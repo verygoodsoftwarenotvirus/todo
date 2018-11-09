@@ -9,11 +9,11 @@ type ItemHandler interface {
 }
 
 type Item struct {
-	ID          uint   `db:"id"`
-	Name        string `db:"name"`
-	Details     string `db:"details"`
-	CreatedOn   uint64 `db:"created_on"`
-	CompletedOn uint64 `db:"completed_on"`
+	ID          uint    `json:"id"`
+	Name        string  `json:"name"`
+	Details     string  `json:"details"`
+	CreatedOn   uint64  `json:"created_on"`
+	CompletedOn *uint64 `json:"completed_on"`
 }
 
 func (i *Item) Update(input *ItemInput) {
@@ -26,9 +26,9 @@ func (i *Item) Update(input *ItemInput) {
 	}
 }
 
-const ItemInputCtxKey = "item_input"
+const ItemInputCtxKey ContextKey = "item_input"
 
 type ItemInput struct {
-	Name    string
-	Details string
+	Name    string `json:"name"`
+	Details string `json:"details"`
 }

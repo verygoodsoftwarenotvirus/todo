@@ -1,0 +1,32 @@
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Goland is pretty good
+.idea
+
+# Vim is better
+*.swp
+
+# client log file
+*log.txt
+
+# the vendor folder
+vendor
+
+# Sqlite databases
+*.db
+
+# OSX
+.DS_Store
+
+vendor
+dev_files

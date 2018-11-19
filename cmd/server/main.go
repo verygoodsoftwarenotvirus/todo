@@ -7,11 +7,11 @@ import (
 )
 
 const (
-	secure   = false
-	dbFile   = "example.db"
-	schemaDir   = "database/schema/sql"
-	certFile = "dev_files/certs/server/cert.pem"
-	keyFile  = "dev_files/certs/server/key.pem"
+	secure    = false
+	dbFile    = "example.db"
+	schemaDir = "database/sqlite/schema"
+	certFile  = "certs/cert.pem"
+	keyFile   = "certs/key.pem"
 )
 
 func main() {
@@ -26,7 +26,7 @@ func main() {
 		KeyFile:   keyFile,
 		SchemaDir: schemaDir,
 
-		DBConfig: dbCfg,
+		DBConfig:  dbCfg,
 		DBBuilder: sqlite.NewSqlite,
 	}
 
@@ -34,8 +34,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-
 
 	server.Serve()
 }

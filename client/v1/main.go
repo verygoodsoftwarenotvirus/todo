@@ -8,181 +8,113 @@ import (
 	"strings"
 	"time"
 
-	// "gitlab.com/verygoodsoftwarenotvirus/todo/models"
-
 	"github.com/moul/http2curl"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
-const defaultTimeout = 5 * time.Second
+const (
+	defaultTimeout = 5 * time.Second
+)
 
 type Config struct {
 	Client    *http.Client
 	Debug     bool
 	Logger    *logrus.Logger
-	BaseURL   string
+	Address   string
 	AuthToken string
 }
 
 type V1Client struct {
-	*http.Client
-	Debug bool
-	URL   *url.URL
-	Token string
+	Client *http.Client
+	logger *logrus.Logger
+	Debug  bool
+	URL    *url.URL
+	Token  string
 }
 
-func NewClient(cfg Config) (*V1Client, error) {
-	var c *V1Client
+func NewClient(cfg *Config) (c *V1Client, err error) {
+	c = &V1Client{
+		Debug: cfg.Debug,
+		Token: cfg.AuthToken,
+	}
+
 	if cfg.Client != nil {
-		c = &V1Client{Client: cfg.Client}
+		c.Client = cfg.Client
+	} else {
+		c.Client = &http.Client{Timeout: 5 * time.Second}
 	}
 
-	u, err := url.Parse(cfg.BaseURL)
-	if err != nil {
-		return nil, errors.Wrap(err, "Store URL is not valid")
-	}
-	c.URL = u
-
-	p := fmt.Sprintf("%s://%s/login", u.Scheme, u.Host)
-	body := strings.NewReader(fmt.Sprintf(`
-		{
-			"username": "%s",
-			"password": "%s"
-		}
-	`, username, password))
-	req, _ := http.NewRequest(http.MethodPost, p, body)
-	res, err := dc.Do(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "Error encountered logging into store")
-	}
-	cookies := res.Cookies()
-	if len(cookies) == 0 {
-		return nil, errors.New("No cookies returned with login response")
-	}
-
-	dc.Client.Timeout = defaultTimeout
-
-	return dc, nil
-}
-
-func NewV1ClientFromCookie(apiURL string, cookie *http.Cookie, client *http.Client) (*V1Client, error) {
-	var dc *V1Client
-	if client != nil {
-		dc = &V1Client{Client: client}
-	}
-
-	u, err := url.Parse(apiURL)
-	if err != nil {
-		return nil, errors.Wrap(err, "API URL is not valid")
-	}
-	dc.URL = u
-
-	dc.Client.Timeout = defaultTimeout
-
-	return dc, nil
-}
-
-func (dc *V1Client) executeRequest(req *http.Request) (*http.Response, error) {
-	if dc.Debug {
-		command, err := http2curl.GetCurlCommand(req)
-		if err == nil {
-			// FIXME: add a real logger
-			fmt.Println(command)
+	if cfg.Logger != nil {
+		c.logger = cfg.Logger
+	} else {
+		c.logger = logrus.New()
+		if cfg.Debug {
+			c.logger.SetLevel(logrus.DebugLevel)
 		}
 	}
 
-	res, err := dc.Do(req)
+	if c.URL, err = url.Parse(cfg.Address); err != nil {
+		return nil, errors.Wrap(err, "Invalid URL is invalid")
+	}
+
+	return
+}
+
+func (c *V1Client) executeRequest(req *http.Request) (*http.Response, error) {
+	command, err := http2curl.GetCurlCommand(req)
+	if err == nil {
+		c.logger.Debugln(command)
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
+
+	res, err := c.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	if dc.Debug {
-		dump, err := httputil.DumpResponse(res, true)
-		if err != nil {
-			return res, err
-		}
-		// FIXME: add a real logger
-		fmt.Printf("%s", dump)
+	dump, err := httputil.DumpResponse(res, true)
+	if err == nil {
+		d := string(dump)
+		c.logger.Debugln(d)
 	}
 
 	return res, nil
 }
 
-func (dc *V1Client) Raw(req *http.Request) (*http.Response, error) {
-	return dc.executeRequest(req)
-}
+func (c *V1Client) BuildURL(queryParams map[string]string, parts ...string) string {
+	tu := *c.URL
 
-func (dc *V1Client) buildURL(queryParams map[string]string, parts ...string) string {
-	parts = append([]string{"v1"}, parts...)
+	parts = append([]string{"api", "v1"}, parts...)
 	u, _ := url.Parse(strings.Join(parts, "/"))
-	queryString := mapToQueryValues(queryParams)
-	u.RawQuery = queryString.Encode()
-	return dc.URL.ResolveReference(u).String()
-}
 
-// BuildURL is the same as the unexported build URL, except I trust myself to never call the
-// unexported function with variables that could lead to an error being returned. This function
-// returns the error in the event a user needs to build an API url, but tries to do so with an
-// invalid value.
-func (dc *V1Client) BuildURL(queryParams map[string]string, parts ...string) (string, error) {
-	parts = append([]string{"v1"}, parts...)
-
-	u, err := url.Parse(strings.Join(parts, "/"))
-	if err != nil {
-		return "", err
+	if queryParams != nil {
+		query := url.Values{}
+		for k, v := range queryParams {
+			query.Set(k, v)
+		}
+		u.RawQuery = query.Encode()
 	}
 
-	queryString := mapToQueryValues(queryParams)
-	u.RawQuery = queryString.Encode()
-	return dc.URL.ResolveReference(u).String(), nil
+	return tu.ResolveReference(u).String()
 }
 
-func (dc *V1Client) exists(uri string) (bool, error) {
-	req, _ := http.NewRequest(http.MethodHead, uri, nil)
-	res, err := dc.executeRequest(req)
-	if err != nil {
-		return false, errors.Wrap(err, "encountered error executing request")
-	}
+func (c *V1Client) IsUp() bool {
+	u := *c.URL
 
-	return res.StatusCode == http.StatusOK, nil
-}
-
-func (dc *V1Client) get(uri string, obj interface{}) error {
-	ce := &ClientError{}
-
-	if err := argIsNotPointerOrNil(obj); err != nil {
-		ce.Err = errors.Wrap(err, "struct to load must be a pointer")
-		return ce
-	}
-
+	uri := fmt.Sprintf("%s://%s:%s/_debug_/health", u.Scheme, u.Hostname(), u.Port())
 	req, _ := http.NewRequest(http.MethodGet, uri, nil)
-	res, err := dc.executeRequest(req)
+	res, err := c.executeRequest(req)
+
 	if err != nil {
-		ce.Err = errors.Wrap(err, "encountered error executing request")
-		return ce
+		return false
 	}
 
-	return unmarshalBody(res, &obj)
+	return res.StatusCode == http.StatusOK
 }
 
-func (dc *V1Client) delete(uri string, out interface{}) error {
-	ce := &ClientError{}
-	if err := argIsNotPointerOrNil(out); err != nil {
-		ce.Err = errors.Wrap(err, "struct to load must be a pointer")
-		return ce
-	}
-
-	req, _ := http.NewRequest(http.MethodDelete, uri, nil)
-	res, err := dc.executeRequest(req)
-	if err != nil {
-		return &ClientError{Err: err}
-	}
-
-	return unmarshalBody(res, nil)
-}
-
-func (dc *V1Client) makeDataRequest(method string, uri string, in interface{}, out interface{}) error {
+func (c *V1Client) makeDataRequest(method string, uri string, in interface{}, out interface{}) error {
 	ce := &ClientError{}
 
 	if err := argIsNotPointerOrNil(out); err != nil {
@@ -197,7 +129,7 @@ func (dc *V1Client) makeDataRequest(method string, uri string, in interface{}, o
 	}
 
 	req, _ := http.NewRequest(method, uri, body)
-	res, err := dc.executeRequest(req)
+	res, err := c.executeRequest(req)
 	if err != nil {
 		ce.Err = errors.Wrap(err, "encountered error executing request")
 		return ce
@@ -209,13 +141,55 @@ func (dc *V1Client) makeDataRequest(method string, uri string, in interface{}, o
 		return ce
 	}
 
+	c.logger.Debugf("data request returned: %+v", out)
+
 	return nil
 }
 
-func (dc *V1Client) post(uri string, in interface{}, out interface{}) error {
-	return dc.makeDataRequest(http.MethodPost, uri, in, out)
+func (c *V1Client) exists(uri string) (bool, error) {
+	req, _ := http.NewRequest(http.MethodHead, uri, nil)
+	res, err := c.executeRequest(req)
+	if err != nil {
+		return false, errors.Wrap(err, "encountered error executing request")
+	}
+
+	return res.StatusCode == http.StatusOK, nil
 }
 
-func (dc *V1Client) patch(uri string, in interface{}, out interface{}) error {
-	return dc.makeDataRequest(http.MethodPatch, uri, in, out)
+func (c *V1Client) get(uri string, obj interface{}) error {
+	ce := &ClientError{}
+
+	if err := argIsNotPointerOrNil(obj); err != nil {
+		ce.Err = errors.Wrap(err, "struct to load must be a pointer")
+		return ce
+	}
+
+	req, _ := http.NewRequest(http.MethodGet, uri, nil)
+	res, err := c.executeRequest(req)
+	if err != nil {
+		ce.Err = errors.Wrap(err, "encountered error executing request")
+		return ce
+	}
+
+	return unmarshalBody(res, &obj)
+}
+
+func (c *V1Client) delete(uri string) error {
+	req, _ := http.NewRequest(http.MethodDelete, uri, nil)
+	res, err := c.executeRequest(req)
+	if err != nil {
+		return &ClientError{Err: err}
+	} else if res.StatusCode != http.StatusOK {
+		return &ClientError{Err: errors.New(fmt.Sprintf("status returned: %d", res.StatusCode))}
+	}
+
+	return nil
+}
+
+func (c *V1Client) post(uri string, in interface{}, out interface{}) error {
+	return c.makeDataRequest(http.MethodPost, uri, in, out)
+}
+
+func (c *V1Client) put(uri string, in interface{}, out interface{}) error {
+	return c.makeDataRequest(http.MethodPut, uri, in, out)
 }

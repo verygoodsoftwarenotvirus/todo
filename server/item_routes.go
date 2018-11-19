@@ -25,6 +25,7 @@ func (s *Server) getItem(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	res.Header().Set("Content-type", "application/json")
 	json.NewEncoder(res).Encode(i)
 }
 
@@ -35,6 +36,7 @@ func (s *Server) getItems(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	res.Header().Set("Content-type", "application/json")
 	json.NewEncoder(res).Encode(items)
 }
 
@@ -65,11 +67,12 @@ func (s *Server) updateItem(res http.ResponseWriter, req *http.Request) {
 	}
 
 	i.Update(input)
-	if err :=  s.db.UpdateItem(i); err != nil {
+	if err := s.db.UpdateItem(i); err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	res.Header().Set("Content-type", "application/json")
 	json.NewEncoder(res).Encode(i)
 }
 
@@ -88,5 +91,6 @@ func (s *Server) createItem(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	res.Header().Set("Content-type", "application/json")
 	json.NewEncoder(res).Encode(i)
 }

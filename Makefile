@@ -8,6 +8,14 @@ SERVER_CERT_KEY := dev_files/certs/server/cert.pem
 CLIENT_PRIV_KEY := dev_files/certs/client/key.pem
 CLIENT_CERT_KEY := dev_files/certs/client/cert.pem
 
+## generic make stuff
+
+.PHONY: clean
+clean:
+	rm example.db
+
+## Project prerequisites
+
 vendor:
 	GO111MODULE=on go mod init
 	GO111MODULE=on go mod vendor
@@ -28,6 +36,8 @@ dev_files/certs/server/key.pem dev_files/certs/server/cert.pem:
 	mkdir -p dev_files/certs/server
 	openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout dev_files/certs/server/key.pem -out dev_files/certs/server/cert.pem
 
+## Test things
+
 .PHONY: coverage
 coverage:
 	if [ -f coverage.out ]; then rm coverage.out; fi
@@ -43,10 +53,19 @@ coverage:
 ci-coverage:
 	go test $(TESTABLE_PACKAGES) -v -coverprofile=profile.out
 
+example.db:
+	go run tools/db-bootstrap/main.go
+
+.PHONY: integration-tests
+integration-tests:
+	docker-compose --file compose-files/integration-tests.yaml up --build --remove-orphans --force-recreate --abort-on-container-exit
+
+## Docker things
+
 .PHONY: docker-image
 docker-image: prerequisites
-	docker build --tag todo:latest --file dockerfiles/Dockerfile .
+	docker build --tag todo:latest --file dockerfiles/server.Dockerfile .
 
 .PHONY: run
 run: docker-image
-	docker run --rm todo:latest --publish 443
+	docker run --rm --publish 1443:443 todo:latest

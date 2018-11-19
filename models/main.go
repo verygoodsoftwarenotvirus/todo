@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"strconv"
 )
 
 const DefaultLimit = 20
@@ -11,6 +12,13 @@ type ContextKey string
 type QueryFilter struct {
 	Page  uint `json:"page"`
 	Limit uint `json:"limit"`
+}
+
+func (qf *QueryFilter) ToMap() map[string]string {
+	return map[string]string{
+		"page":  strconv.Itoa(int(qf.Page)),
+		"limit": strconv.Itoa(int(qf.Limit)),
+	}
 }
 
 var DefaultQueryFilter = &QueryFilter{

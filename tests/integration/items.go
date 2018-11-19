@@ -1,35 +1,48 @@
 package integration
 
 import (
-	"testing"
+	"log"
 
-	// "gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
 
-	// "github.com/bxcodec/faker"
-	"github.com/franela/goblin"
+	"github.com/bxcodec/faker"
 )
 
-func TestAll(t *testing.T) {
-	g := goblin.Goblin(t)
+type ItemManager struct {
+	*client.V1Client
+	items []*models.Item
+}
 
-	g.Describe("Auth", func() {
-		g.It("should reject an unauthenticated request")
-		g.Describe("credentials", func() {
-			g.It("should accept a valid cookie")
-			g.It("should reject a valid cookie")
-			g.It("should accept a valid auth key")
-			g.It("should reject an invalid auth key")
-		})
-	})
+func NewItemManager(c *client.V1Client) *ItemManager {
+	return &ItemManager{
+		V1Client: c,
+		items:    []*models.Item{},
+	}
+}
 
-	g.Describe("Items", func() {
-		g.It("Should create an item", func() {
+func (im *ItemManager) Add(count int) []*models.Item {
+	fake := faker.GetLorem()
+	items := []*models.Item{}
+	for i := 0; i < count; i++ {
+		ii := &models.ItemInput{
+			Name:    fake.Word(),
+			Details: fake.Sentence(),
+		}
+		item, err := im.CreateItem(ii)
+		if err != nil {
+			panic(err)
+		}
+		items = append(items, item)
+	}
+	im.items = append(im.items, items...)
+	return items
+}
 
-		})
-		g.It("Should return a pre-made item")
-		g.It("Should return a list of pre-made items")
-		g.It("Should update a item")
-		g.It("Should delete a item")
-	})
-
+func (im *ItemManager) CleanUp() {
+	for _, item := range im.items {
+		if err := im.DeleteItem(item.ID); err != nil {
+			log.Printf("error deleting item %d: %v", item.ID, err)
+		}
+	}
 }

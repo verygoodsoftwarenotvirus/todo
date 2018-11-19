@@ -104,19 +104,22 @@ func (s *Server) setupRoutes() *chi.Mux {
 
 	router.Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Route("/v1", func(v1Router chi.Router) {
+			// v1Router.Route("/items", func(itemsRouter chi.Router) {
+
 			// Items
 			v1Router.
 				With(s.buildRouteCtx(models.ItemInputCtxKey, new(models.ItemInput))).
 				Post("/items", s.createItem) // Create
 
-			v1Router.Get("/item/{itemID:[0-9]+}", s.getItem) // Read
-			v1Router.Get("/items", s.getItems)               // List
+			v1Router.Get("/items/{itemID:[0-9]+}", s.getItem) // Read
+			v1Router.Get("/items", s.getItems)                // List
 
 			v1Router.
 				With(s.buildRouteCtx(models.ItemInputCtxKey, new(models.ItemInput))).
-				Patch("/item/{itemID:[0-9]+}", s.updateItem) // Update
+				Put("/items/{itemID:[0-9]+}", s.updateItem) // Update
 
-			v1Router.Delete("/item/{itemID:[0-9]+}", s.deleteItem) // Delete
+			v1Router.Delete("/items/{itemID:[0-9]+}", s.deleteItem) // Delete
+			// }
 		})
 	})
 
@@ -133,16 +136,6 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 	if err := db.Migrate(cfg.SchemaDir); err != nil {
 		return nil, err
 	}
-
-	db.CreateItem(&models.ItemInput{
-		Name:    "name",
-		Details: "details",
-	})
-
-	db.CreateItem(&models.ItemInput{
-		Name:    "other",
-		Details: "things",
-	})
 
 	return &Server{
 		certFile: cfg.CertFile,

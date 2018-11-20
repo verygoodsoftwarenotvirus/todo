@@ -10,6 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/items"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -26,7 +27,6 @@ type ServerConfig struct {
 	DebugMode bool
 	SchemaDir string
 
-	DBConfig  database.Config
 	DBBuilder func(database.Config) (database.Database, error)
 }
 
@@ -36,11 +36,15 @@ type Server struct {
 	keyFile   string
 
 	server        *http.Server
-	Authenticator auth.Enticator
+	authenticator auth.Enticator
 	db            database.Database
 
-	Router *chi.Mux
-	Logger *logrus.Logger
+	// Services
+	itemsService *items.ItemsService
+
+	// infra things
+	router *chi.Mux
+	logger *logrus.Logger
 }
 
 func buildServer() *http.Server {
@@ -82,7 +86,7 @@ func (s *Server) buildRouteCtx(key models.ContextKey, x interface{}) func(next h
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			if err := json.NewDecoder(req.Body).Decode(x); err != nil {
-				s.Logger.Errorf("error encountered decoding request body: %v", err)
+				s.logger.Errorf("error encountered decoding request body: %v", err)
 				res.WriteHeader(http.StatusBadRequest)
 				return
 			}
@@ -104,32 +108,42 @@ func (s *Server) setupRoutes() *chi.Mux {
 
 	router.Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Route("/v1", func(v1Router chi.Router) {
-			// v1Router.Route("/items", func(itemsRouter chi.Router) {
+			v1Router.Route("/items", func(itemsRouter chi.Router) {
+				sr := "/{itemID:[0-9]+}"
+				// Create
+				itemsRouter.
+					With(s.buildRouteCtx(
+						models.ItemInputCtxKey,
+						new(models.ItemInput),
+					)).
+					Post("/", s.itemsService.Create)
 
-			// Items
-			v1Router.
-				With(s.buildRouteCtx(models.ItemInputCtxKey, new(models.ItemInput))).
-				Post("/items", s.createItem) // Create
+				// Read
+				itemsRouter.Get(sr, s.itemsService.Read)
+				// List
+				itemsRouter.Get("/", s.itemsService.List)
 
-			v1Router.Get("/items/{itemID:[0-9]+}", s.getItem) // Read
-			v1Router.Get("/items", s.getItems)                // List
+				// Update
+				itemsRouter.
+					With(s.buildRouteCtx(
+						models.ItemInputCtxKey,
+						new(models.ItemInput),
+					)).
+					Put(sr, s.itemsService.Update)
 
-			v1Router.
-				With(s.buildRouteCtx(models.ItemInputCtxKey, new(models.ItemInput))).
-				Put("/items/{itemID:[0-9]+}", s.updateItem) // Update
-
-			v1Router.Delete("/items/{itemID:[0-9]+}", s.deleteItem) // Delete
-			// }
+				// Delete
+				itemsRouter.Delete(sr, s.itemsService.Delete)
+			})
 		})
 	})
 
 	return router
 }
 
-func NewServer(cfg ServerConfig) (*Server, error) {
+func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 	logger := logrus.New()
 
-	db, err := cfg.DBBuilder(cfg.DBConfig)
+	db, err := cfg.DBBuilder(dbConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -141,24 +155,29 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 		certFile: cfg.CertFile,
 		keyFile:  cfg.KeyFile,
 		server:   buildServer(),
-		Logger:   logger,
-		Router:   setupRouter(),
+		logger:   logger,
+		router:   setupRouter(),
 		db:       db,
+
+		itemsService: items.NewItemsService(items.ItemsServiceConfig{
+			Logger: logger,
+			DB:     db,
+		}),
 	}, nil
 }
 
-func NewDebug(cfg ServerConfig) (*Server, error) {
-	c, err := NewServer(cfg)
+func NewDebug(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
+	c, err := NewServer(cfg, dbConfig)
 	if err != nil {
 		return nil, err
 	}
 	c.DebugMode = true
-	c.Logger.SetLevel(logrus.DebugLevel)
+	c.logger.SetLevel(logrus.DebugLevel)
 	return c, nil
 }
 
 func (s *Server) Serve() {
 	s.server.Handler = s.setupRoutes()
-	s.Logger.Debugf("About to listen on 443. Go to https://localhost/")
-	s.Logger.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))
+	s.logger.Debugf("Listening on 443. Go to https://localhost/")
+	s.logger.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))
 }

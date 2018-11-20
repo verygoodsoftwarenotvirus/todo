@@ -1,7 +1,8 @@
 GOPATH            := $(GOPATH)
 GIT_HASH          := $(shell git describe --tags --always --dirty)
 BUILD_TIME        := $(shell date -u '+%Y-%m-%d_%I:%M:%S%p')
-TESTABLE_PACKAGES := $(shell go list gitlab.com/verygoodsoftwarenotvirus/todo/...)
+TESTABLE_PACKAGES := $(shell go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|tools)')
+COVERAGE_OUT      := coverage.out
 
 SERVER_PRIV_KEY := dev_files/certs/server/key.pem
 SERVER_CERT_KEY := dev_files/certs/server/cert.pem
@@ -12,7 +13,8 @@ CLIENT_CERT_KEY := dev_files/certs/client/cert.pem
 
 .PHONY: clean
 clean:
-	rm example.db
+	rm -f $(COVERAGE_OUT)
+	rm -f example.db
 
 ## Project prerequisites
 
@@ -38,20 +40,14 @@ dev_files/certs/server/key.pem dev_files/certs/server/cert.pem:
 
 ## Test things
 
-.PHONY: coverage
-coverage:
-	if [ -f coverage.out ]; then rm coverage.out; fi
-	echo "mode: set" > coverage.out
+$(COVERAGE_OUT):
+	echo "mode: set" > $(COVERAGE_OUT)
 
 	for pkg in $(TESTABLE_PACKAGES); do \
-		set -e; go test -coverprofile=profile.out -v -race $$pkg; \
-		cat profile.out | grep -v "mode: atomic" >> coverage.out; \
+		go test -coverprofile=profile.out -v -race -count 5 $$pkg; \
+		cat profile.out | grep -v "mode: atomic" >> $(COVERAGE_OUT); \
 	done
 	rm profile.out
-
-.PHONY: ci-coverage
-ci-coverage:
-	go test $(TESTABLE_PACKAGES) -v -coverprofile=profile.out
 
 example.db:
 	go run tools/db-bootstrap/main.go
@@ -59,6 +55,12 @@ example.db:
 .PHONY: integration-tests
 integration-tests:
 	docker-compose --file compose-files/integration-tests.yaml up --build --remove-orphans --force-recreate --abort-on-container-exit
+
+.PHONY: test
+test:
+	for pkg in $(TESTABLE_PACKAGES); do \
+		go test -cover -v -race -count 5 $$pkg; \
+	done
 
 ## Docker things
 

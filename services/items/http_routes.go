@@ -1,4 +1,4 @@
-package server
+package items
 
 import (
 	"database/sql"
@@ -11,16 +11,16 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func (s *Server) getItem(res http.ResponseWriter, req *http.Request) {
+func (is *ItemsService) Read(res http.ResponseWriter, req *http.Request) {
 	itemIDParam := chi.URLParam(req, "itemID")
 	itemID, _ := strconv.ParseUint(itemIDParam, 10, 64)
 
-	i, err := s.db.GetItem(uint(itemID))
+	i, err := is.db.GetItem(uint(itemID))
 	if err == sql.ErrNoRows {
 		res.WriteHeader(http.StatusNotFound)
 		return
 	} else if err != nil {
-		s.Logger.Errorf("error fetching item #%s from database: %v", itemIDParam, err)
+		is.logger.Errorf("error fetching item #%s from database: %v", itemIDParam, err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -29,8 +29,8 @@ func (s *Server) getItem(res http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(res).Encode(i)
 }
 
-func (s *Server) getItems(res http.ResponseWriter, req *http.Request) {
-	items, err := s.db.GetItems(nil)
+func (is *ItemsService) List(res http.ResponseWriter, req *http.Request) {
+	items, err := is.db.GetItems(nil)
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -40,17 +40,17 @@ func (s *Server) getItems(res http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(res).Encode(items)
 }
 
-func (s *Server) deleteItem(res http.ResponseWriter, req *http.Request) {
+func (is *ItemsService) Delete(res http.ResponseWriter, req *http.Request) {
 	itemIDParam := chi.URLParam(req, "itemID")
 	itemID, _ := strconv.ParseUint(itemIDParam, 10, 64)
 
-	if err := s.db.DeleteItem(uint(itemID)); err != nil {
+	if err := is.db.DeleteItem(uint(itemID)); err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }
 
-func (s *Server) updateItem(res http.ResponseWriter, req *http.Request) {
+func (is *ItemsService) Update(res http.ResponseWriter, req *http.Request) {
 	input, ok := req.Context().Value(models.ItemInputCtxKey).(*models.ItemInput)
 	if !ok {
 		res.WriteHeader(http.StatusBadRequest)
@@ -60,14 +60,14 @@ func (s *Server) updateItem(res http.ResponseWriter, req *http.Request) {
 	itemIDParam := chi.URLParam(req, "itemID")
 	itemID, _ := strconv.ParseUint(itemIDParam, 10, 64)
 
-	i, err := s.db.GetItem(uint(itemID))
+	i, err := is.db.GetItem(uint(itemID))
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	i.Update(input)
-	if err := s.db.UpdateItem(i); err != nil {
+	if err := is.db.UpdateItem(i); err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -76,17 +76,17 @@ func (s *Server) updateItem(res http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(res).Encode(i)
 }
 
-func (s *Server) createItem(res http.ResponseWriter, req *http.Request) {
+func (is *ItemsService) Create(res http.ResponseWriter, req *http.Request) {
 	input, ok := req.Context().Value(models.ItemInputCtxKey).(*models.ItemInput)
 	if !ok {
-		s.Logger.Errorln("valid input not attached to request")
+		is.logger.Errorln("valid input not attached to request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	i, err := s.db.CreateItem(input)
+	i, err := is.db.CreateItem(input)
 	if err != nil {
-		s.Logger.Errorf("error creating item: %v", err)
+		is.logger.Errorf("error creating item: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}

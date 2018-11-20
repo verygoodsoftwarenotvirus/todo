@@ -15,6 +15,10 @@ type QueryFilter struct {
 }
 
 func (qf *QueryFilter) ToMap() map[string]string {
+	if qf == nil {
+		return DefaultQueryFilter.ToMap()
+	}
+
 	return map[string]string{
 		"page":  strconv.Itoa(int(qf.Page)),
 		"limit": strconv.Itoa(int(qf.Limit)),

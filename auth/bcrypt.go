@@ -26,13 +26,6 @@ type BcryptAuthenticator struct {
 	minimumPasswordSize uint
 }
 
-func New(hashCost, minimumPasswordSize uint) *BcryptAuthenticator {
-	return &BcryptAuthenticator{
-		hashCost:            hashCost,
-		minimumPasswordSize: minimumPasswordSize,
-	}
-}
-
 func NewBcrypt(logger *logrus.Logger) *BcryptAuthenticator {
 	if logger == nil {
 		logger = logrus.New()
@@ -50,14 +43,17 @@ func (b *BcryptAuthenticator) HashPassword(password string) (string, error) {
 }
 
 func (b *BcryptAuthenticator) PasswordMatches(hashedPassword, providedPassword string) bool {
-	matches := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(providedPassword)) == nil
-	tooWeak := b.passwordIsTooWeak([]byte(hashedPassword))
+	matches := bcrypt.CompareHashAndPassword(
+		[]byte(hashedPassword),
+		[]byte(providedPassword),
+	) == nil
+	tooWeak := b.hashedPasswordIsTooWeak(hashedPassword)
 
 	return matches && !tooWeak
 }
 
-func (b *BcryptAuthenticator) passwordIsTooWeak(hashedPassword []byte) bool {
-	cost, err := bcrypt.Cost(hashedPassword)
+func (b *BcryptAuthenticator) hashedPasswordIsTooWeak(hashedPassword string) bool {
+	cost, err := bcrypt.Cost([]byte(hashedPassword))
 
 	if err != nil || uint(cost) != b.hashCost {
 		return true

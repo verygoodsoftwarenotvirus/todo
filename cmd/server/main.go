@@ -28,11 +28,10 @@ func main() {
 		KeyFile:   keyFile,
 		SchemaDir: schemaDir,
 
-		DBConfig:  dbCfg,
 		DBBuilder: sqlite.NewSqlite,
 	}
 
-	server, err := server.NewDebug(cfg)
+	server, err := server.NewDebug(cfg, dbCfg)
 	if err != nil {
 		panic(err)
 	}

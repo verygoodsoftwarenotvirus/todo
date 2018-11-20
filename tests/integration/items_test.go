@@ -40,11 +40,12 @@ func TestItems(t *testing.T) {
 			assert.NotNil(t, actual)
 
 			// Assert item equality
-			assert.NotZero(t, actual.ID)
-			assert.Equal(t, expected.Name, actual.Name)
-			assert.Equal(t, expected.Details, actual.Details)
-			assert.NotZero(t, actual.CreatedOn)
-			assert.Nil(t, actual.CompletedOn)
+			assert.NotZero(t, actual.ID, "ID should be non-zero")
+			assert.Equal(t, expected.Name, actual.Name, "expected .Name to be %q, but it was %q", expected.Name, actual.Name)
+			assert.Equal(t, expected.Details, actual.Details, "expected .Details to be %q, but it was %q", expected.Details, actual.Details)
+			assert.NotZero(t, actual.CreatedOn, ".CreatedOn should not be zero")
+			assert.Nil(t, actual.CompletedOn, ".CompletedOn should be nil")
+			assert.Nil(t, actual.UpdatedOn, ".UpdatedOn should be nil")
 
 			// Clean up
 			err = todoClient.DeleteItem(actual.ID)
@@ -65,11 +66,12 @@ func TestItems(t *testing.T) {
 			assert.NoError(t, err)
 
 			// Assert item equality
-			assert.NotZero(t, actual.ID)
-			assert.Equal(t, expected.Name, actual.Name)
-			assert.Equal(t, expected.Details, actual.Details)
-			assert.NotZero(t, actual.CreatedOn)
-			assert.Nil(t, actual.CompletedOn)
+			assert.NotZero(t, actual.ID, "ID should be non-zero")
+			assert.Equal(t, expected.Name, actual.Name, "expected .Name to be %q, but it was %q", expected.Name, actual.Name)
+			assert.Equal(t, expected.Details, actual.Details, "expected .Details to be %q, but it was %q", expected.Details, actual.Details)
+			assert.NotZero(t, actual.CreatedOn, ".CreatedOn should not be zero")
+			assert.Nil(t, actual.CompletedOn, ".CompletedOn should be nil")
+			assert.Nil(t, actual.UpdatedOn, ".UpdatedOn should be nil")
 
 			// Clean up
 			err = todoClient.DeleteItem(actual.ID)
@@ -79,9 +81,9 @@ func TestItems(t *testing.T) {
 
 		g.It("Should error when fetching a nonexistent item", func() {
 			// Fetch item
-			actual, err := todoClient.GetItem(nonexistentID)
-			assert.NoError(t, err)
-			assert.Nil(t, actual)
+			_, err := todoClient.GetItem(nonexistentID)
+			assert.Error(t, err)
+			// assert.Nil(t, actual)
 		})
 
 		g.It("Should return a list of pre-made items", func() {
@@ -130,10 +132,11 @@ func TestItems(t *testing.T) {
 			assert.NoError(t, err)
 
 			// Assert item equality
-			assert.Equal(t, expected.Name, actual.Name)
-			assert.Equal(t, expected.Details, actual.Details)
-			assert.NotZero(t, actual.UpdatedOn)
-			assert.Nil(t, actual.CompletedOn)
+			assert.Equal(t, expectedName, actual.Name, "expected .Name to be %q, but it was %q", expected.Name, actual.Name)
+			assert.Equal(t, expectedDetails, actual.Details, "expected .Details to be %q, but it was %q", expected.Details, actual.Details)
+			assert.NotZero(t, actual.CreatedOn, ".CreatedOn should not be zero")
+			assert.NotNil(t, actual.UpdatedOn, ".UpdatedOn should not be nil")
+			assert.Nil(t, actual.CompletedOn, ".CompletedOn should be nil")
 
 			// Clean up
 			err = todoClient.DeleteItem(actual.ID)

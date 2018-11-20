@@ -32,13 +32,13 @@ func (c *V1Client) GetItems(filter *models.QueryFilter) (items []models.Item, er
 	return
 }
 
-func (c *V1Client) CreateItem(input *models.ItemInput) (item *models.Item, err error) {
+func (c *V1Client) CreateItem(input *models.ItemInput) (*models.Item, error) {
 	u := c.BuildURL(nil, itemsBasePath)
-	item = &models.Item{}
+	item := &models.Item{}
 
-	err = c.post(u, input, item)
+	err := c.post(u, input, item)
 
-	return
+	return item, err
 }
 
 func (c *V1Client) UpdateItem(updated *models.Item) (err error) {

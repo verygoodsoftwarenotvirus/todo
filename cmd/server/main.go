@@ -7,11 +7,13 @@ import (
 )
 
 const (
-	secure    = false
-	dbFile    = "example.db"
-	schemaDir = "database/sqlite/schema"
-	certFile  = "certs/cert.pem"
-	keyFile   = "certs/key.pem"
+	secure        = false
+	dbFile        = "example.db"
+	schemaDir     = "database/sqlite/schema"
+	certFile      = "certs/cert.pem"
+	keyFile       = "certs/key.pem"
+	localCertFile = "dev_files/certs/server/cert.pem"
+	localKeyFile  = "dev_files/certs/server/key.pem"
 )
 
 func main() {

@@ -66,6 +66,12 @@ integration-tests:
 docker-image: prerequisites
 	docker build --tag todo:latest --file dockerfiles/server.Dockerfile .
 
+## Running
+
 .PHONY: run
 run: docker-image
 	docker run --rm --publish 1443:443 todo:latest
+
+.PHONY: run-local
+run-local:
+	go run cmd/server/main.go

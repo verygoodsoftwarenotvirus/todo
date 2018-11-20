@@ -76,8 +76,10 @@ func (c *V1Client) executeRequest(req *http.Request) (*http.Response, error) {
 
 	dump, err := httputil.DumpResponse(res, true)
 	if err == nil {
-		d := string(dump)
-		c.logger.Debugln(d)
+		if req.Method != http.MethodGet {
+			d := string(dump)
+			c.logger.Debugln(d)
+		}
 	}
 
 	return res, nil
@@ -168,6 +170,11 @@ func (c *V1Client) get(uri string, obj interface{}) error {
 	res, err := c.executeRequest(req)
 	if err != nil {
 		ce.Err = errors.Wrap(err, "encountered error executing request")
+		return ce
+	}
+
+	if res.StatusCode == http.StatusNotFound {
+		ce.Err = errors.New("404 Not Found")
 		return ce
 	}
 

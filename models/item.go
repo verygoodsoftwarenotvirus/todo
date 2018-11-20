@@ -13,7 +13,7 @@ type Item struct {
 	Name        string  `json:"name"`
 	Details     string  `json:"details"`
 	CreatedOn   uint64  `json:"created_on"`
-	UpdatedOn   uint64  `json:"updated_on"`
+	UpdatedOn   *uint64 `json:"updated_on"`
 	CompletedOn *uint64 `json:"completed_on"`
 }
 

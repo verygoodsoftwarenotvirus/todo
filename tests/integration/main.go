@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	debug         = true
-	nonexistentID = 999999999
-	//defaultTestInstanceURL = "https://localhost"
+	debug                        = false
+	nonexistentID                = 999999999
+	localTestInstanceURL         = "https://localhost"
 	defaultTestInstanceURL       = "https://demo-server"
 	defaultTestInstanceAuthToken = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
 )
@@ -29,7 +29,10 @@ func initializeClient() {
 		Address:   defaultTestInstanceURL,
 		AuthToken: defaultTestInstanceAuthToken,
 	}
-	cfg.Client.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	cfg.Client.Transport.(*http.Transport).TLSClientConfig = &tls.Config{
+		// WARNING: Never this ordinarily, this is an application which will only ever run in a local context
+		InsecureSkipVerify: true,
+	}
 
 	c, err := client.NewClient(cfg)
 	if err != nil {

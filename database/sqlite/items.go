@@ -11,7 +11,7 @@ const (
 		FROM
 			items
 		WHERE
-			id = ? AND completed_on = null
+			id = ? AND completed_on is null
 	`
 	getItemsQuery = `
 		SELECT
@@ -19,7 +19,7 @@ const (
 		FROM
 			items
 		WHERE
-			completed_on = null
+			completed_on is null
 		LIMIT ?
 		OFFSET ?
 	`
@@ -32,20 +32,6 @@ const (
 		(
 			?, ?
 		)
-	`
-	createdOnItemQuery = `
-		SELECT
-			created_on
-		FROM
-			items
-		WHERE id = ?
-	`
-	updatedOnItemQuery = `
-		SELECT
-			created_on
-		FROM
-			items
-		WHERE id = ?
 	`
 	updateItemQuery = `
 		UPDATE items SET
@@ -117,42 +103,51 @@ func (s *sqlite) GetItems(filter *models.QueryFilter) ([]models.Item, error) {
 	return list, err
 }
 
-func (s *sqlite) CreateItem(input *models.ItemInput) (*models.Item, error) {
-	i := &models.Item{
+func (s *sqlite) CreateItem(input *models.ItemInput) (i *models.Item, err error) {
+	i = &models.Item{
 		Name:    input.Name,
 		Details: input.Details,
 	}
 
 	tx, err := s.database.Begin()
 	if err != nil {
+		s.logger.Errorf("error beginning database connection: %v", err)
 		return nil, err
 	}
 
+	// create the item
 	res, err := tx.Exec(createItemQuery, input.Name, input.Details)
 	if err != nil {
-		if e := tx.Rollback(); e != nil {
-			return nil, e
-		}
+		s.logger.Errorf("error executing item creation query: %v", err)
+		tx.Rollback()
 		return nil, err
 	}
 
+	// determine its id
 	id, err := res.LastInsertId()
 	if err != nil {
-		if e := tx.Rollback(); e != nil {
-			return nil, e
-		}
-		return nil, err
-	}
-	i.ID = uint(id)
-
-	if err := tx.QueryRow(createdOnItemQuery, id).Scan(&i.CreatedOn); err != nil {
+		s.logger.Errorf("error fetching last inserted item ID: %v", err)
 		return nil, err
 	}
 
-	if err := tx.Commit(); err != nil {
+	// fetch full updated item
+	err = tx.QueryRow(getItemQuery, id).Scan(
+		&i.ID,
+		&i.Name,
+		&i.Details,
+		&i.CreatedOn,
+		&i.UpdatedOn,
+		&i.CompletedOn,
+	)
+	if err != nil {
+		s.logger.Errorf("error fetching newly created item %d: %v", id, err)
+		tx.Rollback()
 		return nil, err
 	}
 
+	tx.Commit()
+
+	s.logger.Debugln("returning from CreateItem")
 	return i, nil
 }
 
@@ -162,17 +157,26 @@ func (s *sqlite) UpdateItem(input *models.Item) (err error) {
 		return
 	}
 
-	_, err = tx.Exec(updateItemQuery, input.Name, input.Details, input.ID)
-	if err != nil {
+	// update the item
+	if _, err = tx.Exec(updateItemQuery, input.Name, input.Details, input.ID); err != nil {
 		tx.Rollback()
 		return
 	}
 
-	if err = tx.QueryRow(updatedOnItemQuery, input.ID).Scan(&input.UpdatedOn); err != nil {
+	// fetch full updated item
+	if err = tx.QueryRow(getItemQuery, input.ID).Scan(
+		&input.ID,
+		&input.Name,
+		&input.Details,
+		&input.CreatedOn,
+		&input.UpdatedOn,
+		&input.CompletedOn,
+	); err != nil {
 		tx.Rollback()
 		return
 	}
 
+	// commit the changes
 	if err = tx.Commit(); err != nil {
 		tx.Rollback()
 		return

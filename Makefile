@@ -1,7 +1,4 @@
 GOPATH            := $(GOPATH)
-GIT_HASH          := $(shell git describe --tags --always --dirty)
-BUILD_TIME        := $(shell date -u '+%Y-%m-%d_%I:%M:%S%p')
-TESTABLE_PACKAGES := $(shell go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|tools)')
 COVERAGE_OUT      := coverage.out
 
 SERVER_PRIV_KEY := dev_files/certs/server/key.pem
@@ -17,40 +14,38 @@ clean:
 	rm -f example.db
 
 ## Project prerequisites
-
 vendor:
-	GO111MODULE=on go mod init
-	GO111MODULE=on go mod vendor
+	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` --workdir=`pwd` golang:latest /bin/sh -c "pwd; ls -Al; go mod vendor"
 
 .PHONY: revendor
 revendor:
 	rm -rf vendor go.{mod,sum}
+	GO111MODULE=on go mod init
 	$(MAKE) vendor
 
 .PHONY: prerequisites
-prerequisites: vendor $(SERVER_PRIV_KEY) $(SERVER_CERT_KEY) $(CLIENT_PRIV_KEY) $(CLIENT_CERT_KEY)
+prerequisites:
+	$(MAKE) vendor $(SERVER_PRIV_KEY) $(SERVER_CERT_KEY) $(CLIENT_PRIV_KEY) $(CLIENT_CERT_KEY)
 
 dev_files/certs/client/key.pem dev_files/certs/client/cert.pem:
 	mkdir -p dev_files/certs/client
-	openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout dev_files/certs/client/key.pem -out dev_files/certs/client/cert.pem
+	openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=www.example.com" -keyout dev_files/certs/client/key.pem -out dev_files/certs/client/cert.pem
 
 dev_files/certs/server/key.pem dev_files/certs/server/cert.pem:
 	mkdir -p dev_files/certs/server
-	openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout dev_files/certs/server/key.pem -out dev_files/certs/server/cert.pem
+	openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=www.example.com" -keyout dev_files/certs/server/key.pem -out dev_files/certs/server/cert.pem
 
 ## Test things
-
-$(COVERAGE_OUT):
-	echo "mode: set" > $(COVERAGE_OUT)
-
-	for pkg in $(TESTABLE_PACKAGES); do \
-		go test -coverprofile=profile.out -v -race -count 5 $$pkg; \
-		cat profile.out | grep -v "mode: atomic" >> $(COVERAGE_OUT); \
-	done
-	rm profile.out
-
 example.db:
 	go run tools/db-bootstrap/main.go
+
+$(COVERAGE_OUT):
+	./scripts/coverage.sh
+
+.PHONY: ci-coverage
+ci-coverage:
+	docker build --tag coverage-todo:latest --file dockerfiles/coverage.Dockerfile .
+	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` coverage-todo:latest
 
 .PHONY: integration-tests
 integration-tests:
@@ -59,7 +54,7 @@ integration-tests:
 .PHONY: test
 test:
 	for pkg in $(TESTABLE_PACKAGES); do \
-		go test -cover -v -race -count 5 $$pkg; \
+		go test -cover -v -count 5 $$pkg; \
 	done
 
 ## Docker things

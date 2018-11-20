@@ -1,0 +1,30 @@
+stages:
+    - testing
+
+image: docker:latest
+
+services:
+    - docker:dind
+
+before_script:
+    - mkdir -p /go/src/gitlab.com/verygoodsoftwarenotvirus/
+    - cp -rf /builds/verygoodsoftwarenotvirus/todo /go/src/gitlab.com/verygoodsoftwarenotvirus/
+    - cd /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
+    - apk add --update --no-cache make git gcc musl-dev
+
+unit-tests:
+    stage: testing
+    image: golang:alpine
+    variables:
+        GOPATH: '/go'
+    script:
+        - make coverage.out
+
+integration-tests:
+    stage: testing
+    variables:
+        GOPATH: '/go'
+    script:
+        - apk add --update --no-cache py-pip openssl
+        - pip install docker-compose
+        - make prerequisites integration-tests

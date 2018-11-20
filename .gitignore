@@ -16,17 +16,10 @@
 # Vim is better
 *.swp
 
-# client log file
-*log.txt
-
-# the vendor folder
-vendor
-
 # Sqlite databases
 *.db
 
 # OSX
 .DS_Store
 
-vendor
 dev_files

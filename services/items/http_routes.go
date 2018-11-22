@@ -12,6 +12,10 @@ import (
 	"github.com/go-chi/chi"
 )
 
+const (
+	urlParamKey = "itemID"
+)
+
 func (is *ItemsService) ItemContextMiddleware(next http.Handler) http.Handler {
 	x := new(models.ItemInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -20,13 +24,13 @@ func (is *ItemsService) ItemContextMiddleware(next http.Handler) http.Handler {
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		ctx := context.WithValue(req.Context(), models.ItemInputCtxKey, x)
+		ctx := context.WithValue(req.Context(), MiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }
 
 func (is *ItemsService) Read(res http.ResponseWriter, req *http.Request) {
-	itemIDParam := chi.URLParam(req, "itemID")
+	itemIDParam := chi.URLParam(req, urlParamKey)
 	itemID, _ := strconv.ParseUint(itemIDParam, 10, 64)
 
 	i, err := is.db.GetItem(uint(itemID))
@@ -56,7 +60,7 @@ func (is *ItemsService) List(res http.ResponseWriter, req *http.Request) {
 }
 
 func (is *ItemsService) Delete(res http.ResponseWriter, req *http.Request) {
-	itemIDParam := chi.URLParam(req, "itemID")
+	itemIDParam := chi.URLParam(req, urlParamKey)
 	itemID, _ := strconv.ParseUint(itemIDParam, 10, 64)
 
 	if err := is.db.DeleteItem(uint(itemID)); err != nil {
@@ -66,13 +70,13 @@ func (is *ItemsService) Delete(res http.ResponseWriter, req *http.Request) {
 }
 
 func (is *ItemsService) Update(res http.ResponseWriter, req *http.Request) {
-	input, ok := req.Context().Value(models.ItemInputCtxKey).(*models.ItemInput)
+	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.ItemInput)
 	if !ok {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	itemIDParam := chi.URLParam(req, "itemID")
+	itemIDParam := chi.URLParam(req, urlParamKey)
 	itemID, _ := strconv.ParseUint(itemIDParam, 10, 64)
 
 	i, err := is.db.GetItem(uint(itemID))
@@ -92,7 +96,7 @@ func (is *ItemsService) Update(res http.ResponseWriter, req *http.Request) {
 }
 
 func (is *ItemsService) Create(res http.ResponseWriter, req *http.Request) {
-	input, ok := req.Context().Value(models.ItemInputCtxKey).(*models.ItemInput)
+	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.ItemInput)
 	if !ok {
 		is.logger.Errorln("valid input not attached to request")
 		res.WriteHeader(http.StatusBadRequest)
@@ -105,7 +109,7 @@ func (is *ItemsService) Create(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	is.itemHub.AddItem(*i)
+	is.eventHub.AddEvent(models.Create, i)
 
 	res.Header().Set("Content-type", "application/json")
 	json.NewEncoder(res).Encode(i)

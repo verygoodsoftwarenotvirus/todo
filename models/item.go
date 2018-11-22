@@ -27,8 +27,6 @@ func (i *Item) Update(input *ItemInput) {
 	}
 }
 
-const ItemInputCtxKey ContextKey = "item_input"
-
 type ItemInput struct {
 	Name    string `json:"name"`
 	Details string `json:"details"`

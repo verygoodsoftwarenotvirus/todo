@@ -85,11 +85,18 @@ func (c *V1Client) buildItemsFeed(conn *websocket.Conn, itemChan chan models.Ite
 		}
 		c.logger.Debugln("message read from connection")
 
-		item := models.Item{}
-		if err := json.NewDecoder(bytes.NewReader(message)).Decode(&item); err != nil {
+		e := &models.Event{}
+
+		if err := json.NewDecoder(bytes.NewReader(message)).Decode(e); err != nil {
 			c.logger.Errorf("error decoding item: %v", err)
 			break
 		}
+
+		if _, ok := e.Data.(models.Item); !ok {
+			continue
+		}
+
+		item := e.Data.(models.Item)
 		c.logger.Debugf("writing item %d to channel", item.ID)
 		itemChan <- item
 	}
@@ -97,12 +104,14 @@ func (c *V1Client) buildItemsFeed(conn *websocket.Conn, itemChan chan models.Ite
 
 func (c *V1Client) ItemsFeed() (<-chan models.Item, error) {
 	itemChan := make(chan models.Item)
+	itemFeedQueryValues := map[string]string{"events": "*", "types": "items"}
+
 	if !c.IsUp() {
 		c.logger.Debugln("returning early from ItemsFeed because the service is down")
 		return nil, errors.New("service is down")
 	}
 
-	u := c.buildURL(nil, "items", "feed")
+	u := c.buildURL(itemFeedQueryValues, "event_feed")
 	u.Scheme = "wss"
 	dialer := websocket.DefaultDialer
 	dialer.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}

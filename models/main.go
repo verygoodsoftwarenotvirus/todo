@@ -21,7 +21,31 @@ var (
 	strSortDesc             = "desc"
 	SortAscending  sortType = (sortType)(strSortAsc)
 	SortDescending sortType = (sortType)(strSortDesc)
+
+	typeMap = map[string]func() interface{}{
+		"item": func() interface{} { return new(Item) },
+	}
+
+	allTypes = []interface{}{
+		new(Item),
+	}
 )
+
+func DetermineTypesOfInterest(params url.Values) []interface{} {
+	toc := []interface{}{}
+	if x, ok := params["types"]; ok && len(x) > 0 {
+		if len(x) == 1 && x[0] == "*" {
+			return allTypes
+		}
+
+		for _, y := range x {
+			if z, ok := typeMap[strings.ToLower(y)]; ok {
+				toc = append(toc, z())
+			}
+		}
+	}
+	return toc
+}
 
 type QueryFilter struct {
 	Page          uint64   `json:"page"`

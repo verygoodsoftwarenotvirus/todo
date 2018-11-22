@@ -2,24 +2,30 @@ package items
 
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database"
-	// "gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/events/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
 
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
 
-type ItemsService struct {
-	logger   *logrus.Logger
-	db       database.Database
-	upgrader websocket.Upgrader
-	itemHub  *ItemHub
-	// cachedItems []models.Item
-}
+const MiddlewareCtxKey models.ContextKey = "item_input"
 
-type ItemsServiceConfig struct {
-	Logger *logrus.Logger
-	DB     database.Database
-}
+type (
+	ItemsService struct {
+		logger   *logrus.Logger
+		db       database.Database
+		upgrader websocket.Upgrader
+		eventHub *events.EventHub
+		// cachedItems []models.Item
+	}
+
+	ItemsServiceConfig struct {
+		Logger   *logrus.Logger
+		DB       database.Database
+		EventHub *events.EventHub
+	}
+)
 
 func NewItemsService(cfg ItemsServiceConfig) *ItemsService {
 	if cfg.Logger == nil {
@@ -30,6 +36,7 @@ func NewItemsService(cfg ItemsServiceConfig) *ItemsService {
 		logger:   cfg.Logger,
 		db:       cfg.DB,
 		upgrader: websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024},
-		itemHub:  newItemHub(),
+		eventHub: cfg.EventHub,
+		// itemHub:  newItemHub(),
 	}
 }

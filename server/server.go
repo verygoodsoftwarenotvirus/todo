@@ -3,14 +3,19 @@ package server
 import (
 	"crypto/tls"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/events/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/items"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,16 +36,18 @@ type Server struct {
 	certFile  string
 	keyFile   string
 
-	server        *http.Server
 	authenticator auth.Enticator
 	db            database.Database
+	eventHub      *events.EventHub
 
 	// Services
 	itemsService *items.ItemsService
 
 	// infra things
-	router *chi.Mux
-	logger *logrus.Logger
+	upgrader websocket.Upgrader
+	server   *http.Server
+	router   *chi.Mux
+	logger   *logrus.Logger
 }
 
 func buildServer() *http.Server {
@@ -87,12 +94,12 @@ func (s *Server) setupRoutes() *chi.Mux {
 
 	router.Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Route("/v1", func(v1Router chi.Router) {
+			v1Router.Get("/event_feed", s.EventFeed)
 			v1Router.Route("/items", func(itemsRouter chi.Router) {
 				sr := "/{itemID:[0-9]+}"
 				itemsRouter.
 					With(s.itemsService.ItemContextMiddleware).
 					Post("/", s.itemsService.Create) // Create
-				itemsRouter.Get("/feed", s.itemsService.Feed) // Feed
 				itemsRouter.Get(sr, s.itemsService.Read)      // Read
 				itemsRouter.Get("/", s.itemsService.List)     // List
 				itemsRouter.Delete(sr, s.itemsService.Delete) // Delete
@@ -126,6 +133,8 @@ func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 		keyFile:   cfg.KeyFile,
 		server:    buildServer(),
 		router:    setupRouter(),
+		eventHub:  events.NewEventHub(),
+		upgrader:  websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024},
 
 		// Services
 		itemsService: items.NewItemsService(
@@ -153,4 +162,57 @@ func NewDebug(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 func (s *Server) Serve() {
 	s.logger.Debugf("Listening on 443. Go to https://localhost/")
 	s.logger.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))
+}
+
+func parseEventMap(params url.Values) map[string]bool {
+	out := map[string]bool{}
+	if x, ok := params["events"]; ok && len(x) > 0 {
+		for _, y := range x {
+			z := strings.ToLower(y)
+			if _, ok := models.ValidEventMap[z]; ok {
+				out[models.ValidEventMap[z]] = true
+			}
+		}
+	}
+	return out
+}
+
+func parseTypeCollection(params url.Values) []string {
+	out := []string{}
+	if x, ok := params["events"]; ok && len(x) > 0 {
+		if len(x) == 1 && x[0] == "*" {
+			return models.AllEvents
+		}
+
+		for _, y := range x {
+			switch y {
+			case string(models.Create):
+				out = append(out, y)
+			case string(models.Update):
+				out = append(out, y)
+			case string(models.Delete):
+				out = append(out, y)
+			}
+		}
+	}
+	return out
+}
+
+// Feed handles websocket requests from the peer.
+func (s *Server) EventFeed(res http.ResponseWriter, req *http.Request) {
+	q := req.URL.Query()
+	conn, err := s.upgrader.Upgrade(res, req, nil)
+	if err != nil {
+		s.logger.Error(err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	l := events.NewEventListener(s.eventHub, conn)
+	l.SubscribedTopics = parseEventMap(q)
+	l.SubscribedTypes = models.DetermineTypesOfInterest(q)
+
+	s.eventHub.AttachListener(l)
+
+	go l.Serve()
 }

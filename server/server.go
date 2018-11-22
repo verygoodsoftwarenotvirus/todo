@@ -118,6 +118,8 @@ func (s *Server) setupRoutes() *chi.Mux {
 					)).
 					Post("/", s.itemsService.Create)
 
+				itemsRouter.Get("/feed", s.itemsService.Feed)
+
 				// Read
 				itemsRouter.Get(sr, s.itemsService.Read)
 				// List
@@ -151,7 +153,7 @@ func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 		return nil, err
 	}
 
-	return &Server{
+	srv := &Server{
 		certFile: cfg.CertFile,
 		keyFile:  cfg.KeyFile,
 		server:   buildServer(),
@@ -163,7 +165,9 @@ func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 			Logger: logger,
 			DB:     db,
 		}),
-	}, nil
+	}
+	srv.server.Handler = srv.setupRoutes()
+	return srv, nil
 }
 
 func NewDebug(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
@@ -177,7 +181,6 @@ func NewDebug(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 }
 
 func (s *Server) Serve() {
-	s.server.Handler = s.setupRoutes()
 	s.logger.Debugf("Listening on 443. Go to https://localhost/")
 	s.logger.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))
 }

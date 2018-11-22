@@ -6,7 +6,6 @@ WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 RUN apk add --update gcc musl-dev
 
 ADD . .
-RUN ls -Al
 
 RUN go build -o /todo gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server
 

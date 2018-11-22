@@ -2,14 +2,26 @@ package integration
 
 import (
 	"testing"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
 
-	"github.com/bxcodec/faker"
 	"github.com/franela/goblin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func buildDummyItem(t *testing.T) *models.Item {
+	t.Helper()
+
+	ii := &models.ItemInput{
+		Name:    fake.Word(),
+		Details: fake.Sentence(),
+	}
+	item, err := todoClient.CreateItem(ii)
+	assert.NoError(t, err)
+	return item
+}
 
 func TestAuth(t *testing.T) {
 	g := goblin.Goblin(t)
@@ -88,16 +100,9 @@ func TestItems(t *testing.T) {
 
 		g.It("Should return a list of pre-made items", func() {
 			// Create items
-			fake := faker.GetLorem()
 			expected := []*models.Item{}
 			for i := 0; i < 5; i++ {
-				ii := &models.ItemInput{
-					Name:    fake.Word(),
-					Details: fake.Sentence(),
-				}
-				item, err := todoClient.CreateItem(ii)
-				assert.NoError(t, err)
-				expected = append(expected, item)
+				expected = append(expected, buildDummyItem(t))
 			}
 
 			// Assert item list equality
@@ -155,6 +160,46 @@ func TestItems(t *testing.T) {
 			// Clean up
 			err = todoClient.DeleteItem(premade.ID)
 			assert.NoError(t, err)
+		})
+
+		g.It("should serve a websocket feed", func() {
+			createdItems := []*models.Item{}
+			reportedItemsCount := len(createdItems)
+			feed, err := todoClient.ItemsFeed()
+			if err != nil {
+				g.Fail(err)
+				return
+			}
+
+			timeLimit := time.NewTimer(2 * time.Second)
+			ticker := time.NewTicker(250 * time.Millisecond)
+			defer func() {
+				ticker.Stop()
+			}()
+
+			done := false
+			for done {
+				select {
+				case <-feed:
+					reportedItemsCount += 1
+					t.Logf("item #%d came into feed. item count: %d", reportedItemsCount, len(createdItems))
+				case <-ticker.C:
+					t.Log("creating new item")
+					createdItems = append(createdItems, buildDummyItem(t))
+				case <-timeLimit.C:
+					t.Log("timer has gone off")
+					ticker.Stop()
+					assert.Equal(
+						t,
+						len(createdItems),
+						reportedItemsCount,
+						"expected number of created items (%d) to match the number of items that came through the websocket (%d)",
+						len(createdItems),
+						reportedItemsCount,
+					)
+					done = true
+				}
+			}
 		})
 	})
 

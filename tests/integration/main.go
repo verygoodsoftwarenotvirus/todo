@@ -7,17 +7,22 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1"
+
+	"github.com/bxcodec/faker"
 )
 
 const (
-	debug                        = false
+	debug                        = true
 	nonexistentID                = 999999999
 	localTestInstanceURL         = "https://localhost"
 	defaultTestInstanceURL       = "https://demo-server"
 	defaultTestInstanceAuthToken = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
 )
 
-var todoClient *client.V1Client
+var (
+	todoClient *client.V1Client
+	fake       = faker.GetLorem()
+)
 
 func initializeClient() {
 	cfg := &client.Config{

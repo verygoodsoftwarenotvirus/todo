@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+
 	"github.com/moul/http2curl"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -31,6 +33,9 @@ type V1Client struct {
 	Debug  bool
 	URL    *url.URL
 	Token  string
+
+	Items     <-chan *models.Item
+	itemsChan chan *models.Item
 }
 
 func NewClient(cfg *Config) (c *V1Client, err error) {
@@ -86,6 +91,10 @@ func (c *V1Client) executeRequest(req *http.Request) (*http.Response, error) {
 }
 
 func (c *V1Client) BuildURL(queryParams map[string]string, parts ...string) string {
+	return c.buildURL(queryParams, parts...).String()
+}
+
+func (c *V1Client) buildURL(queryParams map[string]string, parts ...string) *url.URL {
 	tu := *c.URL
 
 	parts = append([]string{"api", "v1"}, parts...)
@@ -99,7 +108,14 @@ func (c *V1Client) BuildURL(queryParams map[string]string, parts ...string) stri
 		u.RawQuery = query.Encode()
 	}
 
-	return tu.ResolveReference(u).String()
+	return tu.ResolveReference(u)
+}
+
+func (c *V1Client) BuildWebsocketURL(parts ...string) string {
+	u := c.buildURL(nil, parts...)
+	u.Scheme = "ws"
+
+	return u.String()
 }
 
 func (c *V1Client) IsUp() bool {

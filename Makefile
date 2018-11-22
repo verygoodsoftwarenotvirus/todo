@@ -15,7 +15,7 @@ clean:
 
 ## Project prerequisites
 vendor:
-	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` --workdir=`pwd` golang:latest /bin/sh -c "pwd; ls -Al; go mod vendor"
+	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` --workdir=`pwd` golang:latest /bin/sh -c "go mod vendor"
 
 .PHONY: revendor
 revendor:
@@ -29,11 +29,11 @@ prerequisites:
 
 dev_files/certs/client/key.pem dev_files/certs/client/cert.pem:
 	mkdir -p dev_files/certs/client
-	openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=www.example.com" -keyout dev_files/certs/client/key.pem -out dev_files/certs/client/cert.pem
+	openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=demo-server" -keyout dev_files/certs/client/key.pem -out dev_files/certs/client/cert.pem
 
 dev_files/certs/server/key.pem dev_files/certs/server/cert.pem:
 	mkdir -p dev_files/certs/server
-	openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=www.example.com" -keyout dev_files/certs/server/key.pem -out dev_files/certs/server/cert.pem
+	openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=demo-server" -keyout dev_files/certs/server/key.pem -out dev_files/certs/server/cert.pem
 
 ## Test things
 example.db:

@@ -30,7 +30,8 @@ func (is *ItemsService) Read(res http.ResponseWriter, req *http.Request) {
 }
 
 func (is *ItemsService) List(res http.ResponseWriter, req *http.Request) {
-	items, err := is.db.GetItems(nil)
+	qf := models.ParseQueryFilter(req)
+	items, err := is.db.GetItems(qf)
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -90,6 +91,7 @@ func (is *ItemsService) Create(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	is.itemHub.AddItem(*i)
 
 	res.Header().Set("Content-type", "application/json")
 	json.NewEncoder(res).Encode(i)

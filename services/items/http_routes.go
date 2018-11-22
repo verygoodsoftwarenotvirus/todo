@@ -1,6 +1,7 @@
 package items
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
@@ -10,6 +11,19 @@ import (
 
 	"github.com/go-chi/chi"
 )
+
+func (is *ItemsService) ItemContextMiddleware(next http.Handler) http.Handler {
+	x := new(models.ItemInput)
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
+			is.logger.Errorf("error encountered decoding request body: %v", err)
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		ctx := context.WithValue(req.Context(), models.ItemInputCtxKey, x)
+		next.ServeHTTP(res, req.WithContext(ctx))
+	})
+}
 
 func (is *ItemsService) Read(res http.ResponseWriter, req *http.Request) {
 	itemIDParam := chi.URLParam(req, "itemID")

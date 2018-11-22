@@ -1,15 +1,12 @@
 package server
 
 import (
-	"context"
 	"crypto/tls"
-	"encoding/json"
 	"net/http"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/items"
 
 	"github.com/go-chi/chi"
@@ -82,20 +79,6 @@ func setupRouter() *chi.Mux {
 	return router
 }
 
-func (s *Server) buildRouteCtx(key models.ContextKey, x interface{}) func(next http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			if err := json.NewDecoder(req.Body).Decode(x); err != nil {
-				s.logger.Errorf("error encountered decoding request body: %v", err)
-				res.WriteHeader(http.StatusBadRequest)
-				return
-			}
-			ctx := context.WithValue(req.Context(), key, x)
-			next.ServeHTTP(res, req.WithContext(ctx))
-		})
-	}
-}
-
 func (s *Server) setupRoutes() *chi.Mux {
 	router := setupRouter()
 
@@ -110,31 +93,16 @@ func (s *Server) setupRoutes() *chi.Mux {
 		apiRouter.Route("/v1", func(v1Router chi.Router) {
 			v1Router.Route("/items", func(itemsRouter chi.Router) {
 				sr := "/{itemID:[0-9]+}"
-				// Create
 				itemsRouter.
-					With(s.buildRouteCtx(
-						models.ItemInputCtxKey,
-						new(models.ItemInput),
-					)).
-					Post("/", s.itemsService.Create)
-
-				itemsRouter.Get("/feed", s.itemsService.Feed)
-
-				// Read
-				itemsRouter.Get(sr, s.itemsService.Read)
-				// List
-				itemsRouter.Get("/", s.itemsService.List)
-
-				// Update
+					With(s.itemsService.ItemContextMiddleware).
+					Post("/", s.itemsService.Create) // Create
+				itemsRouter.Get("/feed", s.itemsService.Feed) // Feed
+				itemsRouter.Get(sr, s.itemsService.Read)      // Read
+				itemsRouter.Get("/", s.itemsService.List)     // List
+				itemsRouter.Delete(sr, s.itemsService.Delete) // Delete
 				itemsRouter.
-					With(s.buildRouteCtx(
-						models.ItemInputCtxKey,
-						new(models.ItemInput),
-					)).
-					Put(sr, s.itemsService.Update)
-
-				// Delete
-				itemsRouter.Delete(sr, s.itemsService.Delete)
+					With(s.itemsService.ItemContextMiddleware).
+					Put(sr, s.itemsService.Update) // Update
 			})
 		})
 	})

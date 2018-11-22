@@ -1,5 +1,8 @@
 package items
 
+// very much heavily borrowed from the great gorilla/websocket examples:
+//		https://github.com/gorilla/websocket/tree/483fb8d7c32fcb4b5636cd293a92e3935932e2f4/examples/chat
+
 import (
 	"log"
 	"net/http"

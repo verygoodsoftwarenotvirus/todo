@@ -18,23 +18,21 @@ const (
 
 func main() {
 	dbCfg := database.Config{
-		Debug:            true,
+		Debug:            !secure,
 		ConnectionString: dbFile,
+		SchemaDir:        schemaDir,
 	}
 
 	cfg := server.ServerConfig{
 		DebugMode: !secure,
 		CertFile:  certFile,
 		KeyFile:   keyFile,
-		SchemaDir: schemaDir,
-
 		DBBuilder: sqlite.NewSqlite,
 	}
 
-	server, err := server.NewDebug(cfg, dbCfg)
-	if err != nil {
+	if server, err := server.NewDebug(cfg, dbCfg); err != nil {
 		panic(err)
+	} else {
+		server.Serve()
 	}
-
-	server.Serve()
 }

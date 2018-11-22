@@ -10,6 +10,7 @@ type Config struct {
 	Debug            bool
 	ConnectionString string
 	Logger           *logrus.Logger
+	SchemaDir        string
 }
 
 type Database interface {

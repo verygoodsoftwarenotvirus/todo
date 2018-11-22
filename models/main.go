@@ -6,15 +6,31 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 const DefaultLimit = 20
 
-type ContextKey string
+type (
+	ContextKey string
+	sortType   string
+)
+
+var (
+	strSortAsc              = "asc"
+	strSortDesc             = "desc"
+	SortAscending  sortType = (sortType)(strSortAsc)
+	SortDescending sortType = (sortType)(strSortDesc)
+)
 
 type QueryFilter struct {
-	Page  uint `json:"page"`
-	Limit uint `json:"limit"`
+	Page          uint64   `json:"page"`
+	Limit         uint64   `json:"limit"`
+	CreatedAfter  uint64   `json:"created_before"`
+	CreatedBefore uint64   `json:"created_after"`
+	UpdatedAfter  uint64   `json:"updated_before"`
+	UpdatedBefore uint64   `json:"updated_after"`
+	SortBy        sortType `json:"sort_by"`
 }
 
 func buildDefaultQueryFilter() *QueryFilter {
@@ -27,39 +43,48 @@ func buildDefaultQueryFilter() *QueryFilter {
 func (qf *QueryFilter) FromParams(params url.Values) {
 	if page, ok := params["page"]; ok && len(page) >= 1 {
 		if i, err := strconv.ParseUint(page[0], 10, 64); err == nil {
-			qf.Page = uint(math.Max(float64(i), 1))
+			qf.Page = uint64(math.Max(float64(i), 1))
 		}
 	}
 
 	if limit, ok := params["limit"]; ok && len(limit) >= 1 {
 		if i, err := strconv.ParseUint(limit[0], 10, 64); err == nil {
-			qf.Limit = uint(math.Max(float64(i), 1))
+			qf.Limit = uint64(math.Max(float64(i), 1))
 		}
 	}
 
-	// if updatedAfter, ok := params["updated_after"]; ok && len(updatedAfter) >= 1 {
-	// 	if i, err := strconv.ParseUint(updatedAfter[0], 10, 64); err == nil {
-	// 		qf.UpdatedAfter = time.Unix(int64(i), 0)
-	// 	}
-	// }
-	//
-	// if updatedAfter, ok := params["updated_after"]; ok && len(updatedAfter) >= 1 {
-	// 	if i, err := strconv.ParseUint(updatedAfter[0], 10, 64); err == nil {
-	// 		qf.UpdatedAfter = time.Unix(int64(i), 0)
-	// 	}
-	// }
-	//
-	// if updatedAfter, ok := params["updated_after"]; ok && len(updatedAfter) >= 1 {
-	// 	if i, err := strconv.ParseUint(updatedAfter[0], 10, 64); err == nil {
-	// 		qf.UpdatedAfter = time.Unix(int64(i), 0)
-	// 	}
-	// }
-	//
-	// if updatedAfter, ok := params["updated_after"]; ok && len(updatedAfter) >= 1 {
-	// 	if i, err := strconv.ParseUint(updatedAfter[0], 10, 64); err == nil {
-	// 		qf.UpdatedAfter = time.Unix(int64(i), 0)
-	// 	}
-	// }
+	if createdBefore, ok := params["created_before"]; ok && len(createdBefore) >= 1 {
+		if i, err := strconv.ParseUint(createdBefore[0], 10, 64); err == nil {
+			qf.CreatedBefore = uint64(i)
+		}
+	}
+
+	if createdAfter, ok := params["created_after"]; ok && len(createdAfter) >= 1 {
+		if i, err := strconv.ParseUint(createdAfter[0], 10, 64); err == nil {
+			qf.CreatedAfter = uint64(i)
+		}
+	}
+
+	if updatedBefore, ok := params["updated_before"]; ok && len(updatedBefore) >= 1 {
+		if i, err := strconv.ParseUint(updatedBefore[0], 10, 64); err == nil {
+			qf.UpdatedAfter = uint64(i)
+		}
+	}
+
+	if updatedAfter, ok := params["updated_after"]; ok && len(updatedAfter) >= 1 {
+		if i, err := strconv.ParseUint(updatedAfter[0], 10, 64); err == nil {
+			qf.UpdatedAfter = uint64(i)
+		}
+	}
+
+	if sortBy, ok := params["sort_by"]; ok && len(sortBy) >= 1 {
+		switch strings.ToLower(sortBy[0]) {
+		case strSortAsc:
+			qf.SortBy = SortAscending
+		case strSortDesc:
+			qf.SortBy = SortDescending
+		}
+	}
 }
 
 func ParseQueryFilter(req *http.Request) *QueryFilter {

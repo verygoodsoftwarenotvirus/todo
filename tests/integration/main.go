@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	debug                        = true
+	debug                        = false
 	nonexistentID                = 999999999
 	localTestInstanceURL         = "https://localhost"
 	defaultTestInstanceURL       = "https://demo-server"

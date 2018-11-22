@@ -22,7 +22,6 @@ type ServerConfig struct {
 	CertFile  string
 	KeyFile   string
 	DebugMode bool
-	SchemaDir string
 
 	DBBuilder func(database.Config) (database.Database, error)
 }
@@ -82,12 +81,9 @@ func setupRouter() *chi.Mux {
 func (s *Server) setupRoutes() *chi.Mux {
 	router := setupRouter()
 
-	router.Get(
-		"/_debug_/health",
-		func(res http.ResponseWriter, req *http.Request) {
-			res.WriteHeader(http.StatusOK)
-		},
-	)
+	router.Get("/_debug_/health", func(res http.ResponseWriter, req *http.Request) {
+		res.WriteHeader(http.StatusOK)
+	})
 
 	router.Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Route("/v1", func(v1Router chi.Router) {
@@ -113,37 +109,43 @@ func (s *Server) setupRoutes() *chi.Mux {
 func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 	logger := logrus.New()
 
+	dbConfig.Logger = logger
 	db, err := cfg.DBBuilder(dbConfig)
 	if err != nil {
 		return nil, err
 	}
-	if err := db.Migrate(cfg.SchemaDir); err != nil {
+	if err := db.Migrate(dbConfig.SchemaDir); err != nil {
 		return nil, err
 	}
 
 	srv := &Server{
-		certFile: cfg.CertFile,
-		keyFile:  cfg.KeyFile,
-		server:   buildServer(),
-		logger:   logger,
-		router:   setupRouter(),
-		db:       db,
+		DebugMode: cfg.DebugMode,
+		db:        db,
+		logger:    logger,
+		certFile:  cfg.CertFile,
+		keyFile:   cfg.KeyFile,
+		server:    buildServer(),
+		router:    setupRouter(),
 
-		itemsService: items.NewItemsService(items.ItemsServiceConfig{
-			Logger: logger,
-			DB:     db,
-		}),
+		// Services
+		itemsService: items.NewItemsService(
+			items.ItemsServiceConfig{
+				Logger: logger,
+				DB:     db,
+			},
+		),
 	}
 	srv.server.Handler = srv.setupRoutes()
 	return srv, nil
 }
 
 func NewDebug(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
+	dbConfig.Debug = true
+	cfg.DebugMode = true
 	c, err := NewServer(cfg, dbConfig)
 	if err != nil {
 		return nil, err
 	}
-	c.DebugMode = true
 	c.logger.SetLevel(logrus.DebugLevel)
 	return c, nil
 }

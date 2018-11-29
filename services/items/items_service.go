@@ -2,7 +2,6 @@ package items
 
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/events/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
 
 	"github.com/gorilla/websocket"
@@ -16,14 +15,12 @@ type (
 		logger   *logrus.Logger
 		db       database.Database
 		upgrader websocket.Upgrader
-		eventHub *events.EventHub
 		// cachedItems []models.Item
 	}
 
 	ItemsServiceConfig struct {
-		Logger   *logrus.Logger
-		DB       database.Database
-		EventHub *events.EventHub
+		Logger *logrus.Logger
+		DB     database.Database
 	}
 )
 
@@ -36,7 +33,5 @@ func NewItemsService(cfg ItemsServiceConfig) *ItemsService {
 		logger:   cfg.Logger,
 		db:       cfg.DB,
 		upgrader: websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024},
-		eventHub: cfg.EventHub,
-		// itemHub:  newItemHub(),
 	}
 }

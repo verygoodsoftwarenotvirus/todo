@@ -12,7 +12,6 @@ type TodoClient interface {
 	CreateItem(input *models.ItemInput) (*models.Item, error)
 	UpdateItem(updated *models.Item) error
 	DeleteItem(id uint) error
-	ItemsFeed() (<-chan *models.Item, error)
 }
 
 func NewClient(address, authToken string, debug bool) (TodoClient, error) {

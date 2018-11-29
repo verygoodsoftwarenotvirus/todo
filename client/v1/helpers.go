@@ -28,6 +28,41 @@ func (ce *ClientError) Error() string {
 	return ""
 }
 
+type FeedQuery struct {
+	Events    []string
+	DataTypes []string
+	Topics    []string
+}
+
+func (fq *FeedQuery) Values() url.Values {
+	v := url.Values{}
+
+	if fq.Events != nil {
+		for _, x := range fq.Events {
+			v.Add("event", x)
+		}
+	}
+	if fq.DataTypes != nil {
+		for _, x := range fq.DataTypes {
+			v.Add("type", x)
+		}
+	}
+	if fq.Topics != nil {
+		for _, x := range fq.Topics {
+			v.Add("topic", x)
+		}
+	}
+	return v
+}
+
+var (
+	DefaultFeedQuery = &FeedQuery{
+		Events:    []string{"*"},
+		DataTypes: []string{"*"},
+		Topics:    []string{"*"},
+	}
+)
+
 ////////////////////////////////////////////////////////
 //                                                    //
 //                 Helper Functions                   //

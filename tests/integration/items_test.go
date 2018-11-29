@@ -2,7 +2,6 @@ package integration
 
 import (
 	"testing"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
 
@@ -162,45 +161,45 @@ func TestItems(t *testing.T) {
 			assert.NoError(t, err)
 		})
 
-		g.It("should serve a websocket feed", func() {
-			createdItems := []*models.Item{}
-			reportedItemsCount := len(createdItems)
-			feed, err := todoClient.ItemsFeed()
-			if err != nil {
-				g.Fail(err)
-				return
-			}
+		// g.It("should serve a websocket feed", func() {
+		// 	createdItems := []*models.Item{}
+		// 	reportedItemsCount := len(createdItems)
+		// 	feed, err := todoClient.ItemsFeed()
+		// 	if err != nil {
+		// 		g.Fail(err)
+		// 		return
+		// 	}
 
-			timeLimit := time.NewTimer(2 * time.Second)
-			ticker := time.NewTicker(250 * time.Millisecond)
-			defer func() {
-				ticker.Stop()
-			}()
+		// 	timeLimit := time.NewTimer(2 * time.Second)
+		// 	ticker := time.NewTicker(250 * time.Millisecond)
+		// 	defer func() {
+		// 		ticker.Stop()
+		// 	}()
 
-			done := false
-			for done {
-				select {
-				case <-feed:
-					reportedItemsCount += 1
-					t.Logf("item #%d came into feed. item count: %d", reportedItemsCount, len(createdItems))
-				case <-ticker.C:
-					t.Log("creating new item")
-					createdItems = append(createdItems, buildDummyItem(t))
-				case <-timeLimit.C:
-					t.Log("timer has gone off")
-					ticker.Stop()
-					assert.Equal(
-						t,
-						len(createdItems),
-						reportedItemsCount,
-						"expected number of created items (%d) to match the number of items that came through the websocket (%d)",
-						len(createdItems),
-						reportedItemsCount,
-					)
-					done = true
-				}
-			}
-		})
+		// 	done := false
+		// 	for done {
+		// 		select {
+		// 		case <-feed:
+		// 			reportedItemsCount += 1
+		// 			t.Logf("item #%d came into feed. item count: %d", reportedItemsCount, len(createdItems))
+		// 		case <-ticker.C:
+		// 			t.Log("creating new item")
+		// 			createdItems = append(createdItems, buildDummyItem(t))
+		// 		case <-timeLimit.C:
+		// 			t.Log("timer has gone off")
+		// 			ticker.Stop()
+		// 			assert.Equal(
+		// 				t,
+		// 				len(createdItems),
+		// 				reportedItemsCount,
+		// 				"expected number of created items (%d) to match the number of items that came through the websocket (%d)",
+		// 				len(createdItems),
+		// 				reportedItemsCount,
+		// 			)
+		// 			done = true
+		// 		}
+		// 	}
+		// })
 	})
 
 }

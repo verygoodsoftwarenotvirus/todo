@@ -109,7 +109,6 @@ func (is *ItemsService) Create(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	is.eventHub.AddEvent(models.Create, i)
 
 	res.Header().Set("Content-type", "application/json")
 	json.NewEncoder(res).Encode(i)

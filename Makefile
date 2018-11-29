@@ -42,20 +42,14 @@ example.db:
 $(COVERAGE_OUT):
 	./scripts/coverage.sh
 
-.PHONY: ci-coverage
-ci-coverage:
+.PHONY: test
+test:
 	docker build --tag coverage-todo:latest --file dockerfiles/coverage.Dockerfile .
 	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` coverage-todo:latest
 
 .PHONY: integration-tests
 integration-tests:
 	docker-compose --file compose-files/integration-tests.yaml up --build --remove-orphans --force-recreate --abort-on-container-exit
-
-.PHONY: test
-test:
-	for pkg in $(TESTABLE_PACKAGES); do \
-		go test -cover -v -count 5 $$pkg; \
-	done
 
 ## Docker things
 

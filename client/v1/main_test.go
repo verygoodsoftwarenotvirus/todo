@@ -1,6 +1,7 @@
 package client_test
 
 import (
+	"net/url"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1"
@@ -26,7 +27,7 @@ func TestBuildURL(T *testing.T) {
 		testCases := []struct {
 			expectation string
 			inputParts  []string
-			inputQuery  map[string]string
+			inputQuery  url.Values
 		}{
 			{
 				expectation: "https://todo.verygoodsoftwarenotvirus.ru/api/v1/things",
@@ -34,16 +35,16 @@ func TestBuildURL(T *testing.T) {
 			},
 			{
 				expectation: "https://todo.verygoodsoftwarenotvirus.ru/api/v1/stuff?key=value",
-				inputQuery: map[string]string{
-					"key": "value",
+				inputQuery: map[string][]string{
+					"key": {"value"},
 				},
 				inputParts: []string{"stuff"},
 			},
 			{
-				expectation: "https://todo.verygoodsoftwarenotvirus.ru/api/v1/things/and/stuff?key=value&yek=eulav",
-				inputQuery: map[string]string{
-					"key": "value",
-					"yek": "eulav",
+				expectation: "https://todo.verygoodsoftwarenotvirus.ru/api/v1/things/and/stuff?key=value1&key=value2&yek=eulav",
+				inputQuery: map[string][]string{
+					"key": {"value1", "value2"},
+					"yek": {"eulav"},
 				},
 				inputParts: []string{"things", "and", "stuff"},
 			},

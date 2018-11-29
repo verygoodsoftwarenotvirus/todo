@@ -9,7 +9,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/events/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/items"
 
@@ -38,7 +37,6 @@ type Server struct {
 
 	authenticator auth.Enticator
 	db            database.Database
-	eventHub      *events.EventHub
 
 	// Services
 	itemsService *items.ItemsService
@@ -94,7 +92,6 @@ func (s *Server) setupRoutes() *chi.Mux {
 
 	router.Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Route("/v1", func(v1Router chi.Router) {
-			v1Router.Get("/event_feed", s.EventFeed)
 			v1Router.Route("/items", func(itemsRouter chi.Router) {
 				sr := "/{itemID:[0-9]+}"
 				itemsRouter.
@@ -133,7 +130,6 @@ func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 		keyFile:   cfg.KeyFile,
 		server:    buildServer(),
 		router:    setupRouter(),
-		eventHub:  events.NewEventHub(),
 		upgrader:  websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024},
 
 		// Services
@@ -196,23 +192,4 @@ func parseTypeCollection(params url.Values) []string {
 		}
 	}
 	return out
-}
-
-// Feed handles websocket requests from the peer.
-func (s *Server) EventFeed(res http.ResponseWriter, req *http.Request) {
-	q := req.URL.Query()
-	conn, err := s.upgrader.Upgrade(res, req, nil)
-	if err != nil {
-		s.logger.Error(err)
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	l := events.NewEventListener(s.eventHub, conn)
-	l.SubscribedTopics = parseEventMap(q)
-	l.SubscribedTypes = models.DetermineTypesOfInterest(q)
-
-	s.eventHub.AttachListener(l)
-
-	go l.Serve()
 }

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
@@ -10,6 +11,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
 
+	"github.com/gorilla/websocket"
 	"github.com/moul/http2curl"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -90,22 +92,18 @@ func (c *V1Client) executeRequest(req *http.Request) (*http.Response, error) {
 	return res, nil
 }
 
-func (c *V1Client) BuildURL(queryParams map[string]string, parts ...string) string {
+func (c *V1Client) BuildURL(queryParams url.Values, parts ...string) string {
 	return c.buildURL(queryParams, parts...).String()
 }
 
-func (c *V1Client) buildURL(queryParams map[string]string, parts ...string) *url.URL {
+func (c *V1Client) buildURL(queryParams url.Values, parts ...string) *url.URL {
 	tu := *c.URL
 
 	parts = append([]string{"api", "v1"}, parts...)
 	u, _ := url.Parse(strings.Join(parts, "/"))
 
 	if queryParams != nil {
-		query := url.Values{}
-		for k, v := range queryParams {
-			query.Set(k, v)
-		}
-		u.RawQuery = query.Encode()
+		u.RawQuery = queryParams.Encode()
 	}
 
 	return tu.ResolveReference(u)
@@ -215,4 +213,32 @@ func (c *V1Client) post(uri string, in interface{}, out interface{}) error {
 
 func (c *V1Client) put(uri string, in interface{}, out interface{}) error {
 	return c.makeDataRequest(http.MethodPut, uri, in, out)
+}
+
+func (c *V1Client) DialWebsocket(fq *FeedQuery) (*websocket.Conn, error) {
+	if fq == nil {
+		return nil, errors.New("Valid feed query required")
+	}
+
+	if !c.IsUp() {
+		c.logger.Debugln("returning early from ItemsFeed because the service is down")
+		return nil, errors.New("service is down")
+	}
+
+	u := c.buildURL(fq.Values(), "event_feed")
+	u.Scheme = "wss"
+	dialer := websocket.DefaultDialer
+	dialer.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+
+	c.logger.Debugf("connecting to websocket at %q", u.String())
+	conn, res, err := dialer.Dial(u.String(), nil)
+	if err != nil {
+		c.logger.Debugf("encountered error dialing %q: %v", u.String(), err)
+		return nil, err
+	}
+
+	if res.StatusCode < http.StatusBadRequest {
+		return conn, nil
+	}
+	return nil, fmt.Errorf("encountered status code: %d when trying to reach websocket", res.StatusCode)
 }

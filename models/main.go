@@ -117,6 +117,23 @@ func ParseQueryFilter(req *http.Request) *QueryFilter {
 	return qf
 }
 
+func (qf *QueryFilter) ToValues() url.Values {
+	if qf == nil {
+		return DefaultQueryFilter.ToValues()
+	}
+
+	v := url.Values{}
+	v.Set("page", strconv.FormatUint(qf.Page, 10))
+	v.Set("limit", strconv.FormatUint(qf.Limit, 10))
+	v.Set("created_before", strconv.FormatUint(qf.CreatedBefore, 10))
+	v.Set("created_after", strconv.FormatUint(qf.CreatedAfter, 10))
+	v.Set("updated_before", strconv.FormatUint(qf.UpdatedBefore, 10))
+	v.Set("updated_after", strconv.FormatUint(qf.UpdatedAfter, 10))
+	v.Set("sort_by", string(qf.SortBy))
+
+	return v
+}
+
 func (qf *QueryFilter) ToMap() map[string]string {
 	if qf == nil {
 		return DefaultQueryFilter.ToMap()

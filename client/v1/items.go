@@ -2,11 +2,8 @@ package client
 
 import (
 	"bytes"
-	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
 
@@ -14,16 +11,6 @@ import (
 )
 
 const itemsBasePath = "items"
-
-func (c *V1Client) GetItemChannel() {
-	// p := fmt.Sprintf("%s/%d", itemsBasePath, id)
-	// u := c.BuildURL(nil, p)
-	// item = &models.Item{}
-
-	// err = c.get(u, &item)
-
-	// return
-}
 
 func (c *V1Client) GetItem(id uint) (item *models.Item, err error) {
 	p := fmt.Sprintf("%s/%d", itemsBasePath, id)
@@ -40,7 +27,7 @@ func (c *V1Client) GetItems(filter *models.QueryFilter) (items []models.Item, er
 	if filter == nil {
 		u = c.BuildURL(nil, itemsBasePath)
 	} else {
-		u = c.BuildURL(filter.ToMap(), itemsBasePath)
+		u = c.BuildURL(filter.ToValues(), itemsBasePath)
 	}
 
 	items = []models.Item{}
@@ -102,32 +89,23 @@ func (c *V1Client) buildItemsFeed(conn *websocket.Conn, itemChan chan models.Ite
 	}
 }
 
-func (c *V1Client) ItemsFeed() (<-chan models.Item, error) {
+func (c *V1Client) NewItemsFeed() (<-chan models.Item, error) {
 	itemChan := make(chan models.Item)
-	itemFeedQueryValues := map[string]string{"events": "*", "types": "items"}
-
-	if !c.IsUp() {
-		c.logger.Debugln("returning early from ItemsFeed because the service is down")
-		return nil, errors.New("service is down")
+	fq := &FeedQuery{
+		DataTypes: []string{"item"},
+		Events:    []string{"create"},
+		Topics:    []string{"*"},
 	}
-
-	u := c.buildURL(itemFeedQueryValues, "event_feed")
-	u.Scheme = "wss"
-	dialer := websocket.DefaultDialer
-	dialer.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-
-	c.logger.Debugf("connecting to websocket at %q", u.String())
-	conn, res, err := dialer.Dial(u.String(), nil)
+	u := c.buildURL(fq.Values(), "event_feed")
+	conn, err := c.DialWebsocket(fq)
 	if err != nil {
 		c.logger.Debugf("encountered error dialing %q: %v", u.String(), err)
 		return nil, err
 	}
 
-	if res.StatusCode < http.StatusBadRequest {
-		go c.buildItemsFeed(conn, itemChan)
-	} else {
-		return nil, fmt.Errorf("encountered status code: %d when trying to reach websocket", res.StatusCode)
+	if err != nil {
+		return nil, err
 	}
-
+	go c.buildItemsFeed(conn, itemChan)
 	return itemChan, nil
 }

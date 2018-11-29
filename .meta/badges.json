@@ -1,0 +1,32 @@
+{
+    "badges": [
+        {
+            "name": "godoc",
+            "gitlab": {
+                "link": "https://godoc.org/gitlab.com/%{project_path}",
+                "badge_image_url": "https://godoc.org/gitlab.com/%{project_path}?status.svg"
+            }
+        },
+        {
+            "name": "ci",
+            "gitlab": {
+                "link": "https://gitlab.com/%{project_path}/commits/%{default_branch}",
+                "badge_image_url": "https://gitlab.com/%{project_path}/badges/%{default_branch}/pipeline.svg"
+            }
+        },
+        {
+            "name": "coverage",
+            "gitlab": {
+                "link": "https://gitlab.com/%{project_path}/commits/%{default_branch}",
+                "badge_image_url": "https://gitlab.com/%{project_path}/badges/%{default_branch}/coverage.svg"
+            }
+        },
+        {
+            "name": "docker",
+            "gitlab": {
+                "link": "https://hub.docker.com/r/%{project_path}",
+                "badge_image_url": "https://img.shields.io/docker/automated/%{project_path}.svg"
+            }
+        }
+    ]
+}

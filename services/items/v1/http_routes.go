@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/go-chi/chi"
 )

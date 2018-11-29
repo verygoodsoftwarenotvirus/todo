@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"reflect"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
 type ClientError struct {

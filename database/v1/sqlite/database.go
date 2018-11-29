@@ -6,7 +6,7 @@ import (
 	"path"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/sirupsen/logrus"

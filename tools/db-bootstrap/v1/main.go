@@ -6,9 +6,9 @@ import (
 	"os"
 
 	// "gitlab.com/verygoodsoftwarenotvirus/todo/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/sqlite"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	//
 	// "github.com/sirupsen/logrus"
 )

@@ -1,13 +1,9 @@
 package client
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
-
-	"github.com/gorilla/websocket"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
 const itemsBasePath = "items"
@@ -59,53 +55,53 @@ func (c *V1Client) DeleteItem(id uint) error {
 	return c.delete(u)
 }
 
-func (c *V1Client) buildItemsFeed(conn *websocket.Conn, itemChan chan models.Item) {
-	defer conn.Close()
-	for {
-		_, message, err := conn.ReadMessage()
-		if err != nil {
-			c.logger.Errorf("error: %v", err)
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				c.logger.Println("something is supposed to happen here?")
-			}
-			break
-		}
-		c.logger.Debugln("message read from connection")
+// func (c *V1Client) buildItemsFeed(conn *websocket.Conn, itemChan chan models.Item) {
+// 	defer conn.Close()
+// 	for {
+// 		_, message, err := conn.ReadMessage()
+// 		if err != nil {
+// 			c.logger.Errorf("error: %v", err)
+// 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+// 				c.logger.Println("something is supposed to happen here?")
+// 			}
+// 			break
+// 		}
+// 		c.logger.Debugln("message read from connection")
 
-		e := &models.Event{}
+// 		e := &models.Event{}
 
-		if err := json.NewDecoder(bytes.NewReader(message)).Decode(e); err != nil {
-			c.logger.Errorf("error decoding item: %v", err)
-			break
-		}
+// 		if err := json.NewDecoder(bytes.NewReader(message)).Decode(e); err != nil {
+// 			c.logger.Errorf("error decoding item: %v", err)
+// 			break
+// 		}
 
-		if _, ok := e.Data.(models.Item); !ok {
-			continue
-		}
+// 		if _, ok := e.Data.(models.Item); !ok {
+// 			continue
+// 		}
 
-		item := e.Data.(models.Item)
-		c.logger.Debugf("writing item %d to channel", item.ID)
-		itemChan <- item
-	}
-}
+// 		item := e.Data.(models.Item)
+// 		c.logger.Debugf("writing item %d to channel", item.ID)
+// 		itemChan <- item
+// 	}
+// }
 
-func (c *V1Client) NewItemsFeed() (<-chan models.Item, error) {
-	itemChan := make(chan models.Item)
-	fq := &FeedQuery{
-		DataTypes: []string{"item"},
-		Events:    []string{"create"},
-		Topics:    []string{"*"},
-	}
-	u := c.buildURL(fq.Values(), "event_feed")
-	conn, err := c.DialWebsocket(fq)
-	if err != nil {
-		c.logger.Debugf("encountered error dialing %q: %v", u.String(), err)
-		return nil, err
-	}
+// func (c *V1Client) NewItemsFeed() (<-chan models.Item, error) {
+// 	itemChan := make(chan models.Item)
+// 	fq := &FeedQuery{
+// 		DataTypes: []string{"item"},
+// 		Events:    []string{"create"},
+// 		Topics:    []string{"*"},
+// 	}
+// 	u := c.buildURL(fq.Values(), "event_feed")
+// 	conn, err := c.DialWebsocket(fq)
+// 	if err != nil {
+// 		c.logger.Debugf("encountered error dialing %q: %v", u.String(), err)
+// 		return nil, err
+// 	}
 
-	if err != nil {
-		return nil, err
-	}
-	go c.buildItemsFeed(conn, itemChan)
-	return itemChan, nil
-}
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	go c.buildItemsFeed(conn, itemChan)
+// 	return itemChan, nil
+// }

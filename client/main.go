@@ -1,9 +1,8 @@
 package client
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
-
 	v1 "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
 type TodoClient interface {

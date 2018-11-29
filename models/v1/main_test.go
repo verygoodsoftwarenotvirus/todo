@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/stretchr/testify/assert"
 )

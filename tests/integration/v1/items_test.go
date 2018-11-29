@@ -3,7 +3,7 @@ package integration
 import (
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/franela/goblin"
 	"github.com/stretchr/testify/assert"

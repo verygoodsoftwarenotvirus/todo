@@ -1,7 +1,7 @@
 package sqlite
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
 const (

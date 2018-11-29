@@ -3,14 +3,11 @@ package server
 import (
 	"crypto/tls"
 	"net/http"
-	"net/url"
-	"strings"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/items"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/items/v1"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -158,38 +155,4 @@ func NewDebug(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 func (s *Server) Serve() {
 	s.logger.Debugf("Listening on 443. Go to https://localhost/")
 	s.logger.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))
-}
-
-func parseEventMap(params url.Values) map[string]bool {
-	out := map[string]bool{}
-	if x, ok := params["events"]; ok && len(x) > 0 {
-		for _, y := range x {
-			z := strings.ToLower(y)
-			if _, ok := models.ValidEventMap[z]; ok {
-				out[models.ValidEventMap[z]] = true
-			}
-		}
-	}
-	return out
-}
-
-func parseTypeCollection(params url.Values) []string {
-	out := []string{}
-	if x, ok := params["events"]; ok && len(x) > 0 {
-		if len(x) == 1 && x[0] == "*" {
-			return models.AllEvents
-		}
-
-		for _, y := range x {
-			switch y {
-			case string(models.Create):
-				out = append(out, y)
-			case string(models.Update):
-				out = append(out, y)
-			case string(models.Delete):
-				out = append(out, y)
-			}
-		}
-	}
-	return out
 }

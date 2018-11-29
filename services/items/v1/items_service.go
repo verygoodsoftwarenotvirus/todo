@@ -1,8 +1,8 @@
 package items
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"

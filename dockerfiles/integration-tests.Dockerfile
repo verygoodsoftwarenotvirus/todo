@@ -6,4 +6,4 @@ RUN apk add --update gcc musl-dev
 
 ADD . .
 
-ENTRYPOINT [ "go", "test", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration" ]
+ENTRYPOINT [ "go", "test", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration/v1" ]

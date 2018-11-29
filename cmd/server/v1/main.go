@@ -1,15 +1,15 @@
 package main
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/sqlite"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/server"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 )
 
 const (
 	secure        = false
 	dbFile        = "example.db"
-	schemaDir     = "database/sqlite/schema"
+	schemaDir     = "database/v1/sqlite/schema"
 	certFile      = "certs/cert.pem"
 	keyFile       = "certs/key.pem"
 	localCertFile = "dev_files/certs/server/cert.pem"

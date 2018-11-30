@@ -2,12 +2,14 @@ package server
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/items/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -37,74 +39,13 @@ type Server struct {
 
 	// Services
 	itemsService *items.ItemsService
+	usersService *users.UsersService
 
 	// infra things
 	upgrader websocket.Upgrader
 	server   *http.Server
 	router   *chi.Mux
 	logger   *logrus.Logger
-}
-
-func buildServer() *http.Server {
-	// heavily inspired by https://blog.cloudflare.com/exposing-go-on-the-internet/
-	return &http.Server{
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  maxTimeout,
-		TLSConfig: &tls.Config{
-			PreferServerCipherSuites: true,
-			// Only use curves which have assembly implementations
-			CurvePreferences: []tls.CurveID{
-				tls.CurveP256,
-				tls.X25519,
-			},
-			MinVersion: tls.VersionTLS12,
-			CipherSuites: []uint16{
-				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
-				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-			},
-		},
-	}
-}
-
-func setupRouter() *chi.Mux {
-	router := chi.NewRouter()
-	router.Use(middleware.RequestID)
-	router.Use(middleware.DefaultLogger)
-	router.Use(middleware.Timeout(maxTimeout))
-
-	return router
-}
-
-func (s *Server) setupRoutes() *chi.Mux {
-	router := setupRouter()
-
-	router.Get("/_debug_/health", func(res http.ResponseWriter, req *http.Request) {
-		res.WriteHeader(http.StatusOK)
-	})
-
-	router.Route("/api", func(apiRouter chi.Router) {
-		apiRouter.Route("/v1", func(v1Router chi.Router) {
-			v1Router.Route("/items", func(itemsRouter chi.Router) {
-				sr := "/{itemID:[0-9]+}"
-				itemsRouter.
-					With(s.itemsService.ItemContextMiddleware).
-					Post("/", s.itemsService.Create) // Create
-				itemsRouter.Get(sr, s.itemsService.Read)      // Read
-				itemsRouter.Get("/", s.itemsService.List)     // List
-				itemsRouter.Delete(sr, s.itemsService.Delete) // Delete
-				itemsRouter.
-					With(s.itemsService.ItemContextMiddleware).
-					Put(sr, s.itemsService.Update) // Update
-			})
-		})
-	})
-
-	return router
 }
 
 func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
@@ -155,4 +96,83 @@ func NewDebug(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 func (s *Server) Serve() {
 	s.logger.Debugf("Listening on 443. Go to https://localhost/")
 	s.logger.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))
+}
+
+func buildServer() *http.Server {
+	// heavily inspired by https://blog.cloudflare.com/exposing-go-on-the-internet/
+	return &http.Server{
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  maxTimeout,
+		TLSConfig: &tls.Config{
+			PreferServerCipherSuites: true,
+			// Only use curves which have assembly implementations
+			CurvePreferences: []tls.CurveID{
+				tls.CurveP256,
+				tls.X25519,
+			},
+			MinVersion: tls.VersionTLS12,
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			},
+		},
+	}
+}
+
+func setupRouter() *chi.Mux {
+	router := chi.NewRouter()
+	router.Use(middleware.RequestID)
+	router.Use(middleware.DefaultLogger)
+	router.Use(middleware.Timeout(maxTimeout))
+
+	return router
+}
+
+func (s *Server) setupRoutes() *chi.Mux {
+	router := setupRouter()
+
+	router.Get("/_debug_/health", func(res http.ResponseWriter, req *http.Request) {
+		res.WriteHeader(http.StatusOK)
+	})
+
+	router.Route("/users", func(usersRouter chi.Router) {
+		// sr := fmt.Sprintf("/{%s:[0-9]+}", users.URIParamKey)
+
+		usersRouter.Post("/login", s.usersService.Login)
+		usersRouter.Post("/logout", s.usersService.Logout)
+
+		// usersRouter.
+		// 	With(s.usersService.UserContextMiddleware).
+		// 	Post("/", s.usersService.Create) // Create
+		// usersRouter.Get(sr, s.usersService.Read)      // Read
+		// usersRouter.Get("/", s.usersService.List)     // List
+		// usersRouter.Delete(sr, s.usersService.Delete) // Delete
+		// usersRouter.
+		// 	With(s.usersService.UserContextMiddleware).
+		// 	Put(sr, s.usersService.Update) // Update
+	})
+
+	router.Route("/api", func(apiRouter chi.Router) {
+		apiRouter.Route("/v1", func(v1Router chi.Router) {
+			v1Router.Route("/items", func(itemsRouter chi.Router) {
+				sr := fmt.Sprintf("/{%s:[0-9]+}", items.URIParamKey)
+				itemsRouter.
+					With(s.itemsService.ItemContextMiddleware).
+					Post("/", s.itemsService.Create) // Create
+				itemsRouter.Get(sr, s.itemsService.Read)      // Read
+				itemsRouter.Get("/", s.itemsService.List)     // List
+				itemsRouter.Delete(sr, s.itemsService.Delete) // Delete
+				itemsRouter.
+					With(s.itemsService.ItemContextMiddleware).
+					Put(sr, s.itemsService.Update) // Update
+			})
+		})
+	})
+
+	return router
 }

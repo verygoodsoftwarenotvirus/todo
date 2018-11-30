@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	urlParamKey = "itemID"
+	URIParamKey = "itemID"
 )
 
 func (is *ItemsService) ItemContextMiddleware(next http.Handler) http.Handler {
@@ -30,7 +30,7 @@ func (is *ItemsService) ItemContextMiddleware(next http.Handler) http.Handler {
 }
 
 func (is *ItemsService) Read(res http.ResponseWriter, req *http.Request) {
-	itemIDParam := chi.URLParam(req, urlParamKey)
+	itemIDParam := chi.URLParam(req, URIParamKey)
 	itemID, _ := strconv.ParseUint(itemIDParam, 10, 64)
 
 	i, err := is.db.GetItem(uint(itemID))
@@ -60,7 +60,7 @@ func (is *ItemsService) List(res http.ResponseWriter, req *http.Request) {
 }
 
 func (is *ItemsService) Delete(res http.ResponseWriter, req *http.Request) {
-	itemIDParam := chi.URLParam(req, urlParamKey)
+	itemIDParam := chi.URLParam(req, URIParamKey)
 	itemID, _ := strconv.ParseUint(itemIDParam, 10, 64)
 
 	if err := is.db.DeleteItem(uint(itemID)); err != nil {
@@ -76,7 +76,7 @@ func (is *ItemsService) Update(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	itemIDParam := chi.URLParam(req, urlParamKey)
+	itemIDParam := chi.URLParam(req, URIParamKey)
 	itemID, _ := strconv.ParseUint(itemIDParam, 10, 64)
 
 	i, err := is.db.GetItem(uint(itemID))

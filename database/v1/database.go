@@ -17,4 +17,9 @@ type Database interface {
 	Migrate(schemaDir string) error
 
 	models.ItemHandler
+	models.UserHandler
+}
+
+type Scannable interface {
+	Scan(dest ...interface{}) error
 }

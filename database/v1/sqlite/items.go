@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
@@ -48,21 +49,26 @@ const (
 	`
 )
 
-func (s *sqlite) GetItem(id uint) (*models.Item, error) {
+func scanItem(scan database.Scannable) (*models.Item, error) {
 	i := &models.Item{}
-
-	if err := s.database.QueryRow(getItemQuery, id).Scan(
+	err := scan.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Details,
 		&i.CreatedOn,
 		&i.UpdatedOn,
 		&i.CompletedOn,
-	); err != nil {
+	)
+	if err != nil {
 		return nil, err
 	}
-
 	return i, nil
+}
+
+func (s *sqlite) GetItem(id uint) (*models.Item, error) {
+	row := s.database.QueryRow(getItemQuery, id)
+	i, err := scanItem(row)
+	return i, err
 }
 
 func (s *sqlite) GetItems(filter *models.QueryFilter) ([]models.Item, error) {
@@ -81,19 +87,11 @@ func (s *sqlite) GetItems(filter *models.QueryFilter) ([]models.Item, error) {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var item models.Item
-		err := rows.Scan(
-			&item.ID,
-			&item.Name,
-			&item.Details,
-			&item.CreatedOn,
-			&item.UpdatedOn,
-			&item.CompletedOn,
-		)
+		item, err := scanItem(rows)
 		if err != nil {
 			return nil, err
 		}
-		list = append(list, item)
+		list = append(list, *item)
 	}
 	err = rows.Err()
 	if err != nil {
@@ -131,14 +129,8 @@ func (s *sqlite) CreateItem(input *models.ItemInput) (i *models.Item, err error)
 	}
 
 	// fetch full updated item
-	err = tx.QueryRow(getItemQuery, id).Scan(
-		&i.ID,
-		&i.Name,
-		&i.Details,
-		&i.CreatedOn,
-		&i.UpdatedOn,
-		&i.CompletedOn,
-	)
+	row := tx.QueryRow(getItemQuery, id)
+	i, err = scanItem(row)
 	if err != nil {
 		s.logger.Errorf("error fetching newly created item %d: %v", id, err)
 		tx.Rollback()

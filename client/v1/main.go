@@ -119,7 +119,7 @@ func (c *V1Client) BuildWebsocketURL(parts ...string) string {
 func (c *V1Client) IsUp() bool {
 	u := *c.URL
 
-	uri := fmt.Sprintf("%s://%s:%s/_debug_/health", u.Scheme, u.Hostname(), u.Port())
+	uri := fmt.Sprintf("%s://%s:%s/_meta_/health", u.Scheme, u.Hostname(), u.Port())
 	req, _ := http.NewRequest(http.MethodGet, uri, nil)
 	res, err := c.executeRequest(req)
 

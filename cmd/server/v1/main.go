@@ -14,6 +14,7 @@ const (
 	keyFile       = "certs/key.pem"
 	localCertFile = "dev_files/certs/server/cert.pem"
 	localKeyFile  = "dev_files/certs/server/key.pem"
+	cookieSecret  = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
 )
 
 func main() {
@@ -24,10 +25,11 @@ func main() {
 	}
 
 	cfg := server.ServerConfig{
-		DebugMode: !secure,
-		CertFile:  certFile,
-		KeyFile:   keyFile,
-		DBBuilder: sqlite.NewSqlite,
+		DebugMode:    !secure,
+		CookieSecret: []byte(cookieSecret),
+		CertFile:     certFile,
+		KeyFile:      keyFile,
+		DBBuilder:    sqlite.NewSqlite,
 	}
 
 	if server, err := server.NewDebug(cfg, dbCfg); err != nil {

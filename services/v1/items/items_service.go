@@ -19,8 +19,8 @@ type (
 	}
 
 	ItemsServiceConfig struct {
-		Logger *logrus.Logger
-		DB     database.Database
+		Logger   *logrus.Logger
+		Database database.Database
 	}
 )
 
@@ -31,7 +31,7 @@ func NewItemsService(cfg ItemsServiceConfig) *ItemsService {
 
 	return &ItemsService{
 		logger:   cfg.Logger,
-		db:       cfg.DB,
+		db:       cfg.Database,
 		upgrader: websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024},
 	}
 }

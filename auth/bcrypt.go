@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"errors"
-
 	"github.com/pquerna/otp/totp"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
@@ -11,11 +9,6 @@ import (
 const (
 	defaultHashCost            = uint(bcrypt.DefaultCost) + 3
 	defaultMinimumPasswordSize = 16
-)
-
-var (
-	ErrCostTooLow           = errors.New("stored password's cost is too low")
-	ErrInvalidTwoFactorCode = errors.New("invalid two factor code")
 )
 
 var _ Enticator = (*BcryptAuthenticator)(nil)

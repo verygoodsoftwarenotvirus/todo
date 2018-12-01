@@ -3,7 +3,7 @@ package models
 type UserHandler interface {
 	GetUser(identifier string) (*User, error)
 	GetUsers(filter *QueryFilter) ([]User, error)
-	CreateUser(input *UserCreationInput) (*User, error)
+	CreateUser(input *UserInput) (*User, error)
 	UpdateUser(updated *User) error
 	DeleteUser(id uint) error
 }
@@ -15,8 +15,8 @@ type UserLoginInput struct {
 	TOTPToken string `json:"totp_token"`
 }
 
-// UserCreationInput represents a user
-type UserCreationInput struct {
+// UserInput represents the input required to modify/create users
+type UserInput struct {
 	Username   string `json:"username"`
 	Password   string `json:"password"`
 	TOTPSecret string `json:"totp_secret"`
@@ -32,4 +32,18 @@ type User struct {
 	CreatedOn             uint64  `json:"created_on"`
 	UpdatedOn             *uint64 `json:"updated_on"`
 	ArchivedOn            *uint64 `json:"archived_on"`
+}
+
+func (u *User) Update(input User) {
+	if input.Username != "" && input.Username != u.Username {
+		u.Username = input.Username
+	}
+
+	if input.HashedPassword != "" && input.HashedPassword != u.HashedPassword {
+		u.HashedPassword = input.HashedPassword
+	}
+
+	if input.TwoFactorSecret != "" && input.TwoFactorSecret != u.TwoFactorSecret {
+		u.TwoFactorSecret = input.TwoFactorSecret
+	}
 }

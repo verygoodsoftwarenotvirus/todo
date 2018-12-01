@@ -114,7 +114,7 @@ func (s *sqlite) GetUsers(filter *models.QueryFilter) ([]models.User, error) {
 	return list, err
 }
 
-func (s *sqlite) CreateUser(input *models.UserCreationInput) (u *models.User, err error) {
+func (s *sqlite) CreateUser(input *models.UserInput) (u *models.User, err error) {
 	u = &models.User{}
 
 	tx, err := s.database.Begin()

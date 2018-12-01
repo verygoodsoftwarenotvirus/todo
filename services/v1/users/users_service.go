@@ -17,28 +17,25 @@ type (
 		Validate(req *http.Request) (bool, error)
 	}
 
-	UserServiceConfig struct {
+	UsersServiceConfig struct {
 		CookieName    string
 		Logger        *logrus.Logger
 		Database      database.Database
 		Authenticator auth.Enticator
-		LoginMonitor  BruteForceLoginDetector
 	}
 
 	UsersService struct {
 		cookieName    string
 		database      database.Database
 		authenticator auth.Enticator
-		loginMonitor  BruteForceLoginDetector
 		logger        *logrus.Logger
 	}
 )
 
-func NewUsersService(cfg UserServiceConfig) *UsersService {
+func NewUsersService(cfg UsersServiceConfig) *UsersService {
 	us := &UsersService{
 		cookieName:    cfg.CookieName,
 		database:      cfg.Database,
-		loginMonitor:  cfg.LoginMonitor,
 		authenticator: cfg.Authenticator,
 		logger:        cfg.Logger,
 	}

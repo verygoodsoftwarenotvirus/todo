@@ -5,17 +5,18 @@ import (
 	"log"
 	"os"
 
-	// "gitlab.com/verygoodsoftwarenotvirus/todo/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	//
-	// "github.com/sirupsen/logrus"
 )
 
 const (
+	ExpectedUsername = "username"
+	ExpectedPassword = "password"
+
 	defaultDBPath    = "example.db"
-	defaultSchemaDir = "database/sqlite/schema"
+	defaultSchemaDir = "database/v1/sqlite/schema"
 	defaultSecret    = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
 )
 
@@ -23,34 +24,33 @@ func main() {
 	dbPath := defaultDBPath
 	if len(os.Args) > 1 {
 		dbPath = os.Args[1]
+		log.Printf("set alternative output path: %q", dbPath)
 	}
 
-	dbcfg := database.Config{
-		ConnectionString: dbPath,
-	}
+	dbcfg := database.Config{ConnectionString: dbPath}
 	db, err := sqlite.NewSqlite(dbcfg)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("error opening sqlite connection: %v", err)
 	}
 
 	if err := db.Migrate(defaultSchemaDir); err != nil {
-		log.Fatal(err)
+		log.Fatalf("error performing migration: %v", err)
 	}
 
-	// a := auth.NewBcrypt(logrus.New())
-	// password, err := a.HashPassword("password")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	b := auth.NewBcrypt(nil)
+	hp, err := b.HashPassword(ExpectedPassword)
+	if err != nil {
+		log.Fatalf("error hashing password: %v", err)
+	}
 
-	// ak := &models.AuthToken{
-	// 	AppName:   appName,
-	// 	Secret:    defaultSecret,
-	// 	ExpiresOn: time.Now().Add(365 * (24 * time.Hour)),
-	// }
-	// if err := db.CreateAuthKey(ak); err != nil {
-	// 	log.Fatal(err)
-	// }
+	_, err = db.CreateUser(&models.UserInput{
+		Username:   ExpectedUsername,
+		Password:   hp,
+		TOTPSecret: defaultSecret,
+	})
+	if err != nil {
+		log.Fatalf("error creating user: %v", err)
+	}
 
 	for i := 1; i < 6; i++ {
 		exampleItem := &models.ItemInput{

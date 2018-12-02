@@ -4,7 +4,7 @@ services:
     demo-server:
         build:
             context: ../
-            dockerfile: dockerfiles/server.Dockerfile
+            dockerfile: dockerfiles/integration-server.Dockerfile
         ports:
             - '1443:443'
         # logging:

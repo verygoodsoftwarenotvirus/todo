@@ -5,17 +5,18 @@ import (
 	"log"
 	"os"
 
-	// "gitlab.com/verygoodsoftwarenotvirus/todo/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	//
-	// "github.com/sirupsen/logrus"
 )
 
 const (
+	ExpectedUsername = "username"
+	ExpectedPassword = "password"
+
 	defaultDBPath    = "example.db"
-	defaultSchemaDir = "database/sqlite/schema"
+	defaultSchemaDir = "database/v1/sqlite/schema"
 	defaultSecret    = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
 )
 
@@ -37,20 +38,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// a := auth.NewBcrypt(logrus.New())
-	// password, err := a.HashPassword("password")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	b := auth.NewBcrypt(nil)
+	hp, _ := b.HashPassword(ExpectedPassword)
 
-	// ak := &models.AuthToken{
-	// 	AppName:   appName,
-	// 	Secret:    defaultSecret,
-	// 	ExpiresOn: time.Now().Add(365 * (24 * time.Hour)),
-	// }
-	// if err := db.CreateAuthKey(ak); err != nil {
-	// 	log.Fatal(err)
-	// }
+	db.CreateUser(&models.UserInput{
+		Username:   ExpectedUsername,
+		TOTPSecret: defaultSecret,
+		Password:   hp,
+	})
 
 	for i := 1; i < 6; i++ {
 		exampleItem := &models.ItemInput{

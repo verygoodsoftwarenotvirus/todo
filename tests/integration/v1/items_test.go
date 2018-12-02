@@ -7,7 +7,7 @@ import (
 
 	"github.com/franela/goblin"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	// "github.com/stretchr/testify/require"
 )
 
 func buildDummyItem(t *testing.T) *models.Item {
@@ -20,20 +20,6 @@ func buildDummyItem(t *testing.T) *models.Item {
 	item, err := todoClient.CreateItem(ii)
 	assert.NoError(t, err)
 	return item
-}
-
-func TestAuth(t *testing.T) {
-	g := goblin.Goblin(t)
-
-	g.Describe("Auth", func() {
-		g.It("should reject an unauthenticated request")
-		g.Describe("credentials", func() {
-			g.It("should accept a valid cookie")
-			g.It("should reject a valid cookie")
-			g.It("should accept a valid auth key")
-			g.It("should reject an invalid auth key")
-		})
-	})
 }
 
 func TestItems(t *testing.T) {
@@ -108,7 +94,7 @@ func TestItems(t *testing.T) {
 			actual, err := todoClient.GetItems(nil)
 			assert.NoError(t, err)
 			assert.NotNil(t, actual)
-			require.True(t, len(expected) >= len(actual))
+			assert.True(t, len(expected) <= len(actual), "expected %d to be <= %d", len(expected), len(actual))
 
 			// Clean up
 			for _, item := range actual {

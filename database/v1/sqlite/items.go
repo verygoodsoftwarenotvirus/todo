@@ -137,7 +137,10 @@ func (s *sqlite) CreateItem(input *models.ItemInput) (i *models.Item, err error)
 		return nil, err
 	}
 
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		s.logger.Errorf("error committing transaction: %v", err)
+		return nil, err
+	}
 
 	s.logger.Debugln("returning from CreateItem")
 	return i, nil

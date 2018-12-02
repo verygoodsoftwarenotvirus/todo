@@ -14,7 +14,7 @@ const (
 	keyFile       = "certs/key.pem"
 	localCertFile = "dev_files/certs/server/cert.pem"
 	localKeyFile  = "dev_files/certs/server/key.pem"
-	cookieSecret  = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
+	cookieSecret  = "HEREISA32CHARSECRETWHICHISMADEUP"
 )
 
 func main() {

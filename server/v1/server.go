@@ -17,7 +17,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/gorilla/context"
-	"github.com/gorilla/sessions"
+	"github.com/gorilla/securecookie"
 	"github.com/sirupsen/logrus"
 	oauth2errors "gopkg.in/oauth2.v3/errors"
 	oauth2manage "gopkg.in/oauth2.v3/manage"
@@ -52,10 +52,11 @@ type Server struct {
 	usersService *users.UsersService
 
 	// infra things
-	db          database.Database
-	server      *http.Server
-	logger      *logrus.Logger
-	cookieStore *sessions.CookieStore
+	db            database.Database
+	server        *http.Server
+	logger        *logrus.Logger
+	cookieSecret  []byte
+	cookieBuilder *securecookie.SecureCookie
 
 	// Oauth2 stuff
 	oauth2Handler *oauth2server.Server
@@ -78,14 +79,16 @@ func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 	}
 
 	srv := &Server{
-		DebugMode:    cfg.DebugMode,
-		db:           db,
-		logger:       logger,
-		certFile:     cfg.CertFile,
-		keyFile:      cfg.KeyFile,
-		server:       buildServer(),
-		loginMonitor: &NoopLoginMonitor{}, // TODO: this makes me sad
-		cookieStore:  sessions.NewCookieStore(cfg.CookieSecret),
+		DebugMode:     cfg.DebugMode,
+		db:            db,
+		logger:        logger,
+		certFile:      cfg.CertFile,
+		keyFile:       cfg.KeyFile,
+		server:        buildServer(),
+		loginMonitor:  &NoopLoginMonitor{}, // TODO: this makes me sad
+		authenticator: auth.NewBcrypt(logger),
+		cookieSecret:  cfg.CookieSecret,
+		cookieBuilder: securecookie.New(securecookie.GenerateRandomKey(64), cfg.CookieSecret),
 
 		// Services
 		itemsService: items.NewItemsService(
@@ -120,7 +123,7 @@ func NewDebug(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 }
 
 func (s *Server) Serve() {
-	s.logger.Debugf("Listening on 443. Go to https://localhost/")
+	s.logger.Debugf("Listening on 443")
 	s.logger.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))
 }
 
@@ -167,20 +170,28 @@ func (s *Server) setupRoutes() {
 		router.Get("/_debug_/stats", s.stats)
 	}
 
-	router.Route("/oauth2", func(oauthRouter chi.Router) {
-		oauthRouter.Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
-			if err := s.oauth2Handler.HandleAuthorizeRequest(res, req); err != nil {
-				http.Error(res, err.Error(), http.StatusBadRequest)
-			}
-		})
+	router.With(s.usersService.UserInputContextMiddleware).Post("/login", s.Login)
+	router.Post("/logout", s.Logout)
 
-		oauthRouter.Get("/token", func(res http.ResponseWriter, req *http.Request) {
-			s.oauth2Handler.HandleTokenRequest(res, req)
-		})
-	})
+	// router.Route("/oauth2", func(oauthRouter chi.Router) {
+	// 	oauthRouter.Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
+	// 		if err := s.oauth2Handler.HandleAuthorizeRequest(res, req); err != nil {
+	// 			http.Error(res, err.Error(), http.StatusBadRequest)
+	// 		}
+	// 	})
+
+	// 	oauthRouter.Get("/token", func(res http.ResponseWriter, req *http.Request) {
+	// 		s.oauth2Handler.HandleTokenRequest(res, req)
+	// 	})
+	// })
 
 	router.Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Route("/v1", func(v1Router chi.Router) {
+
+			v1Router.With(s.AuthorizationMiddleware).Post("/fart", func(res http.ResponseWriter, req *http.Request) {
+				res.WriteHeader(http.StatusTeapot)
+			})
+
 			v1Router.Route("/items", func(itemsRouter chi.Router) {
 				sr := fmt.Sprintf("/{%s:[0-9]+}", items.URIParamKey)
 				itemsRouter.With(s.itemsService.ItemContextMiddleware).Post("/", s.itemsService.Create) // Create

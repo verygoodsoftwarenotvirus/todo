@@ -37,7 +37,7 @@ dev_files/certs/server/key.pem dev_files/certs/server/cert.pem:
 
 ## Test things
 example.db:
-	go run tools/db-bootstrap/main.go
+	go run tools/db_bootstrap/v1/main.go
 
 $(COVERAGE_OUT):
 	./scripts/coverage.sh

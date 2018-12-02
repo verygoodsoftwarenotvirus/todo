@@ -12,6 +12,7 @@ const (
 			username,
 			password,
 			password_last_changed_on,
+			two_factor_secret,
 			created_on,
 			updated_on,
 			archived_on
@@ -20,12 +21,28 @@ const (
 		WHERE
 			username = ? AND archived_on is null
 	`
+	getUserQueryByID = `
+		SELECT
+			id,
+			username,
+			password,
+			password_last_changed_on,
+			two_factor_secret,
+			created_on,
+			updated_on,
+			archived_on
+		FROM
+			users
+		WHERE
+			id = ? AND archived_on is null
+	`
 	getUsersQuery = `
 		SELECT
 			id,
 			username,
 			password,
 			password_last_changed_on,
+			two_factor_secret,
 			created_on,
 			updated_on,
 			archived_on
@@ -39,11 +56,11 @@ const (
 	createUserQuery = `
 		INSERT INTO users
 		(
-			username, password
+			username, password, two_factor_secret
 		)
 		VALUES
 		(
-			?, ?
+			?, ?, ?
 		)
 	`
 	updateUserQuery = `
@@ -68,6 +85,7 @@ func scanUser(scan database.Scannable) (*models.User, error) {
 		&u.Username,
 		&u.HashedPassword,
 		&u.PasswordLastChangedOn,
+		&u.TwoFactorSecret,
 		&u.CreatedOn,
 		&u.UpdatedOn,
 		&u.ArchivedOn,
@@ -89,16 +107,15 @@ func (s *sqlite) GetUsers(filter *models.QueryFilter) ([]models.User, error) {
 		s.logger.Debugln("using default query filter")
 		filter = models.DefaultQueryFilter
 	}
-
 	list := []models.User{}
 
 	s.logger.Infof("query limit: %d, query page: %d, calculated page: %d", filter.Limit, filter.Page, uint(filter.Limit*(filter.Page-1)))
-
 	rows, err := s.database.Query(getUsersQuery, filter.Limit, uint(filter.Limit*(filter.Page-1)))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
+
 	for rows.Next() {
 		user, err := scanUser(rows)
 		if err != nil {
@@ -124,7 +141,7 @@ func (s *sqlite) CreateUser(input *models.UserInput) (u *models.User, err error)
 	}
 
 	// create the user
-	res, err := tx.Exec(createUserQuery, input.Username, input.Password)
+	res, err := tx.Exec(createUserQuery, input.Username, input.Password, input.TOTPSecret)
 	if err != nil {
 		s.logger.Errorf("error executing user creation query: %v", err)
 		tx.Rollback()
@@ -139,7 +156,7 @@ func (s *sqlite) CreateUser(input *models.UserInput) (u *models.User, err error)
 	}
 
 	// fetch full updated user
-	finalRow := tx.QueryRow(getUserQuery, id)
+	finalRow := tx.QueryRow(getUserQueryByID, id)
 	u, err = scanUser(finalRow)
 	if err != nil {
 		s.logger.Errorf("error fetching newly created user %d: %v", id, err)
@@ -147,7 +164,10 @@ func (s *sqlite) CreateUser(input *models.UserInput) (u *models.User, err error)
 		return nil, err
 	}
 
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		s.logger.Errorf("error committing transaction: %v", err)
+		return nil, err
+	}
 
 	s.logger.Debugln("returning from CreateUser")
 	return

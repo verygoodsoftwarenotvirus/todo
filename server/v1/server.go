@@ -170,20 +170,22 @@ func (s *Server) setupRoutes() {
 		router.Get("/_debug_/stats", s.stats)
 	}
 
-	router.With(s.usersService.UserInputContextMiddleware).Post("/login", s.Login)
-	router.Post("/logout", s.Logout)
+	router.Route("/users", func(userRouter chi.Router) {
+		userRouter.With(s.usersService.UserInputContextMiddleware).Post("/login", s.Login)
+		userRouter.Post("/logout", s.Logout)
+	})
 
-	// router.Route("/oauth2", func(oauthRouter chi.Router) {
-	// 	oauthRouter.Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
-	// 		if err := s.oauth2Handler.HandleAuthorizeRequest(res, req); err != nil {
-	// 			http.Error(res, err.Error(), http.StatusBadRequest)
-	// 		}
-	// 	})
+	router.Route("/oauth2", func(oauthRouter chi.Router) {
+		oauthRouter.Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
+			if err := s.oauth2Handler.HandleAuthorizeRequest(res, req); err != nil {
+				http.Error(res, err.Error(), http.StatusBadRequest)
+			}
+		})
 
-	// 	oauthRouter.Get("/token", func(res http.ResponseWriter, req *http.Request) {
-	// 		s.oauth2Handler.HandleTokenRequest(res, req)
-	// 	})
-	// })
+		oauthRouter.Get("/token", func(res http.ResponseWriter, req *http.Request) {
+			s.oauth2Handler.HandleTokenRequest(res, req)
+		})
+	})
 
 	router.Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Route("/v1", func(v1Router chi.Router) {

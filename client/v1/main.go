@@ -22,19 +22,21 @@ const (
 )
 
 type Config struct {
-	Client    *http.Client
-	Debug     bool
-	Logger    *logrus.Logger
-	Address   string
-	AuthToken string
+	Client  *http.Client
+	Debug   bool
+	Logger  *logrus.Logger
+	Address string
+
+	UserCredentials *url.Userinfo
+	AuthToken       *string
 }
 
 type V1Client struct {
-	Client *http.Client
-	logger *logrus.Logger
-	Debug  bool
-	URL    *url.URL
-	Token  string
+	Client    *http.Client
+	logger    *logrus.Logger
+	Debug     bool
+	URL       *url.URL
+	authToken string
 
 	Items     <-chan *models.Item
 	itemsChan chan *models.Item
@@ -43,8 +45,17 @@ type V1Client struct {
 func NewClient(cfg *Config) (c *V1Client, err error) {
 	c = &V1Client{
 		Debug: cfg.Debug,
-		Token: cfg.AuthToken,
 	}
+
+	if c.URL, err = url.Parse(cfg.Address); err != nil {
+		return nil, errors.Wrap(err, "parsing URL")
+	}
+
+	if cfg.AuthToken != nil {
+		c.authToken = *cfg.AuthToken
+	} // else {
+	//
+	// }
 
 	if cfg.Client != nil {
 		c.Client = cfg.Client
@@ -61,10 +72,6 @@ func NewClient(cfg *Config) (c *V1Client, err error) {
 		}
 	}
 
-	if c.URL, err = url.Parse(cfg.Address); err != nil {
-		return nil, errors.Wrap(err, "Invalid URL is invalid")
-	}
-
 	return
 }
 
@@ -74,7 +81,7 @@ func (c *V1Client) executeRequest(req *http.Request) (*http.Response, error) {
 		c.logger.Debugln(command)
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.authToken))
 
 	res, err := c.Client.Do(req)
 	if err != nil {

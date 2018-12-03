@@ -24,6 +24,8 @@ var (
 	fake       = faker.GetLorem()
 )
 
+func sp(s string) *string { return &s }
+
 func initializeClient() {
 	cfg := &client.Config{
 		Client: &http.Client{
@@ -32,8 +34,9 @@ func initializeClient() {
 		},
 		Debug:     debug,
 		Address:   defaultTestInstanceURL,
-		AuthToken: defaultTestInstanceAuthToken,
+		AuthToken: sp(defaultTestInstanceAuthToken),
 	}
+
 	cfg.Client.Transport.(*http.Transport).TLSClientConfig = &tls.Config{
 		// WARNING: Never this ordinarily, this is an application which will only ever run in a local context
 		InsecureSkipVerify: true,

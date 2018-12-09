@@ -19,11 +19,7 @@ import (
 	"github.com/gorilla/context"
 	"github.com/gorilla/securecookie"
 	"github.com/sirupsen/logrus"
-	oauth2errors "gopkg.in/oauth2.v3/errors"
-	oauth2manage "gopkg.in/oauth2.v3/manage"
-	oauth2models "gopkg.in/oauth2.v3/models"
 	oauth2server "gopkg.in/oauth2.v3/server"
-	oauth2store "gopkg.in/oauth2.v3/store"
 )
 
 const (
@@ -127,35 +123,6 @@ func (s *Server) Serve() {
 	s.logger.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))
 }
 
-func (s *Server) initializeOauth2Routes() {
-	manager := oauth2manage.NewDefaultManager()
-	// token memory store
-	manager.MustTokenStorage(oauth2store.NewMemoryTokenStore())
-
-	// client memory store
-	clientStore := oauth2store.NewClientStore()
-	clientStore.Set("000000", &oauth2models.Client{
-		ID:     "000000",
-		Secret: "999999",
-		Domain: "https://localhost",
-	})
-	manager.MapClientStorage(clientStore)
-
-	s.oauth2Handler = oauth2server.NewDefaultServer(manager)
-	s.oauth2Handler.SetAllowGetAccessRequest(true)
-	s.oauth2Handler.SetClientInfoHandler(oauth2server.ClientFormHandler)
-
-	s.oauth2Handler.SetInternalErrorHandler(func(err error) (re *oauth2errors.Response) {
-		s.logger.Errorf("Internal Error: %v", err.Error())
-		return
-	})
-
-	s.oauth2Handler.SetResponseErrorHandler(func(re *oauth2errors.Response) {
-		s.logger.Errorf("Response Error: %v", re.Error)
-	})
-
-}
-
 func (s *Server) setupRoutes() {
 	router := chi.NewRouter()
 	router.Use(middleware.RequestID)
@@ -175,17 +142,17 @@ func (s *Server) setupRoutes() {
 		userRouter.Post("/logout", s.Logout)
 	})
 
-	router.Route("/oauth2", func(oauthRouter chi.Router) {
-		oauthRouter.Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
-			if err := s.oauth2Handler.HandleAuthorizeRequest(res, req); err != nil {
-				http.Error(res, err.Error(), http.StatusBadRequest)
-			}
-		})
-
-		oauthRouter.Get("/token", func(res http.ResponseWriter, req *http.Request) {
-			s.oauth2Handler.HandleTokenRequest(res, req)
-		})
+	// router.Route("/oauth2", func(oauthRouter chi.Router) {
+	router.Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
+		if err := s.oauth2Handler.HandleAuthorizeRequest(res, req); err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
+		}
 	})
+
+	router.Get("/token", func(res http.ResponseWriter, req *http.Request) {
+		s.oauth2Handler.HandleTokenRequest(res, req)
+	})
+	// })
 
 	router.Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Route("/v1", func(v1Router chi.Router) {
@@ -233,30 +200,50 @@ type genericResponse struct {
 	Message string `json:"message"`
 }
 
-func (s *Server) internalServerError(res http.ResponseWriter, err error) {
+type ErrorNotifier func(res http.ResponseWriter, req *http.Request, err error)
+
+func (s *Server) internalServerError(res http.ResponseWriter, req *http.Request, err error) {
 	sc := http.StatusInternalServerError
-	s.logger.Errorf("Encountered this error: %v\n", err)
+	s.logger.Errorf("Encountered this internal error: %v\n", err)
 	res.WriteHeader(sc)
 	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "Unexpected internal error occurred"})
 }
 
-func (s *Server) invalidInput(res http.ResponseWriter, req *http.Request) {
+func (s *Server) notifyUnauthorized(res http.ResponseWriter, req *http.Request, err error) {
+	sc := http.StatusUnauthorized
+	if err != nil {
+		s.logger.Errorln("notifyUnauthorized called with this error: ", err)
+	}
+	res.WriteHeader(sc)
+	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "Unauthorized"})
+}
+
+func (s *Server) invalidInput(res http.ResponseWriter, req *http.Request, err error) {
 	sc := http.StatusBadRequest
 	s.logger.Debugf("invalidInput called for route: %q\n", req.URL.String())
+	if err != nil {
+		s.logger.Errorln("invalidInput called with this error: ", err)
+	}
 	res.WriteHeader(sc)
 	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "invalid input"})
 }
 
-func (s *Server) notFound(res http.ResponseWriter, req *http.Request) {
+func (s *Server) notFound(res http.ResponseWriter, req *http.Request, err error) {
 	sc := http.StatusNotFound
 	s.logger.Debugf("notFound called for route: %q\n", req.URL.String())
+	if err != nil {
+		s.logger.Errorln("notFound called with this error: ", err)
+	}
 	res.WriteHeader(sc)
 	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "not found"})
 }
 
-func (s *Server) notifyOfInvalidRequestCookie(res http.ResponseWriter, req *http.Request) {
+func (s *Server) notifyOfInvalidRequestCookie(res http.ResponseWriter, req *http.Request, err error) {
 	sc := http.StatusBadRequest
 	s.logger.Debugf("notifyOfInvalidRequestCookie called for route: %q\n", req.URL.String())
+	if err != nil {
+		s.logger.Errorln("notifyOfInvalidRequestCookie called with this error: ", err)
+	}
 	res.WriteHeader(sc)
 	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "invalid cookie"})
 }

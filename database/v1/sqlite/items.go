@@ -67,8 +67,7 @@ func scanItem(scan database.Scannable) (*models.Item, error) {
 
 func (s *sqlite) GetItem(id uint) (*models.Item, error) {
 	row := s.database.QueryRow(getItemQuery, id)
-	i, err := scanItem(row)
-	return i, err
+	return scanItem(row)
 }
 
 func (s *sqlite) GetItems(filter *models.QueryFilter) ([]models.Item, error) {
@@ -102,11 +101,6 @@ func (s *sqlite) GetItems(filter *models.QueryFilter) ([]models.Item, error) {
 }
 
 func (s *sqlite) CreateItem(input *models.ItemInput) (i *models.Item, err error) {
-	i = &models.Item{
-		Name:    input.Name,
-		Details: input.Details,
-	}
-
 	tx, err := s.database.Begin()
 	if err != nil {
 		s.logger.Errorf("error beginning database connection: %v", err)
@@ -159,6 +153,13 @@ func (s *sqlite) UpdateItem(input *models.Item) (err error) {
 	}
 
 	// fetch full updated item
+	row := tx.QueryRow(getItemQuery, input.ID)
+	input, err = scanItem(row)
+	if err != nil {
+		tx.Rollback()
+		return
+	}
+
 	if err = tx.QueryRow(getItemQuery, input.ID).Scan(
 		&input.ID,
 		&input.Name,

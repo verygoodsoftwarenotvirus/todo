@@ -24,7 +24,7 @@ type UserInput struct {
 
 // User represents a user
 type User struct {
-	ID                    uint64  `json:"id"`
+	ID                    string  `json:"id"`
 	Username              string  `json:"username"`
 	HashedPassword        string  `json:"-"`
 	TwoFactorSecret       string  `json:"-"`

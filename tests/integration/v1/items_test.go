@@ -73,7 +73,6 @@ func TestItems(t *testing.T) {
 			// Clean up
 			err = todoClient.DeleteItem(actual.ID)
 			assert.NoError(t, err)
-
 		})
 
 		g.It("Should error when fetching a nonexistent item", func() {

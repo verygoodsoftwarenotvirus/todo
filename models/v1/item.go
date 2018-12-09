@@ -9,7 +9,7 @@ type ItemHandler interface {
 }
 
 type Item struct {
-	ID          uint    `json:"id"`
+	ID          string  `json:"id"`
 	Name        string  `json:"name"`
 	Details     string  `json:"details"`
 	CreatedOn   uint64  `json:"created_on"`

@@ -13,7 +13,7 @@ import (
 
 const (
 	debug                        = false
-	nonexistentID                = 999999999
+	nonexistentID                = "999999999"
 	localTestInstanceURL         = "https://localhost"
 	defaultTestInstanceURL       = "https://demo-server"
 	defaultTestInstanceAuthToken = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"

@@ -8,8 +8,8 @@ import (
 
 const itemsBasePath = "items"
 
-func (c *V1Client) GetItem(id uint) (item *models.Item, err error) {
-	p := fmt.Sprintf("%s/%d", itemsBasePath, id)
+func (c *V1Client) GetItem(id string) (item *models.Item, err error) {
+	p := fmt.Sprintf("%s/%s", itemsBasePath, id)
 	u := c.BuildURL(nil, p)
 	item = &models.Item{}
 
@@ -42,14 +42,14 @@ func (c *V1Client) CreateItem(input *models.ItemInput) (*models.Item, error) {
 }
 
 func (c *V1Client) UpdateItem(updated *models.Item) (err error) {
-	p := fmt.Sprintf("%s/%d", itemsBasePath, updated.ID)
+	p := fmt.Sprintf("%s/%s", itemsBasePath, updated.ID)
 	u := c.BuildURL(nil, p)
 
 	return c.put(u, updated, &models.Item{})
 }
 
-func (c *V1Client) DeleteItem(id uint) error {
-	p := fmt.Sprintf("%s/%d", itemsBasePath, id)
+func (c *V1Client) DeleteItem(id string) error {
+	p := fmt.Sprintf("%s/%s", itemsBasePath, id)
 	u := c.BuildURL(nil, p)
 
 	return c.delete(u)

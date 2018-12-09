@@ -79,27 +79,26 @@ const (
 )
 
 func scanUser(scan database.Scannable) (*models.User, error) {
-	u := &models.User{}
+	x := &models.User{}
 	err := scan.Scan(
-		&u.ID,
-		&u.Username,
-		&u.HashedPassword,
-		&u.PasswordLastChangedOn,
-		&u.TwoFactorSecret,
-		&u.CreatedOn,
-		&u.UpdatedOn,
-		&u.ArchivedOn,
+		&x.ID,
+		&x.Username,
+		&x.HashedPassword,
+		&x.PasswordLastChangedOn,
+		&x.TwoFactorSecret,
+		&x.CreatedOn,
+		&x.UpdatedOn,
+		&x.ArchivedOn,
 	)
 	if err != nil {
 		return nil, err
 	}
-	return u, nil
+	return x, nil
 }
 
 func (s *sqlite) GetUser(identifier string) (*models.User, error) {
 	row := s.database.QueryRow(getUserQuery, identifier)
-	user, err := scanUser(row)
-	return user, err
+	return scanUser(row)
 }
 
 func (s *sqlite) GetUsers(filter *models.QueryFilter) ([]models.User, error) {
@@ -131,9 +130,7 @@ func (s *sqlite) GetUsers(filter *models.QueryFilter) ([]models.User, error) {
 	return list, err
 }
 
-func (s *sqlite) CreateUser(input *models.UserInput) (u *models.User, err error) {
-	u = &models.User{}
-
+func (s *sqlite) CreateUser(input *models.UserInput) (x *models.User, err error) {
 	tx, err := s.database.Begin()
 	if err != nil {
 		s.logger.Errorf("error beginning database connection: %v", err)
@@ -157,7 +154,7 @@ func (s *sqlite) CreateUser(input *models.UserInput) (u *models.User, err error)
 
 	// fetch full updated user
 	finalRow := tx.QueryRow(getUserQueryByID, id)
-	u, err = scanUser(finalRow)
+	x, err = scanUser(finalRow)
 	if err != nil {
 		s.logger.Errorf("error fetching newly created user %d: %v", id, err)
 		tx.Rollback()

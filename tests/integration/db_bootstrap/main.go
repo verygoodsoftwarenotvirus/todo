@@ -43,14 +43,23 @@ func main() {
 		log.Fatalf("error hashing password: %v", err)
 	}
 
-	_, err = db.CreateUser(&models.UserInput{
+	if _, err = db.CreateUser(&models.UserInput{
 		Username:   ExpectedUsername,
 		Password:   hp,
 		TOTPSecret: defaultSecret,
-	})
+	}); err != nil {
+		log.Fatalf("error creating user: %v", err)
+	}
+
+	oac, err := db.CreateOauthClient(&models.OauthClientInput{Scopes: []string{"*"}})
 	if err != nil {
 		log.Fatalf("error creating user: %v", err)
 	}
+
+	log.Printf(`
+	client_id: %q
+client_secret: %q
+`, oac.ClientID, oac.ClientSecret)
 
 	for i := 1; i < 6; i++ {
 		exampleItem := &models.ItemInput{

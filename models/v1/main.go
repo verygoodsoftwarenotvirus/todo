@@ -47,6 +47,12 @@ func DetermineTypesOfInterest(params url.Values) []interface{} {
 	return toc
 }
 
+type Pagination struct {
+	Page       uint64 `json:"page"`
+	Limit      uint64 `json:"limit"`
+	TotalCount uint64 `json:"total_count"`
+}
+
 type QueryFilter struct {
 	Page          uint64   `json:"page"`
 	Limit         uint64   `json:"limit"`

@@ -2,14 +2,17 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"github.com/sirupsen/logrus"
 )
+
+var logger *logrus.Logger
 
 const (
 	ExpectedUsername = "username"
@@ -21,26 +24,33 @@ const (
 )
 
 func main() {
+	logger = logrus.New()
+	// logger.SetLevel(logrus.DebugLevel)
+
 	dbPath := defaultDBPath
 	if len(os.Args) > 1 {
 		dbPath = os.Args[1]
-		log.Printf("set alternative output path: %q", dbPath)
+		logger.Printf("set alternative output path: %q", dbPath)
 	}
 
-	dbcfg := database.Config{ConnectionString: dbPath}
+	dbcfg := database.Config{
+		Logger: logger,
+		// Debug:            true,
+		ConnectionString: dbPath,
+	}
 	db, err := sqlite.NewSqlite(dbcfg)
 	if err != nil {
-		log.Fatalf("error opening sqlite connection: %v", err)
+		logger.Fatalf("error opening sqlite connection: %v", err)
 	}
 
 	if err := db.Migrate(defaultSchemaDir); err != nil {
-		log.Fatalf("error performing migration: %v", err)
+		logger.Fatalf("error performing migration: %v", err)
 	}
 
 	b := auth.NewBcrypt(nil)
 	hp, err := b.HashPassword(ExpectedPassword)
 	if err != nil {
-		log.Fatalf("error hashing password: %v", err)
+		logger.Fatalf("error hashing password: %v", err)
 	}
 
 	if _, err = db.CreateUser(&models.UserInput{
@@ -48,18 +58,27 @@ func main() {
 		Password:   hp,
 		TOTPSecret: defaultSecret,
 	}); err != nil {
-		log.Fatalf("error creating user: %v", err)
+		logger.Fatalf("error creating user: %v", err)
 	}
 
-	oac, err := db.CreateOauthClient(&models.OauthClientInput{Scopes: []string{"*"}})
+	oac, err := db.CreateOauthClient(
+		&models.OauthClientInput{
+			Scopes: []string{"*"},
+		},
+	)
 	if err != nil {
-		log.Fatalf("error creating user: %v", err)
+		logger.Fatalf("error creating oauth client: %v", err)
 	}
 
-	log.Printf(`
-	client_id: %q
-client_secret: %q
-`, oac.ClientID, oac.ClientSecret)
+	reverseSecret := []rune(defaultSecret)
+	for i, j := 0, len(reverseSecret)-1; i < j; i, j = i+1, j-1 {
+		reverseSecret[i], reverseSecret[j] = reverseSecret[j], reverseSecret[i]
+	}
+
+	oac.ClientID, oac.ClientSecret = defaultSecret, string(reverseSecret)
+	if err := db.UpdateOauthClient(oac); err != nil {
+		logger.Fatalf("error overriding oauth client secrets: %v", err)
+	}
 
 	for i := 1; i < 6; i++ {
 		exampleItem := &models.ItemInput{
@@ -69,7 +88,7 @@ client_secret: %q
 
 		_, err := db.CreateItem(exampleItem)
 		if err != nil {
-			log.Fatalf("error creating item #%d", i)
+			logger.Fatalf("error creating item #%d", i)
 		}
 	}
 }

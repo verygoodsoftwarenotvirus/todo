@@ -65,4 +65,10 @@ run: docker-image
 
 .PHONY: run-local
 run-local:
-	go run cmd/server/main.go
+	go run cmd/server/v1/main.go
+
+
+.PHONY: run-local-integration-server
+run-local-integration-server:
+	docker build --tag dev-todo:latest --file dockerfiles/integration-server.Dockerfile .
+	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` --publish=443 dev-todo:latest

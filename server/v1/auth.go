@@ -6,15 +6,10 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
-
-	"gopkg.in/oauth2.v3"
-	oauth2errors "gopkg.in/oauth2.v3/errors"
-	oauth2server "gopkg.in/oauth2.v3/server"
 )
 
 const (
@@ -29,10 +24,10 @@ type cookieAuth struct {
 	Authenticated bool
 }
 
-func (s *Server) AuthorizationMiddleware(next http.Handler) http.Handler {
+func (s *Server) UserAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		s.logger.Debugln("AuthorizationMiddleware triggered")
-		if cookie, err := req.Cookie(CookieName); err == nil {
+		s.logger.Debugln("UserAuthenticationMiddleware triggered")
+		if cookie, err := req.Cookie(CookieName); err == nil && cookie != nil {
 			var ca cookieAuth
 			if err := s.cookieBuilder.Decode(CookieName, cookie.Value, &ca); err == nil {
 				s.logger.Debugln("no problem decoding cookie")
@@ -47,7 +42,7 @@ func (s *Server) AuthorizationMiddleware(next http.Handler) http.Handler {
 				s.logger.Debugf("problem decoding cookie: %v", err)
 			}
 		}
-		res.WriteHeader(http.StatusUnauthorized)
+		http.Redirect(res, req, "/login", http.StatusUnauthorized)
 	})
 }
 
@@ -183,69 +178,4 @@ func (s *Server) Logout(res http.ResponseWriter, req *http.Request) {
 	}
 
 	res.WriteHeader(http.StatusOK)
-}
-
-// gopkg.in/oauth2.v3/server specific implementations
-
-func (s *Server) setOauth2Defaults() {
-	s.oauth2Handler.SetAccessTokenExpHandler(s.AccessTokenExpirationHandler)
-	s.oauth2Handler.SetClientAuthorizedHandler(s.ClientAuthorizedHandler)
-	s.oauth2Handler.SetClientScopeHandler(s.ClientScopeHandler)
-	s.oauth2Handler.SetClientInfoHandler(s.ClientInfoHandler)
-
-	s.oauth2Handler.SetInternalErrorHandler(func(err error) (re *oauth2errors.Response) {
-		s.logger.Errorln("Internal Error:", err.Error())
-		return
-	})
-
-	s.oauth2Handler.SetResponseErrorHandler(func(re *oauth2errors.Response) {
-		s.logger.Errorln("Response Error:", re.Error.Error())
-	})
-}
-
-var _ oauth2server.AccessTokenExpHandler = (*Server)(nil).AccessTokenExpirationHandler
-
-func (s *Server) AccessTokenExpirationHandler(w http.ResponseWriter, r *http.Request) (time.Duration, error) {
-	return 10 * time.Minute, nil
-}
-
-var _ oauth2server.ClientAuthorizedHandler = (*Server)(nil).ClientAuthorizedHandler
-
-func (s *Server) ClientAuthorizedHandler(clientID string, grant oauth2.GrantType) (allowed bool, err error) {
-	// AuthorizationCode   GrantType = "authorization_code"
-	// ClientCredentials   GrantType = "client_credentials"
-	// Refreshing          GrantType = "refresh_token"
-	// Implicit            GrantType = "__implicit"
-	// PasswordCredentials GrantType = "password"
-
-	if grant == oauth2.Implicit {
-		// validate that the client ID is allowed to have implicits somehow?
-	}
-
-	return true, nil
-}
-
-var _ oauth2server.ClientScopeHandler = (*Server)(nil).ClientScopeHandler
-
-func (s *Server) ClientScopeHandler(clientID, scope string) (allowed bool, err error) {
-	if c, err := s.db.GetOauthClient(clientID); err != nil {
-		return false, err
-	} else {
-		for _, s := range c.Scopes {
-			if s == scope {
-				return true, nil
-			}
-		}
-	}
-	return
-}
-
-var _ oauth2server.ClientInfoHandler = (*Server)(nil).ClientInfoHandler
-
-func (s *Server) ClientInfoHandler(req *http.Request) (clientID, clientSecret string, err error) {
-	c, err := s.db.GetOauthClient(req.Header.Get("X-TODO-CLIENT-ID"))
-	if err != nil {
-		return
-	}
-	return c.ClientID, c.ClientSecret, nil
 }

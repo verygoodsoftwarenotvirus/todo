@@ -1,6 +1,10 @@
 package main
 
 import (
+	"log"
+	"os"
+	"strings"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
@@ -18,17 +22,19 @@ const (
 )
 
 func main() {
+	debug := strings.ToLower(os.Getenv("DEBUG")) == "true"
+	log.Printf("debug: %v\n", debug)
 	dbCfg := database.Config{
-		Debug:            !secure,
+		Debug:            debug,
 		ConnectionString: dbFile,
 		SchemaDir:        schemaDir,
 	}
 
 	cfg := server.ServerConfig{
-		DebugMode:    !secure,
+		DebugMode:    debug,
 		CookieSecret: []byte(cookieSecret),
-		CertFile:     certFile,
-		KeyFile:      keyFile,
+		CertFile:     localCertFile,
+		KeyFile:      localKeyFile,
 		DBBuilder:    sqlite.NewSqlite,
 	}
 

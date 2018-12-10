@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS oauth_clients (
-    client_id TEXT NOT NULL PRIMARY KEY,
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    client_id TEXT NOT NULL,
     client_secret TEXT NOT NULL,
     scopes TEXT NOT NULL,
     created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),

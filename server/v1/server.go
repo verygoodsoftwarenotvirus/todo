@@ -31,6 +31,7 @@ type ServerConfig struct {
 	KeyFile      string
 	DebugMode    bool
 	CookieSecret []byte
+	Logger       *logrus.Logger
 
 	DBBuilder func(database.Config) (database.Database, error)
 }
@@ -59,10 +60,17 @@ type Server struct {
 }
 
 func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
-	logger := logrus.New()
-	dbConfig.Logger = logger
+	var logger = cfg.Logger
+	if logger == nil {
+		logger = logrus.New()
+	}
+
+	if dbConfig.Logger == nil {
+		dbConfig.Logger = logger
+	}
 
 	if len(cfg.CookieSecret) < 32 {
+		logger.Errorln("cookie secret is too short, must be at least 32 characters in length")
 		return nil, errors.New("cookie secret is too short, must be at least 32 characters in length")
 	}
 
@@ -101,21 +109,19 @@ func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 		),
 	}
 
-	srv.initializeOauth2Routes()
+	srv.initializeOauth2Server()
 	srv.setupRoutes()
 
 	return srv, nil
 }
 
-func NewDebug(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
-	dbConfig.Debug = true
-	cfg.DebugMode = true
-	c, err := NewServer(cfg, dbConfig)
-	if err != nil {
+func NewDebug(cfg ServerConfig, dbConfig database.Config) (srv *Server, err error) {
+	dbConfig.Debug, cfg.DebugMode = true, true
+	if srv, err = NewServer(cfg, dbConfig); err != nil {
 		return nil, err
 	}
-	c.logger.SetLevel(logrus.DebugLevel)
-	return c, nil
+	srv.logger.SetLevel(logrus.DebugLevel)
+	return
 }
 
 func (s *Server) Serve() {
@@ -125,13 +131,13 @@ func (s *Server) Serve() {
 
 func (s *Server) setupRoutes() {
 	router := chi.NewRouter()
-	router.Use(middleware.RequestID)
-	router.Use(context.ClearHandler)
-	router.Use(middleware.DefaultLogger)
-	router.Use(middleware.Timeout(maxTimeout))
-	router.Get("/_meta_/health", func(res http.ResponseWriter, req *http.Request) {
-		res.WriteHeader(http.StatusOK)
-	})
+	router.Use(
+		context.ClearHandler,
+		middleware.RequestID,
+		middleware.DefaultLogger,
+		middleware.Timeout(maxTimeout),
+	)
+	router.Get("/_meta_/health", func(res http.ResponseWriter, req *http.Request) { res.WriteHeader(http.StatusOK) })
 
 	if s.DebugMode {
 		router.Get("/_debug_/stats", s.stats)
@@ -143,31 +149,56 @@ func (s *Server) setupRoutes() {
 	})
 
 	// router.Route("/oauth2", func(oauthRouter chi.Router) {
-	router.Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
-		if err := s.oauth2Handler.HandleAuthorizeRequest(res, req); err != nil {
-			http.Error(res, err.Error(), http.StatusBadRequest)
-		}
-	})
+	// pk := fmt.Sprintf(`{%s:[a-zA-Z0-9\_\-]+}`, oauth2ClientIDURIParamKey)
+	// oauthRouter.Post("/clients/%s/access-token/renew", func(res http.ResponseWriter, req *http.Request){
+	//
+	// })
+	router.
+		With(s.UserAuthenticationMiddleware).
+		Get("/authorize", func(res http.ResponseWriter, req *http.Request) {
+			res.Write([]byte(`
+<html>
+	<form action="/token">
+		Do you want to authorize this application?
+  	<input type="text" hidden="true" name="secret" value="BLAHBLAHBLAHSECRET">
+  	<br><br>
+  	<input type="button" name="authorized" value="yes">
+  	<input type="button" name="authorized" value="no">
+</form> 
 
-	router.Get("/token", func(res http.ResponseWriter, req *http.Request) {
+</html>
+		`))
+		})
+
+	router.
+		With(
+			s.UserAuthenticationMiddleware,
+			s.OauthClientInfoMiddleware,
+		).
+		Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
+			if err := s.oauth2Handler.HandleAuthorizeRequest(res, req); err != nil {
+				http.Error(res, err.Error(), http.StatusBadRequest)
+			}
+		})
+
+	router.Post("/token", func(res http.ResponseWriter, req *http.Request) {
 		s.oauth2Handler.HandleTokenRequest(res, req)
 	})
 	// })
 
 	router.Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Route("/v1", func(v1Router chi.Router) {
-
-			v1Router.With(s.AuthorizationMiddleware).Post("/fart", func(res http.ResponseWriter, req *http.Request) {
+			v1Router.With(s.UserAuthenticationMiddleware).Post("/fart", func(res http.ResponseWriter, req *http.Request) {
 				res.WriteHeader(http.StatusTeapot)
 			})
 
 			v1Router.Route("/items", func(itemsRouter chi.Router) {
 				sr := fmt.Sprintf("/{%s:[0-9]+}", items.URIParamKey)
-				itemsRouter.With(s.itemsService.ItemContextMiddleware).Post("/", s.itemsService.Create) // Create
-				itemsRouter.Get(sr, s.itemsService.Read)                                                // Read
 				itemsRouter.Get("/", s.itemsService.List)                                               // List
+				itemsRouter.Get(sr, s.itemsService.Read)                                                // Read
 				itemsRouter.Delete(sr, s.itemsService.Delete)                                           // Delete
 				itemsRouter.With(s.itemsService.ItemContextMiddleware).Put(sr, s.itemsService.Update)   // Update
+				itemsRouter.With(s.itemsService.ItemContextMiddleware).Post("/", s.itemsService.Create) // Create
 			})
 		})
 	})

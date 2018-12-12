@@ -12,6 +12,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/gorilla/websocket"
+	"github.com/jinzhu/copier"
 	"github.com/moul/http2curl"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -32,10 +33,14 @@ type Config struct {
 }
 
 type V1Client struct {
-	Client    *http.Client
-	logger    *logrus.Logger
-	Debug     bool
-	URL       *url.URL
+	Client *http.Client
+	logger *logrus.Logger
+	Debug  bool
+	URL    *url.URL
+
+	// old and busted
+	authCookie *http.Cookie
+	// new hotness
 	authToken string
 
 	Items     <-chan *models.Item
@@ -53,9 +58,7 @@ func NewClient(cfg *Config) (c *V1Client, err error) {
 
 	if cfg.AuthToken != nil {
 		c.authToken = *cfg.AuthToken
-	} // else {
-	//
-	// }
+	}
 
 	if cfg.Client != nil {
 		c.Client = cfg.Client
@@ -82,6 +85,9 @@ func (c *V1Client) executeRequest(req *http.Request) (*http.Response, error) {
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.authToken))
+	if c.authCookie != nil {
+		req.AddCookie(c.authCookie)
+	}
 
 	res, err := c.Client.Do(req)
 	if err != nil {
@@ -99,8 +105,22 @@ func (c *V1Client) executeRequest(req *http.Request) (*http.Response, error) {
 	return res, nil
 }
 
-func (c *V1Client) BuildURL(queryParams url.Values, parts ...string) string {
-	return c.buildURL(queryParams, parts...).String()
+func (c *V1Client) Do(req *http.Request) (*http.Response, error) {
+	if c.URL.Hostname() != req.URL.Hostname() {
+		return nil, errors.New("request is destined for unknown server")
+	}
+	return c.executeRequest(req)
+}
+
+type Valuer interface {
+	ToValues() url.Values
+}
+
+func (c *V1Client) BuildURL(qp Valuer, parts ...string) string {
+	if qp != nil {
+		return c.buildURL(qp.ToValues(), parts...).String()
+	}
+	return c.buildURL(nil, parts...).String()
 }
 
 func (c *V1Client) buildURL(queryParams url.Values, parts ...string) *url.URL {
@@ -123,6 +143,40 @@ func (c *V1Client) BuildWebsocketURL(parts ...string) string {
 	return u.String()
 }
 
+func (c *V1Client) LoginAs(username, password, totpToken string) (nc *V1Client, err error) {
+	copier.Copy(&nc, &c)
+
+	u := *nc.URL
+	u.Path = "users"
+
+	x := models.UserLoginInput{
+		Username:  username,
+		Password:  password,
+		TOTPToken: totpToken,
+	}
+	y, err := createBodyFromStruct(x)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, u.String(), y)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := nc.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	cookies := res.Cookies()
+	if len(cookies) > 0 {
+		nc.authCookie = cookies[0]
+	}
+
+	return nc, nil
+}
+
 func (c *V1Client) IsUp() bool {
 	u := *c.URL
 
@@ -140,9 +194,14 @@ func (c *V1Client) IsUp() bool {
 func (c *V1Client) makeDataRequest(method string, uri string, in interface{}, out interface{}) error {
 	ce := &ClientError{}
 
-	if err := argIsNotPointerOrNil(out); err != nil {
-		ce.Err = errors.Wrap(err, "struct to load must be a pointer")
-		return ce
+	// sometimes we want to make requests with data attached, but we don't really care about the response
+	// so we give this function a nil `out` value.
+	if out != nil {
+		// that said, if you provide us a value, it needs to be a pointer.
+		if np, err := argIsNotPointer(out); np || err != nil {
+			ce.Err = errors.Wrap(err, "struct to load must be a pointer")
+			return ce
+		}
 	}
 
 	body, err := createBodyFromStruct(in)
@@ -158,13 +217,14 @@ func (c *V1Client) makeDataRequest(method string, uri string, in interface{}, ou
 		return ce
 	}
 
-	resErr := unmarshalBody(res, &out)
-	if resErr != nil {
-		ce.Err = errors.Wrap(err, "encountered error loading response from server")
-		return ce
+	if out != nil {
+		resErr := unmarshalBody(res, &out)
+		if resErr != nil {
+			ce.Err = errors.Wrap(err, "encountered error loading response from server")
+			return ce
+		}
+		c.logger.Debugf("data request returned: %+v", out)
 	}
-
-	c.logger.Debugf("data request returned: %+v", out)
 
 	return nil
 }

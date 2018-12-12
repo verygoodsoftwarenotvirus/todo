@@ -2,7 +2,8 @@ package models
 
 type UserHandler interface {
 	GetUser(identifier string) (*User, error)
-	GetUsers(filter *QueryFilter) ([]User, error)
+	GetUserCount(filter *QueryFilter) (uint64, error)
+	GetUsers(filter *QueryFilter) (*UserList, error)
 	CreateUser(input *UserInput) (*User, error)
 	UpdateUser(updated *User) error
 	DeleteUser(id uint) error
@@ -46,4 +47,19 @@ func (u *User) Update(input User) {
 	if input.TwoFactorSecret != "" && input.TwoFactorSecret != u.TwoFactorSecret {
 		u.TwoFactorSecret = input.TwoFactorSecret
 	}
+}
+
+type UserList struct {
+	Pagination
+	Users []User `json:"users"`
+}
+
+type PasswordUpdateInput struct {
+	NewPassword string `json:"new_password"`
+	TOTPSecretRefreshInput
+}
+
+type TOTPSecretRefreshInput struct {
+	CurrentPassword string `json:"current_password"`
+	TOTPToken       string `json:"totp_token"`
 }

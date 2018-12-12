@@ -30,6 +30,4 @@ COPY --from=db-build-stage /example.db example.db
 
 EXPOSE 443
 
-RUN ls -Al
-
 ENTRYPOINT ["/todo"]

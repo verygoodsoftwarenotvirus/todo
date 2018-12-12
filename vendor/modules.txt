@@ -1,3 +1,5 @@
+# github.com/Masterminds/squirrel v0.0.0-20181211162353-a8c1880ebb4d
+github.com/Masterminds/squirrel
 # github.com/boombuler/barcode v1.0.0
 github.com/boombuler/barcode
 github.com/boombuler/barcode/qr
@@ -22,12 +24,31 @@ github.com/gorilla/context
 github.com/gorilla/securecookie
 # github.com/gorilla/websocket v1.4.0
 github.com/gorilla/websocket
+# github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3
+github.com/jinzhu/copier
 # github.com/konsorten/go-windows-terminal-sequences v1.0.1
 github.com/konsorten/go-windows-terminal-sequences
+# github.com/lann/builder v0.0.0-20180802200727-47ae307949d0
+github.com/lann/builder
+# github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0
+github.com/lann/ps
 # github.com/mattn/go-sqlite3 v1.10.0
 github.com/mattn/go-sqlite3
 # github.com/moul/http2curl v1.0.0
 github.com/moul/http2curl
+# github.com/onsi/gomega v1.4.3
+github.com/onsi/gomega
+github.com/onsi/gomega/internal/assertion
+github.com/onsi/gomega/internal/asyncassertion
+github.com/onsi/gomega/internal/testingtsupport
+github.com/onsi/gomega/matchers
+github.com/onsi/gomega/types
+github.com/onsi/gomega/internal/oraclematcher
+github.com/onsi/gomega/format
+github.com/onsi/gomega/matchers/support/goraph/bipartitegraph
+github.com/onsi/gomega/matchers/support/goraph/edge
+github.com/onsi/gomega/matchers/support/goraph/node
+github.com/onsi/gomega/matchers/support/goraph/util
 # github.com/pkg/errors v0.8.0
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
@@ -49,7 +70,7 @@ github.com/tidwall/buntdb
 github.com/tidwall/gjson
 # github.com/tidwall/grect v0.0.0-20161006141115-ba9a043346eb
 github.com/tidwall/grect
-# github.com/tidwall/match v1.0.0
+# github.com/tidwall/match v1.0.1
 github.com/tidwall/match
 # github.com/tidwall/rtree v0.0.0-20180113144539-6cd427091e0e
 github.com/tidwall/rtree
@@ -60,15 +81,34 @@ github.com/tidwall/tinyqueue
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/blowfish
-# golang.org/x/net v0.0.0-20181207154023-610586996380
+# golang.org/x/net v0.0.0-20180906233101-161cd47e91fd
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/context
+golang.org/x/net/html/charset
+golang.org/x/net/html
+golang.org/x/net/html/atom
 # golang.org/x/oauth2 v0.0.0-20181203162652-d668ce993890
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20180905080454-ebe1bf3edb33
+# golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e
 golang.org/x/sys/unix
 golang.org/x/sys/windows
+# golang.org/x/text v0.3.0
+golang.org/x/text/encoding
+golang.org/x/text/encoding/charmap
+golang.org/x/text/encoding/htmlindex
+golang.org/x/text/transform
+golang.org/x/text/encoding/internal/identifier
+golang.org/x/text/encoding/internal
+golang.org/x/text/encoding/japanese
+golang.org/x/text/encoding/korean
+golang.org/x/text/encoding/simplifiedchinese
+golang.org/x/text/encoding/traditionalchinese
+golang.org/x/text/encoding/unicode
+golang.org/x/text/language
+golang.org/x/text/internal/utf8internal
+golang.org/x/text/runes
+golang.org/x/text/internal/tag
 # google.golang.org/appengine v1.3.0
 google.golang.org/appengine/urlfetch
 google.golang.org/appengine/internal
@@ -86,3 +126,5 @@ gopkg.in/oauth2.v3/server
 gopkg.in/oauth2.v3/store
 gopkg.in/oauth2.v3/generates
 gopkg.in/oauth2.v3/utils/uuid
+# gopkg.in/yaml.v2 v2.2.1
+gopkg.in/yaml.v2

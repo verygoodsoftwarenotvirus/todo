@@ -14,6 +14,12 @@ const (
 	exampleURL = "https://todo.verygoodsoftwarenotvirus.ru"
 )
 
+type valuer map[string][]string
+
+func (v valuer) ToValues() url.Values {
+	return url.Values(v)
+}
+
 func TestBuildURL(T *testing.T) {
 	T.Parallel()
 
@@ -27,7 +33,7 @@ func TestBuildURL(T *testing.T) {
 		testCases := []struct {
 			expectation string
 			inputParts  []string
-			inputQuery  url.Values
+			inputQuery  valuer
 		}{
 			{
 				expectation: "https://todo.verygoodsoftwarenotvirus.ru/api/v1/things",

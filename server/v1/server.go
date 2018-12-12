@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"runtime"
 	"time"
@@ -12,11 +11,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauthclients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
-	"github.com/gorilla/context"
 	"github.com/gorilla/securecookie"
 	"github.com/sirupsen/logrus"
 	oauth2server "gopkg.in/oauth2.v3/server"
@@ -33,6 +30,9 @@ type ServerConfig struct {
 	CookieSecret []byte
 	Logger       *logrus.Logger
 
+	Authenticator auth.Enticator
+	LoginMonitor  LoginMonitor
+
 	DBBuilder func(database.Config) (database.Database, error)
 }
 
@@ -44,9 +44,10 @@ type Server struct {
 	authenticator auth.Enticator
 
 	// Services
-	loginMonitor LoginMonitor
-	itemsService *items.ItemsService
-	usersService *users.UsersService
+	loginMonitor        LoginMonitor
+	itemsService        *items.ItemsService
+	usersService        *users.UsersService
+	oauthclientsService *oauthclients.Oauth2ClientsService
 
 	// infra things
 	db            database.Database
@@ -69,6 +70,14 @@ func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 		dbConfig.Logger = logger
 	}
 
+	if cfg.Authenticator == nil {
+		cfg.Authenticator = auth.NewBcrypt(logger)
+	}
+
+	if cfg.LoginMonitor == nil {
+		cfg.LoginMonitor = &NoopLoginMonitor{}
+	}
+
 	if len(cfg.CookieSecret) < 32 {
 		logger.Errorln("cookie secret is too short, must be at least 32 characters in length")
 		return nil, errors.New("cookie secret is too short, must be at least 32 characters in length")
@@ -89,8 +98,8 @@ func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 		certFile:      cfg.CertFile,
 		keyFile:       cfg.KeyFile,
 		server:        buildServer(),
-		loginMonitor:  &NoopLoginMonitor{}, // TODO: this makes me sad
-		authenticator: auth.NewBcrypt(logger),
+		loginMonitor:  cfg.LoginMonitor,
+		authenticator: cfg.Authenticator,
 		cookieSecret:  cfg.CookieSecret,
 		cookieBuilder: securecookie.New(securecookie.GenerateRandomKey(64), cfg.CookieSecret),
 
@@ -103,8 +112,17 @@ func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 		),
 		usersService: users.NewUsersService(
 			users.UsersServiceConfig{
-				Logger:   logger,
-				Database: db,
+				// CookieName: s.config.CookieName
+				Logger:        logger,
+				Database:      db,
+				Authenticator: cfg.Authenticator,
+			},
+		),
+		oauthclientsService: oauthclients.NewOauth2ClientsService(
+			oauthclients.Oauth2ClientsServiceConfig{
+				Logger:        logger,
+				Authenticator: cfg.Authenticator,
+				Database:      db,
 			},
 		),
 	}
@@ -127,83 +145,6 @@ func NewDebug(cfg ServerConfig, dbConfig database.Config) (srv *Server, err erro
 func (s *Server) Serve() {
 	s.logger.Debugf("Listening on 443")
 	s.logger.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))
-}
-
-func (s *Server) setupRoutes() {
-	router := chi.NewRouter()
-	router.Use(
-		context.ClearHandler,
-		middleware.RequestID,
-		middleware.DefaultLogger,
-		middleware.Timeout(maxTimeout),
-	)
-	router.Get("/_meta_/health", func(res http.ResponseWriter, req *http.Request) { res.WriteHeader(http.StatusOK) })
-
-	if s.DebugMode {
-		router.Get("/_debug_/stats", s.stats)
-	}
-
-	router.Route("/users", func(userRouter chi.Router) {
-		userRouter.With(s.usersService.UserInputContextMiddleware).Post("/login", s.Login)
-		userRouter.Post("/logout", s.Logout)
-	})
-
-	// router.Route("/oauth2", func(oauthRouter chi.Router) {
-	// pk := fmt.Sprintf(`{%s:[a-zA-Z0-9\_\-]+}`, oauth2ClientIDURIParamKey)
-	// oauthRouter.Post("/clients/%s/access-token/renew", func(res http.ResponseWriter, req *http.Request){
-	//
-	// })
-	router.
-		With(s.UserAuthenticationMiddleware).
-		Get("/authorize", func(res http.ResponseWriter, req *http.Request) {
-			res.Write([]byte(`
-<html>
-	<form action="/token">
-		Do you want to authorize this application?
-  	<input type="text" hidden="true" name="secret" value="BLAHBLAHBLAHSECRET">
-  	<br><br>
-  	<input type="button" name="authorized" value="yes">
-  	<input type="button" name="authorized" value="no">
-</form> 
-
-</html>
-		`))
-		})
-
-	router.
-		With(
-			s.UserAuthenticationMiddleware,
-			s.OauthClientInfoMiddleware,
-		).
-		Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
-			if err := s.oauth2Handler.HandleAuthorizeRequest(res, req); err != nil {
-				http.Error(res, err.Error(), http.StatusBadRequest)
-			}
-		})
-
-	router.Post("/token", func(res http.ResponseWriter, req *http.Request) {
-		s.oauth2Handler.HandleTokenRequest(res, req)
-	})
-	// })
-
-	router.Route("/api", func(apiRouter chi.Router) {
-		apiRouter.Route("/v1", func(v1Router chi.Router) {
-			v1Router.With(s.UserAuthenticationMiddleware).Post("/fart", func(res http.ResponseWriter, req *http.Request) {
-				res.WriteHeader(http.StatusTeapot)
-			})
-
-			v1Router.Route("/items", func(itemsRouter chi.Router) {
-				sr := fmt.Sprintf("/{%s:[0-9]+}", items.URIParamKey)
-				itemsRouter.Get("/", s.itemsService.List)                                               // List
-				itemsRouter.Get(sr, s.itemsService.Read)                                                // Read
-				itemsRouter.Delete(sr, s.itemsService.Delete)                                           // Delete
-				itemsRouter.With(s.itemsService.ItemContextMiddleware).Put(sr, s.itemsService.Update)   // Update
-				itemsRouter.With(s.itemsService.ItemContextMiddleware).Post("/", s.itemsService.Create) // Create
-			})
-		})
-	})
-
-	s.server.Handler = router
 }
 
 func (s *Server) stats(res http.ResponseWriter, req *http.Request) {

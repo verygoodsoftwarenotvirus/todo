@@ -24,7 +24,7 @@ type Database interface {
 
 	models.ItemHandler
 	models.UserHandler
-	models.OauthClientHandler
+	models.Oauth2ClientHandler
 }
 
 type SecretGenerator interface {

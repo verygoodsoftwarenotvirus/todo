@@ -78,13 +78,29 @@ func mapToQueryValues(in map[string]string) url.Values {
 }
 
 func argIsNotPointerOrNil(i interface{}) error {
-	if i == nil {
-		return errors.New("unmarshalBody cannot accept nil values")
+	if nn, err := argIsNotNil(i); nn || err != nil {
+		return err
 	}
-	if reflect.TypeOf(i).Kind() != reflect.Ptr {
-		return errors.New("unmarshalBody can only accept pointers")
+	if np, err := argIsNotPointer(i); np || err != nil {
+		return err
 	}
 	return nil
+}
+
+// argIsNotPointer looks like a normal function, but its error value is actually an error you can wrap around
+func argIsNotPointer(i interface{}) (np bool, err error) {
+	if reflect.TypeOf(i).Kind() != reflect.Ptr {
+		return true, errors.New("value is not a pointer")
+	}
+	return
+}
+
+// argIsNotNil looks like a normal function, but its error value is actually an error you can wrap around
+func argIsNotNil(i interface{}) (nn bool, err error) {
+	if i == nil {
+		return true, errors.New("value is nil")
+	}
+	return
 }
 
 func unmarshalBody(res *http.Response, dest interface{}) error {

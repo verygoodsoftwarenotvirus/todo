@@ -1,11 +1,12 @@
 package models
 
 type ItemHandler interface {
-	GetItem(id uint) (*Item, error)
-	GetItems(filter *QueryFilter) ([]Item, error)
+	GetItem(id uint64) (*Item, error)
+	GetItemCount(filter *QueryFilter) (uint64, error)
+	GetItems(filter *QueryFilter) (*ItemList, error)
 	CreateItem(input *ItemInput) (*Item, error)
 	UpdateItem(updated *Item) error
-	DeleteItem(id uint) error
+	DeleteItem(id uint64) error
 }
 
 type Item struct {
@@ -25,6 +26,11 @@ func (i *Item) Update(input *ItemInput) {
 	if input.Details != "" || input.Details != i.Details {
 		i.Details = input.Details
 	}
+}
+
+type ItemList struct {
+	Pagination
+	Items []Item `json:"items"`
 }
 
 type ItemInput struct {

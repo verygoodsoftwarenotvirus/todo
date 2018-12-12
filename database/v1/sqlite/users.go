@@ -21,6 +21,13 @@ const (
 		WHERE
 			username = ? AND archived_on is null
 	`
+	getUserCountQuery = `
+		SELECT
+			COUNT(*)
+		FROM
+			users
+		WHERE archived_on is null
+	`
 	getUserQueryByID = `
 		SELECT
 			id,
@@ -101,7 +108,13 @@ func (s *sqlite) GetUser(identifier string) (*models.User, error) {
 	return scanUser(row)
 }
 
-func (s *sqlite) GetUsers(filter *models.QueryFilter) ([]models.User, error) {
+func (s *sqlite) GetUserCount(filter *models.QueryFilter) (uint64, error) {
+	var count uint64
+	err := s.database.QueryRow(getUserCountQuery).Scan(&count)
+	return count, err
+}
+
+func (s *sqlite) GetUsers(filter *models.QueryFilter) (*models.UserList, error) {
 	if filter == nil {
 		s.logger.Debugln("using default query filter")
 		filter = models.DefaultQueryFilter
@@ -122,12 +135,25 @@ func (s *sqlite) GetUsers(filter *models.QueryFilter) ([]models.User, error) {
 		}
 		list = append(list, *user)
 	}
-	err = rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	count, err := s.GetUserCount(filter)
 	if err != nil {
 		return nil, err
 	}
 
-	return list, err
+	x := &models.UserList{
+		Pagination: models.Pagination{
+			Page:       filter.Page,
+			Limit:      filter.Limit,
+			TotalCount: count,
+		},
+		Users: list,
+	}
+
+	return x, err
 }
 
 func (s *sqlite) CreateUser(input *models.UserInput) (x *models.User, err error) {

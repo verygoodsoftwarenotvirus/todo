@@ -1,6 +1,8 @@
 package sqlite
 
 import (
+	"math"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
@@ -13,6 +15,13 @@ const (
 			items
 		WHERE
 			id = ? AND completed_on is null
+	`
+	getItemCountQuery = `
+		SELECT
+			COUNT(*)
+		FROM
+			items
+		WHERE completed_on is null
 	`
 	getItemsQuery = `
 		SELECT
@@ -65,20 +74,29 @@ func scanItem(scan database.Scannable) (*models.Item, error) {
 	return i, nil
 }
 
-func (s *sqlite) GetItem(id uint) (*models.Item, error) {
+func (s *sqlite) GetItem(id uint64) (*models.Item, error) {
 	row := s.database.QueryRow(getItemQuery, id)
 	return scanItem(row)
 }
 
-func (s *sqlite) GetItems(filter *models.QueryFilter) ([]models.Item, error) {
+func (s *sqlite) GetItemCount(filter *models.QueryFilter) (uint64, error) {
+	var count uint64
+	// TODO: apply filter here
+	err := s.database.QueryRow(getItemCountQuery).Scan(&count)
+	return count, err
+}
+
+func (s *sqlite) GetItems(filter *models.QueryFilter) (*models.ItemList, error) {
 	if filter == nil {
 		s.logger.Debugln("using default query filter")
 		filter = models.DefaultQueryFilter
 	}
+	filter.Page = uint64(math.Max(1, float64(filter.Page)))
+	queryPage := uint(filter.Limit * (filter.Page - 1))
 
 	list := []models.Item{}
 
-	s.logger.Infof("query limit: %d, query page: %d, calculated page: %d", filter.Limit, filter.Page, uint(filter.Limit*(filter.Page-1)))
+	s.logger.Debugf("query limit: %d, query page: %d, calculated page: %d", filter.Limit, filter.Page, queryPage)
 
 	rows, err := s.database.Query(getItemsQuery, filter.Limit, uint(filter.Limit*(filter.Page-1)))
 	if err != nil {
@@ -92,12 +110,25 @@ func (s *sqlite) GetItems(filter *models.QueryFilter) ([]models.Item, error) {
 		}
 		list = append(list, *item)
 	}
-	err = rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	count, err := s.GetItemCount(filter)
 	if err != nil {
 		return nil, err
 	}
 
-	return list, err
+	x := &models.ItemList{
+		Pagination: models.Pagination{
+			Page:       filter.Page,
+			TotalCount: count,
+			Limit:      filter.Limit,
+		},
+		Items: list,
+	}
+
+	return x, err
 }
 
 func (s *sqlite) CreateItem(input *models.ItemInput) (i *models.Item, err error) {
@@ -181,7 +212,7 @@ func (s *sqlite) UpdateItem(input *models.Item) (err error) {
 	return
 }
 
-func (s *sqlite) DeleteItem(id uint) error {
+func (s *sqlite) DeleteItem(id uint64) error {
 	_, err := s.database.Exec(archiveItemQuery, id)
 	return err
 }

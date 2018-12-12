@@ -1,58 +1,29 @@
 package client
 
 import (
-	"fmt"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
 const itemsBasePath = "items"
 
 func (c *V1Client) GetItem(id string) (item *models.Item, err error) {
-	p := fmt.Sprintf("%s/%s", itemsBasePath, id)
-	u := c.BuildURL(nil, p)
-	item = &models.Item{}
-
-	err = c.get(u, &item)
-
-	return
+	return item, c.get(c.BuildURL(nil, itemsBasePath, id), &item)
 }
 
-func (c *V1Client) GetItems(filter *models.QueryFilter) (items []models.Item, err error) {
-	var u string
-	if filter == nil {
-		u = c.BuildURL(nil, itemsBasePath)
-	} else {
-		u = c.BuildURL(filter.ToValues(), itemsBasePath)
-	}
-
-	items = []models.Item{}
-	err = c.get(u, &items)
-
-	return
+func (c *V1Client) GetItems(filter *models.QueryFilter) (items *models.ItemList, err error) {
+	return items, c.get(c.BuildURL(filter, itemsBasePath), &items)
 }
 
-func (c *V1Client) CreateItem(input *models.ItemInput) (*models.Item, error) {
-	u := c.BuildURL(nil, itemsBasePath)
-	item := &models.Item{}
-
-	err := c.post(u, input, item)
-
-	return item, err
+func (c *V1Client) CreateItem(input *models.ItemInput) (item *models.Item, err error) {
+	return item, c.post(c.BuildURL(nil, itemsBasePath), input, &item)
 }
 
 func (c *V1Client) UpdateItem(updated *models.Item) (err error) {
-	p := fmt.Sprintf("%s/%s", itemsBasePath, updated.ID)
-	u := c.BuildURL(nil, p)
-
-	return c.put(u, updated, &models.Item{})
+	return c.put(c.BuildURL(nil, itemsBasePath, updated.ID), updated, &updated)
 }
 
 func (c *V1Client) DeleteItem(id string) error {
-	p := fmt.Sprintf("%s/%s", itemsBasePath, id)
-	u := c.BuildURL(nil, p)
-
-	return c.delete(u)
+	return c.delete(c.BuildURL(nil, itemsBasePath, id))
 }
 
 // func (c *V1Client) buildItemsFeed(conn *websocket.Conn, itemChan chan models.Item) {

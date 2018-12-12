@@ -35,7 +35,7 @@ func (b *BcryptAuthenticator) HashPassword(password string) (string, error) {
 	return string(hashedPass), err
 }
 
-func (b *BcryptAuthenticator) PasswordMatches(hashedPassword, providedPassword string) bool {
+func (b *BcryptAuthenticator) PasswordMatches(hashedPassword, providedPassword string, salt []byte) bool {
 	matches := bcrypt.CompareHashAndPassword(
 		[]byte(hashedPassword),
 		[]byte(providedPassword),
@@ -60,7 +60,7 @@ func (b *BcryptAuthenticator) PasswordIsAcceptable(pass string) bool {
 }
 
 func (b *BcryptAuthenticator) ValidateLogin(hashedPassword, providedPassword, twoFactorSecret, twoFactorCode string) (bool, error) {
-	passwordMatches := b.PasswordMatches(hashedPassword, providedPassword)
+	passwordMatches := b.PasswordMatches(hashedPassword, providedPassword, nil)
 	tokenIsValid := totp.Validate(twoFactorCode, twoFactorSecret)
 	if !tokenIsValid {
 		return passwordMatches, ErrInvalidTwoFactorCode

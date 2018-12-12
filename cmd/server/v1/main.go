@@ -21,20 +21,36 @@ const (
 	cookieSecret  = "HEREISA32CHARSECRETWHICHISMADEUP"
 )
 
-func main() {
-	debug := strings.ToLower(os.Getenv("DEBUG")) == "true"
+var (
+	certToUse, keyToUse string
+	debug               bool
+)
+
+func init() {
+	debug = strings.ToLower(os.Getenv("DOCKER")) == "true"
+	if debug {
+		log.Println("running in a docker environment")
+		certToUse, keyToUse = certFile, keyFile
+	} else {
+		certToUse, keyToUse = localCertFile, localKeyFile
+	}
 	log.Printf("debug: %v\n", debug)
+	log.Printf("using this cert: %q\n", certToUse)
+	log.Printf("using this key: %q\n", keyToUse)
+}
+
+func main() {
 	dbCfg := database.Config{
-		Debug:            debug,
+		Debug:            true,
 		ConnectionString: dbFile,
 		SchemaDir:        schemaDir,
 	}
 
 	cfg := server.ServerConfig{
-		DebugMode:    debug,
+		DebugMode:    true,
 		CookieSecret: []byte(cookieSecret),
-		CertFile:     localCertFile,
-		KeyFile:      localKeyFile,
+		CertFile:     certToUse,
+		KeyFile:      keyToUse,
 		DBBuilder:    sqlite.NewSqlite,
 	}
 

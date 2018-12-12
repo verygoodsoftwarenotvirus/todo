@@ -1,10 +1,11 @@
 package integration
 
 import (
+	"bytes"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
-	"github.com/pquerna/otp/totp"
-	"golang.org/x/oauth2"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -12,12 +13,14 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/bxcodec/faker"
+	"github.com/pquerna/otp/totp"
+	"golang.org/x/oauth2"
 )
 
 const (
-	debug                  = false
+	debug                  = true
 	nonexistentID          = "999999999"
 	localTestInstanceURL   = "https://localhost"
 	defaultTestInstanceURL = "https://demo-server"
@@ -25,45 +28,55 @@ const (
 	defaultTestInstanceClientID     = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
 	defaultTestInstanceClientSecret = "YLBAILERTSETANNAWIESUACEBPUEDAMEVIHCIHWTERCESASIEREH"
 	defaultTestInstanceAuthToken    = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
+
+	exampleUsername   = "username"
+	examplePassword   = "password"
+	exampleTOTPSecret = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
 )
 
 var (
+	urlToUse   = defaultTestInstanceURL
 	todoClient *client.V1Client
-	fake       = faker.GetLorem()
 )
 
 func sp(s string) *string { return &s }
 
-func fetchCookieForOauthTesting(username, password, totpSecret string) *http.Cookie {
+func readerFromObject(i interface{}) io.Reader {
+	b, err := json.Marshal(i)
+	if err != nil {
+
+	}
+	return bytes.NewReader(b)
+}
+
+func buildLoginInput(username, password, totpSecret string) *models.UserLoginInput {
+	code, err := totp.GenerateCode(strings.ToUpper(totpSecret), time.Now())
+	if err != nil {
+
+	}
+	uli := &models.UserLoginInput{
+		Username:  username,
+		Password:  password,
+		TOTPToken: code,
+	}
+	return uli
+}
+
+func fetchCookieForOauthTesting(uli *models.UserLoginInput) *http.Cookie {
 	loginURL := fmt.Sprintf("%s://%s/users/login", todoClient.URL.Scheme, todoClient.URL.Hostname())
 
-	code, err := totp.GenerateCode(strings.ToUpper(totpSecret), time.Now())
-
-	body := strings.NewReader(fmt.Sprintf(`
-		{
-			"username": %q,
-			"password": %q,
-			"totp_token": %q
-		}
-	`, username, password, code))
+	body := readerFromObject(uli)
 	req, _ := http.NewRequest(http.MethodPost, loginURL, body)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	cookies := resp.Cookies()
-	if len(cookies) == 1 {
+	if len(resp.Cookies()) == 1 {
 		return resp.Cookies()[0]
 	}
 	return nil
 }
-
-const (
-	exampleUsername   = "username"
-	examplePassword   = "password"
-	exampleTOTPSecret = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
-)
 
 func testOAuth() {
 	var tempServer *http.Server
@@ -84,7 +97,8 @@ func testOAuth() {
 		log.Fatal(tempServer.ListenAndServe())
 	}()
 
-	loggedInCookie := fetchCookieForOauthTesting(exampleUsername, examplePassword, exampleTOTPSecret)
+	uli := buildLoginInput(exampleUsername, examplePassword, exampleTOTPSecret)
+	loggedInCookie := fetchCookieForOauthTesting(uli)
 	if loggedInCookie == nil {
 		panic("wtf")
 	}
@@ -95,26 +109,26 @@ func testOAuth() {
 		RedirectURL:  tempServer.Addr,
 		Scopes:       []string{"*"},
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  fmt.Sprintf("%s/authorize", localTestInstanceURL),
-			TokenURL: fmt.Sprintf("%s/token", localTestInstanceURL),
+			AuthURL:  fmt.Sprintf("%s/authorize", urlToUse),
+			TokenURL: fmt.Sprintf("%s/token", urlToUse),
 		},
 	}
-	//tok, err := conf.Exchange(
-	//	oauth2.NoContext,
-	//	defaultTestInstanceAuthToken,
-	//	oauth2.SetAuthURLParam("client_id", conf.ClientID),
-	//	oauth2.SetAuthURLParam("client_secret", conf.ClientSecret),
-	//	oauth2.SetAuthURLParam("redirect_url", "YOUR_REDIRECT_URL"),
-	//)
-	//
-	//
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
 
-	//oaClient := conf.Client(oauth2.NoContext, tok)
+	tok, err := conf.Exchange(
+		oauth2.NoContext,
+		defaultTestInstanceAuthToken,
+		oauth2.SetAuthURLParam("client_id", conf.ClientID),
+		oauth2.SetAuthURLParam("client_secret", conf.ClientSecret),
+		oauth2.SetAuthURLParam("response_type", "token"),
+		oauth2.SetAuthURLParam("redirect_uri", fmt.Sprintf("http://localhost%s", tempServer.Addr)),
+		oauth2.SetAuthURLParam("scope", "*"),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	oaClient := conf.Client(oauth2.NoContext, tok)
 
-	oaClient := *http.DefaultClient
+	//oaClient := *http.DefaultClient
 
 	oaClient.Transport = http.DefaultTransport
 	oaClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{
@@ -122,14 +136,14 @@ func testOAuth() {
 		InsecureSkipVerify: true,
 	}
 
-	u, _ := url.Parse(fmt.Sprintf("%s/authorize", localTestInstanceURL))
-	values := u.Query()
-	values.Set("client_id", conf.ClientID)
-	values.Set("client_secret", conf.ClientSecret)
-	values.Set("response_type", "code")
-	values.Set("scope", "*")
-	values.Set("redirect_uri", fmt.Sprintf("http://localhost%s", tempServer.Addr))
-	u.RawQuery = values.Encode()
+	u, _ := url.Parse(fmt.Sprintf("%s/authorize", urlToUse))
+	// values := u.Query()
+	// values.Set("client_id", conf.ClientID)
+	// values.Set("client_secret", conf.ClientSecret)
+	// values.Set("response_type", "code")
+	// values.Set("redirect_uri", fmt.Sprintf("http://localhost%s", tempServer.Addr))
+	// values.Set("scope", "*")
+	// u.RawQuery = values.Encode()
 
 	req, _ := http.NewRequest(http.MethodGet, u.String(), nil)
 	req.AddCookie(loggedInCookie)
@@ -155,7 +169,7 @@ func initializeClient() {
 			//Timeout:   5 * time.Second,
 		},
 		Debug:     debug,
-		Address:   localTestInstanceURL,
+		Address:   urlToUse,
 		AuthToken: sp(defaultTestInstanceAuthToken),
 	}
 
@@ -196,5 +210,5 @@ func ensureServerIsUp() {
 func init() {
 	initializeClient()
 	ensureServerIsUp()
-	testOAuth()
+	//testOAuth()
 }

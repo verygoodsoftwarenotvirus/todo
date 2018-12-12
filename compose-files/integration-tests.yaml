@@ -7,6 +7,8 @@ services:
             dockerfile: dockerfiles/integration-server.Dockerfile
         ports:
             - '1443:443'
+        environment:
+            DOCKER: 'true'
         # logging:
         #     driver: none
 

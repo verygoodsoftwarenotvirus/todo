@@ -61,8 +61,8 @@ func main() {
 		logger.Fatalf("error creating user: %v", err)
 	}
 
-	oac, err := db.CreateOauthClient(
-		&models.OauthClientInput{
+	oac, err := db.CreateOauth2Client(
+		&models.Oauth2ClientInput{
 			Scopes: []string{"*"},
 		},
 	)
@@ -76,7 +76,7 @@ func main() {
 	}
 
 	oac.ClientID, oac.ClientSecret = defaultSecret, string(reverseSecret)
-	if err := db.UpdateOauthClient(oac); err != nil {
+	if err := db.UpdateOauth2Client(oac); err != nil {
 		logger.Fatalf("error overriding oauth client secrets: %v", err)
 	}
 

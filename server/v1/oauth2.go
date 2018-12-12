@@ -20,24 +20,25 @@ import (
 )
 
 const (
-	oauth2ClientIDURIParamKey                   = "client_id"
-	scopesSeparator                             = `,`
-	clientIDKey               models.ContextKey = "client_id"
 	clientKey                 models.ContextKey = "client"
 	scopesKey                 models.ContextKey = "scopes"
+	clientIDKey               models.ContextKey = "client_id"
+	oauth2ClientIDURIParamKey                   = "client_id"
+	scopesSeparator                             = ","
 )
 
 func (s *Server) initializeOauth2Server() {
 	manager := oauth2manage.NewDefaultManager()
 	// token memory store
-	manager.MustTokenStorage(oauth2store.NewMemoryTokenStore())
+	tokenStore, err := oauth2store.NewMemoryTokenStore()
+	manager.MustTokenStorage(tokenStore, err)
 
 	// client memory store
 	clientStore := oauth2store.NewClientStore()
 
 	var paginating bool = true
 	for page := 1; paginating; page++ {
-		clientList, err := s.db.GetOauthClients(
+		clientList, err := s.db.GetOauth2Clients(
 			&models.QueryFilter{
 				Page:  uint64(page),
 				Limit: 50,
@@ -101,7 +102,7 @@ func setOauth2Defaults(srv *oauth2server.Server, s *Server) {
 	})
 }
 
-func (s *Server) OauthClientInfoMiddleware(next http.Handler) http.Handler {
+func (s *Server) Oauth2ClientInfoMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		s.logger.Debugln("OauthInfoMiddleware triggered")
 
@@ -114,15 +115,15 @@ func (s *Server) OauthClientInfoMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) fetchOauthClientFromRequest(req *http.Request) *models.OauthClient {
-	client, ok := req.Context().Value(clientKey).(*models.OauthClient)
+func (s *Server) fetchOauth2ClientFromRequest(req *http.Request) *models.Oauth2Client {
+	client, ok := req.Context().Value(clientKey).(*models.Oauth2Client)
 	if !ok {
 		return nil
 	}
 	return client
 }
 
-func (s *Server) fetchOauthClientScopesFromRequest(req *http.Request) []string {
+func (s *Server) fetchOauth2ClientScopesFromRequest(req *http.Request) []string {
 	scopes, ok := req.Context().Value(scopesKey).([]string)
 	if !ok {
 		return nil
@@ -130,7 +131,7 @@ func (s *Server) fetchOauthClientScopesFromRequest(req *http.Request) []string {
 	return scopes
 }
 
-func (s *Server) fetchOauthClientIDFromRequest(req *http.Request) string {
+func (s *Server) fetchOauth2ClientIDFromRequest(req *http.Request) string {
 	clientID, ok := req.Context().Value(clientIDKey).(string)
 	if !ok {
 		return ""
@@ -143,19 +144,19 @@ func (s *Server) fetchOauthClientIDFromRequest(req *http.Request) string {
 var _ oauth2server.AuthorizeScopeHandler = (*Server)(nil).AuthorizeScopeHandler
 
 func (s *Server) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Request) (scope string, err error) {
-	client := s.fetchOauthClientFromRequest(req)
+	client := s.fetchOauth2ClientFromRequest(req)
 	if client != nil {
 		return strings.Join(client.Scopes, scopesSeparator), nil
 	}
 
-	scopes := s.fetchOauthClientScopesFromRequest(req)
+	scopes := s.fetchOauth2ClientScopesFromRequest(req)
 	if scopes != nil {
 		return strings.Join(scopes, scopesSeparator), nil
 	}
 
-	clientID := s.fetchOauthClientIDFromRequest(req)
+	clientID := s.fetchOauth2ClientIDFromRequest(req)
 	if clientID != "" {
-		client, err := s.db.GetOauthClient(clientID)
+		client, err := s.db.GetOauth2Client(clientID)
 		if err != nil {
 			return "", err
 		}
@@ -202,7 +203,7 @@ func (s *Server) ClientAuthorizedHandler(clientID string, grant oauth2.GrantType
 var _ oauth2server.ClientScopeHandler = (*Server)(nil).ClientScopeHandler
 
 func (s *Server) ClientScopeHandler(clientID, scope string) (allowed bool, err error) {
-	if c, err := s.db.GetOauthClient(clientID); err != nil {
+	if c, err := s.db.GetOauth2Client(clientID); err != nil {
 		return false, err
 	} else {
 		for _, s := range c.Scopes {
@@ -217,7 +218,7 @@ func (s *Server) ClientScopeHandler(clientID, scope string) (allowed bool, err e
 var _ oauth2server.ClientInfoHandler = (*Server)(nil).ClientInfoHandler
 
 func (s *Server) ClientInfoHandler(req *http.Request) (clientID, clientSecret string, err error) {
-	c, err := s.db.GetOauthClient(req.Header.Get("X-TODO-CLIENT-ID"))
+	c, err := s.db.GetOauth2Client(req.Header.Get("X-TODO-CLIENT-ID"))
 	if err != nil {
 		return
 	}

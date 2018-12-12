@@ -1,43 +1,42 @@
 package sqlite
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"math"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
 const (
-	scopesSeparator          = `,`
-	getOauthClientCountQuery = `
+	scopesSeparator           = `,`
+	getOauth2ClientCountQuery = `
 		SELECT
 			COUNT(*)
 		FROM
 			oauth_clients
 		WHERE archived_on is null
 	`
-	getOauthClientQuery = `
+	getOauth2ClientQuery = `
 		SELECT
-			id, client_id, scopes, client_secret, created_on, updated_on, archived_on
+			id, client_id, scopes, domain, client_secret, created_on, updated_on, archived_on
 		FROM
 			oauth_clients
 		WHERE
 			id = ? AND archived_on is null
 	`
-	getOauthClientByClientIDQuery = `
+	getOauth2ClientByClientIDQuery = `
 		SELECT
-			id, client_id, scopes, client_secret, created_on, updated_on, archived_on
+			id, client_id, scopes, domain, client_secret, created_on, updated_on, archived_on
 		FROM
 			oauth_clients
 		WHERE
 			client_id = ? AND archived_on is null
 	`
-	getOauthClientsQuery = `
+	getOauth2ClientsQuery = `
 		SELECT
-			id, client_id, scopes, client_secret, created_on, updated_on, archived_on
+			id, client_id, scopes, domain, client_secret, created_on, updated_on, archived_on
 		FROM
 			oauth_clients
 		WHERE
@@ -45,25 +44,26 @@ const (
 		LIMIT ?
 		OFFSET ?
 	`
-	createOauthClientQuery = `
+	createOauth2ClientQuery = `
 		INSERT INTO oauth_clients
 		(
-			client_id, client_secret, scopes
+			client_id, client_secret, scopes, domain
 		)
 		VALUES
 		(
-			?, ?, ?
+			?, ?, ?, ?
 		)
 	`
-	updateOauthClientQuery = `
+	updateOauth2ClientQuery = `
 		UPDATE oauth_clients SET
 			client_id = ?,
 			client_secret = ?,
 			scopes = ?,
+			domain = ?,
 			updated_on = (strftime('%s','now'))
 		WHERE id = ?
 	`
-	archiveOauthClientQuery = `
+	archiveOauth2ClientQuery = `
 		UPDATE oauth_clients SET
 			client_id = "__ARCHIVED__",
 			client_secret = "__ARCHIVED__",
@@ -73,25 +73,16 @@ const (
 	`
 )
 
-// https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
-func buildRandoString() (string, error) {
-	b := make([]byte, 64)
-	// Note that err == nil only if we read len(b) bytes.
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	return base64.URLEncoding.EncodeToString(b), nil
-}
-
-func scanOauthClient(scan database.Scannable) (*models.OauthClient, error) {
+func scanOauth2Client(scan database.Scannable) (*models.Oauth2Client, error) {
 	var (
-		x      = &models.OauthClient{}
+		x      = &models.Oauth2Client{}
 		scopes string
 	)
 	err := scan.Scan(
 		&x.ID,
 		&x.ClientID,
 		&scopes,
+		&x.Domain,
 		&x.ClientSecret,
 		&x.CreatedOn,
 		&x.UpdatedOn,
@@ -106,20 +97,20 @@ func scanOauthClient(scan database.Scannable) (*models.OauthClient, error) {
 	return x, nil
 }
 
-var _ models.OauthClientHandler = (*sqlite)(nil)
+var _ models.Oauth2ClientHandler = (*sqlite)(nil)
 
-func (s *sqlite) GetOauthClient(id string) (*models.OauthClient, error) {
-	row := s.database.QueryRow(getOauthClientByClientIDQuery, id)
-	return scanOauthClient(row)
+func (s *sqlite) GetOauth2Client(id string) (*models.Oauth2Client, error) {
+	row := s.database.QueryRow(getOauth2ClientByClientIDQuery, id)
+	return scanOauth2Client(row)
 }
 
-func (s *sqlite) GetOauthClientCount() (uint64, error) {
+func (s *sqlite) GetOauth2ClientCount() (uint64, error) {
 	var count uint64
-	err := s.database.QueryRow(getOauthClientCountQuery).Scan(&count)
+	err := s.database.QueryRow(getOauth2ClientCountQuery).Scan(&count)
 	return count, err
 }
 
-func (s *sqlite) GetOauthClients(filter *models.QueryFilter) (*models.OauthClientList, error) {
+func (s *sqlite) GetOauth2Clients(filter *models.QueryFilter) (*models.Oauth2ClientList, error) {
 	if filter == nil {
 		s.logger.Debugln("using default query filter")
 		filter = models.DefaultQueryFilter
@@ -127,17 +118,17 @@ func (s *sqlite) GetOauthClients(filter *models.QueryFilter) (*models.OauthClien
 	filter.Page = uint64(math.Max(1, float64(filter.Page)))
 	queryPage := uint(filter.Limit * (filter.Page - 1))
 
-	list := []models.OauthClient{}
+	list := []models.Oauth2Client{}
 
 	s.logger.Debugf("query limit: %d, query page: %d, calculated page: %d", filter.Limit, filter.Page, queryPage)
 
-	rows, err := s.database.Query(getOauthClientsQuery, filter.Limit, queryPage)
+	rows, err := s.database.Query(getOauth2ClientsQuery, filter.Limit, queryPage)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
-		x, err := scanOauthClient(rows)
+		x, err := scanOauth2Client(rows)
 		if err != nil {
 			return nil, err
 		}
@@ -147,7 +138,7 @@ func (s *sqlite) GetOauthClients(filter *models.QueryFilter) (*models.OauthClien
 		return nil, err
 	}
 
-	ocl := &models.OauthClientList{
+	ocl := &models.Oauth2ClientList{
 		Pagination: models.Pagination{
 			Page:       filter.Page,
 			Limit:      filter.Limit,
@@ -155,23 +146,24 @@ func (s *sqlite) GetOauthClients(filter *models.QueryFilter) (*models.OauthClien
 		},
 		Clients: list,
 	}
-	if ocl.TotalCount, err = s.GetOauthClientCount(); err != nil {
+	if ocl.TotalCount, err = s.GetOauth2ClientCount(); err != nil {
 		return nil, err
 	}
 
 	return ocl, err
 }
 
-func (s *sqlite) CreateOauthClient(input *models.OauthClientInput) (x *models.OauthClient, err error) {
-	x = &models.OauthClient{
+func (s *sqlite) CreateOauth2Client(input *models.Oauth2ClientInput) (x *models.Oauth2Client, err error) {
+	x = &models.Oauth2Client{
+		Domain: input.Domain,
 		Scopes: input.Scopes,
 	}
 
-	if x.ClientID, err = buildRandoString(); err != nil {
+	if x.ClientID, err = auth.RandString(64); err != nil {
 		return nil, err
 	}
 
-	if x.ClientSecret, err = buildRandoString(); err != nil {
+	if x.ClientSecret, err = auth.RandString(64); err != nil {
 		return nil, err
 	}
 
@@ -183,10 +175,11 @@ func (s *sqlite) CreateOauthClient(input *models.OauthClientInput) (x *models.Oa
 
 	// create the client
 	res, err := tx.Exec(
-		createOauthClientQuery,
+		createOauth2ClientQuery,
 		x.ClientID,
-		x.ClientSecret,
+		x.Domain,
 		strings.Join(x.Scopes, scopesSeparator),
+		x.ClientSecret,
 	)
 	if err != nil {
 		s.logger.Errorf("error executing client creation query: %v", err)
@@ -202,8 +195,8 @@ func (s *sqlite) CreateOauthClient(input *models.OauthClientInput) (x *models.Oa
 	}
 
 	// fetch full updated client
-	row := tx.QueryRow(getOauthClientQuery, id)
-	if x, err = scanOauthClient(row); err != nil {
+	row := tx.QueryRow(getOauth2ClientQuery, id)
+	if x, err = scanOauth2Client(row); err != nil {
 		s.logger.Errorf("error fetching newly created client %s: %v", x.ClientID, err)
 		tx.Rollback()
 		return nil, err
@@ -214,11 +207,11 @@ func (s *sqlite) CreateOauthClient(input *models.OauthClientInput) (x *models.Oa
 		return nil, err
 	}
 
-	s.logger.Debugln("returning from CreateOauthClient")
+	s.logger.Debugln("returning from CreateOauth2Client")
 	return
 }
 
-func (s *sqlite) UpdateOauthClient(input *models.OauthClient) (err error) {
+func (s *sqlite) UpdateOauth2Client(input *models.Oauth2Client) (err error) {
 	tx, err := s.database.Begin()
 	if err != nil {
 		return
@@ -226,10 +219,11 @@ func (s *sqlite) UpdateOauthClient(input *models.OauthClient) (err error) {
 
 	// update the client
 	if _, err = tx.Exec(
-		updateOauthClientQuery,
+		updateOauth2ClientQuery,
 		input.ClientID,
 		input.ClientSecret,
 		strings.Join(input.Scopes, scopesSeparator),
+		input.Domain,
 		input.ClientID,
 		input.ID,
 	); err != nil {
@@ -238,8 +232,8 @@ func (s *sqlite) UpdateOauthClient(input *models.OauthClient) (err error) {
 	}
 
 	// fetch full updated client
-	row := tx.QueryRow(getOauthClientQuery, input.ID)
-	if input, err = scanOauthClient(row); err != nil {
+	row := tx.QueryRow(getOauth2ClientQuery, input.ID)
+	if input, err = scanOauth2Client(row); err != nil {
 		tx.Rollback()
 		return
 	}
@@ -253,7 +247,7 @@ func (s *sqlite) UpdateOauthClient(input *models.OauthClient) (err error) {
 	return
 }
 
-func (s *sqlite) DeleteOauthClient(id uint) error {
-	_, err := s.database.Exec(archiveOauthClientQuery, id)
+func (s *sqlite) DeleteOauth2Client(id uint) error {
+	_, err := s.database.Exec(archiveOauth2ClientQuery, id)
 	return err
 }

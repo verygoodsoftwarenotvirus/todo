@@ -20,7 +20,7 @@ const (
 )
 
 type cookieAuth struct {
-	UserID        string
+	Username      string
 	Authenticated bool
 }
 
@@ -28,18 +28,26 @@ func (s *Server) UserAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		s.logger.Debugln("UserAuthenticationMiddleware triggered")
 		if cookie, err := req.Cookie(CookieName); err == nil && cookie != nil {
+			s.logger.Debugln("")
 			var ca cookieAuth
 			if err := s.cookieBuilder.Decode(CookieName, cookie.Value, &ca); err == nil {
-				s.logger.Debugln("no problem decoding cookie")
 				// // TODO: refresh cookie
 				// cookie.Expires = time.Now().Add(s.config.MaxCookieLifetime)
 				// http.SetCookie(res, cookie)
+				var ctx = req.Context()
 
-				ctx := context.WithValue(req.Context(), userKey, ca.UserID)
+				if u := ctx.Value(userKey); u == nil {
+					user, err := s.db.GetUser(ca.Username)
+					if err != nil {
+						s.internalServerError(res, req, err)
+						return
+					}
+					ctx = context.WithValue(req.Context(), userKey, user)
+				}
 				next.ServeHTTP(res, req.WithContext(ctx))
 				return
 			} else {
-				s.logger.Debugf("problem decoding cookie: %v", err)
+				s.logger.Errorf("problem decoding cookie: %v", err)
 			}
 		}
 		http.Redirect(res, req, "/login", http.StatusUnauthorized)
@@ -137,7 +145,7 @@ func (s *Server) Login(res http.ResponseWriter, req *http.Request) {
 		return
 	} else {
 		s.logger.Debugln("login was valid, returning cookie")
-		encoded, err := s.cookieBuilder.Encode(CookieName, cookieAuth{UserID: user.ID, Authenticated: loginValid})
+		encoded, err := s.cookieBuilder.Encode(CookieName, cookieAuth{Username: user.Username, Authenticated: loginValid})
 		if err != nil {
 			s.internalServerError(res, req, err)
 			return

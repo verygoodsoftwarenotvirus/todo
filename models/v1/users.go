@@ -4,7 +4,7 @@ type UserHandler interface {
 	GetUser(identifier string) (*User, error)
 	GetUserCount(filter *QueryFilter) (uint64, error)
 	GetUsers(filter *QueryFilter) (*UserList, error)
-	CreateUser(input *UserInput) (*User, error)
+	CreateUser(input *UserInput, totpSecret string) (*User, error)
 	UpdateUser(updated *User) error
 	DeleteUser(id uint) error
 }
@@ -18,9 +18,18 @@ type UserLoginInput struct {
 
 // UserInput represents the input required to modify/create users
 type UserInput struct {
-	Username   string `json:"username"`
-	Password   string `json:"password"`
-	TOTPSecret string `json:"totp_secret"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type UserCreationResponse struct {
+	ID                    string  `json:"id"`
+	Username              string  `json:"username"`
+	TwoFactorSecret       string  `json:"two_factor_secret"`
+	PasswordLastChangedOn *uint64 `json:"password_last_changed_on"`
+	CreatedOn             uint64  `json:"created_on"`
+	UpdatedOn             *uint64 `json:"updated_on"`
+	ArchivedOn            *uint64 `json:"archived_on"`
 }
 
 // User represents a user

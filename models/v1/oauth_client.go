@@ -2,7 +2,7 @@ package models
 
 type Oauth2ClientHandler interface {
 	GetOauth2Client(identifier string) (*Oauth2Client, error)
-	GetOauth2ClientCount() (uint64, error)
+	GetOauth2ClientCount(filter *QueryFilter) (uint64, error)
 	GetOauth2Clients(filter *QueryFilter) (*Oauth2ClientList, error)
 	CreateOauth2Client(input *Oauth2ClientInput) (*Oauth2Client, error)
 	UpdateOauth2Client(updated *Oauth2Client) error

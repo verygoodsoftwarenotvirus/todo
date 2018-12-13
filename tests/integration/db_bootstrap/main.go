@@ -53,12 +53,11 @@ func main() {
 		logger.Fatalf("error hashing password: %v", err)
 	}
 
-	if _, err = db.CreateUser(&models.UserInput{
-		Username:   ExpectedUsername,
-		Password:   hp,
-		TOTPSecret: defaultSecret,
-	}); err != nil {
+	u, err := db.CreateUser(&models.UserInput{Username: ExpectedUsername, Password: hp}, defaultSecret)
+	if err != nil {
 		logger.Fatalf("error creating user: %v", err)
+	} else if u.TwoFactorSecret != defaultSecret {
+		logger.Fatal("wtf")
 	}
 
 	oac, err := db.CreateOauth2Client(

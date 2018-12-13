@@ -19,7 +19,7 @@ const (
 		FROM
 			users
 		WHERE
-			username = ? AND archived_on is null
+			username = ?
 	`
 	getUserCountQuery = `
 		SELECT
@@ -156,7 +156,9 @@ func (s *sqlite) GetUsers(filter *models.QueryFilter) (*models.UserList, error) 
 	return x, err
 }
 
-func (s *sqlite) CreateUser(input *models.UserInput) (x *models.User, err error) {
+func (s *sqlite) CreateUser(input *models.UserInput, totpSecret string) (x *models.User, err error) {
+	s.logger.Debugf("CreateUser called for %s", input.Username)
+
 	tx, err := s.database.Begin()
 	if err != nil {
 		s.logger.Errorf("error beginning database connection: %v", err)
@@ -164,7 +166,7 @@ func (s *sqlite) CreateUser(input *models.UserInput) (x *models.User, err error)
 	}
 
 	// create the user
-	res, err := tx.Exec(createUserQuery, input.Username, input.Password, input.TOTPSecret)
+	res, err := tx.Exec(createUserQuery, input.Username, input.Password, totpSecret)
 	if err != nil {
 		s.logger.Errorf("error executing user creation query: %v", err)
 		tx.Rollback()

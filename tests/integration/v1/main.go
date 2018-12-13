@@ -10,17 +10,19 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"testing"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pquerna/otp/totp"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 )
 
 const (
-	debug                  = true
+	debug                  = false
 	nonexistentID          = "999999999"
 	localTestInstanceURL   = "https://localhost"
 	defaultTestInstanceURL = "https://demo-server"
@@ -40,6 +42,21 @@ var (
 )
 
 func sp(s string) *string { return &s }
+
+func checkValueAndError(t *testing.T, i interface{}, err error) {
+	t.Helper()
+
+	if err != nil {
+		t.Logf(`
+
+			err: %v
+
+		`, err)
+	}
+
+	require.NoError(t, err)
+	require.NotNil(t, i)
+}
 
 func readerFromObject(i interface{}) io.Reader {
 	b, err := json.Marshal(i)

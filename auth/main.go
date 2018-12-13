@@ -2,9 +2,13 @@ package auth
 
 import (
 	"crypto/rand"
-	"encoding/base64"
+	"encoding/base32"
 	"errors"
 	"math"
+)
+
+const (
+	charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
 var (
@@ -13,10 +17,19 @@ var (
 	ErrPasswordHashTooWeak  = errors.New("password's hash is too weak")
 )
 
-type Enticator interface {
+type PasswordHasher interface {
 	HashPassword(password string) (string, error)
 	PasswordIsAcceptable(password string) bool
 	PasswordMatches(hashedPassword, providedPassword string, salt []byte) bool
+}
+
+type Enticator2 interface {
+	PasswordMatches(providedPassword string) bool
+	ValidateLogin(providedPassword, twoFactorCode string) (bool, error)
+}
+
+type Enticator interface {
+	PasswordHasher
 	ValidateLogin(hashedPassword, providedPassword, twoFactorSecret, twoFactorCode string) (bool, error)
 }
 
@@ -34,5 +47,6 @@ func RandString(len uint64) (string, error) {
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
-	return base64.URLEncoding.EncodeToString(b), nil
+
+	return base32.StdEncoding.EncodeToString(b), nil
 }

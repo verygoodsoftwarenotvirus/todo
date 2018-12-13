@@ -54,6 +54,58 @@ func (s *Server) UserAuthenticationMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func (s *Server) Login(res http.ResponseWriter, req *http.Request) {
+	s.logger.Debugln("Login called")
+	var statusToWrite = http.StatusUnauthorized
+
+	loginInput, user, errNotifier, err := s.fetchLoginDataFromRequest(req)
+	if errNotifier != nil {
+		errNotifier(res, req, err)
+		return
+	} else if err != nil {
+		s.internalServerError(res, req, err)
+	}
+
+	loginValid, errNotifier, err := s.validateLogin(user, loginInput)
+	if errNotifier != nil {
+		errNotifier(res, req, err)
+		return
+	} else if err != nil {
+		s.internalServerError(res, req, err)
+	}
+
+	if !loginValid {
+		s.logger.Debugln("login was invalid")
+		s.loginMonitor.LogUnsuccessfulAttempt(loginInput.Username)
+		s.invalidInput(res, req, nil)
+		return
+	} else {
+		s.logger.Debugln("login was valid, returning cookie")
+		cookie, err := s.buildCookie(user, loginValid)
+		if err != nil {
+
+			s.internalServerError(res, req, err)
+			return
+		}
+
+		http.SetCookie(res, cookie)
+		statusToWrite = http.StatusOK
+	}
+	res.WriteHeader(statusToWrite)
+}
+
+func (s *Server) Logout(res http.ResponseWriter, req *http.Request) {
+	if cookie, err := req.Cookie(CookieName); err == nil {
+		s.logger.Debugln("logout was called, clearing cookie")
+		cookie.MaxAge = -1
+		http.SetCookie(res, cookie)
+	} else {
+		s.logger.Debugln("logout was called, no cookie was found")
+	}
+
+	res.WriteHeader(http.StatusOK)
+}
+
 func (s *Server) userAuthorizationHandler(res http.ResponseWriter, req *http.Request) (string, error) {
 	userID, ok := req.Context().Value(userKey).(uint64)
 	if !ok {
@@ -101,89 +153,48 @@ func (s *Server) validateLogin(user *models.User, loginInput *models.UserLoginIn
 	)
 	if err == auth.ErrPasswordHashTooWeak && loginValid {
 		s.logger.Debugln("hashed password was deemed to weak, updating its hash")
-		updatedPassword, err := s.authenticator.HashPassword(loginInput.Password)
-		if err != nil {
-			return false, s.internalServerError, err
-		}
-
-		user.HashedPassword = updatedPassword
-		if err := s.db.UpdateUser(user); err != nil {
-			return false, s.internalServerError, nil
+		if updated, e := s.authenticator.HashPassword(loginInput.Password); e != nil {
+			return false, s.internalServerError, e
+		} else {
+			user.HashedPassword = updated
+			if err := s.db.UpdateUser(user); err != nil {
+				return false, s.internalServerError, err
+			}
 		}
 	} else if err != nil {
 		return false, s.internalServerError, err
 	}
 
 	return loginValid, nil, nil
-
 }
 
-func (s *Server) Login(res http.ResponseWriter, req *http.Request) {
-	s.logger.Debugln("Login called")
-	var statusToWrite = http.StatusUnauthorized
-
-	loginInput, user, errNotifier, err := s.fetchLoginDataFromRequest(req)
-	if errNotifier != nil {
-		errNotifier(res, req, err)
-		return
-	} else if err != nil {
-		s.internalServerError(res, req, err)
+func (s *Server) buildCookie(user *models.User, loginValid bool) (*http.Cookie, error) {
+	s.logger.Debugf("buildCookie called for %s", user.Username)
+	encoded, err := s.cookieBuilder.Encode(CookieName, cookieAuth{
+		Username: user.Username, Authenticated: loginValid,
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	loginValid, errNotifier, err := s.validateLogin(user, loginInput)
-	if errNotifier != nil {
-		errNotifier(res, req, err)
-		return
-	} else if err != nil {
-		s.internalServerError(res, req, err)
-	}
-
-	if !loginValid {
-		s.logger.Debugln("login was invalid")
-		s.loginMonitor.LogUnsuccessfulAttempt(loginInput.Username)
-		s.invalidInput(res, req, nil)
-		return
-	} else {
-		s.logger.Debugln("login was valid, returning cookie")
-		encoded, err := s.cookieBuilder.Encode(CookieName, cookieAuth{Username: user.Username, Authenticated: loginValid})
-		if err != nil {
-			s.internalServerError(res, req, err)
-			return
-		}
-
-		// https://www.calhoun.io/securing-cookies-in-go/
-		http.SetCookie(res, &http.Cookie{
-			Name:  CookieName,
-			Value: encoded,
-			// Defaults to any path on your app, but you can use this
-			// to limit to a specific subdirectory.
-			Path: "/",
-			// true means no scripts, http requests only. This has
-			// nothing to do with https vs http
-			HttpOnly: true,
-			// https vs http
-			Secure: true,
-			// T // Defaults to host-only, which means exact subdomain
-			// O // matching. Only change this to enable subdomains if you
-			// D // need to! The below code would work on any subdomain for
-			// O // yoursite.com
-			///////
-			// Domain: s.config.Hostname,
-			// Expires: time.Now().Add(s.config.MaxCookieLifetime),
-		})
-		statusToWrite = http.StatusOK
-	}
-	res.WriteHeader(statusToWrite)
-}
-
-func (s *Server) Logout(res http.ResponseWriter, req *http.Request) {
-	if cookie, err := req.Cookie(CookieName); err == nil {
-		s.logger.Debugln("logout was called, clearing cookie")
-		cookie.MaxAge = -1
-		http.SetCookie(res, cookie)
-	} else {
-		s.logger.Debugln("logout was called, no cookie was found")
-	}
-
-	res.WriteHeader(http.StatusOK)
+	// https://www.calhoun.io/securing-cookies-in-go/
+	return &http.Cookie{
+		Name:  CookieName,
+		Value: encoded,
+		// Defaults to any path on your app, but you can use this
+		// to limit to a specific subdirectory.
+		Path: "/",
+		// true means no scripts, http requests only. This has
+		// nothing to do with https vs http
+		HttpOnly: true,
+		// https vs http
+		Secure: true,
+		// T // Defaults to host-only, which means exact subdomain
+		// O // matching. Only change this to enable subdomains if you
+		// D // need to! The below code would work on any subdomain for
+		// O // yoursite.com
+		///////
+		// Domain: s.config.Hostname,
+		// Expires: time.Now().Add(s.config.MaxCookieLifetime),
+	}, nil
 }

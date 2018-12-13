@@ -12,7 +12,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/gorilla/websocket"
-	"github.com/jinzhu/copier"
 	"github.com/moul/http2curl"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -143,10 +142,8 @@ func (c *V1Client) BuildWebsocketURL(parts ...string) string {
 	return u.String()
 }
 
-func (c *V1Client) LoginAs(username, password, totpToken string) (nc *V1Client, err error) {
-	copier.Copy(&nc, &c)
-
-	u := *nc.URL
+func (c *V1Client) LoginAs(username, password, totpToken string) (nc *http.Cookie, err error) {
+	u := *c.URL
 	u.Path = "users"
 
 	x := models.UserLoginInput{
@@ -164,17 +161,17 @@ func (c *V1Client) LoginAs(username, password, totpToken string) (nc *V1Client, 
 		return nil, err
 	}
 
-	res, err := nc.Do(req)
+	res, err := c.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
 	cookies := res.Cookies()
 	if len(cookies) > 0 {
-		nc.authCookie = cookies[0]
+		return cookies[0], nil
 	}
 
-	return nc, nil
+	return nil, nil
 }
 
 func (c *V1Client) IsUp() bool {

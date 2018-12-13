@@ -14,7 +14,7 @@ const (
 		FROM
 			items
 		WHERE
-			id = ? AND completed_on is null
+			id = ?
 	`
 	getItemCountQuery = `
 		SELECT

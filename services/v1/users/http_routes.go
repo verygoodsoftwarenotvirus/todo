@@ -122,32 +122,23 @@ func (s *UsersService) Delete(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (s *UsersService) validateCredentialChangeRequest(
-	usernameFetcher func(req *http.Request) string,
-	req *http.Request,
-	password string,
-	totpToken string,
-) (user *models.User, statusCode int) {
+type usernameFetcher func(req *http.Request) string
+
+func (s *UsersService) validateCredentialChangeRequest(uf usernameFetcher, req *http.Request, password string, totpToken string) (user *models.User, statusCode int) {
 	var err error
-	username := usernameFetcher(req)
+	username := uf(req)
 	user, err = s.database.GetUser(username)
 	if err != nil {
 		s.logger.Errorf("error encountered fecthing user %q: %v", username, err)
 		return nil, http.StatusInternalServerError
 	}
 
-	valid, err := s.authenticator.ValidateLogin(
-		user.HashedPassword,
-		password,
-		user.TwoFactorSecret,
-		totpToken,
-	)
-	if !valid {
-		s.logger.Debugf("invalid attempt to cycle TOTP token by user %q: %v", username, err)
-		return nil, http.StatusUnauthorized
-	} else if err != nil {
+	if valid, err := s.authenticator.ValidateLogin(user.HashedPassword, password, user.TwoFactorSecret, totpToken); err != nil {
 		s.logger.Errorf("error encountered generating random TOTP string for user %q: %v", username, err)
 		return nil, http.StatusInternalServerError
+	} else if !valid {
+		s.logger.Debugf("invalid attempt to cycle TOTP token by user %q: %v", username, err)
+		return nil, http.StatusUnauthorized
 	}
 
 	return user, 0
@@ -179,12 +170,13 @@ func (s *UsersService) NewTOTPSecret(usernameFetcher func(req *http.Request) str
 			return
 		}
 
-		user.TwoFactorSecret, err = auth.RandString(52) // I forgot how I know it needs to be this long
+		tfc, err := auth.RandString(64)
 		if err != nil {
 			s.logger.Errorf("error encountered generating random TOTP string for user %q: %v", user.Username, err)
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+		user.TwoFactorSecret = tfc // [:52] // I forgot how I know it needs to be this long
 
 		if err := s.database.UpdateUser(user); err != nil {
 			s.logger.Errorf("error encountered updating TOTP token for user %q: %v", user.Username, err)
@@ -251,13 +243,58 @@ func (s *UsersService) Create(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	x, err := s.database.CreateUser(input)
+	hp, err := s.authenticator.HashPassword(input.Password)
+	if err != nil {
+		s.logger.Errorln("valid input not attached to request")
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	input.Password = hp
+
+	newSecret, err := auth.RandString(64)
+	if err != nil {
+		s.logger.Errorln("error generating TOTP secret: ", err)
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	totpSecret := newSecret //[:52] // I forgot how I know it needs to be this long
+
+	s.logger.Debugf("assigning user %q the TOTP secret %q", input.Username, totpSecret)
+	x, err := s.database.CreateUser(input, totpSecret)
 	if err != nil {
 		s.logger.Errorf("error creating user: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	s.logger.Debugf(`
+
+
+
+
+
+	user %q
+	provided password %q
+	  hashed password %q
+		  TOTP secret %q
+
+
+
+
+	`, input.Username, input.Password, x.HashedPassword, x.TwoFactorSecret)
+
+	// UserCreationResponse is a struct we can use to notify the user of
+	// their two factor secret, `but ideally just this once and then never again.
+	ucr := &models.UserCreationResponse{
+		ID:                    x.ID,
+		Username:              x.Username,
+		TwoFactorSecret:       x.TwoFactorSecret,
+		PasswordLastChangedOn: x.PasswordLastChangedOn,
+		CreatedOn:             x.CreatedOn,
+		UpdatedOn:             x.UpdatedOn,
+		ArchivedOn:            x.ArchivedOn,
+	}
+
 	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(x)
+	json.NewEncoder(res).Encode(ucr)
 }

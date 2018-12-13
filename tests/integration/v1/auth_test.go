@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/franela/goblin"
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 )
@@ -50,39 +49,60 @@ func loginUser(t *testing.T, username string, password string) *http.Cookie {
 	return nil
 }
 
-func TestAuth(t *testing.T) {
-	g := goblin.Goblin(t)
+func TestAuth(test *testing.T) {
+	// test.Parallel()
 
-	g.Describe("Auth", func() {
-		g.It("should reject an unauthenticated request", func() {
-			res, err := todoClient.Client.Post(todoClient.BuildURL(nil, "fart"), "application/json", nil)
-			assert.NoError(t, err)
-			assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
-		})
-
-		g.Describe("credentials", func() {
-			g.It("should accept a valid cookie", func() {
-				cookie := loginUser(t, expectedUsername, expectedPassword)
-				assert.NotNil(t, cookie)
-
-				req, err := http.NewRequest(http.MethodPost, todoClient.BuildURL(nil, "fart"), nil)
-				req.AddCookie(cookie)
-				assert.NoError(t, err)
-				res, err := todoClient.Client.Do(req)
-				assert.NoError(t, err)
-				assert.Equal(t, http.StatusTeapot, res.StatusCode)
-			})
-
-			g.It("should reject an invalid cookie", func() {
-				req, err := http.NewRequest(http.MethodPost, todoClient.BuildURL(nil, "fart"), nil)
-				assert.NoError(t, err)
-				res, err := todoClient.Client.Do(req)
-				assert.NoError(t, err)
-				assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
-			})
-
-			g.It("should accept a valid auth key")
-			g.It("should reject an invalid auth key")
-		})
+	test.Run("should reject an unauthenticated request", func(t *testing.T) {
+		res, err := todoClient.Client.Post(todoClient.BuildURL(nil, "fart"), "application/json", nil)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 	})
+
+	test.Run("should accept a valid cookie", func(t *testing.T) {
+		cookie := loginUser(t, expectedUsername, expectedPassword)
+		assert.NotNil(t, cookie)
+
+		req, err := http.NewRequest(http.MethodPost, todoClient.BuildURL(nil, "fart"), nil)
+		req.AddCookie(cookie)
+		assert.NoError(t, err)
+		res, err := todoClient.Client.Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusTeapot, res.StatusCode)
+	})
+
+	test.Run("should reject an invalid cookie", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodPost, todoClient.BuildURL(nil, "fart"), nil)
+		assert.NoError(t, err)
+		res, err := todoClient.Client.Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
+	})
+
+	// 	test.Run("Creating", func(T *testing.T) {
+	// 		T.Run("should be creatable", func(t *testing.T) {
+	// 		})
+	// 	})
+	// 	test.Run("Reading", func(T *testing.T) {
+	// 		T.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
+	// 		})
+	// 		T.Run("it should be readable", func(t *testing.T) {
+	// 		})
+	// 	})
+	// 	test.Run("Updating", func(T *testing.T) {
+	// 		T.Run("it should be updatable", func(t *testing.T) {
+	// 		})
+	// 	})
+	// 	test.Run("Deleting", func(T *testing.T) {
+	// 		T.Run("should be able to be deleted", func(t *testing.T) {
+	// 		})
+	// 	})
+	// 	test.Run("Listing", func(T *testing.T) {
+	// 		T.Run("should be able to be read in a list", func(t *testing.T) {
+	// 		})
+	// 	})
+	// 	test.Run("Counting", func(T *testing.T) {
+	// 		T.Run("it should be able to be counted", func(t *testing.T) {
+	// 			t.Skip()
+	// 		})
+	// 	})
 }

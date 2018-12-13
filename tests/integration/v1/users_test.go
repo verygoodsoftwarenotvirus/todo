@@ -3,57 +3,71 @@ package integration
 import (
 	"net/http"
 	"testing"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/bxcodec/faker"
-	"github.com/franela/goblin"
-	. "github.com/onsi/gomega"
+	"github.com/pquerna/otp/totp"
+	"github.com/stretchr/testify/assert"
 )
 
 func buildDummyUserInput(t *testing.T) *models.UserInput {
 	t.Helper()
 
 	x := &models.UserInput{
-		Username: faker.Internet{}.UserName(),
-		Password: faker.Internet{}.Password(),
+		Username: (&faker.Internet{}).UserName(),
+		Password: (&faker.Internet{}).Password(),
 	}
 
 	return x
 }
 
-func buildDummyUser(t *testing.T) (*models.User, *models.UserInput, *http.Cookie) {
+func buildDummyUser(t *testing.T) (*models.UserCreationResponse, *models.UserInput, *http.Cookie) {
 	t.Helper()
 
+	// build user creation route input
 	y := buildDummyUserInput(t)
-	u := *todoClient.URL
-	u.Path = "users"
-
-	req, err := http.NewRequest(http.MethodPost, u.String(), readerFromObject(y))
-	Ω(err).ShouldNot(HaveOccurred())
-
-	res, err := todoClient.Do(req)
-	Ω(err).ShouldNot(HaveOccurred())
-
 	x, err := todoClient.CreateUser(y)
-	Ω(err).ShouldNot(HaveOccurred())
+	assert.NoError(t, err)
 
-	var cookie *http.Cookie
-	cookies := res.Cookies()
-	if len(cookies) > 0 {
-		cookie = res.Cookies()[0]
-	}
+	code, err := totp.GenerateCode(x.TwoFactorSecret, time.Now())
+	assert.NoError(t, err)
+	cookie, err := todoClient.Login(x.Username, y.Password, code)
+	assert.NoError(t, err)
 
 	return x, y, cookie
 }
 
-func TestUsers(t *testing.T) {
-	g := goblin.Goblin(t)
+func checkUserCreationEquality(t *testing.T, expected *models.UserInput, actual *models.UserCreationResponse) {
+	t.Helper()
 
-	RegisterFailHandler(func(m string, _ ...int) { g.Fail(m) })
+	assert.NotZero(t, actual.ID)
+	assert.Equal(t, expected.Username, actual.Username)
+	assert.NotEmpty(t, actual.TwoFactorSecret)
+	// assert.Nil(t, actual.PasswordLastChangedOn)
+	assert.NotZero(t, actual.CreatedOn)
+	assert.Nil(t, actual.UpdatedOn)
+	assert.Nil(t, actual.ArchivedOn)
+}
 
-	g.Describe("Users", func() {
-		g.It("should be able to be created", func() {
+func checkUserEquality(t *testing.T, expected *models.UserInput, actual *models.User) {
+	t.Helper()
+
+	assert.NotZero(t, actual.ID)
+	assert.Equal(t, expected.Username, actual.Username)
+	assert.Empty(t, actual.TwoFactorSecret)
+	// assert.Nil(t, actual.PasswordLastChangedOn)
+	assert.NotZero(t, actual.CreatedOn)
+	assert.Nil(t, actual.UpdatedOn)
+	assert.Nil(t, actual.ArchivedOn)
+}
+
+func TestUsers(test *testing.T) {
+	// test.Parallel()
+
+	test.Run("Creating", func(T *testing.T) {
+		T.Run("should be creatable", func(t *testing.T) {
 			// Create user
 			expected := buildDummyUserInput(t)
 			actual, err := todoClient.CreateUser(
@@ -62,24 +76,25 @@ func TestUsers(t *testing.T) {
 					Password: expected.Password,
 				},
 			)
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(actual).ShouldNot(BeNil())
+			checkValueAndError(t, actual, err)
 
 			// Assert user equality
-			Ω(actual.ID).ShouldNot(BeZero())
-			Ω(expected.Username).Should(Equal(actual.Username))
-			Ω(actual.HashedPassword).Should(BeEmpty())
-			Ω(actual.TwoFactorSecret).Should(BeEmpty())
-			Ω(actual.CreatedOn).ShouldNot(BeZero())
-			Ω(actual.UpdatedOn).Should(BeNil())
-			Ω(actual.ArchivedOn).Should(BeNil())
+			checkUserCreationEquality(t, expected, actual)
 
 			// Clean up
-			err = todoClient.DeleteUser(actual.ID)
-			Ω(err).ShouldNot(HaveOccurred())
+			assert.NoError(t, todoClient.DeleteUser(actual.ID))
+		})
+	})
+
+	test.Run("Reading", func(T *testing.T) {
+		T.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
+			// Fetch user
+			actual, err := todoClient.GetUser(nonexistentID)
+			assert.Nil(t, actual)
+			assert.Error(t, err)
 		})
 
-		g.It("should be able to be read", func() {
+		T.Run("it should be readable", func(t *testing.T) {
 			// Create user
 			expected := buildDummyUserInput(t)
 			premade, err := todoClient.CreateUser(
@@ -88,66 +103,67 @@ func TestUsers(t *testing.T) {
 					Password: expected.Password,
 				},
 			)
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(premade).ShouldNot(BeNil())
+			checkValueAndError(t, premade, err)
+			assert.NotEmpty(t, premade.TwoFactorSecret)
 
 			// Fetch user
 			actual, err := todoClient.GetUser(premade.Username)
-			Ω(err).ShouldNot(HaveOccurred())
+			checkValueAndError(t, actual, err)
 
 			// Assert user equality
-			Ω(actual.ID).ShouldNot(BeZero())
-			Ω(expected.Username).Should(Equal(actual.Username))
-			Ω(actual.HashedPassword).Should(BeEmpty())
-			Ω(actual.TwoFactorSecret).Should(BeEmpty())
-			Ω(actual.CreatedOn).ShouldNot(BeZero())
-			Ω(actual.UpdatedOn).Should(BeNil())
-			Ω(actual.ArchivedOn).Should(BeNil())
+			checkUserEquality(t, expected, actual)
+
 			// Clean up
-			err = todoClient.DeleteUser(actual.Username)
-			Ω(err).ShouldNot(HaveOccurred())
+			assert.NoError(t, todoClient.DeleteUser(actual.Username))
 		})
+	})
 
-		g.It("should return an error when fetching a nonexistent one", func() {
-			// Fetch user
-			_, err := todoClient.GetUser(nonexistentID)
-			Ω(err).Should(HaveOccurred())
-			// assert.Nil(t, actual)
+	test.Run("Updating", func(T *testing.T) {
+		T.Run("it should be updatable", func(t *testing.T) {
+			t.SkipNow()
 		})
+	})
 
-		g.It("should be able to be read in a list", func() {
+	test.Run("Deleting", func(T *testing.T) {
+		T.Run("should be able to be deleted", func(t *testing.T) {
+			// Create user
+			premade, _, c := buildDummyUser(t)
+			if c == nil {
+				t.Log("TestUsers deleted test cookie is nil")
+			}
+
+			// Clean up
+			err := todoClient.DeleteUser(premade.ID)
+			assert.NoError(t, err)
+		})
+	})
+
+	test.Run("Listing", func(T *testing.T) {
+		T.Run("should be able to be read in a list", func(t *testing.T) {
 			// Create users
-			expected := []*models.User{}
+			expected := []*models.UserCreationResponse{}
 			for i := 0; i < 5; i++ {
 				user, _, c := buildDummyUser(t)
-				Ω(c).ShouldNot(BeNil())
+				assert.NotNil(t, c)
 				expected = append(expected, user)
 			}
 
 			// Assert user list equality
 			actual, err := todoClient.GetUsers(nil)
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(actual).ShouldNot(BeNil())
-			Ω(len(expected) <= len(actual.Users)).Should(BeTrue())
+			checkValueAndError(t, actual, err)
+			assert.True(t, len(expected) <= len(actual.Users))
 
 			// Clean up
 			for _, user := range actual.Users {
 				err := todoClient.DeleteUser(user.ID)
-				Ω(err).ShouldNot(HaveOccurred())
+				assert.NoError(t, err)
 			}
 		})
+	})
 
-		g.It("should be able to change their TOTP Token")
-		g.It("should be able to change their password")
-
-		g.It("should be able to be deleted", func() {
-			// Create user
-			premade, _, c := buildDummyUser(t)
-			Ω(c).ShouldNot(BeNil())
-
-			// Clean up
-			err := todoClient.DeleteUser(premade.ID)
-			Ω(err).ShouldNot(HaveOccurred())
+	test.Run("Counting", func(T *testing.T) {
+		T.Run("it should be able to be counted", func(t *testing.T) {
+			t.Skip()
 		})
 	})
 }

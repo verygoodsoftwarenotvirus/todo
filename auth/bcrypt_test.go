@@ -49,6 +49,7 @@ func TestBcrypt_PasswordMatches(T *testing.T) {
 		assert.False(t, actual)
 	})
 }
+
 func TestBcrypt_PasswordIsAcceptable(T *testing.T) {
 	T.Parallel()
 

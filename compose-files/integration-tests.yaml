@@ -9,8 +9,8 @@ services:
             - '1443:443'
         environment:
             DOCKER: 'true'
-        # logging:
-        #     driver: none
+        logging:
+            driver: none
 
     integration-test:
         build:

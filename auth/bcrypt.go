@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"time"
+
 	"github.com/pquerna/otp/totp"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
@@ -61,8 +63,13 @@ func (b *BcryptAuthenticator) PasswordIsAcceptable(pass string) bool {
 
 func (b *BcryptAuthenticator) ValidateLogin(hashedPassword, providedPassword, twoFactorSecret, twoFactorCode string) (bool, error) {
 	passwordMatches := b.PasswordMatches(hashedPassword, providedPassword, nil)
-	tokenIsValid := totp.Validate(twoFactorCode, twoFactorSecret)
-	if !tokenIsValid {
+	goodToken, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
+	if err != nil {
+		b.logger.Errorln("error generating goodToken", err)
+	}
+	b.logger.Debugf("example good token: %q", goodToken)
+
+	if !totp.Validate(twoFactorCode, twoFactorSecret) {
 		return passwordMatches, ErrInvalidTwoFactorCode
 	}
 

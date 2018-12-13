@@ -39,14 +39,10 @@ func (s *Server) setupRoutes() {
 		userRouter.Post("/logout", s.Logout)
 
 		userRouter.
-			With(
-				s.UserAuthenticationMiddleware,
-				s.usersService.TOTPSecretRefreshInputContextMiddleware).
+			With(s.UserAuthenticationMiddleware, s.usersService.TOTPSecretRefreshInputContextMiddleware).
 			Post("/totp_secret/new", s.usersService.NewTOTPSecret(chiUsernameFetcher))
 		userRouter.
-			With(
-				s.UserAuthenticationMiddleware,
-				s.usersService.PasswordUpdateInputContextMiddleware).
+			With(s.UserAuthenticationMiddleware, s.usersService.PasswordUpdateInputContextMiddleware).
 			Post("/password/new", s.usersService.UpdatePassword(chiUsernameFetcher))
 
 		userRouter.Get("/", s.usersService.List)     // List
@@ -97,9 +93,9 @@ func (s *Server) setupRoutes() {
 			})
 
 			v1Router.
-				With(s.UserAuthenticationMiddleware).
+				// With(s.UserAuthenticationMiddleware).
 				Route("/clients", func(oauth2ClientRouter chi.Router) {
-					sr := fmt.Sprintf("/{%s:[a-zA-Z0-9]+}", oauthclients.URIParamKey)
+					sr := fmt.Sprintf("/{%s}", oauthclients.URIParamKey)
 					oauth2ClientRouter.Get("/", s.oauthclientsService.List)                                                                   // List
 					oauth2ClientRouter.Get(sr, s.oauthclientsService.Read)                                                                    // Read
 					oauth2ClientRouter.Delete(sr, s.oauthclientsService.Delete)                                                               // Delete

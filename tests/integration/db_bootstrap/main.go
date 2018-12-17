@@ -74,7 +74,7 @@ func main() {
 		reverseSecret[i], reverseSecret[j] = reverseSecret[j], reverseSecret[i]
 	}
 
-	oac.ClientID, oac.ClientSecret = defaultSecret, string(reverseSecret)
+	oac.ClientID, oac.ClientSecret = defaultSecret, defaultSecret
 	if err := db.UpdateOauth2Client(oac); err != nil {
 		logger.Fatalf("error overriding oauth client secrets: %v", err)
 	}

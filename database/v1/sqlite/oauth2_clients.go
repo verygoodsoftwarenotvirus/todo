@@ -20,7 +20,7 @@ const (
 	`
 	getOauth2ClientQuery = `
 		SELECT
-			id, client_id, scopes, domain, client_secret, created_on, updated_on, archived_on
+			id, client_id, scopes, domain, client_secret, created_on, updated_on, archived_on, belongs_to
 		FROM
 			oauth_clients
 		WHERE
@@ -28,7 +28,7 @@ const (
 	`
 	getOauth2ClientByClientIDQuery = `
 		SELECT
-			id, client_id, scopes, domain, client_secret, created_on, updated_on, archived_on
+			id, client_id, scopes, domain, client_secret, created_on, updated_on, archived_on, belongs_to
 		FROM
 			oauth_clients
 		WHERE
@@ -36,7 +36,7 @@ const (
 	`
 	getOauth2ClientsQuery = `
 		SELECT
-			id, client_id, scopes, domain, client_secret, created_on, updated_on, archived_on
+			id, client_id, scopes, domain, client_secret, created_on, updated_on, archived_on, belongs_to
 		FROM
 			oauth_clients
 		WHERE
@@ -87,6 +87,7 @@ func scanOauth2Client(scan database.Scannable) (*models.Oauth2Client, error) {
 		&x.CreatedOn,
 		&x.UpdatedOn,
 		&x.ArchivedOn,
+		&x.BelongsTo,
 	)
 	if err != nil {
 		return nil, err
@@ -99,9 +100,9 @@ func scanOauth2Client(scan database.Scannable) (*models.Oauth2Client, error) {
 
 var _ models.Oauth2ClientHandler = (*sqlite)(nil)
 
-func (s *sqlite) GetOauth2Client(id string) (*models.Oauth2Client, error) {
-	s.logger.Debugf("GetOauth2Client called for %s", id)
-	row := s.database.QueryRow(getOauth2ClientByClientIDQuery, id)
+func (s *sqlite) GetOauth2Client(clientID string) (*models.Oauth2Client, error) {
+	s.logger.Debugf("GetOauth2Client called for %s", clientID)
+	row := s.database.QueryRow(getOauth2ClientByClientIDQuery, clientID)
 	return scanOauth2Client(row)
 }
 

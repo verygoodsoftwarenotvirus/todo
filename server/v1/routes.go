@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauthclients"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
 	"github.com/go-chi/chi"
@@ -52,28 +52,30 @@ func (s *Server) setupRoutes() {
 		userRouter.With(s.usersService.UserInputContextMiddleware).Post("/", s.usersService.Create) // Create
 	})
 
-	router.Route("/oauth2", func(oauthRouter chi.Router) {
+	router.Route("/oauth2", func(oauth2Router chi.Router) {
 		// pk := fmt.Sprintf(`{%s:[a-zA-Z0-9\_\-]+}`, oauth2ClientIDURIParamKey)
-		oauthRouter.
+		oauth2Router.
 			With(s.UserAuthenticationMiddleware).
 			Post("/clients", func(res http.ResponseWriter, req *http.Request) {
 
 			})
-	})
 
-	router.
-		With(
-			s.UserAuthenticationMiddleware,
-			s.Oauth2ClientInfoMiddleware,
-		).
-		Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
-			if err := s.oauth2Handler.HandleAuthorizeRequest(res, req); err != nil {
-				http.Error(res, err.Error(), http.StatusBadRequest)
-			}
+		oauth2Router.
+			With(
+				s.UserAuthenticationMiddleware,
+				s.Oauth2ClientInfoMiddleware,
+			).
+			Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
+				err := s.oauth2Handler.HandleAuthorizeRequest(res, req)
+				if err != nil {
+					http.Error(res, err.Error(), http.StatusBadRequest)
+				}
+			})
+
+		oauth2Router.Post("/token", func(res http.ResponseWriter, req *http.Request) {
+			s.oauth2Handler.HandleTokenRequest(res, req)
 		})
 
-	router.Post("/token", func(res http.ResponseWriter, req *http.Request) {
-		s.oauth2Handler.HandleTokenRequest(res, req)
 	})
 
 	router.Route("/api", func(apiRouter chi.Router) {
@@ -92,17 +94,20 @@ func (s *Server) setupRoutes() {
 				itemsRouter.With(s.itemsService.ItemContextMiddleware).Post("/", s.itemsService.Create) // Create
 			})
 
-			v1Router.
-				// With(s.UserAuthenticationMiddleware).
-				Route("/clients", func(oauth2ClientRouter chi.Router) {
+			v1Router.Route("/oauth2", func(oauth2Router chi.Router) {
+				oauth2Router.Route("/clients", func(clientRouter chi.Router) {
 					sr := fmt.Sprintf("/{%s}", oauthclients.URIParamKey)
-					oauth2ClientRouter.Get("/", s.oauthclientsService.List)                                                                   // List
-					oauth2ClientRouter.Get(sr, s.oauthclientsService.Read)                                                                    // Read
-					oauth2ClientRouter.Delete(sr, s.oauthclientsService.Delete)                                                               // Delete
-					oauth2ClientRouter.With(s.oauthclientsService.Oauth2ClientInputContextMiddleware).Put(sr, s.oauthclientsService.Update)   // Update
-					oauth2ClientRouter.With(s.oauthclientsService.Oauth2ClientInputContextMiddleware).Post("/", s.oauthclientsService.Create) // Create
+					clientRouter.Get("/", s.oauth2ClientsService.List)     // List
+					clientRouter.Get(sr, s.oauth2ClientsService.Read)      // Read
+					clientRouter.Delete(sr, s.oauth2ClientsService.Delete) // Delete
+					clientRouter.
+						With(s.oauth2ClientsService.Oauth2ClientInputContextMiddleware).
+						Put(sr, s.oauth2ClientsService.Update) // Update
+					clientRouter.
+						With(s.oauth2ClientsService.Oauth2ClientInputContextMiddleware).
+						Post("/", s.oauth2ClientsService.Create) // Create
 				})
-
+			})
 		})
 	})
 

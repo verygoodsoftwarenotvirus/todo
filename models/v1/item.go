@@ -16,6 +16,7 @@ type Item struct {
 	CreatedOn   uint64  `json:"created_on"`
 	UpdatedOn   *uint64 `json:"updated_on"`
 	CompletedOn *uint64 `json:"completed_on"`
+	BelongsTo   *uint64 `json:"belongs_to"`
 }
 
 func (i *Item) Update(input *ItemInput) {

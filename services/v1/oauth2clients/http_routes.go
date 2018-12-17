@@ -6,14 +6,17 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	// "strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/go-chi/chi"
+	// oauth2models "gopkg.in/oauth2.v3/models"
 )
 
 const (
-	URIParamKey = "oauth2ClientID"
+	URIParamKey     = "oauth2ClientID"
+	scopesSeparator = `,`
 )
 
 func (s *Oauth2ClientsService) Oauth2ClientInputContextMiddleware(next http.Handler) http.Handler {
@@ -27,6 +30,43 @@ func (s *Oauth2ClientsService) Oauth2ClientInputContextMiddleware(next http.Hand
 		ctx := context.WithValue(req.Context(), MiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
+}
+
+func (s *Oauth2ClientsService) Create(res http.ResponseWriter, req *http.Request) {
+	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.Oauth2ClientInput)
+	if !ok {
+		s.logger.Errorln("valid input not attached to request")
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	x, err := s.database.CreateOauth2Client(input)
+	if err != nil {
+		s.logger.Errorf("error creating oauth2Client: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err := s.clientStore.Set(x.ClientID, x); err != nil {
+		s.logger.Errorf("error creating oauth2Client: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// token := &oauth2models.Token{
+	// 	ClientID: x.ClientID,
+	// 	// UserID:
+	// 	// RedirectURI
+	// 	Scope: strings.Join(input.Scopes, scopesSeparator),
+	// }
+	// if err := s.tokenStore.Create(token); err != nil {
+	// 	s.logger.Errorf("error creating oauth2Client token: %v", err)
+	// 	res.WriteHeader(http.StatusInternalServerError)
+	// 	return
+	// }
+
+	res.Header().Set("Content-type", "application/json")
+	json.NewEncoder(res).Encode(x)
 }
 
 func (s *Oauth2ClientsService) Read(res http.ResponseWriter, req *http.Request) {
@@ -90,25 +130,6 @@ func (s *Oauth2ClientsService) Update(res http.ResponseWriter, req *http.Request
 	//x.Update()
 
 	if err := s.database.UpdateOauth2Client(x); err != nil {
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(x)
-}
-
-func (s *Oauth2ClientsService) Create(res http.ResponseWriter, req *http.Request) {
-	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.Oauth2ClientInput)
-	if !ok {
-		s.logger.Errorln("valid input not attached to request")
-		res.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	x, err := s.database.CreateOauth2Client(input)
-	if err != nil {
-		s.logger.Errorf("error creating oauth2Client: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}

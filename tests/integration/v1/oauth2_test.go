@@ -9,6 +9,7 @@ import (
 	"github.com/bxcodec/faker"
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func buildDummyOauth2ClientInput(t *testing.T, username, password, totpSecret string) *models.Oauth2ClientInput {
@@ -41,7 +42,8 @@ func buildDummyOauth2Client(t *testing.T, username, password, totpSecret string)
 			totpSecret,
 		),
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
+	require.NotNil(t, x)
 
 	return x
 }

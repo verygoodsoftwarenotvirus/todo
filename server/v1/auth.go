@@ -42,9 +42,10 @@ func (s *Server) UserAuthenticationMiddleware(next http.Handler) http.Handler {
 						s.internalServerError(res, req, err)
 						return
 					}
-					ctx = context.WithValue(req.Context(), userKey, user)
+					ctx = context.WithValue(ctx, userKey, user)
+					req = req.WithContext(ctx)
 				}
-				next.ServeHTTP(res, req.WithContext(ctx))
+				next.ServeHTTP(res, req)
 				return
 			} else {
 				s.logger.Errorf("problem decoding cookie: %v", err)

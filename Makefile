@@ -37,7 +37,7 @@ dev_files/certs/server/key.pem dev_files/certs/server/cert.pem:
 
 ## Test things
 example.db:
-	go run tools/db_bootstrap/v1/main.go
+	go run tests/integration/db_bootstrap/main.go
 
 $(COVERAGE_OUT):
 	./scripts/coverage.sh
@@ -49,7 +49,7 @@ test:
 
 .PHONY: integration-tests
 integration-tests:
-	docker-compose --file compose-files/integration-tests.yaml up --build --remove-orphans --force-recreate --abort-on-container-exit
+	docker-compose --file compose-files/integration-tests.yaml up --build --remove-orphans --abort-on-container-exit --force-recreate
 
 ## Docker things
 

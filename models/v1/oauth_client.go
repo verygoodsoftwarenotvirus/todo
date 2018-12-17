@@ -1,5 +1,9 @@
 package models
 
+import (
+	"strconv"
+)
+
 type Oauth2ClientHandler interface {
 	GetOauth2Client(identifier string) (*Oauth2Client, error)
 	GetOauth2ClientCount(filter *QueryFilter) (uint64, error)
@@ -18,6 +22,26 @@ type Oauth2Client struct {
 	CreatedOn    uint64   `json:"created_on"`
 	UpdatedOn    *uint64  `json:"updated_on"`
 	ArchivedOn   *uint64  `json:"archived_on"`
+	BelongsTo    *uint64  `json:"belongs_to"`
+}
+
+func (c *Oauth2Client) GetID() string {
+	return c.ClientID
+}
+
+func (c *Oauth2Client) GetSecret() string {
+	return c.ClientSecret
+}
+
+func (c *Oauth2Client) GetDomain() string {
+	return c.Domain
+}
+
+func (c *Oauth2Client) GetUserID() string {
+	if c.BelongsTo != nil { // REMOVEME:
+		return strconv.FormatUint(*c.BelongsTo, 10)
+	}
+	return ""
 }
 
 type Oauth2ClientList struct {

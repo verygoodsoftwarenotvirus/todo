@@ -162,7 +162,7 @@ func testOAuth() {
 	// values.Set("scope", "*")
 	// u.RawQuery = values.Encode()
 
-	req, _ := http.NewRequest(http.MethodGet, u.String(), nil)
+	req, _ := http.NewRequest(http.MethodPost, u.String(), nil)
 	req.AddCookie(loggedInCookie)
 	res, err := oaClient.Do(req)
 	if err != nil {

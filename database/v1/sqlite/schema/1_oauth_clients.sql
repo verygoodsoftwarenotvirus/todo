@@ -7,6 +7,6 @@ CREATE TABLE IF NOT EXISTS oauth_clients (
     created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
     updated_on INTEGER,
     archived_on INTEGER DEFAULT NULL,
-    created_by INTEGER,
-    FOREIGN KEY(created_by) REFERENCES users(id)
+    belongs_to INTEGER,
+    FOREIGN KEY(belongs_to) REFERENCES users(id)
 );

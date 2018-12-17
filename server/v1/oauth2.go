@@ -6,9 +6,9 @@ import (
 	"errors"
 	"net/http"
 	"strings"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 
 	// "github.com/sirupsen/logrus"
 	"gopkg.in/oauth2.v3"
@@ -20,11 +20,11 @@ import (
 )
 
 const (
+	scopesSeparator                             = ","
 	clientKey                 models.ContextKey = "client"
 	scopesKey                 models.ContextKey = "scopes"
 	clientIDKey               models.ContextKey = "client_id"
 	oauth2ClientIDURIParamKey                   = "client_id"
-	scopesSeparator                             = ","
 )
 
 func (s *Server) initializeOauth2Server() {
@@ -45,7 +45,7 @@ func (s *Server) initializeOauth2Server() {
 			},
 		)
 
-		if len(clientList.Clients) == 0 || err == sql.ErrNoRows {
+		if clientList != nil && len(clientList.Clients) == 0 || err == sql.ErrNoRows {
 			paginating = false
 		} else if err != nil {
 			s.logger.Fatalln("error encountered querying oauth clients to add to the clientStore: ", err)
@@ -65,13 +65,24 @@ func (s *Server) initializeOauth2Server() {
 
 	authSrv := oauth2server.NewDefaultServer(manager)
 	setOauth2Defaults(authSrv, s)
+
 	s.oauth2Handler = authSrv
+	s.oauth2ClientStore = clientStore
+	s.oauth2ClientsService = oauthclients.NewOauth2ClientsService(
+		oauthclients.Oauth2ClientsServiceConfig{
+			Logger:        s.logger,
+			Authenticator: s.authenticator,
+			Database:      s.db,
+			ClientStore:   clientStore,
+			TokenStore:    tokenStore,
+		},
+	)
 }
 
 func setOauth2Defaults(srv *oauth2server.Server, s *Server) {
 	// srv.SetClientInfoHandler(s.ClientInfoHandler)
 	srv.SetAllowGetAccessRequest(true)
-	srv.SetAccessTokenExpHandler(s.AccessTokenExpirationHandler)
+	// srv.SetAccessTokenExpHandler(s.AccessTokenExpirationHandler)
 	srv.SetClientAuthorizedHandler(s.ClientAuthorizedHandler)
 	srv.SetClientScopeHandler(s.ClientScopeHandler)
 	srv.SetClientInfoHandler(oauth2server.ClientFormHandler)
@@ -108,7 +119,11 @@ func (s *Server) Oauth2ClientInfoMiddleware(next http.Handler) http.Handler {
 
 		values := req.URL.Query()
 		if v := values.Get("client_id"); v != "" {
-			req = req.WithContext(context.WithValue(req.Context(), clientIDKey, v))
+			client, err := s.db.GetOauth2Client(v)
+			if err != nil {
+				http.Error(res, err.Error(), http.StatusInternalServerError)
+			}
+			req = req.WithContext(context.WithValue(req.Context(), clientKey, client))
 		}
 
 		next.ServeHTTP(res, req)
@@ -145,44 +160,39 @@ var _ oauth2server.AuthorizeScopeHandler = (*Server)(nil).AuthorizeScopeHandler
 
 func (s *Server) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Request) (scope string, err error) {
 	client := s.fetchOauth2ClientFromRequest(req)
-	if client != nil {
-		return strings.Join(client.Scopes, scopesSeparator), nil
-	}
+	if client == nil {
+		clientID := s.fetchOauth2ClientIDFromRequest(req)
+		if clientID != "" {
+			client, err := s.db.GetOauth2Client(clientID)
+			if err != nil {
+				return "", err
+			}
 
-	scopes := s.fetchOauth2ClientScopesFromRequest(req)
-	if scopes != nil {
-		return strings.Join(scopes, scopesSeparator), nil
-	}
-
-	clientID := s.fetchOauth2ClientIDFromRequest(req)
-	if clientID != "" {
-		client, err := s.db.GetOauth2Client(clientID)
-		if err != nil {
-			return "", err
+			req = req.WithContext(context.WithValue(req.Context(), clientKey, client))
+			return strings.Join(client.Scopes, scopesSeparator), nil
 		}
-
-		req = req.WithContext(context.WithValue(req.Context(), clientKey, client))
+	} else {
 		return strings.Join(client.Scopes, scopesSeparator), nil
 	}
 
-	return "*", nil //errors.New("no scope information found")
+	return "", errors.New("no scope information found")
 }
 
 var _ oauth2server.UserAuthorizationHandler = (*Server)(nil).UserAuthorizationHandler
 
 func (s *Server) UserAuthorizationHandler(res http.ResponseWriter, req *http.Request) (userID string, err error) {
-	userID, ok := req.Context().Value(userKey).(string)
+	user, ok := req.Context().Value(userKey).(*models.User)
 	if !ok {
 		return "", errors.New("userID not found")
 	}
-	return userID, nil
+	return user.ID, nil
 }
 
-var _ oauth2server.AccessTokenExpHandler = (*Server)(nil).AccessTokenExpirationHandler
+// var _ oauth2server.AccessTokenExpHandler = (*Server)(nil).AccessTokenExpirationHandler
 
-func (s *Server) AccessTokenExpirationHandler(w http.ResponseWriter, r *http.Request) (time.Duration, error) {
-	return 10 * time.Minute, nil
-}
+// func (s *Server) AccessTokenExpirationHandler(w http.ResponseWriter, r *http.Request) (time.Duration, error) {
+// 	return 10 * time.Minute, nil
+// }
 
 var _ oauth2server.ClientAuthorizedHandler = (*Server)(nil).ClientAuthorizedHandler
 

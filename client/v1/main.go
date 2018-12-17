@@ -142,38 +142,6 @@ func (c *V1Client) BuildWebsocketURL(parts ...string) string {
 	return u.String()
 }
 
-func (c *V1Client) LoginAs(username, password, totpToken string) (nc *http.Cookie, err error) {
-	u := *c.URL
-	u.Path = "users"
-
-	x := models.UserLoginInput{
-		Username:  username,
-		Password:  password,
-		TOTPToken: totpToken,
-	}
-	y, err := createBodyFromStruct(x)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodPost, u.String(), y)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := c.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	cookies := res.Cookies()
-	if len(cookies) > 0 {
-		return cookies[0], nil
-	}
-
-	return nil, nil
-}
-
 func (c *V1Client) IsUp() bool {
 	u := *c.URL
 
@@ -188,37 +156,42 @@ func (c *V1Client) IsUp() bool {
 	return res.StatusCode == http.StatusOK
 }
 
-func (c *V1Client) makeDataRequest(method string, uri string, in interface{}, out interface{}) error {
-	ce := &ClientError{}
+func (c *V1Client) buildDataRequest(method, uri string, in interface{}) (*http.Request, error) {
+	body, err := createBodyFromStruct(in)
+	if err != nil {
+		return nil, err
+	}
 
+	return http.NewRequest(method, uri, body)
+}
+
+func (c *V1Client) makeDataRequest(method string, uri string, in interface{}, out interface{}) error {
 	// sometimes we want to make requests with data attached, but we don't really care about the response
-	// so we give this function a nil `out` value.
+	// so we give this function a nil `out` value. That said, if you provide us a value, it needs to be a pointer.
 	if out != nil {
-		// that said, if you provide us a value, it needs to be a pointer.
 		if np, err := argIsNotPointer(out); np || err != nil {
-			ce.Err = errors.Wrap(err, "struct to load must be a pointer")
-			return ce
+			return errors.Wrap(err, "struct to load must be a pointer")
 		}
 	}
 
-	body, err := createBodyFromStruct(in)
-	if err != nil {
-		ce.Err = errors.Wrap(err, "encountered error marshaling data to JSON")
-		return ce
+	var (
+		req *http.Request
+		res *http.Response
+		err error
+	)
+
+	if req, err = c.buildDataRequest(method, uri, in); err != nil {
+		return errors.Wrap(err, "encountered error building request")
 	}
 
-	req, _ := http.NewRequest(method, uri, body)
-	res, err := c.executeRequest(req)
-	if err != nil {
-		ce.Err = errors.Wrap(err, "encountered error executing request")
-		return ce
+	if res, err = c.executeRequest(req); err != nil {
+		return errors.Wrap(err, "encountered error executing request")
 	}
 
 	if out != nil {
 		resErr := unmarshalBody(res, &out)
 		if resErr != nil {
-			ce.Err = errors.Wrap(err, "encountered error loading response from server")
-			return ce
+			return errors.Wrap(err, "encountered error loading response from server")
 		}
 		c.logger.Debugf("data request returned: %+v", out)
 	}

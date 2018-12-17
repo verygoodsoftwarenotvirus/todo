@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS items (
     created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
     updated_on INTEGER,
     completed_on INTEGER DEFAULT NULL,
-    created_by INTEGER,
-    FOREIGN KEY(created_by) REFERENCES users(id)
+    belongs_to INTEGER DEFAULT NULL, -- TODO: NOT NULL
+    FOREIGN KEY(belongs_to) REFERENCES users(id)
 );
 

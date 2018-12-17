@@ -10,7 +10,7 @@ import (
 const (
 	getItemQuery = `
 		SELECT
-			id, name, details, created_on, updated_on, completed_on
+			id, name, details, created_on, updated_on, completed_on, belongs_to
 		FROM
 			items
 		WHERE
@@ -25,7 +25,7 @@ const (
 	`
 	getItemsQuery = `
 		SELECT
-			id, name, details, created_on, updated_on, completed_on
+			id, name, details, created_on, updated_on, completed_on, belongs_to
 		FROM
 			items
 		WHERE
@@ -59,19 +59,20 @@ const (
 )
 
 func scanItem(scan database.Scannable) (*models.Item, error) {
-	i := &models.Item{}
+	x := &models.Item{}
 	err := scan.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Details,
-		&i.CreatedOn,
-		&i.UpdatedOn,
-		&i.CompletedOn,
+		&x.ID,
+		&x.Name,
+		&x.Details,
+		&x.CreatedOn,
+		&x.UpdatedOn,
+		&x.CompletedOn,
+		&x.BelongsTo,
 	)
 	if err != nil {
 		return nil, err
 	}
-	return i, nil
+	return x, nil
 }
 
 func (s *sqlite) GetItem(id uint64) (*models.Item, error) {
@@ -187,18 +188,6 @@ func (s *sqlite) UpdateItem(input *models.Item) (err error) {
 	row := tx.QueryRow(getItemQuery, input.ID)
 	input, err = scanItem(row)
 	if err != nil {
-		tx.Rollback()
-		return
-	}
-
-	if err = tx.QueryRow(getItemQuery, input.ID).Scan(
-		&input.ID,
-		&input.Name,
-		&input.Details,
-		&input.CreatedOn,
-		&input.UpdatedOn,
-		&input.CompletedOn,
-	); err != nil {
 		tx.Rollback()
 		return
 	}

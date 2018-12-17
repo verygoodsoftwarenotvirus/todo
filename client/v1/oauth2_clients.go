@@ -4,7 +4,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
-const oauth2ClientsBasePath = "clients"
+const oauth2ClientsBasePath = "oauth2/clients"
 
 func (c *V1Client) GetOauth2Client(id string) (oauth2Client *models.Oauth2Client, err error) {
 	return oauth2Client, c.get(c.BuildURL(nil, oauth2ClientsBasePath, id), &oauth2Client)

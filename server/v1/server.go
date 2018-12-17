@@ -11,12 +11,13 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauthclients"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
 	"github.com/gorilla/securecookie"
 	"github.com/sirupsen/logrus"
 	oauth2server "gopkg.in/oauth2.v3/server"
+	oauth2store "gopkg.in/oauth2.v3/store"
 )
 
 const (
@@ -44,20 +45,30 @@ type Server struct {
 	authenticator auth.Enticator
 
 	// Services
-	loginMonitor        LoginMonitor
-	itemsService        *items.ItemsService
-	usersService        *users.UsersService
-	oauthclientsService *oauthclients.Oauth2ClientsService
+	loginMonitor         LoginMonitor
+	itemsService         *items.ItemsService
+	usersService         *users.UsersService
+	oauth2ClientsService *oauthclients.Oauth2ClientsService
 
 	// infra things
 	db            database.Database
 	server        *http.Server
 	logger        *logrus.Logger
-	cookieSecret  []byte
 	cookieBuilder *securecookie.SecureCookie
 
 	// Oauth2 stuff
-	oauth2Handler *oauth2server.Server
+	oauth2Handler     *oauth2server.Server
+	oauth2ClientStore *oauth2store.ClientStore
+	// oauth2TokenStore  oauth2store.TokenStore
+}
+
+func DefaultServerConfig() *ServerConfig {
+	logger := logrus.New()
+	return &ServerConfig{
+		Logger:        logger,
+		Authenticator: auth.NewBcrypt(logger),
+		LoginMonitor:  &NoopLoginMonitor{},
+	}
 }
 
 func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
@@ -100,7 +111,6 @@ func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 		server:        buildServer(),
 		loginMonitor:  cfg.LoginMonitor,
 		authenticator: cfg.Authenticator,
-		cookieSecret:  cfg.CookieSecret,
 		cookieBuilder: securecookie.New(securecookie.GenerateRandomKey(64), cfg.CookieSecret),
 
 		// Services
@@ -116,13 +126,6 @@ func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 				Logger:        logger,
 				Database:      db,
 				Authenticator: cfg.Authenticator,
-			},
-		),
-		oauthclientsService: oauthclients.NewOauth2ClientsService(
-			oauthclients.Oauth2ClientsServiceConfig{
-				Logger:        logger,
-				Authenticator: cfg.Authenticator,
-				Database:      db,
 			},
 		),
 	}

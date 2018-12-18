@@ -1,8 +1,10 @@
 package client
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -15,6 +17,7 @@ import (
 	"github.com/moul/http2curl"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/oauth2"
 )
 
 const (
@@ -44,6 +47,62 @@ type V1Client struct {
 
 	Items     <-chan *models.Item
 	itemsChan chan *models.Item
+}
+
+func buildOauth2Client(info *models.Oauth2Client, baseURL *url.URL) (*http.Client, error) {
+	if strings.ToLower(baseURL.Scheme) != "https" {
+		return nil, errors.New("https is required")
+	}
+
+	conf := &oauth2.Config{
+		ClientID:     info.ClientID,
+		ClientSecret: info.ClientSecret,
+		Scopes:       []string{"*"},
+		Endpoint: oauth2.Endpoint{
+			TokenURL: fmt.Sprintf("https://%s/oauth2/token", baseURL.Hostname()),
+			AuthURL:  fmt.Sprintf("https://%s/oauth2/authorize", baseURL.Hostname()),
+		},
+	}
+
+	// Use the custom HTTP client when requesting a token.
+	httpClient := &http.Client{
+		Timeout:   2 * time.Second,
+		Transport: http.DefaultTransport,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{
+		// WARNING: Never do this ordinarily, this is an application which will only ever run in a local context
+		InsecureSkipVerify: true,
+	}
+
+	aurl := conf.AuthCodeURL(
+		"",
+		oauth2.SetAuthURLParam("client_id", conf.ClientID),
+		oauth2.SetAuthURLParam("client_secret", conf.ClientSecret),
+		oauth2.SetAuthURLParam("redirect_uri", "https://yourredirecturl.com"),
+	)
+	req, err := http.NewRequest(http.MethodPost, aurl, nil)
+	if err != nil || req == nil {
+		panic(err)
+	}
+	//req.AddCookie(cookie)
+
+	res, err := httpClient.Do(req)
+	if err != nil {
+		log.Fatal("error trying to get authorized", err)
+	}
+	u, _ := url.Parse(res.Header.Get("Location"))
+	tok := u.Query().Get("code")
+
+	client := conf.Client(context.Background(), &oauth2.Token{
+		AccessToken: tok,
+		TokenType:   "Bearer",
+		//RefreshToken
+		Expiry: time.Now().Add(10 * time.Minute),
+	})
+	return client, nil
 }
 
 func NewClient(cfg *Config) (c *V1Client, err error) {

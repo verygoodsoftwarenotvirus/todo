@@ -13,7 +13,8 @@ import (
 	"github.com/gorilla/context"
 )
 
-func chiUsernameFetcher(req *http.Request) string {
+// chiUsernameFetcher (now named uf) fetches a username from a request routed by chi.
+func uf(req *http.Request) string {
 	// PONDER: if the only time we use users.URIParamKey is externally to the users package
 	// does it really need to belong there?
 	return chi.URLParam(req, users.URIParamKey)
@@ -38,12 +39,11 @@ func (s *Server) setupRoutes() {
 		userRouter.With(s.usersService.UserLoginInputContextMiddleware).Post("/login", s.Login)
 		userRouter.Post("/logout", s.Logout)
 
-		userRouter.
-			With(s.UserAuthenticationMiddleware, s.usersService.TOTPSecretRefreshInputContextMiddleware).
-			Post("/totp_secret/new", s.usersService.NewTOTPSecret(chiUsernameFetcher))
-		userRouter.
-			With(s.UserAuthenticationMiddleware, s.usersService.PasswordUpdateInputContextMiddleware).
-			Post("/password/new", s.usersService.UpdatePassword(chiUsernameFetcher))
+		userRouter.With(s.UserAuthenticationMiddleware, s.usersService.TOTPSecretRefreshInputContextMiddleware).
+			Post("/totp_secret/new", s.usersService.NewTOTPSecret(uf))
+
+		userRouter.With(s.UserAuthenticationMiddleware, s.usersService.PasswordUpdateInputContextMiddleware).
+			Post("/password/new", s.usersService.UpdatePassword(uf))
 
 		userRouter.Get("/", s.usersService.List)     // List
 		userRouter.Get(sr, s.usersService.Read)      // Read
@@ -80,7 +80,20 @@ func (s *Server) setupRoutes() {
 
 	router.Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Route("/v1", func(v1Router chi.Router) {
-			v1Router.With(s.UserAuthenticationMiddleware).Post("/fart", func(res http.ResponseWriter, req *http.Request) {
+
+			v1Router.With(
+				//s.UserAuthenticationMiddleware,
+				func(next http.Handler) http.Handler {
+					return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+						token, err := s.oauth2Handler.ValidationBearerToken(req)
+						if err != nil {
+							http.Error(res, err.Error(), http.StatusUnauthorized)
+							return
+						}
+						_ = token
+					})
+				},
+			).Post("/fart", func(res http.ResponseWriter, req *http.Request) {
 				res.WriteHeader(http.StatusTeapot)
 			})
 

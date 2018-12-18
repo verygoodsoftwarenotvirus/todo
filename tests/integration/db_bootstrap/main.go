@@ -18,9 +18,11 @@ const (
 	ExpectedUsername = "username"
 	ExpectedPassword = "password"
 
-	defaultDBPath    = "example.db"
-	defaultSchemaDir = "database/v1/sqlite/schema"
-	defaultSecret    = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
+	defaultDBPath       = "example.db"
+	defaultSchemaDir    = "database/v1/sqlite/schema"
+	defaultSecret       = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
+	defaultClientID     = "HEREISACLIENTIDWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
+	defaultClientSecret = defaultSecret
 )
 
 func main() {
@@ -62,7 +64,8 @@ func main() {
 
 	oac, err := db.CreateOauth2Client(
 		&models.Oauth2ClientInput{
-			Scopes: []string{"*"},
+			UserLoginInput: models.UserLoginInput{Username: u.Username},
+			Scopes:         []string{"*"},
 		},
 	)
 	if err != nil {
@@ -74,7 +77,7 @@ func main() {
 		reverseSecret[i], reverseSecret[j] = reverseSecret[j], reverseSecret[i]
 	}
 
-	oac.ClientID, oac.ClientSecret = defaultSecret, defaultSecret
+	oac.ClientID, oac.ClientSecret = defaultClientID, defaultClientSecret
 	if err := db.UpdateOauth2Client(oac); err != nil {
 		logger.Fatalf("error overriding oauth client secrets: %v", err)
 	}

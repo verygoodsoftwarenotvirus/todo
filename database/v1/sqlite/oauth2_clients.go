@@ -47,11 +47,11 @@ const (
 	createOauth2ClientQuery = `
 		INSERT INTO oauth_clients
 		(
-			client_id, client_secret, scopes, domain
+			client_id, client_secret, scopes, domain, belongs_to
 		)
 		VALUES
 		(
-			?, ?, ?, ?
+			?, ?, ?, ?, ?
 		)
 	`
 	updateOauth2ClientQuery = `
@@ -177,6 +177,12 @@ func (s *sqlite) CreateOauth2Client(input *models.Oauth2ClientInput) (x *models.
 		return nil, err
 	}
 
+	user, err := scanUser(tx.QueryRow(getUserQuery, input.Username))
+	if err != nil {
+		s.logger.Errorf("error fetching user info: %v", err)
+		return nil, err
+	}
+
 	// create the client
 	res, err := tx.Exec(
 		createOauth2ClientQuery,
@@ -184,6 +190,7 @@ func (s *sqlite) CreateOauth2Client(input *models.Oauth2ClientInput) (x *models.
 		x.ClientSecret,
 		strings.Join(x.Scopes, scopesSeparator),
 		x.Domain,
+		user.ID,
 	)
 	if err != nil {
 		s.logger.Errorf("error executing client creation query: %v", err)
@@ -228,7 +235,6 @@ func (s *sqlite) UpdateOauth2Client(input *models.Oauth2Client) (err error) {
 		input.ClientSecret,
 		strings.Join(input.Scopes, scopesSeparator),
 		input.Domain,
-		input.ClientID,
 		input.ID,
 	); err != nil {
 		tx.Rollback()

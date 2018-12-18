@@ -124,6 +124,10 @@ func TestOauth2Clients(test *testing.T) {
 			err := todoClient.DeleteOauth2Client(premade.ID)
 			assert.NoError(t, err)
 		})
+
+		T.Run("should be unable to authorize after being deleted", func(t *testing.T) {
+			t.SkipNow()
+		})
 	})
 
 	test.Run("Listing", func(T *testing.T) {

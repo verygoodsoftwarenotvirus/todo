@@ -118,7 +118,7 @@ func (s *Server) Oauth2ClientInfoMiddleware(next http.Handler) http.Handler {
 		s.logger.Debugln("OauthInfoMiddleware triggered")
 
 		values := req.URL.Query()
-		if v := values.Get("client_id"); v != "" {
+		if v := values.Get(oauth2ClientIDURIParamKey); v != "" {
 			client, err := s.db.GetOauth2Client(v)
 			if err != nil {
 				http.Error(res, err.Error(), http.StatusInternalServerError)

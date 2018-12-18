@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"github.com/pquerna/otp/totp"
 	"log"
@@ -15,7 +16,9 @@ import (
 )
 
 const (
-	defaultSecret = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
+	defaultSecret       = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
+	defaultClientID     = "HEREISACLIENTIDWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
+	defaultClientSecret = defaultSecret
 )
 
 func main() {
@@ -50,8 +53,8 @@ func main() {
 	}
 
 	conf := &oauth2.Config{
-		ClientID:     defaultSecret,
-		ClientSecret: defaultSecret,
+		ClientID:     defaultClientID,
+		ClientSecret: defaultClientSecret,
 		Scopes:       []string{"*"},
 		Endpoint: oauth2.Endpoint{
 			TokenURL: "https://localhost/oauth2/token",
@@ -73,11 +76,12 @@ func main() {
 	}
 
 	aurl := conf.AuthCodeURL(
-		"xyz",
-		oauth2.SetAuthURLParam("client_id", defaultSecret),
-		oauth2.SetAuthURLParam("client_secret", defaultSecret),
+		"",
+		oauth2.SetAuthURLParam("client_id", defaultClientID),
+		oauth2.SetAuthURLParam("client_secret", defaultClientSecret),
 		oauth2.SetAuthURLParam("redirect_uri", "https://yourredirecturl.com"),
 	)
+
 	req, err := http.NewRequest(http.MethodPost, aurl, nil)
 	if err != nil || req == nil {
 		panic(err)
@@ -89,9 +93,35 @@ func main() {
 		log.Fatal("error trying to get authorized", err)
 	}
 	u, _ := url.Parse(res.Header.Get("Location"))
-	actualCode := u.Query().Get("code")
+	tok := u.Query().Get("code")
+	log.Println("fetched the following auth code: ", tok)
 
-	log.Println(actualCode)
+	token, err := conf.Exchange(
+		context.TODO(),
+		tok,
+		oauth2.SetAuthURLParam("client_id", defaultClientID),
+		oauth2.SetAuthURLParam("client_secret", defaultClientSecret),
+		oauth2.SetAuthURLParam("redirect_uri", "https://yourredirecturl.com"),
+	)
+	if err != nil {
+		log.Fatal("error trying to get authorized", err)
+	}
+
+	client := conf.Client(context.Background(), token)
+	if client == nil {
+		log.Println("client is nil!!!")
+	}
+
+	req, err = http.NewRequest(http.MethodPost, "https://localhost/api/v1/fart", nil)
+	if err != nil {
+		log.Fatal("error trying to build test authorization request", err)
+	}
+	res, err = client.Do(req)
+	if err != nil {
+		log.Fatal("error trying to test authorization", err)
+	}
+	if client == nil {
+	}
 
 	/*
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

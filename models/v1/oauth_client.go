@@ -22,7 +22,7 @@ type Oauth2Client struct {
 	CreatedOn    uint64   `json:"created_on"`
 	UpdatedOn    *uint64  `json:"updated_on"`
 	ArchivedOn   *uint64  `json:"archived_on"`
-	BelongsTo    *uint64  `json:"belongs_to"`
+	BelongsTo    uint64   `json:"belongs_to"`
 }
 
 func (c *Oauth2Client) GetID() string {
@@ -38,10 +38,7 @@ func (c *Oauth2Client) GetDomain() string {
 }
 
 func (c *Oauth2Client) GetUserID() string {
-	if c.BelongsTo != nil { // REMOVEME:
-		return strconv.FormatUint(*c.BelongsTo, 10)
-	}
-	return ""
+	return strconv.FormatUint(c.BelongsTo, 10)
 }
 
 type Oauth2ClientList struct {

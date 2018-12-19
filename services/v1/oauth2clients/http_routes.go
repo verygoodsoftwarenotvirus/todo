@@ -15,8 +15,7 @@ import (
 )
 
 const (
-	URIParamKey     = "oauth2ClientID"
-	scopesSeparator = `,`
+	URIParamKey = "oauth2ClientID"
 )
 
 func (s *Oauth2ClientsService) Oauth2ClientInputContextMiddleware(next http.Handler) http.Handler {
@@ -40,6 +39,29 @@ func (s *Oauth2ClientsService) Create(res http.ResponseWriter, req *http.Request
 		return
 	}
 
+	user, err := s.database.GetUser(input.Username)
+	if err != nil {
+		s.logger.Errorf("error creating oauth2Client: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	input.BelongsTo = user.ID
+
+	if valid, err := s.authenticator.ValidateLogin(
+		user.HashedPassword,
+		input.Password,
+		user.TwoFactorSecret,
+		input.TOTPToken,
+	); !valid {
+		s.logger.Debugln("invalid credentials provided")
+		res.WriteHeader(http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		s.logger.Errorf("error validating user credentials: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	x, err := s.database.CreateOauth2Client(input)
 	if err != nil {
 		s.logger.Errorf("error creating oauth2Client: %v", err)
@@ -52,18 +74,6 @@ func (s *Oauth2ClientsService) Create(res http.ResponseWriter, req *http.Request
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	// token := &oauth2models.Token{
-	// 	ClientID: x.ClientID,
-	// 	// UserID:
-	// 	// RedirectURI
-	// 	Scope: strings.Join(input.Scopes, scopesSeparator),
-	// }
-	// if err := s.tokenStore.Create(token); err != nil {
-	// 	s.logger.Errorf("error creating oauth2Client token: %v", err)
-	// 	res.WriteHeader(http.StatusInternalServerError)
-	// 	return
-	// }
 
 	res.Header().Set("Content-type", "application/json")
 	json.NewEncoder(res).Encode(x)

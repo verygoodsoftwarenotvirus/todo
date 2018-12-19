@@ -3,20 +3,14 @@ package server
 import (
 	"context"
 	"database/sql"
-	"errors"
-	"net/http"
-	"strconv"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
+	"net/http"
 )
 
 const (
-	CookieName                         = "todo"
-	userKey          models.ContextKey = "user"
-	sessionUserIDKey                   = "user_id"
-	sessionAuthKey                     = "authenticated"
+	CookieName = "todo"
 )
 
 type cookieAuth struct {
@@ -36,13 +30,13 @@ func (s *Server) UserAuthenticationMiddleware(next http.Handler) http.Handler {
 				// http.SetCookie(res, cookie)
 				var ctx = req.Context()
 
-				if u := ctx.Value(userKey); u == nil {
+				if u := ctx.Value(models.UserKey); u == nil {
 					user, err := s.db.GetUser(ca.Username)
 					if err != nil {
 						s.internalServerError(res, req, err)
 						return
 					}
-					ctx = context.WithValue(ctx, userKey, user)
+					ctx = context.WithValue(ctx, models.UserKey, user)
 					req = req.WithContext(ctx)
 				}
 				next.ServeHTTP(res, req)
@@ -107,15 +101,15 @@ func (s *Server) Logout(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusOK)
 }
 
-func (s *Server) userAuthorizationHandler(res http.ResponseWriter, req *http.Request) (string, error) {
-	userID, ok := req.Context().Value(userKey).(uint64)
-	if !ok {
-		s.logger.Debugln("no userKey found for authorization request")
-		res.WriteHeader(http.StatusUnauthorized)
-		return "", errors.New("")
-	}
-	return strconv.FormatUint(userID, 10), nil
-}
+//func (s *Server) userAuthorizationHandler(res http.ResponseWriter, req *http.Request) (string, error) {
+//	userID, ok := req.Context().Value(models.UserKey).(uint64)
+//	if !ok {
+//		s.logger.Debugln("no userKey found for authorization request")
+//		res.WriteHeader(http.StatusUnauthorized)
+//		return "", errors.New("")
+//	}
+//	return strconv.FormatUint(userID, 10), nil
+//}
 
 func (s *Server) fetchLoginDataFromRequest(req *http.Request) (*models.UserLoginInput, *models.User, ErrorNotifier, error) {
 	loginInput, ok := req.Context().Value(users.MiddlewareCtxKey).(*models.UserLoginInput)

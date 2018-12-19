@@ -9,6 +9,10 @@ type UserHandler interface {
 	DeleteUser(id uint) error
 }
 
+const (
+	UserKey ContextKey = "user"
+)
+
 // UserLoginInput represents the payload used to log in a user
 type UserLoginInput struct {
 	Username  string `json:"username"`

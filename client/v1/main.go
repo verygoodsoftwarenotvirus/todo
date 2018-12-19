@@ -31,7 +31,11 @@ type Config struct {
 	Address string
 
 	UserCredentials *url.Userinfo
-	AuthToken       *string
+
+	ClientID     string
+	ClientSecret string
+	RedirectURI  string
+	Scopes       []string
 }
 
 type V1Client struct {
@@ -43,80 +47,111 @@ type V1Client struct {
 	// old and busted
 	authCookie *http.Cookie
 	// new hotness
-	authToken string
+	clientID     string
+	clientSecret string
+	Scopes       []string
+	redirectURI  string
 
 	Items     <-chan *models.Item
 	itemsChan chan *models.Item
 }
 
-func buildOauth2Client(info *models.Oauth2Client, baseURL *url.URL) (*http.Client, error) {
-	if strings.ToLower(baseURL.Scheme) != "https" {
-		return nil, errors.New("https is required")
-	}
+func noRedirect(req *http.Request, via []*http.Request) error {
+	log.Print(`
 
-	conf := &oauth2.Config{
-		ClientID:     info.ClientID,
-		ClientSecret: info.ClientSecret,
-		Scopes:       []string{"*"},
-		Endpoint: oauth2.Endpoint{
-			TokenURL: fmt.Sprintf("https://%s/oauth2/token", baseURL.Hostname()),
-			AuthURL:  fmt.Sprintf("https://%s/oauth2/authorize", baseURL.Hostname()),
-		},
-	}
 
-	// Use the custom HTTP client when requesting a token.
-	httpClient := &http.Client{
-		Timeout:   2 * time.Second,
-		Transport: http.DefaultTransport,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
-	httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{
-		// WARNING: Never do this ordinarily, this is an application which will only ever run in a local context
-		InsecureSkipVerify: true,
-	}
 
-	aurl := conf.AuthCodeURL(
-		"",
-		oauth2.SetAuthURLParam("client_id", conf.ClientID),
-		oauth2.SetAuthURLParam("client_secret", conf.ClientSecret),
-		oauth2.SetAuthURLParam("redirect_uri", "https://yourredirecturl.com"),
-	)
-	req, err := http.NewRequest(http.MethodPost, aurl, nil)
-	if err != nil || req == nil {
-		panic(err)
-	}
-	//req.AddCookie(cookie)
+	noRedirect called
 
-	res, err := httpClient.Do(req)
-	if err != nil {
-		log.Fatal("error trying to get authorized", err)
-	}
-	u, _ := url.Parse(res.Header.Get("Location"))
-	tok := u.Query().Get("code")
 
-	client := conf.Client(context.Background(), &oauth2.Token{
-		AccessToken: tok,
-		TokenType:   "Bearer",
-		//RefreshToken
-		Expiry: time.Now().Add(10 * time.Minute),
-	})
-	return client, nil
+
+	`)
+	return http.ErrUseLastResponse
 }
 
-func NewClient(cfg *Config) (c *V1Client, err error) {
-	c = &V1Client{
-		Debug: cfg.Debug,
+func endpoint(baseURL *url.URL) oauth2.Endpoint {
+	tu, au := *baseURL, *baseURL
+	tu.Path, au.Path = "oath2/token", "oath2/authorize"
+
+	return oauth2.Endpoint{
+		TokenURL: tu.String(),
+		AuthURL:  au.String(),
+	}
+}
+
+func (c *V1Client) enableOauth(cfg *Config) error {
+	c.logger.Debugln("enabling OAuth")
+	conf := &oauth2.Config{
+		ClientID:     cfg.ClientID,
+		ClientSecret: cfg.ClientSecret,
+		Scopes:       []string{"*"},
+		Endpoint:     endpoint(c.URL),
 	}
 
-	if c.URL, err = url.Parse(cfg.Address); err != nil {
+	client := cfg.Client
+	if client == nil {
+		// Use the custom HTTP client when requesting a token.
+		client := &http.Client{
+			Timeout:   5 * time.Second,
+			Transport: http.DefaultTransport,
+		}
+		client.Transport.(*http.Transport).TLSClientConfig = &tls.Config{
+			// WARNING: Never do this ordinarily, this is an application which will only ever run in a local context
+			InsecureSkipVerify: true,
+		}
+	}
+	client.CheckRedirect = noRedirect
+
+	urlParts := []oauth2.AuthCodeOption{
+		oauth2.SetAuthURLParam("client_id", cfg.ClientID),
+		oauth2.SetAuthURLParam("client_secret", cfg.ClientSecret),
+		oauth2.SetAuthURLParam("redirect_uri", cfg.RedirectURI),
+	}
+
+	aurl := conf.AuthCodeURL("", urlParts...)
+	req, err := http.NewRequest(http.MethodPost, aurl, nil)
+	if err != nil {
+		return err
+	}
+
+	c.logger.Debugln("fetching auth code")
+	res, err := client.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "fetching auth code")
+	}
+
+	u, _ := url.Parse(res.Header.Get("Location"))
+	q := u.Query()
+	authErr := q.Get("error")
+	if authErr != "" {
+		return errors.Wrap(errors.New(q.Get("error_description")), "exchanging code for token")
+	}
+
+	authCode := q.Get("code")
+	log.Println("fetched the following auth code: ", authCode)
+
+	authToken, err := conf.Exchange(context.TODO(), authCode, urlParts...)
+	if err != nil {
+		return errors.Wrap(err, "getting token")
+	}
+
+	c.Client = conf.Client(context.Background(), authToken)
+
+	return nil
+}
+
+func NewClient(cfg *Config) (*V1Client, error) {
+	c := &V1Client{Debug: cfg.Debug}
+
+	if cfg.ClientID == "" || cfg.ClientSecret == "" {
+		return nil, errors.New("Client ID and Client Secret required")
+	}
+
+	u, err := url.Parse(cfg.Address)
+	if err != nil {
 		return nil, errors.Wrap(err, "parsing URL")
 	}
-
-	if cfg.AuthToken != nil {
-		c.authToken = *cfg.AuthToken
-	}
+	c.URL = u
 
 	if cfg.Client != nil {
 		c.Client = cfg.Client
@@ -132,8 +167,11 @@ func NewClient(cfg *Config) (c *V1Client, err error) {
 			c.logger.SetLevel(logrus.DebugLevel)
 		}
 	}
+	if err := c.enableOauth(cfg); err != nil {
+		return nil, err
+	}
 
-	return
+	return c, nil
 }
 
 func (c *V1Client) executeRequest(req *http.Request) (*http.Response, error) {
@@ -142,10 +180,9 @@ func (c *V1Client) executeRequest(req *http.Request) (*http.Response, error) {
 		c.logger.Debugln(command)
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.authToken))
-	if c.authCookie != nil {
-		req.AddCookie(c.authCookie)
-	}
+	//if c.authCookie != nil {
+	//	req.AddCookie(c.authCookie)
+	//}
 
 	res, err := c.Client.Do(req)
 	if err != nil {

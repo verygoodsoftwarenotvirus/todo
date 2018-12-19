@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -21,7 +22,6 @@ import (
 
 const (
 	scopesSeparator                             = ","
-	clientKey                 models.ContextKey = "client"
 	scopesKey                 models.ContextKey = "scopes"
 	clientIDKey               models.ContextKey = "client_id"
 	oauth2ClientIDURIParamKey                   = "client_id"
@@ -56,7 +56,7 @@ func (s *Server) initializeOauth2Server() {
 			clientStore.Set(client.ClientID, &oauth2models.Client{
 				ID:     client.ClientID,
 				Secret: client.ClientSecret,
-				Domain: "https://yourredirecturl.com", // FIXME
+				Domain: client.RedirectURI,
 			})
 		}
 	}
@@ -119,11 +119,13 @@ func (s *Server) Oauth2ClientInfoMiddleware(next http.Handler) http.Handler {
 
 		values := req.URL.Query()
 		if v := values.Get(oauth2ClientIDURIParamKey); v != "" {
+			s.logger.Debugf("fetching oauth2 client %s from database", v)
 			client, err := s.db.GetOauth2Client(v)
 			if err != nil {
+				s.logger.Errorln("error fetching ")
 				http.Error(res, err.Error(), http.StatusInternalServerError)
 			}
-			req = req.WithContext(context.WithValue(req.Context(), clientKey, client))
+			req = req.WithContext(context.WithValue(req.Context(), models.Oauth2ClientKey, client))
 		}
 
 		next.ServeHTTP(res, req)
@@ -131,7 +133,7 @@ func (s *Server) Oauth2ClientInfoMiddleware(next http.Handler) http.Handler {
 }
 
 func (s *Server) fetchOauth2ClientFromRequest(req *http.Request) *models.Oauth2Client {
-	client, ok := req.Context().Value(clientKey).(*models.Oauth2Client)
+	client, ok := req.Context().Value(models.Oauth2ClientKey).(*models.Oauth2Client)
 	if !ok {
 		return nil
 	}
@@ -168,7 +170,7 @@ func (s *Server) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reques
 				return "", err
 			}
 
-			req = req.WithContext(context.WithValue(req.Context(), clientKey, client))
+			req = req.WithContext(context.WithValue(req.Context(), models.Oauth2ClientKey, client))
 			return strings.Join(client.Scopes, scopesSeparator), nil
 		}
 	} else {
@@ -181,11 +183,17 @@ func (s *Server) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reques
 var _ oauth2server.UserAuthorizationHandler = (*Server)(nil).UserAuthorizationHandler
 
 func (s *Server) UserAuthorizationHandler(res http.ResponseWriter, req *http.Request) (userID string, err error) {
-	user, ok := req.Context().Value(userKey).(*models.User)
-	if !ok {
-		return "", errors.New("userID not found")
+	ctx := req.Context()
+	client, clientOk := ctx.Value(models.Oauth2ClientKey).(*models.Oauth2Client)
+	if !clientOk {
+		user, ok := ctx.Value(models.UserKey).(*models.User)
+		if !ok {
+			return "", errors.New("user not found")
+		}
+		return user.ID, nil
+	} else {
+		return strconv.FormatUint(client.BelongsTo, 10), nil
 	}
-	return user.ID, nil
 }
 
 // var _ oauth2server.AccessTokenExpHandler = (*Server)(nil).AccessTokenExpirationHandler

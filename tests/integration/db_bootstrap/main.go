@@ -18,11 +18,12 @@ const (
 	ExpectedUsername = "username"
 	ExpectedPassword = "password"
 
-	defaultDBPath       = "example.db"
-	defaultSchemaDir    = "database/v1/sqlite/schema"
-	defaultSecret       = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
-	defaultClientID     = "HEREISACLIENTIDWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
-	defaultClientSecret = defaultSecret
+	defaultDBPath        = "example.db"
+	defaultSchemaDir     = "database/v1/sqlite/schema"
+	localTestInstanceURL = "https://localhost"
+	defaultSecret        = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
+	defaultClientID      = "HEREISACLIENTIDWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
+	defaultClientSecret  = defaultSecret
 )
 
 func main() {
@@ -66,30 +67,23 @@ func main() {
 		&models.Oauth2ClientInput{
 			UserLoginInput: models.UserLoginInput{Username: u.Username},
 			Scopes:         []string{"*"},
+			BelongsTo:      u.ID,
 		},
 	)
 	if err != nil {
 		logger.Fatalf("error creating oauth client: %v", err)
 	}
 
-	reverseSecret := []rune(defaultSecret)
-	for i, j := 0, len(reverseSecret)-1; i < j; i, j = i+1, j-1 {
-		reverseSecret[i], reverseSecret[j] = reverseSecret[j], reverseSecret[i]
-	}
-
-	oac.ClientID, oac.ClientSecret = defaultClientID, defaultClientSecret
+	oac.ClientID, oac.ClientSecret, oac.RedirectURI = defaultClientID, defaultClientSecret, localTestInstanceURL
 	if err := db.UpdateOauth2Client(oac); err != nil {
 		logger.Fatalf("error overriding oauth client secrets: %v", err)
 	}
 
 	for i := 1; i < 6; i++ {
-		exampleItem := &models.ItemInput{
+		if _, err := db.CreateItem(&models.ItemInput{
 			Name:    fmt.Sprintf("example item #%d", i),
 			Details: fmt.Sprintf("example details #%d", i),
-		}
-
-		_, err := db.CreateItem(exampleItem)
-		if err != nil {
+		}); err != nil {
 			logger.Fatalf("error creating item #%d", i)
 		}
 	}

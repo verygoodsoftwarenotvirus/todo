@@ -6,7 +6,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/bxcodec/faker"
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,8 +23,8 @@ func buildDummyOauth2ClientInput(t *testing.T, username, password, totpSecret st
 			Password:  password,
 			TOTPToken: code,
 		},
-		Scopes: []string{"*"},
-		Domain: faker.Internet{}.DomainName(),
+		Scopes:      []string{"*"},
+		RedirectURI: localTestInstanceURL, //faker.Internet{}.DomainName(),
 	}
 
 	return x
@@ -54,7 +53,7 @@ func checkOauth2ClientEquality(t *testing.T, expected *models.Oauth2ClientInput,
 	assert.NotZero(t, actual.ID)
 	assert.NotEmpty(t, actual.ClientID)
 	assert.NotEmpty(t, actual.ClientSecret)
-	assert.Equal(t, expected.Domain, actual.Domain)
+	assert.Equal(t, expected.RedirectURI, actual.RedirectURI)
 	assert.Equal(t, expected.Scopes, actual.Scopes)
 	assert.NotZero(t, actual.CreatedOn)
 	assert.Nil(t, actual.ArchivedOn)

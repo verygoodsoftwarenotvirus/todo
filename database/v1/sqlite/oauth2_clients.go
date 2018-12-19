@@ -20,7 +20,7 @@ const (
 	`
 	getOauth2ClientQuery = `
 		SELECT
-			id, client_id, scopes, domain, client_secret, created_on, updated_on, archived_on, belongs_to
+			id, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to
 		FROM
 			oauth_clients
 		WHERE
@@ -28,7 +28,7 @@ const (
 	`
 	getOauth2ClientByClientIDQuery = `
 		SELECT
-			id, client_id, scopes, domain, client_secret, created_on, updated_on, archived_on, belongs_to
+			id, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to
 		FROM
 			oauth_clients
 		WHERE
@@ -36,7 +36,7 @@ const (
 	`
 	getOauth2ClientsQuery = `
 		SELECT
-			id, client_id, scopes, domain, client_secret, created_on, updated_on, archived_on, belongs_to
+			id, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to
 		FROM
 			oauth_clients
 		WHERE
@@ -47,7 +47,7 @@ const (
 	createOauth2ClientQuery = `
 		INSERT INTO oauth_clients
 		(
-			client_id, client_secret, scopes, domain, belongs_to
+			client_id, client_secret, scopes, redirect_uri, belongs_to
 		)
 		VALUES
 		(
@@ -59,7 +59,7 @@ const (
 			client_id = ?,
 			client_secret = ?,
 			scopes = ?,
-			domain = ?,
+			redirect_uri = ?,
 			updated_on = (strftime('%s','now'))
 		WHERE id = ?
 	`
@@ -82,7 +82,7 @@ func scanOauth2Client(scan database.Scannable) (*models.Oauth2Client, error) {
 		&x.ID,
 		&x.ClientID,
 		&scopes,
-		&x.Domain,
+		&x.RedirectURI,
 		&x.ClientSecret,
 		&x.CreatedOn,
 		&x.UpdatedOn,
@@ -159,8 +159,8 @@ func (s *sqlite) CreateOauth2Client(input *models.Oauth2ClientInput) (x *models.
 	s.logger.Debugln("CreateOauth2Client called.")
 
 	x = &models.Oauth2Client{
-		Domain: input.Domain,
-		Scopes: input.Scopes,
+		RedirectURI: input.RedirectURI,
+		Scopes:      input.Scopes,
 	}
 
 	if x.ClientID, err = auth.RandString(64); err != nil {
@@ -177,20 +177,14 @@ func (s *sqlite) CreateOauth2Client(input *models.Oauth2ClientInput) (x *models.
 		return nil, err
 	}
 
-	user, err := scanUser(tx.QueryRow(getUserQuery, input.Username))
-	if err != nil {
-		s.logger.Errorf("error fetching user info: %v", err)
-		return nil, err
-	}
-
 	// create the client
 	res, err := tx.Exec(
 		createOauth2ClientQuery,
 		x.ClientID,
 		x.ClientSecret,
 		strings.Join(x.Scopes, scopesSeparator),
-		x.Domain,
-		user.ID,
+		x.RedirectURI,
+		x.BelongsTo,
 	)
 	if err != nil {
 		s.logger.Errorf("error executing client creation query: %v", err)
@@ -234,7 +228,7 @@ func (s *sqlite) UpdateOauth2Client(input *models.Oauth2Client) (err error) {
 		input.ClientID,
 		input.ClientSecret,
 		strings.Join(input.Scopes, scopesSeparator),
-		input.Domain,
+		input.RedirectURI,
 		input.ID,
 	); err != nil {
 		tx.Rollback()

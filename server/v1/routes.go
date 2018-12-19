@@ -62,7 +62,7 @@ func (s *Server) setupRoutes() {
 
 		oauth2Router.
 			With(
-				s.UserAuthenticationMiddleware,
+				//s.UserAuthenticationMiddleware, // TODO: maybe an optional user attacher?
 				s.Oauth2ClientInfoMiddleware,
 			).
 			Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
@@ -86,11 +86,10 @@ func (s *Server) setupRoutes() {
 				func(next http.Handler) http.Handler {
 					return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 						token, err := s.oauth2Handler.ValidationBearerToken(req)
-						if err != nil {
+						if err != nil || token == nil {
 							http.Error(res, err.Error(), http.StatusUnauthorized)
 							return
 						}
-						_ = token
 					})
 				},
 			).Post("/fart", func(res http.ResponseWriter, req *http.Request) {
@@ -117,12 +116,14 @@ func (s *Server) setupRoutes() {
 						With(s.oauth2ClientsService.Oauth2ClientInputContextMiddleware).
 						Put(sr, s.oauth2ClientsService.Update) // Update
 					clientRouter.
-						With(s.oauth2ClientsService.Oauth2ClientInputContextMiddleware).
-						Post("/", s.oauth2ClientsService.Create) // Create
+						With(s.UserAuthenticationMiddleware,
+							s.oauth2ClientsService.Oauth2ClientInputContextMiddleware,
+						).Post("/", s.oauth2ClientsService.Create) // Create
 				})
 			})
 		})
 	})
 
+	s.router = router
 	s.server.Handler = router
 }

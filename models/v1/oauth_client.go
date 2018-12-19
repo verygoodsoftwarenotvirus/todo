@@ -4,6 +4,10 @@ import (
 	"strconv"
 )
 
+const (
+	Oauth2ClientKey ContextKey = "user"
+)
+
 type Oauth2ClientHandler interface {
 	GetOauth2Client(identifier string) (*Oauth2Client, error)
 	GetOauth2ClientCount(filter *QueryFilter) (uint64, error)
@@ -17,7 +21,7 @@ type Oauth2Client struct {
 	ID           string   `json:"id"`
 	ClientID     string   `json:"client_id"`
 	ClientSecret string   `json:"client_secret"`
-	Domain       string   `json:"domain"`
+	RedirectURI  string   `json:"redirect_uri"`
 	Scopes       []string `json:"scopes"`
 	CreatedOn    uint64   `json:"created_on"`
 	UpdatedOn    *uint64  `json:"updated_on"`
@@ -34,7 +38,7 @@ func (c *Oauth2Client) GetSecret() string {
 }
 
 func (c *Oauth2Client) GetDomain() string {
-	return c.Domain
+	return c.RedirectURI
 }
 
 func (c *Oauth2Client) GetUserID() string {
@@ -48,6 +52,7 @@ type Oauth2ClientList struct {
 
 type Oauth2ClientInput struct {
 	UserLoginInput
-	Domain string   `json:"domain"`
-	Scopes []string `json:"scopes"`
+	RedirectURI string   `json:"redirect_uri"`
+	BelongsTo   string   `json:"belongs_to"`
+	Scopes      []string `json:"scopes"`
 }

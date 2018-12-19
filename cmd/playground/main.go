@@ -16,10 +16,23 @@ import (
 )
 
 const (
+	defaultAddress      = "https://localhost"
 	defaultSecret       = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
 	defaultClientID     = "HEREISACLIENTIDWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
 	defaultClientSecret = defaultSecret
 )
+
+func buildUnsecureClient() *http.Client {
+	httpClient := &http.Client{
+		Timeout:   2 * time.Second,
+		Transport: http.DefaultTransport,
+	}
+	httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{
+		// WARNING: Never do this ordinarily, this is an application which will only ever run in a local context
+		InsecureSkipVerify: true,
+	}
+	return httpClient
+}
 
 func main() {
 
@@ -29,7 +42,7 @@ func main() {
 			//Timeout:   5 * time.Second,
 		},
 		Debug:   false,
-		Address: "https://localhost",
+		Address: defaultAddress,
 	}
 
 	cfg.Client.Transport.(*http.Transport).TLSClientConfig = &tls.Config{
@@ -79,7 +92,7 @@ func main() {
 		"",
 		oauth2.SetAuthURLParam("client_id", defaultClientID),
 		oauth2.SetAuthURLParam("client_secret", defaultClientSecret),
-		oauth2.SetAuthURLParam("redirect_uri", "https://yourredirecturl.com"),
+		oauth2.SetAuthURLParam("redirect_uri", defaultAddress),
 	)
 
 	req, err := http.NewRequest(http.MethodPost, aurl, nil)
@@ -101,7 +114,7 @@ func main() {
 		tok,
 		oauth2.SetAuthURLParam("client_id", defaultClientID),
 		oauth2.SetAuthURLParam("client_secret", defaultClientSecret),
-		oauth2.SetAuthURLParam("redirect_uri", "https://yourredirecturl.com"),
+		oauth2.SetAuthURLParam("redirect_uri", defaultAddress),
 	)
 	if err != nil {
 		log.Fatal("error trying to get authorized", err)
@@ -116,12 +129,18 @@ func main() {
 	if err != nil {
 		log.Fatal("error trying to build test authorization request", err)
 	}
-	res, err = client.Do(req)
+
+	sc := buildUnsecureClient()
+	unauthedRes, err := sc.Do(req)
+
+	authedRes, err := client.Do(req)
 	if err != nil {
 		log.Fatal("error trying to test authorization", err)
 	}
 	if client == nil {
 	}
+	log.Println(unauthedRes.StatusCode)
+	log.Println(authedRes.StatusCode)
 
 	/*
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

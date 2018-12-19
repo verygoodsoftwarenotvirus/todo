@@ -14,6 +14,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
+	"github.com/go-chi/chi"
 	"github.com/gorilla/securecookie"
 	"github.com/sirupsen/logrus"
 	oauth2server "gopkg.in/oauth2.v3/server"
@@ -52,6 +53,7 @@ type Server struct {
 
 	// infra things
 	db            database.Database
+	router        *chi.Mux
 	server        *http.Server
 	logger        *logrus.Logger
 	cookieBuilder *securecookie.SecureCookie
@@ -145,8 +147,28 @@ func NewDebug(cfg ServerConfig, dbConfig database.Config) (srv *Server, err erro
 	return
 }
 
+func (s *Server) logRoute(prefix string, route chi.Route) {
+	rp := route.Pattern
+	if prefix != "" {
+		rp = prefix + rp
+	}
+	s.logger.Debugln(rp)
+	if route.SubRoutes != nil {
+		for _, sr := range route.SubRoutes.Routes() {
+			s.logRoute(rp, sr)
+		}
+	}
+}
+
 func (s *Server) Serve() {
 	s.logger.Debugf("Listening on 443")
+
+	if s.DebugMode {
+		for _, route := range s.router.Routes() {
+			s.logRoute("", route)
+		}
+	}
+
 	s.logger.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))
 }
 

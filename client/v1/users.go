@@ -38,7 +38,7 @@ func (c *V1Client) Login(username, password, totpToken string) (*http.Cookie, er
 	}
 
 	req, _ := http.NewRequest(http.MethodPost, c.buildVersionlessURL(nil, usersBasePath, "login"), body)
-	if res, err := c.executeRequest(req); err != nil {
+	if res, err := c.plainClient.Do(req); err != nil {
 		return nil, errors.Wrap(err, "encountered error executing request")
 	} else {
 		cookies := res.Cookies()

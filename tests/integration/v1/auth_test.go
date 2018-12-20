@@ -52,20 +52,24 @@ func loginUser(t *testing.T, username string, password string) *http.Cookie {
 func TestAuth(test *testing.T) {
 	// test.Parallel()
 
+	pc := todoClient.PlainClient()
+
 	test.Run("should reject an unauthenticated request", func(t *testing.T) {
-		res, err := todoClient.Client.Post(todoClient.BuildURL(nil, "fart"), "application/json", nil)
+		res, err := pc.Post(todoClient.BuildURL(nil, "fart"), "application/json", nil)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 	})
 
-	test.Run("should accept a valid cookie", func(t *testing.T) {
+	test.Run("should accept a valid token", func(t *testing.T) {
 		cookie := loginUser(t, expectedUsername, expectedPassword)
 		assert.NotNil(t, cookie)
 
 		req, err := http.NewRequest(http.MethodPost, todoClient.BuildURL(nil, "fart"), nil)
 		req.AddCookie(cookie)
 		assert.NoError(t, err)
-		res, err := todoClient.Client.Do(req)
+
+		ac := todoClient.AuthenticatedClient()
+		res, err := ac.Do(req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusTeapot, res.StatusCode)
 	})
@@ -73,7 +77,7 @@ func TestAuth(test *testing.T) {
 	test.Run("should reject an invalid cookie", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, todoClient.BuildURL(nil, "fart"), nil)
 		assert.NoError(t, err)
-		res, err := todoClient.Client.Do(req)
+		res, err := pc.Do(req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 	})

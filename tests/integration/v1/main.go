@@ -4,6 +4,8 @@ import (
 	"crypto/tls"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,7 +14,7 @@ import (
 )
 
 const (
-	debug                  = true
+	debug                  = false
 	nonexistentID          = "999999999"
 	localTestInstanceURL   = "https://localhost"
 	defaultTestInstanceURL = "https://demo-server"
@@ -23,7 +25,7 @@ const (
 )
 
 var (
-	urlToUse   = defaultTestInstanceURL
+	urlToUse   string
 	todoClient *client.V1Client
 )
 
@@ -80,6 +82,12 @@ func ensureServerIsUp() {
 }
 
 func init() {
+	if strings.ToLower(os.Getenv("DOCKER")) == "true" {
+		urlToUse = defaultTestInstanceURL
+	} else {
+		urlToUse = localTestInstanceURL
+	}
+
 	initializeClient()
 	ensureServerIsUp()
 	//testOAuth()

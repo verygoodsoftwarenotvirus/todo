@@ -18,11 +18,10 @@ type cookieAuth struct {
 	Authenticated bool
 }
 
-func (s *Server) UserAuthenticationMiddleware(next http.Handler) http.Handler {
+func (s *Server) UserCookieAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		s.logger.Debugln("UserAuthenticationMiddleware triggered")
 		if cookie, err := req.Cookie(CookieName); err == nil && cookie != nil {
-			s.logger.Debugln("")
 			var ca cookieAuth
 			if err := s.cookieBuilder.Decode(CookieName, cookie.Value, &ca); err == nil {
 				// // TODO: refresh cookie

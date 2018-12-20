@@ -147,6 +147,14 @@ func NewDebug(cfg ServerConfig, dbConfig database.Config) (srv *Server, err erro
 	return
 }
 
+func (s *Server) logRoutes(routes chi.Routes) {
+	if s.DebugMode {
+		for _, route := range routes.Routes() {
+			s.logRoute("", route)
+		}
+	}
+}
+
 func (s *Server) logRoute(prefix string, route chi.Route) {
 	rp := route.Pattern
 	if prefix != "" {
@@ -162,13 +170,7 @@ func (s *Server) logRoute(prefix string, route chi.Route) {
 
 func (s *Server) Serve() {
 	s.logger.Debugf("Listening on 443")
-
-	if s.DebugMode {
-		for _, route := range s.router.Routes() {
-			s.logRoute("", route)
-		}
-	}
-
+	//s.logRoutes(s.router)
 	s.logger.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))
 }
 

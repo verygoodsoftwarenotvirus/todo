@@ -37,13 +37,17 @@ func (s *Server) setupRoutes() {
 	router.Route("/users", func(userRouter chi.Router) {
 		sr := fmt.Sprintf("/{%s:[a-zA-Z0-9]+}", users.URIParamKey)
 		userRouter.With(s.usersService.UserLoginInputContextMiddleware).Post("/login", s.Login)
-		userRouter.Post("/logout", s.Logout)
+		userRouter.With(s.UserCookieAuthenticationMiddleware).Post("/logout", s.Logout)
 
-		userRouter.With(s.UserAuthenticationMiddleware, s.usersService.TOTPSecretRefreshInputContextMiddleware).
-			Post("/totp_secret/new", s.usersService.NewTOTPSecret(uf))
+		userRouter.With(
+			s.UserCookieAuthenticationMiddleware,
+			s.usersService.TOTPSecretRefreshInputContextMiddleware,
+		).Post("/totp_secret/new", s.usersService.NewTOTPSecret(uf))
 
-		userRouter.With(s.UserAuthenticationMiddleware, s.usersService.PasswordUpdateInputContextMiddleware).
-			Post("/password/new", s.usersService.UpdatePassword(uf))
+		userRouter.With(
+			s.UserCookieAuthenticationMiddleware,
+			s.usersService.PasswordUpdateInputContextMiddleware,
+		).Post("/password/new", s.usersService.UpdatePassword(uf))
 
 		userRouter.Get("/", s.usersService.List)     // List
 		userRouter.Get(sr, s.usersService.Read)      // Read
@@ -53,46 +57,26 @@ func (s *Server) setupRoutes() {
 	})
 
 	router.Route("/oauth2", func(oauth2Router chi.Router) {
-		// pk := fmt.Sprintf(`{%s:[a-zA-Z0-9\_\-]+}`, oauth2ClientIDURIParamKey)
 		oauth2Router.
-			With(s.UserAuthenticationMiddleware).
-			Post("/clients", func(res http.ResponseWriter, req *http.Request) {
-
-			})
-
-		oauth2Router.
-			With(
-				//s.UserAuthenticationMiddleware, // TODO: maybe an optional user attacher?
-				s.Oauth2ClientInfoMiddleware,
-			).
+			With(s.Oauth2ClientInfoMiddleware).
 			Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
-				err := s.oauth2Handler.HandleAuthorizeRequest(res, req)
-				if err != nil {
+				if err := s.oauth2Handler.HandleAuthorizeRequest(res, req); err != nil {
 					http.Error(res, err.Error(), http.StatusBadRequest)
 				}
 			})
 
 		oauth2Router.Post("/token", func(res http.ResponseWriter, req *http.Request) {
-			s.oauth2Handler.HandleTokenRequest(res, req)
-		})
+			if err := s.oauth2Handler.HandleTokenRequest(res, req); err != nil {
+				http.Error(res, err.Error(), http.StatusBadRequest)
 
+			}
+		})
 	})
 
-	router.Route("/api", func(apiRouter chi.Router) {
+	router.With(s.OauthTokenAuthenticationMiddleware).Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Route("/v1", func(v1Router chi.Router) {
 
-			v1Router.With(
-				//s.UserAuthenticationMiddleware,
-				func(next http.Handler) http.Handler {
-					return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-						token, err := s.oauth2Handler.ValidationBearerToken(req)
-						if err != nil || token == nil {
-							http.Error(res, err.Error(), http.StatusUnauthorized)
-							return
-						}
-					})
-				},
-			).Post("/fart", func(res http.ResponseWriter, req *http.Request) {
+			v1Router.Post("/fart", func(res http.ResponseWriter, req *http.Request) {
 				res.WriteHeader(http.StatusTeapot)
 			})
 
@@ -116,9 +100,8 @@ func (s *Server) setupRoutes() {
 						With(s.oauth2ClientsService.Oauth2ClientInputContextMiddleware).
 						Put(sr, s.oauth2ClientsService.Update) // Update
 					clientRouter.
-						With(s.UserAuthenticationMiddleware,
-							s.oauth2ClientsService.Oauth2ClientInputContextMiddleware,
-						).Post("/", s.oauth2ClientsService.Create) // Create
+						With(s.oauth2ClientsService.Oauth2ClientInputContextMiddleware).
+						Post("/", s.oauth2ClientsService.Create) // Create
 				})
 			})
 		})

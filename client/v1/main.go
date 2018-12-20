@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"log"
+	"golang.org/x/oauth2/clientcredentials"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -39,10 +39,11 @@ type Config struct {
 }
 
 type V1Client struct {
-	Client *http.Client
-	logger *logrus.Logger
-	Debug  bool
-	URL    *url.URL
+	plainClient  *http.Client
+	authedClient *http.Client
+	logger       *logrus.Logger
+	Debug        bool
+	URL          *url.URL
 
 	// old and busted
 	authCookie *http.Cookie
@@ -56,22 +57,17 @@ type V1Client struct {
 	itemsChan chan *models.Item
 }
 
-func noRedirect(req *http.Request, via []*http.Request) error {
-	log.Print(`
+func (c *V1Client) PlainClient() *http.Client {
+	return c.plainClient
+}
 
-
-
-	noRedirect called
-
-
-
-	`)
-	return http.ErrUseLastResponse
+func (c *V1Client) AuthenticatedClient() *http.Client {
+	return c.authedClient
 }
 
 func endpoint(baseURL *url.URL) oauth2.Endpoint {
 	tu, au := *baseURL, *baseURL
-	tu.Path, au.Path = "oath2/token", "oath2/authorize"
+	tu.Path, au.Path = "oauth2/token", "oauth2/authorize"
 
 	return oauth2.Endpoint{
 		TokenURL: tu.String(),
@@ -81,61 +77,18 @@ func endpoint(baseURL *url.URL) oauth2.Endpoint {
 
 func (c *V1Client) enableOauth(cfg *Config) error {
 	c.logger.Debugln("enabling OAuth")
-	conf := &oauth2.Config{
+
+	conf := clientcredentials.Config{
 		ClientID:     cfg.ClientID,
 		ClientSecret: cfg.ClientSecret,
 		Scopes:       []string{"*"},
-		Endpoint:     endpoint(c.URL),
+		EndpointParams: url.Values{
+			"client_id":     []string{cfg.ClientID},
+			"client_secret": []string{cfg.ClientSecret},
+		},
+		TokenURL: endpoint(c.URL).TokenURL,
 	}
-
-	client := cfg.Client
-	if client == nil {
-		// Use the custom HTTP client when requesting a token.
-		client := &http.Client{
-			Timeout:   5 * time.Second,
-			Transport: http.DefaultTransport,
-		}
-		client.Transport.(*http.Transport).TLSClientConfig = &tls.Config{
-			// WARNING: Never do this ordinarily, this is an application which will only ever run in a local context
-			InsecureSkipVerify: true,
-		}
-	}
-	client.CheckRedirect = noRedirect
-
-	urlParts := []oauth2.AuthCodeOption{
-		oauth2.SetAuthURLParam("client_id", cfg.ClientID),
-		oauth2.SetAuthURLParam("client_secret", cfg.ClientSecret),
-		oauth2.SetAuthURLParam("redirect_uri", cfg.RedirectURI),
-	}
-
-	aurl := conf.AuthCodeURL("", urlParts...)
-	req, err := http.NewRequest(http.MethodPost, aurl, nil)
-	if err != nil {
-		return err
-	}
-
-	c.logger.Debugln("fetching auth code")
-	res, err := client.Do(req)
-	if err != nil {
-		return errors.Wrap(err, "fetching auth code")
-	}
-
-	u, _ := url.Parse(res.Header.Get("Location"))
-	q := u.Query()
-	authErr := q.Get("error")
-	if authErr != "" {
-		return errors.Wrap(errors.New(q.Get("error_description")), "exchanging code for token")
-	}
-
-	authCode := q.Get("code")
-	log.Println("fetched the following auth code: ", authCode)
-
-	authToken, err := conf.Exchange(context.TODO(), authCode, urlParts...)
-	if err != nil {
-		return errors.Wrap(err, "getting token")
-	}
-
-	c.Client = conf.Client(context.Background(), authToken)
+	c.authedClient = conf.Client(context.TODO())
 
 	return nil
 }
@@ -154,9 +107,9 @@ func NewClient(cfg *Config) (*V1Client, error) {
 	c.URL = u
 
 	if cfg.Client != nil {
-		c.Client = cfg.Client
+		c.plainClient = cfg.Client
 	} else {
-		c.Client = &http.Client{Timeout: 5 * time.Second}
+		c.plainClient = &http.Client{Timeout: 5 * time.Second}
 	}
 
 	if cfg.Logger != nil {
@@ -180,11 +133,7 @@ func (c *V1Client) executeRequest(req *http.Request) (*http.Response, error) {
 		c.logger.Debugln(command)
 	}
 
-	//if c.authCookie != nil {
-	//	req.AddCookie(c.authCookie)
-	//}
-
-	res, err := c.Client.Do(req)
+	res, err := c.authedClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +192,7 @@ func (c *V1Client) IsUp() bool {
 
 	uri := fmt.Sprintf("%s://%s:%s/_meta_/health", u.Scheme, u.Hostname(), u.Port())
 	req, _ := http.NewRequest(http.MethodGet, uri, nil)
-	res, err := c.executeRequest(req)
+	res, err := c.plainClient.Do(req)
 
 	if err != nil {
 		return false

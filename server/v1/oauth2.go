@@ -36,7 +36,7 @@ func (s *Server) initializeOauth2Server() {
 	// client memory store
 	clientStore := oauth2store.NewClientStore()
 
-	var paginating bool = true
+	paginating := true
 	for page := 1; paginating; page++ {
 		clientList, err := s.db.GetOauth2Clients(
 			&models.QueryFilter{
@@ -53,11 +53,15 @@ func (s *Server) initializeOauth2Server() {
 
 		for _, client := range clientList.Clients {
 			s.logger.Debugf("loading client %q", client.ClientID)
-			clientStore.Set(client.ClientID, &oauth2models.Client{
+			if err := clientStore.Set(client.ClientID, &oauth2models.Client{
 				ID:     client.ClientID,
 				Secret: client.ClientSecret,
 				Domain: client.RedirectURI,
-			})
+				UserID: strconv.FormatUint(client.BelongsTo, 10),
+			}); err != nil {
+				s.logger.Fatalln("error encountered loading oauth clients to the clientStore: ", err)
+			}
+
 		}
 	}
 
@@ -88,6 +92,9 @@ func setOauth2Defaults(srv *oauth2server.Server, s *Server) {
 	srv.SetClientInfoHandler(oauth2server.ClientFormHandler)
 	srv.SetUserAuthorizationHandler(s.UserAuthorizationHandler)
 	srv.SetAuthorizeScopeHandler(s.AuthorizeScopeHandler)
+	srv.Config.AllowedGrantTypes = []oauth2.GrantType{
+		oauth2.AuthorizationCode, oauth2.ClientCredentials, oauth2.Refreshing, oauth2.Implicit,
+	}
 
 	srv.SetInternalErrorHandler(func(err error) (re *oauth2errors.Response) {
 		s.logger.Errorln("Internal Error:", err.Error())
@@ -110,6 +117,17 @@ func setOauth2Defaults(srv *oauth2server.Server, s *Server) {
 			re.StatusCode,
 			re.Header,
 		)
+	})
+}
+
+func (s *Server) OauthTokenAuthenticationMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		token, err := s.oauth2Handler.ValidationBearerToken(req)
+		if err != nil || token == nil {
+			http.Error(res, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(res, req)
 	})
 }
 

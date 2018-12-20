@@ -5,12 +5,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"github.com/go-chi/chi"
 )
 
 const (
@@ -69,20 +66,22 @@ func (s *UsersService) TOTPSecretRefreshInputContextMiddleware(next http.Handler
 	})
 }
 
-func (s *UsersService) Read(res http.ResponseWriter, req *http.Request) {
-	userID := chi.URLParam(req, URIParamKey)
-	x, err := s.database.GetUser(userID)
-	if err == sql.ErrNoRows {
-		res.WriteHeader(http.StatusNotFound)
-		return
-	} else if err != nil {
-		s.logger.Errorf("error fetching user %q from database: %v", userID, err)
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+func (s *UsersService) Read(usernameFetcher func(req *http.Request) string) http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		userID := usernameFetcher(req)
+		x, err := s.database.GetUser(userID)
+		if err == sql.ErrNoRows {
+			res.WriteHeader(http.StatusNotFound)
+			return
+		} else if err != nil {
+			s.logger.Errorf("error fetching user %q from database: %v", userID, err)
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(x)
+		res.Header().Set("Content-type", "application/json")
+		json.NewEncoder(res).Encode(x)
+	}
 }
 
 func (s *UsersService) Count(res http.ResponseWriter, req *http.Request) {
@@ -112,13 +111,14 @@ func (s *UsersService) List(res http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(res).Encode(users)
 }
 
-func (s *UsersService) Delete(res http.ResponseWriter, req *http.Request) {
-	userIDParam := chi.URLParam(req, URIParamKey)
-	userID, _ := strconv.ParseUint(userIDParam, 10, 64)
-
-	if err := s.database.DeleteUser(uint(userID)); err != nil {
-		res.WriteHeader(http.StatusInternalServerError)
-		return
+func (s *UsersService) Delete(usernameFetcher func(req *http.Request) uint64) http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		userID := usernameFetcher(req)
+		s.logger.Debugf("UsersService.Delete called for user #%d", userID)
+		if err := s.database.DeleteUser(uint(userID)); err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
@@ -259,7 +259,6 @@ func (s *UsersService) Create(res http.ResponseWriter, req *http.Request) {
 	}
 	totpSecret := newSecret //[:52] // I forgot how I know it needs to be this long
 
-	s.logger.Debugf("assigning user %q the TOTP secret %q", input.Username, totpSecret)
 	x, err := s.database.CreateUser(input, totpSecret)
 	if err != nil {
 		s.logger.Errorf("error creating user: %v", err)
@@ -267,24 +266,8 @@ func (s *UsersService) Create(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	s.logger.Debugf(`
-
-
-
-
-
-	user %q
-	provided password %q
-	  hashed password %q
-		  TOTP secret %q
-
-
-
-
-	`, input.Username, input.Password, x.HashedPassword, x.TwoFactorSecret)
-
 	// UserCreationResponse is a struct we can use to notify the user of
-	// their two factor secret, `but ideally just this once and then never again.
+	// their two factor secret, but ideally just this once and then never again.
 	ucr := &models.UserCreationResponse{
 		ID:                    x.ID,
 		Username:              x.Username,

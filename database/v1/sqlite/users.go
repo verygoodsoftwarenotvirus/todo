@@ -10,7 +10,7 @@ const (
 		SELECT
 			id,
 			username,
-			password,
+			hashed_password,
 			password_last_changed_on,
 			two_factor_secret,
 			created_on,
@@ -32,7 +32,7 @@ const (
 		SELECT
 			id,
 			username,
-			password,
+			hashed_password,
 			password_last_changed_on,
 			two_factor_secret,
 			created_on,
@@ -47,7 +47,7 @@ const (
 		SELECT
 			id,
 			username,
-			password,
+			hashed_password,
 			password_last_changed_on,
 			two_factor_secret,
 			created_on,
@@ -63,7 +63,7 @@ const (
 	createUserQuery = `
 		INSERT INTO users
 		(
-			username, password, two_factor_secret
+			username, hashed_password, two_factor_secret
 		)
 		VALUES
 		(
@@ -81,7 +81,7 @@ const (
 		UPDATE users SET
 			updated_on = (strftime('%s','now')),
 			archived_on = (strftime('%s','now'))
-		WHERE id = ?
+		WHERE username = ?
 	`
 )
 
@@ -104,14 +104,11 @@ func scanUser(scan database.Scannable) (*models.User, error) {
 }
 
 func (s *sqlite) GetUser(identifier string) (*models.User, error) {
-	row := s.database.QueryRow(getUserQuery, identifier)
-	return scanUser(row)
+	return scanUser(s.database.QueryRow(getUserQuery, identifier))
 }
 
-func (s *sqlite) GetUserCount(filter *models.QueryFilter) (uint64, error) {
-	var count uint64
-	err := s.database.QueryRow(getUserCountQuery).Scan(&count)
-	return count, err
+func (s *sqlite) GetUserCount(filter *models.QueryFilter) (count uint64, err error) {
+	return count, s.database.QueryRow(getUserCountQuery).Scan(&count)
 }
 
 func (s *sqlite) GetUsers(filter *models.QueryFilter) (*models.UserList, error) {

@@ -60,7 +60,7 @@ func checkOauth2ClientEquality(t *testing.T, expected *models.Oauth2ClientInput,
 }
 
 func TestOauth2Clients(test *testing.T) {
-	// test.Parallel()
+	test.Parallel()
 
 	// create user
 	x, y, c := buildDummyUser(test)

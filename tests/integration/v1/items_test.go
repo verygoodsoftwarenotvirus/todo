@@ -31,7 +31,7 @@ func buildDummyItem(t *testing.T) *models.Item {
 }
 
 func TestItems(test *testing.T) {
-	// test.Parallel()
+	test.Parallel()
 
 	test.Run("Creating", func(T *testing.T) {
 		T.Run("should be createable", func(t *testing.T) {

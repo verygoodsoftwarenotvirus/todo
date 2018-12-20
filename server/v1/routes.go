@@ -13,13 +13,6 @@ import (
 	"github.com/gorilla/context"
 )
 
-// chiUsernameFetcher (now named uf) fetches a username from a request routed by chi.
-func uf(req *http.Request) string {
-	// PONDER: if the only time we use users.URIParamKey is externally to the users package
-	// does it really need to belong there?
-	return chi.URLParam(req, users.URIParamKey)
-}
-
 func (s *Server) setupRoutes() {
 	router := chi.NewRouter()
 	router.Use(
@@ -35,25 +28,25 @@ func (s *Server) setupRoutes() {
 	}
 
 	router.Route("/users", func(userRouter chi.Router) {
-		sr := fmt.Sprintf("/{%s:[a-zA-Z0-9]+}", users.URIParamKey)
+		usernamePattern := fmt.Sprintf("/{%s:[a-zA-Z0-9]+}", users.URIParamKey)
 		userRouter.With(s.usersService.UserLoginInputContextMiddleware).Post("/login", s.Login)
 		userRouter.With(s.UserCookieAuthenticationMiddleware).Post("/logout", s.Logout)
 
 		userRouter.With(
 			s.UserCookieAuthenticationMiddleware,
 			s.usersService.TOTPSecretRefreshInputContextMiddleware,
-		).Post("/totp_secret/new", s.usersService.NewTOTPSecret(uf))
+		).Post("/totp_secret/new", s.usersService.NewTOTPSecret(chiUsernameFetcher))
 
 		userRouter.With(
 			s.UserCookieAuthenticationMiddleware,
 			s.usersService.PasswordUpdateInputContextMiddleware,
-		).Post("/password/new", s.usersService.UpdatePassword(uf))
+		).Post("/password/new", s.usersService.UpdatePassword(chiUsernameFetcher))
 
-		userRouter.Get("/", s.usersService.List)     // List
-		userRouter.Get(sr, s.usersService.Read)      // Read
-		userRouter.Delete(sr, s.usersService.Delete) // Delete
-		// userRouter.With(s.usersService.UserInputContextMiddleware).Put(sr, s.usersService.Update)   // Update
+		userRouter.Get("/", s.usersService.List)                                                    // List
+		userRouter.Get(usernamePattern, s.usersService.Read(chiUsernameFetcher))                    // Read
+		userRouter.Delete(usernamePattern, s.usersService.Delete(chiUserIDFetcher))                 // Delete
 		userRouter.With(s.usersService.UserInputContextMiddleware).Post("/", s.usersService.Create) // Create
+		// userRouter.With(s.usersService.UserInputContextMiddleware).Put(sr, s.usersService.Update)   // Update
 	})
 
 	router.Route("/oauth2", func(oauth2Router chi.Router) {
@@ -75,10 +68,6 @@ func (s *Server) setupRoutes() {
 
 	router.With(s.OauthTokenAuthenticationMiddleware).Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Route("/v1", func(v1Router chi.Router) {
-
-			v1Router.Post("/fart", func(res http.ResponseWriter, req *http.Request) {
-				res.WriteHeader(http.StatusTeapot)
-			})
 
 			v1Router.Route("/items", func(itemsRouter chi.Router) {
 				sr := fmt.Sprintf("/{%s:[0-9]+}", items.URIParamKey)
@@ -104,6 +93,7 @@ func (s *Server) setupRoutes() {
 						Post("/", s.oauth2ClientsService.Create) // Create
 				})
 			})
+
 		})
 	})
 

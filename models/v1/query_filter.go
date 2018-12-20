@@ -22,6 +22,7 @@ type QueryFilter struct {
 	CreatedBefore uint64   `json:"created_after"`
 	UpdatedAfter  uint64   `json:"updated_before"`
 	UpdatedBefore uint64   `json:"updated_after"`
+	IncludeAll    bool     `json:"include_all"`
 	SortBy        sortType `json:"sort_by"`
 }
 
@@ -69,6 +70,12 @@ func (qf *QueryFilter) FromParams(params url.Values) {
 	if updatedAfter, ok := params["updated_after"]; ok && len(updatedAfter) >= 1 {
 		if i, err := strconv.ParseUint(updatedAfter[0], 10, 64); err == nil {
 			qf.UpdatedAfter = uint64(i)
+		}
+	}
+
+	if includeAll, ok := params["include_all"]; ok && len(includeAll) >= 1 {
+		if ia, err := strconv.ParseBool(includeAll[0]); err == nil {
+			qf.IncludeAll = ia
 		}
 	}
 

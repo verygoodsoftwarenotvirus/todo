@@ -18,15 +18,16 @@ type Oauth2ClientHandler interface {
 }
 
 type Oauth2Client struct {
-	ID           string   `json:"id"`
-	ClientID     string   `json:"client_id"`
-	ClientSecret string   `json:"client_secret"`
-	RedirectURI  string   `json:"redirect_uri"`
-	Scopes       []string `json:"scopes"`
-	CreatedOn    uint64   `json:"created_on"`
-	UpdatedOn    *uint64  `json:"updated_on"`
-	ArchivedOn   *uint64  `json:"archived_on"`
-	BelongsTo    uint64   `json:"belongs_to"`
+	ID              string   `json:"id"`
+	ClientID        string   `json:"client_id"`
+	ClientSecret    string   `json:"client_secret"`
+	RedirectURI     string   `json:"redirect_uri"`
+	Scopes          []string `json:"scopes"`
+	ImplicitAllowed bool     `json:"implicit_allowed"`
+	CreatedOn       uint64   `json:"created_on"`
+	UpdatedOn       *uint64  `json:"updated_on"`
+	ArchivedOn      *uint64  `json:"archived_on"`
+	BelongsTo       uint64   `json:"belongs_to"`
 }
 
 func (c *Oauth2Client) GetID() string {

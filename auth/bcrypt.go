@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"errors"
-
 	"github.com/pquerna/otp/totp"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
@@ -11,11 +9,6 @@ import (
 const (
 	defaultHashCost            = uint(bcrypt.DefaultCost) + 3
 	defaultMinimumPasswordSize = 16
-)
-
-var (
-	ErrCostTooLow           = errors.New("stored password's cost is too low")
-	ErrInvalidTwoFactorCode = errors.New("invalid two factor code")
 )
 
 var _ Enticator = (*BcryptAuthenticator)(nil)
@@ -42,7 +35,7 @@ func (b *BcryptAuthenticator) HashPassword(password string) (string, error) {
 	return string(hashedPass), err
 }
 
-func (b *BcryptAuthenticator) PasswordMatches(hashedPassword, providedPassword string) bool {
+func (b *BcryptAuthenticator) PasswordMatches(hashedPassword, providedPassword string, salt []byte) bool {
 	matches := bcrypt.CompareHashAndPassword(
 		[]byte(hashedPassword),
 		[]byte(providedPassword),
@@ -67,11 +60,9 @@ func (b *BcryptAuthenticator) PasswordIsAcceptable(pass string) bool {
 }
 
 func (b *BcryptAuthenticator) ValidateLogin(hashedPassword, providedPassword, twoFactorSecret, twoFactorCode string) (bool, error) {
-	passwordMatches := b.PasswordMatches(hashedPassword, providedPassword)
-	tokenIsValid := totp.Validate(twoFactorCode, twoFactorSecret)
-	if !tokenIsValid {
+	passwordMatches := b.PasswordMatches(hashedPassword, providedPassword, nil)
+	if !totp.Validate(twoFactorCode, twoFactorSecret) {
 		return passwordMatches, ErrInvalidTwoFactorCode
 	}
-
 	return passwordMatches, nil
 }

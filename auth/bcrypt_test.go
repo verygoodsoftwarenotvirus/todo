@@ -38,17 +38,18 @@ func TestBcrypt_PasswordMatches(T *testing.T) {
 	T.Run("normal usage", func(t *testing.T) {
 		t.Parallel()
 
-		actual := x.PasswordMatches(hashedExamplePassword, examplePassword)
+		actual := x.PasswordMatches(hashedExamplePassword, examplePassword, nil)
 		assert.True(t, actual)
 	})
 
 	T.Run("when passwords don't match", func(t *testing.T) {
 		t.Parallel()
 
-		actual := x.PasswordMatches(hashedExamplePassword, "password")
+		actual := x.PasswordMatches(hashedExamplePassword, "password", nil)
 		assert.False(t, actual)
 	})
 }
+
 func TestBcrypt_PasswordIsAcceptable(T *testing.T) {
 	T.Parallel()
 

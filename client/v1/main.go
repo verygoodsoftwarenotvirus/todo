@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net/http"
@@ -15,41 +16,104 @@ import (
 	"github.com/moul/http2curl"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 )
 
 const (
 	defaultTimeout = 5 * time.Second
 )
 
+var (
+	ErrNotFound = errors.New("404: not found")
+)
+
 type Config struct {
-	Client    *http.Client
-	Debug     bool
-	Logger    *logrus.Logger
-	Address   string
-	AuthToken string
+	Client  *http.Client
+	Debug   bool
+	Logger  *logrus.Logger
+	Address string
+
+	UserCredentials *url.Userinfo
+
+	ClientID     string
+	ClientSecret string
+	RedirectURI  string
+	Scopes       []string
 }
 
 type V1Client struct {
-	Client *http.Client
-	logger *logrus.Logger
-	Debug  bool
-	URL    *url.URL
-	Token  string
+	plainClient  *http.Client
+	authedClient *http.Client
+	logger       *logrus.Logger
+	Debug        bool
+	URL          *url.URL
+
+	// old and busted
+	authCookie *http.Cookie
+	// new hotness
+	clientID     string
+	clientSecret string
+	Scopes       []string
+	redirectURI  string
 
 	Items     <-chan *models.Item
 	itemsChan chan *models.Item
 }
 
-func NewClient(cfg *Config) (c *V1Client, err error) {
-	c = &V1Client{
-		Debug: cfg.Debug,
-		Token: cfg.AuthToken,
+func (c *V1Client) PlainClient() *http.Client {
+	return c.plainClient
+}
+
+func (c *V1Client) AuthenticatedClient() *http.Client {
+	return c.authedClient
+}
+
+func endpoint(baseURL *url.URL) oauth2.Endpoint {
+	tu, au := *baseURL, *baseURL
+	tu.Path, au.Path = "oauth2/token", "oauth2/authorize"
+
+	return oauth2.Endpoint{
+		TokenURL: tu.String(),
+		AuthURL:  au.String(),
+	}
+}
+
+func (c *V1Client) enableOauth(cfg *Config) error {
+	c.logger.Debugln("enabling OAuth")
+
+	conf := clientcredentials.Config{
+		ClientID:     cfg.ClientID,
+		ClientSecret: cfg.ClientSecret,
+		Scopes:       []string{"*"},
+		EndpointParams: url.Values{
+			"client_id":     []string{cfg.ClientID},
+			"client_secret": []string{cfg.ClientSecret},
+		},
+		TokenURL: endpoint(c.URL).TokenURL,
+	}
+	c.authedClient = conf.Client(context.TODO())
+
+	return nil
+}
+
+func NewClient(cfg *Config) (*V1Client, error) {
+	c := &V1Client{Debug: cfg.Debug}
+
+	if cfg.ClientID == "" || cfg.ClientSecret == "" {
+		return nil, errors.New("Client ID and Client Secret required")
 	}
 
+	u, err := url.Parse(cfg.Address)
+	if err != nil {
+		return nil, errors.Wrap(err, "parsing URL")
+	}
+	c.URL = u
+
 	if cfg.Client != nil {
-		c.Client = cfg.Client
+		c.plainClient = cfg.Client
 	} else {
-		c.Client = &http.Client{Timeout: 5 * time.Second}
+		c.plainClient = &http.Client{Timeout: 5 * time.Second}
 	}
 
 	if cfg.Logger != nil {
@@ -60,12 +124,11 @@ func NewClient(cfg *Config) (c *V1Client, err error) {
 			c.logger.SetLevel(logrus.DebugLevel)
 		}
 	}
-
-	if c.URL, err = url.Parse(cfg.Address); err != nil {
-		return nil, errors.Wrap(err, "Invalid URL is invalid")
+	if err := c.enableOauth(cfg); err != nil {
+		return nil, err
 	}
 
-	return
+	return c, nil
 }
 
 func (c *V1Client) executeRequest(req *http.Request) (*http.Response, error) {
@@ -74,9 +137,7 @@ func (c *V1Client) executeRequest(req *http.Request) (*http.Response, error) {
 		c.logger.Debugln(command)
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
-
-	res, err := c.Client.Do(req)
+	res, err := c.authedClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -92,8 +153,22 @@ func (c *V1Client) executeRequest(req *http.Request) (*http.Response, error) {
 	return res, nil
 }
 
-func (c *V1Client) BuildURL(queryParams url.Values, parts ...string) string {
-	return c.buildURL(queryParams, parts...).String()
+func (c *V1Client) Do(req *http.Request) (*http.Response, error) {
+	if c.URL.Hostname() != req.URL.Hostname() {
+		return nil, errors.New("request is destined for unknown server")
+	}
+	return c.executeRequest(req)
+}
+
+type Valuer interface {
+	ToValues() url.Values
+}
+
+func (c *V1Client) BuildURL(qp Valuer, parts ...string) string {
+	if qp != nil {
+		return c.buildURL(qp.ToValues(), parts...).String()
+	}
+	return c.buildURL(nil, parts...).String()
 }
 
 func (c *V1Client) buildURL(queryParams url.Values, parts ...string) *url.URL {
@@ -119,9 +194,9 @@ func (c *V1Client) BuildWebsocketURL(parts ...string) string {
 func (c *V1Client) IsUp() bool {
 	u := *c.URL
 
-	uri := fmt.Sprintf("%s://%s:%s/_debug_/health", u.Scheme, u.Hostname(), u.Port())
+	uri := fmt.Sprintf("%s://%s:%s/_meta_/health", u.Scheme, u.Hostname(), u.Port())
 	req, _ := http.NewRequest(http.MethodGet, uri, nil)
-	res, err := c.executeRequest(req)
+	res, err := c.plainClient.Do(req)
 
 	if err != nil {
 		return false
@@ -130,34 +205,49 @@ func (c *V1Client) IsUp() bool {
 	return res.StatusCode == http.StatusOK
 }
 
-func (c *V1Client) makeDataRequest(method string, uri string, in interface{}, out interface{}) error {
-	ce := &ClientError{}
-
-	if err := argIsNotPointerOrNil(out); err != nil {
-		ce.Err = errors.Wrap(err, "struct to load must be a pointer")
-		return ce
-	}
-
+func (c *V1Client) buildDataRequest(method, uri string, in interface{}) (*http.Request, error) {
 	body, err := createBodyFromStruct(in)
 	if err != nil {
-		ce.Err = errors.Wrap(err, "encountered error marshaling data to JSON")
-		return ce
+		return nil, err
 	}
 
-	req, _ := http.NewRequest(method, uri, body)
-	res, err := c.executeRequest(req)
-	if err != nil {
-		ce.Err = errors.Wrap(err, "encountered error executing request")
-		return ce
+	return http.NewRequest(method, uri, body)
+}
+
+func (c *V1Client) makeDataRequest(method string, uri string, in interface{}, out interface{}) error {
+	// sometimes we want to make requests with data attached, but we don't really care about the response
+	// so we give this function a nil `out` value. That said, if you provide us a value, it needs to be a pointer.
+	if out != nil {
+		if np, err := argIsNotPointer(out); np || err != nil {
+			return errors.Wrap(err, "struct to load must be a pointer")
+		}
 	}
 
-	resErr := unmarshalBody(res, &out)
-	if resErr != nil {
-		ce.Err = errors.Wrap(err, "encountered error loading response from server")
-		return ce
+	var (
+		req *http.Request
+		res *http.Response
+		err error
+	)
+
+	if req, err = c.buildDataRequest(method, uri, in); err != nil {
+		return errors.Wrap(err, "encountered error building request")
 	}
 
-	c.logger.Debugf("data request returned: %+v", out)
+	if res, err = c.executeRequest(req); err != nil {
+		return errors.Wrap(err, "encountered error executing request")
+	}
+
+	if res.StatusCode == http.StatusNotFound {
+		return ErrNotFound
+	}
+
+	if out != nil {
+		resErr := unmarshalBody(res, &out)
+		if resErr != nil {
+			return errors.Wrap(err, "encountered error loading response from server")
+		}
+		c.logger.Debugf("data request returned: %+v", out)
+	}
 
 	return nil
 }

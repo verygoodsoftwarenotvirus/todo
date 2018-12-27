@@ -4,40 +4,54 @@ import (
 	"crypto/tls"
 	"log"
 	"net/http"
+	"os"
+	"strings"
+	"testing"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1"
 
-	"github.com/bxcodec/faker"
+	"github.com/stretchr/testify/require"
 )
 
 const (
-	debug                        = false
-	nonexistentID                = 999999999
-	localTestInstanceURL         = "https://localhost"
-	defaultTestInstanceURL       = "https://demo-server"
-	defaultTestInstanceAuthToken = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
+	debug                  = true
+	nonexistentID          = 999999999
+	localTestInstanceURL   = "https://localhost"
+	defaultTestInstanceURL = "https://demo-server"
+
+	defaultSecret                   = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
+	defaultTestInstanceClientID     = "HEREISACLIENTIDWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
+	defaultTestInstanceClientSecret = defaultSecret
 )
 
 var (
+	urlToUse   string
 	todoClient *client.V1Client
-	fake       = faker.GetLorem()
 )
+
+func checkValueAndError(t *testing.T, i interface{}, err error) {
+	t.Helper()
+	require.NoError(t, err)
+	require.NotNil(t, i)
+}
 
 func initializeClient() {
 	cfg := &client.Config{
 		Client: &http.Client{
 			Transport: http.DefaultTransport,
-			//Timeout:   5 * time.Second,
+			Timeout:   5 * time.Second,
 		},
-		Debug:     debug,
-		Address:   defaultTestInstanceURL,
-		AuthToken: defaultTestInstanceAuthToken,
+		Debug:   debug,
+		Address: urlToUse,
+
+		ClientID:     defaultTestInstanceClientID,
+		ClientSecret: defaultTestInstanceClientSecret,
+		RedirectURI:  defaultTestInstanceURL,
 	}
-	cfg.Client.Transport.(*http.Transport).TLSClientConfig = &tls.Config{
-		// WARNING: Never this ordinarily, this is an application which will only ever run in a local context
-		InsecureSkipVerify: true,
-	}
+
+	// WARNING: Never do this ordinarily, this is an application which will only ever run in a local context
+	cfg.Client.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
 	c, err := client.NewClient(cfg)
 	if err != nil {
@@ -47,9 +61,11 @@ func initializeClient() {
 }
 
 func ensureServerIsUp() {
-	maxAttempts := 25
-	isDown := true
-	numberOfAttempts := 0
+	var (
+		isDown           = true
+		maxAttempts      = 25
+		numberOfAttempts = 0
+	)
 
 	for isDown {
 		if !todoClient.IsUp() {
@@ -67,6 +83,13 @@ func ensureServerIsUp() {
 }
 
 func init() {
+	if strings.ToLower(os.Getenv("DOCKER")) == "true" {
+		urlToUse = defaultTestInstanceURL
+	} else {
+		urlToUse = localTestInstanceURL
+	}
+
 	initializeClient()
 	ensureServerIsUp()
+	//testOAuth()
 }

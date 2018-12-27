@@ -16,6 +16,7 @@ COPY dev_files/certs/server /certs
 COPY database database
 COPY --from=build-stage /todo /todo
 
+ENV DOCKER=true
 EXPOSE 443
 
 ENTRYPOINT ["/todo"]

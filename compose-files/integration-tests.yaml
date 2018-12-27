@@ -4,15 +4,19 @@ services:
     demo-server:
         build:
             context: ../
-            dockerfile: dockerfiles/server.Dockerfile
+            dockerfile: dockerfiles/integration-server.Dockerfile
         ports:
-            - '1443:443'
-        # logging:
-        #     driver: none
+            - '443:443'
+        environment:
+            DOCKER: 'true'
+        logging:
+            driver: none
 
     integration-test:
         build:
             context: ../
             dockerfile: dockerfiles/integration-tests.Dockerfile
+        environment:
+            DOCKER: 'true'
         links:
             - demo-server

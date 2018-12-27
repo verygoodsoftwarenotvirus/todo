@@ -18,6 +18,9 @@ type sqlite struct {
 	debug    bool
 	logger   *logrus.Logger
 	database *sql.DB
+
+	clientIDExtractor database.ClientIDExtractor
+	secretGenerator   database.SecretGenerator
 }
 
 // NewSqlite provides a sqlite database controller
@@ -37,6 +40,10 @@ func NewSqlite(config database.Config) (database.Database, error) {
 		debug:    config.Debug,
 		logger:   config.Logger,
 		database: db,
+
+		// FIXME: these should be allowed to be nil
+		clientIDExtractor: config.Extractor,
+		secretGenerator:   config.SecretGenerator,
 	}
 
 	return s, nil
@@ -49,8 +56,8 @@ func (s *sqlite) Migrate(schemaDir string) error {
 	if err != nil {
 		return err
 	}
-
 	s.logger.Debugf("%d files found in schema directory", len(files))
+
 	for _, file := range files {
 		schemaFile := path.Join(schemaDir, file.Name())
 

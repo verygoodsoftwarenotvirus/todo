@@ -5,99 +5,79 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/franela/goblin"
+	"github.com/bxcodec/faker"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+func checkItemEquality(t *testing.T, expected, actual *models.Item) {
+	t.Helper()
+
+	assert.NotZero(t, actual.ID)
+	assert.Equal(t, expected.Name, actual.Name)
+	assert.Equal(t, expected.Details, actual.Details)
+	assert.NotZero(t, actual.CreatedOn)
+}
+
 func buildDummyItem(t *testing.T) *models.Item {
 	t.Helper()
 
-	ii := &models.ItemInput{
-		Name:    fake.Word(),
-		Details: fake.Sentence(),
+	x := &models.ItemInput{
+		Name:    faker.Lorem{}.Word(),
+		Details: faker.Lorem{}.Sentence(),
 	}
-	item, err := todoClient.CreateItem(ii)
-	assert.NoError(t, err)
-	return item
+	y, err := todoClient.CreateItem(x)
+	require.NoError(t, err)
+	return y
 }
 
-func TestAuth(t *testing.T) {
-	g := goblin.Goblin(t)
+func TestItems(test *testing.T) {
+	test.Parallel()
 
-	g.Describe("Auth", func() {
-		g.It("should reject an unauthenticated request")
-		g.Describe("credentials", func() {
-			g.It("should accept a valid cookie")
-			g.It("should reject a valid cookie")
-			g.It("should accept a valid auth key")
-			g.It("should reject an invalid auth key")
-		})
-	})
-}
-
-func TestItems(t *testing.T) {
-	g := goblin.Goblin(t)
-
-	g.Describe("Items", func() {
-
-		g.It("Should create an item", func() {
-			// Create item
-			expected := &models.Item{Name: "name", Details: "details"}
-			actual, err := todoClient.CreateItem(&models.ItemInput{
-				Name: expected.Name, Details: expected.Details,
-			})
-			assert.NoError(t, err)
-			assert.NotNil(t, actual)
-
-			// Assert item equality
-			assert.NotZero(t, actual.ID, "ID should be non-zero")
-			assert.Equal(t, expected.Name, actual.Name, "expected .Name to be %q, but it was %q", expected.Name, actual.Name)
-			assert.Equal(t, expected.Details, actual.Details, "expected .Details to be %q, but it was %q", expected.Details, actual.Details)
-			assert.NotZero(t, actual.CreatedOn, ".CreatedOn should not be zero")
-			assert.Nil(t, actual.CompletedOn, ".CompletedOn should be nil")
-			assert.Nil(t, actual.UpdatedOn, ".UpdatedOn should be nil")
-
-			// Clean up
-			err = todoClient.DeleteItem(actual.ID)
-			assert.NoError(t, err)
-		})
-
-		g.It("Should return a pre-made item", func() {
+	test.Run("Creating", func(T *testing.T) {
+		T.Run("should be createable", func(t *testing.T) {
 			// Create item
 			expected := &models.Item{Name: "name", Details: "details"}
 			premade, err := todoClient.CreateItem(&models.ItemInput{
 				Name: expected.Name, Details: expected.Details,
 			})
-			assert.NoError(t, err)
-			assert.NotNil(t, premade)
-
-			// Fetch item
-			actual, err := todoClient.GetItem(premade.ID)
-			assert.NoError(t, err)
+			checkValueAndError(t, premade, err)
 
 			// Assert item equality
-			assert.NotZero(t, actual.ID, "ID should be non-zero")
-			assert.Equal(t, expected.Name, actual.Name, "expected .Name to be %q, but it was %q", expected.Name, actual.Name)
-			assert.Equal(t, expected.Details, actual.Details, "expected .Details to be %q, but it was %q", expected.Details, actual.Details)
-			assert.NotZero(t, actual.CreatedOn, ".CreatedOn should not be zero")
-			assert.Nil(t, actual.CompletedOn, ".CompletedOn should be nil")
-			assert.Nil(t, actual.UpdatedOn, ".UpdatedOn should be nil")
+			checkItemEquality(t, expected, premade)
 
 			// Clean up
-			err = todoClient.DeleteItem(actual.ID)
+			err = todoClient.DeleteItem(premade.ID)
 			assert.NoError(t, err)
 
+			actual, err := todoClient.GetItem(premade.ID)
+			checkValueAndError(t, actual, err)
+			checkItemEquality(t, expected, actual)
+			assert.NotZero(t, actual.CompletedOn)
 		})
+	})
 
-		g.It("Should error when fetching a nonexistent item", func() {
-			// Fetch item
-			_, err := todoClient.GetItem(nonexistentID)
-			assert.Error(t, err)
-			// assert.Nil(t, actual)
+	test.Run("Counting", func(T *testing.T) {
+		T.Run("it should be able to be counted", func(t *testing.T) {
+			premade := []*models.Item{}
+			for i := 0; i < 5; i++ {
+				x := buildDummyItem(t)
+				require.NotNil(t, x)
+				premade = append(premade, x)
+			}
+
+			count, err := todoClient.GetItemCount(nil)
+			assert.NoError(t, err)
+			assert.NotZero(t, count)
+
+			for _, x := range premade {
+				assert.NoError(t, todoClient.DeleteItem(x.ID))
+			}
 		})
+	})
 
-		g.It("Should return a list of pre-made items", func() {
+	test.Run("Listing", func(T *testing.T) {
+		T.Run("should be able to be read in a list", func(t *testing.T) {
 			// Create items
 			expected := []*models.Item{}
 			for i := 0; i < 5; i++ {
@@ -106,28 +86,65 @@ func TestItems(t *testing.T) {
 
 			// Assert item list equality
 			actual, err := todoClient.GetItems(nil)
-			assert.NoError(t, err)
-			assert.NotNil(t, actual)
-			require.True(t, len(expected) >= len(actual))
+			checkValueAndError(t, actual, err)
+			assert.True(t, len(expected) <= len(actual.Items))
 
 			// Clean up
-			for _, item := range actual {
-				assert.NoError(t, todoClient.DeleteItem(item.ID))
+			for _, item := range actual.Items {
+				err := todoClient.DeleteItem(item.ID)
+				assert.NoError(t, err)
 			}
 		})
+	})
 
-		g.It("Should update a item", func() {
+	test.Run("Reading", func(T *testing.T) {
+		T.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
+			// Fetch item
+			_, err := todoClient.GetItem(nonexistentID)
+			assert.Error(t, err)
+		})
+
+		T.Run("it should be readable", func(t *testing.T) {
 			// Create item
 			expected := &models.Item{Name: "name", Details: "details"}
 			premade, err := todoClient.CreateItem(&models.ItemInput{
 				Name: expected.Name, Details: expected.Details,
 			})
+			checkValueAndError(t, premade, err)
+
+			// Fetch item
+			actual, err := todoClient.GetItem(premade.ID)
+			checkValueAndError(t, actual, err)
+
+			// Assert item equality
+			checkItemEquality(t, expected, actual)
+
+			// Clean up
+			err = todoClient.DeleteItem(actual.ID)
 			assert.NoError(t, err)
-			assert.NotNil(t, premade)
+		})
+	})
+
+	test.Run("Updating", func(T *testing.T) {
+		T.Run("it should return an error when trying to update something that doesn't exist", func(t *testing.T) {
+			err := todoClient.UpdateItem(&models.Item{ID: nonexistentID})
+			assert.Error(t, err)
+
+		})
+
+		T.Run("it should be updatable", func(t *testing.T) {
+			// Create item
+			expected := &models.Item{Name: "new name", Details: "new details"}
+			premade, err := todoClient.CreateItem(
+				&models.ItemInput{
+					Name:    "old name",
+					Details: "old details",
+				},
+			)
+			checkValueAndError(t, premade, err)
 
 			// Change item
-			expectedName, expectedDetails := "new name", "new details"
-			premade.Name, premade.Details = expectedName, expectedDetails
+			premade.Name, premade.Details = expected.Name, expected.Details
 			err = todoClient.UpdateItem(premade)
 			assert.NoError(t, err)
 
@@ -136,70 +153,27 @@ func TestItems(t *testing.T) {
 			assert.NoError(t, err)
 
 			// Assert item equality
-			assert.Equal(t, expectedName, actual.Name, "expected .Name to be %q, but it was %q", expected.Name, actual.Name)
-			assert.Equal(t, expectedDetails, actual.Details, "expected .Details to be %q, but it was %q", expected.Details, actual.Details)
-			assert.NotZero(t, actual.CreatedOn, ".CreatedOn should not be zero")
-			assert.NotNil(t, actual.UpdatedOn, ".UpdatedOn should not be nil")
-			assert.Nil(t, actual.CompletedOn, ".CompletedOn should be nil")
+			checkItemEquality(t, expected, actual)
+			assert.NotNil(t, actual.UpdatedOn)
 
 			// Clean up
 			err = todoClient.DeleteItem(actual.ID)
 			assert.NoError(t, err)
 		})
+	})
 
-		g.It("Should delete a item", func() {
+	test.Run("Deleting", func(T *testing.T) {
+		T.Run("should be able to be deleted", func(t *testing.T) {
 			// Create item
 			expected := &models.Item{Name: "name", Details: "details"}
 			premade, err := todoClient.CreateItem(&models.ItemInput{
 				Name: expected.Name, Details: expected.Details,
 			})
-			assert.NoError(t, err)
-			assert.NotNil(t, premade)
+			checkValueAndError(t, premade, err)
 
 			// Clean up
 			err = todoClient.DeleteItem(premade.ID)
 			assert.NoError(t, err)
 		})
-
-		// g.It("should serve a websocket feed", func() {
-		// 	createdItems := []*models.Item{}
-		// 	reportedItemsCount := len(createdItems)
-		// 	feed, err := todoClient.ItemsFeed()
-		// 	if err != nil {
-		// 		g.Fail(err)
-		// 		return
-		// 	}
-
-		// 	timeLimit := time.NewTimer(2 * time.Second)
-		// 	ticker := time.NewTicker(250 * time.Millisecond)
-		// 	defer func() {
-		// 		ticker.Stop()
-		// 	}()
-
-		// 	done := false
-		// 	for done {
-		// 		select {
-		// 		case <-feed:
-		// 			reportedItemsCount += 1
-		// 			t.Logf("item #%d came into feed. item count: %d", reportedItemsCount, len(createdItems))
-		// 		case <-ticker.C:
-		// 			t.Log("creating new item")
-		// 			createdItems = append(createdItems, buildDummyItem(t))
-		// 		case <-timeLimit.C:
-		// 			t.Log("timer has gone off")
-		// 			ticker.Stop()
-		// 			assert.Equal(
-		// 				t,
-		// 				len(createdItems),
-		// 				reportedItemsCount,
-		// 				"expected number of created items (%d) to match the number of items that came through the websocket (%d)",
-		// 				len(createdItems),
-		// 				reportedItemsCount,
-		// 			)
-		// 			done = true
-		// 		}
-		// 	}
-		// })
 	})
-
 }

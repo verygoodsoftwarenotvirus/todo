@@ -1,58 +1,36 @@
 package client
 
 import (
-	"fmt"
+	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
 const itemsBasePath = "items"
 
-func (c *V1Client) GetItem(id uint) (item *models.Item, err error) {
-	p := fmt.Sprintf("%s/%d", itemsBasePath, id)
-	u := c.BuildURL(nil, p)
-	item = &models.Item{}
-
-	err = c.get(u, &item)
-
-	return
+func (c *V1Client) GetItem(id uint64) (item *models.Item, err error) {
+	return item, c.get(c.BuildURL(nil, itemsBasePath, strconv.FormatUint(id, 10)), &item)
 }
 
-func (c *V1Client) GetItems(filter *models.QueryFilter) (items []models.Item, err error) {
-	var u string
-	if filter == nil {
-		u = c.BuildURL(nil, itemsBasePath)
-	} else {
-		u = c.BuildURL(filter.ToValues(), itemsBasePath)
-	}
-
-	items = []models.Item{}
-	err = c.get(u, &items)
-
-	return
+func (c *V1Client) GetItemCount(filter *models.QueryFilter) (uint64, error) {
+	x := models.CountResponse{}
+	return x.Count, c.get(c.BuildURL(filter, itemsBasePath, "count"), &x)
 }
 
-func (c *V1Client) CreateItem(input *models.ItemInput) (*models.Item, error) {
-	u := c.BuildURL(nil, itemsBasePath)
-	item := &models.Item{}
+func (c *V1Client) GetItems(filter *models.QueryFilter) (items *models.ItemList, err error) {
+	return items, c.get(c.BuildURL(filter, itemsBasePath), &items)
+}
 
-	err := c.post(u, input, item)
-
-	return item, err
+func (c *V1Client) CreateItem(input *models.ItemInput) (item *models.Item, err error) {
+	return item, c.post(c.BuildURL(nil, itemsBasePath), input, &item)
 }
 
 func (c *V1Client) UpdateItem(updated *models.Item) (err error) {
-	p := fmt.Sprintf("%s/%d", itemsBasePath, updated.ID)
-	u := c.BuildURL(nil, p)
-
-	return c.put(u, updated, &models.Item{})
+	return c.put(c.BuildURL(nil, itemsBasePath, strconv.FormatUint(updated.ID, 10)), updated, &updated)
 }
 
-func (c *V1Client) DeleteItem(id uint) error {
-	p := fmt.Sprintf("%s/%d", itemsBasePath, id)
-	u := c.BuildURL(nil, p)
-
-	return c.delete(u)
+func (c *V1Client) DeleteItem(id uint64) error {
+	return c.delete(c.BuildURL(nil, itemsBasePath, strconv.FormatUint(id, 10)))
 }
 
 // func (c *V1Client) buildItemsFeed(conn *websocket.Conn, itemChan chan models.Item) {

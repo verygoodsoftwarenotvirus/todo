@@ -1,13 +1,13 @@
 package integration
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/bxcodec/faker"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func checkItemEquality(t *testing.T, expected, actual *models.Item) {

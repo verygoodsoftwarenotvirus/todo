@@ -12,8 +12,8 @@ type MockItemHandler struct {
 	mock.Mock
 }
 
-func (m *MockItemHandler) GetItem(id uint64) (*models.Item, error) {
-	args := m.Called(id)
+func (m *MockItemHandler) GetItem(itemID, userID uint64) (*models.Item, error) {
+	args := m.Called(itemID, userID)
 	return args.Get(0).(*models.Item), args.Error(1)
 }
 

@@ -14,14 +14,14 @@ const (
 		FROM
 			items
 		WHERE
-			id = ?
+			id = ? AND belongs_to = ?
 	`
 	getItemCountQuery = `
 		SELECT
 			COUNT(*)
 		FROM
 			items
-		WHERE completed_on is null
+		WHERE completed_on IS NULL
 	`
 	getItemsQuery = `
 		SELECT
@@ -29,18 +29,18 @@ const (
 		FROM
 			items
 		WHERE
-			completed_on is null
+			completed_on IS NULL
 		LIMIT ?
 		OFFSET ?
 	`
 	createItemQuery = `
 		INSERT INTO items
 		(
-			name, details
+			name, details, belongs_to
 		)
 		VALUES
 		(
-			?, ?
+			?, ?, ?
 		)
 	`
 	updateItemQuery = `
@@ -54,7 +54,7 @@ const (
 		UPDATE items SET
 			updated_on = (strftime('%s','now')),
 			completed_on = (strftime('%s','now'))
-		WHERE id = ?
+		WHERE id = ? AND completed_on IS NULL
 	`
 )
 
@@ -75,16 +75,13 @@ func scanItem(scan database.Scannable) (*models.Item, error) {
 	return x, nil
 }
 
-func (s *sqlite) GetItem(id uint64) (*models.Item, error) {
-	row := s.database.QueryRow(getItemQuery, id)
+func (s *sqlite) GetItem(itemID, userID uint64) (*models.Item, error) {
+	row := s.database.QueryRow(getItemQuery, itemID, userID)
 	return scanItem(row)
 }
 
-func (s *sqlite) GetItemCount(filter *models.QueryFilter) (uint64, error) {
-	var count uint64
-	// TODO: apply filter here
-	err := s.database.QueryRow(getItemCountQuery).Scan(&count)
-	return count, err
+func (s *sqlite) GetItemCount(filter *models.QueryFilter) (count uint64, err error) {
+	return count, s.database.QueryRow(getItemCountQuery).Scan(&count)
 }
 
 func (s *sqlite) GetItems(filter *models.QueryFilter) (*models.ItemList, error) {
@@ -99,7 +96,7 @@ func (s *sqlite) GetItems(filter *models.QueryFilter) (*models.ItemList, error) 
 
 	s.logger.Debugf("query limit: %d, query page: %d, calculated page: %d", filter.Limit, filter.Page, queryPage)
 
-	rows, err := s.database.Query(getItemsQuery, filter.Limit, uint(filter.Limit*(filter.Page-1)))
+	rows, err := s.database.Query(getItemsQuery, filter.Limit, queryPage)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +137,7 @@ func (s *sqlite) CreateItem(input *models.ItemInput) (i *models.Item, err error)
 	}
 
 	// create the item
-	res, err := tx.Exec(createItemQuery, input.Name, input.Details)
+	res, err := tx.Exec(createItemQuery, input.Name, input.Details, input.BelongsTo)
 	if err != nil {
 		s.logger.Errorf("error executing item creation query: %v", err)
 		tx.Rollback()
@@ -155,7 +152,7 @@ func (s *sqlite) CreateItem(input *models.ItemInput) (i *models.Item, err error)
 	}
 
 	// fetch full updated item
-	row := tx.QueryRow(getItemQuery, id)
+	row := tx.QueryRow(getItemQuery, id, input.BelongsTo)
 	i, err = scanItem(row)
 	if err != nil {
 		s.logger.Errorf("error fetching newly created item %d: %v", id, err)
@@ -185,7 +182,7 @@ func (s *sqlite) UpdateItem(input *models.Item) (err error) {
 	}
 
 	// fetch full updated item
-	row := tx.QueryRow(getItemQuery, input.ID)
+	row := tx.QueryRow(getItemQuery, input.ID, input.BelongsTo)
 	input, err = scanItem(row)
 	if err != nil {
 		tx.Rollback()

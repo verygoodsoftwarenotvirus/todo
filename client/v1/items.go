@@ -1,13 +1,20 @@
 package client
 
 import (
+	"strconv"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
 const itemsBasePath = "items"
 
-func (c *V1Client) GetItem(id string) (item *models.Item, err error) {
-	return item, c.get(c.BuildURL(nil, itemsBasePath, id), &item)
+func (c *V1Client) GetItem(id uint64) (item *models.Item, err error) {
+	return item, c.get(c.BuildURL(nil, itemsBasePath, strconv.FormatUint(id, 10)), &item)
+}
+
+func (c *V1Client) GetItemCount(filter *models.QueryFilter) (uint64, error) {
+	x := models.CountResponse{}
+	return x.Count, c.get(c.BuildURL(filter, itemsBasePath, "count"), &x)
 }
 
 func (c *V1Client) GetItems(filter *models.QueryFilter) (items *models.ItemList, err error) {
@@ -19,11 +26,11 @@ func (c *V1Client) CreateItem(input *models.ItemInput) (item *models.Item, err e
 }
 
 func (c *V1Client) UpdateItem(updated *models.Item) (err error) {
-	return c.put(c.BuildURL(nil, itemsBasePath, updated.ID), updated, &updated)
+	return c.put(c.BuildURL(nil, itemsBasePath, strconv.FormatUint(updated.ID, 10)), updated, &updated)
 }
 
-func (c *V1Client) DeleteItem(id string) error {
-	return c.delete(c.BuildURL(nil, itemsBasePath, id))
+func (c *V1Client) DeleteItem(id uint64) error {
+	return c.delete(c.BuildURL(nil, itemsBasePath, strconv.FormatUint(id, 10)))
 }
 
 // func (c *V1Client) buildItemsFeed(conn *websocket.Conn, itemChan chan models.Item) {

@@ -2,8 +2,6 @@ package models
 
 import (
 	"fmt"
-	"net/url"
-	"strings"
 )
 
 const DefaultLimit = 20
@@ -28,22 +26,6 @@ var (
 	}
 )
 
-func DetermineTypesOfInterest(params url.Values) []interface{} {
-	toc := []interface{}{}
-	if x, ok := params["types"]; ok && len(x) > 0 {
-		if len(x) == 1 && x[0] == "*" {
-			return allTypes
-		}
-
-		for _, y := range x {
-			if z, ok := typeMap[strings.ToLower(y)]; ok {
-				toc = append(toc, z())
-			}
-		}
-	}
-	return toc
-}
-
 type Pagination struct {
 	Page       uint64 `json:"page"`
 	Limit      uint64 `json:"limit"`
@@ -59,4 +41,13 @@ type ErrorResponse struct {
 
 func (er *ErrorResponse) Error() string {
 	return fmt.Sprintf("%d - %s", er.Code, er.Message)
+}
+
+type ResponseMetadata struct {
+	RequestID string         `json:"request_id"`
+	Error     *ErrorResponse `json:"error"`
+}
+
+type CountResponse struct {
+	Count uint64 `json:"count"`
 }

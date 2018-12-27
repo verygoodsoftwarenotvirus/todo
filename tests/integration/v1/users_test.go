@@ -2,6 +2,7 @@ package integration
 
 import (
 	"net/http"
+	"strconv"
 	"testing"
 	"time"
 
@@ -82,14 +83,14 @@ func TestUsers(test *testing.T) {
 			checkUserCreationEquality(t, expected, actual)
 
 			// Clean up
-			assert.NoError(t, todoClient.DeleteUser(actual.ID))
+			assert.NoError(t, todoClient.DeleteUser(strconv.FormatUint(actual.ID, 10)))
 		})
 	})
 
 	test.Run("Reading", func(T *testing.T) {
 		T.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
 			// Fetch user
-			actual, err := todoClient.GetUser(nonexistentID)
+			actual, err := todoClient.GetUser("nonexistent")
 			assert.Nil(t, actual)
 			assert.Error(t, err)
 		})
@@ -133,7 +134,7 @@ func TestUsers(test *testing.T) {
 			}
 
 			// Clean up
-			err := todoClient.DeleteUser(premade.ID)
+			err := todoClient.DeleteUser(strconv.FormatUint(premade.ID, 10))
 			assert.NoError(t, err)
 		})
 	})
@@ -155,7 +156,7 @@ func TestUsers(test *testing.T) {
 
 			// Clean up
 			for _, user := range actual.Users {
-				err := todoClient.DeleteUser(user.ID)
+				err := todoClient.DeleteUser(strconv.FormatUint(user.ID, 10))
 				assert.NoError(t, err)
 			}
 		})

@@ -9,13 +9,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1"
+
+	"github.com/stretchr/testify/require"
 )
 
 const (
-	debug                  = false
-	nonexistentID          = "999999999"
+	debug                  = true
+	nonexistentID          = 999999999
 	localTestInstanceURL   = "https://localhost"
 	defaultTestInstanceURL = "https://demo-server"
 

@@ -24,6 +24,10 @@ const (
 	defaultTimeout = 5 * time.Second
 )
 
+var (
+	ErrNotFound = errors.New("404: not found")
+)
+
 type Config struct {
 	Client  *http.Client
 	Debug   bool
@@ -231,6 +235,10 @@ func (c *V1Client) makeDataRequest(method string, uri string, in interface{}, ou
 
 	if res, err = c.executeRequest(req); err != nil {
 		return errors.Wrap(err, "encountered error executing request")
+	}
+
+	if res.StatusCode == http.StatusNotFound {
+		return ErrNotFound
 	}
 
 	if out != nil {

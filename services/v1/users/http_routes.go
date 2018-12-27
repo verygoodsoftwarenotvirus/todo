@@ -111,11 +111,11 @@ func (s *UsersService) List(res http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(res).Encode(users)
 }
 
-func (s *UsersService) Delete(usernameFetcher func(req *http.Request) uint64) http.HandlerFunc {
+func (s *UsersService) Delete(usernameFetcher func(req *http.Request) string) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		userID := usernameFetcher(req)
 		s.logger.Debugf("UsersService.Delete called for user #%d", userID)
-		if err := s.database.DeleteUser(uint(userID)); err != nil {
+		if err := s.database.DeleteUser(userID); err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}

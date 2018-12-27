@@ -65,8 +65,6 @@ const (
 	`
 	archiveOauth2ClientQuery = `
 		UPDATE oauth_clients SET
-			client_id = "__ARCHIVED__",
-			client_secret = "__ARCHIVED__",
 			updated_on = (strftime('%s','now')),
 			archived_on = (strftime('%s','now'))
 		WHERE id = ?
@@ -155,7 +153,7 @@ func (s *sqlite) GetOauth2Clients(filter *models.QueryFilter) (*models.Oauth2Cli
 	return ocl, err
 }
 
-func (s *sqlite) CreateOauth2Client(input *models.Oauth2ClientInput) (x *models.Oauth2Client, err error) {
+func (s *sqlite) CreateOauth2Client(input *models.Oauth2ClientCreationInput) (x *models.Oauth2Client, err error) {
 	s.logger.Debugln("CreateOauth2Client called.")
 
 	x = &models.Oauth2Client{
@@ -251,7 +249,7 @@ func (s *sqlite) UpdateOauth2Client(input *models.Oauth2Client) (err error) {
 	return
 }
 
-func (s *sqlite) DeleteOauth2Client(id uint) error {
+func (s *sqlite) DeleteOauth2Client(id string) error {
 	_, err := s.database.Exec(archiveOauth2ClientQuery, id)
 	return err
 }

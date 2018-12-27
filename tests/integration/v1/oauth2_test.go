@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"strconv"
 	"testing"
 	"time"
 
@@ -11,13 +12,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func buildDummyOauth2ClientInput(t *testing.T, username, password, totpSecret string) *models.Oauth2ClientInput {
+func buildDummyOauth2ClientInput(t *testing.T, username, password, totpSecret string) *models.Oauth2ClientCreationInput {
 	t.Helper()
 
 	code, err := totp.GenerateCode(totpSecret, time.Now())
 	assert.NoError(t, err)
 
-	x := &models.Oauth2ClientInput{
+	x := &models.Oauth2ClientCreationInput{
 		UserLoginInput: models.UserLoginInput{
 			Username:  username,
 			Password:  password,
@@ -34,12 +35,7 @@ func buildDummyOauth2Client(t *testing.T, username, password, totpSecret string)
 	t.Helper()
 
 	x, err := todoClient.CreateOauth2Client(
-		buildDummyOauth2ClientInput(
-			t,
-			username,
-			password,
-			totpSecret,
-		),
+		buildDummyOauth2ClientInput(t, username, password, totpSecret),
 	)
 	require.NoError(t, err)
 	require.NotNil(t, x)
@@ -47,7 +43,7 @@ func buildDummyOauth2Client(t *testing.T, username, password, totpSecret string)
 	return x
 }
 
-func checkOauth2ClientEquality(t *testing.T, expected *models.Oauth2ClientInput, actual *models.Oauth2Client) {
+func checkOauth2ClientEquality(t *testing.T, expected *models.Oauth2ClientCreationInput, actual *models.Oauth2Client) {
 	t.Helper()
 
 	assert.NotZero(t, actual.ID)
@@ -85,7 +81,7 @@ func TestOauth2Clients(test *testing.T) {
 	test.Run("Reading", func(T *testing.T) {
 		T.Run("it should return an error when trying to read one that doesn't exist", func(t *testing.T) {
 			// Fetch oauth2Client
-			_, err := todoClient.GetOauth2Client(nonexistentID)
+			_, err := todoClient.GetOauth2Client(strconv.Itoa(nonexistentID))
 			assert.Error(t, err)
 		})
 
@@ -152,6 +148,16 @@ func TestOauth2Clients(test *testing.T) {
 
 	test.Run("Counting", func(T *testing.T) {
 		T.Run("it should be able to be counted", func(t *testing.T) {
+			t.SkipNow()
+		})
+	})
+
+	test.Run("Using", func(T *testing.T) {
+		T.Run("should allow an authorized client to use the implicit grant type", func(t *testing.T) {
+			t.SkipNow()
+		})
+
+		T.Run("should not allow an unauthorized client to use the implicit grant type", func(t *testing.T) {
 			t.SkipNow()
 		})
 	})

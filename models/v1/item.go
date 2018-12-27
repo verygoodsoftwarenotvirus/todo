@@ -1,7 +1,7 @@
 package models
 
 type ItemHandler interface {
-	GetItem(id uint64) (*Item, error)
+	GetItem(itemID, userID uint64) (*Item, error)
 	GetItemCount(filter *QueryFilter) (uint64, error)
 	GetItems(filter *QueryFilter) (*ItemList, error)
 	CreateItem(input *ItemInput) (*Item, error)
@@ -10,13 +10,13 @@ type ItemHandler interface {
 }
 
 type Item struct {
-	ID          string  `json:"id"`
+	ID          uint64  `json:"id"`
 	Name        string  `json:"name"`
 	Details     string  `json:"details"`
 	CreatedOn   uint64  `json:"created_on"`
 	UpdatedOn   *uint64 `json:"updated_on"`
 	CompletedOn *uint64 `json:"completed_on"`
-	BelongsTo   *uint64 `json:"belongs_to"`
+	BelongsTo   uint64  `json:"belongs_to"`
 }
 
 func (i *Item) Update(input *ItemInput) {
@@ -35,6 +35,7 @@ type ItemList struct {
 }
 
 type ItemInput struct {
-	Name    string `json:"name"`
-	Details string `json:"details"`
+	Name      string `json:"name"`
+	Details   string `json:"details"`
+	BelongsTo uint64 `json:"-"`
 }

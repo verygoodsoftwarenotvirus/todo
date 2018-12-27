@@ -35,8 +35,12 @@ func (s *Server) UserCookieAuthenticationMiddleware(next http.Handler) http.Hand
 						s.internalServerError(res, req, err)
 						return
 					}
-					ctx = context.WithValue(ctx, models.UserKey, user)
-					req = req.WithContext(ctx)
+
+					req = req.WithContext(context.WithValue(
+						context.WithValue(ctx, models.UserKey, user),
+						models.UserIDKey,
+						user.ID,
+					))
 				}
 				next.ServeHTTP(res, req)
 				return

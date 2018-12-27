@@ -1,4 +1,4 @@
-package oauthclients
+package oauth2clients
 
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"

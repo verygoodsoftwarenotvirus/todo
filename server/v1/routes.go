@@ -1,34 +1,51 @@
 package server
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"github.com/gorilla/context"
+	gcontext "github.com/gorilla/context"
 )
 
+func (s *Server) buildRouteCtx(key models.ContextKey, x interface{}) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+			if err := json.NewDecoder(req.Body).Decode(x); err != nil {
+				s.logger.Errorf("error encountered decoding request body: %v", err)
+				res.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			next.ServeHTTP(res, req.WithContext(context.WithValue(req.Context(), key, x)))
+		})
+	}
+}
+
 func (s *Server) setupRoutes() {
-	router := chi.NewRouter()
-	router.Use(
-		context.ClearHandler,
+	s.router = chi.NewRouter()
+	s.router.Use(
+		gcontext.ClearHandler,
 		middleware.RequestID,
 		middleware.DefaultLogger,
 		middleware.Timeout(maxTimeout),
 	)
-	router.Get("/_meta_/health", func(res http.ResponseWriter, req *http.Request) { res.WriteHeader(http.StatusOK) })
 
 	if s.DebugMode {
-		router.Get("/_debug_/stats", s.stats)
+		s.router.Use(middleware.SetHeader("Access-Control-Allow-Origin", "*"))
+		s.router.Get("/_debug_/stats", s.stats)
 	}
 
-	router.Route("/users", func(userRouter chi.Router) {
-		usernamePattern := fmt.Sprintf("/{%s:[a-zA-Z0-9]+}", users.URIParamKey)
+	s.router.Get("/_meta_/health", func(res http.ResponseWriter, req *http.Request) { res.WriteHeader(http.StatusOK) })
+
+	s.router.Route("/users", func(userRouter chi.Router) {
 		userRouter.With(s.usersService.UserLoginInputContextMiddleware).Post("/login", s.Login)
 		userRouter.With(s.UserCookieAuthenticationMiddleware).Post("/logout", s.Logout)
 
@@ -42,14 +59,16 @@ func (s *Server) setupRoutes() {
 			s.usersService.PasswordUpdateInputContextMiddleware,
 		).Post("/password/new", s.usersService.UpdatePassword(chiUsernameFetcher))
 
+		usernamePattern := fmt.Sprintf("/{%s:[a-zA-Z0-9]+}", users.URIParamKey)
+
 		userRouter.Get("/", s.usersService.List)                                                    // List
 		userRouter.Get(usernamePattern, s.usersService.Read(chiUsernameFetcher))                    // Read
-		userRouter.Delete(usernamePattern, s.usersService.Delete(chiUserIDFetcher))                 // Delete
+		userRouter.Delete(usernamePattern, s.usersService.Delete(chiUsernameFetcher))               // Delete
 		userRouter.With(s.usersService.UserInputContextMiddleware).Post("/", s.usersService.Create) // Create
 		// userRouter.With(s.usersService.UserInputContextMiddleware).Put(sr, s.usersService.Update)   // Update
 	})
 
-	router.Route("/oauth2", func(oauth2Router chi.Router) {
+	s.router.Route("/oauth2", func(oauth2Router chi.Router) {
 		oauth2Router.
 			With(s.Oauth2ClientInfoMiddleware).
 			Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
@@ -66,37 +85,38 @@ func (s *Server) setupRoutes() {
 		})
 	})
 
-	router.With(s.OauthTokenAuthenticationMiddleware).Route("/api", func(apiRouter chi.Router) {
-		apiRouter.Route("/v1", func(v1Router chi.Router) {
+	s.router.
+		With(s.OauthTokenAuthenticationMiddleware).
+		Route("/api", func(apiRouter chi.Router) {
+			apiRouter.Route("/v1", func(v1Router chi.Router) {
 
-			v1Router.Route("/items", func(itemsRouter chi.Router) {
-				sr := fmt.Sprintf("/{%s:[0-9]+}", items.URIParamKey)
-				itemsRouter.Get("/", s.itemsService.List)                                               // List
-				itemsRouter.Get("/count", s.itemsService.Count)                                         // List
-				itemsRouter.Get(sr, s.itemsService.Read)                                                // Read
-				itemsRouter.Delete(sr, s.itemsService.Delete)                                           // Delete
-				itemsRouter.With(s.itemsService.ItemContextMiddleware).Put(sr, s.itemsService.Update)   // Update
-				itemsRouter.With(s.itemsService.ItemContextMiddleware).Post("/", s.itemsService.Create) // Create
-			})
-
-			v1Router.Route("/oauth2", func(oauth2Router chi.Router) {
-				oauth2Router.Route("/clients", func(clientRouter chi.Router) {
-					sr := fmt.Sprintf("/{%s}", oauthclients.URIParamKey)
-					clientRouter.Get("/", s.oauth2ClientsService.List)     // List
-					clientRouter.Get(sr, s.oauth2ClientsService.Read)      // Read
-					clientRouter.Delete(sr, s.oauth2ClientsService.Delete) // Delete
-					clientRouter.
-						With(s.oauth2ClientsService.Oauth2ClientInputContextMiddleware).
-						Put(sr, s.oauth2ClientsService.Update) // Update
-					clientRouter.
-						With(s.oauth2ClientsService.Oauth2ClientInputContextMiddleware).
-						Post("/", s.oauth2ClientsService.Create) // Create
+				v1Router.Route("/items", func(itemsRouter chi.Router) {
+					sr := fmt.Sprintf("/{%s:[0-9]+}", items.URIParamKey)
+					itemsRouter.Get("/", s.itemsService.List)                                   // List
+					itemsRouter.Get("/count", s.itemsService.Count)                             // Count
+					itemsRouter.Get(sr, s.itemsService.BuildReadHandler(chiItemIDFetcher))      // Read
+					itemsRouter.Delete(sr, s.itemsService.BuildDeleteHandler(chiItemIDFetcher)) // Delete
+					itemsRouter.With(s.itemsService.ItemInputMiddleware).
+						Put(sr, s.itemsService.BuildUpdateHandler(chiItemIDFetcher)) // Update
+					itemsRouter.With(s.itemsService.ItemInputMiddleware).
+						Post("/", s.itemsService.Create) // Create
 				})
+
+				v1Router.Route("/oauth2", func(oauth2Router chi.Router) {
+					oauth2Router.Route("/clients", func(clientRouter chi.Router) {
+						sr := fmt.Sprintf("/{%s}", oauth2clients.URIParamKey)
+						clientRouter.Get("/", s.oauth2ClientsService.List)                                           // List
+						clientRouter.Get(sr, s.oauth2ClientsService.BuildReadHandler(chiOauth2ClientIDFetcher))      // Read
+						clientRouter.Delete(sr, s.oauth2ClientsService.BuildDeleteHandler(chiOauth2ClientIDFetcher)) // Delete
+						clientRouter.
+							With(s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.Oauth2ClientUpdateInput))).
+							Put(sr, s.oauth2ClientsService.BuildUpdateHandler(chiOauth2ClientIDFetcher)) // Update
+						clientRouter.
+							With(s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.Oauth2ClientCreationInput))).
+							Post("/", s.oauth2ClientsService.Create) // Create
+					})
+				})
+
 			})
-
 		})
-	})
-
-	s.router = router
-	s.server.Handler = router
 }

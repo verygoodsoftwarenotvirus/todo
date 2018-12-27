@@ -103,8 +103,8 @@ func scanUser(scan database.Scannable) (*models.User, error) {
 	return x, nil
 }
 
-func (s *sqlite) GetUser(identifier string) (*models.User, error) {
-	return scanUser(s.database.QueryRow(getUserQuery, identifier))
+func (s *sqlite) GetUser(username string) (*models.User, error) {
+	return scanUser(s.database.QueryRow(getUserQuery, username))
 }
 
 func (s *sqlite) GetUserCount(filter *models.QueryFilter) (count uint64, err error) {
@@ -224,7 +224,7 @@ func (s *sqlite) UpdateUser(input *models.User) (err error) {
 	return
 }
 
-func (s *sqlite) DeleteUser(id uint) error {
-	_, err := s.database.Exec(archiveUserQuery, id)
+func (s *sqlite) DeleteUser(username string) error {
+	_, err := s.database.Exec(archiveUserQuery, username)
 	return err
 }

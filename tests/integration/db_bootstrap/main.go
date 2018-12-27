@@ -64,7 +64,7 @@ func main() {
 	}
 
 	oac, err := db.CreateOauth2Client(
-		&models.Oauth2ClientInput{
+		&models.Oauth2ClientCreationInput{
 			UserLoginInput: models.UserLoginInput{Username: u.Username},
 			Scopes:         []string{"*"},
 			BelongsTo:      u.ID,
@@ -81,8 +81,9 @@ func main() {
 
 	for i := 1; i < 6; i++ {
 		if _, err := db.CreateItem(&models.ItemInput{
-			Name:    fmt.Sprintf("example item #%d", i),
-			Details: fmt.Sprintf("example details #%d", i),
+			Name:      fmt.Sprintf("example item #%d", i),
+			Details:   fmt.Sprintf("example details #%d", i),
+			BelongsTo: u.ID,
 		}); err != nil {
 			logger.Fatalf("error creating item #%d", i)
 		}

@@ -1,16 +1,17 @@
 package models
 
 type UserHandler interface {
-	GetUser(identifier string) (*User, error)
+	GetUser(username string) (*User, error)
 	GetUserCount(filter *QueryFilter) (uint64, error)
 	GetUsers(filter *QueryFilter) (*UserList, error)
 	CreateUser(input *UserInput, totpSecret string) (*User, error)
 	UpdateUser(updated *User) error
-	DeleteUser(id uint) error
+	DeleteUser(username string) error
 }
 
 const (
-	UserKey ContextKey = "user"
+	UserKey   ContextKey = "user"
+	UserIDKey ContextKey = "user_id"
 )
 
 // UserLoginInput represents the payload used to log in a user
@@ -27,7 +28,7 @@ type UserInput struct {
 }
 
 type UserCreationResponse struct {
-	ID                    string  `json:"id"`
+	ID                    uint64  `json:"id"`
 	Username              string  `json:"username"`
 	TwoFactorSecret       string  `json:"two_factor_secret"`
 	PasswordLastChangedOn *uint64 `json:"password_last_changed_on"`
@@ -38,7 +39,7 @@ type UserCreationResponse struct {
 
 // User represents a user
 type User struct {
-	ID                    string  `json:"id"`
+	ID                    uint64  `json:"id"`
 	Username              string  `json:"username"`
 	HashedPassword        string  `json:"-"`
 	TwoFactorSecret       string  `json:"-"`

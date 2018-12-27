@@ -81,32 +81,4 @@ func TestAuth(test *testing.T) {
 	// 	assert.NoError(t, err)
 	// 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 	// })
-
-	// 	test.Run("Creating", func(T *testing.T) {
-	// 		T.Run("should be creatable", func(t *testing.T) {
-	// 		})
-	// 	})
-	// 	test.Run("Reading", func(T *testing.T) {
-	// 		T.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
-	// 		})
-	// 		T.Run("it should be readable", func(t *testing.T) {
-	// 		})
-	// 	})
-	// 	test.Run("Updating", func(T *testing.T) {
-	// 		T.Run("it should be updatable", func(t *testing.T) {
-	// 		})
-	// 	})
-	// 	test.Run("Deleting", func(T *testing.T) {
-	// 		T.Run("should be able to be deleted", func(t *testing.T) {
-	// 		})
-	// 	})
-	// 	test.Run("Listing", func(T *testing.T) {
-	// 		T.Run("should be able to be read in a list", func(t *testing.T) {
-	// 		})
-	// 	})
-	// 	test.Run("Counting", func(T *testing.T) {
-	// 		T.Run("it should be able to be counted", func(t *testing.T) {
-	// 			t.Skip()
-	// 		})
-	// 	})
 }

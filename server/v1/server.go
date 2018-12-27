@@ -49,7 +49,7 @@ type Server struct {
 	loginMonitor         LoginMonitor
 	itemsService         *items.ItemsService
 	usersService         *users.UsersService
-	oauth2ClientsService *oauthclients.Oauth2ClientsService
+	oauth2ClientsService *oauth2clients.Oauth2ClientsService
 
 	// infra things
 	db            database.Database
@@ -116,12 +116,6 @@ func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 		cookieBuilder: securecookie.New(securecookie.GenerateRandomKey(64), cfg.CookieSecret),
 
 		// Services
-		itemsService: items.NewItemsService(
-			items.ItemsServiceConfig{
-				Logger:   logger,
-				Database: db,
-			},
-		),
 		usersService: users.NewUsersService(
 			users.UsersServiceConfig{
 				// CookieName: s.config.CookieName
@@ -130,6 +124,16 @@ func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 				Authenticator: cfg.Authenticator,
 			},
 		),
+	}
+
+	if srv.itemsService, err = items.NewItemsService(
+		items.ItemsServiceConfig{
+			Logger:        logger,
+			Database:      db,
+			UserIDFetcher: srv.userIDFetcher,
+		},
+	); err != nil {
+		return nil, err
 	}
 
 	srv.initializeOauth2Server()
@@ -169,6 +173,7 @@ func (s *Server) logRoute(prefix string, route chi.Route) {
 }
 
 func (s *Server) Serve() {
+	s.server.Handler = s.router
 	s.logger.Debugf("Listening on 443")
 	//s.logRoutes(s.router)
 	s.logger.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))

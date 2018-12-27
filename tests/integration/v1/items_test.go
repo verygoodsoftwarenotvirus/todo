@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -26,7 +27,7 @@ func buildDummyItem(t *testing.T) *models.Item {
 		Details: faker.Lorem{}.Sentence(),
 	}
 	y, err := todoClient.CreateItem(x)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	return y
 }
 
@@ -53,6 +54,46 @@ func TestItems(test *testing.T) {
 			checkValueAndError(t, actual, err)
 			checkItemEquality(t, expected, actual)
 			assert.NotZero(t, actual.CompletedOn)
+		})
+	})
+
+	test.Run("Counting", func(T *testing.T) {
+		T.Run("it should be able to be counted", func(t *testing.T) {
+			premade := []*models.Item{}
+			for i := 0; i < 5; i++ {
+				x := buildDummyItem(t)
+				require.NotNil(t, x)
+				premade = append(premade, x)
+			}
+
+			count, err := todoClient.GetItemCount(nil)
+			assert.NoError(t, err)
+			assert.NotZero(t, count)
+
+			for _, x := range premade {
+				assert.NoError(t, todoClient.DeleteItem(x.ID))
+			}
+		})
+	})
+
+	test.Run("Listing", func(T *testing.T) {
+		T.Run("should be able to be read in a list", func(t *testing.T) {
+			// Create items
+			expected := []*models.Item{}
+			for i := 0; i < 5; i++ {
+				expected = append(expected, buildDummyItem(t))
+			}
+
+			// Assert item list equality
+			actual, err := todoClient.GetItems(nil)
+			checkValueAndError(t, actual, err)
+			assert.True(t, len(expected) <= len(actual.Items))
+
+			// Clean up
+			for _, item := range actual.Items {
+				err := todoClient.DeleteItem(item.ID)
+				assert.NoError(t, err)
+			}
 		})
 	})
 
@@ -85,6 +126,12 @@ func TestItems(test *testing.T) {
 	})
 
 	test.Run("Updating", func(T *testing.T) {
+		T.Run("it should return an error when trying to update something that doesn't exist", func(t *testing.T) {
+			err := todoClient.UpdateItem(&models.Item{ID: nonexistentID})
+			assert.Error(t, err)
+
+		})
+
 		T.Run("it should be updatable", func(t *testing.T) {
 			// Create item
 			expected := &models.Item{Name: "new name", Details: "new details"}
@@ -127,33 +174,6 @@ func TestItems(test *testing.T) {
 			// Clean up
 			err = todoClient.DeleteItem(premade.ID)
 			assert.NoError(t, err)
-		})
-	})
-
-	test.Run("Listing", func(T *testing.T) {
-		T.Run("should be able to be read in a list", func(t *testing.T) {
-			// Create items
-			expected := []*models.Item{}
-			for i := 0; i < 5; i++ {
-				expected = append(expected, buildDummyItem(t))
-			}
-
-			// Assert item list equality
-			actual, err := todoClient.GetItems(nil)
-			checkValueAndError(t, actual, err)
-			assert.True(t, len(expected) <= len(actual.Items))
-
-			// Clean up
-			for _, item := range actual.Items {
-				err := todoClient.DeleteItem(item.ID)
-				assert.NoError(t, err)
-			}
-		})
-	})
-
-	test.Run("Counting", func(T *testing.T) {
-		T.Run("it should be able to be counted", func(t *testing.T) {
-			t.Skip()
 		})
 	})
 }

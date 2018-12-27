@@ -2,19 +2,21 @@ package models
 
 import (
 	"strconv"
+
+	"gopkg.in/oauth2.v3"
 )
 
 const (
-	Oauth2ClientKey ContextKey = "user"
+	Oauth2ClientKey ContextKey = "oauth2_client"
 )
 
 type Oauth2ClientHandler interface {
 	GetOauth2Client(identifier string) (*Oauth2Client, error)
 	GetOauth2ClientCount(filter *QueryFilter) (uint64, error)
 	GetOauth2Clients(filter *QueryFilter) (*Oauth2ClientList, error)
-	CreateOauth2Client(input *Oauth2ClientInput) (*Oauth2Client, error)
+	CreateOauth2Client(input *Oauth2ClientCreationInput) (*Oauth2Client, error)
 	UpdateOauth2Client(updated *Oauth2Client) error
-	DeleteOauth2Client(id uint) error
+	DeleteOauth2Client(identifier string) error
 }
 
 type Oauth2Client struct {
@@ -29,6 +31,8 @@ type Oauth2Client struct {
 	ArchivedOn      *uint64  `json:"archived_on"`
 	BelongsTo       uint64   `json:"belongs_to"`
 }
+
+var _ oauth2.ClientInfo = (*Oauth2Client)(nil)
 
 func (c *Oauth2Client) GetID() string {
 	return c.ClientID
@@ -51,9 +55,14 @@ type Oauth2ClientList struct {
 	Clients []Oauth2Client `json:"clients"`
 }
 
-type Oauth2ClientInput struct {
+type Oauth2ClientCreationInput struct {
 	UserLoginInput
 	RedirectURI string   `json:"redirect_uri"`
-	BelongsTo   string   `json:"belongs_to"`
+	BelongsTo   uint64   `json:"belongs_to"`
+	Scopes      []string `json:"scopes"`
+}
+
+type Oauth2ClientUpdateInput struct {
+	RedirectURI string   `json:"redirect_uri"`
 	Scopes      []string `json:"scopes"`
 }

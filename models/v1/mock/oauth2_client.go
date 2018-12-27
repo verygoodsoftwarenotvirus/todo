@@ -27,7 +27,7 @@ func (m *MockOauth2ClientHandler) GetOauth2Clients(filter *models.QueryFilter) (
 	return args.Get(0).(*models.Oauth2ClientList), args.Error(1)
 }
 
-func (m *MockOauth2ClientHandler) CreateOauth2Client(input *models.Oauth2ClientInput) (*models.Oauth2Client, error) {
+func (m *MockOauth2ClientHandler) CreateOauth2Client(input *models.Oauth2ClientCreationInput) (*models.Oauth2Client, error) {
 	args := m.Called(input)
 	return args.Get(0).(*models.Oauth2Client), args.Error(1)
 }
@@ -36,6 +36,6 @@ func (m *MockOauth2ClientHandler) UpdateOauth2Client(updated *models.Oauth2Clien
 	return m.Called(updated).Error(0)
 }
 
-func (m *MockOauth2ClientHandler) DeleteOauth2Client(id uint) error {
-	return m.Called(id).Error(0)
+func (m *MockOauth2ClientHandler) DeleteOauth2Client(identifier string) error {
+	return m.Called(identifier).Error(0)
 }

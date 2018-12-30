@@ -8,7 +8,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
 	"github.com/go-chi/chi"
@@ -104,16 +103,16 @@ func (s *Server) setupRoutes() {
 
 				v1Router.Route("/oauth2", func(oauth2Router chi.Router) {
 					oauth2Router.Route("/clients", func(clientRouter chi.Router) {
-						sr := fmt.Sprintf("/{%s}", oauth2clients.URIParamKey)
-						clientRouter.Get("/", s.oauth2ClientsService.List)                                           // List
-						clientRouter.Get(sr, s.oauth2ClientsService.BuildReadHandler(chiOauth2ClientIDFetcher))      // Read
-						clientRouter.Delete(sr, s.oauth2ClientsService.BuildDeleteHandler(chiOauth2ClientIDFetcher)) // Delete
+						sr := fmt.Sprintf("/{%s}", oauth2ClientIDURIParamKey)
+						clientRouter.Get("/", s.ListOauth2Clients)    // List
+						clientRouter.Get(sr, s.ReadOauth2Client)      // Read
+						clientRouter.Delete(sr, s.DeleteOauth2Client) // Delete
 						clientRouter.
-							With(s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.Oauth2ClientUpdateInput))).
-							Put(sr, s.oauth2ClientsService.BuildUpdateHandler(chiOauth2ClientIDFetcher)) // Update
+							With(s.buildRouteCtx(oauth2ClientIDKey, new(models.Oauth2ClientUpdateInput))).
+							Put(sr, s.UpdateOauth2Client) // Update
 						clientRouter.
-							With(s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.Oauth2ClientCreationInput))).
-							Post("/", s.oauth2ClientsService.Create) // Create
+							With(s.buildRouteCtx(oauth2ClientIDKey, new(models.Oauth2ClientCreationInput))).
+							Post("/", s.CreateOauth2Client) // Create
 					})
 				})
 

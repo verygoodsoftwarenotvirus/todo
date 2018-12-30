@@ -41,7 +41,7 @@ dev_files/certs/server/key.pem dev_files/certs/server/cert.pem:
 
 ## Test things
 example.db:
-	go run tests/integration/db_bootstrap/main.go
+	go run tests/integration/v1/db_bootstrap/main.go
 
 $(COVERAGE_OUT):
 	./scripts/coverage.sh
@@ -70,7 +70,6 @@ run: docker-image
 .PHONY: run-local
 run-local:
 	go run cmd/server/v1/main.go
-
 
 .PHONY: run-local-integration-server
 run-local-integration-server:

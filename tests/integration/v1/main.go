@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	debug4sure             = true
+	debug                  = false
 	nonexistentID          = 999999999
 	localTestInstanceURL   = "https://localhost"
 	defaultTestInstanceURL = "https://demo-server"
@@ -37,11 +37,6 @@ func checkValueAndError(t *testing.T, i interface{}, err error) {
 }
 
 func initializeClient() {
-	var debug = strings.ToLower(os.Getenv("TODO_DEBUG")) == "true"
-	if !debug && debug4sure {
-		debug = debug4sure
-	}
-
 	cfg := &client.Config{
 		Client: &http.Client{
 			Transport: http.DefaultTransport,

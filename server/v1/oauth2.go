@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -11,6 +10,7 @@ import (
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 
 	// "github.com/sirupsen/logrus"
 	"gopkg.in/oauth2.v3"
@@ -24,7 +24,7 @@ import (
 const (
 	scopesSeparator                             = ","
 	scopesKey                 models.ContextKey = "scopes"
-	oauth2ClientIDKey         models.ContextKey = "client_id"
+	clientIDKey               models.ContextKey = "client_id"
 	oauth2ClientIDURIParamKey                   = "client_id"
 )
 
@@ -70,15 +70,15 @@ func (s *Server) initializeOauth2Server() {
 
 	s.setOauth2Defaults(manager)
 
-	// s.oauth2ClientsService = oauth2clients.NewOauth2ClientsService(
-	// 	oauth2clients.Oauth2ClientsServiceConfig{
-	// 		Logger:        s.logger,
-	// 		Authenticator: s.authenticator,
-	// 		Database:      s.db,
-	// 		ClientStore:   s.oauth2ClientStore,
-	// 		TokenStore:    tokenStore,                 // this is the one I think we need
-	// 	},
-	// )
+	s.oauth2ClientsService = oauth2clients.NewOauth2ClientsService(
+		oauth2clients.Oauth2ClientsServiceConfig{
+			Logger:        s.logger,
+			Authenticator: s.authenticator,
+			Database:      s.db,
+			ClientStore:   s.oauth2ClientStore,
+			TokenStore:    tokenStore,
+		},
+	)
 }
 
 func (s *Server) setOauth2Defaults(manager *oauth2manage.Manager) {
@@ -176,7 +176,7 @@ func (s *Server) fetchOauth2ClientScopesFromRequest(req *http.Request) []string 
 }
 
 func (s *Server) fetchOauth2ClientIDFromRequest(req *http.Request) string {
-	clientID, ok := req.Context().Value(oauth2ClientIDKey).(string)
+	clientID, ok := req.Context().Value(clientIDKey).(string)
 	if !ok {
 		return ""
 	}
@@ -273,136 +273,4 @@ func (s *Server) ClientScopeHandler(clientID, scope string) (allowed bool, err e
 		}
 	}
 	return
-}
-
-func (s *Server) Oauth2ClientCreationInputContextMiddleware(next http.Handler) http.Handler {
-	x := new(models.Oauth2ClientCreationInput)
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
-			s.logger.Errorf("error encountered decoding request body: %v", err)
-			res.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		ctx := context.WithValue(req.Context(), oauth2ClientIDKey, x)
-		next.ServeHTTP(res, req.WithContext(ctx))
-	})
-}
-
-func (s *Server) CreateOauth2Client(res http.ResponseWriter, req *http.Request) {
-	s.logger.Debugln("oauth2Client creation route called")
-	input, ok := req.Context().Value(oauth2ClientIDKey).(*models.Oauth2ClientCreationInput)
-	if !ok {
-		s.logger.Errorln("valid input not attached to request")
-		res.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	user, err := s.db.GetUser(input.Username)
-	if err != nil {
-		s.logger.Errorf("error creating oauth2Client: %v", err)
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	input.BelongsTo = user.ID
-
-	if valid, err := s.authenticator.ValidateLogin(
-		user.HashedPassword,
-		input.Password,
-		user.TwoFactorSecret,
-		input.TOTPToken,
-	); !valid {
-		s.logger.Debugln("invalid credentials provided")
-		res.WriteHeader(http.StatusUnauthorized)
-		return
-	} else if err != nil {
-		s.logger.Errorf("error validating user credentials: %v", err)
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	x, err := s.db.CreateOauth2Client(input)
-	if err != nil {
-		s.logger.Errorf("error creating oauth2Client: %v", err)
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	if err := s.oauth2ClientStore.Set(x.ClientID, x); err != nil {
-		s.logger.Errorf("error creating oauth2Client: %v", err)
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(x)
-}
-
-func (s *Server) ReadOauth2Client(res http.ResponseWriter, req *http.Request) {
-	s.logger.Debugln("oauth2Client read route called")
-	oauth2ClientID := chiOauth2ClientIDFetcher(req)
-	i, err := s.db.GetOauth2Client(oauth2ClientID)
-	if err == sql.ErrNoRows {
-		s.logger.Debugf("Read called on nonexistent client %s", oauth2ClientID)
-		res.WriteHeader(http.StatusNotFound)
-		return
-	} else if err != nil {
-		s.logger.Errorf("error fetching oauth2Client %q from database: %v", oauth2ClientID, err)
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(i)
-}
-
-func (s *Server) ListOauth2Clients(res http.ResponseWriter, req *http.Request) {
-	s.logger.Debugln("oauth2Client list route called")
-	qf := models.ParseQueryFilter(req)
-	oauth2Clients, err := s.db.GetOauth2Clients(qf)
-	if err != nil {
-		s.logger.Errorln("encountered error getting list of oauth2 clients: ", err)
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(oauth2Clients)
-}
-
-func (s *Server) DeleteOauth2Client(res http.ResponseWriter, req *http.Request) {
-	s.logger.Debugln("oauth2Client deletion route called")
-	oauth2ClientID := chiOauth2ClientIDFetcher(req)
-
-	if err := s.db.DeleteOauth2Client(oauth2ClientID); err != nil {
-		s.logger.Errorln("encountered error deleting oauth2 client: ", err)
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-}
-
-func (s *Server) UpdateOauth2Client(res http.ResponseWriter, req *http.Request) {
-	s.logger.Debugln("oauth2Client update route called")
-	// input, ok := req.Context().Value(MiddlewareCtxKey).(*models.Oauth2ClientUpdateInput)
-	// if !ok {
-	// 	res.WriteHeader(http.StatusBadRequest)
-	// 	return
-	// }
-
-	oauth2ClientID := chiOauth2ClientIDFetcher(req)
-	x, err := s.db.GetOauth2Client(oauth2ClientID)
-	if err != nil {
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// IMPLEMENTME:
-	//x.Update()
-
-	if err := s.db.UpdateOauth2Client(x); err != nil {
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(x)
 }

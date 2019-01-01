@@ -11,6 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
 	"github.com/go-chi/chi"
@@ -45,9 +46,10 @@ type Server struct {
 	authenticator auth.Enticator
 
 	// Services
-	loginMonitor LoginMonitor
-	itemsService *items.ItemsService
-	usersService *users.UsersService
+	loginMonitor         LoginMonitor
+	itemsService         *items.ItemsService
+	usersService         *users.UsersService
+	oauth2ClientsService *oauth2clients.Oauth2ClientsService
 
 	// infra things
 	db            database.Database

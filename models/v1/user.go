@@ -25,12 +25,14 @@ type UserLoginInput struct {
 type UserInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+	IsAdmin  bool   `json:"is_admin"`
 }
 
 type UserCreationResponse struct {
 	ID                    uint64  `json:"id"`
 	Username              string  `json:"username"`
 	TwoFactorSecret       string  `json:"two_factor_secret"`
+	IsAdmin               bool    `json:"is_admin"`
 	PasswordLastChangedOn *uint64 `json:"password_last_changed_on"`
 	CreatedOn             uint64  `json:"created_on"`
 	UpdatedOn             *uint64 `json:"updated_on"`
@@ -43,6 +45,7 @@ type User struct {
 	Username              string  `json:"username"`
 	HashedPassword        string  `json:"-"`
 	TwoFactorSecret       string  `json:"-"`
+	IsAdmin               bool    `json:"is_admin"`
 	PasswordLastChangedOn *uint64 `json:"password_last_changed_on"`
 	CreatedOn             uint64  `json:"created_on"`
 	UpdatedOn             *uint64 `json:"updated_on"`

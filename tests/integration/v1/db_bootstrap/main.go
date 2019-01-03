@@ -56,7 +56,7 @@ func main() {
 		logger.Fatalf("error hashing password: %v", err)
 	}
 
-	u, err := db.CreateUser(&models.UserInput{Username: ExpectedUsername, Password: hp}, defaultSecret)
+	u, err := db.CreateUser(&models.UserInput{Username: ExpectedUsername, Password: hp, IsAdmin: true}, defaultSecret)
 	if err != nil {
 		logger.Fatalf("error creating user: %v", err)
 	} else if u.TwoFactorSecret != defaultSecret {

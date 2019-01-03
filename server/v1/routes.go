@@ -52,19 +52,20 @@ func (s *Server) setupRoutes() {
 		userRouter.With(
 			s.UserCookieAuthenticationMiddleware,
 			s.usersService.TOTPSecretRefreshInputContextMiddleware,
-		).Post("/totp_secret/new", s.usersService.NewTOTPSecret(chiUsernameFetcher))
+		).Post("/totp_secret/new", s.usersService.NewTOTPSecret)
 
 		userRouter.With(
 			s.UserCookieAuthenticationMiddleware,
 			s.usersService.PasswordUpdateInputContextMiddleware,
-		).Post("/password/new", s.usersService.UpdatePassword(chiUsernameFetcher))
+		).Post("/password/new", s.usersService.UpdatePassword)
 
 		usernamePattern := fmt.Sprintf("/{%s:[a-zA-Z0-9]+}", users.URIParamKey)
 
-		userRouter.Get("/", s.usersService.List)                                                    // List
-		userRouter.Get(usernamePattern, s.usersService.Read(chiUsernameFetcher))                    // Read
-		userRouter.Delete(usernamePattern, s.usersService.Delete(chiUsernameFetcher))               // Delete
-		userRouter.With(s.usersService.UserInputContextMiddleware).Post("/", s.usersService.Create) // Create
+		userRouter.Get("/", s.usersService.List)                  // List
+		userRouter.Get(usernamePattern, s.usersService.Read)      // Read
+		userRouter.Delete(usernamePattern, s.usersService.Delete) // Delete
+		userRouter.With(s.usersService.UserInputContextMiddleware).
+			Post("/", s.usersService.Create) // Create
 		// userRouter.With(s.usersService.UserInputContextMiddleware).Put(sr, s.usersService.Update)   // Update
 	})
 
@@ -80,7 +81,6 @@ func (s *Server) setupRoutes() {
 		oauth2Router.Post("/token", func(res http.ResponseWriter, req *http.Request) {
 			if err := s.oauth2Handler.HandleTokenRequest(res, req); err != nil {
 				http.Error(res, err.Error(), http.StatusBadRequest)
-
 			}
 		})
 	})

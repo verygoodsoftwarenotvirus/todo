@@ -13,6 +13,7 @@ const (
 			hashed_password,
 			password_last_changed_on,
 			two_factor_secret,
+			is_admin,
 			created_on,
 			updated_on,
 			archived_on
@@ -35,6 +36,7 @@ const (
 			hashed_password,
 			password_last_changed_on,
 			two_factor_secret,
+			is_admin,
 			created_on,
 			updated_on,
 			archived_on
@@ -50,6 +52,7 @@ const (
 			hashed_password,
 			password_last_changed_on,
 			two_factor_secret,
+			is_admin,
 			created_on,
 			updated_on,
 			archived_on
@@ -63,11 +66,11 @@ const (
 	createUserQuery = `
 		INSERT INTO users
 		(
-			username, hashed_password, two_factor_secret
+			username, hashed_password, two_factor_secret, is_admin
 		)
 		VALUES
 		(
-			?, ?, ?
+			?, ?, ?, ?
 		)
 	`
 	updateUserQuery = `
@@ -93,6 +96,7 @@ func scanUser(scan database.Scannable) (*models.User, error) {
 		&x.HashedPassword,
 		&x.PasswordLastChangedOn,
 		&x.TwoFactorSecret,
+		&x.IsAdmin,
 		&x.CreatedOn,
 		&x.UpdatedOn,
 		&x.ArchivedOn,
@@ -163,7 +167,7 @@ func (s *sqlite) CreateUser(input *models.UserInput, totpSecret string) (x *mode
 	}
 
 	// create the user
-	res, err := tx.Exec(createUserQuery, input.Username, input.Password, totpSecret)
+	res, err := tx.Exec(createUserQuery, input.Username, input.Password, totpSecret, input.IsAdmin)
 	if err != nil {
 		s.logger.Errorf("error executing user creation query: %v", err)
 		tx.Rollback()

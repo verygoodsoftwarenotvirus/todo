@@ -18,26 +18,32 @@ type (
 	}
 
 	UsersServiceConfig struct {
-		CookieName    string
-		Logger        *logrus.Logger
-		Database      database.Database
-		Authenticator auth.Enticator
+		CookieName      string
+		Logger          *logrus.Logger
+		Database        database.Database
+		Authenticator   auth.Enticator
+		UsernameFetcher func(*http.Request) string
 	}
 
 	UsersService struct {
-		cookieName    string
-		database      database.Database
-		authenticator auth.Enticator
-		logger        *logrus.Logger
+		cookieName      string
+		database        database.Database
+		authenticator   auth.Enticator
+		logger          *logrus.Logger
+		usernameFetcher func(*http.Request) string
 	}
 )
 
 func NewUsersService(cfg UsersServiceConfig) *UsersService {
+	if cfg.UsernameFetcher == nil {
+		panic("usernameFetcher must be provided")
+	}
 	us := &UsersService{
-		cookieName:    cfg.CookieName,
-		database:      cfg.Database,
-		authenticator: cfg.Authenticator,
-		logger:        cfg.Logger,
+		cookieName:      cfg.CookieName,
+		database:        cfg.Database,
+		authenticator:   cfg.Authenticator,
+		logger:          cfg.Logger,
+		usernameFetcher: cfg.UsernameFetcher,
 	}
 	return us
 }

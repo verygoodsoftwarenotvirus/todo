@@ -66,22 +66,20 @@ func (s *UsersService) TOTPSecretRefreshInputContextMiddleware(next http.Handler
 	})
 }
 
-func (s *UsersService) Read(usernameFetcher func(req *http.Request) string) http.HandlerFunc {
-	return func(res http.ResponseWriter, req *http.Request) {
-		userID := usernameFetcher(req)
-		x, err := s.database.GetUser(userID)
-		if err == sql.ErrNoRows {
-			res.WriteHeader(http.StatusNotFound)
-			return
-		} else if err != nil {
-			s.logger.Errorf("error fetching user %q from database: %v", userID, err)
-			res.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		res.Header().Set("Content-type", "application/json")
-		json.NewEncoder(res).Encode(x)
+func (s *UsersService) Read(res http.ResponseWriter, req *http.Request) {
+	userID := s.usernameFetcher(req)
+	x, err := s.database.GetUser(userID)
+	if err == sql.ErrNoRows {
+		res.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
+		s.logger.Errorf("error fetching user %q from database: %v", userID, err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
 	}
+
+	res.Header().Set("Content-type", "application/json")
+	json.NewEncoder(res).Encode(x)
 }
 
 func (s *UsersService) Count(res http.ResponseWriter, req *http.Request) {
@@ -111,22 +109,20 @@ func (s *UsersService) List(res http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(res).Encode(users)
 }
 
-func (s *UsersService) Delete(usernameFetcher func(req *http.Request) string) http.HandlerFunc {
-	return func(res http.ResponseWriter, req *http.Request) {
-		userID := usernameFetcher(req)
-		s.logger.Debugf("UsersService.Delete called for user #%d", userID)
-		if err := s.database.DeleteUser(userID); err != nil {
-			res.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+func (s *UsersService) Delete(res http.ResponseWriter, req *http.Request) {
+	username := s.usernameFetcher(req)
+	s.logger.Debugf("UsersService.Delete called for user %s", username)
+	if err := s.database.DeleteUser(username); err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 }
 
 type usernameFetcher func(req *http.Request) string
 
-func (s *UsersService) validateCredentialChangeRequest(uf usernameFetcher, req *http.Request, password string, totpToken string) (user *models.User, statusCode int) {
+func (s *UsersService) validateCredentialChangeRequest(req *http.Request, password string, totpToken string) (user *models.User, statusCode int) {
 	var err error
-	username := uf(req)
+	username := s.usernameFetcher(req)
 	user, err = s.database.GetUser(username)
 	if err != nil {
 		s.logger.Errorf("error encountered fecthing user %q: %v", username, err)
@@ -146,91 +142,71 @@ func (s *UsersService) validateCredentialChangeRequest(uf usernameFetcher, req *
 
 // NewTOTPSecret fetches a user, and issues them a new TOTP secret, after validating
 // that information received from TOTPSecretRefreshInputContextMiddleware is valid
-func (s *UsersService) NewTOTPSecret(usernameFetcher func(req *http.Request) string) http.HandlerFunc {
-	if usernameFetcher == nil {
-		panic("usernameFetcher must be provided")
+func (s *UsersService) NewTOTPSecret(res http.ResponseWriter, req *http.Request) {
+	var err error
+	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.TOTPSecretRefreshInput)
+	if !ok {
+		s.logger.Debugln("no input found on TOTP Secret refresh request")
+		res.WriteHeader(http.StatusBadRequest)
+		return
 	}
-	return func(res http.ResponseWriter, req *http.Request) {
-		var err error
-		input, ok := req.Context().Value(MiddlewareCtxKey).(*models.TOTPSecretRefreshInput)
-		if !ok {
-			s.logger.Debugln("no input found on TOTP Secret refresh request")
-			res.WriteHeader(http.StatusBadRequest)
-			return
-		}
 
-		user, sc := s.validateCredentialChangeRequest(
-			usernameFetcher,
-			req,
-			input.CurrentPassword,
-			input.TOTPToken,
-		)
-		if sc != 0 {
-			res.WriteHeader(sc)
-			return
-		}
-
-		tfc, err := auth.RandString(64)
-		if err != nil {
-			s.logger.Errorf("error encountered generating random TOTP string for user %q: %v", user.Username, err)
-			res.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		user.TwoFactorSecret = tfc // [:52] // I forgot how I know it needs to be this long
-
-		if err := s.database.UpdateUser(user); err != nil {
-			s.logger.Errorf("error encountered updating TOTP token for user %q: %v", user.Username, err)
-			res.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		res.Header().Set("Content-type", "application/json")
-		json.NewEncoder(res).Encode(user)
+	user, sc := s.validateCredentialChangeRequest(req, input.CurrentPassword, input.TOTPToken)
+	if sc != 0 {
+		res.WriteHeader(sc)
+		return
 	}
+
+	tfc, err := auth.RandString(64)
+	if err != nil {
+		s.logger.Errorf("error encountered generating random TOTP string for user %q: %v", user.Username, err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	user.TwoFactorSecret = tfc
+
+	if err := s.database.UpdateUser(user); err != nil {
+		s.logger.Errorf("error encountered updating TOTP token for user %q: %v", user.Username, err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	res.Header().Set("Content-type", "application/json")
+	json.NewEncoder(res).Encode(user)
 }
 
-// UpdatePassword updates a user's password, after validating
-// that information received from PasswordUpdateInputContextMiddleware is valid
-func (s *UsersService) UpdatePassword(usernameFetcher func(req *http.Request) string) http.HandlerFunc {
-	if usernameFetcher == nil {
-		panic("usernameFetcher must be provided")
+// UpdatePassword updates a user's password, after validating that information received
+// from PasswordUpdateInputContextMiddleware is valid
+func (s *UsersService) UpdatePassword(res http.ResponseWriter, req *http.Request) {
+	var err error
+	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.PasswordUpdateInput)
+	if !ok {
+		s.logger.Debugln("no input found on TOTP Secret refresh request")
+		res.WriteHeader(http.StatusBadRequest)
+		return
 	}
-	return func(res http.ResponseWriter, req *http.Request) {
-		var err error
-		input, ok := req.Context().Value(MiddlewareCtxKey).(*models.PasswordUpdateInput)
-		if !ok {
-			s.logger.Debugln("no input found on TOTP Secret refresh request")
-			res.WriteHeader(http.StatusBadRequest)
-			return
-		}
 
-		user, sc := s.validateCredentialChangeRequest(
-			usernameFetcher,
-			req,
-			input.CurrentPassword,
-			input.TOTPToken,
-		)
-		if sc != 0 {
-			res.WriteHeader(sc)
-			return
-		}
-
-		user.HashedPassword, err = s.authenticator.HashPassword(input.NewPassword)
-		if err != nil {
-			s.logger.Errorf("error encountered generating random TOTP string for user %q: %v", user.Username, err)
-			res.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		if err := s.database.UpdateUser(user); err != nil {
-			s.logger.Errorf("error encountered updating TOTP token for user %q: %v", user.Username, err)
-			res.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		res.Header().Set("Content-type", "application/json")
-		json.NewEncoder(res).Encode(user)
+	user, sc := s.validateCredentialChangeRequest(req, input.CurrentPassword, input.TOTPToken)
+	if sc != 0 {
+		res.WriteHeader(sc)
+		return
 	}
+
+	user.HashedPassword, err = s.authenticator.HashPassword(input.NewPassword)
+	if err != nil {
+		s.logger.Errorf("error encountered generating random TOTP string for user %q: %v", user.Username, err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err := s.database.UpdateUser(user); err != nil {
+		s.logger.Errorf("error encountered updating TOTP token for user %q: %v", user.Username, err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	res.Header().Set("Content-type", "application/json")
+	json.NewEncoder(res).Encode(user)
 }
 
 // Create is our user creation route

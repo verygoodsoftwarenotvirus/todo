@@ -119,9 +119,10 @@ func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 		usersService: users.NewUsersService(
 			users.UsersServiceConfig{
 				// CookieName: s.config.CookieName
-				Logger:        logger,
-				Database:      db,
-				Authenticator: cfg.Authenticator,
+				Logger:          logger,
+				Database:        db,
+				Authenticator:   cfg.Authenticator,
+				UsernameFetcher: chiUsernameFetcher,
 			},
 		),
 	}

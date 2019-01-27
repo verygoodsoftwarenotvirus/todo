@@ -15,7 +15,7 @@ clean:
 
 ## Project prerequisites
 vendor:
-	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` --workdir=`pwd` golang:latest /bin/sh -c "go mod vendor"
+	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` golang:latest /bin/sh -c "go mod vendor"
 
 .PHONY: revendor
 revendor:
@@ -65,7 +65,7 @@ docker-image: prerequisites
 
 .PHONY: run
 run: docker-image
-	docker run --rm --publish 443:443 todo:latest
+	docker-compose --file compose-files/docker-compose.yaml up --build --remove-orphans --abort-on-container-exit --force-recreate
 
 .PHONY: run-local
 run-local:
@@ -75,3 +75,7 @@ run-local:
 run-local-integration-server:
 	docker build --tag dev-todo:latest --file dockerfiles/integration-server.Dockerfile .
 	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` --publish=443 dev-todo:latest
+
+.PHONY: glide-vendor
+glide-vendor:
+	docker run --rm -it -volume `pwd`:`pwd` --workdir=`pwd` instrumentisto/glide init

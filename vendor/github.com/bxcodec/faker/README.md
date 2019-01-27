@@ -34,9 +34,9 @@ See documentation in [Godoc](https://godoc.org/github.com/bxcodec/faker)
 ```shell
 go get -u github.com/bxcodec/faker
 ```
-## Example
+# Example
 
-### With Tag
+## With Tag
 Supported tag:
 
 **Internet :**
@@ -93,6 +93,13 @@ Supported tag:
 * Amount
 * Amount with Currency
 
+**UUID :**
+* UUID Digit (32 bytes)
+* UUID Hyphenated (36 bytes)
+
+**Skip :**
+* \-
+
 ```go
 
 package main
@@ -143,6 +150,9 @@ type SomeStruct struct {
 	Currency           string  `faker:"currency"`
 	Amount             float64 `faker:"amount"`
 	AmountWithCurrency string  `faker:"amount_with_currency"`
+	UUIDHypenated	   string  `faker:"uuid_hyphenated"`
+	UUID	           string  `faker:"uuid_digit"`
+	Skip		   string  `faker:"-"`
 }
 
 func main() {
@@ -194,13 +204,61 @@ func main() {
 			Currency: IRR,
 			Amount: 88.990000,
 			AmountWithCurrency: XBB 49257.100000,
+			UUIDHypenated: 8f8e4463-9560-4a38-9b0c-ef24481e4e27,
+			UUID: 90ea6479fd0e4940af741f0a87596b73,
+			Skip:
 		}
 	*/
 }
 
 ```
 
-### Without Tag
+## Custom Generator Provider
+You can also add your own generator function to your own defined tags. See example below
+```go
+type Gondoruwo struct {
+	Name       string
+	Locatadata int
+}
+
+type Sample struct {
+	ID                 int64     `faker:"customIdFaker"`
+	Gondoruwo          Gondoruwo `faker:"gondoruwo"`
+	Danger             string    `faker:"danger"`
+}
+
+func CustomGenerator() {
+	faker.AddProvider("customIdFaker", func(v reflect.Value) (interface{}, error) {
+		 return int64(43), nil
+	})
+	faker.AddProvider("danger", func(v reflect.Value) (interface{}, error) {
+		return "danger-ranger", nil
+	})
+
+	faker.AddProvider("gondoruwo", func(v reflect.Value) (interface{}, error) {
+		obj := Gondoruwo{
+			Name:       "Power",
+			Locatadata: 324,
+		}
+		return obj, nil
+	})
+}
+
+func main() { 
+	CustomGenerator()
+	var sample Sample
+	faker.FakeData(&sample)
+	fmt.Printf("%+v", sample)
+}
+```
+
+Results:
+```
+{ID:43 Gondoruwo:{Name:Power Locatadata:324} Danger:danger-ranger}
+```
+
+## Without Tag
+You also can use faker to generate your structs data randomly without any tag. And it will fill the data based on its data-type.
 
 ```go
 
@@ -281,8 +339,11 @@ func main() {
 
 ```
 
+## DEMO
+
 ![Example to use Faker](https://cdn-images-1.medium.com/max/800/1*AkMbxngg7zfvtWiuvFb4Mg.gif)
 
+## Benchmark
 Bench To Generate Fake Data
 #### Without Tag
 ```bash

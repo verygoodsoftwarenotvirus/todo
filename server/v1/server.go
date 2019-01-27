@@ -16,6 +16,8 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/gorilla/securecookie"
+	"github.com/opentracing-contrib/go-stdlib/nethttp"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	oauth2server "gopkg.in/oauth2.v3/server"
 	oauth2store "gopkg.in/oauth2.v3/store"
@@ -25,7 +27,8 @@ const (
 	maxTimeout = 120 * time.Second
 )
 
-type ServerConfig struct {
+// Config describes the configuration of a server
+type Config struct {
 	CertFile     string
 	KeyFile      string
 	DebugMode    bool
@@ -33,11 +36,13 @@ type ServerConfig struct {
 	Logger       *logrus.Logger
 
 	Authenticator auth.Enticator
-	LoginMonitor  LoginMonitor
+
+	Tracer opentracing.Tracer
 
 	DBBuilder func(database.Config) (database.Database, error)
 }
 
+// Server is our API server
 type Server struct {
 	DebugMode bool
 	certFile  string
@@ -46,7 +51,6 @@ type Server struct {
 	authenticator auth.Enticator
 
 	// Services
-	loginMonitor         LoginMonitor
 	itemsService         *items.ItemsService
 	usersService         *users.UsersService
 	oauth2ClientsService *oauth2clients.Oauth2ClientsService
@@ -56,6 +60,7 @@ type Server struct {
 	router        *chi.Mux
 	server        *http.Server
 	logger        *logrus.Logger
+	tracer        opentracing.Tracer
 	cookieBuilder *securecookie.SecureCookie
 
 	// Oauth2 stuff
@@ -64,16 +69,17 @@ type Server struct {
 	// oauth2TokenStore  oauth2store.TokenStore
 }
 
-func DefaultServerConfig() *ServerConfig {
+// DefaultServerConfig provides the default Config object
+func DefaultServerConfig() *Config {
 	logger := logrus.New()
-	return &ServerConfig{
+	return &Config{
 		Logger:        logger,
 		Authenticator: auth.NewBcrypt(logger),
-		LoginMonitor:  &NoopLoginMonitor{},
 	}
 }
 
-func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
+// NewServer builds a new Server instance
+func NewServer(cfg Config, dbConfig database.Config) (*Server, error) {
 	var logger = cfg.Logger
 	if logger == nil {
 		logger = logrus.New()
@@ -85,10 +91,6 @@ func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 
 	if cfg.Authenticator == nil {
 		cfg.Authenticator = auth.NewBcrypt(logger)
-	}
-
-	if cfg.LoginMonitor == nil {
-		cfg.LoginMonitor = &NoopLoginMonitor{}
 	}
 
 	if len(cfg.CookieSecret) < 32 {
@@ -111,9 +113,10 @@ func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 		certFile:      cfg.CertFile,
 		keyFile:       cfg.KeyFile,
 		server:        buildServer(),
-		loginMonitor:  cfg.LoginMonitor,
 		authenticator: cfg.Authenticator,
 		cookieBuilder: securecookie.New(securecookie.GenerateRandomKey(64), cfg.CookieSecret),
+
+		tracer: cfg.Tracer,
 
 		// Services
 		usersService: users.NewUsersService(
@@ -143,7 +146,8 @@ func NewServer(cfg ServerConfig, dbConfig database.Config) (*Server, error) {
 	return srv, nil
 }
 
-func NewDebug(cfg ServerConfig, dbConfig database.Config) (srv *Server, err error) {
+// NewDebug builds a new debug Server
+func NewDebug(cfg Config, dbConfig database.Config) (srv *Server, err error) {
 	dbConfig.Debug, cfg.DebugMode = true, true
 	if srv, err = NewServer(cfg, dbConfig); err != nil {
 		return nil, err
@@ -173,8 +177,9 @@ func (s *Server) logRoute(prefix string, route chi.Route) {
 	}
 }
 
+// Serve serves HTTP traffic
 func (s *Server) Serve() {
-	s.server.Handler = s.router
+	s.server.Handler = nethttp.Middleware(s.tracer, s.router)
 	s.logger.Debugf("Listening on 443")
 	//s.logRoutes(s.router)
 	s.logger.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))
@@ -205,6 +210,7 @@ type genericResponse struct {
 	Message string `json:"message"`
 }
 
+// ErrorNotifier is a function which can notify a user of an error
 type ErrorNotifier func(res http.ResponseWriter, req *http.Request, err error)
 
 func (s *Server) internalServerError(res http.ResponseWriter, req *http.Request, err error) {
@@ -258,7 +264,7 @@ func buildServer() *http.Server {
 	return &http.Server{
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  maxTimeout,
+		IdleTimeout:  120 * time.Second,
 		TLSConfig: &tls.Config{
 			PreferServerCipherSuites: true,
 			// Only use curves which have assembly implementations

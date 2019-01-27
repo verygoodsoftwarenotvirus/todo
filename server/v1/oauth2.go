@@ -112,6 +112,7 @@ func (s *Server) setOauth2Defaults(manager *oauth2manage.Manager) {
 	})
 }
 
+// OauthTokenAuthenticationMiddleware authenticates Oauth tokens
 func (s *Server) OauthTokenAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		token, err := s.oauth2Handler.ValidationBearerToken(req)
@@ -140,6 +141,7 @@ func (s *Server) userIDFetcher(req *http.Request) uint64 {
 	return x
 }
 
+// Oauth2ClientInfoMiddleware fetches clientOauth2Client info from requests and attaches it eplicitly to a request
 func (s *Server) Oauth2ClientInfoMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		s.logger.Debugln("OauthInfoMiddleware triggered")
@@ -187,6 +189,7 @@ func (s *Server) fetchOauth2ClientIDFromRequest(req *http.Request) string {
 
 var _ oauth2server.AuthorizeScopeHandler = (*Server)(nil).AuthorizeScopeHandler
 
+// AuthorizeScopeHandler satisfies the oauth2server AuthorizeScopeHandler interface
 func (s *Server) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Request) (scope string, err error) {
 	s.logger.Debugln("AuthorizeScopeHandler called")
 	client := s.fetchOauth2ClientFromRequest(req)
@@ -210,6 +213,7 @@ func (s *Server) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reques
 
 var _ oauth2server.UserAuthorizationHandler = (*Server)(nil).UserAuthorizationHandler
 
+// UserAuthorizationHandler satisfies the oauth2server UserAuthorizationHandler interface
 func (s *Server) UserAuthorizationHandler(res http.ResponseWriter, req *http.Request) (userID string, err error) {
 	s.logger.Debugln("UserAuthorizationHandler called")
 	ctx := req.Context()
@@ -234,6 +238,7 @@ func (s *Server) UserAuthorizationHandler(res http.ResponseWriter, req *http.Req
 
 var _ oauth2server.ClientAuthorizedHandler = (*Server)(nil).ClientAuthorizedHandler
 
+// ClientAuthorizedHandler satisfies the oauth2server ClientAuthorizedHandler interface
 func (s *Server) ClientAuthorizedHandler(clientID string, grant oauth2.GrantType) (allowed bool, err error) {
 	s.logger.Debugln("ClientAuthorizedHandler called")
 	// AuthorizationCode   GrantType = "authorization_code"
@@ -261,15 +266,16 @@ func (s *Server) ClientAuthorizedHandler(clientID string, grant oauth2.GrantType
 
 var _ oauth2server.ClientScopeHandler = (*Server)(nil).ClientScopeHandler
 
+// ClientScopeHandler satisfies the oauth2server ClientScopeHandler interface
 func (s *Server) ClientScopeHandler(clientID, scope string) (allowed bool, err error) {
 	s.logger.Debugln("ClientScopeHandler called")
-	if c, err := s.db.GetOauth2Client(clientID); err != nil {
+	c, err := s.db.GetOauth2Client(clientID)
+	if err != nil {
 		return false, err
-	} else {
-		for _, s := range c.Scopes {
-			if s == scope || s == "*" {
-				return true, nil
-			}
+	}
+	for _, s := range c.Scopes {
+		if s == scope || s == "*" {
+			return true, nil
 		}
 	}
 	return

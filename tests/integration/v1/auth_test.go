@@ -42,10 +42,10 @@ func loginUser(t *testing.T, username string, password string) *http.Cookie {
 	cookies := resp.Cookies()
 	if len(cookies) == 1 {
 		return resp.Cookies()[0]
-	} else {
-		t.Logf("wrong number of cookies found: %d", len(cookies))
-		t.FailNow()
 	}
+	t.Logf("wrong number of cookies found: %d", len(cookies))
+	t.FailNow()
+
 	return nil
 }
 

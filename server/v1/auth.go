@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	// CookieName is the name of the cookie we attach to requests
 	CookieName = "todo"
 )
 
@@ -18,6 +19,7 @@ type cookieAuth struct {
 	Authenticated bool
 }
 
+// UserCookieAuthenticationMiddleware authenticates user cookies
 func (s *Server) UserCookieAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		s.logger.Debugln("UserAuthenticationMiddleware triggered")
@@ -44,17 +46,16 @@ func (s *Server) UserCookieAuthenticationMiddleware(next http.Handler) http.Hand
 				}
 				next.ServeHTTP(res, req)
 				return
-			} else {
-				s.logger.Errorf("problem decoding cookie: %v", err)
 			}
+			s.logger.Errorf("problem decoding cookie: %v", err)
 		}
 		http.Redirect(res, req, "/login", http.StatusUnauthorized)
 	})
 }
 
+// Login is our login route
 func (s *Server) Login(res http.ResponseWriter, req *http.Request) {
 	s.logger.Debugln("Login called")
-	var statusToWrite = http.StatusUnauthorized
 
 	loginInput, user, errNotifier, err := s.fetchLoginDataFromRequest(req)
 	if errNotifier != nil {
@@ -62,6 +63,7 @@ func (s *Server) Login(res http.ResponseWriter, req *http.Request) {
 		return
 	} else if err != nil {
 		s.internalServerError(res, req, err)
+		return
 	}
 
 	loginValid, errNotifier, err := s.validateLogin(user, loginInput)
@@ -70,28 +72,28 @@ func (s *Server) Login(res http.ResponseWriter, req *http.Request) {
 		return
 	} else if err != nil {
 		s.internalServerError(res, req, err)
+		return
 	}
 
 	if !loginValid {
 		s.logger.Debugln("login was invalid")
-		s.loginMonitor.LogUnsuccessfulAttempt(loginInput.Username)
+		// s.loginMonitor.LogUnsuccessfulAttempt(loginInput.Username)
 		s.invalidInput(res, req, nil)
+		res.WriteHeader(http.StatusUnauthorized)
 		return
-	} else {
-		s.logger.Debugln("login was valid, returning cookie")
-		cookie, err := s.buildCookie(user, loginValid)
-		if err != nil {
-
-			s.internalServerError(res, req, err)
-			return
-		}
-
-		http.SetCookie(res, cookie)
-		statusToWrite = http.StatusOK
 	}
-	res.WriteHeader(statusToWrite)
+	s.logger.Debugln("login was valid, returning cookie")
+	cookie, err := s.buildCookie(user, loginValid)
+	if err != nil {
+		s.internalServerError(res, req, err)
+		return
+	}
+
+	http.SetCookie(res, cookie)
+	res.WriteHeader(http.StatusOK)
 }
 
+// Logout is our logout route
 func (s *Server) Logout(res http.ResponseWriter, req *http.Request) {
 	if cookie, err := req.Cookie(CookieName); err == nil {
 		s.logger.Debugln("logout was called, clearing cookie")
@@ -104,16 +106,6 @@ func (s *Server) Logout(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusOK)
 }
 
-//func (s *Server) userAuthorizationHandler(res http.ResponseWriter, req *http.Request) (string, error) {
-//	userID, ok := req.Context().Value(models.UserKey).(uint64)
-//	if !ok {
-//		s.logger.Debugln("no userKey found for authorization request")
-//		res.WriteHeader(http.StatusUnauthorized)
-//		return "", errors.New("")
-//	}
-//	return strconv.FormatUint(userID, 10), nil
-//}
-
 func (s *Server) fetchLoginDataFromRequest(req *http.Request) (*models.UserLoginInput, *models.User, ErrorNotifier, error) {
 	loginInput, ok := req.Context().Value(users.MiddlewareCtxKey).(*models.UserLoginInput)
 	if !ok {
@@ -122,21 +114,21 @@ func (s *Server) fetchLoginDataFromRequest(req *http.Request) (*models.UserLogin
 	}
 	username := loginInput.Username
 
-	if err := s.loginMonitor.LoginAttemptsExhausted(username); err != nil {
-		s.logger.Debugln("user has exhausted their number of login attempts")
-		return nil, nil, func(res http.ResponseWriter, req *http.Request, err error) {
-			s.loginMonitor.NotifyExhaustedAttempts(res)
-		}, err
-	}
+	// if err := s.loginMonitor.LoginAttemptsExhausted(username); err != nil {
+	// 	s.logger.Debugln("user has exhausted their number of login attempts")
+	// 	return nil, nil, func(res http.ResponseWriter, req *http.Request, err error) {
+	// 		s.loginMonitor.NotifyExhaustedAttempts(res)
+	// 	}, err
+	// }
 
 	// you could ensure there isn't an unsatisfied password reset token requested before allowing login here
 
-	user, err := s.db.GetUser(loginInput.Username)
+	user, err := s.db.GetUser(username)
 	if err == sql.ErrNoRows {
-		s.logger.Debugf("no matching user: %q", loginInput.Username)
+		s.logger.Debugf("no matching user: %q", username)
 		return nil, nil, s.invalidInput, err
 	} else if err != nil {
-		s.logger.Debugf("error fetching user: %q", loginInput.Username)
+		s.logger.Debugf("error fetching user: %q", username)
 		return nil, nil, s.internalServerError, err
 	}
 	return loginInput, user, nil, nil
@@ -151,13 +143,13 @@ func (s *Server) validateLogin(user *models.User, loginInput *models.UserLoginIn
 	)
 	if err == auth.ErrPasswordHashTooWeak && loginValid {
 		s.logger.Debugln("hashed password was deemed to weak, updating its hash")
-		if updated, e := s.authenticator.HashPassword(loginInput.Password); e != nil {
+		updated, e := s.authenticator.HashPassword(loginInput.Password)
+		if e != nil {
 			return false, s.internalServerError, e
-		} else {
-			user.HashedPassword = updated
-			if err := s.db.UpdateUser(user); err != nil {
-				return false, s.internalServerError, err
-			}
+		}
+		user.HashedPassword = updated
+		if err := s.db.UpdateUser(user); err != nil {
+			return false, s.internalServerError, err
 		}
 	} else if err != nil {
 		return false, s.internalServerError, err

@@ -37,23 +37,22 @@ func checkValueAndError(t *testing.T, i interface{}, err error) {
 }
 
 func initializeClient() {
-	cfg := &client.Config{
-		Client: &http.Client{
-			Transport: http.DefaultTransport,
-			Timeout:   5 * time.Second,
-		},
-		Debug:   debug,
-		Address: urlToUse,
-
-		ClientID:     defaultTestInstanceClientID,
-		ClientSecret: defaultTestInstanceClientSecret,
-		RedirectURI:  defaultTestInstanceURL,
+	httpc := &http.Client{
+		Transport: http.DefaultTransport,
+		Timeout:   5 * time.Second,
 	}
 
 	// WARNING: Never do this ordinarily, this is an application which will only ever run in a local context
-	cfg.Client.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	httpc.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
-	c, err := client.NewClient(cfg)
+	c, err := client.NewClient(
+		urlToUse,
+		defaultTestInstanceClientID,
+		defaultTestInstanceClientSecret,
+		nil,
+		httpc,
+		true,
+	)
 	if err != nil {
 		panic(err)
 	}

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -8,6 +10,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
+
+	opentracing "github.com/opentracing/opentracing-go"
+	jaeger "github.com/uber/jaeger-client-go"
+	config "github.com/uber/jaeger-client-go/config"
 )
 
 const (
@@ -39,6 +45,22 @@ func init() {
 	log.Printf("using this key: %q\n", keyToUse)
 }
 
+// initJaeger returns an instance of Jaeger Tracer that samples 100% of traces and logs all spans to stdout.
+func initJaeger(service string) (opentracing.Tracer, io.Closer) {
+	cfg := &config.Configuration{
+		Sampler: &config.SamplerConfig{Type: "const", Param: 1},
+		Reporter: &config.ReporterConfig{
+			LogSpans: true,
+		},
+	}
+	tracer, closer, err := cfg.New(service, config.Logger(jaeger.StdLogger))
+	if err != nil {
+		panic(fmt.Sprintf("ERROR: cannot init Jaeger: %v\n", err))
+	}
+
+	return tracer, closer
+}
+
 func main() {
 	dbCfg := database.Config{
 		Debug:            true,
@@ -46,11 +68,15 @@ func main() {
 		SchemaDir:        schemaDir,
 	}
 
-	cfg := server.ServerConfig{
+	tracer, closer := initJaeger("todo-server")
+	defer closer.Close()
+
+	cfg := server.Config{
 		DebugMode:    true,
 		CookieSecret: []byte(cookieSecret),
 		CertFile:     certToUse,
 		KeyFile:      keyToUse,
+		Tracer:       tracer,
 		DBBuilder:    sqlite.NewSqlite,
 	}
 

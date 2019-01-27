@@ -8,27 +8,33 @@ import (
 
 const itemsBasePath = "items"
 
+// GetItem gets an item
 func (c *V1Client) GetItem(id uint64) (item *models.Item, err error) {
 	return item, c.get(c.BuildURL(nil, itemsBasePath, strconv.FormatUint(id, 10)), &item)
 }
 
+// GetItemCount an item
 func (c *V1Client) GetItemCount(filter *models.QueryFilter) (uint64, error) {
 	x := models.CountResponse{}
-	return x.Count, c.get(c.BuildURL(filter, itemsBasePath, "count"), &x)
+	return x.Count, c.get(c.BuildURL(filter.ToValues(), itemsBasePath, "count"), &x)
 }
 
+// GetItems gets a list of items
 func (c *V1Client) GetItems(filter *models.QueryFilter) (items *models.ItemList, err error) {
-	return items, c.get(c.BuildURL(filter, itemsBasePath), &items)
+	return items, c.get(c.BuildURL(filter.ToValues(), itemsBasePath), &items)
 }
 
+// CreateItem creates an item
 func (c *V1Client) CreateItem(input *models.ItemInput) (item *models.Item, err error) {
 	return item, c.post(c.BuildURL(nil, itemsBasePath), input, &item)
 }
 
+// UpdateItem updates an item
 func (c *V1Client) UpdateItem(updated *models.Item) (err error) {
 	return c.put(c.BuildURL(nil, itemsBasePath, strconv.FormatUint(updated.ID, 10)), updated, &updated)
 }
 
+// DeleteItem deletes an item
 func (c *V1Client) DeleteItem(id uint64) error {
 	return c.delete(c.BuildURL(nil, itemsBasePath, strconv.FormatUint(id, 10)))
 }

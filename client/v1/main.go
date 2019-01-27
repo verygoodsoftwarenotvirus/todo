@@ -25,23 +25,11 @@ const (
 )
 
 var (
+	// ErrNotFound is a handy error to return when we receive a 404 response
 	ErrNotFound = errors.New("404: not found")
 )
 
-type Config struct {
-	Client  *http.Client
-	Debug   bool
-	Logger  *logrus.Logger
-	Address string
-
-	UserCredentials *url.Userinfo
-
-	ClientID     string
-	ClientSecret string
-	RedirectURI  string
-	Scopes       []string
-}
-
+// V1Client is a client for interacting with v1 of our API
 type V1Client struct {
 	plainClient  *http.Client
 	authedClient *http.Client
@@ -61,12 +49,14 @@ type V1Client struct {
 	itemsChan chan *models.Item
 }
 
-func (c *V1Client) PlainClient() *http.Client {
-	return c.plainClient
-}
-
+// AuthenticatedClient returns the authenticated *http.Client that we use to make most requests
 func (c *V1Client) AuthenticatedClient() *http.Client {
 	return c.authedClient
+}
+
+// PlainClient returns the unauthenticated *http.Client that we use to make certain requests
+func (c *V1Client) PlainClient() *http.Client {
+	return c.plainClient
 }
 
 func endpoint(baseURL *url.URL) oauth2.Endpoint {
@@ -79,16 +69,16 @@ func endpoint(baseURL *url.URL) oauth2.Endpoint {
 	}
 }
 
-func (c *V1Client) enableOauth(cfg *Config) error {
+func (c *V1Client) enableOauth(clientID, clientSecret string) error {
 	c.logger.Debugln("enabling OAuth")
 
 	conf := clientcredentials.Config{
-		ClientID:     cfg.ClientID,
-		ClientSecret: cfg.ClientSecret,
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
 		Scopes:       []string{"*"},
 		EndpointParams: url.Values{
-			"client_id":     []string{cfg.ClientID},
-			"client_secret": []string{cfg.ClientSecret},
+			"client_id":     []string{clientID},
+			"client_secret": []string{clientSecret},
 		},
 		TokenURL: endpoint(c.URL).TokenURL,
 	}
@@ -97,34 +87,35 @@ func (c *V1Client) enableOauth(cfg *Config) error {
 	return nil
 }
 
-func NewClient(cfg *Config) (*V1Client, error) {
-	c := &V1Client{Debug: cfg.Debug}
+// NewClient builds a new API client for us
+func NewClient(address, clientID, clientSecret string, logger *logrus.Logger, client *http.Client, debug bool) (*V1Client, error) {
+	c := &V1Client{Debug: debug}
 
-	if cfg.ClientID == "" || cfg.ClientSecret == "" {
+	if clientID == "" || clientSecret == "" {
 		return nil, errors.New("Client ID and Client Secret required")
 	}
 
-	u, err := url.Parse(cfg.Address)
+	u, err := url.Parse(address)
 	if err != nil {
 		return nil, errors.Wrap(err, "parsing URL")
 	}
 	c.URL = u
 
-	if cfg.Client != nil {
-		c.plainClient = cfg.Client
+	if client != nil {
+		c.plainClient = client
 	} else {
 		c.plainClient = &http.Client{Timeout: 5 * time.Second}
 	}
 
-	if cfg.Logger != nil {
-		c.logger = cfg.Logger
+	if logger != nil {
+		c.logger = logger
 	} else {
 		c.logger = logrus.New()
-		if cfg.Debug {
+		if debug {
 			c.logger.SetLevel(logrus.DebugLevel)
 		}
 	}
-	if err := c.enableOauth(cfg); err != nil {
+	if err := c.enableOauth(clientID, clientSecret); err != nil {
 		return nil, err
 	}
 
@@ -153,6 +144,8 @@ func (c *V1Client) executeRequest(req *http.Request) (*http.Response, error) {
 	return res, nil
 }
 
+// Do executes a raw request object
+// TODO: find out why this was implemented
 func (c *V1Client) Do(req *http.Request) (*http.Response, error) {
 	if c.URL.Hostname() != req.URL.Hostname() {
 		return nil, errors.New("request is destined for unknown server")
@@ -160,13 +153,10 @@ func (c *V1Client) Do(req *http.Request) (*http.Response, error) {
 	return c.executeRequest(req)
 }
 
-type Valuer interface {
-	ToValues() url.Values
-}
-
-func (c *V1Client) BuildURL(qp Valuer, parts ...string) string {
+// BuildURL builds URLs
+func (c *V1Client) BuildURL(qp url.Values, parts ...string) string {
 	if qp != nil {
-		return c.buildURL(qp.ToValues(), parts...).String()
+		return c.buildURL(qp, parts...).String()
 	}
 	return c.buildURL(nil, parts...).String()
 }
@@ -184,6 +174,7 @@ func (c *V1Client) buildURL(queryParams url.Values, parts ...string) *url.URL {
 	return tu.ResolveReference(u)
 }
 
+// BuildWebsocketURL builds websocket URLs
 func (c *V1Client) BuildWebsocketURL(parts ...string) string {
 	u := c.buildURL(nil, parts...)
 	u.Scheme = "ws"
@@ -191,6 +182,7 @@ func (c *V1Client) BuildWebsocketURL(parts ...string) string {
 	return u.String()
 }
 
+// IsUp returns whether or not the service is healthy
 func (c *V1Client) IsUp() bool {
 	u := *c.URL
 
@@ -263,7 +255,7 @@ func (c *V1Client) exists(uri string) (bool, error) {
 }
 
 func (c *V1Client) get(uri string, obj interface{}) error {
-	ce := &ClientError{}
+	ce := &Error{}
 
 	if err := argIsNotPointerOrNil(obj); err != nil {
 		ce.Err = errors.Wrap(err, "struct to load must be a pointer")
@@ -289,9 +281,9 @@ func (c *V1Client) delete(uri string) error {
 	req, _ := http.NewRequest(http.MethodDelete, uri, nil)
 	res, err := c.executeRequest(req)
 	if err != nil {
-		return &ClientError{Err: err}
+		return &Error{Err: err}
 	} else if res.StatusCode != http.StatusOK {
-		return &ClientError{Err: errors.New(fmt.Sprintf("status returned: %d", res.StatusCode))}
+		return &Error{Err: errors.New(fmt.Sprintf("status returned: %d", res.StatusCode))}
 	}
 
 	return nil
@@ -305,6 +297,7 @@ func (c *V1Client) put(uri string, in interface{}, out interface{}) error {
 	return c.makeDataRequest(http.MethodPut, uri, in, out)
 }
 
+// DialWebsocket dials a websocket
 func (c *V1Client) DialWebsocket(fq *FeedQuery) (*websocket.Conn, error) {
 	if fq == nil {
 		return nil, errors.New("Valid feed query required")

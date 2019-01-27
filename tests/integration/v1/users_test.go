@@ -2,6 +2,7 @@ package integration
 
 import (
 	"net/http"
+	"reflect"
 	"strconv"
 	"testing"
 	"time"
@@ -16,9 +17,12 @@ import (
 func buildDummyUserInput(t *testing.T) *models.UserInput {
 	t.Helper()
 
+	u, _ := (&faker.Internet{}).UserName(reflect.ValueOf(nil))
+	p, _ := (&faker.Internet{}).Password(reflect.ValueOf(nil))
+
 	x := &models.UserInput{
-		Username: (&faker.Internet{}).UserName(),
-		Password: (&faker.Internet{}).Password(),
+		Username: u.(string),
+		Password: p.(string),
 	}
 
 	return x

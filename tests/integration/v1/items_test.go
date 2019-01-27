@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"reflect"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -21,10 +22,12 @@ func checkItemEquality(t *testing.T, expected, actual *models.Item) {
 
 func buildDummyItem(t *testing.T) *models.Item {
 	t.Helper()
+	n, _ := faker.GetLorem().Word(reflect.ValueOf(nil))
+	d, _ := faker.GetLorem().Sentence(reflect.ValueOf(nil))
 
 	x := &models.ItemInput{
-		Name:    faker.Lorem{}.Word(),
-		Details: faker.Lorem{}.Sentence(),
+		Name:    n.(string),
+		Details: d.(string),
 	}
 	y, err := todoClient.CreateItem(x)
 	require.NoError(t, err)

@@ -13,12 +13,13 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
-type ClientError struct {
+// Error is an error wrapper we can expose to the end user
+type Error struct {
 	Err     error
 	FromAPI *models.ErrorResponse
 }
 
-func (ce *ClientError) Error() string {
+func (ce *Error) Error() string {
 	if ce.Err != nil {
 		return ce.Err.Error()
 	} else if ce.FromAPI != nil {
@@ -28,12 +29,14 @@ func (ce *ClientError) Error() string {
 	return ""
 }
 
+// FeedQuery represents a feed request
 type FeedQuery struct {
 	Events    []string
 	DataTypes []string
 	Topics    []string
 }
 
+// Values turns a FeedQuery into a url.Values instance
 func (fq *FeedQuery) Values() url.Values {
 	v := url.Values{}
 
@@ -54,14 +57,6 @@ func (fq *FeedQuery) Values() url.Values {
 	}
 	return v
 }
-
-var (
-	DefaultFeedQuery = &FeedQuery{
-		Events:    []string{"*"},
-		DataTypes: []string{"*"},
-		Topics:    []string{"*"},
-	}
-)
 
 ////////////////////////////////////////////////////////
 //                                                    //
@@ -104,7 +99,7 @@ func argIsNotNil(i interface{}) (nn bool, err error) {
 }
 
 func unmarshalBody(res *http.Response, dest interface{}) error {
-	ce := &ClientError{}
+	ce := &Error{}
 
 	// These paths should only ever be reached in tests, and should never be encountered by an end user.
 	if err := argIsNotPointerOrNil(dest); err != nil {
@@ -123,14 +118,14 @@ func unmarshalBody(res *http.Response, dest interface{}) error {
 		// eating this error because it would have been caught above
 		err = json.Unmarshal(bodyBytes, &apiErr)
 		if err != nil {
-			return &ClientError{Err: err}
+			return &Error{Err: err}
 		}
-		return &ClientError{FromAPI: apiErr}
+		return &Error{FromAPI: apiErr}
 	}
 
 	err = json.Unmarshal(bodyBytes, &dest)
 	if err != nil {
-		return &ClientError{Err: err}
+		return &Error{Err: err}
 	}
 
 	return nil

@@ -1,7 +1,6 @@
 package items
 
 import (
-	"errors"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
@@ -14,34 +13,25 @@ import (
 const MiddlewareCtxKey models.ContextKey = "item_input"
 
 type (
+	// ItemsService handles TODO List items
 	ItemsService struct {
 		logger        *logrus.Logger
 		db            database.Database
 		upgrader      websocket.Upgrader
 		userIDFetcher func(*http.Request) uint64
-		// cachedItems []models.Item
-	}
-
-	ItemsServiceConfig struct {
-		Logger        *logrus.Logger
-		Database      database.Database
-		UserIDFetcher func(*http.Request) uint64
 	}
 )
 
-func NewItemsService(cfg ItemsServiceConfig) (*ItemsService, error) {
-	if cfg.Logger == nil {
-		cfg.Logger = logrus.New()
-	}
+// UserIDFetcher is a function that fetches user IDs
+type UserIDFetcher func(*http.Request) uint64
 
-	if cfg.UserIDFetcher == nil {
-		return nil, errors.New("UserIDFetcher cannot be nil")
-	}
+// ProvideItemsService builds a new ItemsService
+func ProvideItemsService(logger *logrus.Logger, db database.Database, userIDFetcher UserIDFetcher) *ItemsService {
 
 	return &ItemsService{
-		logger:   cfg.Logger,
-		db:       cfg.Database,
-		userIDFetcher: cfg.UserIDFetcher,
-		upgrader: websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024},
-	}, nil
+		logger:        logger,
+		db:            db,
+		userIDFetcher: userIDFetcher,
+		upgrader:      websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024},
+	}
 }

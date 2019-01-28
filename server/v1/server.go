@@ -27,21 +27,6 @@ const (
 	maxTimeout = 120 * time.Second
 )
 
-// Config describes the configuration of a server
-type Config struct {
-	CertFile     string
-	KeyFile      string
-	DebugMode    bool
-	CookieSecret []byte
-	Logger       *logrus.Logger
-
-	Authenticator auth.Enticator
-
-	Tracer opentracing.Tracer
-
-	DBBuilder func(database.Config) (database.Database, error)
-}
-
 // Server is our API server
 type Server struct {
 	DebugMode bool
@@ -69,75 +54,81 @@ type Server struct {
 	// oauth2TokenStore  oauth2store.TokenStore
 }
 
-// DefaultServerConfig provides the default Config object
-func DefaultServerConfig() *Config {
-	logger := logrus.New()
-	return &Config{
-		Logger:        logger,
-		Authenticator: auth.NewBcrypt(logger),
-	}
+// TodoServer is an obligatory interface
+type TodoServer interface {
+	Serve()
 }
 
-// NewServer builds a new Server instance
-func NewServer(cfg Config, dbConfig database.Config) (*Server, error) {
-	var logger = cfg.Logger
+// CertPair represents the certificate and key you need to serve HTTPS
+type CertPair struct {
+	CertFile string
+	KeyFile  string
+}
+
+// ProvideServer builds a new Server instance
+func ProvideServer(
+	db database.Database,
+	logger *logrus.Logger,
+	authenticator auth.Enticator,
+	schemaDirectory database.SchemaDirectory,
+	cp CertPair,
+	cookieSecret []byte,
+	tracer opentracing.Tracer,
+	debug bool,
+	usersService *users.UsersService,
+	itemsService *items.ItemsService,
+) (*Server, error) {
 	if logger == nil {
 		logger = logrus.New()
 	}
 
-	if dbConfig.Logger == nil {
-		dbConfig.Logger = logger
+	if authenticator == nil {
+		authenticator = auth.NewBcrypt(logger)
 	}
 
-	if cfg.Authenticator == nil {
-		cfg.Authenticator = auth.NewBcrypt(logger)
-	}
-
-	if len(cfg.CookieSecret) < 32 {
+	if len(cookieSecret) < 32 {
 		logger.Errorln("cookie secret is too short, must be at least 32 characters in length")
 		return nil, errors.New("cookie secret is too short, must be at least 32 characters in length")
 	}
 
-	db, err := cfg.DBBuilder(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-	if err := db.Migrate(dbConfig.SchemaDir); err != nil {
+	if err := db.Migrate(schemaDirectory); err != nil {
 		return nil, err
 	}
 
 	srv := &Server{
-		DebugMode:     cfg.DebugMode,
+		DebugMode:     debug,
 		db:            db,
 		logger:        logger,
-		certFile:      cfg.CertFile,
-		keyFile:       cfg.KeyFile,
+		certFile:      cp.CertFile,
+		keyFile:       cp.KeyFile,
 		server:        buildServer(),
-		authenticator: cfg.Authenticator,
-		cookieBuilder: securecookie.New(securecookie.GenerateRandomKey(64), cfg.CookieSecret),
-
-		tracer: cfg.Tracer,
+		authenticator: authenticator,
+		cookieBuilder: securecookie.New(securecookie.GenerateRandomKey(64), cookieSecret),
+		tracer:        tracer,
 
 		// Services
-		usersService: users.NewUsersService(
-			users.UsersServiceConfig{
-				// CookieName: s.config.CookieName
-				Logger:          logger,
-				Database:        db,
-				Authenticator:   cfg.Authenticator,
-				UsernameFetcher: chiUsernameFetcher,
-			},
-		),
-	}
+		usersService: usersService,
+		itemsService: itemsService,
 
-	if srv.itemsService, err = items.NewItemsService(
-		items.ItemsServiceConfig{
-			Logger:        logger,
-			Database:      db,
-			UserIDFetcher: srv.userIDFetcher,
-		},
-	); err != nil {
-		return nil, err
+		// usersService: users.NewUsersService(
+		// 	users.UsersServiceConfig{
+		// 		// CookieName: s.config.CookieName
+		// 		Logger:          logger,
+		// 		Database:        db,
+		// 		Authenticator:   authenticator,
+		// 		UsernameFetcher: chiUsernameFetcher,
+		// 	},
+		// ),
+		//
+		// is, err = items.NewItemsService(
+		// 	items.ItemsServiceConfig{
+		// 		Logger:        logger,
+		// 		Database:      db,
+		// 		UserIDFetcher: srv.userIDFetcher,
+		// 	},
+		// ); err != nil {
+		// 	return nil, err
+		// }
 	}
 
 	srv.initializeOauth2Server()
@@ -146,14 +137,12 @@ func NewServer(cfg Config, dbConfig database.Config) (*Server, error) {
 	return srv, nil
 }
 
-// NewDebug builds a new debug Server
-func NewDebug(cfg Config, dbConfig database.Config) (srv *Server, err error) {
-	dbConfig.Debug, cfg.DebugMode = true, true
-	if srv, err = NewServer(cfg, dbConfig); err != nil {
-		return nil, err
+// SetDebug sets the debug level of the serer
+func (s *Server) SetDebug(debug bool) {
+	s.DebugMode = debug
+	if debug {
+		s.logger.SetLevel(logrus.DebugLevel)
 	}
-	srv.logger.SetLevel(logrus.DebugLevel)
-	return
 }
 
 func (s *Server) logRoutes(routes chi.Routes) {

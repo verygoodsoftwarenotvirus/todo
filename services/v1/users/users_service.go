@@ -10,23 +10,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// MiddlewareCtxKey is the context key we search for when interacting with user-related requests
 const MiddlewareCtxKey models.ContextKey = "user_input"
 
 type (
+	// RequestValidator validates request
 	RequestValidator interface {
 		Validate(req *http.Request) (bool, error)
 	}
 
-	UsersServiceConfig struct {
-		CookieName      string
-		Logger          *logrus.Logger
-		Database        database.Database
-		Authenticator   auth.Enticator
-		UsernameFetcher func(*http.Request) string
-	}
-
+	// UsersService handles our users
 	UsersService struct {
-		cookieName      string
+		cookieName      CookieName
 		database        database.Database
 		authenticator   auth.Enticator
 		logger          *logrus.Logger
@@ -34,16 +29,29 @@ type (
 	}
 )
 
-func NewUsersService(cfg UsersServiceConfig) *UsersService {
-	if cfg.UsernameFetcher == nil {
+// UsernameFetcher fetches usernames from requests
+type UsernameFetcher func(*http.Request) string
+
+// CookieName is an arbitrary type alias
+type CookieName string
+
+// ProvideUsersService builds a new UsersService
+func ProvideUsersService(
+	cookieName CookieName,
+	logger *logrus.Logger,
+	database database.Database,
+	authenticator auth.Enticator,
+	usernameFetcher UsernameFetcher,
+) *UsersService {
+	if usernameFetcher == nil {
 		panic("usernameFetcher must be provided")
 	}
 	us := &UsersService{
-		cookieName:      cfg.CookieName,
-		database:        cfg.Database,
-		authenticator:   cfg.Authenticator,
-		logger:          cfg.Logger,
-		usernameFetcher: cfg.UsernameFetcher,
+		cookieName:      cookieName,
+		database:        database,
+		authenticator:   authenticator,
+		logger:          logger,
+		usernameFetcher: usernameFetcher,
 	}
 	return us
 }

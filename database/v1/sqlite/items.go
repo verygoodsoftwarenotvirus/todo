@@ -75,16 +75,19 @@ func scanItem(scan database.Scannable) (*models.Item, error) {
 	return x, nil
 }
 
-func (s *sqlite) GetItem(itemID, userID uint64) (*models.Item, error) {
+// GetItem fetches an item from the sqlite database
+func (s *Sqlite) GetItem(itemID, userID uint64) (*models.Item, error) {
 	row := s.database.QueryRow(getItemQuery, itemID, userID)
 	return scanItem(row)
 }
 
-func (s *sqlite) GetItemCount(filter *models.QueryFilter) (count uint64, err error) {
+// GetItemCount fetches the count of items from the sqlite database that meet a particular filter
+func (s *Sqlite) GetItemCount(filter *models.QueryFilter) (count uint64, err error) {
 	return count, s.database.QueryRow(getItemCountQuery).Scan(&count)
 }
 
-func (s *sqlite) GetItems(filter *models.QueryFilter) (*models.ItemList, error) {
+// GetItems fetches a list of items from the sqlite database that meet a particular filter
+func (s *Sqlite) GetItems(filter *models.QueryFilter) (*models.ItemList, error) {
 	if filter == nil {
 		s.logger.Debugln("using default query filter")
 		filter = models.DefaultQueryFilter
@@ -129,7 +132,8 @@ func (s *sqlite) GetItems(filter *models.QueryFilter) (*models.ItemList, error) 
 	return x, err
 }
 
-func (s *sqlite) CreateItem(input *models.ItemInput) (i *models.Item, err error) {
+// CreateItem creates an item in a sqlite database
+func (s *Sqlite) CreateItem(input *models.ItemInput) (i *models.Item, err error) {
 	tx, err := s.database.Begin()
 	if err != nil {
 		s.logger.Errorf("error beginning database connection: %v", err)
@@ -169,7 +173,8 @@ func (s *sqlite) CreateItem(input *models.ItemInput) (i *models.Item, err error)
 	return i, nil
 }
 
-func (s *sqlite) UpdateItem(input *models.Item) (err error) {
+// UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
+func (s *Sqlite) UpdateItem(input *models.Item) (err error) {
 	tx, err := s.database.Begin()
 	if err != nil {
 		return
@@ -198,7 +203,8 @@ func (s *sqlite) UpdateItem(input *models.Item) (err error) {
 	return
 }
 
-func (s *sqlite) DeleteItem(id uint64) error {
+// DeleteItem deletes an item from the database by its ID
+func (s *Sqlite) DeleteItem(id uint64) error {
 	_, err := s.database.Exec(archiveItemQuery, id)
 	return err
 }

@@ -39,7 +39,7 @@ func (s *Server) initializeOauth2Server() {
 
 	paginating := true
 	for page := 1; paginating; page++ {
-		clientList, err := s.db.GetOauth2Clients(
+		clientList, err := s.db.GetOAuth2Clients(
 			&models.QueryFilter{
 				Page:  uint64(page),
 				Limit: 50,
@@ -122,7 +122,7 @@ func (s *Server) OauthTokenAuthenticationMiddleware(next http.Handler) http.Hand
 		}
 
 		cid := token.GetClientID()
-		c, err := s.db.GetOauth2Client(cid)
+		c, err := s.db.GetOAuth2Client(cid)
 		if err != nil {
 			http.Error(res, fmt.Sprintf("error fetching client ID: %s", err.Error()), http.StatusUnauthorized)
 			return
@@ -133,14 +133,6 @@ func (s *Server) OauthTokenAuthenticationMiddleware(next http.Handler) http.Hand
 	})
 }
 
-func (s *Server) userIDFetcher(req *http.Request) uint64 {
-	x, ok := req.Context().Value(models.UserIDKey).(uint64)
-	if !ok {
-		s.logger.Errorln("no input attached to request")
-	}
-	return x
-}
-
 // Oauth2ClientInfoMiddleware fetches clientOauth2Client info from requests and attaches it eplicitly to a request
 func (s *Server) Oauth2ClientInfoMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -149,20 +141,20 @@ func (s *Server) Oauth2ClientInfoMiddleware(next http.Handler) http.Handler {
 		values := req.URL.Query()
 		if v := values.Get(oauth2ClientIDURIParamKey); v != "" {
 			s.logger.Debugf("fetching oauth2 client %s from database", v)
-			client, err := s.db.GetOauth2Client(v)
+			client, err := s.db.GetOAuth2Client(v)
 			if err != nil {
 				s.logger.Errorln("error fetching ")
 				http.Error(res, err.Error(), http.StatusInternalServerError)
 			}
-			req = req.WithContext(context.WithValue(req.Context(), models.Oauth2ClientKey, client))
+			req = req.WithContext(context.WithValue(req.Context(), models.OAuth2ClientKey, client))
 		}
 
 		next.ServeHTTP(res, req)
 	})
 }
 
-func (s *Server) fetchOauth2ClientFromRequest(req *http.Request) *models.Oauth2Client {
-	client, ok := req.Context().Value(models.Oauth2ClientKey).(*models.Oauth2Client)
+func (s *Server) fetchOauth2ClientFromRequest(req *http.Request) *models.OAuth2Client {
+	client, ok := req.Context().Value(models.OAuth2ClientKey).(*models.OAuth2Client)
 	if !ok {
 		return nil
 	}
@@ -196,12 +188,12 @@ func (s *Server) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reques
 	if client == nil {
 		clientID := s.fetchOauth2ClientIDFromRequest(req)
 		if clientID != "" {
-			client, err := s.db.GetOauth2Client(clientID)
+			client, err := s.db.GetOAuth2Client(clientID)
 			if err != nil {
 				return "", err
 			}
 
-			req = req.WithContext(context.WithValue(req.Context(), models.Oauth2ClientKey, client))
+			req = req.WithContext(context.WithValue(req.Context(), models.OAuth2ClientKey, client))
 			return strings.Join(client.Scopes, scopesSeparator), nil
 		}
 	} else {
@@ -218,7 +210,7 @@ func (s *Server) UserAuthorizationHandler(res http.ResponseWriter, req *http.Req
 	s.logger.Debugln("UserAuthorizationHandler called")
 	ctx := req.Context()
 	var uid uint64
-	if client, clientOk := ctx.Value(models.Oauth2ClientKey).(*models.Oauth2Client); !clientOk {
+	if client, clientOk := ctx.Value(models.OAuth2ClientKey).(*models.OAuth2Client); !clientOk {
 		user, ok := ctx.Value(models.UserKey).(*models.User)
 		if !ok {
 			return "", errors.New("user not found")
@@ -252,7 +244,7 @@ func (s *Server) ClientAuthorizedHandler(clientID string, grant oauth2.GrantType
 	}
 
 	// TODO: what if client is deactivated?!
-	client, err := s.db.GetOauth2Client(clientID)
+	client, err := s.db.GetOAuth2Client(clientID)
 	if err != nil {
 		return false, err
 	}
@@ -269,7 +261,7 @@ var _ oauth2server.ClientScopeHandler = (*Server)(nil).ClientScopeHandler
 // ClientScopeHandler satisfies the oauth2server ClientScopeHandler interface
 func (s *Server) ClientScopeHandler(clientID, scope string) (allowed bool, err error) {
 	s.logger.Debugln("ClientScopeHandler called")
-	c, err := s.db.GetOauth2Client(clientID)
+	c, err := s.db.GetOAuth2Client(clientID)
 	if err != nil {
 		return false, err
 	}

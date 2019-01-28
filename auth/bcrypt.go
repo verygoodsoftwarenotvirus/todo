@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"errors"
+
 	"github.com/pquerna/otp/totp"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
@@ -11,15 +13,22 @@ const (
 	defaultMinimumPasswordSize = 16
 )
 
-var _ Enticator = (*BcryptAuthenticator)(nil)
+var (
+	_ Enticator = (*BcryptAuthenticator)(nil)
 
+	// ErrCostTooLow indicates that a password has too low a Bcrypt cost
+	ErrCostTooLow = errors.New("stored password's cost is too low")
+)
+
+// BcryptAuthenticator is our bcrypt-based authenticator
 type BcryptAuthenticator struct {
 	logger              *logrus.Logger
 	hashCost            uint
 	minimumPasswordSize uint
 }
 
-func NewBcrypt(logger *logrus.Logger) *BcryptAuthenticator {
+// NewBcrypt returns a Bcrypt-powered Enticator
+func NewBcrypt(logger *logrus.Logger) Enticator {
 	if logger == nil {
 		logger = logrus.New()
 	}
@@ -30,11 +39,13 @@ func NewBcrypt(logger *logrus.Logger) *BcryptAuthenticator {
 	}
 }
 
+// HashPassword takes a password and hashes it using bcrypt
 func (b *BcryptAuthenticator) HashPassword(password string) (string, error) {
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), int(b.hashCost))
 	return string(hashedPass), err
 }
 
+// PasswordMatches validates whether or not a bcrypt-hashed password matches a provided password
 func (b *BcryptAuthenticator) PasswordMatches(hashedPassword, providedPassword string, salt []byte) bool {
 	matches := bcrypt.CompareHashAndPassword(
 		[]byte(hashedPassword),
@@ -55,10 +66,12 @@ func (b *BcryptAuthenticator) hashedPasswordIsTooWeak(hashedPassword string) boo
 	return false
 }
 
+// PasswordIsAcceptable takes a password and returns whether or not it satisfies the authenticator
 func (b *BcryptAuthenticator) PasswordIsAcceptable(pass string) bool {
 	return uint(len(pass)) >= b.minimumPasswordSize
 }
 
+// ValidateLogin validates a password and two factor code
 func (b *BcryptAuthenticator) ValidateLogin(hashedPassword, providedPassword, twoFactorSecret, twoFactorCode string) (bool, error) {
 	passwordMatches := b.PasswordMatches(hashedPassword, providedPassword, nil)
 	if !totp.Validate(twoFactorCode, twoFactorSecret) {

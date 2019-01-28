@@ -12,22 +12,20 @@ const (
 )
 
 var (
-	ErrCostTooLow           = errors.New("stored password's cost is too low")
+	// ErrInvalidTwoFactorCode indicates that a provided two factor code is invalid
 	ErrInvalidTwoFactorCode = errors.New("invalid two factor code")
-	ErrPasswordHashTooWeak  = errors.New("password's hash is too weak")
+	// ErrPasswordHashTooWeak indicates that a provided password hash is too weak
+	ErrPasswordHashTooWeak = errors.New("password's hash is too weak")
 )
 
+// PasswordHasher hashes passwords
 type PasswordHasher interface {
 	HashPassword(password string) (string, error)
 	PasswordIsAcceptable(password string) bool
 	PasswordMatches(hashedPassword, providedPassword string, salt []byte) bool
 }
 
-type Enticator2 interface {
-	PasswordMatches(providedPassword string) bool
-	ValidateLogin(providedPassword, twoFactorCode string) (bool, error)
-}
-
+// Enticator is a poorly named Authenticator interface
 type Enticator interface {
 	PasswordHasher
 	ValidateLogin(hashedPassword, providedPassword, twoFactorSecret, twoFactorCode string) (bool, error)
@@ -40,6 +38,7 @@ func init() {
 	}
 }
 
+// RandString produces a random string
 // https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
 func RandString(len uint64) (string, error) {
 	b := make([]byte, uint64(math.Max(64, float64(len))))

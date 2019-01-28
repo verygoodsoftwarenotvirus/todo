@@ -22,6 +22,6 @@ services:
             JAEGER_SAMPLER_MANAGER_HOST_PORT: 'tracing-server:5778'
         links:
             - tracing-server
-        logging:
-            driver: none
+        # logging:
+        #     driver: none
 

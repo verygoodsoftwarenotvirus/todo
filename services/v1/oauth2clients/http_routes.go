@@ -58,7 +58,7 @@ func (s *Oauth2ClientsService) Create(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	x, err := s.database.CreateOauth2Client(input)
+	x, err := s.database.CreateOAuth2Client(input)
 	if err != nil {
 		s.logger.Errorf("error creating oauth2Client: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
@@ -82,7 +82,7 @@ func (s *Oauth2ClientsService) BuildReadHandler(oauth2ClientIDFetcher func(req *
 	return func(res http.ResponseWriter, req *http.Request) {
 		s.logger.Debugln("oauth2Client read route called")
 		oauth2ClientID := oauth2ClientIDFetcher(req)
-		i, err := s.database.GetOauth2Client(oauth2ClientID)
+		i, err := s.database.GetOAuth2Client(oauth2ClientID)
 		if err == sql.ErrNoRows {
 			s.logger.Debugf("Read called on nonexistent client %s", oauth2ClientID)
 			res.WriteHeader(http.StatusNotFound)
@@ -101,7 +101,7 @@ func (s *Oauth2ClientsService) BuildReadHandler(oauth2ClientIDFetcher func(req *
 func (s *Oauth2ClientsService) List(res http.ResponseWriter, req *http.Request) {
 	s.logger.Debugln("oauth2Client list route called")
 	qf := models.ParseQueryFilter(req)
-	oauth2Clients, err := s.database.GetOauth2Clients(qf)
+	oauth2Clients, err := s.database.GetOAuth2Clients(qf)
 	if err != nil {
 		s.logger.Errorln("encountered error getting list of oauth2 clients: ", err)
 		res.WriteHeader(http.StatusInternalServerError)
@@ -120,7 +120,7 @@ func (s *Oauth2ClientsService) BuildDeleteHandler(oauth2ClientIDFetcher func(req
 		s.logger.Debugln("oauth2Client deletion route called")
 		oauth2ClientID := oauth2ClientIDFetcher(req)
 
-		if err := s.database.DeleteOauth2Client(oauth2ClientID); err != nil {
+		if err := s.database.DeleteOAuth2Client(oauth2ClientID); err != nil {
 			s.logger.Errorln("encountered error deleting oauth2 client: ", err)
 			res.WriteHeader(http.StatusInternalServerError)
 			return
@@ -141,7 +141,7 @@ func (s *Oauth2ClientsService) BuildUpdateHandler(oauth2ClientIDFetcher func(req
 		// }
 
 		oauth2ClientID := oauth2ClientIDFetcher(req)
-		x, err := s.database.GetOauth2Client(oauth2ClientID)
+		x, err := s.database.GetOAuth2Client(oauth2ClientID)
 		if err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
 			return
@@ -150,7 +150,7 @@ func (s *Oauth2ClientsService) BuildUpdateHandler(oauth2ClientIDFetcher func(req
 		// IMPLEMENTME:
 		//x.Update()
 
-		if err := s.database.UpdateOauth2Client(x); err != nil {
+		if err := s.database.UpdateOAuth2Client(x); err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}

@@ -8,58 +8,53 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/mattn/go-sqlite3" // for the init import call
 	"github.com/sirupsen/logrus"
 )
 
-var _ database.Database = (*sqlite)(nil)
+var _ database.Database = (*Sqlite)(nil)
 
-type sqlite struct {
+// Sqlite is our main Sqlite interaction database
+type Sqlite struct {
 	debug    bool
 	logger   *logrus.Logger
 	database *sql.DB
-
-	clientIDExtractor database.ClientIDExtractor
-	secretGenerator   database.SecretGenerator
 }
 
-// NewSqlite provides a sqlite database controller
-func NewSqlite(config database.Config) (database.Database, error) {
-	if config.Logger == nil {
-		config.Logger = logrus.New()
-	}
-
-	config.Logger.Debugf("Establishing connection to sqlite3 file: %q\n", config.ConnectionString)
-	db, err := sql.Open("sqlite3", config.ConnectionString)
+// ProvideSqlite provides a sqlite database controller
+func ProvideSqlite(
+	debug bool,
+	logger *logrus.Logger,
+	connectionDetails database.ConnectionDetails,
+) (database.Database, error) {
+	logger.Debugf("Establishing connection to sqlite3 file: %q\n", connectionDetails)
+	db, err := sql.Open("sqlite3", string(connectionDetails))
 	if err != nil {
-		config.Logger.Errorf("error encountered establishing database connection: %v\n", err)
+		logger.Errorf("error encountered establishing database connection: %v\n", err)
 		return nil, err
 	}
 
-	s := &sqlite{
-		debug:    config.Debug,
-		logger:   config.Logger,
+	s := &Sqlite{
+		debug:    debug,
+		logger:   logger,
 		database: db,
-
-		// FIXME: these should be allowed to be nil
-		clientIDExtractor: config.Extractor,
-		secretGenerator:   config.SecretGenerator,
 	}
 
 	return s, nil
 }
 
-func (s *sqlite) Migrate(schemaDir string) error {
+// Migrate migrates a given Sqlite database. The current implementation is pretty primitive.
+func (s *Sqlite) Migrate(schemaDir database.SchemaDirectory) error {
 	s.logger.Debugln("Migrate called")
 
-	files, err := ioutil.ReadDir(schemaDir)
+	files, err := ioutil.ReadDir(string(schemaDir))
 	if err != nil {
 		return err
 	}
 	s.logger.Debugf("%d files found in schema directory", len(files))
 
 	for _, file := range files {
-		schemaFile := path.Join(schemaDir, file.Name())
+		schemaFile := path.Join(string(schemaDir), file.Name())
 
 		if strings.HasSuffix(schemaFile, ".sql") {
 			s.logger.Debugf("migrating schema file: %q", schemaFile)

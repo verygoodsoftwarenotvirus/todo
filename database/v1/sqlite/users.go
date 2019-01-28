@@ -107,15 +107,18 @@ func scanUser(scan database.Scannable) (*models.User, error) {
 	return x, nil
 }
 
-func (s *sqlite) GetUser(username string) (*models.User, error) {
+// GetUser fetches a user by their username
+func (s *Sqlite) GetUser(username string) (*models.User, error) {
 	return scanUser(s.database.QueryRow(getUserQuery, username))
 }
 
-func (s *sqlite) GetUserCount(filter *models.QueryFilter) (count uint64, err error) {
+// GetUserCount fetches a count of users from the sqlite database that meet a particular filter
+func (s *Sqlite) GetUserCount(filter *models.QueryFilter) (count uint64, err error) {
 	return count, s.database.QueryRow(getUserCountQuery).Scan(&count)
 }
 
-func (s *sqlite) GetUsers(filter *models.QueryFilter) (*models.UserList, error) {
+// GetUsers fetches a list of users from the sqlite database that meet a particular filter
+func (s *Sqlite) GetUsers(filter *models.QueryFilter) (*models.UserList, error) {
 	if filter == nil {
 		s.logger.Debugln("using default query filter")
 		filter = models.DefaultQueryFilter
@@ -157,7 +160,8 @@ func (s *sqlite) GetUsers(filter *models.QueryFilter) (*models.UserList, error) 
 	return x, err
 }
 
-func (s *sqlite) CreateUser(input *models.UserInput, totpSecret string) (x *models.User, err error) {
+// CreateUser creates a user
+func (s *Sqlite) CreateUser(input *models.UserInput, totpSecret string) (x *models.User, err error) {
 	s.logger.Debugf("CreateUser called for %s", input.Username)
 
 	tx, err := s.database.Begin()
@@ -199,7 +203,8 @@ func (s *sqlite) CreateUser(input *models.UserInput, totpSecret string) (x *mode
 	return
 }
 
-func (s *sqlite) UpdateUser(input *models.User) (err error) {
+// UpdateUser updates a user. Note that this function expects the provided user to have a valid ID.
+func (s *Sqlite) UpdateUser(input *models.User) (err error) {
 	tx, err := s.database.Begin()
 	if err != nil {
 		return
@@ -228,7 +233,8 @@ func (s *sqlite) UpdateUser(input *models.User) (err error) {
 	return
 }
 
-func (s *sqlite) DeleteUser(username string) error {
+// DeleteUser deletes a user by their username
+func (s *Sqlite) DeleteUser(username string) error {
 	_, err := s.database.Exec(archiveUserQuery, username)
 	return err
 }

@@ -71,9 +71,9 @@ const (
 	`
 )
 
-func scanOauth2Client(scan database.Scannable) (*models.Oauth2Client, error) {
+func scanOauth2Client(scan database.Scannable) (*models.OAuth2Client, error) {
 	var (
-		x      = &models.Oauth2Client{}
+		x      = &models.OAuth2Client{}
 		scopes string
 	)
 	err := scan.Scan(
@@ -96,21 +96,24 @@ func scanOauth2Client(scan database.Scannable) (*models.Oauth2Client, error) {
 	return x, nil
 }
 
-var _ models.Oauth2ClientHandler = (*sqlite)(nil)
+var _ models.OAuth2ClientHandler = (*Sqlite)(nil)
 
-func (s *sqlite) GetOauth2Client(clientID string) (*models.Oauth2Client, error) {
+// GetOAuth2Client gets an OAuth2 client
+func (s *Sqlite) GetOAuth2Client(clientID string) (*models.OAuth2Client, error) {
 	s.logger.Debugf("GetOauth2Client called for %s", clientID)
 	row := s.database.QueryRow(getOauth2ClientByClientIDQuery, clientID)
 	return scanOauth2Client(row)
 }
 
-func (s *sqlite) GetOauth2ClientCount(filter *models.QueryFilter) (uint64, error) {
+// GetOAuth2ClientCount gets the count of OAuth2 clients that match the current filter
+func (s *Sqlite) GetOAuth2ClientCount(filter *models.QueryFilter) (uint64, error) {
 	var count uint64
 	err := s.database.QueryRow(getOauth2ClientCountQuery).Scan(&count)
 	return count, err
 }
 
-func (s *sqlite) GetOauth2Clients(filter *models.QueryFilter) (*models.Oauth2ClientList, error) {
+// GetOAuth2Clients gets a list of OAuth2 clients
+func (s *Sqlite) GetOAuth2Clients(filter *models.QueryFilter) (*models.Oauth2ClientList, error) {
 	if filter == nil {
 		s.logger.Debugln("using default query filter")
 		filter = models.DefaultQueryFilter
@@ -118,7 +121,7 @@ func (s *sqlite) GetOauth2Clients(filter *models.QueryFilter) (*models.Oauth2Cli
 	filter.Page = uint64(math.Max(1, float64(filter.Page)))
 	queryPage := uint(filter.Limit * (filter.Page - 1))
 
-	list := []models.Oauth2Client{}
+	list := []models.OAuth2Client{}
 
 	s.logger.Debugf("query limit: %d, query page: %d, calculated page: %d", filter.Limit, filter.Page, queryPage)
 
@@ -146,17 +149,18 @@ func (s *sqlite) GetOauth2Clients(filter *models.QueryFilter) (*models.Oauth2Cli
 		},
 		Clients: list,
 	}
-	if ocl.TotalCount, err = s.GetOauth2ClientCount(filter); err != nil {
+	if ocl.TotalCount, err = s.GetOAuth2ClientCount(filter); err != nil {
 		return nil, err
 	}
 
 	return ocl, err
 }
 
-func (s *sqlite) CreateOauth2Client(input *models.Oauth2ClientCreationInput) (x *models.Oauth2Client, err error) {
+// CreateOAuth2Client creates an OAuth2 client
+func (s *Sqlite) CreateOAuth2Client(input *models.Oauth2ClientCreationInput) (x *models.OAuth2Client, err error) {
 	s.logger.Debugln("CreateOauth2Client called.")
 
-	x = &models.Oauth2Client{
+	x = &models.OAuth2Client{
 		RedirectURI: input.RedirectURI,
 		Scopes:      input.Scopes,
 	}
@@ -214,7 +218,9 @@ func (s *sqlite) CreateOauth2Client(input *models.Oauth2ClientCreationInput) (x 
 	return
 }
 
-func (s *sqlite) UpdateOauth2Client(input *models.Oauth2Client) (err error) {
+// UpdateOAuth2Client updates a OAuth2 client. Note that this function expects the input's
+// ID field to be valid.
+func (s *Sqlite) UpdateOAuth2Client(input *models.OAuth2Client) (err error) {
 	tx, err := s.database.Begin()
 	if err != nil {
 		return
@@ -249,7 +255,8 @@ func (s *sqlite) UpdateOauth2Client(input *models.Oauth2Client) (err error) {
 	return
 }
 
-func (s *sqlite) DeleteOauth2Client(id string) error {
+// DeleteOAuth2Client deletes an OAuth2 client
+func (s *Sqlite) DeleteOAuth2Client(id string) error {
 	_, err := s.database.Exec(archiveOauth2ClientQuery, id)
 	return err
 }

@@ -15,8 +15,8 @@ import (
 var logger *logrus.Logger
 
 const (
-	ExpectedUsername = "username"
-	ExpectedPassword = "password"
+	expectedUsername = "username"
+	expectedPassword = "password"
 
 	defaultDBPath        = "example.db"
 	defaultSchemaDir     = "database/v1/sqlite/schema"
@@ -36,12 +36,7 @@ func main() {
 		logger.Printf("set alternative output path: %q", dbPath)
 	}
 
-	dbcfg := database.Config{
-		Logger: logger,
-		// Debug:            true,
-		ConnectionString: dbPath,
-	}
-	db, err := sqlite.NewSqlite(dbcfg)
+	db, err := sqlite.ProvideSqlite(false, logger, database.ConnectionDetails(dbPath))
 	if err != nil {
 		logger.Fatalf("error opening sqlite connection: %v", err)
 	}
@@ -51,19 +46,19 @@ func main() {
 	}
 
 	b := auth.NewBcrypt(nil)
-	hp, err := b.HashPassword(ExpectedPassword)
+	hp, err := b.HashPassword(expectedUsername)
 	if err != nil {
 		logger.Fatalf("error hashing password: %v", err)
 	}
 
-	u, err := db.CreateUser(&models.UserInput{Username: ExpectedUsername, Password: hp, IsAdmin: true}, defaultSecret)
+	u, err := db.CreateUser(&models.UserInput{Username: expectedUsername, Password: hp, IsAdmin: true}, defaultSecret)
 	if err != nil {
 		logger.Fatalf("error creating user: %v", err)
 	} else if u.TwoFactorSecret != defaultSecret {
 		logger.Fatal("wtf")
 	}
 
-	oac, err := db.CreateOauth2Client(
+	oac, err := db.CreateOAuth2Client(
 		&models.Oauth2ClientCreationInput{
 			UserLoginInput: models.UserLoginInput{Username: u.Username},
 			Scopes:         []string{"*"},
@@ -75,7 +70,7 @@ func main() {
 	}
 
 	oac.ClientID, oac.ClientSecret, oac.RedirectURI = defaultClientID, defaultClientSecret, localTestInstanceURL
-	if err := db.UpdateOauth2Client(oac); err != nil {
+	if err := db.UpdateOAuth2Client(oac); err != nil {
 		logger.Fatalf("error overriding oauth client secrets: %v", err)
 	}
 

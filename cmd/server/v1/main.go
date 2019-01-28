@@ -2,14 +2,13 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
 	opentracing "github.com/opentracing/opentracing-go"
 	jaeger "github.com/uber/jaeger-client-go"
@@ -45,43 +44,36 @@ func init() {
 	log.Printf("using this key: %q\n", keyToUse)
 }
 
-// initJaeger returns an instance of Jaeger Tracer that samples 100% of traces and logs all spans to stdout.
-func initJaeger(service string) (opentracing.Tracer, io.Closer) {
+// provideJaeger returns an instance of Jaeger Tracer that samples 100% of traces and logs all spans to stdout.
+func provideJaeger() opentracing.Tracer {
 	cfg := &config.Configuration{
 		Sampler: &config.SamplerConfig{Type: "const", Param: 1},
 		Reporter: &config.ReporterConfig{
 			LogSpans: true,
 		},
 	}
-	tracer, closer, err := cfg.New(service, config.Logger(jaeger.StdLogger))
+	tracer, _, err := cfg.New("todo-server", config.Logger(jaeger.StdLogger))
 	if err != nil {
 		panic(fmt.Sprintf("ERROR: cannot init Jaeger: %v\n", err))
 	}
 
-	return tracer, closer
+	return tracer
 }
-
 func main() {
-	dbCfg := database.Config{
-		Debug:            true,
-		ConnectionString: dbFile,
-		SchemaDir:        schemaDir,
-	}
+	server, err := BuildServer(
+		database.ConnectionDetails(dbFile),
+		schemaDir,
+		server.CertPair{
+			CertFile: certToUse,
+			KeyFile:  keyToUse,
+		},
+		users.CookieName("todo"),
+		[]byte(cookieSecret),
+		true,
+	)
 
-	tracer, closer := initJaeger("todo-server")
-	defer closer.Close()
-
-	cfg := server.Config{
-		DebugMode:    true,
-		CookieSecret: []byte(cookieSecret),
-		CertFile:     certToUse,
-		KeyFile:      keyToUse,
-		Tracer:       tracer,
-		DBBuilder:    sqlite.NewSqlite,
-	}
-
-	if server, err := server.NewDebug(cfg, dbCfg); err != nil {
-		panic(err)
+	if err != nil {
+		log.Fatal(err)
 	} else {
 		server.Serve()
 	}

@@ -31,7 +31,7 @@ func buildDummyOauth2ClientInput(t *testing.T, username, password, totpSecret st
 	return x
 }
 
-func buildDummyOauth2Client(t *testing.T, username, password, totpSecret string) *models.Oauth2Client {
+func buildDummyOauth2Client(t *testing.T, username, password, totpSecret string) *models.OAuth2Client {
 	t.Helper()
 
 	x, err := todoClient.CreateOauth2Client(
@@ -43,7 +43,7 @@ func buildDummyOauth2Client(t *testing.T, username, password, totpSecret string)
 	return x
 }
 
-func checkOauth2ClientEquality(t *testing.T, expected *models.Oauth2ClientCreationInput, actual *models.Oauth2Client) {
+func checkOauth2ClientEquality(t *testing.T, expected *models.Oauth2ClientCreationInput, actual *models.OAuth2Client) {
 	t.Helper()
 
 	assert.NotZero(t, actual.ID)
@@ -128,7 +128,7 @@ func TestOauth2Clients(test *testing.T) {
 	test.Run("Listing", func(T *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
 			// Create oauth2Clients
-			expected := []*models.Oauth2Client{}
+			expected := []*models.OAuth2Client{}
 			for i := 0; i < 5; i++ {
 				expected = append(expected, buildDummyOauth2Client(t, x.Username, y.Password, x.TwoFactorSecret))
 			}

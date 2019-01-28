@@ -25,10 +25,14 @@ revendor:
 
 .PHONY: dev-tools
 dev-tools:
-	go get -u github.com/jsha/minica
+	go get -u github.com/google/wire/cmd/wire
+
+.PHONY: wire-gen-server
+wire-gen-server:
+	wire gen gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
 
 .PHONY: prerequisites
-prerequisites:
+prerequisites: dev-tools
 	$(MAKE) vendor $(SERVER_PRIV_KEY) $(SERVER_CERT_KEY) $(CLIENT_PRIV_KEY) $(CLIENT_CERT_KEY)
 
 dev_files/certs/client/key.pem dev_files/certs/client/cert.pem:
@@ -58,7 +62,7 @@ integration-tests:
 ## Docker things
 
 .PHONY: docker-image
-docker-image: prerequisites
+docker-image: prerequisites wire-gen-server
 	docker build --tag todo:latest --file dockerfiles/server.Dockerfile .
 
 ## Running
@@ -75,7 +79,3 @@ run-local:
 run-local-integration-server:
 	docker build --tag dev-todo:latest --file dockerfiles/integration-server.Dockerfile .
 	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` --publish=443 dev-todo:latest
-
-.PHONY: glide-vendor
-glide-vendor:
-	docker run --rm -it -volume `pwd`:`pwd` --workdir=`pwd` instrumentisto/glide init

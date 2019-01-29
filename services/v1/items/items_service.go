@@ -10,11 +10,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const MiddlewareCtxKey models.ContextKey = "item_input"
+const (
+	// MiddlewareCtxKey is a string alias we can use for referring to item input data in contexts
+	MiddlewareCtxKey models.ContextKey = "item_input"
+)
 
 type (
-	// ItemsService handles TODO List items
-	ItemsService struct {
+	// Service handles TODO List items
+	Service struct {
 		logger        *logrus.Logger
 		db            database.Database
 		upgrader      websocket.Upgrader
@@ -26,9 +29,9 @@ type (
 type UserIDFetcher func(*http.Request) uint64
 
 // ProvideItemsService builds a new ItemsService
-func ProvideItemsService(logger *logrus.Logger, db database.Database, userIDFetcher UserIDFetcher) *ItemsService {
+func ProvideItemsService(logger *logrus.Logger, db database.Database, userIDFetcher UserIDFetcher) *Service {
 
-	return &ItemsService{
+	return &Service{
 		logger:        logger,
 		db:            db,
 		userIDFetcher: userIDFetcher,

@@ -16,9 +16,9 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/gorilla/securecookie"
-	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/oauth2.v3"
 	oauth2server "gopkg.in/oauth2.v3/server"
 	oauth2store "gopkg.in/oauth2.v3/store"
 )
@@ -36,9 +36,9 @@ type Server struct {
 	authenticator auth.Enticator
 
 	// Services
-	itemsService         *items.ItemsService
-	usersService         *users.UsersService
-	oauth2ClientsService *oauth2clients.Oauth2ClientsService
+	itemsService         *items.Service
+	usersService         *users.Service
+	oauth2ClientsService *oauth2clients.Service
 
 	// infra things
 	db            database.Database
@@ -75,8 +75,10 @@ func ProvideServer(
 	cookieSecret []byte,
 	tracer opentracing.Tracer,
 	debug bool,
-	usersService *users.UsersService,
-	itemsService *items.ItemsService,
+	tokenStore oauth2.TokenStore,
+	clientStore *oauth2store.ClientStore,
+	usersService *users.Service,
+	itemsService *items.Service,
 ) (*Server, error) {
 	if logger == nil {
 		logger = logrus.New()
@@ -131,7 +133,7 @@ func ProvideServer(
 		// }
 	}
 
-	srv.initializeOauth2Server()
+	srv.initializeOauth2Server(tokenStore, clientStore)
 	srv.setupRoutes()
 
 	return srv, nil
@@ -168,7 +170,7 @@ func (s *Server) logRoute(prefix string, route chi.Route) {
 
 // Serve serves HTTP traffic
 func (s *Server) Serve() {
-	s.server.Handler = nethttp.Middleware(s.tracer, s.router)
+	s.server.Handler = s.router
 	s.logger.Debugf("Listening on 443")
 	//s.logRoutes(s.router)
 	s.logger.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))

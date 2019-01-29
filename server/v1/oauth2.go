@@ -28,14 +28,19 @@ const (
 	oauth2ClientIDURIParamKey                   = "client_id"
 )
 
-func (s *Server) initializeOauth2Server() {
-	manager := oauth2manage.NewDefaultManager()
-	// token memory store
-	tokenStore, err := oauth2store.NewMemoryTokenStore()
-	manager.MustTokenStorage(tokenStore, err)
+// ProvideTokenStore provides a token store for use with the server
+func ProvideTokenStore() (oauth2.TokenStore, error) {
+	return oauth2store.NewMemoryTokenStore()
+}
 
-	// client memory store
-	s.oauth2ClientStore = oauth2store.NewClientStore()
+// ProvideClientStore provides a client store for use with the server
+func ProvideClientStore() *oauth2store.ClientStore {
+	return oauth2store.NewClientStore()
+}
+
+func (s *Server) initializeOauth2Server(tokenStore oauth2.TokenStore, clientStore *oauth2store.ClientStore) {
+	manager := oauth2manage.NewDefaultManager()
+	manager.MustTokenStorage(tokenStore, nil)
 
 	paginating := true
 	for page := 1; paginating; page++ {
@@ -46,7 +51,7 @@ func (s *Server) initializeOauth2Server() {
 			},
 		)
 
-		if clientList != nil && len(clientList.Clients) == 0 || err == sql.ErrNoRows {
+		if (clientList != nil && len(clientList.Clients) == 0) || err == sql.ErrNoRows {
 			paginating = false
 		} else if err != nil {
 			s.logger.Fatalln("error encountered querying oauth clients to add to the clientStore: ", err)
@@ -54,7 +59,7 @@ func (s *Server) initializeOauth2Server() {
 
 		for _, client := range clientList.Clients {
 			s.logger.Debugf("loading client %q", client.ClientID)
-			if err := s.oauth2ClientStore.Set(client.ClientID, &oauth2models.Client{
+			if err := clientStore.Set(client.ClientID, &oauth2models.Client{
 				ID:     client.ClientID,
 				Secret: client.ClientSecret,
 				Domain: client.RedirectURI,
@@ -66,18 +71,16 @@ func (s *Server) initializeOauth2Server() {
 		}
 	}
 
-	manager.MapClientStorage(s.oauth2ClientStore)
-
+	manager.MapClientStorage(clientStore)
 	s.setOauth2Defaults(manager)
 
-	s.oauth2ClientsService = oauth2clients.NewOauth2ClientsService(
-		oauth2clients.Oauth2ClientsServiceConfig{
-			Logger:        s.logger,
-			Authenticator: s.authenticator,
-			Database:      s.db,
-			ClientStore:   s.oauth2ClientStore,
-			TokenStore:    tokenStore,
-		},
+	s.oauth2ClientStore = clientStore
+	s.oauth2ClientsService = oauth2clients.ProvideOauth2ClientsService(
+		s.db,
+		s.authenticator,
+		s.logger,
+		s.oauth2ClientStore,
+		tokenStore,
 	)
 }
 

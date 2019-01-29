@@ -14,6 +14,8 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	gcontext "github.com/gorilla/context"
+	"github.com/opentracing-contrib/go-stdlib/nethttp"
+	"github.com/opentracing/opentracing-go"
 )
 
 func (s *Server) buildRouteCtx(key models.ContextKey, x interface{}) func(next http.Handler) http.Handler {
@@ -29,13 +31,41 @@ func (s *Server) buildRouteCtx(key models.ContextKey, x interface{}) func(next h
 	}
 }
 
+func (s *Server) buildTracingMiddleware() func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return nethttp.Middleware(
+			s.tracer,
+			next,
+			nethttp.MWComponentName("todo-server"),
+			// nethttp.MWSpanFilter(func(r *http.Request) bool {
+			// }),
+			nethttp.MWSpanObserver(func(span opentracing.Span, req *http.Request) {
+				span.SetTag("http.uri", req.URL.EscapedPath())
+				// var parentCtx opentracing.SpanContext
+				// parentSpan := opentracing.SpanFromContext(req.Context())
+				// if parentSpan != nil {
+				// 	parentCtx = parentSpan.Context()
+				// }
+
+				// // span := c.tracer.StartSpan("GetUser", opentracing.ChildOf(parentCtx))
+				// ctx = opentracing.ContextWithSpan(ctx, span)
+			}),
+			nethttp.OperationNameFunc(func(req *http.Request) string {
+				return fmt.Sprintf("%s %s", req.Method, req.URL.Path)
+			}),
+		)
+	}
+}
+
 func (s *Server) setupRoutes() {
 	s.router = chi.NewRouter()
+
 	s.router.Use(
 		gcontext.ClearHandler,
 		middleware.RequestID,
 		middleware.DefaultLogger,
 		middleware.Timeout(maxTimeout),
+		s.buildTracingMiddleware(),
 	)
 
 	if s.DebugMode {

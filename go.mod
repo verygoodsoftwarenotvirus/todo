@@ -2,10 +2,13 @@ module gitlab.com/verygoodsoftwarenotvirus/todo
 
 require (
 	github.com/Masterminds/squirrel v1.1.0
+	github.com/VividCortex/gohistogram v1.0.0 // indirect
 	github.com/boombuler/barcode v1.0.0 // indirect
-	github.com/bxcodec/faker v2.0.0+incompatible
+	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
 	github.com/go-chi/chi v4.0.1+incompatible
+	github.com/go-kit/kit v0.8.0 // indirect
+	github.com/google/wire v0.2.1
 	github.com/gorilla/context v1.1.1
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/websocket v1.4.0
@@ -18,8 +21,8 @@ require (
 	github.com/sirupsen/logrus v1.3.0
 	github.com/stretchr/testify v1.3.0
 	github.com/uber/jaeger-client-go v2.14.0+incompatible
-	github.com/uber/jaeger-lib v1.5.0 // indirect
-	golang.org/x/crypto v0.0.0-20190122013713-64072686203f
+	github.com/uber/jaeger-lib v1.5.0
+	golang.org/x/crypto v0.0.0-20190128193316-c7b33c32a30b
 	golang.org/x/oauth2 v0.0.0-20190115181402-5dab4167f31c
 	gopkg.in/oauth2.v3 v3.9.5
 )

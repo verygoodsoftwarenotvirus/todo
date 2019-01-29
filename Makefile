@@ -13,6 +13,10 @@ clean:
 	rm -f $(COVERAGE_OUT)
 	rm -f example.db
 
+.PHONY: dockercide
+dockercide:
+	docker system prune --force --all --volumes
+
 ## Project prerequisites
 vendor:
 	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` golang:latest /bin/sh -c "go mod vendor"
@@ -57,7 +61,7 @@ test:
 
 .PHONY: integration-tests
 integration-tests:
-	docker-compose --file compose-files/integration-tests.yaml up --build --remove-orphans --abort-on-container-exit --force-recreate
+	docker-compose --file compose-files/integration-tests.yaml up --build --remove-orphans --force-recreate
 
 ## Docker things
 

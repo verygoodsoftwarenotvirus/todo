@@ -19,8 +19,8 @@ type (
 		Validate(req *http.Request) (bool, error)
 	}
 
-	// UsersService handles our users
-	UsersService struct {
+	// Service handles our users
+	Service struct {
 		cookieName      CookieName
 		database        database.Database
 		authenticator   auth.Enticator
@@ -42,11 +42,11 @@ func ProvideUsersService(
 	database database.Database,
 	authenticator auth.Enticator,
 	usernameFetcher UsernameFetcher,
-) *UsersService {
+) *Service {
 	if usernameFetcher == nil {
 		panic("usernameFetcher must be provided")
 	}
-	us := &UsersService{
+	us := &Service{
 		cookieName:      cookieName,
 		database:        database,
 		authenticator:   authenticator,

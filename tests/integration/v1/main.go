@@ -11,7 +11,11 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1"
 
+	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
+	config "github.com/uber/jaeger-client-go/config"
+	jexpvar "github.com/uber/jaeger-lib/metrics/expvar"
 )
 
 const (
@@ -36,6 +40,29 @@ func checkValueAndError(t *testing.T, i interface{}, err error) {
 	require.NotNil(t, i)
 }
 
+// provideJaeger returns an instance of Jaeger Tracer that samples 100% of traces and logs all spans to stdout.
+func provideJaeger() (tracer opentracing.Tracer) {
+	cfg, err := config.FromEnv()
+	if err != nil {
+		log.Fatal("cannot parse Jaeger env vars", err)
+	}
+	cfg.ServiceName = "integration-tests-client"
+	cfg.Sampler.Type = "const"
+	cfg.Sampler.Param = 1
+
+	// TODO(ys) a quick hack to ensure random generators get different seeds, which are based on current time.
+	metricsFactory := jexpvar.NewFactory(10).Namespace(cfg.ServiceName, nil)
+	if tracer, _, err = cfg.NewTracer(
+		// config.Logger(jaegerLogger),
+		config.Metrics(metricsFactory),
+		// config.Observer(rpcmetrics.NewObserver(metricsFactory, rpcmetrics.DefaultNameNormalizer)),
+	); err != nil {
+		log.Fatalf("ERROR: cannot init Jaeger: %v\n", err)
+	}
+
+	return tracer
+}
+
 func initializeClient() {
 	httpc := &http.Client{
 		Transport: http.DefaultTransport,
@@ -49,8 +76,9 @@ func initializeClient() {
 		urlToUse,
 		defaultTestInstanceClientID,
 		defaultTestInstanceClientSecret,
-		nil,
+		logrus.New(),
 		httpc,
+		provideJaeger(),
 		true,
 	)
 	if err != nil {

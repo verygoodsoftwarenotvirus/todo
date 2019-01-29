@@ -10,18 +10,14 @@ import (
 	oauth2store "gopkg.in/oauth2.v3/store"
 )
 
-const MiddlewareCtxKey models.ContextKey = "oauth2_client"
+const (
+	// MiddlewareCtxKey is a string alias for referring to OAuth2 clients in contexts
+	MiddlewareCtxKey models.ContextKey = "oauth2_client"
+)
 
 type (
-	Oauth2ClientsServiceConfig struct {
-		Logger        *logrus.Logger
-		Database      database.Database
-		Authenticator auth.Enticator
-		ClientStore   *oauth2store.ClientStore
-		TokenStore    oauth2.TokenStore
-	}
-
-	Oauth2ClientsService struct {
+	// Service manages our OAuth2 clients via HTTP
+	Service struct {
 		database      database.Database
 		authenticator auth.Enticator
 		logger        *logrus.Logger
@@ -30,13 +26,20 @@ type (
 	}
 )
 
-func NewOauth2ClientsService(cfg Oauth2ClientsServiceConfig) *Oauth2ClientsService {
-	us := &Oauth2ClientsService{
-		database:      cfg.Database,
-		authenticator: cfg.Authenticator,
-		logger:        cfg.Logger,
-		clientStore:   cfg.ClientStore,
-		tokenStore:    cfg.TokenStore,
+// ProvideOauth2ClientsService builds a new Oauth2ClientsService
+func ProvideOauth2ClientsService(
+	database database.Database,
+	authenticator auth.Enticator,
+	logger *logrus.Logger,
+	clientStore *oauth2store.ClientStore,
+	tokenStore oauth2.TokenStore,
+) *Service {
+	us := &Service{
+		database:      database,
+		authenticator: authenticator,
+		logger:        logger,
+		clientStore:   clientStore,
+		tokenStore:    tokenStore,
 	}
 	return us
 }

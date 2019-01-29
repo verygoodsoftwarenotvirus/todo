@@ -1,5 +1,6 @@
 package models
 
+// UserHandler describes a structure which can manage users in permanent storage
 type UserHandler interface {
 	GetUser(username string) (*User, error)
 	GetUserCount(filter *QueryFilter) (uint64, error)
@@ -10,7 +11,9 @@ type UserHandler interface {
 }
 
 const (
-	UserKey   ContextKey = "user"
+	// UserKey is the non-string type we use for referencing a user in a context
+	UserKey ContextKey = "user"
+	// UserIDKey is the non-string type we use for referencing a user ID in a context
 	UserIDKey ContextKey = "user_id"
 )
 
@@ -28,6 +31,7 @@ type UserInput struct {
 	IsAdmin  bool   `json:"is_admin"`
 }
 
+// UserCreationResponse is a response structure for Users that doesn't contain password fields
 type UserCreationResponse struct {
 	ID                    uint64  `json:"id"`
 	Username              string  `json:"username"`
@@ -52,6 +56,7 @@ type User struct {
 	ArchivedOn            *uint64 `json:"archived_on"`
 }
 
+// Update accepts a User as input and merges those values if they're set
 func (u *User) Update(input User) {
 	if input.Username != "" && input.Username != u.Username {
 		u.Username = input.Username
@@ -66,16 +71,19 @@ func (u *User) Update(input User) {
 	}
 }
 
+// UserList represents a list of users
 type UserList struct {
 	Pagination
 	Users []User `json:"users"`
 }
 
+// PasswordUpdateInput represents input a user would provide when updating their password
 type PasswordUpdateInput struct {
 	NewPassword string `json:"new_password"`
 	TOTPSecretRefreshInput
 }
 
+// TOTPSecretRefreshInput represents input a user would provide when updating their 2FA secret
 type TOTPSecretRefreshInput struct {
 	CurrentPassword string `json:"current_password"`
 	TOTPToken       string `json:"totp_token"`

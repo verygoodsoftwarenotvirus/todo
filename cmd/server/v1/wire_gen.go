@@ -25,11 +25,16 @@ func BuildServer(connectionDetails database.ConnectionDetails, SchemaDirectory d
 	}
 	enticator := auth.NewBcrypt(logger)
 	tracer := provideJaeger()
+	tokenStore, err := server.ProvideTokenStore()
+	if err != nil {
+		return nil, err
+	}
+	clientStore := server.ProvideClientStore()
 	usernameFetcher := server.ProvideUsernameFetcher()
-	usersService := users.ProvideUsersService(CookieName, logger, databaseDatabase, enticator, usernameFetcher)
+	service := users.ProvideUsersService(CookieName, logger, databaseDatabase, enticator, usernameFetcher)
 	userIDFetcher := server.ProvideUserIDFetcher()
 	itemsService := items.ProvideItemsService(logger, databaseDatabase, userIDFetcher)
-	serverServer, err := server.ProvideServer(databaseDatabase, logger, enticator, SchemaDirectory, CertPair, CookieSecret, tracer, Debug, usersService, itemsService)
+	serverServer, err := server.ProvideServer(databaseDatabase, logger, enticator, SchemaDirectory, CertPair, CookieSecret, tracer, Debug, tokenStore, clientStore, service, itemsService)
 	if err != nil {
 		return nil, err
 	}

@@ -27,6 +27,8 @@ func BuildServer(
 	wire.Build(
 		server.ProvideUserIDFetcher,
 		server.ProvideUsernameFetcher,
+		server.ProvideTokenStore,
+		server.ProvideClientStore,
 		auth.NewBcrypt,
 		logrus.New,
 		provideJaeger,

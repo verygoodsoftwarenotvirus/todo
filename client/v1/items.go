@@ -1,42 +1,78 @@
 package client
 
 import (
+	"context"
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"github.com/opentracing/opentracing-go"
 )
 
 const itemsBasePath = "items"
 
 // GetItem gets an item
-func (c *V1Client) GetItem(id uint64) (item *models.Item, err error) {
-	return item, c.get(c.BuildURL(nil, itemsBasePath, strconv.FormatUint(id, 10)), &item)
+func (c *V1Client) GetItem(ctx context.Context, id uint64) (item *models.Item, err error) {
+	span := c.tracer.StartSpan("GetItem")
+	span.SetTag("itemID", id)
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
+	uri := c.BuildURL(nil, itemsBasePath, strconv.FormatUint(id, 10))
+	return item, c.get(ctx, uri, &item)
 }
 
 // GetItemCount an item
-func (c *V1Client) GetItemCount(filter *models.QueryFilter) (uint64, error) {
+func (c *V1Client) GetItemCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
+	span := c.tracer.StartSpan("GetItemCount")
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
 	x := models.CountResponse{}
-	return x.Count, c.get(c.BuildURL(filter.ToValues(), itemsBasePath, "count"), &x)
+	uri := c.BuildURL(filter.ToValues(), itemsBasePath, "count")
+	return x.Count, c.get(ctx, uri, &x)
 }
 
 // GetItems gets a list of items
-func (c *V1Client) GetItems(filter *models.QueryFilter) (items *models.ItemList, err error) {
-	return items, c.get(c.BuildURL(filter.ToValues(), itemsBasePath), &items)
+func (c *V1Client) GetItems(ctx context.Context, filter *models.QueryFilter) (items *models.ItemList, err error) {
+	span := c.tracer.StartSpan("GetItems")
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
+	uri := c.BuildURL(filter.ToValues(), itemsBasePath)
+	return items, c.get(ctx, uri, &items)
 }
 
 // CreateItem creates an item
-func (c *V1Client) CreateItem(input *models.ItemInput) (item *models.Item, err error) {
-	return item, c.post(c.BuildURL(nil, itemsBasePath), input, &item)
+func (c *V1Client) CreateItem(ctx context.Context, input *models.ItemInput) (item *models.Item, err error) {
+	span := c.tracer.StartSpan("CreateItem")
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
+	uri := c.BuildURL(nil, itemsBasePath)
+	return item, c.post(ctx, uri, input, &item)
 }
 
 // UpdateItem updates an item
-func (c *V1Client) UpdateItem(updated *models.Item) (err error) {
-	return c.put(c.BuildURL(nil, itemsBasePath, strconv.FormatUint(updated.ID, 10)), updated, &updated)
+func (c *V1Client) UpdateItem(ctx context.Context, updated *models.Item) (err error) {
+	span := c.tracer.StartSpan("UpdateItem")
+	span.SetTag("itemID", updated.ID)
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
+	uri := c.BuildURL(nil, itemsBasePath, strconv.FormatUint(updated.ID, 10))
+	return c.put(ctx, uri, updated, &updated)
 }
 
 // DeleteItem deletes an item
-func (c *V1Client) DeleteItem(id uint64) error {
-	return c.delete(c.BuildURL(nil, itemsBasePath, strconv.FormatUint(id, 10)))
+func (c *V1Client) DeleteItem(ctx context.Context, id uint64) error {
+	span := c.tracer.StartSpan("DeleteItem")
+	span.SetTag("itemID", id)
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
+	uri := c.BuildURL(nil, itemsBasePath, strconv.FormatUint(id, 10))
+	return c.delete(ctx, uri)
 }
 
 // func (c *V1Client) buildItemsFeed(conn *websocket.Conn, itemChan chan models.Item) {

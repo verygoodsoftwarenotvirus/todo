@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -29,7 +30,7 @@ func buildDummyItem(t *testing.T) *models.Item {
 		Name:    n.(string),
 		Details: d.(string),
 	}
-	y, err := todoClient.CreateItem(x)
+	y, err := todoClient.CreateItem(context.Background(), x)
 	require.NoError(t, err)
 	return y
 }
@@ -39,21 +40,26 @@ func TestItems(test *testing.T) {
 
 	test.Run("Creating", func(T *testing.T) {
 		T.Run("should be createable", func(t *testing.T) {
+			tctx := context.Background()
+
 			// Create item
 			expected := &models.Item{Name: "name", Details: "details"}
-			premade, err := todoClient.CreateItem(&models.ItemInput{
-				Name: expected.Name, Details: expected.Details,
-			})
+			premade, err := todoClient.CreateItem(
+				tctx,
+				&models.ItemInput{
+					Name:    expected.Name,
+					Details: expected.Details,
+				})
 			checkValueAndError(t, premade, err)
 
 			// Assert item equality
 			checkItemEquality(t, expected, premade)
 
 			// Clean up
-			err = todoClient.DeleteItem(premade.ID)
+			err = todoClient.DeleteItem(tctx, premade.ID)
 			assert.NoError(t, err)
 
-			actual, err := todoClient.GetItem(premade.ID)
+			actual, err := todoClient.GetItem(tctx, premade.ID)
 			checkValueAndError(t, actual, err)
 			checkItemEquality(t, expected, actual)
 			assert.NotZero(t, actual.CompletedOn)
@@ -62,6 +68,8 @@ func TestItems(test *testing.T) {
 
 	test.Run("Counting", func(T *testing.T) {
 		T.Run("it should be able to be counted", func(t *testing.T) {
+			tctx := context.Background()
+
 			premade := []*models.Item{}
 			for i := 0; i < 5; i++ {
 				x := buildDummyItem(t)
@@ -69,18 +77,20 @@ func TestItems(test *testing.T) {
 				premade = append(premade, x)
 			}
 
-			count, err := todoClient.GetItemCount(nil)
+			count, err := todoClient.GetItemCount(tctx, nil)
 			assert.NoError(t, err)
 			assert.NotZero(t, count)
 
 			for _, x := range premade {
-				assert.NoError(t, todoClient.DeleteItem(x.ID))
+				assert.NoError(t, todoClient.DeleteItem(tctx, x.ID))
 			}
 		})
 	})
 
 	test.Run("Listing", func(T *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
+			tctx := context.Background()
+
 			// Create items
 			expected := []*models.Item{}
 			for i := 0; i < 5; i++ {
@@ -88,13 +98,13 @@ func TestItems(test *testing.T) {
 			}
 
 			// Assert item list equality
-			actual, err := todoClient.GetItems(nil)
+			actual, err := todoClient.GetItems(tctx, nil)
 			checkValueAndError(t, actual, err)
 			assert.True(t, len(expected) <= len(actual.Items))
 
 			// Clean up
 			for _, item := range actual.Items {
-				err := todoClient.DeleteItem(item.ID)
+				err := todoClient.DeleteItem(tctx, item.ID)
 				assert.NoError(t, err)
 			}
 		})
@@ -102,43 +112,52 @@ func TestItems(test *testing.T) {
 
 	test.Run("Reading", func(T *testing.T) {
 		T.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
+			tctx := context.Background()
+
 			// Fetch item
-			_, err := todoClient.GetItem(nonexistentID)
+			_, err := todoClient.GetItem(tctx, nonexistentID)
 			assert.Error(t, err)
 		})
 
 		T.Run("it should be readable", func(t *testing.T) {
+			tctx := context.Background()
+
 			// Create item
 			expected := &models.Item{Name: "name", Details: "details"}
-			premade, err := todoClient.CreateItem(&models.ItemInput{
+			premade, err := todoClient.CreateItem(tctx, &models.ItemInput{
 				Name: expected.Name, Details: expected.Details,
 			})
 			checkValueAndError(t, premade, err)
 
 			// Fetch item
-			actual, err := todoClient.GetItem(premade.ID)
+			actual, err := todoClient.GetItem(tctx, premade.ID)
 			checkValueAndError(t, actual, err)
 
 			// Assert item equality
 			checkItemEquality(t, expected, actual)
 
 			// Clean up
-			err = todoClient.DeleteItem(actual.ID)
+			err = todoClient.DeleteItem(tctx, actual.ID)
 			assert.NoError(t, err)
 		})
 	})
 
 	test.Run("Updating", func(T *testing.T) {
 		T.Run("it should return an error when trying to update something that doesn't exist", func(t *testing.T) {
-			err := todoClient.UpdateItem(&models.Item{ID: nonexistentID})
+			tctx := context.Background()
+
+			err := todoClient.UpdateItem(tctx, &models.Item{ID: nonexistentID})
 			assert.Error(t, err)
 
 		})
 
 		T.Run("it should be updatable", func(t *testing.T) {
+			tctx := context.Background()
+
 			// Create item
 			expected := &models.Item{Name: "new name", Details: "new details"}
 			premade, err := todoClient.CreateItem(
+				tctx,
 				&models.ItemInput{
 					Name:    "old name",
 					Details: "old details",
@@ -148,11 +167,11 @@ func TestItems(test *testing.T) {
 
 			// Change item
 			premade.Name, premade.Details = expected.Name, expected.Details
-			err = todoClient.UpdateItem(premade)
+			err = todoClient.UpdateItem(tctx, premade)
 			assert.NoError(t, err)
 
 			// Fetch item
-			actual, err := todoClient.GetItem(premade.ID)
+			actual, err := todoClient.GetItem(tctx, premade.ID)
 			assert.NoError(t, err)
 
 			// Assert item equality
@@ -160,22 +179,24 @@ func TestItems(test *testing.T) {
 			assert.NotNil(t, actual.UpdatedOn)
 
 			// Clean up
-			err = todoClient.DeleteItem(actual.ID)
+			err = todoClient.DeleteItem(tctx, actual.ID)
 			assert.NoError(t, err)
 		})
 	})
 
 	test.Run("Deleting", func(T *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
+			tctx := context.Background()
+
 			// Create item
 			expected := &models.Item{Name: "name", Details: "details"}
-			premade, err := todoClient.CreateItem(&models.ItemInput{
+			premade, err := todoClient.CreateItem(tctx, &models.ItemInput{
 				Name: expected.Name, Details: expected.Details,
 			})
 			checkValueAndError(t, premade, err)
 
 			// Clean up
-			err = todoClient.DeleteItem(premade.ID)
+			err = todoClient.DeleteItem(tctx, premade.ID)
 			assert.NoError(t, err)
 		})
 	})

@@ -1,39 +1,51 @@
 package models_test
 
-import (
-	"strconv"
-	"testing"
+// import (
+// 	"strconv"
+// 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+// 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/stretchr/testify/assert"
-)
+// 	"github.com/stretchr/testify/assert"
+// )
 
-func TestQueryFilter_ToMap(T *testing.T) {
-	T.Parallel()
+// // ToMap returns a
+// func (qf *QueryFilter) ToMap() map[string]string {
+// 	if qf == nil {
+// 		return DefaultQueryFilter.ToMap()
+// 	}
 
-	T.Run("normal operation", func(t *testing.T) {
-		t.Parallel()
+// 	return map[string]string{
+// 		"page":  strconv.Itoa(int(qf.Page)),
+// 		"limit": strconv.Itoa(int(qf.Limit)),
+// 	}
+// }
 
-		example := &models.QueryFilter{
-			Page: 123, Limit: 321,
-		}
+// func TestQueryFilter_ToMap(T *testing.T) {
+// 	T.Parallel()
 
-		expected := map[string]string{
-			"page":  strconv.Itoa(int(example.Page)),
-			"limit": strconv.Itoa(int(example.Limit)),
-		}
-		actual := example.ToMap()
+// 	T.Run("normal operation", func(t *testing.T) {
+// 		t.Parallel()
 
-		assert.Equal(t, expected, actual)
-	})
+// 		example := &models.QueryFilter{
+// 			Page: 123, Limit: 321,
+// 		}
 
-	T.Run("with nil", func(t *testing.T) {
-		t.Parallel()
+// 		expected := map[string]string{
+// 			"page":  strconv.Itoa(int(example.Page)),
+// 			"limit": strconv.Itoa(int(example.Limit)),
+// 		}
+// 		actual := example.ToMap()
 
-		example := (*models.QueryFilter)(nil)
-		actual := example.ToMap()
+// 		assert.Equal(t, expected, actual)
+// 	})
 
-		assert.Equal(t, models.DefaultQueryFilter.ToMap(), actual)
-	})
-}
+// 	T.Run("with nil", func(t *testing.T) {
+// 		t.Parallel()
+
+// 		example := (*models.QueryFilter)(nil)
+// 		actual := example.ToMap()
+
+// 		assert.Equal(t, models.DefaultQueryFilter.ToMap(), actual)
+// 	})
+// }

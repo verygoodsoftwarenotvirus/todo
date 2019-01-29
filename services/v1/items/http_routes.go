@@ -10,10 +10,12 @@ import (
 )
 
 const (
+	// URIParamKey is a standard string that we'll use to refer to item IDs with
 	URIParamKey = "itemID"
 )
 
-func (s *ItemsService) ItemInputMiddleware(next http.Handler) http.Handler {
+// ItemInputMiddleware is a middleware for fetching, parsing, and attaching a parsed ItemInput struct from a request
+func (s *Service) ItemInputMiddleware(next http.Handler) http.Handler {
 	s.logger.Debugln("ItemInputMiddleware called")
 	x := new(models.ItemInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -27,7 +29,8 @@ func (s *ItemsService) ItemInputMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *ItemsService) BuildReadHandler(itemIDFetcher func(*http.Request) uint64) http.HandlerFunc {
+// BuildReadHandler returns a GET handler that returns an item
+func (s *Service) BuildReadHandler(itemIDFetcher func(*http.Request) uint64) http.HandlerFunc {
 	if itemIDFetcher == nil {
 		panic("itemIDFetcher provided to BuildRead cannot be nil")
 	}
@@ -51,9 +54,10 @@ func (s *ItemsService) BuildReadHandler(itemIDFetcher func(*http.Request) uint64
 	}
 }
 
-func (s *ItemsService) Count(res http.ResponseWriter, req *http.Request) {
+// Count is our count route
+func (s *Service) Count(res http.ResponseWriter, req *http.Request) {
 	s.logger.Debugln("ItemsService.Count called")
-	qf := models.ParseQueryFilter(req)
+	qf := models.ExtractQueryFilter(req)
 	itemCount, err := s.db.GetItemCount(qf)
 	if err != nil {
 		s.logger.Errorf("error fetching item count from database: %v", err)
@@ -64,8 +68,9 @@ func (s *ItemsService) Count(res http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(res).Encode(&models.CountResponse{Count: itemCount})
 }
 
-func (s *ItemsService) List(res http.ResponseWriter, req *http.Request) {
-	qf := models.ParseQueryFilter(req)
+// List is our list route
+func (s *Service) List(res http.ResponseWriter, req *http.Request) {
+	qf := models.ExtractQueryFilter(req)
 	items, err := s.db.GetItems(qf)
 	if err != nil {
 		s.logger.Errorln("error encountered fetching items: ", err)
@@ -77,7 +82,8 @@ func (s *ItemsService) List(res http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(res).Encode(items)
 }
 
-func (s *ItemsService) BuildDeleteHandler(itemIDFetcher func(*http.Request) uint64) http.HandlerFunc {
+// BuildDeleteHandler returns a handler that deletes an item
+func (s *Service) BuildDeleteHandler(itemIDFetcher func(*http.Request) uint64) http.HandlerFunc {
 	if itemIDFetcher == nil {
 		panic("itemIDFetcher provided to BuildRead cannot be nil")
 	}
@@ -99,7 +105,8 @@ func (s *ItemsService) BuildDeleteHandler(itemIDFetcher func(*http.Request) uint
 	}
 }
 
-func (s *ItemsService) BuildUpdateHandler(itemIDFetcher func(*http.Request) uint64) http.HandlerFunc {
+// BuildUpdateHandler returns a handler that updates an item
+func (s *Service) BuildUpdateHandler(itemIDFetcher func(*http.Request) uint64) http.HandlerFunc {
 	if itemIDFetcher == nil {
 		panic("itemIDFetcher provided to BuildRead cannot be nil")
 	}
@@ -137,8 +144,7 @@ func (s *ItemsService) BuildUpdateHandler(itemIDFetcher func(*http.Request) uint
 }
 
 // Create is our item creation route
-// note that Create is meant to happen after ItemContextMiddleware
-func (s *ItemsService) Create(res http.ResponseWriter, req *http.Request) {
+func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	s.logger.Debugln("ItemsService.Create called")
 	rctx := req.Context()
 	input, ok := rctx.Value(MiddlewareCtxKey).(*models.ItemInput)
@@ -149,9 +155,9 @@ func (s *ItemsService) Create(res http.ResponseWriter, req *http.Request) {
 	}
 
 	s.logger.WithFields(map[string]interface{}{
-		"input == nil": input == nil,
+		"input == nil":           input == nil,
 		"s.userIDFetcher == nil": s.userIDFetcher == nil,
-		"req == nil": req == nil,
+		"req == nil":             req == nil,
 	}).Debugln("ItemsService.Create called")
 
 	input.BelongsTo = s.userIDFetcher(req)

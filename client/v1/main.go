@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"net/http/httptrace"
 	"net/http/httputil"
 	"net/url"
 	"strings"
@@ -14,14 +15,19 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/moul/http2curl"
+	"github.com/opentracing-contrib/go-stdlib/nethttp"
+	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )
 
+type contextKey int
+
 const (
-	defaultTimeout = 5 * time.Second
+	keyTracer      contextKey = iota
+	defaultTimeout            = 5 * time.Second
 )
 
 var (
@@ -34,6 +40,7 @@ type V1Client struct {
 	plainClient  *http.Client
 	authedClient *http.Client
 	logger       *logrus.Logger
+	tracer       opentracing.Tracer
 	Debug        bool
 	URL          *url.URL
 
@@ -59,7 +66,7 @@ func (c *V1Client) PlainClient() *http.Client {
 	return c.plainClient
 }
 
-func endpoint(baseURL *url.URL) oauth2.Endpoint {
+func tokenEndpoint(baseURL *url.URL) oauth2.Endpoint {
 	tu, au := *baseURL, *baseURL
 	tu.Path, au.Path = "oauth2/token", "oauth2/authorize"
 
@@ -69,9 +76,7 @@ func endpoint(baseURL *url.URL) oauth2.Endpoint {
 	}
 }
 
-func (c *V1Client) enableOauth(clientID, clientSecret string) error {
-	c.logger.Debugln("enabling OAuth")
-
+func buildOAuthClient(ctx context.Context, uri *url.URL, clientID, clientSecret string) *http.Client {
 	conf := clientcredentials.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
@@ -80,53 +85,92 @@ func (c *V1Client) enableOauth(clientID, clientSecret string) error {
 			"client_id":     []string{clientID},
 			"client_secret": []string{clientSecret},
 		},
-		TokenURL: endpoint(c.URL).TokenURL,
+		TokenURL: tokenEndpoint(uri).TokenURL,
 	}
-	c.authedClient = conf.Client(context.TODO())
 
-	return nil
+	return &http.Client{
+		Transport: &oauth2.Transport{
+			Base:   &nethttp.Transport{},
+			Source: oauth2.ReuseTokenSource(nil, conf.TokenSource(ctx)),
+		},
+	}
 }
 
 // NewClient builds a new API client for us
-func NewClient(address, clientID, clientSecret string, logger *logrus.Logger, client *http.Client, debug bool) (*V1Client, error) {
-	c := &V1Client{Debug: debug}
-
+func NewClient(
+	address,
+	clientID,
+	clientSecret string,
+	logger *logrus.Logger,
+	hclient *http.Client,
+	tracer opentracing.Tracer,
+	debug bool,
+) (*V1Client, error) {
 	if clientID == "" || clientSecret == "" {
 		return nil, errors.New("Client ID and Client Secret required")
+	}
+
+	var client *http.Client = hclient
+	if client == nil {
+		client = &http.Client{
+			Timeout: 5 * time.Second,
+		}
 	}
 
 	u, err := url.Parse(address)
 	if err != nil {
 		return nil, errors.Wrap(err, "parsing URL")
 	}
-	c.URL = u
 
-	if client != nil {
-		c.plainClient = client
-	} else {
-		c.plainClient = &http.Client{Timeout: 5 * time.Second}
+	c := &V1Client{
+		URL:         u,
+		plainClient: client,
+		logger:      logger,
+		tracer:      tracer,
+		Debug:       debug,
 	}
 
-	if logger != nil {
-		c.logger = logger
-	} else {
-		c.logger = logrus.New()
-		if debug {
-			c.logger.SetLevel(logrus.DebugLevel)
-		}
+	if debug {
+		c.logger.SetLevel(logrus.DebugLevel)
 	}
-	if err := c.enableOauth(clientID, clientSecret); err != nil {
-		return nil, err
-	}
+
+	c.authedClient = buildOAuthClient(context.TODO(), c.URL, clientID, clientSecret)
+	c.authedClient.Timeout = 5 * time.Second
 
 	return c, nil
 }
 
-func (c *V1Client) executeRequest(req *http.Request) (*http.Response, error) {
+func (c *V1Client) executeRequest(ctx context.Context, req *http.Request) (*http.Response, error) {
+	var parentCtx opentracing.SpanContext
+	parentSpan := opentracing.SpanFromContext(ctx)
+	if parentSpan != nil {
+		parentCtx = parentSpan.Context()
+	}
+
+	span := c.tracer.StartSpan("executeRequest", opentracing.ChildOf(parentCtx))
+	span.SetTag("url", req.URL.String())
+	defer span.Finish()
+
+	// make the Span current in the context
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	command, err := http2curl.GetCurlCommand(req)
 	if err == nil {
 		c.logger.Debugln(command)
 	}
+
+	// attach ClientTrace to the Context, and Context to request
+	trace := NewClientTrace(span)
+	ctx = httptrace.WithClientTrace(ctx, trace)
+	req = req.WithContext(ctx)
+
+	// wrap the request in nethttp.TraceRequest
+	req, _ = nethttp.TraceRequest(
+		c.tracer,
+		req,
+		// nethttp.OperationName(operationName string),
+		// nethttp.ComponentName(componentName string),
+		nethttp.ClientTrace(true),
+	)
 
 	res, err := c.authedClient.Do(req)
 	if err != nil {
@@ -150,7 +194,7 @@ func (c *V1Client) Do(req *http.Request) (*http.Response, error) {
 	if c.URL.Hostname() != req.URL.Hostname() {
 		return nil, errors.New("request is destined for unknown server")
 	}
-	return c.executeRequest(req)
+	return c.executeRequest(context.Background(), req)
 }
 
 // BuildURL builds URLs
@@ -215,17 +259,13 @@ func (c *V1Client) makeDataRequest(method string, uri string, in interface{}, ou
 		}
 	}
 
-	var (
-		req *http.Request
-		res *http.Response
-		err error
-	)
-
-	if req, err = c.buildDataRequest(method, uri, in); err != nil {
+	req, err := c.buildDataRequest(method, uri, in)
+	if err != nil {
 		return errors.Wrap(err, "encountered error building request")
 	}
 
-	if res, err = c.executeRequest(req); err != nil {
+	res, err := c.executeRequest(context.Background(), req)
+	if err != nil {
 		return errors.Wrap(err, "encountered error executing request")
 	}
 
@@ -244,9 +284,9 @@ func (c *V1Client) makeDataRequest(method string, uri string, in interface{}, ou
 	return nil
 }
 
-func (c *V1Client) exists(uri string) (bool, error) {
+func (c *V1Client) exists(ctx context.Context, uri string) (bool, error) {
 	req, _ := http.NewRequest(http.MethodHead, uri, nil)
-	res, err := c.executeRequest(req)
+	res, err := c.executeRequest(context.Background(), req)
 	if err != nil {
 		return false, errors.Wrap(err, "encountered error executing request")
 	}
@@ -254,7 +294,7 @@ func (c *V1Client) exists(uri string) (bool, error) {
 	return res.StatusCode == http.StatusOK, nil
 }
 
-func (c *V1Client) get(uri string, obj interface{}) error {
+func (c *V1Client) get(ctx context.Context, uri string, obj interface{}) error {
 	ce := &Error{}
 
 	if err := argIsNotPointerOrNil(obj); err != nil {
@@ -263,7 +303,7 @@ func (c *V1Client) get(uri string, obj interface{}) error {
 	}
 
 	req, _ := http.NewRequest(http.MethodGet, uri, nil)
-	res, err := c.executeRequest(req)
+	res, err := c.executeRequest(context.Background(), req)
 	if err != nil {
 		ce.Err = errors.Wrap(err, "encountered error executing request")
 		return ce
@@ -277,9 +317,9 @@ func (c *V1Client) get(uri string, obj interface{}) error {
 	return unmarshalBody(res, &obj)
 }
 
-func (c *V1Client) delete(uri string) error {
+func (c *V1Client) delete(ctx context.Context, uri string) error {
 	req, _ := http.NewRequest(http.MethodDelete, uri, nil)
-	res, err := c.executeRequest(req)
+	res, err := c.executeRequest(context.Background(), req)
 	if err != nil {
 		return &Error{Err: err}
 	} else if res.StatusCode != http.StatusOK {
@@ -289,11 +329,11 @@ func (c *V1Client) delete(uri string) error {
 	return nil
 }
 
-func (c *V1Client) post(uri string, in interface{}, out interface{}) error {
+func (c *V1Client) post(ctx context.Context, uri string, in interface{}, out interface{}) error {
 	return c.makeDataRequest(http.MethodPost, uri, in, out)
 }
 
-func (c *V1Client) put(uri string, in interface{}, out interface{}) error {
+func (c *V1Client) put(ctx context.Context, uri string, in interface{}, out interface{}) error {
 	return c.makeDataRequest(http.MethodPut, uri, in, out)
 }
 

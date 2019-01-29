@@ -10,10 +10,12 @@ import (
 )
 
 const (
+	// URIParamKey is used for referring to OAuth2 client IDs in router params
 	URIParamKey = "oauth2ClientID"
 )
 
-func (s *Oauth2ClientsService) Oauth2ClientCreationInputContextMiddleware(next http.Handler) http.Handler {
+// Oauth2ClientCreationInputContextMiddleware is a middleware for attaching OAuth2 client info to a request
+func (s *Service) Oauth2ClientCreationInputContextMiddleware(next http.Handler) http.Handler {
 	x := new(models.Oauth2ClientCreationInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
@@ -26,7 +28,8 @@ func (s *Oauth2ClientsService) Oauth2ClientCreationInputContextMiddleware(next h
 	})
 }
 
-func (s *Oauth2ClientsService) Create(res http.ResponseWriter, req *http.Request) {
+// Create is our OAuth2 client creation route
+func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	s.logger.Debugln("oauth2Client creation route called")
 	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.Oauth2ClientCreationInput)
 	if !ok {
@@ -75,7 +78,8 @@ func (s *Oauth2ClientsService) Create(res http.ResponseWriter, req *http.Request
 	json.NewEncoder(res).Encode(x)
 }
 
-func (s *Oauth2ClientsService) BuildReadHandler(oauth2ClientIDFetcher func(req *http.Request) string) http.HandlerFunc {
+// BuildReadHandler returns a handler for retrieving an OAuth2 client
+func (s *Service) BuildReadHandler(oauth2ClientIDFetcher func(req *http.Request) string) http.HandlerFunc {
 	if oauth2ClientIDFetcher == nil {
 		panic("oauth2ClientIDFetcher may not be nil")
 	}
@@ -98,9 +102,10 @@ func (s *Oauth2ClientsService) BuildReadHandler(oauth2ClientIDFetcher func(req *
 	}
 }
 
-func (s *Oauth2ClientsService) List(res http.ResponseWriter, req *http.Request) {
+// List is a handler that returns a list of OAuth2 clients
+func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 	s.logger.Debugln("oauth2Client list route called")
-	qf := models.ParseQueryFilter(req)
+	qf := models.ExtractQueryFilter(req)
 	oauth2Clients, err := s.database.GetOAuth2Clients(qf)
 	if err != nil {
 		s.logger.Errorln("encountered error getting list of oauth2 clients: ", err)
@@ -112,13 +117,14 @@ func (s *Oauth2ClientsService) List(res http.ResponseWriter, req *http.Request) 
 	json.NewEncoder(res).Encode(oauth2Clients)
 }
 
-func (s *Oauth2ClientsService) BuildDeleteHandler(oauth2ClientIDFetcher func(req *http.Request) string) http.HandlerFunc {
-	if oauth2ClientIDFetcher == nil {
+// BuildDeleteHandler returns a Handler for deleting an OAuth2 client
+func (s *Service) BuildDeleteHandler(clientIDFetcher func(req *http.Request) string) http.HandlerFunc {
+	if clientIDFetcher == nil {
 		panic("oauth2ClientIDFetcher may not be nil")
 	}
 	return func(res http.ResponseWriter, req *http.Request) {
 		s.logger.Debugln("oauth2Client deletion route called")
-		oauth2ClientID := oauth2ClientIDFetcher(req)
+		oauth2ClientID := clientIDFetcher(req)
 
 		if err := s.database.DeleteOAuth2Client(oauth2ClientID); err != nil {
 			s.logger.Errorln("encountered error deleting oauth2 client: ", err)
@@ -128,8 +134,9 @@ func (s *Oauth2ClientsService) BuildDeleteHandler(oauth2ClientIDFetcher func(req
 	}
 }
 
-func (s *Oauth2ClientsService) BuildUpdateHandler(oauth2ClientIDFetcher func(req *http.Request) string) http.HandlerFunc {
-	if oauth2ClientIDFetcher == nil {
+// BuildUpdateHandler returns a handler for updating OAuth2 clients
+func (s *Service) BuildUpdateHandler(clientIDFetcher func(req *http.Request) string) http.HandlerFunc {
+	if clientIDFetcher == nil {
 		panic("oauth2ClientIDFetcher may not be nil")
 	}
 	return func(res http.ResponseWriter, req *http.Request) {
@@ -140,7 +147,7 @@ func (s *Oauth2ClientsService) BuildUpdateHandler(oauth2ClientIDFetcher func(req
 		// 	return
 		// }
 
-		oauth2ClientID := oauth2ClientIDFetcher(req)
+		oauth2ClientID := clientIDFetcher(req)
 		x, err := s.database.GetOAuth2Client(oauth2ClientID)
 		if err != nil {
 			res.WriteHeader(http.StatusInternalServerError)

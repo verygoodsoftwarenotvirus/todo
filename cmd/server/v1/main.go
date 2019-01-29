@@ -11,8 +11,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
 	opentracing "github.com/opentracing/opentracing-go"
-	jaeger "github.com/uber/jaeger-client-go"
 	config "github.com/uber/jaeger-client-go/config"
+	jexpvar "github.com/uber/jaeger-lib/metrics/expvar"
 )
 
 const (
@@ -45,20 +45,28 @@ func init() {
 }
 
 // provideJaeger returns an instance of Jaeger Tracer that samples 100% of traces and logs all spans to stdout.
-func provideJaeger() opentracing.Tracer {
-	cfg := &config.Configuration{
-		Sampler: &config.SamplerConfig{Type: "const", Param: 1},
-		Reporter: &config.ReporterConfig{
-			LogSpans: true,
-		},
-	}
-	tracer, _, err := cfg.New("todo-server", config.Logger(jaeger.StdLogger))
+func provideJaeger() (tracer opentracing.Tracer) {
+	cfg, err := config.FromEnv()
 	if err != nil {
+		log.Fatal("cannot parse Jaeger env vars", err)
+	}
+	cfg.ServiceName = "todo-server"
+	cfg.Sampler.Type = "const"
+	cfg.Sampler.Param = 1
+
+	// TODO(ys) a quick hack to ensure random generators get different seeds, which are based on current time.
+	metricsFactory := jexpvar.NewFactory(10).Namespace(cfg.ServiceName, nil)
+	if tracer, _, err = cfg.NewTracer(
+		// config.Logger(jaegerLogger),
+		config.Metrics(metricsFactory),
+		// config.Observer(rpcmetrics.NewObserver(metricsFactory, rpcmetrics.DefaultNameNormalizer)),
+	); err != nil {
 		panic(fmt.Sprintf("ERROR: cannot init Jaeger: %v\n", err))
 	}
 
 	return tracer
 }
+
 func main() {
 	server, err := BuildServer(
 		database.ConnectionDetails(dbFile),

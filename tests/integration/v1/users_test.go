@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -28,17 +29,17 @@ func buildDummyUserInput(t *testing.T) *models.UserInput {
 	return x
 }
 
-func buildDummyUser(t *testing.T) (*models.UserCreationResponse, *models.UserInput, *http.Cookie) {
+func buildDummyUser(ctx context.Context, t *testing.T) (*models.UserCreationResponse, *models.UserInput, *http.Cookie) {
 	t.Helper()
 
 	// build user creation route input
 	y := buildDummyUserInput(t)
-	x, err := todoClient.CreateUser(y)
+	x, err := todoClient.CreateUser(ctx, y)
 	assert.NoError(t, err)
 
 	code, err := totp.GenerateCode(x.TwoFactorSecret, time.Now())
 	assert.NoError(t, err)
-	cookie, err := todoClient.Login(x.Username, y.Password, code)
+	cookie, err := todoClient.Login(ctx, x.Username, y.Password, code)
 	assert.NoError(t, err)
 
 	return x, y, cookie
@@ -73,9 +74,12 @@ func TestUsers(test *testing.T) {
 
 	test.Run("Creating", func(T *testing.T) {
 		T.Run("should be creatable", func(t *testing.T) {
+			tctx := context.Background()
+
 			// Create user
 			expected := buildDummyUserInput(t)
 			actual, err := todoClient.CreateUser(
+				tctx,
 				&models.UserInput{
 					Username: expected.Username,
 					Password: expected.Password,
@@ -87,22 +91,27 @@ func TestUsers(test *testing.T) {
 			checkUserCreationEquality(t, expected, actual)
 
 			// Clean up
-			assert.NoError(t, todoClient.DeleteUser(strconv.FormatUint(actual.ID, 10)))
+			assert.NoError(t, todoClient.DeleteUser(tctx, strconv.FormatUint(actual.ID, 10)))
 		})
 	})
 
 	test.Run("Reading", func(T *testing.T) {
 		T.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
+			tctx := context.Background()
+
 			// Fetch user
-			actual, err := todoClient.GetUser("nonexistent")
+			actual, err := todoClient.GetUser(tctx, "nonexistent")
 			assert.Nil(t, actual)
 			assert.Error(t, err)
 		})
 
 		T.Run("it should be readable", func(t *testing.T) {
+			tctx := context.Background()
+
 			// Create user
 			expected := buildDummyUserInput(t)
 			premade, err := todoClient.CreateUser(
+				tctx,
 				&models.UserInput{
 					Username: expected.Username,
 					Password: expected.Password,
@@ -112,55 +121,61 @@ func TestUsers(test *testing.T) {
 			assert.NotEmpty(t, premade.TwoFactorSecret)
 
 			// Fetch user
-			actual, err := todoClient.GetUser(premade.Username)
+			actual, err := todoClient.GetUser(tctx, premade.Username)
 			checkValueAndError(t, actual, err)
 
 			// Assert user equality
 			checkUserEquality(t, expected, actual)
 
 			// Clean up
-			assert.NoError(t, todoClient.DeleteUser(actual.Username))
+			assert.NoError(t, todoClient.DeleteUser(tctx, actual.Username))
 		})
 	})
 
 	test.Run("Updating", func(T *testing.T) {
 		T.Run("it should be updatable", func(t *testing.T) {
+			// tctx := context.Background()
+
 			t.SkipNow()
 		})
 	})
 
 	test.Run("Deleting", func(T *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
+			tctx := context.Background()
+
 			// Create user
-			premade, _, c := buildDummyUser(t)
+			premade, _, c := buildDummyUser(tctx, t)
 			if c == nil {
 				t.Log("TestUsers deleted test cookie is nil")
 			}
 
 			// Clean up
-			err := todoClient.DeleteUser(strconv.FormatUint(premade.ID, 10))
+			err := todoClient.DeleteUser(tctx, strconv.FormatUint(premade.ID, 10))
 			assert.NoError(t, err)
 		})
 	})
 
 	test.Run("Listing", func(T *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
+			tctx := context.Background()
+
 			// Create users
 			expected := []*models.UserCreationResponse{}
 			for i := 0; i < 5; i++ {
-				user, _, c := buildDummyUser(t)
+				user, _, c := buildDummyUser(tctx, t)
 				assert.NotNil(t, c)
 				expected = append(expected, user)
 			}
 
 			// Assert user list equality
-			actual, err := todoClient.GetUsers(nil)
+			actual, err := todoClient.GetUsers(tctx, nil)
 			checkValueAndError(t, actual, err)
 			assert.True(t, len(expected) <= len(actual.Users))
 
 			// Clean up
 			for _, user := range actual.Users {
-				err := todoClient.DeleteUser(strconv.FormatUint(user.ID, 10))
+				err := todoClient.DeleteUser(tctx, strconv.FormatUint(user.ID, 10))
 				assert.NoError(t, err)
 			}
 		})
@@ -168,6 +183,8 @@ func TestUsers(test *testing.T) {
 
 	test.Run("Counting", func(T *testing.T) {
 		T.Run("it should be able to be counted", func(t *testing.T) {
+			// tctx := context.Background()
+
 			t.Skip()
 		})
 	})

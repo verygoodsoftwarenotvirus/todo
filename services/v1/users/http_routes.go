@@ -11,10 +11,12 @@ import (
 )
 
 const (
+	// URIParamKey is used to refer to user IDs in router params
 	URIParamKey = "userID"
 )
 
-func (s *UsersService) UserLoginInputContextMiddleware(next http.Handler) http.Handler {
+// UserLoginInputContextMiddleware fetches user login input from requests
+func (s *Service) UserLoginInputContextMiddleware(next http.Handler) http.Handler {
 	x := new(models.UserLoginInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
@@ -27,7 +29,8 @@ func (s *UsersService) UserLoginInputContextMiddleware(next http.Handler) http.H
 	})
 }
 
-func (s *UsersService) UserInputContextMiddleware(next http.Handler) http.Handler {
+// UserInputContextMiddleware fetches user input from requests
+func (s *Service) UserInputContextMiddleware(next http.Handler) http.Handler {
 	x := new(models.UserInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
@@ -40,7 +43,8 @@ func (s *UsersService) UserInputContextMiddleware(next http.Handler) http.Handle
 	})
 }
 
-func (s *UsersService) PasswordUpdateInputContextMiddleware(next http.Handler) http.Handler {
+// PasswordUpdateInputContextMiddleware fetches password update input from requests
+func (s *Service) PasswordUpdateInputContextMiddleware(next http.Handler) http.Handler {
 	x := new(models.PasswordUpdateInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
@@ -53,7 +57,8 @@ func (s *UsersService) PasswordUpdateInputContextMiddleware(next http.Handler) h
 	})
 }
 
-func (s *UsersService) TOTPSecretRefreshInputContextMiddleware(next http.Handler) http.Handler {
+// TOTPSecretRefreshInputContextMiddleware fetches 2FA update input from requests
+func (s *Service) TOTPSecretRefreshInputContextMiddleware(next http.Handler) http.Handler {
 	x := new(models.TOTPSecretRefreshInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
@@ -66,7 +71,8 @@ func (s *UsersService) TOTPSecretRefreshInputContextMiddleware(next http.Handler
 	})
 }
 
-func (s *UsersService) Read(res http.ResponseWriter, req *http.Request) {
+// Read is our read route
+func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	userID := s.usernameFetcher(req)
 	x, err := s.database.GetUser(userID)
 	if err == sql.ErrNoRows {
@@ -82,8 +88,9 @@ func (s *UsersService) Read(res http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(res).Encode(x)
 }
 
-func (s *UsersService) Count(res http.ResponseWriter, req *http.Request) {
-	qf := models.ParseQueryFilter(req)
+// Count is a handler for responding with a count of users
+func (s *Service) Count(res http.ResponseWriter, req *http.Request) {
+	qf := models.ExtractQueryFilter(req)
 	userCount, err := s.database.GetUserCount(qf)
 	if err != nil {
 		s.logger.Errorf("error fetching item count from database: %v", err)
@@ -97,8 +104,9 @@ func (s *UsersService) Count(res http.ResponseWriter, req *http.Request) {
 	}{userCount})
 }
 
-func (s *UsersService) List(res http.ResponseWriter, req *http.Request) {
-	qf := models.ParseQueryFilter(req)
+// List is a handler for responding with a list of users
+func (s *Service) List(res http.ResponseWriter, req *http.Request) {
+	qf := models.ExtractQueryFilter(req)
 	users, err := s.database.GetUsers(qf)
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
@@ -109,7 +117,8 @@ func (s *UsersService) List(res http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(res).Encode(users)
 }
 
-func (s *UsersService) Delete(res http.ResponseWriter, req *http.Request) {
+// Delete is a handler for deleting a user
+func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	username := s.usernameFetcher(req)
 	s.logger.Debugf("UsersService.Delete called for user %s", username)
 	if err := s.database.DeleteUser(username); err != nil {
@@ -120,7 +129,7 @@ func (s *UsersService) Delete(res http.ResponseWriter, req *http.Request) {
 
 type usernameFetcher func(req *http.Request) string
 
-func (s *UsersService) validateCredentialChangeRequest(req *http.Request, password string, totpToken string) (user *models.User, statusCode int) {
+func (s *Service) validateCredentialChangeRequest(req *http.Request, password string, totpToken string) (user *models.User, statusCode int) {
 	var err error
 	username := s.usernameFetcher(req)
 	user, err = s.database.GetUser(username)
@@ -142,7 +151,7 @@ func (s *UsersService) validateCredentialChangeRequest(req *http.Request, passwo
 
 // NewTOTPSecret fetches a user, and issues them a new TOTP secret, after validating
 // that information received from TOTPSecretRefreshInputContextMiddleware is valid
-func (s *UsersService) NewTOTPSecret(res http.ResponseWriter, req *http.Request) {
+func (s *Service) NewTOTPSecret(res http.ResponseWriter, req *http.Request) {
 	var err error
 	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.TOTPSecretRefreshInput)
 	if !ok {
@@ -177,7 +186,7 @@ func (s *UsersService) NewTOTPSecret(res http.ResponseWriter, req *http.Request)
 
 // UpdatePassword updates a user's password, after validating that information received
 // from PasswordUpdateInputContextMiddleware is valid
-func (s *UsersService) UpdatePassword(res http.ResponseWriter, req *http.Request) {
+func (s *Service) UpdatePassword(res http.ResponseWriter, req *http.Request) {
 	var err error
 	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.PasswordUpdateInput)
 	if !ok {
@@ -210,8 +219,7 @@ func (s *UsersService) UpdatePassword(res http.ResponseWriter, req *http.Request
 }
 
 // Create is our user creation route
-// note that Create is meant to be executed after UserInputContextMiddleware
-func (s *UsersService) Create(res http.ResponseWriter, req *http.Request) {
+func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.UserInput)
 	if !ok {
 		s.logger.Errorln("valid input not attached to request")

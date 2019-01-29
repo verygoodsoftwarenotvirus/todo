@@ -1,12 +1,14 @@
 package client
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 )
 
@@ -24,27 +26,61 @@ func (c *V1Client) buildVersionlessURL(qp url.Values, parts ...string) string {
 }
 
 // GetUser gets a user
-func (c *V1Client) GetUser(id string) (user *models.User, err error) {
-	return user, c.get(c.buildVersionlessURL(nil, usersBasePath, id), &user)
+func (c *V1Client) GetUser(ctx context.Context, id string) (user *models.User, err error) {
+	var parentCtx opentracing.SpanContext
+	parentSpan := opentracing.SpanFromContext(ctx)
+	if parentSpan != nil {
+		parentCtx = parentSpan.Context()
+	}
+
+	span := c.tracer.StartSpan("GetUser", opentracing.ChildOf(parentCtx))
+	span.SetTag("itemID", id)
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
+	uri := c.buildVersionlessURL(nil, usersBasePath, id)
+	return user, c.get(ctx, uri, &user)
 }
 
 // GetUsers gets a list of users
-func (c *V1Client) GetUsers(filter *models.QueryFilter) (users *models.UserList, err error) {
-	return users, c.get(c.buildVersionlessURL(filter.ToValues(), usersBasePath), &users)
+func (c *V1Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (users *models.UserList, err error) {
+	span := c.tracer.StartSpan("GetUsers")
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
+	uri := c.buildVersionlessURL(filter.ToValues(), usersBasePath)
+	return users, c.get(ctx, uri, &users)
 }
 
 // CreateUser creates a user
-func (c *V1Client) CreateUser(input *models.UserInput) (user *models.UserCreationResponse, err error) {
-	return user, c.post(c.buildVersionlessURL(nil, usersBasePath), input, &user)
+func (c *V1Client) CreateUser(ctx context.Context, input *models.UserInput) (user *models.UserCreationResponse, err error) {
+	span := c.tracer.StartSpan("CreateUser")
+	span.SetTag("username", input.Username)
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
+	uri := c.buildVersionlessURL(nil, usersBasePath)
+	return user, c.post(ctx, uri, input, &user)
 }
 
 // DeleteUser deletes a user
-func (c *V1Client) DeleteUser(username string) error {
-	return c.delete(c.buildVersionlessURL(nil, usersBasePath, username))
+func (c *V1Client) DeleteUser(ctx context.Context, username string) error {
+	span := c.tracer.StartSpan("DeleteUser")
+	span.SetTag("username", username)
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
+	uri := c.buildVersionlessURL(nil, usersBasePath, username)
+	return c.delete(ctx, uri)
 }
 
 // Login logs a user in
-func (c *V1Client) Login(username, password, totpToken string) (*http.Cookie, error) {
+func (c *V1Client) Login(ctx context.Context, username, password, totpToken string) (*http.Cookie, error) {
+	span := c.tracer.StartSpan("Login")
+	span.SetTag("username", username)
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
 	body, err := createBodyFromStruct(&models.UserLoginInput{
 		Username:  username,
 		Password:  password,

@@ -7,24 +7,47 @@ import (
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 
+	"github.com/google/wire"
 	_ "github.com/mattn/go-sqlite3" // for the init import call
+	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 )
 
-var _ database.Database = (*Sqlite)(nil)
+type (
+	// Tracer is an arbitrary alias for dependency injection
+	Tracer opentracing.Tracer
 
-// Sqlite is our main Sqlite interaction database
-type Sqlite struct {
-	debug    bool
-	logger   *logrus.Logger
-	database *sql.DB
+	// Sqlite is our main Sqlite interaction database
+	Sqlite struct {
+		debug    bool
+		logger   *logrus.Logger
+		database *sql.DB
+		tracer   opentracing.Tracer
+	}
+)
+
+var (
+	_ database.Database = (*Sqlite)(nil)
+
+	// Providers is what we provide for dependency injection
+	Providers = wire.NewSet(
+		ProvideSqlite,
+		ProvideSqliteTracer,
+	)
+)
+
+// ProvideSqliteTracer provides a Tracer
+func ProvideSqliteTracer() (Tracer, error) {
+	return tracing.ProvideTracer("sqlite-database")
 }
 
 // ProvideSqlite provides a sqlite database controller
 func ProvideSqlite(
 	debug bool,
 	logger *logrus.Logger,
+	tracer Tracer,
 	connectionDetails database.ConnectionDetails,
 ) (database.Database, error) {
 	logger.Debugf("Establishing connection to sqlite3 file: %q\n", connectionDetails)
@@ -38,6 +61,7 @@ func ProvideSqlite(
 		debug:    debug,
 		logger:   logger,
 		database: db,
+		tracer:   tracer,
 	}
 
 	return s, nil

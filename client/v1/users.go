@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/opentracing/opentracing-go"
@@ -27,13 +28,7 @@ func (c *V1Client) buildVersionlessURL(qp url.Values, parts ...string) string {
 
 // GetUser gets a user
 func (c *V1Client) GetUser(ctx context.Context, id string) (user *models.User, err error) {
-	var parentCtx opentracing.SpanContext
-	parentSpan := opentracing.SpanFromContext(ctx)
-	if parentSpan != nil {
-		parentCtx = parentSpan.Context()
-	}
-
-	span := c.tracer.StartSpan("GetUser", opentracing.ChildOf(parentCtx))
+	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetUser")
 	span.SetTag("itemID", id)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
@@ -44,7 +39,7 @@ func (c *V1Client) GetUser(ctx context.Context, id string) (user *models.User, e
 
 // GetUsers gets a list of users
 func (c *V1Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (users *models.UserList, err error) {
-	span := c.tracer.StartSpan("GetUsers")
+	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetUsers")
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
@@ -54,7 +49,7 @@ func (c *V1Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (us
 
 // CreateUser creates a user
 func (c *V1Client) CreateUser(ctx context.Context, input *models.UserInput) (user *models.UserCreationResponse, err error) {
-	span := c.tracer.StartSpan("CreateUser")
+	span := tracing.FetchSpanFromContext(ctx, c.tracer, "CreateUser")
 	span.SetTag("username", input.Username)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
@@ -65,7 +60,7 @@ func (c *V1Client) CreateUser(ctx context.Context, input *models.UserInput) (use
 
 // DeleteUser deletes a user
 func (c *V1Client) DeleteUser(ctx context.Context, username string) error {
-	span := c.tracer.StartSpan("DeleteUser")
+	span := tracing.FetchSpanFromContext(ctx, c.tracer, "DeleteUser")
 	span.SetTag("username", username)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
@@ -76,7 +71,7 @@ func (c *V1Client) DeleteUser(ctx context.Context, username string) error {
 
 // Login logs a user in
 func (c *V1Client) Login(ctx context.Context, username, password, totpToken string) (*http.Cookie, error) {
-	span := c.tracer.StartSpan("Login")
+	span := tracing.FetchSpanFromContext(ctx, c.tracer, "Login")
 	span.SetTag("username", username)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)

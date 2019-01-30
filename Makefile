@@ -31,8 +31,8 @@ revendor:
 dev-tools:
 	go get -u github.com/google/wire/cmd/wire
 
-.PHONY: wire-gen-server
-wire-gen-server:
+.PHONY: wire
+wire:
 	wire gen gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
 
 .PHONY: prerequisites
@@ -60,7 +60,11 @@ test:
 	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` coverage-todo:latest
 
 .PHONY: integration-tests
-integration-tests:
+integration-tests: wire
+	docker-compose --file compose-files/integration-tests.yaml up --build --remove-orphans --force-recreate --abort-on-container-exit
+
+.PHONY: debug-integration-tests
+debug-integration-tests: wire # literally the same except it won't exit
 	docker-compose --file compose-files/integration-tests.yaml up --build --remove-orphans --force-recreate
 
 ## Docker things

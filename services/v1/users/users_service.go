@@ -5,8 +5,11 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"github.com/google/wire"
+	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,21 +22,38 @@ type (
 		Validate(req *http.Request) (bool, error)
 	}
 
+	// Tracer is an arbitrary type alias we use for dependency injection
+	Tracer opentracing.Tracer
+
 	// Service handles our users
 	Service struct {
 		cookieName      CookieName
 		database        database.Database
 		authenticator   auth.Enticator
 		logger          *logrus.Logger
+		tracer          Tracer
 		usernameFetcher func(*http.Request) string
 	}
+
+	// UsernameFetcher fetches usernames from requests
+	UsernameFetcher func(*http.Request) string
+
+	// CookieName is an arbitrary type alias
+	CookieName string
 )
 
-// UsernameFetcher fetches usernames from requests
-type UsernameFetcher func(*http.Request) string
+var (
+	// Providers is what we provide for dependency injectors
+	Providers = wire.NewSet(
+		ProvideUserServiceTracer,
+		ProvideUsersService,
+	)
+)
 
-// CookieName is an arbitrary type alias
-type CookieName string
+// ProvideUserServiceTracer wraps an opentracing Tracer
+func ProvideUserServiceTracer() (Tracer, error) {
+	return tracing.ProvideTracer("users-service")
+}
 
 // ProvideUsersService builds a new UsersService
 func ProvideUsersService(
@@ -42,16 +62,18 @@ func ProvideUsersService(
 	database database.Database,
 	authenticator auth.Enticator,
 	usernameFetcher UsernameFetcher,
+	tracer Tracer,
 ) *Service {
 	if usernameFetcher == nil {
 		panic("usernameFetcher must be provided")
 	}
 	us := &Service{
+		logger:          logger,
 		cookieName:      cookieName,
 		database:        database,
 		authenticator:   authenticator,
-		logger:          logger,
 		usernameFetcher: usernameFetcher,
+		tracer:          tracer,
 	}
 	return us
 }

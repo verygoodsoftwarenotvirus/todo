@@ -12,31 +12,55 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
+	"gopkg.in/oauth2.v3/manage"
 )
 
 // Injectors from wire.go:
 
 func BuildServer(connectionDetails database.ConnectionDetails, SchemaDirectory database.SchemaDirectory, CertPair server.CertPair, CookieName users.CookieName, CookieSecret []byte, Debug bool) (*server.Server, error) {
 	logger := logrus.New()
-	databaseDatabase, err := sqlite.ProvideSqlite(Debug, logger, connectionDetails)
+	enticator := auth.NewBcrypt(logger)
+	tracer, err := sqlite.ProvideSqliteTracer()
 	if err != nil {
 		return nil, err
 	}
-	enticator := auth.NewBcrypt(logger)
-	tracer := provideJaeger()
+	databaseDatabase, err := sqlite.ProvideSqlite(Debug, logger, tracer, connectionDetails)
+	if err != nil {
+		return nil, err
+	}
+	userIDFetcher := server.ProvideUserIDFetcher()
+	serviceTracer, err := items.ProvideItemsServiceTracer()
+	if err != nil {
+		return nil, err
+	}
+	service := items.ProvideItemsService(logger, databaseDatabase, userIDFetcher, serviceTracer)
+	usernameFetcher := server.ProvideUsernameFetcher()
+	usersTracer, err := users.ProvideUserServiceTracer()
+	if err != nil {
+		return nil, err
+	}
+	usersService := users.ProvideUsersService(CookieName, logger, databaseDatabase, enticator, usernameFetcher, usersTracer)
+	clientStore := server.ProvideClientStore()
 	tokenStore, err := server.ProvideTokenStore()
 	if err != nil {
 		return nil, err
 	}
-	clientStore := server.ProvideClientStore()
-	usernameFetcher := server.ProvideUsernameFetcher()
-	service := users.ProvideUsersService(CookieName, logger, databaseDatabase, enticator, usernameFetcher)
-	userIDFetcher := server.ProvideUserIDFetcher()
-	itemsService := items.ProvideItemsService(logger, databaseDatabase, userIDFetcher)
-	serverServer, err := server.ProvideServer(databaseDatabase, logger, enticator, SchemaDirectory, CertPair, CookieSecret, tracer, Debug, tokenStore, clientStore, service, itemsService)
+	oauth2clientsTracer, err := oauth2clients.ProvideOAuth2ClientsServiceTracer()
 	if err != nil {
 		return nil, err
 	}
-	return serverServer, nil
+	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(databaseDatabase, enticator, logger, clientStore, tokenStore, oauth2clientsTracer)
+	serverTracer, err := server.ProvideServerTracer()
+	if err != nil {
+		return nil, err
+	}
+	manager := manage.NewDefaultManager()
+	serverServer := server.ProvideOAuth2Server(manager, tokenStore, clientStore)
+	server2, err := server.ProvideServer(Debug, CertPair, CookieSecret, enticator, SchemaDirectory, service, usersService, oauth2clientsService, databaseDatabase, logger, serverTracer, serverServer, tokenStore, clientStore)
+	if err != nil {
+		return nil, err
+	}
+	return server2, nil
 }

@@ -7,6 +7,8 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"github.com/opentracing/opentracing-go"
 )
 
 const (
@@ -30,6 +32,10 @@ func (s *Service) Oauth2ClientCreationInputContextMiddleware(next http.Handler) 
 
 // Create is our OAuth2 client creation route
 func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
+	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	serverSpan := s.tracer.StartSpan("create route", opentracing.ChildOf(spanCtx))
+	defer serverSpan.Finish()
+
 	s.logger.Debugln("oauth2Client creation route called")
 	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.Oauth2ClientCreationInput)
 	if !ok {
@@ -84,6 +90,10 @@ func (s *Service) BuildReadHandler(oauth2ClientIDFetcher func(req *http.Request)
 		panic("oauth2ClientIDFetcher may not be nil")
 	}
 	return func(res http.ResponseWriter, req *http.Request) {
+		spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+		serverSpan := s.tracer.StartSpan("read route", opentracing.ChildOf(spanCtx))
+		defer serverSpan.Finish()
+
 		s.logger.Debugln("oauth2Client read route called")
 		oauth2ClientID := oauth2ClientIDFetcher(req)
 		i, err := s.database.GetOAuth2Client(oauth2ClientID)
@@ -104,6 +114,10 @@ func (s *Service) BuildReadHandler(oauth2ClientIDFetcher func(req *http.Request)
 
 // List is a handler that returns a list of OAuth2 clients
 func (s *Service) List(res http.ResponseWriter, req *http.Request) {
+	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	serverSpan := s.tracer.StartSpan("list route", opentracing.ChildOf(spanCtx))
+	defer serverSpan.Finish()
+
 	s.logger.Debugln("oauth2Client list route called")
 	qf := models.ExtractQueryFilter(req)
 	oauth2Clients, err := s.database.GetOAuth2Clients(qf)
@@ -123,6 +137,10 @@ func (s *Service) BuildDeleteHandler(clientIDFetcher func(req *http.Request) str
 		panic("oauth2ClientIDFetcher may not be nil")
 	}
 	return func(res http.ResponseWriter, req *http.Request) {
+		spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+		serverSpan := s.tracer.StartSpan("delete route", opentracing.ChildOf(spanCtx))
+		defer serverSpan.Finish()
+
 		s.logger.Debugln("oauth2Client deletion route called")
 		oauth2ClientID := clientIDFetcher(req)
 
@@ -140,6 +158,10 @@ func (s *Service) BuildUpdateHandler(clientIDFetcher func(req *http.Request) str
 		panic("oauth2ClientIDFetcher may not be nil")
 	}
 	return func(res http.ResponseWriter, req *http.Request) {
+		spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+		serverSpan := s.tracer.StartSpan("update route", opentracing.ChildOf(spanCtx))
+		defer serverSpan.Finish()
+
 		s.logger.Debugln("oauth2Client update route called")
 		// input, ok := req.Context().Value(MiddlewareCtxKey).(*models.Oauth2ClientUpdateInput)
 		// if !ok {

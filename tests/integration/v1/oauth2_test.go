@@ -66,7 +66,7 @@ func TestOauth2Clients(test *testing.T) {
 
 	test.Run("Creating", func(T *testing.T) {
 		T.Run("should be creatable", func(t *testing.T) {
-			tctx := context.Background()
+			tctx := buildSpanContext("create-oauth2-client")
 
 			// Create oauth2Client
 			input := buildDummyOauth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
@@ -84,7 +84,7 @@ func TestOauth2Clients(test *testing.T) {
 
 	test.Run("Reading", func(T *testing.T) {
 		T.Run("it should return an error when trying to read one that doesn't exist", func(t *testing.T) {
-			tctx := context.Background()
+			tctx := buildSpanContext("try-to-read-nonexistent-oauth2-client")
 
 			// Fetch oauth2Client
 			_, err := todoClient.GetOauth2Client(tctx, strconv.Itoa(nonexistentID))
@@ -92,7 +92,7 @@ func TestOauth2Clients(test *testing.T) {
 		})
 
 		T.Run("it should be readable", func(t *testing.T) {
-			tctx := context.Background()
+			tctx := buildSpanContext("read-oauth2-client")
 
 			// Create oauth2Client
 			input := buildDummyOauth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
@@ -114,7 +114,7 @@ func TestOauth2Clients(test *testing.T) {
 
 	test.Run("Updating", func(T *testing.T) {
 		T.Run("it should be updatable", func(t *testing.T) {
-			// tctx := context.Background()
+			// tctx := buildSpanContext("CHANGEME")
 
 			t.SkipNow()
 		})
@@ -122,7 +122,7 @@ func TestOauth2Clients(test *testing.T) {
 
 	test.Run("Deleting", func(T *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
-			tctx := context.Background()
+			tctx := buildSpanContext("delete-oauth2-client")
 
 			// Create oauth2Client
 			premade := buildDummyOauth2Client(tctx, t, x.Username, y.Password, x.TwoFactorSecret)
@@ -141,7 +141,7 @@ func TestOauth2Clients(test *testing.T) {
 
 	test.Run("Listing", func(T *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
-			tctx := context.Background()
+			tctx := buildSpanContext("list-oauth2-clients")
 
 			// Create oauth2Clients
 			expected := []*models.OAuth2Client{}
@@ -164,7 +164,7 @@ func TestOauth2Clients(test *testing.T) {
 
 	test.Run("Counting", func(T *testing.T) {
 		T.Run("it should be able to be counted", func(t *testing.T) {
-			// tctx := context.Background()
+			// tctx := buildSpanContext("CHANGEME")
 
 			t.SkipNow()
 		})
@@ -172,13 +172,13 @@ func TestOauth2Clients(test *testing.T) {
 
 	test.Run("Using", func(T *testing.T) {
 		T.Run("should allow an authorized client to use the implicit grant type", func(t *testing.T) {
-			// tctx := context.Background()
+			// tctx := buildSpanContext("CHANGEME")
 
 			t.SkipNow()
 		})
 
 		T.Run("should not allow an unauthorized client to use the implicit grant type", func(t *testing.T) {
-			// tctx := context.Background()
+			// tctx := buildSpanContext("CHANGEME")
 
 			t.SkipNow()
 		})

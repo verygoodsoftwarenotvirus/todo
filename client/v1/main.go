@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/gorilla/websocket"
@@ -44,8 +45,6 @@ type V1Client struct {
 	Debug        bool
 	URL          *url.URL
 
-	// old and busted
-	authCookie *http.Cookie
 	// new hotness
 	clientID     string
 	clientSecret string
@@ -88,12 +87,15 @@ func buildOAuthClient(ctx context.Context, uri *url.URL, clientID, clientSecret 
 		TokenURL: tokenEndpoint(uri).TokenURL,
 	}
 
-	return &http.Client{
+	client := &http.Client{
 		Transport: &oauth2.Transport{
 			Base:   &nethttp.Transport{},
 			Source: oauth2.ReuseTokenSource(nil, conf.TokenSource(ctx)),
 		},
+		Timeout: 5 * time.Second,
 	}
+
+	return client
 }
 
 // NewClient builds a new API client for us
@@ -117,71 +119,50 @@ func NewClient(
 		}
 	}
 
+	if debug {
+		logger.SetLevel(logrus.DebugLevel)
+	}
+
 	u, err := url.Parse(address)
 	if err != nil {
 		return nil, errors.Wrap(err, "parsing URL")
 	}
 
 	c := &V1Client{
-		URL:         u,
-		plainClient: client,
-		logger:      logger,
-		tracer:      tracer,
-		Debug:       debug,
+		URL:          u,
+		plainClient:  client,
+		logger:       logger,
+		tracer:       tracer,
+		Debug:        debug,
+		authedClient: buildOAuthClient(context.TODO(), u, clientID, clientSecret),
 	}
-
-	if debug {
-		c.logger.SetLevel(logrus.DebugLevel)
-	}
-
-	c.authedClient = buildOAuthClient(context.TODO(), c.URL, clientID, clientSecret)
-	c.authedClient.Timeout = 5 * time.Second
 
 	return c, nil
 }
 
 func (c *V1Client) executeRequest(ctx context.Context, req *http.Request) (*http.Response, error) {
-	var parentCtx opentracing.SpanContext
-	parentSpan := opentracing.SpanFromContext(ctx)
-	if parentSpan != nil {
-		parentCtx = parentSpan.Context()
-	}
-
-	span := c.tracer.StartSpan("executeRequest", opentracing.ChildOf(parentCtx))
-	span.SetTag("url", req.URL.String())
-	defer span.Finish()
-
-	// make the Span current in the context
-	ctx = opentracing.ContextWithSpan(ctx, span)
-	command, err := http2curl.GetCurlCommand(req)
-	if err == nil {
+	if command, err := http2curl.GetCurlCommand(req); err == nil {
 		c.logger.Debugln(command)
 	}
 
 	// attach ClientTrace to the Context, and Context to request
+	span := tracing.FetchSpanFromContext(ctx, c.tracer, "executeRequest")
 	trace := NewClientTrace(span)
 	ctx = httptrace.WithClientTrace(ctx, trace)
 	req = req.WithContext(ctx)
 
 	// wrap the request in nethttp.TraceRequest
-	req, _ = nethttp.TraceRequest(
-		c.tracer,
-		req,
-		// nethttp.OperationName(operationName string),
-		// nethttp.ComponentName(componentName string),
-		nethttp.ClientTrace(true),
-	)
-
+	req, _ = nethttp.TraceRequest(c.tracer, req, nethttp.ClientTrace(true))
 	res, err := c.authedClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	dump, err := httputil.DumpResponse(res, true)
+	bdump, err := httputil.DumpResponse(res, true)
 	if err == nil {
 		if req.Method != http.MethodGet {
-			d := string(dump)
-			c.logger.Debugln(d)
+			dump := string(bdump)
+			c.logger.Debugln(dump)
 		}
 	}
 

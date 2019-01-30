@@ -8,6 +8,9 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"github.com/opentracing/opentracing-go"
+	// "github.com/opentracing/opentracing-go/ext"
 )
 
 const (
@@ -73,6 +76,10 @@ func (s *Service) TOTPSecretRefreshInputContextMiddleware(next http.Handler) htt
 
 // Read is our read route
 func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
+	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	serverSpan := s.tracer.StartSpan("read route", opentracing.ChildOf(spanCtx))
+	defer serverSpan.Finish()
+
 	userID := s.usernameFetcher(req)
 	x, err := s.database.GetUser(userID)
 	if err == sql.ErrNoRows {
@@ -90,6 +97,10 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 
 // Count is a handler for responding with a count of users
 func (s *Service) Count(res http.ResponseWriter, req *http.Request) {
+	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	serverSpan := s.tracer.StartSpan("count route", opentracing.ChildOf(spanCtx))
+	defer serverSpan.Finish()
+
 	qf := models.ExtractQueryFilter(req)
 	userCount, err := s.database.GetUserCount(qf)
 	if err != nil {
@@ -106,6 +117,10 @@ func (s *Service) Count(res http.ResponseWriter, req *http.Request) {
 
 // List is a handler for responding with a list of users
 func (s *Service) List(res http.ResponseWriter, req *http.Request) {
+	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	serverSpan := s.tracer.StartSpan("list route", opentracing.ChildOf(spanCtx))
+	defer serverSpan.Finish()
+
 	qf := models.ExtractQueryFilter(req)
 	users, err := s.database.GetUsers(qf)
 	if err != nil {
@@ -119,6 +134,10 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 
 // Delete is a handler for deleting a user
 func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
+	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	serverSpan := s.tracer.StartSpan("delete route", opentracing.ChildOf(spanCtx))
+	defer serverSpan.Finish()
+
 	username := s.usernameFetcher(req)
 	s.logger.Debugf("UsersService.Delete called for user %s", username)
 	if err := s.database.DeleteUser(username); err != nil {
@@ -220,6 +239,10 @@ func (s *Service) UpdatePassword(res http.ResponseWriter, req *http.Request) {
 
 // Create is our user creation route
 func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
+	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	serverSpan := s.tracer.StartSpan("create route", opentracing.ChildOf(spanCtx))
+	defer serverSpan.Finish()
+
 	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.UserInput)
 	if !ok {
 		s.logger.Errorln("valid input not attached to request")

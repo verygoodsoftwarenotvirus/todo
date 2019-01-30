@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 
 	// "github.com/sirupsen/logrus"
 	"gopkg.in/oauth2.v3"
@@ -22,10 +21,11 @@ import (
 )
 
 const (
-	scopesSeparator                             = ","
-	scopesKey                 models.ContextKey = "scopes"
-	clientIDKey               models.ContextKey = "client_id"
-	oauth2ClientIDURIParamKey                   = "client_id"
+	scopesKey   models.ContextKey = "scopes"
+	clientIDKey models.ContextKey = "client_id"
+
+	scopesSeparator           = ","
+	oauth2ClientIDURIParamKey = "client_id"
 )
 
 // ProvideTokenStore provides a token store for use with the server
@@ -38,10 +38,18 @@ func ProvideClientStore() *oauth2store.ClientStore {
 	return oauth2store.NewClientStore()
 }
 
-func (s *Server) initializeOauth2Server(tokenStore oauth2.TokenStore, clientStore *oauth2store.ClientStore) {
-	manager := oauth2manage.NewDefaultManager()
+// ProvideOAuth2Server provides an oauth2server.Server that meets the server's specifications
+func ProvideOAuth2Server(manager *oauth2manage.Manager, tokenStore oauth2.TokenStore, clientStore *oauth2store.ClientStore) *oauth2server.Server {
 	manager.MustTokenStorage(tokenStore, nil)
+	manager.MapClientStorage(clientStore)
 
+	oauth2Handler := oauth2server.NewDefaultServer(manager)
+
+	return oauth2Handler
+}
+
+// ProvideOauth2Service provides an OAuth2 Clients service
+func (s *Server) initializeOAuth2Clients() {
 	paginating := true
 	for page := 1; paginating; page++ {
 		clientList, err := s.db.GetOAuth2Clients(
@@ -59,7 +67,7 @@ func (s *Server) initializeOauth2Server(tokenStore oauth2.TokenStore, clientStor
 
 		for _, client := range clientList.Clients {
 			s.logger.Debugf("loading client %q", client.ClientID)
-			if err := clientStore.Set(client.ClientID, &oauth2models.Client{
+			if err := s.oauth2ClientStore.Set(client.ClientID, &oauth2models.Client{
 				ID:     client.ClientID,
 				Secret: client.ClientSecret,
 				Domain: client.RedirectURI,
@@ -71,34 +79,20 @@ func (s *Server) initializeOauth2Server(tokenStore oauth2.TokenStore, clientStor
 		}
 	}
 
-	manager.MapClientStorage(clientStore)
-	s.setOauth2Defaults(manager)
-
-	s.oauth2ClientStore = clientStore
-	s.oauth2ClientsService = oauth2clients.ProvideOauth2ClientsService(
-		s.db,
-		s.authenticator,
-		s.logger,
-		s.oauth2ClientStore,
-		tokenStore,
-	)
-}
-
-func (s *Server) setOauth2Defaults(manager *oauth2manage.Manager) {
-	s.oauth2Handler = oauth2server.NewDefaultServer(manager)
-
 	s.oauth2Handler.SetAllowGetAccessRequest(true)
-	// s.oauth2Handler.SetAccessTokenExpHandler(s.AccessTokenExpirationHandler)
 	s.oauth2Handler.SetClientAuthorizedHandler(s.ClientAuthorizedHandler)
 	s.oauth2Handler.SetClientScopeHandler(s.ClientScopeHandler)
 	s.oauth2Handler.SetClientInfoHandler(oauth2server.ClientFormHandler)
 	s.oauth2Handler.SetUserAuthorizationHandler(s.UserAuthorizationHandler)
 	s.oauth2Handler.SetAuthorizeScopeHandler(s.AuthorizeScopeHandler)
 	s.oauth2Handler.Config.AllowedGrantTypes = []oauth2.GrantType{
-		oauth2.AuthorizationCode, oauth2.ClientCredentials, oauth2.Refreshing, oauth2.Implicit,
+		oauth2.AuthorizationCode,
+		oauth2.ClientCredentials,
+		oauth2.Refreshing,
+		oauth2.Implicit,
 	}
 
-	s.oauth2Handler.SetInternalErrorHandler(func(err error) (re *oauth2errors.Response) {
+	s.oauth2Handler.SetInternalErrorHandler(func(err error) (r *oauth2errors.Response) {
 		s.logger.Errorln("Internal Error:", err.Error())
 		return
 	})
@@ -113,6 +107,7 @@ func (s *Server) setOauth2Defaults(manager *oauth2manage.Manager) {
 			"header":      re.Header,
 		})
 	})
+
 }
 
 // OauthTokenAuthenticationMiddleware authenticates Oauth tokens
@@ -225,12 +220,6 @@ func (s *Server) UserAuthorizationHandler(res http.ResponseWriter, req *http.Req
 	return strconv.FormatUint(uid, 10), nil
 }
 
-// var _ oauth2server.AccessTokenExpHandler = (*Server)(nil).AccessTokenExpirationHandler
-
-// func (s *Server) AccessTokenExpirationHandler(w http.ResponseWriter, r *http.Request) (time.Duration, error) {
-// 	return 10 * time.Minute, nil
-// }
-
 var _ oauth2server.ClientAuthorizedHandler = (*Server)(nil).ClientAuthorizedHandler
 
 // ClientAuthorizedHandler satisfies the oauth2server ClientAuthorizedHandler interface
@@ -262,7 +251,7 @@ func (s *Server) ClientAuthorizedHandler(clientID string, grant oauth2.GrantType
 var _ oauth2server.ClientScopeHandler = (*Server)(nil).ClientScopeHandler
 
 // ClientScopeHandler satisfies the oauth2server ClientScopeHandler interface
-func (s *Server) ClientScopeHandler(clientID, scope string) (allowed bool, err error) {
+func (s *Server) ClientScopeHandler(clientID, scope string) (bool, error) {
 	s.logger.Debugln("ClientScopeHandler called")
 	c, err := s.db.GetOAuth2Client(clientID)
 	if err != nil {
@@ -273,5 +262,5 @@ func (s *Server) ClientScopeHandler(clientID, scope string) (allowed bool, err e
 			return true, nil
 		}
 	}
-	return
+	return false, nil
 }

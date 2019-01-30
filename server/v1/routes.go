@@ -37,18 +37,9 @@ func (s *Server) buildTracingMiddleware() func(next http.Handler) http.Handler {
 			s.tracer,
 			next,
 			nethttp.MWComponentName("todo-server"),
-			// nethttp.MWSpanFilter(func(r *http.Request) bool {
-			// }),
 			nethttp.MWSpanObserver(func(span opentracing.Span, req *http.Request) {
+				span.SetTag("http.method", req.Method)
 				span.SetTag("http.uri", req.URL.EscapedPath())
-				// var parentCtx opentracing.SpanContext
-				// parentSpan := opentracing.SpanFromContext(req.Context())
-				// if parentSpan != nil {
-				// 	parentCtx = parentSpan.Context()
-				// }
-
-				// // span := c.tracer.StartSpan("GetUser", opentracing.ChildOf(parentCtx))
-				// ctx = opentracing.ContextWithSpan(ctx, span)
 			}),
 			nethttp.OperationNameFunc(func(req *http.Request) string {
 				return fmt.Sprintf("%s %s", req.Method, req.URL.Path)

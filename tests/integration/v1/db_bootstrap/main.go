@@ -7,6 +7,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/sirupsen/logrus"
@@ -33,27 +34,32 @@ func main() {
 	dbPath := defaultDBPath
 	if len(os.Args) > 1 {
 		dbPath = os.Args[1]
-		logger.Printf("set alternative output path: %q", dbPath)
+		logger.Printf("set alternative output path: %q\n", dbPath)
 	}
 
-	db, err := sqlite.ProvideSqlite(false, logger, database.ConnectionDetails(dbPath))
+	tracer, err := tracing.ProvideTracer("db-bootstrap")
 	if err != nil {
-		logger.Fatalf("error opening sqlite connection: %v", err)
+		logger.Debugf("error building tracer: %v\n", err)
+	}
+
+	db, err := sqlite.ProvideSqlite(false, logger, tracer, database.ConnectionDetails(dbPath))
+	if err != nil {
+		logger.Fatalf("error opening sqlite connection: %v\n", err)
 	}
 
 	if err := db.Migrate(defaultSchemaDir); err != nil {
-		logger.Fatalf("error performing migration: %v", err)
+		logger.Fatalf("error performing migration: %v\n", err)
 	}
 
 	b := auth.NewBcrypt(nil)
 	hp, err := b.HashPassword(expectedUsername)
 	if err != nil {
-		logger.Fatalf("error hashing password: %v", err)
+		logger.Fatalf("error hashing password: %v\n", err)
 	}
 
 	u, err := db.CreateUser(&models.UserInput{Username: expectedUsername, Password: hp, IsAdmin: true}, defaultSecret)
 	if err != nil {
-		logger.Fatalf("error creating user: %v", err)
+		logger.Fatalf("error creating user: %v\n", err)
 	} else if u.TwoFactorSecret != defaultSecret {
 		logger.Fatal("wtf")
 	}

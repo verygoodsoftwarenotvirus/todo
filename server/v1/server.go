@@ -10,11 +10,13 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
 	"github.com/go-chi/chi"
+	"github.com/google/wire"
 	"github.com/gorilla/securecookie"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
@@ -27,58 +29,88 @@ const (
 	maxTimeout = 120 * time.Second
 )
 
-// Server is our API server
-type Server struct {
-	DebugMode bool
-	certFile  string
-	keyFile   string
+type (
+	// TodoServer is an obligatory interface
+	TodoServer interface {
+		Serve()
+	}
 
-	authenticator auth.Enticator
+	// CertPair represents the certificate and key you need to serve HTTPS
+	CertPair struct {
+		CertFile string
+		KeyFile  string
+	}
 
-	// Services
-	itemsService         *items.Service
-	usersService         *users.Service
-	oauth2ClientsService *oauth2clients.Service
+	// Tracer is an arbitrary type we use for dependency injection
+	Tracer opentracing.Tracer
 
-	// infra things
-	db            database.Database
-	router        *chi.Mux
-	server        *http.Server
-	logger        *logrus.Logger
-	tracer        opentracing.Tracer
-	cookieBuilder *securecookie.SecureCookie
+	// Server is our API server
+	Server struct {
+		DebugMode bool
+		certFile  string
+		keyFile   string
 
-	// Oauth2 stuff
-	oauth2Handler     *oauth2server.Server
-	oauth2ClientStore *oauth2store.ClientStore
-	// oauth2TokenStore  oauth2store.TokenStore
-}
+		authenticator auth.Enticator
 
-// TodoServer is an obligatory interface
-type TodoServer interface {
-	Serve()
-}
+		// Services
+		itemsService         *items.Service
+		usersService         *users.Service
+		oauth2ClientsService *oauth2clients.Service
 
-// CertPair represents the certificate and key you need to serve HTTPS
-type CertPair struct {
-	CertFile string
-	KeyFile  string
+		// infra things
+		db            database.Database
+		router        *chi.Mux
+		server        *http.Server
+		logger        *logrus.Logger
+		tracer        opentracing.Tracer
+		cookieBuilder *securecookie.SecureCookie
+
+		// OAuth2 stuff
+		oauth2Handler     *oauth2server.Server
+		oauth2ClientStore *oauth2store.ClientStore
+	}
+)
+
+var (
+	// Providers is our wire superset of providers this package offers
+	Providers = wire.NewSet(
+		ProvideUserIDFetcher,
+		ProvideUsernameFetcher,
+		ProvideTokenStore,
+		ProvideClientStore,
+		ProvideServer,
+		ProvideServerTracer,
+		ProvideOAuth2Server,
+	)
+)
+
+// ProvideServerTracer provides a UserServiceTracer from an tracer building function
+func ProvideServerTracer() (Tracer, error) {
+	return tracing.ProvideTracer("todo-server")
 }
 
 // ProvideServer builds a new Server instance
 func ProvideServer(
-	db database.Database,
-	logger *logrus.Logger,
-	authenticator auth.Enticator,
-	schemaDirectory database.SchemaDirectory,
+	debug bool,
 	cp CertPair,
 	cookieSecret []byte,
-	tracer opentracing.Tracer,
-	debug bool,
+	authenticator auth.Enticator,
+	schemaDirectory database.SchemaDirectory,
+
+	// services
+	itemsService *items.Service,
+	usersService *users.Service,
+	oauth2Service *oauth2clients.Service,
+
+	// infra things
+	db database.Database,
+	logger *logrus.Logger,
+	tracer Tracer,
+
+	// OAuth2 stuff
+	oauth2Handler *oauth2server.Server,
 	tokenStore oauth2.TokenStore,
 	clientStore *oauth2store.ClientStore,
-	usersService *users.Service,
-	itemsService *items.Service,
 ) (*Server, error) {
 	if logger == nil {
 		logger = logrus.New()
@@ -109,32 +141,17 @@ func ProvideServer(
 		tracer:        tracer,
 
 		// Services
-		usersService: usersService,
-		itemsService: itemsService,
+		usersService:         usersService,
+		itemsService:         itemsService,
+		oauth2ClientsService: oauth2Service,
 
-		// usersService: users.NewUsersService(
-		// 	users.UsersServiceConfig{
-		// 		// CookieName: s.config.CookieName
-		// 		Logger:          logger,
-		// 		Database:        db,
-		// 		Authenticator:   authenticator,
-		// 		UsernameFetcher: chiUsernameFetcher,
-		// 	},
-		// ),
-		//
-		// is, err = items.NewItemsService(
-		// 	items.ItemsServiceConfig{
-		// 		Logger:        logger,
-		// 		Database:      db,
-		// 		UserIDFetcher: srv.userIDFetcher,
-		// 	},
-		// ); err != nil {
-		// 	return nil, err
-		// }
+		// OAuth2 stuff
+		oauth2ClientStore: clientStore,
+		oauth2Handler:     oauth2Handler,
 	}
 
-	srv.initializeOauth2Server(tokenStore, clientStore)
 	srv.setupRoutes()
+	srv.initializeOAuth2Clients()
 
 	return srv, nil
 }

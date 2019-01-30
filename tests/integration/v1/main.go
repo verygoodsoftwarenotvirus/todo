@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"crypto/tls"
 	"log"
 	"net/http"
@@ -10,12 +11,11 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
-	config "github.com/uber/jaeger-client-go/config"
-	jexpvar "github.com/uber/jaeger-lib/metrics/expvar"
 )
 
 const (
@@ -34,33 +34,16 @@ var (
 	todoClient *client.V1Client
 )
 
+func buildSpanContext(operationName string) context.Context {
+	// tspan := opentracing.GlobalTracer().StartSpan(operationName) // || fmt.Sprintf("integration-tests-%s", operationName)
+	// return opentracing.ContextWithSpan(context.Background(), tspan)
+	return context.Background()
+}
+
 func checkValueAndError(t *testing.T, i interface{}, err error) {
 	t.Helper()
 	require.NoError(t, err)
 	require.NotNil(t, i)
-}
-
-// provideJaeger returns an instance of Jaeger Tracer that samples 100% of traces and logs all spans to stdout.
-func provideJaeger() (tracer opentracing.Tracer) {
-	cfg, err := config.FromEnv()
-	if err != nil {
-		log.Fatal("cannot parse Jaeger env vars", err)
-	}
-	cfg.ServiceName = "integration-tests-client"
-	cfg.Sampler.Type = "const"
-	cfg.Sampler.Param = 1
-
-	// TODO(ys) a quick hack to ensure random generators get different seeds, which are based on current time.
-	metricsFactory := jexpvar.NewFactory(10).Namespace(cfg.ServiceName, nil)
-	if tracer, _, err = cfg.NewTracer(
-		// config.Logger(jaegerLogger),
-		config.Metrics(metricsFactory),
-		// config.Observer(rpcmetrics.NewObserver(metricsFactory, rpcmetrics.DefaultNameNormalizer)),
-	); err != nil {
-		log.Fatalf("ERROR: cannot init Jaeger: %v\n", err)
-	}
-
-	return tracer
 }
 
 func initializeClient() {
@@ -72,13 +55,19 @@ func initializeClient() {
 	// WARNING: Never do this ordinarily, this is an application which will only ever run in a local context
 	httpc.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
+	tracer, err := tracing.ProvideTracer("integration-tests-client")
+	if err != nil {
+		log.Fatal(err)
+	}
+	opentracing.SetGlobalTracer(tracer)
+
 	c, err := client.NewClient(
 		urlToUse,
 		defaultTestInstanceClientID,
 		defaultTestInstanceClientSecret,
 		logrus.New(),
 		httpc,
-		provideJaeger(),
+		tracer,
 		true,
 	)
 	if err != nil {

@@ -8,10 +8,12 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
 	"github.com/google/wire"
 	"github.com/sirupsen/logrus"
+	oauth2manage "gopkg.in/oauth2.v3/manage"
 )
 
 // BuildServer builds a server
@@ -25,17 +27,14 @@ func BuildServer(
 ) (*server.Server, error) {
 
 	wire.Build(
-		server.ProvideUserIDFetcher,
-		server.ProvideUsernameFetcher,
-		server.ProvideTokenStore,
-		server.ProvideClientStore,
-		auth.NewBcrypt,
 		logrus.New,
-		provideJaeger,
-		sqlite.ProvideSqlite,
-		users.ProvideUsersService,
-		items.ProvideItemsService,
-		server.ProvideServer,
+		auth.NewBcrypt,
+		oauth2manage.NewDefaultManager,
+		sqlite.Providers,
+		server.Providers,
+		users.Providers,
+		items.Providers,
+		oauth2clients.Providers,
 	)
 	return nil, nil
 }

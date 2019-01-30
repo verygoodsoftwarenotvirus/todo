@@ -24,4 +24,3 @@ services:
             - tracing-server
         # logging:
         #     driver: none
-

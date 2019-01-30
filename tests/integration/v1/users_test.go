@@ -74,7 +74,7 @@ func TestUsers(test *testing.T) {
 
 	test.Run("Creating", func(T *testing.T) {
 		T.Run("should be creatable", func(t *testing.T) {
-			tctx := context.Background()
+			tctx := buildSpanContext("create-user")
 
 			// Create user
 			expected := buildDummyUserInput(t)
@@ -97,7 +97,7 @@ func TestUsers(test *testing.T) {
 
 	test.Run("Reading", func(T *testing.T) {
 		T.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
-			tctx := context.Background()
+			tctx := buildSpanContext("search-for-nonexistent-user")
 
 			// Fetch user
 			actual, err := todoClient.GetUser(tctx, "nonexistent")
@@ -106,7 +106,7 @@ func TestUsers(test *testing.T) {
 		})
 
 		T.Run("it should be readable", func(t *testing.T) {
-			tctx := context.Background()
+			tctx := buildSpanContext("read-user")
 
 			// Create user
 			expected := buildDummyUserInput(t)
@@ -134,7 +134,8 @@ func TestUsers(test *testing.T) {
 
 	test.Run("Updating", func(T *testing.T) {
 		T.Run("it should be updatable", func(t *testing.T) {
-			// tctx := context.Background()
+			// tspan := opentracing.GlobalTracer().StartSpan("integration-tests-CHANGEME")
+			// tctx := opentracing.ContextWithSpan(context.Background(), tspan)
 
 			t.SkipNow()
 		})
@@ -142,7 +143,7 @@ func TestUsers(test *testing.T) {
 
 	test.Run("Deleting", func(T *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
-			tctx := context.Background()
+			tctx := buildSpanContext("delete-user")
 
 			// Create user
 			premade, _, c := buildDummyUser(tctx, t)
@@ -158,7 +159,7 @@ func TestUsers(test *testing.T) {
 
 	test.Run("Listing", func(T *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
-			tctx := context.Background()
+			tctx := buildSpanContext("list-users")
 
 			// Create users
 			expected := []*models.UserCreationResponse{}

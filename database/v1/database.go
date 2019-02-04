@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -27,7 +28,8 @@ type ConnectionDetails string
 
 // Database describes anything that stores data for our services
 type Database interface {
-	Migrate(schemaDir SchemaDirectory) error
+	Migrate(ctx context.Context, schemaDir SchemaDirectory) error
+	IsReady(ctx context.Context) (ready bool)
 
 	models.ItemHandler
 	models.UserHandler

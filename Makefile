@@ -61,11 +61,11 @@ test:
 
 .PHONY: integration-tests
 integration-tests: wire
-	docker-compose --file compose-files/integration-tests.yaml up --build --remove-orphans --force-recreate --abort-on-container-exit
+	docker-compose --file compose-files/integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
 
 .PHONY: debug-integration-tests
 debug-integration-tests: wire # literally the same except it won't exit
-	docker-compose --file compose-files/integration-tests.yaml up --build --remove-orphans --force-recreate
+	docker-compose --file compose-files/integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate
 
 ## Docker things
 
@@ -77,7 +77,7 @@ docker-image: prerequisites wire-gen-server
 
 .PHONY: run
 run: docker-image
-	docker-compose --file compose-files/docker-compose.yaml up --build --remove-orphans --abort-on-container-exit --force-recreate
+	docker-compose --file compose-files/docker-compose.yaml up --always-recreate-deps --build --remove-orphans --abort-on-container-exit --force-recreate
 
 .PHONY: run-local
 run-local:
@@ -85,5 +85,4 @@ run-local:
 
 .PHONY: run-local-integration-server
 run-local-integration-server:
-	docker build --tag dev-todo:latest --file dockerfiles/integration-server.Dockerfile .
-	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` --publish=443 dev-todo:latest
+	docker-compose --file compose-files/integration-debug.yaml up --always-recreate-deps --build --remove-orphans --force-recreate

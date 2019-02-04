@@ -1,7 +1,9 @@
 package sqlite
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"io/ioutil"
 	"path"
 	"strings"
@@ -67,9 +69,42 @@ func ProvideSqlite(
 	return s, nil
 }
 
+// IsReady reports whether or not Sqlite is ready to be written to. Since Sqlite is a file-based database, it is always ready
+func (s *Sqlite) IsReady(ctx context.Context) (ready bool) {
+	// var (
+	// 	numberOfUnsuccessfulAttempts uint
+	// 	databaseIsNotReady           = true
+	// )
+
+	// s.logger.WithFields(map[string]interface{}{
+	// 	"interval":     time.Second,
+	// 	"max_attempts": 50,
+	// }).Debugln("IsReady called")
+
+	// for databaseIsNotReady {
+	// 	err := s.database.Ping()
+	// 	if err != nil {
+	// 		s.logger.Debugln("ping failed, waiting for database")
+	// 		time.Sleep(time.Second)
+	// 		numberOfUnsuccessfulAttempts++
+	// 		if numberOfUnsuccessfulAttempts >= 50 {
+	// 			return
+	// 		}
+	// 	} else {
+	// 		ready = true
+	// 		return
+	// 	}
+	// }
+	return true
+}
+
 // Migrate migrates a given Sqlite database. The current implementation is pretty primitive.
-func (s *Sqlite) Migrate(schemaDir database.SchemaDirectory) error {
+func (s *Sqlite) Migrate(ctx context.Context, schemaDir database.SchemaDirectory) error {
 	s.logger.Debugln("Migrate called")
+
+	if ready := s.IsReady(ctx); !ready {
+		return errors.New("database not ready")
+	}
 
 	files, err := ioutil.ReadDir(string(schemaDir))
 	if err != nil {
@@ -100,5 +135,4 @@ func (s *Sqlite) Migrate(schemaDir database.SchemaDirectory) error {
 
 	s.logger.Debugln("returning no error from sqlite.Migrate()")
 	return nil
-
 }

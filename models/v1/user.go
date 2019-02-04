@@ -1,13 +1,17 @@
 package models
 
+import (
+	"context"
+)
+
 // UserHandler describes a structure which can manage users in permanent storage
 type UserHandler interface {
-	GetUser(username string) (*User, error)
-	GetUserCount(filter *QueryFilter) (uint64, error)
-	GetUsers(filter *QueryFilter) (*UserList, error)
-	CreateUser(input *UserInput, totpSecret string) (*User, error)
-	UpdateUser(updated *User) error
-	DeleteUser(username string) error
+	GetUser(ctx context.Context, username string) (*User, error)
+	GetUserCount(ctx context.Context, filter *QueryFilter) (uint64, error)
+	GetUsers(ctx context.Context, filter *QueryFilter) (*UserList, error)
+	CreateUser(ctx context.Context, input *UserInput) (*User, error)
+	UpdateUser(ctx context.Context, updated *User) error
+	DeleteUser(ctx context.Context, username string) error
 }
 
 const (
@@ -26,9 +30,10 @@ type UserLoginInput struct {
 
 // UserInput represents the input required to modify/create users
 type UserInput struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	IsAdmin  bool   `json:"is_admin"`
+	Username        string `json:"username"`
+	Password        string `json:"password"`
+	IsAdmin         bool   `json:"is_admin"`
+	TwoFactorSecret string `json:"-"`
 }
 
 // UserCreationResponse is a response structure for Users that doesn't contain password fields

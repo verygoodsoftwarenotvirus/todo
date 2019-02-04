@@ -112,7 +112,7 @@ func NewClient(
 		return nil, errors.New("Client ID and Client Secret required")
 	}
 
-	var client *http.Client = hclient
+	var client = hclient
 	if client == nil {
 		client = &http.Client{
 			Timeout: 5 * time.Second,
@@ -171,7 +171,7 @@ func (c *V1Client) executeRequest(ctx context.Context, req *http.Request) (*http
 
 // Do executes a raw request object
 // TODO: find out why this was implemented
-func (c *V1Client) Do(req *http.Request) (*http.Response, error) {
+func (c *V1Client) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
 	if c.URL.Hostname() != req.URL.Hostname() {
 		return nil, errors.New("request is destined for unknown server")
 	}
@@ -253,6 +253,9 @@ func (c *V1Client) makeDataRequest(method string, uri string, in interface{}, ou
 	if res.StatusCode == http.StatusNotFound {
 		return ErrNotFound
 	}
+
+	rb, err := httputil.DumpResponse(res, true)
+	c.logger.Debugf("Response body: %s", rb)
 
 	if out != nil {
 		resErr := unmarshalBody(res, &out)

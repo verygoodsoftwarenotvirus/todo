@@ -16,15 +16,17 @@ const (
 	URIParamKey = "oauth2ClientID"
 )
 
-// Oauth2ClientCreationInputContextMiddleware is a middleware for attaching OAuth2 client info to a request
-func (s *Service) Oauth2ClientCreationInputContextMiddleware(next http.Handler) http.Handler {
-	x := new(models.Oauth2ClientCreationInput)
+// OAuth2ClientCreationInputContextMiddleware is a middleware for attaching OAuth2 client info to a request
+func (s *Service) OAuth2ClientCreationInputContextMiddleware(next http.Handler) http.Handler {
+	x := new(models.OAuth2ClientCreationInput)
+
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
-			s.logger.Errorf("error encountered decoding request body: %v", err)
+			s.logger.WithError(err).Errorln("error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
+
 		ctx := context.WithValue(req.Context(), MiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
@@ -37,16 +39,23 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	defer serverSpan.Finish()
 
 	s.logger.Debugln("oauth2Client creation route called")
-	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.Oauth2ClientCreationInput)
+	ctx := req.Context()
+	input, ok := ctx.Value(MiddlewareCtxKey).(*models.OAuth2ClientCreationInput)
 	if !ok {
 		s.logger.Errorln("valid input not attached to request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	user, err := s.database.GetUser(input.Username)
+	logger := s.logger.WithFields(map[string]interface{}{
+		"username":     input.Username,
+		"scopes":       input.Scopes,
+		"redirect_uri": input.RedirectURI,
+	})
+
+	user, err := s.database.GetUser(ctx, input.Username)
 	if err != nil {
-		s.logger.Errorf("error creating oauth2Client: %v", err)
+		logger.WithError(err).Errorln("error creating oauth2Client")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -58,24 +67,24 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		user.TwoFactorSecret,
 		input.TOTPToken,
 	); !valid {
-		s.logger.Debugln("invalid credentials provided")
+		logger.Debugln("invalid credentials provided")
 		res.WriteHeader(http.StatusUnauthorized)
 		return
 	} else if err != nil {
-		s.logger.Errorf("error validating user credentials: %v", err)
+		logger.WithError(err).Errorln("error validating user credentials")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	x, err := s.database.CreateOAuth2Client(input)
+	x, err := s.database.CreateOAuth2Client(ctx, input)
 	if err != nil {
-		s.logger.Errorf("error creating oauth2Client: %v", err)
+		logger.WithError(err).Errorln("error creating oauth2Client in the database")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	if err := s.clientStore.Set(x.ClientID, x); err != nil {
-		s.logger.Errorf("error creating oauth2Client: %v", err)
+		logger.WithError(err).Errorln("error setting client ID in the client store")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -94,9 +103,12 @@ func (s *Service) BuildReadHandler(oauth2ClientIDFetcher func(req *http.Request)
 		serverSpan := s.tracer.StartSpan("read route", opentracing.ChildOf(spanCtx))
 		defer serverSpan.Finish()
 
-		s.logger.Debugln("oauth2Client read route called")
+		ctx := req.Context()
 		oauth2ClientID := oauth2ClientIDFetcher(req)
-		i, err := s.database.GetOAuth2Client(oauth2ClientID)
+		logger := s.logger.WithField("oauth2_client_id", oauth2ClientID)
+		logger.Debugln("oauth2Client read route called")
+
+		i, err := s.database.GetOAuth2Client(ctx, oauth2ClientID)
 		if err == sql.ErrNoRows {
 			s.logger.Debugf("Read called on nonexistent client %s", oauth2ClientID)
 			res.WriteHeader(http.StatusNotFound)
@@ -118,11 +130,14 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 	serverSpan := s.tracer.StartSpan("list route", opentracing.ChildOf(spanCtx))
 	defer serverSpan.Finish()
 
-	s.logger.Debugln("oauth2Client list route called")
+	ctx := req.Context()
 	qf := models.ExtractQueryFilter(req)
-	oauth2Clients, err := s.database.GetOAuth2Clients(qf)
+	logger := s.logger.WithField("filter", qf)
+	logger.Debugln("oauth2Client list route called")
+
+	oauth2Clients, err := s.database.GetOAuth2Clients(ctx, qf)
 	if err != nil {
-		s.logger.Errorln("encountered error getting list of oauth2 clients: ", err)
+		logger.Errorln("encountered error getting list of oauth2 clients: ", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -141,10 +156,12 @@ func (s *Service) BuildDeleteHandler(clientIDFetcher func(req *http.Request) str
 		serverSpan := s.tracer.StartSpan("delete route", opentracing.ChildOf(spanCtx))
 		defer serverSpan.Finish()
 
-		s.logger.Debugln("oauth2Client deletion route called")
+		ctx := req.Context()
 		oauth2ClientID := clientIDFetcher(req)
+		logger := s.logger.WithField("oauth2_client_id", oauth2ClientID)
+		logger.Debugln("oauth2Client deletion route called")
 
-		if err := s.database.DeleteOAuth2Client(oauth2ClientID); err != nil {
+		if err := s.database.DeleteOAuth2Client(ctx, oauth2ClientID); err != nil {
 			s.logger.Errorln("encountered error deleting oauth2 client: ", err)
 			res.WriteHeader(http.StatusInternalServerError)
 			return
@@ -162,15 +179,17 @@ func (s *Service) BuildUpdateHandler(clientIDFetcher func(req *http.Request) str
 		serverSpan := s.tracer.StartSpan("update route", opentracing.ChildOf(spanCtx))
 		defer serverSpan.Finish()
 
-		s.logger.Debugln("oauth2Client update route called")
-		// input, ok := req.Context().Value(MiddlewareCtxKey).(*models.Oauth2ClientUpdateInput)
+		ctx := req.Context()
+		oauth2ClientID := clientIDFetcher(req)
+		logger := s.logger.WithField("oauth2_client_id", oauth2ClientID)
+		logger.Debugln("oauth2Client update route called")
+		// input, ok := req.Context().Value(MiddlewareCtxKey).(*models.OAuth2ClientUpdateInput)
 		// if !ok {
 		// 	res.WriteHeader(http.StatusBadRequest)
 		// 	return
 		// }
 
-		oauth2ClientID := clientIDFetcher(req)
-		x, err := s.database.GetOAuth2Client(oauth2ClientID)
+		x, err := s.database.GetOAuth2Client(ctx, oauth2ClientID)
 		if err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
 			return
@@ -179,7 +198,7 @@ func (s *Service) BuildUpdateHandler(clientIDFetcher func(req *http.Request) str
 		// IMPLEMENTME:
 		//x.Update()
 
-		if err := s.database.UpdateOAuth2Client(x); err != nil {
+		if err := s.database.UpdateOAuth2Client(ctx, x); err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}

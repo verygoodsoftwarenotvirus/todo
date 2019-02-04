@@ -28,6 +28,9 @@ func (c *V1Client) buildVersionlessURL(qp url.Values, parts ...string) string {
 
 // GetUser gets a user
 func (c *V1Client) GetUser(ctx context.Context, id string) (user *models.User, err error) {
+	logger := c.logger.WithField("user_id", id)
+	logger.Debugln("GetUser called")
+
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetUser")
 	span.SetTag("itemID", id)
 	defer span.Finish()
@@ -38,28 +41,35 @@ func (c *V1Client) GetUser(ctx context.Context, id string) (user *models.User, e
 }
 
 // GetUsers gets a list of users
-func (c *V1Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (users *models.UserList, err error) {
+func (c *V1Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
+	users := &models.UserList{}
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetUsers")
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	uri := c.buildVersionlessURL(filter.ToValues(), usersBasePath)
-	return users, c.get(ctx, uri, &users)
+	err := c.get(ctx, uri, &users)
+	return users, err
 }
 
 // CreateUser creates a user
-func (c *V1Client) CreateUser(ctx context.Context, input *models.UserInput) (user *models.UserCreationResponse, err error) {
+func (c *V1Client) CreateUser(ctx context.Context, input *models.UserInput) (*models.UserCreationResponse, error) {
+	user := &models.UserCreationResponse{}
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "CreateUser")
 	span.SetTag("username", input.Username)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	uri := c.buildVersionlessURL(nil, usersBasePath)
-	return user, c.post(ctx, uri, input, &user)
+	err := c.post(ctx, uri, input, &user)
+	return user, err
 }
 
 // DeleteUser deletes a user
 func (c *V1Client) DeleteUser(ctx context.Context, username string) error {
+	logger := c.logger.WithField("username", username)
+	logger.Debugln("")
+
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "DeleteUser")
 	span.SetTag("username", username)
 	defer span.Finish()
@@ -70,7 +80,10 @@ func (c *V1Client) DeleteUser(ctx context.Context, username string) error {
 }
 
 // Login logs a user in
-func (c *V1Client) Login(ctx context.Context, username, password, totpToken string) (*http.Cookie, error) {
+func (c *V1Client) Login(ctx context.Context, username, password, TOTPToken string) (*http.Cookie, error) {
+	logger := c.logger.WithField("username", username)
+	logger.Debugln("Login called")
+
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "Login")
 	span.SetTag("username", username)
 	defer span.Finish()
@@ -79,13 +92,17 @@ func (c *V1Client) Login(ctx context.Context, username, password, totpToken stri
 	body, err := createBodyFromStruct(&models.UserLoginInput{
 		Username:  username,
 		Password:  password,
-		TOTPToken: totpToken,
+		TOTPToken: TOTPToken,
 	})
+
 	if err != nil {
+		logger.WithError(err).Errorln("")
 		return nil, err
 	}
 
-	req, _ := http.NewRequest(http.MethodPost, c.buildVersionlessURL(nil, usersBasePath, "login"), body)
+	uri := c.buildVersionlessURL(nil, usersBasePath, "login")
+	req, _ := c.buildDataRequest(http.MethodPost, uri, body)
+
 	res, err := c.plainClient.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "encountered error executing request")

@@ -12,17 +12,19 @@ require (
 	github.com/gorilla/context v1.1.1
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/websocket v1.4.0
+	github.com/lib/pq v1.0.0
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/moul/http2curl v1.0.0
 	github.com/opentracing-contrib/go-stdlib v0.0.0-20181222025249-77df8e8e70b4
 	github.com/opentracing/opentracing-go v1.0.2
 	github.com/pkg/errors v0.8.1
 	github.com/pquerna/otp v1.1.0
+	github.com/rs/zerolog v1.11.0
 	github.com/sirupsen/logrus v1.3.0
 	github.com/stretchr/testify v1.3.0
 	github.com/uber/jaeger-client-go v2.14.0+incompatible
 	github.com/uber/jaeger-lib v1.5.0
-	golang.org/x/crypto v0.0.0-20190128193316-c7b33c32a30b
-	golang.org/x/oauth2 v0.0.0-20190115181402-5dab4167f31c
+	golang.org/x/crypto v0.0.0-20190131182504-b8fe1690c613
+	golang.org/x/oauth2 v0.0.0-20190130055435-99b60b757ec1
 	gopkg.in/oauth2.v3 v3.9.5
 )

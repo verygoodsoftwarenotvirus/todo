@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"strconv"
 
 	"gopkg.in/oauth2.v3"
@@ -13,12 +14,12 @@ const (
 
 // OAuth2ClientHandler handles OAuth2 clients
 type OAuth2ClientHandler interface {
-	GetOAuth2Client(identifier string) (*OAuth2Client, error)
-	GetOAuth2ClientCount(filter *QueryFilter) (uint64, error)
-	GetOAuth2Clients(filter *QueryFilter) (*Oauth2ClientList, error)
-	CreateOAuth2Client(input *Oauth2ClientCreationInput) (*OAuth2Client, error)
-	UpdateOAuth2Client(updated *OAuth2Client) error
-	DeleteOAuth2Client(identifier string) error
+	GetOAuth2Client(ctx context.Context, identifier string) (*OAuth2Client, error)
+	GetOAuth2ClientCount(ctx context.Context, filter *QueryFilter) (uint64, error)
+	GetOAuth2Clients(ctx context.Context, filter *QueryFilter) (*OAuth2ClientList, error)
+	CreateOAuth2Client(ctx context.Context, input *OAuth2ClientCreationInput) (*OAuth2Client, error)
+	UpdateOAuth2Client(ctx context.Context, updated *OAuth2Client) error
+	DeleteOAuth2Client(ctx context.Context, identifier string) error
 }
 
 // OAuth2Client represents a user-authorized API client
@@ -57,22 +58,22 @@ func (c *OAuth2Client) GetUserID() string {
 	return strconv.FormatUint(c.BelongsTo, 10)
 }
 
-// Oauth2ClientList is a response struct containing a list of OAuth2Clients
-type Oauth2ClientList struct {
+// OAuth2ClientList is a response struct containing a list of OAuth2Clients
+type OAuth2ClientList struct {
 	Pagination
 	Clients []OAuth2Client `json:"clients"`
 }
 
-// Oauth2ClientCreationInput is a struct for use when creating OAuth2 clients.
-type Oauth2ClientCreationInput struct {
+// OAuth2ClientCreationInput is a struct for use when creating OAuth2 clients.
+type OAuth2ClientCreationInput struct {
 	UserLoginInput
 	RedirectURI string   `json:"redirect_uri"`
 	BelongsTo   uint64   `json:"belongs_to"`
 	Scopes      []string `json:"scopes"`
 }
 
-// Oauth2ClientUpdateInput is a struct for use when updating OAuth2 clients
-type Oauth2ClientUpdateInput struct {
+// OAuth2ClientUpdateInput is a struct for use when updating OAuth2 clients
+type OAuth2ClientUpdateInput struct {
 	RedirectURI string   `json:"redirect_uri"`
 	Scopes      []string `json:"scopes"`
 }

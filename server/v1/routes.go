@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
@@ -46,6 +47,21 @@ func (s *Server) buildTracingMiddleware() func(next http.Handler) http.Handler {
 			}),
 		)
 	}
+}
+
+func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
+	f := &middleware.DefaultLogFormatter{Logger: s.logger, NoColor: true}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		entry := f.NewLogEntry(r)
+		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+
+		start := time.Now()
+		defer func() {
+			entry.Write(ww.Status(), ww.BytesWritten(), time.Since(start))
+		}()
+
+		next.ServeHTTP(ww, middleware.WithLogEntry(r, entry))
+	})
 }
 
 func (s *Server) setupRoutes() {
@@ -92,7 +108,7 @@ func (s *Server) setupRoutes() {
 
 	s.router.Route("/oauth2", func(oauth2Router chi.Router) {
 		oauth2Router.
-			With(s.Oauth2ClientInfoMiddleware).
+			With(s.OAuth2ClientInfoMiddleware).
 			Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
 				if err := s.oauth2Handler.HandleAuthorizeRequest(res, req); err != nil {
 					http.Error(res, err.Error(), http.StatusBadRequest)
@@ -127,13 +143,13 @@ func (s *Server) setupRoutes() {
 					oauth2Router.Route("/clients", func(clientRouter chi.Router) {
 						sr := fmt.Sprintf("/{%s}", oauth2clients.URIParamKey)
 						clientRouter.Get("/", s.oauth2ClientsService.List)                                           // List
-						clientRouter.Get(sr, s.oauth2ClientsService.BuildReadHandler(chiOauth2ClientIDFetcher))      // Read
-						clientRouter.Delete(sr, s.oauth2ClientsService.BuildDeleteHandler(chiOauth2ClientIDFetcher)) // Delete
+						clientRouter.Get(sr, s.oauth2ClientsService.BuildReadHandler(chiOAuth2ClientIDFetcher))      // Read
+						clientRouter.Delete(sr, s.oauth2ClientsService.BuildDeleteHandler(chiOAuth2ClientIDFetcher)) // Delete
 						clientRouter.
-							With(s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.Oauth2ClientUpdateInput))).
-							Put(sr, s.oauth2ClientsService.BuildUpdateHandler(chiOauth2ClientIDFetcher)) // Update
+							With(s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.OAuth2ClientUpdateInput))).
+							Put(sr, s.oauth2ClientsService.BuildUpdateHandler(chiOAuth2ClientIDFetcher)) // Update
 						clientRouter.
-							With(s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.Oauth2ClientCreationInput))).
+							With(s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.OAuth2ClientCreationInput))).
 							Post("/", s.oauth2ClientsService.Create) // Create
 					})
 				})

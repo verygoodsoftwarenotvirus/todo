@@ -1,6 +1,8 @@
 package sqlite
 
 import (
+	"context"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
@@ -108,17 +110,17 @@ func scanUser(scan database.Scannable) (*models.User, error) {
 }
 
 // GetUser fetches a user by their username
-func (s *Sqlite) GetUser(username string) (*models.User, error) {
+func (s *Sqlite) GetUser(ctx context.Context, username string) (*models.User, error) {
 	return scanUser(s.database.QueryRow(getUserQuery, username))
 }
 
 // GetUserCount fetches a count of users from the sqlite database that meet a particular filter
-func (s *Sqlite) GetUserCount(filter *models.QueryFilter) (count uint64, err error) {
+func (s *Sqlite) GetUserCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
 	return count, s.database.QueryRow(getUserCountQuery).Scan(&count)
 }
 
 // GetUsers fetches a list of users from the sqlite database that meet a particular filter
-func (s *Sqlite) GetUsers(filter *models.QueryFilter) (*models.UserList, error) {
+func (s *Sqlite) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
 	if filter == nil {
 		s.logger.Debugln("using default query filter")
 		filter = models.DefaultQueryFilter
@@ -143,7 +145,7 @@ func (s *Sqlite) GetUsers(filter *models.QueryFilter) (*models.UserList, error) 
 		return nil, err
 	}
 
-	count, err := s.GetUserCount(filter)
+	count, err := s.GetUserCount(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +163,7 @@ func (s *Sqlite) GetUsers(filter *models.QueryFilter) (*models.UserList, error) 
 }
 
 // CreateUser creates a user
-func (s *Sqlite) CreateUser(input *models.UserInput, totpSecret string) (x *models.User, err error) {
+func (s *Sqlite) CreateUser(ctx context.Context, input *models.UserInput) (x *models.User, err error) {
 	s.logger.Debugf("CreateUser called for %s", input.Username)
 
 	tx, err := s.database.Begin()
@@ -171,7 +173,7 @@ func (s *Sqlite) CreateUser(input *models.UserInput, totpSecret string) (x *mode
 	}
 
 	// create the user
-	res, err := tx.Exec(createUserQuery, input.Username, input.Password, totpSecret, input.IsAdmin)
+	res, err := tx.Exec(createUserQuery, input.Username, input.Password, input.TwoFactorSecret, input.IsAdmin)
 	if err != nil {
 		s.logger.Errorf("error executing user creation query: %v", err)
 		tx.Rollback()
@@ -204,7 +206,7 @@ func (s *Sqlite) CreateUser(input *models.UserInput, totpSecret string) (x *mode
 }
 
 // UpdateUser updates a user. Note that this function expects the provided user to have a valid ID.
-func (s *Sqlite) UpdateUser(input *models.User) (err error) {
+func (s *Sqlite) UpdateUser(ctx context.Context, input *models.User) (err error) {
 	tx, err := s.database.Begin()
 	if err != nil {
 		return
@@ -234,7 +236,7 @@ func (s *Sqlite) UpdateUser(input *models.User) (err error) {
 }
 
 // DeleteUser deletes a user by their username
-func (s *Sqlite) DeleteUser(username string) error {
+func (s *Sqlite) DeleteUser(ctx context.Context, username string) error {
 	_, err := s.database.Exec(archiveUserQuery, username)
 	return err
 }

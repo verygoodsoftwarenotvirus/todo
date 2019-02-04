@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
@@ -112,20 +113,17 @@ func ProvideServer(
 	tokenStore oauth2.TokenStore,
 	clientStore *oauth2store.ClientStore,
 ) (*Server, error) {
-	if logger == nil {
-		logger = logrus.New()
-	}
-
-	if authenticator == nil {
-		authenticator = auth.NewBcrypt(logger)
-	}
 
 	if len(cookieSecret) < 32 {
-		logger.Errorln("cookie secret is too short, must be at least 32 characters in length")
-		return nil, errors.New("cookie secret is too short, must be at least 32 characters in length")
+		err := errors.New("cookie secret is too short, must be at least 32 characters in length")
+		logger.WithError(err).Errorln("cookie secret failure")
+		return nil, err
 	}
 
-	if err := db.Migrate(schemaDirectory); err != nil {
+	span := tracer.StartSpan("startup")
+	defer span.Finish()
+
+	if err := db.Migrate(context.Background(), schemaDirectory); err != nil {
 		return nil, err
 	}
 
@@ -222,6 +220,12 @@ type genericResponse struct {
 type ErrorNotifier func(res http.ResponseWriter, req *http.Request, err error)
 
 func (s *Server) internalServerError(res http.ResponseWriter, req *http.Request, err error) {
+	s.logger.WithFields(map[string]interface{}{
+		"path":   req.URL.Path,
+		"method": req.Method,
+		"error":  err,
+	}).Debugln("internalServerError called")
+
 	sc := http.StatusInternalServerError
 	s.logger.Errorf("Encountered this internal error: %v\n", err)
 	res.WriteHeader(sc)
@@ -229,6 +233,12 @@ func (s *Server) internalServerError(res http.ResponseWriter, req *http.Request,
 }
 
 func (s *Server) notifyUnauthorized(res http.ResponseWriter, req *http.Request, err error) {
+	s.logger.WithFields(map[string]interface{}{
+		"path":   req.URL.Path,
+		"method": req.Method,
+		"error":  err,
+	}).Debugln("notifyUnauthorized called")
+
 	sc := http.StatusUnauthorized
 	if err != nil {
 		s.logger.Errorln("notifyUnauthorized called with this error: ", err)
@@ -238,6 +248,12 @@ func (s *Server) notifyUnauthorized(res http.ResponseWriter, req *http.Request, 
 }
 
 func (s *Server) invalidInput(res http.ResponseWriter, req *http.Request, err error) {
+	s.logger.WithFields(map[string]interface{}{
+		"path":   req.URL.Path,
+		"method": req.Method,
+		"error":  err,
+	}).Debugln("invalidInput called")
+
 	sc := http.StatusBadRequest
 	s.logger.Debugf("invalidInput called for route: %q\n", req.URL.String())
 	if err != nil {
@@ -248,6 +264,12 @@ func (s *Server) invalidInput(res http.ResponseWriter, req *http.Request, err er
 }
 
 func (s *Server) notFound(res http.ResponseWriter, req *http.Request, err error) {
+	s.logger.WithFields(map[string]interface{}{
+		"path":   req.URL.Path,
+		"method": req.Method,
+		"error":  err,
+	}).Debugln("notFound called")
+
 	sc := http.StatusNotFound
 	s.logger.Debugf("notFound called for route: %q\n", req.URL.String())
 	if err != nil {
@@ -258,6 +280,12 @@ func (s *Server) notFound(res http.ResponseWriter, req *http.Request, err error)
 }
 
 func (s *Server) notifyOfInvalidRequestCookie(res http.ResponseWriter, req *http.Request, err error) {
+	s.logger.WithFields(map[string]interface{}{
+		"path":   req.URL.Path,
+		"method": req.Method,
+		"error":  err,
+	}).Debugln("notifyOfInvalidRequestCookie called")
+
 	sc := http.StatusBadRequest
 	s.logger.Debugf("notifyOfInvalidRequestCookie called for route: %q\n", req.URL.String())
 	if err != nil {
@@ -269,13 +297,13 @@ func (s *Server) notifyOfInvalidRequestCookie(res http.ResponseWriter, req *http
 
 func buildServer() *http.Server {
 	// heavily inspired by https://blog.cloudflare.com/exposing-go-on-the-internet/
-	return &http.Server{
+	srv := &http.Server{
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
 		TLSConfig: &tls.Config{
 			PreferServerCipherSuites: true,
-			// Only use curves which have assembly implementations
+			// "Only use curves which have assembly implementations"
 			CurvePreferences: []tls.CurveID{
 				tls.CurveP256,
 				tls.X25519,
@@ -291,4 +319,5 @@ func buildServer() *http.Server {
 			},
 		},
 	}
+	return srv
 }

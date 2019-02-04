@@ -3,6 +3,9 @@ package integration
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/postgres"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration/v1/db_bootstrap"
 	"log"
 	"net/http"
 	"os"
@@ -10,19 +13,21 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
-
+	_ "github.com/lib/pq" // importing for database initialization
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 )
 
 const (
-	debug                  = false
 	nonexistentID          = 999999999
 	localTestInstanceURL   = "https://localhost"
 	defaultTestInstanceURL = "https://demo-server"
+
+	dockerPostgresAddress = "postgres://todo:hunter2@database:5432/todo?sslmode=disable"
+	localPostgresAddress  = "postgres://todo:hunter2@localhost:2345/todo?sslmode=disable"
 
 	defaultSecret                   = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
 	defaultTestInstanceClientID     = "HEREISACLIENTIDWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
@@ -35,9 +40,8 @@ var (
 )
 
 func buildSpanContext(operationName string) context.Context {
-	// tspan := opentracing.GlobalTracer().StartSpan(operationName) // || fmt.Sprintf("integration-tests-%s", operationName)
-	// return opentracing.ContextWithSpan(context.Background(), tspan)
-	return context.Background()
+	tspan := opentracing.GlobalTracer().StartSpan(fmt.Sprintf("integration-tests-%s", operationName))
+	return opentracing.ContextWithSpan(context.Background(), tspan)
 }
 
 func checkValueAndError(t *testing.T, i interface{}, err error) {
@@ -61,11 +65,14 @@ func initializeClient() {
 	}
 	opentracing.SetGlobalTracer(tracer)
 
+	logger := logrus.New()
+	logger.SetLevel(logrus.DebugLevel)
+
 	c, err := client.NewClient(
 		urlToUse,
 		defaultTestInstanceClientID,
 		defaultTestInstanceClientSecret,
-		logrus.New(),
+		logger,
 		httpc,
 		tracer,
 		true,
@@ -108,4 +115,21 @@ func init() {
 	initializeClient()
 	ensureServerIsUp()
 	//testOAuth()
+
+	if strings.ToLower(os.Getenv("DOCKER")) == "true" {
+		switch strings.ToLower(os.Getenv("DATABASE_TO_USE")) {
+		case "postgres":
+			db, err := postgres.ProvidePostgres(true, logrus.New(), opentracing.GlobalTracer(), dockerPostgresAddress)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if err := bootstrap.PreloadDatabase(db, ""); err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
+
+	// time.Sleep(10 * time.Minute)
+	fmt.Println("Running tests")
 }

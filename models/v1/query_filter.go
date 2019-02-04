@@ -18,11 +18,11 @@ const (
 type QueryFilter struct {
 	Page          uint64   `json:"page"`
 	Limit         uint64   `json:"limit"`
-	CreatedAfter  uint64   `json:"created_before"`
-	CreatedBefore uint64   `json:"created_after"`
-	UpdatedAfter  uint64   `json:"updated_before"`
-	UpdatedBefore uint64   `json:"updated_after"`
-	IncludeAll    bool     `json:"include_all"`
+	CreatedAfter  uint64   `json:"created_before,omitempty"`
+	CreatedBefore uint64   `json:"created_after,omitempty"`
+	UpdatedAfter  uint64   `json:"updated_before,omitempty"`
+	UpdatedBefore uint64   `json:"updated_after,omitempty"`
+	IncludeAll    bool     `json:"include_all,omitempty"`
 	SortBy        sortType `json:"sort_by"`
 }
 
@@ -80,6 +80,16 @@ func (qf *QueryFilter) FromParams(params url.Values) {
 	case strSortDesc:
 		qf.SortBy = SortDescending
 	}
+}
+
+// SetPage sets the current page with certain constraints
+func (qf *QueryFilter) SetPage(page uint64) {
+	qf.Page = uint64(math.Max(1, float64(page)))
+}
+
+// QueryPage calculates a query page from the current filter values
+func (qf *QueryFilter) QueryPage() uint {
+	return uint(qf.Limit * (qf.Page - 1))
 }
 
 // ToValues returns a url.Values from a QueryFilter

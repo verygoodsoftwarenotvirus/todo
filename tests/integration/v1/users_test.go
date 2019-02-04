@@ -8,11 +8,13 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/bxcodec/faker"
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
+	// "github.com/stretchr/testify/require"
 )
 
 func buildDummyUserInput(t *testing.T) *models.UserInput {
@@ -20,10 +22,12 @@ func buildDummyUserInput(t *testing.T) *models.UserInput {
 
 	u, _ := (&faker.Internet{}).UserName(reflect.ValueOf(nil))
 	p, _ := (&faker.Internet{}).Password(reflect.ValueOf(nil))
+	tfs, _ := auth.RandString(64)
 
 	x := &models.UserInput{
-		Username: u.(string),
-		Password: p.(string),
+		Username:        u.(string),
+		Password:        p.(string),
+		TwoFactorSecret: tfs,
 	}
 
 	return x
@@ -34,15 +38,19 @@ func buildDummyUser(ctx context.Context, t *testing.T) (*models.UserCreationResp
 
 	// build user creation route input
 	y := buildDummyUserInput(t)
-	x, err := todoClient.CreateUser(ctx, y)
-	assert.NoError(t, err)
+	u, err := todoClient.CreateUser(ctx, y)
+	// require.NotNil(t, u)
+	// require.NoError(t, err)
 
-	code, err := totp.GenerateCode(x.TwoFactorSecret, time.Now())
-	assert.NoError(t, err)
-	cookie, err := todoClient.Login(ctx, x.Username, y.Password, code)
-	assert.NoError(t, err)
+	code, err := totp.GenerateCode(u.TwoFactorSecret, time.Now())
+	// require.NoError(t, err)
+	// require.NotEmpty(t, code)
 
-	return x, y, cookie
+	cookie, err := todoClient.Login(ctx, u.Username, y.Password, code)
+	assert.NoError(t, err)
+	assert.NotNil(t, cookie)
+
+	return u, y, cookie
 }
 
 func checkUserCreationEquality(t *testing.T, expected *models.UserInput, actual *models.UserCreationResponse) {
@@ -147,8 +155,9 @@ func TestUsers(test *testing.T) {
 
 			// Create user
 			premade, _, c := buildDummyUser(tctx, t)
-			if c == nil {
-				t.Log("TestUsers deleted test cookie is nil")
+			if c == nil || premade == nil {
+				t.Log("TestUsers something has gone awry")
+				t.FailNow()
 			}
 
 			// Clean up

@@ -1,13 +1,17 @@
 package models
 
+import (
+	"context"
+)
+
 // ItemHandler describes a structure capable of storing items permanently
 type ItemHandler interface {
-	GetItem(itemID, userID uint64) (*Item, error)
-	GetItemCount(filter *QueryFilter) (uint64, error)
-	GetItems(filter *QueryFilter) (*ItemList, error)
-	CreateItem(input *ItemInput) (*Item, error)
-	UpdateItem(updated *Item) error
-	DeleteItem(id uint64) error
+	GetItem(ctx context.Context, itemID, userID uint64) (*Item, error)
+	GetItemCount(ctx context.Context, filter *QueryFilter) (uint64, error)
+	GetItems(ctx context.Context, filter *QueryFilter) (*ItemList, error)
+	CreateItem(ctx context.Context, input *ItemInput) (*Item, error)
+	UpdateItem(ctx context.Context, updated *Item) error
+	DeleteItem(ctx context.Context, id uint64) error
 }
 
 // Item represents an item

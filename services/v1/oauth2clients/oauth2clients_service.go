@@ -46,7 +46,7 @@ func ProvideOAuth2ClientsServiceTracer() (Tracer, error) {
 	return tracing.ProvideTracer("oauth2-clients-service")
 }
 
-// ProvideOAuth2ClientsService builds a new Oauth2ClientsService
+// ProvideOAuth2ClientsService builds a new OAuth2ClientsService
 func ProvideOAuth2ClientsService(
 	database database.Database,
 	authenticator auth.Enticator,

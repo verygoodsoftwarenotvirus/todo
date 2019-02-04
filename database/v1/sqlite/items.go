@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"context"
 	"math"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
@@ -76,18 +77,21 @@ func scanItem(scan database.Scannable) (*models.Item, error) {
 }
 
 // GetItem fetches an item from the sqlite database
-func (s *Sqlite) GetItem(itemID, userID uint64) (*models.Item, error) {
+func (s *Sqlite) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
 	row := s.database.QueryRow(getItemQuery, itemID, userID)
-	return scanItem(row)
+	i, err := scanItem(row)
+	return i, err
 }
 
 // GetItemCount fetches the count of items from the sqlite database that meet a particular filter
-func (s *Sqlite) GetItemCount(filter *models.QueryFilter) (count uint64, err error) {
-	return count, s.database.QueryRow(getItemCountQuery).Scan(&count)
+func (s *Sqlite) GetItemCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
+	var count uint64
+	err := s.database.QueryRow(getItemCountQuery).Scan(&count)
+	return count, err
 }
 
 // GetItems fetches a list of items from the sqlite database that meet a particular filter
-func (s *Sqlite) GetItems(filter *models.QueryFilter) (*models.ItemList, error) {
+func (s *Sqlite) GetItems(ctx context.Context, filter *models.QueryFilter) (*models.ItemList, error) {
 	if filter == nil {
 		s.logger.Debugln("using default query filter")
 		filter = models.DefaultQueryFilter
@@ -115,7 +119,7 @@ func (s *Sqlite) GetItems(filter *models.QueryFilter) (*models.ItemList, error) 
 		return nil, err
 	}
 
-	count, err := s.GetItemCount(filter)
+	count, err := s.GetItemCount(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +137,7 @@ func (s *Sqlite) GetItems(filter *models.QueryFilter) (*models.ItemList, error) 
 }
 
 // CreateItem creates an item in a sqlite database
-func (s *Sqlite) CreateItem(input *models.ItemInput) (i *models.Item, err error) {
+func (s *Sqlite) CreateItem(ctx context.Context, input *models.ItemInput) (i *models.Item, err error) {
 	tx, err := s.database.Begin()
 	if err != nil {
 		s.logger.Errorf("error beginning database connection: %v", err)
@@ -174,7 +178,7 @@ func (s *Sqlite) CreateItem(input *models.ItemInput) (i *models.Item, err error)
 }
 
 // UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
-func (s *Sqlite) UpdateItem(input *models.Item) (err error) {
+func (s *Sqlite) UpdateItem(ctx context.Context, input *models.Item) (err error) {
 	tx, err := s.database.Begin()
 	if err != nil {
 		return
@@ -204,7 +208,7 @@ func (s *Sqlite) UpdateItem(input *models.Item) (err error) {
 }
 
 // DeleteItem deletes an item from the database by its ID
-func (s *Sqlite) DeleteItem(id uint64) error {
+func (s *Sqlite) DeleteItem(ctx context.Context, id uint64) error {
 	_, err := s.database.Exec(archiveItemQuery, id)
 	return err
 }

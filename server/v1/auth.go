@@ -32,7 +32,7 @@ func (s *Server) UserCookieAuthenticationMiddleware(next http.Handler) http.Hand
 				var ctx = req.Context()
 
 				if u := ctx.Value(models.UserKey); u == nil {
-					user, err := s.db.GetUser(ca.Username)
+					user, err := s.db.GetUser(ctx, ca.Username)
 					if err != nil {
 						s.internalServerError(res, req, err)
 						return
@@ -57,6 +57,7 @@ func (s *Server) UserCookieAuthenticationMiddleware(next http.Handler) http.Hand
 func (s *Server) Login(res http.ResponseWriter, req *http.Request) {
 	s.logger.Debugln("Login called")
 
+	ctx := req.Context()
 	loginInput, user, errNotifier, err := s.fetchLoginDataFromRequest(req)
 	if errNotifier != nil {
 		errNotifier(res, req, err)
@@ -66,7 +67,7 @@ func (s *Server) Login(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	loginValid, errNotifier, err := s.validateLogin(user, loginInput)
+	loginValid, errNotifier, err := s.validateLogin(ctx, user, loginInput)
 	if errNotifier != nil {
 		errNotifier(res, req, err)
 		return
@@ -107,7 +108,8 @@ func (s *Server) Logout(res http.ResponseWriter, req *http.Request) {
 }
 
 func (s *Server) fetchLoginDataFromRequest(req *http.Request) (*models.UserLoginInput, *models.User, ErrorNotifier, error) {
-	loginInput, ok := req.Context().Value(users.MiddlewareCtxKey).(*models.UserLoginInput)
+	ctx := req.Context()
+	loginInput, ok := ctx.Value(users.MiddlewareCtxKey).(*models.UserLoginInput)
 	if !ok {
 		s.logger.Debugln("no UserLoginInput found for /login request")
 		return nil, nil, s.notifyUnauthorized, nil
@@ -123,7 +125,7 @@ func (s *Server) fetchLoginDataFromRequest(req *http.Request) (*models.UserLogin
 
 	// you could ensure there isn't an unsatisfied password reset token requested before allowing login here
 
-	user, err := s.db.GetUser(username)
+	user, err := s.db.GetUser(ctx, username)
 	if err == sql.ErrNoRows {
 		s.logger.Debugf("no matching user: %q", username)
 		return nil, nil, s.invalidInput, err
@@ -134,7 +136,11 @@ func (s *Server) fetchLoginDataFromRequest(req *http.Request) (*models.UserLogin
 	return loginInput, user, nil, nil
 }
 
-func (s *Server) validateLogin(user *models.User, loginInput *models.UserLoginInput) (bool, ErrorNotifier, error) {
+func (s *Server) validateLogin(
+	ctx context.Context,
+	user *models.User,
+	loginInput *models.UserLoginInput,
+) (bool, ErrorNotifier, error) {
 	loginValid, err := s.authenticator.ValidateLogin(
 		user.HashedPassword,
 		loginInput.Password,
@@ -148,7 +154,7 @@ func (s *Server) validateLogin(user *models.User, loginInput *models.UserLoginIn
 			return false, s.internalServerError, e
 		}
 		user.HashedPassword = updated
-		if err := s.db.UpdateUser(user); err != nil {
+		if err := s.db.UpdateUser(ctx, user); err != nil {
 			return false, s.internalServerError, err
 		}
 	} else if err != nil {

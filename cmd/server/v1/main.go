@@ -8,23 +8,48 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
-	secure        = false
-	dbFile        = "example.db"
-	schemaDir     = "database/v1/sqlite/schema"
-	certFile      = "certs/cert.pem"
-	keyFile       = "certs/key.pem"
+	secure = false
+
+	sqliteSchemaDir         = "database/v1/sqlite/schema"
+	sqliteConnectionDetails = "example.db"
+
+	postgresSchemaDir         = "database/v1/postgres/schema"
+	postgresConnectionDetails = "postgres://todo:hunter2@database:5432/todo?sslmode=disable"
+
+	certFile = "certs/cert.pem"
+	keyFile  = "certs/key.pem"
+
 	localCertFile = "dev_files/certs/server/cert.pem"
 	localKeyFile  = "dev_files/certs/server/key.pem"
-	cookieSecret  = "HEREISA32CHARSECRETWHICHISMADEUP"
+
+	cookieSecret = "HEREISA32CHARSECRETWHICHISMADEUP"
 )
 
 var (
 	certToUse, keyToUse string
 	debug               bool
 )
+
+func buildLogger(debug bool) *logrus.Logger {
+	logger := logrus.New()
+	if debug {
+		logger.SetLevel(logrus.DebugLevel)
+	}
+
+	logger.SetFormatter(&logrus.JSONFormatter{
+		DataKey:     "meta",
+		PrettyPrint: true,
+	})
+
+	logger.SetReportCaller(true)
+
+	return logger
+}
 
 func init() {
 	debug = strings.ToLower(os.Getenv("DOCKER")) == "true"
@@ -41,15 +66,15 @@ func init() {
 
 func main() {
 	server, err := BuildServer(
-		database.ConnectionDetails(dbFile),
-		schemaDir,
+		database.ConnectionDetails(sqliteConnectionDetails),
+		sqliteSchemaDir,
 		server.CertPair{
 			CertFile: certToUse,
 			KeyFile:  keyToUse,
 		},
 		users.CookieName("todo"),
 		[]byte(cookieSecret),
-		true,
+		debug,
 	)
 
 	if err != nil {

@@ -14,66 +14,93 @@ const itemsBasePath = "items"
 
 // GetItem gets an item
 func (c *V1Client) GetItem(ctx context.Context, id uint64) (item *models.Item, err error) {
+	logger := c.logger.WithField("id", id)
+	logger.Debugln("GetItem called")
+
 	var span opentracing.Span // If I don't set this value here, then ctx gets over
 	span, ctx = opentracing.StartSpanFromContext(ctx, "GetItem")
 	span.SetTag("itemID", id)
 	defer span.Finish()
 
 	uri := c.BuildURL(nil, itemsBasePath, strconv.FormatUint(id, 10))
-	return item, c.get(ctx, uri, &item)
+	err = c.get(ctx, uri, &item)
+	return item, err
 }
 
 // GetItemCount an item
 func (c *V1Client) GetItemCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
+	logger := c.logger.WithField("filter", filter)
+	logger.Debugln("GetItemCount called")
+
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetItemCount")
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	x := models.CountResponse{}
 	uri := c.BuildURL(filter.ToValues(), itemsBasePath, "count")
-	return x.Count, c.get(ctx, uri, &x)
+	err := c.get(ctx, uri, &x)
+	return x.Count, err
 }
 
 // GetItems gets a list of items
 func (c *V1Client) GetItems(ctx context.Context, filter *models.QueryFilter) (items *models.ItemList, err error) {
+	logger := c.logger.WithField("filter", filter)
+	logger.Debugln("GetItems called")
+
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetItems")
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	uri := c.BuildURL(filter.ToValues(), itemsBasePath)
-	return items, c.get(ctx, uri, &items)
+	err = c.get(ctx, uri, &items)
+	return items, err
 }
 
 // CreateItem creates an item
 func (c *V1Client) CreateItem(ctx context.Context, input *models.ItemInput) (item *models.Item, err error) {
+	logger := c.logger.WithFields(map[string]interface{}{
+		"input_name":    input.Name,
+		"input_details": input.Details,
+	})
+	logger.Debugln("CreateItem called")
+
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "CreateItem")
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	uri := c.BuildURL(nil, itemsBasePath)
-	return item, c.post(ctx, uri, input, &item)
+	err = c.post(ctx, uri, input, &item)
+	return item, err
 }
 
 // UpdateItem updates an item
-func (c *V1Client) UpdateItem(ctx context.Context, updated *models.Item) (err error) {
+func (c *V1Client) UpdateItem(ctx context.Context, updated *models.Item) error {
+	logger := c.logger.WithField("id", updated.ID)
+	logger.Debugln("UpdateItem called")
+
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "UpdateItem")
 	span.SetTag("itemID", updated.ID)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	uri := c.BuildURL(nil, itemsBasePath, strconv.FormatUint(updated.ID, 10))
-	return c.put(ctx, uri, updated, &updated)
+	err := c.put(ctx, uri, updated, &updated)
+	return err
 }
 
 // DeleteItem deletes an item
 func (c *V1Client) DeleteItem(ctx context.Context, id uint64) error {
+	logger := c.logger.WithField("id", id)
+	logger.Debugln("DeleteItem called")
+
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "DeleteItem")
 	span.SetTag("itemID", id)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	uri := c.BuildURL(nil, itemsBasePath, strconv.FormatUint(id, 10))
-	return c.delete(ctx, uri)
+	err := c.delete(ctx, uri)
+	return err
 }
 
 // func (c *V1Client) buildItemsFeed(conn *websocket.Conn, itemChan chan models.Item) {

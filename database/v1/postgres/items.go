@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
@@ -100,6 +101,11 @@ func scanItem(scan database.Scannable) (*models.Item, error) {
 
 // GetItem fetches an item from the postgres database
 func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetItem")
+	span.SetTag("item_id", itemID)
+	span.SetTag("user_id", userID)
+	defer span.Finish()
+
 	p.logger.WithFields(map[string]interface{}{
 		"item_id": itemID,
 		"user_id": userID,
@@ -112,6 +118,9 @@ func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*models.
 
 // GetItemCount fetches the count of items from the postgres database that meet a particular filter
 func (p *Postgres) GetItemCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetItemCount")
+	defer span.Finish()
+
 	p.logger.WithField("filter", filter).Debugln("GetItemCount called")
 
 	err = p.database.QueryRow(getItemCountQuery).Scan(&count)
@@ -120,6 +129,9 @@ func (p *Postgres) GetItemCount(ctx context.Context, filter *models.QueryFilter)
 
 // GetItems fetches a list of items from the postgres database that meet a particular filter
 func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter) (*models.ItemList, error) {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetItems")
+	defer span.Finish()
+
 	p.logger.WithField("filter", filter).Debugln("GetItems called")
 
 	if filter == nil {
@@ -166,6 +178,9 @@ func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter) (*m
 
 // CreateItem creates an item in a postgres database
 func (p *Postgres) CreateItem(ctx context.Context, input *models.ItemInput) (*models.Item, error) {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "CreateItem")
+	defer span.Finish()
+
 	p.logger.WithField("input", input).Debugln("CreateItem called")
 
 	i := &models.Item{
@@ -189,6 +204,9 @@ func (p *Postgres) CreateItem(ctx context.Context, input *models.ItemInput) (*mo
 
 // UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
 func (p *Postgres) UpdateItem(ctx context.Context, input *models.Item) error {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "UpdateItem")
+	defer span.Finish()
+
 	p.logger.WithField("input", input).Debugln("UpdateItem called")
 
 	// update the item
@@ -201,6 +219,9 @@ func (p *Postgres) UpdateItem(ctx context.Context, input *models.Item) error {
 
 // DeleteItem deletes an item from the database by its ID
 func (p *Postgres) DeleteItem(ctx context.Context, id uint64) error {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "DeleteItem")
+	defer span.Finish()
+
 	p.logger.WithField("id", id).Debugln("DeleteItem called")
 
 	_, err := p.database.Exec(archiveItemQuery, id)

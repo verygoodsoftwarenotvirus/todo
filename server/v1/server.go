@@ -82,6 +82,7 @@ var (
 		ProvideServer,
 		ProvideServerTracer,
 		ProvideOAuth2Server,
+		ProvideItemIDFetcher,
 	)
 )
 

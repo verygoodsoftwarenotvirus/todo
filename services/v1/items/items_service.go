@@ -28,7 +28,8 @@ type (
 		db            database.Database
 		upgrader      websocket.Upgrader
 		tracer        opentracing.Tracer
-		userIDFetcher func(*http.Request) uint64
+		userIDFetcher UserIDFetcher
+		itemIDFetcher ItemIDFetcher
 	}
 )
 
@@ -48,14 +49,18 @@ func ProvideItemsServiceTracer() (ServiceTracer, error) {
 // UserIDFetcher is a function that fetches user IDs
 type UserIDFetcher func(*http.Request) uint64
 
-// ProvideItemsService builds a new ItemsService
-func ProvideItemsService(logger *logrus.Logger, db database.Database, userIDFetcher UserIDFetcher, tracer ServiceTracer) *Service {
+// ItemIDFetcher is a function that fetches item IDs
+type ItemIDFetcher func(*http.Request) uint64
 
-	return &Service{
+// ProvideItemsService builds a new ItemsService
+func ProvideItemsService(logger *logrus.Logger, db database.Database, userIDFetcher UserIDFetcher, itemIDFetcher ItemIDFetcher, tracer ServiceTracer) *Service {
+	svc := &Service{
 		logger:        logger,
 		db:            db,
 		tracer:        tracer,
 		userIDFetcher: userIDFetcher,
+		itemIDFetcher: itemIDFetcher,
 		upgrader:      websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024},
 	}
+	return svc
 }

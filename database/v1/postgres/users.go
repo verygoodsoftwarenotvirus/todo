@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
@@ -134,6 +135,9 @@ func scanUser(scan database.Scannable) (*models.User, error) {
 
 // GetUser fetches a user by their username
 func (p *Postgres) GetUser(ctx context.Context, username string) (*models.User, error) {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetUser")
+	defer span.Finish()
+
 	p.logger.WithField("username", username).Debugln("GetUser called")
 	u, err := scanUser(p.database.QueryRow(getUserQuery, username))
 	return u, err
@@ -141,6 +145,9 @@ func (p *Postgres) GetUser(ctx context.Context, username string) (*models.User, 
 
 // GetUserCount fetches a count of users from the postgres database that meet a particular filter
 func (p *Postgres) GetUserCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetUserCount")
+	defer span.Finish()
+
 	p.logger.WithField("filter", filter).Debugln("GetUserCount called")
 	err = p.database.QueryRow(getUserCountQuery).Scan(&count)
 	return
@@ -148,6 +155,9 @@ func (p *Postgres) GetUserCount(ctx context.Context, filter *models.QueryFilter)
 
 // GetUsers fetches a list of users from the postgres database that meet a particular filter
 func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetUsers")
+	defer span.Finish()
+
 	p.logger.WithField("filter", filter).Debugln("GetUsers called")
 
 	if filter == nil {
@@ -192,6 +202,9 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 
 // CreateUser creates a user
 func (p *Postgres) CreateUser(ctx context.Context, input *models.UserInput) (*models.User, error) {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "CreateUser")
+	defer span.Finish()
+
 	p.logger.WithFields(map[string]interface{}{
 		"username": input.Username,
 		"is_admin": input.IsAdmin,
@@ -221,6 +234,9 @@ func (p *Postgres) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 // UpdateUser receives a complete User struct and updates its place in the database.
 // NOTE this function uses the ID provided in the input to make its query.
 func (p *Postgres) UpdateUser(ctx context.Context, input *models.User) error {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "UpdateUser")
+	defer span.Finish()
+
 	p.logger.WithFields(map[string]interface{}{
 		"username": input.Username,
 		"is_admin": input.IsAdmin,
@@ -238,6 +254,9 @@ func (p *Postgres) UpdateUser(ctx context.Context, input *models.User) error {
 
 // DeleteUser deletes a user by their username
 func (p *Postgres) DeleteUser(ctx context.Context, username string) error {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "DeleteUser")
+	defer span.Finish()
+
 	p.logger.WithField("username", username).Debugln("DeleteUser called")
 	_, err := p.database.Exec(archiveUserQuery, username)
 	return err

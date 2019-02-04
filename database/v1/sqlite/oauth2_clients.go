@@ -7,6 +7,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
@@ -101,6 +102,9 @@ var _ models.OAuth2ClientHandler = (*Sqlite)(nil)
 
 // GetOAuth2Client gets an OAuth2 client
 func (s *Sqlite) GetOAuth2Client(ctx context.Context, clientID string) (*models.OAuth2Client, error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetOAuth2Client")
+	defer span.Finish()
+
 	s.logger.Debugf("GetOAuth2Client called for %s", clientID)
 	row := s.database.QueryRow(getOAuth2ClientByClientIDQuery, clientID)
 	return scanOAuth2Client(row)
@@ -108,6 +112,9 @@ func (s *Sqlite) GetOAuth2Client(ctx context.Context, clientID string) (*models.
 
 // GetOAuth2ClientCount gets the count of OAuth2 clients that match the current filter
 func (s *Sqlite) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetOAuth2ClientCount")
+	defer span.Finish()
+
 	var count uint64
 	err := s.database.QueryRow(getOAuth2ClientCountQuery).Scan(&count)
 	return count, err
@@ -115,6 +122,9 @@ func (s *Sqlite) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryF
 
 // GetOAuth2Clients gets a list of OAuth2 clients
 func (s *Sqlite) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetOAuth2Clients")
+	defer span.Finish()
+
 	if filter == nil {
 		s.logger.Debugln("using default query filter")
 		filter = models.DefaultQueryFilter
@@ -159,6 +169,9 @@ func (s *Sqlite) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilte
 
 // CreateOAuth2Client creates an OAuth2 client
 func (s *Sqlite) CreateOAuth2Client(ctx context.Context, input *models.OAuth2ClientCreationInput) (x *models.OAuth2Client, err error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "CreateOAuth2Client")
+	defer span.Finish()
+
 	s.logger.Debugln("CreateOAuth2Client called.")
 
 	x = &models.OAuth2Client{
@@ -222,6 +235,9 @@ func (s *Sqlite) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 // UpdateOAuth2Client updates a OAuth2 client. Note that this function expects the input's
 // ID field to be valid.
 func (s *Sqlite) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2Client) (err error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "UpdateOAuth2Client")
+	defer span.Finish()
+
 	tx, err := s.database.Begin()
 	if err != nil {
 		return
@@ -258,6 +274,9 @@ func (s *Sqlite) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 
 // DeleteOAuth2Client deletes an OAuth2 client
 func (s *Sqlite) DeleteOAuth2Client(ctx context.Context, id string) error {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "DeleteOAuth2Client")
+	defer span.Finish()
+
 	_, err := s.database.Exec(archiveOAuth2ClientQuery, id)
 	return err
 }

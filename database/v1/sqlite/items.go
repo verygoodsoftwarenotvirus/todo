@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
@@ -78,6 +79,9 @@ func scanItem(scan database.Scannable) (*models.Item, error) {
 
 // GetItem fetches an item from the sqlite database
 func (s *Sqlite) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetItem")
+	defer span.Finish()
+
 	row := s.database.QueryRow(getItemQuery, itemID, userID)
 	i, err := scanItem(row)
 	return i, err
@@ -85,6 +89,9 @@ func (s *Sqlite) GetItem(ctx context.Context, itemID, userID uint64) (*models.It
 
 // GetItemCount fetches the count of items from the sqlite database that meet a particular filter
 func (s *Sqlite) GetItemCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetItemCount")
+	defer span.Finish()
+
 	var count uint64
 	err := s.database.QueryRow(getItemCountQuery).Scan(&count)
 	return count, err
@@ -92,6 +99,9 @@ func (s *Sqlite) GetItemCount(ctx context.Context, filter *models.QueryFilter) (
 
 // GetItems fetches a list of items from the sqlite database that meet a particular filter
 func (s *Sqlite) GetItems(ctx context.Context, filter *models.QueryFilter) (*models.ItemList, error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetItems")
+	defer span.Finish()
+
 	if filter == nil {
 		s.logger.Debugln("using default query filter")
 		filter = models.DefaultQueryFilter
@@ -138,6 +148,9 @@ func (s *Sqlite) GetItems(ctx context.Context, filter *models.QueryFilter) (*mod
 
 // CreateItem creates an item in a sqlite database
 func (s *Sqlite) CreateItem(ctx context.Context, input *models.ItemInput) (i *models.Item, err error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "CreateItem")
+	defer span.Finish()
+
 	tx, err := s.database.Begin()
 	if err != nil {
 		s.logger.Errorf("error beginning database connection: %v", err)
@@ -179,6 +192,9 @@ func (s *Sqlite) CreateItem(ctx context.Context, input *models.ItemInput) (i *mo
 
 // UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
 func (s *Sqlite) UpdateItem(ctx context.Context, input *models.Item) (err error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "UpdateItem")
+	defer span.Finish()
+
 	tx, err := s.database.Begin()
 	if err != nil {
 		return
@@ -209,6 +225,9 @@ func (s *Sqlite) UpdateItem(ctx context.Context, input *models.Item) (err error)
 
 // DeleteItem deletes an item from the database by its ID
 func (s *Sqlite) DeleteItem(ctx context.Context, id uint64) error {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "DeleteItem")
+	defer span.Finish()
+
 	_, err := s.database.Exec(archiveItemQuery, id)
 	return err
 }

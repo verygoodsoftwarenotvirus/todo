@@ -1,6 +1,7 @@
 module gitlab.com/verygoodsoftwarenotvirus/todo
 
 require (
+	github.com/GuiaBolso/darwin v0.0.0-20170210191649-86919dfcf808
 	github.com/Masterminds/squirrel v1.1.0
 	github.com/VividCortex/gohistogram v1.0.0 // indirect
 	github.com/boombuler/barcode v1.0.0 // indirect

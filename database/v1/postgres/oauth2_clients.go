@@ -7,6 +7,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
@@ -120,6 +121,9 @@ var _ models.OAuth2ClientHandler = (*Postgres)(nil)
 
 // GetOAuth2Client gets an OAuth2 client
 func (p *Postgres) GetOAuth2Client(ctx context.Context, clientID string) (*models.OAuth2Client, error) {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetOAuth2Client")
+	defer span.Finish()
+
 	logger := p.logger.WithField("oauth2_client_id", clientID)
 	logger.Debugln("Postgres.GetOAuth2Client called")
 
@@ -143,6 +147,9 @@ func (p *Postgres) GetOAuth2Client(ctx context.Context, clientID string) (*model
 
 // GetOAuth2ClientCount gets the count of OAuth2 clients that match the current filter
 func (p *Postgres) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetOAuth2ClientCount")
+	defer span.Finish()
+
 	logger := p.logger.WithField("filter", filter)
 	logger.Debugln("Postgres.GetOAuth2ClientCount called")
 
@@ -159,6 +166,9 @@ func (p *Postgres) GetOAuth2ClientCount(ctx context.Context, filter *models.Quer
 
 // GetOAuth2Clients gets a list of OAuth2 clients
 func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetOAuth2Clients")
+	defer span.Finish()
+
 	logger := p.logger.WithField("filter", filter)
 	logger.Debugln("Postgres.GetOAuth2Clients called")
 
@@ -215,6 +225,9 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 
 // CreateOAuth2Client creates an OAuth2 client
 func (p *Postgres) CreateOAuth2Client(ctx context.Context, input *models.OAuth2ClientCreationInput) (*models.OAuth2Client, error) {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "CreateOAuth2Client")
+	defer span.Finish()
+
 	logger := p.logger.WithFields(map[string]interface{}{
 		"redirect_uri": input.RedirectURI,
 		"scopes":       input.Scopes,
@@ -265,6 +278,9 @@ func (p *Postgres) CreateOAuth2Client(ctx context.Context, input *models.OAuth2C
 // UpdateOAuth2Client updates a OAuth2 client. Note that this function expects the input's
 // ID field to be valid.
 func (p *Postgres) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2Client) error {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "UpdateOAuth2Client")
+	defer span.Finish()
+
 	logger := p.logger.WithFields(map[string]interface{}{
 		"redirect_uri": input.RedirectURI,
 		"scopes":       input.Scopes,
@@ -295,6 +311,9 @@ func (p *Postgres) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2C
 
 // DeleteOAuth2Client deletes an OAuth2 client
 func (p *Postgres) DeleteOAuth2Client(ctx context.Context, id string) error {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "DeleteOAuth2Client")
+	defer span.Finish()
+
 	logger := p.logger.WithField("id", id)
 	logger.Debugln("Postgres.DeleteOAuth2Client called")
 

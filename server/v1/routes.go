@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	// "gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
@@ -70,6 +71,7 @@ func (s *Server) setupRoutes() {
 	s.router.Use(
 		gcontext.ClearHandler,
 		middleware.RequestID,
+		// middleware.RequestLogger(logging.ProvideLogFormatter()),
 		middleware.DefaultLogger,
 		middleware.Timeout(maxTimeout),
 		s.buildTracingMiddleware(),
@@ -129,12 +131,12 @@ func (s *Server) setupRoutes() {
 
 				v1Router.Route("/items", func(itemsRouter chi.Router) {
 					sr := fmt.Sprintf("/{%s:[0-9]+}", items.URIParamKey)
-					itemsRouter.Get("/", s.itemsService.List)                                   // List
-					itemsRouter.Get("/count", s.itemsService.Count)                             // Count
-					itemsRouter.Get(sr, s.itemsService.BuildReadHandler(chiItemIDFetcher))      // Read
-					itemsRouter.Delete(sr, s.itemsService.BuildDeleteHandler(chiItemIDFetcher)) // Delete
+					itemsRouter.Get("/", s.itemsService.List)       // List
+					itemsRouter.Get("/count", s.itemsService.Count) // Count
+					itemsRouter.Get(sr, s.itemsService.Read)        // Read
+					itemsRouter.Delete(sr, s.itemsService.Delete)   // Delete
 					itemsRouter.With(s.itemsService.ItemInputMiddleware).
-						Put(sr, s.itemsService.BuildUpdateHandler(chiItemIDFetcher)) // Update
+						Put(sr, s.itemsService.Update) // Update
 					itemsRouter.With(s.itemsService.ItemInputMiddleware).
 						Post("/", s.itemsService.Create) // Create
 				})

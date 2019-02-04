@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
@@ -111,16 +112,25 @@ func scanUser(scan database.Scannable) (*models.User, error) {
 
 // GetUser fetches a user by their username
 func (s *Sqlite) GetUser(ctx context.Context, username string) (*models.User, error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetUser")
+	defer span.Finish()
+
 	return scanUser(s.database.QueryRow(getUserQuery, username))
 }
 
 // GetUserCount fetches a count of users from the sqlite database that meet a particular filter
 func (s *Sqlite) GetUserCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetUserCount")
+	defer span.Finish()
+
 	return count, s.database.QueryRow(getUserCountQuery).Scan(&count)
 }
 
 // GetUsers fetches a list of users from the sqlite database that meet a particular filter
 func (s *Sqlite) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetUsers")
+	defer span.Finish()
+
 	if filter == nil {
 		s.logger.Debugln("using default query filter")
 		filter = models.DefaultQueryFilter
@@ -164,6 +174,9 @@ func (s *Sqlite) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mod
 
 // CreateUser creates a user
 func (s *Sqlite) CreateUser(ctx context.Context, input *models.UserInput) (x *models.User, err error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "CreateUser")
+	defer span.Finish()
+
 	s.logger.Debugf("CreateUser called for %s", input.Username)
 
 	tx, err := s.database.Begin()
@@ -207,6 +220,9 @@ func (s *Sqlite) CreateUser(ctx context.Context, input *models.UserInput) (x *mo
 
 // UpdateUser updates a user. Note that this function expects the provided user to have a valid ID.
 func (s *Sqlite) UpdateUser(ctx context.Context, input *models.User) (err error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "UpdateUser")
+	defer span.Finish()
+
 	tx, err := s.database.Begin()
 	if err != nil {
 		return
@@ -237,6 +253,9 @@ func (s *Sqlite) UpdateUser(ctx context.Context, input *models.User) (err error)
 
 // DeleteUser deletes a user by their username
 func (s *Sqlite) DeleteUser(ctx context.Context, username string) error {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "DeleteUser")
+	defer span.Finish()
+
 	_, err := s.database.Exec(archiveUserQuery, username)
 	return err
 }

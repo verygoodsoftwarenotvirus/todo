@@ -1,3 +1,5 @@
+# github.com/GuiaBolso/darwin v0.0.0-20170210191649-86919dfcf808
+github.com/GuiaBolso/darwin
 # github.com/Masterminds/squirrel v1.1.0
 github.com/Masterminds/squirrel
 # github.com/VividCortex/gohistogram v1.0.0

@@ -17,6 +17,11 @@ func ProvideUserIDFetcher() items.UserIDFetcher {
 	return UserIDFetcher
 }
 
+// ProvideItemIDFetcher provides an ItemIDFetcher
+func ProvideItemIDFetcher() items.ItemIDFetcher {
+	return chiItemIDFetcher
+}
+
 // ProvideUsernameFetcher provides a UsernameFetcher
 func ProvideUsernameFetcher() users.UsernameFetcher {
 	return ChiUsernameFetcher
@@ -30,8 +35,6 @@ func UserIDFetcher(req *http.Request) uint64 {
 
 // ChiUsernameFetcher fetches a username from a request routed by chi.
 func ChiUsernameFetcher(req *http.Request) string {
-	// PONDER: if the only time we use users.URIParamKey is externally to the users package
-	// does it really need to belong there?
 	return chi.URLParam(req, users.URIParamKey)
 }
 

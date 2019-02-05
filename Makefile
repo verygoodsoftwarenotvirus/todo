@@ -36,7 +36,7 @@ wire:
 	wire gen gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
 
 .PHONY: prerequisites
-prerequisites: dev-tools
+prerequisites:
 	$(MAKE) vendor $(SERVER_PRIV_KEY) $(SERVER_CERT_KEY) $(CLIENT_PRIV_KEY) $(CLIENT_CERT_KEY)
 
 dev_files/certs/client/key.pem dev_files/certs/client/cert.pem:

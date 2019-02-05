@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strings"
 
@@ -107,6 +108,10 @@ func (c *V1Client) Login(ctx context.Context, username, password, TOTPToken stri
 	if err != nil {
 		return nil, errors.Wrap(err, "encountered error executing request")
 	}
+
+	b, _ := httputil.DumpResponse(res, true)
+	logger.WithField("response", string(b)).Debugln()
+
 	cookies := res.Cookies()
 	if len(cookies) > 0 {
 		return cookies[0], nil

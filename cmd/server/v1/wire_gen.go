@@ -43,7 +43,8 @@ func BuildServer(connectionDetails database.ConnectionDetails, SchemaDirectory d
 	}
 	usersService := users.ProvideUsersService(CookieName, logger, databaseDatabase, enticator, usernameFetcher, usersTracer)
 	clientStore := server.ProvideClientStore()
-	tokenStore, err := server.ProvideTokenStore()
+	manager := manage.NewDefaultManager()
+	tokenStore, err := server.ProvideTokenStore(manager)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +57,6 @@ func BuildServer(connectionDetails database.ConnectionDetails, SchemaDirectory d
 	if err != nil {
 		return nil, err
 	}
-	manager := manage.NewDefaultManager()
 	serverServer := server.ProvideOAuth2Server(manager, tokenStore, clientStore)
 	server2, err := server.ProvideServer(Debug, CertPair, CookieSecret, enticator, SchemaDirectory, service, usersService, oauth2clientsService, databaseDatabase, logger, serverTracer, serverServer, tokenStore, clientStore)
 	if err != nil {

@@ -2,9 +2,9 @@ package integration
 
 import (
 	"context"
+	"strconv"
 	"testing"
 	"time"
-	// "strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
@@ -57,131 +57,130 @@ func checkOAuth2ClientEquality(t *testing.T, expected *models.OAuth2ClientCreati
 	assert.Nil(t, actual.ArchivedOn)
 }
 
-// FIXME:
-// func TestOAuth2Clients(test *testing.T) {
-// 	test.Parallel()
+func TestOAuth2Clients(test *testing.T) {
+	test.Parallel()
 
-// 	// create user
-// 	x, y, c := buildDummyUser(context.Background(), test)
-// 	assert.NotNil(test, c)
+	// create user
+	x, y, c := buildDummyUser(context.Background(), test)
+	assert.NotNil(test, c)
 
-// 	test.Run("Creating", func(T *testing.T) {
-// 		T.Run("should be creatable", func(t *testing.T) {
-// 			tctx := buildSpanContext("create-oauth2-client")
+	test.Run("Creating", func(T *testing.T) {
+		T.Run("should be creatable", func(t *testing.T) {
+			tctx := buildSpanContext("create-oauth2-client")
 
-// 			// Create oauth2Client
-// 			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
-// 			actual, err := todoClient.CreateOAuth2Client(tctx, input)
-// 			checkValueAndError(t, actual, err)
+			// Create oauth2Client
+			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
+			actual, err := todoClient.CreateOAuth2Client(tctx, input)
+			checkValueAndError(t, actual, err)
 
-// 			// Assert oauth2Client equality
-// 			checkOAuth2ClientEquality(t, input, actual)
+			// Assert oauth2Client equality
+			checkOAuth2ClientEquality(t, input, actual)
 
-// 			// Clean up
-// 			err = todoClient.DeleteOAuth2Client(tctx, actual.ID)
-// 			assert.NoError(t, err)
-// 		})
-// 	})
+			// Clean up
+			err = todoClient.DeleteOAuth2Client(tctx, actual.ID)
+			assert.NoError(t, err)
+		})
+	})
 
-// 	test.Run("Reading", func(T *testing.T) {
-// 		T.Run("it should return an error when trying to read one that doesn't exist", func(t *testing.T) {
-// 			tctx := buildSpanContext("try-to-read-nonexistent-oauth2-client")
+	test.Run("Reading", func(T *testing.T) {
+		T.Run("it should return an error when trying to read one that doesn't exist", func(t *testing.T) {
+			tctx := buildSpanContext("try-to-read-nonexistent-oauth2-client")
 
-// 			// Fetch oauth2Client
-// 			_, err := todoClient.GetOAuth2Client(tctx, strconv.Itoa(nonexistentID))
-// 			assert.Error(t, err)
-// 		})
+			// Fetch oauth2Client
+			_, err := todoClient.GetOAuth2Client(tctx, strconv.Itoa(nonexistentID))
+			assert.Error(t, err)
+		})
 
-// 		T.Run("it should be readable", func(t *testing.T) {
-// 			tctx := buildSpanContext("read-oauth2-client")
+		T.Run("it should be readable", func(t *testing.T) {
+			tctx := buildSpanContext("read-oauth2-client")
 
-// 			// Create oauth2Client
-// 			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
-// 			premade, err := todoClient.CreateOAuth2Client(tctx, input)
-// 			checkValueAndError(t, premade, err)
+			// Create oauth2Client
+			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
+			premade, err := todoClient.CreateOAuth2Client(tctx, input)
+			checkValueAndError(t, premade, err)
 
-// 			// Fetch oauth2Client
-// 			actual, err := todoClient.GetOAuth2Client(tctx, premade.ClientID)
-// 			assert.NoError(t, err)
+			// Fetch oauth2Client
+			actual, err := todoClient.GetOAuth2Client(tctx, premade.ClientID)
+			assert.NoError(t, err)
 
-// 			// Assert oauth2Client equality
-// 			checkOAuth2ClientEquality(t, input, actual)
+			// Assert oauth2Client equality
+			checkOAuth2ClientEquality(t, input, actual)
 
-// 			// Clean up
-// 			err = todoClient.DeleteOAuth2Client(tctx, actual.ID)
-// 			assert.NoError(t, err)
-// 		})
-// 	})
+			// Clean up
+			err = todoClient.DeleteOAuth2Client(tctx, actual.ID)
+			assert.NoError(t, err)
+		})
+	})
 
-// 	test.Run("Updating", func(T *testing.T) {
-// 		T.Run("it should be updatable", func(t *testing.T) {
-// 			// tctx := buildSpanContext("CHANGEME")
+	test.Run("Updating", func(T *testing.T) {
+		T.Run("it should be updatable", func(t *testing.T) {
+			// tctx := buildSpanContext("CHANGEME")
 
-// 			t.SkipNow()
-// 		})
-// 	})
+			t.SkipNow()
+		})
+	})
 
-// 	test.Run("Deleting", func(T *testing.T) {
-// 		T.Run("should be able to be deleted", func(t *testing.T) {
-// 			tctx := buildSpanContext("delete-oauth2-client")
+	test.Run("Deleting", func(T *testing.T) {
+		T.Run("should be able to be deleted", func(t *testing.T) {
+			tctx := buildSpanContext("delete-oauth2-client")
 
-// 			// Create oauth2Client
-// 			premade := buildDummyOAuth2Client(tctx, t, x.Username, y.Password, x.TwoFactorSecret)
+			// Create oauth2Client
+			premade := buildDummyOAuth2Client(tctx, t, x.Username, y.Password, x.TwoFactorSecret)
 
-// 			// Clean up
-// 			err := todoClient.DeleteOAuth2Client(tctx, premade.ID)
-// 			assert.NoError(t, err)
-// 		})
+			// Clean up
+			err := todoClient.DeleteOAuth2Client(tctx, premade.ID)
+			assert.NoError(t, err)
+		})
 
-// 		T.Run("should be unable to authorize after being deleted", func(t *testing.T) {
-// 			// tctx := context.Background()
+		T.Run("should be unable to authorize after being deleted", func(t *testing.T) {
+			// tctx := context.Background()
 
-// 			t.SkipNow()
-// 		})
-// 	})
+			t.SkipNow()
+		})
+	})
 
-// 	test.Run("Listing", func(T *testing.T) {
-// 		T.Run("should be able to be read in a list", func(t *testing.T) {
-// 			tctx := buildSpanContext("list-oauth2-clients")
+	test.Run("Listing", func(T *testing.T) {
+		T.Run("should be able to be read in a list", func(t *testing.T) {
+			tctx := buildSpanContext("list-oauth2-clients")
 
-// 			// Create oauth2Clients
-// 			expected := []*models.OAuth2Client{}
-// 			for i := 0; i < 5; i++ {
-// 				expected = append(expected, buildDummyOAuth2Client(tctx, t, x.Username, y.Password, x.TwoFactorSecret))
-// 			}
+			// Create oauth2Clients
+			expected := []*models.OAuth2Client{}
+			for i := 0; i < 5; i++ {
+				expected = append(expected, buildDummyOAuth2Client(tctx, t, x.Username, y.Password, x.TwoFactorSecret))
+			}
 
-// 			// Assert oauth2Client list equality
-// 			actual, err := todoClient.GetOAuth2Clients(tctx, nil)
-// 			checkValueAndError(t, actual, err)
-// 			assert.True(t, len(expected) <= len(actual.Clients))
+			// Assert oauth2Client list equality
+			actual, err := todoClient.GetOAuth2Clients(tctx, nil)
+			checkValueAndError(t, actual, err)
+			assert.True(t, len(expected) <= len(actual.Clients))
 
-// 			// Clean up
-// 			for _, oauth2Client := range actual.Clients {
-// 				err := todoClient.DeleteOAuth2Client(tctx, oauth2Client.ID)
-// 				assert.NoError(t, err)
-// 			}
-// 		})
-// 	})
+			// Clean up
+			for _, oauth2Client := range actual.Clients {
+				err := todoClient.DeleteOAuth2Client(tctx, oauth2Client.ID)
+				assert.NoError(t, err)
+			}
+		})
+	})
 
-// 	test.Run("Counting", func(T *testing.T) {
-// 		T.Run("it should be able to be counted", func(t *testing.T) {
-// 			// tctx := buildSpanContext("CHANGEME")
+	test.Run("Counting", func(T *testing.T) {
+		T.Run("it should be able to be counted", func(t *testing.T) {
+			// tctx := buildSpanContext("CHANGEME")
 
-// 			t.SkipNow()
-// 		})
-// 	})
+			t.SkipNow()
+		})
+	})
 
-// 	test.Run("Using", func(T *testing.T) {
-// 		T.Run("should allow an authorized client to use the implicit grant type", func(t *testing.T) {
-// 			// tctx := buildSpanContext("CHANGEME")
+	test.Run("Using", func(T *testing.T) {
+		T.Run("should allow an authorized client to use the implicit grant type", func(t *testing.T) {
+			// tctx := buildSpanContext("CHANGEME")
 
-// 			t.SkipNow()
-// 		})
+			t.SkipNow()
+		})
 
-// 		T.Run("should not allow an unauthorized client to use the implicit grant type", func(t *testing.T) {
-// 			// tctx := buildSpanContext("CHANGEME")
+		T.Run("should not allow an unauthorized client to use the implicit grant type", func(t *testing.T) {
+			// tctx := buildSpanContext("CHANGEME")
 
-// 			t.SkipNow()
-// 		})
-// 	})
-// }
+			t.SkipNow()
+		})
+	})
+}

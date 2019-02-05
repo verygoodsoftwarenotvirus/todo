@@ -6,13 +6,13 @@ import (
 	"reflect"
 	"strconv"
 	"testing"
-	"time"
+	// "time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	// "github.com/pquerna/otp/totp"
 	"github.com/bxcodec/faker"
-	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	// "github.com/stretchr/testify/require"
 )
@@ -39,14 +39,21 @@ func buildDummyUser(ctx context.Context, t *testing.T) (*models.UserCreationResp
 	// build user creation route input
 	y := buildDummyUserInput(t)
 	u, err := todoClient.CreateUser(ctx, y)
-	// require.NotNil(t, u)
+	assert.NotNil(t, u)
 	// require.NoError(t, err)
 
-	code, err := totp.GenerateCode(u.TwoFactorSecret, time.Now())
-	// require.NoError(t, err)
+	t.Logf("created dummy user #%d", u.ID)
+	// code, err := totp.GenerateCode(u.TwoFactorSecret, time.Now())
+	// assert.NoError(t, err)
+	// t.Logf("created 2FA code %q", code)
 	// require.NotEmpty(t, code)
 
-	cookie, err := todoClient.Login(ctx, u.Username, y.Password, code)
+	cookie := loginUser(t, u.Username, y.Password, u.TwoFactorSecret)
+
+	// cookie, err := todoClient.Login(ctx, u.Username, y.Password, code)
+	t.Logf("received cookie: %v", cookie != nil)
+	t.Logf("received error: %v", err != nil)
+
 	assert.NoError(t, err)
 	assert.NotNil(t, cookie)
 
@@ -142,9 +149,6 @@ func TestUsers(test *testing.T) {
 
 	test.Run("Updating", func(T *testing.T) {
 		T.Run("it should be updatable", func(t *testing.T) {
-			// tspan := opentracing.GlobalTracer().StartSpan("integration-tests-CHANGEME")
-			// tctx := opentracing.ContextWithSpan(context.Background(), tspan)
-
 			t.SkipNow()
 		})
 	})
@@ -154,14 +158,18 @@ func TestUsers(test *testing.T) {
 			tctx := buildSpanContext("delete-user")
 
 			// Create user
-			premade, _, c := buildDummyUser(tctx, t)
-			if c == nil || premade == nil {
-				t.Log("TestUsers something has gone awry")
+			y := buildDummyUserInput(t)
+			u, err := todoClient.CreateUser(tctx, y)
+			assert.NoError(t, err)
+			assert.NotNil(t, u)
+
+			if u == nil || err != nil {
+				t.Log("TestUsers something has gone awry, user returned is nil")
 				t.FailNow()
 			}
 
-			// Clean up
-			err := todoClient.DeleteUser(tctx, strconv.FormatUint(premade.ID, 10))
+			// Execute
+			err = todoClient.DeleteUser(tctx, strconv.FormatUint(u.ID, 10))
 			assert.NoError(t, err)
 		})
 	})
@@ -193,8 +201,6 @@ func TestUsers(test *testing.T) {
 
 	test.Run("Counting", func(T *testing.T) {
 		T.Run("it should be able to be counted", func(t *testing.T) {
-			// tctx := context.Background()
-
 			t.Skip()
 		})
 	})

@@ -23,6 +23,8 @@ import (
 )
 
 const (
+	debug = true
+
 	nonexistentID          = 999999999
 	localTestInstanceURL   = "https://localhost"
 	defaultTestInstanceURL = "https://demo-server"
@@ -76,7 +78,7 @@ func initializeClient() {
 		logger,
 		httpc,
 		tracer,
-		true,
+		debug,
 	)
 	if err != nil {
 		panic(err)

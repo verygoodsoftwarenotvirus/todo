@@ -18,10 +18,10 @@ const (
 	expectedTOTPSecret = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
 )
 
-func loginUser(t *testing.T, username string, password string) *http.Cookie {
+func loginUser(t *testing.T, username, password, totpSecret string) *http.Cookie {
 	loginURL := fmt.Sprintf("%s://%s/users/login", todoClient.URL.Scheme, todoClient.URL.Hostname())
 
-	code, err := totp.GenerateCode(strings.ToUpper(expectedTOTPSecret), time.Now())
+	code, err := totp.GenerateCode(strings.ToUpper(totpSecret), time.Now())
 	assert.NoError(t, err)
 
 	body := strings.NewReader(fmt.Sprintf(`
@@ -31,6 +31,7 @@ func loginUser(t *testing.T, username string, password string) *http.Cookie {
 			"totp_token": %q
 		}
 	`, username, password, code))
+
 	req, _ := http.NewRequest(http.MethodPost, loginURL, body)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

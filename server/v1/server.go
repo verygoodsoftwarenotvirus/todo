@@ -166,22 +166,19 @@ func (s *Server) SetDebug(debug bool) {
 func (s *Server) logRoutes(routes chi.Routes) {
 	if s.DebugMode {
 		for _, route := range routes.Routes() {
-			s.logRoute("", route)
+			rp := route.Pattern
+			s.logger.Debugln(rp)
+			if route.SubRoutes != nil {
+				for _, sr := range route.SubRoutes.Routes() {
+					s.logRoute(rp, sr)
+				}
+			}
 		}
 	}
 }
 
 func (s *Server) logRoute(prefix string, route chi.Route) {
-	rp := route.Pattern
-	if prefix != "" {
-		rp = prefix + rp
-	}
-	s.logger.Debugln(rp)
-	if route.SubRoutes != nil {
-		for _, sr := range route.SubRoutes.Routes() {
-			s.logRoute(rp, sr)
-		}
-	}
+
 }
 
 // Serve serves HTTP traffic

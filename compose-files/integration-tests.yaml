@@ -39,6 +39,11 @@ services:
       links:
         - database
         - tracing-server
+      logging:
+        driver: "json-file"
+        # log-opts:
+        #   max-size: "10m"
+        #   max-file: "1"
 
     integration-test:
       build:

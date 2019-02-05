@@ -32,8 +32,10 @@ var (
 )
 
 // ProvideTokenStore provides a token store for use with the server
-func ProvideTokenStore() (oauth2.TokenStore, error) {
-	return oauth2store.NewMemoryTokenStore()
+func ProvideTokenStore(manager *oauth2manage.Manager) (oauth2.TokenStore, error) {
+	tokenStore, err := oauth2store.NewMemoryTokenStore()
+	manager.MustTokenStorage(tokenStore, err)
+	return tokenStore, nil
 }
 
 // ProvideClientStore provides a client store for use with the server
@@ -43,7 +45,6 @@ func ProvideClientStore() *oauth2store.ClientStore {
 
 // ProvideOAuth2Server provides an oauth2server.Server that meets the server's specifications
 func ProvideOAuth2Server(manager *oauth2manage.Manager, tokenStore oauth2.TokenStore, clientStore *oauth2store.ClientStore) *oauth2server.Server {
-	manager.MustTokenStorage(tokenStore, nil)
 	manager.MapClientStorage(clientStore)
 
 	oauth2Handler := oauth2server.NewDefaultServer(manager)

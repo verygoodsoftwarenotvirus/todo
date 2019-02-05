@@ -8,7 +8,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration/v1/db_bootstrap"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/db_bootstrap"
 
 	"github.com/sirupsen/logrus"
 )

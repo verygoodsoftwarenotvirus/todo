@@ -42,8 +42,8 @@ func buildLogger(debug bool) *logrus.Logger {
 	}
 
 	logger.SetFormatter(&logrus.JSONFormatter{
-		DataKey:     "meta",
-		PrettyPrint: true,
+		DataKey: "meta",
+		// PrettyPrint: true,
 	})
 
 	logger.SetReportCaller(true)

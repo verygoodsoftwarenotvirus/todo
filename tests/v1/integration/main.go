@@ -4,8 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/postgres"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration/v1/db_bootstrap"
 	"log"
 	"net/http"
 	"os"
@@ -13,12 +11,15 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/postgres"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/db_bootstrap"
+
 	_ "github.com/lib/pq" // importing for database initialization
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 )
 
 const (

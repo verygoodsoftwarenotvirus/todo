@@ -59,6 +59,10 @@ test:
 	docker build --tag coverage-todo:latest --file dockerfiles/coverage.Dockerfile .
 	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` coverage-todo:latest
 
+.PHONY: ci-integration-tests
+ci-integration-tests: # literally the same as integration-tests, except without the wire prereq
+	docker-compose --file compose-files/integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
+
 .PHONY: integration-tests
 integration-tests: wire
 	docker-compose --file compose-files/integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit

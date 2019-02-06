@@ -8,8 +8,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
-
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -34,22 +32,6 @@ var (
 	certToUse, keyToUse string
 	debug               bool
 )
-
-func buildLogger(debug bool) *logrus.Logger {
-	logger := logrus.New()
-	if debug {
-		logger.SetLevel(logrus.DebugLevel)
-	}
-
-	logger.SetFormatter(&logrus.JSONFormatter{
-		DataKey: "meta",
-		// PrettyPrint: true,
-	})
-
-	logger.SetReportCaller(true)
-
-	return logger
-}
 
 func init() {
 	debug = strings.ToLower(os.Getenv("DOCKER")) == "true"

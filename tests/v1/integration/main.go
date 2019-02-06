@@ -13,6 +13,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/postgres"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/db_bootstrap"
 
@@ -76,6 +77,7 @@ func initializeClient() {
 		defaultTestInstanceClientID,
 		defaultTestInstanceClientSecret,
 		logger,
+		nil, // REPLACEME with actual logger
 		httpc,
 		tracer,
 		debug,
@@ -122,7 +124,13 @@ func init() {
 	if strings.ToLower(os.Getenv("DOCKER")) == "true" {
 		switch strings.ToLower(os.Getenv("DATABASE_TO_USE")) {
 		case "postgres":
-			db, err := postgres.ProvidePostgres(true, logrus.New(), opentracing.GlobalTracer(), dockerPostgresAddress)
+			db, err := postgres.ProvidePostgres(
+				true,
+				logrus.New(),
+				zerolog.ProvideLogger(zerolog.ProvideZerologger()),
+				opentracing.GlobalTracer(),
+				dockerPostgresAddress,
+			)
 			if err != nil {
 				log.Fatal(err)
 			}

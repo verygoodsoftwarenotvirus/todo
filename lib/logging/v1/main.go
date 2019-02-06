@@ -13,9 +13,14 @@ import (
 
 // Logger represents a simple logging interface we can build wrappers around.
 type Logger interface {
-	Infoln(...interface{})
-	Debugln(...interface{})
-	Errorln(...interface{})
+	Info(string)
+	Debug(string)
+	Error(string)
+
+	// Builder funcs
+	WithValues(map[string]interface{}) Logger
+	WithValue(string, interface{}) Logger
+	WithError(error) Logger
 }
 
 // LogFormatter formats logs for our chosen router, chi

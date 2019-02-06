@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	v1 "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/opentracing/opentracing-go"
@@ -26,9 +27,10 @@ func NewClient(
 	clientID,
 	clientSecret string,
 	logger *logrus.Logger,
+	newLogger logging.Logger,
 	client *http.Client,
 	tracer opentracing.Tracer,
 	debug bool,
 ) (TodoClient, error) {
-	return v1.NewClient(address, clientID, clientSecret, logger, client, tracer, debug)
+	return v1.NewClient(address, clientID, clientSecret, logger, newLogger, client, tracer, debug)
 }

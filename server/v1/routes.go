@@ -33,21 +33,19 @@ func (s *Server) buildRouteCtx(key models.ContextKey, x interface{}) func(next h
 	}
 }
 
-func (s *Server) buildTracingMiddleware() func(next http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return nethttp.Middleware(
-			s.tracer,
-			next,
-			nethttp.MWComponentName("todo-server"),
-			nethttp.MWSpanObserver(func(span opentracing.Span, req *http.Request) {
-				span.SetTag("http.method", req.Method)
-				span.SetTag("http.uri", req.URL.EscapedPath())
-			}),
-			nethttp.OperationNameFunc(func(req *http.Request) string {
-				return fmt.Sprintf("%s %s", req.Method, req.URL.Path)
-			}),
-		)
-	}
+func (s *Server) tracingMiddleware(next http.Handler) http.Handler {
+	return nethttp.Middleware(
+		s.tracer,
+		next,
+		nethttp.MWComponentName("todo-server"),
+		nethttp.MWSpanObserver(func(span opentracing.Span, req *http.Request) {
+			span.SetTag("http.method", req.Method)
+			span.SetTag("http.uri", req.URL.EscapedPath())
+		}),
+		nethttp.OperationNameFunc(func(req *http.Request) string {
+			return fmt.Sprintf("%s %s", req.Method, req.URL.Path)
+		}),
+	)
 }
 
 func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
@@ -71,10 +69,9 @@ func (s *Server) setupRoutes() {
 	s.router.Use(
 		gcontext.ClearHandler,
 		middleware.RequestID,
-		// middleware.RequestLogger(logging.ProvideLogFormatter()),
-		middleware.DefaultLogger,
 		middleware.Timeout(maxTimeout),
-		s.buildTracingMiddleware(),
+		s.loggingMiddleware,
+		s.tracingMiddleware,
 	)
 
 	if s.DebugMode {

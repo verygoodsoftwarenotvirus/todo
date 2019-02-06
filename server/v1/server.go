@@ -11,6 +11,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
@@ -63,6 +64,7 @@ type (
 		router        *chi.Mux
 		server        *http.Server
 		logger        *logrus.Logger
+		newLogger     logging.Logger
 		tracer        opentracing.Tracer
 		cookieBuilder *securecookie.SecureCookie
 
@@ -107,6 +109,7 @@ func ProvideServer(
 	// infra things
 	db database.Database,
 	logger *logrus.Logger,
+	newLogger logging.Logger,
 	tracer Tracer,
 
 	// OAuth2 stuff

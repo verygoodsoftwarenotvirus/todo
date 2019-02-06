@@ -21,11 +21,10 @@ dockercide:
 vendor:
 	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` golang:latest /bin/sh -c "go mod vendor"
 
-.PHONY: revendor
-revendor:
+.PHONY: unvendor
+unvendor:
 	rm -rf vendor go.{mod,sum}
 	GO111MODULE=on go mod init
-	$(MAKE) vendor
 
 .PHONY: dev-tools
 dev-tools:

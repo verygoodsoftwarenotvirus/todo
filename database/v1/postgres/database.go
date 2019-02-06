@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 
 	"github.com/google/wire"
@@ -26,6 +27,7 @@ type (
 	Postgres struct {
 		debug       bool
 		logger      *logrus.Logger
+		newLogger   logging.Logger
 		database    *sql.DB
 		databaseURL string
 		tracer      opentracing.Tracer
@@ -79,6 +81,7 @@ func timeToPUInt64(t unixer) *uint64 {
 func ProvidePostgres(
 	debug bool,
 	logger *logrus.Logger,
+	newLogger logging.Logger,
 	tracer Tracer,
 	connectionDetails database.ConnectionDetails,
 ) (database.Database, error) {
@@ -93,6 +96,7 @@ func ProvidePostgres(
 	s := &Postgres{
 		debug:       debug,
 		logger:      logger,
+		newLogger:   newLogger,
 		database:    db,
 		databaseURL: string(connectionDetails),
 		tracer:      tracer,

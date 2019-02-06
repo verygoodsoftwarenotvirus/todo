@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 
 	"github.com/google/wire"
@@ -23,10 +24,11 @@ type (
 
 	// Sqlite is our main Sqlite interaction database
 	Sqlite struct {
-		debug    bool
-		logger   *logrus.Logger
-		database *sql.DB
-		tracer   opentracing.Tracer
+		debug     bool
+		logger    *logrus.Logger
+		newLogger logging.Logger
+		database  *sql.DB
+		tracer    opentracing.Tracer
 	}
 )
 
@@ -49,6 +51,7 @@ func ProvideSqliteTracer() (Tracer, error) {
 func ProvideSqlite(
 	debug bool,
 	logger *logrus.Logger,
+	newLogger logging.Logger,
 	tracer Tracer,
 	connectionDetails database.ConnectionDetails,
 ) (database.Database, error) {
@@ -60,10 +63,11 @@ func ProvideSqlite(
 	}
 
 	s := &Sqlite{
-		debug:    debug,
-		logger:   logger,
-		database: db,
-		tracer:   tracer,
+		debug:     debug,
+		logger:    logger,
+		newLogger: newLogger,
+		database:  db,
+		tracer:    tracer,
 	}
 
 	return s, nil
@@ -71,65 +75,43 @@ func ProvideSqlite(
 
 // IsReady reports whether or not Sqlite is ready to be written to. Since Sqlite is a file-based database, it is always ready
 func (s *Sqlite) IsReady(ctx context.Context) (ready bool) {
-	// var (
-	// 	numberOfUnsuccessfulAttempts uint
-	// 	databaseIsNotReady           = true
-	// )
-
-	// s.logger.WithFields(map[string]interface{}{
-	// 	"interval":     time.Second,
-	// 	"max_attempts": 50,
-	// }).Debugln("IsReady called")
-
-	// for databaseIsNotReady {
-	// 	err := s.database.Ping()
-	// 	if err != nil {
-	// 		s.logger.Debugln("ping failed, waiting for database")
-	// 		time.Sleep(time.Second)
-	// 		numberOfUnsuccessfulAttempts++
-	// 		if numberOfUnsuccessfulAttempts >= 50 {
-	// 			return
-	// 		}
-	// 	} else {
-	// 		ready = true
-	// 		return
-	// 	}
-	// }
 	return true
 }
 
 // Migrate migrates a given Sqlite database. The current implementation is pretty primitive.
 func (s *Sqlite) Migrate(ctx context.Context, schemaDir database.SchemaDirectory) error {
-	s.logger.Debugln("Migrate called")
+	sd := string(schemaDir)
+	logger := s.logger.WithField("schema_dir", sd)
+	logger.Debugln("Migrate called")
 
 	if ready := s.IsReady(ctx); !ready {
 		return errors.New("database not ready")
 	}
 
-	files, err := ioutil.ReadDir(string(schemaDir))
+	files, err := ioutil.ReadDir(string(sd))
 	if err != nil {
 		return err
 	}
-	s.logger.Debugf("%d files found in schema directory", len(files))
+	logger.Debugf("%d files found in schema directory", len(files))
 
 	for _, file := range files {
-		schemaFile := path.Join(string(schemaDir), file.Name())
+		schemaFile := path.Join(string(sd), file.Name())
 
 		if strings.HasSuffix(schemaFile, ".sql") {
-			s.logger.Debugf("migrating schema file: %q", schemaFile)
+			logger.Debugf("migrating schema file: %q", schemaFile)
 			data, err := ioutil.ReadFile(schemaFile)
 			if err != nil {
 				s.logger.Errorf("error encountered reading schema file: %q (%v)\n", schemaFile, err)
 				return err
 			}
 
-			s.logger.Debugf("running query: %q", string(data))
+			logger.Debugf("running query: %q", string(data))
 			_, err = s.database.Exec(string(data))
 			if err != nil {
-				s.logger.Debugln("database.Exec finished, returning err")
+				logger.Debugln("database.Exec finished, returning err")
 				return err
 			}
-			s.logger.Debugln("database.Exec finished, error not returned")
+			logger.Debugln("database.Exec finished, error not returned")
 		}
 	}
 

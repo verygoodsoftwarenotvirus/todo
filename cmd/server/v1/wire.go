@@ -7,6 +7,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	// "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/logrus"
+	// "gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
@@ -27,11 +29,17 @@ func BuildServer(
 ) (*server.Server, error) {
 
 	wire.Build(
-		buildLogger,
 		auth.NewBcrypt,
 		oauth2manage.NewDefaultManager,
+
+		//// Databases
 		// postgres.Providers,
 		sqlite.Providers,
+
+		//// Loggers
+		// zerolog.Providers,
+		logrus.Providers,
+
 		server.Providers,
 		users.Providers,
 		items.Providers,

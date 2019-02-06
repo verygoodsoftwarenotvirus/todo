@@ -7,6 +7,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/db_bootstrap"
 
@@ -47,7 +48,7 @@ func main() {
 	switch strings.ToLower(os.Getenv("DATABASE_TO_USE")) {
 	case "postgres":
 		schemaDir = postgresSchemaDir
-		db, err = postgres.ProvidePostgres(false, logger, tracer, database.ConnectionDetails(postgresConnectionDetails))
+		db, err = postgres.ProvidePostgres(false, logger, nil, tracer, database.ConnectionDetails(postgresConnectionDetails))
 	default:
 		schemaDir = sqliteSchemaDir
 		dbPath := sqliteConnectionDetails
@@ -55,7 +56,9 @@ func main() {
 			dbPath = os.Args[1]
 			logger.Printf("set alternative output path: %q\n", dbPath)
 		}
-		db, err = sqlite.ProvideSqlite(false, logger, tracer, database.ConnectionDetails(dbPath))
+
+		newLogger := zerolog.ProvideLogger(zerolog.ProvideZerologger())
+		db, err = sqlite.ProvideSqlite(false, logger, newLogger, tracer, database.ConnectionDetails(dbPath))
 	}
 	if err != nil {
 		logger.Fatalf("error opening database connection: %v\n", err)

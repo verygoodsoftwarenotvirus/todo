@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
@@ -41,6 +42,7 @@ type V1Client struct {
 	plainClient  *http.Client
 	authedClient *http.Client
 	logger       *logrus.Logger
+	newLogger    logging.Logger
 	tracer       opentracing.Tracer
 	Debug        bool
 	URL          *url.URL
@@ -104,6 +106,7 @@ func NewClient(
 	clientID,
 	clientSecret string,
 	logger *logrus.Logger,
+	newLogger logging.Logger,
 	hclient *http.Client,
 	tracer opentracing.Tracer,
 	debug bool,

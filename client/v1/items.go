@@ -10,12 +10,14 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
-const itemsBasePath = "items"
+const (
+	itemsBasePath = "items"
+)
 
 // GetItem gets an item
 func (c *V1Client) GetItem(ctx context.Context, id uint64) (item *models.Item, err error) {
-	logger := c.logger.WithField("id", id)
-	logger.Debugln("GetItem called")
+	logger := c.logger.WithValue("id", id)
+	logger.Debug("GetItem called")
 
 	var span opentracing.Span // If I don't set this value here, then ctx gets over
 	span, ctx = opentracing.StartSpanFromContext(ctx, "GetItem")
@@ -29,8 +31,8 @@ func (c *V1Client) GetItem(ctx context.Context, id uint64) (item *models.Item, e
 
 // GetItemCount an item
 func (c *V1Client) GetItemCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
-	logger := c.logger.WithField("filter", filter)
-	logger.Debugln("GetItemCount called")
+	logger := c.logger.WithValue("filter", filter)
+	logger.Debug("GetItemCount called")
 
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetItemCount")
 	defer span.Finish()
@@ -44,8 +46,8 @@ func (c *V1Client) GetItemCount(ctx context.Context, filter *models.QueryFilter)
 
 // GetItems gets a list of items
 func (c *V1Client) GetItems(ctx context.Context, filter *models.QueryFilter) (items *models.ItemList, err error) {
-	logger := c.logger.WithField("filter", filter)
-	logger.Debugln("GetItems called")
+	logger := c.logger.WithValue("filter", filter)
+	logger.Debug("GetItems called")
 
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetItems")
 	defer span.Finish()
@@ -58,11 +60,11 @@ func (c *V1Client) GetItems(ctx context.Context, filter *models.QueryFilter) (it
 
 // CreateItem creates an item
 func (c *V1Client) CreateItem(ctx context.Context, input *models.ItemInput) (item *models.Item, err error) {
-	logger := c.logger.WithFields(map[string]interface{}{
+	logger := c.logger.WithValues(map[string]interface{}{
 		"input_name":    input.Name,
 		"input_details": input.Details,
 	})
-	logger.Debugln("CreateItem called")
+	logger.Debug("CreateItem called")
 
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "CreateItem")
 	defer span.Finish()
@@ -75,8 +77,8 @@ func (c *V1Client) CreateItem(ctx context.Context, input *models.ItemInput) (ite
 
 // UpdateItem updates an item
 func (c *V1Client) UpdateItem(ctx context.Context, updated *models.Item) error {
-	logger := c.logger.WithField("id", updated.ID)
-	logger.Debugln("UpdateItem called")
+	logger := c.logger.WithValue("id", updated.ID)
+	logger.Debug("UpdateItem called")
 
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "UpdateItem")
 	span.SetTag("itemID", updated.ID)
@@ -90,8 +92,8 @@ func (c *V1Client) UpdateItem(ctx context.Context, updated *models.Item) error {
 
 // DeleteItem deletes an item
 func (c *V1Client) DeleteItem(ctx context.Context, id uint64) error {
-	logger := c.logger.WithField("id", id)
-	logger.Debugln("DeleteItem called")
+	logger := c.logger.WithValue("id", id)
+	logger.Debug("DeleteItem called")
 
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "DeleteItem")
 	span.SetTag("itemID", id)
@@ -114,7 +116,7 @@ func (c *V1Client) DeleteItem(ctx context.Context, id uint64) error {
 // 			}
 // 			break
 // 		}
-// 		c.logger.Debugln("message read from connection")
+// 		c.logger.Debug("message read from connection")
 
 // 		e := &models.Event{}
 
@@ -128,7 +130,7 @@ func (c *V1Client) DeleteItem(ctx context.Context, id uint64) error {
 // 		}
 
 // 		item := e.Data.(models.Item)
-// 		c.logger.Debugf("writing item %d to channel", item.ID)
+// 		c.logger.Debug("writing item %d to channel", item.ID)
 // 		itemChan <- item
 // 	}
 // }
@@ -143,7 +145,7 @@ func (c *V1Client) DeleteItem(ctx context.Context, id uint64) error {
 // 	u := c.buildURL(fq.Values(), "event_feed")
 // 	conn, err := c.DialWebsocket(fq)
 // 	if err != nil {
-// 		c.logger.Debugf("encountered error dialing %q: %v", u.String(), err)
+// 		c.logger.Debug("encountered error dialing %q: %v", u.String(), err)
 // 		return nil, err
 // 	}
 

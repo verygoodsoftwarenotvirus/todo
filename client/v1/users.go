@@ -29,8 +29,8 @@ func (c *V1Client) buildVersionlessURL(qp url.Values, parts ...string) string {
 
 // GetUser gets a user
 func (c *V1Client) GetUser(ctx context.Context, id string) (user *models.User, err error) {
-	logger := c.logger.WithField("user_id", id)
-	logger.Debugln("GetUser called")
+	logger := c.logger.WithValue("user_id", id)
+	logger.Debug("GetUser called")
 
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetUser")
 	span.SetTag("itemID", id)
@@ -68,8 +68,8 @@ func (c *V1Client) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 
 // DeleteUser deletes a user
 func (c *V1Client) DeleteUser(ctx context.Context, username string) error {
-	logger := c.logger.WithField("username", username)
-	logger.Debugln("")
+	logger := c.logger.WithValue("username", username)
+	logger.Debug("")
 
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "DeleteUser")
 	span.SetTag("username", username)
@@ -82,8 +82,8 @@ func (c *V1Client) DeleteUser(ctx context.Context, username string) error {
 
 // Login logs a user in
 func (c *V1Client) Login(ctx context.Context, username, password, TOTPToken string) (*http.Cookie, error) {
-	logger := c.logger.WithField("username", username)
-	logger.Debugln("Login called")
+	logger := c.logger.WithValue("username", username)
+	logger.Debug("Login called")
 
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "Login")
 	span.SetTag("username", username)
@@ -97,7 +97,7 @@ func (c *V1Client) Login(ctx context.Context, username, password, TOTPToken stri
 	})
 
 	if err != nil {
-		logger.WithError(err).Errorln("")
+		logger.Error(err, "")
 		return nil, err
 	}
 
@@ -110,7 +110,7 @@ func (c *V1Client) Login(ctx context.Context, username, password, TOTPToken stri
 	}
 
 	b, _ := httputil.DumpResponse(res, true)
-	logger.WithField("response", string(b)).Debugln()
+	logger.WithValue("response", string(b)).Debug("login response received")
 
 	cookies := res.Cookies()
 	if len(cookies) > 0 {

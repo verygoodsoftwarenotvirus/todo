@@ -31,7 +31,6 @@ const (
 
 func main() {
 	logger := zerolog.ProvideLogger(zerolog.ProvideZerologger())
-	// logger.SetLevel(logrus.DebugLevel)
 
 	var (
 		db        database.Database

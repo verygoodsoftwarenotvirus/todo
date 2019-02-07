@@ -20,7 +20,6 @@ import (
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )
@@ -41,8 +40,7 @@ var (
 type V1Client struct {
 	plainClient  *http.Client
 	authedClient *http.Client
-	logger       *logrus.Logger
-	newLogger    logging.Logger
+	logger       logging.Logger
 	tracer       opentracing.Tracer
 	Debug        bool
 	URL          *url.URL
@@ -105,8 +103,7 @@ func NewClient(
 	clientID,
 	clientSecret string,
 	address *url.URL,
-	logger *logrus.Logger,
-	newLogger logging.Logger,
+	logger logging.Logger,
 	hclient *http.Client,
 	tracer opentracing.Tracer,
 	debug bool,
@@ -133,8 +130,9 @@ func NewClient(
 }
 
 func (c *V1Client) executeRequest(ctx context.Context, req *http.Request) (*http.Response, error) {
+	logger := c.logger
 	if command, err := http2curl.GetCurlCommand(req); err == nil {
-		c.logger.Debugln(command)
+		logger = c.logger.WithValue("curl", command.String())
 	}
 
 	// attach ClientTrace to the Context, and Context to request
@@ -153,14 +151,11 @@ func (c *V1Client) executeRequest(ctx context.Context, req *http.Request) (*http
 		return nil, err
 	}
 
-	bdump, err := httputil.DumpResponse(res, true)
-	if err == nil {
-		if req.Method != http.MethodGet {
-			dump := string(bdump)
-			c.logger.Debugln(dump)
-		}
+	if bdump, err := httputil.DumpResponse(res, true); err == nil && req.Method != http.MethodGet {
+		logger = logger.WithValue("response_body", string(bdump))
 	}
 
+	logger.Debug("executeRequest called")
 	return res, nil
 }
 
@@ -250,14 +245,14 @@ func (c *V1Client) makeDataRequest(method string, uri string, in interface{}, ou
 	}
 
 	rb, err := httputil.DumpResponse(res, true)
-	c.logger.Debugf("Response body: %s", rb)
+	c.logger.WithValue("response_body", rb).Debug("")
 
 	if out != nil {
 		resErr := unmarshalBody(res, &out)
 		if resErr != nil {
 			return errors.Wrap(err, "encountered error loading response from server")
 		}
-		c.logger.Debugf("data request returned: %+v", out)
+		c.logger.WithValue("loaded_value", out).Debug("data request returned")
 	}
 
 	return nil
@@ -317,25 +312,32 @@ func (c *V1Client) put(ctx context.Context, uri string, in interface{}, out inte
 }
 
 // DialWebsocket dials a websocket
-func (c *V1Client) DialWebsocket(fq *FeedQuery) (*websocket.Conn, error) {
+func (c *V1Client) DialWebsocket(ctx context.Context, fq *FeedQuery) (*websocket.Conn, error) {
+	u := c.buildURL(fq.Values(), "event_feed")
+	u.Scheme = "wss"
+
+	logger := c.logger.WithValues(map[string]interface{}{
+		"feed_query":    fq,
+		"websocket_url": u.String(),
+	})
+
 	if fq == nil {
 		return nil, errors.New("Valid feed query required")
 	}
 
 	if !c.IsUp() {
-		c.logger.Debugln("returning early from ItemsFeed because the service is down")
+		logger.Debug("websocket service is down")
 		return nil, errors.New("service is down")
 	}
 
-	u := c.buildURL(fq.Values(), "event_feed")
-	u.Scheme = "wss"
 	dialer := websocket.DefaultDialer
 	dialer.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
-	c.logger.Debugf("connecting to websocket at %q", u.String())
+	logger.Debug("connecting to websocket")
+
 	conn, res, err := dialer.Dial(u.String(), nil)
 	if err != nil {
-		c.logger.Debugf("encountered error dialing %q: %v", u.String(), err)
+		logger.Debug("encountered error dialing websocket")
 		return nil, err
 	}
 

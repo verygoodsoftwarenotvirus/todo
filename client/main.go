@@ -10,7 +10,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/opentracing/opentracing-go"
-	"github.com/sirupsen/logrus"
 )
 
 // TodoClient defines a Todo service client
@@ -27,11 +26,10 @@ func NewClient(
 	clientID,
 	clientSecret string,
 	address *url.URL,
-	logger *logrus.Logger,
-	newLogger logging.Logger,
+	logger logging.Logger,
 	client *http.Client,
 	tracer opentracing.Tracer,
 	debug bool,
 ) (TodoClient, error) {
-	return v1.NewClient(clientID, clientSecret, address, logger, newLogger, client, tracer, debug)
+	return v1.NewClient(clientID, clientSecret, address, logger, client, tracer, debug)
 }

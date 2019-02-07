@@ -13,8 +13,8 @@ const oauth2ClientsBasePath = "oauth2/clients"
 
 // GetOAuth2Client gets an OAuth2 client
 func (c *V1Client) GetOAuth2Client(ctx context.Context, id string) (oauth2Client *models.OAuth2Client, err error) {
-	logger := c.logger.WithField("oauth2_client_id", id)
-	logger.Debugln("GetOAuth2Client called")
+	logger := c.logger.WithValue("oauth2_client_id", id)
+	logger.Debug("GetOAuth2Client called")
 
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetOAuth2Client")
 	span.SetTag("OAuth2ClientID", id)
@@ -27,8 +27,8 @@ func (c *V1Client) GetOAuth2Client(ctx context.Context, id string) (oauth2Client
 
 // GetOAuth2Clients gets a list of OAuth2 clients
 func (c *V1Client) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter) (oauth2Clients *models.OAuth2ClientList, err error) {
-	logger := c.logger.WithField("filter", filter)
-	logger.Debugln("GetOAuth2Clients called")
+	logger := c.logger.WithValue("filter", filter)
+	logger.Debug("GetOAuth2Clients called")
 
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetOAuth2Clients")
 	defer span.Finish()
@@ -40,12 +40,12 @@ func (c *V1Client) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 
 // CreateOAuth2Client creates an OAuth2 client
 func (c *V1Client) CreateOAuth2Client(ctx context.Context, input *models.OAuth2ClientCreationInput) (oauth2Client *models.OAuth2Client, err error) {
-	logger := c.logger.WithFields(map[string]interface{}{
+	logger := c.logger.WithValues(map[string]interface{}{
 		"redirect_uri": input.RedirectURI,
 		"belongs_to":   input.BelongsTo,
 		"scopes":       input.Scopes,
 	})
-	logger.Debugln("CreateOAuth2Client called")
+	logger.Debug("CreateOAuth2Client called")
 
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "CreateOAuth2Client")
 	defer span.Finish()
@@ -57,11 +57,11 @@ func (c *V1Client) CreateOAuth2Client(ctx context.Context, input *models.OAuth2C
 
 // UpdateOAuth2Client updates an OAuth2 client
 func (c *V1Client) UpdateOAuth2Client(ctx context.Context, updated *models.OAuth2Client) error {
-	logger := c.logger.WithFields(map[string]interface{}{
+	logger := c.logger.WithValues(map[string]interface{}{
 		"id":        updated.ID,
 		"client_id": updated.ClientID,
 	})
-	logger.Debugln("UpdateOAuth2Client called")
+	logger.Debug("UpdateOAuth2Client called")
 
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "UpdateOAuth2Client")
 	span.SetTag("OAuth2ClientID", updated.ID)
@@ -70,7 +70,7 @@ func (c *V1Client) UpdateOAuth2Client(ctx context.Context, updated *models.OAuth
 
 	uri := c.BuildURL(nil, oauth2ClientsBasePath, updated.ID)
 	if err := c.put(ctx, uri, updated, &updated); err != nil {
-		logger.WithError(err).Errorln("error encountered updating OAuth2 client")
+		logger.Error(err, "error encountered updating OAuth2 client")
 		return err
 	}
 	return nil
@@ -78,8 +78,8 @@ func (c *V1Client) UpdateOAuth2Client(ctx context.Context, updated *models.OAuth
 
 // DeleteOAuth2Client deletes an OAuth2 client
 func (c *V1Client) DeleteOAuth2Client(ctx context.Context, id string) error {
-	logger := c.logger.WithField("oauth2client_id", id)
-	logger.Debugf("DeleteOAuth2Client called on %s", id)
+	logger := c.logger.WithValue("oauth2client_id", id)
+	logger.Debug("DeleteOAuth2Client called")
 
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "DeleteOAuth2Client")
 	span.SetTag("OAuth2ClientID", id)
@@ -88,7 +88,7 @@ func (c *V1Client) DeleteOAuth2Client(ctx context.Context, id string) error {
 
 	uri := c.BuildURL(nil, oauth2ClientsBasePath, id)
 	if err := c.delete(ctx, uri); err != nil {
-		logger.WithError(err).Errorln("error encountered deleting OAuth2 client")
+		logger.Error(err, "error encountered deleting OAuth2 client")
 		return err
 	}
 	return nil

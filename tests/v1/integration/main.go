@@ -20,7 +20,6 @@ import (
 
 	_ "github.com/lib/pq" // importing for database initialization
 	"github.com/opentracing/opentracing-go"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -72,15 +71,11 @@ func initializeClient() {
 	// WARNING: Never do this ordinarily, this is an application which will only ever run in a local context
 	httpc.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
-	logger := logrus.New()
-	logger.SetLevel(logrus.DebugLevel)
-
 	u, _ := url.Parse(urlToUse)
 	c, err := client.NewClient(
 		defaultTestInstanceClientID,
 		defaultTestInstanceClientSecret,
 		u,
-		logger,
 		zerolog.ProvideLogger(zerolog.ProvideZerologger()),
 		httpc,
 		opentracing.GlobalTracer(),

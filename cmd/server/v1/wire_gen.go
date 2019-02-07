@@ -56,7 +56,7 @@ func BuildServer(connectionDetails database.ConnectionDetails, SchemaDirectory d
 	if err != nil {
 		return nil, err
 	}
-	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(databaseDatabase, enticator, logger, clientStore, tokenStore, oauth2clientsTracer)
+	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(databaseDatabase, enticator, loggingLogger, clientStore, tokenStore, oauth2clientsTracer)
 	serverTracer, err := server.ProvideServerTracer()
 	if err != nil {
 		return nil, err

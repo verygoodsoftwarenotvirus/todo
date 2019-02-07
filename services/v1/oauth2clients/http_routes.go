@@ -22,7 +22,7 @@ func (s *Service) OAuth2ClientCreationInputContextMiddleware(next http.Handler) 
 
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
-			s.logger.WithError(err).Errorln("error encountered decoding request body")
+			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -38,16 +38,16 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	serverSpan := s.tracer.StartSpan("create route", opentracing.ChildOf(spanCtx))
 	defer serverSpan.Finish()
 
-	s.logger.Debugln("oauth2Client creation route called")
+	s.logger.Debug("oauth2Client creation route called")
 	ctx := req.Context()
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.OAuth2ClientCreationInput)
 	if !ok {
-		s.logger.Errorln("valid input not attached to request")
+		s.logger.Error(nil, "valid input not attached to request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	logger := s.logger.WithFields(map[string]interface{}{
+	logger := s.logger.WithValues(map[string]interface{}{
 		"username":     input.Username,
 		"scopes":       input.Scopes,
 		"redirect_uri": input.RedirectURI,
@@ -55,7 +55,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 
 	user, err := s.database.GetUser(ctx, input.Username)
 	if err != nil {
-		logger.WithError(err).Errorln("error creating oauth2Client")
+		logger.Error(err, "error creating oauth2Client")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -67,24 +67,24 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		user.TwoFactorSecret,
 		input.TOTPToken,
 	); !valid {
-		logger.Debugln("invalid credentials provided")
+		logger.Debug("invalid credentials provided")
 		res.WriteHeader(http.StatusUnauthorized)
 		return
 	} else if err != nil {
-		logger.WithError(err).Errorln("error validating user credentials")
+		logger.Error(err, "error validating user credentials")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	x, err := s.database.CreateOAuth2Client(ctx, input)
 	if err != nil {
-		logger.WithError(err).Errorln("error creating oauth2Client in the database")
+		logger.Error(err, "error creating oauth2Client in the database")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	if err := s.clientStore.Set(x.ClientID, x); err != nil {
-		logger.WithError(err).Errorln("error setting client ID in the client store")
+		logger.Error(err, "error setting client ID in the client store")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -105,16 +105,16 @@ func (s *Service) BuildReadHandler(oauth2ClientIDFetcher func(req *http.Request)
 
 		ctx := req.Context()
 		oauth2ClientID := oauth2ClientIDFetcher(req)
-		logger := s.logger.WithField("oauth2_client_id", oauth2ClientID)
-		logger.Debugln("oauth2Client read route called")
+		logger := s.logger.WithValue("oauth2_client_id", oauth2ClientID)
+		logger.Debug("oauth2Client read route called")
 
 		i, err := s.database.GetOAuth2Client(ctx, oauth2ClientID)
 		if err == sql.ErrNoRows {
-			s.logger.Debugf("Read called on nonexistent client %s", oauth2ClientID)
+			logger.Debug("Read called on nonexistent client")
 			res.WriteHeader(http.StatusNotFound)
 			return
 		} else if err != nil {
-			s.logger.Errorf("error fetching oauth2Client %q from database: %v", oauth2ClientID, err)
+			logger.Error(err, "error fetching oauth2Client from database")
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -132,12 +132,12 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 
 	ctx := req.Context()
 	qf := models.ExtractQueryFilter(req)
-	logger := s.logger.WithField("filter", qf)
-	logger.Debugln("oauth2Client list route called")
+	logger := s.logger.WithValue("filter", qf)
+	logger.Debug("oauth2Client list route called")
 
 	oauth2Clients, err := s.database.GetOAuth2Clients(ctx, qf)
 	if err != nil {
-		logger.Errorln("encountered error getting list of oauth2 clients: ", err)
+		logger.Error(err, "encountered error getting list of oauth2 clients from database")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -158,11 +158,11 @@ func (s *Service) BuildDeleteHandler(clientIDFetcher func(req *http.Request) str
 
 		ctx := req.Context()
 		oauth2ClientID := clientIDFetcher(req)
-		logger := s.logger.WithField("oauth2_client_id", oauth2ClientID)
-		logger.Debugln("oauth2Client deletion route called")
+		logger := s.logger.WithValue("oauth2_client_id", oauth2ClientID)
+		logger.Debug("oauth2Client deletion route called")
 
 		if err := s.database.DeleteOAuth2Client(ctx, oauth2ClientID); err != nil {
-			s.logger.Errorln("encountered error deleting oauth2 client: ", err)
+			s.logger.Error(err, "encountered error deleting oauth2 client")
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -181,8 +181,8 @@ func (s *Service) BuildUpdateHandler(clientIDFetcher func(req *http.Request) str
 
 		ctx := req.Context()
 		oauth2ClientID := clientIDFetcher(req)
-		logger := s.logger.WithField("oauth2_client_id", oauth2ClientID)
-		logger.Debugln("oauth2Client update route called")
+		logger := s.logger.WithValue("oauth2_client_id", oauth2ClientID)
+		logger.Debug("oauth2Client update route called")
 		// input, ok := req.Context().Value(MiddlewareCtxKey).(*models.OAuth2ClientUpdateInput)
 		// if !ok {
 		// 	res.WriteHeader(http.StatusBadRequest)

@@ -3,12 +3,12 @@ package oauth2clients
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/google/wire"
 	"github.com/opentracing/opentracing-go"
-	"github.com/sirupsen/logrus"
 	"gopkg.in/oauth2.v3"
 	oauth2store "gopkg.in/oauth2.v3/store"
 )
@@ -26,7 +26,7 @@ type (
 	Service struct {
 		database      database.Database
 		authenticator auth.Enticator
-		logger        *logrus.Logger
+		logger        logging.Logger
 		tracer        opentracing.Tracer
 		clientStore   *oauth2store.ClientStore
 		tokenStore    oauth2.TokenStore
@@ -50,7 +50,7 @@ func ProvideOAuth2ClientsServiceTracer() (Tracer, error) {
 func ProvideOAuth2ClientsService(
 	database database.Database,
 	authenticator auth.Enticator,
-	logger *logrus.Logger,
+	logger logging.Logger,
 	clientStore *oauth2store.ClientStore,
 	tokenStore oauth2.TokenStore,
 	tracer Tracer,

@@ -2,10 +2,13 @@ package sqlite
 
 import (
 	"context"
+	"database/sql"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -110,6 +113,24 @@ func scanUser(scan database.Scannable) (*models.User, error) {
 	return x, nil
 }
 
+func scanUsers(rows *sql.Rows) ([]models.User, error) {
+	list := []models.User{}
+	defer rows.Close()
+	for rows.Next() {
+		user, err := scanUser(rows)
+		if err != nil {
+			return nil, errors.Wrap(err, "scanning user result")
+		}
+		list = append(list, *user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return list, nil
+}
+
 // GetUser fetches a user by their username
 func (s *Sqlite) GetUser(ctx context.Context, username string) (*models.User, error) {
 	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetUser")
@@ -131,27 +152,14 @@ func (s *Sqlite) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mod
 	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetUsers")
 	defer span.Finish()
 
-	if filter == nil {
-		s.logger.Debugln("using default query filter")
-		filter = models.DefaultQueryFilter
-	}
-	list := []models.User{}
-
-	s.logger.Infof("query limit: %d, query page: %d, calculated page: %d", filter.Limit, filter.Page, uint(filter.Limit*(filter.Page-1)))
-	rows, err := s.database.Query(getUsersQuery, filter.Limit, uint(filter.Limit*(filter.Page-1)))
+	filter = s.prepareFilter(filter, span)
+	rows, err := s.database.Query(getUsersQuery, filter.Limit, filter.QueryPage())
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		user, err := scanUser(rows)
-		if err != nil {
-			return nil, err
-		}
-		list = append(list, *user)
-	}
-	if err := rows.Err(); err != nil {
+	list, err := scanUsers(rows)
+	if err != nil {
 		return nil, err
 	}
 
@@ -169,86 +177,54 @@ func (s *Sqlite) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mod
 		Users: list,
 	}
 
-	return x, err
+	return x, nil
 }
 
 // CreateUser creates a user
-func (s *Sqlite) CreateUser(ctx context.Context, input *models.UserInput) (x *models.User, err error) {
+func (s *Sqlite) CreateUser(ctx context.Context, input *models.UserInput) (*models.User, error) {
 	span := tracing.FetchSpanFromContext(ctx, s.tracer, "CreateUser")
 	defer span.Finish()
 
-	s.logger.Debugf("CreateUser called for %s", input.Username)
-
-	tx, err := s.database.Begin()
-	if err != nil {
-		s.logger.Errorf("error beginning database connection: %v", err)
-		return nil, err
-	}
+	logger := s.logger.WithValue("username", input.Username)
+	logger.Debug("CreateUser called")
 
 	// create the user
-	res, err := tx.Exec(createUserQuery, input.Username, input.Password, input.TwoFactorSecret, input.IsAdmin)
+	res, err := s.database.Exec(createUserQuery, input.Username, input.Password, input.TwoFactorSecret, input.IsAdmin)
 	if err != nil {
-		s.logger.Errorf("error executing user creation query: %v", err)
-		tx.Rollback()
+		logger.Error(err, "error executing user creation query")
 		return nil, err
 	}
 
 	// determine its id
 	id, err := res.LastInsertId()
 	if err != nil {
-		s.logger.Errorf("error fetching last inserted user ID: %v", err)
+		logger.Error(err, "error fetching last inserted user ID")
 		return nil, err
 	}
 
 	// fetch full updated user
-	finalRow := tx.QueryRow(getUserQueryByID, id)
-	x, err = scanUser(finalRow)
+	finalRow := s.database.QueryRow(getUserQueryByID, id)
+	x, err := scanUser(finalRow)
 	if err != nil {
-		s.logger.Errorf("error fetching newly created user %d: %v", id, err)
-		tx.Rollback()
+		logger.Error(err, "error fetching newly created user %d: %v")
 		return nil, err
 	}
 
-	if err := tx.Commit(); err != nil {
-		s.logger.Errorf("error committing transaction: %v", err)
-		return nil, err
-	}
-
-	s.logger.Debugln("returning from CreateUser")
-	return
+	logger.Debug("returning from CreateUser")
+	return x, nil
 }
 
 // UpdateUser updates a user. Note that this function expects the provided user to have a valid ID.
-func (s *Sqlite) UpdateUser(ctx context.Context, input *models.User) (err error) {
+func (s *Sqlite) UpdateUser(ctx context.Context, input *models.User) error {
 	span := tracing.FetchSpanFromContext(ctx, s.tracer, "UpdateUser")
 	defer span.Finish()
 
-	tx, err := s.database.Begin()
-	if err != nil {
-		return
-	}
-
 	// update the user
-	if _, err = tx.Exec(updateUserQuery, input.Username, input.HashedPassword, input.ID); err != nil {
-		tx.Rollback()
-		return
+	if _, err := s.database.Exec(updateUserQuery, input.Username, input.HashedPassword, input.ID); err != nil {
+		return err
 	}
 
-	// fetch full updated user
-	finalRow := tx.QueryRow(getUserQuery, input.ID)
-	input, err = scanUser(finalRow)
-	if err != nil {
-		tx.Rollback()
-		return
-	}
-
-	// commit the changes
-	if err = tx.Commit(); err != nil {
-		tx.Rollback()
-		return
-	}
-
-	return
+	return nil
 }
 
 // DeleteUser deletes a user by their username

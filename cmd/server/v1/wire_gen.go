@@ -29,7 +29,7 @@ func BuildServer(connectionDetails database.ConnectionDetails, SchemaDirectory d
 	if err != nil {
 		return nil, err
 	}
-	databaseDatabase, err := sqlite.ProvideSqlite(Debug, logger, loggingLogger, tracer, connectionDetails)
+	databaseDatabase, err := sqlite.ProvideSqlite(Debug, loggingLogger, tracer, connectionDetails)
 	if err != nil {
 		return nil, err
 	}

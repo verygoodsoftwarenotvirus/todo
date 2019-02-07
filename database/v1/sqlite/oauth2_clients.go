@@ -2,13 +2,15 @@ package sqlite
 
 import (
 	"context"
-	"math"
+	"database/sql"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -98,6 +100,24 @@ func scanOAuth2Client(scan database.Scannable) (*models.OAuth2Client, error) {
 	return x, nil
 }
 
+func scanOAuth2Clients(rows *sql.Rows) ([]models.OAuth2Client, error) {
+	list := []models.OAuth2Client{}
+	defer rows.Close()
+	for rows.Next() {
+		x, err := scanOAuth2Client(rows)
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, *x)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return list, nil
+}
+
 var _ models.OAuth2ClientHandler = (*Sqlite)(nil)
 
 // GetOAuth2Client gets an OAuth2 client
@@ -105,7 +125,7 @@ func (s *Sqlite) GetOAuth2Client(ctx context.Context, clientID string) (*models.
 	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetOAuth2Client")
 	defer span.Finish()
 
-	s.logger.Debugf("GetOAuth2Client called for %s", clientID)
+	s.logger.WithValue("client_id", clientID).Debug("GetOAuth2Client called")
 	row := s.database.QueryRow(getOAuth2ClientByClientIDQuery, clientID)
 	return scanOAuth2Client(row)
 }
@@ -125,38 +145,21 @@ func (s *Sqlite) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilte
 	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetOAuth2Clients")
 	defer span.Finish()
 
-	if filter == nil {
-		s.logger.Debugln("using default query filter")
-		filter = models.DefaultQueryFilter
-	}
-	filter.Page = uint64(math.Max(1, float64(filter.Page)))
-	queryPage := uint(filter.Limit * (filter.Page - 1))
-
-	list := []models.OAuth2Client{}
-
-	s.logger.Debugf("query limit: %d, query page: %d, calculated page: %d", filter.Limit, filter.Page, queryPage)
-
-	rows, err := s.database.Query(getOAuth2ClientsQuery, filter.Limit, queryPage)
+	filter = s.prepareFilter(filter, span)
+	rows, err := s.database.Query(getOAuth2ClientsQuery, filter.Limit, filter.QueryPage())
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	for rows.Next() {
-		x, err := scanOAuth2Client(rows)
-		if err != nil {
-			return nil, err
-		}
-		list = append(list, *x)
-	}
-	if err := rows.Err(); err != nil {
+
+	list, err := scanOAuth2Clients(rows)
+	if err != nil {
 		return nil, err
 	}
 
 	ocl := &models.OAuth2ClientList{
 		Pagination: models.Pagination{
-			Page:       filter.Page,
-			Limit:      filter.Limit,
-			TotalCount: 666,
+			Page:  filter.Page,
+			Limit: filter.Limit,
 		},
 		Clients: list,
 	}
@@ -167,34 +170,39 @@ func (s *Sqlite) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilte
 	return ocl, err
 }
 
-// CreateOAuth2Client creates an OAuth2 client
-func (s *Sqlite) CreateOAuth2Client(ctx context.Context, input *models.OAuth2ClientCreationInput) (x *models.OAuth2Client, err error) {
-	span := tracing.FetchSpanFromContext(ctx, s.tracer, "CreateOAuth2Client")
-	defer span.Finish()
-
-	s.logger.Debugln("CreateOAuth2Client called.")
-
-	x = &models.OAuth2Client{
+func prepareOAuth2Client(input *models.OAuth2ClientCreationInput) (*models.OAuth2Client, error) {
+	x := &models.OAuth2Client{
 		RedirectURI: input.RedirectURI,
 		Scopes:      input.Scopes,
+		BelongsTo:   input.BelongsTo,
 	}
 
+	var err error
 	if x.ClientID, err = auth.RandString(64); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "generating OAuth2 Client ID")
 	}
 
 	if x.ClientSecret, err = auth.RandString(64); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "generating OAuth2 Client Secret")
 	}
 
-	tx, err := s.database.Begin()
+	return x, nil
+}
+
+// CreateOAuth2Client creates an OAuth2 client
+func (s *Sqlite) CreateOAuth2Client(ctx context.Context, input *models.OAuth2ClientCreationInput) (*models.OAuth2Client, error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "CreateOAuth2Client")
+	defer span.Finish()
+
+	s.logger.Debug("CreateOAuth2Client called.")
+
+	x, err := prepareOAuth2Client(input)
 	if err != nil {
-		s.logger.Errorf("error beginning database connection: %v", err)
 		return nil, err
 	}
 
 	// create the client
-	res, err := tx.Exec(
+	res, err := s.database.Exec(
 		createOAuth2ClientQuery,
 		x.ClientID,
 		x.ClientSecret,
@@ -203,73 +211,42 @@ func (s *Sqlite) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 		x.BelongsTo,
 	)
 	if err != nil {
-		s.logger.Errorf("error executing client creation query: %v", err)
-		tx.Rollback()
-		return nil, err
+		return nil, errors.Wrap(err, "error executing client creation query")
 	}
 
 	// determine its id
 	id, err := res.LastInsertId()
 	if err != nil {
-		s.logger.Errorf("error fetching last inserted item ID: %v", err)
-		return nil, err
+		return nil, errors.Wrap(err, "error fetching last inserted item ID")
 	}
 
 	// fetch full updated client
-	row := tx.QueryRow(getOAuth2ClientQuery, id)
+	row := s.database.QueryRow(getOAuth2ClientQuery, id)
 	if x, err = scanOAuth2Client(row); err != nil {
-		s.logger.Errorf("error fetching newly created client %s: %v", x.ClientID, err)
-		tx.Rollback()
-		return nil, err
+		return nil, errors.Wrap(err, "error fetching newly created")
 	}
 
-	if err := tx.Commit(); err != nil {
-		s.logger.Errorf("error committing transaction: %v", err)
-		return nil, err
-	}
-
-	s.logger.Debugln("returning from CreateOAuth2Client")
-	return
+	s.logger.Debug("returning from CreateOAuth2Client")
+	return x, nil
 }
 
 // UpdateOAuth2Client updates a OAuth2 client. Note that this function expects the input's
 // ID field to be valid.
-func (s *Sqlite) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2Client) (err error) {
+func (s *Sqlite) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2Client) error {
 	span := tracing.FetchSpanFromContext(ctx, s.tracer, "UpdateOAuth2Client")
 	defer span.Finish()
 
-	tx, err := s.database.Begin()
-	if err != nil {
-		return
-	}
-
 	// update the client
-	if _, err = tx.Exec(
+	_, err := s.database.Exec(
 		updateOAuth2ClientQuery,
 		input.ClientID,
 		input.ClientSecret,
 		strings.Join(input.Scopes, scopesSeparator),
 		input.RedirectURI,
 		input.ID,
-	); err != nil {
-		tx.Rollback()
-		return
-	}
+	)
 
-	// fetch full updated client
-	row := tx.QueryRow(getOAuth2ClientQuery, input.ID)
-	if input, err = scanOAuth2Client(row); err != nil {
-		tx.Rollback()
-		return
-	}
-
-	// commit the changes
-	if err = tx.Commit(); err != nil {
-		tx.Rollback()
-		return
-	}
-
-	return
+	return err
 }
 
 // DeleteOAuth2Client deletes an OAuth2 client

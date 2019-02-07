@@ -11,11 +11,11 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/google/wire"
 	_ "github.com/mattn/go-sqlite3" // for the init import call
 	"github.com/opentracing/opentracing-go"
-	"github.com/sirupsen/logrus"
 )
 
 type (
@@ -24,11 +24,10 @@ type (
 
 	// Sqlite is our main Sqlite interaction database
 	Sqlite struct {
-		debug     bool
-		logger    *logrus.Logger
-		newLogger logging.Logger
-		database  *sql.DB
-		tracer    opentracing.Tracer
+		debug    bool
+		database *sql.DB
+		logger   logging.Logger
+		tracer   opentracing.Tracer
 	}
 )
 
@@ -50,27 +49,39 @@ func ProvideSqliteTracer() (Tracer, error) {
 // ProvideSqlite provides a sqlite database controller
 func ProvideSqlite(
 	debug bool,
-	logger *logrus.Logger,
-	newLogger logging.Logger,
+	logger logging.Logger,
 	tracer Tracer,
 	connectionDetails database.ConnectionDetails,
 ) (database.Database, error) {
-	logger.Debugf("Establishing connection to sqlite3 file: %q\n", connectionDetails)
+	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to sqlite3 file")
 	db, err := sql.Open("sqlite3", string(connectionDetails))
 	if err != nil {
-		logger.Errorf("error encountered establishing database connection: %v\n", err)
+		logger.Error(err, "error encountered establishing database connection")
 		return nil, err
 	}
 
 	s := &Sqlite{
-		debug:     debug,
-		logger:    logger,
-		newLogger: newLogger,
-		database:  db,
-		tracer:    tracer,
+		debug:    debug,
+		logger:   logger,
+		database: db,
+		tracer:   tracer,
 	}
 
 	return s, nil
+}
+
+func (s *Sqlite) prepareFilter(filter *models.QueryFilter, span opentracing.Span) *models.QueryFilter {
+	if filter == nil {
+		s.logger.Debug("using default query filter")
+		filter = models.DefaultQueryFilter
+	}
+	filter.SetPage(filter.Page)
+
+	span.SetTag("limit", filter.Limit)
+	span.SetTag("page", filter.Page)
+	span.SetTag("queryPage", filter.QueryPage)
+
+	return filter
 }
 
 // IsReady reports whether or not Sqlite is ready to be written to. Since Sqlite is a file-based database, it is always ready
@@ -81,8 +92,8 @@ func (s *Sqlite) IsReady(ctx context.Context) (ready bool) {
 // Migrate migrates a given Sqlite database. The current implementation is pretty primitive.
 func (s *Sqlite) Migrate(ctx context.Context, schemaDir database.SchemaDirectory) error {
 	sd := string(schemaDir)
-	logger := s.logger.WithField("schema_dir", sd)
-	logger.Debugln("Migrate called")
+	logger := s.logger.WithValue("schema_dir", sd)
+	logger.Debug("Migrate called")
 
 	if ready := s.IsReady(ctx); !ready {
 		return errors.New("database not ready")
@@ -92,29 +103,29 @@ func (s *Sqlite) Migrate(ctx context.Context, schemaDir database.SchemaDirectory
 	if err != nil {
 		return err
 	}
-	logger.Debugf("%d files found in schema directory", len(files))
+	logger.WithValue("file_count", len(files)).Debug("found files in schema directory")
 
 	for _, file := range files {
 		schemaFile := path.Join(string(sd), file.Name())
 
 		if strings.HasSuffix(schemaFile, ".sql") {
-			logger.Debugf("migrating schema file: %q", schemaFile)
+			logger.WithValue("schema_file", schemaFile).Debug("migrating schema file")
 			data, err := ioutil.ReadFile(schemaFile)
 			if err != nil {
-				s.logger.Errorf("error encountered reading schema file: %q (%v)\n", schemaFile, err)
+				logger.Error(err, "error encountered reading schema file")
 				return err
 			}
 
-			logger.Debugf("running query: %q", string(data))
+			logger.WithValue("query", string(data)).Debug("running query")
 			_, err = s.database.Exec(string(data))
 			if err != nil {
-				logger.Debugln("database.Exec finished, returning err")
+				logger.Debug("database.Exec finished, returning err")
 				return err
 			}
-			logger.Debugln("database.Exec finished, error not returned")
+			logger.Debug("database.Exec finished, error not returned")
 		}
 	}
 
-	s.logger.Debugln("returning no error from sqlite.Migrate()")
+	logger.Debug("returning no error from sqlite.Migrate()")
 	return nil
 }

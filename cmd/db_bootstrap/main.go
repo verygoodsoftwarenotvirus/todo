@@ -58,8 +58,9 @@ func main() {
 		}
 
 		newLogger := zerolog.ProvideLogger(zerolog.ProvideZerologger())
-		db, err = sqlite.ProvideSqlite(false, logger, newLogger, tracer, database.ConnectionDetails(dbPath))
+		db, err = sqlite.ProvideSqlite(false, newLogger, tracer, database.ConnectionDetails(dbPath))
 	}
+
 	if err != nil {
 		logger.Fatalf("error opening database connection: %v\n", err)
 	}

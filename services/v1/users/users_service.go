@@ -5,12 +5,12 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/google/wire"
 	"github.com/opentracing/opentracing-go"
-	"github.com/sirupsen/logrus"
 )
 
 // MiddlewareCtxKey is the context key we search for when interacting with user-related requests
@@ -30,7 +30,7 @@ type (
 		cookieName      CookieName
 		database        database.Database
 		authenticator   auth.Enticator
-		logger          *logrus.Logger
+		logger          logging.Logger
 		tracer          Tracer
 		usernameFetcher func(*http.Request) string
 	}
@@ -58,7 +58,7 @@ func ProvideUserServiceTracer() (Tracer, error) {
 // ProvideUsersService builds a new UsersService
 func ProvideUsersService(
 	cookieName CookieName,
-	logger *logrus.Logger,
+	logger logging.Logger,
 	database database.Database,
 	authenticator auth.Enticator,
 	usernameFetcher UsernameFetcher,

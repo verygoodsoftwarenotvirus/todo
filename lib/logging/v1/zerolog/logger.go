@@ -1,6 +1,7 @@
 package zerolog
 
 import (
+	"net/http"
 	"os"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
@@ -81,5 +82,15 @@ func (l *Logger) WithValue(key string, value interface{}) logging.Logger {
 // WithError satisfies our contract for the logging.Logger WithError method.
 func (l *Logger) WithError(err error) logging.Logger {
 	l2 := l.logger.With().Err(err).Logger()
+	return &Logger{logger: l2}
+}
+
+// WithRequest satisfies our contract for the logging.Logger WithRequest method.
+func (l *Logger) WithRequest(req *http.Request) logging.Logger {
+	l2 := l.logger.With().
+		Str("path", req.URL.Path).
+		Str("method", req.Method).
+		Str("query	", req.URL.RawQuery).
+		Logger()
 	return &Logger{logger: l2}
 }

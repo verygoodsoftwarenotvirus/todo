@@ -1,6 +1,8 @@
 package logrus
 
 import (
+	"net/http"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 
 	"github.com/google/wire"
@@ -85,6 +87,15 @@ func (l *Logger) WithError(err error) logging.Logger {
 	return l.WithError(err)
 }
 
+// WithRequest satisfies our contract for the logging.Logger WithRequest method.
+func (l *Logger) WithRequest(req *http.Request) logging.Logger {
+	return &entryWrapper{l.logger.WithFields(map[string]interface{}{
+		"path":   req.URL.Path,
+		"method": req.Method,
+		"query":  req.URL.RawQuery,
+	})}
+}
+
 // entryWrapper has repeats of many functions
 
 type entryWrapper struct {
@@ -129,4 +140,13 @@ func (e *entryWrapper) WithValue(key string, value interface{}) logging.Logger {
 // WithError satisfies our contract for the logging.Logger WithError method.
 func (e *entryWrapper) WithError(err error) logging.Logger {
 	return e.WithError(err)
+}
+
+// WithRequest satisfies our contract for the logging.Logger WithRequest method.
+func (e *entryWrapper) WithRequest(req *http.Request) logging.Logger {
+	return e.WithValues(map[string]interface{}{
+		"path":   req.URL.Path,
+		"method": req.Method,
+		"query":  req.URL.RawQuery,
+	})
 }

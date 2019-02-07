@@ -22,6 +22,7 @@ type Logger interface {
 	// Builder funcs
 	WithValues(map[string]interface{}) Logger
 	WithValue(string, interface{}) Logger
+	WithRequest(*http.Request) Logger
 	WithError(error) Logger
 }
 

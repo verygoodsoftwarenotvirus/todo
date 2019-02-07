@@ -45,7 +45,7 @@ func BuildServer(connectionDetails database.ConnectionDetails, SchemaDirectory d
 	if err != nil {
 		return nil, err
 	}
-	usersService := users.ProvideUsersService(CookieName, logger, databaseDatabase, enticator, usernameFetcher, usersTracer)
+	usersService := users.ProvideUsersService(CookieName, loggingLogger, databaseDatabase, enticator, usernameFetcher, usersTracer)
 	clientStore := server.ProvideClientStore()
 	manager := manage.NewDefaultManager()
 	tokenStore, err := server.ProvideTokenStore(manager)

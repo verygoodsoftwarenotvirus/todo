@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"strings"
 
@@ -10,8 +11,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/db_bootstrap"
-
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -31,7 +30,7 @@ const (
 )
 
 func main() {
-	logger := logrus.New()
+	logger := zerolog.ProvideLogger(zerolog.ProvideZerologger())
 	// logger.SetLevel(logrus.DebugLevel)
 
 	var (
@@ -42,27 +41,25 @@ func main() {
 
 	tracer, err := tracing.ProvideTracer("db-bootstrap")
 	if err != nil {
-		logger.Debugf("error building tracer: %v\n", err)
+		log.Printf("error building tracer: %v\n", err)
 	}
 
 	switch strings.ToLower(os.Getenv("DATABASE_TO_USE")) {
 	case "postgres":
 		schemaDir = postgresSchemaDir
-		db, err = postgres.ProvidePostgres(false, logger, nil, tracer, database.ConnectionDetails(postgresConnectionDetails))
+		db, err = postgres.ProvidePostgres(false, logger, tracer, database.ConnectionDetails(postgresConnectionDetails))
 	default:
 		schemaDir = sqliteSchemaDir
 		dbPath := sqliteConnectionDetails
 		if len(os.Args) > 1 {
 			dbPath = os.Args[1]
-			logger.Printf("set alternative output path: %q\n", dbPath)
+			log.Printf("set alternative output path: %q\n", dbPath)
 		}
-
-		newLogger := zerolog.ProvideLogger(zerolog.ProvideZerologger())
-		db, err = sqlite.ProvideSqlite(false, newLogger, tracer, database.ConnectionDetails(dbPath))
+		db, err = sqlite.ProvideSqlite(false, logger, tracer, database.ConnectionDetails(dbPath))
 	}
 
 	if err != nil {
-		logger.Fatalf("error opening database connection: %v\n", err)
+		log.Fatalf("error opening database connection: %v\n", err)
 	}
 
 	bootstrap.PreloadDatabase(db, database.SchemaDirectory(schemaDir))

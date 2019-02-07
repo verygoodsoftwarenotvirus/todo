@@ -5,20 +5,7 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	//
-	// "github.com/sirupsen/logrus"
 )
-
-// type Config struct {
-// 	Debug            bool
-// 	ConnectionString string
-// 	Logger           *logrus.Logger
-// 	SchemaDir        string
-
-// 	Extractor       ClientIDExtractor
-// 	UserIDExtractor UserIDExtractor
-// 	SecretGenerator SecretGenerator
-// }
 
 // SchemaDirectory is an arbitrary string type
 type SchemaDirectory string

@@ -138,7 +138,7 @@ func (p *Postgres) GetUser(ctx context.Context, username string) (*models.User, 
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetUser")
 	defer span.Finish()
 
-	p.logger.WithField("username", username).Debugln("GetUser called")
+	p.logger.WithValue("username", username).Debug("GetUser called")
 	u, err := scanUser(p.database.QueryRow(getUserQuery, username))
 	return u, err
 }
@@ -148,7 +148,7 @@ func (p *Postgres) GetUserCount(ctx context.Context, filter *models.QueryFilter)
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetUserCount")
 	defer span.Finish()
 
-	p.logger.WithField("filter", filter).Debugln("GetUserCount called")
+	p.logger.WithValue("filter", filter).Debug("GetUserCount called")
 	err = p.database.QueryRow(getUserCountQuery).Scan(&count)
 	return
 }
@@ -158,10 +158,10 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetUsers")
 	defer span.Finish()
 
-	p.logger.WithField("filter", filter).Debugln("GetUsers called")
+	p.logger.WithValue("filter", filter).Debug("GetUsers called")
 
 	if filter == nil {
-		p.logger.Debugln("using default query filter")
+		p.logger.Debug("using default query filter")
 		filter = models.DefaultQueryFilter
 	}
 	list := []models.User{}
@@ -205,29 +205,29 @@ func (p *Postgres) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "CreateUser")
 	defer span.Finish()
 
-	p.logger.WithFields(map[string]interface{}{
+	logger := p.logger.WithValues(map[string]interface{}{
 		"username": input.Username,
 		"is_admin": input.IsAdmin,
-	}).Debugln("CreateUser called")
+	})
+	logger.Debug("CreateUser called")
 
 	x := &models.User{
 		Username:        input.Username,
 		TwoFactorSecret: input.TwoFactorSecret,
 		IsAdmin:         input.IsAdmin,
 	}
-	p.logger.Debugf("CreateUser called for %s", input.Username)
 
 	// create the user
 	var t time.Time
 	if err := p.database.
 		QueryRow(createUserQuery, input.Username, input.Password, input.TwoFactorSecret, input.IsAdmin).
 		Scan(&x.ID, &t); err != nil {
-		p.logger.Errorf("error executing user creation query: %v", err)
+		logger.Error(err, "error executing user creation query")
 		return nil, err
 	}
 	x.CreatedOn = timeToUInt64(t)
 
-	p.logger.Debugln("returning from CreateUser")
+	p.logger.Debug("returning from CreateUser")
 	return x, nil
 }
 
@@ -237,10 +237,10 @@ func (p *Postgres) UpdateUser(ctx context.Context, input *models.User) error {
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "UpdateUser")
 	defer span.Finish()
 
-	p.logger.WithFields(map[string]interface{}{
+	p.logger.WithValues(map[string]interface{}{
 		"username": input.Username,
 		"is_admin": input.IsAdmin,
-	}).Debugln("UpdateUser called")
+	}).Debug("UpdateUser called")
 
 	// update the user
 	var t *time.Time
@@ -257,7 +257,7 @@ func (p *Postgres) DeleteUser(ctx context.Context, username string) error {
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "DeleteUser")
 	defer span.Finish()
 
-	p.logger.WithField("username", username).Debugln("DeleteUser called")
+	p.logger.WithValue("username", username).Debug("DeleteUser called")
 	_, err := p.database.Exec(archiveUserQuery, username)
 	return err
 }

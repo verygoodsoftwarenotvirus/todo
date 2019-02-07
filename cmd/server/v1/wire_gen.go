@@ -39,7 +39,7 @@ func BuildServer(connectionDetails database.ConnectionDetails, SchemaDirectory d
 	if err != nil {
 		return nil, err
 	}
-	service := items.ProvideItemsService(logger, databaseDatabase, userIDFetcher, itemIDFetcher, serviceTracer)
+	service := items.ProvideItemsService(loggingLogger, databaseDatabase, userIDFetcher, itemIDFetcher, serviceTracer)
 	usernameFetcher := server.ProvideUsernameFetcher()
 	usersTracer, err := users.ProvideUserServiceTracer()
 	if err != nil {

@@ -4,13 +4,13 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/google/wire"
 	"github.com/gorilla/websocket"
 	"github.com/opentracing/opentracing-go"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -24,7 +24,7 @@ type (
 
 	// Service handles TODO List items
 	Service struct {
-		logger        *logrus.Logger
+		logger        logging.Logger
 		db            database.Database
 		upgrader      websocket.Upgrader
 		tracer        opentracing.Tracer
@@ -53,7 +53,7 @@ type UserIDFetcher func(*http.Request) uint64
 type ItemIDFetcher func(*http.Request) uint64
 
 // ProvideItemsService builds a new ItemsService
-func ProvideItemsService(logger *logrus.Logger, db database.Database, userIDFetcher UserIDFetcher, itemIDFetcher ItemIDFetcher, tracer ServiceTracer) *Service {
+func ProvideItemsService(logger logging.Logger, db database.Database, userIDFetcher UserIDFetcher, itemIDFetcher ItemIDFetcher, tracer ServiceTracer) *Service {
 	svc := &Service{
 		logger:        logger,
 		db:            db,

@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"io/ioutil"
 	"path"
 	"strings"
@@ -16,7 +15,7 @@ import (
 	"github.com/google/wire"
 	_ "github.com/lib/pq" // we need the import here
 	"github.com/opentracing/opentracing-go"
-	"github.com/sirupsen/logrus"
+	"github.com/pkg/errors"
 )
 
 type (
@@ -26,8 +25,7 @@ type (
 	// Postgres is our main Postgres interaction database
 	Postgres struct {
 		debug       bool
-		logger      *logrus.Logger
-		newLogger   logging.Logger
+		logger      logging.Logger
 		database    *sql.DB
 		databaseURL string
 		tracer      opentracing.Tracer
@@ -80,23 +78,21 @@ func timeToPUInt64(t unixer) *uint64 {
 // ProvidePostgres provides a postgres database controller
 func ProvidePostgres(
 	debug bool,
-	logger *logrus.Logger,
-	newLogger logging.Logger,
+	logger logging.Logger,
 	tracer Tracer,
 	connectionDetails database.ConnectionDetails,
 ) (database.Database, error) {
 
-	logger.Debugf("Establishing connection to postgres: %q\n", connectionDetails)
+	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to postgres")
 	db, err := sql.Open("postgres", string(connectionDetails))
 	if err != nil {
-		logger.Errorf("error encountered establishing database connection: %v\n", err)
-		return nil, err
+		logger.Error(err, "error encountered establishing database connection")
+		return nil, errors.Wrap(err, "establishing database connection")
 	}
 
 	s := &Postgres{
 		debug:       debug,
 		logger:      logger,
-		newLogger:   newLogger,
 		database:    db,
 		databaseURL: string(connectionDetails),
 		tracer:      tracer,
@@ -112,16 +108,16 @@ func (p *Postgres) IsReady(ctx context.Context) (ready bool) {
 		databaseIsNotReady           = true
 	)
 
-	p.logger.WithFields(map[string]interface{}{
+	p.logger.WithValues(map[string]interface{}{
 		"database_url": p.databaseURL,
 		"interval":     time.Second,
 		"max_attempts": 50,
-	}).Debugln("IsReady called")
+	}).Debug("IsReady called")
 
 	for databaseIsNotReady {
 		err := p.database.Ping()
 		if err != nil {
-			p.logger.Debugln("ping failed, waiting for database")
+			p.logger.Debug("ping failed, waiting for database")
 			time.Sleep(time.Second)
 			numberOfUnsuccessfulAttempts++
 			if numberOfUnsuccessfulAttempts >= 50 {
@@ -137,7 +133,8 @@ func (p *Postgres) IsReady(ctx context.Context) (ready bool) {
 
 // Migrate migrates a given postgres database. The current implementation is pretty primitive.
 func (p *Postgres) Migrate(ctx context.Context, schemaDir database.SchemaDirectory) error {
-	p.logger.WithField("schemaDir", schemaDir).Debugln("Migrate called")
+	logger := p.logger.WithValue("schemaDir", schemaDir)
+	logger.Debug("Migrate called")
 
 	if !p.IsReady(ctx) {
 		return errors.New("no database ready")
@@ -147,30 +144,33 @@ func (p *Postgres) Migrate(ctx context.Context, schemaDir database.SchemaDirecto
 	if err != nil {
 		return err
 	}
-	p.logger.Debugf("%d files found in schema directory", len(files))
+
+	logger.WithValue("file_count", len(files)).Debug("found files in schema directory")
 
 	for _, file := range files {
 		schemaFile := path.Join(string(schemaDir), file.Name())
 
 		if strings.HasSuffix(schemaFile, ".sql") {
-			p.logger.Debugf("migrating schema file: %q", schemaFile)
+			logger = logger.WithValue("schema_file", schemaFile)
+			p.logger.Debug("migrating schema file")
 			data, err := ioutil.ReadFile(schemaFile)
 			if err != nil {
-				p.logger.Errorf("error encountered reading schema file: %q (%v)\n", schemaFile, err)
-				return err
+				p.logger.Error(err, "error encountered reading schema file")
+				return errors.Wrap(err, "reading schema file")
 			}
 
-			p.logger.Debugf("running query: %q", string(data))
+			query := string(data)
+			logger.WithValue("query", query).Debug("running query")
 			_, err = p.database.Exec(string(data))
 			if err != nil {
-				p.logger.Debugln("database.Exec finished, returning err")
-				return err
+				p.logger.Debug("database.Exec finished, returning err")
+				return errors.Wrap(err, "performing migration")
 			}
-			p.logger.Debugln("database.Exec finished, error not returned")
+			p.logger.Debug("database.Exec finished, error not returned")
 		}
 	}
 
-	p.logger.Debugln("returning no error from postgres.Migrate()")
+	p.logger.Debug("returning no error from postgres.Migrate()")
 	return nil
 
 }

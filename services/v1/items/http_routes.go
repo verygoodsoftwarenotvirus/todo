@@ -18,7 +18,7 @@ const (
 
 // ItemInputMiddleware is a middleware for fetching, parsing, and attaching a parsed ItemInput struct from a request
 func (s *Service) ItemInputMiddleware(next http.Handler) http.Handler {
-	s.logger.Debugln("ItemInputMiddleware called")
+	s.logger.Debug("ItemInputMiddleware called")
 	x := new(models.ItemInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
@@ -26,7 +26,7 @@ func (s *Service) ItemInputMiddleware(next http.Handler) http.Handler {
 		defer serverSpan.Finish()
 
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
-			s.logger.Errorf("error encountered decoding request body: %v", err)
+			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -42,20 +42,20 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	defer serverSpan.Finish()
 
 	itemID := s.itemIDFetcher(req)
-	logger := s.logger.WithField("item_id", itemID)
-	logger.Debugln("itemsService.ReadHandler called")
+	logger := s.logger.WithValue("item_id", itemID)
+	logger.Debug("itemsService.ReadHandler called")
 
 	userID := s.userIDFetcher(req)
-	logger = logger.WithField("user_id", userID)
+	logger = logger.WithValue("user_id", userID)
 	ctx := req.Context()
 
 	i, err := s.db.GetItem(ctx, itemID, userID)
 	if err == sql.ErrNoRows {
-		logger.Debugln("No rows found in database")
+		logger.Debug("No rows found in database")
 		res.WriteHeader(http.StatusNotFound)
 		return
 	} else if err != nil {
-		logger.WithError(err).Errorln("Error fetching item from database")
+		logger.Error(err, "Error fetching item from database")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -70,15 +70,15 @@ func (s *Service) Count(res http.ResponseWriter, req *http.Request) {
 	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
 	defer serverSpan.Finish()
 
-	s.logger.Debugln("ItemsService.Count called")
+	s.logger.Debug("ItemsService.Count called")
 	qf := models.ExtractQueryFilter(req)
 
-	logger := s.logger.WithField("filter", qf)
+	logger := s.logger.WithValue("filter", qf)
 	ctx := req.Context()
 
 	itemCount, err := s.db.GetItemCount(ctx, qf)
 	if err != nil {
-		logger.Errorf("error fetching item count from database: %v", err)
+		logger.Error(err, "error fetching item count from database")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -93,15 +93,15 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
 	defer serverSpan.Finish()
 
-	s.logger.Debugln("ItemsService.List called")
+	s.logger.Debug("ItemsService.List called")
 	qf := models.ExtractQueryFilter(req)
 
-	logger := s.logger.WithField("filter", qf)
+	logger := s.logger.WithValue("filter", qf)
 	ctx := req.Context()
 
 	items, err := s.db.GetItems(ctx, qf)
 	if err != nil {
-		logger.Errorln("error encountered fetching items: ", err)
+		logger.Error(err, "error encountered fetching items")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -119,16 +119,16 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
 	itemID := s.itemIDFetcher(req)
-	logger := s.logger.WithField("item_id", itemID)
-	logger.Debugln("ItemsService Deletion handler called")
+	logger := s.logger.WithValue("item_id", itemID)
+	logger.Debug("ItemsService Deletion handler called")
 
 	err := s.db.DeleteItem(ctx, itemID)
 	if err == sql.ErrNoRows {
-		logger.Debugln("no rows found for item")
+		logger.Debug("no rows found for item")
 		res.WriteHeader(http.StatusNotFound)
 		return
 	} else if err != nil {
-		logger.WithError(err).Errorln("error encountered deleting item")
+		logger.Error(err, "error encountered deleting item")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -143,14 +143,14 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.ItemInput)
 	if !ok {
-		s.logger.Errorln("no input attached to request")
+		s.logger.Error(nil, "no input attached to request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	userID := s.userIDFetcher(req)
 	itemID := s.itemIDFetcher(req)
-	logger := s.logger.WithFields(map[string]interface{}{
+	logger := s.logger.WithValues(map[string]interface{}{
 		"user_id": userID,
 		"item_id": itemID,
 		"input":   input,
@@ -158,18 +158,18 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 
 	i, err := s.db.GetItem(ctx, itemID, userID)
 	if err == sql.ErrNoRows {
-		logger.Debugln("no rows found for item")
+		logger.Debug("no rows found for item")
 		res.WriteHeader(http.StatusNotFound)
 		return
 	} else if err != nil {
-		logger.WithError(err).Errorln("error encountered getting item")
+		logger.Error(err, "error encountered getting item")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	i.Update(input)
 	if err := s.db.UpdateItem(ctx, i); err != nil {
-		logger.WithError(err).Errorln("error encountered updating item")
+		logger.Error(err, "error encountered updating item")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -184,20 +184,20 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
 	defer serverSpan.Finish()
 
-	s.logger.Debugln("ItemsService.Create called")
+	s.logger.Debug("ItemsService.Create called")
 	ctx := req.Context()
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.ItemInput)
 	if !ok {
-		s.logger.Errorln("valid input not attached to request")
+		s.logger.Error(nil, "valid input not attached to request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	input.BelongsTo = s.userIDFetcher(req)
 
-	s.logger.WithField("input", input).Debugln("ItemsService.Create called")
+	s.logger.WithValue("input", input).Debug("ItemsService.Create called")
 	i, err := s.db.CreateItem(ctx, input)
 	if err != nil {
-		s.logger.Errorf("error creating item: %v", err)
+		s.logger.Error(err, "error creating item")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}

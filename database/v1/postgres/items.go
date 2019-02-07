@@ -106,10 +106,10 @@ func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*models.
 	span.SetTag("user_id", userID)
 	defer span.Finish()
 
-	p.logger.WithFields(map[string]interface{}{
+	p.logger.WithValues(map[string]interface{}{
 		"item_id": itemID,
 		"user_id": userID,
-	}).Debugln("GetItem called")
+	}).Debug("GetItem called")
 
 	row := p.database.QueryRow(getItemQuery, itemID, userID)
 	i, err := scanItem(row)
@@ -121,7 +121,7 @@ func (p *Postgres) GetItemCount(ctx context.Context, filter *models.QueryFilter)
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetItemCount")
 	defer span.Finish()
 
-	p.logger.WithField("filter", filter).Debugln("GetItemCount called")
+	p.logger.WithValue("filter", filter).Debug("GetItemCount called")
 
 	err = p.database.QueryRow(getItemCountQuery).Scan(&count)
 	return
@@ -132,10 +132,10 @@ func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter) (*m
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetItems")
 	defer span.Finish()
 
-	p.logger.WithField("filter", filter).Debugln("GetItems called")
+	p.logger.WithValue("filter", filter).Debug("GetItems called")
 
 	if filter == nil {
-		p.logger.Debugln("using default query filter")
+		p.logger.Debug("using default query filter")
 		filter = models.DefaultQueryFilter
 	}
 	filter.Page = uint64(math.Max(1, float64(filter.Page)))
@@ -181,7 +181,7 @@ func (p *Postgres) CreateItem(ctx context.Context, input *models.ItemInput) (*mo
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "CreateItem")
 	defer span.Finish()
 
-	p.logger.WithField("input", input).Debugln("CreateItem called")
+	p.logger.WithValue("input", input).Debug("CreateItem called")
 
 	i := &models.Item{
 		Name:      input.Name,
@@ -194,7 +194,7 @@ func (p *Postgres) CreateItem(ctx context.Context, input *models.ItemInput) (*mo
 	if err := p.database.
 		QueryRow(createItemQuery, input.Name, input.Details, input.BelongsTo).
 		Scan(&i.ID, &t); err != nil {
-		p.logger.Errorf("error executing item creation query: %v", err)
+		p.logger.Error(err, "error executing item creation query")
 		return nil, err
 	}
 	i.CreatedOn = timeToUInt64(t)
@@ -207,7 +207,7 @@ func (p *Postgres) UpdateItem(ctx context.Context, input *models.Item) error {
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "UpdateItem")
 	defer span.Finish()
 
-	p.logger.WithField("input", input).Debugln("UpdateItem called")
+	p.logger.WithValue("input", input).Debug("UpdateItem called")
 
 	// update the item
 	var t *time.Time
@@ -222,7 +222,7 @@ func (p *Postgres) DeleteItem(ctx context.Context, id uint64) error {
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "DeleteItem")
 	defer span.Finish()
 
-	p.logger.WithField("id", id).Debugln("DeleteItem called")
+	p.logger.WithValue("id", id).Debug("DeleteItem called")
 
 	_, err := p.database.Exec(archiveItemQuery, id)
 	return err

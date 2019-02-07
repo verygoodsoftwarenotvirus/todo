@@ -126,7 +126,6 @@ func init() {
 		case "postgres":
 			db, err := postgres.ProvidePostgres(
 				true,
-				logrus.New(),
 				zerolog.ProvideLogger(zerolog.ProvideZerologger()),
 				opentracing.GlobalTracer(),
 				dockerPostgresAddress,

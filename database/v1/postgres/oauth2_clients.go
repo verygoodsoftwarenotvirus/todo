@@ -124,23 +124,23 @@ func (p *Postgres) GetOAuth2Client(ctx context.Context, clientID string) (*model
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetOAuth2Client")
 	defer span.Finish()
 
-	logger := p.logger.WithField("oauth2_client_id", clientID)
-	logger.Debugln("Postgres.GetOAuth2Client called")
+	logger := p.logger.WithValue("oauth2_client_id", clientID)
+	logger.Debug("Postgres.GetOAuth2Client called")
 
 	prep, err := p.database.Prepare(getOAuth2ClientByClientIDQuery)
 	if err != nil {
-		logger.WithError(err).Errorln("error preparing OAuth2 retrieval query")
+		logger.Error(err, "error preparing OAuth2 retrieval query")
 		return nil, err
 	}
 
 	row := prep.QueryRow(clientID)
 	client, err := scanOAuth2Client(row)
 	if err != nil {
-		logger.WithError(err).Errorln("error scanning returned row")
+		logger.Error(err, "error scanning returned row")
 		return nil, err
 	}
 
-	logger.WithError(nil).Debugln("returning from Postgres.GetOAuth2Client")
+	logger.WithError(nil).Debug("returning from Postgres.GetOAuth2Client")
 
 	return client, nil
 }
@@ -150,12 +150,12 @@ func (p *Postgres) GetOAuth2ClientCount(ctx context.Context, filter *models.Quer
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetOAuth2ClientCount")
 	defer span.Finish()
 
-	logger := p.logger.WithField("filter", filter)
-	logger.Debugln("Postgres.GetOAuth2ClientCount called")
+	logger := p.logger.WithValue("filter", filter)
+	logger.Debug("Postgres.GetOAuth2ClientCount called")
 
 	prep, err := p.database.Prepare(getOAuth2ClientCountQuery)
 	if err != nil {
-		logger.WithError(err).Errorln("error preparing OAuth2 count retrieval query")
+		logger.Error(err, "error preparing OAuth2 count retrieval query")
 		return 0, err
 	}
 
@@ -169,21 +169,21 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetOAuth2Clients")
 	defer span.Finish()
 
-	logger := p.logger.WithField("filter", filter)
-	logger.Debugln("Postgres.GetOAuth2Clients called")
+	logger := p.logger.WithValue("filter", filter)
+	logger.Debug("Postgres.GetOAuth2Clients called")
 
 	if filter == nil {
-		logger.Debugln("using default query filter")
+		logger.Debug("using default query filter")
 		filter = models.DefaultQueryFilter
 	}
 
 	filter.SetPage(filter.Page)
 	queryPage := filter.QueryPage()
-	logger = logger.WithField("query_page", queryPage)
+	logger = logger.WithValue("query_page", queryPage)
 
 	prep, err := p.database.Prepare(getOAuth2ClientsQuery)
 	if err != nil {
-		logger.WithError(err).Errorln("error preparing  query")
+		logger.Error(err, "error preparing  query")
 		return nil, err
 	}
 
@@ -197,14 +197,14 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 	for rows.Next() {
 		x, err := scanOAuth2Client(rows)
 		if err != nil {
-			logger.WithError(err).Errorln("error encountered scanning OAuth2Client")
+			logger.Error(err, "error encountered scanning OAuth2Client")
 			return nil, err
 		}
 		list = append(list, *x)
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.WithError(err).Errorln("error encountered fetching list of OAuth2Clients")
+		logger.Error(err, "error encountered fetching list of OAuth2Clients")
 		return nil, err
 	}
 
@@ -228,12 +228,12 @@ func (p *Postgres) CreateOAuth2Client(ctx context.Context, input *models.OAuth2C
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "CreateOAuth2Client")
 	defer span.Finish()
 
-	logger := p.logger.WithFields(map[string]interface{}{
+	logger := p.logger.WithValues(map[string]interface{}{
 		"redirect_uri": input.RedirectURI,
 		"scopes":       input.Scopes,
 		"belongs_to":   input.BelongsTo,
 	})
-	logger.Debugln("CreateOAuth2Client called.")
+	logger.Debug("CreateOAuth2Client called.")
 
 	var err error
 	x := &models.OAuth2Client{
@@ -243,18 +243,18 @@ func (p *Postgres) CreateOAuth2Client(ctx context.Context, input *models.OAuth2C
 	}
 
 	if x.ClientID, err = auth.RandString(64); err != nil {
-		logger.WithError(err).Errorln("error encountered generating OAuth2Client's ClientID")
+		logger.Error(err, "error encountered generating OAuth2Client's ClientID")
 		return nil, err
 	}
 
 	if x.ClientSecret, err = auth.RandString(64); err != nil {
-		logger.WithError(err).Errorln("error encountered generating OAuth2Client's ClientSecret")
+		logger.Error(err, "error encountered generating OAuth2Client's ClientSecret")
 		return nil, err
 	}
 
 	prep, err := p.database.Prepare(createOAuth2ClientQuery)
 	if err != nil {
-		logger.WithError(err).Errorln("error preparing  query")
+		logger.Error(err, "error preparing  query")
 		return nil, err
 	}
 
@@ -267,7 +267,7 @@ func (p *Postgres) CreateOAuth2Client(ctx context.Context, input *models.OAuth2C
 		x.RedirectURI,
 		x.BelongsTo,
 	).Scan(&x.ID, &t); err != nil {
-		logger.WithError(err).Errorln("error executing client creation query")
+		logger.Error(err, "error executing client creation query")
 		return nil, err
 	}
 	x.CreatedOn = uint64(t.Unix())
@@ -281,16 +281,16 @@ func (p *Postgres) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2C
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "UpdateOAuth2Client")
 	defer span.Finish()
 
-	logger := p.logger.WithFields(map[string]interface{}{
+	logger := p.logger.WithValues(map[string]interface{}{
 		"redirect_uri": input.RedirectURI,
 		"scopes":       input.Scopes,
 		"belongs_to":   input.BelongsTo,
 	})
-	logger.Debugln("UpdateOAuth2Client called.")
+	logger.Debug("UpdateOAuth2Client called.")
 
 	prep, err := p.database.Prepare(updateOAuth2ClientQuery)
 	if err != nil {
-		logger.WithError(err).Errorln("error preparing  query")
+		logger.Error(err, "error preparing  query")
 		return err
 	}
 
@@ -314,12 +314,12 @@ func (p *Postgres) DeleteOAuth2Client(ctx context.Context, id string) error {
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "DeleteOAuth2Client")
 	defer span.Finish()
 
-	logger := p.logger.WithField("id", id)
-	logger.Debugln("Postgres.DeleteOAuth2Client called")
+	logger := p.logger.WithValue("id", id)
+	logger.Debug("Postgres.DeleteOAuth2Client called")
 
 	prep, err := p.database.Prepare(archiveOAuth2ClientQuery)
 	if err != nil {
-		logger.WithError(err).Errorln("error preparing  query")
+		logger.Error(err, "error preparing  query")
 		return err
 	}
 

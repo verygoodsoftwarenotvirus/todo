@@ -56,7 +56,7 @@ func PreloadDatabase(
 		}
 	}
 
-	b := auth.ProvideBcrypt(logger, tracer)
+	b := auth.ProvideBcrypt(auth.DefaultBcryptHashCost, logger, tracer)
 	hp, err := b.HashPassword(ctx, expectedUsername)
 	if err != nil {
 		return err

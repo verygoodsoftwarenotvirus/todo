@@ -38,7 +38,7 @@ func init() {
 func TestBcrypt_HashPassword(T *testing.T) {
 	T.Parallel()
 
-	x := auth.ProvideBcrypt(nil, tracer)
+	x := auth.ProvideBcrypt(auth.DefaultBcryptHashCost, nil, tracer)
 
 	T.Run("normal operation", func(t *testing.T) {
 		t.Parallel()
@@ -52,7 +52,7 @@ func TestBcrypt_HashPassword(T *testing.T) {
 func TestBcrypt_PasswordMatches(T *testing.T) {
 	T.Parallel()
 
-	x := auth.ProvideBcrypt(nil, tracer)
+	x := auth.ProvideBcrypt(auth.DefaultBcryptHashCost, nil, tracer)
 
 	T.Run("normal usage", func(t *testing.T) {
 		t.Parallel()
@@ -74,7 +74,7 @@ func TestBcrypt_PasswordMatches(T *testing.T) {
 func TestBcrypt_PasswordIsAcceptable(T *testing.T) {
 	T.Parallel()
 
-	x := auth.ProvideBcrypt(nil, tracer)
+	x := auth.ProvideBcrypt(auth.DefaultBcryptHashCost, nil, tracer)
 
 	T.Run("normal operation", func(t *testing.T) {
 		t.Parallel()
@@ -86,7 +86,7 @@ func TestBcrypt_PasswordIsAcceptable(T *testing.T) {
 func TestBcrypt_ValidateLogin(T *testing.T) {
 	T.Parallel()
 
-	x := auth.ProvideBcrypt(nil, tracer)
+	x := auth.ProvideBcrypt(auth.DefaultBcryptHashCost, nil, tracer)
 
 	T.Run("normal operation", func(t *testing.T) {
 		t.Parallel()

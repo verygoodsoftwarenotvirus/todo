@@ -20,13 +20,14 @@ import (
 // Injectors from wire.go:
 
 func BuildServer(connectionDetails database.ConnectionDetails, SchemaDirectory database.SchemaDirectory, CertPair server.CertPair, CookieName users.CookieName, CookieSecret []byte, Debug bool) (*server.Server, error) {
+	bcryptHashCost := auth.ProvideBcryptHashCost()
 	logger := zerolog.ProvideZerologger()
 	loggingLogger := zerolog.ProvideLogger(logger)
 	tracer, err := auth.ProvideTracer()
 	if err != nil {
 		return nil, err
 	}
-	enticator := auth.ProvideBcrypt(loggingLogger, tracer)
+	enticator := auth.ProvideBcrypt(bcryptHashCost, loggingLogger, tracer)
 	sqliteTracer, err := sqlite.ProvideSqliteTracer()
 	if err != nil {
 		return nil, err

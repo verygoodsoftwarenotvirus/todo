@@ -3,9 +3,10 @@ package auth
 import (
 	"context"
 	"errors"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
+	"math"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/pquerna/otp/totp"
@@ -13,7 +14,8 @@ import (
 )
 
 const (
-	defaultHashCost            = uint(bcrypt.DefaultCost) + 2
+	// DefaultBcryptHashCost is what it says on the tin
+	DefaultBcryptHashCost      = BcryptHashCost(bcrypt.DefaultCost + 2)
 	defaultMinimumPasswordSize = 16
 )
 
@@ -32,12 +34,15 @@ type BcryptAuthenticator struct {
 	tracer              opentracing.Tracer
 }
 
+// BcryptHashCost is an arbitrary type alias for dependency injection's sake.
+type BcryptHashCost uint
+
 // ProvideBcrypt returns a Bcrypt-powered Enticator
-func ProvideBcrypt(logger logging.Logger, tracer Tracer) Enticator {
+func ProvideBcrypt(hashCost BcryptHashCost, logger logging.Logger, tracer Tracer) Enticator {
 	ba := &BcryptAuthenticator{
 		logger:              logger,
 		tracer:              tracer,
-		hashCost:            defaultHashCost,
+		hashCost:            uint(math.Min(float64(DefaultBcryptHashCost), float64(hashCost))),
 		minimumPasswordSize: defaultMinimumPasswordSize,
 	}
 	return ba

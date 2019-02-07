@@ -25,8 +25,14 @@ var (
 	Providers = wire.NewSet(
 		ProvideBcrypt,
 		ProvideTracer,
+		ProvideBcryptHashCost,
 	)
 )
+
+// ProvideBcryptHashCost provides a BcryptHashCost
+func ProvideBcryptHashCost() BcryptHashCost {
+	return DefaultBcryptHashCost
+}
 
 // PasswordHasher hashes passwords
 type PasswordHasher interface {

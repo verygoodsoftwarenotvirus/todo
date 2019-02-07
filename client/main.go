@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"net/http"
+	"net/url"
 
 	v1 "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
@@ -23,14 +24,14 @@ type TodoClient interface {
 
 // NewClient builds a new TodoClient
 func NewClient(
-	address,
 	clientID,
 	clientSecret string,
+	address *url.URL,
 	logger *logrus.Logger,
 	newLogger logging.Logger,
 	client *http.Client,
 	tracer opentracing.Tracer,
 	debug bool,
 ) (TodoClient, error) {
-	return v1.NewClient(address, clientID, clientSecret, logger, newLogger, client, tracer, debug)
+	return v1.NewClient(clientID, clientSecret, address, logger, newLogger, client, tracer, debug)
 }

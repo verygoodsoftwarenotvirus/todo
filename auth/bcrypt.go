@@ -1,15 +1,19 @@
 package auth
 
 import (
+	"context"
 	"errors"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
+
+	"github.com/opentracing/opentracing-go"
 	"github.com/pquerna/otp/totp"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
 
 const (
-	defaultHashCost            = uint(bcrypt.DefaultCost) + 3
+	defaultHashCost            = uint(bcrypt.DefaultCost) + 2
 	defaultMinimumPasswordSize = 16
 )
 
@@ -22,36 +26,47 @@ var (
 
 // BcryptAuthenticator is our bcrypt-based authenticator
 type BcryptAuthenticator struct {
-	logger              *logrus.Logger
+	logger              logging.Logger
 	hashCost            uint
 	minimumPasswordSize uint
+	tracer              opentracing.Tracer
 }
 
-// NewBcrypt returns a Bcrypt-powered Enticator
-func NewBcrypt(logger *logrus.Logger) Enticator {
-	if logger == nil {
-		logger = logrus.New()
-	}
-	return &BcryptAuthenticator{
+// ProvideBcrypt returns a Bcrypt-powered Enticator
+func ProvideBcrypt(logger logging.Logger, tracer Tracer) Enticator {
+	ba := &BcryptAuthenticator{
 		logger:              logger,
+		tracer:              tracer,
 		hashCost:            defaultHashCost,
 		minimumPasswordSize: defaultMinimumPasswordSize,
 	}
+	return ba
 }
 
 // HashPassword takes a password and hashes it using bcrypt
-func (b *BcryptAuthenticator) HashPassword(password string) (string, error) {
+func (b *BcryptAuthenticator) HashPassword(ctx context.Context, password string) (string, error) {
+	span := tracing.FetchSpanFromContext(ctx, b.tracer, "HashPassword")
+	defer span.Finish()
+
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), int(b.hashCost))
 	return string(hashedPass), err
 }
 
 // PasswordMatches validates whether or not a bcrypt-hashed password matches a provided password
-func (b *BcryptAuthenticator) PasswordMatches(hashedPassword, providedPassword string, salt []byte) bool {
+func (b *BcryptAuthenticator) PasswordMatches(ctx context.Context, hashedPassword, providedPassword string, _ []byte) bool {
+	span := tracing.FetchSpanFromContext(ctx, b.tracer, "PasswordMatches")
+	defer span.Finish()
+
 	matches := bcrypt.CompareHashAndPassword(
 		[]byte(hashedPassword),
 		[]byte(providedPassword),
 	) == nil
 	tooWeak := b.hashedPasswordIsTooWeak(hashedPassword)
+
+	b.logger.WithValues(map[string]interface{}{
+		"too_weak": tooWeak,
+		"matches":  matches,
+	}).Debug("evaluated password match")
 
 	return matches && !tooWeak
 }
@@ -72,8 +87,11 @@ func (b *BcryptAuthenticator) PasswordIsAcceptable(pass string) bool {
 }
 
 // ValidateLogin validates a password and two factor code
-func (b *BcryptAuthenticator) ValidateLogin(hashedPassword, providedPassword, twoFactorSecret, twoFactorCode string) (bool, error) {
-	passwordMatches := b.PasswordMatches(hashedPassword, providedPassword, nil)
+func (b *BcryptAuthenticator) ValidateLogin(ctx context.Context, hashedPassword, providedPassword, twoFactorSecret, twoFactorCode string) (bool, error) {
+	span := tracing.FetchSpanFromContext(ctx, b.tracer, "ValidateLogin")
+	defer span.Finish()
+
+	passwordMatches := b.PasswordMatches(ctx, hashedPassword, providedPassword, nil)
 	if !totp.Validate(twoFactorCode, twoFactorSecret) {
 		return passwordMatches, ErrInvalidTwoFactorCode
 	}

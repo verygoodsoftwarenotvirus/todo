@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
-	"net/http/httptrace"
+	// "net/http/httptrace"
 	"net/http/httputil"
 	"net/url"
 	"strings"
@@ -102,9 +102,9 @@ func buildOAuthClient(ctx context.Context, uri *url.URL, clientID, clientSecret 
 
 // NewClient builds a new API client for us
 func NewClient(
-	address,
 	clientID,
 	clientSecret string,
+	address *url.URL,
 	logger *logrus.Logger,
 	newLogger logging.Logger,
 	hclient *http.Client,
@@ -117,27 +117,16 @@ func NewClient(
 
 	var client = hclient
 	if client == nil {
-		client = &http.Client{
-			Timeout: 5 * time.Second,
-		}
-	}
-
-	if debug {
-		logger.SetLevel(logrus.DebugLevel)
-	}
-
-	u, err := url.Parse(address)
-	if err != nil {
-		return nil, errors.Wrap(err, "parsing URL")
+		client = &http.Client{}
 	}
 
 	c := &V1Client{
-		URL:          u,
+		URL:          address,
 		plainClient:  client,
 		logger:       logger,
 		tracer:       tracer,
 		Debug:        debug,
-		authedClient: buildOAuthClient(context.TODO(), u, clientID, clientSecret),
+		authedClient: buildOAuthClient(context.Background(), address, clientID, clientSecret),
 	}
 
 	return c, nil
@@ -150,12 +139,15 @@ func (c *V1Client) executeRequest(ctx context.Context, req *http.Request) (*http
 
 	// attach ClientTrace to the Context, and Context to request
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "executeRequest")
-	trace := NewClientTrace(span)
-	ctx = httptrace.WithClientTrace(ctx, trace)
-	req = req.WithContext(ctx)
+	// trace := NewClientTrace(span)
+	// ctx = httptrace.WithClientTrace(ctx, trace)
+	// req = req.WithContext(ctx)
 
 	// wrap the request in nethttp.TraceRequest
-	req, _ = nethttp.TraceRequest(c.tracer, req, nethttp.ClientTrace(true))
+	// req, _ = nethttp.TraceRequest(c.tracer, req, nethttp.ClientTrace(true))
+
+	c.tracer.Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+
 	res, err := c.authedClient.Do(req)
 	if err != nil {
 		return nil, err

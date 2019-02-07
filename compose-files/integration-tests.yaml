@@ -14,15 +14,15 @@ services:
       logging:
         driver: none
 
-    database:
-      image: postgres:latest
-      ports:
-        - "2345:5432"
-      environment:
-        POSTGRES_USER: todo
-        POSTGRES_PASSWORD: hunter2
-      logging:
-        driver: none
+    # database:
+    #   image: postgres:latest
+    #   ports:
+    #     - "2345:5432"
+    #   environment:
+    #     POSTGRES_USER: todo
+    #     POSTGRES_PASSWORD: hunter2
+    #   logging:
+    #     driver: none
 
     demo-server:
       build:
@@ -37,8 +37,8 @@ services:
         JAEGER_AGENT_PORT: '6831'
         JAEGER_SAMPLER_MANAGER_HOST_PORT: 'tracing-server:5778'
       links:
-        - database
         - tracing-server
+        # - database
       logging:
         driver: "json-file"
         # log-opts:
@@ -56,6 +56,6 @@ services:
         JAEGER_AGENT_PORT: '6831'
         JAEGER_SAMPLER_MANAGER_HOST_PORT: 'tracing-server:5778'
       links:
-        - database
         - tracing-server
         - demo-server
+        # - database

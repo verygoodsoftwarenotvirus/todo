@@ -1,8 +1,14 @@
 package auth
 
 import (
+	"context"
 	"crypto/rand"
 	"errors"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
+
+	"github.com/google/wire"
+	"github.com/opentracing/opentracing-go"
 )
 
 const (
@@ -14,19 +20,33 @@ var (
 	ErrInvalidTwoFactorCode = errors.New("invalid two factor code")
 	// ErrPasswordHashTooWeak indicates that a provided password hash is too weak
 	ErrPasswordHashTooWeak = errors.New("password's hash is too weak")
+
+	// Providers represents what this package offers to external libraries in the way of consntructors
+	Providers = wire.NewSet(
+		ProvideBcrypt,
+		ProvideTracer,
+	)
 )
 
 // PasswordHasher hashes passwords
 type PasswordHasher interface {
-	HashPassword(password string) (string, error)
+	HashPassword(ctx context.Context, password string) (string, error)
 	PasswordIsAcceptable(password string) bool
-	PasswordMatches(hashedPassword, providedPassword string, salt []byte) bool
+	PasswordMatches(ctx context.Context, hashedPassword, providedPassword string, salt []byte) bool
+}
+
+// Tracer is an obligatory type alias we have for dependency injection's sake
+type Tracer opentracing.Tracer
+
+// ProvideTracer provides a Tracer
+func ProvideTracer() (Tracer, error) {
+	return tracing.ProvideTracer("password-authentication")
 }
 
 // Enticator is a poorly named Authenticator interface
 type Enticator interface {
 	PasswordHasher
-	ValidateLogin(hashedPassword, providedPassword, twoFactorSecret, twoFactorCode string) (bool, error)
+	ValidateLogin(ctx context.Context, hashedPassword, providedPassword, twoFactorSecret, twoFactorCode string) (bool, error)
 }
 
 func init() {

@@ -156,7 +156,9 @@ func (s *Server) validateLogin(
 	user *models.User,
 	loginInput *models.UserLoginInput,
 ) (bool, ErrorNotifier, error) {
+
 	loginValid, err := s.authenticator.ValidateLogin(
+		ctx,
 		user.HashedPassword,
 		loginInput.Password,
 		user.TwoFactorSecret,
@@ -165,7 +167,7 @@ func (s *Server) validateLogin(
 	if err == auth.ErrPasswordHashTooWeak && loginValid {
 		s.logger.Debug("hashed password was deemed to weak, updating its hash")
 
-		updated, e := s.authenticator.HashPassword(loginInput.Password)
+		updated, e := s.authenticator.HashPassword(ctx, loginInput.Password)
 		if e != nil {
 			return false, s.internalServerError, e
 		}

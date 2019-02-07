@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -54,6 +55,14 @@ func checkValueAndError(t *testing.T, i interface{}, err error) {
 	require.NotNil(t, i)
 }
 
+func initializeTracer() {
+	tracer, err := tracing.ProvideTracer("integration-tests-client")
+	if err != nil {
+		log.Fatal(err)
+	}
+	opentracing.SetGlobalTracer(tracer)
+}
+
 func initializeClient() {
 	httpc := &http.Client{
 		Transport: http.DefaultTransport,
@@ -63,23 +72,18 @@ func initializeClient() {
 	// WARNING: Never do this ordinarily, this is an application which will only ever run in a local context
 	httpc.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
-	tracer, err := tracing.ProvideTracer("integration-tests-client")
-	if err != nil {
-		log.Fatal(err)
-	}
-	opentracing.SetGlobalTracer(tracer)
-
 	logger := logrus.New()
 	logger.SetLevel(logrus.DebugLevel)
 
+	u, _ := url.Parse(urlToUse)
 	c, err := client.NewClient(
-		urlToUse,
 		defaultTestInstanceClientID,
 		defaultTestInstanceClientSecret,
+		u,
 		logger,
-		nil, // REPLACEME with actual logger
+		zerolog.ProvideLogger(zerolog.ProvideZerologger()),
 		httpc,
-		tracer,
+		opentracing.GlobalTracer(),
 		debug,
 	)
 	if err != nil {
@@ -117,6 +121,10 @@ func init() {
 		urlToUse = localTestInstanceURL
 	}
 
+	tracer := opentracing.GlobalTracer()
+	logger := zerolog.ProvideLogger(zerolog.ProvideZerologger())
+
+	initializeTracer()
 	initializeClient()
 	ensureServerIsUp()
 	//testOAuth()
@@ -126,15 +134,15 @@ func init() {
 		case "postgres":
 			db, err := postgres.ProvidePostgres(
 				true,
-				zerolog.ProvideLogger(zerolog.ProvideZerologger()),
-				opentracing.GlobalTracer(),
+				logger,
+				tracer,
 				dockerPostgresAddress,
 			)
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			if err := bootstrap.PreloadDatabase(db, ""); err != nil {
+			if err := bootstrap.PreloadDatabase(db, "", logger, tracer); err != nil {
 				log.Fatal(err)
 			}
 		}

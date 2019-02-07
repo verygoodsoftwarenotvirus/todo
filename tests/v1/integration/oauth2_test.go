@@ -133,7 +133,7 @@ func TestOAuth2Clients(test *testing.T) {
 		})
 
 		T.Run("should be unable to authorize after being deleted", func(t *testing.T) {
-			// tctx := context.Background()
+			// tctx := buildSpanContext()
 
 			t.SkipNow()
 		})

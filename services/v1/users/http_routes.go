@@ -207,7 +207,13 @@ func (s *Service) validateCredentialChangeRequest(req *http.Request, password st
 
 	logger = logger.WithValue("username", user.Username)
 
-	if valid, err := s.authenticator.ValidateLogin(user.HashedPassword, password, user.TwoFactorSecret, totpToken); err != nil {
+	if valid, err := s.authenticator.ValidateLogin(
+		ctx,
+		user.HashedPassword,
+		password,
+		user.TwoFactorSecret,
+		totpToken,
+	); err != nil {
 		logger.Error(err, "error encountered generating random TOTP string")
 		return nil, http.StatusInternalServerError
 	} else if !valid {
@@ -280,7 +286,7 @@ func (s *Service) UpdatePassword(res http.ResponseWriter, req *http.Request) {
 
 	logger := s.logger.WithValue("username", user.Username)
 
-	user.HashedPassword, err = s.authenticator.HashPassword(input.NewPassword)
+	user.HashedPassword, err = s.authenticator.HashPassword(ctx, input.NewPassword)
 	if err != nil {
 		logger.Error(err, "error hashing password")
 		res.WriteHeader(http.StatusInternalServerError)
@@ -316,7 +322,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		"is_admin": input.IsAdmin,
 	}).Debug("Create route hit")
 
-	hp, err := s.authenticator.HashPassword(input.Password)
+	hp, err := s.authenticator.HashPassword(ctx, input.Password)
 	if err != nil {
 		s.logger.Error(err, "valid input not attached to request")
 		res.WriteHeader(http.StatusInternalServerError)

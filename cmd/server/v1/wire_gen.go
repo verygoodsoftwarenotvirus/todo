@@ -6,7 +6,6 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
@@ -21,15 +20,18 @@ import (
 // Injectors from wire.go:
 
 func BuildServer(connectionDetails database.ConnectionDetails, SchemaDirectory database.SchemaDirectory, CertPair server.CertPair, CookieName users.CookieName, CookieSecret []byte, Debug bool) (*server.Server, error) {
-	logger := logrus.New()
-	enticator := auth.NewBcrypt(logger)
-	zerologLogger := zerolog.ProvideZerologger()
-	loggingLogger := zerolog.ProvideLogger(zerologLogger)
-	tracer, err := sqlite.ProvideSqliteTracer()
+	logger := zerolog.ProvideZerologger()
+	loggingLogger := zerolog.ProvideLogger(logger)
+	tracer, err := auth.ProvideTracer()
 	if err != nil {
 		return nil, err
 	}
-	databaseDatabase, err := sqlite.ProvideSqlite(Debug, loggingLogger, tracer, connectionDetails)
+	enticator := auth.ProvideBcrypt(loggingLogger, tracer)
+	sqliteTracer, err := sqlite.ProvideSqliteTracer()
+	if err != nil {
+		return nil, err
+	}
+	databaseDatabase, err := sqlite.ProvideSqlite(Debug, loggingLogger, sqliteTracer, connectionDetails)
 	if err != nil {
 		return nil, err
 	}

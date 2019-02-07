@@ -62,6 +62,11 @@ func main() {
 		log.Fatalf("error opening database connection: %v\n", err)
 	}
 
-	bootstrap.PreloadDatabase(db, database.SchemaDirectory(schemaDir))
+	bootstrap.PreloadDatabase(
+		db,
+		database.SchemaDirectory(schemaDir),
+		logger,
+		tracer,
+	)
 
 }

@@ -9,12 +9,11 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/sirupsen/logrus"
+	"github.com/opentracing/opentracing-go"
 )
-
-var logger *logrus.Logger
 
 const (
 	expectedUsername = "username"
@@ -33,31 +32,37 @@ const (
 )
 
 // PreloadDatabase migrates a postgres database
-func PreloadDatabase(db database.Database, schemaDir database.SchemaDirectory) error {
+func PreloadDatabase(
+	db database.Database,
+	schemaDir database.SchemaDirectory,
+	logger logging.Logger,
+	tracer opentracing.Tracer,
+) error {
 	switch strings.ToLower(os.Getenv("DATABASE_TO_USE")) {
 	case "postgres":
 		println()
 	default:
 		println()
 	}
+	ctx := context.Background()
 
 	if !db.IsReady(context.Background()) {
 		return errors.New("no database ready")
 	}
 
 	if len(schemaDir) > 0 {
-		if err := db.Migrate(context.Background(), schemaDir); err != nil {
+		if err := db.Migrate(ctx, schemaDir); err != nil {
 			return err
 		}
 	}
 
-	b := auth.NewBcrypt(nil)
-	hp, err := b.HashPassword(expectedUsername)
+	b := auth.ProvideBcrypt(logger, tracer)
+	hp, err := b.HashPassword(ctx, expectedUsername)
 	if err != nil {
 		return err
 	}
 
-	u, err := db.CreateUser(context.Background(), &models.UserInput{
+	u, err := db.CreateUser(ctx, &models.UserInput{
 		Username:        expectedUsername,
 		Password:        hp,
 		IsAdmin:         true,
@@ -70,7 +75,7 @@ func PreloadDatabase(db database.Database, schemaDir database.SchemaDirectory) e
 	}
 
 	oac, err := db.CreateOAuth2Client(
-		context.Background(),
+		ctx,
 		&models.OAuth2ClientCreationInput{
 			UserLoginInput: models.UserLoginInput{Username: u.Username},
 			Scopes:         []string{"*"},
@@ -78,16 +83,17 @@ func PreloadDatabase(db database.Database, schemaDir database.SchemaDirectory) e
 		},
 	)
 	if err != nil {
-		logger.Fatalf("error creating oauth client: %v", err)
+		logger.Error(err, "error creating oauth client")
+		logger.Fatal(err)
 	}
 
 	oac.ClientID, oac.ClientSecret, oac.RedirectURI = defaultClientID, defaultClientSecret, localTestInstanceURL
-	if err := db.UpdateOAuth2Client(context.Background(), oac); err != nil {
+	if err := db.UpdateOAuth2Client(ctx, oac); err != nil {
 		return err
 	}
 
 	for i := 1; i < 6; i++ {
-		if _, err := db.CreateItem(context.Background(), &models.ItemInput{
+		if _, err := db.CreateItem(ctx, &models.ItemInput{
 			Name:      fmt.Sprintf("example item #%d", i),
 			Details:   fmt.Sprintf("example details #%d", i),
 			BelongsTo: u.ID,

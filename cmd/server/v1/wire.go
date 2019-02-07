@@ -14,7 +14,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
 	"github.com/google/wire"
-	"github.com/sirupsen/logrus"
 	oauth2manage "gopkg.in/oauth2.v3/manage"
 )
 
@@ -29,8 +28,7 @@ func BuildServer(
 ) (*server.Server, error) {
 
 	wire.Build(
-		logrus.New,
-		auth.NewBcrypt,
+		auth.Providers,
 		oauth2manage.NewDefaultManager,
 
 		//// Databases

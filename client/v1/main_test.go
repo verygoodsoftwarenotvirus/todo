@@ -26,7 +26,8 @@ func TestBuildURL(T *testing.T) {
 	T.Run("various urls", func(t *testing.T) {
 		t.Parallel()
 
-		c, err := client.NewClient(exampleURL, "", "", nil, nil, nil, nil, false)
+		u, _ := url.Parse(exampleURL)
+		c, err := client.NewClient("", "", u, nil, nil, nil, nil, false)
 		require.NoError(t, err)
 
 		testCases := []struct {

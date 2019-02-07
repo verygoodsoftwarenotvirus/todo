@@ -56,8 +56,18 @@ func (l *Logger) Debug(input string) {
 }
 
 // Error satisfies our contract for the logging.Logger Error method.
-func (l *Logger) Error(input string) {
-	l.logger.Errorln(input)
+func (l *Logger) Error(err error, input string) {
+	l.logger.WithField("err", err).Errorln(input)
+}
+
+// Fatal satisfies our contract for the logging.Logger Fatal method.
+func (l *Logger) Fatal(err error) {
+	l.logger.WithField("err", err).Fatal()
+}
+
+// Print satisfies our contract for the logging.Logger Print method.
+func (l *Logger) Print(input ...interface{}) {
+	l.logger.Print(input...)
 }
 
 // WithValues satisfies our contract for the logging.Logger WithValues method.
@@ -75,6 +85,8 @@ func (l *Logger) WithError(err error) logging.Logger {
 	return l.WithError(err)
 }
 
+// entryWrapper has repeats of many functions
+
 type entryWrapper struct {
 	*logrus.Entry
 }
@@ -90,8 +102,18 @@ func (e *entryWrapper) Debug(input string) {
 }
 
 // Error satisfies our contract for the logging.Logger Error method.
-func (e *entryWrapper) Error(input string) {
-	e.Errorln(input)
+func (e *entryWrapper) Error(err error, input string) {
+	e.Error(err, input)
+}
+
+// Fatal satisfies our contract for the logging.Logger Fatal method.
+func (e *entryWrapper) Fatal(err error) {
+	e.Fatal(err)
+}
+
+// Print satisfies our contract for the logging.Logger Print method.
+func (e *entryWrapper) Print(input ...interface{}) {
+	e.Print(input...)
 }
 
 // WithValues satisfies our contract for the logging.Logger WithValues method.

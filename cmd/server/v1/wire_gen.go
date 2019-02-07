@@ -6,10 +6,11 @@
 package main
 
 import (
+	"github.com/sirupsen/logrus"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/logrus"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
@@ -20,9 +21,10 @@ import (
 // Injectors from wire.go:
 
 func BuildServer(connectionDetails database.ConnectionDetails, SchemaDirectory database.SchemaDirectory, CertPair server.CertPair, CookieName users.CookieName, CookieSecret []byte, Debug bool) (*server.Server, error) {
-	logger := logrus.ProvideLogrus(Debug)
+	logger := logrus.New()
 	enticator := auth.NewBcrypt(logger)
-	loggingLogger := logrus.ProvideLogger(logger)
+	zerologLogger := zerolog.ProvideZerologger()
+	loggingLogger := zerolog.ProvideLogger(zerologLogger)
 	tracer, err := sqlite.ProvideSqliteTracer()
 	if err != nil {
 		return nil, err
@@ -60,7 +62,7 @@ func BuildServer(connectionDetails database.ConnectionDetails, SchemaDirectory d
 		return nil, err
 	}
 	serverServer := server.ProvideOAuth2Server(manager, tokenStore, clientStore)
-	server2, err := server.ProvideServer(Debug, CertPair, CookieSecret, enticator, SchemaDirectory, service, usersService, oauth2clientsService, databaseDatabase, logger, loggingLogger, serverTracer, serverServer, tokenStore, clientStore)
+	server2, err := server.ProvideServer(Debug, CertPair, CookieSecret, enticator, SchemaDirectory, service, usersService, oauth2clientsService, databaseDatabase, loggingLogger, serverTracer, serverServer, tokenStore, clientStore)
 	if err != nil {
 		return nil, err
 	}

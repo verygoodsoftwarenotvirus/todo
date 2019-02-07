@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"runtime"
 	"time"
@@ -20,8 +21,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/google/wire"
 	"github.com/gorilla/securecookie"
-	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/sirupsen/logrus"
+	"github.com/opentracing/opentracing-go"
 	"gopkg.in/oauth2.v3"
 	oauth2server "gopkg.in/oauth2.v3/server"
 	oauth2store "gopkg.in/oauth2.v3/store"
@@ -63,8 +63,7 @@ type (
 		db            database.Database
 		router        *chi.Mux
 		server        *http.Server
-		logger        *logrus.Logger
-		newLogger     logging.Logger
+		logger        logging.Logger
 		tracer        opentracing.Tracer
 		cookieBuilder *securecookie.SecureCookie
 
@@ -108,8 +107,7 @@ func ProvideServer(
 
 	// infra things
 	db database.Database,
-	logger *logrus.Logger,
-	newLogger logging.Logger,
+	logger logging.Logger,
 	tracer Tracer,
 
 	// OAuth2 stuff
@@ -120,7 +118,7 @@ func ProvideServer(
 
 	if len(cookieSecret) < 32 {
 		err := errors.New("cookie secret is too short, must be at least 32 characters in length")
-		logger.WithError(err).Errorln("cookie secret failure")
+		logger.Error(err, "cookie secret failure")
 		return nil, err
 	}
 
@@ -158,42 +156,16 @@ func ProvideServer(
 	return srv, nil
 }
 
-// SetDebug sets the debug level of the serer
-func (s *Server) SetDebug(debug bool) {
-	s.DebugMode = debug
-	if debug {
-		s.logger.SetLevel(logrus.DebugLevel)
-	}
-}
-
-func (s *Server) logRoutes(routes chi.Routes) {
-	if s.DebugMode {
-		for _, route := range routes.Routes() {
-			rp := route.Pattern
-			s.logger.Debugln(rp)
-			if route.SubRoutes != nil {
-				for _, sr := range route.SubRoutes.Routes() {
-					s.logRoute(rp, sr)
-				}
-			}
-		}
-	}
-}
-
-func (s *Server) logRoute(prefix string, route chi.Route) {
-
-}
-
 // Serve serves HTTP traffic
 func (s *Server) Serve() {
 	s.server.Handler = s.router
-	s.logger.Debugf("Listening on 443")
+	s.logger.Debug("Listening on 443")
 	//s.logRoutes(s.router)
-	s.logger.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))
+	log.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))
 }
 
 func (s *Server) stats(res http.ResponseWriter, req *http.Request) {
-	s.logger.Debugln("stats called")
+	s.logger.Debug("stats called")
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 
@@ -208,7 +180,7 @@ func (s *Server) stats(res http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := json.NewEncoder(res).Encode(x); err != nil {
-		s.logger.Errorf("Error encoding struct: %v", err)
+		s.logger.Error(err, "encoding struct")
 	}
 }
 
@@ -221,76 +193,76 @@ type genericResponse struct {
 type ErrorNotifier func(res http.ResponseWriter, req *http.Request, err error)
 
 func (s *Server) internalServerError(res http.ResponseWriter, req *http.Request, err error) {
-	s.logger.WithFields(map[string]interface{}{
+	s.logger.WithValues(map[string]interface{}{
 		"path":   req.URL.Path,
 		"method": req.Method,
 		"error":  err,
-	}).Debugln("internalServerError called")
+	}).Debug("internalServerError called")
 
 	sc := http.StatusInternalServerError
-	s.logger.Errorf("Encountered this internal error: %v\n", err)
+	s.logger.Error(err, "Encountered internal error")
 	res.WriteHeader(sc)
 	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "Unexpected internal error occurred"})
 }
 
 func (s *Server) notifyUnauthorized(res http.ResponseWriter, req *http.Request, err error) {
-	s.logger.WithFields(map[string]interface{}{
+	s.logger.WithValues(map[string]interface{}{
 		"path":   req.URL.Path,
 		"method": req.Method,
 		"error":  err,
-	}).Debugln("notifyUnauthorized called")
+	}).Debug("notifyUnauthorized called")
 
 	sc := http.StatusUnauthorized
 	if err != nil {
-		s.logger.Errorln("notifyUnauthorized called with this error: ", err)
+		s.logger.WithError(err).Debug("notifyUnauthorized called")
 	}
 	res.WriteHeader(sc)
 	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "Unauthorized"})
 }
 
 func (s *Server) invalidInput(res http.ResponseWriter, req *http.Request, err error) {
-	s.logger.WithFields(map[string]interface{}{
+	s.logger.WithValues(map[string]interface{}{
 		"path":   req.URL.Path,
 		"method": req.Method,
 		"error":  err,
-	}).Debugln("invalidInput called")
+	}).Debug("invalidInput called")
 
 	sc := http.StatusBadRequest
-	s.logger.Debugf("invalidInput called for route: %q\n", req.URL.String())
+	s.logger.WithValue("route", req.URL.Path).Debug("invalidInput called for route")
 	if err != nil {
-		s.logger.Errorln("invalidInput called with this error: ", err)
+		s.logger.WithError(err).Debug("invalidInput called")
 	}
 	res.WriteHeader(sc)
 	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "invalid input"})
 }
 
 func (s *Server) notFound(res http.ResponseWriter, req *http.Request, err error) {
-	s.logger.WithFields(map[string]interface{}{
+	s.logger.WithValues(map[string]interface{}{
 		"path":   req.URL.Path,
 		"method": req.Method,
 		"error":  err,
-	}).Debugln("notFound called")
+	}).Debug("notFound called")
 
 	sc := http.StatusNotFound
-	s.logger.Debugf("notFound called for route: %q\n", req.URL.String())
+	s.logger.WithValue("route", req.URL.Path).Debug("notFound called for route")
 	if err != nil {
-		s.logger.Errorln("notFound called with this error: ", err)
+		s.logger.WithError(err).Debug("notFound called")
 	}
 	res.WriteHeader(sc)
 	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "not found"})
 }
 
 func (s *Server) notifyOfInvalidRequestCookie(res http.ResponseWriter, req *http.Request, err error) {
-	s.logger.WithFields(map[string]interface{}{
+	s.logger.WithValues(map[string]interface{}{
 		"path":   req.URL.Path,
 		"method": req.Method,
 		"error":  err,
-	}).Debugln("notifyOfInvalidRequestCookie called")
+	}).Debug("notifyOfInvalidRequestCookie called")
 
 	sc := http.StatusBadRequest
-	s.logger.Debugf("notifyOfInvalidRequestCookie called for route: %q\n", req.URL.String())
+	s.logger.WithValue("route", req.URL.Path).Debug("notifyOfInvalidRequestCookie called for route")
 	if err != nil {
-		s.logger.Errorln("notifyOfInvalidRequestCookie called with this error: ", err)
+		s.logger.WithError(err).Debug("notifyOfInvalidRequestCookie called")
 	}
 	res.WriteHeader(sc)
 	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "invalid cookie"})

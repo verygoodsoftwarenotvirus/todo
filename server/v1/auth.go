@@ -22,7 +22,7 @@ type cookieAuth struct {
 // UserCookieAuthenticationMiddleware authenticates user cookies
 func (s *Server) UserCookieAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		s.logger.Debugln("UserAuthenticationMiddleware triggered")
+		s.logger.Debug("UserAuthenticationMiddleware triggered")
 
 		if cookie, err := req.Cookie(CookieName); err == nil && cookie != nil {
 			var ca cookieAuth
@@ -36,7 +36,7 @@ func (s *Server) UserCookieAuthenticationMiddleware(next http.Handler) http.Hand
 				if u := ctx.Value(models.UserKey); u == nil {
 					user, err := s.db.GetUser(ctx, ca.Username)
 					if err != nil {
-						s.logger.WithError(err).Errorln("error encountered fetching user")
+						s.logger.Error(err, "error encountered fetching user")
 						s.internalServerError(res, req, err)
 						return
 					}
@@ -50,7 +50,7 @@ func (s *Server) UserCookieAuthenticationMiddleware(next http.Handler) http.Hand
 				next.ServeHTTP(res, req)
 				return
 			}
-			s.logger.Errorf("problem decoding cookie: %v", err)
+			s.logger.Error(err, "problem decoding cookie")
 		}
 		http.Redirect(res, req, "/login", http.StatusUnauthorized)
 	})
@@ -59,11 +59,11 @@ func (s *Server) UserCookieAuthenticationMiddleware(next http.Handler) http.Hand
 // Login is our login route
 func (s *Server) Login(res http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	s.logger.Debugln("Login called")
+	s.logger.Debug("Login called")
 
 	loginInput, user, errNotifier, err := s.fetchLoginDataFromRequest(req)
 	if err != nil {
-		s.logger.WithError(err).Errorln("error encountered fetching login data from request")
+		s.logger.Error(err, "error encountered fetching login data from request")
 		if errNotifier != nil {
 			errNotifier(res, req, err)
 		} else {
@@ -72,11 +72,11 @@ func (s *Server) Login(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger := s.logger.WithField("login_input", loginInput)
+	logger := s.logger.WithValue("login_input", loginInput)
 
 	loginValid, errNotifier, err := s.validateLogin(ctx, user, loginInput)
 	if err != nil {
-		logger.WithError(err).Errorln("error encountered validating login")
+		logger.Error(err, "error encountered validating login")
 		if errNotifier != nil {
 			errNotifier(res, req, err)
 		} else {
@@ -85,20 +85,20 @@ func (s *Server) Login(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger = logger.WithField("valid", loginValid)
+	logger = logger.WithValue("valid", loginValid)
 
 	if !loginValid {
-		logger.Debugln("login was invalid")
+		logger.Debug("login was invalid")
 		// s.loginMonitor.LogUnsuccessfulAttempt(loginInput.Username)
 		s.invalidInput(res, req, nil)
 		res.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	logger.Debugln("login was valid, returning cookie")
+	logger.Debug("login was valid, returning cookie")
 	cookie, err := s.buildCookie(user, loginValid)
 	if err != nil {
-		logger.WithError(err).Errorln("error building cookie")
+		logger.Error(err, "error building cookie")
 		s.internalServerError(res, req, err)
 		return
 	}
@@ -110,11 +110,11 @@ func (s *Server) Login(res http.ResponseWriter, req *http.Request) {
 // Logout is our logout route
 func (s *Server) Logout(res http.ResponseWriter, req *http.Request) {
 	if cookie, err := req.Cookie(CookieName); err == nil {
-		s.logger.Debugln("logout was called, clearing cookie")
+		s.logger.Debug("logout was called, clearing cookie")
 		cookie.MaxAge = -1
 		http.SetCookie(res, cookie)
 	} else {
-		s.logger.WithError(err).Errorln("logout was called, no cookie was found")
+		s.logger.Error(err, "logout was called, no cookie was found")
 	}
 
 	res.WriteHeader(http.StatusOK)
@@ -124,14 +124,14 @@ func (s *Server) fetchLoginDataFromRequest(req *http.Request) (*models.UserLogin
 	ctx := req.Context()
 	loginInput, ok := ctx.Value(users.MiddlewareCtxKey).(*models.UserLoginInput)
 	if !ok {
-		s.logger.Debugln("no UserLoginInput found for /login request")
+		s.logger.Debug("no UserLoginInput found for /login request")
 		return nil, nil, s.notifyUnauthorized, nil
 	}
 	username := loginInput.Username
-	logger := s.logger.WithField("username", username)
+	logger := s.logger.WithValue("username", username)
 
 	// if err := s.loginMonitor.LoginAttemptsExhausted(username); err != nil {
-	// 	s.logger.Debugln("user has exhausted their number of login attempts")
+	// 	s.logger.Debug("user has exhausted their number of login attempts")
 	// 	return nil, nil, func(res http.ResponseWriter, req *http.Request, err error) {
 	// 		s.loginMonitor.NotifyExhaustedAttempts(res)
 	// 	}, err
@@ -141,10 +141,10 @@ func (s *Server) fetchLoginDataFromRequest(req *http.Request) (*models.UserLogin
 
 	user, err := s.db.GetUser(ctx, username)
 	if err == sql.ErrNoRows {
-		logger.WithError(err).Debugln("no matching user")
+		logger.WithError(err).Debug("no matching user")
 		return nil, nil, s.invalidInput, err
 	} else if err != nil {
-		logger.WithError(err).Debugln("error fetching user")
+		logger.WithError(err).Debug("error fetching user")
 		return nil, nil, s.internalServerError, err
 	}
 
@@ -163,7 +163,7 @@ func (s *Server) validateLogin(
 		loginInput.TOTPToken,
 	)
 	if err == auth.ErrPasswordHashTooWeak && loginValid {
-		s.logger.Debugln("hashed password was deemed to weak, updating its hash")
+		s.logger.Debug("hashed password was deemed to weak, updating its hash")
 
 		updated, e := s.authenticator.HashPassword(loginInput.Password)
 		if e != nil {
@@ -182,10 +182,10 @@ func (s *Server) validateLogin(
 }
 
 func (s *Server) buildCookie(user *models.User, loginValid bool) (*http.Cookie, error) {
-	s.logger.WithFields(map[string]interface{}{
+	s.logger.WithValues(map[string]interface{}{
 		"user_id":     user.ID,
 		"login_valid": loginValid,
-	}).Debugln("buildCookie called")
+	}).Debug("buildCookie called")
 
 	encoded, err := s.cookieBuilder.Encode(
 		CookieName, cookieAuth{
@@ -195,7 +195,7 @@ func (s *Server) buildCookie(user *models.User, loginValid bool) (*http.Cookie, 
 	)
 
 	if err != nil {
-		s.logger.WithError(err).Errorln("error encoding cookie")
+		s.logger.Error(err, "error encoding cookie")
 		return nil, err
 	}
 

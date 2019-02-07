@@ -7,14 +7,14 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	// "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/logrus"
-	// "gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
 	"github.com/google/wire"
+	"github.com/sirupsen/logrus"
 	oauth2manage "gopkg.in/oauth2.v3/manage"
 )
 
@@ -29,6 +29,7 @@ func BuildServer(
 ) (*server.Server, error) {
 
 	wire.Build(
+		logrus.New,
 		auth.NewBcrypt,
 		oauth2manage.NewDefaultManager,
 
@@ -37,9 +38,9 @@ func BuildServer(
 		sqlite.Providers,
 
 		//// Loggers
-		// zerolog.Providers,
-		logrus.Providers,
+		zerolog.Providers,
 
+		//// Server things
 		server.Providers,
 		users.Providers,
 		items.Providers,

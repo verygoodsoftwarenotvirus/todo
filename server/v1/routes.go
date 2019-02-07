@@ -24,7 +24,7 @@ func (s *Server) buildRouteCtx(key models.ContextKey, x interface{}) func(next h
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			if err := json.NewDecoder(req.Body).Decode(x); err != nil {
-				s.logger.Errorf("error encountered decoding request body: %v", err)
+				s.logger.Error(err, "error encountered decoding request body")
 				res.WriteHeader(http.StatusBadRequest)
 				return
 			}

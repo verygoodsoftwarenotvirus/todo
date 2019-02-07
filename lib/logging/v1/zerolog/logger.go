@@ -47,8 +47,18 @@ func (l *Logger) Debug(input string) {
 }
 
 // Error satisfies our contract for the logging.Logger Error method.
-func (l *Logger) Error(input string) {
-	l.logger.Error().Msg(input)
+func (l *Logger) Error(err error, input string) {
+	l.logger.Error().Err(err).Msg(input)
+}
+
+// Fatal satisfies our contract for the logging.Logger Fatal method.
+func (l *Logger) Fatal(err error) {
+	l.logger.Fatal().Err(err).Msg("")
+}
+
+// Print satisfies our contract for the logging.Logger Print method.
+func (l *Logger) Print(input ...interface{}) {
+	l.logger.Print(input...)
 }
 
 // WithValues satisfies our contract for the logging.Logger WithValues method.

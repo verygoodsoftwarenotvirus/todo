@@ -15,7 +15,9 @@ import (
 type Logger interface {
 	Info(string)
 	Debug(string)
-	Error(string)
+	Error(error, string)
+	Fatal(error)
+	Print(...interface{})
 
 	// Builder funcs
 	WithValues(map[string]interface{}) Logger

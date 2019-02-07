@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -11,6 +10,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"github.com/pkg/errors"
 	"gopkg.in/oauth2.v3"
 	oauth2errors "gopkg.in/oauth2.v3/errors"
 	oauth2manage "gopkg.in/oauth2.v3/manage"
@@ -68,18 +68,18 @@ func (s *Server) initializeOAuth2Clients() {
 		if (clientList != nil && len(clientList.Clients) == 0) || err == sql.ErrNoRows {
 			paginating = false
 		} else if err != nil {
-			s.logger.Fatalln("error encountered querying oauth clients to add to the clientStore: ", err)
+			s.logger.Fatal(errors.Wrap(err, "querying oauth clients to add to the clientStore"))
 		}
 
 		for _, client := range clientList.Clients {
-			s.logger.WithField("client_id", client.ClientID).Debugln("loading client")
+			s.logger.WithValue("client_id", client.ClientID).Debug("loading client")
 			if err := s.oauth2ClientStore.Set(client.ClientID, &oauth2models.Client{
 				ID:     client.ClientID,
 				Secret: client.ClientSecret,
 				Domain: client.RedirectURI,
 				UserID: strconv.FormatUint(client.BelongsTo, 10),
 			}); err != nil {
-				s.logger.WithError(err).Fatalln("error encountered loading oauth clients to the clientStore")
+				s.logger.Fatal(errors.Wrap(err, "error encountered loading oauth clients to the clientStore"))
 			}
 		}
 	}
@@ -113,7 +113,7 @@ func (s *Server) OAuth2InternalErrorHandler(err error) *oauth2errors.Response {
 		StatusCode:  http.StatusInternalServerError,
 	}
 
-	s.logger.WithError(err).Errorln("Internal Error")
+	s.logger.Error(err, "OAuth2 Internal Error")
 	return res
 }
 
@@ -121,7 +121,7 @@ var _ oauth2server.ResponseErrorHandler = (*Server)(nil).OAuth2ResponseErrorHand
 
 // OAuth2ResponseErrorHandler fulfills a role for the OAuth2 server-side provider
 func (s *Server) OAuth2ResponseErrorHandler(re *oauth2errors.Response) {
-	s.logger.WithFields(map[string]interface{}{
+	s.logger.WithValues(map[string]interface{}{
 		"error":       re.Error,
 		"error_code":  re.ErrorCode,
 		"description": re.Description,
@@ -135,21 +135,21 @@ func (s *Server) OAuth2ResponseErrorHandler(re *oauth2errors.Response) {
 func (s *Server) OauthTokenAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
-		s.logger.Debugln("OauthTokenAuthenticationMiddleware called")
+		s.logger.Debug("OauthTokenAuthenticationMiddleware called")
 
 		token, err := s.oauth2Handler.ValidationBearerToken(req)
 		if err != nil || token == nil {
-			s.logger.WithError(err).Errorln("error validating bearer token")
+			s.logger.Error(err, "error validating bearer token")
 			http.Error(res, errInvalidToken.Error(), http.StatusUnauthorized)
 			return
 		}
 
 		cid := token.GetClientID()
-		logger := s.logger.WithField("client_id", cid)
+		logger := s.logger.WithValue("client_id", cid)
 
 		c, err := s.db.GetOAuth2Client(ctx, cid)
 		if err != nil {
-			logger.WithError(err).Errorln("error fetching OAuth2 Client")
+			logger.Error(err, "error fetching OAuth2 Client")
 			http.Error(res, fmt.Sprintf("error fetching client ID: %s", err.Error()), http.StatusUnauthorized)
 			return
 		}
@@ -163,15 +163,15 @@ func (s *Server) OauthTokenAuthenticationMiddleware(next http.Handler) http.Hand
 func (s *Server) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
-		s.logger.Debugln("OauthInfoMiddleware called")
+		s.logger.Debug("OauthInfoMiddleware called")
 
 		if v := req.URL.Query().Get(oauth2ClientIDURIParamKey); v != "" {
-			logger := s.logger.WithField("oauth2_client_id", v)
-			logger.Debugln("fetching oauth2 client from database")
+			logger := s.logger.WithValue("oauth2_client_id", v)
+			logger.Debug("fetching oauth2 client from database")
 
 			client, err := s.db.GetOAuth2Client(ctx, v)
 			if err != nil {
-				logger.WithError(err).Errorln("error fetching OAuth2 client")
+				logger.Error(err, "error fetching OAuth2 client")
 				http.Error(res, err.Error(), http.StatusInternalServerError)
 			}
 			req = req.WithContext(context.WithValue(ctx, models.OAuth2ClientKey, client))
@@ -182,7 +182,7 @@ func (s *Server) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 }
 
 func (s *Server) fetchOAuth2ClientFromRequest(req *http.Request) *models.OAuth2Client {
-	s.logger.Debugln("fetchOAuth2ClientFromRequest called")
+	s.logger.Debug("fetchOAuth2ClientFromRequest called")
 	ctx := req.Context()
 	client, ok := ctx.Value(models.OAuth2ClientKey).(*models.OAuth2Client)
 	if !ok {
@@ -192,7 +192,7 @@ func (s *Server) fetchOAuth2ClientFromRequest(req *http.Request) *models.OAuth2C
 }
 
 func (s *Server) fetchOAuth2ClientScopesFromRequest(req *http.Request) []string {
-	s.logger.Debugln("fetchOAuth2ClientScopesFromRequest called")
+	s.logger.Debug("fetchOAuth2ClientScopesFromRequest called")
 	ctx := req.Context()
 	scopes, ok := ctx.Value(scopesKey).([]string)
 	if !ok {
@@ -202,7 +202,7 @@ func (s *Server) fetchOAuth2ClientScopesFromRequest(req *http.Request) []string 
 }
 
 func (s *Server) fetchOAuth2ClientIDFromRequest(req *http.Request) string {
-	s.logger.Debugln("fetchOAuth2ClientIDFromRequest called")
+	s.logger.Debug("fetchOAuth2ClientIDFromRequest called")
 	ctx := req.Context()
 	clientID, ok := ctx.Value(clientIDKey).(string)
 	if !ok {
@@ -219,9 +219,9 @@ var _ oauth2server.AuthorizeScopeHandler = (*Server)(nil).AuthorizeScopeHandler
 func (s *Server) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Request) (scope string, err error) {
 	ctx := req.Context()
 
-	s.logger.Debugln("AuthorizeScopeHandler called")
+	s.logger.Debug("AuthorizeScopeHandler called")
 	client := s.fetchOAuth2ClientFromRequest(req)
-	logger := s.logger.WithFields(map[string]interface{}{
+	logger := s.logger.WithValues(map[string]interface{}{
 		"client.ID": client.ID,
 	})
 
@@ -230,7 +230,7 @@ func (s *Server) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reques
 		if clientID != "" {
 			client, err := s.db.GetOAuth2Client(ctx, clientID)
 			if err != nil {
-				logger.WithError(err).Errorln("error fetching OAuth2 Client")
+				logger.Error(err, "error fetching OAuth2 Client")
 				return "", err
 			}
 
@@ -241,8 +241,9 @@ func (s *Server) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reques
 		return strings.Join(client.Scopes, scopesSeparator), nil
 	}
 
-	logger.Errorln("no scope information found")
-	return "", errors.New("no scope information found")
+	returnErr := errors.New("no scope information found")
+	logger.Error(nil, "no scope information found")
+	return "", returnErr
 }
 
 var _ oauth2server.UserAuthorizationHandler = (*Server)(nil).UserAuthorizationHandler
@@ -250,13 +251,13 @@ var _ oauth2server.UserAuthorizationHandler = (*Server)(nil).UserAuthorizationHa
 // UserAuthorizationHandler satisfies the oauth2server UserAuthorizationHandler interface
 func (s *Server) UserAuthorizationHandler(res http.ResponseWriter, req *http.Request) (userID string, err error) {
 	ctx := req.Context()
-	s.logger.Debugln("UserAuthorizationHandler called")
+	s.logger.Debug("UserAuthorizationHandler called")
 
 	var uid uint64
 	if client, clientOk := ctx.Value(models.OAuth2ClientKey).(*models.OAuth2Client); !clientOk {
 		user, ok := ctx.Value(models.UserKey).(*models.User)
 		if !ok {
-			s.logger.Debugln("no user attached to this request")
+			s.logger.Debug("no user attached to this request")
 			return "", errors.New("user not found")
 		}
 		uid = user.ID
@@ -270,7 +271,7 @@ var _ oauth2server.ClientAuthorizedHandler = (*Server)(nil).ClientAuthorizedHand
 
 // ClientAuthorizedHandler satisfies the oauth2server ClientAuthorizedHandler interface
 func (s *Server) ClientAuthorizedHandler(clientID string, grant oauth2.GrantType) (allowed bool, err error) {
-	s.logger.Debugln("ClientAuthorizedHandler called")
+	s.logger.Debug("ClientAuthorizedHandler called")
 
 	if grant == oauth2.PasswordCredentials {
 		return false, errors.New("invalid grant type: password")
@@ -293,20 +294,20 @@ var _ oauth2server.ClientScopeHandler = (*Server)(nil).ClientScopeHandler
 
 // ClientScopeHandler satisfies the oauth2server ClientScopeHandler interface
 func (s *Server) ClientScopeHandler(clientID, scope string) (authed bool, err error) {
-	logger := s.logger.WithFields(map[string]interface{}{
+	logger := s.logger.WithValues(map[string]interface{}{
 		"client_id": clientID,
 		"scope":     scope,
 	})
-	logger.Debugln("ClientScopeHandler called")
+	logger.Debug("ClientScopeHandler called")
 
 	c, err := s.db.GetOAuth2Client(context.Background(), clientID)
 	if err != nil {
-		logger.WithError(err).Errorln("error fetching OAuth2 client for ClientScopeHandler")
+		logger.Error(err, "error fetching OAuth2 client for ClientScopeHandler")
 		return false, err
 	}
 
-	logger = logger.WithField("oauth2_client", c)
-	logger.Debugln("OAuth2 Client retrieved in ClientScopeHandler")
+	logger = logger.WithValue("oauth2_client", c)
+	logger.Debug("OAuth2 Client retrieved in ClientScopeHandler")
 
 	for _, s := range c.Scopes {
 		if s == scope || s == "*" {
@@ -314,9 +315,6 @@ func (s *Server) ClientScopeHandler(clientID, scope string) (authed bool, err er
 		}
 	}
 
-	logger.
-		WithField("authed", authed).
-		Debugln("returning from ClientScopeHandler")
-
+	logger.WithValue("authed", authed).Debug("returning from ClientScopeHandler")
 	return authed, nil
 }

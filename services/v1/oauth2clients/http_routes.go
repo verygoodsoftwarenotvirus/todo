@@ -2,7 +2,9 @@ package oauth2clients
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
+	"encoding/base32"
 	"encoding/json"
 	"net/http"
 
@@ -15,6 +17,25 @@ const (
 	// URIParamKey is used for referring to OAuth2 client IDs in router params
 	URIParamKey = "oauth2ClientID"
 )
+
+func init() {
+	b := make([]byte, 64)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+}
+
+// randString produces a random string
+// https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
+func randString() (string, error) {
+	b := make([]byte, 64)
+	// Note that err == nil only if we read len(b) bytes.
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+
+	return base32.StdEncoding.EncodeToString(b), nil
+}
 
 // OAuth2ClientCreationInputContextMiddleware is a middleware for attaching OAuth2 client info to a request
 func (s *Service) OAuth2ClientCreationInputContextMiddleware(next http.Handler) http.Handler {
@@ -73,6 +94,14 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	} else if err != nil {
 		logger.Error(err, "error validating user credentials")
 		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if input.ClientID, err = randString(); err != nil {
+		logger.Error(err, "generating OAuth2 Client ID")
+		return
+	} else if input.ClientSecret, err = randString(); err != nil {
+		logger.Error(err, "generating OAuth2 Client Secret")
 		return
 	}
 

@@ -2,27 +2,44 @@ package integration
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base32"
 	"net/http"
 	"reflect"
 	"strconv"
 	"testing"
-	// "time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	// "github.com/pquerna/otp/totp"
 	"github.com/bxcodec/faker"
 	"github.com/stretchr/testify/assert"
-	// "github.com/stretchr/testify/require"
 )
+
+func init() {
+	b := make([]byte, 64)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+}
+
+// randString produces a random string
+// https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
+func randString() (string, error) {
+	b := make([]byte, 64)
+	// Note that err == nil only if we read len(b) bytes.
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+
+	return base32.StdEncoding.EncodeToString(b), nil
+}
 
 func buildDummyUserInput(t *testing.T) *models.UserInput {
 	t.Helper()
 
 	u, _ := (&faker.Internet{}).UserName(reflect.ValueOf(nil))
 	p, _ := (&faker.Internet{}).Password(reflect.ValueOf(nil))
-	tfs, _ := auth.RandString(64)
+	tfs, _ := randString()
 
 	x := &models.UserInput{
 		Username:        u.(string),

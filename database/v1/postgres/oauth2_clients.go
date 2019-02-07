@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -237,19 +236,11 @@ func (p *Postgres) CreateOAuth2Client(ctx context.Context, input *models.OAuth2C
 
 	var err error
 	x := &models.OAuth2Client{
-		RedirectURI: input.RedirectURI,
-		Scopes:      input.Scopes,
-		BelongsTo:   input.BelongsTo,
-	}
-
-	if x.ClientID, err = auth.RandString(64); err != nil {
-		logger.Error(err, "error encountered generating OAuth2Client's ClientID")
-		return nil, err
-	}
-
-	if x.ClientSecret, err = auth.RandString(64); err != nil {
-		logger.Error(err, "error encountered generating OAuth2Client's ClientSecret")
-		return nil, err
+		ClientID:     input.ClientID,
+		ClientSecret: input.ClientSecret,
+		RedirectURI:  input.RedirectURI,
+		Scopes:       input.Scopes,
+		BelongsTo:    input.BelongsTo,
 	}
 
 	prep, err := p.database.Prepare(createOAuth2ClientQuery)

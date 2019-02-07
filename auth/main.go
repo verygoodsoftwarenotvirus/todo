@@ -2,9 +2,7 @@ package auth
 
 import (
 	"crypto/rand"
-	"encoding/base32"
 	"errors"
-	"math"
 )
 
 const (
@@ -36,16 +34,4 @@ func init() {
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}
-}
-
-// RandString produces a random string
-// https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
-func RandString(len uint64) (string, error) {
-	b := make([]byte, uint64(math.Max(64, float64(len))))
-	// Note that err == nil only if we read len(b) bytes.
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-
-	return base32.StdEncoding.EncodeToString(b), nil
 }

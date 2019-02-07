@@ -67,9 +67,11 @@ type OAuth2ClientList struct {
 // OAuth2ClientCreationInput is a struct for use when creating OAuth2 clients.
 type OAuth2ClientCreationInput struct {
 	UserLoginInput
-	RedirectURI string   `json:"redirect_uri"`
-	BelongsTo   uint64   `json:"belongs_to"`
-	Scopes      []string `json:"scopes"`
+	ClientID     string   `json:"-"`
+	ClientSecret string   `json:"-"`
+	RedirectURI  string   `json:"redirect_uri"`
+	BelongsTo    uint64   `json:"belongs_to"`
+	Scopes       []string `json:"scopes"`
 }
 
 // OAuth2ClientUpdateInput is a struct for use when updating OAuth2 clients

@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -170,23 +169,15 @@ func (s *Sqlite) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilte
 	return ocl, err
 }
 
-func prepareOAuth2Client(input *models.OAuth2ClientCreationInput) (*models.OAuth2Client, error) {
+func prepareOAuth2Client(input *models.OAuth2ClientCreationInput) *models.OAuth2Client {
 	x := &models.OAuth2Client{
-		RedirectURI: input.RedirectURI,
-		Scopes:      input.Scopes,
-		BelongsTo:   input.BelongsTo,
+		ClientID:     input.ClientID,
+		ClientSecret: input.ClientSecret,
+		RedirectURI:  input.RedirectURI,
+		Scopes:       input.Scopes,
+		BelongsTo:    input.BelongsTo,
 	}
-
-	var err error
-	if x.ClientID, err = auth.RandString(64); err != nil {
-		return nil, errors.Wrap(err, "generating OAuth2 Client ID")
-	}
-
-	if x.ClientSecret, err = auth.RandString(64); err != nil {
-		return nil, errors.Wrap(err, "generating OAuth2 Client Secret")
-	}
-
-	return x, nil
+	return x
 }
 
 // CreateOAuth2Client creates an OAuth2 client
@@ -196,12 +187,8 @@ func (s *Sqlite) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 
 	s.logger.Debug("CreateOAuth2Client called.")
 
-	x, err := prepareOAuth2Client(input)
-	if err != nil {
-		return nil, err
-	}
-
 	// create the client
+	x := prepareOAuth2Client(input)
 	res, err := s.database.Exec(
 		createOAuth2ClientQuery,
 		x.ClientID,

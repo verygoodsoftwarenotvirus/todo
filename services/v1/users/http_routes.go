@@ -2,21 +2,40 @@ package users
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
+	"encoding/base32"
 	"encoding/json"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/opentracing/opentracing-go"
-	// "github.com/opentracing/opentracing-go/ext"
 )
 
 const (
 	// URIParamKey is used to refer to user IDs in router params
 	URIParamKey = "userID"
 )
+
+func init() {
+	b := make([]byte, 64)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+}
+
+// randString produces a random string
+// https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
+func randString() (string, error) {
+	b := make([]byte, 64)
+	// Note that err == nil only if we read len(b) bytes.
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+
+	return base32.StdEncoding.EncodeToString(b), nil
+}
 
 // UserLoginInputContextMiddleware fetches user login input from requests
 func (s *Service) UserLoginInputContextMiddleware(next http.Handler) http.Handler {
@@ -221,7 +240,7 @@ func (s *Service) NewTOTPSecret(res http.ResponseWriter, req *http.Request) {
 
 	logger := s.logger.WithValue("username", user.Username)
 
-	tfc, err := auth.RandString(64)
+	tfc, err := randString()
 	if err != nil {
 		logger.Error(err, "error encountered generating random TOTP string")
 		res.WriteHeader(http.StatusInternalServerError)
@@ -305,7 +324,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	}
 	input.Password = hp
 
-	input.TwoFactorSecret, err = auth.RandString(64)
+	input.TwoFactorSecret, err = randString()
 	if err != nil {
 		s.logger.Error(err, "error generating TOTP secret")
 		res.WriteHeader(http.StatusBadRequest)

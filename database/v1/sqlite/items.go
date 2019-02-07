@@ -1,10 +1,14 @@
 package sqlite
 
 import (
-	"math"
+	"context"
+	"database/sql"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -75,31 +79,9 @@ func scanItem(scan database.Scannable) (*models.Item, error) {
 	return x, nil
 }
 
-func (s *sqlite) GetItem(itemID, userID uint64) (*models.Item, error) {
-	row := s.database.QueryRow(getItemQuery, itemID, userID)
-	return scanItem(row)
-}
-
-func (s *sqlite) GetItemCount(filter *models.QueryFilter) (count uint64, err error) {
-	return count, s.database.QueryRow(getItemCountQuery).Scan(&count)
-}
-
-func (s *sqlite) GetItems(filter *models.QueryFilter) (*models.ItemList, error) {
-	if filter == nil {
-		s.logger.Debugln("using default query filter")
-		filter = models.DefaultQueryFilter
-	}
-	filter.Page = uint64(math.Max(1, float64(filter.Page)))
-	queryPage := uint(filter.Limit * (filter.Page - 1))
-
+func scanItems(rows *sql.Rows) ([]models.Item, error) {
 	list := []models.Item{}
 
-	s.logger.Debugf("query limit: %d, query page: %d, calculated page: %d", filter.Limit, filter.Page, queryPage)
-
-	rows, err := s.database.Query(getItemsQuery, filter.Limit, queryPage)
-	if err != nil {
-		return nil, err
-	}
 	defer rows.Close()
 	for rows.Next() {
 		item, err := scanItem(rows)
@@ -112,9 +94,49 @@ func (s *sqlite) GetItems(filter *models.QueryFilter) (*models.ItemList, error) 
 		return nil, err
 	}
 
-	count, err := s.GetItemCount(filter)
+	return list, nil
+}
+
+// GetItem fetches an item from the sqlite database
+func (s *Sqlite) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetItem")
+	defer span.Finish()
+
+	row := s.database.QueryRow(getItemQuery, itemID, userID)
+	i, err := scanItem(row)
+	return i, err
+}
+
+// GetItemCount fetches the count of items from the sqlite database that meet a particular filter
+func (s *Sqlite) GetItemCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetItemCount")
+	defer span.Finish()
+
+	var count uint64
+	err := s.database.QueryRow(getItemCountQuery).Scan(&count)
+	return count, err
+}
+
+// GetItems fetches a list of items from the sqlite database that meet a particular filter
+func (s *Sqlite) GetItems(ctx context.Context, filter *models.QueryFilter) (*models.ItemList, error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetItems")
+	defer span.Finish()
+
+	filter = s.prepareFilter(filter, span)
+
+	rows, err := s.database.Query(getItemsQuery, filter.Limit, filter.QueryPage())
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "querying database for items")
+	}
+
+	list, err := scanItems(rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "scanning items")
+	}
+
+	count, err := s.GetItemCount(ctx, filter)
+	if err != nil {
+		return nil, errors.Wrap(err, "fetching item count")
 	}
 
 	x := &models.ItemList{
@@ -126,79 +148,61 @@ func (s *sqlite) GetItems(filter *models.QueryFilter) (*models.ItemList, error) 
 		Items: list,
 	}
 
-	return x, err
+	return x, nil
 }
 
-func (s *sqlite) CreateItem(input *models.ItemInput) (i *models.Item, err error) {
-	tx, err := s.database.Begin()
-	if err != nil {
-		s.logger.Errorf("error beginning database connection: %v", err)
-		return nil, err
-	}
+// CreateItem creates an item in a sqlite database
+func (s *Sqlite) CreateItem(ctx context.Context, input *models.ItemInput) (*models.Item, error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "CreateItem")
+	defer span.Finish()
+
+	logger := s.logger.WithValue("belongs_to", input.BelongsTo)
 
 	// create the item
-	res, err := tx.Exec(createItemQuery, input.Name, input.Details, input.BelongsTo)
+	res, err := s.database.Exec(createItemQuery, input.Name, input.Details, input.BelongsTo)
 	if err != nil {
-		s.logger.Errorf("error executing item creation query: %v", err)
-		tx.Rollback()
+		logger.Error(err, "error executing item creation query")
 		return nil, err
 	}
 
 	// determine its id
 	id, err := res.LastInsertId()
 	if err != nil {
-		s.logger.Errorf("error fetching last inserted item ID: %v", err)
+		logger.Error(err, "error fetching last inserted item ID")
 		return nil, err
 	}
+
+	logger = logger.WithValue("item_id", id)
 
 	// fetch full updated item
-	row := tx.QueryRow(getItemQuery, id, input.BelongsTo)
-	i, err = scanItem(row)
+	i, err := s.GetItem(ctx, uint64(id), input.BelongsTo)
 	if err != nil {
-		s.logger.Errorf("error fetching newly created item %d: %v", id, err)
-		tx.Rollback()
+		logger.Error(err, "error fetching newly created item")
 		return nil, err
 	}
 
-	if err := tx.Commit(); err != nil {
-		s.logger.Errorf("error committing transaction: %v", err)
-		return nil, err
-	}
-
-	s.logger.Debugln("returning from CreateItem")
+	logger.Debug("returning from CreateItem")
 	return i, nil
 }
 
-func (s *sqlite) UpdateItem(input *models.Item) (err error) {
-	tx, err := s.database.Begin()
-	if err != nil {
-		return
-	}
+// UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
+func (s *Sqlite) UpdateItem(ctx context.Context, input *models.Item) error {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "UpdateItem")
+	defer span.Finish()
 
 	// update the item
-	if _, err = tx.Exec(updateItemQuery, input.Name, input.Details, input.ID); err != nil {
-		tx.Rollback()
-		return
+	if _, err := s.database.Exec(updateItemQuery, input.Name, input.Details, input.ID); err != nil {
+		return errors.Wrap(err, "updating item")
 	}
 
-	// fetch full updated item
-	row := tx.QueryRow(getItemQuery, input.ID, input.BelongsTo)
-	input, err = scanItem(row)
-	if err != nil {
-		tx.Rollback()
-		return
-	}
-
-	// commit the changes
-	if err = tx.Commit(); err != nil {
-		tx.Rollback()
-		return
-	}
-
-	return
+	return nil
 }
 
-func (s *sqlite) DeleteItem(id uint64) error {
+// DeleteItem deletes an item from the database by its ID
+func (s *Sqlite) DeleteItem(ctx context.Context, id uint64) error {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "DeleteItem")
+	defer span.Finish()
+
 	_, err := s.database.Exec(archiveItemQuery, id)
 	return err
 }

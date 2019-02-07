@@ -26,8 +26,8 @@ func TestBuildURL(T *testing.T) {
 	T.Run("various urls", func(t *testing.T) {
 		t.Parallel()
 
-		cfg := &client.Config{Address: exampleURL}
-		c, err := client.NewClient(cfg)
+		u, _ := url.Parse(exampleURL)
+		c, err := client.NewClient("", "", u, nil, nil, nil, false)
 		require.NoError(t, err)
 
 		testCases := []struct {
@@ -57,7 +57,7 @@ func TestBuildURL(T *testing.T) {
 		}
 
 		for _, tc := range testCases {
-			actual := c.BuildURL(tc.inputQuery, tc.inputParts...)
+			actual := c.BuildURL(tc.inputQuery.ToValues(), tc.inputParts...)
 			assert.Equal(t, tc.expectation, actual)
 		}
 	})

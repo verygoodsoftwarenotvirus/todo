@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
+	// "gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
@@ -14,13 +16,15 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	gcontext "github.com/gorilla/context"
+	"github.com/opentracing-contrib/go-stdlib/nethttp"
+	"github.com/opentracing/opentracing-go"
 )
 
 func (s *Server) buildRouteCtx(key models.ContextKey, x interface{}) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			if err := json.NewDecoder(req.Body).Decode(x); err != nil {
-				s.logger.Errorf("error encountered decoding request body: %v", err)
+				s.logger.Error(err, "error encountered decoding request body")
 				res.WriteHeader(http.StatusBadRequest)
 				return
 			}
@@ -29,13 +33,45 @@ func (s *Server) buildRouteCtx(key models.ContextKey, x interface{}) func(next h
 	}
 }
 
+func (s *Server) tracingMiddleware(next http.Handler) http.Handler {
+	return nethttp.Middleware(
+		s.tracer,
+		next,
+		nethttp.MWComponentName("todo-server"),
+		nethttp.MWSpanObserver(func(span opentracing.Span, req *http.Request) {
+			span.SetTag("http.method", req.Method)
+			span.SetTag("http.uri", req.URL.EscapedPath())
+		}),
+		nethttp.OperationNameFunc(func(req *http.Request) string {
+			return fmt.Sprintf("%s %s", req.Method, req.URL.Path)
+		}),
+	)
+}
+
+func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
+	f := &middleware.DefaultLogFormatter{Logger: s.logger, NoColor: true}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		entry := f.NewLogEntry(r)
+		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+
+		start := time.Now()
+		defer func() {
+			entry.Write(ww.Status(), ww.BytesWritten(), time.Since(start))
+		}()
+
+		next.ServeHTTP(ww, middleware.WithLogEntry(r, entry))
+	})
+}
+
 func (s *Server) setupRoutes() {
 	s.router = chi.NewRouter()
+
 	s.router.Use(
 		gcontext.ClearHandler,
 		middleware.RequestID,
-		middleware.DefaultLogger,
 		middleware.Timeout(maxTimeout),
+		s.loggingMiddleware,
+		s.tracingMiddleware,
 	)
 
 	if s.DebugMode {
@@ -71,7 +107,7 @@ func (s *Server) setupRoutes() {
 
 	s.router.Route("/oauth2", func(oauth2Router chi.Router) {
 		oauth2Router.
-			With(s.Oauth2ClientInfoMiddleware).
+			With(s.OAuth2ClientInfoMiddleware).
 			Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
 				if err := s.oauth2Handler.HandleAuthorizeRequest(res, req); err != nil {
 					http.Error(res, err.Error(), http.StatusBadRequest)
@@ -92,12 +128,12 @@ func (s *Server) setupRoutes() {
 
 				v1Router.Route("/items", func(itemsRouter chi.Router) {
 					sr := fmt.Sprintf("/{%s:[0-9]+}", items.URIParamKey)
-					itemsRouter.Get("/", s.itemsService.List)                                   // List
-					itemsRouter.Get("/count", s.itemsService.Count)                             // Count
-					itemsRouter.Get(sr, s.itemsService.BuildReadHandler(chiItemIDFetcher))      // Read
-					itemsRouter.Delete(sr, s.itemsService.BuildDeleteHandler(chiItemIDFetcher)) // Delete
+					itemsRouter.Get("/", s.itemsService.List)       // List
+					itemsRouter.Get("/count", s.itemsService.Count) // Count
+					itemsRouter.Get(sr, s.itemsService.Read)        // Read
+					itemsRouter.Delete(sr, s.itemsService.Delete)   // Delete
 					itemsRouter.With(s.itemsService.ItemInputMiddleware).
-						Put(sr, s.itemsService.BuildUpdateHandler(chiItemIDFetcher)) // Update
+						Put(sr, s.itemsService.Update) // Update
 					itemsRouter.With(s.itemsService.ItemInputMiddleware).
 						Post("/", s.itemsService.Create) // Create
 				})
@@ -106,13 +142,13 @@ func (s *Server) setupRoutes() {
 					oauth2Router.Route("/clients", func(clientRouter chi.Router) {
 						sr := fmt.Sprintf("/{%s}", oauth2clients.URIParamKey)
 						clientRouter.Get("/", s.oauth2ClientsService.List)                                           // List
-						clientRouter.Get(sr, s.oauth2ClientsService.BuildReadHandler(chiOauth2ClientIDFetcher))      // Read
-						clientRouter.Delete(sr, s.oauth2ClientsService.BuildDeleteHandler(chiOauth2ClientIDFetcher)) // Delete
+						clientRouter.Get(sr, s.oauth2ClientsService.BuildReadHandler(chiOAuth2ClientIDFetcher))      // Read
+						clientRouter.Delete(sr, s.oauth2ClientsService.BuildDeleteHandler(chiOAuth2ClientIDFetcher)) // Delete
 						clientRouter.
-							With(s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.Oauth2ClientUpdateInput))).
-							Put(sr, s.oauth2ClientsService.BuildUpdateHandler(chiOauth2ClientIDFetcher)) // Update
+							With(s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.OAuth2ClientUpdateInput))).
+							Put(sr, s.oauth2ClientsService.BuildUpdateHandler(chiOAuth2ClientIDFetcher)) // Update
 						clientRouter.
-							With(s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.Oauth2ClientCreationInput))).
+							With(s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.OAuth2ClientCreationInput))).
 							Post("/", s.oauth2ClientsService.Create) // Create
 					})
 				})

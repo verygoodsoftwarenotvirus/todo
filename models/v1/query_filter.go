@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"math"
 	"net/http"
 	"net/url"
@@ -15,17 +14,19 @@ const (
 	maxLimit = 50
 )
 
+// QueryFilter represents all the filters a user could apply to a list query
 type QueryFilter struct {
 	Page          uint64   `json:"page"`
 	Limit         uint64   `json:"limit"`
-	CreatedAfter  uint64   `json:"created_before"`
-	CreatedBefore uint64   `json:"created_after"`
-	UpdatedAfter  uint64   `json:"updated_before"`
-	UpdatedBefore uint64   `json:"updated_after"`
-	IncludeAll    bool     `json:"include_all"`
+	CreatedAfter  uint64   `json:"created_before,omitempty"`
+	CreatedBefore uint64   `json:"created_after,omitempty"`
+	UpdatedAfter  uint64   `json:"updated_before,omitempty"`
+	UpdatedBefore uint64   `json:"updated_after,omitempty"`
+	IncludeAll    bool     `json:"include_all,omitempty"`
 	SortBy        sortType `json:"sort_by"`
 }
 
+// DefaultQueryFilter represents the standard filter collection
 var DefaultQueryFilter = buildDefaultQueryFilter()
 
 func buildDefaultQueryFilter() *QueryFilter {
@@ -36,59 +37,62 @@ func buildDefaultQueryFilter() *QueryFilter {
 	}
 }
 
+func fetchQueryParam(params url.Values, key string) string {
+	if val, ok := params[key]; ok && len(val) >= 1 {
+		return val[0]
+	}
+	return ""
+}
+
+// FromParams overrides the core QueryFilter values with values retrieved from url.Params
 func (qf *QueryFilter) FromParams(params url.Values) {
-	if page, ok := params["page"]; ok && len(page) >= 1 {
-		if i, err := strconv.ParseUint(page[0], 10, 64); err == nil {
-			qf.Page = uint64(math.Max(float64(i), 1))
-		}
+	if i, err := strconv.ParseUint(params.Get("page"), 10, 64); err == nil {
+		qf.Page = uint64(math.Max(float64(i), 1))
 	}
 
-	if limit, ok := params["limit"]; ok && len(limit) >= 1 {
-		if i, err := strconv.ParseUint(limit[0], 10, 64); err == nil {
-			qf.Limit = uint64(math.Max(float64(i), 1))
-		}
+	if i, err := strconv.ParseUint(params.Get("limit"), 10, 64); err == nil {
+		qf.Limit = uint64(math.Max(float64(i), 1))
 	}
 
-	if createdBefore, ok := params["created_before"]; ok && len(createdBefore) >= 1 {
-		if i, err := strconv.ParseUint(createdBefore[0], 10, 64); err == nil {
-			qf.CreatedBefore = uint64(i)
-		}
+	if i, err := strconv.ParseUint(params.Get("created_before"), 10, 64); err == nil {
+		qf.CreatedBefore = uint64(i)
 	}
 
-	if createdAfter, ok := params["created_after"]; ok && len(createdAfter) >= 1 {
-		if i, err := strconv.ParseUint(createdAfter[0], 10, 64); err == nil {
-			qf.CreatedAfter = uint64(i)
-		}
+	if i, err := strconv.ParseUint(params.Get("created_after"), 10, 64); err == nil {
+		qf.CreatedAfter = uint64(i)
 	}
 
-	if updatedBefore, ok := params["updated_before"]; ok && len(updatedBefore) >= 1 {
-		if i, err := strconv.ParseUint(updatedBefore[0], 10, 64); err == nil {
-			qf.UpdatedAfter = uint64(i)
-		}
+	if i, err := strconv.ParseUint(params.Get("updated_before"), 10, 64); err == nil {
+		qf.UpdatedAfter = uint64(i)
 	}
 
-	if updatedAfter, ok := params["updated_after"]; ok && len(updatedAfter) >= 1 {
-		if i, err := strconv.ParseUint(updatedAfter[0], 10, 64); err == nil {
-			qf.UpdatedAfter = uint64(i)
-		}
+	if i, err := strconv.ParseUint(params.Get("updated_after"), 10, 64); err == nil {
+		qf.UpdatedAfter = uint64(i)
 	}
 
-	if includeAll, ok := params["include_all"]; ok && len(includeAll) >= 1 {
-		if ia, err := strconv.ParseBool(includeAll[0]); err == nil {
-			qf.IncludeAll = ia
-		}
+	if ia, err := strconv.ParseBool(params.Get("include_all")); err == nil {
+		qf.IncludeAll = ia
 	}
 
-	if sortBy, ok := params["sort_by"]; ok && len(sortBy) >= 1 {
-		switch strings.ToLower(sortBy[0]) {
-		case strSortAsc:
-			qf.SortBy = SortAscending
-		case strSortDesc:
-			qf.SortBy = SortDescending
-		}
+	switch strings.ToLower(params.Get("sort_by")) {
+	case strSortAsc:
+		qf.SortBy = SortAscending
+	case strSortDesc:
+		qf.SortBy = SortDescending
 	}
 }
 
+// SetPage sets the current page with certain constraints
+func (qf *QueryFilter) SetPage(page uint64) {
+	qf.Page = uint64(math.Max(1, float64(page)))
+}
+
+// QueryPage calculates a query page from the current filter values
+func (qf *QueryFilter) QueryPage() uint {
+	return uint(qf.Limit * (qf.Page - 1))
+}
+
+// ToValues returns a url.Values from a QueryFilter
 func (qf *QueryFilter) ToValues() url.Values {
 	if qf == nil {
 		return DefaultQueryFilter.ToValues()
@@ -120,39 +124,15 @@ func (qf *QueryFilter) ToValues() url.Values {
 	return v
 }
 
-func (qf *QueryFilter) ToMap() map[string]string {
-	if qf == nil {
-		return DefaultQueryFilter.ToMap()
-	}
-
-	return map[string]string{
-		"page":  strconv.Itoa(int(qf.Page)),
-		"limit": strconv.Itoa(int(qf.Limit)),
-	}
-}
-
-func ParseQueryFilter(req *http.Request) *QueryFilter {
+// ExtractQueryFilter can extract a QueryFilter from a request
+func ExtractQueryFilter(req *http.Request) *QueryFilter {
 	qf := buildDefaultQueryFilter()
 	qf.FromParams(req.URL.Query())
 	return qf
 }
 
-type QueryLimiter struct {
-	CreationTimeColumnName string
-	UpdatedTimeColumnName  string
-}
-
-func NewQueryLimiter(CreationTimeColumnName string, UpdatedTimeColumnName string) (*QueryLimiter, error) {
-	if CreationTimeColumnName == "" || UpdatedTimeColumnName == "" {
-		return nil, errors.New("column names must not be nil")
-	}
-	return &QueryLimiter{
-		CreationTimeColumnName: CreationTimeColumnName,
-		UpdatedTimeColumnName:  UpdatedTimeColumnName,
-	}, nil
-}
-
-func (l *QueryLimiter) BuildQueryLimits(pf squirrel.PlaceholderFormat, filter *QueryFilter) string {
+// BuildQueryLimits does a thing DOCUMENTME
+func BuildQueryLimits(pf squirrel.PlaceholderFormat, filter *QueryFilter, creationTimeColumnName, updatedTimeColumnName string) string {
 	filter.Limit = uint64(math.Max(float64(filter.Limit), maxLimit))
 	filter.Page = uint64(math.Max(1, float64(filter.Page)))
 	queryPage := uint64(filter.Limit * (filter.Page - 1))
@@ -171,19 +151,19 @@ func (l *QueryLimiter) BuildQueryLimits(pf squirrel.PlaceholderFormat, filter *Q
 	}
 
 	if filter.CreatedAfter != 0 {
-		sb = sb.Where(squirrel.GtOrEq{l.CreationTimeColumnName: filter.CreatedAfter})
+		sb = sb.Where(squirrel.GtOrEq{creationTimeColumnName: filter.CreatedAfter})
 	}
 
 	if filter.CreatedBefore != 0 {
-		sb = sb.Where(squirrel.LtOrEq{l.CreationTimeColumnName: filter.CreatedBefore})
+		sb = sb.Where(squirrel.LtOrEq{creationTimeColumnName: filter.CreatedBefore})
 	}
 
 	if filter.UpdatedAfter != 0 {
-		sb = sb.Where(squirrel.GtOrEq{l.UpdatedTimeColumnName: filter.UpdatedAfter})
+		sb = sb.Where(squirrel.GtOrEq{updatedTimeColumnName: filter.UpdatedAfter})
 	}
 
 	if filter.UpdatedBefore != 0 {
-		sb = sb.Where(squirrel.LtOrEq{l.UpdatedTimeColumnName: filter.UpdatedBefore})
+		sb = sb.Where(squirrel.LtOrEq{updatedTimeColumnName: filter.UpdatedBefore})
 	}
 
 	if filter.SortBy != "" {

@@ -1,41 +1,50 @@
 package mock
 
 import (
+	"context"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/stretchr/testify/mock"
 )
 
-var _ models.UserHandler = (*MockUserHandler)(nil)
+var _ models.UserHandler = (*UserHandler)(nil)
 
-type MockUserHandler struct {
+// UserHandler is what it says on the tin
+type UserHandler struct {
 	mock.Mock
 }
 
-func (m *MockUserHandler) GetUser(username string) (*models.User, error) {
-	args := m.Called(username)
+// GetUser is a mock function
+func (m *UserHandler) GetUser(ctx context.Context, username string) (*models.User, error) {
+	args := m.Called(ctx, username)
 	return args.Get(0).(*models.User), args.Error(1)
 }
 
-func (m *MockUserHandler) GetUserCount(filter *models.QueryFilter) (uint64, error) {
-	args := m.Called(filter)
+// GetUserCount is a mock function
+func (m *UserHandler) GetUserCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
+	args := m.Called(ctx, filter)
 	return args.Get(0).(uint64), args.Error(1)
 }
 
-func (m *MockUserHandler) GetUsers(filter *models.QueryFilter) (*models.UserList, error) {
-	args := m.Called(filter)
+// GetUsers is a mock function
+func (m *UserHandler) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
+	args := m.Called(ctx, filter)
 	return args.Get(0).(*models.UserList), args.Error(1)
 }
 
-func (m *MockUserHandler) CreateUser(input *models.UserInput, totpSecret string) (*models.User, error) {
-	args := m.Called(input)
+// CreateUser is a mock function
+func (m *UserHandler) CreateUser(ctx context.Context, input *models.UserInput) (*models.User, error) {
+	args := m.Called(ctx, input)
 	return args.Get(0).(*models.User), args.Error(1)
 }
 
-func (m *MockUserHandler) UpdateUser(updated *models.User) error {
-	return m.Called(updated).Error(0)
+// UpdateUser is a mock function
+func (m *UserHandler) UpdateUser(ctx context.Context, updated *models.User) error {
+	return m.Called(ctx, updated).Error(0)
 }
 
-func (m *MockUserHandler) DeleteUser(username string) error {
-	return m.Called(username).Error(0)
+// DeleteUser is a mock function
+func (m *UserHandler) DeleteUser(ctx context.Context, username string) error {
+	return m.Called(ctx, username).Error(0)
 }

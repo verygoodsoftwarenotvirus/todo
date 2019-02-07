@@ -1,85 +1,131 @@
 package sqlite
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"io/ioutil"
 	"path"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/sirupsen/logrus"
+	"github.com/google/wire"
+	_ "github.com/mattn/go-sqlite3" // for the init import call
+	"github.com/opentracing/opentracing-go"
 )
 
-var _ database.Database = (*sqlite)(nil)
+type (
+	// Tracer is an arbitrary alias for dependency injection
+	Tracer opentracing.Tracer
 
-type sqlite struct {
-	debug    bool
-	logger   *logrus.Logger
-	database *sql.DB
+	// Sqlite is our main Sqlite interaction database
+	Sqlite struct {
+		debug    bool
+		database *sql.DB
+		logger   logging.Logger
+		tracer   opentracing.Tracer
+	}
+)
 
-	clientIDExtractor database.ClientIDExtractor
-	secretGenerator   database.SecretGenerator
+var (
+	_ database.Database = (*Sqlite)(nil)
+
+	// Providers is what we provide for dependency injection
+	Providers = wire.NewSet(
+		ProvideSqlite,
+		ProvideSqliteTracer,
+	)
+)
+
+// ProvideSqliteTracer provides a Tracer
+func ProvideSqliteTracer() (Tracer, error) {
+	return tracing.ProvideTracer("sqlite-database")
 }
 
-// NewSqlite provides a sqlite database controller
-func NewSqlite(config database.Config) (database.Database, error) {
-	if config.Logger == nil {
-		config.Logger = logrus.New()
-	}
-
-	config.Logger.Debugf("Establishing connection to sqlite3 file: %q\n", config.ConnectionString)
-	db, err := sql.Open("sqlite3", config.ConnectionString)
+// ProvideSqlite provides a sqlite database controller
+func ProvideSqlite(
+	debug bool,
+	logger logging.Logger,
+	tracer Tracer,
+	connectionDetails database.ConnectionDetails,
+) (database.Database, error) {
+	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to sqlite3 file")
+	db, err := sql.Open("sqlite3", string(connectionDetails))
 	if err != nil {
-		config.Logger.Errorf("error encountered establishing database connection: %v\n", err)
+		logger.Error(err, "error encountered establishing database connection")
 		return nil, err
 	}
 
-	s := &sqlite{
-		debug:    config.Debug,
-		logger:   config.Logger,
+	s := &Sqlite{
+		debug:    debug,
+		logger:   logger,
 		database: db,
-
-		// FIXME: these should be allowed to be nil
-		clientIDExtractor: config.Extractor,
-		secretGenerator:   config.SecretGenerator,
+		tracer:   tracer,
 	}
 
 	return s, nil
 }
 
-func (s *sqlite) Migrate(schemaDir string) error {
-	s.logger.Debugln("Migrate called")
+func (s *Sqlite) prepareFilter(filter *models.QueryFilter, span opentracing.Span) *models.QueryFilter {
+	if filter == nil {
+		s.logger.Debug("using default query filter")
+		filter = models.DefaultQueryFilter
+	}
+	filter.SetPage(filter.Page)
 
-	files, err := ioutil.ReadDir(schemaDir)
+	span.SetTag("limit", filter.Limit)
+	span.SetTag("page", filter.Page)
+	span.SetTag("queryPage", filter.QueryPage)
+
+	return filter
+}
+
+// IsReady reports whether or not Sqlite is ready to be written to. Since Sqlite is a file-based database, it is always ready
+func (s *Sqlite) IsReady(ctx context.Context) (ready bool) {
+	return true
+}
+
+// Migrate migrates a given Sqlite database. The current implementation is pretty primitive.
+func (s *Sqlite) Migrate(ctx context.Context, schemaDir database.SchemaDirectory) error {
+	sd := string(schemaDir)
+	logger := s.logger.WithValue("schema_dir", sd)
+	logger.Debug("Migrate called")
+
+	if ready := s.IsReady(ctx); !ready {
+		return errors.New("database not ready")
+	}
+
+	files, err := ioutil.ReadDir(string(sd))
 	if err != nil {
 		return err
 	}
-	s.logger.Debugf("%d files found in schema directory", len(files))
+	logger.WithValue("file_count", len(files)).Debug("found files in schema directory")
 
 	for _, file := range files {
-		schemaFile := path.Join(schemaDir, file.Name())
+		schemaFile := path.Join(string(sd), file.Name())
 
 		if strings.HasSuffix(schemaFile, ".sql") {
-			s.logger.Debugf("migrating schema file: %q", schemaFile)
+			logger.WithValue("schema_file", schemaFile).Debug("migrating schema file")
 			data, err := ioutil.ReadFile(schemaFile)
 			if err != nil {
-				s.logger.Errorf("error encountered reading schema file: %q (%v)\n", schemaFile, err)
+				logger.Error(err, "error encountered reading schema file")
 				return err
 			}
 
-			s.logger.Debugf("running query: %q", string(data))
+			logger.WithValue("query", string(data)).Debug("running query")
 			_, err = s.database.Exec(string(data))
 			if err != nil {
-				s.logger.Debugln("database.Exec finished, returning err")
+				logger.Debug("database.Exec finished, returning err")
 				return err
 			}
-			s.logger.Debugln("database.Exec finished, error not returned")
+			logger.Debug("database.Exec finished, error not returned")
 		}
 	}
 
-	s.logger.Debugln("returning no error from sqlite.Migrate()")
+	logger.Debug("returning no error from sqlite.Migrate()")
 	return nil
-
 }

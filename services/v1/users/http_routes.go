@@ -2,23 +2,48 @@ package users
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
+	"encoding/base32"
 	"encoding/json"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"github.com/opentracing/opentracing-go"
 )
 
 const (
+	// URIParamKey is used to refer to user IDs in router params
 	URIParamKey = "userID"
 )
 
-func (s *UsersService) UserLoginInputContextMiddleware(next http.Handler) http.Handler {
+func init() {
+	b := make([]byte, 64)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+}
+
+// randString produces a random string
+// https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
+func randString() (string, error) {
+	b := make([]byte, 64)
+	// Note that err == nil only if we read len(b) bytes.
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+
+	return base32.StdEncoding.EncodeToString(b), nil
+}
+
+// UserLoginInputContextMiddleware fetches user login input from requests
+func (s *Service) UserLoginInputContextMiddleware(next http.Handler) http.Handler {
 	x := new(models.UserLoginInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		s.logger.WithRequest(req).Debug("UserLoginInputContextMiddleware called")
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
-			s.logger.Errorf("error encountered decoding request body: %v", err)
+			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -27,11 +52,13 @@ func (s *UsersService) UserLoginInputContextMiddleware(next http.Handler) http.H
 	})
 }
 
-func (s *UsersService) UserInputContextMiddleware(next http.Handler) http.Handler {
+// UserInputContextMiddleware fetches user input from requests
+func (s *Service) UserInputContextMiddleware(next http.Handler) http.Handler {
 	x := new(models.UserInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		s.logger.WithRequest(req).Debug("UserInputContextMiddleware called")
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
-			s.logger.Errorf("error encountered decoding request body: %v", err)
+			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -40,11 +67,13 @@ func (s *UsersService) UserInputContextMiddleware(next http.Handler) http.Handle
 	})
 }
 
-func (s *UsersService) PasswordUpdateInputContextMiddleware(next http.Handler) http.Handler {
+// PasswordUpdateInputContextMiddleware fetches password update input from requests
+func (s *Service) PasswordUpdateInputContextMiddleware(next http.Handler) http.Handler {
 	x := new(models.PasswordUpdateInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		s.logger.WithRequest(req).Debug("PasswordUpdateInputContextMiddleware called")
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
-			s.logger.Errorf("error encountered decoding request body: %v", err)
+			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -53,11 +82,13 @@ func (s *UsersService) PasswordUpdateInputContextMiddleware(next http.Handler) h
 	})
 }
 
-func (s *UsersService) TOTPSecretRefreshInputContextMiddleware(next http.Handler) http.Handler {
+// TOTPSecretRefreshInputContextMiddleware fetches 2FA update input from requests
+func (s *Service) TOTPSecretRefreshInputContextMiddleware(next http.Handler) http.Handler {
 	x := new(models.TOTPSecretRefreshInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		s.logger.WithRequest(req).Debug("TOTPSecretRefreshInputContextMiddleware called")
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
-			s.logger.Errorf("error encountered decoding request body: %v", err)
+			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -66,14 +97,25 @@ func (s *UsersService) TOTPSecretRefreshInputContextMiddleware(next http.Handler
 	})
 }
 
-func (s *UsersService) Read(res http.ResponseWriter, req *http.Request) {
+// Read is our read route
+func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
+	s.logger.Debug("Read route hit in UsersService")
+
+	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	serverSpan := s.tracer.StartSpan("read route", opentracing.ChildOf(spanCtx))
+	defer serverSpan.Finish()
+
+	ctx := req.Context()
 	userID := s.usernameFetcher(req)
-	x, err := s.database.GetUser(userID)
+	logger := s.logger.WithValue("user_id", userID)
+
+	x, err := s.database.GetUser(ctx, userID)
 	if err == sql.ErrNoRows {
+		logger.Debug("no such user")
 		res.WriteHeader(http.StatusNotFound)
 		return
 	} else if err != nil {
-		s.logger.Errorf("error fetching user %q from database: %v", userID, err)
+		logger.Error(err, "error fetching user from database")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -82,11 +124,21 @@ func (s *UsersService) Read(res http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(res).Encode(x)
 }
 
-func (s *UsersService) Count(res http.ResponseWriter, req *http.Request) {
-	qf := models.ParseQueryFilter(req)
-	userCount, err := s.database.GetUserCount(qf)
+// Count is a handler for responding with a count of users
+func (s *Service) Count(res http.ResponseWriter, req *http.Request) {
+	s.logger.Debug("Count route hit in UsersService")
+
+	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	serverSpan := s.tracer.StartSpan("count route", opentracing.ChildOf(spanCtx))
+	defer serverSpan.Finish()
+
+	ctx := req.Context()
+	qf := models.ExtractQueryFilter(req)
+	logger := s.logger.WithValue("query_filter", qf)
+
+	userCount, err := s.database.GetUserCount(ctx, qf)
 	if err != nil {
-		s.logger.Errorf("error fetching item count from database: %v", err)
+		logger.Error(err, "error fetching item count from database")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -97,10 +149,21 @@ func (s *UsersService) Count(res http.ResponseWriter, req *http.Request) {
 	}{userCount})
 }
 
-func (s *UsersService) List(res http.ResponseWriter, req *http.Request) {
-	qf := models.ParseQueryFilter(req)
-	users, err := s.database.GetUsers(qf)
+// List is a handler for responding with a list of users
+func (s *Service) List(res http.ResponseWriter, req *http.Request) {
+	s.logger.Debug("List route hit in UsersService")
+
+	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	serverSpan := s.tracer.StartSpan("list route", opentracing.ChildOf(spanCtx))
+	defer serverSpan.Finish()
+
+	ctx := req.Context()
+	qf := models.ExtractQueryFilter(req)
+	logger := s.logger.WithValue("query_filter", qf)
+
+	users, err := s.database.GetUsers(ctx, qf)
 	if err != nil {
+		logger.Error(err, "error fetching users for List route")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -109,10 +172,21 @@ func (s *UsersService) List(res http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(res).Encode(users)
 }
 
-func (s *UsersService) Delete(res http.ResponseWriter, req *http.Request) {
+// Delete is a handler for deleting a user
+func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
+	s.logger.Debug("Delete route hit in UsersService")
+
+	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	serverSpan := s.tracer.StartSpan("delete route", opentracing.ChildOf(spanCtx))
+	defer serverSpan.Finish()
+
+	ctx := req.Context()
 	username := s.usernameFetcher(req)
-	s.logger.Debugf("UsersService.Delete called for user %s", username)
-	if err := s.database.DeleteUser(username); err != nil {
+	logger := s.logger.WithValue("username", username)
+	logger.Debug("UsersService.Delete called")
+
+	if err := s.database.DeleteUser(ctx, username); err != nil {
+		logger.Error(err, "UsersService.Delete called")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -120,20 +194,30 @@ func (s *UsersService) Delete(res http.ResponseWriter, req *http.Request) {
 
 type usernameFetcher func(req *http.Request) string
 
-func (s *UsersService) validateCredentialChangeRequest(req *http.Request, password string, totpToken string) (user *models.User, statusCode int) {
-	var err error
+func (s *Service) validateCredentialChangeRequest(req *http.Request, password string, totpToken string) (*models.User, int) {
 	username := s.usernameFetcher(req)
-	user, err = s.database.GetUser(username)
+	logger := s.logger.WithValue("username", username)
+
+	ctx := req.Context()
+	user, err := s.database.GetUser(ctx, username)
 	if err != nil {
-		s.logger.Errorf("error encountered fecthing user %q: %v", username, err)
+		logger.Error(err, "error encountered fecthing user")
 		return nil, http.StatusInternalServerError
 	}
 
-	if valid, err := s.authenticator.ValidateLogin(user.HashedPassword, password, user.TwoFactorSecret, totpToken); err != nil {
-		s.logger.Errorf("error encountered generating random TOTP string for user %q: %v", username, err)
+	logger = logger.WithValue("username", user.Username)
+
+	if valid, err := s.authenticator.ValidateLogin(
+		ctx,
+		user.HashedPassword,
+		password,
+		user.TwoFactorSecret,
+		totpToken,
+	); err != nil {
+		logger.Error(err, "error encountered generating random TOTP string")
 		return nil, http.StatusInternalServerError
 	} else if !valid {
-		s.logger.Debugf("invalid attempt to cycle TOTP token by user %q: %v", username, err)
+		logger.WithValue("valid", valid).Error(err, "invalid attempt to cycle TOTP token")
 		return nil, http.StatusUnauthorized
 	}
 
@@ -142,11 +226,14 @@ func (s *UsersService) validateCredentialChangeRequest(req *http.Request, passwo
 
 // NewTOTPSecret fetches a user, and issues them a new TOTP secret, after validating
 // that information received from TOTPSecretRefreshInputContextMiddleware is valid
-func (s *UsersService) NewTOTPSecret(res http.ResponseWriter, req *http.Request) {
+func (s *Service) NewTOTPSecret(res http.ResponseWriter, req *http.Request) {
+	s.logger.Debug("NewTOTPSecret route hit in UsersService")
+
 	var err error
+	ctx := req.Context()
 	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.TOTPSecretRefreshInput)
 	if !ok {
-		s.logger.Debugln("no input found on TOTP Secret refresh request")
+		s.logger.Debug("no input found on TOTP Secret refresh request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -157,16 +244,18 @@ func (s *UsersService) NewTOTPSecret(res http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	tfc, err := auth.RandString(64)
+	logger := s.logger.WithValue("username", user.Username)
+
+	tfc, err := randString()
 	if err != nil {
-		s.logger.Errorf("error encountered generating random TOTP string for user %q: %v", user.Username, err)
+		logger.Error(err, "error encountered generating random TOTP string")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	user.TwoFactorSecret = tfc
 
-	if err := s.database.UpdateUser(user); err != nil {
-		s.logger.Errorf("error encountered updating TOTP token for user %q: %v", user.Username, err)
+	if err := s.database.UpdateUser(ctx, user); err != nil {
+		logger.Error(err, "error encountered updating TOTP token")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -177,11 +266,14 @@ func (s *UsersService) NewTOTPSecret(res http.ResponseWriter, req *http.Request)
 
 // UpdatePassword updates a user's password, after validating that information received
 // from PasswordUpdateInputContextMiddleware is valid
-func (s *UsersService) UpdatePassword(res http.ResponseWriter, req *http.Request) {
+func (s *Service) UpdatePassword(res http.ResponseWriter, req *http.Request) {
+	s.logger.Debug("UpdatePassword route hit in UsersService")
+
 	var err error
-	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.PasswordUpdateInput)
+	ctx := req.Context()
+	input, ok := ctx.Value(MiddlewareCtxKey).(*models.PasswordUpdateInput)
 	if !ok {
-		s.logger.Debugln("no input found on TOTP Secret refresh request")
+		s.logger.Debug("no input found on TOTP Secret refresh request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -192,15 +284,17 @@ func (s *UsersService) UpdatePassword(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	user.HashedPassword, err = s.authenticator.HashPassword(input.NewPassword)
+	logger := s.logger.WithValue("username", user.Username)
+
+	user.HashedPassword, err = s.authenticator.HashPassword(ctx, input.NewPassword)
 	if err != nil {
-		s.logger.Errorf("error encountered generating random TOTP string for user %q: %v", user.Username, err)
+		logger.Error(err, "error hashing password")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	if err := s.database.UpdateUser(user); err != nil {
-		s.logger.Errorf("error encountered updating TOTP token for user %q: %v", user.Username, err)
+	if err := s.database.UpdateUser(ctx, user); err != nil {
+		logger.Error(err, "error encountered updating user")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -210,34 +304,42 @@ func (s *UsersService) UpdatePassword(res http.ResponseWriter, req *http.Request
 }
 
 // Create is our user creation route
-// note that Create is meant to be executed after UserInputContextMiddleware
-func (s *UsersService) Create(res http.ResponseWriter, req *http.Request) {
-	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.UserInput)
+func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
+	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	serverSpan := s.tracer.StartSpan("create route", opentracing.ChildOf(spanCtx))
+	defer serverSpan.Finish()
+
+	ctx := req.Context()
+	input, ok := ctx.Value(MiddlewareCtxKey).(*models.UserInput)
 	if !ok {
-		s.logger.Errorln("valid input not attached to request")
+		s.logger.Error(nil, "valid input not attached to UsersService Create request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	hp, err := s.authenticator.HashPassword(input.Password)
+	s.logger.WithValues(map[string]interface{}{
+		"username": input.Username,
+		"is_admin": input.IsAdmin,
+	}).Debug("Create route hit")
+
+	hp, err := s.authenticator.HashPassword(ctx, input.Password)
 	if err != nil {
-		s.logger.Errorln("valid input not attached to request")
+		s.logger.Error(err, "valid input not attached to request")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	input.Password = hp
 
-	newSecret, err := auth.RandString(64)
+	input.TwoFactorSecret, err = randString()
 	if err != nil {
-		s.logger.Errorln("error generating TOTP secret: ", err)
+		s.logger.Error(err, "error generating TOTP secret")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	totpSecret := newSecret //[:52] // I forgot how I know it needs to be this long
 
-	x, err := s.database.CreateUser(input, totpSecret)
+	x, err := s.database.CreateUser(ctx, input)
 	if err != nil {
-		s.logger.Errorf("error creating user: %v", err)
+		s.logger.Error(err, "error creating user")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}

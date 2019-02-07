@@ -1,11 +1,15 @@
 package auth_test
 
 import (
+	"context"
+	"log"
 	"testing"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 
+	"github.com/opentracing/opentracing-go"
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 )
@@ -17,15 +21,30 @@ const (
 	exampleTwoFactorSecret    = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
 )
 
+var (
+	tracer opentracing.Tracer
+)
+
+func init() {
+	var err error
+	tracer, err = tracing.ProvideTracer("fart")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	opentracing.SetGlobalTracer(tracer)
+}
+
 func TestBcrypt_HashPassword(T *testing.T) {
 	T.Parallel()
 
-	x := auth.NewBcrypt(nil)
+	x := auth.ProvideBcrypt(auth.DefaultBcryptHashCost, nil, tracer)
 
 	T.Run("normal operation", func(t *testing.T) {
 		t.Parallel()
+		tctx := context.Background()
 
-		actual, err := x.HashPassword("password")
+		actual, err := x.HashPassword(tctx, "password")
 		assert.NoError(t, err)
 		assert.NotEmpty(t, actual)
 	})
@@ -33,19 +52,21 @@ func TestBcrypt_HashPassword(T *testing.T) {
 func TestBcrypt_PasswordMatches(T *testing.T) {
 	T.Parallel()
 
-	x := auth.NewBcrypt(nil)
+	x := auth.ProvideBcrypt(auth.DefaultBcryptHashCost, nil, tracer)
 
 	T.Run("normal usage", func(t *testing.T) {
 		t.Parallel()
+		tctx := context.Background()
 
-		actual := x.PasswordMatches(hashedExamplePassword, examplePassword, nil)
+		actual := x.PasswordMatches(tctx, hashedExamplePassword, examplePassword, nil)
 		assert.True(t, actual)
 	})
 
 	T.Run("when passwords don't match", func(t *testing.T) {
 		t.Parallel()
+		tctx := context.Background()
 
-		actual := x.PasswordMatches(hashedExamplePassword, "password", nil)
+		actual := x.PasswordMatches(tctx, hashedExamplePassword, "password", nil)
 		assert.False(t, actual)
 	})
 }
@@ -53,7 +74,7 @@ func TestBcrypt_PasswordMatches(T *testing.T) {
 func TestBcrypt_PasswordIsAcceptable(T *testing.T) {
 	T.Parallel()
 
-	x := auth.NewBcrypt(nil)
+	x := auth.ProvideBcrypt(auth.DefaultBcryptHashCost, nil, tracer)
 
 	T.Run("normal operation", func(t *testing.T) {
 		t.Parallel()
@@ -65,7 +86,7 @@ func TestBcrypt_PasswordIsAcceptable(T *testing.T) {
 func TestBcrypt_ValidateLogin(T *testing.T) {
 	T.Parallel()
 
-	x := auth.NewBcrypt(nil)
+	x := auth.ProvideBcrypt(auth.DefaultBcryptHashCost, nil, tracer)
 
 	T.Run("normal operation", func(t *testing.T) {
 		t.Parallel()
@@ -74,6 +95,7 @@ func TestBcrypt_ValidateLogin(T *testing.T) {
 		assert.NoError(t, err, "error generating code to validate login")
 
 		valid, err := x.ValidateLogin(
+			context.Background(),
 			hashedExamplePassword,
 			examplePassword,
 			exampleTwoFactorSecret,

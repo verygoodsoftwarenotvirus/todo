@@ -7,7 +7,7 @@ RUN apk add --update gcc musl-dev
 
 ADD . .
 
-RUN go run tests/integration/v1/db_bootstrap/main.go /example.db
+RUN go run cmd/db_bootstrap/main.go /example.db
 
 # build stage
 FROM golang:alpine AS build-stage

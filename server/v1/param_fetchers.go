@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -11,10 +12,29 @@ import (
 	"github.com/go-chi/chi"
 )
 
-// chiUsernameFetcher fetches a username from a request routed by chi.
-func chiUsernameFetcher(req *http.Request) string {
-	// PONDER: if the only time we use users.URIParamKey is externally to the users package
-	// does it really need to belong there?
+// ProvideUserIDFetcher provides a UserIDFetcher
+func ProvideUserIDFetcher() items.UserIDFetcher {
+	return UserIDFetcher
+}
+
+// ProvideItemIDFetcher provides an ItemIDFetcher
+func ProvideItemIDFetcher() items.ItemIDFetcher {
+	return chiItemIDFetcher
+}
+
+// ProvideUsernameFetcher provides a UsernameFetcher
+func ProvideUsernameFetcher() users.UsernameFetcher {
+	return ChiUsernameFetcher
+}
+
+// UserIDFetcher fetches a user ID from a request routed by chi.
+func UserIDFetcher(req *http.Request) uint64 {
+	x, _ := req.Context().Value(models.UserIDKey).(uint64)
+	return x
+}
+
+// ChiUsernameFetcher fetches a username from a request routed by chi.
+func ChiUsernameFetcher(req *http.Request) string {
 	return chi.URLParam(req, users.URIParamKey)
 }
 
@@ -34,15 +54,15 @@ func chiItemIDFetcher(req *http.Request) uint64 {
 	return u
 }
 
-// chiOauth2ClientIDFetcher fetches a username from a request routed by chi.
-func chiOauth2ClientIDFetcher(req *http.Request) string {
+// chiOAuth2ClientIDFetcher fetches a username from a request routed by chi.
+func chiOAuth2ClientIDFetcher(req *http.Request) string {
 	// PONDER: if the only time we use users.URIParamKey is externally to the users package
 	// does it really need to belong there?
 	return chi.URLParam(req, oauth2clients.URIParamKey)
 }
 
 // chiUserIDFetcher fetches a username from a request routed by chi.
-func chiOauth2ClientDBIDFetcher(req *http.Request) uint64 {
+func chiOAuth2ClientDBIDFetcher(req *http.Request) uint64 {
 	// we disregard this error only because we're able to validate that the string only
 	// contains numbers via chi's regex things
 	u, _ := strconv.ParseUint(chi.URLParam(req, oauth2clients.URIParamKey), 10, 64)

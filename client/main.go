@@ -1,23 +1,35 @@
 package client
 
 import (
+	"context"
+	"net/http"
+	"net/url"
+
 	v1 "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"github.com/opentracing/opentracing-go"
 )
 
+// TodoClient defines a Todo service client
 type TodoClient interface {
-	GetItem(id uint) (*models.Item, error)
-	GetItems(filter *models.QueryFilter) ([]models.Item, error)
-	CreateItem(input *models.ItemInput) (*models.Item, error)
-	UpdateItem(updated *models.Item) error
-	DeleteItem(id uint) error
+	GetItem(ctx context.Context, id uint64) (*models.Item, error)
+	GetItems(ctx context.Context, filter *models.QueryFilter) (*models.ItemList, error)
+	CreateItem(ctx context.Context, input *models.ItemInput) (*models.Item, error)
+	UpdateItem(ctx context.Context, updated *models.Item) error
+	DeleteItem(ctx context.Context, id uint64) error
 }
 
-func NewClient(address, authToken string, debug bool) (TodoClient, error) {
-	cfg := &v1.Config{
-		Debug:     debug,
-		Address:   address,
-		AuthToken: authToken,
-	}
-	return v1.NewClient(cfg)
+// NewClient builds a new TodoClient
+func NewClient(
+	clientID,
+	clientSecret string,
+	address *url.URL,
+	logger logging.Logger,
+	client *http.Client,
+	tracer opentracing.Tracer,
+	debug bool,
+) (TodoClient, error) {
+	return v1.NewClient(clientID, clientSecret, address, logger, client, tracer, debug)
 }

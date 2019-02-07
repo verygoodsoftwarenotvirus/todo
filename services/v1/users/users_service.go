@@ -5,45 +5,75 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/sirupsen/logrus"
+	"github.com/google/wire"
+	"github.com/opentracing/opentracing-go"
 )
 
+// MiddlewareCtxKey is the context key we search for when interacting with user-related requests
 const MiddlewareCtxKey models.ContextKey = "user_input"
 
 type (
+	// RequestValidator validates request
 	RequestValidator interface {
 		Validate(req *http.Request) (bool, error)
 	}
 
-	UsersServiceConfig struct {
-		CookieName      string
-		Logger          *logrus.Logger
-		Database        database.Database
-		Authenticator   auth.Enticator
-		UsernameFetcher func(*http.Request) string
-	}
+	// Tracer is an arbitrary type alias we use for dependency injection
+	Tracer opentracing.Tracer
 
-	UsersService struct {
-		cookieName      string
+	// Service handles our users
+	Service struct {
+		cookieName      CookieName
 		database        database.Database
 		authenticator   auth.Enticator
-		logger          *logrus.Logger
+		logger          logging.Logger
+		tracer          Tracer
 		usernameFetcher func(*http.Request) string
 	}
+
+	// UsernameFetcher fetches usernames from requests
+	UsernameFetcher func(*http.Request) string
+
+	// CookieName is an arbitrary type alias
+	CookieName string
 )
 
-func NewUsersService(cfg UsersServiceConfig) *UsersService {
-	if cfg.UsernameFetcher == nil {
+var (
+	// Providers is what we provide for dependency injectors
+	Providers = wire.NewSet(
+		ProvideUserServiceTracer,
+		ProvideUsersService,
+	)
+)
+
+// ProvideUserServiceTracer wraps an opentracing Tracer
+func ProvideUserServiceTracer() (Tracer, error) {
+	return tracing.ProvideTracer("users-service")
+}
+
+// ProvideUsersService builds a new UsersService
+func ProvideUsersService(
+	cookieName CookieName,
+	logger logging.Logger,
+	database database.Database,
+	authenticator auth.Enticator,
+	usernameFetcher UsernameFetcher,
+	tracer Tracer,
+) *Service {
+	if usernameFetcher == nil {
 		panic("usernameFetcher must be provided")
 	}
-	us := &UsersService{
-		cookieName:      cfg.CookieName,
-		database:        cfg.Database,
-		authenticator:   cfg.Authenticator,
-		logger:          cfg.Logger,
-		usernameFetcher: cfg.UsernameFetcher,
+	us := &Service{
+		logger:          logger,
+		cookieName:      cookieName,
+		database:        database,
+		authenticator:   authenticator,
+		usernameFetcher: usernameFetcher,
+		tracer:          tracer,
 	}
 	return us
 }

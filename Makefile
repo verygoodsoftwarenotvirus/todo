@@ -13,19 +13,26 @@ clean:
 	rm -f $(COVERAGE_OUT)
 	rm -f example.db
 
+.PHONY: dockercide
+dockercide:
+	docker system prune --force --all --volumes
+
 ## Project prerequisites
 vendor:
-	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` --workdir=`pwd` golang:latest /bin/sh -c "go mod vendor"
+	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` golang:latest /bin/sh -c "go mod vendor"
 
-.PHONY: revendor
-revendor:
+.PHONY: unvendor
+unvendor:
 	rm -rf vendor go.{mod,sum}
 	GO111MODULE=on go mod init
-	$(MAKE) vendor
 
 .PHONY: dev-tools
 dev-tools:
-	go get -u github.com/jsha/minica
+	go get -u github.com/google/wire/cmd/wire
+
+.PHONY: wire
+wire:
+	wire gen gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
 
 .PHONY: prerequisites
 prerequisites:
@@ -51,21 +58,29 @@ test:
 	docker build --tag coverage-todo:latest --file dockerfiles/coverage.Dockerfile .
 	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` coverage-todo:latest
 
+.PHONY: ci-integration-tests
+ci-integration-tests: # literally the same as integration-tests, except without the wire prereq
+	docker-compose --file compose-files/integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
+
 .PHONY: integration-tests
-integration-tests:
-	docker-compose --file compose-files/integration-tests.yaml up --build --remove-orphans --abort-on-container-exit --force-recreate
+integration-tests: wire
+	docker-compose --file compose-files/integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
+
+.PHONY: debug-integration-tests
+debug-integration-tests: wire # literally the same except it won't exit
+	docker-compose --file compose-files/integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate
 
 ## Docker things
 
 .PHONY: docker-image
-docker-image: prerequisites
+docker-image: prerequisites wire-gen-server
 	docker build --tag todo:latest --file dockerfiles/server.Dockerfile .
 
 ## Running
 
 .PHONY: run
 run: docker-image
-	docker run --rm --publish 443:443 todo:latest
+	docker-compose --file compose-files/docker-compose.yaml up --always-recreate-deps --build --remove-orphans --abort-on-container-exit --force-recreate
 
 .PHONY: run-local
 run-local:
@@ -73,5 +88,4 @@ run-local:
 
 .PHONY: run-local-integration-server
 run-local-integration-server:
-	docker build --tag dev-todo:latest --file dockerfiles/integration-server.Dockerfile .
-	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` --publish=443 dev-todo:latest
+	docker-compose --file compose-files/integration-debug.yaml up --always-recreate-deps --build --remove-orphans --force-recreate

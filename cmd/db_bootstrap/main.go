@@ -33,9 +33,8 @@ func main() {
 	logger := zerolog.ProvideLogger(zerolog.ProvideZerologger())
 
 	var (
-		db        database.Database
-		schemaDir string
-		err       error
+		db  database.Database
+		err error
 	)
 
 	tracer, err := tracing.ProvideTracer("db-bootstrap")
@@ -45,10 +44,8 @@ func main() {
 
 	switch strings.ToLower(os.Getenv("DATABASE_TO_USE")) {
 	case "postgres":
-		schemaDir = postgresSchemaDir
 		db, err = postgres.ProvidePostgres(false, logger, tracer, database.ConnectionDetails(postgresConnectionDetails))
 	default:
-		schemaDir = sqliteSchemaDir
 		dbPath := sqliteConnectionDetails
 		if len(os.Args) > 1 {
 			dbPath = os.Args[1]
@@ -63,7 +60,6 @@ func main() {
 
 	bootstrap.PreloadDatabase(
 		db,
-		database.SchemaDirectory(schemaDir),
 		logger,
 		tracer,
 	)

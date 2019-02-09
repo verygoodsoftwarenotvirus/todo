@@ -3,10 +3,10 @@ package sqlite
 import (
 	"context"
 	"database/sql"
-	"errors"
-	"io/ioutil"
-	"path"
-	"strings"
+	// "errors"
+	// "io/ioutil"
+	// "path"
+	// "strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
@@ -84,48 +84,8 @@ func (s *Sqlite) prepareFilter(filter *models.QueryFilter, span opentracing.Span
 	return filter
 }
 
-// IsReady reports whether or not Sqlite is ready to be written to. Since Sqlite is a file-based database, it is always ready
+// IsReady reports whether or not Sqlite is ready to be written to.
+// Since sqlite3 is a file-based database, it is always ready AFAICT
 func (s *Sqlite) IsReady(ctx context.Context) (ready bool) {
 	return true
-}
-
-// Migrate migrates a given Sqlite database. The current implementation is pretty primitive.
-func (s *Sqlite) Migrate(ctx context.Context, schemaDir database.SchemaDirectory) error {
-	sd := string(schemaDir)
-	logger := s.logger.WithValue("schema_dir", sd)
-	logger.Debug("Migrate called")
-
-	if ready := s.IsReady(ctx); !ready {
-		return errors.New("database not ready")
-	}
-
-	files, err := ioutil.ReadDir(string(sd))
-	if err != nil {
-		return err
-	}
-	logger.WithValue("file_count", len(files)).Debug("found files in schema directory")
-
-	for _, file := range files {
-		schemaFile := path.Join(string(sd), file.Name())
-
-		if strings.HasSuffix(schemaFile, ".sql") {
-			logger.WithValue("schema_file", schemaFile).Debug("migrating schema file")
-			data, err := ioutil.ReadFile(schemaFile)
-			if err != nil {
-				logger.Error(err, "error encountered reading schema file")
-				return err
-			}
-
-			logger.WithValue("query", string(data)).Debug("running query")
-			_, err = s.database.Exec(string(data))
-			if err != nil {
-				logger.Debug("database.Exec finished, returning err")
-				return err
-			}
-			logger.Debug("database.Exec finished, error not returned")
-		}
-	}
-
-	logger.Debug("returning no error from sqlite.Migrate()")
-	return nil
 }

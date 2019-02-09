@@ -3,10 +3,10 @@
 package sqlite
 
 import (
-	"database/sql"
-	"log"
+	"context"
 
 	"github.com/GuiaBolso/darwin"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -64,13 +64,15 @@ var (
 	}
 )
 
-func migrate(db *sql.DB) {
-	driver := darwin.NewGenericDriver(db, darwin.SqliteDialect{})
+// Migrate migrates a given Sqlite database.
+func (s *Sqlite) Migrate(context.Context) error {
+	driver := darwin.NewGenericDriver(s.database, darwin.SqliteDialect{})
 
 	d := darwin.New(driver, migrations, nil)
 	err := d.Migrate()
 
 	if err != nil {
-		log.Println(err)
+		return errors.Wrap(err, "migrating sqlite database")
 	}
+	return nil
 }

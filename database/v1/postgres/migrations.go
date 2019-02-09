@@ -3,8 +3,7 @@
 package postgres
 
 import (
-	"database/sql"
-	"log"
+	"context"
 
 	"github.com/GuiaBolso/darwin"
 )
@@ -64,13 +63,8 @@ var (
 	}
 )
 
-func migrate(db *sql.DB) {
-	driver := darwin.NewGenericDriver(db, darwin.PostgresDialect{})
-
-	d := darwin.New(driver, migrations, nil)
-	err := d.Migrate()
-
-	if err != nil {
-		log.Println(err)
-	}
+// Migrate migrates a postgres database
+func (p *Postgres) Migrate(context.Context) error {
+	driver := darwin.NewGenericDriver(p.database, darwin.PostgresDialect{})
+	return darwin.New(driver, migrations, nil).Migrate()
 }

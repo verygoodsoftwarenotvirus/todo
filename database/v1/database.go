@@ -15,7 +15,7 @@ type ConnectionDetails string
 
 // Database describes anything that stores data for our services
 type Database interface {
-	Migrate(ctx context.Context, schemaDir SchemaDirectory) error
+	Migrate(ctx context.Context) error
 	IsReady(ctx context.Context) (ready bool)
 
 	models.ItemHandler

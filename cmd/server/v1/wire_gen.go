@@ -19,7 +19,7 @@ import (
 
 // Injectors from wire.go:
 
-func BuildServer(connectionDetails database.ConnectionDetails, SchemaDirectory database.SchemaDirectory, CertPair server.CertPair, CookieName users.CookieName, CookieSecret []byte, Debug bool) (*server.Server, error) {
+func BuildServer(connectionDetails database.ConnectionDetails, CertPair server.CertPair, CookieName users.CookieName, CookieSecret []byte, Debug bool) (*server.Server, error) {
 	bcryptHashCost := auth.ProvideBcryptHashCost()
 	logger := zerolog.ProvideZerologger()
 	loggingLogger := zerolog.ProvideLogger(logger)
@@ -65,7 +65,7 @@ func BuildServer(connectionDetails database.ConnectionDetails, SchemaDirectory d
 		return nil, err
 	}
 	serverServer := server.ProvideOAuth2Server(manager, tokenStore, clientStore)
-	server2, err := server.ProvideServer(Debug, CertPair, CookieSecret, enticator, SchemaDirectory, service, usersService, oauth2clientsService, databaseDatabase, loggingLogger, serverTracer, serverServer, tokenStore, clientStore)
+	server2, err := server.ProvideServer(Debug, CertPair, CookieSecret, enticator, service, usersService, oauth2clientsService, databaseDatabase, loggingLogger, serverTracer, serverServer, tokenStore, clientStore)
 	if err != nil {
 		return nil, err
 	}

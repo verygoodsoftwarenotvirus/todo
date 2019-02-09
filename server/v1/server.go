@@ -98,7 +98,6 @@ func ProvideServer(
 	cp CertPair,
 	cookieSecret []byte,
 	authenticator auth.Enticator,
-	schemaDirectory database.SchemaDirectory,
 
 	// services
 	itemsService *items.Service,

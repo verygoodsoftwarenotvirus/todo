@@ -34,7 +34,6 @@ const (
 // PreloadDatabase migrates a postgres database
 func PreloadDatabase(
 	db database.Database,
-	schemaDir database.SchemaDirectory,
 	logger logging.Logger,
 	tracer opentracing.Tracer,
 ) error {
@@ -50,10 +49,8 @@ func PreloadDatabase(
 		return errors.New("no database ready")
 	}
 
-	if len(schemaDir) > 0 {
-		if err := db.Migrate(ctx); err != nil {
-			return err
-		}
+	if err := db.Migrate(ctx); err != nil {
+		return err
 	}
 
 	b := auth.ProvideBcrypt(auth.DefaultBcryptHashCost, logger, tracer)

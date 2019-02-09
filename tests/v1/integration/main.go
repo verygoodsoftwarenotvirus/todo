@@ -137,7 +137,7 @@ func init() {
 				log.Fatal(err)
 			}
 
-			if err := bootstrap.PreloadDatabase(db, "", logger, tracer); err != nil {
+			if err := bootstrap.PreloadDatabase(db, logger, tracer); err != nil {
 				log.Fatal(err)
 			}
 		}

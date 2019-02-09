@@ -20,7 +20,6 @@ import (
 // BuildServer builds a server
 func BuildServer(
 	connectionDetails database.ConnectionDetails,
-	SchemaDirectory database.SchemaDirectory,
 	CertPair server.CertPair,
 	CookieName users.CookieName,
 	CookieSecret []byte,

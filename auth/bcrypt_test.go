@@ -105,3 +105,28 @@ func TestBcrypt_ValidateLogin(T *testing.T) {
 		assert.True(t, valid)
 	})
 }
+
+func TestPasswordIsAcceptable(T *testing.T) {
+	T.SkipNow()
+
+}
+
+func TestValidateLogin(T *testing.T) {
+	T.SkipNow()
+
+}
+
+func TestProvideBcrypt(T *testing.T) {
+	T.SkipNow()
+
+}
+
+func TestHashPassword(T *testing.T) {
+	T.SkipNow()
+
+}
+
+func TestPasswordMatches(T *testing.T) {
+	T.SkipNow()
+
+}

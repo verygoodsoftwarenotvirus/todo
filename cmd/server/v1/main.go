@@ -13,10 +13,7 @@ import (
 const (
 	secure = false
 
-	sqliteSchemaDir         = "database/v1/sqlite/schema"
-	sqliteConnectionDetails = "example.db"
-
-	postgresSchemaDir         = "database/v1/postgres/schema"
+	sqliteConnectionDetails   = "example.db"
 	postgresConnectionDetails = "postgres://todo:hunter2@database:5432/todo?sslmode=disable"
 
 	certFile = "certs/cert.pem"
@@ -49,7 +46,6 @@ func init() {
 func main() {
 	server, err := BuildServer(
 		database.ConnectionDetails(sqliteConnectionDetails),
-		sqliteSchemaDir,
 		server.CertPair{
 			CertFile: certToUse,
 			KeyFile:  keyToUse,

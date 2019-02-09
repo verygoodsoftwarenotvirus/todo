@@ -51,7 +51,7 @@ func PreloadDatabase(
 	}
 
 	if len(schemaDir) > 0 {
-		if err := db.Migrate(ctx, schemaDir); err != nil {
+		if err := db.Migrate(ctx); err != nil {
 			return err
 		}
 	}

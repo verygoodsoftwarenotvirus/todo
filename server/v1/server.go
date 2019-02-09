@@ -125,7 +125,7 @@ func ProvideServer(
 	span := tracer.StartSpan("startup")
 	defer span.Finish()
 
-	if err := db.Migrate(context.Background(), schemaDirectory); err != nil {
+	if err := db.Migrate(context.Background()); err != nil {
 		return nil, err
 	}
 

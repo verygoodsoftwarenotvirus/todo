@@ -28,7 +28,7 @@ const (
 
 	nonexistentID          = 999999999
 	localTestInstanceURL   = "https://localhost"
-	defaultTestInstanceURL = "https://demo-server"
+	defaultTestInstanceURL = "https://todo-server"
 
 	dockerPostgresAddress = "postgres://todo:hunter2@database:5432/todo?sslmode=disable"
 	localPostgresAddress  = "postgres://todo:hunter2@localhost:2345/todo?sslmode=disable"

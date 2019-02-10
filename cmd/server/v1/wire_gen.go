@@ -10,6 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1/prometheus"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
@@ -64,8 +65,14 @@ func BuildServer(connectionDetails database.ConnectionDetails, CertPair server.C
 	if err != nil {
 		return nil, err
 	}
+	httpServer := server.ProvideHTTPServer()
+	namespace := server.ProvideMetricsNamespace()
+	exporter, err := prometheus.ProvidePrometheus(namespace)
+	if err != nil {
+		return nil, err
+	}
 	serverServer := server.ProvideOAuth2Server(manager, tokenStore, clientStore)
-	server2, err := server.ProvideServer(Debug, CertPair, CookieSecret, enticator, service, usersService, oauth2clientsService, databaseDatabase, loggingLogger, serverTracer, serverServer, tokenStore, clientStore)
+	server2, err := server.ProvideServer(Debug, CertPair, CookieSecret, enticator, service, usersService, oauth2clientsService, databaseDatabase, loggingLogger, serverTracer, httpServer, exporter, serverServer, tokenStore, clientStore)
 	if err != nil {
 		return nil, err
 	}

@@ -25,6 +25,7 @@ require (
 	github.com/stretchr/testify v1.3.0
 	github.com/uber/jaeger-client-go v2.14.0+incompatible
 	github.com/uber/jaeger-lib v1.5.0
+	go.opencensus.io v0.19.0
 	golang.org/x/crypto v0.0.0-20190131182504-b8fe1690c613
 	golang.org/x/oauth2 v0.0.0-20190130055435-99b60b757ec1
 	gopkg.in/oauth2.v3 v3.9.5

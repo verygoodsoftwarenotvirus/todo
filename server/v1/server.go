@@ -13,6 +13,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
@@ -22,6 +23,7 @@ import (
 	"github.com/google/wire"
 	"github.com/gorilla/securecookie"
 	"github.com/opentracing/opentracing-go"
+	"go.opencensus.io/stats/view"
 	"gopkg.in/oauth2.v3"
 	oauth2server "gopkg.in/oauth2.v3/server"
 	oauth2store "gopkg.in/oauth2.v3/store"
@@ -60,12 +62,13 @@ type (
 		oauth2ClientsService *oauth2clients.Service
 
 		// infra things
-		db            database.Database
-		router        *chi.Mux
-		server        *http.Server
-		logger        logging.Logger
-		tracer        opentracing.Tracer
-		cookieBuilder *securecookie.SecureCookie
+		db              database.Database
+		router          *chi.Mux
+		server          *http.Server
+		logger          logging.Logger
+		tracer          opentracing.Tracer
+		metricsExporter view.Exporter
+		cookieBuilder   *securecookie.SecureCookie
 
 		// OAuth2 stuff
 		oauth2Handler     *oauth2server.Server
@@ -81,11 +84,18 @@ var (
 		ProvideTokenStore,
 		ProvideClientStore,
 		ProvideServer,
+		ProvideHTTPServer,
 		ProvideServerTracer,
 		ProvideOAuth2Server,
 		ProvideItemIDFetcher,
+		ProvideMetricsNamespace,
 	)
 )
+
+// ProvideMetricsNamespace provides a metrics namespace
+func ProvideMetricsNamespace() metrics.Namespace {
+	return "todo-server"
+}
 
 // ProvideServerTracer provides a UserServiceTracer from an tracer building function
 func ProvideServerTracer() (Tracer, error) {
@@ -108,6 +118,8 @@ func ProvideServer(
 	db database.Database,
 	logger logging.Logger,
 	tracer Tracer,
+	server *http.Server,
+	metricsExporter view.Exporter,
 
 	// OAuth2 stuff
 	oauth2Handler *oauth2server.Server,
@@ -130,14 +142,17 @@ func ProvideServer(
 
 	srv := &Server{
 		DebugMode:     debug,
-		db:            db,
-		logger:        logger,
 		certFile:      cp.CertFile,
 		keyFile:       cp.KeyFile,
-		server:        buildServer(),
 		authenticator: authenticator,
-		cookieBuilder: securecookie.New(securecookie.GenerateRandomKey(64), cookieSecret),
-		tracer:        tracer,
+
+		// infra thngs
+		db:              db,
+		logger:          logger,
+		server:          server,
+		cookieBuilder:   securecookie.New(securecookie.GenerateRandomKey(64), cookieSecret),
+		tracer:          tracer,
+		metricsExporter: metricsExporter,
 
 		// Services
 		usersService:         usersService,
@@ -267,7 +282,8 @@ func (s *Server) notifyOfInvalidRequestCookie(res http.ResponseWriter, req *http
 	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "invalid cookie"})
 }
 
-func buildServer() *http.Server {
+// ProvideHTTPServer provides an HTTP server
+func ProvideHTTPServer() *http.Server {
 	// heavily inspired by https://blog.cloudflare.com/exposing-go-on-the-internet/
 	srv := &http.Server{
 		ReadTimeout:  5 * time.Second,

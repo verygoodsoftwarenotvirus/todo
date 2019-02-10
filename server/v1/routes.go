@@ -18,6 +18,7 @@ import (
 	gcontext "github.com/gorilla/context"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/opentracing/opentracing-go"
+	"go.opencensus.io/plugin/ochttp"
 )
 
 func (s *Server) buildRouteCtx(key models.ContextKey, x interface{}) func(next http.Handler) http.Handler {
@@ -63,6 +64,12 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func (s *Server) metricsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ochttp.WithRouteTag(next, r.URL.Path).ServeHTTP(w, r)
+	})
+}
+
 func (s *Server) setupRoutes() {
 	s.router = chi.NewRouter()
 
@@ -72,11 +79,18 @@ func (s *Server) setupRoutes() {
 		middleware.Timeout(maxTimeout),
 		s.loggingMiddleware,
 		s.tracingMiddleware,
+		s.metricsMiddleware,
 	)
 
 	if s.DebugMode {
 		s.router.Use(middleware.SetHeader("Access-Control-Allow-Origin", "*"))
 		s.router.Get("/_debug_/stats", s.stats)
+	}
+
+	// all middlewares must be defined before routes on a mux
+
+	if x, ok := s.metricsExporter.(http.Handler); ok {
+		s.router.Handle("/metrics", x)
 	}
 
 	s.router.Get("/_meta_/health", func(res http.ResponseWriter, req *http.Request) { res.WriteHeader(http.StatusOK) })

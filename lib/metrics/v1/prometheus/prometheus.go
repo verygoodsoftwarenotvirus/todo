@@ -20,6 +20,9 @@ func ProvidePrometheus(ns metrics.Namespace) (view.Exporter, error) {
 	pe, err := prometheus.NewExporter(
 		prometheus.Options{
 			Namespace: string(ns),
+			ConstLabels: map[string]string{
+				"server": "server",
+			},
 		},
 	)
 	if err != nil {

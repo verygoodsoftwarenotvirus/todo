@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	// "gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
@@ -18,7 +17,6 @@ import (
 	gcontext "github.com/gorilla/context"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/opentracing/opentracing-go"
-	"go.opencensus.io/plugin/ochttp"
 )
 
 func (s *Server) buildRouteCtx(key models.ContextKey, x interface{}) func(next http.Handler) http.Handler {
@@ -64,22 +62,16 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) metricsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ochttp.WithRouteTag(next, r.URL.Path).ServeHTTP(w, r)
-	})
-}
-
 func (s *Server) setupRoutes() {
 	s.router = chi.NewRouter()
 
 	s.router.Use(
+		s.metricsMiddleware,
 		gcontext.ClearHandler,
 		middleware.RequestID,
 		middleware.Timeout(maxTimeout),
 		s.loggingMiddleware,
 		s.tracingMiddleware,
-		s.metricsMiddleware,
 	)
 
 	if s.DebugMode {
@@ -169,4 +161,5 @@ func (s *Server) setupRoutes() {
 
 			})
 		})
+
 }

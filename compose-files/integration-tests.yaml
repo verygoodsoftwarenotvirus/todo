@@ -57,11 +57,6 @@ services:
       - tracing-server
       - todo-server
 
-  metrics-exporter:
-    image: prom/node-exporter:latest
-    ports:
-      - 9100:9100
-
   prometheus:
     image: quay.io/prometheus/prometheus:v2.0.0
     volumes:
@@ -72,8 +67,6 @@ services:
       '--config.file=/etc/prometheus/config.yaml --storage.tsdb.path=/prometheus'
     ports:
       - 9090:9090
-    links:
-      - metrics-exporter
 
   grafana:
     image: grafana/grafana

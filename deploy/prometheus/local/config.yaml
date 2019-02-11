@@ -31,10 +31,3 @@ scrape_configs:
 
     tls_config:
       insecure_skip_verify: true
-
-    # metrics_path defaults to '/metrics'
-    # scheme defaults to 'http.
-  - job_name: 'node'
-    scrape_interval: '15s'
-    static_configs:
-      - targets: ['metrics-exporter:9100']

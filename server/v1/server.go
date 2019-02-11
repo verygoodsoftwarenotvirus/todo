@@ -23,6 +23,7 @@ import (
 	"github.com/google/wire"
 	"github.com/gorilla/securecookie"
 	"github.com/opentracing/opentracing-go"
+	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/stats/view"
 	"gopkg.in/oauth2.v3"
 	oauth2server "gopkg.in/oauth2.v3/server"
@@ -172,9 +173,12 @@ func ProvideServer(
 
 // Serve serves HTTP traffic
 func (s *Server) Serve() {
-	s.server.Handler = s.router
+	s.server.Handler = &ochttp.Handler{Handler: s.router}
+	if err := view.Register(ochttp.DefaultServerViews...); err != nil {
+		log.Fatal("Failed to register ochttp.DefaultServerViews")
+	}
+
 	s.logger.Debug("Listening on 443")
-	//s.logRoutes(s.router)
 	log.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))
 }
 

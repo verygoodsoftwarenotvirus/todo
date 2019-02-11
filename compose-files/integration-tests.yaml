@@ -61,24 +61,30 @@ services:
     image: prom/node-exporter:latest
     ports:
       - 9100:9100
-    # network_mode: host
 
   prometheus:
     image: quay.io/prometheus/prometheus:v2.0.0
     volumes:
       - type: bind
-        source: ../deploy/prometheus/config.yaml
+        source: ../deploy/prometheus/local/config.yaml
         target: /etc/prometheus/config.yaml
     command:
       '--config.file=/etc/prometheus/config.yaml --storage.tsdb.path=/prometheus'
     ports:
       - 9090:9090
-    depends_on:
+    links:
       - metrics-exporter
 
   grafana:
     image: grafana/grafana
     ports:
       - 3000:3000
-    depends_on:
+    volumes:
+      - type: bind
+        source: ../deploy/grafana/local/provisioning
+        target: /etc/grafana/provisioning
+      - type: bind
+        source: ../deploy/grafana/dashboards
+        target: /etc/grafana/dashboards
+    links:
       - prometheus

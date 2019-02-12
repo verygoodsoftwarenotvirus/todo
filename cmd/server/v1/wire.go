@@ -5,9 +5,10 @@ package main
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	// "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1/prometheus"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
@@ -22,6 +23,7 @@ func BuildServer(
 	connectionDetails database.ConnectionDetails,
 	CertPair server.CertPair,
 	CookieName users.CookieName,
+	metricsNamespace metrics.Namespace,
 	CookieSecret []byte,
 	Debug bool,
 ) (*server.Server, error) {
@@ -30,16 +32,19 @@ func BuildServer(
 		auth.Providers,
 		oauth2manage.NewDefaultManager,
 
-		//// Databases
-		// postgres.Providers,
+		// Databases
 		sqlite.Providers,
 
-		//// Loggers
+		// Loggers
 		zerolog.Providers,
 
-		//// Server things
+		// Server things
 		server.Providers,
 
+		// metrics
+		prometheus.Providers,
+
+		// Services
 		users.Providers,
 		items.Providers,
 		oauth2clients.Providers,

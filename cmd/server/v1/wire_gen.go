@@ -10,6 +10,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1/prometheus"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
@@ -19,7 +21,7 @@ import (
 
 // Injectors from wire.go:
 
-func BuildServer(connectionDetails database.ConnectionDetails, CertPair server.CertPair, CookieName users.CookieName, CookieSecret []byte, Debug bool) (*server.Server, error) {
+func BuildServer(connectionDetails database.ConnectionDetails, CertPair server.CertPair, CookieName users.CookieName, metricsNamespace metrics.Namespace, CookieSecret []byte, Debug bool) (*server.Server, error) {
 	bcryptHashCost := auth.ProvideBcryptHashCost()
 	logger := zerolog.ProvideZerologger()
 	loggingLogger := zerolog.ProvideLogger(logger)
@@ -66,8 +68,9 @@ func BuildServer(connectionDetails database.ConnectionDetails, CertPair server.C
 		return nil, err
 	}
 	httpServer := server.ProvideHTTPServer()
+	handler := prometheus.ProvideMetricsHandler()
 	serverServer := server.ProvideOAuth2Server(manager, tokenStore, clientStore)
-	server2, err := server.ProvideServer(Debug, CertPair, CookieSecret, enticator, service, usersService, oauth2clientsService, databaseDatabase, loggingLogger, serverTracer, httpServer, serverServer, tokenStore, clientStore)
+	server2, err := server.ProvideServer(Debug, CertPair, CookieSecret, enticator, service, usersService, oauth2clientsService, databaseDatabase, loggingLogger, serverTracer, httpServer, handler, serverServer, tokenStore, clientStore)
 	if err != nil {
 		return nil, err
 	}

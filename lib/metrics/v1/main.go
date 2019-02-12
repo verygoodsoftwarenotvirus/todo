@@ -4,11 +4,17 @@ import (
 	"net/http"
 )
 
-// Namespace is a string alias for dependency injection's sake
-type Namespace string
+type (
 
-// Collector is our abstracted interface for a metrics collection
-// service like Prometheus
-type Collector interface {
-	MetricsHandler() http.Handler
-}
+	// Namespace is a string alias for dependency injection's sake
+	Namespace string
+
+	// InstrumentationHandler is the Handler that provides instrumentation details at the root of the server mux
+	InstrumentationHandler http.Handler
+
+	// InstrumentationHandlerProvider is a function that builds an InstrumentationHandler
+	InstrumentationHandlerProvider func(http.Handler) InstrumentationHandler
+
+	// Handler is the Handler that provides metrics data to scraping services
+	Handler http.Handler
+)

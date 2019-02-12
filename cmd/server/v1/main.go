@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 )
@@ -51,6 +52,7 @@ func main() {
 			KeyFile:  keyToUse,
 		},
 		users.CookieName("todo"),
+		metrics.Namespace("todo-server"),
 		[]byte(cookieSecret),
 		debug,
 	)

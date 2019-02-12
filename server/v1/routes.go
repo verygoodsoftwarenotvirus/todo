@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
@@ -17,7 +18,6 @@ import (
 	gcontext "github.com/gorilla/context"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/opentracing/opentracing-go"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func (s *Server) buildRouteCtx(key models.ContextKey, x interface{}) func(next http.Handler) http.Handler {
@@ -63,7 +63,7 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) setupRoutes() {
+func (s *Server) setupRoutes(metricsHandler metrics.Handler) {
 	s.router = chi.NewRouter()
 
 	s.router.Use(
@@ -81,7 +81,9 @@ func (s *Server) setupRoutes() {
 
 	// all middlewares must be defined before routes on a mux
 
-	s.router.Handle("/metrics", promhttp.Handler())
+	if metricsHandler != nil {
+		s.router.Handle("/metrics", metricsHandler)
+	}
 
 	s.router.Get("/_meta_/health", func(res http.ResponseWriter, req *http.Request) { res.WriteHeader(http.StatusOK) })
 

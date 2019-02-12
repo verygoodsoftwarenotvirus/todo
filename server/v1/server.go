@@ -67,7 +67,6 @@ type (
 		server *http.Server
 		logger logging.Logger
 		tracer opentracing.Tracer
-		// instrumentationHandler http.Handler
 
 		// Auth stuff
 		cookieBuilder     *securecookie.SecureCookie
@@ -116,6 +115,7 @@ func ProvideServer(
 	logger logging.Logger,
 	tracer Tracer,
 	server *http.Server,
+	metricsHandler metrics.Handler,
 
 	// OAuth2 stuff
 	oauth2Handler *oauth2server.Server,
@@ -159,7 +159,7 @@ func ProvideServer(
 		oauth2Handler:     oauth2Handler,
 	}
 
-	srv.setupRoutes()
+	srv.setupRoutes(metricsHandler)
 	srv.initializeOAuth2Clients()
 
 	return srv, nil

@@ -10,6 +10,16 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
 	"github.com/go-chi/chi"
+	"github.com/google/wire"
+)
+
+var (
+	paramFetcherProviders = wire.NewSet(
+		ProvideUserIDFetcher,
+		ProvideUsernameFetcher,
+		ProvideClientIDFetcher,
+		ProvideItemIDFetcher,
+	)
 )
 
 // ProvideUserIDFetcher provides a UserIDFetcher
@@ -25,6 +35,11 @@ func ProvideItemIDFetcher() items.ItemIDFetcher {
 // ProvideUsernameFetcher provides a UsernameFetcher
 func ProvideUsernameFetcher() users.UsernameFetcher {
 	return ChiUsernameFetcher
+}
+
+// ProvideClientIDFetcher provides a ClientIDFetcher
+func ProvideClientIDFetcher() oauth2clients.ClientIDFetcher {
+	return chiOAuth2ClientIDFetcher
 }
 
 // UserIDFetcher fetches a user ID from a request routed by chi.

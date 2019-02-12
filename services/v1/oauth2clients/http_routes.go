@@ -123,35 +123,30 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(res).Encode(x)
 }
 
-// BuildReadHandler returns a handler for retrieving an OAuth2 client
-func (s *Service) BuildReadHandler(oauth2ClientIDFetcher func(req *http.Request) string) http.HandlerFunc {
-	if oauth2ClientIDFetcher == nil {
-		panic("oauth2ClientIDFetcher may not be nil")
+// Read is a route handler for retrieving an OAuth2 client
+func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
+	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	serverSpan := s.tracer.StartSpan("read route", opentracing.ChildOf(spanCtx))
+	defer serverSpan.Finish()
+
+	ctx := req.Context()
+	oauth2ClientID := s.clientIDFetcher(req)
+	logger := s.logger.WithValue("oauth2_client_id", oauth2ClientID)
+	logger.Debug("oauth2Client read route called")
+
+	i, err := s.database.GetOAuth2Client(ctx, oauth2ClientID)
+	if err == sql.ErrNoRows {
+		logger.Debug("Read called on nonexistent client")
+		res.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
+		logger.Error(err, "error fetching oauth2Client from database")
+		res.WriteHeader(http.StatusInternalServerError)
+		return
 	}
-	return func(res http.ResponseWriter, req *http.Request) {
-		spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-		serverSpan := s.tracer.StartSpan("read route", opentracing.ChildOf(spanCtx))
-		defer serverSpan.Finish()
 
-		ctx := req.Context()
-		oauth2ClientID := oauth2ClientIDFetcher(req)
-		logger := s.logger.WithValue("oauth2_client_id", oauth2ClientID)
-		logger.Debug("oauth2Client read route called")
-
-		i, err := s.database.GetOAuth2Client(ctx, oauth2ClientID)
-		if err == sql.ErrNoRows {
-			logger.Debug("Read called on nonexistent client")
-			res.WriteHeader(http.StatusNotFound)
-			return
-		} else if err != nil {
-			logger.Error(err, "error fetching oauth2Client from database")
-			res.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		res.Header().Set("Content-type", "application/json")
-		json.NewEncoder(res).Encode(i)
-	}
+	res.Header().Set("Content-type", "application/json")
+	json.NewEncoder(res).Encode(i)
 }
 
 // List is a handler that returns a list of OAuth2 clients
@@ -176,64 +171,56 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(res).Encode(oauth2Clients)
 }
 
-// BuildDeleteHandler returns a Handler for deleting an OAuth2 client
-func (s *Service) BuildDeleteHandler(clientIDFetcher func(req *http.Request) string) http.HandlerFunc {
-	if clientIDFetcher == nil {
-		panic("oauth2ClientIDFetcher may not be nil")
-	}
-	return func(res http.ResponseWriter, req *http.Request) {
-		spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-		serverSpan := s.tracer.StartSpan("delete route", opentracing.ChildOf(spanCtx))
-		defer serverSpan.Finish()
+// Delete is a route handler for deleting an OAuth2 client
+func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
+	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	serverSpan := s.tracer.StartSpan("delete route", opentracing.ChildOf(spanCtx))
+	defer serverSpan.Finish()
 
-		ctx := req.Context()
-		oauth2ClientID := clientIDFetcher(req)
-		logger := s.logger.WithValue("oauth2_client_id", oauth2ClientID)
-		logger.Debug("oauth2Client deletion route called")
+	ctx := req.Context()
+	oauth2ClientID := s.clientIDFetcher(req)
+	logger := s.logger.WithValue("oauth2_client_id", oauth2ClientID)
+	logger.Debug("oauth2Client deletion route called")
 
-		if err := s.database.DeleteOAuth2Client(ctx, oauth2ClientID); err != nil {
-			s.logger.Error(err, "encountered error deleting oauth2 client")
-			res.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+	if err := s.database.DeleteOAuth2Client(ctx, oauth2ClientID); err != nil {
+		s.logger.Error(err, "encountered error deleting oauth2 client")
+		res.WriteHeader(http.StatusInternalServerError)
+		return
 	}
+
+	res.WriteHeader(http.StatusNoContent)
 }
 
-// BuildUpdateHandler returns a handler for updating OAuth2 clients
-func (s *Service) BuildUpdateHandler(clientIDFetcher func(req *http.Request) string) http.HandlerFunc {
-	if clientIDFetcher == nil {
-		panic("oauth2ClientIDFetcher may not be nil")
+// Update is a route handler for updating OAuth2 clients
+func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
+	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	serverSpan := s.tracer.StartSpan("update route", opentracing.ChildOf(spanCtx))
+	defer serverSpan.Finish()
+
+	ctx := req.Context()
+	oauth2ClientID := s.clientIDFetcher(req)
+	logger := s.logger.WithValue("oauth2_client_id", oauth2ClientID)
+	logger.Debug("oauth2Client update route called")
+	// input, ok := req.Context().Value(MiddlewareCtxKey).(*models.OAuth2ClientUpdateInput)
+	// if !ok {
+	// 	res.WriteHeader(http.StatusBadRequest)
+	// 	return
+	// }
+
+	x, err := s.database.GetOAuth2Client(ctx, oauth2ClientID)
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		return
 	}
-	return func(res http.ResponseWriter, req *http.Request) {
-		spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-		serverSpan := s.tracer.StartSpan("update route", opentracing.ChildOf(spanCtx))
-		defer serverSpan.Finish()
 
-		ctx := req.Context()
-		oauth2ClientID := clientIDFetcher(req)
-		logger := s.logger.WithValue("oauth2_client_id", oauth2ClientID)
-		logger.Debug("oauth2Client update route called")
-		// input, ok := req.Context().Value(MiddlewareCtxKey).(*models.OAuth2ClientUpdateInput)
-		// if !ok {
-		// 	res.WriteHeader(http.StatusBadRequest)
-		// 	return
-		// }
+	// IMPLEMENTME:
+	//x.Update()
 
-		x, err := s.database.GetOAuth2Client(ctx, oauth2ClientID)
-		if err != nil {
-			res.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		// IMPLEMENTME:
-		//x.Update()
-
-		if err := s.database.UpdateOAuth2Client(ctx, x); err != nil {
-			res.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		res.Header().Set("Content-type", "application/json")
-		json.NewEncoder(res).Encode(x)
+	if err := s.database.UpdateOAuth2Client(ctx, x); err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		return
 	}
+
+	res.Header().Set("Content-type", "application/json")
+	json.NewEncoder(res).Encode(x)
 }

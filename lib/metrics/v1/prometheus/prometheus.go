@@ -1,36 +1,32 @@
 package prometheus
 
 import (
+	"net/http"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 
 	"github.com/google/wire"
-	"go.opencensus.io/exporter/prometheus"
-	"go.opencensus.io/stats/view"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
 	// Providers represents what this library offers to external users in the form of dependencies
 	Providers = wire.NewSet(
-		ProvidePrometheus,
+		ProvideInstrumentationHandler,
 	)
 )
 
-// ProvidePrometheus provides a prometheus exporter
-func ProvidePrometheus(ns metrics.Namespace) (view.Exporter, error) {
-	pe, err := prometheus.NewExporter(
-		prometheus.Options{
-			Namespace: string(ns),
-			ConstLabels: map[string]string{
-				"server": "server",
-			},
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
+// Collector is our metric collector that exports to Prometheus
+type Collector struct {
+}
 
-	// Ensure that we register it as a stats exporter.
-	view.RegisterExporter(pe)
+// ProvideInstrumentationHandler provides an instrumentation handler
+func ProvideInstrumentationHandler(name metrics.Namespace, handler http.Handler) http.HandlerFunc {
+	return prometheus.InstrumentHandlerFunc(string(name), handler.ServeHTTP)
+}
 
-	return pe, nil
+// ProvideMetricsHandler provides a metrics handler
+func ProvideMetricsHandler() http.Handler {
+	return promhttp.Handler()
 }

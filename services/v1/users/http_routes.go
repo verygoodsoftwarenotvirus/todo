@@ -190,6 +190,8 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	res.WriteHeader(http.StatusNoContent)
 }
 
 type usernameFetcher func(req *http.Request) string

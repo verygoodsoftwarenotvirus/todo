@@ -43,6 +43,11 @@ $(CLIENT_PRIV_KEY) $(CLIENT_CERT_KEY):
 vendor:
 	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` golang:latest /bin/sh -c "go mod vendor"
 
+.PHONY: revendor
+revendor:
+	rm -rf vendor go.sum
+	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` golang:latest /bin/sh -c "go mod vendor"
+
 .PHONY: unvendor
 unvendor:
 	rm -rf vendor go.{mod,sum}
@@ -57,10 +62,6 @@ $(COVERAGE_OUT):
 test:
 	docker build --tag coverage-$(SERVER_DOCKER_IMAGE_NAME):latest --file dockerfiles/coverage.Dockerfile .
 	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` coverage-$(SERVER_DOCKER_IMAGE_NAME):latest
-
-.PHONY: ci-integration-tests
-ci-integration-tests: # literally the same as integration-tests, except without the wire prereq
-	docker-compose --file compose-files/integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
 
 .PHONY: integration-tests
 integration-tests: wire

@@ -17,6 +17,7 @@ import (
 	gcontext "github.com/gorilla/context"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func (s *Server) buildRouteCtx(key models.ContextKey, x interface{}) func(next http.Handler) http.Handler {
@@ -66,7 +67,6 @@ func (s *Server) setupRoutes() {
 	s.router = chi.NewRouter()
 
 	s.router.Use(
-		s.metricsMiddleware,
 		gcontext.ClearHandler,
 		middleware.RequestID,
 		middleware.Timeout(maxTimeout),
@@ -81,9 +81,7 @@ func (s *Server) setupRoutes() {
 
 	// all middlewares must be defined before routes on a mux
 
-	if x, ok := s.metricsExporter.(http.Handler); ok {
-		s.router.Handle("/metrics", x)
-	}
+	s.router.Handle("/metrics", promhttp.Handler())
 
 	s.router.Get("/_meta_/health", func(res http.ResponseWriter, req *http.Request) { res.WriteHeader(http.StatusOK) })
 
@@ -127,39 +125,38 @@ func (s *Server) setupRoutes() {
 		})
 	})
 
-	s.router.
-		With(s.OauthTokenAuthenticationMiddleware).
-		Route("/api", func(apiRouter chi.Router) {
-			apiRouter.Route("/v1", func(v1Router chi.Router) {
+	s.router.With(s.OauthTokenAuthenticationMiddleware).Route("/api", func(apiRouter chi.Router) {
+		apiRouter.Route("/v1", func(v1Router chi.Router) {
 
-				v1Router.Route("/items", func(itemsRouter chi.Router) {
-					sr := fmt.Sprintf("/{%s:[0-9]+}", items.URIParamKey)
-					itemsRouter.Get("/", s.itemsService.List)       // List
-					itemsRouter.Get("/count", s.itemsService.Count) // Count
-					itemsRouter.Get(sr, s.itemsService.Read)        // Read
-					itemsRouter.Delete(sr, s.itemsService.Delete)   // Delete
-					itemsRouter.With(s.itemsService.ItemInputMiddleware).
-						Put(sr, s.itemsService.Update) // Update
-					itemsRouter.With(s.itemsService.ItemInputMiddleware).
-						Post("/", s.itemsService.Create) // Create
-				})
-
-				v1Router.Route("/oauth2", func(oauth2Router chi.Router) {
-					oauth2Router.Route("/clients", func(clientRouter chi.Router) {
-						sr := fmt.Sprintf("/{%s}", oauth2clients.URIParamKey)
-						clientRouter.Get("/", s.oauth2ClientsService.List)                                           // List
-						clientRouter.Get(sr, s.oauth2ClientsService.BuildReadHandler(chiOAuth2ClientIDFetcher))      // Read
-						clientRouter.Delete(sr, s.oauth2ClientsService.BuildDeleteHandler(chiOAuth2ClientIDFetcher)) // Delete
-						clientRouter.
-							With(s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.OAuth2ClientUpdateInput))).
-							Put(sr, s.oauth2ClientsService.BuildUpdateHandler(chiOAuth2ClientIDFetcher)) // Update
-						clientRouter.
-							With(s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.OAuth2ClientCreationInput))).
-							Post("/", s.oauth2ClientsService.Create) // Create
-					})
-				})
-
+			v1Router.Route("/items", func(itemsRouter chi.Router) {
+				sr := fmt.Sprintf("/{%s:[0-9]+}", items.URIParamKey)
+				itemsRouter.Get("/", s.itemsService.List)       // List
+				itemsRouter.Get("/count", s.itemsService.Count) // Count
+				itemsRouter.Get(sr, s.itemsService.Read)        // Read
+				itemsRouter.Delete(sr, s.itemsService.Delete)   // Delete
+				itemsRouter.With(s.itemsService.ItemInputMiddleware).
+					Put(sr, s.itemsService.Update) // Update
+				itemsRouter.With(s.itemsService.ItemInputMiddleware).
+					Post("/", s.itemsService.Create) // Create
 			})
+
+			v1Router.Route("/oauth2", func(oauth2Router chi.Router) {
+				oauth2Router.Route("/clients", func(clientRouter chi.Router) {
+					sr := fmt.Sprintf("/{%s}", oauth2clients.URIParamKey)
+					clientRouter.Get("/", s.oauth2ClientsService.List)     // List
+					clientRouter.Get(sr, s.oauth2ClientsService.Read)      // Read
+					clientRouter.Delete(sr, s.oauth2ClientsService.Delete) // Delete
+					clientRouter.
+						With(s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.OAuth2ClientUpdateInput))).
+						Put(sr, s.oauth2ClientsService.Update) // Update
+					clientRouter.
+						With(s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.OAuth2ClientCreationInput))).
+						Post("/", s.oauth2ClientsService.Create) // Create
+				})
+			})
+
 		})
+
+	})
 
 }

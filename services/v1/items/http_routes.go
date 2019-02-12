@@ -132,6 +132,8 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	res.WriteHeader(http.StatusNoContent)
 }
 
 // Update returns a handler that updates an item

@@ -23,8 +23,7 @@ import (
 	"github.com/google/wire"
 	"github.com/gorilla/securecookie"
 	"github.com/opentracing/opentracing-go"
-	"go.opencensus.io/plugin/ochttp"
-	"go.opencensus.io/stats/view"
+	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/oauth2.v3"
 	oauth2server "gopkg.in/oauth2.v3/server"
 	oauth2store "gopkg.in/oauth2.v3/store"
@@ -63,15 +62,15 @@ type (
 		oauth2ClientsService *oauth2clients.Service
 
 		// infra things
-		db              database.Database
-		router          *chi.Mux
-		server          *http.Server
-		logger          logging.Logger
-		tracer          opentracing.Tracer
-		metricsExporter view.Exporter
-		cookieBuilder   *securecookie.SecureCookie
+		db     database.Database
+		router *chi.Mux
+		server *http.Server
+		logger logging.Logger
+		tracer opentracing.Tracer
+		// instrumentationHandler http.Handler
 
-		// OAuth2 stuff
+		// Auth stuff
+		cookieBuilder     *securecookie.SecureCookie
 		oauth2Handler     *oauth2server.Server
 		oauth2ClientStore *oauth2store.ClientStore
 	}
@@ -80,16 +79,13 @@ type (
 var (
 	// Providers is our wire superset of providers this package offers
 	Providers = wire.NewSet(
-		ProvideUserIDFetcher,
-		ProvideUsernameFetcher,
+		paramFetcherProviders,
 		ProvideTokenStore,
 		ProvideClientStore,
 		ProvideServer,
 		ProvideHTTPServer,
 		ProvideServerTracer,
 		ProvideOAuth2Server,
-		ProvideItemIDFetcher,
-		ProvideMetricsNamespace,
 	)
 )
 
@@ -120,7 +116,6 @@ func ProvideServer(
 	logger logging.Logger,
 	tracer Tracer,
 	server *http.Server,
-	metricsExporter view.Exporter,
 
 	// OAuth2 stuff
 	oauth2Handler *oauth2server.Server,
@@ -148,12 +143,11 @@ func ProvideServer(
 		authenticator: authenticator,
 
 		// infra thngs
-		db:              db,
-		logger:          logger,
-		server:          server,
-		cookieBuilder:   securecookie.New(securecookie.GenerateRandomKey(64), cookieSecret),
-		tracer:          tracer,
-		metricsExporter: metricsExporter,
+		db:            db,
+		logger:        logger,
+		server:        server,
+		cookieBuilder: securecookie.New(securecookie.GenerateRandomKey(64), cookieSecret),
+		tracer:        tracer,
 
 		// Services
 		usersService:         usersService,
@@ -173,11 +167,7 @@ func ProvideServer(
 
 // Serve serves HTTP traffic
 func (s *Server) Serve() {
-	s.server.Handler = &ochttp.Handler{Handler: s.router}
-	if err := view.Register(ochttp.DefaultServerViews...); err != nil {
-		log.Fatal("Failed to register ochttp.DefaultServerViews")
-	}
-
+	s.server.Handler = prometheus.InstrumentHandler("todo-server", s.router)
 	s.logger.Debug("Listening on 443")
 	log.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))
 }

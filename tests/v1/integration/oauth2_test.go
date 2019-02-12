@@ -26,7 +26,7 @@ func buildDummyOAuth2ClientInput(t *testing.T, username, password, totpSecret st
 			TOTPToken: code,
 		},
 		Scopes:      []string{"*"},
-		RedirectURI: localTestInstanceURL, //faker.Internet{}.DomainName(),
+		RedirectURI: localTestInstanceURL,
 	}
 
 	return x

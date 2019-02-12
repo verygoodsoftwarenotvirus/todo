@@ -1,6 +1,8 @@
 package oauth2clients
 
 import (
+	"net/http"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
@@ -22,14 +24,18 @@ type (
 	// Tracer is a type alias we use for dependency injection
 	Tracer opentracing.Tracer
 
+	// ClientIDFetcher is a function for fetching client IDs out of requests
+	ClientIDFetcher func(req *http.Request) string
+
 	// Service manages our OAuth2 clients via HTTP
 	Service struct {
-		database      database.Database
-		authenticator auth.Enticator
-		logger        logging.Logger
-		tracer        opentracing.Tracer
-		clientStore   *oauth2store.ClientStore
-		tokenStore    oauth2.TokenStore
+		database        database.Database
+		authenticator   auth.Enticator
+		logger          logging.Logger
+		tracer          opentracing.Tracer
+		clientStore     *oauth2store.ClientStore
+		tokenStore      oauth2.TokenStore
+		clientIDFetcher func(req *http.Request) string
 	}
 )
 
@@ -48,20 +54,22 @@ func ProvideOAuth2ClientsServiceTracer() (Tracer, error) {
 
 // ProvideOAuth2ClientsService builds a new OAuth2ClientsService
 func ProvideOAuth2ClientsService(
+	logger logging.Logger,
 	database database.Database,
 	authenticator auth.Enticator,
-	logger logging.Logger,
+	clientIDFetcher ClientIDFetcher,
 	clientStore *oauth2store.ClientStore,
 	tokenStore oauth2.TokenStore,
 	tracer Tracer,
 ) *Service {
 	us := &Service{
-		database:      database,
-		authenticator: authenticator,
-		logger:        logger,
-		clientStore:   clientStore,
-		tokenStore:    tokenStore,
-		tracer:        tracer,
+		database:        database,
+		authenticator:   authenticator,
+		logger:          logger,
+		clientStore:     clientStore,
+		tokenStore:      tokenStore,
+		tracer:          tracer,
+		clientIDFetcher: clientIDFetcher,
 	}
 	return us
 }

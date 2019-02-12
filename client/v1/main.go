@@ -296,7 +296,7 @@ func (c *V1Client) delete(ctx context.Context, uri string) error {
 	res, err := c.executeRequest(context.Background(), req)
 	if err != nil {
 		return &Error{Err: err}
-	} else if res.StatusCode != http.StatusOK {
+	} else if res.StatusCode != http.StatusNoContent {
 		return &Error{Err: errors.New(fmt.Sprintf("status returned: %d", res.StatusCode))}
 	}
 

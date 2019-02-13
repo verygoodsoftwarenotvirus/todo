@@ -23,7 +23,6 @@ import (
 	"github.com/google/wire"
 	"github.com/gorilla/securecookie"
 	"github.com/opentracing/opentracing-go"
-	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/oauth2.v3"
 	oauth2server "gopkg.in/oauth2.v3/server"
 	oauth2store "gopkg.in/oauth2.v3/store"
@@ -115,7 +114,10 @@ func ProvideServer(
 	logger logging.Logger,
 	tracer Tracer,
 	server *http.Server,
+
+	// metrics things
 	metricsHandler metrics.Handler,
+	instHandlerProvider metrics.InstrumentationHandlerProvider,
 
 	// OAuth2 stuff
 	oauth2Handler *oauth2server.Server,
@@ -159,15 +161,19 @@ func ProvideServer(
 		oauth2Handler:     oauth2Handler,
 	}
 
-	srv.setupRoutes(metricsHandler)
+	srv.setupRouter(metricsHandler)
 	srv.initializeOAuth2Clients()
 
+	var handler http.Handler = srv.router
+	if instHandlerProvider != nil {
+		handler = instHandlerProvider(srv.router)
+	}
+	srv.server.Handler = handler
 	return srv, nil
 }
 
 // Serve serves HTTP traffic
 func (s *Server) Serve() {
-	s.server.Handler = prometheus.InstrumentHandler("todo-server", s.router)
 	s.logger.Debug("Listening on 443")
 	log.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))
 }

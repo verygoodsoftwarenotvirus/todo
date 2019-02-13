@@ -69,8 +69,9 @@ func BuildServer(connectionDetails database.ConnectionDetails, CertPair server.C
 	}
 	httpServer := server.ProvideHTTPServer()
 	handler := prometheus.ProvideMetricsHandler()
+	instrumentationHandlerProvider := prometheus.ProvideInstrumentationHandlerProvider(metricsNamespace)
 	serverServer := server.ProvideOAuth2Server(manager, tokenStore, clientStore)
-	server2, err := server.ProvideServer(Debug, CertPair, CookieSecret, enticator, service, usersService, oauth2clientsService, databaseDatabase, loggingLogger, serverTracer, httpServer, handler, serverServer, tokenStore, clientStore)
+	server2, err := server.ProvideServer(Debug, CertPair, CookieSecret, enticator, service, usersService, oauth2clientsService, databaseDatabase, loggingLogger, serverTracer, httpServer, handler, instrumentationHandlerProvider, serverServer, tokenStore, clientStore)
 	if err != nil {
 		return nil, err
 	}

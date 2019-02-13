@@ -13,6 +13,7 @@ import (
 var (
 	// Providers represents what this library offers to external users in the form of dependencies
 	Providers = wire.NewSet(
+		ProvideInstrumentationHandlerProvider,
 		ProvideMetricsHandler,
 	)
 )
@@ -21,9 +22,11 @@ var (
 type Collector struct {
 }
 
-// ProvideInstrumentationHandler provides an instrumentation handler
-func ProvideInstrumentationHandler(name metrics.Namespace, handler http.Handler) metrics.InstrumentationHandler {
-	return prometheus.InstrumentHandlerFunc(string(name), handler.ServeHTTP)
+// ProvideInstrumentationHandlerProvider provides an instrumentation handler provider
+func ProvideInstrumentationHandlerProvider(name metrics.Namespace) metrics.InstrumentationHandlerProvider {
+	return func(handler http.Handler) metrics.InstrumentationHandler {
+		return prometheus.InstrumentHandler(string(name), handler)
+	}
 }
 
 // ProvideMetricsHandler provides a metrics handler

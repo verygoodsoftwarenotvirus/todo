@@ -63,7 +63,7 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) setupRoutes(metricsHandler metrics.Handler) {
+func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 	s.router = chi.NewRouter()
 
 	s.router.Use(

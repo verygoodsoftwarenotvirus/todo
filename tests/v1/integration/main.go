@@ -106,7 +106,6 @@ func ensureServerIsUp() {
 			isDown = false
 		}
 	}
-
 }
 
 func init() {

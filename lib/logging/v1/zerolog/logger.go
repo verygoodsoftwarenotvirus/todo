@@ -37,6 +37,20 @@ func ProvideLogger(logger zerolog.Logger) logging.Logger {
 	return l
 }
 
+// SetLevel sets the log level for our logger
+func (l *Logger) SetLevel(level logging.Level) {
+	var lvl zerolog.Level
+	switch level {
+	case logging.InfoLevel:
+		lvl = zerolog.InfoLevel
+	case logging.DebugLevel:
+		lvl = zerolog.DebugLevel
+	case logging.ErrorLevel:
+		lvl = zerolog.ErrorLevel
+	}
+	l.logger = l.logger.Level(lvl)
+}
+
 // Info satisfies our contract for the logging.Logger Info method.
 func (l *Logger) Info(input string) {
 	l.logger.Info().Msg(input)

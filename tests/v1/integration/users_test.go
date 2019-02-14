@@ -5,13 +5,12 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"net/http"
-	"reflect"
 	"strconv"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/bxcodec/faker"
+	"github.com/icrowley/fake"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,13 +36,10 @@ func randString() (string, error) {
 func buildDummyUserInput(t *testing.T) *models.UserInput {
 	t.Helper()
 
-	u, _ := (&faker.Internet{}).UserName(reflect.ValueOf(nil))
-	p, _ := (&faker.Internet{}).Password(reflect.ValueOf(nil))
 	tfs, _ := randString()
-
 	x := &models.UserInput{
-		Username:        u.(string),
-		Password:        p.(string),
+		Username:        fake.UserName(),
+		Password:        fake.Password(8, 64, true, true, true),
 		TwoFactorSecret: tfs,
 	}
 

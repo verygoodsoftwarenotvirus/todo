@@ -11,6 +11,18 @@ import (
 	"github.com/rs/zerolog/diode"
 )
 
+// Level is a simple string alias
+type Level string
+
+var (
+	// InfoLevel describes a info-level log
+	InfoLevel Level = "info"
+	// DebugLevel describes a debug-level log
+	DebugLevel Level = "debug"
+	// ErrorLevel describes a error-level log
+	ErrorLevel Level = "error"
+)
+
 // Logger represents a simple logging interface we can build wrappers around.
 type Logger interface {
 	Info(string)
@@ -18,6 +30,8 @@ type Logger interface {
 	Error(error, string)
 	Fatal(error)
 	Print(...interface{})
+
+	SetLevel(Level)
 
 	// Builder funcs
 	WithValues(map[string]interface{}) Logger

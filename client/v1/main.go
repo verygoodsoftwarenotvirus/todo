@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
-	// "net/http/httptrace"
 	"net/http/httputil"
 	"net/url"
 	"strings"
@@ -114,7 +113,14 @@ func NewClient(
 
 	var client = hclient
 	if client == nil {
-		client = &http.Client{}
+		client = &http.Client{
+			Timeout: 5 * time.Second,
+		}
+	}
+
+	if debug {
+		logger.SetLevel(logging.DebugLevel)
+		logger.Debug("level set to debug!")
 	}
 
 	c := &V1Client{
@@ -126,11 +132,12 @@ func NewClient(
 		authedClient: buildOAuthClient(context.Background(), address, clientID, clientSecret),
 	}
 
+	logger.WithValue("url", address.String()).Debug("returning client")
 	return c, nil
 }
 
 func (c *V1Client) executeRequest(ctx context.Context, req *http.Request) (*http.Response, error) {
-	logger := c.logger
+	var logger = c.logger
 	if command, err := http2curl.GetCurlCommand(req); err == nil {
 		logger = c.logger.WithValue("curl", command.String())
 	}
@@ -200,14 +207,19 @@ func (c *V1Client) BuildWebsocketURL(parts ...string) string {
 // IsUp returns whether or not the service is healthy
 func (c *V1Client) IsUp() bool {
 	u := *c.URL
+	uri := fmt.Sprintf("%s://%s:%s/_meta_/health", u.Scheme, u.Host, u.Port())
 
-	uri := fmt.Sprintf("%s://%s:%s/_meta_/health", u.Scheme, u.Hostname(), u.Port())
+	logger := c.logger.WithValue("health_check_url", uri)
+
 	req, _ := http.NewRequest(http.MethodGet, uri, nil)
 	res, err := c.plainClient.Do(req)
 
 	if err != nil {
+		logger.Error(err, "health check")
 		return false
 	}
+
+	logger.WithValue("status_code", res.StatusCode)
 
 	return res.StatusCode == http.StatusOK
 }

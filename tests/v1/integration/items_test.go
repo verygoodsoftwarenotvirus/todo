@@ -2,12 +2,11 @@ package integration
 
 import (
 	"context"
-	"reflect"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/bxcodec/faker"
+	"github.com/icrowley/fake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,12 +22,10 @@ func checkItemEquality(t *testing.T, expected, actual *models.Item) {
 
 func buildDummyItem(t *testing.T) *models.Item {
 	t.Helper()
-	n, _ := faker.GetLorem().Word(reflect.ValueOf(nil))
-	d, _ := faker.GetLorem().Sentence(reflect.ValueOf(nil))
 
 	x := &models.ItemInput{
-		Name:    n.(string),
-		Details: d.(string),
+		Name:    fake.Word(),
+		Details: fake.Sentence(),
 	}
 	y, err := todoClient.CreateItem(context.Background(), x)
 	require.NoError(t, err)

@@ -40,6 +40,7 @@ $(CLIENT_PRIV_KEY) $(CLIENT_CERT_KEY):
 	mkdir -p dev_files/certs/client
 	openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=localhost" -keyout dev_files/certs/client/key.pem -out dev_files/certs/client/cert.pem
 
+.PHONY: vendor
 vendor:
 	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` golang:latest /bin/sh -c "go mod vendor"
 
@@ -70,6 +71,10 @@ integration-tests: wire
 .PHONY: debug-integration-tests
 debug-integration-tests: wire # literally the same except it won't exit
 	docker-compose --file compose-files/integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate
+
+.PHONY: load-tests
+load-tests: wire # literally the same except it won't exit
+	docker-compose --file compose-files/load-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
 
 ## Docker things
 

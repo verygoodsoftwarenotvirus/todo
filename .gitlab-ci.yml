@@ -28,4 +28,4 @@ integration-tests:
   script:
     - apk add --update --no-cache py-pip openssl
     - pip install docker-compose
-    - make prerequisites integration-tests
+    - make integration-tests

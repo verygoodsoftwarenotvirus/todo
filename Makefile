@@ -87,12 +87,12 @@ load-tests: wire # literally the same except it won't exit
 ## Docker things
 
 .PHONY: server-docker-image
-server-docker-image: prerequisites wire
+server-docker-image: wire
 	docker build --tag $(SERVER_DOCKER_IMAGE_NAME):latest --file dockerfiles/server.Dockerfile .
 
 
 .PHONY: prod-server-docker-image
-prod-server-docker-image: prerequisites wire
+prod-server-docker-image: wire
 	docker build --tag $(SERVER_DOCKER_REPO_NAME):latest --file dockerfiles/server.Dockerfile .
 
 .PHONY: push-server-to-docker

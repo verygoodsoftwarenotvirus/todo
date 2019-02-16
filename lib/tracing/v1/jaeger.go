@@ -12,7 +12,8 @@ import (
 func ProvideTracer(service string) (opentracing.Tracer, error) {
 	cfg, err := config.FromEnv()
 	if err != nil {
-		return nil, err
+		// return nil, err
+		return opentracing.NoopTracer{}, nil
 	}
 	cfg.ServiceName = service
 	cfg.Sampler.Type = "const"
@@ -23,7 +24,8 @@ func ProvideTracer(service string) (opentracing.Tracer, error) {
 		config.Metrics(metricsFactory),
 	)
 	if err != nil {
-		return nil, err
+		// return nil, err
+		return opentracing.NoopTracer{}, nil
 	}
 
 	return tracer, nil

@@ -104,7 +104,7 @@ func (l *Logger) WithRequest(req *http.Request) logging.Logger {
 	l2 := l.logger.With().
 		Str("path", req.URL.Path).
 		Str("method", req.Method).
-		Str("query	", req.URL.RawQuery).
+		Str("query", req.URL.RawQuery).
 		Logger()
 	return &Logger{logger: l2}
 }

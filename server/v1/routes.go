@@ -63,7 +63,7 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) setupRouter(metricsHandler metrics.Handler) {
+func (s *Server) setupRouter(metricsHandler metrics.Handler, createClientInitRoute bool) {
 	s.router = chi.NewRouter()
 
 	s.router.Use(
@@ -112,22 +112,32 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 	})
 
 	s.router.Route("/oauth2", func(oauth2Router chi.Router) {
+		if createClientInitRoute {
+			s.logger.Debug("creating OAuth2 client initialization route")
+			oauth2Router.
+				With(s.buildRouteCtx(
+					oauth2clients.MiddlewareCtxKey,
+					new(models.OAuth2ClientCreationInput),
+				)).
+				Post("/init_client", s.oauth2ClientsService.Create)
+		}
+
 		oauth2Router.
-			With(s.OAuth2ClientInfoMiddleware).
+			With(s.oauth2ClientsService.OAuth2ClientInfoMiddleware).
 			Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
-				if err := s.oauth2Handler.HandleAuthorizeRequest(res, req); err != nil {
+				if err := s.oauth2ClientsService.HandleAuthorizeRequest(res, req); err != nil {
 					http.Error(res, err.Error(), http.StatusBadRequest)
 				}
 			})
 
 		oauth2Router.Post("/token", func(res http.ResponseWriter, req *http.Request) {
-			if err := s.oauth2Handler.HandleTokenRequest(res, req); err != nil {
+			if err := s.oauth2ClientsService.HandleTokenRequest(res, req); err != nil {
 				http.Error(res, err.Error(), http.StatusBadRequest)
 			}
 		})
 	})
 
-	s.router.With(s.OauthTokenAuthenticationMiddleware).Route("/api", func(apiRouter chi.Router) {
+	s.router.With(s.oauth2ClientsService.OauthTokenAuthenticationMiddleware).Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Route("/v1", func(v1Router chi.Router) {
 
 			v1Router.Route("/items", func(itemsRouter chi.Router) {

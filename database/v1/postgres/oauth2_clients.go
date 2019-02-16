@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"strings"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
@@ -63,29 +62,25 @@ const (
 			client_secret = $2,
 			scopes = $3,
 			redirect_uri = $4,
-			updated_on = to_timestamp(extract(epoch FROM NOW()))
+			updated_on = extract(epoch FROM NOW())
 		WHERE id = $5
 		RETURNING
 			updated_on
 	`
 	archiveOAuth2ClientQuery = `
 		UPDATE oauth_clients SET
-			updated_on = to_timestamp(extract(epoch FROM NOW())),
-			archived_on = to_timestamp(extract(epoch FROM NOW()))
+			updated_on = extract(epoch FROM NOW()),
+			archived_on = extract(epoch FROM NOW())
 		WHERE id = $1
 		RETURNING
 			archived_on
 	`
 )
 
-func scanOAuth2Client(scan database.Scannable) (*models.OAuth2Client, error) {
+func (p Postgres) scanOAuth2Client(scan database.Scannable) (*models.OAuth2Client, error) {
 	var (
-		x = &models.OAuth2Client{}
-
+		x      = &models.OAuth2Client{}
 		scopes string
-		co     time.Time
-		uo     *time.Time
-		ao     *time.Time
 	)
 
 	err := scan.Scan(
@@ -94,23 +89,14 @@ func scanOAuth2Client(scan database.Scannable) (*models.OAuth2Client, error) {
 		&scopes,
 		&x.RedirectURI,
 		&x.ClientSecret,
-		&co,
-		&uo,
-		&ao,
+		&x.CreatedOn,
+		&x.UpdatedOn,
+		&x.ArchivedOn,
 		&x.BelongsTo,
 	)
 	if err != nil {
 		return nil, err
 	}
-
-	x.CreatedOn = timeToUInt64(co)
-	if uo != nil {
-		x.UpdatedOn = timeToPUInt64(uo)
-	}
-	if ao != nil {
-		x.ArchivedOn = timeToPUInt64(ao)
-	}
-
 	x.Scopes = strings.Split(scopes, scopesSeparator)
 
 	return x, nil
@@ -133,7 +119,7 @@ func (p *Postgres) GetOAuth2Client(ctx context.Context, clientID string) (*model
 	}
 
 	row := prep.QueryRow(clientID)
-	client, err := scanOAuth2Client(row)
+	client, err := p.scanOAuth2Client(row)
 	if err != nil {
 		logger.Error(err, "error scanning returned row")
 		return nil, err
@@ -194,7 +180,7 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 
 	list := []models.OAuth2Client{}
 	for rows.Next() {
-		x, err := scanOAuth2Client(rows)
+		x, err := p.scanOAuth2Client(rows)
 		if err != nil {
 			logger.Error(err, "error encountered scanning OAuth2Client")
 			return nil, err
@@ -250,18 +236,16 @@ func (p *Postgres) CreateOAuth2Client(ctx context.Context, input *models.OAuth2C
 	}
 
 	// create the client
-	var t time.Time
 	if err = prep.QueryRow(
 		x.ClientID,
 		x.ClientSecret,
 		strings.Join(x.Scopes, scopesSeparator),
 		x.RedirectURI,
 		x.BelongsTo,
-	).Scan(&x.ID, &t); err != nil {
+	).Scan(&x.ID, &x.CreatedOn); err != nil {
 		logger.Error(err, "error executing client creation query")
 		return nil, err
 	}
-	x.CreatedOn = uint64(t.Unix())
 
 	return x, err
 }
@@ -285,17 +269,13 @@ func (p *Postgres) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2C
 		return err
 	}
 
-	var t *time.Time
 	err = prep.QueryRow(
 		input.ClientID,
 		input.ClientSecret,
 		strings.Join(input.Scopes, scopesSeparator),
 		input.RedirectURI,
 		input.ID,
-	).Scan(&t)
-
-	uo := uint64(t.Unix())
-	input.UpdatedOn = &uo
+	).Scan(&input.UpdatedOn)
 
 	return err
 }

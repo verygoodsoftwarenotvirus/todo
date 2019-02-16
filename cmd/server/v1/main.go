@@ -31,22 +31,16 @@ var (
 	debug               bool
 )
 
-func init() {
+func main() {
 	debug = strings.ToLower(os.Getenv("DOCKER")) == "true"
 	if debug {
-		log.Println("running in a docker environment")
 		certToUse, keyToUse = certFile, keyFile
 	} else {
 		certToUse, keyToUse = localCertFile, localKeyFile
 	}
-	log.Printf("debug: %v\n", debug)
-	log.Printf("using this cert: %q\n", certToUse)
-	log.Printf("using this key: %q\n", keyToUse)
-}
 
-func main() {
 	server, err := BuildServer(
-		database.ConnectionDetails(sqliteConnectionDetails),
+		database.ConnectionDetails(postgresConnectionDetails),
 		server.CertPair{
 			CertFile: certToUse,
 			KeyFile:  keyToUse,
@@ -56,6 +50,12 @@ func main() {
 		[]byte(cookieSecret),
 		debug,
 	)
+
+	log.Printf(`
+	debug: %v
+	using this cert: %q
+	using this key: %q
+	`, debug, certToUse, keyToUse)
 
 	if err != nil {
 		log.Fatal(err)

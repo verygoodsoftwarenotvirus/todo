@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"math"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
@@ -59,41 +58,29 @@ const (
 	`
 	archiveItemQuery = `
 		UPDATE items SET
-			updated_on = to_timestamp(extract(epoch FROM NOW())),
-			completed_on = to_timestamp(extract(epoch FROM NOW()))
+			updated_on = extract(epoch FROM NOW()),
+			completed_on = extract(epoch FROM NOW())
 		WHERE id = $1 AND completed_on IS NULL
 		RETURNING
 			completed_on
 	`
 )
 
-func scanItem(scan database.Scannable) (*models.Item, error) {
+func (p Postgres) scanItem(scan database.Scannable) (*models.Item, error) {
 	var (
 		x = &models.Item{}
-
-		co time.Time
-		uo *time.Time
-		ao *time.Time
 	)
 
 	if err := scan.Scan(
 		&x.ID,
 		&x.Name,
 		&x.Details,
-		&co,
-		&uo,
-		&ao,
+		&x.CreatedOn,
+		&x.UpdatedOn,
+		&x.CompletedOn,
 		&x.BelongsTo,
 	); err != nil {
 		return nil, err
-	}
-
-	x.CreatedOn = timeToUInt64(co)
-	if uo != nil {
-		x.UpdatedOn = timeToPUInt64(uo)
-	}
-	if ao != nil {
-		x.CompletedOn = timeToPUInt64(ao)
 	}
 
 	return x, nil
@@ -112,7 +99,7 @@ func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*models.
 	}).Debug("GetItem called")
 
 	row := p.database.QueryRow(getItemQuery, itemID, userID)
-	i, err := scanItem(row)
+	i, err := p.scanItem(row)
 	return i, err
 }
 
@@ -149,7 +136,7 @@ func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter) (*m
 	}
 	defer rows.Close()
 	for rows.Next() {
-		item, err := scanItem(rows)
+		item, err := p.scanItem(rows)
 		if err != nil {
 			return nil, err
 		}
@@ -190,14 +177,13 @@ func (p *Postgres) CreateItem(ctx context.Context, input *models.ItemInput) (*mo
 	}
 
 	// create the item
-	var t time.Time
-	if err := p.database.
+	err := p.database.
 		QueryRow(createItemQuery, input.Name, input.Details, input.BelongsTo).
-		Scan(&i.ID, &t); err != nil {
+		Scan(&i.ID, &i.CreatedOn)
+	if err != nil {
 		p.logger.Error(err, "error executing item creation query")
 		return nil, err
 	}
-	i.CreatedOn = timeToUInt64(t)
 
 	return i, nil
 }
@@ -210,10 +196,7 @@ func (p *Postgres) UpdateItem(ctx context.Context, input *models.Item) error {
 	p.logger.WithValue("input", input).Debug("UpdateItem called")
 
 	// update the item
-	var t *time.Time
-	err := p.database.QueryRow(updateItemQuery, input.Name, input.Details, input.ID).Scan(&t)
-	uo := uint64(t.Unix())
-	input.UpdatedOn = &uo
+	err := p.database.QueryRow(updateItemQuery, input.Name, input.Details, input.ID).Scan(&input.UpdatedOn)
 	return err
 }
 

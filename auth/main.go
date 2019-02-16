@@ -52,6 +52,7 @@ func ProvideTracer() (Tracer, error) {
 // Enticator is a poorly named Authenticator interface
 type Enticator interface {
 	PasswordHasher
+
 	ValidateLogin(ctx context.Context, hashedPassword, providedPassword, twoFactorSecret, twoFactorCode string) (bool, error)
 }
 

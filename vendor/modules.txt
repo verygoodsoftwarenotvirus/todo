@@ -2,16 +2,12 @@
 github.com/GuiaBolso/darwin
 # github.com/Masterminds/squirrel v1.1.0
 github.com/Masterminds/squirrel
-# github.com/VividCortex/gohistogram v1.0.0
-github.com/VividCortex/gohistogram
 # github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
 github.com/beorn7/perks/quantile
 # github.com/boombuler/barcode v1.0.0
 github.com/boombuler/barcode
 github.com/boombuler/barcode/qr
 github.com/boombuler/barcode/utils
-# github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd
-github.com/codahale/hdrhistogram
 # github.com/corpix/uarand v0.0.0
 github.com/corpix/uarand
 # github.com/davecgh/go-spew v1.1.1
@@ -21,11 +17,6 @@ github.com/dgrijalva/jwt-go
 # github.com/go-chi/chi v4.0.1+incompatible
 github.com/go-chi/chi/middleware
 github.com/go-chi/chi
-# github.com/go-kit/kit v0.8.0
-github.com/go-kit/kit/metrics
-github.com/go-kit/kit/metrics/expvar
-github.com/go-kit/kit/metrics/generic
-github.com/go-kit/kit/metrics/internal/lv
 # github.com/golang/protobuf v1.2.0
 github.com/golang/protobuf/proto
 # github.com/google/wire v0.2.1
@@ -119,29 +110,6 @@ github.com/tidwall/rtree/base
 github.com/tidwall/tinyqueue
 # github.com/tsenart/vegeta v12.1.0+incompatible
 github.com/tsenart/vegeta/lib
-# github.com/uber/jaeger-client-go v2.14.0+incompatible
-github.com/uber/jaeger-client-go/config
-github.com/uber/jaeger-client-go
-github.com/uber/jaeger-client-go/internal/baggage/remote
-github.com/uber/jaeger-client-go/internal/throttler/remote
-github.com/uber/jaeger-client-go/rpcmetrics
-github.com/uber/jaeger-client-go/internal/baggage
-github.com/uber/jaeger-client-go/internal/spanlog
-github.com/uber/jaeger-client-go/internal/throttler
-github.com/uber/jaeger-client-go/log
-github.com/uber/jaeger-client-go/thrift
-github.com/uber/jaeger-client-go/thrift-gen/jaeger
-github.com/uber/jaeger-client-go/thrift-gen/sampling
-github.com/uber/jaeger-client-go/thrift-gen/zipkincore
-github.com/uber/jaeger-client-go/utils
-github.com/uber/jaeger-client-go/thrift-gen/baggage
-github.com/uber/jaeger-client-go/thrift-gen/agent
-# github.com/uber/jaeger-lib v1.5.0
-github.com/uber/jaeger-lib/metrics/expvar
-github.com/uber/jaeger-lib/metrics
-github.com/uber/jaeger-lib/metrics/adapters
-github.com/uber/jaeger-lib/metrics/go-kit
-github.com/uber/jaeger-lib/metrics/go-kit/expvar
 # golang.org/x/crypto v0.0.0-20190211182817-74369b46fc67
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -174,9 +142,9 @@ google.golang.org/appengine/internal/datastore
 google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/remote_api
 # gopkg.in/oauth2.v3 v3.9.5
-gopkg.in/oauth2.v3/manage
 gopkg.in/oauth2.v3
 gopkg.in/oauth2.v3/errors
+gopkg.in/oauth2.v3/manage
 gopkg.in/oauth2.v3/models
 gopkg.in/oauth2.v3/server
 gopkg.in/oauth2.v3/store

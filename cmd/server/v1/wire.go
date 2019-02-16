@@ -5,7 +5,8 @@ package main
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/postgres"
+	// "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1/prometheus"
@@ -15,7 +16,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
 	"github.com/google/wire"
-	oauth2manage "gopkg.in/oauth2.v3/manage"
 )
 
 // BuildServer builds a server
@@ -30,10 +30,10 @@ func BuildServer(
 
 	wire.Build(
 		auth.Providers,
-		oauth2manage.NewDefaultManager,
 
 		// Databases
-		sqlite.Providers,
+		// sqlite.Providers,
+		postgres.Providers,
 
 		// Loggers
 		zerolog.Providers,

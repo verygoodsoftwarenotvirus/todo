@@ -18,7 +18,6 @@ const (
 
 // ItemInputMiddleware is a middleware for fetching, parsing, and attaching a parsed ItemInput struct from a request
 func (s *Service) ItemInputMiddleware(next http.Handler) http.Handler {
-	s.logger.Debug("ItemInputMiddleware called")
 	x := new(models.ItemInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
@@ -30,6 +29,8 @@ func (s *Service) ItemInputMiddleware(next http.Handler) http.Handler {
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
+
+		s.logger.WithValue("itemInput", x).Debug("ItemInputMiddleware called")
 		ctx := context.WithValue(req.Context(), MiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})

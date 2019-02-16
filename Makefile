@@ -25,9 +25,16 @@ dockercide:
 dev-tools:
 	go get -u github.com/google/wire/cmd/wire
 
+.PHONY: wire-clean
+wire-clean:
+	rm -f cmd/server/v1/wire_gen.go
+
 .PHONY: wire
 wire:
 	wire gen gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
+
+.PHONY: rewire
+rewire: wire-clean wire
 
 .PHONY: prerequisites
 prerequisites: vendor $(SERVER_PRIV_KEY) $(SERVER_CERT_KEY) $(CLIENT_PRIV_KEY) $(CLIENT_CERT_KEY)
@@ -43,11 +50,13 @@ $(CLIENT_PRIV_KEY) $(CLIENT_CERT_KEY):
 .PHONY: vendor
 vendor:
 	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` golang:latest /bin/sh -c "go mod vendor"
+	sudo chown `whoami`:`whoami` vendor go.sum
 
 .PHONY: revendor
 revendor:
 	rm -rf vendor go.sum
 	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` golang:latest /bin/sh -c "go mod vendor"
+	sudo chown `whoami`:`whoami` vendor go.sum
 
 .PHONY: unvendor
 unvendor:

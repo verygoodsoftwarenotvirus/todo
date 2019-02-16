@@ -23,9 +23,6 @@ import (
 	"github.com/google/wire"
 	"github.com/gorilla/securecookie"
 	"github.com/opentracing/opentracing-go"
-	"gopkg.in/oauth2.v3"
-	oauth2server "gopkg.in/oauth2.v3/server"
-	oauth2store "gopkg.in/oauth2.v3/store"
 )
 
 const (
@@ -68,9 +65,7 @@ type (
 		tracer opentracing.Tracer
 
 		// Auth stuff
-		cookieBuilder     *securecookie.SecureCookie
-		oauth2Handler     *oauth2server.Server
-		oauth2ClientStore *oauth2store.ClientStore
+		cookieBuilder *securecookie.SecureCookie
 	}
 )
 
@@ -78,12 +73,9 @@ var (
 	// Providers is our wire superset of providers this package offers
 	Providers = wire.NewSet(
 		paramFetcherProviders,
-		ProvideTokenStore,
-		ProvideClientStore,
 		ProvideServer,
 		ProvideHTTPServer,
 		ProvideServerTracer,
-		ProvideOAuth2Server,
 	)
 )
 
@@ -118,11 +110,6 @@ func ProvideServer(
 	// metrics things
 	metricsHandler metrics.Handler,
 	instHandlerProvider metrics.InstrumentationHandlerProvider,
-
-	// OAuth2 stuff
-	oauth2Handler *oauth2server.Server,
-	tokenStore oauth2.TokenStore,
-	clientStore *oauth2store.ClientStore,
 ) (*Server, error) {
 
 	if len(cookieSecret) < 32 {
@@ -133,11 +120,6 @@ func ProvideServer(
 
 	span := tracer.StartSpan("startup")
 	defer span.Finish()
-
-	if err := db.Migrate(context.Background()); err != nil {
-		return nil, err
-	}
-
 	srv := &Server{
 		DebugMode:     debug,
 		certFile:      cp.CertFile,
@@ -155,14 +137,16 @@ func ProvideServer(
 		usersService:         usersService,
 		itemsService:         itemsService,
 		oauth2ClientsService: oauth2Service,
-
-		// OAuth2 stuff
-		oauth2ClientStore: clientStore,
-		oauth2Handler:     oauth2Handler,
 	}
 
-	srv.setupRouter(metricsHandler)
-	srv.initializeOAuth2Clients()
+	srv.logger.Info("migrating database")
+	if err := srv.db.Migrate(context.Background()); err != nil {
+		return nil, err
+	}
+	srv.logger.Info("database migrated!")
+
+	cc := srv.oauth2ClientsService.InitializeOAuth2Clients()
+	srv.setupRouter(metricsHandler, cc == 0)
 
 	var handler http.Handler = srv.router
 	if instHandlerProvider != nil {

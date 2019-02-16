@@ -24,7 +24,7 @@ const (
 		FROM
 			items
 		WHERE completed_on IS NULL
-	`
+	`  // FINISHME: finish adding filters to this query
 	getItemsQuery = `
 		SELECT
 			id, name, details, created_on, updated_on, completed_on, belongs_to
@@ -34,7 +34,7 @@ const (
 			completed_on IS NULL
 		LIMIT $1
 		OFFSET $2
-	`
+	`  // FINISHME: finish adding filters to this query
 	createItemQuery = `
 		INSERT INTO items
 		(

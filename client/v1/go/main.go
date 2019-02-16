@@ -166,15 +166,6 @@ func (c *V1Client) executeRequest(ctx context.Context, req *http.Request) (*http
 	return res, nil
 }
 
-// Do executes a raw request object
-// TODO: find out why this was implemented
-func (c *V1Client) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
-	if c.URL.Hostname() != req.URL.Hostname() {
-		return nil, errors.New("request is destined for unknown server")
-	}
-	return c.executeRequest(context.Background(), req)
-}
-
 // BuildURL builds URLs
 func (c *V1Client) BuildURL(qp url.Values, parts ...string) string {
 	if qp != nil {

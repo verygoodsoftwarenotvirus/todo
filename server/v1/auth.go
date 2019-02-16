@@ -28,7 +28,7 @@ func (s *Server) UserCookieAuthenticationMiddleware(next http.Handler) http.Hand
 			var ca cookieAuth
 
 			if err := s.cookieBuilder.Decode(CookieName, cookie.Value, &ca); err == nil {
-				// // TODO: refresh cookie
+				// // FINISHME: refresh cookie
 				// cookie.Expires = time.Now().Add(s.config.MaxCookieLifetime)
 				// http.SetCookie(res, cookie)
 				var ctx = req.Context()

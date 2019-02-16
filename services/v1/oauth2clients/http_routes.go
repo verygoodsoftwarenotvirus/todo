@@ -414,12 +414,11 @@ func (s *Service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantTyp
 	if grant == oauth2.PasswordCredentials {
 		return false, errors.New("invalid grant type: password")
 	}
-
-	// TODO: what if client is deactivated?!
 	client, err := s.database.GetOAuth2Client(context.Background(), clientID)
 	if err != nil {
 		return false, err
 	}
+	// FINISHME: what if client is deactivated?!
 
 	if grant == oauth2.Implicit && !client.ImplicitAllowed {
 		return false, errors.New("client not authorized for implicit grants")

@@ -73,7 +73,7 @@ test:
 	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` coverage-$(SERVER_DOCKER_IMAGE_NAME):latest
 
 .PHONY: integration-tests
-integration-tests: wire
+integration-tests:
 	docker-compose --file compose-files/integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
 
 .PHONY: debug-integration-tests
@@ -89,7 +89,6 @@ load-tests: wire # literally the same except it won't exit
 .PHONY: server-docker-image
 server-docker-image: wire
 	docker build --tag $(SERVER_DOCKER_IMAGE_NAME):latest --file dockerfiles/server.Dockerfile .
-
 
 .PHONY: prod-server-docker-image
 prod-server-docker-image: wire

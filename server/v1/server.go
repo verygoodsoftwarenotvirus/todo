@@ -7,7 +7,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"runtime"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
@@ -35,20 +34,12 @@ type (
 		Serve()
 	}
 
-	// CertPair represents the certificate and key you need to serve HTTPS
-	CertPair struct {
-		CertFile string
-		KeyFile  string
-	}
-
 	// Tracer is an arbitrary type we use for dependency injection
 	Tracer opentracing.Tracer
 
 	// Server is our API server
 	Server struct {
 		DebugMode bool
-		certFile  string
-		keyFile   string
 
 		authenticator auth.Enticator
 
@@ -92,7 +83,6 @@ func ProvideServerTracer() (Tracer, error) {
 // ProvideServer builds a new Server instance
 func ProvideServer(
 	debug bool,
-	cp CertPair,
 	cookieSecret []byte,
 	authenticator auth.Enticator,
 
@@ -122,8 +112,6 @@ func ProvideServer(
 	defer span.Finish()
 	srv := &Server{
 		DebugMode:     debug,
-		certFile:      cp.CertFile,
-		keyFile:       cp.KeyFile,
 		authenticator: authenticator,
 
 		// infra thngs
@@ -150,6 +138,7 @@ func ProvideServer(
 
 	var handler http.Handler = srv.router
 	if instHandlerProvider != nil {
+		srv.logger.Debug("setting instrumentation handler")
 		handler = instHandlerProvider(srv.router)
 	}
 	srv.server.Handler = handler
@@ -158,28 +147,9 @@ func ProvideServer(
 
 // Serve serves HTTP traffic
 func (s *Server) Serve() {
-	s.logger.Debug("Listening on 443")
-	log.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))
-}
-
-func (s *Server) stats(res http.ResponseWriter, req *http.Request) {
-	s.logger.Debug("stats called")
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-
-	x := struct {
-		Alloc      uint64 `json:"memory_allocated"`
-		TotalAlloc uint64 `json:"lifetime_memory_allocated"`
-		NumGC      uint64 `json:"num_gc"`
-	}{
-		Alloc:      m.Alloc,
-		TotalAlloc: m.TotalAlloc,
-		NumGC:      uint64(m.NumGC),
-	}
-
-	if err := json.NewEncoder(res).Encode(x); err != nil {
-		s.logger.Error(err, "encoding struct")
-	}
+	s.server.Addr = ":80"
+	s.logger.Debug("Listening on 80")
+	log.Fatal(s.server.ListenAndServe())
 }
 
 type genericResponse struct {

@@ -25,7 +25,7 @@ const (
 	postgresSchemaDir         = "database/v1/postgres/schema"
 	postgresConnectionDetails = "postgres://todo:hunter2@database:5432/todo?sslmode=disable"
 
-	localTestInstanceURL = "https://localhost"
+	localTestInstanceURL = "http://localhost"
 	defaultSecret        = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
 	defaultClientID      = "HEREISACLIENTIDWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
 	defaultClientSecret  = defaultSecret

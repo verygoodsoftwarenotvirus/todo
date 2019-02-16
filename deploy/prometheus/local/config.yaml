@@ -24,8 +24,6 @@ scrape_configs:
 
     # metrics_path defaults to '/metrics'
     # scheme defaults to 'http'.
-    scheme: 'https'
-
     static_configs:
       - targets: ['todo-server']
 

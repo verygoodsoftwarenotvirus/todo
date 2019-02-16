@@ -2,7 +2,6 @@ package integration
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"log"
 	"net/http"
@@ -22,8 +21,8 @@ const (
 	debug = true
 
 	nonexistentID          = 999999999
-	localTestInstanceURL   = "https://localhost"
-	defaultTestInstanceURL = "https://todo-server"
+	localTestInstanceURL   = "http://localhost"
+	defaultTestInstanceURL = "http://todo-server"
 
 	dockerPostgresAddress = "postgres://todo:hunter2@database:5432/todo?sslmode=disable"
 	localPostgresAddress  = "postgres://todo:hunter2@localhost:2345/todo?sslmode=disable"
@@ -62,9 +61,6 @@ func buildHTTPClient() *http.Client {
 		Transport: http.DefaultTransport,
 		Timeout:   5 * time.Second,
 	}
-
-	// WARNING: Never do this ordinarily, this is an application which will only ever run in a local context
-	httpc.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
 	return httpc
 }

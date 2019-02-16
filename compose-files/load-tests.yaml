@@ -19,7 +19,7 @@ services:
       context: ../
       dockerfile: dockerfiles/integration-server.Dockerfile
     ports:
-      - '443:443'
+      - '80:80'
     environment:
       DOCKER: 'true'
       JAEGER_SERVICE_NAME: 'todo-server'
@@ -43,7 +43,7 @@ services:
   # locust-load-tests:
   #   image: grubykarol/locust
   #   environment:
-  #     ATTACKED_HOST: https://todo-server
+  #     ATTACKED_HOST: http://todo-server
   #     LOCUST_FILE: /tests/locustfile.py
   #   ports:
   #     - 8089:8089

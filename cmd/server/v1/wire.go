@@ -21,7 +21,6 @@ import (
 // BuildServer builds a server
 func BuildServer(
 	connectionDetails database.ConnectionDetails,
-	CertPair server.CertPair,
 	CookieName users.CookieName,
 	metricsNamespace metrics.Namespace,
 	CookieSecret []byte,
@@ -32,8 +31,8 @@ func BuildServer(
 		auth.Providers,
 
 		// Databases
-		// sqlite.Providers,
 		postgres.Providers,
+		// sqlite.Providers,
 
 		// Loggers
 		zerolog.Providers,

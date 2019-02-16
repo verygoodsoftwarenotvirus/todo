@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
@@ -48,21 +48,6 @@ func (s *Server) tracingMiddleware(next http.Handler) http.Handler {
 	)
 }
 
-func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
-	f := &middleware.DefaultLogFormatter{Logger: s.logger, NoColor: true}
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		entry := f.NewLogEntry(r)
-		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
-
-		start := time.Now()
-		defer func() {
-			entry.Write(ww.Status(), ww.BytesWritten(), time.Since(start))
-		}()
-
-		next.ServeHTTP(ww, middleware.WithLogEntry(r, entry))
-	})
-}
-
 func (s *Server) setupRouter(metricsHandler metrics.Handler, createClientInitRoute bool) {
 	s.router = chi.NewRouter()
 
@@ -70,22 +55,17 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler, createClientInitRou
 		gcontext.ClearHandler,
 		middleware.RequestID,
 		middleware.Timeout(maxTimeout),
-		s.loggingMiddleware,
 		s.tracingMiddleware,
+		logging.BuildMiddleware(s.logger),
 	)
-
-	if s.DebugMode {
-		s.router.Use(middleware.SetHeader("Access-Control-Allow-Origin", "*"))
-		s.router.Get("/_debug_/stats", s.stats)
-	}
-
 	// all middlewares must be defined before routes on a mux
 
+	s.router.Get("/_meta_/health", func(res http.ResponseWriter, req *http.Request) { res.WriteHeader(http.StatusOK) })
+
 	if metricsHandler != nil {
+		s.logger.Debug("setting metrics handler")
 		s.router.Handle("/metrics", metricsHandler)
 	}
-
-	s.router.Get("/_meta_/health", func(res http.ResponseWriter, req *http.Request) { res.WriteHeader(http.StatusOK) })
 
 	s.router.Route("/users", func(userRouter chi.Router) {
 		userRouter.With(s.usersService.UserLoginInputContextMiddleware).Post("/login", s.Login)
@@ -115,10 +95,13 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler, createClientInitRou
 		if createClientInitRoute {
 			s.logger.Debug("creating OAuth2 client initialization route")
 			oauth2Router.
-				With(s.buildRouteCtx(
-					oauth2clients.MiddlewareCtxKey,
-					new(models.OAuth2ClientCreationInput),
-				)).
+				With(
+					// s.UserCookieAuthenticationMiddleware,
+					s.buildRouteCtx(
+						oauth2clients.MiddlewareCtxKey,
+						new(models.OAuth2ClientCreationInput),
+					),
+				).
 				Post("/init_client", s.oauth2ClientsService.Create)
 		}
 

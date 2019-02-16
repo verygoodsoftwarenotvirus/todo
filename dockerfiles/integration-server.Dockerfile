@@ -12,10 +12,9 @@ RUN go build -o /todo gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
 # final stage
 FROM alpine:latest
 
-COPY dev_files/certs/server /certs
 COPY database database
 COPY --from=build-stage /todo /todo
 
-EXPOSE 443
+EXPOSE 443 80
 
 ENTRYPOINT ["/todo"]

@@ -150,6 +150,10 @@ func TestUsers(test *testing.T) {
 
 			// Fetch user
 			actual, err := todoClient.GetUser(tctx, premade.Username)
+			if err != nil {
+				t.Logf("error encountered trying to fetch user %q: %v\n", premade.Username, err)
+			}
+
 			checkValueAndError(t, actual, err)
 
 			// Assert user equality

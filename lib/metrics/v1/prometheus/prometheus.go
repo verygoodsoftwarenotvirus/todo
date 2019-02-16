@@ -18,14 +18,11 @@ var (
 	)
 )
 
-// Collector is our metric collector that exports to Prometheus
-type Collector struct {
-}
-
 // ProvideInstrumentationHandlerProvider provides an instrumentation handler provider
 func ProvideInstrumentationHandlerProvider(name metrics.Namespace) metrics.InstrumentationHandlerProvider {
+	namespace := string(name)
 	return func(handler http.Handler) metrics.InstrumentationHandler {
-		return prometheus.InstrumentHandler(string(name), handler)
+		return prometheus.InstrumentHandler(namespace, handler)
 	}
 }
 

@@ -5,11 +5,6 @@ KUBERNETES_NAMESPACE     := todo
 SERVER_DOCKER_IMAGE_NAME := todo-server
 SERVER_DOCKER_REPO_NAME  := docker.io/verygoodsoftwarenotvirus/$(SERVER_DOCKER_IMAGE_NAME)
 
-SERVER_PRIV_KEY := dev_files/certs/server/key.pem
-SERVER_CERT_KEY := dev_files/certs/server/cert.pem
-CLIENT_PRIV_KEY := dev_files/certs/client/key.pem
-CLIENT_CERT_KEY := dev_files/certs/client/cert.pem
-
 .PHONY: clean
 clean:
 	rm -f $(COVERAGE_OUT)
@@ -36,31 +31,35 @@ wire:
 .PHONY: rewire
 rewire: wire-clean wire
 
-.PHONY: prerequisites
-prerequisites: vendor $(SERVER_PRIV_KEY) $(SERVER_CERT_KEY) $(CLIENT_PRIV_KEY) $(CLIENT_CERT_KEY)
+## Python-specific prerequisite stuff
+.env:
+	python3 -m venv .env
 
-$(SERVER_PRIV_KEY) $(SERVER_CERT_KEY):
-	mkdir -p dev_files/certs/server
-	openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=localhost" -keyout dev_files/certs/server/key.pem -out dev_files/certs/server/cert.pem
+.PHONY: env
+env:
+	. .env/bin/activate
 
-$(CLIENT_PRIV_KEY) $(CLIENT_CERT_KEY):
-	mkdir -p dev_files/certs/client
-	openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=localhost" -keyout dev_files/certs/client/key.pem -out dev_files/certs/client/cert.pem
+requirements.txt: .env
+	./.env/bin/pip freeze --local > requirements.txt
 
-.PHONY: vendor
+.PHONY: python-prereqs
+python-prereqs: .env
+	./.env/bin/pip install -r requirements.txt
+
+## Go-specific prerequisite stuff
+
 vendor:
 	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` golang:latest /bin/sh -c "go mod vendor"
 	sudo chown `whoami`:`whoami` vendor go.sum
 
 .PHONY: revendor
 revendor:
-	rm -rf vendor go.sum
+	sudo rm -rf vendor go.sum
 	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` golang:latest /bin/sh -c "go mod vendor"
-	sudo chown `whoami`:`whoami` vendor go.sum
 
 .PHONY: unvendor
 unvendor:
-	rm -rf vendor go.{mod,sum}
+	sudo rm -rf vendor go.{mod,sum}
 	GO111MODULE=on go mod init
 
 ## Testing things

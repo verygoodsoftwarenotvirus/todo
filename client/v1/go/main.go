@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
@@ -334,8 +333,6 @@ func (c *V1Client) DialWebsocket(ctx context.Context, fq *FeedQuery) (*websocket
 	}
 
 	dialer := websocket.DefaultDialer
-	dialer.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-
 	logger.Debug("connecting to websocket")
 
 	conn, res, err := dialer.Dial(u.String(), nil)

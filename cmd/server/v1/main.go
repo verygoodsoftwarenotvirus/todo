@@ -9,9 +9,6 @@ import (
 )
 
 const (
-	secure = false
-
-	sqliteConnectionDetails   = "example.db"
 	postgresConnectionDetails = "postgres://todo:hunter2@database:5432/todo?sslmode=disable"
 
 	cookieSecret = "HEREISA32CHARSECRETWHICHISMADEUP"

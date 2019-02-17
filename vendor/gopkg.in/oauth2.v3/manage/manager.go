@@ -1,6 +1,7 @@
 package manage
 
 import (
+	"log"
 	"time"
 
 	"gopkg.in/oauth2.v3"
@@ -134,6 +135,26 @@ func (m *Manager) GetClient(clientID string) (cli oauth2.ClientInfo, err error) 
 	if err != nil {
 		return
 	} else if cli == nil {
+
+		log.Println(`
+
+
+
+
+
+
+
+
+		client was nil
+
+
+
+
+
+
+
+
+		`)
 		err = errors.ErrInvalidClient
 	}
 	return

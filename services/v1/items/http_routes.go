@@ -61,8 +61,9 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(i)
+	if err = s.encoder.EncodeResponse(res, i); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 // Count is our count route
@@ -78,14 +79,18 @@ func (s *Service) Count(res http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
 	itemCount, err := s.db.GetItemCount(ctx, qf)
+	logger = logger.WithValue("item_count", itemCount)
 	if err != nil {
 		logger.Error(err, "error fetching item count from database")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(&models.CountResponse{Count: itemCount})
+	c := &models.CountResponse{Count: itemCount}
+
+	if err = s.encoder.EncodeResponse(res, c); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 // List is our list route
@@ -107,8 +112,9 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(items)
+	if err = s.encoder.EncodeResponse(res, items); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 // Delete returns a handler that deletes an item
@@ -171,14 +177,15 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 	}
 
 	i.Update(input)
-	if err := s.db.UpdateItem(ctx, i); err != nil {
+	if err = s.db.UpdateItem(ctx, i); err != nil {
 		logger.Error(err, "error encountered updating item")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(i)
+	if err = s.encoder.EncodeResponse(res, i); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 // Create is our item creation route
@@ -205,6 +212,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(i)
+	if err = s.encoder.EncodeResponse(res, i); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }

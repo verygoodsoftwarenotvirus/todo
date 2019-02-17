@@ -99,9 +99,15 @@ func scanOAuth2Client(scan database.Scannable) (*models.OAuth2Client, error) {
 	return x, nil
 }
 
-func scanOAuth2Clients(rows *sql.Rows) ([]models.OAuth2Client, error) {
-	list := []models.OAuth2Client{}
-	defer rows.Close()
+func (s *Sqlite) scanOAuth2Clients(rows *sql.Rows) ([]models.OAuth2Client, error) {
+	var list []models.OAuth2Client
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			s.logger.Error(err, "closing rows")
+		}
+	}()
+
 	for rows.Next() {
 		x, err := scanOAuth2Client(rows)
 		if err != nil {
@@ -150,7 +156,7 @@ func (s *Sqlite) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilte
 		return nil, err
 	}
 
-	list, err := scanOAuth2Clients(rows)
+	list, err := s.scanOAuth2Clients(rows)
 	if err != nil {
 		return nil, err
 	}

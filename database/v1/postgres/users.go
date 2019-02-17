@@ -32,22 +32,6 @@ const (
 			users
 		WHERE archived_on is null
 	`
-	getUserQueryByID = `
-		SELECT
-			id,
-			username,
-			hashed_password,
-			password_last_changed_on,
-			two_factor_secret,
-			is_admin,
-			created_on,
-			updated_on,
-			archived_on
-		FROM
-			users
-		WHERE
-			id = $1 AND archived_on is null
-	`
 	getUsersQuery = `
 		SELECT
 			id,
@@ -152,22 +136,28 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 		p.logger.Debug("using default query filter")
 		filter = models.DefaultQueryFilter
 	}
-	list := []models.User{}
+	var list []models.User
 
 	rows, err := p.database.Query(getUsersQuery, filter.Limit, filter.QueryPage())
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+
+	defer func() {
+		if err = rows.Close(); err != nil {
+			p.logger.Error(err, "closing rows")
+		}
+	}()
 
 	for rows.Next() {
-		user, err := p.scanUser(rows)
+		var user *models.User
+		user, err = p.scanUser(rows)
 		if err != nil {
 			return nil, err
 		}
 		list = append(list, *user)
 	}
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 

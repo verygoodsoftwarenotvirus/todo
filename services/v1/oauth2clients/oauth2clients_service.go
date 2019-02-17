@@ -3,6 +3,7 @@ package oauth2clients
 import (
 	"context"
 	"database/sql"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"net/http"
 	"strconv"
 
@@ -40,6 +41,7 @@ type (
 		authenticator     auth.Enticator
 		logger            logging.Logger
 		tracer            opentracing.Tracer
+		encoder           encoding.ResponseEncoder
 		tokenStore        oauth2.TokenStore
 		clientIDFetcher   func(req *http.Request) string
 		oauth2Handler     *oauth2server.Server
@@ -67,6 +69,7 @@ func ProvideOAuth2ClientsService(
 	authenticator auth.Enticator,
 	clientIDFetcher ClientIDFetcher,
 	tracer Tracer,
+	encoder encoding.ResponseEncoder,
 ) *Service {
 
 	manager := manage.NewDefaultManager()
@@ -82,6 +85,7 @@ func ProvideOAuth2ClientsService(
 		logger:            logger,
 		tokenStore:        tokenStore,
 		tracer:            tracer,
+		encoder:           encoder,
 		clientIDFetcher:   clientIDFetcher,
 		oauth2Handler:     server,
 		oauth2ClientStore: clientStore,
@@ -128,7 +132,7 @@ func (s *Service) InitializeOAuth2Clients() (clientCount uint) {
 		for _, client := range clientList.Clients {
 			s.logger.WithValue("client_id", client.ClientID).Debug("loading client")
 
-			if err := s.oauth2ClientStore.Set(client.ClientID, &oauth2models.Client{
+			if err = s.oauth2ClientStore.Set(client.ClientID, &oauth2models.Client{
 				ID:     client.ClientID,
 				Secret: client.ClientSecret,
 				Domain: client.RedirectURI,
@@ -144,11 +148,15 @@ func (s *Service) InitializeOAuth2Clients() (clientCount uint) {
 // HandleAuthorizeRequest is a simple wrapper around the internal server's HandleAuthorizeRequest
 func (s *Service) HandleAuthorizeRequest(res http.ResponseWriter, req *http.Request) error {
 	s.logger.Debug("HandleAuthorizeRequest called")
-	return s.oauth2Handler.HandleAuthorizeRequest(res, req)
+	err := s.oauth2Handler.HandleAuthorizeRequest(res, req)
+	s.logger.Debug("returning from HandleAuthorizeRequest")
+	return err
 }
 
 // HandleTokenRequest is a simple wrapper around the internal server's HandleTokenRequest
 func (s *Service) HandleTokenRequest(res http.ResponseWriter, req *http.Request) error {
 	s.logger.Debug("HandleTokenRequest called")
-	return s.oauth2Handler.HandleTokenRequest(res, req)
+	err := s.oauth2Handler.HandleTokenRequest(res, req)
+	s.logger.Debug("returning from HandleTokenRequest")
+	return err
 }

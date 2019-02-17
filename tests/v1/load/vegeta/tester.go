@@ -24,7 +24,6 @@ import (
 const (
 	debug = true
 
-	nonexistentID          = 999999999
 	localTestInstanceURL   = "http://localhost"
 	defaultTestInstanceURL = "http://todo-server"
 

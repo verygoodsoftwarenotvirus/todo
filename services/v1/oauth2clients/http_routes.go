@@ -55,6 +55,7 @@ func (s *Service) OAuth2ClientCreationInputContextMiddleware(next http.Handler) 
 	x := new(models.OAuth2ClientCreationInput)
 
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		s.logger.Debug("OAuth2ClientCreationInputContextMiddleware called")
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
@@ -95,13 +96,15 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	}
 	input.BelongsTo = user.ID
 
-	if valid, err := s.authenticator.ValidateLogin(
+	valid, err := s.authenticator.ValidateLogin(
 		ctx,
 		user.HashedPassword,
 		input.Password,
 		user.TwoFactorSecret,
 		input.TOTPToken,
-	); !valid {
+	)
+
+	if !valid {
 		logger.Debug("invalid credentials provided")
 		res.WriteHeader(http.StatusUnauthorized)
 		return
@@ -126,14 +129,15 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err := s.oauth2ClientStore.Set(x.ClientID, x); err != nil {
+	if err = s.oauth2ClientStore.Set(x.ClientID, x); err != nil {
 		logger.Error(err, "error setting client ID in the client store")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(x)
+	if err = s.encoder.EncodeResponse(res, x); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 // Read is a route handler for retrieving an OAuth2 client
@@ -147,7 +151,7 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithValue("oauth2_client_id", oauth2ClientID)
 	logger.Debug("oauth2Client read route called")
 
-	i, err := s.database.GetOAuth2Client(ctx, oauth2ClientID)
+	x, err := s.database.GetOAuth2Client(ctx, oauth2ClientID)
 	if err == sql.ErrNoRows {
 		logger.Debug("Read called on nonexistent client")
 		res.WriteHeader(http.StatusNotFound)
@@ -158,8 +162,9 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(i)
+	if err = s.encoder.EncodeResponse(res, x); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 // List is a handler that returns a list of OAuth2 clients
@@ -180,8 +185,9 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(oauth2Clients)
+	if err = s.encoder.EncodeResponse(res, oauth2Clients); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 // Delete is a route handler for deleting an OAuth2 client
@@ -214,11 +220,13 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 	oauth2ClientID := s.clientIDFetcher(req)
 	logger := s.logger.WithValue("oauth2_client_id", oauth2ClientID)
 	logger.Debug("oauth2Client update route called")
-	// input, ok := req.Context().Value(MiddlewareCtxKey).(*models.OAuth2ClientUpdateInput)
-	// if !ok {
-	// 	res.WriteHeader(http.StatusBadRequest)
-	// 	return
-	// }
+
+	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.OAuth2ClientUpdateInput)
+	if !ok {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	_ = input
 
 	x, err := s.database.GetOAuth2Client(ctx, oauth2ClientID)
 	if err != nil {
@@ -229,13 +237,14 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 	// IMPLEMENTME:
 	//x.Update()
 
-	if err := s.database.UpdateOAuth2Client(ctx, x); err != nil {
+	if err = s.database.UpdateOAuth2Client(ctx, x); err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(x)
+	if err = s.encoder.EncodeResponse(res, x); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 // gopkg.in/oauth2.v3/server specific implementations
@@ -263,7 +272,7 @@ func (s *Service) OAuth2ResponseErrorHandler(re *oauth2errors.Response) {
 		"error":       re.Error,
 		"error_code":  re.ErrorCode,
 		"description": re.Description,
-		"URI":         re.URI,
+		"uri":         re.URI,
 		"status_code": re.StatusCode,
 		"header":      re.Header,
 	})
@@ -366,7 +375,7 @@ func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reque
 	if client == nil {
 		clientID := s.fetchOAuth2ClientIDFromRequest(req)
 		if clientID != "" {
-			client, err := s.database.GetOAuth2Client(ctx, clientID)
+			client, err = s.database.GetOAuth2Client(ctx, clientID)
 			if err != nil {
 				logger.Error(err, "error fetching OAuth2 Client")
 				return "", err
@@ -446,8 +455,8 @@ func (s *Service) ClientScopeHandler(clientID, scope string) (authed bool, err e
 	logger = logger.WithValue("oauth2_client_scopes", c.Scopes)
 	logger.Debug("OAuth2 Client retrieved in ClientScopeHandler")
 
-	for _, s := range c.Scopes {
-		if s == scope || s == "*" {
+	for _, cscope := range c.Scopes {
+		if cscope == scope || cscope == "*" {
 			authed = true
 		}
 	}

@@ -44,6 +44,7 @@ func (l *Logger) SetLevel(level logging.Level) {
 	case logging.InfoLevel:
 		lvl = zerolog.InfoLevel
 	case logging.DebugLevel:
+		l.logger = l.logger.With().Caller().Logger()
 		lvl = zerolog.DebugLevel
 	case logging.ErrorLevel:
 		lvl = zerolog.ErrorLevel
@@ -63,12 +64,12 @@ func (l *Logger) Debug(input string) {
 
 // Error satisfies our contract for the logging.Logger Error method.
 func (l *Logger) Error(err error, input string) {
-	l.logger.Error().Err(err).Msg(input)
+	l.logger.Error().Caller().Err(err).Msg(input)
 }
 
 // Fatal satisfies our contract for the logging.Logger Fatal method.
 func (l *Logger) Fatal(err error) {
-	l.logger.Fatal().Err(err).Msg("")
+	l.logger.Fatal().Caller().Err(err).Msg("")
 }
 
 // Print satisfies our contract for the logging.Logger Print method.

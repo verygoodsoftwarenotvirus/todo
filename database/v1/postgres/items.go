@@ -128,21 +128,28 @@ func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter) (*m
 	filter.Page = uint64(math.Max(1, float64(filter.Page)))
 	queryPage := uint(filter.Limit * (filter.Page - 1))
 
-	list := []models.Item{}
+	var list []models.Item
 
 	rows, err := p.database.Query(getItemsQuery, filter.Limit, queryPage)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+
+	defer func() {
+		if err = rows.Close(); err != nil {
+			p.logger.Error(err, "closing rows")
+		}
+	}()
+
 	for rows.Next() {
-		item, err := p.scanItem(rows)
-		if err != nil {
-			return nil, err
+		item, ierr := p.scanItem(rows)
+		if ierr != nil {
+			return nil, ierr
 		}
 		list = append(list, *item)
 	}
-	if err := rows.Err(); err != nil {
+
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 

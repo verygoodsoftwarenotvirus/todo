@@ -23,13 +23,6 @@ const (
 	nonexistentID          = 999999999
 	localTestInstanceURL   = "http://localhost"
 	defaultTestInstanceURL = "http://todo-server"
-
-	dockerPostgresAddress = "postgres://todo:hunter2@database:5432/todo?sslmode=disable"
-	localPostgresAddress  = "postgres://todo:hunter2@localhost:2345/todo?sslmode=disable"
-
-	defaultSecret                   = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
-	defaultTestInstanceClientID     = "HEREISACLIENTIDWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
-	defaultTestInstanceClientSecret = defaultSecret
 )
 
 var (

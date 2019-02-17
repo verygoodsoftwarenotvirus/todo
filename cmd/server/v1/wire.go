@@ -7,6 +7,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/postgres"
 	// "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1/prometheus"
@@ -39,6 +40,7 @@ func BuildServer(
 
 		// Server things
 		server.Providers,
+		encoding.Providers,
 
 		// metrics
 		prometheus.Providers,

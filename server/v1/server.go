@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"errors"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"log"
 	"net/http"
 	"time"
@@ -49,11 +49,12 @@ type (
 		oauth2ClientsService *oauth2clients.Service
 
 		// infra things
-		db     database.Database
-		router *chi.Mux
-		server *http.Server
-		logger logging.Logger
-		tracer opentracing.Tracer
+		db      database.Database
+		router  *chi.Mux
+		server  *http.Server
+		logger  logging.Logger
+		tracer  opentracing.Tracer
+		encoder encoding.ResponseEncoder
 
 		// Auth stuff
 		cookieBuilder *securecookie.SecureCookie
@@ -69,11 +70,6 @@ var (
 		ProvideServerTracer,
 	)
 )
-
-// ProvideMetricsNamespace provides a metrics namespace
-func ProvideMetricsNamespace() metrics.Namespace {
-	return "todo-server"
-}
 
 // ProvideServerTracer provides a UserServiceTracer from an tracer building function
 func ProvideServerTracer() (Tracer, error) {
@@ -96,6 +92,7 @@ func ProvideServer(
 	logger logging.Logger,
 	tracer Tracer,
 	server *http.Server,
+	encoder encoding.ResponseEncoder,
 
 	// metrics things
 	metricsHandler metrics.Handler,
@@ -108,8 +105,8 @@ func ProvideServer(
 		return nil, err
 	}
 
-	span := tracer.StartSpan("startup")
-	defer span.Finish()
+	cookieBuilder := securecookie.New(securecookie.GenerateRandomKey(64), cookieSecret)
+
 	srv := &Server{
 		DebugMode:     debug,
 		authenticator: authenticator,
@@ -118,8 +115,9 @@ func ProvideServer(
 		db:            db,
 		logger:        logger,
 		server:        server,
-		cookieBuilder: securecookie.New(securecookie.GenerateRandomKey(64), cookieSecret),
+		cookieBuilder: cookieBuilder,
 		tracer:        tracer,
+		encoder:       encoder,
 
 		// Services
 		usersService:         usersService,
@@ -170,7 +168,10 @@ func (s *Server) internalServerError(res http.ResponseWriter, req *http.Request,
 	sc := http.StatusInternalServerError
 	s.logger.Error(err, "Encountered internal error")
 	res.WriteHeader(sc)
-	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "Unexpected internal error occurred"})
+
+	if err = s.encoder.EncodeResponse(res, genericResponse{Status: sc, Message: "Unexpected internal error occurred"}); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 func (s *Server) notifyUnauthorized(res http.ResponseWriter, req *http.Request, err error) {
@@ -185,7 +186,10 @@ func (s *Server) notifyUnauthorized(res http.ResponseWriter, req *http.Request, 
 		s.logger.WithError(err).Debug("notifyUnauthorized called")
 	}
 	res.WriteHeader(sc)
-	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "Unauthorized"})
+
+	if err = s.encoder.EncodeResponse(res, genericResponse{Status: sc, Message: "Unauthorized"}); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 func (s *Server) invalidInput(res http.ResponseWriter, req *http.Request, err error) {
@@ -201,7 +205,10 @@ func (s *Server) invalidInput(res http.ResponseWriter, req *http.Request, err er
 		s.logger.WithError(err).Debug("invalidInput called")
 	}
 	res.WriteHeader(sc)
-	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "invalid input"})
+
+	if err = s.encoder.EncodeResponse(res, genericResponse{Status: sc, Message: "invalid input"}); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 func (s *Server) notFound(res http.ResponseWriter, req *http.Request, err error) {
@@ -217,7 +224,10 @@ func (s *Server) notFound(res http.ResponseWriter, req *http.Request, err error)
 		s.logger.WithError(err).Debug("notFound called")
 	}
 	res.WriteHeader(sc)
-	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "not found"})
+
+	if err = s.encoder.EncodeResponse(res, genericResponse{Status: sc, Message: "not found"}); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 func (s *Server) notifyOfInvalidRequestCookie(res http.ResponseWriter, req *http.Request, err error) {
@@ -233,7 +243,10 @@ func (s *Server) notifyOfInvalidRequestCookie(res http.ResponseWriter, req *http
 		s.logger.WithError(err).Debug("notifyOfInvalidRequestCookie called")
 	}
 	res.WriteHeader(sc)
-	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "invalid cookie"})
+
+	if err = s.encoder.EncodeResponse(res, genericResponse{Status: sc, Message: "invalid cookie"}); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 // ProvideHTTPServer provides an HTTP server

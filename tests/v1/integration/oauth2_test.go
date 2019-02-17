@@ -144,7 +144,7 @@ func TestOAuth2Clients(test *testing.T) {
 			tctx := buildSpanContext("list-oauth2-clients")
 
 			// Create oauth2Clients
-			expected := []*models.OAuth2Client{}
+			var expected []*models.OAuth2Client
 			for i := 0; i < 5; i++ {
 				expected = append(expected, buildDummyOAuth2Client(tctx, t, x.Username, y.Password, x.TwoFactorSecret))
 			}
@@ -156,7 +156,7 @@ func TestOAuth2Clients(test *testing.T) {
 
 			// Clean up
 			for _, oauth2Client := range actual.Clients {
-				err := todoClient.DeleteOAuth2Client(tctx, oauth2Client.ID)
+				err = todoClient.DeleteOAuth2Client(tctx, oauth2Client.ID)
 				assert.NoError(t, err)
 			}
 		})

@@ -22,6 +22,7 @@ var (
 func ProvideInstrumentationHandlerProvider(name metrics.Namespace) metrics.InstrumentationHandlerProvider {
 	namespace := string(name)
 	return func(handler http.Handler) metrics.InstrumentationHandler {
+		//return promhttp.InstrumentMetricHandler(prometheus.DefaultRegisterer, handler)
 		return prometheus.InstrumentHandler(namespace, handler)
 	}
 }

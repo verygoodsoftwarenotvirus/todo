@@ -63,7 +63,7 @@ func buildDummyUser(ctx context.Context, t *testing.T) (*models.UserCreationResp
 
 	cookie := loginUser(t, u.Username, y.Password, u.TwoFactorSecret)
 
-	// cookie, err := todoClient.Login(ctx, u.Username, y.Password, code)
+	// cookie, err := todoClient.login(ctx, u.Username, y.Password, code)
 	t.Logf("received cookie: %v", cookie != nil)
 	t.Logf("received error: %v", err != nil)
 
@@ -196,7 +196,7 @@ func TestUsers(test *testing.T) {
 			tctx := buildSpanContext("list-users")
 
 			// Create users
-			expected := []*models.UserCreationResponse{}
+			var expected []*models.UserCreationResponse
 			for i := 0; i < 5; i++ {
 				user, _, c := buildDummyUser(tctx, t)
 				assert.NotNil(t, c)
@@ -210,7 +210,7 @@ func TestUsers(test *testing.T) {
 
 			// Clean up
 			for _, user := range actual.Users {
-				err := todoClient.DeleteUser(tctx, strconv.FormatUint(user.ID, 10))
+				err = todoClient.DeleteUser(tctx, strconv.FormatUint(user.ID, 10))
 				assert.NoError(t, err)
 			}
 		})

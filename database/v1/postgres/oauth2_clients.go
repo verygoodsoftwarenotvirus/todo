@@ -24,14 +24,6 @@ const (
 		FROM
 			oauth_clients
 		WHERE
-			id = $1
-	`
-	getOAuth2ClientByClientIDQuery = `
-		SELECT
-			id, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to
-		FROM
-			oauth_clients
-		WHERE
 			client_id = $1
 	`
 	getOAuth2ClientsQuery = `
@@ -112,7 +104,7 @@ func (p *Postgres) GetOAuth2Client(ctx context.Context, clientID string) (*model
 	logger := p.logger.WithValue("oauth2_client_id", clientID)
 	logger.Debug("Postgres.GetOAuth2Client called")
 
-	prep, err := p.database.Prepare(getOAuth2ClientByClientIDQuery)
+	prep, err := p.database.Prepare(getOAuth2ClientQuery)
 	if err != nil {
 		logger.Error(err, "error preparing OAuth2 retrieval query")
 		return nil, err
@@ -176,11 +168,17 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	list := []models.OAuth2Client{}
+	defer func() {
+		if err = rows.Close(); err != nil {
+			p.logger.Error(err, "closing rows")
+		}
+	}()
+
+	var list []models.OAuth2Client
 	for rows.Next() {
-		x, err := p.scanOAuth2Client(rows)
+		var x *models.OAuth2Client
+		x, err = p.scanOAuth2Client(rows)
 		if err != nil {
 			logger.Error(err, "error encountered scanning OAuth2Client")
 			return nil, err
@@ -188,7 +186,7 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 		list = append(list, *x)
 	}
 
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		logger.Error(err, "error encountered fetching list of OAuth2Clients")
 		return nil, err
 	}

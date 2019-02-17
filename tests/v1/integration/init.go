@@ -2,6 +2,7 @@ package integration
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 
 	"github.com/icrowley/fake"
 	"github.com/moul/http2curl"
-	"github.com/pkg/errors"
 	"github.com/pquerna/otp/totp"
 )
 
@@ -72,7 +72,13 @@ func createObligatoryUser() (*models.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+
+	defer func() {
+		if err = res.Body.Close(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
 	err = json.NewDecoder(res.Body).Decode(&r)
 
 	u := &models.User{
@@ -82,6 +88,39 @@ func createObligatoryUser() (*models.User, error) {
 	}
 
 	return u, err
+}
+
+func getLoginCookie(u models.User) (*http.Cookie, error) {
+	uri := buildURL("users", "login")
+
+	code, err := totp.GenerateCode(strings.ToUpper(u.TwoFactorSecret), time.Now())
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, uri, strings.NewReader(fmt.Sprintf(`
+		{
+
+			"username": %q,
+			"password": %q,
+			"totp_token": %q
+		}
+		`, u.Username, u.HashedPassword, code)))
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := buildHTTPClient().Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	cookies := res.Cookies()
+	if len(cookies) > 0 {
+		return cookies[0], nil
+	}
+
+	return nil, errors.New("no cookie found :(")
 }
 
 func createObligatoryClient(u models.User) (clientID, clientSecret string, err error) {
@@ -107,7 +146,18 @@ func createObligatoryClient(u models.User) (clientID, clientSecret string, err e
 		return "", "", err
 	}
 
-	if command, err := http2curl.GetCurlCommand(req); err == nil {
+	cookie, err := getLoginCookie(u)
+	if err != nil || cookie == nil {
+		log.Fatalf(`cookie problems!
+
+		cookie == nil: %v
+		          err: %v
+	`, cookie == nil, err)
+	}
+	req.AddCookie(cookie)
+
+	command, err := http2curl.GetCurlCommand(req)
+	if err == nil {
 		log.Println(command.String())
 	}
 
@@ -118,11 +168,17 @@ func createObligatoryClient(u models.User) (clientID, clientSecret string, err e
 	if err != nil {
 		return "", "", err
 	} else if res.StatusCode >= http.StatusCreated {
-		return "", "", errors.New("bad status")
+		return "", "", fmt.Errorf("bad status: %d", res.StatusCode)
 	}
-	defer res.Body.Close()
 
-	if bdump, err := httputil.DumpResponse(res, true); err == nil && req.Method != http.MethodGet {
+	defer func() {
+		if err = res.Body.Close(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	bdump, err := httputil.DumpResponse(res, true)
+	if err == nil && req.Method != http.MethodGet {
 		log.Println(string(bdump))
 	}
 

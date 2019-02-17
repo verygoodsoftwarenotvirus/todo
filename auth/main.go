@@ -11,10 +11,6 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
-const (
-	charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-)
-
 var (
 	// ErrInvalidTwoFactorCode indicates that a provided two factor code is invalid
 	ErrInvalidTwoFactorCode = errors.New("invalid two factor code")

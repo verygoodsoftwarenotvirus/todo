@@ -9,6 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/postgres"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1/prometheus"
@@ -43,19 +44,20 @@ func BuildServer(connectionDetails database.ConnectionDetails, CookieName users.
 	if err != nil {
 		return nil, err
 	}
-	service := items.ProvideItemsService(loggingLogger, databaseDatabase, userIDFetcher, itemIDFetcher, serviceTracer)
+	responseEncoder := encoding.ProvideJSONResponseEncoder()
+	service := items.ProvideItemsService(loggingLogger, databaseDatabase, userIDFetcher, itemIDFetcher, serviceTracer, responseEncoder)
 	usernameFetcher := server.ProvideUsernameFetcher()
 	usersTracer, err := users.ProvideUserServiceTracer()
 	if err != nil {
 		return nil, err
 	}
-	usersService := users.ProvideUsersService(CookieName, loggingLogger, databaseDatabase, enticator, usernameFetcher, usersTracer)
+	usersService := users.ProvideUsersService(CookieName, loggingLogger, databaseDatabase, enticator, usernameFetcher, usersTracer, responseEncoder)
 	clientIDFetcher := server.ProvideClientIDFetcher()
 	oauth2clientsTracer, err := oauth2clients.ProvideOAuth2ClientsServiceTracer()
 	if err != nil {
 		return nil, err
 	}
-	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(loggingLogger, databaseDatabase, enticator, clientIDFetcher, oauth2clientsTracer)
+	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(loggingLogger, databaseDatabase, enticator, clientIDFetcher, oauth2clientsTracer, responseEncoder)
 	serverTracer, err := server.ProvideServerTracer()
 	if err != nil {
 		return nil, err
@@ -63,7 +65,7 @@ func BuildServer(connectionDetails database.ConnectionDetails, CookieName users.
 	httpServer := server.ProvideHTTPServer()
 	handler := prometheus.ProvideMetricsHandler()
 	instrumentationHandlerProvider := prometheus.ProvideInstrumentationHandlerProvider(metricsNamespace)
-	serverServer, err := server.ProvideServer(Debug, CookieSecret, enticator, service, usersService, oauth2clientsService, databaseDatabase, loggingLogger, serverTracer, httpServer, handler, instrumentationHandlerProvider)
+	serverServer, err := server.ProvideServer(Debug, CookieSecret, enticator, service, usersService, oauth2clientsService, databaseDatabase, loggingLogger, serverTracer, httpServer, responseEncoder, handler, instrumentationHandlerProvider)
 	if err != nil {
 		return nil, err
 	}

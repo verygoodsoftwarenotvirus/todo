@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
@@ -48,6 +48,23 @@ func (s *Server) tracingMiddleware(next http.Handler) http.Handler {
 	)
 }
 
+func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+
+		start := time.Now()
+		defer func() {
+			s.logger.WithValues(map[string]interface{}{
+				"status":        ww.Status(),
+				"bytes_written": ww.BytesWritten(),
+				"elapsed":       time.Since(start),
+			})
+		}()
+
+		next.ServeHTTP(ww, r)
+	})
+}
+
 func (s *Server) setupRouter(metricsHandler metrics.Handler, createClientInitRoute bool) {
 	s.router = chi.NewRouter()
 
@@ -56,7 +73,8 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler, createClientInitRou
 		middleware.RequestID,
 		middleware.Timeout(maxTimeout),
 		s.tracingMiddleware,
-		logging.BuildMiddleware(s.logger),
+		s.loggingMiddleware,
+		//logging.BuildMiddleware(s.logger),
 	)
 	// all middlewares must be defined before routes on a mux
 
@@ -68,16 +86,16 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler, createClientInitRou
 	}
 
 	s.router.Route("/users", func(userRouter chi.Router) {
-		userRouter.With(s.usersService.UserLoginInputContextMiddleware).Post("/login", s.Login)
-		userRouter.With(s.UserCookieAuthenticationMiddleware).Post("/logout", s.Logout)
+		userRouter.With(s.usersService.UserLoginInputContextMiddleware).Post("/login", s.login)
+		userRouter.With(s.userCookieAuthenticationMiddleware).Post("/logout", s.logout)
 
 		userRouter.With(
-			s.UserCookieAuthenticationMiddleware,
+			s.userCookieAuthenticationMiddleware,
 			s.usersService.TOTPSecretRefreshInputContextMiddleware,
 		).Post("/totp_secret/new", s.usersService.NewTOTPSecret)
 
 		userRouter.With(
-			s.UserCookieAuthenticationMiddleware,
+			s.userCookieAuthenticationMiddleware,
 			s.usersService.PasswordUpdateInputContextMiddleware,
 		).Post("/password/new", s.usersService.UpdatePassword)
 
@@ -96,11 +114,8 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler, createClientInitRou
 			s.logger.Debug("creating OAuth2 client initialization route")
 			oauth2Router.
 				With(
-					// s.UserCookieAuthenticationMiddleware,
-					s.buildRouteCtx(
-						oauth2clients.MiddlewareCtxKey,
-						new(models.OAuth2ClientCreationInput),
-					),
+					s.userCookieAuthenticationMiddleware,
+					s.oauth2ClientsService.OAuth2ClientCreationInputContextMiddleware,
 				).
 				Post("/init_client", s.oauth2ClientsService.Create)
 		}

@@ -64,13 +64,13 @@ func (fq *FeedQuery) Values() url.Values {
 //                                                    //
 ////////////////////////////////////////////////////////
 
-func mapToQueryValues(in map[string]string) url.Values {
-	out := url.Values{}
-	for k, v := range in {
-		out.Set(k, v)
-	}
-	return out
-}
+//func mapToQueryValues(in map[string]string) url.Values {
+//	out := url.Values{}
+//	for k, v := range in {
+//		out.Set(k, v)
+//	}
+//	return out
+//}
 
 func argIsNotPointerOrNil(i interface{}) error {
 	if nn, err := argIsNotNil(i); nn || err != nil {

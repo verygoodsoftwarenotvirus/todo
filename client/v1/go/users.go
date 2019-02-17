@@ -83,9 +83,9 @@ func (c *V1Client) DeleteUser(ctx context.Context, username string) error {
 // Login logs a user in
 func (c *V1Client) Login(ctx context.Context, username, password, TOTPToken string) (*http.Cookie, error) {
 	logger := c.logger.WithValue("username", username)
-	logger.Debug("Login called")
+	logger.Debug("login called")
 
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "Login")
+	span := tracing.FetchSpanFromContext(ctx, c.tracer, "login")
 	span.SetTag("username", username)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)

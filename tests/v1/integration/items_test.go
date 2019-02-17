@@ -67,7 +67,7 @@ func TestItems(test *testing.T) {
 		T.Run("it should be able to be counted", func(t *testing.T) {
 			tctx := buildSpanContext("counting-items")
 
-			premade := []*models.Item{}
+			var premade []*models.Item
 			for i := 0; i < 5; i++ {
 				x := buildDummyItem(t)
 				require.NotNil(t, x)
@@ -89,7 +89,7 @@ func TestItems(test *testing.T) {
 			tctx := buildSpanContext("listing-items")
 
 			// Create items
-			expected := []*models.Item{}
+			var expected []*models.Item
 			for i := 0; i < 5; i++ {
 				expected = append(expected, buildDummyItem(t))
 			}
@@ -101,7 +101,7 @@ func TestItems(test *testing.T) {
 
 			// Clean up
 			for _, item := range actual.Items {
-				err := todoClient.DeleteItem(tctx, item.ID)
+				err = todoClient.DeleteItem(tctx, item.ID)
 				assert.NoError(t, err)
 			}
 		})

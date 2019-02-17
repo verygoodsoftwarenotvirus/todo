@@ -14,19 +14,10 @@ import (
 )
 
 const (
-	expectedUsername = "username"
-	expectedPassword = "password"
-
-	sqliteSchemaDir         = "database/v1/sqlite/schema"
 	sqliteConnectionDetails = "example.db"
 
-	postgresSchemaDir         = "database/v1/postgres/schema"
+	//postgresSchemaDir         = "database/v1/postgres/schema"
 	postgresConnectionDetails = "postgres://todo:hunter2@database:5432/todo?sslmode=disable"
-
-	localTestInstanceURL = "http://localhost"
-	defaultSecret        = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
-	defaultClientID      = "HEREISACLIENTIDWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
-	defaultClientSecret  = defaultSecret
 )
 
 func main() {
@@ -58,10 +49,12 @@ func main() {
 		log.Fatalf("error opening database connection: %v\n", err)
 	}
 
-	bootstrap.PreloadDatabase(
+	if err = bootstrap.PreloadDatabase(
 		db,
 		logger,
 		tracer,
-	)
+	); err != nil {
+		log.Fatal("error preloading the database: ", err)
+	}
 
 }

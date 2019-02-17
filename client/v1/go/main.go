@@ -22,13 +22,6 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 )
 
-type contextKey int
-
-const (
-	keyTracer      contextKey = iota
-	defaultTimeout            = 5 * time.Second
-)
-
 var (
 	// ErrNotFound is a handy error to return when we receive a 404 response
 	ErrNotFound = errors.New("404: not found")
@@ -143,21 +136,17 @@ func (c *V1Client) executeRequest(ctx context.Context, req *http.Request) (*http
 
 	// attach ClientTrace to the Context, and Context to request
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "executeRequest")
-	// trace := NewClientTrace(span)
-	// ctx = httptrace.WithClientTrace(ctx, trace)
-	// req = req.WithContext(ctx)
-
-	// wrap the request in nethttp.TraceRequest
-	// req, _ = nethttp.TraceRequest(c.tracer, req, nethttp.ClientTrace(true))
-
-	c.tracer.Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	if err := c.tracer.Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
+		return nil, errors.Wrap(err, "injecting span into headers")
+	}
 
 	res, err := c.authedClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "executing request")
 	}
 
-	if bdump, err := httputil.DumpResponse(res, true); err == nil && req.Method != http.MethodGet {
+	bdump, err := httputil.DumpResponse(res, true)
+	if err == nil && req.Method != http.MethodGet {
 		logger = logger.WithValue("response_body", string(bdump))
 	}
 

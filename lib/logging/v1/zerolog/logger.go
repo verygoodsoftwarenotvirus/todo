@@ -37,6 +37,21 @@ func ProvideLogger(logger zerolog.Logger) logging.Logger {
 	return l
 }
 
+// SetLevel sets the log level for our logger
+func (l *Logger) SetLevel(level logging.Level) {
+	var lvl zerolog.Level
+	switch level {
+	case logging.InfoLevel:
+		lvl = zerolog.InfoLevel
+	case logging.DebugLevel:
+		l.logger = l.logger.With().Caller().Logger()
+		lvl = zerolog.DebugLevel
+	case logging.ErrorLevel:
+		lvl = zerolog.ErrorLevel
+	}
+	l.logger = l.logger.Level(lvl)
+}
+
 // Info satisfies our contract for the logging.Logger Info method.
 func (l *Logger) Info(input string) {
 	l.logger.Info().Msg(input)
@@ -49,12 +64,12 @@ func (l *Logger) Debug(input string) {
 
 // Error satisfies our contract for the logging.Logger Error method.
 func (l *Logger) Error(err error, input string) {
-	l.logger.Error().Err(err).Msg(input)
+	l.logger.Error().Caller().Err(err).Msg(input)
 }
 
 // Fatal satisfies our contract for the logging.Logger Fatal method.
 func (l *Logger) Fatal(err error) {
-	l.logger.Fatal().Err(err).Msg("")
+	l.logger.Fatal().Caller().Err(err).Msg("")
 }
 
 // Print satisfies our contract for the logging.Logger Print method.
@@ -90,7 +105,7 @@ func (l *Logger) WithRequest(req *http.Request) logging.Logger {
 	l2 := l.logger.With().
 		Str("path", req.URL.Path).
 		Str("method", req.Method).
-		Str("query	", req.URL.RawQuery).
+		Str("query", req.URL.RawQuery).
 		Logger()
 	return &Logger{logger: l2}
 }

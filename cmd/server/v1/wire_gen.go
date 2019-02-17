@@ -8,18 +8,20 @@ package main
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/postgres"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1/prometheus"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
-	"gopkg.in/oauth2.v3/manage"
 )
 
 // Injectors from wire.go:
 
-func BuildServer(connectionDetails database.ConnectionDetails, CertPair server.CertPair, CookieName users.CookieName, CookieSecret []byte, Debug bool) (*server.Server, error) {
+func BuildServer(connectionDetails database.ConnectionDetails, CookieName users.CookieName, metricsNamespace metrics.Namespace, CookieSecret []byte, Debug bool) (*server.Server, error) {
 	bcryptHashCost := auth.ProvideBcryptHashCost()
 	logger := zerolog.ProvideZerologger()
 	loggingLogger := zerolog.ProvideLogger(logger)
@@ -28,11 +30,11 @@ func BuildServer(connectionDetails database.ConnectionDetails, CertPair server.C
 		return nil, err
 	}
 	enticator := auth.ProvideBcrypt(bcryptHashCost, loggingLogger, tracer)
-	sqliteTracer, err := sqlite.ProvideSqliteTracer()
+	postgresTracer, err := postgres.ProvidePostgresTracer()
 	if err != nil {
 		return nil, err
 	}
-	databaseDatabase, err := sqlite.ProvideSqlite(Debug, loggingLogger, sqliteTracer, connectionDetails)
+	databaseDatabase, err := postgres.ProvidePostgres(Debug, loggingLogger, postgresTracer, connectionDetails)
 	if err != nil {
 		return nil, err
 	}
@@ -42,32 +44,30 @@ func BuildServer(connectionDetails database.ConnectionDetails, CertPair server.C
 	if err != nil {
 		return nil, err
 	}
-	service := items.ProvideItemsService(loggingLogger, databaseDatabase, userIDFetcher, itemIDFetcher, serviceTracer)
+	responseEncoder := encoding.ProvideJSONResponseEncoder()
+	service := items.ProvideItemsService(loggingLogger, databaseDatabase, userIDFetcher, itemIDFetcher, serviceTracer, responseEncoder)
 	usernameFetcher := server.ProvideUsernameFetcher()
 	usersTracer, err := users.ProvideUserServiceTracer()
 	if err != nil {
 		return nil, err
 	}
-	usersService := users.ProvideUsersService(CookieName, loggingLogger, databaseDatabase, enticator, usernameFetcher, usersTracer)
-	clientStore := server.ProvideClientStore()
-	manager := manage.NewDefaultManager()
-	tokenStore, err := server.ProvideTokenStore(manager)
-	if err != nil {
-		return nil, err
-	}
+	usersService := users.ProvideUsersService(CookieName, loggingLogger, databaseDatabase, enticator, usernameFetcher, usersTracer, responseEncoder)
+	clientIDFetcher := server.ProvideClientIDFetcher()
 	oauth2clientsTracer, err := oauth2clients.ProvideOAuth2ClientsServiceTracer()
 	if err != nil {
 		return nil, err
 	}
-	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(databaseDatabase, enticator, loggingLogger, clientStore, tokenStore, oauth2clientsTracer)
+	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(loggingLogger, databaseDatabase, enticator, clientIDFetcher, oauth2clientsTracer, responseEncoder)
 	serverTracer, err := server.ProvideServerTracer()
 	if err != nil {
 		return nil, err
 	}
-	serverServer := server.ProvideOAuth2Server(manager, tokenStore, clientStore)
-	server2, err := server.ProvideServer(Debug, CertPair, CookieSecret, enticator, service, usersService, oauth2clientsService, databaseDatabase, loggingLogger, serverTracer, serverServer, tokenStore, clientStore)
+	httpServer := server.ProvideHTTPServer()
+	handler := prometheus.ProvideMetricsHandler()
+	instrumentationHandlerProvider := prometheus.ProvideInstrumentationHandlerProvider(metricsNamespace)
+	serverServer, err := server.ProvideServer(Debug, CookieSecret, enticator, service, usersService, oauth2clientsService, databaseDatabase, loggingLogger, serverTracer, httpServer, responseEncoder, handler, instrumentationHandlerProvider)
 	if err != nil {
 		return nil, err
 	}
-	return server2, nil
+	return serverServer, nil
 }

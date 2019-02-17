@@ -15,10 +15,9 @@ import (
 )
 
 const (
-	examplePassword           = "Pa$$w0rdPa$$w0rdPa$$w0rdPa$$w0rd"
-	weakHashedExamplePassword = "$2a$10$iXvFoFHDudDpzhIhPbJIAukZ7QxkSVx6WmUfd01MG8zO5C0E8JCGC"
-	hashedExamplePassword     = "$2a$13$hxMAo/ZRDmyaWcwvIem/vuUJkmeNytg3rwHUj6bRZR1d/cQHXjFvW"
-	exampleTwoFactorSecret    = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
+	examplePassword        = "Pa$$w0rdPa$$w0rdPa$$w0rdPa$$w0rd"
+	hashedExamplePassword  = "$2a$13$hxMAo/ZRDmyaWcwvIem/vuUJkmeNytg3rwHUj6bRZR1d/cQHXjFvW"
+	exampleTwoFactorSecret = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
 )
 
 var (

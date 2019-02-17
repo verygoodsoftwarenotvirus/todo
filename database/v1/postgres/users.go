@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
@@ -33,22 +32,6 @@ const (
 			users
 		WHERE archived_on is null
 	`
-	getUserQueryByID = `
-		SELECT
-			id,
-			username,
-			hashed_password,
-			password_last_changed_on,
-			two_factor_secret,
-			is_admin,
-			created_on,
-			updated_on,
-			archived_on
-		FROM
-			users
-		WHERE
-			id = $1 AND archived_on is null
-	`
 	getUsersQuery = `
 		SELECT
 			id,
@@ -64,8 +47,8 @@ const (
 			users
 		WHERE
 		archived_on is null
-		LIMIT $
-		OFFSET $
+		LIMIT $1
+		OFFSET $2
 	`
 	createUserQuery = `
 		INSERT INTO users
@@ -83,28 +66,24 @@ const (
 		UPDATE users SET
 			username = $1,
 			password = $2,
-			updated_on = to_timestamp(extract(epoch FROM NOW()))
+			updated_on = extract(epoch FROM NOW())
 		WHERE id = $3
 		RETURNING
 			updated_on
 	`
 	archiveUserQuery = `
 		UPDATE users SET
-			updated_on = to_timestamp(extract(epoch FROM NOW())),
-			archived_on = to_timestamp(extract(epoch FROM NOW()))
+			updated_on = extract(epoch FROM NOW()),
+			archived_on = extract(epoch FROM NOW())
 		WHERE username = $1
 		RETURNING
 			archived_on
 	`
 )
 
-func scanUser(scan database.Scannable) (*models.User, error) {
+func (p Postgres) scanUser(scan database.Scannable) (*models.User, error) {
 	var (
 		x = &models.User{}
-
-		co time.Time
-		uo *time.Time
-		ao *time.Time
 	)
 
 	err := scan.Scan(
@@ -114,20 +93,12 @@ func scanUser(scan database.Scannable) (*models.User, error) {
 		&x.PasswordLastChangedOn,
 		&x.TwoFactorSecret,
 		&x.IsAdmin,
-		&co,
-		&uo,
-		&ao,
+		&x.CreatedOn,
+		&x.UpdatedOn,
+		&x.ArchivedOn,
 	)
 	if err != nil {
 		return nil, err
-	}
-
-	x.CreatedOn = timeToUInt64(co)
-	if uo != nil {
-		x.UpdatedOn = timeToPUInt64(uo)
-	}
-	if ao != nil {
-		x.ArchivedOn = timeToPUInt64(ao)
 	}
 
 	return x, nil
@@ -139,7 +110,8 @@ func (p *Postgres) GetUser(ctx context.Context, username string) (*models.User, 
 	defer span.Finish()
 
 	p.logger.WithValue("username", username).Debug("GetUser called")
-	u, err := scanUser(p.database.QueryRow(getUserQuery, username))
+	row := p.database.QueryRow(getUserQuery, username)
+	u, err := p.scanUser(row)
 	return u, err
 }
 
@@ -164,22 +136,28 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 		p.logger.Debug("using default query filter")
 		filter = models.DefaultQueryFilter
 	}
-	list := []models.User{}
+	var list []models.User
 
 	rows, err := p.database.Query(getUsersQuery, filter.Limit, filter.QueryPage())
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+
+	defer func() {
+		if err = rows.Close(); err != nil {
+			p.logger.Error(err, "closing rows")
+		}
+	}()
 
 	for rows.Next() {
-		user, err := scanUser(rows)
+		var user *models.User
+		user, err = p.scanUser(rows)
 		if err != nil {
 			return nil, err
 		}
 		list = append(list, *user)
 	}
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
@@ -218,14 +196,13 @@ func (p *Postgres) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 	}
 
 	// create the user
-	var t time.Time
-	if err := p.database.
+	err := p.database.
 		QueryRow(createUserQuery, input.Username, input.Password, input.TwoFactorSecret, input.IsAdmin).
-		Scan(&x.ID, &t); err != nil {
+		Scan(&x.ID, &x.CreatedOn)
+	if err != nil {
 		logger.Error(err, "error executing user creation query")
 		return nil, err
 	}
-	x.CreatedOn = timeToUInt64(t)
 
 	p.logger.Debug("returning from CreateUser")
 	return x, nil
@@ -243,13 +220,11 @@ func (p *Postgres) UpdateUser(ctx context.Context, input *models.User) error {
 	}).Debug("UpdateUser called")
 
 	// update the user
-	var t *time.Time
-	if err := p.database.QueryRow(updateUserQuery, input.Username, input.HashedPassword, input.ID).Scan(&t); err != nil {
-		return err
-	}
-	input.UpdatedOn = timeToPUInt64(t)
+	err := p.database.
+		QueryRow(updateUserQuery, input.Username, input.HashedPassword, input.ID).
+		Scan(&input.UpdatedOn)
 
-	return nil
+	return err
 }
 
 // DeleteUser deletes a user by their username

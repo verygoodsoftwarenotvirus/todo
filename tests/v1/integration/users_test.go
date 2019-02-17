@@ -5,13 +5,12 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"net/http"
-	"reflect"
 	"strconv"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/bxcodec/faker"
+	"github.com/icrowley/fake"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,13 +36,10 @@ func randString() (string, error) {
 func buildDummyUserInput(t *testing.T) *models.UserInput {
 	t.Helper()
 
-	u, _ := (&faker.Internet{}).UserName(reflect.ValueOf(nil))
-	p, _ := (&faker.Internet{}).Password(reflect.ValueOf(nil))
 	tfs, _ := randString()
-
 	x := &models.UserInput{
-		Username:        u.(string),
-		Password:        p.(string),
+		Username:        fake.UserName(),
+		Password:        fake.Password(8, 64, true, true, true),
 		TwoFactorSecret: tfs,
 	}
 
@@ -67,7 +63,7 @@ func buildDummyUser(ctx context.Context, t *testing.T) (*models.UserCreationResp
 
 	cookie := loginUser(t, u.Username, y.Password, u.TwoFactorSecret)
 
-	// cookie, err := todoClient.Login(ctx, u.Username, y.Password, code)
+	// cookie, err := todoClient.login(ctx, u.Username, y.Password, code)
 	t.Logf("received cookie: %v", cookie != nil)
 	t.Logf("received error: %v", err != nil)
 
@@ -154,6 +150,10 @@ func TestUsers(test *testing.T) {
 
 			// Fetch user
 			actual, err := todoClient.GetUser(tctx, premade.Username)
+			if err != nil {
+				t.Logf("error encountered trying to fetch user %q: %v\n", premade.Username, err)
+			}
+
 			checkValueAndError(t, actual, err)
 
 			// Assert user equality
@@ -196,7 +196,7 @@ func TestUsers(test *testing.T) {
 			tctx := buildSpanContext("list-users")
 
 			// Create users
-			expected := []*models.UserCreationResponse{}
+			var expected []*models.UserCreationResponse
 			for i := 0; i < 5; i++ {
 				user, _, c := buildDummyUser(tctx, t)
 				assert.NotNil(t, c)
@@ -210,7 +210,7 @@ func TestUsers(test *testing.T) {
 
 			// Clean up
 			for _, user := range actual.Users {
-				err := todoClient.DeleteUser(tctx, strconv.FormatUint(user.ID, 10))
+				err = todoClient.DeleteUser(tctx, strconv.FormatUint(user.ID, 10))
 				assert.NoError(t, err)
 			}
 		})

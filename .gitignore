@@ -10,10 +10,11 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-# Goland is pretty good
+# pretty good IDEs
 .idea
+.vscode
 
-# Vim is better
+# Vim
 *.swp
 
 # Sqlite databases
@@ -22,5 +23,5 @@
 # OSX
 .DS_Store
 
-dev_files
-*.pem
+# Python
+.env

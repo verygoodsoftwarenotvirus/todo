@@ -37,13 +37,6 @@ func buildDefaultQueryFilter() *QueryFilter {
 	}
 }
 
-func fetchQueryParam(params url.Values, key string) string {
-	if val, ok := params[key]; ok && len(val) >= 1 {
-		return val[0]
-	}
-	return ""
-}
-
 // FromParams overrides the core QueryFilter values with values retrieved from url.Params
 func (qf *QueryFilter) FromParams(params url.Values) {
 	if i, err := strconv.ParseUint(params.Get("page"), 10, 64); err == nil {

@@ -1,6 +1,7 @@
 package users
 
 import (
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
@@ -32,6 +33,7 @@ type (
 		authenticator   auth.Enticator
 		logger          logging.Logger
 		tracer          Tracer
+		encoder         encoding.ResponseEncoder
 		usernameFetcher func(*http.Request) string
 	}
 
@@ -63,6 +65,7 @@ func ProvideUsersService(
 	authenticator auth.Enticator,
 	usernameFetcher UsernameFetcher,
 	tracer Tracer,
+	encoder encoding.ResponseEncoder,
 ) *Service {
 	if usernameFetcher == nil {
 		panic("usernameFetcher must be provided")
@@ -74,6 +77,7 @@ func ProvideUsersService(
 		authenticator:   authenticator,
 		usernameFetcher: usernameFetcher,
 		tracer:          tracer,
+		encoder:         encoder,
 	}
 	return us
 }

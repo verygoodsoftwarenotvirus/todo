@@ -16,16 +16,8 @@ import (
 )
 
 const (
-	expectedUsername = "username"
-	expectedPassword = "password"
-
-	sqliteSchemaDir         = "database/v1/sqlite/schema"
-	sqliteConnectionDetails = "example.db"
-
-	postgresSchemaDir         = "database/v1/postgres/schema"
-	postgresConnectionDetails = "postgres://todo:hunter2@database:5432/todo?sslmode=disable"
-
-	localTestInstanceURL = "https://localhost"
+	expectedUsername     = "username"
+	localTestInstanceURL = "http://localhost"
 	defaultSecret        = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
 	defaultClientID      = "HEREISACLIENTIDWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
 	defaultClientSecret  = defaultSecret
@@ -85,12 +77,12 @@ func PreloadDatabase(
 	}
 
 	oac.ClientID, oac.ClientSecret, oac.RedirectURI = defaultClientID, defaultClientSecret, localTestInstanceURL
-	if err := db.UpdateOAuth2Client(ctx, oac); err != nil {
+	if err = db.UpdateOAuth2Client(ctx, oac); err != nil {
 		return err
 	}
 
 	for i := 1; i < 6; i++ {
-		if _, err := db.CreateItem(ctx, &models.ItemInput{
+		if _, err = db.CreateItem(ctx, &models.ItemInput{
 			Name:      fmt.Sprintf("example item #%d", i),
 			Details:   fmt.Sprintf("example details #%d", i),
 			BelongsTo: u.ID,

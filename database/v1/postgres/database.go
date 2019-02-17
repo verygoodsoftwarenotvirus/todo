@@ -44,34 +44,6 @@ func ProvidePostgresTracer() (Tracer, error) {
 	return tracing.ProvideTracer("postgres-database")
 }
 
-// Begin utility funcs
-
-type unixer interface {
-	Unix() int64
-}
-
-func uip(u uint64) *uint64 {
-	return &u
-}
-
-func timeToUInt64(t unixer) uint64 {
-	_, ok := t.(*time.Time)
-	if t == nil || !ok {
-		return 0
-	}
-	return uint64(t.Unix())
-}
-
-func timeToPUInt64(t unixer) *uint64 {
-	_, ok := t.(*time.Time)
-	if t == nil || !ok {
-		return nil
-	}
-	return uip(uint64(t.Unix()))
-}
-
-// End utility funcs
-
 // ProvidePostgres provides a postgres database controller
 func ProvidePostgres(
 	debug bool,

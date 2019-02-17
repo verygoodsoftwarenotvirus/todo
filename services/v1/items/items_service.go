@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -30,6 +31,7 @@ type (
 		tracer        opentracing.Tracer
 		userIDFetcher UserIDFetcher
 		itemIDFetcher ItemIDFetcher
+		encoder       encoding.ResponseEncoder
 	}
 )
 
@@ -53,11 +55,19 @@ type UserIDFetcher func(*http.Request) uint64
 type ItemIDFetcher func(*http.Request) uint64
 
 // ProvideItemsService builds a new ItemsService
-func ProvideItemsService(logger logging.Logger, db database.Database, userIDFetcher UserIDFetcher, itemIDFetcher ItemIDFetcher, tracer ServiceTracer) *Service {
+func ProvideItemsService(
+	logger logging.Logger,
+	db database.Database,
+	userIDFetcher UserIDFetcher,
+	itemIDFetcher ItemIDFetcher,
+	tracer ServiceTracer,
+	encoder encoding.ResponseEncoder,
+) *Service {
 	svc := &Service{
 		logger:        logger,
 		db:            db,
 		tracer:        tracer,
+		encoder:       encoder,
 		userIDFetcher: userIDFetcher,
 		itemIDFetcher: itemIDFetcher,
 		upgrader:      websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024},

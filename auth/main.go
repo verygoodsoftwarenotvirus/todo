@@ -11,10 +11,6 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
-const (
-	charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-)
-
 var (
 	// ErrInvalidTwoFactorCode indicates that a provided two factor code is invalid
 	ErrInvalidTwoFactorCode = errors.New("invalid two factor code")
@@ -52,6 +48,7 @@ func ProvideTracer() (Tracer, error) {
 // Enticator is a poorly named Authenticator interface
 type Enticator interface {
 	PasswordHasher
+
 	ValidateLogin(ctx context.Context, hashedPassword, providedPassword, twoFactorSecret, twoFactorCode string) (bool, error)
 }
 

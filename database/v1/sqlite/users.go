@@ -113,9 +113,15 @@ func scanUser(scan database.Scannable) (*models.User, error) {
 	return x, nil
 }
 
-func scanUsers(rows *sql.Rows) ([]models.User, error) {
-	list := []models.User{}
-	defer rows.Close()
+func (s *Sqlite) scanUsers(rows *sql.Rows) ([]models.User, error) {
+	var list []models.User
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			s.logger.Error(err, "closing rows")
+		}
+	}()
+
 	for rows.Next() {
 		user, err := scanUser(rows)
 		if err != nil {
@@ -158,7 +164,7 @@ func (s *Sqlite) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mod
 		return nil, err
 	}
 
-	list, err := scanUsers(rows)
+	list, err := s.scanUsers(rows)
 	if err != nil {
 		return nil, err
 	}

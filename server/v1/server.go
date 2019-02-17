@@ -3,16 +3,16 @@ package server
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"errors"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"log"
 	"net/http"
-	"runtime"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
@@ -22,9 +22,6 @@ import (
 	"github.com/google/wire"
 	"github.com/gorilla/securecookie"
 	"github.com/opentracing/opentracing-go"
-	"gopkg.in/oauth2.v3"
-	oauth2server "gopkg.in/oauth2.v3/server"
-	oauth2store "gopkg.in/oauth2.v3/store"
 )
 
 const (
@@ -37,20 +34,12 @@ type (
 		Serve()
 	}
 
-	// CertPair represents the certificate and key you need to serve HTTPS
-	CertPair struct {
-		CertFile string
-		KeyFile  string
-	}
-
 	// Tracer is an arbitrary type we use for dependency injection
 	Tracer opentracing.Tracer
 
 	// Server is our API server
 	Server struct {
 		DebugMode bool
-		certFile  string
-		keyFile   string
 
 		authenticator auth.Enticator
 
@@ -60,30 +49,25 @@ type (
 		oauth2ClientsService *oauth2clients.Service
 
 		// infra things
-		db            database.Database
-		router        *chi.Mux
-		server        *http.Server
-		logger        logging.Logger
-		tracer        opentracing.Tracer
-		cookieBuilder *securecookie.SecureCookie
+		db      database.Database
+		router  *chi.Mux
+		server  *http.Server
+		logger  logging.Logger
+		tracer  opentracing.Tracer
+		encoder encoding.ResponseEncoder
 
-		// OAuth2 stuff
-		oauth2Handler     *oauth2server.Server
-		oauth2ClientStore *oauth2store.ClientStore
+		// Auth stuff
+		cookieBuilder *securecookie.SecureCookie
 	}
 )
 
 var (
 	// Providers is our wire superset of providers this package offers
 	Providers = wire.NewSet(
-		ProvideUserIDFetcher,
-		ProvideUsernameFetcher,
-		ProvideTokenStore,
-		ProvideClientStore,
+		paramFetcherProviders,
 		ProvideServer,
+		ProvideHTTPServer,
 		ProvideServerTracer,
-		ProvideOAuth2Server,
-		ProvideItemIDFetcher,
 	)
 )
 
@@ -95,7 +79,6 @@ func ProvideServerTracer() (Tracer, error) {
 // ProvideServer builds a new Server instance
 func ProvideServer(
 	debug bool,
-	cp CertPair,
 	cookieSecret []byte,
 	authenticator auth.Enticator,
 
@@ -108,11 +91,12 @@ func ProvideServer(
 	db database.Database,
 	logger logging.Logger,
 	tracer Tracer,
+	server *http.Server,
+	encoder encoding.ResponseEncoder,
 
-	// OAuth2 stuff
-	oauth2Handler *oauth2server.Server,
-	tokenStore oauth2.TokenStore,
-	clientStore *oauth2store.ClientStore,
+	// metrics things
+	metricsHandler metrics.Handler,
+	instHandlerProvider metrics.InstrumentationHandlerProvider,
 ) (*Server, error) {
 
 	if len(cookieSecret) < 32 {
@@ -121,66 +105,49 @@ func ProvideServer(
 		return nil, err
 	}
 
-	span := tracer.StartSpan("startup")
-	defer span.Finish()
-
-	if err := db.Migrate(context.Background()); err != nil {
-		return nil, err
-	}
+	cookieBuilder := securecookie.New(securecookie.GenerateRandomKey(64), cookieSecret)
 
 	srv := &Server{
 		DebugMode:     debug,
+		authenticator: authenticator,
+
+		// infra thngs
 		db:            db,
 		logger:        logger,
-		certFile:      cp.CertFile,
-		keyFile:       cp.KeyFile,
-		server:        buildServer(),
-		authenticator: authenticator,
-		cookieBuilder: securecookie.New(securecookie.GenerateRandomKey(64), cookieSecret),
+		server:        server,
+		cookieBuilder: cookieBuilder,
 		tracer:        tracer,
+		encoder:       encoder,
 
 		// Services
 		usersService:         usersService,
 		itemsService:         itemsService,
 		oauth2ClientsService: oauth2Service,
-
-		// OAuth2 stuff
-		oauth2ClientStore: clientStore,
-		oauth2Handler:     oauth2Handler,
 	}
 
-	srv.setupRoutes()
-	srv.initializeOAuth2Clients()
+	srv.logger.Info("migrating database")
+	if err := srv.db.Migrate(context.Background()); err != nil {
+		return nil, err
+	}
+	srv.logger.Info("database migrated!")
 
+	cc := srv.oauth2ClientsService.InitializeOAuth2Clients()
+	srv.setupRouter(metricsHandler, cc == 0)
+
+	var handler http.Handler = srv.router
+	if instHandlerProvider != nil {
+		srv.logger.Debug("setting instrumentation handler")
+		handler = instHandlerProvider(srv.router)
+	}
+	srv.server.Handler = handler
 	return srv, nil
 }
 
 // Serve serves HTTP traffic
 func (s *Server) Serve() {
-	s.server.Handler = s.router
-	s.logger.Debug("Listening on 443")
-	//s.logRoutes(s.router)
-	log.Fatal(s.server.ListenAndServeTLS(s.certFile, s.keyFile))
-}
-
-func (s *Server) stats(res http.ResponseWriter, req *http.Request) {
-	s.logger.Debug("stats called")
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-
-	x := struct {
-		Alloc      uint64 `json:"memory_allocated"`
-		TotalAlloc uint64 `json:"lifetime_memory_allocated"`
-		NumGC      uint64 `json:"num_gc"`
-	}{
-		Alloc:      m.Alloc,
-		TotalAlloc: m.TotalAlloc,
-		NumGC:      uint64(m.NumGC),
-	}
-
-	if err := json.NewEncoder(res).Encode(x); err != nil {
-		s.logger.Error(err, "encoding struct")
-	}
+	s.server.Addr = ":80"
+	s.logger.Debug("Listening on 80")
+	log.Fatal(s.server.ListenAndServe())
 }
 
 type genericResponse struct {
@@ -201,7 +168,10 @@ func (s *Server) internalServerError(res http.ResponseWriter, req *http.Request,
 	sc := http.StatusInternalServerError
 	s.logger.Error(err, "Encountered internal error")
 	res.WriteHeader(sc)
-	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "Unexpected internal error occurred"})
+
+	if err = s.encoder.EncodeResponse(res, genericResponse{Status: sc, Message: "Unexpected internal error occurred"}); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 func (s *Server) notifyUnauthorized(res http.ResponseWriter, req *http.Request, err error) {
@@ -216,7 +186,10 @@ func (s *Server) notifyUnauthorized(res http.ResponseWriter, req *http.Request, 
 		s.logger.WithError(err).Debug("notifyUnauthorized called")
 	}
 	res.WriteHeader(sc)
-	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "Unauthorized"})
+
+	if err = s.encoder.EncodeResponse(res, genericResponse{Status: sc, Message: "Unauthorized"}); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 func (s *Server) invalidInput(res http.ResponseWriter, req *http.Request, err error) {
@@ -232,7 +205,10 @@ func (s *Server) invalidInput(res http.ResponseWriter, req *http.Request, err er
 		s.logger.WithError(err).Debug("invalidInput called")
 	}
 	res.WriteHeader(sc)
-	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "invalid input"})
+
+	if err = s.encoder.EncodeResponse(res, genericResponse{Status: sc, Message: "invalid input"}); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 func (s *Server) notFound(res http.ResponseWriter, req *http.Request, err error) {
@@ -248,7 +224,10 @@ func (s *Server) notFound(res http.ResponseWriter, req *http.Request, err error)
 		s.logger.WithError(err).Debug("notFound called")
 	}
 	res.WriteHeader(sc)
-	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "not found"})
+
+	if err = s.encoder.EncodeResponse(res, genericResponse{Status: sc, Message: "not found"}); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 func (s *Server) notifyOfInvalidRequestCookie(res http.ResponseWriter, req *http.Request, err error) {
@@ -264,10 +243,14 @@ func (s *Server) notifyOfInvalidRequestCookie(res http.ResponseWriter, req *http
 		s.logger.WithError(err).Debug("notifyOfInvalidRequestCookie called")
 	}
 	res.WriteHeader(sc)
-	json.NewEncoder(res).Encode(genericResponse{Status: sc, Message: "invalid cookie"})
+
+	if err = s.encoder.EncodeResponse(res, genericResponse{Status: sc, Message: "invalid cookie"}); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
-func buildServer() *http.Server {
+// ProvideHTTPServer provides an HTTP server
+func ProvideHTTPServer() *http.Server {
 	// heavily inspired by https://blog.cloudflare.com/exposing-go-on-the-internet/
 	srv := &http.Server{
 		ReadTimeout:  5 * time.Second,

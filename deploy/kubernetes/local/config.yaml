@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: todo
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: todo
+  name: todo
+  namespace: todo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo
+  template:
+    metadata:
+      labels:
+        app: todo
+    spec:
+      containers:
+        - name: todo
+          image: verygoodsoftwarenotvirus/todo-server:latest
+          imagePullPolicy: Always
+          # env:
+          # - name: NAME
+          #   value: 'value'
+          ports:
+            - containerPort: 443
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 256m
+              memory: 256m
+            requests:
+              cpu: 64m
+              memory: 64m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: todo
+  name: todo
+  namespace: default
+spec:
+  selector:
+    app: todo
+  type: LoadBalancer
+  ports:
+    - name: https
+      port: 443
+      targetPort: 443
+      protocol: TCP
+---
+

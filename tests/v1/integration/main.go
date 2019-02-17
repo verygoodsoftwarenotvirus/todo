@@ -2,23 +2,17 @@ package integration
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
-	"os"
-	"strings"
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/postgres"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/go"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/db_bootstrap"
 
-	_ "github.com/lib/pq" // importing for database initialization
 	"github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/require"
 )
@@ -27,15 +21,8 @@ const (
 	debug = true
 
 	nonexistentID          = 999999999
-	localTestInstanceURL   = "https://localhost"
-	defaultTestInstanceURL = "https://demo-server"
-
-	dockerPostgresAddress = "postgres://todo:hunter2@database:5432/todo?sslmode=disable"
-	localPostgresAddress  = "postgres://todo:hunter2@localhost:2345/todo?sslmode=disable"
-
-	defaultSecret                   = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
-	defaultTestInstanceClientID     = "HEREISACLIENTIDWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
-	defaultTestInstanceClientSecret = defaultSecret
+	localTestInstanceURL   = "http://localhost"
+	defaultTestInstanceURL = "http://todo-server"
 )
 
 var (
@@ -62,19 +49,22 @@ func initializeTracer() {
 	opentracing.SetGlobalTracer(tracer)
 }
 
-func initializeClient() {
+func buildHTTPClient() *http.Client {
 	httpc := &http.Client{
 		Transport: http.DefaultTransport,
 		Timeout:   5 * time.Second,
 	}
 
-	// WARNING: Never do this ordinarily, this is an application which will only ever run in a local context
-	httpc.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	return httpc
+}
+
+func initializeClient(clientID, clientSecret string) {
+	httpc := buildHTTPClient()
 
 	u, _ := url.Parse(urlToUse)
 	c, err := client.NewClient(
-		defaultTestInstanceClientID,
-		defaultTestInstanceClientSecret,
+		clientID,
+		clientSecret,
 		u,
 		zerolog.ProvideLogger(zerolog.ProvideZerologger()),
 		httpc,
@@ -87,7 +77,21 @@ func initializeClient() {
 	todoClient = c
 }
 
-func ensureServerIsUp() {
+func isUp(baseURI string) bool {
+	uri := fmt.Sprintf("%s/_meta_/health", baseURI)
+
+	req, _ := http.NewRequest(http.MethodGet, uri, nil)
+	httpc := buildHTTPClient()
+
+	res, err := httpc.Do(req)
+	if err != nil {
+		return false
+	}
+
+	return res.StatusCode == http.StatusOK
+}
+
+func ensureServerIsUp(address string) {
 	var (
 		isDown           = true
 		maxAttempts      = 25
@@ -95,7 +99,7 @@ func ensureServerIsUp() {
 	)
 
 	for isDown {
-		if !todoClient.IsUp() {
+		if !isUp(address) {
 			log.Printf("waiting half a second before pinging again")
 			time.Sleep(500 * time.Millisecond)
 			numberOfAttempts++
@@ -106,43 +110,4 @@ func ensureServerIsUp() {
 			isDown = false
 		}
 	}
-
-}
-
-func init() {
-	if strings.ToLower(os.Getenv("DOCKER")) == "true" {
-		urlToUse = defaultTestInstanceURL
-	} else {
-		urlToUse = localTestInstanceURL
-	}
-
-	tracer := opentracing.GlobalTracer()
-	logger := zerolog.ProvideLogger(zerolog.ProvideZerologger())
-
-	initializeTracer()
-	initializeClient()
-	ensureServerIsUp()
-	//testOAuth()
-
-	if strings.ToLower(os.Getenv("DOCKER")) == "true" {
-		switch strings.ToLower(os.Getenv("DATABASE_TO_USE")) {
-		case "postgres":
-			db, err := postgres.ProvidePostgres(
-				true,
-				logger,
-				tracer,
-				dockerPostgresAddress,
-			)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			if err := bootstrap.PreloadDatabase(db, logger, tracer); err != nil {
-				log.Fatal(err)
-			}
-		}
-	}
-
-	// time.Sleep(10 * time.Minute)
-	fmt.Println("Running tests")
 }

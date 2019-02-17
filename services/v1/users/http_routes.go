@@ -120,8 +120,9 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(x)
+	if err = s.encoder.EncodeResponse(res, x); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 // Count is a handler for responding with a count of users
@@ -142,11 +143,11 @@ func (s *Service) Count(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	res.Header().Set("Content-type", "application/json")
 
-	json.NewEncoder(res).Encode(struct {
-		Count uint64 `json:"count"`
-	}{userCount})
+	x := &models.CountResponse{Count: userCount}
+	if err = s.encoder.EncodeResponse(res, x); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 // List is a handler for responding with a list of users
@@ -168,8 +169,9 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(users)
+	if err = s.encoder.EncodeResponse(res, users); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 // Delete is a handler for deleting a user
@@ -190,9 +192,9 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-}
 
-type usernameFetcher func(req *http.Request) string
+	res.WriteHeader(http.StatusNoContent)
+}
 
 func (s *Service) validateCredentialChangeRequest(req *http.Request, password string, totpToken string) (*models.User, int) {
 	username := s.usernameFetcher(req)
@@ -207,13 +209,15 @@ func (s *Service) validateCredentialChangeRequest(req *http.Request, password st
 
 	logger = logger.WithValue("username", user.Username)
 
-	if valid, err := s.authenticator.ValidateLogin(
+	valid, err := s.authenticator.ValidateLogin(
 		ctx,
 		user.HashedPassword,
 		password,
 		user.TwoFactorSecret,
 		totpToken,
-	); err != nil {
+	)
+
+	if err != nil {
 		logger.Error(err, "error encountered generating random TOTP string")
 		return nil, http.StatusInternalServerError
 	} else if !valid {
@@ -254,14 +258,15 @@ func (s *Service) NewTOTPSecret(res http.ResponseWriter, req *http.Request) {
 	}
 	user.TwoFactorSecret = tfc
 
-	if err := s.database.UpdateUser(ctx, user); err != nil {
+	if err = s.database.UpdateUser(ctx, user); err != nil {
 		logger.Error(err, "error encountered updating TOTP token")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(user)
+	if err = s.encoder.EncodeResponse(res, user); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }
 
 // UpdatePassword updates a user's password, after validating that information received
@@ -293,14 +298,16 @@ func (s *Service) UpdatePassword(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err := s.database.UpdateUser(ctx, user); err != nil {
+	if err = s.database.UpdateUser(ctx, user); err != nil {
 		logger.Error(err, "error encountered updating user")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(user)
+	res.WriteHeader(http.StatusAccepted)
+	//if err := s.encoder.EncodeResponse(res, user); err != nil {
+	//	s.logger.Error(err, "encoding response")
+	//}
 }
 
 // Create is our user creation route
@@ -337,7 +344,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	x, err := s.database.CreateUser(ctx, input)
+	user, err := s.database.CreateUser(ctx, input)
 	if err != nil {
 		s.logger.Error(err, "error creating user")
 		res.WriteHeader(http.StatusInternalServerError)
@@ -346,16 +353,17 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 
 	// UserCreationResponse is a struct we can use to notify the user of
 	// their two factor secret, but ideally just this once and then never again.
-	ucr := &models.UserCreationResponse{
-		ID:                    x.ID,
-		Username:              x.Username,
-		TwoFactorSecret:       x.TwoFactorSecret,
-		PasswordLastChangedOn: x.PasswordLastChangedOn,
-		CreatedOn:             x.CreatedOn,
-		UpdatedOn:             x.UpdatedOn,
-		ArchivedOn:            x.ArchivedOn,
+	x := &models.UserCreationResponse{
+		ID:                    user.ID,
+		Username:              user.Username,
+		TwoFactorSecret:       user.TwoFactorSecret,
+		PasswordLastChangedOn: user.PasswordLastChangedOn,
+		CreatedOn:             user.CreatedOn,
+		UpdatedOn:             user.UpdatedOn,
+		ArchivedOn:            user.ArchivedOn,
 	}
 
-	res.Header().Set("Content-type", "application/json")
-	json.NewEncoder(res).Encode(ucr)
+	if err = s.encoder.EncodeResponse(res, x); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
 }

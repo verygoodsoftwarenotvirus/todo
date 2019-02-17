@@ -79,10 +79,15 @@ func scanItem(scan database.Scannable) (*models.Item, error) {
 	return x, nil
 }
 
-func scanItems(rows *sql.Rows) ([]models.Item, error) {
-	list := []models.Item{}
+func (s *Sqlite) scanItems(rows *sql.Rows) ([]models.Item, error) {
+	var list []models.Item
 
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			s.logger.Error(err, "closing rows")
+		}
+	}()
+
 	for rows.Next() {
 		item, err := scanItem(rows)
 		if err != nil {
@@ -129,7 +134,7 @@ func (s *Sqlite) GetItems(ctx context.Context, filter *models.QueryFilter) (*mod
 		return nil, errors.Wrap(err, "querying database for items")
 	}
 
-	list, err := scanItems(rows)
+	list, err := s.scanItems(rows)
 	if err != nil {
 		return nil, errors.Wrap(err, "scanning items")
 	}

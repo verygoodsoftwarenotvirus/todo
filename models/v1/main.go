@@ -25,14 +25,6 @@ var (
 	SortAscending = (sortType)(strSortAsc)
 	// SortDescending is the pre-determined Descending sortType for external use
 	SortDescending = (sortType)(strSortDesc)
-
-	typeMap = map[string]func() interface{}{
-		"item": func() interface{} { return new(Item) },
-	}
-
-	allTypes = []interface{}{
-		new(Item),
-	}
 )
 
 // Pagination represents a pagination request

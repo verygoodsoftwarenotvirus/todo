@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"math"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
@@ -22,8 +21,8 @@ const (
 var (
 	_ Enticator = (*BcryptAuthenticator)(nil)
 
-	// ErrCostTooLow indicates that a password has too low a Bcrypt cost
-	ErrCostTooLow = errors.New("stored password's cost is too low")
+	//// ErrCostTooLow indicates that a password has too low a Bcrypt cost
+	//ErrCostTooLow = errors.New("stored password's cost is too low")
 )
 
 // BcryptAuthenticator is our bcrypt-based authenticator

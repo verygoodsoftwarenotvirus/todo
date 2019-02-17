@@ -2,55 +2,27 @@ package main
 
 import (
 	"log"
-	"os"
-	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 )
 
 const (
-	secure = false
-
-	sqliteConnectionDetails   = "example.db"
 	postgresConnectionDetails = "postgres://todo:hunter2@database:5432/todo?sslmode=disable"
-
-	certFile = "certs/cert.pem"
-	keyFile  = "certs/key.pem"
-
-	localCertFile = "dev_files/certs/server/cert.pem"
-	localKeyFile  = "dev_files/certs/server/key.pem"
 
 	cookieSecret = "HEREISA32CHARSECRETWHICHISMADEUP"
 )
 
 var (
-	certToUse, keyToUse string
-	debug               bool
+	debug bool
 )
-
-func init() {
-	debug = strings.ToLower(os.Getenv("DOCKER")) == "true"
-	if debug {
-		log.Println("running in a docker environment")
-		certToUse, keyToUse = certFile, keyFile
-	} else {
-		certToUse, keyToUse = localCertFile, localKeyFile
-	}
-	log.Printf("debug: %v\n", debug)
-	log.Printf("using this cert: %q\n", certToUse)
-	log.Printf("using this key: %q\n", keyToUse)
-}
 
 func main() {
 	server, err := BuildServer(
-		database.ConnectionDetails(sqliteConnectionDetails),
-		server.CertPair{
-			CertFile: certToUse,
-			KeyFile:  keyToUse,
-		},
+		database.ConnectionDetails(postgresConnectionDetails),
 		users.CookieName("todo"),
+		metrics.Namespace("todo-server"),
 		[]byte(cookieSecret),
 		debug,
 	)

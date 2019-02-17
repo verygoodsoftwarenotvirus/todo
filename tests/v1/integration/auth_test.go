@@ -12,12 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const (
-	expectedUsername   = "username"
-	expectedPassword   = "password"
-	expectedTOTPSecret = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
-)
-
 func loginUser(t *testing.T, username, password, totpSecret string) *http.Cookie {
 	loginURL := fmt.Sprintf("%s://%s/users/login", todoClient.URL.Scheme, todoClient.URL.Hostname())
 

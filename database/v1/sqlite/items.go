@@ -25,18 +25,21 @@ const (
 			COUNT(*)
 		FROM
 			items
-		WHERE completed_on IS NULL
-	`
+		WHERE 
+			completed_on IS NULL 
+			AND belongs_to = ?
+	`  // FINISHME: finish adding filters to this query
 	getItemsQuery = `
 		SELECT
 			id, name, details, created_on, updated_on, completed_on, belongs_to
 		FROM
 			items
 		WHERE
-			completed_on IS NULL
+			completed_on IS NULL 
+			AND belongs_to = ?
 		LIMIT ?
 		OFFSET ?
-	`
+	`  // FINISHME: finish adding filters to this query
 	createItemQuery = `
 		INSERT INTO items
 		(
@@ -52,13 +55,17 @@ const (
 			name = ?,
 			details = ?,
 			updated_on = (strftime('%s','now'))
-		WHERE id = ?
+		WHERE 
+			id = ?
 	`
 	archiveItemQuery = `
 		UPDATE items SET
 			updated_on = (strftime('%s','now')),
 			completed_on = (strftime('%s','now'))
-		WHERE id = ? AND completed_on IS NULL
+		WHERE 
+			id = ?
+			AND belongs_to = ?
+			AND completed_on IS NULL
 	`
 )
 
@@ -113,23 +120,23 @@ func (s *Sqlite) GetItem(ctx context.Context, itemID, userID uint64) (*models.It
 }
 
 // GetItemCount fetches the count of items from the sqlite database that meet a particular filter
-func (s *Sqlite) GetItemCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
+func (s *Sqlite) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (uint64, error) {
 	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetItemCount")
 	defer span.Finish()
 
 	var count uint64
-	err := s.database.QueryRow(getItemCountQuery).Scan(&count)
+	err := s.database.QueryRow(getItemCountQuery, userID).Scan(&count)
 	return count, err
 }
 
 // GetItems fetches a list of items from the sqlite database that meet a particular filter
-func (s *Sqlite) GetItems(ctx context.Context, filter *models.QueryFilter) (*models.ItemList, error) {
+func (s *Sqlite) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
 	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetItems")
 	defer span.Finish()
 
 	filter = s.prepareFilter(filter, span)
 
-	rows, err := s.database.Query(getItemsQuery, filter.Limit, filter.QueryPage())
+	rows, err := s.database.Query(getItemsQuery, userID, filter.Limit, filter.QueryPage())
 	if err != nil {
 		return nil, errors.Wrap(err, "querying database for items")
 	}
@@ -139,7 +146,7 @@ func (s *Sqlite) GetItems(ctx context.Context, filter *models.QueryFilter) (*mod
 		return nil, errors.Wrap(err, "scanning items")
 	}
 
-	count, err := s.GetItemCount(ctx, filter)
+	count, err := s.GetItemCount(ctx, filter, userID)
 	if err != nil {
 		return nil, errors.Wrap(err, "fetching item count")
 	}
@@ -204,10 +211,10 @@ func (s *Sqlite) UpdateItem(ctx context.Context, input *models.Item) error {
 }
 
 // DeleteItem deletes an item from the database by its ID
-func (s *Sqlite) DeleteItem(ctx context.Context, id uint64) error {
+func (s *Sqlite) DeleteItem(ctx context.Context, itemID uint64, userID uint64) error {
 	span := tracing.FetchSpanFromContext(ctx, s.tracer, "DeleteItem")
 	defer span.Finish()
 
-	_, err := s.database.Exec(archiveItemQuery, id)
+	_, err := s.database.Exec(archiveItemQuery, itemID, userID)
 	return err
 }

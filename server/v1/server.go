@@ -57,7 +57,8 @@ type (
 		encoder encoding.ResponseEncoder
 
 		// Auth stuff
-		cookieBuilder *securecookie.SecureCookie
+		adminUserExists bool
+		cookieBuilder   *securecookie.SecureCookie
 	}
 )
 

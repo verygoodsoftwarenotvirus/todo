@@ -35,6 +35,9 @@ type (
 	// ClientIDFetcher is a function for fetching client IDs out of requests
 	ClientIDFetcher func(req *http.Request) string
 
+	// UserIDFetcher is a function for fetching user IDs out of requests
+	UserIDFetcher func(req *http.Request) uint64
+
 	// Service manages our OAuth2 clients via HTTP
 	Service struct {
 		database          database.Database
@@ -44,6 +47,7 @@ type (
 		encoder           encoding.ResponseEncoder
 		tokenStore        oauth2.TokenStore
 		clientIDFetcher   func(req *http.Request) string
+		userIDFetcher     func(req *http.Request) uint64
 		oauth2Handler     *oauth2server.Server
 		oauth2ClientStore *oauth2store.ClientStore
 	}
@@ -68,6 +72,7 @@ func ProvideOAuth2ClientsService(
 	database database.Database,
 	authenticator auth.Enticator,
 	clientIDFetcher ClientIDFetcher,
+	userIDFetcher UserIDFetcher,
 	tracer Tracer,
 	encoder encoding.ResponseEncoder,
 ) *Service {
@@ -87,6 +92,7 @@ func ProvideOAuth2ClientsService(
 		tracer:            tracer,
 		encoder:           encoder,
 		clientIDFetcher:   clientIDFetcher,
+		userIDFetcher:     userIDFetcher,
 		oauth2Handler:     server,
 		oauth2ClientStore: clientStore,
 	}
@@ -113,23 +119,22 @@ func ProvideOAuth2ClientsService(
 func (s *Service) InitializeOAuth2Clients() (clientCount uint) {
 	var paginating = true
 	for page := 1; paginating; page++ {
-		clientList, err := s.database.GetOAuth2Clients(
-			context.Background(),
-			&models.QueryFilter{
-				Page:  uint64(page),
-				Limit: 50,
-			},
-		)
+		clientList, err := s.database.GetAllOAuth2Clients(context.Background())
+		if err != nil {
+			s.logger.Error(err, "trying to load all OAuth2 clients")
+		}
 
-		clientCount = uint(len(clientList.Clients))
-		s.logger.WithValue("client_count", clientCount).Debug("loading OAuth2 clients")
-		if (clientList != nil && len(clientList.Clients) == 0) || err == sql.ErrNoRows {
+		clientCount = uint(len(clientList))
+		s.logger.WithValues(map[string]interface{}{
+			"client_count": clientCount,
+		}).Debug("loading OAuth2 clients")
+		if clientCount == 0 || err == sql.ErrNoRows {
 			paginating = false
 		} else if err != nil {
 			s.logger.Fatal(errors.Wrap(err, "querying oauth clients to add to the clientStore"))
 		}
 
-		for _, client := range clientList.Clients {
+		for _, client := range clientList {
 			s.logger.WithValue("client_id", client.ClientID).Debug("loading client")
 
 			if err = s.oauth2ClientStore.Set(client.ClientID, &oauth2models.Client{

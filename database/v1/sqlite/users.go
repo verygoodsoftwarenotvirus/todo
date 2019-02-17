@@ -28,28 +28,22 @@ const (
 		WHERE
 			username = ?
 	`
+	getAdminUserCountQuery = `
+		SELECT
+			COUNT(*)
+		FROM
+			users
+		WHERE 
+			archived_on is null
+			AND is_admin = true
+	`
 	getUserCountQuery = `
 		SELECT
 			COUNT(*)
 		FROM
 			users
-		WHERE archived_on is null
-	`
-	getUserQueryByID = `
-		SELECT
-			id,
-			username,
-			hashed_password,
-			password_last_changed_on,
-			two_factor_secret,
-			is_admin,
-			created_on,
-			updated_on,
-			archived_on
-		FROM
-			users
-		WHERE
-			id = ? AND archived_on is null
+		WHERE 
+			archived_on is null
 	`
 	getUsersQuery = `
 		SELECT
@@ -65,7 +59,7 @@ const (
 		FROM
 			users
 		WHERE
-		archived_on is null
+			archived_on is null
 		LIMIT ?
 		OFFSET ?
 	`
@@ -78,19 +72,27 @@ const (
 		(
 			?, ?, ?, ?
 		)
+		RETURNING
+			id, created_on
 	`
 	updateUserQuery = `
 		UPDATE users SET
 			username = ?,
 			password = ?,
 			updated_on = (strftime('%s','now'))
-		WHERE id = ?
+		WHERE 
+			id = ?
+		RETURNING
+			updated_on
 	`
 	archiveUserQuery = `
 		UPDATE users SET
 			updated_on = (strftime('%s','now')),
 			archived_on = (strftime('%s','now'))
-		WHERE username = ?
+		WHERE 
+			username = ?
+		RETURNING
+			archived_on
 	`
 )
 
@@ -143,6 +145,18 @@ func (s *Sqlite) GetUser(ctx context.Context, username string) (*models.User, er
 	defer span.Finish()
 
 	return scanUser(s.database.QueryRow(getUserQuery, username))
+}
+
+// AdminUserExists executes a query to determine if an admin user has been established in the database
+func (s *Sqlite) AdminUserExists(ctx context.Context) (bool, error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "AdminUserExists")
+	defer span.Finish()
+
+	var count uint
+	s.logger.Debug("AdminUserExists called")
+	err := s.database.QueryRow(getAdminUserCountQuery).Scan(&count)
+	return count > 0, err
+
 }
 
 // GetUserCount fetches a count of users from the sqlite database that meet a particular filter

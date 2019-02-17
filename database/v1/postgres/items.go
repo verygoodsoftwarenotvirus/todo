@@ -23,7 +23,9 @@ const (
 			COUNT(*)
 		FROM
 			items
-		WHERE completed_on IS NULL
+		WHERE 
+			completed_on IS NULL 
+			AND belongs_to = $1
 	`  // FINISHME: finish adding filters to this query
 	getItemsQuery = `
 		SELECT
@@ -31,9 +33,10 @@ const (
 		FROM
 			items
 		WHERE
-			completed_on IS NULL
-		LIMIT $1
-		OFFSET $2
+			completed_on IS NULL 
+			AND belongs_to = $1
+		LIMIT $2
+		OFFSET $3
 	`  // FINISHME: finish adding filters to this query
 	createItemQuery = `
 		INSERT INTO items
@@ -52,7 +55,8 @@ const (
 			name = $1,
 			details = $2,
 			updated_on = extract(epoch FROM NOW())
-		WHERE id = $3
+		WHERE 
+			id = $3
 		RETURNING
 			updated_on
 	`
@@ -60,7 +64,10 @@ const (
 		UPDATE items SET
 			updated_on = extract(epoch FROM NOW()),
 			completed_on = extract(epoch FROM NOW())
-		WHERE id = $1 AND completed_on IS NULL
+		WHERE 
+			id = $1 
+			AND belongs_to = $2
+			AND completed_on IS NULL
 		RETURNING
 			completed_on
 	`
@@ -104,19 +111,21 @@ func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*models.
 }
 
 // GetItemCount fetches the count of items from the postgres database that meet a particular filter
-func (p *Postgres) GetItemCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
+func (p *Postgres) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetItemCount")
+	span.SetTag("user_id", userID)
 	defer span.Finish()
 
 	p.logger.WithValue("filter", filter).Debug("GetItemCount called")
 
-	err = p.database.QueryRow(getItemCountQuery).Scan(&count)
+	err = p.database.QueryRow(getItemCountQuery, userID).Scan(&count)
 	return
 }
 
 // GetItems fetches a list of items from the postgres database that meet a particular filter
-func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter) (*models.ItemList, error) {
+func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetItems")
+	span.SetTag("user_id", userID)
 	defer span.Finish()
 
 	p.logger.WithValue("filter", filter).Debug("GetItems called")
@@ -130,7 +139,7 @@ func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter) (*m
 
 	var list []models.Item
 
-	rows, err := p.database.Query(getItemsQuery, filter.Limit, queryPage)
+	rows, err := p.database.Query(getItemsQuery, userID, filter.Limit, queryPage)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +162,7 @@ func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter) (*m
 		return nil, err
 	}
 
-	count, err := p.GetItemCount(ctx, filter)
+	count, err := p.GetItemCount(ctx, filter, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -198,6 +207,7 @@ func (p *Postgres) CreateItem(ctx context.Context, input *models.ItemInput) (*mo
 // UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
 func (p *Postgres) UpdateItem(ctx context.Context, input *models.Item) error {
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "UpdateItem")
+	span.SetTag("item_id", input.ID)
 	defer span.Finish()
 
 	p.logger.WithValue("input", input).Debug("UpdateItem called")
@@ -208,12 +218,17 @@ func (p *Postgres) UpdateItem(ctx context.Context, input *models.Item) error {
 }
 
 // DeleteItem deletes an item from the database by its ID
-func (p *Postgres) DeleteItem(ctx context.Context, id uint64) error {
+func (p *Postgres) DeleteItem(ctx context.Context, itemID uint64, userID uint64) error {
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "DeleteItem")
+	span.SetTag("item_id", itemID)
+	span.SetTag("user_id", userID)
 	defer span.Finish()
 
-	p.logger.WithValue("id", id).Debug("DeleteItem called")
+	p.logger.WithValues(map[string]interface{}{
+		"item_id": itemID,
+		"user_id": userID,
+	}).Debug("DeleteItem called")
 
-	_, err := p.database.Exec(archiveItemQuery, id)
+	_, err := p.database.Exec(archiveItemQuery, itemID, userID)
 	return err
 }

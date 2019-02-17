@@ -25,12 +25,22 @@ const (
 		WHERE
 			username = $1
 	`
+	getAdminUserCountQuery = `
+		SELECT
+			COUNT(*)
+		FROM
+			users
+		WHERE 
+			archived_on is null
+			AND is_admin = true
+	`
 	getUserCountQuery = `
 		SELECT
 			COUNT(*)
 		FROM
 			users
-		WHERE archived_on is null
+		WHERE 
+			archived_on is null
 	`
 	getUsersQuery = `
 		SELECT
@@ -46,7 +56,7 @@ const (
 		FROM
 			users
 		WHERE
-		archived_on is null
+			archived_on is null
 		LIMIT $1
 		OFFSET $2
 	`
@@ -67,7 +77,8 @@ const (
 			username = $1,
 			password = $2,
 			updated_on = extract(epoch FROM NOW())
-		WHERE id = $3
+		WHERE 
+			id = $3
 		RETURNING
 			updated_on
 	`
@@ -75,7 +86,8 @@ const (
 		UPDATE users SET
 			updated_on = extract(epoch FROM NOW()),
 			archived_on = extract(epoch FROM NOW())
-		WHERE username = $1
+		WHERE 
+			username = $1
 		RETURNING
 			archived_on
 	`
@@ -102,6 +114,18 @@ func (p Postgres) scanUser(scan database.Scannable) (*models.User, error) {
 	}
 
 	return x, nil
+}
+
+// AdminUserExists executes a query to determine if an admin user has been established in the database
+func (p *Postgres) AdminUserExists(ctx context.Context) (bool, error) {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "AdminUserExists")
+	defer span.Finish()
+
+	var count uint
+	p.logger.Debug("AdminUserExists called")
+	err := p.database.QueryRow(getAdminUserCountQuery).Scan(&count)
+	return count > 0, err
+
 }
 
 // GetUser fetches a user by their username

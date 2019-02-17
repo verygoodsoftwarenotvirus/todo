@@ -19,7 +19,9 @@ const (
 			COUNT(*)
 		FROM
 			oauth_clients
-		WHERE archived_on is null
+		WHERE 
+			archived_on IS NULL
+			AND belongs_to = ?
 	`
 	getOAuth2ClientQuery = `
 		SELECT
@@ -28,6 +30,7 @@ const (
 			oauth_clients
 		WHERE
 			id = ?
+			AND belongs_to = ?
 	`
 	getOAuth2ClientByClientIDQuery = `
 		SELECT
@@ -36,6 +39,24 @@ const (
 			oauth_clients
 		WHERE
 			client_id = ?
+			AND belongs_to = ?
+	`
+	getAnyOAuth2ClientQuery = `
+		SELECT
+			id, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to
+		FROM
+			oauth_clients
+		WHERE
+			client_id = ?
+			AND belongs_to = ?
+	`
+	getAllOAuth2ClientsQuery = `
+		SELECT
+			id, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to
+		FROM
+			oauth_clients
+		WHERE
+			archived_on IS NULL
 	`
 	getOAuth2ClientsQuery = `
 		SELECT
@@ -43,7 +64,8 @@ const (
 		FROM
 			oauth_clients
 		WHERE
-			archived_on is null
+			archived_on IS NULL
+			AND belongs_to = ?
 		LIMIT ?
 		OFFSET ?
 	`
@@ -64,17 +86,20 @@ const (
 			scopes = ?,
 			redirect_uri = ?,
 			updated_on = (strftime('%s','now'))
-		WHERE id = ?
+		WHERE 
+			id = ?
 	`
 	archiveOAuth2ClientQuery = `
 		UPDATE oauth_clients SET
 			updated_on = (strftime('%s','now')),
 			archived_on = (strftime('%s','now'))
-		WHERE id = ?
+		WHERE 
+			id = ?
+			AND belongs_to = ?
 	`
 )
 
-func scanOAuth2Client(scan database.Scannable) (*models.OAuth2Client, error) {
+func (s *Sqlite) scanOAuth2Client(scan database.Scannable) (*models.OAuth2Client, error) {
 	var (
 		x      = &models.OAuth2Client{}
 		scopes string
@@ -109,7 +134,7 @@ func (s *Sqlite) scanOAuth2Clients(rows *sql.Rows) ([]models.OAuth2Client, error
 	}()
 
 	for rows.Next() {
-		x, err := scanOAuth2Client(rows)
+		x, err := s.scanOAuth2Client(rows)
 		if err != nil {
 			return nil, err
 		}
@@ -126,32 +151,86 @@ func (s *Sqlite) scanOAuth2Clients(rows *sql.Rows) ([]models.OAuth2Client, error
 var _ models.OAuth2ClientHandler = (*Sqlite)(nil)
 
 // GetOAuth2Client gets an OAuth2 client
-func (s *Sqlite) GetOAuth2Client(ctx context.Context, clientID string) (*models.OAuth2Client, error) {
+func (s *Sqlite) GetOAuth2Client(ctx context.Context, clientID string, userID uint64) (*models.OAuth2Client, error) {
 	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetOAuth2Client")
 	defer span.Finish()
 
 	s.logger.WithValue("client_id", clientID).Debug("GetOAuth2Client called")
-	row := s.database.QueryRow(getOAuth2ClientByClientIDQuery, clientID)
-	return scanOAuth2Client(row)
+	row := s.database.QueryRow(getOAuth2ClientByClientIDQuery, clientID, userID)
+	return s.scanOAuth2Client(row)
+}
+
+// GetOAuth2ClientByClientID fetches any OAuth2 client by client ID, regardless of ownership. This is used by
+// authenticating middleware to fetch client information it needs to validate
+func (s *Sqlite) GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*models.OAuth2Client, error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetOAuth2Client")
+	defer span.Finish()
+
+	s.logger.WithValue("client_id", clientID).Debug("GetOAuth2Client called")
+	row := s.database.QueryRow(getAnyOAuth2ClientQuery, clientID)
+	return s.scanOAuth2Client(row)
 }
 
 // GetOAuth2ClientCount gets the count of OAuth2 clients that match the current filter
-func (s *Sqlite) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
+func (s *Sqlite) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (uint64, error) {
 	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetOAuth2ClientCount")
 	defer span.Finish()
 
 	var count uint64
-	err := s.database.QueryRow(getOAuth2ClientCountQuery).Scan(&count)
+	err := s.database.QueryRow(getOAuth2ClientCountQuery, userID).Scan(&count)
 	return count, err
 }
 
+// GetAllOAuth2Clients returns all OAuth2 clients, irrespective of ownership. It is called on startup to populate
+// the OAuth2 Client handler
+func (s *Sqlite) GetAllOAuth2Clients(ctx context.Context) ([]models.OAuth2Client, error) {
+	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetAllOAuth2Clients")
+	defer span.Finish()
+	s.logger.Debug("Postgres.GetAllOAuth2Clients called")
+
+	prep, err := s.database.Prepare(getAllOAuth2ClientsQuery)
+	if err != nil {
+		s.logger.Error(err, "error preparing query")
+		return nil, err
+	}
+
+	rows, err := prep.Query()
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if err = rows.Close(); err != nil {
+			s.logger.Error(err, "closing rows")
+		}
+	}()
+
+	var list []models.OAuth2Client
+	for rows.Next() {
+		var x *models.OAuth2Client
+		x, err = s.scanOAuth2Client(rows)
+		if err != nil {
+			s.logger.Error(err, "error encountered scanning OAuth2Client")
+			return nil, err
+		}
+		list = append(list, *x)
+	}
+
+	if err = rows.Err(); err != nil {
+		s.logger.Error(err, "error encountered fetching list of OAuth2Clients")
+		return nil, err
+	}
+
+	return list, err
+}
+
 // GetOAuth2Clients gets a list of OAuth2 clients
-func (s *Sqlite) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
+func (s *Sqlite) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.OAuth2ClientList, error) {
 	span := tracing.FetchSpanFromContext(ctx, s.tracer, "GetOAuth2Clients")
 	defer span.Finish()
 
 	filter = s.prepareFilter(filter, span)
-	rows, err := s.database.Query(getOAuth2ClientsQuery, filter.Limit, filter.QueryPage())
+	rows, err := s.database.Query(getOAuth2ClientsQuery, userID, filter.Limit, filter.QueryPage())
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +247,7 @@ func (s *Sqlite) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilte
 		},
 		Clients: list,
 	}
-	if ocl.TotalCount, err = s.GetOAuth2ClientCount(ctx, filter); err != nil {
+	if ocl.TotalCount, err = s.GetOAuth2ClientCount(ctx, filter, userID); err != nil {
 		return nil, err
 	}
 
@@ -215,7 +294,7 @@ func (s *Sqlite) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 
 	// fetch full updated client
 	row := s.database.QueryRow(getOAuth2ClientQuery, id)
-	if x, err = scanOAuth2Client(row); err != nil {
+	if x, err = s.scanOAuth2Client(row); err != nil {
 		return nil, errors.Wrap(err, "error fetching newly created")
 	}
 
@@ -243,10 +322,10 @@ func (s *Sqlite) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 }
 
 // DeleteOAuth2Client deletes an OAuth2 client
-func (s *Sqlite) DeleteOAuth2Client(ctx context.Context, id string) error {
+func (s *Sqlite) DeleteOAuth2Client(ctx context.Context, identifier string, userID uint64) error {
 	span := tracing.FetchSpanFromContext(ctx, s.tracer, "DeleteOAuth2Client")
 	defer span.Finish()
 
-	_, err := s.database.Exec(archiveOAuth2ClientQuery, id)
+	_, err := s.database.Exec(archiveOAuth2ClientQuery, identifier, userID)
 	return err
 }

@@ -18,6 +18,8 @@ type Database interface {
 	Migrate(ctx context.Context) error
 	IsReady(ctx context.Context) (ready bool)
 
+	AdminUserExists(ctx context.Context) (bool, error)
+
 	models.ItemHandler
 	models.UserHandler
 	models.OAuth2ClientHandler

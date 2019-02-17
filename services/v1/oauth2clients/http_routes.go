@@ -142,16 +142,20 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 
 // Read is a route handler for retrieving an OAuth2 client
 func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("read route", opentracing.ChildOf(spanCtx))
 	defer serverSpan.Finish()
 
-	ctx := req.Context()
+	userID := s.userIDFetcher(req)
 	oauth2ClientID := s.clientIDFetcher(req)
-	logger := s.logger.WithValue("oauth2_client_id", oauth2ClientID)
+	logger := s.logger.WithValues(map[string]interface{}{
+		"oauth2_client_id": oauth2ClientID,
+		"user_id":          userID,
+	})
 	logger.Debug("oauth2Client read route called")
 
-	x, err := s.database.GetOAuth2Client(ctx, oauth2ClientID)
+	x, err := s.database.GetOAuth2Client(ctx, oauth2ClientID, userID)
 	if err == sql.ErrNoRows {
 		logger.Debug("Read called on nonexistent client")
 		res.WriteHeader(http.StatusNotFound)
@@ -169,16 +173,20 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 
 // List is a handler that returns a list of OAuth2 clients
 func (s *Service) List(res http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("list route", opentracing.ChildOf(spanCtx))
 	defer serverSpan.Finish()
 
-	ctx := req.Context()
+	userID := s.userIDFetcher(req)
 	qf := models.ExtractQueryFilter(req)
-	logger := s.logger.WithValue("filter", qf)
+	logger := s.logger.WithValues(map[string]interface{}{
+		"filter":  qf,
+		"user_id": userID,
+	})
 	logger.Debug("oauth2Client list route called")
 
-	oauth2Clients, err := s.database.GetOAuth2Clients(ctx, qf)
+	oauth2Clients, err := s.database.GetOAuth2Clients(ctx, qf, userID)
 	if err != nil {
 		logger.Error(err, "encountered error getting list of oauth2 clients from database")
 		res.WriteHeader(http.StatusInternalServerError)
@@ -192,16 +200,20 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 
 // Delete is a route handler for deleting an OAuth2 client
 func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("delete route", opentracing.ChildOf(spanCtx))
 	defer serverSpan.Finish()
 
-	ctx := req.Context()
+	userID := s.userIDFetcher(req)
 	oauth2ClientID := s.clientIDFetcher(req)
-	logger := s.logger.WithValue("oauth2_client_id", oauth2ClientID)
+	logger := s.logger.WithValues(map[string]interface{}{
+		"oauth2_client_id": oauth2ClientID,
+		"user_id":          userID,
+	})
 	logger.Debug("oauth2Client deletion route called")
 
-	if err := s.database.DeleteOAuth2Client(ctx, oauth2ClientID); err != nil {
+	if err := s.database.DeleteOAuth2Client(ctx, oauth2ClientID, userID); err != nil {
 		s.logger.Error(err, "encountered error deleting oauth2 client")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -212,13 +224,17 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 
 // Update is a route handler for updating OAuth2 clients
 func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("update route", opentracing.ChildOf(spanCtx))
 	defer serverSpan.Finish()
 
-	ctx := req.Context()
+	userID := s.userIDFetcher(req)
 	oauth2ClientID := s.clientIDFetcher(req)
-	logger := s.logger.WithValue("oauth2_client_id", oauth2ClientID)
+	logger := s.logger.WithValues(map[string]interface{}{
+		"oauth2_client_id": oauth2ClientID,
+		"user_id":          userID,
+	})
 	logger.Debug("oauth2Client update route called")
 
 	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.OAuth2ClientUpdateInput)
@@ -228,7 +244,7 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 	}
 	_ = input
 
-	x, err := s.database.GetOAuth2Client(ctx, oauth2ClientID)
+	x, err := s.database.GetOAuth2Client(ctx, oauth2ClientID, userID)
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -283,6 +299,7 @@ func (s *Service) OauthTokenAuthenticationMiddleware(next http.Handler) http.Han
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		s.logger.Debug("OauthTokenAuthenticationMiddleware called")
+		userID := s.userIDFetcher(req)
 
 		token, err := s.oauth2Handler.ValidationBearerToken(req)
 		if err != nil || token == nil {
@@ -294,7 +311,7 @@ func (s *Service) OauthTokenAuthenticationMiddleware(next http.Handler) http.Han
 		cid := token.GetClientID()
 		logger := s.logger.WithValue("client_id", cid)
 
-		c, err := s.database.GetOAuth2Client(ctx, cid)
+		c, err := s.database.GetOAuth2Client(ctx, cid, userID)
 		if err != nil {
 			logger.Error(err, "error fetching OAuth2 Client")
 			http.Error(res, fmt.Sprintf("error fetching client ID: %s", err.Error()), http.StatusUnauthorized)
@@ -311,12 +328,13 @@ func (s *Service) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		s.logger.Debug("OauthInfoMiddleware called")
+		userID := s.userIDFetcher(req)
 
 		if v := req.URL.Query().Get(oauth2ClientIDURIParamKey); v != "" {
 			logger := s.logger.WithValue("oauth2_client_id", v)
 			logger.Debug("fetching oauth2 client from database")
 
-			client, err := s.database.GetOAuth2Client(ctx, v)
+			client, err := s.database.GetOAuth2Client(ctx, v, userID)
 			if err != nil {
 				logger.Error(err, "error fetching OAuth2 client")
 				http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -365,17 +383,19 @@ var _ oauth2server.AuthorizeScopeHandler = (*Service)(nil).AuthorizeScopeHandler
 // AuthorizeScopeHandler satisfies the oauth2server AuthorizeScopeHandler interface
 func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Request) (scope string, err error) {
 	ctx := req.Context()
+	userID := s.userIDFetcher(req)
+	client := s.fetchOAuth2ClientFromRequest(req)
 
 	s.logger.Debug("AuthorizeScopeHandler called")
-	client := s.fetchOAuth2ClientFromRequest(req)
 	logger := s.logger.WithValues(map[string]interface{}{
+		"user_id":   userID,
 		"client.ID": client.ID,
 	})
 
 	if client == nil {
 		clientID := s.fetchOAuth2ClientIDFromRequest(req)
 		if clientID != "" {
-			client, err = s.database.GetOAuth2Client(ctx, clientID)
+			client, err = s.database.GetOAuth2Client(ctx, clientID, userID)
 			if err != nil {
 				logger.Error(err, "error fetching OAuth2 Client")
 				return "", err
@@ -423,7 +443,7 @@ func (s *Service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantTyp
 	if grant == oauth2.PasswordCredentials {
 		return false, errors.New("invalid grant type: password")
 	}
-	client, err := s.database.GetOAuth2Client(context.Background(), clientID)
+	client, err := s.database.GetOAuth2ClientByClientID(context.Background(), clientID)
 	if err != nil {
 		return false, err
 	}
@@ -446,7 +466,7 @@ func (s *Service) ClientScopeHandler(clientID, scope string) (authed bool, err e
 	})
 	logger.Debug("ClientScopeHandler called")
 
-	c, err := s.database.GetOAuth2Client(context.Background(), clientID)
+	c, err := s.database.GetOAuth2ClientByClientID(context.Background(), clientID)
 	if err != nil {
 		logger.Error(err, "error fetching OAuth2 client for ClientScopeHandler")
 		return false, err

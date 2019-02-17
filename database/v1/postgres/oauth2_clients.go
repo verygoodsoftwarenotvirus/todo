@@ -16,7 +16,9 @@ const (
 			COUNT(*)
 		FROM
 			oauth_clients
-		WHERE archived_on is null
+		WHERE 
+			archived_on IS NULL
+			AND belongs_to = $1
 	`
 	getOAuth2ClientQuery = `
 		SELECT
@@ -25,6 +27,23 @@ const (
 			oauth_clients
 		WHERE
 			client_id = $1
+			AND belongs_to = $2
+	`
+	getAnyOAuth2ClientQuery = `
+		SELECT
+			id, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to
+		FROM
+			oauth_clients
+		WHERE
+			client_id = $1
+	`
+	getAllOAuth2ClientsQuery = `
+		SELECT
+			id, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to
+		FROM
+			oauth_clients
+		WHERE
+			archived_on IS NULL
 	`
 	getOAuth2ClientsQuery = `
 		SELECT
@@ -32,9 +51,10 @@ const (
 		FROM
 			oauth_clients
 		WHERE
-			archived_on is null
-		LIMIT $1
-		OFFSET $2
+			archived_on IS NULL
+			AND belongs_to = $1
+		LIMIT $2 
+		OFFSET $3
 	`
 	createOAuth2ClientQuery = `
 		INSERT INTO oauth_clients
@@ -55,7 +75,9 @@ const (
 			scopes = $3,
 			redirect_uri = $4,
 			updated_on = extract(epoch FROM NOW())
-		WHERE id = $5
+		WHERE 
+			id = $5
+			AND belongs_to = $6
 		RETURNING
 			updated_on
 	`
@@ -63,7 +85,9 @@ const (
 		UPDATE oauth_clients SET
 			updated_on = extract(epoch FROM NOW()),
 			archived_on = extract(epoch FROM NOW())
-		WHERE id = $1
+		WHERE 
+			id = $1
+			AND belongs_to = $2
 		RETURNING
 			archived_on
 	`
@@ -97,7 +121,7 @@ func (p Postgres) scanOAuth2Client(scan database.Scannable) (*models.OAuth2Clien
 var _ models.OAuth2ClientHandler = (*Postgres)(nil)
 
 // GetOAuth2Client gets an OAuth2 client
-func (p *Postgres) GetOAuth2Client(ctx context.Context, clientID string) (*models.OAuth2Client, error) {
+func (p *Postgres) GetOAuth2Client(ctx context.Context, clientID string, userID uint64) (*models.OAuth2Client, error) {
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetOAuth2Client")
 	defer span.Finish()
 
@@ -122,8 +146,19 @@ func (p *Postgres) GetOAuth2Client(ctx context.Context, clientID string) (*model
 	return client, nil
 }
 
+// GetOAuth2ClientByClientID fetches any OAuth2 client by client ID, regardless of ownership. This is used by
+// authenticating middleware to fetch client information it needs to validate
+func (p *Postgres) GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*models.OAuth2Client, error) {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetOAuth2Client")
+	defer span.Finish()
+
+	p.logger.WithValue("client_id", clientID).Debug("GetOAuth2Client called")
+	row := p.database.QueryRow(getAnyOAuth2ClientQuery, clientID)
+	return p.scanOAuth2Client(row)
+}
+
 // GetOAuth2ClientCount gets the count of OAuth2 clients that match the current filter
-func (p *Postgres) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
+func (p *Postgres) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (uint64, error) {
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetOAuth2ClientCount")
 	defer span.Finish()
 
@@ -137,12 +172,55 @@ func (p *Postgres) GetOAuth2ClientCount(ctx context.Context, filter *models.Quer
 	}
 
 	var count uint64
-	err = prep.QueryRow().Scan(&count)
+	err = prep.QueryRow(userID).Scan(&count)
 	return count, err
 }
 
+// GetAllOAuth2Clients returns all OAuth2 clients, irrespective of ownership. It is called on startup to populate
+// the OAuth2 Client handler
+func (p *Postgres) GetAllOAuth2Clients(ctx context.Context) ([]models.OAuth2Client, error) {
+	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetAllOAuth2Clients")
+	defer span.Finish()
+	p.logger.Debug("Postgres.GetAllOAuth2Clients called")
+
+	prep, err := p.database.Prepare(getAllOAuth2ClientsQuery)
+	if err != nil {
+		p.logger.Error(err, "error preparing query")
+		return nil, err
+	}
+
+	rows, err := prep.Query()
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if err = rows.Close(); err != nil {
+			p.logger.Error(err, "closing rows")
+		}
+	}()
+
+	var list []models.OAuth2Client
+	for rows.Next() {
+		var x *models.OAuth2Client
+		x, err = p.scanOAuth2Client(rows)
+		if err != nil {
+			p.logger.Error(err, "error encountered scanning OAuth2Client")
+			return nil, err
+		}
+		list = append(list, *x)
+	}
+
+	if err = rows.Err(); err != nil {
+		p.logger.Error(err, "error encountered fetching list of OAuth2Clients")
+		return nil, err
+	}
+
+	return list, err
+}
+
 // GetOAuth2Clients gets a list of OAuth2 clients
-func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
+func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.OAuth2ClientList, error) {
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "GetOAuth2Clients")
 	defer span.Finish()
 
@@ -193,13 +271,12 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 
 	ocl := &models.OAuth2ClientList{
 		Pagination: models.Pagination{
-			Page:       filter.Page,
-			Limit:      filter.Limit,
-			TotalCount: 666,
+			Page:  filter.Page,
+			Limit: filter.Limit,
 		},
 		Clients: list,
 	}
-	if ocl.TotalCount, err = p.GetOAuth2ClientCount(ctx, filter); err != nil {
+	if ocl.TotalCount, err = p.GetOAuth2ClientCount(ctx, filter, userID); err != nil {
 		return nil, err
 	}
 
@@ -279,11 +356,14 @@ func (p *Postgres) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2C
 }
 
 // DeleteOAuth2Client deletes an OAuth2 client
-func (p *Postgres) DeleteOAuth2Client(ctx context.Context, id string) error {
+func (p *Postgres) DeleteOAuth2Client(ctx context.Context, clientID string, userID uint64) error {
 	span := tracing.FetchSpanFromContext(ctx, p.tracer, "DeleteOAuth2Client")
 	defer span.Finish()
 
-	logger := p.logger.WithValue("id", id)
+	logger := p.logger.WithValues(map[string]interface{}{
+		"oauth2_client_id": clientID,
+		"user_id":          userID,
+	})
 	logger.Debug("Postgres.DeleteOAuth2Client called")
 
 	prep, err := p.database.Prepare(archiveOAuth2ClientQuery)
@@ -292,6 +372,6 @@ func (p *Postgres) DeleteOAuth2Client(ctx context.Context, id string) error {
 		return err
 	}
 
-	_, err = prep.Exec(id)
+	_, err = prep.Exec(clientID)
 	return err
 }

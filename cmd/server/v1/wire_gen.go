@@ -52,12 +52,13 @@ func BuildServer(connectionDetails database.ConnectionDetails, CookieName users.
 		return nil, err
 	}
 	usersService := users.ProvideUsersService(CookieName, loggingLogger, databaseDatabase, enticator, usernameFetcher, usersTracer, responseEncoder)
-	clientIDFetcher := server.ProvideClientIDFetcher()
+	clientIDFetcher := server.ProvideOAuth2ServiceClientIDFetcher()
+	oauth2clientsUserIDFetcher := server.ProvideOAuth2ServiceUserIDFetcher()
 	oauth2clientsTracer, err := oauth2clients.ProvideOAuth2ClientsServiceTracer()
 	if err != nil {
 		return nil, err
 	}
-	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(loggingLogger, databaseDatabase, enticator, clientIDFetcher, oauth2clientsTracer, responseEncoder)
+	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(loggingLogger, databaseDatabase, enticator, clientIDFetcher, oauth2clientsUserIDFetcher, oauth2clientsTracer, responseEncoder)
 	serverTracer, err := server.ProvideServerTracer()
 	if err != nil {
 		return nil, err

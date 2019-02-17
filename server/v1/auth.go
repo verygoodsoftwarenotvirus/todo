@@ -11,12 +11,13 @@ import (
 
 const (
 	// cookieName is the name of the cookie we attach to requests
-	cookieName = "todo"
+	cookieName = "todocookie"
 )
 
 type cookieAuth struct {
-	Username      string
-	Authenticated bool
+	// NOTE: both of these fields need to be exported for gob to work, and gob is the basis of how we encode cookies.
+	Admin    bool
+	Username string
 }
 
 // userCookieAuthenticationMiddleware authenticates user cookies
@@ -105,7 +106,7 @@ func (s *Server) login(res http.ResponseWriter, req *http.Request) {
 	}
 
 	logger.Debug("login was valid, returning cookie")
-	cookie, err := s.buildCookie(user, loginValid)
+	cookie, err := s.buildCookie(user)
 	if err != nil {
 		logger.Error(err, "error building cookie")
 		s.internalServerError(res, req, err)
@@ -137,9 +138,9 @@ func (s *Server) fetchLoginDataFromRequest(req *http.Request) (*models.UserLogin
 		return nil, nil, s.notifyUnauthorized, nil
 	}
 	username := loginInput.Username
-	logger := s.logger.WithValue("username", username)
+	logger := s.logger.WithValue("Username", username)
 
-	// if err := s.loginMonitor.LoginAttemptsExhausted(username); err != nil {
+	// if err := s.loginMonitor.LoginAttemptsExhausted(Username); err != nil {
 	// 	s.logger.Debug("user has exhausted their number of login attempts")
 	// 	return nil, nil, func(res http.ResponseWriter, req *http.Request, err error) {
 	// 		s.loginMonitor.NotifyExhaustedAttempts(res)
@@ -192,16 +193,15 @@ func (s *Server) validateLogin(
 	return loginValid, nil, nil
 }
 
-func (s *Server) buildCookie(user *models.User, loginValid bool) (*http.Cookie, error) {
+func (s *Server) buildCookie(user *models.User) (*http.Cookie, error) {
 	s.logger.WithValues(map[string]interface{}{
-		"user_id":     user.ID,
-		"login_valid": loginValid,
+		"user_id": user.ID,
 	}).Debug("buildCookie called")
 
 	encoded, err := s.cookieBuilder.Encode(
 		cookieName, cookieAuth{
-			Username:      user.Username,
-			Authenticated: loginValid,
+			Admin:    user.IsAdmin,
+			Username: user.Username,
 		},
 	)
 

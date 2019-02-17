@@ -14,12 +14,14 @@ const (
 
 // OAuth2ClientHandler handles OAuth2 clients
 type OAuth2ClientHandler interface {
-	GetOAuth2Client(ctx context.Context, identifier string) (*OAuth2Client, error)
-	GetOAuth2ClientCount(ctx context.Context, filter *QueryFilter) (uint64, error)
-	GetOAuth2Clients(ctx context.Context, filter *QueryFilter) (*OAuth2ClientList, error)
+	GetOAuth2Client(ctx context.Context, identifier string, userID uint64) (*OAuth2Client, error)
+	GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*OAuth2Client, error)
+	GetOAuth2ClientCount(ctx context.Context, filter *QueryFilter, userID uint64) (uint64, error)
+	GetOAuth2Clients(ctx context.Context, filter *QueryFilter, userID uint64) (*OAuth2ClientList, error)
+	GetAllOAuth2Clients(ctx context.Context) ([]OAuth2Client, error)
 	CreateOAuth2Client(ctx context.Context, input *OAuth2ClientCreationInput) (*OAuth2Client, error)
 	UpdateOAuth2Client(ctx context.Context, updated *OAuth2Client) error
-	DeleteOAuth2Client(ctx context.Context, identifier string) error
+	DeleteOAuth2Client(ctx context.Context, identifier string, userID uint64) error
 }
 
 // OAuth2Client represents a user-authorized API client

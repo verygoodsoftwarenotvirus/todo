@@ -17,7 +17,6 @@ var (
 	paramFetcherProviders = wire.NewSet(
 		ProvideUserIDFetcher,
 		ProvideUsernameFetcher,
-		ProvideOAuth2ServiceUserIDFetcher,
 		ProvideOAuth2ServiceClientIDFetcher,
 		ProvideItemIDFetcher,
 	)
@@ -36,11 +35,6 @@ func ProvideItemIDFetcher() items.ItemIDFetcher {
 // ProvideUsernameFetcher provides a UsernameFetcher
 func ProvideUsernameFetcher() users.UsernameFetcher {
 	return ChiUsernameFetcher
-}
-
-// ProvideOAuth2ServiceUserIDFetcher provides a UserIDFetcher
-func ProvideOAuth2ServiceUserIDFetcher() oauth2clients.UserIDFetcher {
-	return UserIDFetcher
 }
 
 // ProvideOAuth2ServiceClientIDFetcher provides a ClientIDFetcher

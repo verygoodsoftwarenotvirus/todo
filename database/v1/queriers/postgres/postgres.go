@@ -5,14 +5,30 @@ import (
 	"database/sql"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 
+	"github.com/ExpansiveWorlds/instrumentedsql"
+	// instrumentedopentracing "github.com/ExpansiveWorlds/instrumentedsql/opentracing"
 	"github.com/google/wire"
-	_ "github.com/lib/pq" // we need the import here
-	"github.com/pkg/errors"
+	postgres "github.com/lib/pq"
+	"github.com/opentracing/opentracing-go"
+)
+
+var (
+	// Providers is what we provide for dependency injection
+	Providers = wire.NewSet(
+		ProvidePostgresDB,
+		ProvidePostgres,
+		ProvidePostgresTracer,
+	)
 )
 
 type (
+	// Tracer is a tracing wrapper
+	Tracer opentracing.Tracer
+
 	// Postgres is our main Postgres interaction database
 	Postgres struct {
 		debug       bool
@@ -37,27 +53,58 @@ type (
 	}
 )
 
-var (
-	// Providers is what we provide for dependency injection
-	Providers = wire.NewSet(
-		ProvidePostgres,
+// ProvidePostgresTracer provides a Postgres tracer
+func ProvidePostgresTracer() Tracer {
+	return tracing.ProvideTracer("postgres")
+}
+
+// ProvidePostgresDB provides an instrumented postgres database
+func ProvidePostgresDB(
+	logger logging.Logger,
+	tracer Tracer,
+	connectionDetails database.ConnectionDetails,
+) (*sql.DB, error) {
+	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to postgres")
+
+	loggerFunc := instrumentedsql.LoggerFunc(func(ctx context.Context, msg string, keyvals ...interface{}) {
+		var (
+			currentKey string
+		)
+
+		values := map[string]interface{}{}
+		for i, x := range keyvals {
+			if i%2 == 0 {
+				if y, ok := x.(string); ok {
+					currentKey = y
+				}
+			} else if currentKey != "" && x != nil {
+				values[currentKey] = x
+				currentKey = ""
+			}
+		}
+		values["msg"] = msg
+
+		logger.WithValues(values).Debug("")
+	})
+
+	sql.Register(
+		"instrumented-postgres",
+		instrumentedsql.WrapDriver(
+			&postgres.Driver{},
+			// instrumentedsql.WithTracer(instrumentedsql.Tracer),
+			instrumentedsql.WithLogger(loggerFunc),
+		),
 	)
-)
+	return sql.Open("instrumented-postgres", string(connectionDetails))
+}
 
 // ProvidePostgres provides a postgres database controller
 func ProvidePostgres(
 	debug bool,
+	db *sql.DB,
 	logger logging.Logger,
-	connectionDetails ConnectionDetails,
+	connectionDetails database.ConnectionDetails,
 ) (*Postgres, error) {
-
-	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to postgres")
-	db, err := sql.Open("postgres", string(connectionDetails))
-	if err != nil {
-		logger.Error(err, "error encountered establishing database connection")
-		return nil, errors.Wrap(err, "establishing database connection")
-	}
-
 	s := &Postgres{
 		debug:       debug,
 		logger:      logger,

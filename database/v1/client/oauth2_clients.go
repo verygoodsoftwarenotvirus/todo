@@ -40,6 +40,11 @@ func (c *Client) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryF
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetOAuth2ClientCount")
 	defer span.Finish()
 
+	if filter == nil {
+		c.logger.Debug("using default query filter")
+		filter = models.DefaultQueryFilter
+	}
+
 	logger := c.logger.WithValue("filter", filter)
 	logger.Debug("Postgres.GetOAuth2ClientCount called")
 
@@ -51,6 +56,7 @@ func (c *Client) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryF
 func (c *Client) GetAllOAuth2Clients(ctx context.Context) ([]models.OAuth2Client, error) {
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetAllOAuth2Clients")
 	defer span.Finish()
+
 	c.logger.Debug("Postgres.GetAllOAuth2Clients called")
 
 	return c.database.GetAllOAuth2Clients(ctx)

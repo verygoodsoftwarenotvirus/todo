@@ -11,6 +11,14 @@ import (
 
 var _ database.Database = (*Client)(nil)
 
+/*
+	NOTE: the original purpose of this client is to allow convenient wrapping of actual query execution.
+
+	I didn't want to neglect one database implementation while another flourished, so I created this wrapper.
+	In reality, a better abstraction is needed, but I need some time to think about what that should look like,
+	but it probably will look more like this and less like it did.
+*/
+
 // Client is a wrapper around a database
 type Client struct {
 	database database.Database

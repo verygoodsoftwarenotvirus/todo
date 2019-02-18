@@ -42,10 +42,7 @@ func checkValueAndError(t *testing.T, i interface{}, err error) {
 }
 
 func initializeTracer() {
-	tracer, err := tracing.ProvideTracer("integration-tests-client")
-	if err != nil {
-		log.Fatal(err)
-	}
+	tracer := tracing.ProvideTracer("integration-tests-client")
 	opentracing.SetGlobalTracer(tracer)
 }
 

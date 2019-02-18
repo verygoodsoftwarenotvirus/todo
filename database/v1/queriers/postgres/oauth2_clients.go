@@ -40,21 +40,24 @@ func (p Postgres) scanOAuth2Client(scan Scannable) (*models.OAuth2Client, error)
 
 const getOAuth2ClientQuery = `
 	SELECT
-		id, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to
+		id,
+		client_id,
+		scopes,
+		redirect_uri,
+		client_secret,
+		created_on,
+		updated_on,
+		archived_on,
+		belongs_to
 	FROM
 		oauth_clients
 	WHERE
 		client_id = $1
-`
+` // AND belongs_to = $2 // FIXME: if you add this to the query, *boom* the world goes insane!
 
 // GetOAuth2Client gets an OAuth2 client
 func (p *Postgres) GetOAuth2Client(ctx context.Context, clientID string, userID uint64) (*models.OAuth2Client, error) {
-	prep, err := p.database.PrepareContext(ctx, getOAuth2ClientQuery)
-	if err != nil {
-		return nil, errors.Wrap(err, "error preparing OAuth2 retrieval query")
-	}
-
-	row := prep.QueryRow(clientID)
+	row := p.database.QueryRowContext(ctx, getOAuth2ClientQuery, clientID)
 	client, err := p.scanOAuth2Client(row)
 	if err != nil {
 		return nil, errors.Wrap(err, "error scanning returned row")
@@ -63,23 +66,18 @@ func (p *Postgres) GetOAuth2Client(ctx context.Context, clientID string, userID 
 	return client, nil
 }
 
-// const getOAuth2ClientQuery = `
-// 	SELECT
-// 		id, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to
-// 	FROM
-// 		oauth_clients
-// 	WHERE
-// 		client_id = $1
-// `
+const getOAuth2ClientByClientIDQuery = `
+	SELECT
+		id, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to
+	FROM
+		oauth_clients
+	WHERE
+		client_id = $1
+`
 
 // GetOAuth2ClientByClientID gets an OAuth2 client
 func (p *Postgres) GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*models.OAuth2Client, error) {
-	prep, err := p.database.PrepareContext(ctx, getOAuth2ClientQuery)
-	if err != nil {
-		return nil, errors.Wrap(err, "error preparing OAuth2 retrieval query")
-	}
-
-	row := prep.QueryRow(clientID)
+	row := p.database.QueryRowContext(ctx, getOAuth2ClientByClientIDQuery, clientID)
 	client, err := p.scanOAuth2Client(row)
 	if err != nil {
 		return nil, errors.Wrap(err, "error scanning returned row")
@@ -97,15 +95,10 @@ const getOAuth2ClientCountQuery = `
 		archived_on IS NULL
 `
 
-// GetOAuth2ClientCount gets the count of OAuth2 clients that match the current filter
+// GetOAuth2ClientCount WILL get the count of OAuth2 clients that match the current filter
 func (p *Postgres) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (uint64, error) {
-	prep, err := p.database.PrepareContext(ctx, getOAuth2ClientCountQuery)
-	if err != nil {
-		return 0, errors.Wrap(err, "error preparing OAuth2 count retrieval query")
-	}
-
 	var count uint64
-	err = prep.QueryRow().Scan(&count)
+	err := p.database.QueryRowContext(ctx, getOAuth2ClientCountQuery).Scan(&count)
 	return count, err
 }
 
@@ -130,17 +123,7 @@ const getOAuth2ClientsQuery = `
 
 // GetOAuth2Clients gets a list of OAuth2 clients
 func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.OAuth2ClientList, error) {
-	if filter == nil {
-		p.logger.Debug("using default query filter")
-		filter = models.DefaultQueryFilter
-	}
-
-	prep, err := p.database.PrepareContext(ctx, getOAuth2ClientsQuery)
-	if err != nil {
-		return nil, errors.Wrap(err, "preparing query")
-	}
-
-	rows, err := prep.Query(filter.Limit, filter.QueryPage())
+	rows, err := p.database.QueryContext(ctx, getOAuth2ClientsQuery, filter.Limit, filter.QueryPage())
 	if err != nil {
 		return nil, errors.Wrap(err, "executing query")
 	}
@@ -182,7 +165,15 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 
 const getAllOAuth2ClientsQuery = `
 	SELECT
-		id, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to
+		id,
+		client_id,
+		scopes,
+		redirect_uri,
+		client_secret,
+		created_on,
+		updated_on,
+		archived_on,
+		belongs_to
 	FROM
 		oauth_clients
 	WHERE

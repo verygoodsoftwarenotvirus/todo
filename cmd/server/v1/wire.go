@@ -4,7 +4,9 @@ package main
 
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
@@ -19,7 +21,7 @@ import (
 
 // BuildServer builds a server
 func BuildServer(
-	connectionDetails string,
+	connectionDetails database.ConnectionDetails,
 	CookieName users.CookieName,
 	metricsNamespace metrics.Namespace,
 	CookieSecret []byte,
@@ -34,6 +36,7 @@ func BuildServer(
 
 		// Database things
 		dbclient.Providers,
+		postgres.Providers,
 
 		// Server things
 		server.Providers,

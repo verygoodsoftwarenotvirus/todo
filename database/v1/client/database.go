@@ -17,7 +17,7 @@ var (
 )
 
 // ProvideTracer provides a tracer
-func ProvideTracer() (Tracer, error) {
+func ProvideTracer() Tracer {
 	return tracing.ProvideTracer("database-client")
 }
 

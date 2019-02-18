@@ -58,11 +58,12 @@ const getItemCountQuery = `
 		items
 	WHERE
 		completed_on IS NULL
+		AND belongs_to = $1
 ` // FINISHME: finish adding filters to this query
 
-// GetItemCount fetches the count of items from the postgres database that meet a particular filter
+// GetItemCount WILL fetch the count of items from the postgres database that meet a particular filter
 func (p *Postgres) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
-	err = p.database.QueryRowContext(ctx, getItemCountQuery).Scan(&count)
+	err = p.database.QueryRowContext(ctx, getItemCountQuery, userID).Scan(&count)
 	return
 }
 
@@ -79,19 +80,15 @@ const getItemsQuery = `
 		items
 	WHERE
 		completed_on IS NULL
-	LIMIT $1
-	OFFSET $2
+		AND belongs_to = $1
+	LIMIT $2
+	OFFSET $3
 ` // FINISHME: finish adding filters to this query
 
 // GetItems fetches a list of items from the postgres database that meet a particular filter
 func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
-	if filter == nil {
-		p.logger.Debug("using default query filter")
-		filter = models.DefaultQueryFilter
-	}
-
 	var list []models.Item
-	rows, err := p.database.QueryContext(ctx, getItemsQuery, filter.Limit, filter.QueryPage())
+	rows, err := p.database.QueryContext(ctx, getItemsQuery, userID, filter.Limit, filter.QueryPage())
 	if err != nil {
 		return nil, err
 	}
@@ -172,6 +169,7 @@ const updateItemQuery = `
 		updated_on = extract(epoch FROM NOW())
 	WHERE
 		id = $3
+		AND belongs_to = $4
 	RETURNING
 		updated_on
 `
@@ -179,7 +177,15 @@ const updateItemQuery = `
 // UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
 func (p *Postgres) UpdateItem(ctx context.Context, input *models.Item) error {
 	// update the item
-	err := p.database.QueryRowContext(ctx, updateItemQuery, input.Name, input.Details, input.ID).Scan(&input.UpdatedOn)
+	err := p.database.
+		QueryRowContext(
+			ctx,
+			updateItemQuery,
+			input.Name,
+			input.Details,
+			input.ID,
+			input.BelongsTo,
+		).Scan(&input.UpdatedOn)
 	return err
 }
 
@@ -190,12 +196,13 @@ const archiveItemQuery = `
 	WHERE
 		id = $1
 		AND completed_on IS NULL
+		AND belongs_to = $2
 	RETURNING
 		completed_on
 `
 
 // DeleteItem deletes an item from the database by its ID
-func (p *Postgres) DeleteItem(ctx context.Context, id uint64, userID uint64) error {
-	_, err := p.database.ExecContext(ctx, archiveItemQuery, id)
+func (p *Postgres) DeleteItem(ctx context.Context, itemID uint64, userID uint64) error {
+	_, err := p.database.ExecContext(ctx, archiveItemQuery, itemID, userID)
 	return err
 }

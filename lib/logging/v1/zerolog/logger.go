@@ -51,6 +51,7 @@ func (l *Logger) SetLevel(level logging.Level) {
 		l.logger = l.logger.With().Caller().Logger()
 		lvl = zerolog.DebugLevel
 	case logging.ErrorLevel:
+		l.logger = l.logger.With().Caller().Logger()
 		lvl = zerolog.ErrorLevel
 	}
 	l.logger = l.logger.Level(lvl)

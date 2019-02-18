@@ -7,7 +7,9 @@ package main
 
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
@@ -20,52 +22,38 @@ import (
 
 // Injectors from wire.go:
 
-func BuildServer(connectionDetails string, CookieName users.CookieName, metricsNamespace metrics.Namespace, CookieSecret []byte, Debug bool) (*server.Server, error) {
+func BuildServer(connectionDetails database.ConnectionDetails, CookieName users.CookieName, metricsNamespace metrics.Namespace, CookieSecret []byte, Debug bool) (*server.Server, error) {
 	bcryptHashCost := auth.ProvideBcryptHashCost()
 	logger := zerolog.ProvideZerologger()
 	loggingLogger := zerolog.ProvideLogger(logger)
-	tracer, err := auth.ProvideTracer()
-	if err != nil {
-		return nil, err
-	}
+	tracer := auth.ProvideTracer()
 	enticator := auth.ProvideBcrypt(bcryptHashCost, loggingLogger, tracer)
-	dbclientTracer, err := dbclient.ProvideTracer()
+	postgresTracer := postgres.ProvidePostgresTracer()
+	db, err := postgres.ProvidePostgresDB(loggingLogger, postgresTracer, connectionDetails)
 	if err != nil {
 		return nil, err
 	}
-	database, err := dbclient.ProvidePostgresDatabase(Debug, loggingLogger, connectionDetails, dbclientTracer)
+	dbclientTracer := dbclient.ProvideTracer()
+	databaseDatabase, err := dbclient.ProvidePostgresDatabase(Debug, db, loggingLogger, connectionDetails, dbclientTracer)
 	if err != nil {
 		return nil, err
 	}
 	userIDFetcher := server.ProvideUserIDFetcher()
 	itemIDFetcher := server.ProvideItemIDFetcher()
-	serviceTracer, err := items.ProvideItemsServiceTracer()
-	if err != nil {
-		return nil, err
-	}
+	itemsTracer := items.ProvideItemsServiceTracer()
 	responseEncoder := encoding.ProvideJSONResponseEncoder()
-	service := items.ProvideItemsService(loggingLogger, database, userIDFetcher, itemIDFetcher, serviceTracer, responseEncoder)
+	service := items.ProvideItemsService(loggingLogger, databaseDatabase, userIDFetcher, itemIDFetcher, itemsTracer, responseEncoder)
 	usernameFetcher := server.ProvideUsernameFetcher()
-	usersTracer, err := users.ProvideUserServiceTracer()
-	if err != nil {
-		return nil, err
-	}
-	usersService := users.ProvideUsersService(CookieName, loggingLogger, database, enticator, usernameFetcher, usersTracer, responseEncoder)
+	usersTracer := users.ProvideUserServiceTracer()
+	usersService := users.ProvideUsersService(CookieName, loggingLogger, databaseDatabase, enticator, usernameFetcher, usersTracer, responseEncoder)
 	clientIDFetcher := server.ProvideOAuth2ServiceClientIDFetcher()
-	oauth2clientsUserIDFetcher := server.ProvideOAuth2ServiceUserIDFetcher()
-	oauth2clientsTracer, err := oauth2clients.ProvideOAuth2ClientsServiceTracer()
-	if err != nil {
-		return nil, err
-	}
-	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(loggingLogger, database, enticator, clientIDFetcher, oauth2clientsUserIDFetcher, oauth2clientsTracer, responseEncoder)
-	serverTracer, err := server.ProvideServerTracer()
-	if err != nil {
-		return nil, err
-	}
+	oauth2clientsTracer := oauth2clients.ProvideOAuth2ClientsServiceTracer()
+	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(loggingLogger, databaseDatabase, enticator, clientIDFetcher, oauth2clientsTracer, responseEncoder)
+	serverTracer := server.ProvideServerTracer()
 	httpServer := server.ProvideHTTPServer()
 	handler := prometheus.ProvideMetricsHandler()
 	instrumentationHandlerProvider := prometheus.ProvideInstrumentationHandlerProvider(metricsNamespace)
-	serverServer, err := server.ProvideServer(Debug, CookieSecret, enticator, service, usersService, oauth2clientsService, database, loggingLogger, serverTracer, httpServer, responseEncoder, handler, instrumentationHandlerProvider)
+	serverServer, err := server.ProvideServer(Debug, CookieSecret, enticator, service, usersService, oauth2clientsService, databaseDatabase, loggingLogger, serverTracer, httpServer, responseEncoder, handler, instrumentationHandlerProvider)
 	if err != nil {
 		return nil, err
 	}

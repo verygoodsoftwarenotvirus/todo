@@ -9,12 +9,15 @@ import (
 	"github.com/uber/jaeger-lib/metrics/expvar"
 )
 
+func init() {
+	opentracing.SetGlobalTracer(ProvideTracer("_null_"))
+}
+
 // ProvideTracer provides a tracer
-func ProvideTracer(service string) (opentracing.Tracer, error) {
+func ProvideTracer(service string) opentracing.Tracer {
 	cfg, err := config.FromEnv()
 	if err != nil {
-		// return nil, err
-		return opentracing.NoopTracer{}, nil
+		return opentracing.NoopTracer{}
 	}
 	cfg.ServiceName = service
 	cfg.Sampler.Type = "const"
@@ -25,11 +28,10 @@ func ProvideTracer(service string) (opentracing.Tracer, error) {
 		config.Metrics(metricsFactory),
 	)
 	if err != nil {
-		// return nil, err
-		return opentracing.NoopTracer{}, nil
+		return opentracing.NoopTracer{}
 	}
 
-	return tracer, nil
+	return tracer
 }
 
 // ProvideNoopTracer provides a noop tracer

@@ -35,21 +35,17 @@ type (
 	// ClientIDFetcher is a function for fetching client IDs out of requests
 	ClientIDFetcher func(req *http.Request) string
 
-	// UserIDFetcher is a function for fetching user IDs out of requests
-	UserIDFetcher func(req *http.Request) uint64
-
 	// Service manages our OAuth2 clients via HTTP
 	Service struct {
-		database          database.Database
-		authenticator     auth.Enticator
-		logger            logging.Logger
-		tracer            opentracing.Tracer
-		encoder           encoding.ResponseEncoder
-		tokenStore        oauth2.TokenStore
-		clientIDFetcher   func(req *http.Request) string
-		userIDFetcher     func(req *http.Request) uint64
-		oauth2Handler     *oauth2server.Server
-		oauth2ClientStore *oauth2store.ClientStore
+		database             database.Database
+		authenticator        auth.Enticator
+		logger               logging.Logger
+		tracer               opentracing.Tracer
+		encoder              encoding.ResponseEncoder
+		tokenStore           oauth2.TokenStore
+		urlClientIDExtractor func(req *http.Request) string
+		oauth2Handler        *oauth2server.Server
+		oauth2ClientStore    *oauth2store.ClientStore
 	}
 )
 
@@ -62,7 +58,7 @@ var (
 )
 
 // ProvideOAuth2ClientsServiceTracer is an obligatory Tracer wrapper
-func ProvideOAuth2ClientsServiceTracer() (Tracer, error) {
+func ProvideOAuth2ClientsServiceTracer() Tracer {
 	return tracing.ProvideTracer("oauth2-clients-service")
 }
 
@@ -72,7 +68,6 @@ func ProvideOAuth2ClientsService(
 	database database.Database,
 	authenticator auth.Enticator,
 	clientIDFetcher ClientIDFetcher,
-	userIDFetcher UserIDFetcher,
 	tracer Tracer,
 	encoder encoding.ResponseEncoder,
 ) *Service {
@@ -85,16 +80,15 @@ func ProvideOAuth2ClientsService(
 	server := oauth2server.NewDefaultServer(manager)
 
 	us := &Service{
-		database:          database,
-		authenticator:     authenticator,
-		logger:            logger,
-		tokenStore:        tokenStore,
-		tracer:            tracer,
-		encoder:           encoder,
-		clientIDFetcher:   clientIDFetcher,
-		userIDFetcher:     userIDFetcher,
-		oauth2Handler:     server,
-		oauth2ClientStore: clientStore,
+		database:             database,
+		authenticator:        authenticator,
+		logger:               logger,
+		tokenStore:           tokenStore,
+		tracer:               tracer,
+		encoder:              encoder,
+		urlClientIDExtractor: clientIDFetcher,
+		oauth2Handler:        server,
+		oauth2ClientStore:    clientStore,
 	}
 
 	us.oauth2Handler.SetAllowGetAccessRequest(true)

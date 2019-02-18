@@ -3,12 +3,13 @@ package main
 import (
 	"log"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 )
 
 const (
-	postgresConnectionDetails = "postgres://todo:hunter2@database:5432/todo?sslmode=disable"
+	postgresConnectionDetails = database.ConnectionDetails("postgres://todo:hunter2@database:5432/todo?sslmode=disable")
 
 	cookieSecret = "HEREISA32CHARSECRETWHICHISMADEUP"
 )

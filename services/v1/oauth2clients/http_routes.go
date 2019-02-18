@@ -50,6 +50,13 @@ func randString() (string, error) {
 	return base32.StdEncoding.EncodeToString(b), nil
 }
 
+func (s *Service) fetchUserID(req *http.Request) uint64 {
+	if x, ok := req.Context().Value(models.UserIDKey).(uint64); ok {
+		return x
+	}
+	return 0
+}
+
 // OAuth2ClientCreationInputContextMiddleware is a middleware for attaching OAuth2 client info to a request
 func (s *Service) OAuth2ClientCreationInputContextMiddleware(next http.Handler) http.Handler {
 	x := new(models.OAuth2ClientCreationInput)
@@ -121,6 +128,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		logger.Error(err, "generating OAuth2 Client Secret")
 		return
 	}
+	input.BelongsTo = s.fetchUserID(req)
 
 	x, err := s.database.CreateOAuth2Client(ctx, input)
 	if err != nil {
@@ -147,8 +155,8 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	serverSpan := s.tracer.StartSpan("read route", opentracing.ChildOf(spanCtx))
 	defer serverSpan.Finish()
 
-	userID := s.userIDFetcher(req)
-	oauth2ClientID := s.clientIDFetcher(req)
+	userID := s.fetchUserID(req)
+	oauth2ClientID := s.urlClientIDExtractor(req)
 	logger := s.logger.WithValues(map[string]interface{}{
 		"oauth2_client_id": oauth2ClientID,
 		"user_id":          userID,
@@ -178,7 +186,7 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 	serverSpan := s.tracer.StartSpan("list route", opentracing.ChildOf(spanCtx))
 	defer serverSpan.Finish()
 
-	userID := s.userIDFetcher(req)
+	userID := s.fetchUserID(req)
 	qf := models.ExtractQueryFilter(req)
 	logger := s.logger.WithValues(map[string]interface{}{
 		"filter":  qf,
@@ -205,8 +213,8 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	serverSpan := s.tracer.StartSpan("delete route", opentracing.ChildOf(spanCtx))
 	defer serverSpan.Finish()
 
-	userID := s.userIDFetcher(req)
-	oauth2ClientID := s.clientIDFetcher(req)
+	userID := s.fetchUserID(req)
+	oauth2ClientID := s.urlClientIDExtractor(req)
 	logger := s.logger.WithValues(map[string]interface{}{
 		"oauth2_client_id": oauth2ClientID,
 		"user_id":          userID,
@@ -229,8 +237,8 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 	serverSpan := s.tracer.StartSpan("update route", opentracing.ChildOf(spanCtx))
 	defer serverSpan.Finish()
 
-	userID := s.userIDFetcher(req)
-	oauth2ClientID := s.clientIDFetcher(req)
+	userID := s.fetchUserID(req)
+	oauth2ClientID := s.urlClientIDExtractor(req)
 	logger := s.logger.WithValues(map[string]interface{}{
 		"oauth2_client_id": oauth2ClientID,
 		"user_id":          userID,
@@ -332,13 +340,11 @@ func (s *Service) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		s.logger.Debug("OauthInfoMiddleware called")
-		userID := s.userIDFetcher(req)
 
 		if v := req.URL.Query().Get(oauth2ClientIDURIParamKey); v != "" {
 			logger := s.logger.WithValue("oauth2_client_id", v)
-			logger.Debug("fetching oauth2 client from database")
 
-			client, err := s.database.GetOAuth2Client(ctx, v, userID)
+			client, err := s.database.GetOAuth2ClientByClientID(ctx, v)
 			if err != nil {
 				logger.Error(err, "error fetching OAuth2 client")
 				http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -387,21 +393,16 @@ var _ oauth2server.AuthorizeScopeHandler = (*Service)(nil).AuthorizeScopeHandler
 // AuthorizeScopeHandler satisfies the oauth2server AuthorizeScopeHandler interface
 func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Request) (scope string, err error) {
 	ctx := req.Context()
-	userID := s.userIDFetcher(req)
 	client := s.fetchOAuth2ClientFromRequest(req)
 
 	s.logger.Debug("AuthorizeScopeHandler called")
-	logger := s.logger.WithValues(map[string]interface{}{
-		"user_id":   userID,
-		"client.ID": client.ID,
-	})
 
 	if client == nil {
 		clientID := s.fetchOAuth2ClientIDFromRequest(req)
 		if clientID != "" {
-			client, err = s.database.GetOAuth2Client(ctx, clientID, userID)
+			client, err = s.database.GetOAuth2ClientByClientID(ctx, clientID)
 			if err != nil {
-				logger.Error(err, "error fetching OAuth2 Client")
+				s.logger.Error(err, "error fetching OAuth2 Client")
 				return "", err
 			}
 
@@ -412,9 +413,7 @@ func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reque
 		return strings.Join(client.Scopes, scopesSeparator), nil
 	}
 
-	returnErr := errors.New("no scope information found")
-	logger.Error(nil, "no scope information found")
-	return "", returnErr
+	return "", errors.New("no scope information found")
 }
 
 var _ oauth2server.UserAuthorizationHandler = (*Service)(nil).UserAuthorizationHandler

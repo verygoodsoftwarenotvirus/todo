@@ -99,7 +99,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler, createClientInitRou
 			s.usersService.PasswordUpdateInputContextMiddleware,
 		).Post("/password/new", s.usersService.UpdatePassword)
 
-		usernamePattern := fmt.Sprintf("/{%s:[a-zA-Z0-9]+}", users.URIParamKey)
+		usernamePattern := fmt.Sprintf(`/{%s:[a-zA-Z0-9_\-]+}`, users.URIParamKey)
 
 		userRouter.Get("/", s.usersService.List)                  // List
 		userRouter.Get(usernamePattern, s.usersService.Read)      // Read

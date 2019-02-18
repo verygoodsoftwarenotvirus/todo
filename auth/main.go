@@ -41,7 +41,7 @@ type PasswordHasher interface {
 type Tracer opentracing.Tracer
 
 // ProvideTracer provides a Tracer
-func ProvideTracer() (Tracer, error) {
+func ProvideTracer() Tracer {
 	return tracing.ProvideTracer("password-authentication")
 }
 

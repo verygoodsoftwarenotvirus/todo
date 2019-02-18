@@ -73,7 +73,7 @@ var (
 )
 
 // ProvideServerTracer provides a UserServiceTracer from an tracer building function
-func ProvideServerTracer() (Tracer, error) {
+func ProvideServerTracer() Tracer {
 	return tracing.ProvideTracer("todo-server")
 }
 

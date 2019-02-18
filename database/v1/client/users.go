@@ -34,6 +34,11 @@ func (c *Client) GetUserCount(ctx context.Context, filter *models.QueryFilter) (
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetUserCount")
 	defer span.Finish()
 
+	if filter == nil {
+		c.logger.Debug("using default query filter")
+		filter = models.DefaultQueryFilter
+	}
+
 	c.logger.WithValue("filter", filter).Debug("GetUserCount called")
 
 	return c.database.GetUserCount(ctx, filter)
@@ -43,6 +48,11 @@ func (c *Client) GetUserCount(ctx context.Context, filter *models.QueryFilter) (
 func (c *Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetUsers")
 	defer span.Finish()
+
+	if filter == nil {
+		c.logger.Debug("using default query filter")
+		filter = models.DefaultQueryFilter
+	}
 
 	c.logger.WithValue("filter", filter).Debug("GetUsers called")
 

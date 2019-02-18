@@ -235,9 +235,6 @@ func (c *V1Client) makeDataRequest(method string, uri string, in interface{}, ou
 		return ErrNotFound
 	}
 
-	rb, err := httputil.DumpResponse(res, true)
-	c.logger.WithValue("response_body", string(rb)).Debug("")
-
 	if out != nil {
 		resErr := unmarshalBody(res, &out)
 		if resErr != nil {

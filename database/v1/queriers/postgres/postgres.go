@@ -5,52 +5,51 @@ import (
 	"database/sql"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 
 	"github.com/google/wire"
 	_ "github.com/lib/pq" // we need the import here
-	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 )
 
 type (
-	// Tracer is an arbitrary alias for dependency injection
-	Tracer opentracing.Tracer
-
 	// Postgres is our main Postgres interaction database
 	Postgres struct {
 		debug       bool
 		logger      logging.Logger
 		database    *sql.DB
 		databaseURL string
-		tracer      opentracing.Tracer
+	}
+
+	// ConnectionDetails is a string alias for a Postgres url
+	ConnectionDetails string
+
+	// Scannable represents any database response (i.e. either a transaction or a regular execution response)
+	Scannable interface {
+		Scan(dest ...interface{}) error
+	}
+
+	// Querier is a subset interface for sql.{DB|Tx|Stmt} objects
+	Querier interface {
+		ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error)
+		QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows, error)
+		QueryRowContext(ctx context.Context, args ...interface{}) *sql.Row
 	}
 )
 
 var (
-	_ database.Database = (*Postgres)(nil)
-
 	// Providers is what we provide for dependency injection
 	Providers = wire.NewSet(
 		ProvidePostgres,
-		ProvidePostgresTracer,
 	)
 )
-
-// ProvidePostgresTracer provides a Tracer
-func ProvidePostgresTracer() (Tracer, error) {
-	return tracing.ProvideTracer("postgres-database")
-}
 
 // ProvidePostgres provides a postgres database controller
 func ProvidePostgres(
 	debug bool,
 	logger logging.Logger,
-	tracer Tracer,
-	connectionDetails database.ConnectionDetails,
-) (database.Database, error) {
+	connectionDetails ConnectionDetails,
+) (*Postgres, error) {
 
 	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to postgres")
 	db, err := sql.Open("postgres", string(connectionDetails))
@@ -64,7 +63,6 @@ func ProvidePostgres(
 		logger:      logger,
 		database:    db,
 		databaseURL: string(connectionDetails),
-		tracer:      tracer,
 	}
 
 	return s, nil

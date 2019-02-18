@@ -2,6 +2,7 @@ package tracing
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go/config"
@@ -41,6 +42,10 @@ func FetchSpanFromContext(ctx context.Context, tracer opentracing.Tracer, operat
 	var parentCtx opentracing.SpanContext
 	if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 		parentCtx = parentSpan.Context()
+	}
+
+	if tracer == nil {
+		panic(fmt.Sprintf("nil tracer from %q", operationName))
 	}
 
 	if parentCtx != nil {

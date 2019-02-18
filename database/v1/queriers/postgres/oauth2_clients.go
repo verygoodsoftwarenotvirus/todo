@@ -1,0 +1,324 @@
+package postgres
+
+import (
+	"context"
+	"strings"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"github.com/pkg/errors"
+)
+
+const (
+	scopesSeparator = `,`
+)
+
+func (p Postgres) scanOAuth2Client(scan Scannable) (*models.OAuth2Client, error) {
+	var (
+		x      = &models.OAuth2Client{}
+		scopes string
+	)
+
+	err := scan.Scan(
+		&x.ID,
+		&x.ClientID,
+		&scopes,
+		&x.RedirectURI,
+		&x.ClientSecret,
+		&x.CreatedOn,
+		&x.UpdatedOn,
+		&x.ArchivedOn,
+		&x.BelongsTo,
+	)
+	if err != nil {
+		return nil, err
+	}
+	x.Scopes = strings.Split(scopes, scopesSeparator)
+
+	return x, nil
+}
+
+const getOAuth2ClientQuery = `
+	SELECT
+		id, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to
+	FROM
+		oauth_clients
+	WHERE
+		client_id = $1
+`
+
+// GetOAuth2Client gets an OAuth2 client
+func (p *Postgres) GetOAuth2Client(ctx context.Context, clientID string, userID uint64) (*models.OAuth2Client, error) {
+	prep, err := p.database.PrepareContext(ctx, getOAuth2ClientQuery)
+	if err != nil {
+		return nil, errors.Wrap(err, "error preparing OAuth2 retrieval query")
+	}
+
+	row := prep.QueryRow(clientID)
+	client, err := p.scanOAuth2Client(row)
+	if err != nil {
+		return nil, errors.Wrap(err, "error scanning returned row")
+	}
+
+	return client, nil
+}
+
+// const getOAuth2ClientQuery = `
+// 	SELECT
+// 		id, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to
+// 	FROM
+// 		oauth_clients
+// 	WHERE
+// 		client_id = $1
+// `
+
+// GetOAuth2ClientByClientID gets an OAuth2 client
+func (p *Postgres) GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*models.OAuth2Client, error) {
+	prep, err := p.database.PrepareContext(ctx, getOAuth2ClientQuery)
+	if err != nil {
+		return nil, errors.Wrap(err, "error preparing OAuth2 retrieval query")
+	}
+
+	row := prep.QueryRow(clientID)
+	client, err := p.scanOAuth2Client(row)
+	if err != nil {
+		return nil, errors.Wrap(err, "error scanning returned row")
+	}
+
+	return client, nil
+}
+
+const getOAuth2ClientCountQuery = `
+	SELECT
+		COUNT(*)
+	FROM
+		oauth_clients
+	WHERE
+		archived_on IS NULL
+`
+
+// GetOAuth2ClientCount gets the count of OAuth2 clients that match the current filter
+func (p *Postgres) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (uint64, error) {
+	prep, err := p.database.PrepareContext(ctx, getOAuth2ClientCountQuery)
+	if err != nil {
+		return 0, errors.Wrap(err, "error preparing OAuth2 count retrieval query")
+	}
+
+	var count uint64
+	err = prep.QueryRow().Scan(&count)
+	return count, err
+}
+
+const getOAuth2ClientsQuery = `
+	SELECT
+		id,
+		client_id,
+		scopes,
+		redirect_uri,
+		client_secret,
+		created_on,
+		updated_on,
+		archived_on,
+		belongs_to
+	FROM
+		oauth_clients
+	WHERE
+		archived_on IS NULL
+	LIMIT $1
+	OFFSET $2
+`
+
+// GetOAuth2Clients gets a list of OAuth2 clients
+func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.OAuth2ClientList, error) {
+	if filter == nil {
+		p.logger.Debug("using default query filter")
+		filter = models.DefaultQueryFilter
+	}
+
+	prep, err := p.database.PrepareContext(ctx, getOAuth2ClientsQuery)
+	if err != nil {
+		return nil, errors.Wrap(err, "preparing query")
+	}
+
+	rows, err := prep.Query(filter.Limit, filter.QueryPage())
+	if err != nil {
+		return nil, errors.Wrap(err, "executing query")
+	}
+
+	defer func() {
+		if err = rows.Close(); err != nil {
+			p.logger.Error(err, "closing rows")
+		}
+	}()
+
+	var list []models.OAuth2Client
+	for rows.Next() {
+		var x *models.OAuth2Client
+		x, err = p.scanOAuth2Client(rows)
+		if err != nil {
+			return nil, errors.Wrap(err, "scanning OAuth2Client")
+		}
+		list = append(list, *x)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, errors.Wrap(err, "fetching list of OAuth2Clients")
+	}
+
+	ocl := &models.OAuth2ClientList{
+		Pagination: models.Pagination{
+			Page:       filter.Page,
+			Limit:      filter.Limit,
+			TotalCount: 666,
+		},
+		Clients: list,
+	}
+	if ocl.TotalCount, err = p.GetOAuth2ClientCount(ctx, filter, userID); err != nil {
+		return nil, err
+	}
+
+	return ocl, err
+}
+
+const getAllOAuth2ClientsQuery = `
+	SELECT
+		id, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to
+	FROM
+		oauth_clients
+	WHERE
+		archived_on is null
+`
+
+// GetAllOAuth2Clients gets a list of OAuth2 clients regardless of ownership
+func (p *Postgres) GetAllOAuth2Clients(ctx context.Context) ([]models.OAuth2Client, error) {
+	prep, err := p.database.PrepareContext(ctx, getAllOAuth2ClientsQuery)
+	if err != nil {
+		return nil, errors.Wrap(err, "preparing query")
+	}
+
+	rows, err := prep.Query()
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if err = rows.Close(); err != nil {
+			p.logger.Error(err, "closing rows")
+		}
+	}()
+
+	var list []models.OAuth2Client
+	for rows.Next() {
+		var x *models.OAuth2Client
+		x, err = p.scanOAuth2Client(rows)
+		if err != nil {
+			return nil, errors.Wrap(err, "scanning OAuth2Client")
+		}
+		list = append(list, *x)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, errors.Wrap(err, "fetching list of OAuth2Clients")
+	}
+
+	return list, nil
+}
+
+const createOAuth2ClientQuery = `
+	INSERT INTO oauth_clients
+	(
+		client_id,
+		client_secret,
+		scopes,
+		redirect_uri,
+		belongs_to
+	)
+	VALUES
+	(
+		$1, $2, $3, $4, $5
+	)
+	RETURNING
+		id,
+		created_on
+`
+
+// CreateOAuth2Client creates an OAuth2 client
+func (p *Postgres) CreateOAuth2Client(ctx context.Context, input *models.OAuth2ClientCreationInput) (*models.OAuth2Client, error) {
+	var err error
+	x := &models.OAuth2Client{
+		ClientID:     input.ClientID,
+		ClientSecret: input.ClientSecret,
+		RedirectURI:  input.RedirectURI,
+		Scopes:       input.Scopes,
+		BelongsTo:    input.BelongsTo,
+	}
+
+	prep, err := p.database.PrepareContext(ctx, createOAuth2ClientQuery)
+	if err != nil {
+		return nil, errors.Wrap(err, "error preparing  query")
+	}
+
+	// create the client
+	if err = prep.QueryRow(
+		x.ClientID,
+		x.ClientSecret,
+		strings.Join(x.Scopes, scopesSeparator),
+		x.RedirectURI,
+		x.BelongsTo,
+	).Scan(&x.ID, &x.CreatedOn); err != nil {
+		return nil, errors.Wrap(err, "error executing client creation query")
+	}
+
+	return x, nil
+}
+
+const updateOAuth2ClientQuery = `
+	UPDATE oauth_clients SET
+		client_id = $1,
+		client_secret = $2,
+		scopes = $3,
+		redirect_uri = $4,
+		updated_on = extract(epoch FROM NOW())
+	WHERE id = $5
+	RETURNING
+		updated_on
+`
+
+// UpdateOAuth2Client updates a OAuth2 client. Note that this function expects the input's
+// ID field to be valid.
+func (p *Postgres) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2Client) error {
+	prep, err := p.database.PrepareContext(ctx, updateOAuth2ClientQuery)
+	if err != nil {
+		return errors.Wrap(err, "error preparing query")
+	}
+
+	err = prep.QueryRow(
+		input.ClientID,
+		input.ClientSecret,
+		strings.Join(input.Scopes, scopesSeparator),
+		input.RedirectURI,
+		input.ID,
+	).Scan(&input.UpdatedOn)
+
+	return err
+}
+
+const archiveOAuth2ClientQuery = `
+	UPDATE oauth_clients SET
+		updated_on = extract(epoch FROM NOW()),
+		archived_on = extract(epoch FROM NOW())
+	WHERE id = $1
+	RETURNING
+		archived_on
+`
+
+// DeleteOAuth2Client deletes an OAuth2 client
+func (p *Postgres) DeleteOAuth2Client(ctx context.Context, id string, userID uint64) error {
+	prep, err := p.database.PrepareContext(ctx, archiveOAuth2ClientQuery)
+	if err != nil {
+		return errors.Wrap(err, "error preparing query")
+	}
+
+	_, err = prep.Exec(id)
+	return err
+}

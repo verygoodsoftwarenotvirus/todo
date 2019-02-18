@@ -27,7 +27,6 @@ const (
 func PreloadDatabase(
 	db database.Database,
 	logger logging.Logger,
-	tracer opentracing.Tracer,
 ) error {
 	switch strings.ToLower(os.Getenv("DATABASE_TO_USE")) {
 	case "postgres":
@@ -45,7 +44,7 @@ func PreloadDatabase(
 		return err
 	}
 
-	b := auth.ProvideBcrypt(auth.DefaultBcryptHashCost, logger, tracer)
+	b := auth.ProvideBcrypt(auth.DefaultBcryptHashCost, logger, &opentracing.NoopTracer{})
 	hp, err := b.HashPassword(ctx, expectedUsername)
 	if err != nil {
 		return err

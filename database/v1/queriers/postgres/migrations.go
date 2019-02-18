@@ -4,6 +4,7 @@ package postgres
 
 import (
 	"context"
+	// "database/sql"
 
 	"github.com/GuiaBolso/darwin"
 	"github.com/pkg/errors"

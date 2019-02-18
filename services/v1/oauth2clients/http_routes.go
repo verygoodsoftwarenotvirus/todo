@@ -294,12 +294,11 @@ func (s *Service) OAuth2ResponseErrorHandler(re *oauth2errors.Response) {
 	})
 }
 
-// OauthTokenAuthenticationMiddleware authenticates Oauth tokens
-func (s *Service) OauthTokenAuthenticationMiddleware(next http.Handler) http.Handler {
+// OAuth2TokenAuthenticationMiddleware authenticates Oauth tokens
+func (s *Service) OAuth2TokenAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
-		s.logger.Debug("OauthTokenAuthenticationMiddleware called")
-		userID := s.userIDFetcher(req)
+		s.logger.Debug("OAuth2TokenAuthenticationMiddleware called")
 
 		token, err := s.oauth2Handler.ValidationBearerToken(req)
 		if err != nil || token == nil {
@@ -308,10 +307,15 @@ func (s *Service) OauthTokenAuthenticationMiddleware(next http.Handler) http.Han
 			return
 		}
 
-		cid := token.GetClientID()
-		logger := s.logger.WithValue("client_id", cid)
+		// ignoring this error because the User ID source should only ever provide uints
+		userID, _ := strconv.ParseUint(token.GetUserID(), 10, 64)
+		clientID := token.GetClientID()
+		logger := s.logger.WithValues(map[string]interface{}{
+			"client_id": clientID,
+			"user_id":   userID,
+		})
 
-		c, err := s.database.GetOAuth2Client(ctx, cid, userID)
+		c, err := s.database.GetOAuth2Client(ctx, clientID, userID)
 		if err != nil {
 			logger.Error(err, "error fetching OAuth2 Client")
 			http.Error(res, fmt.Sprintf("error fetching client ID: %s", err.Error()), http.StatusUnauthorized)

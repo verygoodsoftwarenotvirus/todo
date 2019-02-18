@@ -10,15 +10,19 @@ import (
 	"github.com/rs/zerolog"
 )
 
+func init() {
+	zerolog.CallerSkipFrameCount = zerolog.CallerSkipFrameCount + 1
+}
+
 var (
 	// Providers is what we offer to external implementers
 	Providers = wire.NewSet(
 		ProvideZerologger,
 		ProvideLogger,
 	)
-)
 
-var _ logging.Logger = (*Logger)(nil)
+	_ logging.Logger = (*Logger)(nil)
+)
 
 // Logger is our log wrapper
 type Logger struct {

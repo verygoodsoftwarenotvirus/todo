@@ -3,10 +3,13 @@ package server
 import (
 	"context"
 	"database/sql"
+	"net/http"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
-	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -20,49 +23,54 @@ type cookieAuth struct {
 	Username string
 }
 
+func (s *Server) fetchUserFromRequest(req *http.Request) (user *models.User, err error) {
+	var ctx = req.Context()
+	var ca cookieAuth
+
+	cookie, cerr := req.Cookie(cookieName)
+	if cerr == nil && cookie != nil {
+		derr := s.cookieBuilder.Decode(cookieName, cookie.Value, &ca)
+		if derr == nil {
+			if u := ctx.Value(models.UserKey); u == nil {
+				user, err = s.db.GetUser(ctx, ca.Username)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				user = u.(*models.User)
+			}
+			return
+		}
+		err = derr
+		s.logger.Error(derr, "error decoding request cookie")
+	}
+	return nil, errors.New("no user found in request")
+}
+
 // userCookieAuthenticationMiddleware authenticates user cookies
 func (s *Server) userCookieAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		s.logger.Debug("userCookieAuthenticationMiddleware triggered")
 
-		cookie, cerr := req.Cookie(cookieName)
-		if cerr == nil && cookie != nil {
-			var ca cookieAuth
-
-			derr := s.cookieBuilder.Decode(cookieName, cookie.Value, &ca)
-			if derr == nil {
-				// // FINISHME: refresh cookie
-				// cookie.Expires = time.Now().Add(s.config.MaxCookieLifetime)
-				// http.SetCookie(res, cookie)
-				var ctx = req.Context()
-
-				if u := ctx.Value(models.UserKey); u == nil {
-					user, err := s.db.GetUser(ctx, ca.Username)
-					if err != nil {
-						s.logger.Error(err, "error encountered fetching user")
-						s.internalServerError(res, req, err)
-						return
-					}
-
-					req = req.WithContext(context.WithValue(
-						context.WithValue(ctx, models.UserKey, user),
-						models.UserIDKey,
-						user.ID,
-					))
-				}
-				s.logger.Debug("returning from UserAuthenticationMiddleware")
-				next.ServeHTTP(res, req)
-				return
-			} else {
-				s.logger.Error(derr, "error decoding request cookie")
-			}
-		} else {
-			s.logger.WithValues(map[string]interface{}{
-				"cookie == nil": cookie == nil,
-			}).Error(cerr, "redirecting!")
-			http.Redirect(res, req, "/login", http.StatusUnauthorized)
-
+		user, err := s.fetchUserFromRequest(req)
+		if err != nil {
+			s.logger.Error(err, "error encountered fetching user")
+			s.internalServerError(res, req, err)
+			return
 		}
+
+		if user != nil {
+			req = req.WithContext(context.WithValue(
+				context.WithValue(req.Context(), models.UserKey, user),
+				models.UserIDKey,
+				user.ID,
+			))
+
+			s.logger.Debug("returning from UserAuthenticationMiddleware")
+			next.ServeHTTP(res, req)
+			return
+		}
+		http.Redirect(res, req, "/login", http.StatusUnauthorized)
 	})
 }
 
@@ -99,7 +107,6 @@ func (s *Server) login(res http.ResponseWriter, req *http.Request) {
 
 	if !loginValid {
 		logger.Debug("login was invalid")
-		// s.loginMonitor.LogUnsuccessfulAttempt(loginInput.Username)
 		s.invalidInput(res, req, nil)
 		res.WriteHeader(http.StatusUnauthorized)
 		return
@@ -139,13 +146,6 @@ func (s *Server) fetchLoginDataFromRequest(req *http.Request) (*models.UserLogin
 	}
 	username := loginInput.Username
 	logger := s.logger.WithValue("Username", username)
-
-	// if err := s.loginMonitor.LoginAttemptsExhausted(Username); err != nil {
-	// 	s.logger.Debug("user has exhausted their number of login attempts")
-	// 	return nil, nil, func(res http.ResponseWriter, req *http.Request, err error) {
-	// 		s.loginMonitor.NotifyExhaustedAttempts(res)
-	// 	}, err
-	// }
 
 	// you could ensure there isn't an unsatisfied password reset token requested before allowing login here
 

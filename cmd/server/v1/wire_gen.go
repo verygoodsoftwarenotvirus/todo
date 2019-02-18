@@ -8,7 +8,6 @@ package main
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
@@ -21,7 +20,7 @@ import (
 
 // Injectors from wire.go:
 
-func BuildServer(connectionDetails database.ConnectionDetails, CookieName users.CookieName, metricsNamespace metrics.Namespace, CookieSecret []byte, Debug bool) (*server.Server, error) {
+func BuildServer(connectionDetails string, CookieName users.CookieName, metricsNamespace metrics.Namespace, CookieSecret []byte, Debug bool) (*server.Server, error) {
 	bcryptHashCost := auth.ProvideBcryptHashCost()
 	logger := zerolog.ProvideZerologger()
 	loggingLogger := zerolog.ProvideLogger(logger)
@@ -30,11 +29,7 @@ func BuildServer(connectionDetails database.ConnectionDetails, CookieName users.
 		return nil, err
 	}
 	enticator := auth.ProvideBcrypt(bcryptHashCost, loggingLogger, tracer)
-	postgresTracer, err := postgres.ProvidePostgresTracer()
-	if err != nil {
-		return nil, err
-	}
-	databaseDatabase, err := postgres.ProvidePostgres(Debug, loggingLogger, postgresTracer, connectionDetails)
+	databaseDatabase, err := database.ProvidePostgresDatabase(Debug, loggingLogger, connectionDetails)
 	if err != nil {
 		return nil, err
 	}
@@ -59,6 +54,14 @@ func BuildServer(connectionDetails database.ConnectionDetails, CookieName users.
 		return nil, err
 	}
 	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(loggingLogger, databaseDatabase, enticator, clientIDFetcher, oauth2clientsUserIDFetcher, oauth2clientsTracer, responseEncoder)
+	databaseTracer, err := database.ProvideTracer()
+	if err != nil {
+		return nil, err
+	}
+	client, err := database.ProvideDatabaseClient(databaseDatabase, Debug, loggingLogger, databaseTracer)
+	if err != nil {
+		return nil, err
+	}
 	serverTracer, err := server.ProvideServerTracer()
 	if err != nil {
 		return nil, err
@@ -66,7 +69,7 @@ func BuildServer(connectionDetails database.ConnectionDetails, CookieName users.
 	httpServer := server.ProvideHTTPServer()
 	handler := prometheus.ProvideMetricsHandler()
 	instrumentationHandlerProvider := prometheus.ProvideInstrumentationHandlerProvider(metricsNamespace)
-	serverServer, err := server.ProvideServer(Debug, CookieSecret, enticator, service, usersService, oauth2clientsService, databaseDatabase, loggingLogger, serverTracer, httpServer, responseEncoder, handler, instrumentationHandlerProvider)
+	serverServer, err := server.ProvideServer(Debug, CookieSecret, enticator, service, usersService, oauth2clientsService, client, loggingLogger, serverTracer, httpServer, responseEncoder, handler, instrumentationHandlerProvider)
 	if err != nil {
 		return nil, err
 	}

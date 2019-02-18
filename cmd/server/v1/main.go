@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 )
@@ -20,7 +19,7 @@ var (
 
 func main() {
 	server, err := BuildServer(
-		database.ConnectionDetails(postgresConnectionDetails),
+		postgresConnectionDetails,
 		users.CookieName("todo"),
 		metrics.Namespace("todo-server"),
 		[]byte(cookieSecret),

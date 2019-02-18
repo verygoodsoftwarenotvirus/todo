@@ -118,19 +118,16 @@ func ProvideOAuth2ClientsService(
 // InitializeOAuth2Clients initializes an OAuth2 client
 func (s *Service) InitializeOAuth2Clients() (clientCount uint) {
 	clientList, err := s.database.GetAllOAuth2Clients(context.Background())
-	if err != nil {
-		s.logger.Error(err, "trying to load all OAuth2 clients")
+	if err == sql.ErrNoRows {
+		return
+	} else if err != nil {
+		s.logger.Fatal(errors.Wrap(err, "querying oauth clients to add to the clientStore"))
 	}
 
 	clientCount = uint(len(clientList))
 	s.logger.WithValues(map[string]interface{}{
 		"client_count": clientCount,
 	}).Debug("loading OAuth2 clients")
-	if err == sql.ErrNoRows {
-		return
-	} else if err != nil {
-		s.logger.Fatal(errors.Wrap(err, "querying oauth clients to add to the clientStore"))
-	}
 
 	for _, client := range clientList {
 		s.logger.WithValue("client_id", client.ClientID).Debug("loading client")

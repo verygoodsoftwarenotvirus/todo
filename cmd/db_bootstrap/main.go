@@ -6,10 +6,9 @@ import (
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/postgres"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/sqlite"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/postgres"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/db_bootstrap"
 )
 
@@ -28,21 +27,16 @@ func main() {
 		err error
 	)
 
-	tracer, err := tracing.ProvideTracer("db-bootstrap")
-	if err != nil {
-		log.Printf("error building tracer: %v\n", err)
-	}
-
 	switch strings.ToLower(os.Getenv("DATABASE_TO_USE")) {
 	case "postgres":
-		db, err = postgres.ProvidePostgres(false, logger, tracer, database.ConnectionDetails(postgresConnectionDetails))
+		db, err = postgres.ProvidePostgres(false, logger, postgres.ConnectionDetails(postgresConnectionDetails))
 	default:
 		dbPath := sqliteConnectionDetails
 		if len(os.Args) > 1 {
 			dbPath = os.Args[1]
 			log.Printf("set alternative output path: %q\n", dbPath)
 		}
-		db, err = sqlite.ProvideSqlite(false, logger, tracer, database.ConnectionDetails(dbPath))
+		db, err = sqlite.ProvideSqlite(false, logger, sqlite.Filepath(dbPath))
 	}
 
 	if err != nil {
@@ -52,7 +46,6 @@ func main() {
 	if err = bootstrap.PreloadDatabase(
 		db,
 		logger,
-		tracer,
 	); err != nil {
 		log.Fatal("error preloading the database: ", err)
 	}

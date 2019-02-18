@@ -13,9 +13,7 @@ import (
 )
 
 const (
-	sqliteConnectionDetails = "example.db"
-
-	//postgresSchemaDir         = "database/v1/postgres/schema"
+	sqliteConnectionDetails   = "example.db"
 	postgresConnectionDetails = "postgres://todo:hunter2@database:5432/todo?sslmode=disable"
 )
 
@@ -43,11 +41,7 @@ func main() {
 		log.Fatalf("error opening database connection: %v\n", err)
 	}
 
-	if err = bootstrap.PreloadDatabase(
-		db,
-		logger,
-	); err != nil {
+	if err = bootstrap.PreloadDatabase(db, logger); err != nil {
 		log.Fatal("error preloading the database: ", err)
 	}
-
 }

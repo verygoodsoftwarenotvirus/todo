@@ -1,16 +1,19 @@
-package database
+package dbclient
 
 import (
 	"context"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 
 	"github.com/opentracing/opentracing-go"
 )
 
+var _ database.Database = (*Client)(nil)
+
 // Client is a wrapper around a database
 type Client struct {
-	database Database
+	database database.Database
 
 	debug  bool
 	logger logging.Logger
@@ -29,7 +32,7 @@ func (c *Client) IsReady(ctx context.Context) (ready bool) {
 
 // ProvideDatabaseClient provides a database client
 func ProvideDatabaseClient(
-	database Database,
+	database database.Database,
 	debug bool,
 	logger logging.Logger,
 	tracer Tracer,

@@ -1,4 +1,4 @@
-package database
+package dbclient
 
 import (
 	"context"
@@ -60,7 +60,7 @@ func (c *Client) CreateUser(ctx context.Context, input *models.UserInput) (*mode
 	})
 	logger.Debug("CreateUser called")
 
-	return c.database.GetUser(ctx, input.Username)
+	return c.database.CreateUser(ctx, input)
 }
 
 // UpdateUser receives a complete User struct and updates its place in the database.

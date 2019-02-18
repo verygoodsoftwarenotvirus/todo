@@ -49,7 +49,7 @@ type (
 		oauth2ClientsService *oauth2clients.Service
 
 		// infra things
-		db      *database.Client
+		db      database.Database
 		router  *chi.Mux
 		server  *http.Server
 		logger  logging.Logger
@@ -89,7 +89,7 @@ func ProvideServer(
 	oauth2Service *oauth2clients.Service,
 
 	// infra things
-	db *database.Client,
+	db database.Database,
 	logger logging.Logger,
 	tracer Tracer,
 	server *http.Server,

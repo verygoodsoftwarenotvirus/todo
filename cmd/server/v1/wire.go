@@ -4,7 +4,7 @@ package main
 
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
@@ -33,7 +33,7 @@ func BuildServer(
 		zerolog.Providers,
 
 		// Database things
-		database.Providers,
+		dbclient.Providers,
 
 		// Server things
 		server.Providers,

@@ -28,12 +28,28 @@ const (
 		WHERE
 			username = ?
 	`
+	getUserQueryByID = `
+		SELECT
+			id,
+			username,
+			hashed_password,
+			password_last_changed_on,
+			two_factor_secret,
+			is_admin,
+			created_on,
+			updated_on,
+			archived_on
+		FROM
+			users
+		WHERE
+			id = ?
+	`
 	getAdminUserCountQuery = `
 		SELECT
 			COUNT(*)
 		FROM
 			users
-		WHERE 
+		WHERE
 			archived_on is null
 			AND is_admin = true
 	`
@@ -42,7 +58,7 @@ const (
 			COUNT(*)
 		FROM
 			users
-		WHERE 
+		WHERE
 			archived_on is null
 	`
 	getUsersQuery = `
@@ -80,7 +96,7 @@ const (
 			username = ?,
 			password = ?,
 			updated_on = (strftime('%s','now'))
-		WHERE 
+		WHERE
 			id = ?
 		RETURNING
 			updated_on
@@ -89,7 +105,7 @@ const (
 		UPDATE users SET
 			updated_on = (strftime('%s','now')),
 			archived_on = (strftime('%s','now'))
-		WHERE 
+		WHERE
 			username = ?
 		RETURNING
 			archived_on

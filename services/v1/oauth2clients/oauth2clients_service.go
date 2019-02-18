@@ -117,36 +117,34 @@ func ProvideOAuth2ClientsService(
 
 // InitializeOAuth2Clients initializes an OAuth2 client
 func (s *Service) InitializeOAuth2Clients() (clientCount uint) {
-	var paginating = true
-	for page := 1; paginating; page++ {
-		clientList, err := s.database.GetAllOAuth2Clients(context.Background())
-		if err != nil {
-			s.logger.Error(err, "trying to load all OAuth2 clients")
-		}
+	clientList, err := s.database.GetAllOAuth2Clients(context.Background())
+	if err != nil {
+		s.logger.Error(err, "trying to load all OAuth2 clients")
+	}
 
-		clientCount = uint(len(clientList))
-		s.logger.WithValues(map[string]interface{}{
-			"client_count": clientCount,
-		}).Debug("loading OAuth2 clients")
-		if clientCount == 0 || err == sql.ErrNoRows {
-			paginating = false
-		} else if err != nil {
-			s.logger.Fatal(errors.Wrap(err, "querying oauth clients to add to the clientStore"))
-		}
+	clientCount = uint(len(clientList))
+	s.logger.WithValues(map[string]interface{}{
+		"client_count": clientCount,
+	}).Debug("loading OAuth2 clients")
+	if err == sql.ErrNoRows {
+		return
+	} else if err != nil {
+		s.logger.Fatal(errors.Wrap(err, "querying oauth clients to add to the clientStore"))
+	}
 
-		for _, client := range clientList {
-			s.logger.WithValue("client_id", client.ClientID).Debug("loading client")
+	for _, client := range clientList {
+		s.logger.WithValue("client_id", client.ClientID).Debug("loading client")
 
-			if err = s.oauth2ClientStore.Set(client.ClientID, &oauth2models.Client{
-				ID:     client.ClientID,
-				Secret: client.ClientSecret,
-				Domain: client.RedirectURI,
-				UserID: strconv.FormatUint(client.BelongsTo, 10),
-			}); err != nil {
-				s.logger.Fatal(errors.Wrap(err, "error encountered loading oauth clients to the clientStore"))
-			}
+		if err = s.oauth2ClientStore.Set(client.ClientID, &oauth2models.Client{
+			ID:     client.ClientID,
+			Secret: client.ClientSecret,
+			Domain: client.RedirectURI,
+			UserID: strconv.FormatUint(client.BelongsTo, 10),
+		}); err != nil {
+			s.logger.Fatal(errors.Wrap(err, "error encountered loading oauth clients to the clientStore"))
 		}
 	}
+
 	return
 }
 

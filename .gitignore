@@ -25,3 +25,4 @@
 
 # Python
 .env
+.mypy_caches

@@ -36,7 +36,7 @@ rewire: wire-clean wire
 	python3 -m venv .env
 
 .PHONY: env
-env:
+env: .env
 	. .env/bin/activate
 
 requirements.txt: .env
@@ -65,6 +65,11 @@ unvendor:
 
 $(COVERAGE_OUT):
 	./scripts/coverage.sh
+
+.PHONY: python-type-check
+python-type-check:
+	docker build --tag mypy-local:latest --file dockerfiles/mypy.Dockerfile .
+	docker run --rm --volume `pwd`:`pwd` --workdir `pwd` mypy-local:latest
 
 .PHONY: test
 test:

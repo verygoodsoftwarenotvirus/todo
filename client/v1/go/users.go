@@ -66,6 +66,19 @@ func (c *V1Client) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 	return user, err
 }
 
+// CreateNewUser creates a new user
+func (c *V1Client) CreateNewUser(ctx context.Context, input *models.UserInput) (*models.UserCreationResponse, error) {
+	user := &models.UserCreationResponse{}
+	span := tracing.FetchSpanFromContext(ctx, c.tracer, "CreateUser")
+	span.SetTag("username", input.Username)
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
+	uri := c.buildVersionlessURL(nil, usersBasePath)
+	err := c.postPlain(ctx, uri, input, &user)
+	return user, err
+}
+
 // DeleteUser deletes a user
 func (c *V1Client) DeleteUser(ctx context.Context, username string) error {
 	logger := c.logger.WithValue("username", username)
@@ -89,6 +102,11 @@ func (c *V1Client) Login(ctx context.Context, username, password, TOTPToken stri
 	span.SetTag("username", username)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
+
+	if c.currentUserCookie != nil {
+		logger.Debug("returning user cookie from cache")
+		return c.currentUserCookie, nil
+	}
 
 	body, err := createBodyFromStruct(&models.UserLoginInput{
 		Username:  username,
@@ -114,7 +132,8 @@ func (c *V1Client) Login(ctx context.Context, username, password, TOTPToken stri
 
 	cookies := res.Cookies()
 	if len(cookies) > 0 {
-		return cookies[0], nil
+		c.currentUserCookie = cookies[0]
+		return c.currentUserCookie, nil
 	}
 
 	return nil, errors.New("no cookies returned from request")

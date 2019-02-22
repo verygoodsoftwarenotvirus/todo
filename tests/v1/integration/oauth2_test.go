@@ -6,6 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/go"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pquerna/otp/totp"
@@ -13,34 +16,25 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func mustBuildCode(t *testing.T, totpSecret string) string {
+	t.Helper()
+	code, err := totp.GenerateCode(totpSecret, time.Now())
+	require.NoError(t, err)
+	return code
+}
+
 func buildDummyOAuth2ClientInput(t *testing.T, username, password, totpSecret string) *models.OAuth2ClientCreationInput {
 	t.Helper()
-
-	code, err := totp.GenerateCode(totpSecret, time.Now())
-	assert.NoError(t, err)
 
 	x := &models.OAuth2ClientCreationInput{
 		UserLoginInput: models.UserLoginInput{
 			Username:  username,
 			Password:  password,
-			TOTPToken: code,
+			TOTPToken: mustBuildCode(t, totpSecret),
 		},
 		Scopes:      []string{"*"},
 		RedirectURI: localTestInstanceURL,
 	}
-
-	return x
-}
-
-func buildDummyOAuth2Client(ctx context.Context, t *testing.T, username, password, totpSecret string) *models.OAuth2Client {
-	t.Helper()
-
-	x, err := todoClient.CreateOAuth2Client(
-		ctx,
-		buildDummyOAuth2ClientInput(t, username, password, totpSecret),
-	)
-	require.NoError(t, err)
-	require.NotNil(t, x)
 
 	return x
 }
@@ -61,16 +55,30 @@ func TestOAuth2Clients(test *testing.T) {
 	test.Parallel()
 
 	// create user
-	x, y, c := buildDummyUser(context.Background(), test)
-	assert.NotNil(test, c)
+	x, y, cookie := buildDummyUser(context.Background(), test)
+	assert.NotNil(test, cookie)
+
+	input := buildDummyOAuth2ClientInput(test, x.Username, y.Password, x.TwoFactorSecret)
+	premade, err := todoClient.CreateOAuth2Client(context.Background(), input, cookie)
+	checkValueAndError(test, premade, err)
+
+	c2, err := client.NewClient(
+		premade.ClientID,
+		premade.ClientSecret,
+		todoClient.URL,
+		noop.ProvideNoopLogger(),
+		buildHTTPClient(),
+		tracing.ProvideNoopTracer(),
+		true,
+	)
+	checkValueAndError(test, c2, err)
 
 	test.Run("Creating", func(T *testing.T) {
 		T.Run("should be creatable", func(t *testing.T) {
 			tctx := buildSpanContext("create-oauth2-client")
 
 			// Create oauth2Client
-			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
-			actual, err := todoClient.CreateOAuth2Client(tctx, input)
+			actual, err := c2.CreateOAuth2Client(tctx, input, cookie)
 			checkValueAndError(t, actual, err)
 
 			// Assert oauth2Client equality
@@ -96,18 +104,18 @@ func TestOAuth2Clients(test *testing.T) {
 
 			// Create oauth2Client
 			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
-			premade, err := todoClient.CreateOAuth2Client(tctx, input)
+			premade, err := c2.CreateOAuth2Client(tctx, input, cookie)
 			checkValueAndError(t, premade, err)
 
 			// Fetch oauth2Client
-			actual, err := todoClient.GetOAuth2Client(tctx, premade.ClientID)
-			assert.NoError(t, err)
+			actual, err := c2.GetOAuth2Client(tctx, premade.ClientID)
+			checkValueAndError(t, actual, err)
 
 			// Assert oauth2Client equality
 			checkOAuth2ClientEquality(t, input, actual)
 
 			// Clean up
-			err = todoClient.DeleteOAuth2Client(tctx, actual.ID)
+			err = c2.DeleteOAuth2Client(tctx, actual.ID)
 			assert.NoError(t, err)
 		})
 	})
@@ -125,10 +133,12 @@ func TestOAuth2Clients(test *testing.T) {
 			tctx := buildSpanContext("delete-oauth2-client")
 
 			// Create oauth2Client
-			premade := buildDummyOAuth2Client(tctx, t, x.Username, y.Password, x.TwoFactorSecret)
+			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
+			premade, err := c2.CreateOAuth2Client(tctx, input, cookie)
+			checkValueAndError(t, premade, nil)
 
 			// Clean up
-			err := todoClient.DeleteOAuth2Client(tctx, premade.ID)
+			err = c2.DeleteOAuth2Client(tctx, premade.ID)
 			assert.NoError(t, err)
 		})
 
@@ -143,20 +153,24 @@ func TestOAuth2Clients(test *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
 			tctx := buildSpanContext("list-oauth2-clients")
 
+			// Create oauth2Client
 			// Create oauth2Clients
 			var expected []*models.OAuth2Client
 			for i := 0; i < 5; i++ {
-				expected = append(expected, buildDummyOAuth2Client(tctx, t, x.Username, y.Password, x.TwoFactorSecret))
+				input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
+				oac, err := c2.CreateOAuth2Client(tctx, input, cookie)
+				checkValueAndError(t, oac, err)
+				expected = append(expected, oac)
 			}
 
 			// Assert oauth2Client list equality
-			actual, err := todoClient.GetOAuth2Clients(tctx, nil)
+			actual, err := c2.GetOAuth2Clients(tctx, nil)
 			checkValueAndError(t, actual, err)
 			assert.True(t, len(expected) <= len(actual.Clients))
 
 			// Clean up
 			for _, oauth2Client := range actual.Clients {
-				err = todoClient.DeleteOAuth2Client(tctx, oauth2Client.ID)
+				err = c2.DeleteOAuth2Client(tctx, oauth2Client.ID)
 				assert.NoError(t, err)
 			}
 		})

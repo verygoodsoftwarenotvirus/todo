@@ -133,8 +133,8 @@ func ProvideServer(
 	}
 	srv.logger.Info("database migrated!")
 
-	cc := srv.oauth2ClientsService.InitializeOAuth2Clients()
-	srv.setupRouter(metricsHandler, cc == 0)
+	srv.oauth2ClientsService.InitializeOAuth2Clients()
+	srv.setupRouter(metricsHandler)
 
 	var handler http.Handler = srv.router
 	if instHandlerProvider != nil {

@@ -65,7 +65,7 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) setupRouter(metricsHandler metrics.Handler, createClientInitRoute bool) {
+func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 	s.router = chi.NewRouter()
 
 	s.router.Use(
@@ -110,15 +110,11 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler, createClientInitRou
 	})
 
 	s.router.Route("/oauth2", func(oauth2Router chi.Router) {
-		if createClientInitRoute {
-			s.logger.Debug("creating OAuth2 client initialization route")
-			oauth2Router.
-				With(
-					s.userCookieAuthenticationMiddleware,
-					s.oauth2ClientsService.OAuth2ClientCreationInputContextMiddleware,
-				).
-				Post("/init_client", s.oauth2ClientsService.Create)
-		}
+		oauth2Router.
+			With(
+				s.userCookieAuthenticationMiddleware,
+				s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.OAuth2ClientCreationInput)),
+			).Post("/client", s.oauth2ClientsService.Create) // Create
 
 		oauth2Router.
 			With(s.oauth2ClientsService.OAuth2ClientInfoMiddleware).
@@ -159,9 +155,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler, createClientInitRou
 					clientRouter.
 						With(s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.OAuth2ClientUpdateInput))).
 						Put(sr, s.oauth2ClientsService.Update) // Update
-					clientRouter.
-						With(s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.OAuth2ClientCreationInput))).
-						Post("/", s.oauth2ClientsService.Create) // Create
+					// Create is not bound to an OAuth2 authentication
 				})
 			})
 

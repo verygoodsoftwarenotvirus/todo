@@ -49,7 +49,7 @@ func initializeTracer() {
 func buildHTTPClient() *http.Client {
 	httpc := &http.Client{
 		Transport: http.DefaultTransport,
-		// Timeout:   5 * time.Second,
+		Timeout:   5 * time.Second,
 	}
 
 	return httpc

@@ -20,7 +20,7 @@ var cookieSecret = []byte("HEREISA32CHARSECRETWHICHISMADEUP")
 func main() {
 	server, err := BuildServer(
 		postgresConnectionDetails,
-		users.CookieName("todo"),
+		users.CookieName("todocookie"),
 		metrics.Namespace("todo-server"),
 		[]byte(cookieSecret),
 		debug,

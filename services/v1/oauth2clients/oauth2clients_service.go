@@ -112,7 +112,7 @@ func ProvideOAuth2ClientsService(
 }
 
 // InitializeOAuth2Clients initializes an OAuth2 client
-func (s *Service) InitializeOAuth2Clients() (clientCount uint) {
+func (s *Service) InitializeOAuth2Clients() {
 	clientList, err := s.database.GetAllOAuth2Clients(context.Background())
 	if err == sql.ErrNoRows {
 		return
@@ -120,7 +120,7 @@ func (s *Service) InitializeOAuth2Clients() (clientCount uint) {
 		s.logger.Fatal(errors.Wrap(err, "querying oauth clients to add to the clientStore"))
 	}
 
-	clientCount = uint(len(clientList))
+	clientCount := uint(len(clientList))
 	s.logger.WithValues(map[string]interface{}{
 		"client_count": clientCount,
 	}).Debug("loading OAuth2 clients")
@@ -138,8 +138,6 @@ func (s *Service) InitializeOAuth2Clients() (clientCount uint) {
 			s.logger.Fatal(errors.Wrap(err, "error encountered loading oauth clients to the clientStore"))
 		}
 	}
-
-	return
 }
 
 // HandleAuthorizeRequest is a simple wrapper around the internal server's HandleAuthorizeRequest

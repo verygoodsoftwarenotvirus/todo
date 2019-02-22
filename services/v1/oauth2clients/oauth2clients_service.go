@@ -37,13 +37,14 @@ type (
 
 	// Service manages our OAuth2 clients via HTTP
 	Service struct {
-		database          database.Database
-		authenticator     auth.Enticator
-		logger            logging.Logger
-		tracer            opentracing.Tracer
-		encoder           encoding.ResponseEncoder
+		database             database.Database
+		authenticator        auth.Enticator
+		logger               logging.Logger
+		tracer               opentracing.Tracer
+		encoder              encoding.ResponseEncoder
+		urlClientIDExtractor func(req *http.Request) string
+
 		tokenStore        oauth2.TokenStore
-		clientIDFetcher   func(req *http.Request) string
 		oauth2Handler     *oauth2server.Server
 		oauth2ClientStore *oauth2store.ClientStore
 	}
@@ -58,7 +59,7 @@ var (
 )
 
 // ProvideOAuth2ClientsServiceTracer is an obligatory Tracer wrapper
-func ProvideOAuth2ClientsServiceTracer() (Tracer, error) {
+func ProvideOAuth2ClientsServiceTracer() Tracer {
 	return tracing.ProvideTracer("oauth2-clients-service")
 }
 
@@ -79,69 +80,65 @@ func ProvideOAuth2ClientsService(
 	manager.MustTokenStorage(tokenStore, err)
 	server := oauth2server.NewDefaultServer(manager)
 
-	us := &Service{
-		database:          database,
-		authenticator:     authenticator,
-		logger:            logger,
+	s := &Service{
+		database:             database,
+		logger:               logger,
+		tracer:               tracer,
+		encoder:              encoder,
+		authenticator:        authenticator,
+		urlClientIDExtractor: clientIDFetcher,
+
 		tokenStore:        tokenStore,
-		tracer:            tracer,
-		encoder:           encoder,
-		clientIDFetcher:   clientIDFetcher,
 		oauth2Handler:     server,
 		oauth2ClientStore: clientStore,
 	}
 
-	us.oauth2Handler.SetAllowGetAccessRequest(true)
-	us.oauth2Handler.SetClientAuthorizedHandler(us.ClientAuthorizedHandler)
-	us.oauth2Handler.SetClientScopeHandler(us.ClientScopeHandler)
-	us.oauth2Handler.SetClientInfoHandler(oauth2server.ClientFormHandler)
-	us.oauth2Handler.SetUserAuthorizationHandler(us.UserAuthorizationHandler)
-	us.oauth2Handler.SetAuthorizeScopeHandler(us.AuthorizeScopeHandler)
-	us.oauth2Handler.SetResponseErrorHandler(us.OAuth2ResponseErrorHandler)
-	us.oauth2Handler.SetInternalErrorHandler(us.OAuth2InternalErrorHandler)
-	us.oauth2Handler.Config.AllowedGrantTypes = []oauth2.GrantType{
+	s.oauth2Handler.SetAllowGetAccessRequest(true)
+	s.oauth2Handler.SetClientAuthorizedHandler(s.ClientAuthorizedHandler)
+	s.oauth2Handler.SetClientScopeHandler(s.ClientScopeHandler)
+	s.oauth2Handler.SetClientInfoHandler(oauth2server.ClientFormHandler)
+	s.oauth2Handler.SetUserAuthorizationHandler(s.UserAuthorizationHandler)
+	s.oauth2Handler.SetAuthorizeScopeHandler(s.AuthorizeScopeHandler)
+	s.oauth2Handler.SetResponseErrorHandler(s.OAuth2ResponseErrorHandler)
+	s.oauth2Handler.SetInternalErrorHandler(s.OAuth2InternalErrorHandler)
+	s.oauth2Handler.Config.AllowedGrantTypes = []oauth2.GrantType{
 		oauth2.AuthorizationCode,
 		oauth2.ClientCredentials,
 		oauth2.Refreshing,
 		oauth2.Implicit,
 	}
 
-	return us
+	return s
 }
 
 // InitializeOAuth2Clients initializes an OAuth2 client
 func (s *Service) InitializeOAuth2Clients() (clientCount uint) {
-	var paginating = true
-	for page := 1; paginating; page++ {
-		clientList, err := s.database.GetOAuth2Clients(
-			context.Background(),
-			&models.QueryFilter{
-				Page:  uint64(page),
-				Limit: 50,
-			},
-		)
+	clientList, err := s.database.GetAllOAuth2Clients(context.Background())
+	if err == sql.ErrNoRows {
+		return
+	} else if err != nil {
+		s.logger.Fatal(errors.Wrap(err, "querying oauth clients to add to the clientStore"))
+	}
 
-		clientCount = uint(len(clientList.Clients))
-		s.logger.WithValue("client_count", clientCount).Debug("loading OAuth2 clients")
-		if (clientList != nil && len(clientList.Clients) == 0) || err == sql.ErrNoRows {
-			paginating = false
-		} else if err != nil {
-			s.logger.Fatal(errors.Wrap(err, "querying oauth clients to add to the clientStore"))
+	clientCount = uint(len(clientList))
+	s.logger.WithValues(map[string]interface{}{
+		"client_count": clientCount,
+	}).Debug("loading OAuth2 clients")
+
+	for _, client := range clientList {
+		s.logger.WithValue("client_id", client.ClientID).Debug("loading client")
+
+		c := &oauth2models.Client{
+			ID:     client.ClientID,
+			Secret: client.ClientSecret,
+			Domain: client.RedirectURI,
+			UserID: strconv.FormatUint(client.BelongsTo, 10),
 		}
-
-		for _, client := range clientList.Clients {
-			s.logger.WithValue("client_id", client.ClientID).Debug("loading client")
-
-			if err = s.oauth2ClientStore.Set(client.ClientID, &oauth2models.Client{
-				ID:     client.ClientID,
-				Secret: client.ClientSecret,
-				Domain: client.RedirectURI,
-				UserID: strconv.FormatUint(client.BelongsTo, 10),
-			}); err != nil {
-				s.logger.Fatal(errors.Wrap(err, "error encountered loading oauth clients to the clientStore"))
-			}
+		if err = s.oauth2ClientStore.Set(client.ClientID, c); err != nil {
+			s.logger.Fatal(errors.Wrap(err, "error encountered loading oauth clients to the clientStore"))
 		}
 	}
+
 	return
 }
 

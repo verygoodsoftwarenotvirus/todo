@@ -99,14 +99,14 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler, createClientInitRou
 			s.usersService.PasswordUpdateInputContextMiddleware,
 		).Post("/password/new", s.usersService.UpdatePassword)
 
-		usernamePattern := fmt.Sprintf("/{%s:[a-zA-Z0-9]+}", users.URIParamKey)
+		usernamePattern := fmt.Sprintf(`/{%s:[a-zA-Z0-9_\-]+}`, users.URIParamKey)
 
 		userRouter.Get("/", s.usersService.List)                  // List
 		userRouter.Get(usernamePattern, s.usersService.Read)      // Read
 		userRouter.Delete(usernamePattern, s.usersService.Delete) // Delete
 		userRouter.With(s.usersService.UserInputContextMiddleware).
 			Post("/", s.usersService.Create) // Create
-		// userRouter.With(s.usersService.UserInputContextMiddleware).Put(sr, s.usersService.Update)   // Update
+		// TODO: Update
 	})
 
 	s.router.Route("/oauth2", func(oauth2Router chi.Router) {
@@ -135,7 +135,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler, createClientInitRou
 		})
 	})
 
-	s.router.With(s.oauth2ClientsService.OauthTokenAuthenticationMiddleware).Route("/api", func(apiRouter chi.Router) {
+	s.router.With(s.oauth2ClientsService.OAuth2TokenAuthenticationMiddleware).Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Route("/v1", func(v1Router chi.Router) {
 
 			v1Router.Route("/items", func(itemsRouter chi.Router) {

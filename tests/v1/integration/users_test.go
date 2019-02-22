@@ -12,6 +12,7 @@ import (
 
 	"github.com/icrowley/fake"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func init() {
@@ -53,13 +54,8 @@ func buildDummyUser(ctx context.Context, t *testing.T) (*models.UserCreationResp
 	y := buildDummyUserInput(t)
 	u, err := todoClient.CreateUser(ctx, y)
 	assert.NotNil(t, u)
-	// require.NoError(t, err)
-
+	require.NoError(t, err)
 	t.Logf("created dummy user #%d", u.ID)
-	// code, err := totp.GenerateCode(u.TwoFactorSecret, time.Now())
-	// assert.NoError(t, err)
-	// t.Logf("created 2FA code %q", code)
-	// require.NotEmpty(t, code)
 
 	cookie := loginUser(t, u.Username, y.Password, u.TwoFactorSecret)
 

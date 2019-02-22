@@ -16,19 +16,31 @@ type OAuth2ClientHandler struct {
 }
 
 // GetOAuth2Client is a mock function
-func (m *OAuth2ClientHandler) GetOAuth2Client(ctx context.Context, identifier string) (*models.OAuth2Client, error) {
+func (m *OAuth2ClientHandler) GetOAuth2Client(ctx context.Context, identifier string, userID uint64) (*models.OAuth2Client, error) {
+	args := m.Called(ctx, identifier)
+	return args.Get(0).(*models.OAuth2Client), args.Error(1)
+}
+
+// GetOAuth2ClientByClientID is a mock function
+func (m *OAuth2ClientHandler) GetOAuth2ClientByClientID(ctx context.Context, identifier string) (*models.OAuth2Client, error) {
 	args := m.Called(ctx, identifier)
 	return args.Get(0).(*models.OAuth2Client), args.Error(1)
 }
 
 // GetOAuth2ClientCount is a mock function
-func (m *OAuth2ClientHandler) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
+func (m *OAuth2ClientHandler) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (uint64, error) {
 	args := m.Called(ctx, filter)
 	return args.Get(0).(uint64), args.Error(1)
 }
 
+// GetAllOAuth2Clients is a mock function
+func (m *OAuth2ClientHandler) GetAllOAuth2Clients(ctx context.Context) ([]models.OAuth2Client, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]models.OAuth2Client), args.Error(1)
+}
+
 // GetOAuth2Clients is a mock function
-func (m *OAuth2ClientHandler) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
+func (m *OAuth2ClientHandler) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.OAuth2ClientList, error) {
 	args := m.Called(ctx, filter)
 	return args.Get(0).(*models.OAuth2ClientList), args.Error(1)
 }
@@ -45,6 +57,6 @@ func (m *OAuth2ClientHandler) UpdateOAuth2Client(ctx context.Context, updated *m
 }
 
 // DeleteOAuth2Client is a mock function
-func (m *OAuth2ClientHandler) DeleteOAuth2Client(ctx context.Context, identifier string) error {
+func (m *OAuth2ClientHandler) DeleteOAuth2Client(ctx context.Context, identifier string, userID uint64) error {
 	return m.Called(ctx, identifier).Error(0)
 }

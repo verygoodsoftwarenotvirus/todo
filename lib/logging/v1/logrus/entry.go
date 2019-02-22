@@ -19,6 +19,12 @@ type entryWrapper struct {
 // overrides that behavior, simple though it may be to paste it here
 func (e *entryWrapper) SetLevel(level logging.Level) {}
 
+// WithName is our obligatory contract fulfillment function
+// Logrus doesn't support named loggers :(
+func (e *entryWrapper) WithName(name string) logging.Logger {
+	return e
+}
+
 // Info satisfies our contract for the logging.Logger Info method.
 func (e *entryWrapper) Info(input string) {
 	e.Infoln(input)
@@ -37,11 +43,6 @@ func (e *entryWrapper) Error(err error, input string) {
 // Fatal satisfies our contract for the logging.Logger Fatal method.
 func (e *entryWrapper) Fatal(err error) {
 	e.Fatal(err)
-}
-
-// Print satisfies our contract for the logging.Logger Print method.
-func (e *entryWrapper) Print(input ...interface{}) {
-	e.Print(input...)
 }
 
 // WithValues satisfies our contract for the logging.Logger WithValues method.

@@ -9,18 +9,17 @@ import (
 )
 
 const (
-	postgresConnectionDetails = "postgres://todo:hunter2@database:5432/todo?sslmode=disable"
+	debug = false
 
-	cookieSecret = "HEREISA32CHARSECRETWHICHISMADEUP"
+	sqliteConnectionDetails   = database.ConnectionDetails("example.db")
+	postgresConnectionDetails = database.ConnectionDetails("postgres://todo:hunter2@database:5432/todo?sslmode=disable")
 )
 
-var (
-	debug bool
-)
+var cookieSecret = []byte("HEREISA32CHARSECRETWHICHISMADEUP")
 
 func main() {
 	server, err := BuildServer(
-		database.ConnectionDetails(postgresConnectionDetails),
+		postgresConnectionDetails,
 		users.CookieName("todo"),
 		metrics.Namespace("todo-server"),
 		[]byte(cookieSecret),

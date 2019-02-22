@@ -2,12 +2,10 @@ package auth_test
 
 import (
 	"context"
-	"log"
 	"testing"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/pquerna/otp/totp"
@@ -21,18 +19,8 @@ const (
 )
 
 var (
-	tracer opentracing.Tracer
+	tracer = &opentracing.NoopTracer{}
 )
-
-func init() {
-	var err error
-	tracer, err = tracing.ProvideTracer("fart")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	opentracing.SetGlobalTracer(tracer)
-}
 
 func TestBcrypt_HashPassword(T *testing.T) {
 	T.Parallel()

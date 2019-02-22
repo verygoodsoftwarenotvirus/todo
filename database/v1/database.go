@@ -2,43 +2,36 @@ package database
 
 import (
 	"context"
-	"net/http"
+	"database/sql"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
-// SchemaDirectory is an arbitrary string type
-type SchemaDirectory string
+type (
+	// Database describes anything that stores data for our services
+	Database interface {
+		Migrate(ctx context.Context) error
+		IsReady(ctx context.Context) (ready bool)
 
-// ConnectionDetails is an arbitrary string type
-type ConnectionDetails string
+		AdminUserExists(ctx context.Context) (bool, error)
 
-// Database describes anything that stores data for our services
-type Database interface {
-	Migrate(ctx context.Context) error
-	IsReady(ctx context.Context) (ready bool)
+		models.ItemHandler
+		models.UserHandler
+		models.OAuth2ClientHandler
+	}
 
-	models.ItemHandler
-	models.UserHandler
-	models.OAuth2ClientHandler
-}
+	// ConnectionDetails is a string alias for a Postgres url
+	ConnectionDetails string
 
-// SecretGenerator generates secrets
-type SecretGenerator interface {
-	GenerateSecret(length uint) string
-}
+	// Scannable represents any database response (i.e. either a transaction or a regular execution response)
+	Scannable interface {
+		Scan(dest ...interface{}) error
+	}
 
-// ClientIDExtractor extracts client IDs from an interface
-type ClientIDExtractor interface {
-	ExtractClientID(req *http.Request) string
-}
-
-// UserIDExtractor extracts user IDs from a request
-type UserIDExtractor interface {
-	ExtractUserID(req *http.Request) (string, error)
-}
-
-// Scannable represents any database response (i.e. either a transaction or a regular execution response)
-type Scannable interface {
-	Scan(dest ...interface{}) error
-}
+	// Querier is a subset interface for sql.{DB|Tx|Stmt} objects
+	Querier interface {
+		ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error)
+		QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows, error)
+		QueryRowContext(ctx context.Context, args ...interface{}) *sql.Row
+	}
+)

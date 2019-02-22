@@ -53,7 +53,7 @@ var (
 )
 
 // ProvideUserServiceTracer wraps an opentracing Tracer
-func ProvideUserServiceTracer() (Tracer, error) {
+func ProvideUserServiceTracer() Tracer {
 	return tracing.ProvideTracer("users-service")
 }
 

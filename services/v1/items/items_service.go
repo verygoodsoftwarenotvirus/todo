@@ -20,8 +20,8 @@ const (
 )
 
 type (
-	// ServiceTracer is an arbitrary type alias we're using for dependency injection
-	ServiceTracer opentracing.Tracer
+	// Tracer is an arbitrary type alias we're using for dependency injection
+	Tracer opentracing.Tracer
 
 	// Service handles TODO List items
 	Service struct {
@@ -44,7 +44,7 @@ var (
 )
 
 // ProvideItemsServiceTracer provides a UserServiceTracer from an tracer building function
-func ProvideItemsServiceTracer() (ServiceTracer, error) {
+func ProvideItemsServiceTracer() Tracer {
 	return tracing.ProvideTracer("todo-server-items-service")
 }
 
@@ -60,7 +60,7 @@ func ProvideItemsService(
 	db database.Database,
 	userIDFetcher UserIDFetcher,
 	itemIDFetcher ItemIDFetcher,
-	tracer ServiceTracer,
+	tracer Tracer,
 	encoder encoding.ResponseEncoder,
 ) *Service {
 	svc := &Service{

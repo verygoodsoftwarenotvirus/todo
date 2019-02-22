@@ -22,6 +22,7 @@ func (s *Service) ItemInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 		serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
+		ctx := opentracing.ContextWithSpan(req.Context(), serverSpan)
 		defer serverSpan.Finish()
 
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
@@ -31,24 +32,28 @@ func (s *Service) ItemInputMiddleware(next http.Handler) http.Handler {
 		}
 
 		s.logger.WithValue("itemInput", x).Debug("ItemInputMiddleware called")
-		ctx := context.WithValue(req.Context(), MiddlewareCtxKey, x)
+		ctx = context.WithValue(ctx, MiddlewareCtxKey, x)
+
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }
 
 // Read returns a GET handler that returns an item
 func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
+	ctx = opentracing.ContextWithSpan(ctx, serverSpan)
 	defer serverSpan.Finish()
 
-	itemID := s.itemIDFetcher(req)
-	logger := s.logger.WithValue("item_id", itemID)
-	logger.Debug("itemsService.ReadHandler called")
-
 	userID := s.userIDFetcher(req)
-	logger = logger.WithValue("user_id", userID)
-	ctx := req.Context()
+	itemID := s.itemIDFetcher(req)
+
+	logger := s.logger.WithValues(map[string]interface{}{
+		"user_id": userID,
+		"item_id": itemID,
+	})
+	logger.Debug("itemsService.ReadHandler called")
 
 	i, err := s.db.GetItem(ctx, itemID, userID)
 	if err == sql.ErrNoRows {
@@ -68,17 +73,19 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 
 // Count is our count route
 func (s *Service) Count(res http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
+	ctx = opentracing.ContextWithSpan(ctx, serverSpan)
 	defer serverSpan.Finish()
 
 	s.logger.Debug("ItemsService.Count called")
 	qf := models.ExtractQueryFilter(req)
 
 	logger := s.logger.WithValue("filter", qf)
-	ctx := req.Context()
+	userID := s.userIDFetcher(req)
 
-	itemCount, err := s.db.GetItemCount(ctx, qf)
+	itemCount, err := s.db.GetItemCount(ctx, qf, userID)
 	logger = logger.WithValue("item_count", itemCount)
 	if err != nil {
 		logger.Error(err, "error fetching item count from database")
@@ -95,17 +102,22 @@ func (s *Service) Count(res http.ResponseWriter, req *http.Request) {
 
 // List is our list route
 func (s *Service) List(res http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
+	ctx = opentracing.ContextWithSpan(ctx, serverSpan)
 	defer serverSpan.Finish()
 
 	s.logger.Debug("ItemsService.List called")
 	qf := models.ExtractQueryFilter(req)
 
-	logger := s.logger.WithValue("filter", qf)
-	ctx := req.Context()
+	userID := s.userIDFetcher(req)
+	logger := s.logger.WithValues(map[string]interface{}{
+		"filter":  qf,
+		"user_id": userID,
+	})
 
-	items, err := s.db.GetItems(ctx, qf)
+	items, err := s.db.GetItems(ctx, qf, userID)
 	if err != nil {
 		logger.Error(err, "error encountered fetching items")
 		res.WriteHeader(http.StatusInternalServerError)
@@ -121,15 +133,18 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
+	ctx := opentracing.ContextWithSpan(req.Context(), serverSpan)
 	defer serverSpan.Finish()
 
-	ctx := req.Context()
-
+	userID := s.userIDFetcher(req)
 	itemID := s.itemIDFetcher(req)
-	logger := s.logger.WithValue("item_id", itemID)
+	logger := s.logger.WithValues(map[string]interface{}{
+		"item_id": itemID,
+		"user_id": userID,
+	})
 	logger.Debug("ItemsService Deletion handler called")
 
-	err := s.db.DeleteItem(ctx, itemID)
+	err := s.db.DeleteItem(ctx, itemID, userID)
 	if err == sql.ErrNoRows {
 		logger.Debug("no rows found for item")
 		res.WriteHeader(http.StatusNotFound)
@@ -147,9 +162,9 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
+	ctx := opentracing.ContextWithSpan(req.Context(), serverSpan)
 	defer serverSpan.Finish()
 
-	ctx := req.Context()
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.ItemInput)
 	if !ok {
 		s.logger.Error(nil, "no input attached to request")
@@ -192,10 +207,10 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
+	ctx := opentracing.ContextWithSpan(req.Context(), serverSpan)
 	defer serverSpan.Finish()
 
 	s.logger.Debug("ItemsService.Create called")
-	ctx := req.Context()
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.ItemInput)
 	if !ok {
 		s.logger.Error(nil, "valid input not attached to request")

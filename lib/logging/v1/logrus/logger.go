@@ -47,6 +47,12 @@ func ProvideLogger(logger *logrus.Logger) logging.Logger {
 	return l
 }
 
+// WithName is our obligatory contract fulfillment function
+// Logrus doesn't support named loggers :(
+func (l *Logger) WithName(name string) logging.Logger {
+	return l
+}
+
 // SetLevel sets the log level
 func (l *Logger) SetLevel(level logging.Level) {
 	var lvl logrus.Level
@@ -79,11 +85,6 @@ func (l *Logger) Error(err error, input string) {
 // Fatal satisfies our contract for the logging.Logger Fatal method.
 func (l *Logger) Fatal(err error) {
 	l.logger.WithField("err", err).Fatal()
-}
-
-// Print satisfies our contract for the logging.Logger Print method.
-func (l *Logger) Print(input ...interface{}) {
-	l.logger.Print(input...)
 }
 
 // WithValues satisfies our contract for the logging.Logger WithValues method.

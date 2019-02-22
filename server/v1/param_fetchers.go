@@ -17,7 +17,7 @@ var (
 	paramFetcherProviders = wire.NewSet(
 		ProvideUserIDFetcher,
 		ProvideUsernameFetcher,
-		ProvideClientIDFetcher,
+		ProvideOAuth2ServiceClientIDFetcher,
 		ProvideItemIDFetcher,
 	)
 )
@@ -37,8 +37,8 @@ func ProvideUsernameFetcher() users.UsernameFetcher {
 	return ChiUsernameFetcher
 }
 
-// ProvideClientIDFetcher provides a ClientIDFetcher
-func ProvideClientIDFetcher() oauth2clients.ClientIDFetcher {
+// ProvideOAuth2ServiceClientIDFetcher provides a ClientIDFetcher
+func ProvideOAuth2ServiceClientIDFetcher() oauth2clients.ClientIDFetcher {
 	return chiOAuth2ClientIDFetcher
 }
 
@@ -48,12 +48,12 @@ func UserIDFetcher(req *http.Request) uint64 {
 	return x
 }
 
-// ChiUsernameFetcher fetches a username from a request routed by chi.
+// ChiUsernameFetcher fetches a Username from a request routed by chi.
 func ChiUsernameFetcher(req *http.Request) string {
 	return chi.URLParam(req, users.URIParamKey)
 }
 
-// chiItemIDFetcher fetches a username from a request routed by chi.
+// chiItemIDFetcher fetches a Username from a request routed by chi.
 func chiItemIDFetcher(req *http.Request) uint64 {
 	// we disregard this error only because we're able to validate that the string only
 	// contains numbers via chi's regex things
@@ -61,7 +61,7 @@ func chiItemIDFetcher(req *http.Request) uint64 {
 	return u
 }
 
-// chiOAuth2ClientIDFetcher fetches a username from a request routed by chi.
+// chiOAuth2ClientIDFetcher fetches a Username from a request routed by chi.
 func chiOAuth2ClientIDFetcher(req *http.Request) string {
 	// PONDER: if the only time we use users.URIParamKey is externally to the users package
 	// does it really need to belong there?

@@ -3,20 +3,45 @@ package server
 import (
 	"context"
 	"database/sql"
+	"net/http"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
-	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 const (
 	// cookieName is the name of the cookie we attach to requests
-	cookieName = "todo"
+	cookieName = "todocookie"
 )
 
 type cookieAuth struct {
-	Username      string
-	Authenticated bool
+	// NOTE: both of these fields need to be exported for gob to work, and gob is the basis of how we encode cookies.
+	Admin    bool
+	Username string
+}
+
+func (s *Server) fetchUserFromRequest(req *http.Request) (*models.User, error) {
+	var ca cookieAuth
+
+	cookie, cerr := req.Cookie(cookieName)
+	if cerr == nil && cookie != nil {
+		derr := s.cookieBuilder.Decode(cookieName, cookie.Value, &ca)
+		if derr == nil {
+			user, uerr := s.db.GetUser(req.Context(), ca.Username)
+
+			if uerr != nil {
+				return nil, uerr
+			}
+			return user, nil
+		}
+		return nil, errors.Wrap(derr, "decoding request cookie")
+	} else if cerr == nil && cookie == nil {
+		return nil, errors.New("no user found in request")
+	}
+	return nil, errors.Wrap(cerr, "fetching user from request")
 }
 
 // userCookieAuthenticationMiddleware authenticates user cookies
@@ -24,44 +49,25 @@ func (s *Server) userCookieAuthenticationMiddleware(next http.Handler) http.Hand
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		s.logger.Debug("userCookieAuthenticationMiddleware triggered")
 
-		cookie, cerr := req.Cookie(cookieName)
-		if cerr == nil && cookie != nil {
-			var ca cookieAuth
-
-			derr := s.cookieBuilder.Decode(cookieName, cookie.Value, &ca)
-			if derr == nil {
-				// // FINISHME: refresh cookie
-				// cookie.Expires = time.Now().Add(s.config.MaxCookieLifetime)
-				// http.SetCookie(res, cookie)
-				var ctx = req.Context()
-
-				if u := ctx.Value(models.UserKey); u == nil {
-					user, err := s.db.GetUser(ctx, ca.Username)
-					if err != nil {
-						s.logger.Error(err, "error encountered fetching user")
-						s.internalServerError(res, req, err)
-						return
-					}
-
-					req = req.WithContext(context.WithValue(
-						context.WithValue(ctx, models.UserKey, user),
-						models.UserIDKey,
-						user.ID,
-					))
-				}
-				s.logger.Debug("returning from UserAuthenticationMiddleware")
-				next.ServeHTTP(res, req)
-				return
-			} else {
-				s.logger.Error(derr, "error decoding request cookie")
-			}
-		} else {
-			s.logger.WithValues(map[string]interface{}{
-				"cookie == nil": cookie == nil,
-			}).Error(cerr, "redirecting!")
-			http.Redirect(res, req, "/login", http.StatusUnauthorized)
-
+		user, err := s.fetchUserFromRequest(req)
+		if err != nil {
+			s.logger.Error(err, "error encountered fetching user")
+			s.internalServerError(res, req, err)
+			return
 		}
+
+		if user != nil {
+			req = req.WithContext(context.WithValue(
+				context.WithValue(req.Context(), models.UserKey, user),
+				models.UserIDKey,
+				user.ID,
+			))
+
+			s.logger.Debug("returning from UserAuthenticationMiddleware")
+			next.ServeHTTP(res, req)
+			return
+		}
+		http.Redirect(res, req, "/login", http.StatusUnauthorized)
 	})
 }
 
@@ -98,14 +104,13 @@ func (s *Server) login(res http.ResponseWriter, req *http.Request) {
 
 	if !loginValid {
 		logger.Debug("login was invalid")
-		// s.loginMonitor.LogUnsuccessfulAttempt(loginInput.Username)
 		s.invalidInput(res, req, nil)
 		res.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	logger.Debug("login was valid, returning cookie")
-	cookie, err := s.buildCookie(user, loginValid)
+	cookie, err := s.buildCookie(user)
 	if err != nil {
 		logger.Error(err, "error building cookie")
 		s.internalServerError(res, req, err)
@@ -137,14 +142,7 @@ func (s *Server) fetchLoginDataFromRequest(req *http.Request) (*models.UserLogin
 		return nil, nil, s.notifyUnauthorized, nil
 	}
 	username := loginInput.Username
-	logger := s.logger.WithValue("username", username)
-
-	// if err := s.loginMonitor.LoginAttemptsExhausted(username); err != nil {
-	// 	s.logger.Debug("user has exhausted their number of login attempts")
-	// 	return nil, nil, func(res http.ResponseWriter, req *http.Request, err error) {
-	// 		s.loginMonitor.NotifyExhaustedAttempts(res)
-	// 	}, err
-	// }
+	logger := s.logger.WithValue("Username", username)
 
 	// you could ensure there isn't an unsatisfied password reset token requested before allowing login here
 
@@ -192,16 +190,15 @@ func (s *Server) validateLogin(
 	return loginValid, nil, nil
 }
 
-func (s *Server) buildCookie(user *models.User, loginValid bool) (*http.Cookie, error) {
+func (s *Server) buildCookie(user *models.User) (*http.Cookie, error) {
 	s.logger.WithValues(map[string]interface{}{
-		"user_id":     user.ID,
-		"login_valid": loginValid,
+		"user_id": user.ID,
 	}).Debug("buildCookie called")
 
 	encoded, err := s.cookieBuilder.Encode(
 		cookieName, cookieAuth{
-			Username:      user.Username,
-			Authenticated: loginValid,
+			Admin:    user.IsAdmin,
+			Username: user.Username,
 		},
 	)
 

@@ -7,11 +7,11 @@ import (
 // ItemHandler describes a structure capable of storing items permanently
 type ItemHandler interface {
 	GetItem(ctx context.Context, itemID, userID uint64) (*Item, error)
-	GetItemCount(ctx context.Context, filter *QueryFilter) (uint64, error)
-	GetItems(ctx context.Context, filter *QueryFilter) (*ItemList, error)
+	GetItemCount(ctx context.Context, filter *QueryFilter, userID uint64) (uint64, error)
+	GetItems(ctx context.Context, filter *QueryFilter, userID uint64) (*ItemList, error)
 	CreateItem(ctx context.Context, input *ItemInput) (*Item, error)
 	UpdateItem(ctx context.Context, updated *Item) error
-	DeleteItem(ctx context.Context, id uint64) error
+	DeleteItem(ctx context.Context, id uint64, userID uint64) error
 }
 
 // Item represents an item

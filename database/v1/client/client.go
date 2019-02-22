@@ -48,7 +48,7 @@ func ProvideDatabaseClient(
 	c := &Client{
 		database: database,
 		debug:    debug,
-		logger:   logger,
+		logger:   logger.WithName("db_client"),
 		tracer:   tracer,
 	}
 

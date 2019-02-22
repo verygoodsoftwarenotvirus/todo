@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
@@ -57,6 +58,25 @@ func ProvidePostgresTracer() Tracer {
 	return tracing.ProvideTracer("postgres")
 }
 
+func buildLoggerFunc(logger logging.Logger) instrumentedsql.LoggerFunc {
+	return func(ctx context.Context, msg string, keyvals ...interface{}) {
+		var currentKey string
+
+		for i, x := range keyvals {
+			if i%2 == 0 {
+				if y, ok := x.(string); ok && strings.TrimSpace(strings.ToLower(y)) == "query" {
+					currentKey = y
+				}
+			} else if currentKey == "query" && x != nil {
+				if z, ok := x.(string); ok && z != "" {
+					logger.WithName("sql_debug").WithValue("query", x).Debug(msg)
+					break
+				}
+			}
+		}
+	}
+}
+
 // ProvidePostgresDB provides an instrumented postgres database
 func ProvidePostgresDB(
 	logger logging.Logger,
@@ -65,27 +85,7 @@ func ProvidePostgresDB(
 ) (*sql.DB, error) {
 	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to postgres")
 
-	loggerFunc := instrumentedsql.LoggerFunc(func(ctx context.Context, msg string, keyvals ...interface{}) {
-		var (
-			currentKey string
-		)
-
-		values := map[string]interface{}{}
-		for i, x := range keyvals {
-			if i%2 == 0 {
-				if y, ok := x.(string); ok { // && strings.TrimSpace(strings.ToLower(y)) == "query" {
-					currentKey = y
-				}
-			} else if currentKey != "" && x != nil {
-				values[currentKey] = x
-				currentKey = ""
-			}
-		}
-
-		values["msg"] = msg
-
-		logger.WithValues(values).Debug("")
-	})
+	loggerFunc := instrumentedsql.LoggerFunc(buildLoggerFunc(logger))
 
 	sql.Register(
 		"instrumented-postgres",
@@ -107,7 +107,7 @@ func ProvidePostgres(
 ) (database.Database, error) {
 	s := &Postgres{
 		debug:       debug,
-		logger:      logger,
+		logger:      logger.WithName("postgres"),
 		database:    db,
 		databaseURL: string(connectionDetails),
 	}

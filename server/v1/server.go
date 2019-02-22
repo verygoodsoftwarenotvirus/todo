@@ -115,7 +115,7 @@ func ProvideServer(
 
 		// infra thngs
 		db:            db,
-		logger:        logger,
+		logger:        logger.WithName("server"),
 		server:        server,
 		cookieBuilder: cookieBuilder,
 		tracer:        tracer,

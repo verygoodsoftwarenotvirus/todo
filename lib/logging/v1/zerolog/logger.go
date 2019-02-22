@@ -45,9 +45,10 @@ func ProvideLogger(logger zerolog.Logger) logging.Logger {
 }
 
 // WithName is our obligatory contract fulfillment function
-// Zerolog doesn't support named loggers :(
+// Zerolog doesn't support named loggers :( so we have this workaround
 func (l *Logger) WithName(name string) logging.Logger {
-	return l
+	l2 := l.logger.With().Str(logging.LoggerNameKey, name).Logger()
+	return &Logger{logger: l2}
 }
 
 // SetLevel sets the log level for our logger

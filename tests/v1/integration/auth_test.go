@@ -55,25 +55,4 @@ func TestAuth(test *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 	})
 
-	// test.Run("should accept a valid token", func(t *testing.T) {
-	// 	cookie := loginUser(t, expectedUsername, expectedPassword)
-	// 	assert.NotNil(t, cookie)
-
-	// 	req, err := http.NewRequest(http.MethodPost, todoClient.BuildURL(nil, "fart"), nil)
-	// 	req.AddCookie(cookie)
-	// 	assert.NoError(t, err)
-
-	// 	ac := todoClient.AuthenticatedClient()
-	// 	res, err := ac.Do(req)
-	// 	assert.NoError(t, err)
-	// 	assert.Equal(t, http.StatusTeapot, res.StatusCode)
-	// })
-
-	// test.Run("should reject an invalid cookie", func(t *testing.T) {
-	// 	req, err := http.NewRequest(http.MethodPost, todoClient.BuildURL(nil, "fart"), nil)
-	// 	assert.NoError(t, err)
-	// 	res, err := pc.Do(req)
-	// 	assert.NoError(t, err)
-	// 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
-	// })
 }

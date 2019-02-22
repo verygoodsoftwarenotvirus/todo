@@ -26,10 +26,9 @@ type Logger struct {
 }
 
 // ProvideZapLogger builds a new zap logger
-func ProvideZapLogger(name logging.LoggerName) (*zap.Logger, error) {
+func ProvideZapLogger() (*zap.Logger, error) {
 	config := zap.NewDevelopmentConfig()
 	logger, err := config.Build()
-	logger = logger.Named(string(name))
 	return logger, err
 }
 
@@ -86,7 +85,7 @@ func (l *Logger) WithValues(values map[string]interface{}) logging.Logger {
 
 // WithValue satisfies our contract for the logging.Logger WithValue method.
 func (l *Logger) WithValue(key string, value interface{}) logging.Logger {
-	l2 := l.logger.With(zapcore.Field{Key: key, Interface: value})
+	l2 := l.logger.With(zap.Any(key, value))
 	return &Logger{logger: l2}
 }
 

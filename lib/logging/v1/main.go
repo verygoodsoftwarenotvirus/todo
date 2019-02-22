@@ -4,6 +4,11 @@ import (
 	"net/http"
 )
 
+const (
+	// LoggerNameKey is a key we can use to denote logger names across implementations
+	LoggerNameKey = "__logger_name__"
+)
+
 type (
 	// Level is a simple string alias for dependency injection's sake
 	Level string

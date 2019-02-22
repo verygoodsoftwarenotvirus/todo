@@ -50,7 +50,7 @@ func ProvideLogger(logger *logrus.Logger) logging.Logger {
 // WithName is our obligatory contract fulfillment function
 // Logrus doesn't support named loggers :(
 func (l *Logger) WithName(name string) logging.Logger {
-	return l
+	return &entryWrapper{l.logger.WithField(logging.LoggerNameKey, name)}
 }
 
 // SetLevel sets the log level

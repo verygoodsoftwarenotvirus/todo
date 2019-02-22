@@ -116,7 +116,7 @@ func NewClient(
 	c := &V1Client{
 		URL:          address,
 		plainClient:  client,
-		logger:       logger,
+		logger:       logger.WithName("v1_client"),
 		tracer:       tracer,
 		Debug:        debug,
 		authedClient: buildOAuthClient(address, clientID, clientSecret),

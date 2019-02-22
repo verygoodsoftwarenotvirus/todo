@@ -64,7 +64,7 @@ func ProvideItemsService(
 	encoder encoding.ResponseEncoder,
 ) *Service {
 	svc := &Service{
-		logger:        logger,
+		logger:        logger.WithName("items_service"),
 		db:            db,
 		tracer:        tracer,
 		encoder:       encoder,

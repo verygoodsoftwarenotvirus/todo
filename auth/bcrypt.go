@@ -39,7 +39,7 @@ type BcryptHashCost uint
 // ProvideBcrypt returns a Bcrypt-powered Enticator
 func ProvideBcrypt(hashCost BcryptHashCost, logger logging.Logger, tracer Tracer) Enticator {
 	ba := &BcryptAuthenticator{
-		logger:              logger,
+		logger:              logger.WithName("bcrypt"),
 		tracer:              tracer,
 		hashCost:            uint(math.Min(float64(DefaultBcryptHashCost), float64(hashCost))),
 		minimumPasswordSize: defaultMinimumPasswordSize,

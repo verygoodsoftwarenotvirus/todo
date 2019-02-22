@@ -74,7 +74,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 		middleware.Timeout(maxTimeout),
 		s.tracingMiddleware,
 		s.loggingMiddleware,
-		//logging.BuildMiddleware(s.logger),
+		//logging.BuildMiddleware(s.logger), // TODO:
 	)
 	// all middlewares must be defined before routes on a mux
 

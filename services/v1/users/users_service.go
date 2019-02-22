@@ -71,7 +71,7 @@ func ProvideUsersService(
 		panic("usernameFetcher must be provided")
 	}
 	us := &Service{
-		logger:          logger,
+		logger:          logger.WithName("users_service"),
 		cookieName:      cookieName,
 		database:        database,
 		authenticator:   authenticator,

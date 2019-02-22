@@ -82,7 +82,7 @@ func ProvideOAuth2ClientsService(
 
 	s := &Service{
 		database:             database,
-		logger:               logger,
+		logger:               logger.WithName("oauth2_clients_service"),
 		tracer:               tracer,
 		encoder:              encoder,
 		authenticator:        authenticator,

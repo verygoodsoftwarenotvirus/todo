@@ -103,9 +103,9 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("read route", opentracing.ChildOf(spanCtx))
+	ctx := opentracing.ContextWithSpan(req.Context(), serverSpan)
 	defer serverSpan.Finish()
 
-	ctx := req.Context()
 	userID := s.usernameFetcher(req)
 	logger := s.logger.WithValue("user_id", userID)
 
@@ -131,9 +131,9 @@ func (s *Service) Count(res http.ResponseWriter, req *http.Request) {
 
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("count route", opentracing.ChildOf(spanCtx))
+	ctx := opentracing.ContextWithSpan(req.Context(), serverSpan)
 	defer serverSpan.Finish()
 
-	ctx := req.Context()
 	qf := models.ExtractQueryFilter(req)
 	logger := s.logger.WithValue("query_filter", qf)
 
@@ -156,9 +156,9 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("list route", opentracing.ChildOf(spanCtx))
+	ctx := opentracing.ContextWithSpan(req.Context(), serverSpan)
 	defer serverSpan.Finish()
 
-	ctx := req.Context()
 	qf := models.ExtractQueryFilter(req)
 	logger := s.logger.WithValue("query_filter", qf)
 
@@ -180,9 +180,9 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("delete route", opentracing.ChildOf(spanCtx))
+	ctx := opentracing.ContextWithSpan(req.Context(), serverSpan)
 	defer serverSpan.Finish()
 
-	ctx := req.Context()
 	username := s.usernameFetcher(req)
 	logger := s.logger.WithValue("username", username)
 	logger.Debug("UsersService.Delete called")
@@ -314,9 +314,9 @@ func (s *Service) UpdatePassword(res http.ResponseWriter, req *http.Request) {
 func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("create route", opentracing.ChildOf(spanCtx))
+	ctx := opentracing.ContextWithSpan(req.Context(), serverSpan)
 	defer serverSpan.Finish()
 
-	ctx := req.Context()
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.UserInput)
 	if !ok {
 		s.logger.Error(nil, "valid input not attached to UsersService Create request")
@@ -327,7 +327,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	s.logger.WithValues(map[string]interface{}{
 		"username": input.Username,
 		"is_admin": input.IsAdmin,
-	}).Debug("Create route hit")
+	}).Debug("user creation route hit")
 
 	hp, err := s.authenticator.HashPassword(ctx, input.Password)
 	if err != nil {

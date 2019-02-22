@@ -1,16 +1,6 @@
 version: '3.3'
 
 services:
-  database:
-    image: postgres:latest
-    ports:
-      - '2345:5432'
-    environment:
-      POSTGRES_USER: todo
-      POSTGRES_PASSWORD: hunter2
-    logging:
-      driver: none
-
   todo-server:
     build:
       context: ../
@@ -39,3 +29,13 @@ services:
       - todo-server
     # logging:
     #   driver: none
+
+  database:
+    image: postgres:latest
+    ports:
+      - '2345:5432'
+    environment:
+      POSTGRES_USER: todo
+      POSTGRES_PASSWORD: hunter2
+    logging:
+      driver: none

@@ -22,6 +22,7 @@ func (s *Service) ItemInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 		serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
+		ctx := opentracing.ContextWithSpan(req.Context(), serverSpan)
 		defer serverSpan.Finish()
 
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
@@ -31,7 +32,8 @@ func (s *Service) ItemInputMiddleware(next http.Handler) http.Handler {
 		}
 
 		s.logger.WithValue("itemInput", x).Debug("ItemInputMiddleware called")
-		ctx := context.WithValue(req.Context(), MiddlewareCtxKey, x)
+		ctx = context.WithValue(ctx, MiddlewareCtxKey, x)
+
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }
@@ -41,6 +43,7 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
+	ctx = opentracing.ContextWithSpan(ctx, serverSpan)
 	defer serverSpan.Finish()
 
 	userID := s.userIDFetcher(req)
@@ -73,6 +76,7 @@ func (s *Service) Count(res http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
+	ctx = opentracing.ContextWithSpan(ctx, serverSpan)
 	defer serverSpan.Finish()
 
 	s.logger.Debug("ItemsService.Count called")
@@ -101,6 +105,7 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
+	ctx = opentracing.ContextWithSpan(ctx, serverSpan)
 	defer serverSpan.Finish()
 
 	s.logger.Debug("ItemsService.List called")
@@ -128,9 +133,8 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
+	ctx := opentracing.ContextWithSpan(req.Context(), serverSpan)
 	defer serverSpan.Finish()
-
-	ctx := req.Context()
 
 	userID := s.userIDFetcher(req)
 	itemID := s.itemIDFetcher(req)
@@ -158,9 +162,9 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
+	ctx := opentracing.ContextWithSpan(req.Context(), serverSpan)
 	defer serverSpan.Finish()
 
-	ctx := req.Context()
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.ItemInput)
 	if !ok {
 		s.logger.Error(nil, "no input attached to request")
@@ -203,10 +207,10 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
+	ctx := opentracing.ContextWithSpan(req.Context(), serverSpan)
 	defer serverSpan.Finish()
 
 	s.logger.Debug("ItemsService.Create called")
-	ctx := req.Context()
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.ItemInput)
 	if !ok {
 		s.logger.Error(nil, "valid input not attached to request")

@@ -31,13 +31,22 @@ type Logger struct {
 
 // ProvideZerologger builds a new zerologger
 func ProvideZerologger() zerolog.Logger {
-	l := zerolog.New(os.Stdout)
-	return l
+	return zerolog.
+		New(os.Stdout).
+		With().
+		Timestamp().
+		Logger()
 }
 
 // ProvideLogger builds a new logger
 func ProvideLogger(logger zerolog.Logger) logging.Logger {
 	l := &Logger{logger: logger}
+	return l
+}
+
+// WithName is our obligatory contract fulfillment function
+// Zerolog doesn't support named loggers :(
+func (l *Logger) WithName(name string) logging.Logger {
 	return l
 }
 
@@ -75,11 +84,6 @@ func (l *Logger) Error(err error, input string) {
 // Fatal satisfies our contract for the logging.Logger Fatal method.
 func (l *Logger) Fatal(err error) {
 	l.logger.Fatal().Caller().Err(err).Msg("")
-}
-
-// Print satisfies our contract for the logging.Logger Print method.
-func (l *Logger) Print(input ...interface{}) {
-	l.logger.Print(input...)
 }
 
 // WithValues satisfies our contract for the logging.Logger WithValues method.

@@ -23,28 +23,25 @@ type cookieAuth struct {
 	Username string
 }
 
-func (s *Server) fetchUserFromRequest(req *http.Request) (user *models.User, err error) {
-	var ctx = req.Context()
+func (s *Server) fetchUserFromRequest(req *http.Request) (*models.User, error) {
 	var ca cookieAuth
 
 	cookie, cerr := req.Cookie(cookieName)
 	if cerr == nil && cookie != nil {
 		derr := s.cookieBuilder.Decode(cookieName, cookie.Value, &ca)
 		if derr == nil {
-			if u := ctx.Value(models.UserKey); u == nil {
-				user, err = s.db.GetUser(ctx, ca.Username)
-				if err != nil {
-					return nil, err
-				}
-			} else {
-				user = u.(*models.User)
+			user, uerr := s.db.GetUser(req.Context(), ca.Username)
+
+			if uerr != nil {
+				return nil, uerr
 			}
-			return
+			return user, nil
 		}
-		err = derr
-		s.logger.Error(derr, "error decoding request cookie")
+		return nil, errors.Wrap(derr, "decoding request cookie")
+	} else if cerr == nil && cookie == nil {
+		return nil, errors.New("no user found in request")
 	}
-	return nil, errors.New("no user found in request")
+	return nil, errors.Wrap(cerr, "fetching user from request")
 }
 
 // userCookieAuthenticationMiddleware authenticates user cookies

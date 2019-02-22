@@ -4,12 +4,13 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
@@ -49,7 +50,7 @@ type (
 		oauth2ClientsService *oauth2clients.Service
 
 		// infra things
-		db      database.Database
+		db      *dbclient.Client
 		router  *chi.Mux
 		server  *http.Server
 		logger  logging.Logger
@@ -89,7 +90,7 @@ func ProvideServer(
 	oauth2Service *oauth2clients.Service,
 
 	// infra things
-	db database.Database,
+	db *dbclient.Client,
 	logger logging.Logger,
 	tracer Tracer,
 	server *http.Server,
@@ -147,7 +148,7 @@ func ProvideServer(
 // Serve serves HTTP traffic
 func (s *Server) Serve() {
 	s.server.Addr = ":80"
-	s.logger.Debug("Listening on 80")
+	s.logger.Debug(fmt.Sprintf("Listening on %s", s.server.Addr))
 	log.Fatal(s.server.ListenAndServe())
 }
 

@@ -18,8 +18,11 @@ func (c *Client) GetOAuth2Client(ctx context.Context, clientID string, userID ui
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetOAuth2Client")
 	defer span.Finish()
 
-	logger := c.logger.WithValue("oauth2_client_id", clientID)
-	logger.Debug("Postgres.GetOAuth2Client called")
+	logger := c.logger.WithValues(map[string]interface{}{
+		"user_id":          userID,
+		"oauth2_client_id": clientID,
+	})
+	logger.Debug("GetOAuth2Client called")
 
 	return c.database.GetOAuth2Client(ctx, clientID, userID)
 }
@@ -27,10 +30,10 @@ func (c *Client) GetOAuth2Client(ctx context.Context, clientID string, userID ui
 // GetOAuth2ClientByClientID fetches any OAuth2 client by client ID, regardless of ownershic. This is used by
 // authenticating middleware to fetch client information it needs to validate
 func (c *Client) GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*models.OAuth2Client, error) {
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetOAuth2Client")
+	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetOAuth2ClientByClientID")
 	defer span.Finish()
 
-	c.logger.WithValue("client_id", clientID).Debug("GetOAuth2Client called")
+	c.logger.WithValue("client_id", clientID).Debug("GetOAuth2ClientByClientID called")
 
 	return c.database.GetOAuth2ClientByClientID(ctx, clientID)
 }
@@ -45,8 +48,11 @@ func (c *Client) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryF
 		filter = models.DefaultQueryFilter
 	}
 
-	logger := c.logger.WithValue("filter", filter)
-	logger.Debug("Postgres.GetOAuth2ClientCount called")
+	logger := c.logger.WithValues(map[string]interface{}{
+		"user_id": userID,
+		"filter":  filter,
+	})
+	logger.Debug("GetOAuth2ClientCount called")
 
 	return c.database.GetOAuth2ClientCount(ctx, filter, userID)
 }
@@ -57,7 +63,7 @@ func (c *Client) GetAllOAuth2Clients(ctx context.Context) ([]models.OAuth2Client
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetAllOAuth2Clients")
 	defer span.Finish()
 
-	c.logger.Debug("Postgres.GetAllOAuth2Clients called")
+	c.logger.Debug("GetAllOAuth2Clients called")
 
 	return c.database.GetAllOAuth2Clients(ctx)
 }
@@ -67,8 +73,11 @@ func (c *Client) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilte
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetOAuth2Clients")
 	defer span.Finish()
 
-	logger := c.logger.WithValue("filter", filter)
-	logger.Debug("Postgres.GetOAuth2Clients called")
+	logger := c.logger.WithValues(map[string]interface{}{
+		"user_id": userID,
+		"filter":  filter,
+	})
+	logger.Debug("GetOAuth2Clients called")
 
 	if filter == nil {
 		logger.Debug("using default query filter")
@@ -91,7 +100,7 @@ func (c *Client) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 		"scopes":       input.Scopes,
 		"belongs_to":   input.BelongsTo,
 	})
-	logger.Debug("Postgres.CreateOAuth2Client called.")
+	logger.Debug("CreateOAuth2Client called.")
 
 	return c.database.CreateOAuth2Client(ctx, input)
 }
@@ -107,7 +116,7 @@ func (c *Client) UpdateOAuth2Client(ctx context.Context, updated *models.OAuth2C
 		"scopes":       updated.Scopes,
 		"belongs_to":   updated.BelongsTo,
 	})
-	logger.Debug("Postgres.UpdateOAuth2Client called.")
+	logger.Debug("UpdateOAuth2Client called.")
 
 	return c.database.UpdateOAuth2Client(ctx, updated)
 }
@@ -121,7 +130,7 @@ func (c *Client) DeleteOAuth2Client(ctx context.Context, clientID string, userID
 		"oauth2_client_id": clientID,
 		"user_id":          userID,
 	})
-	logger.Debug("Postgres.DeleteOAuth2Client called")
+	logger.Debug("DeleteOAuth2Client called")
 
 	return c.database.DeleteOAuth2Client(ctx, clientID, userID)
 }

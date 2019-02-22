@@ -13,7 +13,7 @@ import (
 )
 
 func loginUser(t *testing.T, username, password, totpSecret string) *http.Cookie {
-	loginURL := fmt.Sprintf("%s://%s/users/login", todoClient.URL.Scheme, todoClient.URL.Hostname())
+	loginURL := fmt.Sprintf("%s://%s:%s/users/login", todoClient.URL.Scheme, todoClient.URL.Hostname(), todoClient.URL.Port())
 
 	code, err := totp.GenerateCode(strings.ToUpper(totpSecret), time.Now())
 	assert.NoError(t, err)

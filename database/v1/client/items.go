@@ -5,6 +5,8 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"github.com/opentracing/opentracing-go"
 )
 
 var _ models.ItemHandler = (*Client)(nil)
@@ -14,6 +16,7 @@ func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*models.It
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetItem")
 	span.SetTag("item_id", itemID)
 	span.SetTag("user_id", userID)
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	defer span.Finish()
 
 	c.logger.WithValues(map[string]interface{}{
@@ -28,6 +31,7 @@ func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*models.It
 func (c *Client) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetItemCount")
 	span.SetTag("user_id", userID)
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	defer span.Finish()
 
 	c.logger.WithValues(map[string]interface{}{
@@ -48,6 +52,7 @@ func (c *Client) GetItemCount(ctx context.Context, filter *models.QueryFilter, u
 func (c *Client) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetItems")
 	span.SetTag("user_id", userID)
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	defer span.Finish()
 
 	c.logger.WithValues(map[string]interface{}{
@@ -67,6 +72,7 @@ func (c *Client) GetItems(ctx context.Context, filter *models.QueryFilter, userI
 // CreateItem creates an item in a postgres database
 func (c *Client) CreateItem(ctx context.Context, input *models.ItemInput) (*models.Item, error) {
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "CreateItem")
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	defer span.Finish()
 
 	c.logger.WithValue("input", input).Debug("CreateItem called")
@@ -78,6 +84,7 @@ func (c *Client) CreateItem(ctx context.Context, input *models.ItemInput) (*mode
 func (c *Client) UpdateItem(ctx context.Context, input *models.Item) error {
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "UpdateItem")
 	span.SetTag("item_id", input.ID)
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	defer span.Finish()
 
 	c.logger.WithValue("input", input).Debug("UpdateItem called")
@@ -90,6 +97,7 @@ func (c *Client) DeleteItem(ctx context.Context, itemID uint64, userID uint64) e
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "DeleteItem")
 	span.SetTag("item_id", itemID)
 	span.SetTag("user_id", userID)
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	defer span.Finish()
 
 	c.logger.WithValues(map[string]interface{}{

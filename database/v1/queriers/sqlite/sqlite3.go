@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 
 	"github.com/google/wire"
@@ -38,8 +39,8 @@ type (
 func ProvideSqlite(
 	debug bool,
 	logger logging.Logger,
-	sqliteFilepath Filepath,
-) (*Sqlite, error) {
+	sqliteFilepath database.ConnectionDetails,
+) (database.Database, error) {
 	logger.WithValue("sqlite_filepath", sqliteFilepath).Debug("Establishing connection to sqlite3 file")
 	db, err := sql.Open("sqlite3", string(sqliteFilepath))
 	if err != nil {

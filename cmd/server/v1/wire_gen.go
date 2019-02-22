@@ -33,8 +33,7 @@ func BuildServer(connectionDetails database.ConnectionDetails, CookieName users.
 	if err != nil {
 		return nil, err
 	}
-	dbclientTracer := dbclient.ProvideTracer()
-	databaseDatabase, err := dbclient.ProvidePostgresDatabase(Debug, db, loggingLogger, connectionDetails, dbclientTracer)
+	databaseDatabase, err := postgres.ProvidePostgres(Debug, db, loggingLogger, connectionDetails)
 	if err != nil {
 		return nil, err
 	}
@@ -49,11 +48,16 @@ func BuildServer(connectionDetails database.ConnectionDetails, CookieName users.
 	clientIDFetcher := server.ProvideOAuth2ServiceClientIDFetcher()
 	oauth2clientsTracer := oauth2clients.ProvideOAuth2ClientsServiceTracer()
 	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(loggingLogger, databaseDatabase, enticator, clientIDFetcher, oauth2clientsTracer, responseEncoder)
+	dbclientTracer := dbclient.ProvideTracer()
+	client, err := dbclient.ProvideDatabaseClient(databaseDatabase, Debug, loggingLogger, dbclientTracer)
+	if err != nil {
+		return nil, err
+	}
 	serverTracer := server.ProvideServerTracer()
 	httpServer := server.ProvideHTTPServer()
 	handler := prometheus.ProvideMetricsHandler()
 	instrumentationHandlerProvider := prometheus.ProvideInstrumentationHandlerProvider(metricsNamespace)
-	serverServer, err := server.ProvideServer(Debug, CookieSecret, enticator, service, usersService, oauth2clientsService, databaseDatabase, loggingLogger, serverTracer, httpServer, responseEncoder, handler, instrumentationHandlerProvider)
+	serverServer, err := server.ProvideServer(Debug, CookieSecret, enticator, service, usersService, oauth2clientsService, client, loggingLogger, serverTracer, httpServer, responseEncoder, handler, instrumentationHandlerProvider)
 	if err != nil {
 		return nil, err
 	}

@@ -9,14 +9,13 @@ import (
 )
 
 const (
+	debug = false
+
+	sqliteConnectionDetails   = database.ConnectionDetails("example.db")
 	postgresConnectionDetails = database.ConnectionDetails("postgres://todo:hunter2@database:5432/todo?sslmode=disable")
-
-	cookieSecret = "HEREISA32CHARSECRETWHICHISMADEUP"
 )
 
-var (
-	debug bool
-)
+var cookieSecret = []byte("HEREISA32CHARSECRETWHICHISMADEUP")
 
 func main() {
 	server, err := BuildServer(

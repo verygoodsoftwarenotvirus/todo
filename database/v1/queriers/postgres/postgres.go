@@ -10,7 +10,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 
 	"github.com/ExpansiveWorlds/instrumentedsql"
-	// instrumentedopentracing "github.com/ExpansiveWorlds/instrumentedsql/opentracing"
 	"github.com/google/wire"
 	postgres "github.com/lib/pq"
 	"github.com/opentracing/opentracing-go"
@@ -74,7 +73,7 @@ func ProvidePostgresDB(
 		values := map[string]interface{}{}
 		for i, x := range keyvals {
 			if i%2 == 0 {
-				if y, ok := x.(string); ok {
+				if y, ok := x.(string); ok { // && strings.TrimSpace(strings.ToLower(y)) == "query" {
 					currentKey = y
 				}
 			} else if currentKey != "" && x != nil {
@@ -82,6 +81,7 @@ func ProvidePostgresDB(
 				currentKey = ""
 			}
 		}
+
 		values["msg"] = msg
 
 		logger.WithValues(values).Debug("")
@@ -104,7 +104,7 @@ func ProvidePostgres(
 	db *sql.DB,
 	logger logging.Logger,
 	connectionDetails database.ConnectionDetails,
-) (*Postgres, error) {
+) (database.Database, error) {
 	s := &Postgres{
 		debug:       debug,
 		logger:      logger,

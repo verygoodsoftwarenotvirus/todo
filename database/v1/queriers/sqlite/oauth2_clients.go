@@ -87,12 +87,13 @@ const getOAuth2ClientQuery = `
 		oauth_clients
 	WHERE
 		client_id = ?
+		AND belongs_to = ?
 `
 
 // GetOAuth2Client gets an OAuth2 client
 func (s *Sqlite) GetOAuth2Client(ctx context.Context, clientID string, userID uint64) (*models.OAuth2Client, error) {
 	s.logger.WithValue("client_id", clientID).Debug("GetOAuth2Client called")
-	row := s.database.QueryRowContext(ctx, getOAuth2ClientQuery, clientID)
+	row := s.database.QueryRowContext(ctx, getOAuth2ClientQuery, clientID, userID)
 	return scanOAuth2Client(row)
 }
 
@@ -195,7 +196,7 @@ const getAllOAuth2ClientsQuery = `
 	FROM
 		oauth_clients
 	WHERE
-		archived_on is null
+		archived_on IS NULL
 `
 
 // GetAllOAuth2Clients gets a list of all OAuth2 clients, regardless of ownership
@@ -286,6 +287,7 @@ const updateOAuth2ClientQuery = `
 		updated_on = (strftime('%s','now'))
 	WHERE
 		id = ?
+		AND belongs_to = ?
 `
 
 // UpdateOAuth2Client updates a OAuth2 client. Note that this function expects the input's
@@ -298,6 +300,7 @@ func (s *Sqlite) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 		strings.Join(input.Scopes, scopesSeparator),
 		input.RedirectURI,
 		input.ID,
+		input.BelongsTo,
 	)
 
 	return err
@@ -310,10 +313,11 @@ const archiveOAuth2ClientQuery = `
 		archived_on = (strftime('%s','now'))
 	WHERE
 		id = ?
+		AND belongs_to = ?
 `
 
 // DeleteOAuth2Client deletes an OAuth2 client
 func (s *Sqlite) DeleteOAuth2Client(ctx context.Context, id string, userID uint64) error {
-	_, err := s.database.ExecContext(ctx, archiveOAuth2ClientQuery, id)
+	_, err := s.database.ExecContext(ctx, archiveOAuth2ClientQuery, id, userID)
 	return err
 }

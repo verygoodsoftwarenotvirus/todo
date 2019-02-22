@@ -49,7 +49,7 @@ func initializeTracer() {
 func buildHTTPClient() *http.Client {
 	httpc := &http.Client{
 		Transport: http.DefaultTransport,
-		Timeout:   5 * time.Second,
+		// Timeout:   5 * time.Second,
 	}
 
 	return httpc
@@ -74,8 +74,8 @@ func initializeClient(clientID, clientSecret string) {
 	todoClient = c
 }
 
-func isUp(baseURI string) bool {
-	uri := fmt.Sprintf("%s/_meta_/health", baseURI)
+func isUp() bool {
+	uri := fmt.Sprintf("%s/_meta_/health", urlToUse)
 
 	req, _ := http.NewRequest(http.MethodGet, uri, nil)
 	httpc := buildHTTPClient()
@@ -88,7 +88,7 @@ func isUp(baseURI string) bool {
 	return res.StatusCode == http.StatusOK
 }
 
-func ensureServerIsUp(address string) {
+func ensureServerIsUp() {
 	var (
 		isDown           = true
 		maxAttempts      = 25
@@ -96,7 +96,7 @@ func ensureServerIsUp(address string) {
 	)
 
 	for isDown {
-		if !isUp(address) {
+		if !isUp() {
 			log.Printf("waiting half a second before pinging again")
 			time.Sleep(500 * time.Millisecond)
 			numberOfAttempts++

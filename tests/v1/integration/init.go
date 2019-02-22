@@ -2,7 +2,6 @@ package integration
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -17,6 +16,7 @@ import (
 
 	"github.com/icrowley/fake"
 	"github.com/moul/http2curl"
+	"github.com/pkg/errors"
 	"github.com/pquerna/otp/totp"
 )
 
@@ -29,7 +29,8 @@ func init() {
 	initializeTracer()
 	logger := zerolog.ProvideLogger(zerolog.ProvideZerologger())
 
-	ensureServerIsUp(urlToUse)
+	logger.WithValue("url", urlToUse).Info("checking server")
+	ensureServerIsUp()
 
 	u, err := createObligatoryUser()
 	if err != nil {

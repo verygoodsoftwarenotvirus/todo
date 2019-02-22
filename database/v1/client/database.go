@@ -10,7 +10,6 @@ import (
 var (
 	// Providers represents what we provide to dependency injectors
 	Providers = wire.NewSet(
-		ProvidePostgresDatabase,
 		ProvideDatabaseClient,
 		ProvideTracer,
 	)

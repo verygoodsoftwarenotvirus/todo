@@ -177,11 +177,20 @@ const updateItemQuery = `
 		updated_on = (strftime('%s','now'))
 	WHERE
 		id = ?
+		AND belongs_to = ?
 `
 
 // UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
 func (s *Sqlite) UpdateItem(ctx context.Context, input *models.Item) error {
-	if _, err := s.database.ExecContext(ctx, updateItemQuery, input.Name, input.Details, input.ID); err != nil {
+	_, err := s.database.ExecContext(
+		ctx,
+		updateItemQuery,
+		input.Name,
+		input.Details,
+		input.ID,
+		input.BelongsTo,
+	)
+	if err != nil {
 		return errors.Wrap(err, "updating item")
 	}
 
@@ -194,11 +203,12 @@ const archiveItemQuery = `
 		completed_on = (strftime('%s','now'))
 	WHERE
 		id = ?
+		AND belongs_to = ?
 		AND completed_on IS NULL
 `
 
 // DeleteItem deletes an item from the database by its ID
 func (s *Sqlite) DeleteItem(ctx context.Context, id uint64, userID uint64) error {
-	_, err := s.database.ExecContext(ctx, archiveItemQuery, id)
+	_, err := s.database.ExecContext(ctx, archiveItemQuery, id, userID)
 	return err
 }

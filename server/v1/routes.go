@@ -69,12 +69,11 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 	s.router = chi.NewRouter()
 
 	s.router.Use(
-		gcontext.ClearHandler,
+		gcontext.ClearHandler, // because we're using securecookie, but not gorilla/mux
 		middleware.RequestID,
-		middleware.Timeout(maxTimeout),
 		s.tracingMiddleware,
+		middleware.Timeout(maxTimeout),
 		s.loggingMiddleware,
-		//logging.BuildMiddleware(s.logger), // TODO:
 	)
 	// all middlewares must be defined before routes on a mux
 
@@ -89,6 +88,12 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 		userRouter.With(s.usersService.UserLoginInputContextMiddleware).Post("/login", s.login)
 		userRouter.With(s.userCookieAuthenticationMiddleware).Post("/logout", s.logout)
 
+		usernamePattern := fmt.Sprintf(`/{%s:[a-zA-Z0-9_\-]+}`, users.URIParamKey)
+
+		userRouter.With(s.usersService.UserInputContextMiddleware).Post("/", s.usersService.Create) // Create
+		userRouter.Get(usernamePattern, s.usersService.Read)                                        // Read
+
+		// Updates:
 		userRouter.With(
 			s.userCookieAuthenticationMiddleware,
 			s.usersService.TOTPSecretRefreshInputContextMiddleware,
@@ -99,21 +104,18 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 			s.usersService.PasswordUpdateInputContextMiddleware,
 		).Post("/password/new", s.usersService.UpdatePassword)
 
-		usernamePattern := fmt.Sprintf(`/{%s:[a-zA-Z0-9_\-]+}`, users.URIParamKey)
-
-		userRouter.Get("/", s.usersService.List)                  // List
-		userRouter.Get(usernamePattern, s.usersService.Read)      // Read
 		userRouter.Delete(usernamePattern, s.usersService.Delete) // Delete
-		userRouter.With(s.usersService.UserInputContextMiddleware).
-			Post("/", s.usersService.Create) // Create
-		// TODO: Update
+		userRouter.Get("/", s.usersService.List)                  // List
 	})
 
 	s.router.Route("/oauth2", func(oauth2Router chi.Router) {
 		oauth2Router.
 			With(
 				s.userCookieAuthenticationMiddleware,
-				s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.OAuth2ClientCreationInput)),
+				s.buildRouteCtx(
+					oauth2clients.MiddlewareCtxKey,
+					new(models.OAuth2ClientCreationInput),
+				),
 			).Post("/client", s.oauth2ClientsService.Create) // Create
 
 		oauth2Router.
@@ -131,36 +133,35 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 		})
 	})
 
-	s.router.With(s.oauth2ClientsService.OAuth2TokenAuthenticationMiddleware).Route("/api", func(apiRouter chi.Router) {
-		apiRouter.Route("/v1", func(v1Router chi.Router) {
+	s.router.
+		With(s.oauth2ClientsService.OAuth2TokenAuthenticationMiddleware).
+		Route("/api", func(apiRouter chi.Router) {
+			apiRouter.Route("/v1", func(v1Router chi.Router) {
 
-			v1Router.Route("/items", func(itemsRouter chi.Router) {
-				sr := fmt.Sprintf("/{%s:[0-9]+}", items.URIParamKey)
-				itemsRouter.Get("/", s.itemsService.List)       // List
-				itemsRouter.Get("/count", s.itemsService.Count) // Count
-				itemsRouter.Get(sr, s.itemsService.Read)        // Read
-				itemsRouter.Delete(sr, s.itemsService.Delete)   // Delete
-				itemsRouter.With(s.itemsService.ItemInputMiddleware).
-					Put(sr, s.itemsService.Update) // Update
-				itemsRouter.With(s.itemsService.ItemInputMiddleware).
-					Post("/", s.itemsService.Create) // Create
-			})
-
-			v1Router.Route("/oauth2", func(oauth2Router chi.Router) {
-				oauth2Router.Route("/clients", func(clientRouter chi.Router) {
-					sr := fmt.Sprintf("/{%s}", oauth2clients.URIParamKey)
-					clientRouter.Get("/", s.oauth2ClientsService.List)     // List
-					clientRouter.Get(sr, s.oauth2ClientsService.Read)      // Read
-					clientRouter.Delete(sr, s.oauth2ClientsService.Delete) // Delete
-					clientRouter.
-						With(s.buildRouteCtx(oauth2clients.MiddlewareCtxKey, new(models.OAuth2ClientUpdateInput))).
-						Put(sr, s.oauth2ClientsService.Update) // Update
-					// Create is not bound to an OAuth2 authentication
+				// Items
+				v1Router.Route("/items", func(itemsRouter chi.Router) {
+					sr := fmt.Sprintf("/{%s:[0-9]+}", items.URIParamKey)
+					itemsRouter.With(s.itemsService.ItemInputMiddleware).Post("/", s.itemsService.Create) // Create
+					itemsRouter.Get(sr, s.itemsService.Read)                                              // Read
+					itemsRouter.With(s.itemsService.ItemInputMiddleware).Put(sr, s.itemsService.Update)   // Update
+					itemsRouter.Delete(sr, s.itemsService.Delete)                                         // Delete
+					itemsRouter.Get("/", s.itemsService.List)                                             // List
 				})
+
+				// OAuth2 Clients
+				v1Router.Route("/oauth2", func(oauth2Router chi.Router) {
+					oauth2Router.Route("/clients", func(clientRouter chi.Router) {
+						sr := fmt.Sprintf(`/{%s}`, oauth2clients.URIParamKey)
+						// Create is not bound to an OAuth2 authentication token
+						clientRouter.Get(sr, s.oauth2ClientsService.Read) // Read
+						// Update not supported for OAuth2 clients. Safer to delete and re-create
+						clientRouter.Delete(sr, s.oauth2ClientsService.Delete) // Delete
+						clientRouter.Get("/", s.oauth2ClientsService.List)     // List
+					})
+				})
+
 			})
 
 		})
-
-	})
 
 }

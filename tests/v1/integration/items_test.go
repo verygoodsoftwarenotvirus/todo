@@ -63,27 +63,6 @@ func TestItems(test *testing.T) {
 		})
 	})
 
-	test.Run("Counting", func(T *testing.T) {
-		T.Run("it should be able to be counted", func(t *testing.T) {
-			tctx := buildSpanContext("counting-items")
-
-			var premade []*models.Item
-			for i := 0; i < 5; i++ {
-				x := buildDummyItem(t)
-				require.NotNil(t, x)
-				premade = append(premade, x)
-			}
-
-			count, err := todoClient.GetItemCount(tctx, nil)
-			assert.NoError(t, err)
-			assert.NotZero(t, count)
-
-			for _, x := range premade {
-				assert.NoError(t, todoClient.DeleteItem(tctx, x.ID))
-			}
-		})
-	})
-
 	test.Run("Listing", func(T *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
 			tctx := buildSpanContext("listing-items")

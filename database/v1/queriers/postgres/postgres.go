@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"regexp"
 	"strings"
 	"time"
 
@@ -68,8 +69,9 @@ func buildLoggerFunc(logger logging.Logger) instrumentedsql.LoggerFunc {
 					currentKey = y
 				}
 			} else if currentKey == "query" && x != nil {
-				if z, ok := x.(string); ok && z != "" {
-					logger.WithName("sql_debug").WithValue("query", x).Debug(msg)
+				if q, ok := x.(string); ok && q != "" {
+					query := regexp.MustCompile(`\s\s+`).ReplaceAllString(q, " ")
+					logger.WithName("sql_debug").WithValue("query", query).Debug(msg)
 					break
 				}
 			}
@@ -80,7 +82,6 @@ func buildLoggerFunc(logger logging.Logger) instrumentedsql.LoggerFunc {
 // ProvidePostgresDB provides an instrumented postgres database
 func ProvidePostgresDB(
 	logger logging.Logger,
-	tracer Tracer,
 	connectionDetails database.ConnectionDetails,
 ) (*sql.DB, error) {
 	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to postgres")
@@ -117,10 +118,7 @@ func ProvidePostgres(
 
 // IsReady reports whether or not the database is ready
 func (p *Postgres) IsReady(ctx context.Context) (ready bool) {
-	var (
-		numberOfUnsuccessfulAttempts uint
-		databaseIsNotReady           = true
-	)
+	numberOfUnsuccessfulAttempts := 0
 
 	p.logger.WithValues(map[string]interface{}{
 		"database_url": p.databaseURL,
@@ -128,7 +126,7 @@ func (p *Postgres) IsReady(ctx context.Context) (ready bool) {
 		"max_attempts": 50,
 	}).Debug("IsReady called")
 
-	for databaseIsNotReady {
+	for !ready {
 		err := p.database.Ping()
 		if err != nil {
 			p.logger.Debug("ping failed, waiting for database")

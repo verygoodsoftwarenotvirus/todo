@@ -55,4 +55,8 @@ func TestAuth(test *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 	})
 
+	test.Run("should only allow users to see their own content", func(t *testing.T) {
+		t.SkipNow()
+	})
+
 }

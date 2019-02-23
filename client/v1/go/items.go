@@ -29,21 +29,6 @@ func (c *V1Client) GetItem(ctx context.Context, id uint64) (item *models.Item, e
 	return item, err
 }
 
-// GetItemCount an item
-func (c *V1Client) GetItemCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
-	logger := c.logger.WithValue("filter", filter)
-	logger.Debug("GetItemCount called")
-
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetItemCount")
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
-
-	x := models.CountResponse{}
-	uri := c.BuildURL(filter.ToValues(), itemsBasePath, "count")
-	err := c.get(ctx, uri, &x)
-	return x.Count, err
-}
-
 // GetItems gets a list of items
 func (c *V1Client) GetItems(ctx context.Context, filter *models.QueryFilter) (items *models.ItemList, err error) {
 	logger := c.logger.WithValue("filter", filter)

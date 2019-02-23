@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/pquerna/otp/totp"

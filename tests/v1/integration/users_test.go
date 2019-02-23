@@ -59,12 +59,8 @@ func buildDummyUser(ctx context.Context, t *testing.T) (*models.UserCreationResp
 
 	cookie := loginUser(t, u.Username, y.Password, u.TwoFactorSecret)
 
-	// cookie, err := todoClient.login(ctx, u.Username, y.Password, code)
-	t.Logf("received cookie: %v", cookie != nil)
-	t.Logf("received error: %v", err != nil)
-
-	assert.NoError(t, err)
-	assert.NotNil(t, cookie)
+	require.NoError(t, err)
+	require.NotNil(t, cookie)
 
 	return u, y, cookie
 }
@@ -160,12 +156,6 @@ func TestUsers(test *testing.T) {
 		})
 	})
 
-	test.Run("Updating", func(T *testing.T) {
-		T.Run("it should be updatable", func(t *testing.T) {
-			t.SkipNow()
-		})
-	})
-
 	test.Run("Deleting", func(T *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
 			tctx := buildSpanContext("delete-user")
@@ -212,9 +202,4 @@ func TestUsers(test *testing.T) {
 		})
 	})
 
-	test.Run("Counting", func(T *testing.T) {
-		T.Run("it should be able to be counted", func(t *testing.T) {
-			t.Skip()
-		})
-	})
 }

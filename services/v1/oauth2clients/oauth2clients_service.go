@@ -2,23 +2,18 @@ package oauth2clients
 
 import (
 	"context"
-	"database/sql"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
-	"net/http"
-	"strconv"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"net/http"
 
 	"github.com/google/wire"
 	"github.com/opentracing/opentracing-go"
-	"github.com/pkg/errors"
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/manage"
-	oauth2models "gopkg.in/oauth2.v3/models"
 	oauth2server "gopkg.in/oauth2.v3/server"
 	oauth2store "gopkg.in/oauth2.v3/store"
 )
@@ -63,6 +58,24 @@ func ProvideOAuth2ClientsServiceTracer() Tracer {
 	return tracing.ProvideTracer("oauth2-clients-service")
 }
 
+var _ oauth2.ClientStore = (*clientStore)(nil)
+
+type clientStore struct {
+	database database.Database
+}
+
+// according to the ID for the client information
+func (s *clientStore) GetByID(id string) (oauth2.ClientInfo, error) {
+	return s.database.GetOAuth2ClientByClientID(context.Background(), id)
+}
+
+func newClientStore(database database.Database) *clientStore {
+	cs := &clientStore{
+		database: database,
+	}
+	return cs
+}
+
 // ProvideOAuth2ClientsService builds a new OAuth2ClientsService
 func ProvideOAuth2ClientsService(
 	logger logging.Logger,
@@ -74,7 +87,7 @@ func ProvideOAuth2ClientsService(
 ) *Service {
 
 	manager := manage.NewDefaultManager()
-	clientStore := oauth2store.NewClientStore()
+	clientStore := newClientStore(database)
 	manager.MapClientStorage(clientStore)
 	tokenStore, err := oauth2store.NewMemoryTokenStore()
 	manager.MustTokenStorage(tokenStore, err)
@@ -88,9 +101,8 @@ func ProvideOAuth2ClientsService(
 		authenticator:        authenticator,
 		urlClientIDExtractor: clientIDFetcher,
 
-		tokenStore:        tokenStore,
-		oauth2Handler:     server,
-		oauth2ClientStore: clientStore,
+		tokenStore:    tokenStore,
+		oauth2Handler: server,
 	}
 
 	s.oauth2Handler.SetAllowGetAccessRequest(true)
@@ -113,31 +125,33 @@ func ProvideOAuth2ClientsService(
 
 // InitializeOAuth2Clients initializes an OAuth2 client
 func (s *Service) InitializeOAuth2Clients() {
-	clientList, err := s.database.GetAllOAuth2Clients(context.Background())
-	if err == sql.ErrNoRows {
-		return
-	} else if err != nil {
-		s.logger.Fatal(errors.Wrap(err, "querying oauth clients to add to the clientStore"))
-	}
-
-	clientCount := uint(len(clientList))
-	s.logger.WithValues(map[string]interface{}{
-		"client_count": clientCount,
-	}).Debug("loading OAuth2 clients")
-
-	for _, client := range clientList {
-		s.logger.WithValue("client_id", client.ClientID).Debug("loading client")
-
-		c := &oauth2models.Client{
-			ID:     client.ClientID,
-			Secret: client.ClientSecret,
-			Domain: client.RedirectURI,
-			UserID: strconv.FormatUint(client.BelongsTo, 10),
-		}
-		if err = s.oauth2ClientStore.Set(client.ClientID, c); err != nil {
-			s.logger.Fatal(errors.Wrap(err, "error encountered loading oauth clients to the clientStore"))
-		}
-	}
+	//// if you were using an alternative client store, your code might look something like this:
+	//
+	//clientList, err := s.database.GetAllOAuth2Clients(context.Background())
+	//if err == sql.ErrNoRows {
+	//	return
+	//} else if err != nil {
+	//	s.logger.Fatal(errors.Wrap(err, "querying oauth clients to add to the clientStore"))
+	//}
+	//
+	//clientCount := uint(len(clientList))
+	//s.logger.WithValues(map[string]interface{}{
+	//	"client_count": clientCount,
+	//}).Debug("loading OAuth2 clients")
+	//
+	//for _, client := range clientList {
+	//	s.logger.WithValue("client_id", client.ClientID).Debug("loading client")
+	//
+	//	c := &oauth2models.Client{
+	//		ID:     client.ClientID,
+	//		Secret: client.ClientSecret,
+	//		Domain: client.RedirectURI,
+	//		UserID: strconv.FormatUint(client.BelongsTo, 10),
+	//	}
+	//	if err = s.oauth2ClientStore.Set(client.ClientID, c); err != nil {
+	//		s.logger.Fatal(errors.Wrap(err, "error encountered loading oauth clients to the clientStore"))
+	//	}
+	//}
 }
 
 // HandleAuthorizeRequest is a simple wrapper around the internal server's HandleAuthorizeRequest

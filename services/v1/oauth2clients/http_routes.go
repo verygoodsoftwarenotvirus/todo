@@ -113,16 +113,9 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err = s.oauth2ClientStore.Set(x.ClientID, x); err != nil {
-		logger.Error(err, "error setting client ID in the client store")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
 	logger.WithValue("client_id", x.ClientID).Debug("CreateOAuth2Client route returning successfully")
-
 	if err = s.encoder.EncodeResponse(res, x); err != nil {
-		s.logger.Error(err, "encoding response")
+		logger.Error(err, "encoding response")
 	}
 }
 
@@ -154,7 +147,7 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	}
 
 	if err = s.encoder.EncodeResponse(res, x); err != nil {
-		s.logger.Error(err, "encoding response")
+		logger.Error(err, "encoding response")
 	}
 }
 
@@ -182,7 +175,7 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 	}
 
 	if err = s.encoder.EncodeResponse(res, oauth2Clients); err != nil {
-		s.logger.Error(err, "encoding response")
+		logger.Error(err, "encoding response")
 	}
 }
 
@@ -198,63 +191,16 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	oauth2ClientID := s.urlClientIDExtractor(req)
 	logger := s.logger.WithValues(map[string]interface{}{
 		"oauth2_client_id": oauth2ClientID,
+		"client_id_EMPTY":  oauth2ClientID == "",
 		"user_id":          userID,
 	})
 	logger.Debug("oauth2Client deletion route called")
 
 	if err := s.database.DeleteOAuth2Client(ctx, oauth2ClientID, userID); err != nil {
-		s.logger.Error(err, "encountered error deleting oauth2 client")
+		logger.Error(err, "encountered error deleting oauth2 client")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
-	}
-
-	if err := s.oauth2ClientStore.Set(oauth2ClientID, nil); err != nil {
-		// this error isn't severe enough to warrant alerting the user or otherwise
-		// providing confusing response codes.
-		logger.Error(err, "error overriding client ID to nil in the client store")
 	}
 
 	res.WriteHeader(http.StatusNoContent)
-}
-
-// Update is a route handler for updating OAuth2 clients
-func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	serverSpan := s.tracer.StartSpan("update route", opentracing.ChildOf(spanCtx))
-	ctx = opentracing.ContextWithSpan(ctx, serverSpan)
-	defer serverSpan.Finish()
-
-	userID := s.fetchUserID(req)
-	oauth2ClientID := s.urlClientIDExtractor(req)
-	logger := s.logger.WithValues(map[string]interface{}{
-		"oauth2_client_id": oauth2ClientID,
-		"user_id":          userID,
-	})
-	logger.Debug("oauth2Client update route called")
-
-	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.OAuth2ClientUpdateInput)
-	if !ok {
-		res.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	_ = input
-
-	x, err := s.database.GetOAuth2Client(ctx, oauth2ClientID, userID)
-	if err != nil {
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// IMPLEMENTME:
-	//x.Update()
-
-	if err = s.database.UpdateOAuth2Client(ctx, x); err != nil {
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	if err = s.encoder.EncodeResponse(res, x); err != nil {
-		s.logger.Error(err, "encoding response")
-	}
 }

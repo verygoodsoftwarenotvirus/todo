@@ -47,7 +47,8 @@ func init() {
 
 	initializeClient(clientID, clientSecret)
 
-	fmt.Println("Running tests")
+	spaces := strings.Repeat("\n", 50)
+	fmt.Printf("%s\tRunning tests%s", spaces, spaces)
 }
 
 // mostly duplicated code from the client

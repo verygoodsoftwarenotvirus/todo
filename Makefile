@@ -76,8 +76,8 @@ integration-tests:
 	docker-compose --file compose-files/integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
 
 .PHONY: debug-integration-tests
-debug-integration-tests: wire # literally the same except it won't exit
-	docker-compose --file compose-files/integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate
+debug-integration-tests: wire
+	docker-compose --file compose-files/debug-integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate
 
 .PHONY: load-tests
 load-tests: wire # literally the same except it won't exit

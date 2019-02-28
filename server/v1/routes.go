@@ -151,7 +151,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 				// OAuth2 Clients
 				v1Router.Route("/oauth2", func(oauth2Router chi.Router) {
 					oauth2Router.Route("/clients", func(clientRouter chi.Router) {
-						sr := fmt.Sprintf(`/{%s}`, oauth2clients.URIParamKey)
+						sr := fmt.Sprintf(`/{%s:[0-9]+}`, oauth2clients.URIParamKey)
 						// Create is not bound to an OAuth2 authentication token
 						clientRouter.Get(sr, s.oauth2ClientsService.Read) // Read
 						// Update not supported for OAuth2 clients. Safer to delete and re-create

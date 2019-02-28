@@ -63,7 +63,6 @@ func (s *Server) userCookieAuthenticationMiddleware(next http.Handler) http.Hand
 				user.ID,
 			))
 
-			s.logger.Debug("returning from UserAuthenticationMiddleware")
 			next.ServeHTTP(res, req)
 			return
 		}

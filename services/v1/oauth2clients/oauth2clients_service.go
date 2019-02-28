@@ -2,16 +2,19 @@ package oauth2clients
 
 import (
 	"context"
+	"database/sql"
+	"net/http"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	"net/http"
 
 	"github.com/google/wire"
 	"github.com/opentracing/opentracing-go"
+	"github.com/pkg/errors"
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/manage"
 	oauth2server "gopkg.in/oauth2.v3/server"
@@ -28,7 +31,7 @@ type (
 	Tracer opentracing.Tracer
 
 	// ClientIDFetcher is a function for fetching client IDs out of requests
-	ClientIDFetcher func(req *http.Request) string
+	ClientIDFetcher func(req *http.Request) uint64
 
 	// Service manages our OAuth2 clients via HTTP
 	Service struct {
@@ -37,7 +40,7 @@ type (
 		logger               logging.Logger
 		tracer               opentracing.Tracer
 		encoder              encoding.ResponseEncoder
-		urlClientIDExtractor func(req *http.Request) string
+		urlClientIDExtractor func(req *http.Request) uint64
 
 		tokenStore        oauth2.TokenStore
 		oauth2Handler     *oauth2server.Server
@@ -66,7 +69,15 @@ type clientStore struct {
 
 // according to the ID for the client information
 func (s *clientStore) GetByID(id string) (oauth2.ClientInfo, error) {
-	return s.database.GetOAuth2ClientByClientID(context.Background(), id)
+	client, err := s.database.GetOAuth2ClientByClientID(context.Background(), id)
+
+	if err == sql.ErrNoRows {
+		return nil, errors.New("invalid client")
+	} else if err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }
 
 func newClientStore(database database.Database) *clientStore {
@@ -158,7 +169,6 @@ func (s *Service) InitializeOAuth2Clients() {
 func (s *Service) HandleAuthorizeRequest(res http.ResponseWriter, req *http.Request) error {
 	s.logger.Debug("HandleAuthorizeRequest called")
 	err := s.oauth2Handler.HandleAuthorizeRequest(res, req)
-	s.logger.Debug("returning from HandleAuthorizeRequest")
 	return err
 }
 
@@ -166,6 +176,5 @@ func (s *Service) HandleAuthorizeRequest(res http.ResponseWriter, req *http.Requ
 func (s *Service) HandleTokenRequest(res http.ResponseWriter, req *http.Request) error {
 	s.logger.Debug("HandleTokenRequest called")
 	err := s.oauth2Handler.HandleTokenRequest(res, req)
-	s.logger.Debug("returning from HandleTokenRequest")
 	return err
 }

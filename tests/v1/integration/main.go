@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/go"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 
@@ -27,13 +27,9 @@ const (
 
 var (
 	urlToUse   string
+	logger     logging.Logger
 	todoClient *client.V1Client
 )
-
-func buildSpanContext(operationName string) context.Context {
-	tspan := opentracing.GlobalTracer().StartSpan(fmt.Sprintf("integration-tests-%s", operationName))
-	return opentracing.ContextWithSpan(context.Background(), tspan)
-}
 
 func checkValueAndError(t *testing.T, i interface{}, err error) {
 	t.Helper()
@@ -55,16 +51,13 @@ func buildHTTPClient() *http.Client {
 	return httpc
 }
 
-func initializeClient(clientID, clientSecret string) {
-	httpc := buildHTTPClient()
-
-	u, _ := url.Parse(urlToUse)
+func initializeClient(uri *url.URL, clientID, clientSecret string) {
 	c, err := client.NewClient(
 		clientID,
 		clientSecret,
-		u,
+		uri,
 		zerolog.ProvideLogger(zerolog.ProvideZerologger()),
-		httpc,
+		buildHTTPClient(),
 		opentracing.GlobalTracer(),
 		debug,
 	)

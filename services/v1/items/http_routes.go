@@ -118,7 +118,10 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 	})
 
 	items, err := s.db.GetItems(ctx, qf, userID)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		res.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
 		logger.Error(err, "error encountered fetching items")
 		res.WriteHeader(http.StatusInternalServerError)
 		return

@@ -16,8 +16,8 @@ type OAuth2ClientHandler struct {
 }
 
 // GetOAuth2Client is a mock function
-func (m *OAuth2ClientHandler) GetOAuth2Client(ctx context.Context, identifier string, userID uint64) (*models.OAuth2Client, error) {
-	args := m.Called(ctx, identifier)
+func (m *OAuth2ClientHandler) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*models.OAuth2Client, error) {
+	args := m.Called(ctx, clientID)
 	return args.Get(0).(*models.OAuth2Client), args.Error(1)
 }
 
@@ -57,6 +57,6 @@ func (m *OAuth2ClientHandler) UpdateOAuth2Client(ctx context.Context, updated *m
 }
 
 // DeleteOAuth2Client is a mock function
-func (m *OAuth2ClientHandler) DeleteOAuth2Client(ctx context.Context, identifier string, userID uint64) error {
-	return m.Called(ctx, identifier).Error(0)
+func (m *OAuth2ClientHandler) DeleteOAuth2Client(ctx context.Context, clientID, userID uint64) error {
+	return m.Called(ctx, clientID).Error(0)
 }

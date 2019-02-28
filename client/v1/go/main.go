@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/noop"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -124,6 +125,18 @@ func NewClient(
 
 	logger.WithValue("url", address.String()).Debug("returning client")
 	return c, nil
+}
+
+// NewSimpleClient is a client that is capable of much less than the normal client
+// and has noops or empty values for most of its authentication and debug parts.
+// Its purpose at the time of this writing is merely so I can make users (which
+// is a route that doesn't require authentication)
+func NewSimpleClient(address *url.URL, debug bool) (*V1Client, error) {
+	l := noop.ProvideNoopLogger()
+	h := &http.Client{Timeout: 5 * time.Second}
+	t := tracing.ProvideNoopTracer()
+	c, err := NewClient("", "", address, l, h, t, debug)
+	return c, err
 }
 
 func (c *V1Client) executeRequest(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
@@ -272,7 +285,7 @@ func (c *V1Client) makeUnauthedDataRequest(method string, uri string, in interfa
 		if resErr != nil {
 			return errors.Wrap(err, "encountered error loading response from server")
 		}
-		c.logger.WithValue("loaded_value", out).Debug("data request returned")
+		c.logger.WithValue("loaded_value", out).Debug("unauthenticated data request returned")
 	}
 
 	return nil

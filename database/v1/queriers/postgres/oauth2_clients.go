@@ -58,7 +58,6 @@ const createOAuth2ClientQuery = `
 
 // CreateOAuth2Client creates an OAuth2 client
 func (p *Postgres) CreateOAuth2Client(ctx context.Context, input *models.OAuth2ClientCreationInput) (*models.OAuth2Client, error) {
-	var err error
 	x := &models.OAuth2Client{
 		ClientID:     input.ClientID,
 		ClientSecret: input.ClientSecret,
@@ -67,19 +66,16 @@ func (p *Postgres) CreateOAuth2Client(ctx context.Context, input *models.OAuth2C
 		BelongsTo:    input.BelongsTo,
 	}
 
-	prep, err := p.database.PrepareContext(ctx, createOAuth2ClientQuery)
-	if err != nil {
-		return nil, errors.Wrap(err, "error preparing  query")
-	}
-
-	// create the client
-	if err = prep.QueryRow(
+	err := p.database.QueryRowContext(
+		ctx,
+		createOAuth2ClientQuery,
 		x.ClientID,
 		x.ClientSecret,
 		strings.Join(x.Scopes, scopesSeparator),
 		x.RedirectURI,
 		x.BelongsTo,
-	).Scan(&x.ID, &x.CreatedOn); err != nil {
+	).Scan(&x.ID, &x.CreatedOn)
+	if err != nil {
 		return nil, errors.Wrap(err, "error executing client creation query")
 	}
 
@@ -110,10 +106,10 @@ const getOAuth2ClientByClientIDQuery = `
 func (p *Postgres) GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*models.OAuth2Client, error) {
 	row := p.database.QueryRowContext(ctx, getOAuth2ClientByClientIDQuery, clientID)
 	client, err := p.scanOAuth2Client(row)
-	if err != nil {
-		return nil, errors.Wrap(err, "error scanning returned row")
-	}
 
+	if err != nil {
+		return nil, err
+	}
 	return client, nil
 }
 
@@ -136,12 +132,7 @@ const getAllOAuth2ClientsQuery = `
 
 // GetAllOAuth2Clients gets a list of OAuth2 clients regardless of ownership
 func (p *Postgres) GetAllOAuth2Clients(ctx context.Context) ([]models.OAuth2Client, error) {
-	prep, err := p.database.PrepareContext(ctx, getAllOAuth2ClientsQuery)
-	if err != nil {
-		return nil, errors.Wrap(err, "preparing query")
-	}
-
-	rows, err := prep.Query()
+	rows, err := p.database.QueryContext(ctx, getAllOAuth2ClientsQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -185,19 +176,19 @@ const getOAuth2ClientQuery = `
 	FROM
 		oauth_clients
 	WHERE
-		client_id = $1
+		id = $1
 		AND belongs_to = $2
 		AND archived_on IS NULL
 `
 
 // GetOAuth2Client gets an OAuth2 client
-func (p *Postgres) GetOAuth2Client(ctx context.Context, clientID string, userID uint64) (*models.OAuth2Client, error) {
-	row := p.database.QueryRowContext(ctx, getOAuth2ClientQuery, clientID, userID)
+func (p *Postgres) GetOAuth2Client(ctx context.Context, id, userID uint64) (*models.OAuth2Client, error) {
+	row := p.database.QueryRowContext(ctx, getOAuth2ClientQuery, id, userID)
 	client, err := p.scanOAuth2Client(row)
-	if err != nil {
-		return nil, errors.Wrap(err, "error scanning returned row")
-	}
 
+	if err != nil {
+		return nil, err
+	}
 	return client, nil
 }
 
@@ -297,12 +288,9 @@ const updateOAuth2ClientQuery = `
 // UpdateOAuth2Client updates a OAuth2 client. Note that this function expects the input's
 // ID field to be valid.
 func (p *Postgres) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2Client) error {
-	prep, err := p.database.PrepareContext(ctx, updateOAuth2ClientQuery)
-	if err != nil {
-		return errors.Wrap(err, "error preparing query")
-	}
-
-	err = prep.QueryRow(
+	err := p.database.QueryRowContext(
+		ctx,
+		updateOAuth2ClientQuery,
 		input.ClientID,
 		input.ClientSecret,
 		strings.Join(input.Scopes, scopesSeparator),
@@ -311,7 +299,11 @@ func (p *Postgres) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2C
 		input.BelongsTo,
 	).Scan(&input.UpdatedOn)
 
-	return err
+	if err != nil {
+		return errors.Wrap(err, "error preparing query")
+	}
+
+	return nil
 }
 
 const archiveOAuth2ClientQuery = `
@@ -319,15 +311,15 @@ const archiveOAuth2ClientQuery = `
 		updated_on = extract(epoch FROM NOW()),
 		archived_on = extract(epoch FROM NOW())
 	WHERE
-		client_id = $1
+		id = $1
 		AND belongs_to = $2
 	RETURNING
 		archived_on
 `
 
 // DeleteOAuth2Client deletes an OAuth2 client
-func (p *Postgres) DeleteOAuth2Client(ctx context.Context, id string, userID uint64) error {
-	_, err := p.database.ExecContext(ctx, archiveOAuth2ClientQuery, id, userID)
+func (p *Postgres) DeleteOAuth2Client(ctx context.Context, clientID, userID uint64) error {
+	_, err := p.database.ExecContext(ctx, archiveOAuth2ClientQuery, clientID, userID)
 
 	return err
 }

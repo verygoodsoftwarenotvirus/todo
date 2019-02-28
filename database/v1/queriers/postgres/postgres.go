@@ -59,7 +59,7 @@ func ProvidePostgresTracer() Tracer {
 	return tracing.ProvideTracer("postgres")
 }
 
-func buildLoggerFunc(logger logging.Logger) instrumentedsql.LoggerFunc {
+func strictQueryLogger(logger logging.Logger) instrumentedsql.LoggerFunc {
 	return func(ctx context.Context, msg string, keyvals ...interface{}) {
 		var currentKey string
 
@@ -68,7 +68,7 @@ func buildLoggerFunc(logger logging.Logger) instrumentedsql.LoggerFunc {
 				if y, ok := x.(string); ok && strings.TrimSpace(strings.ToLower(y)) == "query" {
 					currentKey = y
 				}
-			} else if currentKey == "query" && x != nil {
+			} else if currentKey != "query" && x != nil {
 				if q, ok := x.(string); ok && q != "" {
 					query := regexp.MustCompile(`\s\s+`).ReplaceAllString(q, " ")
 					logger.WithName("sql_debug").WithValue("query", query).Debug(msg)
@@ -77,6 +77,30 @@ func buildLoggerFunc(logger logging.Logger) instrumentedsql.LoggerFunc {
 			}
 		}
 	}
+}
+
+func verboseQueryLogger(logger logging.Logger) instrumentedsql.LoggerFunc {
+	return func(ctx context.Context, msg string, keyvals ...interface{}) {
+		var currentKey string
+
+		for i, x := range keyvals {
+			if i%2 == 0 {
+				if y, ok := x.(string); ok {
+					currentKey = y
+				}
+			} else if currentKey != "" && x != nil {
+				if q, ok := x.(string); ok && q != "" {
+					query := regexp.MustCompile(`\s\s+`).ReplaceAllString(q, " ")
+					logger.WithName("sql_debug").WithValue("query", query).Debug(msg)
+					break
+				}
+			}
+		}
+	}
+}
+
+func buildLoggerFunc(logger logging.Logger) instrumentedsql.LoggerFunc {
+	return strictQueryLogger(logger)
 }
 
 // ProvidePostgresDB provides an instrumented postgres database

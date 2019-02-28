@@ -37,7 +37,7 @@ func TestItems(test *testing.T) {
 
 	test.Run("Creating", func(T *testing.T) {
 		T.Run("should be createable", func(t *testing.T) {
-			tctx := buildSpanContext("creating-items")
+			tctx := context.Background()
 
 			// Create item
 			expected := &models.Item{Name: "name", Details: "details"}
@@ -65,7 +65,7 @@ func TestItems(test *testing.T) {
 
 	test.Run("Listing", func(T *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
-			tctx := buildSpanContext("listing-items")
+			tctx := context.Background()
 
 			// Create items
 			var expected []*models.Item
@@ -88,7 +88,7 @@ func TestItems(test *testing.T) {
 
 	test.Run("Reading", func(T *testing.T) {
 		T.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
-			tctx := buildSpanContext("reading-items-nonexistent")
+			tctx := context.Background()
 
 			// Fetch item
 			_, err := todoClient.GetItem(tctx, nonexistentID)
@@ -96,7 +96,7 @@ func TestItems(test *testing.T) {
 		})
 
 		T.Run("it should be readable", func(t *testing.T) {
-			tctx := buildSpanContext("reading-items")
+			tctx := context.Background()
 
 			// Create item
 			expected := &models.Item{Name: "name", Details: "details"}
@@ -120,7 +120,7 @@ func TestItems(test *testing.T) {
 
 	test.Run("Updating", func(T *testing.T) {
 		T.Run("it should return an error when trying to update something that doesn't exist", func(t *testing.T) {
-			tctx := buildSpanContext("updating-items-nonexistent")
+			tctx := context.Background()
 
 			err := todoClient.UpdateItem(tctx, &models.Item{ID: nonexistentID})
 			assert.Error(t, err)
@@ -128,7 +128,7 @@ func TestItems(test *testing.T) {
 		})
 
 		T.Run("it should be updatable", func(t *testing.T) {
-			tctx := buildSpanContext("updating-items")
+			tctx := context.Background()
 
 			// Create item
 			expected := &models.Item{Name: "new name", Details: "new details"}
@@ -162,7 +162,7 @@ func TestItems(test *testing.T) {
 
 	test.Run("Deleting", func(T *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
-			tctx := buildSpanContext("deleting-items")
+			tctx := context.Background()
 
 			// Create item
 			expected := &models.Item{Name: "name", Details: "details"}

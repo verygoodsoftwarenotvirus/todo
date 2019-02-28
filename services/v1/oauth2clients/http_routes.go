@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/base32"
+	"fmt"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -32,7 +33,7 @@ func init() {
 // randString produces a random string
 // https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
 func randString() (string, error) {
-	b := make([]byte, 64)
+	b := make([]byte, 32)
 	// Note that err == nil only if we read len(b) bytes.
 	if _, err := rand.Read(b); err != nil {
 		return "", err
@@ -113,7 +114,11 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger.WithValue("client_id", x.ClientID).Debug("CreateOAuth2Client route returning successfully")
+	logger.WithValues(map[string]interface{}{
+		"client_id":       x.ID,
+		"belongs_to":      x.BelongsTo,
+		"client_oauth_id": x.ClientID,
+	}).Debug("CreateOAuth2Client route returning successfully")
 	if err = s.encoder.EncodeResponse(res, x); err != nil {
 		logger.Error(err, "encoding response")
 	}
@@ -138,6 +143,14 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	x, err := s.database.GetOAuth2Client(ctx, oauth2ClientID, userID)
 	if err == sql.ErrNoRows {
 		logger.Debug("Read called on nonexistent client")
+
+		clients, _ := s.database.GetAllOAuth2Clients(ctx)
+		if clients != nil && len(clients) > 0 {
+			for _, client := range clients {
+				logger.Debug(fmt.Sprintf("client ID %d belongs to %d", client.ID, client.BelongsTo))
+			}
+		}
+
 		res.WriteHeader(http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -168,7 +181,10 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 	logger.Debug("oauth2Client list route called")
 
 	oauth2Clients, err := s.database.GetOAuth2Clients(ctx, qf, userID)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		res.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
 		logger.Error(err, "encountered error getting list of oauth2 clients from database")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -191,7 +207,6 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	oauth2ClientID := s.urlClientIDExtractor(req)
 	logger := s.logger.WithValues(map[string]interface{}{
 		"oauth2_client_id": oauth2ClientID,
-		"client_id_EMPTY":  oauth2ClientID == "",
 		"user_id":          userID,
 	})
 	logger.Debug("oauth2Client deletion route called")

@@ -14,7 +14,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/go"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/icrowley/fake"
@@ -45,7 +44,11 @@ func init() {
 		logger.Fatal(err)
 	}
 
-	initializeClient(clientID, clientSecret)
+	uri, err := url.Parse(urlToUse)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	initializeClient(uri, clientID, clientSecret)
 
 	spaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", spaces, spaces)
@@ -62,13 +65,7 @@ func buildURL(parts ...string) string {
 func createObligatoryUser() (*models.User, error) {
 	tu, _ := url.Parse(urlToUse)
 
-	c, err := client.NewClient(
-		"", "", tu,
-		zerolog.ProvideLogger(zerolog.ProvideZerologger()),
-		buildHTTPClient(),
-		tracing.ProvideNoopTracer(),
-		debug,
-	)
+	c, err := client.NewSimpleClient(tu, debug)
 	if err != nil {
 		return nil, err
 	}
@@ -108,11 +105,11 @@ func getLoginCookie(u models.User) (*http.Cookie, error) {
 		uri,
 		strings.NewReader(
 			fmt.Sprintf(`
-{
-	"username": %q,
-	"password": %q,
-	"totp_token": %q
-}
+	{
+		"username": %q,
+		"password": %q,
+		"totp_token": %q
+	}
 			`,
 				u.Username,
 				u.HashedPassword,

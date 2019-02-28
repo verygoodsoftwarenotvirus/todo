@@ -89,10 +89,10 @@ func (l *Logger) Fatal(err error) {
 
 // WithValues satisfies our contract for the logging.Logger WithValues method.
 func (l *Logger) WithValues(values map[string]interface{}) logging.Logger {
-	var l2 zerolog.Logger
+	var l2 = l.logger.With().Logger()
 
 	for key, val := range values {
-		l2 = l.logger.With().Interface(key, val).Logger()
+		l2 = l2.With().Interface(key, val).Logger()
 	}
 
 	return &Logger{logger: l2}

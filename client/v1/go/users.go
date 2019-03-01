@@ -7,10 +7,8 @@ import (
 	"net/url"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 )
 
@@ -32,11 +30,6 @@ func (c *V1Client) GetUser(ctx context.Context, id string) (user *models.User, e
 	logger := c.logger.WithValue("user_id", id)
 	logger.Debug("GetUser called")
 
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetUser")
-	span.SetTag("itemID", id)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
-
 	uri := c.buildVersionlessURL(nil, usersBasePath, id)
 	return user, c.get(ctx, uri, &user)
 }
@@ -44,9 +37,6 @@ func (c *V1Client) GetUser(ctx context.Context, id string) (user *models.User, e
 // GetUsers gets a list of users
 func (c *V1Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
 	users := &models.UserList{}
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetUsers")
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	uri := c.buildVersionlessURL(filter.ToValues(), usersBasePath)
 	err := c.get(ctx, uri, &users)
@@ -56,10 +46,6 @@ func (c *V1Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 // CreateUser creates a user
 func (c *V1Client) CreateUser(ctx context.Context, input *models.UserInput) (*models.UserCreationResponse, error) {
 	user := &models.UserCreationResponse{}
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "CreateUser")
-	span.SetTag("username", input.Username)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	uri := c.buildVersionlessURL(nil, usersBasePath)
 	err := c.post(ctx, uri, input, &user)
@@ -69,10 +55,6 @@ func (c *V1Client) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 // CreateNewUser creates a new user
 func (c *V1Client) CreateNewUser(ctx context.Context, input *models.UserInput) (*models.UserCreationResponse, error) {
 	user := &models.UserCreationResponse{}
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "CreateUser")
-	span.SetTag("username", input.Username)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	uri := c.buildVersionlessURL(nil, usersBasePath)
 	err := c.postPlain(ctx, uri, input, &user)
@@ -84,11 +66,6 @@ func (c *V1Client) DeleteUser(ctx context.Context, username string) error {
 	logger := c.logger.WithValue("username", username)
 	logger.Debug("")
 
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "DeleteUser")
-	span.SetTag("username", username)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
-
 	uri := c.buildVersionlessURL(nil, usersBasePath, username)
 	return c.delete(ctx, uri)
 }
@@ -97,11 +74,6 @@ func (c *V1Client) DeleteUser(ctx context.Context, username string) error {
 func (c *V1Client) Login(ctx context.Context, username, password, TOTPToken string) (*http.Cookie, error) {
 	logger := c.logger.WithValue("username", username)
 	logger.Debug("login called")
-
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "login")
-	span.SetTag("username", username)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	if c.currentUserCookie != nil {
 		logger.Debug("returning user cookie from cache")

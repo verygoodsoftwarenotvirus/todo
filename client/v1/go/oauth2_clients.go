@@ -16,31 +16,18 @@ const oauth2ClientsBasePath = "oauth2/clients"
 
 // GetOAuth2Client gets an OAuth2 client
 func (c *V1Client) GetOAuth2Client(ctx context.Context, id uint64) (oauth2Client *models.OAuth2Client, err error) {
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetOAuth2Client")
-	span.SetTag("OAuth2ClientID", id)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
-
 	uri := c.BuildURL(nil, oauth2ClientsBasePath, strconv.FormatUint(id, 10))
 	return oauth2Client, c.get(ctx, uri, &oauth2Client)
 }
 
 // GetOAuth2Clients gets a list of OAuth2 clients
 func (c *V1Client) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter) (oauth2Clients *models.OAuth2ClientList, err error) {
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetOAuth2Clients")
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
-
 	uri := c.BuildURL(filter.ToValues(), oauth2ClientsBasePath)
 	return oauth2Clients, c.get(ctx, uri, &oauth2Clients)
 }
 
 // CreateOAuth2Client creates an OAuth2 client
 func (c *V1Client) CreateOAuth2Client(ctx context.Context, input *models.OAuth2ClientCreationInput, cookie *http.Cookie) (oauth2Client *models.OAuth2Client, err error) {
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "CreateOAuth2Client")
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
-
 	if cookie == nil && c.currentUserCookie == nil {
 		return nil, errors.New("no cookie available for authenticated request")
 	} else if cookie == nil {

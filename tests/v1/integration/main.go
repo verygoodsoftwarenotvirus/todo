@@ -13,7 +13,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 
-	"github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,11 +36,6 @@ func checkValueAndError(t *testing.T, i interface{}, err error) {
 	require.NotNil(t, i)
 }
 
-func initializeTracer() {
-	tracer := tracing.ProvideTracer("integration-tests-client")
-	opentracing.SetGlobalTracer(tracer)
-}
-
 func buildHTTPClient() *http.Client {
 	httpc := &http.Client{
 		Transport: http.DefaultTransport,
@@ -58,7 +52,7 @@ func initializeClient(uri *url.URL, clientID, clientSecret string) {
 		uri,
 		zerolog.ProvideLogger(zerolog.ProvideZerologger()),
 		buildHTTPClient(),
-		opentracing.GlobalTracer(),
+		tracing.ProvideNoopTracer(),
 		debug,
 	)
 	if err != nil {

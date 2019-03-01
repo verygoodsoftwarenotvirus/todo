@@ -28,7 +28,6 @@ func init() {
 	} else {
 		urlToUse = localTestInstanceURL
 	}
-	initializeTracer()
 	logger := zerolog.ProvideLogger(zerolog.ProvideZerologger())
 
 	logger.WithValue("url", urlToUse).Info("checking server")

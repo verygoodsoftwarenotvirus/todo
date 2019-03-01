@@ -145,23 +145,29 @@ func (c *V1Client) executeRequest(ctx context.Context, client *http.Client, req 
 		logger = c.logger.WithValue("curl", command.String())
 	}
 
-	// attach ClientTrace to the Context, and Context to request
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "executeRequest")
-	if err := c.tracer.Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
-		return nil, errors.Wrap(err, "injecting span into headers")
-	}
+	//// attach ClientTrace to the Context, and Context to request
+	// err := c.tracer.Inject(
+	// 	span.Context(),
+	// 	opentracing.HTTPHeaders,
+	// 	opentracing.HTTPHeadersCarrier(req.Header),
+	// )
+	// if err != nil {
+	// 	return nil, errors.Wrap(err, "injecting span into headers")
+	// }
 
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "executing request")
 	}
 
-	bdump, err := httputil.DumpResponse(res, true)
-	if err == nil && req.Method != http.MethodGet {
-		logger = logger.WithValue("response_body", string(bdump))
+	if c.Debug {
+		bdump, err := httputil.DumpResponse(res, true)
+		if err == nil && req.Method != http.MethodGet {
+			logger = logger.WithValue("response_body", string(bdump))
+		}
 	}
 
-	logger.Debug("executeRequest called")
+	logger.Debug("request executed")
 	return res, nil
 }
 

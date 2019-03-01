@@ -51,11 +51,41 @@ func (s *Service) fetchUserID(req *http.Request) uint64 {
 	return 0
 }
 
+// List is a handler that returns a list of OAuth2 clients
+func (s *Service) List(res http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	span := opentracing.SpanFromContext(ctx)
+	serverSpan := s.tracer.StartSpan("list_route", opentracing.ChildOf(span.Context()))
+	defer serverSpan.Finish()
+
+	userID := s.fetchUserID(req)
+	qf := models.ExtractQueryFilter(req)
+	logger := s.logger.WithValues(map[string]interface{}{
+		"filter":  qf,
+		"user_id": userID,
+	})
+	logger.Debug("oauth2Client list route called")
+
+	oauth2Clients, err := s.database.GetOAuth2Clients(ctx, qf, userID)
+	if err == sql.ErrNoRows {
+		res.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
+		logger.Error(err, "encountered error getting list of oauth2 clients from database")
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err = s.encoder.EncodeResponse(res, oauth2Clients); err != nil {
+		logger.Error(err, "encoding response")
+	}
+}
+
 // Create is our OAuth2 client creation route
 func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
-	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	serverSpan := s.tracer.StartSpan("create route", opentracing.ChildOf(spanCtx))
-	ctx := opentracing.ContextWithSpan(req.Context(), serverSpan)
+	ctx := req.Context()
+	span := opentracing.SpanFromContext(ctx)
+	serverSpan := s.tracer.StartSpan("create_route", opentracing.ChildOf(span.Context()))
 	defer serverSpan.Finish()
 
 	s.logger.Debug("oauth2Client creation route called")
@@ -127,9 +157,8 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 // Read is a route handler for retrieving an OAuth2 client
 func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	serverSpan := s.tracer.StartSpan("read route", opentracing.ChildOf(spanCtx))
-	ctx = opentracing.ContextWithSpan(ctx, serverSpan)
+	span := opentracing.SpanFromContext(ctx)
+	serverSpan := s.tracer.StartSpan("read_route", opentracing.ChildOf(span.Context()))
 	defer serverSpan.Finish()
 
 	userID := s.fetchUserID(req)
@@ -164,43 +193,12 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// List is a handler that returns a list of OAuth2 clients
-func (s *Service) List(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	serverSpan := s.tracer.StartSpan("list route", opentracing.ChildOf(spanCtx))
-	ctx = opentracing.ContextWithSpan(ctx, serverSpan)
-	defer serverSpan.Finish()
-
-	userID := s.fetchUserID(req)
-	qf := models.ExtractQueryFilter(req)
-	logger := s.logger.WithValues(map[string]interface{}{
-		"filter":  qf,
-		"user_id": userID,
-	})
-	logger.Debug("oauth2Client list route called")
-
-	oauth2Clients, err := s.database.GetOAuth2Clients(ctx, qf, userID)
-	if err == sql.ErrNoRows {
-		res.WriteHeader(http.StatusNotFound)
-		return
-	} else if err != nil {
-		logger.Error(err, "encountered error getting list of oauth2 clients from database")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	if err = s.encoder.EncodeResponse(res, oauth2Clients); err != nil {
-		logger.Error(err, "encoding response")
-	}
-}
-
 // Delete is a route handler for deleting an OAuth2 client
 func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
+
 	ctx := req.Context()
-	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	serverSpan := s.tracer.StartSpan("delete route", opentracing.ChildOf(spanCtx))
-	ctx = opentracing.ContextWithSpan(ctx, serverSpan)
+	span := opentracing.SpanFromContext(ctx)
+	serverSpan := s.tracer.StartSpan("delete_route", opentracing.ChildOf(span.Context()))
 	defer serverSpan.Finish()
 
 	userID := s.fetchUserID(req)

@@ -47,19 +47,16 @@ python-prereqs: .env
 	./.env/bin/pip install -r requirements.txt
 
 ## Go-specific prerequisite stuff
+.PHONY: vendor-clean
+vendor-clean:
+	rm -rf vendor go.sum
+
 .PHONY: vendor
 vendor:
 	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` golang:latest /bin/sh -c "go mod vendor"
 
 .PHONY: revendor
-revendor:
-	sudo rm -rf vendor go.sum
-	$(MAKE) vendor
-
-.PHONY: unvendor
-unvendor:
-	sudo rm -rf vendor go.{mod,sum}
-	GO111MODULE=on go mod init
+revendor: vendor-clean vendor
 
 ## Testing things
 

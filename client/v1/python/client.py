@@ -1,5 +1,3 @@
-# /usr/bin/python3
-
 import time
 import typing
 from urllib.parse import urlparse
@@ -7,6 +5,7 @@ from http import cookiejar
 from json import JSONEncoder
 
 from .models import Item, OAuth2Client, User
+from .http_client import HTTPClient
 
 import requests
 import pyotp
@@ -14,117 +13,16 @@ from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
 
 
-def raise_for_status(func):
-    def invoke_request(*args, **kwargs) -> typing.Dict:
-        # Invoke the wrapped function first
-        res: requests.Response = func(*args, **kwargs)
-        res.raise_for_status()
-        return res.json()
-    return invoke_request
+class TodoClient(HTTPClient):
 
-
-class HTTPClient:
-    def __init__(
-        self,
-        base_url: str,
-        oauth2_client_id: str,
-        oauth2_client_secret: str,
-        scope: str,
-    ):
-        u = urlparse(base_url, allow_fragments=False)
-
-        self.base_url = u.geturl()
-        self.client_id = oauth2_client_id
-        self.client_secret = oauth2_client_secret
-        self._token: dict = {}
-
-        self.oauth2_client = BackendApplicationClient(
-            client_id=self.client_id,
-            client_secret=self.client_secret,
+    def __init__(self, base_url: str, oauth2_client_id: str, oauth2_client_secret: str, scope: str):
+        super(TodoClient, self).__init__(
+            base_url=base_url,
+            oauth2_client_id=oauth2_client_id,
+            oauth2_client_secret=oauth2_client_secret,
             scope=scope,
         )
 
-        self.sess = OAuth2Session(
-            client_id=self.client_id,
-            client=self.oauth2_client,
-            token_updater=self.update_token,
-            auto_refresh_url=f"{self.base_url}/oauth2/token",
-        )
-
-    def update_token(self, new_token: typing.Dict):
-        self._token = new_token
-
-    @raise_for_status
-    def get(self, url: str) -> requests.Response:
-        self.sess.token = self.token
-        res: requests.Response = self.sess.get(
-            url=url,
-            headers={
-                "Accept": "application/json",
-                "Content-type": "application/json",
-            },
-            client_id=self.client_id,
-            client_secret=self.client_secret,
-        )
-        return res
-
-    @raise_for_status
-    def put(self, url: str, data: JSONEncoder = None) -> requests.Response:
-        self.sess.token = self.token
-        res: requests.Response = self.sess.put(
-            url=url,
-            json=data,
-            headers={
-                "Accept": "application/json",
-                "Content-type": "application/json",
-            },
-            client_id=self.client_id,
-            client_secret=self.client_secret,
-        )
-        return res
-
-    @raise_for_status
-    def post(self, url: str, data: JSONEncoder = None) -> requests.Response:
-        self.sess.token = self.token
-        res: requests.Response = self.sess.post(
-            url=url,
-            json=data,
-            headers={
-                "Accept": "application/json",
-                "Content-type": "application/json",
-            },
-            client_id=self.client_id,
-            client_secret=self.client_secret,
-        )
-        return res
-
-    @raise_for_status
-    def delete(self, url: str) -> requests.Response:
-        self.sess.token = self.token
-        res: requests.Response = self.sess.delete(
-            url=url,
-            headers={
-                "Accept": "application/json",
-                "Content-type": "application/json",
-            },
-            client_id=self.client_id,
-            client_secret=self.client_secret,
-        )
-        return res
-
-    @property
-    def token(self) -> typing.Dict:
-        if not self._token or (self._token.get("expires_at", 0) - time.time() <= 0):
-            self._token: typing.Dict = self.sess.fetch_token(
-                token_url=f"{self.base_url}/oauth2/token",
-                client_id=self.client_id,
-                client_secret=self.client_secret,
-                include_client_id=True,
-            )
-        return self._token
-
-
-class TodoClient(HTTPClient):
     def build_api_url(self, parts: typing.List[str]) -> str:
         url_parts = ['api', 'v1']
         url_parts.extend(parts)
@@ -140,7 +38,14 @@ class TodoClient(HTTPClient):
     def get_items(self) -> typing.List[Item]:
         url = self.build_api_url(parts=['items'])
         res = self.get(url=url)
-        return [Item(**x) for x in res.json().get('items', [])]
+
+        output = []
+        raw_items = res.json().get('items', [])
+        for raw_item in raw_items:
+            item = Item(**raw_item)
+            output.append(item)
+
+        return output
 
     def update_item(self, item: Item):
         url = self.build_api_url(parts=['items', str(item.id)])
@@ -161,7 +66,14 @@ class TodoClient(HTTPClient):
     def get_oauth2_clients(self) -> typing.List[OAuth2Client]:
         url = self.build_api_url(parts=['oauth2', 'clients'])
         res = self.get(url=url)
-        return [OAuth2Client(**x) for x in res.json().get('oauth2', 'clients', [])]
+
+        output = []
+        raw_oauth2_clients = res.json().get('items', [])
+        for raw_oauth2_client in raw_oauth2_clients:
+            oauth2_client = Item(**raw_oauth2_client)
+            output.append(oauth2_client)
+
+        return output
 
     def update_oauth2_client(self, client: OAuth2Client):
         url = self.build_api_url(parts=['oauth2', 'clients', client.client_id])
@@ -177,12 +89,20 @@ class TodoClient(HTTPClient):
     def get_user(self, identifier: str) -> User:
         url = self.build_api_url(parts=['users', identifier])
         res = self.get(url=url)
-        return User(**res.json())
+        user = User(**res.json())
+        return user
 
     def get_users(self) -> typing.List[User]:
         url = self.build_api_url(parts=['users'])
         res = self.get(url=url)
-        return [User(**x) for x in res.json().get('users', [])]
+
+        output = []
+        raw_user = res.json().get('items', [])
+        for raw_user in raw_user:
+            user = User(**raw_user)
+            output.append(user)
+
+        return output
 
     def update_user(self, user: User):
         url = self.build_api_url(parts=['users', user.id])
@@ -193,29 +113,29 @@ class TodoClient(HTTPClient):
         url = self.build_api_url(parts=['users', identifier])
         self.delete(url=url)
 
-# misc
+    @staticmethod
+    def create_user(self, username: str, password: str) -> User:
+        res: requests.Response = requests.post(
+            url="http://localhost/users",
+            json={"username": username, "password": password}
+        )
 
+        user = User(**res.json())
+        return user
 
-def create_user(username: str, password: str) -> typing.Dict:
-    res: requests.Response = requests.post(
-        url="http://localhost/users",
-        json={"username": username, "password": password}
-    )
-    return res.json()
+    @staticmethod
+    def login_user(username: str, password: str, totp_secret: str) -> cookiejar.CookieJar:
+        totp = pyotp.TOTP(totp_secret)
 
-
-def login_user(username: str, password: str, totp_secret: str) -> cookiejar.CookieJar:
-    totp = pyotp.TOTP(totp_secret)
-
-    res: requests.Response = requests.post(
-        url="http://localhost/users/login",
-        json={
-            "username": username,
-            "password": password,
-            "totp_token": totp.now(),
-        },
-    )
-    return res.cookies
+        res: requests.Response = requests.post(
+            url="http://localhost/users/login",
+            json={
+                "username": username,
+                "password": password,
+                "totp_token": totp.now(),
+            },
+        )
+        return res.cookies
 
 
 def build_init_oauth2_client(

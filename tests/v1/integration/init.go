@@ -20,6 +20,12 @@ import (
 	"github.com/pquerna/otp/totp"
 )
 
+func buildURL(parts ...string) string {
+	tu, _ := url.Parse(urlToUse)
+	u, _ := url.Parse(strings.Join(parts, "/"))
+	return tu.ResolveReference(u).String()
+}
+
 func init() {
 	if strings.ToLower(os.Getenv("DOCKER")) == "true" {
 		urlToUse = defaultTestInstanceURL
@@ -42,17 +48,46 @@ func init() {
 		logger.Fatal(err)
 	}
 
-	initializeClient(clientID, clientSecret)
+	todoClient = initializeClient(clientID, clientSecret)
 
 	fmt.Println("Running tests")
 }
 
 // mostly duplicated code from the client
 
-func buildURL(parts ...string) string {
-	tu, _ := url.Parse(urlToUse)
-	u, _ := url.Parse(strings.Join(parts, "/"))
-	return tu.ResolveReference(u).String()
+func ensureServerIsUp() {
+	var (
+		isDown           = true
+		maxAttempts      = 25
+		numberOfAttempts = 0
+	)
+
+	for isDown {
+		if !isUp() {
+			log.Printf("waiting half a second before pinging again")
+			time.Sleep(500 * time.Millisecond)
+			numberOfAttempts++
+			if numberOfAttempts >= maxAttempts {
+				log.Fatalf("Maximum number of attempts made, something's gone awry")
+			}
+		} else {
+			isDown = false
+		}
+	}
+}
+
+func isUp() bool {
+	uri := fmt.Sprintf("%s/_meta_/health", urlToUse)
+
+	req, _ := http.NewRequest(http.MethodGet, uri, nil)
+	httpc := buildHTTPClient()
+
+	res, err := httpc.Do(req)
+	if err != nil {
+		return false
+	}
+
+	return res.StatusCode == http.StatusOK
 }
 
 func createObligatoryUser() (*models.User, error) {

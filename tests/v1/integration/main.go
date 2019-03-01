@@ -3,11 +3,9 @@ package integration
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"testing"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/go"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
@@ -55,7 +53,7 @@ func buildHTTPClient() *http.Client {
 	return httpc
 }
 
-func initializeClient(clientID, clientSecret string) {
+func initializeClient(clientID, clientSecret string) *client.V1Client {
 	httpc := buildHTTPClient()
 
 	u, _ := url.Parse(urlToUse)
@@ -71,40 +69,5 @@ func initializeClient(clientID, clientSecret string) {
 	if err != nil {
 		panic(err)
 	}
-	todoClient = c
-}
-
-func isUp() bool {
-	uri := fmt.Sprintf("%s/_meta_/health", urlToUse)
-
-	req, _ := http.NewRequest(http.MethodGet, uri, nil)
-	httpc := buildHTTPClient()
-
-	res, err := httpc.Do(req)
-	if err != nil {
-		return false
-	}
-
-	return res.StatusCode == http.StatusOK
-}
-
-func ensureServerIsUp() {
-	var (
-		isDown           = true
-		maxAttempts      = 25
-		numberOfAttempts = 0
-	)
-
-	for isDown {
-		if !isUp() {
-			log.Printf("waiting half a second before pinging again")
-			time.Sleep(500 * time.Millisecond)
-			numberOfAttempts++
-			if numberOfAttempts >= maxAttempts {
-				log.Fatalf("Maximum number of attempts made, something's gone awry")
-			}
-		} else {
-			isDown = false
-		}
-	}
+	return c
 }

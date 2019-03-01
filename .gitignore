@@ -23,6 +23,11 @@
 # OSX
 .DS_Store
 
+# Go
+# (this got to be too large)
+vendor
+
 # Python
 .env
 .mypy_caches
+__pycache__

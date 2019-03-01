@@ -1,6 +1,7 @@
 module gitlab.com/verygoodsoftwarenotvirus/todo
 
 require (
+	fortio.org/fortio v1.3.1
 	github.com/ExpansiveWorlds/instrumentedsql v0.0.0-20171218214018-45abb4b1947d
 	github.com/GuiaBolso/darwin v0.0.0-20170210191649-86919dfcf808
 	github.com/Masterminds/squirrel v1.1.0

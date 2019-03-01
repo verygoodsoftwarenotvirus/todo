@@ -15,8 +15,12 @@ services:
       JAEGER_SAMPLER_MANAGER_HOST_PORT: 'tracing-server:5778'
     links:
       - tracing-server
+      - database
+    depends_on:
       - prometheus
       - grafana
+    # logging:
+    #   driver: none
 
   load-tests:
     build:
@@ -26,18 +30,6 @@ services:
       DOCKER: 'true'
     links:
       - todo-server
-
-  # locust-load-tests:
-  #   image: grubykarol/locust
-  #   environment:
-  #     ATTACKED_HOST: http://todo-server
-  #     LOCUST_FILE: /tests/locustfile.py
-  #   ports:
-  #     - 8089:8089
-  #   links:
-  #     - todo-server
-  #   volumes:
-  #     - ../tests/v1/locust:/tests
 
   tracing-server:
     image: jaegertracing/all-in-one:latest
@@ -49,6 +41,16 @@ services:
       - 16686:16686
       - 14268:14268
       - 9411:9411
+    logging:
+      driver: none
+
+  database:
+    image: postgres:latest
+    ports:
+      - '2345:5432'
+    environment:
+      POSTGRES_USER: todo
+      POSTGRES_PASSWORD: hunter2
     logging:
       driver: none
 

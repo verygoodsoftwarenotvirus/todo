@@ -36,7 +36,7 @@ rewire: wire-clean wire
 	python3 -m venv .env
 
 .PHONY: env
-env:
+env: .env
 	. .env/bin/activate
 
 requirements.txt: .env
@@ -47,24 +47,26 @@ python-prereqs: .env
 	./.env/bin/pip install -r requirements.txt
 
 ## Go-specific prerequisite stuff
+.PHONY: vendor-clean
+vendor-clean:
+	rm -rf vendor go.sum
+
 .PHONY: vendor
 vendor:
 	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` golang:latest /bin/sh -c "go mod vendor"
 
 .PHONY: revendor
-revendor:
-	sudo rm -rf vendor go.sum
-	$(MAKE) vendor
-
-.PHONY: unvendor
-unvendor:
-	sudo rm -rf vendor go.{mod,sum}
-	GO111MODULE=on go mod init
+revendor: vendor-clean vendor
 
 ## Testing things
 
 $(COVERAGE_OUT):
 	./scripts/coverage.sh
+
+.PHONY: python-type-check
+python-type-check:
+	docker build --tag mypy-local:latest --file dockerfiles/mypy.Dockerfile .
+	docker run --rm --volume `pwd`:`pwd` --workdir `pwd` mypy-local:latest
 
 .PHONY: test
 test:

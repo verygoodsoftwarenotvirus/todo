@@ -1,8 +1,6 @@
 package integration
 
 import (
-	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"testing"
@@ -45,7 +43,8 @@ func buildHTTPClient() *http.Client {
 	return httpc
 }
 
-func initializeClient(uri *url.URL, clientID, clientSecret string) {
+func initializeClient(clientID, clientSecret string) *client.V1Client {
+	uri, _ := url.Parse(urlToUse)
 	c, err := client.NewClient(
 		clientID,
 		clientSecret,
@@ -58,40 +57,5 @@ func initializeClient(uri *url.URL, clientID, clientSecret string) {
 	if err != nil {
 		panic(err)
 	}
-	todoClient = c
-}
-
-func isUp() bool {
-	uri := fmt.Sprintf("%s/_meta_/health", urlToUse)
-
-	req, _ := http.NewRequest(http.MethodGet, uri, nil)
-	httpc := buildHTTPClient()
-
-	res, err := httpc.Do(req)
-	if err != nil {
-		return false
-	}
-
-	return res.StatusCode == http.StatusOK
-}
-
-func ensureServerIsUp() {
-	var (
-		isDown           = true
-		maxAttempts      = 25
-		numberOfAttempts = 0
-	)
-
-	for isDown {
-		if !isUp() {
-			log.Printf("waiting half a second before pinging again")
-			time.Sleep(500 * time.Millisecond)
-			numberOfAttempts++
-			if numberOfAttempts >= maxAttempts {
-				log.Fatalf("Maximum number of attempts made, something's gone awry")
-			}
-		} else {
-			isDown = false
-		}
-	}
+	return c
 }

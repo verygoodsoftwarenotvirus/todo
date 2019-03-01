@@ -45,7 +45,7 @@ var (
 
 // ProvideItemsServiceTracer provides a UserServiceTracer from an tracer building function
 func ProvideItemsServiceTracer() Tracer {
-	return tracing.ProvideTracer("todo-server-items-service")
+	return tracing.ProvideTracer("items-service")
 }
 
 // UserIDFetcher is a function that fetches user IDs
@@ -64,7 +64,7 @@ func ProvideItemsService(
 	encoder encoding.ResponseEncoder,
 ) *Service {
 	svc := &Service{
-		logger:        logger,
+		logger:        logger.WithName("items_service"),
 		db:            db,
 		tracer:        tracer,
 		encoder:       encoder,

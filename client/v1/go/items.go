@@ -4,10 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"github.com/opentracing/opentracing-go"
 )
 
 const (
@@ -19,39 +16,15 @@ func (c *V1Client) GetItem(ctx context.Context, id uint64) (item *models.Item, e
 	logger := c.logger.WithValue("id", id)
 	logger.Debug("GetItem called")
 
-	var span opentracing.Span // If I don't set this value here, then ctx gets over
-	span, ctx = opentracing.StartSpanFromContext(ctx, "GetItem")
-	span.SetTag("itemID", id)
-	defer span.Finish()
-
 	uri := c.BuildURL(nil, itemsBasePath, strconv.FormatUint(id, 10))
 	err = c.get(ctx, uri, &item)
 	return item, err
-}
-
-// GetItemCount an item
-func (c *V1Client) GetItemCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
-	logger := c.logger.WithValue("filter", filter)
-	logger.Debug("GetItemCount called")
-
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetItemCount")
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
-
-	x := models.CountResponse{}
-	uri := c.BuildURL(filter.ToValues(), itemsBasePath, "count")
-	err := c.get(ctx, uri, &x)
-	return x.Count, err
 }
 
 // GetItems gets a list of items
 func (c *V1Client) GetItems(ctx context.Context, filter *models.QueryFilter) (items *models.ItemList, err error) {
 	logger := c.logger.WithValue("filter", filter)
 	logger.Debug("GetItems called")
-
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetItems")
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	uri := c.BuildURL(filter.ToValues(), itemsBasePath)
 	err = c.get(ctx, uri, &items)
@@ -66,10 +39,6 @@ func (c *V1Client) CreateItem(ctx context.Context, input *models.ItemInput) (ite
 	})
 	logger.Debug("CreateItem called")
 
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "CreateItem")
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
-
 	uri := c.BuildURL(nil, itemsBasePath)
 	err = c.post(ctx, uri, input, &item)
 	return item, err
@@ -80,11 +49,6 @@ func (c *V1Client) UpdateItem(ctx context.Context, updated *models.Item) error {
 	logger := c.logger.WithValue("id", updated.ID)
 	logger.Debug("UpdateItem called")
 
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "UpdateItem")
-	span.SetTag("itemID", updated.ID)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
-
 	uri := c.BuildURL(nil, itemsBasePath, strconv.FormatUint(updated.ID, 10))
 	err := c.put(ctx, uri, updated, &updated)
 	return err
@@ -94,11 +58,6 @@ func (c *V1Client) UpdateItem(ctx context.Context, updated *models.Item) error {
 func (c *V1Client) DeleteItem(ctx context.Context, id uint64) error {
 	logger := c.logger.WithValue("id", id)
 	logger.Debug("DeleteItem called")
-
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "DeleteItem")
-	span.SetTag("itemID", id)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	uri := c.BuildURL(nil, itemsBasePath, strconv.FormatUint(id, 10))
 	err := c.delete(ctx, uri)

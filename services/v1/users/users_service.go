@@ -4,7 +4,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
@@ -71,7 +71,7 @@ func ProvideUsersService(
 		panic("usernameFetcher must be provided")
 	}
 	us := &Service{
-		logger:          logger,
+		logger:          logger.WithName("users_service"),
 		cookieName:      cookieName,
 		database:        database,
 		authenticator:   authenticator,

@@ -22,7 +22,7 @@ func (e *entryWrapper) SetLevel(level logging.Level) {}
 // WithName is our obligatory contract fulfillment function
 // Logrus doesn't support named loggers :(
 func (e *entryWrapper) WithName(name string) logging.Logger {
-	return e
+	return &entryWrapper{e.WithField(logging.LoggerNameKey, name)}
 }
 
 // Info satisfies our contract for the logging.Logger Info method.

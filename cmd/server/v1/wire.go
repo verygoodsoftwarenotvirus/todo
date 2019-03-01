@@ -3,11 +3,10 @@
 package main
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/postgres"
-	// "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/sqlite"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/postgres" // || sqlite
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"

@@ -3,6 +3,8 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"regexp"
+	"strings"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
@@ -57,35 +59,58 @@ func ProvidePostgresTracer() Tracer {
 	return tracing.ProvideTracer("postgres")
 }
 
+func strictQueryLogger(logger logging.Logger) instrumentedsql.LoggerFunc {
+	return func(ctx context.Context, msg string, keyvals ...interface{}) {
+		var currentKey string
+
+		for i, x := range keyvals {
+			if i%2 == 0 {
+				if y, ok := x.(string); ok && strings.TrimSpace(strings.ToLower(y)) == "query" {
+					currentKey = y
+				}
+			} else if currentKey != "query" && x != nil {
+				if q, ok := x.(string); ok && q != "" {
+					query := regexp.MustCompile(`\s\s+`).ReplaceAllString(q, " ")
+					logger.WithName("sql_debug").WithValue("query", query).Debug(msg)
+					break
+				}
+			}
+		}
+	}
+}
+
+func verboseQueryLogger(logger logging.Logger) instrumentedsql.LoggerFunc {
+	return func(ctx context.Context, msg string, keyvals ...interface{}) {
+		var currentKey string
+
+		for i, x := range keyvals {
+			if i%2 == 0 {
+				if y, ok := x.(string); ok {
+					currentKey = y
+				}
+			} else if currentKey != "" && x != nil {
+				if q, ok := x.(string); ok && q != "" {
+					query := regexp.MustCompile(`\s\s+`).ReplaceAllString(q, " ")
+					logger.WithName("sql_debug").WithValue("query", query).Debug(msg)
+					break
+				}
+			}
+		}
+	}
+}
+
+func buildLoggerFunc(logger logging.Logger) instrumentedsql.LoggerFunc {
+	return strictQueryLogger(logger)
+}
+
 // ProvidePostgresDB provides an instrumented postgres database
 func ProvidePostgresDB(
 	logger logging.Logger,
-	tracer Tracer,
 	connectionDetails database.ConnectionDetails,
 ) (*sql.DB, error) {
 	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to postgres")
 
-	loggerFunc := instrumentedsql.LoggerFunc(func(ctx context.Context, msg string, keyvals ...interface{}) {
-		var (
-			currentKey string
-		)
-
-		values := map[string]interface{}{}
-		for i, x := range keyvals {
-			if i%2 == 0 {
-				if y, ok := x.(string); ok { // && strings.TrimSpace(strings.ToLower(y)) == "query" {
-					currentKey = y
-				}
-			} else if currentKey != "" && x != nil {
-				values[currentKey] = x
-				currentKey = ""
-			}
-		}
-
-		values["msg"] = msg
-
-		logger.WithValues(values).Debug("")
-	})
+	loggerFunc := instrumentedsql.LoggerFunc(buildLoggerFunc(logger))
 
 	sql.Register(
 		"instrumented-postgres",
@@ -107,7 +132,7 @@ func ProvidePostgres(
 ) (database.Database, error) {
 	s := &Postgres{
 		debug:       debug,
-		logger:      logger,
+		logger:      logger.WithName("postgres"),
 		database:    db,
 		databaseURL: string(connectionDetails),
 	}
@@ -117,10 +142,7 @@ func ProvidePostgres(
 
 // IsReady reports whether or not the database is ready
 func (p *Postgres) IsReady(ctx context.Context) (ready bool) {
-	var (
-		numberOfUnsuccessfulAttempts uint
-		databaseIsNotReady           = true
-	)
+	numberOfUnsuccessfulAttempts := 0
 
 	p.logger.WithValues(map[string]interface{}{
 		"database_url": p.databaseURL,
@@ -128,7 +150,7 @@ func (p *Postgres) IsReady(ctx context.Context) (ready bool) {
 		"max_attempts": 50,
 	}).Debug("IsReady called")
 
-	for databaseIsNotReady {
+	for !ready {
 		err := p.database.Ping()
 		if err != nil {
 			p.logger.Debug("ping failed, waiting for database")

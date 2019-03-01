@@ -6,10 +6,10 @@
 package main
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/postgres"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
@@ -28,8 +28,7 @@ func BuildServer(connectionDetails database.ConnectionDetails, CookieName users.
 	loggingLogger := zerolog.ProvideLogger(logger)
 	tracer := auth.ProvideTracer()
 	enticator := auth.ProvideBcrypt(bcryptHashCost, loggingLogger, tracer)
-	postgresTracer := postgres.ProvidePostgresTracer()
-	db, err := postgres.ProvidePostgresDB(loggingLogger, postgresTracer, connectionDetails)
+	db, err := postgres.ProvidePostgresDB(loggingLogger, connectionDetails)
 	if err != nil {
 		return nil, err
 	}

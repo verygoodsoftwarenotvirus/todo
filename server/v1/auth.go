@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
@@ -63,7 +63,6 @@ func (s *Server) userCookieAuthenticationMiddleware(next http.Handler) http.Hand
 				user.ID,
 			))
 
-			s.logger.Debug("returning from UserAuthenticationMiddleware")
 			next.ServeHTTP(res, req)
 			return
 		}

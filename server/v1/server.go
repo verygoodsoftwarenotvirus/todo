@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
@@ -115,7 +115,7 @@ func ProvideServer(
 
 		// infra thngs
 		db:            db,
-		logger:        logger,
+		logger:        logger.WithName("server"),
 		server:        server,
 		cookieBuilder: cookieBuilder,
 		tracer:        tracer,
@@ -133,8 +133,8 @@ func ProvideServer(
 	}
 	srv.logger.Info("database migrated!")
 
-	cc := srv.oauth2ClientsService.InitializeOAuth2Clients()
-	srv.setupRouter(metricsHandler, cc == 0)
+	srv.oauth2ClientsService.InitializeOAuth2Clients()
+	srv.setupRouter(metricsHandler)
 
 	var handler http.Handler = srv.router
 	if instHandlerProvider != nil {

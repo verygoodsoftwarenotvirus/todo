@@ -1,12 +1,18 @@
 package integration
 
 import (
+	// "context"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
+
+	// "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/go"
+	// "gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/noop"
+	// "gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
+	// "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -50,30 +56,59 @@ func TestAuth(test *testing.T) {
 	pc := todoClient.PlainClient()
 
 	test.Run("should reject an unauthenticated request", func(t *testing.T) {
-		res, err := pc.Post(todoClient.BuildURL(nil, "fart"), "application/json", nil)
+		res, err := pc.Post(todoClient.BuildURL(nil, "items"), "application/json", nil)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 	})
 
-	// test.Run("should accept a valid token", func(t *testing.T) {
-	// 	cookie := loginUser(t, expectedUsername, expectedPassword)
-	// 	assert.NotNil(t, cookie)
+	// test.Run("should only allow users to see their own content", func(t *testing.T) {
+	// 	tctx := context.Background()
 
-	// 	req, err := http.NewRequest(http.MethodPost, todoClient.BuildURL(nil, "fart"), nil)
-	// 	req.AddCookie(cookie)
-	// 	assert.NoError(t, err)
+	// 	// create user
+	// 	x, y, cookie := buildDummyUser(context.Background(), test)
+	// 	assert.NotNil(test, cookie)
 
-	// 	ac := todoClient.AuthenticatedClient()
-	// 	res, err := ac.Do(req)
-	// 	assert.NoError(t, err)
-	// 	assert.Equal(t, http.StatusTeapot, res.StatusCode)
+	// 	input := buildDummyOAuth2ClientInput(test, x.Username, y.Password, x.TwoFactorSecret)
+	// 	premade, err := todoClient.CreateOAuth2Client(context.Background(), input, cookie)
+	// 	checkValueAndError(test, premade, err)
+
+	// 	c, err := client.NewClient(
+	// 		premade.ClientID,
+	// 		premade.ClientSecret,
+	// 		todoClient.URL,
+	// 		noop.ProvideNoopLogger(),
+	// 		buildHTTPClient(),
+	// 		tracing.ProvideNoopTracer(),
+	// 		true,
+	// 	)
+	// 	checkValueAndError(test, c, err)
+
+	// 	// Create item for user A
+	// 	a, err := todoClient.CreateItem(
+	// 		tctx,
+	// 		&models.ItemInput{
+	// 			Name:    "name A",
+	// 			Details: "details A",
+	// 		})
+	// 	checkValueAndError(t, a, err)
+
+	// 	// Create item for user B
+	// 	b, err := c.CreateItem(
+	// 		tctx,
+	// 		&models.ItemInput{
+	// 			Name:    "name B",
+	// 			Details: "details B",
+	// 		})
+	// 	checkValueAndError(t, b, err)
+
+	// 	i, err := c.GetItem(tctx, a.ID)
+	// 	assert.Nil(t, i)
+	// 	assert.Error(t, err, "should experience error trying to fetch item they're not authorized for")
+
+	// 	// Clean up
+	// 	assert.NoError(t, todoClient.DeleteItem(tctx, a.ID))
+	// 	assert.NoError(t, todoClient.DeleteItem(tctx, b.ID))
+
 	// })
 
-	// test.Run("should reject an invalid cookie", func(t *testing.T) {
-	// 	req, err := http.NewRequest(http.MethodPost, todoClient.BuildURL(nil, "fart"), nil)
-	// 	assert.NoError(t, err)
-	// 	res, err := pc.Do(req)
-	// 	assert.NoError(t, err)
-	// 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
-	// })
 }

@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/base32"
+	"fmt"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -32,7 +33,7 @@ func init() {
 // randString produces a random string
 // https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
 func randString() (string, error) {
-	b := make([]byte, 64)
+	b := make([]byte, 32)
 	// Note that err == nil only if we read len(b) bytes.
 	if _, err := rand.Read(b); err != nil {
 		return "", err
@@ -50,11 +51,41 @@ func (s *Service) fetchUserID(req *http.Request) uint64 {
 	return 0
 }
 
+// List is a handler that returns a list of OAuth2 clients
+func (s *Service) List(res http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	span := opentracing.SpanFromContext(ctx)
+	serverSpan := s.tracer.StartSpan("list_route", opentracing.ChildOf(span.Context()))
+	defer serverSpan.Finish()
+
+	userID := s.fetchUserID(req)
+	qf := models.ExtractQueryFilter(req)
+	logger := s.logger.WithValues(map[string]interface{}{
+		"filter":  qf,
+		"user_id": userID,
+	})
+	logger.Debug("oauth2Client list route called")
+
+	oauth2Clients, err := s.database.GetOAuth2Clients(ctx, qf, userID)
+	if err == sql.ErrNoRows {
+		res.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
+		logger.Error(err, "encountered error getting list of oauth2 clients from database")
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err = s.encoder.EncodeResponse(res, oauth2Clients); err != nil {
+		logger.Error(err, "encoding response")
+	}
+}
+
 // Create is our OAuth2 client creation route
 func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
-	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	serverSpan := s.tracer.StartSpan("create route", opentracing.ChildOf(spanCtx))
-	ctx := opentracing.ContextWithSpan(req.Context(), serverSpan)
+	ctx := req.Context()
+	span := opentracing.SpanFromContext(ctx)
+	serverSpan := s.tracer.StartSpan("create_route", opentracing.ChildOf(span.Context()))
 	defer serverSpan.Finish()
 
 	s.logger.Debug("oauth2Client creation route called")
@@ -113,25 +144,21 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err = s.oauth2ClientStore.Set(x.ClientID, x); err != nil {
-		logger.Error(err, "error setting client ID in the client store")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	logger.WithValue("client_id", x.ClientID).Debug("CreateOAuth2Client route returning successfully")
-
+	logger.WithValues(map[string]interface{}{
+		"client_id":       x.ID,
+		"belongs_to":      x.BelongsTo,
+		"client_oauth_id": x.ClientID,
+	}).Debug("CreateOAuth2Client route returning successfully")
 	if err = s.encoder.EncodeResponse(res, x); err != nil {
-		s.logger.Error(err, "encoding response")
+		logger.Error(err, "encoding response")
 	}
 }
 
 // Read is a route handler for retrieving an OAuth2 client
 func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	serverSpan := s.tracer.StartSpan("read route", opentracing.ChildOf(spanCtx))
-	ctx = opentracing.ContextWithSpan(ctx, serverSpan)
+	span := opentracing.SpanFromContext(ctx)
+	serverSpan := s.tracer.StartSpan("read_route", opentracing.ChildOf(span.Context()))
 	defer serverSpan.Finish()
 
 	userID := s.fetchUserID(req)
@@ -145,6 +172,14 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	x, err := s.database.GetOAuth2Client(ctx, oauth2ClientID, userID)
 	if err == sql.ErrNoRows {
 		logger.Debug("Read called on nonexistent client")
+
+		clients, _ := s.database.GetAllOAuth2Clients(ctx)
+		if clients != nil && len(clients) > 0 {
+			for _, client := range clients {
+				logger.Debug(fmt.Sprintf("client ID %d belongs to %d", client.ID, client.BelongsTo))
+			}
+		}
+
 		res.WriteHeader(http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -154,44 +189,16 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	}
 
 	if err = s.encoder.EncodeResponse(res, x); err != nil {
-		s.logger.Error(err, "encoding response")
-	}
-}
-
-// List is a handler that returns a list of OAuth2 clients
-func (s *Service) List(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	serverSpan := s.tracer.StartSpan("list route", opentracing.ChildOf(spanCtx))
-	ctx = opentracing.ContextWithSpan(ctx, serverSpan)
-	defer serverSpan.Finish()
-
-	userID := s.fetchUserID(req)
-	qf := models.ExtractQueryFilter(req)
-	logger := s.logger.WithValues(map[string]interface{}{
-		"filter":  qf,
-		"user_id": userID,
-	})
-	logger.Debug("oauth2Client list route called")
-
-	oauth2Clients, err := s.database.GetOAuth2Clients(ctx, qf, userID)
-	if err != nil {
-		logger.Error(err, "encountered error getting list of oauth2 clients from database")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	if err = s.encoder.EncodeResponse(res, oauth2Clients); err != nil {
-		s.logger.Error(err, "encoding response")
+		logger.Error(err, "encoding response")
 	}
 }
 
 // Delete is a route handler for deleting an OAuth2 client
 func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
+
 	ctx := req.Context()
-	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	serverSpan := s.tracer.StartSpan("delete route", opentracing.ChildOf(spanCtx))
-	ctx = opentracing.ContextWithSpan(ctx, serverSpan)
+	span := opentracing.SpanFromContext(ctx)
+	serverSpan := s.tracer.StartSpan("delete_route", opentracing.ChildOf(span.Context()))
 	defer serverSpan.Finish()
 
 	userID := s.fetchUserID(req)
@@ -203,58 +210,10 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	logger.Debug("oauth2Client deletion route called")
 
 	if err := s.database.DeleteOAuth2Client(ctx, oauth2ClientID, userID); err != nil {
-		s.logger.Error(err, "encountered error deleting oauth2 client")
+		logger.Error(err, "encountered error deleting oauth2 client")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
-	}
-
-	if err := s.oauth2ClientStore.Set(oauth2ClientID, nil); err != nil {
-		// this error isn't severe enough to warrant alerting the user or otherwise
-		// providing confusing response codes.
-		logger.Error(err, "error overriding client ID to nil in the client store")
 	}
 
 	res.WriteHeader(http.StatusNoContent)
-}
-
-// Update is a route handler for updating OAuth2 clients
-func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	serverSpan := s.tracer.StartSpan("update route", opentracing.ChildOf(spanCtx))
-	ctx = opentracing.ContextWithSpan(ctx, serverSpan)
-	defer serverSpan.Finish()
-
-	userID := s.fetchUserID(req)
-	oauth2ClientID := s.urlClientIDExtractor(req)
-	logger := s.logger.WithValues(map[string]interface{}{
-		"oauth2_client_id": oauth2ClientID,
-		"user_id":          userID,
-	})
-	logger.Debug("oauth2Client update route called")
-
-	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.OAuth2ClientUpdateInput)
-	if !ok {
-		res.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	_ = input
-
-	x, err := s.database.GetOAuth2Client(ctx, oauth2ClientID, userID)
-	if err != nil {
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// IMPLEMENTME:
-	//x.Update()
-
-	if err = s.database.UpdateOAuth2Client(ctx, x); err != nil {
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	if err = s.encoder.EncodeResponse(res, x); err != nil {
-		s.logger.Error(err, "encoding response")
-	}
 }

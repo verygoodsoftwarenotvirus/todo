@@ -26,9 +26,6 @@ type (
 		logger   logging.Logger
 	}
 
-	// Filepath is a string alias for a sqlite filepath
-	Filepath string
-
 	// Scannable represents any database response (i.e. either a transaction or a regular execution response)
 	Scannable interface {
 		Scan(dest ...interface{}) error
@@ -50,7 +47,7 @@ func ProvideSqlite(
 
 	s := &Sqlite{
 		debug:    debug,
-		logger:   logger,
+		logger:   logger.WithName("sqlite"),
 		database: db,
 	}
 

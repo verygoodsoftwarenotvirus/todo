@@ -39,7 +39,7 @@ type BcryptHashCost uint
 // ProvideBcrypt returns a Bcrypt-powered Enticator
 func ProvideBcrypt(hashCost BcryptHashCost, logger logging.Logger, tracer Tracer) Enticator {
 	ba := &BcryptAuthenticator{
-		logger:              logger,
+		logger:              logger.WithName("bcrypt"),
 		tracer:              tracer,
 		hashCost:            uint(math.Min(float64(DefaultBcryptHashCost), float64(hashCost))),
 		minimumPasswordSize: defaultMinimumPasswordSize,
@@ -56,11 +56,20 @@ func (b *BcryptAuthenticator) HashPassword(ctx context.Context, password string)
 	return string(hashedPass), err
 }
 
-// PasswordMatches validates whether or not a bcrypt-hashed password matches a provided password
-func (b *BcryptAuthenticator) PasswordMatches(ctx context.Context, hashedPassword, providedPassword string, _ []byte) bool {
-	span := tracing.FetchSpanFromContext(ctx, b.tracer, "PasswordMatches")
+// ValidateLogin validates a password and two factor code
+func (b *BcryptAuthenticator) ValidateLogin(ctx context.Context, hashedPassword, providedPassword, twoFactorSecret, twoFactorCode string) (bool, error) {
+	span := tracing.FetchSpanFromContext(ctx, b.tracer, "ValidateLogin")
 	defer span.Finish()
 
+	passwordMatches := b.PasswordMatches(ctx, hashedPassword, providedPassword, nil)
+	if !totp.Validate(twoFactorCode, twoFactorSecret) {
+		return passwordMatches, ErrInvalidTwoFactorCode
+	}
+	return passwordMatches, nil
+}
+
+// PasswordMatches validates whether or not a bcrypt-hashed password matches a provided password
+func (b *BcryptAuthenticator) PasswordMatches(ctx context.Context, hashedPassword, providedPassword string, _ []byte) bool {
 	matches := bcrypt.CompareHashAndPassword(
 		[]byte(hashedPassword),
 		[]byte(providedPassword),
@@ -88,16 +97,4 @@ func (b *BcryptAuthenticator) hashedPasswordIsTooWeak(hashedPassword string) boo
 // PasswordIsAcceptable takes a password and returns whether or not it satisfies the authenticator
 func (b *BcryptAuthenticator) PasswordIsAcceptable(pass string) bool {
 	return uint(len(pass)) >= b.minimumPasswordSize
-}
-
-// ValidateLogin validates a password and two factor code
-func (b *BcryptAuthenticator) ValidateLogin(ctx context.Context, hashedPassword, providedPassword, twoFactorSecret, twoFactorCode string) (bool, error) {
-	span := tracing.FetchSpanFromContext(ctx, b.tracer, "ValidateLogin")
-	defer span.Finish()
-
-	passwordMatches := b.PasswordMatches(ctx, hashedPassword, providedPassword, nil)
-	if !totp.Validate(twoFactorCode, twoFactorSecret) {
-		return passwordMatches, ErrInvalidTwoFactorCode
-	}
-	return passwordMatches, nil
 }

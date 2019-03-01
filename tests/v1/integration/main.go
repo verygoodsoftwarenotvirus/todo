@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,10 +9,10 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/go"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 
-	"github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,13 +26,9 @@ const (
 
 var (
 	urlToUse   string
+	logger     logging.Logger
 	todoClient *client.V1Client
 )
-
-func buildSpanContext(operationName string) context.Context {
-	tspan := opentracing.GlobalTracer().StartSpan(fmt.Sprintf("integration-tests-%s", operationName))
-	return opentracing.ContextWithSpan(context.Background(), tspan)
-}
 
 func checkValueAndError(t *testing.T, i interface{}, err error) {
 	t.Helper()
@@ -41,31 +36,23 @@ func checkValueAndError(t *testing.T, i interface{}, err error) {
 	require.NotNil(t, i)
 }
 
-func initializeTracer() {
-	tracer := tracing.ProvideTracer("integration-tests-client")
-	opentracing.SetGlobalTracer(tracer)
-}
-
 func buildHTTPClient() *http.Client {
 	httpc := &http.Client{
 		Transport: http.DefaultTransport,
-		// Timeout:   5 * time.Second,
+		Timeout:   5 * time.Second,
 	}
 
 	return httpc
 }
 
-func initializeClient(clientID, clientSecret string) {
-	httpc := buildHTTPClient()
-
-	u, _ := url.Parse(urlToUse)
+func initializeClient(uri *url.URL, clientID, clientSecret string) {
 	c, err := client.NewClient(
 		clientID,
 		clientSecret,
-		u,
+		uri,
 		zerolog.ProvideLogger(zerolog.ProvideZerologger()),
-		httpc,
-		opentracing.GlobalTracer(),
+		buildHTTPClient(),
+		tracing.ProvideNoopTracer(),
 		debug,
 	)
 	if err != nil {

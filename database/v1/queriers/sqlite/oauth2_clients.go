@@ -91,7 +91,7 @@ const getOAuth2ClientQuery = `
 `
 
 // GetOAuth2Client gets an OAuth2 client
-func (s *Sqlite) GetOAuth2Client(ctx context.Context, clientID string, userID uint64) (*models.OAuth2Client, error) {
+func (s *Sqlite) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*models.OAuth2Client, error) {
 	s.logger.WithValue("client_id", clientID).Debug("GetOAuth2Client called")
 	row := s.database.QueryRowContext(ctx, getOAuth2ClientQuery, clientID, userID)
 	return scanOAuth2Client(row)
@@ -273,7 +273,6 @@ func (s *Sqlite) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 		return nil, errors.Wrap(err, "error fetching newly created")
 	}
 
-	s.logger.Debug("returning from CreateOAuth2Client")
 	return x, nil
 }
 
@@ -317,7 +316,7 @@ const archiveOAuth2ClientQuery = `
 `
 
 // DeleteOAuth2Client deletes an OAuth2 client
-func (s *Sqlite) DeleteOAuth2Client(ctx context.Context, id string, userID uint64) error {
-	_, err := s.database.ExecContext(ctx, archiveOAuth2ClientQuery, id, userID)
+func (s *Sqlite) DeleteOAuth2Client(ctx context.Context, clientID, userID uint64) error {
+	_, err := s.database.ExecContext(ctx, archiveOAuth2ClientQuery, clientID, userID)
 	return err
 }

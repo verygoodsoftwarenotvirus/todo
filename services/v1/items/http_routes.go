@@ -20,11 +20,6 @@ const (
 func (s *Service) ItemInputMiddleware(next http.Handler) http.Handler {
 	x := new(models.ItemInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-		serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
-		ctx := opentracing.ContextWithSpan(req.Context(), serverSpan)
-		defer serverSpan.Finish()
-
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
@@ -32,18 +27,77 @@ func (s *Service) ItemInputMiddleware(next http.Handler) http.Handler {
 		}
 
 		s.logger.WithValue("itemInput", x).Debug("ItemInputMiddleware called")
-		ctx = context.WithValue(ctx, MiddlewareCtxKey, x)
+		ctx := context.WithValue(req.Context(), MiddlewareCtxKey, x)
 
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }
 
+// List is our list route
+func (s *Service) List(res http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	span := opentracing.SpanFromContext(ctx)
+	serverSpan := s.tracer.StartSpan("list_route", opentracing.ChildOf(span.Context()))
+	defer serverSpan.Finish()
+
+	s.logger.Debug("ItemsService.List called")
+	qf := models.ExtractQueryFilter(req)
+
+	userID := s.userIDFetcher(req)
+	logger := s.logger.WithValues(map[string]interface{}{
+		"filter":  qf,
+		"user_id": userID,
+	})
+
+	items, err := s.db.GetItems(ctx, qf, userID)
+	if err == sql.ErrNoRows {
+		res.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
+		logger.Error(err, "error encountered fetching items")
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err = s.encoder.EncodeResponse(res, items); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
+}
+
+// Create is our item creation route
+func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	span := opentracing.SpanFromContext(ctx)
+	serverSpan := s.tracer.StartSpan("create_route", opentracing.ChildOf(span.Context()))
+	defer serverSpan.Finish()
+
+	s.logger.Debug("ItemsService.Create called")
+	input, ok := ctx.Value(MiddlewareCtxKey).(*models.ItemInput)
+	if !ok {
+		s.logger.Error(nil, "valid input not attached to request")
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	input.BelongsTo = s.userIDFetcher(req)
+
+	s.logger.WithValue("input", input).Debug("ItemsService.Create called")
+	i, err := s.db.CreateItem(ctx, input)
+	if err != nil {
+		s.logger.Error(err, "error creating item")
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err = s.encoder.EncodeResponse(res, i); err != nil {
+		s.logger.Error(err, "encoding response")
+	}
+}
+
 // Read returns a GET handler that returns an item
 func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
-	ctx = opentracing.ContextWithSpan(ctx, serverSpan)
+	span := opentracing.SpanFromContext(ctx)
+	serverSpan := s.tracer.StartSpan("read_route", opentracing.ChildOf(span.Context()))
 	defer serverSpan.Finish()
 
 	userID := s.userIDFetcher(req)
@@ -71,98 +125,11 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// Count is our count route
-func (s *Service) Count(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
-	ctx = opentracing.ContextWithSpan(ctx, serverSpan)
-	defer serverSpan.Finish()
-
-	s.logger.Debug("ItemsService.Count called")
-	qf := models.ExtractQueryFilter(req)
-
-	logger := s.logger.WithValue("filter", qf)
-	userID := s.userIDFetcher(req)
-
-	itemCount, err := s.db.GetItemCount(ctx, qf, userID)
-	logger = logger.WithValue("item_count", itemCount)
-	if err != nil {
-		logger.Error(err, "error fetching item count from database")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	c := &models.CountResponse{Count: itemCount}
-
-	if err = s.encoder.EncodeResponse(res, c); err != nil {
-		s.logger.Error(err, "encoding response")
-	}
-}
-
-// List is our list route
-func (s *Service) List(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
-	ctx = opentracing.ContextWithSpan(ctx, serverSpan)
-	defer serverSpan.Finish()
-
-	s.logger.Debug("ItemsService.List called")
-	qf := models.ExtractQueryFilter(req)
-
-	userID := s.userIDFetcher(req)
-	logger := s.logger.WithValues(map[string]interface{}{
-		"filter":  qf,
-		"user_id": userID,
-	})
-
-	items, err := s.db.GetItems(ctx, qf, userID)
-	if err != nil {
-		logger.Error(err, "error encountered fetching items")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	if err = s.encoder.EncodeResponse(res, items); err != nil {
-		s.logger.Error(err, "encoding response")
-	}
-}
-
-// Delete returns a handler that deletes an item
-func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
-	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
-	ctx := opentracing.ContextWithSpan(req.Context(), serverSpan)
-	defer serverSpan.Finish()
-
-	userID := s.userIDFetcher(req)
-	itemID := s.itemIDFetcher(req)
-	logger := s.logger.WithValues(map[string]interface{}{
-		"item_id": itemID,
-		"user_id": userID,
-	})
-	logger.Debug("ItemsService Deletion handler called")
-
-	err := s.db.DeleteItem(ctx, itemID, userID)
-	if err == sql.ErrNoRows {
-		logger.Debug("no rows found for item")
-		res.WriteHeader(http.StatusNotFound)
-		return
-	} else if err != nil {
-		logger.Error(err, "error encountered deleting item")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	res.WriteHeader(http.StatusNoContent)
-}
-
 // Update returns a handler that updates an item
 func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
-	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
-	ctx := opentracing.ContextWithSpan(req.Context(), serverSpan)
+	ctx := req.Context()
+	span := opentracing.SpanFromContext(ctx)
+	serverSpan := s.tracer.StartSpan("update_route", opentracing.ChildOf(span.Context()))
 	defer serverSpan.Finish()
 
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.ItemInput)
@@ -203,31 +170,31 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// Create is our item creation route
-func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
-	spanCtx, _ := s.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	serverSpan := s.tracer.StartSpan("", opentracing.ChildOf(spanCtx))
-	ctx := opentracing.ContextWithSpan(req.Context(), serverSpan)
+// Delete returns a handler that deletes an item
+func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	span := opentracing.SpanFromContext(ctx)
+	serverSpan := s.tracer.StartSpan("delete_route", opentracing.ChildOf(span.Context()))
 	defer serverSpan.Finish()
 
-	s.logger.Debug("ItemsService.Create called")
-	input, ok := ctx.Value(MiddlewareCtxKey).(*models.ItemInput)
-	if !ok {
-		s.logger.Error(nil, "valid input not attached to request")
-		res.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	input.BelongsTo = s.userIDFetcher(req)
+	userID := s.userIDFetcher(req)
+	itemID := s.itemIDFetcher(req)
+	logger := s.logger.WithValues(map[string]interface{}{
+		"item_id": itemID,
+		"user_id": userID,
+	})
+	logger.Debug("ItemsService Deletion handler called")
 
-	s.logger.WithValue("input", input).Debug("ItemsService.Create called")
-	i, err := s.db.CreateItem(ctx, input)
-	if err != nil {
-		s.logger.Error(err, "error creating item")
+	err := s.db.DeleteItem(ctx, itemID, userID)
+	if err == sql.ErrNoRows {
+		logger.Debug("no rows found for item")
+		res.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
+		logger.Error(err, "error encountered deleting item")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	if err = s.encoder.EncodeResponse(res, i); err != nil {
-		s.logger.Error(err, "encoding response")
-	}
+	res.WriteHeader(http.StatusNoContent)
 }

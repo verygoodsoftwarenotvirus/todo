@@ -134,15 +134,11 @@ func (s *Service) ClientScopeHandler(clientID, scope string) (authed bool, err e
 		return false, err
 	}
 
-	logger = logger.WithValue("oauth2_client_scopes", c.Scopes)
-	logger.Debug("OAuth2 Client retrieved in ClientScopeHandler")
-
 	for _, cscope := range c.Scopes {
 		if cscope == scope || cscope == "*" {
 			authed = true
 		}
 	}
 
-	logger.WithValue("authed", authed).Debug("returning from ClientScopeHandler")
 	return authed, nil
 }

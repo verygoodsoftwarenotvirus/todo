@@ -25,7 +25,7 @@ services:
   locust:
     build:
       context: ../
-      dockerfile: dockerfiles/locust-leader.Dockerfile
+      dockerfile: ../dockerfiles/locust.Dockerfile
     environment:
       OAUTHLIB_INSECURE_TRANSPORT: 'true'
     links:
@@ -34,14 +34,6 @@ services:
       - '8089:8089'
       - '5557:5557'
       - '5558:5558'
-
-  # locust-worker:
-  #   build:
-  #     context: ../
-  #     dockerfile: dockerfiles/locust-worker.Dockerfile
-  #   links:
-  #     - todo-server
-  #     - locust-leader
 
   database:
     image: postgres:latest

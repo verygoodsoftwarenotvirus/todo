@@ -22,7 +22,7 @@ import (
 
 // Injectors from wire.go:
 
-func BuildServer(connectionDetails database.ConnectionDetails, CookieName users.CookieName, metricsNamespace metrics.Namespace, CookieSecret []byte, Debug bool) (*server.Server, error) {
+func BuildServer(connectionDetails database.ConnectionDetails, metricsNamespace metrics.Namespace, CookieSecret []byte, Debug bool) (*server.Server, error) {
 	bcryptHashCost := auth.ProvideBcryptHashCost()
 	logger := zerolog.ProvideZerologger()
 	loggingLogger := zerolog.ProvideLogger(logger)
@@ -43,7 +43,7 @@ func BuildServer(connectionDetails database.ConnectionDetails, CookieName users.
 	service := items.ProvideItemsService(loggingLogger, databaseDatabase, userIDFetcher, itemIDFetcher, itemsTracer, responseEncoder)
 	usernameFetcher := server.ProvideUsernameFetcher()
 	usersTracer := users.ProvideUserServiceTracer()
-	usersService := users.ProvideUsersService(CookieName, loggingLogger, databaseDatabase, enticator, usernameFetcher, usersTracer, responseEncoder)
+	usersService := users.ProvideUsersService(CookieSecret, loggingLogger, databaseDatabase, enticator, usernameFetcher, usersTracer, responseEncoder)
 	clientIDFetcher := server.ProvideOAuth2ServiceClientIDFetcher()
 	oauth2clientsTracer := oauth2clients.ProvideOAuth2ClientsServiceTracer()
 	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(loggingLogger, databaseDatabase, enticator, clientIDFetcher, oauth2clientsTracer, responseEncoder)
@@ -55,7 +55,7 @@ func BuildServer(connectionDetails database.ConnectionDetails, CookieName users.
 	serverTracer := server.ProvideServerTracer()
 	httpServer := server.ProvideHTTPServer()
 	handler := prometheus.ProvideMetricsHandler()
-	instrumentationHandlerProvider := prometheus.ProvideInstrumentationHandlerProvider(metricsNamespace)
+	instrumentationHandlerProvider := prometheus.ProvideInstrumentationHandlerProvider()
 	serverServer, err := server.ProvideServer(Debug, CookieSecret, enticator, service, usersService, oauth2clientsService, client, loggingLogger, serverTracer, httpServer, responseEncoder, handler, instrumentationHandlerProvider)
 	if err != nil {
 		return nil, err

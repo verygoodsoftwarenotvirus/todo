@@ -4,8 +4,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -28,7 +28,6 @@ type (
 
 	// Service handles our users
 	Service struct {
-		cookieName      CookieName
 		database        database.Database
 		authenticator   auth.Enticator
 		logger          logging.Logger
@@ -39,9 +38,6 @@ type (
 
 	// UsernameFetcher fetches usernames from requests
 	UsernameFetcher func(*http.Request) string
-
-	// CookieName is an arbitrary type alias
-	CookieName string
 )
 
 var (
@@ -59,7 +55,7 @@ func ProvideUserServiceTracer() Tracer {
 
 // ProvideUsersService builds a new UsersService
 func ProvideUsersService(
-	cookieName CookieName,
+	cookieSecret []byte,
 	logger logging.Logger,
 	database database.Database,
 	authenticator auth.Enticator,
@@ -70,9 +66,9 @@ func ProvideUsersService(
 	if usernameFetcher == nil {
 		panic("usernameFetcher must be provided")
 	}
+
 	us := &Service{
 		logger:          logger.WithName("users_service"),
-		cookieName:      cookieName,
 		database:        database,
 		authenticator:   authenticator,
 		usernameFetcher: usernameFetcher,

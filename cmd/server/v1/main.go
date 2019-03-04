@@ -5,7 +5,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 )
 
 const (
@@ -20,7 +19,6 @@ var cookieSecret = []byte("HEREISA32CHARSECRETWHICHISMADEUP")
 func main() {
 	server, err := BuildServer(
 		postgresConnectionDetails,
-		users.CookieName("todocookie"),
 		metrics.Namespace("todo-server"),
 		[]byte(cookieSecret),
 		debug,

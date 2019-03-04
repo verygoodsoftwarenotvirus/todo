@@ -17,7 +17,7 @@ services:
   integration-test:
     build:
       context: ../
-      dockerfile: dockerfiles/integration-tests.Dockerfile
+      dockerfile: dockerfiles/integration-tests-go.Dockerfile
     environment:
       DOCKER: 'true'
       DATABASE_TO_USE: 'postgres'

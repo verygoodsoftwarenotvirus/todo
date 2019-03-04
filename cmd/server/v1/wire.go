@@ -22,7 +22,6 @@ import (
 // BuildServer builds a server
 func BuildServer(
 	connectionDetails database.ConnectionDetails,
-	CookieName users.CookieName,
 	metricsNamespace metrics.Namespace,
 	CookieSecret []byte,
 	Debug bool,

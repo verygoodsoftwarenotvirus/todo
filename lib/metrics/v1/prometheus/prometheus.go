@@ -19,11 +19,9 @@ var (
 )
 
 // ProvideInstrumentationHandlerProvider provides an instrumentation handler provider
-func ProvideInstrumentationHandlerProvider(name metrics.Namespace) metrics.InstrumentationHandlerProvider {
-	namespace := string(name)
+func ProvideInstrumentationHandlerProvider() metrics.InstrumentationHandlerProvider {
 	return func(handler http.Handler) metrics.InstrumentationHandler {
-		//return promhttp.InstrumentMetricHandler(prometheus.DefaultRegisterer, handler)
-		return prometheus.InstrumentHandler(namespace, handler)
+		return promhttp.InstrumentMetricHandler(prometheus.DefaultRegisterer, handler)
 	}
 }
 

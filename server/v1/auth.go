@@ -17,87 +17,39 @@ const (
 	cookieName = "todocookie"
 )
 
-type cookieAuth struct {
-	// NOTE: both of these fields need to be exported for gob to work, and gob is the basis of how we encode cookies.
-	Admin    bool
-	Username string
-}
+var (
+	errNoCookie = errors.New("no cookie present in request")
+)
 
-func (s *Server) fetchUserFromRequest(req *http.Request) (*models.User, error) {
-	var ca cookieAuth
+func (s *Server) fetchCookieFromRequest(req *http.Request) (*models.CookieAuth, error) {
+	var ca *models.CookieAuth
 
 	cookie, cerr := req.Cookie(cookieName)
 	if cerr == nil && cookie != nil {
 		derr := s.cookieBuilder.Decode(cookieName, cookie.Value, &ca)
-		if derr == nil {
-			user, uerr := s.db.GetUser(req.Context(), ca.Username)
-			if uerr != nil {
-				return nil, uerr
-			}
-			return user, nil
+		if derr != nil {
+			return nil, errors.Wrap(derr, "decoding request cookie")
 		}
-		return nil, errors.Wrap(derr, "decoding request cookie")
-	} else if cerr == nil && cookie == nil {
-		return nil, errors.New("no user found in request")
+
+		return ca, nil
 	}
-	return nil, errors.Wrap(cerr, "fetching user from request")
+	if cerr != nil {
+		return nil, cerr
+	}
+	return nil, errNoCookie
 }
 
-func (s *Server) buildCookieMiddleware(rejectIfNotFound bool) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			logger := s.logger.WithValue("rejecting", rejectIfNotFound)
-			logger.Debug("buildCookieMiddleware triggered")
-
-			user, err := s.fetchUserFromRequest(req)
-			if err != nil && rejectIfNotFound {
-				logger.Error(err, "error encountered fetching user")
-				s.internalServerError(res, req, err)
-				return
-			}
-
-			if user != nil {
-				req = req.WithContext(context.WithValue(
-					context.WithValue(req.Context(), models.UserKey, user),
-					models.UserIDKey,
-					user.ID,
-				))
-			} else if rejectIfNotFound {
-				logger.Debug("redirecting to login")
-				http.Redirect(res, req, "/login", http.StatusUnauthorized)
-				return
-			}
-
-			logger.Debug("moving onto next middleware from buildCookieMiddleware")
-			next.ServeHTTP(res, req)
-		})
+func (s *Server) fetchUserFromRequest(req *http.Request) (*models.User, error) {
+	ca, cerr := s.fetchCookieFromRequest(req)
+	if cerr != nil {
+		return nil, errors.Wrap(cerr, "fetching cookie data from request")
 	}
-}
 
-// userCookieAuthenticationMiddleware checks for a user cookie
-func (s *Server) userCookieAuthenticationMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		s.logger.Debug("userCookieAuthenticationMiddleware triggered")
-
-		user, err := s.fetchUserFromRequest(req)
-		if err != nil {
-			s.logger.Error(err, "error encountered fetching user")
-			s.internalServerError(res, req, err)
-			return
-		}
-
-		if user != nil {
-			req = req.WithContext(context.WithValue(
-				context.WithValue(req.Context(), models.UserKey, user),
-				models.UserIDKey,
-				user.ID,
-			))
-
-			next.ServeHTTP(res, req)
-			return
-		}
-		http.Redirect(res, req, "/login", http.StatusUnauthorized)
-	})
+	user, uerr := s.db.GetUser(req.Context(), ca.Username)
+	if uerr != nil {
+		return nil, errors.Wrap(uerr, "fetching user from request")
+	}
+	return user, nil
 }
 
 // login is our login route
@@ -225,7 +177,7 @@ func (s *Server) buildCookie(user *models.User) (*http.Cookie, error) {
 	}).Debug("buildCookie called")
 
 	encoded, err := s.cookieBuilder.Encode(
-		cookieName, cookieAuth{
+		cookieName, models.CookieAuth{
 			Admin:    user.IsAdmin,
 			Username: user.Username,
 		},

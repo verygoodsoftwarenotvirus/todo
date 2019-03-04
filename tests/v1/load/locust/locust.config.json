@@ -1,6 +1,0 @@
-{
-    "target": "http://todo-server",
-    "locusts": [
-        "TodoAPIServerLocust"
-    ]
-}

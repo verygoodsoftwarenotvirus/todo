@@ -73,11 +73,6 @@ python-client-unit-tests: python-type-check
 	docker build --tag python-client-unit-tests:latest --file dockerfiles/python-client-unit-tests.Dockerfile .
 	docker run python-client-unit-tests:latest
 
-.PHONY: baloney
-baloney:
-	docker build --tag locust-tests:latest --file dockerfiles/locust-tests.Dockerfile .
-	docker run locust-tests:latest
-
 .PHONY: test
 test:
 	docker build --tag coverage-$(SERVER_DOCKER_IMAGE_NAME):latest --file dockerfiles/coverage.Dockerfile .
@@ -90,10 +85,6 @@ integration-tests:
 .PHONY: debug-integration-tests
 debug-integration-tests: wire
 	docker-compose --file compose-files/debug-integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate
-
-.PHONY: vegeta-load-tests
-vegeta-load-tests: wire
-	docker-compose --file compose-files/vegeta-load-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
 
 .PHONY: locust-load-tests
 locust-load-tests: wire

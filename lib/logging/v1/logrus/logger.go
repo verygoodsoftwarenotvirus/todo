@@ -9,14 +9,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	// Providers is what we offer to external implementers
-	Providers = wire.NewSet(
-		ProvideLogrus,
-		ProvideLogger,
-	)
-)
-
 var _ logging.Logger = (*Logger)(nil)
 
 // Logger is our log wrapper

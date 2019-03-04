@@ -27,43 +27,53 @@ func (s *Service) OAuth2ClientCreationInputContextMiddleware(next http.Handler) 
 	})
 }
 
+// RequestIsAuthenticated returns whether or not the request is authenticated
+func (s *Service) RequestIsAuthenticated(req *http.Request) (*models.OAuth2Client, error) {
+	ctx := req.Context()
+	s.logger.Debug("RequestIsAuthenticated called")
+
+	token, err := s.oauth2Handler.ValidationBearerToken(req)
+	if err != nil || token == nil {
+		s.logger.Error(err, "error validating bearer token")
+		return nil, err
+	}
+
+	// ignoring this error because the User ID source should only ever provide uints
+	clientID := token.GetClientID()
+	logger := s.logger.WithValues(map[string]interface{}{
+		"client_id": clientID,
+	})
+
+	c, err := s.database.GetOAuth2ClientByClientID(ctx, clientID)
+	if err != nil {
+		logger.Error(err, "error fetching OAuth2 Client")
+		return nil, err
+	}
+
+	return c, nil
+}
+
 // OAuth2TokenAuthenticationMiddleware authenticates Oauth tokens
 func (s *Service) OAuth2TokenAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		s.logger.Debug("OAuth2TokenAuthenticationMiddleware called")
 
-		token, err := s.oauth2Handler.ValidationBearerToken(req)
-		if err != nil || token == nil {
-			s.logger.Error(err, "error validating bearer token")
+		c, err := s.RequestIsAuthenticated(req)
+		if err != nil {
+			s.logger.Error(err, "error authenticated token-authed request")
 			http.Error(res, "invalid token", http.StatusUnauthorized)
 			return
 		}
 
-		// ignoring this error because the User ID source should only ever provide uints
-		clientID := token.GetClientID()
-		logger := s.logger.WithValues(map[string]interface{}{
-			"client_id": clientID,
-		})
+		// attach both the user ID and the client object to the request. it might seem superfluous,
+		// but some things should only need to know to look for user IDs, and not trouble themselves
+		// with foolish concerns of OAuth2 clients and their fields
+		ctx2 := context.WithValue(ctx, models.UserIDKey, c.BelongsTo)
+		ctx3 := context.WithValue(ctx2, models.OAuth2ClientKey, c)
+		req2 := req.WithContext(ctx3)
 
-		c, err := s.database.GetOAuth2ClientByClientID(ctx, clientID)
-		if err != nil {
-			logger.Error(err, "error fetching OAuth2 Client")
-			http.Error(res, errors.Wrap(err, "error fetching client ID").Error(), http.StatusUnauthorized)
-			// http.Redirect(res, req, "/login", http.StatusUnauthorized)
-			return
-		}
-
-		req = req.WithContext( // attach both the user ID and the client object to the request. it might seem superfluous,
-			context.WithValue( // but some things should only need to know to look for user IDs, and not trouble themselves
-				context.WithValue( // with foolish concerns of OAuth2 clients and their fields
-					ctx, models.UserIDKey, c.BelongsTo,
-				),
-				models.OAuth2ClientKey,
-				c,
-			),
-		)
-		next.ServeHTTP(res, req)
+		next.ServeHTTP(res, req2)
 	})
 }
 

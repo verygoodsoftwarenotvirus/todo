@@ -20,5 +20,4 @@ EXPOSE 8089:8089
 EXPOSE 5557:5557
 EXPOSE 5558:5558
 
-ENTRYPOINT ["locust", "-f", "locustfile.py", "--host=http://todo-server"]
-# , "--master"]
+ENTRYPOINT [ "locust", "-f", "locustfile.py", "--host=http://todo-server" ]

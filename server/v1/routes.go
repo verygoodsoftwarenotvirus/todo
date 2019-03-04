@@ -1,11 +1,8 @@
 package server
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -16,80 +13,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	gcontext "github.com/gorilla/context"
-	"github.com/opentracing-contrib/go-stdlib/nethttp"
-	"github.com/opentracing/opentracing-go"
 )
-
-func (s *Server) buildRouteCtx(key models.ContextKey, x interface{}) func(next http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			if err := json.NewDecoder(req.Body).Decode(x); err != nil {
-				s.logger.Error(err, "error encountered decoding request body")
-				res.WriteHeader(http.StatusBadRequest)
-				return
-			}
-			next.ServeHTTP(res, req.WithContext(context.WithValue(req.Context(), key, x)))
-		})
-	}
-}
-
-func (s *Server) tracingMiddleware(next http.Handler) http.Handler {
-	return nethttp.Middleware(
-		s.tracer,
-		next,
-		nethttp.MWComponentName("todo-server"),
-		nethttp.MWSpanObserver(func(span opentracing.Span, req *http.Request) {
-			span.SetTag("http.method", req.Method)
-			span.SetTag("http.uri", req.URL.EscapedPath())
-		}),
-		nethttp.OperationNameFunc(func(req *http.Request) string {
-			return fmt.Sprintf("%s %s", req.Method, req.URL.Path)
-		}),
-	)
-}
-
-func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ww := middleware.NewWrapResponseWriter(res, req.ProtoMajor)
-
-		start := time.Now()
-		defer func() {
-			s.logger.WithValues(map[string]interface{}{
-				"status":        ww.Status(),
-				"bytes_written": ww.BytesWritten(),
-				"elapsed":       time.Since(start),
-			})
-		}()
-
-		next.ServeHTTP(ww, req)
-	})
-}
-
-func (s *Server) dualAuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx := req.Context()
-
-		oac := ctx.Value(oauth2clients.MiddlewareCtxKey)
-		u := ctx.Value(users.MiddlewareCtxKey)
-
-		x, ok1 := oac.(*models.OAuth2Client)
-		y, ok2 := u.(*models.User)
-
-		logger := s.logger.WithValues(map[string]interface{}{
-			"oauth2_client":    x,
-			"oauth2_client_ok": ok1,
-			"user":             y,
-			"user_ok":          ok2,
-		})
-
-		if (ok1 && x != nil) || (ok2 && y != nil) {
-			logger.Debug("errythang good")
-			next.ServeHTTP(res, req)
-		} else {
-			http.Redirect(res, req, "/login", http.StatusUnauthorized)
-		}
-	})
-}
 
 func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 	s.router = chi.NewRouter()
@@ -101,7 +25,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 		s.tracingMiddleware,
 		middleware.Timeout(maxTimeout),
 	)
-	// all middlewares must be defined before routes on a mux
+	// all middleware must be defined before routes on a mux
 
 	s.router.Get("/_meta_/health", func(res http.ResponseWriter, req *http.Request) { res.WriteHeader(http.StatusOK) })
 
@@ -161,9 +85,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 
 	s.router.
 		With(
-			s.buildCookieMiddleware(false),
-			s.oauth2ClientsService.BuildAuthenticationMiddleware(false),
-			s.dualAuthMiddleware,
+			s.oauth2ClientsService.OAuth2TokenAuthenticationMiddleware,
 		).
 		Route("/api", func(apiRouter chi.Router) {
 			apiRouter.Route("/v1", func(v1Router chi.Router) {
@@ -193,5 +115,4 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 			})
 
 		})
-
 }

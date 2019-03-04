@@ -3,9 +3,11 @@ package oauth2clients
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"net/http"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"github.com/pkg/errors"
 )
 
 // OAuth2ClientCreationInputContextMiddleware is a middleware for attaching OAuth2 client info to a request
@@ -47,7 +49,8 @@ func (s *Service) OAuth2TokenAuthenticationMiddleware(next http.Handler) http.Ha
 		c, err := s.database.GetOAuth2ClientByClientID(ctx, clientID)
 		if err != nil {
 			logger.Error(err, "error fetching OAuth2 Client")
-			http.Error(res, fmt.Sprintf("error fetching client ID: %s", err.Error()), http.StatusUnauthorized)
+			http.Error(res, errors.Wrap(err, "error fetching client ID").Error(), http.StatusUnauthorized)
+			// http.Redirect(res, req, "/login", http.StatusUnauthorized)
 			return
 		}
 
@@ -62,6 +65,57 @@ func (s *Service) OAuth2TokenAuthenticationMiddleware(next http.Handler) http.Ha
 		)
 		next.ServeHTTP(res, req)
 	})
+}
+
+// BuildAuthenticationMiddleware provides a way of building middleware with varying behaviors
+func (s *Service) BuildAuthenticationMiddleware(reject bool) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+			ctx := req.Context()
+			logger := s.logger.WithValue("rejecting", reject)
+			logger.Debug("OAuth2TokenAuthenticationMiddleware called")
+
+			token, err := s.oauth2Handler.ValidationBearerToken(req)
+			if err != nil || token == nil {
+				logger.Error(err, "error validating bearer token")
+				if reject {
+					http.Error(res, "invalid token", http.StatusUnauthorized)
+				} else {
+					next.ServeHTTP(res, req)
+				}
+				return
+			}
+
+			// ignoring this error because the User ID source should only ever provide uints
+			clientID := token.GetClientID()
+			logger = logger.WithValues(map[string]interface{}{
+				"client_id": clientID,
+			})
+
+			c, err := s.database.GetOAuth2ClientByClientID(ctx, clientID)
+			if err != nil {
+				logger.Error(err, "error fetching OAuth2 Client")
+				if reject {
+					http.Error(res, errors.Wrap(err, "error fetching client ID").Error(), http.StatusUnauthorized)
+					// http.Redirect(res, req, "/login", http.StatusUnauthorized)
+				} else {
+					next.ServeHTTP(res, req)
+				}
+				return
+			}
+
+			req = req.WithContext( // attach both the user ID and the client object to the request. it might seem superfluous,
+				context.WithValue( // but some things should only need to know to look for user IDs, and not trouble themselves
+					context.WithValue( // with foolish concerns of OAuth2 clients and their fields
+						ctx, models.UserIDKey, c.BelongsTo,
+					),
+					models.OAuth2ClientKey,
+					c,
+				),
+			)
+			next.ServeHTTP(res, req)
+		})
+	}
 }
 
 // OAuth2ClientInfoMiddleware fetches clientOAuth2Client info from requests and attaches it eplicitly to a request

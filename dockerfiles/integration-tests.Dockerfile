@@ -6,5 +6,5 @@ RUN apk add --update gcc musl-dev
 
 ADD . .
 
-ENTRYPOINT [ "go", "test", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/integration" ]
-# ENTRYPOINT [ "go", "test", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/integration", "-run", "TestOAuth2Clients/Deleting/should_be_unable_to_authorize_after_being_deleted"] # for a more specific test
+ENTRYPOINT [ "go", "test", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/integration/go" ]
+# ENTRYPOINT [ "go", "test", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/integration/go", "-run", "TestAuth/should_reject_an_unauthenticated_request"] # for a more specific test

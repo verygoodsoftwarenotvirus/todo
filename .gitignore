@@ -29,5 +29,5 @@ vendor
 
 # Python
 .env
-.mypy_caches
+.mypy_cache
 __pycache__

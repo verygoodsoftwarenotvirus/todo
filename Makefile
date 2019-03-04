@@ -65,8 +65,18 @@ $(COVERAGE_OUT):
 
 .PHONY: python-type-check
 python-type-check:
-	docker build --tag mypy-local:latest --file dockerfiles/mypy.Dockerfile .
+	docker build --tag python-type-check-local:latest --file dockerfiles/python-type-check.Dockerfile .
 	docker run --rm --volume `pwd`:`pwd` --workdir `pwd` mypy-local:latest
+
+.PHONY: python-client-unit-tests
+python-client-unit-tests: python-type-check
+	docker build --tag python-client-unit-tests:latest --file dockerfiles/python-client-unit-tests.Dockerfile .
+	docker run python-client-unit-tests:latest
+
+.PHONY: baloney
+baloney:
+	docker build --tag locust-tests:latest --file dockerfiles/locust-tests.Dockerfile .
+	docker run locust-tests:latest
 
 .PHONY: test
 test:
@@ -81,9 +91,13 @@ integration-tests:
 debug-integration-tests: wire
 	docker-compose --file compose-files/debug-integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate
 
-.PHONY: load-tests
-load-tests: wire # literally the same except it won't exit
-	docker-compose --file compose-files/load-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
+.PHONY: vegeta-load-tests
+vegeta-load-tests: wire
+	docker-compose --file compose-files/vegeta-load-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
+
+.PHONY: locust-load-tests
+locust-load-tests: wire
+	docker-compose --file compose-files/locust-load-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
 
 ## Docker things
 

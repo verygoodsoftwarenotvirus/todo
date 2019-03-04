@@ -22,21 +22,26 @@ services:
     # logging:
     #   driver: none
 
-  integration-test:
+  load-tests:
     build:
       context: ../
-      dockerfile: dockerfiles/integration-tests.Dockerfile
+      dockerfile: dockerfiles/vegeta-load-tests.Dockerfile
     environment:
       DOCKER: 'true'
-      DATABASE_TO_USE: 'postgres'
-      JAEGER_SERVICE_NAME: 'todo-server'
-      JAEGER_AGENT_HOST: 'tracing-server'
-      JAEGER_AGENT_PORT: '6831'
-      JAEGER_SAMPLER_MANAGER_HOST_PORT: 'tracing-server:5778'
     links:
       - todo-server
-    # logging:
-    #   driver: none
+
+  database:
+    image: postgres:latest
+    ports:
+      - '2345:5432'
+    environment:
+      POSTGRES_USER: todo
+      POSTGRES_PASSWORD: hunter2
+    volumes:
+      - ../database/_postgres_init_.sql:/docker-entrypoint-initdb.d/10-init.sql
+    logging:
+      driver: none
 
   tracing-server:
     image: jaegertracing/all-in-one:latest
@@ -48,18 +53,6 @@ services:
       - 16686:16686
       - 14268:14268
       - 9411:9411
-    logging:
-      driver: none
-
-  database:
-    image: postgres:latest
-    ports:
-      - '2345:5432'
-    environment:
-      POSTGRES_USER: todo
-      POSTGRES_PASSWORD: hunter2
-    volumes:
-      - ../database/_postgres_init_.sql:/docker-entrypoint-initdb.d/10-init.sql
     logging:
       driver: none
 

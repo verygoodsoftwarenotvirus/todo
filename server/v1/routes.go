@@ -49,8 +49,8 @@ func (s *Server) tracingMiddleware(next http.Handler) http.Handler {
 }
 
 func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		ww := middleware.NewWrapResponseWriter(res, req.ProtoMajor)
 
 		start := time.Now()
 		defer func() {
@@ -61,7 +61,33 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 			})
 		}()
 
-		next.ServeHTTP(ww, r)
+		next.ServeHTTP(ww, req)
+	})
+}
+
+func (s *Server) dualAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
+
+		oac := ctx.Value(oauth2clients.MiddlewareCtxKey)
+		u := ctx.Value(users.MiddlewareCtxKey)
+
+		x, ok1 := oac.(*models.OAuth2Client)
+		y, ok2 := u.(*models.User)
+
+		logger := s.logger.WithValues(map[string]interface{}{
+			"oauth2_client":    x,
+			"oauth2_client_ok": ok1,
+			"user":             y,
+			"user_ok":          ok2,
+		})
+
+		if (ok1 && x != nil) || (ok2 && y != nil) {
+			logger.Debug("errythang good")
+			next.ServeHTTP(res, req)
+		} else {
+			http.Redirect(res, req, "/login", http.StatusUnauthorized)
+		}
 	})
 }
 
@@ -71,9 +97,9 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 	s.router.Use(
 		gcontext.ClearHandler, // because we're using securecookie, but not gorilla/mux
 		middleware.RequestID,
+		s.loggingMiddleware,
 		s.tracingMiddleware,
 		middleware.Timeout(maxTimeout),
-		s.loggingMiddleware,
 	)
 	// all middlewares must be defined before routes on a mux
 
@@ -111,7 +137,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 	s.router.Route("/oauth2", func(oauth2Router chi.Router) {
 		oauth2Router.
 			With(
-				s.userCookieAuthenticationMiddleware,
+				s.buildCookieMiddleware(true),
 				s.buildRouteCtx(
 					oauth2clients.MiddlewareCtxKey,
 					new(models.OAuth2ClientCreationInput),
@@ -134,7 +160,11 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 	})
 
 	s.router.
-		With(s.oauth2ClientsService.OAuth2TokenAuthenticationMiddleware).
+		With(
+			s.buildCookieMiddleware(false),
+			s.oauth2ClientsService.BuildAuthenticationMiddleware(false),
+			s.dualAuthMiddleware,
+		).
 		Route("/api", func(apiRouter chi.Router) {
 			apiRouter.Route("/v1", func(v1Router chi.Router) {
 

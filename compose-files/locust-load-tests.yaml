@@ -22,34 +22,26 @@ services:
     # logging:
     #   driver: none
 
-  integration-test:
+  locust:
     build:
       context: ../
-      dockerfile: dockerfiles/integration-tests.Dockerfile
+      dockerfile: dockerfiles/locust-leader.Dockerfile
     environment:
-      DOCKER: 'true'
-      DATABASE_TO_USE: 'postgres'
-      JAEGER_SERVICE_NAME: 'todo-server'
-      JAEGER_AGENT_HOST: 'tracing-server'
-      JAEGER_AGENT_PORT: '6831'
-      JAEGER_SAMPLER_MANAGER_HOST_PORT: 'tracing-server:5778'
+      OAUTHLIB_INSECURE_TRANSPORT: 'true'
     links:
       - todo-server
-    # logging:
-    #   driver: none
-
-  tracing-server:
-    image: jaegertracing/all-in-one:latest
     ports:
-      - 5775:5775/udp
-      - 6831:6831/udp
-      - 6832:6832/udp
-      - 5778:5778
-      - 16686:16686
-      - 14268:14268
-      - 9411:9411
-    logging:
-      driver: none
+      - '8089:8089'
+      - '5557:5557'
+      - '5558:5558'
+
+  # locust-worker:
+  #   build:
+  #     context: ../
+  #     dockerfile: dockerfiles/locust-worker.Dockerfile
+  #   links:
+  #     - todo-server
+  #     - locust-leader
 
   database:
     image: postgres:latest
@@ -60,6 +52,19 @@ services:
       POSTGRES_PASSWORD: hunter2
     volumes:
       - ../database/_postgres_init_.sql:/docker-entrypoint-initdb.d/10-init.sql
+    # logging:
+    #   driver: none
+
+  tracing-server:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - '5775:5775/udp'
+      - '6831:6831/udp'
+      - '6832:6832/udp'
+      - '5778:5778'
+      - '16686:16686'
+      - '14268:14268'
+      - '9411:9411'
     logging:
       driver: none
 
@@ -72,14 +77,14 @@ services:
     command:
       '--config.file=/etc/prometheus/config.yaml --storage.tsdb.path=/prometheus'
     ports:
-      - 9090:9090
+      - '9090:9090'
     logging:
       driver: none
 
   grafana:
     image: grafana/grafana
     ports:
-      - 3000:3000
+      - '3000:3000'
     volumes:
       - type: bind
         source: ../deploy/grafana/local/provisioning

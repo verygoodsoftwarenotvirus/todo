@@ -31,7 +31,6 @@ func (s *Server) fetchUserFromRequest(req *http.Request) (*models.User, error) {
 		derr := s.cookieBuilder.Decode(cookieName, cookie.Value, &ca)
 		if derr == nil {
 			user, uerr := s.db.GetUser(req.Context(), ca.Username)
-
 			if uerr != nil {
 				return nil, uerr
 			}
@@ -44,7 +43,38 @@ func (s *Server) fetchUserFromRequest(req *http.Request) (*models.User, error) {
 	return nil, errors.Wrap(cerr, "fetching user from request")
 }
 
-// userCookieAuthenticationMiddleware authenticates user cookies
+func (s *Server) buildCookieMiddleware(rejectIfNotFound bool) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+			logger := s.logger.WithValue("rejecting", rejectIfNotFound)
+			logger.Debug("buildCookieMiddleware triggered")
+
+			user, err := s.fetchUserFromRequest(req)
+			if err != nil && rejectIfNotFound {
+				logger.Error(err, "error encountered fetching user")
+				s.internalServerError(res, req, err)
+				return
+			}
+
+			if user != nil {
+				req = req.WithContext(context.WithValue(
+					context.WithValue(req.Context(), models.UserKey, user),
+					models.UserIDKey,
+					user.ID,
+				))
+			} else if rejectIfNotFound {
+				logger.Debug("redirecting to login")
+				http.Redirect(res, req, "/login", http.StatusUnauthorized)
+				return
+			}
+
+			logger.Debug("moving onto next middleware from buildCookieMiddleware")
+			next.ServeHTTP(res, req)
+		})
+	}
+}
+
+// userCookieAuthenticationMiddleware checks for a user cookie
 func (s *Server) userCookieAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		s.logger.Debug("userCookieAuthenticationMiddleware triggered")

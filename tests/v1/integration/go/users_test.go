@@ -63,9 +63,13 @@ func buildDummyUser(t *testing.T) (*models.UserCreationResponse, *models.UserInp
 	user, err := todoClient.CreateUser(ctx, userInput)
 	assert.NotNil(t, user)
 	require.NoError(t, err)
-	t.Logf("created dummy user #%d", user.ID)
+	t.Logf("created dummy user #%d: %q", user.ID, user.Username)
 
-	cookie := loginUser(t, user.Username, userInput.Password, user.TwoFactorSecret)
+	if user == nil || err != nil {
+		t.FailNow()
+	}
+
+	cookie := loginUser(t, userInput.Username, userInput.Password, user.TwoFactorSecret)
 
 	require.NoError(t, err)
 	require.NotNil(t, cookie)

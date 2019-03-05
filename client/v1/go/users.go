@@ -67,7 +67,8 @@ func (c *V1Client) DeleteUser(ctx context.Context, username string) error {
 	logger.Debug("")
 
 	uri := c.buildVersionlessURL(nil, usersBasePath, username)
-	return c.delete(ctx, uri)
+	err := c.delete(ctx, uri)
+	return err
 }
 
 // Login logs a user in

@@ -11,8 +11,8 @@ services:
       DOCKER: 'true'
     links:
       - database
-    logging:
-      driver: none
+    # logging:
+    #   driver: none
 
   integration-test:
     build:

@@ -18,13 +18,15 @@ func loginUser(t *testing.T, username, password, totpSecret string) *http.Cookie
 	code, err := totp.GenerateCode(strings.ToUpper(totpSecret), time.Now())
 	assert.NoError(t, err)
 
-	body := strings.NewReader(fmt.Sprintf(`
-		{
-			"username": %q,
-			"password": %q,
-			"totp_token": %q
-		}
-	`, username, password, code))
+	bodyStr := fmt.Sprintf(`
+	{
+		"username": %q,
+		"password": %q,
+		"totp_token": %q
+	}
+`, username, password, code)
+
+	body := strings.NewReader(bodyStr)
 
 	req, _ := http.NewRequest(http.MethodPost, loginURL, body)
 	resp, err := http.DefaultClient.Do(req)
@@ -36,7 +38,7 @@ func loginUser(t *testing.T, username, password, totpSecret string) *http.Cookie
 
 	cookies := resp.Cookies()
 	if len(cookies) == 1 {
-		return resp.Cookies()[0]
+		return cookies[0]
 	}
 	t.Logf("wrong number of cookies found: %d", len(cookies))
 	t.FailNow()
@@ -45,8 +47,6 @@ func loginUser(t *testing.T, username, password, totpSecret string) *http.Cookie
 }
 
 func TestAuth(test *testing.T) {
-	test.Parallel()
-
 	test.Run("should reject an unauthenticated request", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, todoClient.BuildURL(nil, "items"), nil)
 		assert.NoError(t, err)
@@ -57,7 +57,7 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should accept a login cookie if a token is missing", func(t *testing.T) {
-		t.SkipNow()
+		// t.SkipNow()
 		// create user
 		_, _, cookie := buildDummyUser(test)
 		assert.NotNil(test, cookie)

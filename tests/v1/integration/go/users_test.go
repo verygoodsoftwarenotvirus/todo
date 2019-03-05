@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"testing"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
@@ -41,6 +42,8 @@ func buildDummyUserInput(t *testing.T) *models.UserInput {
 	if err != nil {
 		panic(err)
 	}
+
+	fake.Seed(time.Now().UnixNano())
 
 	userInput := &models.UserInput{
 		Username:        fake.UserName(),

@@ -1,18 +1,12 @@
 package integration
 
 import (
-	// "context"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
-
-	// "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/go"
-	// "gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/noop"
-	// "gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
-	// "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -53,12 +47,28 @@ func loginUser(t *testing.T, username, password, totpSecret string) *http.Cookie
 func TestAuth(test *testing.T) {
 	test.Parallel()
 
-	pc := todoClient.PlainClient()
-
 	test.Run("should reject an unauthenticated request", func(t *testing.T) {
-		res, err := pc.Post(todoClient.BuildURL(nil, "items"), "application/json", nil)
+		req, err := http.NewRequest(http.MethodGet, todoClient.BuildURL(nil, "items"), nil)
+		assert.NoError(t, err)
+
+		res, err := (*http.Client)(&http.Client{Timeout: 10 * time.Second}).Do(req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
+	})
+
+	test.Run("should accept a login cookie if a token is missing", func(t *testing.T) {
+		t.SkipNow()
+		// create user
+		_, _, cookie := buildDummyUser(test)
+		assert.NotNil(test, cookie)
+
+		req, err := http.NewRequest(http.MethodGet, todoClient.BuildURL(nil, "items"), nil)
+		assert.NoError(t, err)
+		req.AddCookie(cookie)
+
+		res, err := (*http.Client)(&http.Client{Timeout: 10 * time.Second}).Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
 	})
 
 	// test.Run("should only allow users to see their own content", func(t *testing.T) {

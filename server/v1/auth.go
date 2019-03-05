@@ -21,7 +21,7 @@ var (
 	errNoCookie = errors.New("no cookie present in request")
 )
 
-func (s *Server) fetchCookieFromRequest(req *http.Request) (*models.CookieAuth, error) {
+func (s *Server) decodeCookieFromRequest(req *http.Request) (*models.CookieAuth, error) {
 	var ca *models.CookieAuth
 
 	cookie, cerr := req.Cookie(cookieName)
@@ -40,7 +40,7 @@ func (s *Server) fetchCookieFromRequest(req *http.Request) (*models.CookieAuth, 
 }
 
 func (s *Server) fetchUserFromRequest(req *http.Request) (*models.User, error) {
-	ca, cerr := s.fetchCookieFromRequest(req)
+	ca, cerr := s.decodeCookieFromRequest(req)
 	if cerr != nil {
 		return nil, errors.Wrap(cerr, "fetching cookie data from request")
 	}

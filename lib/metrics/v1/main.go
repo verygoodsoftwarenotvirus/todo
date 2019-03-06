@@ -9,7 +9,10 @@ type (
 	// Namespace is a string alias for dependency injection's sake
 	Namespace string
 
-	// InstrumentationHandler is the Handler that provides instrumentation details at the root of the server mux
+	// Middleware is our middleware
+	Middleware func(http.Handler) http.Handler
+
+	// InstrumentationHandler is an obligatory alias
 	InstrumentationHandler http.Handler
 
 	// InstrumentationHandlerProvider is a function that builds an InstrumentationHandler
@@ -17,4 +20,7 @@ type (
 
 	// Handler is the Handler that provides metrics data to scraping services
 	Handler http.Handler
+
+	// HandlerInstrumentationFunc blah
+	HandlerInstrumentationFunc func(http.HandlerFunc) http.HandlerFunc
 )

@@ -55,8 +55,8 @@ func BuildServer(connectionDetails database.ConnectionDetails, metricsNamespace 
 	serverTracer := server.ProvideServerTracer()
 	httpServer := server.ProvideHTTPServer()
 	handler := prometheus.ProvideMetricsHandler()
-	instrumentationHandlerProvider := prometheus.ProvideInstrumentationHandlerProvider()
-	serverServer, err := server.ProvideServer(Debug, CookieSecret, enticator, service, usersService, oauth2clientsService, client, loggingLogger, serverTracer, httpServer, responseEncoder, handler, instrumentationHandlerProvider)
+	middleware := prometheus.ProvideMiddleware()
+	serverServer, err := server.ProvideServer(Debug, CookieSecret, enticator, service, usersService, oauth2clientsService, client, loggingLogger, serverTracer, httpServer, responseEncoder, handler, middleware)
 	if err != nil {
 		return nil, err
 	}

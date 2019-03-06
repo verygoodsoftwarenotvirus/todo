@@ -98,7 +98,7 @@ func ProvideServer(
 
 	// metrics things
 	metricsHandler metrics.Handler,
-	instHandlerProvider metrics.InstrumentationHandlerProvider,
+	metricsMiddleware metrics.Middleware,
 ) (*Server, error) {
 
 	if len(cookieSecret) < 32 {
@@ -134,14 +134,9 @@ func ProvideServer(
 	srv.logger.Info("database migrated!")
 
 	srv.oauth2ClientsService.InitializeOAuth2Clients()
-	srv.setupRouter(metricsHandler)
+	srv.setupRouter(metricsHandler, metricsMiddleware)
+	srv.server.Handler = srv.router
 
-	var handler http.Handler = srv.router
-	if instHandlerProvider != nil {
-		srv.logger.Debug("setting instrumentation handler")
-		handler = instHandlerProvider(srv.router)
-	}
-	srv.server.Handler = handler
 	return srv, nil
 }
 

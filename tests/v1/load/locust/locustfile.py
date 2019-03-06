@@ -54,7 +54,9 @@ class UserTasks(TaskSet):
         number_of_items = len(self.created_item_ids)
         if number_of_items > 0:
             unlucky_item = self.created_item_ids.pop(random.randrange(number_of_items))
-            self.client.delete(url=f"/api/v1/items/{unlucky_item}")
+            self.client.delete(
+                url=f"/api/v1/items/{unlucky_item}", name="/api/v1/items/[item_id]"
+            )
 
     @task(10)
     def create_item(self):

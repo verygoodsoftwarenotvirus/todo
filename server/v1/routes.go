@@ -15,16 +15,24 @@ import (
 	gcontext "github.com/gorilla/context"
 )
 
-func (s *Server) setupRouter(metricsHandler metrics.Handler) {
+func (s *Server) setupRouter(metricsHandler metrics.Handler, metricsMiddleware metrics.Middleware) {
 	s.router = chi.NewRouter()
 
 	s.router.Use(
 		gcontext.ClearHandler, // because we're using securecookie, but not gorilla/mux
 		middleware.RequestID,
-		s.loggingMiddleware,
-		s.tracingMiddleware,
 		middleware.Timeout(maxTimeout),
 	)
+
+	if metricsMiddleware != nil {
+		s.router.Use(metricsMiddleware)
+	}
+
+	s.router.Use(
+		s.loggingMiddleware,
+		s.tracingMiddleware,
+	)
+
 	// all middleware must be defined before routes on a mux
 
 	s.router.Get("/_meta_/health", func(res http.ResponseWriter, req *http.Request) { res.WriteHeader(http.StatusOK) })

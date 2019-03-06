@@ -71,16 +71,19 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	serverSpan := s.tracer.StartSpan("create_route", opentracing.ChildOf(span.Context()))
 	defer serverSpan.Finish()
 
-	s.logger.Debug("ItemsService.Create called")
+	userID := s.userIDFetcher(req)
+	logger := s.logger.WithValue("user_id", userID)
+
+	logger.Debug("create route called")
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.ItemInput)
 	if !ok {
 		s.logger.Error(nil, "valid input not attached to request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	input.BelongsTo = s.userIDFetcher(req)
+	input.BelongsTo = userID
+	logger = logger.WithValue("input", input)
 
-	s.logger.WithValue("input", input).Debug("ItemsService.Create called")
 	i, err := s.db.CreateItem(ctx, input)
 	if err != nil {
 		s.logger.Error(err, "error creating item")

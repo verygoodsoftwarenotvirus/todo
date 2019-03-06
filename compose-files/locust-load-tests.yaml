@@ -25,7 +25,7 @@ services:
   locust:
     build:
       context: ../
-      dockerfile: ../dockerfiles/locust.Dockerfile
+      dockerfile: dockerfiles/locust.Dockerfile
     environment:
       OAUTHLIB_INSECURE_TRANSPORT: 'true'
     links:

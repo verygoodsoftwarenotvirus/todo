@@ -33,9 +33,10 @@ func (s *Service) RequestIsAuthenticated(req *http.Request) (*models.OAuth2Clien
 	s.logger.Debug("RequestIsAuthenticated called")
 
 	token, err := s.oauth2Handler.ValidationBearerToken(req)
-	if err != nil || token == nil {
-		s.logger.Error(err, "error validating bearer token")
-		return nil, err
+	if err != nil {
+		return nil, errors.Wrap(err, "validating bearer token")
+	} else if token == nil {
+		return nil, nil
 	}
 
 	// ignoring this error because the User ID source should only ever provide uints

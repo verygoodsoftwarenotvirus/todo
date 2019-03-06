@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -62,7 +61,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 	s.router.Route("/oauth2", func(oauth2Router chi.Router) {
 		oauth2Router.
 			With(
-				s.buildCookieMiddleware(true),
+				s.userCookieAuthenticationMiddleware,
 				s.buildRouteCtx(
 					oauth2clients.MiddlewareCtxKey,
 					new(models.OAuth2ClientCreationInput),
@@ -114,31 +113,4 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 			})
 
 		})
-}
-
-func (s *Server) apiAuthenticationMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx := req.Context()
-		s.logger.Debug("OAuth2TokenAuthenticationMiddleware called")
-
-		c, err := s.oauth2ClientsService.RequestIsAuthenticated(req)
-		if err != nil || c == nil {
-			if ca, cerr := s.decodeCookieFromRequest(req); cerr != nil || ca == nil {
-				s.logger.Error(err, "error authenticated token-authed request")
-				http.Error(res, "invalid token", http.StatusUnauthorized)
-				return
-			}
-		}
-
-		if c != nil {
-			// attach both the user ID and the client object to the request. it might seem superfluous,
-			// but some things should only need to know to look for user IDs, and not trouble themselves
-			// with foolish concerns of OAuth2 clients and their fields
-			ctx2 := context.WithValue(ctx, models.UserIDKey, c.BelongsTo)
-			ctx3 := context.WithValue(ctx2, models.OAuth2ClientKey, c)
-			req = req.WithContext(ctx3)
-			next.ServeHTTP(res, req)
-		}
-
-	})
 }

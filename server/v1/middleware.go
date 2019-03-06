@@ -16,35 +16,48 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
-func (s *Server) buildCookieMiddleware(rejectIfNotFound bool) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			logger := s.logger.WithValue("rejecting", rejectIfNotFound)
-			logger.Debug("buildCookieMiddleware triggered")
+func (s *Server) apiAuthenticationMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
+		s.logger.Debug("apiAuthenticationMiddleware called")
 
-			user, err := s.fetchUserFromRequest(req)
-			if err != nil && rejectIfNotFound {
-				logger.Error(err, "error encountered fetching user")
-				s.internalServerError(res, req, err)
+		// First we check to see if there is an OAuth2 token for a valid client attached to the request.
+		// We do this first because it is presumed to be the primary means by which requests are made to the server.
+		oauth2Client, err := s.oauth2ClientsService.RequestIsAuthenticated(req)
+		if err != nil || oauth2Client == nil {
+
+			// In the event there's not a valid OAuth2 token attached to the request, or there is some other OAuth2 issue,
+			// we next check to see if a valid cookie is attached to the request
+			cookieAuth, cerr := s.decodeCookieFromRequest(req)
+			if cerr != nil || cookieAuth == nil {
+				// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere
+				s.logger.Error(err, "error authenticated token-authed request")
+				http.Error(res, "invalid token", http.StatusUnauthorized)
 				return
 			}
 
-			if user != nil {
-				req = req.WithContext(context.WithValue(
-					context.WithValue(req.Context(), models.UserKey, user),
-					models.UserIDKey,
-					user.ID,
-				))
-			} else if rejectIfNotFound {
-				logger.Debug("redirecting to login")
-				http.Redirect(res, req, "/login", http.StatusUnauthorized)
-				return
-			}
-
-			logger.Debug("moving onto next middleware from buildCookieMiddleware")
+			s.logger.WithValue("user_id", cookieAuth.UserID).Debug("attaching userID to request")
+			ctx = context.WithValue(ctx, models.UserIDKey, cookieAuth.UserID)
+			req = req.WithContext(ctx)
 			next.ServeHTTP(res, req)
-		})
-	}
+			return
+		}
+
+		// We found a valid OAuth2 client in the request, let's attach it and move on with our lives
+		if oauth2Client != nil {
+			// Attach both the user ID and the client object to the request. It might seem superfluous,
+			// but some things should only need to know to look for user IDs, and not trouble themselves
+			// with foolish concerns of OAuth2 clients and their fields
+			ctx = context.WithValue(ctx, models.UserIDKey, oauth2Client.BelongsTo)
+			ctx = context.WithValue(ctx, models.OAuth2ClientKey, oauth2Client)
+			req = req.WithContext(ctx)
+			next.ServeHTTP(res, req)
+			return
+		}
+
+		http.Redirect(res, req, "/login", http.StatusUnauthorized)
+		return
+	})
 }
 
 // userCookieAuthenticationMiddleware checks for a user cookie

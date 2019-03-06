@@ -1,7 +1,6 @@
 package prometheus
 
 import (
-	"log"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"

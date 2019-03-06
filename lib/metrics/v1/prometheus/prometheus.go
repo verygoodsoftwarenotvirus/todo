@@ -80,7 +80,9 @@ var (
 
 func init() {
 	if !initialized {
-		prometheus.MustRegister(inFlightGauge, counter, duration, timeToWriteHeader, requestSize, responseSize)
+		for _, collector := range []prometheus.Collector{inFlightGauge, counter, duration, timeToWriteHeader, requestSize, responseSize} {
+			prometheus.DefaultRegisterer.Register(collector)
+		}
 	}
 	initialized = true
 }

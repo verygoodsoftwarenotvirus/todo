@@ -19,8 +19,8 @@ services:
     depends_on:
       - prometheus
       - grafana
-    # logging:
-    #   driver: none
+    logging:
+      driver: none
 
   locust:
     build:
@@ -86,5 +86,7 @@ services:
         target: /etc/grafana/dashboards
     links:
       - prometheus
+    environment:
+      GF_INSTALL_PLUGINS: 'grafana-piechart-panel'
     logging:
       driver: none

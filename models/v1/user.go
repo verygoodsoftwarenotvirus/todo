@@ -93,3 +93,8 @@ type TOTPSecretRefreshInput struct {
 	CurrentPassword string `json:"current_password"`
 	TOTPToken       string `json:"totp_token"`
 }
+
+// TOTPSecretRefreshResponse represents the response we provide to a user when updating their 2FA secret
+type TOTPSecretRefreshResponse struct {
+	TwoFactorSecret string `json:"two_factor_secret"`
+}

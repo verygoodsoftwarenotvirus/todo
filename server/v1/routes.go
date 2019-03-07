@@ -92,7 +92,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler, metricsMiddleware m
 	})
 
 	s.router.
-		With(s.apiAuthenticationMiddleware).
+		With(s.apiAuthenticationMiddleware(true)).
 		Route("/api", func(apiRouter chi.Router) {
 			apiRouter.Route("/v1", func(v1Router chi.Router) {
 

@@ -15,29 +15,28 @@
     "editable": true,
     "gnetId": null,
     "graphTooltip": 0,
-    "id": 1,
     "links": [],
     "panels": [
         {
             "aliasColors": {},
             "bars": false,
+            "cacheTimeout": null,
             "dashLength": 10,
             "dashes": false,
             "datasource": "prometheus",
+            "description": "average request duration during the last 5 minutes",
             "fill": 1,
             "gridPos": {
-                "h": 9,
+                "h": 10,
                 "w": 12,
                 "x": 0,
                 "y": 0
             },
-            "id": 4,
+            "id": 16,
             "legend": {
                 "alignAsTable": true,
                 "avg": true,
                 "current": true,
-                "hideEmpty": true,
-                "hideZero": true,
                 "max": true,
                 "min": true,
                 "show": true,
@@ -48,20 +47,21 @@
             "linewidth": 1,
             "links": [],
             "nullPointMode": "null",
+            "paceLength": 10,
             "percentage": false,
-            "pointradius": 5,
+            "pointradius": 2,
             "points": false,
             "renderer": "flot",
             "seriesOverrides": [],
-            "spaceLength": 10,
             "stack": false,
             "steppedLine": false,
             "targets": [
                 {
-                    "expr": "http_request_duration_microseconds",
+                    "expr": "sum by (method) (rate(request_duration_seconds_sum[5m]) / rate(request_duration_seconds_count[5m]))",
                     "format": "time_series",
+                    "hide": false,
                     "intervalFactor": 1,
-                    "legendFormat": "p{{ quantile }}",
+                    "legendFormat": "{{ method }} ",
                     "refId": "A"
                 }
             ],
@@ -69,13 +69,12 @@
             "timeFrom": null,
             "timeRegions": [],
             "timeShift": null,
-            "title": "Response Times Quantiles",
+            "title": "average request  latency by method",
             "tooltip": {
                 "shared": true,
                 "sort": 0,
                 "value_type": "individual"
             },
-            "transparent": true,
             "type": "graph",
             "xaxis": {
                 "buckets": null,
@@ -86,7 +85,7 @@
             },
             "yaxes": [
                 {
-                    "format": "µs",
+                    "format": "s",
                     "label": null,
                     "logBase": 1,
                     "max": null,
@@ -110,6 +109,7 @@
         {
             "aliasColors": {},
             "bars": false,
+            "cacheTimeout": null,
             "dashLength": 10,
             "dashes": false,
             "datasource": "prometheus",
@@ -138,18 +138,19 @@
             "lines": true,
             "linewidth": 1,
             "links": [],
-            "nullPointMode": "null",
+            "nullPointMode": "null as zero",
+            "paceLength": 10,
             "percentage": false,
             "pointradius": 0.5,
-            "points": true,
+            "points": false,
             "renderer": "flot",
             "seriesOverrides": [],
             "spaceLength": 10,
-            "stack": false,
+            "stack": true,
             "steppedLine": false,
             "targets": [
                 {
-                    "expr": "go_memstats_alloc_bytes",
+                    "expr": "rate(go_memstats_alloc_bytes[10m])",
                     "format": "time_series",
                     "instant": false,
                     "intervalFactor": 1,
@@ -157,18 +158,25 @@
                     "refId": "A"
                 },
                 {
-                    "expr": "go_memstats_stack_inuse_bytes",
+                    "expr": "rate(go_memstats_stack_inuse_bytes[10m])",
                     "format": "time_series",
                     "intervalFactor": 1,
                     "legendFormat": "stack in use ({{ job }})",
                     "refId": "B"
+                },
+                {
+                    "expr": "rate(go_memstats_gc_sys_bytes[10m])",
+                    "format": "time_series",
+                    "intervalFactor": 1,
+                    "legendFormat": "consumed by gc ({{ job }})",
+                    "refId": "C"
                 }
             ],
             "thresholds": [],
             "timeFrom": null,
             "timeRegions": [],
             "timeShift": null,
-            "title": "Memory Usage",
+            "title": "memory use",
             "tooltip": {
                 "shared": true,
                 "sort": 0,
@@ -189,94 +197,6 @@
                     "label": null,
                     "logBase": 1,
                     "max": null,
-                    "min": null,
-                    "show": true
-                },
-                {
-                    "format": "short",
-                    "label": null,
-                    "logBase": 1,
-                    "max": null,
-                    "min": null,
-                    "show": false
-                }
-            ],
-            "yaxis": {
-                "align": false,
-                "alignLevel": null
-            }
-        },
-        {
-            "aliasColors": {},
-            "bars": true,
-            "dashLength": 10,
-            "dashes": false,
-            "datasource": "prometheus",
-            "fill": 1,
-            "gridPos": {
-                "h": 9,
-                "w": 12,
-                "x": 0,
-                "y": 9
-            },
-            "id": 8,
-            "legend": {
-                "alignAsTable": true,
-                "avg": true,
-                "current": true,
-                "hideEmpty": true,
-                "hideZero": true,
-                "max": true,
-                "min": true,
-                "show": true,
-                "total": false,
-                "values": true
-            },
-            "lines": false,
-            "linewidth": 1,
-            "links": [],
-            "nullPointMode": "null",
-            "percentage": true,
-            "pointradius": 5,
-            "points": false,
-            "renderer": "flot",
-            "seriesOverrides": [],
-            "spaceLength": 10,
-            "stack": true,
-            "steppedLine": false,
-            "targets": [
-                {
-                    "expr": "sum(http_requests_total) by (method)",
-                    "format": "time_series",
-                    "intervalFactor": 1,
-                    "legendFormat": " {{ method }}",
-                    "refId": "A"
-                }
-            ],
-            "thresholds": [],
-            "timeFrom": null,
-            "timeRegions": [],
-            "timeShift": null,
-            "title": "percentage of requests by method",
-            "tooltip": {
-                "shared": true,
-                "sort": 0,
-                "value_type": "individual"
-            },
-            "type": "graph",
-            "xaxis": {
-                "buckets": null,
-                "mode": "time",
-                "name": null,
-                "show": true,
-                "values": []
-            },
-            "yaxes": [
-                {
-                    "format": "none",
-                    "label": null,
-                    "logBase": 1,
-                    "max": "100",
                     "min": null,
                     "show": true
                 },
@@ -324,7 +244,8 @@
             "lines": true,
             "linewidth": 1,
             "links": [],
-            "nullPointMode": "null",
+            "nullPointMode": "connected",
+            "paceLength": 10,
             "percentage": false,
             "pointradius": 0.5,
             "points": false,
@@ -332,11 +253,12 @@
             "seriesOverrides": [],
             "spaceLength": 10,
             "stack": false,
-            "steppedLine": false,
+            "steppedLine": true,
             "targets": [
                 {
                     "expr": "go_goroutines",
                     "format": "time_series",
+                    "instant": false,
                     "intervalFactor": 1,
                     "legendFormat": "goroutines",
                     "refId": "A"
@@ -344,6 +266,7 @@
                 {
                     "expr": "go_threads",
                     "format": "time_series",
+                    "instant": false,
                     "intervalFactor": 1,
                     "legendFormat": "threads",
                     "refId": "B"
@@ -353,7 +276,7 @@
             "timeFrom": null,
             "timeRegions": [],
             "timeShift": null,
-            "title": "Threads and Goroutines",
+            "title": "threads & goroutines",
             "tooltip": {
                 "shared": true,
                 "sort": 0,
@@ -370,7 +293,7 @@
             },
             "yaxes": [
                 {
-                    "decimals": null,
+                    "decimals": 0,
                     "format": "short",
                     "label": null,
                     "logBase": 1,
@@ -395,137 +318,56 @@
         },
         {
             "aliasColors": {},
-            "bars": true,
+            "bars": false,
+            "cacheTimeout": null,
             "dashLength": 10,
             "dashes": false,
             "datasource": "prometheus",
+            "description": "average request duration during the last 5 minutes",
             "fill": 1,
             "gridPos": {
-                "h": 9,
+                "h": 8,
                 "w": 12,
                 "x": 0,
-                "y": 18
+                "y": 10
             },
-            "id": 6,
+            "id": 18,
             "legend": {
-                "alignAsTable": true,
-                "avg": true,
+                "avg": false,
                 "current": false,
-                "max": true,
-                "min": true,
+                "max": false,
+                "min": false,
                 "show": true,
                 "total": false,
-                "values": true
-            },
-            "lines": false,
-            "linewidth": 1,
-            "links": [],
-            "nullPointMode": "null",
-            "percentage": true,
-            "pointradius": 5,
-            "points": false,
-            "renderer": "flot",
-            "seriesOverrides": [],
-            "spaceLength": 10,
-            "stack": true,
-            "steppedLine": false,
-            "targets": [
-                {
-                    "expr": "sum(http_requests_total) by (code)",
-                    "format": "time_series",
-                    "instant": false,
-                    "intervalFactor": 1,
-                    "legendFormat": " {{ code }}",
-                    "refId": "A"
-                }
-            ],
-            "thresholds": [],
-            "timeFrom": null,
-            "timeRegions": [],
-            "timeShift": null,
-            "title": "Response codes by percentage",
-            "tooltip": {
-                "shared": true,
-                "sort": 0,
-                "value_type": "individual"
-            },
-            "transparent": true,
-            "type": "graph",
-            "xaxis": {
-                "buckets": null,
-                "mode": "time",
-                "name": null,
-                "show": true,
-                "values": []
-            },
-            "yaxes": [
-                {
-                    "format": "percent",
-                    "label": null,
-                    "logBase": 1,
-                    "max": "100",
-                    "min": "0",
-                    "show": true
-                },
-                {
-                    "format": "short",
-                    "label": null,
-                    "logBase": 1,
-                    "max": null,
-                    "min": null,
-                    "show": true
-                }
-            ],
-            "yaxis": {
-                "align": false,
-                "alignLevel": null
-            }
-        },
-        {
-            "aliasColors": {},
-            "bars": false,
-            "dashLength": 10,
-            "dashes": false,
-            "datasource": "prometheus",
-            "description": "bytes of memory in garbage collection metadata",
-            "fill": 1,
-            "gridPos": {
-                "h": 9,
-                "w": 12,
-                "x": 12,
-                "y": 18
-            },
-            "id": 14,
-            "legend": {
-                "alignAsTable": true,
-                "avg": true,
-                "current": true,
-                "hideEmpty": true,
-                "hideZero": true,
-                "max": true,
-                "min": true,
-                "show": true,
-                "total": false,
-                "values": true
+                "values": false
             },
             "lines": true,
             "linewidth": 1,
             "links": [],
             "nullPointMode": "null",
+            "paceLength": 10,
             "percentage": false,
-            "pointradius": 5,
+            "pointradius": 2,
             "points": false,
             "renderer": "flot",
             "seriesOverrides": [],
-            "spaceLength": 10,
             "stack": false,
             "steppedLine": false,
             "targets": [
                 {
-                    "expr": "go_memstats_gc_sys_bytes ",
+                    "expr": "avg(rate(response_size_bytes_sum[5m]) / rate(response_size_bytes_count[5m]))",
                     "format": "time_series",
+                    "hide": false,
                     "intervalFactor": 1,
-                    "legendFormat": "{{ job }}",
+                    "legendFormat": "response",
+                    "refId": "D"
+                },
+                {
+                    "expr": "avg(rate(request_size_bytes_sum[5m]) / rate(request_size_bytes_count[5m]))",
+                    "format": "time_series",
+                    "hide": false,
+                    "intervalFactor": 1,
+                    "legendFormat": "requests",
                     "refId": "A"
                 }
             ],
@@ -533,7 +375,7 @@
             "timeFrom": null,
             "timeRegions": [],
             "timeShift": null,
-            "title": "memory consumed by garbage collector metadata",
+            "title": "average body sizes",
             "tooltip": {
                 "shared": true,
                 "sort": 0,
@@ -570,17 +412,109 @@
                 "align": false,
                 "alignLevel": null
             }
+        },
+        {
+            "aliasColors": {},
+            "bars": true,
+            "cacheTimeout": null,
+            "dashLength": 10,
+            "dashes": false,
+            "datasource": "prometheus",
+            "fill": 1,
+            "gridPos": {
+                "h": 12,
+                "w": 12,
+                "x": 0,
+                "y": 18
+            },
+            "id": 6,
+            "legend": {
+                "alignAsTable": true,
+                "avg": true,
+                "current": false,
+                "hideEmpty": true,
+                "hideZero": true,
+                "max": true,
+                "min": true,
+                "show": true,
+                "total": false,
+                "values": true
+            },
+            "lines": false,
+            "linewidth": 1,
+            "links": [],
+            "nullPointMode": "null",
+            "paceLength": 10,
+            "percentage": false,
+            "pointradius": 5,
+            "points": false,
+            "renderer": "flot",
+            "seriesOverrides": [],
+            "spaceLength": 10,
+            "stack": false,
+            "steppedLine": true,
+            "targets": [
+                {
+                    "expr": "sum by (code) (rate(requests_total[5m]))",
+                    "format": "time_series",
+                    "hide": false,
+                    "intervalFactor": 1,
+                    "legendFormat": "{{ code }}",
+                    "refId": "B"
+                }
+            ],
+            "thresholds": [],
+            "timeFrom": null,
+            "timeRegions": [],
+            "timeShift": null,
+            "title": "response codes for the last 5m",
+            "tooltip": {
+                "shared": true,
+                "sort": 0,
+                "value_type": "individual"
+            },
+            "transparent": true,
+            "type": "graph",
+            "xaxis": {
+                "buckets": null,
+                "mode": "time",
+                "name": null,
+                "show": true,
+                "values": []
+            },
+            "yaxes": [
+                {
+                    "format": "short",
+                    "label": null,
+                    "logBase": 1,
+                    "max": null,
+                    "min": "0",
+                    "show": true
+                },
+                {
+                    "format": "short",
+                    "label": null,
+                    "logBase": 1,
+                    "max": null,
+                    "min": null,
+                    "show": true
+                }
+            ],
+            "yaxis": {
+                "align": false,
+                "alignLevel": null
+            }
         }
     ],
     "refresh": false,
-    "schemaVersion": 16,
+    "schemaVersion": 18,
     "style": "dark",
     "tags": [],
     "templating": {
         "list": []
     },
     "time": {
-        "from": "now-15m",
+        "from": "now-30m",
         "to": "now"
     },
     "timepicker": {

@@ -1,3 +1,8 @@
+import os
+import sys
+
+sys.path.append(os.getcwd())
+
 import random
 from http import cookiejar
 
@@ -6,74 +11,210 @@ import pyotp
 from mimesis import Generic
 from locust import HttpLocust, TaskSet, task
 
-import client.v1.python as todoclient
-
 
 INSTANCE_URL = "http://todo-server"
+API_URL_PREFIX = "/api/v1"
+
+ITEMS_URL_PREFIX = f"{API_URL_PREFIX}/items"
+OAUTH2_CLIENTS_URL_PREFIX = f"{API_URL_PREFIX}/oauth2/clients"
 
 
 class UserTasks(TaskSet):
     def __init__(self, *args, **kwargs):
         self.created_item_ids = []
+        self.created_oauth2_client_ids = []
+        self.fake = Generic()
 
         super(UserTasks, self).__init__(*args, **kwargs)
 
     def on_start(self):
-        fake = Generic()
-        username = fake.person.username()
-        password = fake.person.password(length=32)
+        self.username = self.fake.person.username()
+        self.password = self.fake.person.password(length=32)
 
         res = self.client.post(
-            url="/users", json={"username": username, "password": password}
+            url="/users", json={"username": self.username, "password": self.password}
         )
         user = res.json()
+        self.two_factor_secret = user.get("two_factor_secret", "")
 
         self.client.post(
             url="/users/login",
             json={
-                "username": username,
-                "password": password,
-                "totp_token": pyotp.TOTP(user.get("two_factor_secret", "")).now(),
+                "username": self.username,
+                "password": self.password,
+                "totp_token": pyotp.TOTP(self.two_factor_secret).now(),
             },
         )
 
-    @task(1)
+    @task(weight=1)
+    def change_password(self):
+        new_password = self.fake.person.password(length=32)
+        res = self.client.post(
+            url="/users/password/new",
+            json={
+                "new_password": new_password,
+                "current_password": self.password,
+                "totp_token": pyotp.TOTP(self.two_factor_secret).now(),
+            },
+        )
+        if res.status_code == 200:
+            self.password = new_password
+
+    @task(weight=1)
+    def change_two_factor_secret(self):
+        res = self.client.post(
+            url="/users/password/new",
+            json={
+                "current_password": self.password,
+                "totp_token": pyotp.TOTP(self.two_factor_secret).now(),
+            },
+        )
+        if res.status_code == 200:
+            try:
+                self.two_factor_secret = res.json().get("two_factor_secret")
+            except:
+                pass
+
+    @task(weight=5)
     def health(self):
         self.client.get("/_meta_/health")
 
-    @task(1)
+    # Item things
+
+    def random_item_id(self) -> int:
+        number_of_items = len(self.created_item_ids)
+        if 0 < number_of_items:
+            return random.choice(self.created_item_ids)
+        else:
+            return None
+
+    @task(weight=10)
     def get_invalid_item(self):
         with self.client.get(
-            url="/api/v1/items/999999999", catch_response=True
+            url=f"{ITEMS_URL_PREFIX}/999999999", catch_response=True
         ) as response:
             if response.status_code != 404:
-                response.failure("service returned item that is irrelevant")
+                response.failure("service returned irrelevant item")
 
-    @task(5)
+    @task(weight=100)
+    def create_item(self):
+        item_creation_input = {
+            "name": self.fake.text.word(),
+            "details": self.fake.text.sentence(),
+        }
+
+        res = self.client.post(url=ITEMS_URL_PREFIX, json=item_creation_input)
+        item_id = res.json().get("id")
+        self.created_item_ids.append(item_id)
+
+    @task(weight=100)
+    def read_item(self):
+        item_id = self.random_item_id()
+        if item_id is not None:
+            self.client.get(
+                url=f"{ITEMS_URL_PREFIX}/{item_id}",
+                name=f"{ITEMS_URL_PREFIX}/[item_id]",
+            )
+
+    @task(75)
+    def update_item(self):
+        item_id = self.random_item_id()
+        if item_id is not None:
+            new_name = self.fake.text.word()
+            response = self.client.put(
+                url=f"{ITEMS_URL_PREFIX}/{item_id}",
+                name=f"{ITEMS_URL_PREFIX}/[item_id]",
+                json={"name": new_name},
+            )
+
+            try:
+                body = response.json()
+                if body.get("name") != new_name:
+                    print(body)
+                    response.failure("service returned an unchanged item")
+            except:
+                pass
+
+    @task(100)
     def delete_item(self):
         number_of_items = len(self.created_item_ids)
         if number_of_items > 0:
             unlucky_item = self.created_item_ids.pop(random.randrange(number_of_items))
             self.client.delete(
-                url=f"/api/v1/items/{unlucky_item}", name="/api/v1/items/[item_id]"
+                url=f"{ITEMS_URL_PREFIX}/{unlucky_item}",
+                name=f"{ITEMS_URL_PREFIX}/[item_id]",
             )
 
-    @task(10)
-    def create_item(self):
-        fake = Generic()
+    @task(50)
+    def list_items(self):
+        self.client.get(url=ITEMS_URL_PREFIX, name=ITEMS_URL_PREFIX)
 
-        item_creation_input = {
-            "name": fake.text.word(),
-            "details": fake.text.sentence(),
+    @task(5)
+    def request_high_offset_items(self):
+        self.client.get(
+            url=f"{ITEMS_URL_PREFIX}?page=999999&limit=500", name=ITEMS_URL_PREFIX
+        )
+
+    # OAuth2 client things
+
+    def random_oauth2_client_id(self) -> int:
+        number_of_oauth2_clients = len(self.created_oauth2_client_ids)
+        if 0 < number_of_oauth2_clients:
+            return random.choice(self.created_oauth2_client_ids)
+        else:
+            return None
+
+    @task(weight=10)
+    def get_invalid_oauth2_client(self):
+        with self.client.get(
+            url=f"{OAUTH2_CLIENTS_URL_PREFIX}/999999999", catch_response=True
+        ) as response:
+            if response.status_code != 404:
+                response.failure("service returned irrelevant oauth2 client")
+
+    @task(weight=50)
+    def create_oauth2_client(self):
+        oauth2_client_creation_input = {
+            "username": self.username,
+            "password": self.password,
+            "totp_token": pyotp.TOTP(self.two_factor_secret).now(),
         }
 
-        res = self.client.post(url="/api/v1/items", json=item_creation_input)
-        item_id = res.json().get("id")
-        self.created_item_ids.append(item_id)
+        res = self.client.post(url="/oauth2/client", json=oauth2_client_creation_input)
+        oauth2_client_db_id = res.json().get("id")
+        self.created_oauth2_client_ids.append(oauth2_client_db_id)
 
-    @task(3)
-    def list_items(self):
-        self.client.get(url="/api/v1/items")
+    @task(weight=100)
+    def read_oauth2_client(self):
+        oauth2_client_db_id = self.random_oauth2_client_id()
+        if oauth2_client_db_id is not None:
+            self.client.get(
+                url=f"{OAUTH2_CLIENTS_URL_PREFIX}/{oauth2_client_db_id}",
+                name=f"{OAUTH2_CLIENTS_URL_PREFIX}/[oauth2_client_db_id]",
+            )
+
+    @task(weight=50)
+    def delete_oauth2_client(self):
+        number_of_oauth2_clients = len(self.created_oauth2_client_ids)
+        if number_of_oauth2_clients > 0:
+            unlucky_item = self.created_oauth2_client_ids.pop(
+                random.randrange(number_of_oauth2_clients)
+            )
+            self.client.delete(
+                url=f"{OAUTH2_CLIENTS_URL_PREFIX}/{unlucky_item}",
+                name=f"{OAUTH2_CLIENTS_URL_PREFIX}/[oauth2_client_db_id]",
+            )
+
+    @task(weight=20)
+    def list_oauth2_clients(self):
+        self.client.get(url=OAUTH2_CLIENTS_URL_PREFIX, name=OAUTH2_CLIENTS_URL_PREFIX)
+
+    @task(weight=5)
+    def request_high_offset_oauth2_clients(self):
+        self.client.get(
+            url=f"{OAUTH2_CLIENTS_URL_PREFIX}?page=999999&limit=500",
+            name=OAUTH2_CLIENTS_URL_PREFIX,
+        )
 
 
 class TodoAPIServerLocust(HttpLocust):

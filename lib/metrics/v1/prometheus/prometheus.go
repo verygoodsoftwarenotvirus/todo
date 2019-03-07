@@ -48,20 +48,18 @@ var (
 	// ObserverVec.
 	timeToWriteHeader = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "response_size_bytes",
-			Help:    "A histogram of response sizes for requests.",
-			Buckets: []float64{200, 500, 900, 1500},
+			Name: "time_to_write_header",
+			Help: "A histogram of latencies for requests.",
 		},
-		[]string{},
+		[]string{"code", "method"},
 	)
 
 	// responseSize has no labels, making it a zero-dimensional
 	// ObserverVec.
 	requestSize = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "response_size_bytes",
-			Help:    "A histogram of response sizes for requests.",
-			Buckets: []float64{200, 500, 900, 1500},
+			Name: "request_size_bytes",
+			Help: "A histogram of response sizes for requests.",
 		},
 		[]string{},
 	)
@@ -70,9 +68,8 @@ var (
 	// ObserverVec.
 	responseSize = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "response_size_bytes",
-			Help:    "A histogram of response sizes for requests.",
-			Buckets: []float64{200, 500, 900, 1500},
+			Name: "response_size_bytes",
+			Help: "A histogram of response sizes for requests.",
 		},
 		[]string{},
 	)

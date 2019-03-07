@@ -7,6 +7,9 @@ RUN apk add --update gcc musl-dev
 
 ADD . .
 
+ENV GO111MODULE=on
+RUN go mod vendor
+
 RUN go build -o /todo gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
 
 # final stage

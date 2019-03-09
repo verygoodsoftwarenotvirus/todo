@@ -49,7 +49,7 @@ func initializeClient(clientID, clientSecret string) *client.V1Client {
 		clientID,
 		clientSecret,
 		uri,
-		zerolog.ProvideLogger(zerolog.ProvideZerologger()),
+		zerolog.ProvideLogger(),
 		buildHTTPClient(),
 		tracing.ProvideNoopTracer(),
 		debug,

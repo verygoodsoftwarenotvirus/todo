@@ -129,7 +129,7 @@ func ProvidePostgres(
 	db *sql.DB,
 	logger logging.Logger,
 	connectionDetails database.ConnectionDetails,
-) (database.Database, error) {
+) database.Database {
 	s := &Postgres{
 		debug:       debug,
 		logger:      logger.WithName("postgres"),
@@ -137,7 +137,7 @@ func ProvidePostgres(
 		databaseURL: string(connectionDetails),
 	}
 
-	return s, nil
+	return s
 }
 
 // IsReady reports whether or not the database is ready

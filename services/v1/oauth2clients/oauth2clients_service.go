@@ -24,6 +24,8 @@ import (
 const (
 	// MiddlewareCtxKey is a string alias for referring to OAuth2 clients in contexts
 	MiddlewareCtxKey models.ContextKey = "oauth2_client"
+
+	serviceName = "oauth2_clients_service"
 )
 
 type (
@@ -51,15 +53,9 @@ type (
 var (
 	// Providers are what we provide for dependency injection
 	Providers = wire.NewSet(
-		ProvideOAuth2ClientsServiceTracer,
 		ProvideOAuth2ClientsService,
 	)
 )
-
-// ProvideOAuth2ClientsServiceTracer is an obligatory Tracer wrapper
-func ProvideOAuth2ClientsServiceTracer() Tracer {
-	return tracing.ProvideTracer("oauth2-clients-service")
-}
 
 var _ oauth2.ClientStore = (*clientStore)(nil)
 
@@ -93,7 +89,6 @@ func ProvideOAuth2ClientsService(
 	database database.Database,
 	authenticator auth.Enticator,
 	clientIDFetcher ClientIDFetcher,
-	tracer Tracer,
 	encoder encoding.ResponseEncoder,
 ) *Service {
 
@@ -106,8 +101,8 @@ func ProvideOAuth2ClientsService(
 
 	s := &Service{
 		database:             database,
-		logger:               logger.WithName("oauth2_clients_service"),
-		tracer:               tracer,
+		logger:               logger.WithName(serviceName),
+		tracer:               tracing.ProvideTracer(serviceName),
 		encoder:              encoder,
 		authenticator:        authenticator,
 		urlClientIDExtractor: clientIDFetcher,

@@ -1,0 +1,16 @@
+[meta]
+# tracing_enabled = true
+# debug = true
+
+[server]
+port = 80
+debug = true
+metrics_namespace = "todo_server"
+
+[auth]
+cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"
+
+[database]
+type = "postgres"
+debug = false
+connection_details = "postgres://todo:hunter2@database:5432/todo?sslmode=disable"

@@ -17,7 +17,6 @@ func init() {
 var (
 	// Providers is what we offer to external implementers
 	Providers = wire.NewSet(
-		ProvideZerologger,
 		ProvideLogger,
 	)
 
@@ -29,8 +28,8 @@ type Logger struct {
 	logger zerolog.Logger
 }
 
-// ProvideZerologger builds a new zerologger
-func ProvideZerologger() zerolog.Logger {
+// buildZerologger builds a new zerologger
+func buildZerologger() zerolog.Logger {
 	return zerolog.
 		New(os.Stdout).
 		With().
@@ -39,8 +38,8 @@ func ProvideZerologger() zerolog.Logger {
 }
 
 // ProvideLogger builds a new logger
-func ProvideLogger(logger zerolog.Logger) logging.Logger {
-	l := &Logger{logger: logger}
+func ProvideLogger() logging.Logger {
+	l := &Logger{logger: buildZerologger()}
 	return l
 }
 

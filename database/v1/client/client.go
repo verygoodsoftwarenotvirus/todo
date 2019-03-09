@@ -44,7 +44,7 @@ func ProvideDatabaseClient(
 	debug bool,
 	logger logging.Logger,
 	tracer Tracer,
-) (*Client, error) {
+) (database.Database, error) {
 	c := &Client{
 		database: database,
 		debug:    debug,

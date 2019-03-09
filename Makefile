@@ -14,10 +14,10 @@ clean:
 dockercide:
 	docker system prune --force --all --volumes
 
-## Project prerequisites
+## dependency injectdion
 
-.PHONY: dev-tools
-dev-tools:
+.PHONY: install-dev-tool-wire
+install-dev-tool-wire:
 	go get -u github.com/google/wire/cmd/wire
 
 .PHONY: wire-clean
@@ -53,7 +53,7 @@ vendor-clean:
 
 .PHONY: vendor
 vendor:
-	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` golang:latest /bin/sh -c "go mod vendor"
+	GO111MODULE=on go mod vendor
 
 .PHONY: revendor
 revendor: vendor-clean vendor

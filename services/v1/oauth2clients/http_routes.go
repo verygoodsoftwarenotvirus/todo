@@ -32,16 +32,13 @@ func init() {
 
 // randString produces a random string
 // https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
-func randString() (string, error) {
+func randString() string {
 	b := make([]byte, 32)
-	// Note that err == nil only if we read len(b) bytes.
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
+	_, _ = rand.Read(b)
 
 	// this is so that we don't end up with `=` in IDs
 	rs := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b)
-	return rs, nil
+	return rs
 }
 
 func (s *Service) fetchUserID(req *http.Request) uint64 {
@@ -128,13 +125,8 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if input.ClientID, err = randString(); err != nil {
-		logger.Error(err, "generating OAuth2 Client ID")
-		return
-	} else if input.ClientSecret, err = randString(); err != nil {
-		logger.Error(err, "generating OAuth2 Client Secret")
-		return
-	}
+	input.ClientID = randString()
+	input.ClientSecret = randString()
 	input.BelongsTo = s.fetchUserID(req)
 
 	x, err := s.database.CreateOAuth2Client(ctx, input)

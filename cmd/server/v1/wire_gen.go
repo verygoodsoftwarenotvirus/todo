@@ -6,13 +6,11 @@
 package main
 
 import (
+	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1/prometheus"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
@@ -22,41 +20,22 @@ import (
 
 // Injectors from wire.go:
 
-func BuildServer(connectionDetails database.ConnectionDetails, metricsNamespace metrics.Namespace, CookieSecret []byte, Debug bool) (*server.Server, error) {
+func BuildServer(cfg *config.ServerConfig, logger logging.Logger, database2 database.Database) (*server.Server, error) {
 	bcryptHashCost := auth.ProvideBcryptHashCost()
-	logger := zerolog.ProvideZerologger()
-	loggingLogger := zerolog.ProvideLogger(logger)
-	tracer := auth.ProvideTracer()
-	enticator := auth.ProvideBcrypt(bcryptHashCost, loggingLogger, tracer)
-	db, err := postgres.ProvidePostgresDB(loggingLogger, connectionDetails)
-	if err != nil {
-		return nil, err
-	}
-	databaseDatabase, err := postgres.ProvidePostgres(Debug, db, loggingLogger, connectionDetails)
-	if err != nil {
-		return nil, err
-	}
+	enticator := auth.ProvideBcrypt(bcryptHashCost, logger)
 	userIDFetcher := server.ProvideUserIDFetcher()
 	itemIDFetcher := server.ProvideItemIDFetcher()
-	itemsTracer := items.ProvideItemsServiceTracer()
 	responseEncoder := encoding.ProvideJSONResponseEncoder()
-	service := items.ProvideItemsService(loggingLogger, databaseDatabase, userIDFetcher, itemIDFetcher, itemsTracer, responseEncoder)
+	service := items.ProvideItemsService(logger, database2, userIDFetcher, itemIDFetcher, responseEncoder)
+	authSettings := config.ProvideConfigAuthSettings(cfg)
 	usernameFetcher := server.ProvideUsernameFetcher()
-	usersTracer := users.ProvideUserServiceTracer()
-	usersService := users.ProvideUsersService(CookieSecret, loggingLogger, databaseDatabase, enticator, usernameFetcher, usersTracer, responseEncoder)
+	usersService := users.ProvideUsersService(authSettings, logger, database2, enticator, usernameFetcher, responseEncoder)
 	clientIDFetcher := server.ProvideOAuth2ServiceClientIDFetcher()
-	oauth2clientsTracer := oauth2clients.ProvideOAuth2ClientsServiceTracer()
-	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(loggingLogger, databaseDatabase, enticator, clientIDFetcher, oauth2clientsTracer, responseEncoder)
-	dbclientTracer := dbclient.ProvideTracer()
-	client, err := dbclient.ProvideDatabaseClient(databaseDatabase, Debug, loggingLogger, dbclientTracer)
-	if err != nil {
-		return nil, err
-	}
-	serverTracer := server.ProvideServerTracer()
+	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(logger, database2, enticator, clientIDFetcher, responseEncoder)
 	httpServer := server.ProvideHTTPServer()
 	handler := prometheus.ProvideMetricsHandler()
 	middleware := prometheus.ProvideMiddleware()
-	serverServer, err := server.ProvideServer(Debug, CookieSecret, enticator, service, usersService, oauth2clientsService, client, loggingLogger, serverTracer, httpServer, responseEncoder, handler, middleware)
+	serverServer, err := server.ProvideServer(cfg, enticator, service, usersService, oauth2clientsService, database2, logger, httpServer, responseEncoder, handler, middleware)
 	if err != nil {
 		return nil, err
 	}

@@ -1,7 +1,6 @@
 module gitlab.com/verygoodsoftwarenotvirus/todo
 
 require (
-	fortio.org/fortio v1.3.1
 	github.com/ExpansiveWorlds/instrumentedsql v0.0.0-20171218214018-45abb4b1947d
 	github.com/GuiaBolso/darwin v0.0.0-20170210191649-86919dfcf808
 	github.com/Masterminds/squirrel v1.1.0
@@ -32,8 +31,9 @@ require (
 	github.com/prometheus/client_golang v0.9.2
 	github.com/rs/zerolog v1.11.0
 	github.com/sirupsen/logrus v1.3.0
+	github.com/spf13/viper v1.3.1
 	github.com/stretchr/testify v1.3.0
-	github.com/tsenart/vegeta v12.1.0+incompatible
+	github.com/tsenart/vegeta v12.1.0+incompatible // indirect
 	github.com/uber/jaeger-client-go v2.14.0+incompatible
 	github.com/uber/jaeger-lib v1.5.0
 	go.opencensus.io v0.19.0 // indirect

@@ -34,7 +34,7 @@ func init() {
 	} else {
 		urlToUse = localTestInstanceURL
 	}
-	logger := zerolog.ProvideLogger(zerolog.ProvideZerologger())
+	logger := zerolog.ProvideLogger()
 
 	logger.WithValue("url", urlToUse).Info("checking server")
 	ensureServerIsUp()

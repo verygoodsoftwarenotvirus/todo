@@ -9,7 +9,8 @@ import (
 	"net/http"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
@@ -50,7 +51,7 @@ type (
 		oauth2ClientsService *oauth2clients.Service
 
 		// infra things
-		db      *dbclient.Client
+		db      database.Database
 		router  *chi.Mux
 		server  *http.Server
 		logger  logging.Logger
@@ -69,19 +70,12 @@ var (
 		paramFetcherProviders,
 		ProvideServer,
 		ProvideHTTPServer,
-		ProvideServerTracer,
 	)
 )
 
-// ProvideServerTracer provides a UserServiceTracer from an tracer building function
-func ProvideServerTracer() Tracer {
-	return tracing.ProvideTracer("todo-server")
-}
-
 // ProvideServer builds a new Server instance
 func ProvideServer(
-	debug bool,
-	cookieSecret []byte,
+	config *config.ServerConfig,
 	authenticator auth.Enticator,
 
 	// services
@@ -90,9 +84,8 @@ func ProvideServer(
 	oauth2Service *oauth2clients.Service,
 
 	// infra things
-	db *dbclient.Client,
+	db database.Database,
 	logger logging.Logger,
-	tracer Tracer,
 	server *http.Server,
 	encoder encoding.ResponseEncoder,
 
@@ -101,27 +94,27 @@ func ProvideServer(
 	metricsMiddleware metrics.Middleware,
 ) (*Server, error) {
 
-	if len(cookieSecret) < 32 {
+	if len(config.Auth.CookieSecret) < 32 {
 		err := errors.New("cookie secret is too short, must be at least 32 characters in length")
 		logger.Error(err, "cookie secret failure")
 		return nil, err
 	}
 
-	cookieBuilder := securecookie.New(securecookie.GenerateRandomKey(64), cookieSecret)
+	cookieBuilder := securecookie.New(securecookie.GenerateRandomKey(64), []byte(config.Auth.CookieSecret))
 
 	srv := &Server{
-		DebugMode:     debug,
+		DebugMode:     config.Server.Debug,
 		authenticator: authenticator,
 
-		// infra thngs
+		// infra things
 		db:            db,
 		logger:        logger.WithName("server"),
 		server:        server,
 		cookieBuilder: cookieBuilder,
-		tracer:        tracer,
+		tracer:        tracing.ProvideTracer("server"),
 		encoder:       encoder,
 
-		// Services
+		// services
 		usersService:         usersService,
 		itemsService:         itemsService,
 		oauth2ClientsService: oauth2Service,

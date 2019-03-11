@@ -36,17 +36,16 @@ func randString() (string, error) {
 }
 
 func (s *Service) validateCredentialChangeRequest(req *http.Request, password string, totpToken string) (*models.User, int) {
-	username := s.usernameFetcher(req)
-	logger := s.logger.WithValue("username", username)
+	userID := s.userIDFetcher(req)
 
 	ctx := req.Context()
-	user, err := s.database.GetUser(ctx, username)
+	user, err := s.database.GetUser(ctx, userID)
 	if err != nil {
-		logger.Error(err, "error encountered fecthing user")
+		s.logger.Error(err, "error encountered fetching user")
 		return nil, http.StatusInternalServerError
 	}
 
-	logger = logger.WithValue("username", user.Username)
+	logger := s.logger.WithValue("username", user.Username)
 
 	valid, err := s.authenticator.ValidateLogin(
 		ctx,
@@ -154,7 +153,7 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	serverSpan := s.tracer.StartSpan("read_route", opentracing.ChildOf(span.Context()))
 	defer serverSpan.Finish()
 
-	userID := s.usernameFetcher(req)
+	userID := s.userIDFetcher(req)
 	logger := s.logger.WithValue("user_id", userID)
 
 	x, err := s.database.GetUser(ctx, userID)
@@ -266,11 +265,11 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	serverSpan := s.tracer.StartSpan("delete_route", opentracing.ChildOf(span.Context()))
 	defer serverSpan.Finish()
 
-	username := s.usernameFetcher(req)
-	logger := s.logger.WithValue("username", username)
+	userID := s.userIDFetcher(req)
+	logger := s.logger.WithValue("user_id", userID)
 	logger.Debug("UsersService.Delete called")
 
-	if err := s.database.DeleteUser(ctx, username); err != nil {
+	if err := s.database.DeleteUser(ctx, userID); err != nil {
 		logger.Error(err, "UsersService.Delete called")
 		res.WriteHeader(http.StatusInternalServerError)
 		return

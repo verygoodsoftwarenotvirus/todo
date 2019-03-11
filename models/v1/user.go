@@ -6,12 +6,13 @@ import (
 
 // UserHandler describes a structure which can manage users in permanent storage
 type UserHandler interface {
-	GetUser(ctx context.Context, username string) (*User, error)
+	GetUser(ctx context.Context, userID uint64) (*User, error)
+	GetUserByUsername(ctx context.Context, username string) (*User, error)
 	GetUserCount(ctx context.Context, filter *QueryFilter) (uint64, error)
 	GetUsers(ctx context.Context, filter *QueryFilter) (*UserList, error)
 	CreateUser(ctx context.Context, input *UserInput) (*User, error)
 	UpdateUser(ctx context.Context, updated *User) error
-	DeleteUser(ctx context.Context, username string) error
+	DeleteUser(ctx context.Context, userID uint64) error
 }
 
 const (

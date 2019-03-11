@@ -99,7 +99,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		"redirect_uri": input.RedirectURI,
 	})
 
-	user, err := s.database.GetUser(ctx, input.Username)
+	user, err := s.database.GetUserByUsername(ctx, input.Username)
 	if err != nil {
 		logger.Error(err, "error creating oauth2Client")
 		res.WriteHeader(http.StatusInternalServerError)

@@ -46,10 +46,14 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler, metricsMiddleware m
 		userRouter.With(s.usersService.UserLoginInputContextMiddleware).Post("/login", s.login)
 		userRouter.With(s.userCookieAuthenticationMiddleware).Post("/logout", s.logout)
 
-		usernamePattern := fmt.Sprintf(`/{%s:[a-zA-Z0-9_\-]+}`, users.URIParamKey)
+		userIDPattern := fmt.Sprintf(`/{%s:[0-9_\-]+}`, users.URIParamKey)
 
-		userRouter.With(s.usersService.UserInputContextMiddleware).Post("/", s.usersService.Create) // Create
-		userRouter.Get(usernamePattern, s.usersService.Read)                                        // Read
+		userRouter.
+			With(s.usersService.UserInputContextMiddleware).
+			Post("/", s.usersService.Create) // Create
+		userRouter.Get(userIDPattern, s.usersService.Read)      // Read
+		userRouter.Delete(userIDPattern, s.usersService.Delete) // Delete
+		userRouter.Get("/", s.usersService.List)                // List
 
 		// Updates:
 		userRouter.With(
@@ -62,8 +66,6 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler, metricsMiddleware m
 			s.usersService.PasswordUpdateInputContextMiddleware,
 		).Post("/password/new", s.usersService.UpdatePassword)
 
-		userRouter.Delete(usernamePattern, s.usersService.Delete) // Delete
-		userRouter.Get("/", s.usersService.List)                  // List
 	})
 
 	s.router.Route("/oauth2", func(oauth2Router chi.Router) {

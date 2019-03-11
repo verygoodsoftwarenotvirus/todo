@@ -34,17 +34,17 @@ type (
 
 	// Service handles our users
 	Service struct {
-		cookieSecret    []byte
-		database        database.Database
-		authenticator   auth.Enticator
-		logger          logging.Logger
-		tracer          Tracer
-		encoder         encoding.ResponseEncoder
-		usernameFetcher func(*http.Request) string
+		cookieSecret  []byte
+		database      database.Database
+		authenticator auth.Enticator
+		logger        logging.Logger
+		tracer        Tracer
+		encoder       encoding.ResponseEncoder
+		userIDFetcher func(*http.Request) uint64
 	}
 
-	// UsernameFetcher fetches usernames from requests
-	UsernameFetcher func(*http.Request) string
+	// UserIDFetcher fetches usernames from requests
+	UserIDFetcher func(*http.Request) uint64
 )
 
 var (
@@ -60,21 +60,21 @@ func ProvideUsersService(
 	logger logging.Logger,
 	database database.Database,
 	authenticator auth.Enticator,
-	usernameFetcher UsernameFetcher,
+	userIDFetcher UserIDFetcher,
 	encoder encoding.ResponseEncoder,
 ) *Service {
-	if usernameFetcher == nil {
+	if userIDFetcher == nil {
 		panic("usernameFetcher must be provided")
 	}
 
 	us := &Service{
-		cookieSecret:    []byte(authSettings.CookieSecret),
-		logger:          logger.WithName(serviceName),
-		database:        database,
-		authenticator:   authenticator,
-		usernameFetcher: usernameFetcher,
-		tracer:          tracing.ProvideTracer(serviceName),
-		encoder:         encoder,
+		cookieSecret:  []byte(authSettings.CookieSecret),
+		logger:        logger.WithName(serviceName),
+		database:      database,
+		authenticator: authenticator,
+		userIDFetcher: userIDFetcher,
+		tracer:        tracing.ProvideTracer(serviceName),
+		encoder:       encoder,
 	}
 	return us
 }

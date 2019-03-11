@@ -7,9 +7,6 @@ RUN apk add --update make git gcc musl-dev
 
 ADD . .
 
-RUN pwd
-RUN ls -Al
-
 RUN go build -o /todo -v gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
 
 # final stage

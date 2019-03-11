@@ -84,12 +84,36 @@ const getUserQuery = `
 	FROM
 		users
 	WHERE
-		username = ?
+		id = ?
 `
 
 // GetUser fetches a user by their username
-func (s *Sqlite) GetUser(ctx context.Context, username string) (*models.User, error) {
-	row := s.database.QueryRowContext(ctx, getUserQuery, username)
+func (s *Sqlite) GetUser(ctx context.Context, userID uint64) (*models.User, error) {
+	row := s.database.QueryRowContext(ctx, getUserQuery, userID)
+	u, err := scanUser(row)
+	return u, err
+}
+
+const getUserByUsernameQuery = `
+	SELECT
+		id,
+		username,
+		hashed_password,
+		password_last_changed_on,
+		two_factor_secret,
+		is_admin,
+		created_on,
+		updated_on,
+		archived_on
+	FROM
+		users
+	WHERE
+		username = ?
+`
+
+// GetUserByUsername fetches a user by their username
+func (s *Sqlite) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
+	row := s.database.QueryRowContext(ctx, getUserByUsernameQuery, username)
 	u, err := scanUser(row)
 	return u, err
 }
@@ -236,11 +260,11 @@ const archiveUserQuery = `
 		updated_on = (strftime('%s','now')),
 		archived_on = (strftime('%s','now'))
 	WHERE
-		username = ?
+		id = ?
 `
 
 // DeleteUser deletes a user by their username
-func (s *Sqlite) DeleteUser(ctx context.Context, username string) error {
-	_, err := s.database.ExecContext(ctx, archiveUserQuery, username)
+func (s *Sqlite) DeleteUser(ctx context.Context, userID uint64) error {
+	_, err := s.database.ExecContext(ctx, archiveUserQuery, userID)
 	return err
 }

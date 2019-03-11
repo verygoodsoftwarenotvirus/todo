@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"net/http"
-	"strconv"
 	"testing"
 	"time"
 
@@ -123,7 +122,7 @@ func TestUsers(test *testing.T) {
 			checkUserCreationEquality(t, expected, actual)
 
 			// Clean up
-			assert.NoError(t, todoClient.DeleteUser(tctx, strconv.FormatUint(actual.ID, 10)))
+			assert.NoError(t, todoClient.DeleteUser(tctx, actual.ID))
 		})
 	})
 
@@ -132,7 +131,7 @@ func TestUsers(test *testing.T) {
 			tctx := context.Background()
 
 			// Fetch user
-			actual, err := todoClient.GetUser(tctx, "nonexistent")
+			actual, err := todoClient.GetUser(tctx, nonexistentID)
 			assert.Nil(t, actual)
 			assert.Error(t, err)
 		})
@@ -153,7 +152,7 @@ func TestUsers(test *testing.T) {
 			assert.NotEmpty(t, premade.TwoFactorSecret)
 
 			// Fetch user
-			actual, err := todoClient.GetUser(tctx, premade.Username)
+			actual, err := todoClient.GetUser(tctx, premade.ID)
 			if err != nil {
 				t.Logf("error encountered trying to fetch user %q: %v\n", premade.Username, err)
 			}
@@ -164,7 +163,7 @@ func TestUsers(test *testing.T) {
 			checkUserEquality(t, expected, actual)
 
 			// Clean up
-			assert.NoError(t, todoClient.DeleteUser(tctx, actual.Username))
+			assert.NoError(t, todoClient.DeleteUser(tctx, actual.ID))
 		})
 	})
 
@@ -184,7 +183,7 @@ func TestUsers(test *testing.T) {
 			}
 
 			// Execute
-			err = todoClient.DeleteUser(tctx, strconv.FormatUint(u.ID, 10))
+			err = todoClient.DeleteUser(tctx, u.ID)
 			assert.NoError(t, err)
 		})
 	})
@@ -208,7 +207,7 @@ func TestUsers(test *testing.T) {
 
 			// Clean up
 			for _, user := range actual.Users {
-				err = todoClient.DeleteUser(tctx, strconv.FormatUint(user.ID, 10))
+				err = todoClient.DeleteUser(tctx, user.ID)
 				assert.NoError(t, err)
 			}
 		})

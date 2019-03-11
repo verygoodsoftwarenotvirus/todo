@@ -45,7 +45,7 @@ func (s *Server) fetchUserFromRequest(req *http.Request) (*models.User, error) {
 		return nil, errors.Wrap(cerr, "fetching cookie data from request")
 	}
 
-	user, uerr := s.db.GetUser(req.Context(), ca.Username)
+	user, uerr := s.db.GetUser(req.Context(), ca.UserID)
 	if uerr != nil {
 		return nil, errors.Wrap(uerr, "fetching user from request")
 	}
@@ -127,7 +127,7 @@ func (s *Server) fetchLoginDataFromRequest(req *http.Request) (*models.UserLogin
 
 	// you could ensure there isn't an unsatisfied password reset token requested before allowing login here
 
-	user, err := s.db.GetUser(ctx, username)
+	user, err := s.db.GetUserByUsername(ctx, username)
 	if err == sql.ErrNoRows {
 		logger.WithError(err).Debug("no matching user")
 		return nil, nil, s.invalidInput, err

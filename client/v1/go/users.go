@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -26,11 +27,8 @@ func (c *V1Client) buildVersionlessURL(qp url.Values, parts ...string) string {
 }
 
 // GetUser gets a user
-func (c *V1Client) GetUser(ctx context.Context, id string) (user *models.User, err error) {
-	logger := c.logger.WithValue("user_id", id)
-	logger.Debug("GetUser called")
-
-	uri := c.buildVersionlessURL(nil, usersBasePath, id)
+func (c *V1Client) GetUser(ctx context.Context, userID uint64) (user *models.User, err error) {
+	uri := c.buildVersionlessURL(nil, usersBasePath, strconv.FormatUint(userID, 10))
 	return user, c.get(ctx, uri, &user)
 }
 
@@ -62,11 +60,8 @@ func (c *V1Client) CreateNewUser(ctx context.Context, input *models.UserInput) (
 }
 
 // DeleteUser deletes a user
-func (c *V1Client) DeleteUser(ctx context.Context, username string) error {
-	logger := c.logger.WithValue("username", username)
-	logger.Debug("")
-
-	uri := c.buildVersionlessURL(nil, usersBasePath, username)
+func (c *V1Client) DeleteUser(ctx context.Context, userID uint64) error {
+	uri := c.buildVersionlessURL(nil, usersBasePath, strconv.FormatUint(userID, 10))
 	err := c.delete(ctx, uri)
 	return err
 }

@@ -64,12 +64,36 @@ const getUserQuery = `
 	FROM
 		users
 	WHERE
-		username = $1
+		id = $1
 `
 
 // GetUser fetches a user by their username
-func (p *Postgres) GetUser(ctx context.Context, username string) (*models.User, error) {
-	row := p.database.QueryRowContext(ctx, getUserQuery, username)
+func (p *Postgres) GetUser(ctx context.Context, userID uint64) (*models.User, error) {
+	row := p.database.QueryRowContext(ctx, getUserQuery, userID)
+	u, err := p.scanUser(row)
+	return u, err
+}
+
+const getUserByUsernameQuery = `
+	SELECT
+		id,
+		username,
+		hashed_password,
+		password_last_changed_on,
+		two_factor_secret,
+		is_admin,
+		created_on,
+		updated_on,
+		archived_on
+	FROM
+		users
+	WHERE
+		username = $1
+`
+
+// GetUserByUsername fetches a user by their username
+func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
+	row := p.database.QueryRowContext(ctx, getUserByUsernameQuery, username)
 	u, err := p.scanUser(row)
 	return u, err
 }
@@ -214,13 +238,13 @@ const archiveUserQuery = `
 	SET
 		updated_on = extract(epoch FROM NOW()),
 		archived_on = extract(epoch FROM NOW())
-	WHERE username = $1
+	WHERE id = $1
 	RETURNING
 		archived_on
 `
 
 // DeleteUser deletes a user by their username
-func (p *Postgres) DeleteUser(ctx context.Context, username string) error {
-	_, err := p.database.ExecContext(ctx, archiveUserQuery, username)
+func (p *Postgres) DeleteUser(ctx context.Context, userID uint64) error {
+	_, err := p.database.ExecContext(ctx, archiveUserQuery, userID)
 	return err
 }

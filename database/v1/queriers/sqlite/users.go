@@ -124,7 +124,7 @@ const getUserCountQuery = `
 	FROM
 		users
 	WHERE
-		archived_on is null
+		archived_on IS NULL
 `
 
 // GetUserCount fetches a count of users from the sqlite database that meet a particular filter

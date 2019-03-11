@@ -23,9 +23,8 @@
 # OSX
 .DS_Store
 
-# Go
-# (this got to be too large)
-vendor
+# # Go
+# vendor
 
 # Python
 .env

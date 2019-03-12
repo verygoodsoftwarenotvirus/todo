@@ -26,7 +26,10 @@ func (s *Service) ItemInputMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		s.logger.WithValue("itemInput", x).Debug("ItemInputMiddleware called")
+		s.logger.
+			WithRequest(req).
+			WithValue("itemInput", x).
+			Debug("ItemInputMiddleware called")
 		ctx := context.WithValue(req.Context(), MiddlewareCtxKey, x)
 
 		next.ServeHTTP(res, req.WithContext(ctx))

@@ -34,7 +34,7 @@ func (c *Client) GetUserByUsername(ctx context.Context, username string) (*model
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetUser")
 	defer span.Finish()
 
-	c.logger.WithValue("username", username).Debug("GetUser called")
+	c.logger.WithValue("username", username).Debug("GetUserByUsername called")
 
 	return c.database.GetUserByUsername(ctx, username)
 }

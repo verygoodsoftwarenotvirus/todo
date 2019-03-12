@@ -147,7 +147,7 @@ const getUsersQuery = `
 	FROM
 		users
 	WHERE
-		archived_on is null
+		archived_on IS NULL
 	LIMIT ?
 	OFFSET ?
 `
@@ -195,7 +195,8 @@ const getUserQueryByID = `
 	FROM
 		users
 	WHERE
-		id = ? AND archived_on is null
+		id = ?
+		AND archived_on IS NULL
 `
 
 const createUserQuery = `

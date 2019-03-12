@@ -101,7 +101,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 
 	user, err := s.database.GetUserByUsername(ctx, input.Username)
 	if err != nil {
-		logger.Error(err, "error creating oauth2Client")
+		logger.Error(err, "error fetching user by username")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}

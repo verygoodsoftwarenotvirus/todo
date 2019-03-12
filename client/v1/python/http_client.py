@@ -54,6 +54,17 @@ class HTTPClient:
             auto_refresh_url=f"{self.base_url}/oauth2/token",
         )
 
+    @property
+    def token(self) -> typing.Dict:
+        if not self._token or (self._token.get("expires_at", 0) - time.time() <= 0):
+            self._token: typing.Dict = self.sess.fetch_token(
+                token_url=f"{self.base_url}/oauth2/token",
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+                include_client_id=True,
+            )
+        return self._token
+
     def update_token(self, new_token: typing.Dict):
         self._token = new_token
 
@@ -102,15 +113,3 @@ class HTTPClient:
             client_secret=self.client_secret,
         )
         return res
-
-    @property
-    def token(self) -> typing.Dict:
-        if not self._token or (self._token.get("expires_at", 0) - time.time() <= 0):
-            self._token: typing.Dict = self.sess.fetch_token(
-                token_url=f"{self.base_url}/oauth2/token",
-                client_id=self.client_id,
-                client_secret=self.client_secret,
-                include_client_id=True,
-            )
-        return self._token
-

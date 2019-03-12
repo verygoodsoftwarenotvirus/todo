@@ -58,8 +58,6 @@ services:
     environment:
       POSTGRES_USER: todo
       POSTGRES_PASSWORD: hunter2
-    volumes:
-      - ../database/_postgres_init_.sql:/docker-entrypoint-initdb.d/10-init.sql
     logging:
       driver: none
 

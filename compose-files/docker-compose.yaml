@@ -39,8 +39,6 @@ services:
     image: postgres:latest
     ports:
       - '2345:5432'
-    volumes:
-      - ../database/_postgres_init_.sql:/docker-entrypoint-initdb.d/10-init.sql
     environment:
       POSTGRES_USER: todo
       POSTGRES_PASSWORD: hunter2

@@ -6,12 +6,13 @@ import (
 
 // UserHandler describes a structure which can manage users in permanent storage
 type UserHandler interface {
-	GetUser(ctx context.Context, username string) (*User, error)
+	GetUser(ctx context.Context, userID uint64) (*User, error)
+	GetUserByUsername(ctx context.Context, username string) (*User, error)
 	GetUserCount(ctx context.Context, filter *QueryFilter) (uint64, error)
 	GetUsers(ctx context.Context, filter *QueryFilter) (*UserList, error)
 	CreateUser(ctx context.Context, input *UserInput) (*User, error)
 	UpdateUser(ctx context.Context, updated *User) error
-	DeleteUser(ctx context.Context, username string) error
+	DeleteUser(ctx context.Context, userID uint64) error
 }
 
 const (
@@ -92,4 +93,9 @@ type PasswordUpdateInput struct {
 type TOTPSecretRefreshInput struct {
 	CurrentPassword string `json:"current_password"`
 	TOTPToken       string `json:"totp_token"`
+}
+
+// TOTPSecretRefreshResponse represents the response we provide to a user when updating their 2FA secret
+type TOTPSecretRefreshResponse struct {
+	TwoFactorSecret string `json:"two_factor_secret"`
 }

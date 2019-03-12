@@ -17,57 +17,39 @@ const (
 	cookieName = "todocookie"
 )
 
-type cookieAuth struct {
-	// NOTE: both of these fields need to be exported for gob to work, and gob is the basis of how we encode cookies.
-	Admin    bool
-	Username string
-}
+var (
+	errNoCookie = errors.New("no cookie present in request")
+)
 
-func (s *Server) fetchUserFromRequest(req *http.Request) (*models.User, error) {
-	var ca cookieAuth
+func (s *Server) decodeCookieFromRequest(req *http.Request) (*models.CookieAuth, error) {
+	var ca *models.CookieAuth
 
 	cookie, cerr := req.Cookie(cookieName)
 	if cerr == nil && cookie != nil {
 		derr := s.cookieBuilder.Decode(cookieName, cookie.Value, &ca)
-		if derr == nil {
-			user, uerr := s.db.GetUser(req.Context(), ca.Username)
-
-			if uerr != nil {
-				return nil, uerr
-			}
-			return user, nil
+		if derr != nil {
+			return nil, errors.Wrap(derr, "decoding request cookie")
 		}
-		return nil, errors.Wrap(derr, "decoding request cookie")
-	} else if cerr == nil && cookie == nil {
-		return nil, errors.New("no user found in request")
+
+		return ca, nil
 	}
-	return nil, errors.Wrap(cerr, "fetching user from request")
+	if cerr != nil {
+		return nil, cerr
+	}
+	return nil, errNoCookie
 }
 
-// userCookieAuthenticationMiddleware authenticates user cookies
-func (s *Server) userCookieAuthenticationMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		s.logger.Debug("userCookieAuthenticationMiddleware triggered")
+func (s *Server) fetchUserFromRequest(req *http.Request) (*models.User, error) {
+	ca, cerr := s.decodeCookieFromRequest(req)
+	if cerr != nil {
+		return nil, errors.Wrap(cerr, "fetching cookie data from request")
+	}
 
-		user, err := s.fetchUserFromRequest(req)
-		if err != nil {
-			s.logger.Error(err, "error encountered fetching user")
-			s.internalServerError(res, req, err)
-			return
-		}
-
-		if user != nil {
-			req = req.WithContext(context.WithValue(
-				context.WithValue(req.Context(), models.UserKey, user),
-				models.UserIDKey,
-				user.ID,
-			))
-
-			next.ServeHTTP(res, req)
-			return
-		}
-		http.Redirect(res, req, "/login", http.StatusUnauthorized)
-	})
+	user, uerr := s.db.GetUser(req.Context(), ca.UserID)
+	if uerr != nil {
+		return nil, errors.Wrap(uerr, "fetching user from request")
+	}
+	return user, nil
 }
 
 // login is our login route
@@ -145,7 +127,7 @@ func (s *Server) fetchLoginDataFromRequest(req *http.Request) (*models.UserLogin
 
 	// you could ensure there isn't an unsatisfied password reset token requested before allowing login here
 
-	user, err := s.db.GetUser(ctx, username)
+	user, err := s.db.GetUserByUsername(ctx, username)
 	if err == sql.ErrNoRows {
 		logger.WithError(err).Debug("no matching user")
 		return nil, nil, s.invalidInput, err
@@ -195,7 +177,8 @@ func (s *Server) buildCookie(user *models.User) (*http.Cookie, error) {
 	}).Debug("buildCookie called")
 
 	encoded, err := s.cookieBuilder.Encode(
-		cookieName, cookieAuth{
+		cookieName, models.CookieAuth{
+			UserID:   user.ID,
 			Admin:    user.IsAdmin,
 			Username: user.Username,
 		},

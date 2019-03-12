@@ -3,28 +3,24 @@ package main
 import (
 	"log"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
 )
-
-const (
-	debug = false
-
-	sqliteConnectionDetails   = database.ConnectionDetails("example.db")
-	postgresConnectionDetails = database.ConnectionDetails("postgres://todo:hunter2@database:5432/todo?sslmode=disable")
-)
-
-var cookieSecret = []byte("HEREISA32CHARSECRETWHICHISMADEUP")
 
 func main() {
-	server, err := BuildServer(
-		postgresConnectionDetails,
-		users.CookieName("todocookie"),
-		metrics.Namespace("todo-server"),
-		[]byte(cookieSecret),
-		debug,
-	)
+	logger := zerolog.ProvideLogger()
+
+	cfg, err := config.ParseConfigFile("production.toml")
+	if err != nil || cfg == nil {
+		log.Fatal(err)
+	}
+
+	db, err := cfg.ProvideDatabase(logger)
+	if err != nil || cfg == nil {
+		log.Fatal(err)
+	}
+
+	server, err := BuildServer(cfg, logger, db)
 
 	if err != nil {
 		log.Fatal(err)

@@ -1,11 +1,9 @@
 package users
 
 import (
-	"context"
 	"crypto/rand"
 	"database/sql"
 	"encoding/base32"
-	"encoding/json"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -37,78 +35,17 @@ func randString() (string, error) {
 	return base32.StdEncoding.EncodeToString(b), nil
 }
 
-// UserLoginInputContextMiddleware fetches user login input from requests
-func (s *Service) UserLoginInputContextMiddleware(next http.Handler) http.Handler {
-	x := new(models.UserLoginInput)
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		s.logger.WithRequest(req).Debug("UserLoginInputContextMiddleware called")
-		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
-			s.logger.Error(err, "error encountered decoding request body")
-			res.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		ctx := context.WithValue(req.Context(), MiddlewareCtxKey, x)
-		next.ServeHTTP(res, req.WithContext(ctx))
-	})
-}
-
-// UserInputContextMiddleware fetches user input from requests
-func (s *Service) UserInputContextMiddleware(next http.Handler) http.Handler {
-	x := new(models.UserInput)
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		s.logger.WithRequest(req).Debug("UserInputContextMiddleware called")
-		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
-			s.logger.Error(err, "error encountered decoding request body")
-			res.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		ctx := context.WithValue(req.Context(), MiddlewareCtxKey, x)
-		next.ServeHTTP(res, req.WithContext(ctx))
-	})
-}
-
-// PasswordUpdateInputContextMiddleware fetches password update input from requests
-func (s *Service) PasswordUpdateInputContextMiddleware(next http.Handler) http.Handler {
-	x := new(models.PasswordUpdateInput)
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		s.logger.WithRequest(req).Debug("PasswordUpdateInputContextMiddleware called")
-		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
-			s.logger.Error(err, "error encountered decoding request body")
-			res.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		ctx := context.WithValue(req.Context(), MiddlewareCtxKey, x)
-		next.ServeHTTP(res, req.WithContext(ctx))
-	})
-}
-
-// TOTPSecretRefreshInputContextMiddleware fetches 2FA update input from requests
-func (s *Service) TOTPSecretRefreshInputContextMiddleware(next http.Handler) http.Handler {
-	x := new(models.TOTPSecretRefreshInput)
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		s.logger.WithRequest(req).Debug("TOTPSecretRefreshInputContextMiddleware called")
-		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
-			s.logger.Error(err, "error encountered decoding request body")
-			res.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		ctx := context.WithValue(req.Context(), MiddlewareCtxKey, x)
-		next.ServeHTTP(res, req.WithContext(ctx))
-	})
-}
-
 func (s *Service) validateCredentialChangeRequest(req *http.Request, password string, totpToken string) (*models.User, int) {
-	username := s.usernameFetcher(req)
-	logger := s.logger.WithValue("username", username)
+	userID := s.userIDFetcher(req)
 
 	ctx := req.Context()
-	user, err := s.database.GetUser(ctx, username)
+	user, err := s.database.GetUser(ctx, userID)
 	if err != nil {
-		logger.Error(err, "error encountered fecthing user")
+		s.logger.Error(err, "error encountered fetching user")
 		return nil, http.StatusInternalServerError
 	}
 
-	logger = logger.WithValue("username", user.Username)
+	logger := s.logger.WithValue("username", user.Username)
 
 	valid, err := s.authenticator.ValidateLogin(
 		ctx,
@@ -216,7 +153,7 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	serverSpan := s.tracer.StartSpan("read_route", opentracing.ChildOf(span.Context()))
 	defer serverSpan.Finish()
 
-	userID := s.usernameFetcher(req)
+	userID := s.userIDFetcher(req)
 	logger := s.logger.WithValue("user_id", userID)
 
 	x, err := s.database.GetUser(ctx, userID)
@@ -265,13 +202,15 @@ func (s *Service) NewTOTPSecret(res http.ResponseWriter, req *http.Request) {
 	}
 	user.TwoFactorSecret = tfc
 
-	if err = s.database.UpdateUser(ctx, user); err != nil {
+	if err := s.database.UpdateUser(ctx, user); err != nil {
 		logger.Error(err, "error encountered updating TOTP token")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	if err = s.encoder.EncodeResponse(res, user); err != nil {
+	if err := s.encoder.EncodeResponse(
+		res, &models.TOTPSecretRefreshResponse{TwoFactorSecret: tfc},
+	); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
 }
@@ -326,11 +265,11 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	serverSpan := s.tracer.StartSpan("delete_route", opentracing.ChildOf(span.Context()))
 	defer serverSpan.Finish()
 
-	username := s.usernameFetcher(req)
-	logger := s.logger.WithValue("username", username)
+	userID := s.userIDFetcher(req)
+	logger := s.logger.WithValue("user_id", userID)
 	logger.Debug("UsersService.Delete called")
 
-	if err := s.database.DeleteUser(ctx, username); err != nil {
+	if err := s.database.DeleteUser(ctx, userID); err != nil {
 		logger.Error(err, "UsersService.Delete called")
 		res.WriteHeader(http.StatusInternalServerError)
 		return

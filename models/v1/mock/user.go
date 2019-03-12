@@ -16,7 +16,13 @@ type UserHandler struct {
 }
 
 // GetUser is a mock function
-func (m *UserHandler) GetUser(ctx context.Context, username string) (*models.User, error) {
+func (m *UserHandler) GetUser(ctx context.Context, userID uint64) (*models.User, error) {
+	args := m.Called(ctx, userID)
+	return args.Get(0).(*models.User), args.Error(1)
+}
+
+// GetUserByUsername is a mock function
+func (m *UserHandler) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
 	args := m.Called(ctx, username)
 	return args.Get(0).(*models.User), args.Error(1)
 }
@@ -45,6 +51,6 @@ func (m *UserHandler) UpdateUser(ctx context.Context, updated *models.User) erro
 }
 
 // DeleteUser is a mock function
-func (m *UserHandler) DeleteUser(ctx context.Context, username string) error {
-	return m.Called(ctx, username).Error(0)
+func (m *UserHandler) DeleteUser(ctx context.Context, userID uint64) error {
+	return m.Called(ctx, userID).Error(0)
 }

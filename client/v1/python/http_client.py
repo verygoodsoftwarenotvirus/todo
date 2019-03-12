@@ -1,24 +1,30 @@
 import typing
 import time
 from urllib.parse import urlparse
-from json import JSONEncoder
+import json
 
 import requests
 
 from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
 
-DEFAULT_HEADERS = {
-    "Accept": "application/json",
-    "Content-type": "application/json",
-}
+DEFAULT_HEADERS = {"Accept": "application/json", "Content-type": "application/json"}
+
 
 def raise_for_status(func):
     def invoke_request(*args, **kwargs) -> typing.Dict:
         # Invoke the wrapped function first
         res: requests.Response = func(*args, **kwargs)
         res.raise_for_status()
-        return res.json()
+
+        response = {"response": res.content}
+        try:
+            alt_res = res.json()
+            response = alt_res
+        except json.decoder.JSONDecodeError:
+            pass
+        return response
+
     return invoke_request
 
 
@@ -38,9 +44,7 @@ class HTTPClient:
         self._token: dict = {}
 
         self.oauth2_client = BackendApplicationClient(
-            client_id=self.client_id,
-            client_secret=self.client_secret,
-            scope=scope,
+            client_id=self.client_id, client_secret=self.client_secret, scope=scope
         )
 
         self.sess = OAuth2Session(
@@ -49,6 +53,17 @@ class HTTPClient:
             token_updater=self.update_token,
             auto_refresh_url=f"{self.base_url}/oauth2/token",
         )
+
+    @property
+    def token(self) -> typing.Dict:
+        if not self._token or (self._token.get("expires_at", 0) - time.time() <= 0):
+            self._token: typing.Dict = self.sess.fetch_token(
+                token_url=f"{self.base_url}/oauth2/token",
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+                include_client_id=True,
+            )
+        return self._token
 
     def update_token(self, new_token: typing.Dict):
         self._token = new_token
@@ -65,7 +80,7 @@ class HTTPClient:
         return res
 
     @raise_for_status
-    def put(self, url: str, data: JSONEncoder = None) -> requests.Response:
+    def put(self, url: str, data: json.JSONEncoder = None) -> requests.Response:
         self.sess.token = self.token
         res: requests.Response = self.sess.put(
             url=url,
@@ -77,7 +92,7 @@ class HTTPClient:
         return res
 
     @raise_for_status
-    def post(self, url: str, data: JSONEncoder = None) -> requests.Response:
+    def post(self, url: str, data: json.JSONEncoder = None) -> requests.Response:
         self.sess.token = self.token
         res: requests.Response = self.sess.post(
             url=url,
@@ -98,15 +113,3 @@ class HTTPClient:
             client_secret=self.client_secret,
         )
         return res
-
-    @property
-    def token(self) -> typing.Dict:
-        if not self._token or (self._token.get("expires_at", 0) - time.time() <= 0):
-            self._token: typing.Dict = self.sess.fetch_token(
-                token_url=f"{self.base_url}/oauth2/token",
-                client_id=self.client_id,
-                client_secret=self.client_secret,
-                include_client_id=True,
-            )
-        return self._token
-

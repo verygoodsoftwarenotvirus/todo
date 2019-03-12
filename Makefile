@@ -14,10 +14,10 @@ clean:
 dockercide:
 	docker system prune --force --all --volumes
 
-## Project prerequisites
+## dependency injectdion
 
-.PHONY: dev-tools
-dev-tools:
+.PHONY: install-dev-tool-wire
+install-dev-tool-wire:
 	go get -u github.com/google/wire/cmd/wire
 
 .PHONY: wire-clean
@@ -53,7 +53,7 @@ vendor-clean:
 
 .PHONY: vendor
 vendor:
-	docker run --env GO111MODULE=on --volume `pwd`:`pwd` --workdir=`pwd` golang:latest /bin/sh -c "go mod vendor"
+	GO111MODULE=on go mod vendor
 
 .PHONY: revendor
 revendor: vendor-clean vendor
@@ -65,8 +65,13 @@ $(COVERAGE_OUT):
 
 .PHONY: python-type-check
 python-type-check:
-	docker build --tag mypy-local:latest --file dockerfiles/mypy.Dockerfile .
+	docker build --tag python-type-check-local:latest --file dockerfiles/python-type-check.Dockerfile .
 	docker run --rm --volume `pwd`:`pwd` --workdir `pwd` mypy-local:latest
+
+.PHONY: python-client-unit-tests
+python-client-unit-tests: python-type-check
+	docker build --tag python-client-unit-tests:latest --file dockerfiles/python-client-unit-tests.Dockerfile .
+	docker run python-client-unit-tests:latest
 
 .PHONY: test
 test:
@@ -81,9 +86,9 @@ integration-tests:
 debug-integration-tests: wire
 	docker-compose --file compose-files/debug-integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate
 
-.PHONY: load-tests
-load-tests: wire # literally the same except it won't exit
-	docker-compose --file compose-files/load-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
+.PHONY: locust-load-tests
+locust-load-tests: wire
+	docker-compose --file compose-files/locust-load-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
 
 ## Docker things
 

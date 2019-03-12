@@ -3,7 +3,7 @@ FROM golang:alpine AS build-stage
 
 WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
-RUN apk add --update gcc musl-dev
+RUN apk add --update make git gcc musl-dev
 
 ADD . .
 
@@ -12,7 +12,7 @@ RUN go build -o /todo gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
 # final stage
 FROM alpine:latest
 
-COPY database database
+COPY config_files config_files
 COPY --from=build-stage /todo /todo
 
 ENV DOCKER=true

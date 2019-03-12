@@ -19,14 +19,24 @@ func (c *Client) AdminUserExists(ctx context.Context) (bool, error) {
 	return c.database.AdminUserExists(ctx)
 }
 
-// GetUser fetches a user by their username
-func (c *Client) GetUser(ctx context.Context, username string) (*models.User, error) {
+// GetUser fetches a user
+func (c *Client) GetUser(ctx context.Context, userID uint64) (*models.User, error) {
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetUser")
 	defer span.Finish()
 
-	c.logger.WithValue("username", username).Debug("GetUser called")
+	c.logger.WithValue("user_id", userID).Debug("GetUser called")
 
-	return c.database.GetUser(ctx, username)
+	return c.database.GetUser(ctx, userID)
+}
+
+// GetUserByUsername fetches a user by their username
+func (c *Client) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
+	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetUser")
+	defer span.Finish()
+
+	c.logger.WithValue("username", username).Debug("GetUserByUsername called")
+
+	return c.database.GetUserByUsername(ctx, username)
 }
 
 // GetUserCount fetches a count of users from the postgres database that meet a particular filter
@@ -88,11 +98,11 @@ func (c *Client) UpdateUser(ctx context.Context, updated *models.User) error {
 }
 
 // DeleteUser deletes a user by their username
-func (c *Client) DeleteUser(ctx context.Context, username string) error {
+func (c *Client) DeleteUser(ctx context.Context, userID uint64) error {
 	span := tracing.FetchSpanFromContext(ctx, c.tracer, "DeleteUser")
 	defer span.Finish()
 
-	c.logger.WithValue("username", username).Debug("DeleteUser called")
+	c.logger.WithValue("user_id", userID).Debug("DeleteUser called")
 
-	return c.database.DeleteUser(ctx, username)
+	return c.database.DeleteUser(ctx, userID)
 }

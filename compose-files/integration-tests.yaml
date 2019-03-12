@@ -17,7 +17,7 @@ services:
   integration-test:
     build:
       context: ../
-      dockerfile: dockerfiles/integration-tests.Dockerfile
+      dockerfile: dockerfiles/integration-tests-go.Dockerfile
     environment:
       DOCKER: 'true'
       DATABASE_TO_USE: 'postgres'
@@ -37,5 +37,5 @@ services:
     environment:
       POSTGRES_USER: todo
       POSTGRES_PASSWORD: hunter2
-    logging:
-      driver: none
+    # logging:
+    #   driver: none

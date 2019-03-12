@@ -5,16 +5,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 
-	"github.com/google/wire"
 	"github.com/sirupsen/logrus"
-)
-
-var (
-	// Providers is what we offer to external implementers
-	Providers = wire.NewSet(
-		ProvideLogrus,
-		ProvideLogger,
-	)
 )
 
 var _ logging.Logger = (*Logger)(nil)

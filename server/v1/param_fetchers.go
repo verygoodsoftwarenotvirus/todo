@@ -33,8 +33,8 @@ func ProvideItemIDFetcher() items.ItemIDFetcher {
 }
 
 // ProvideUsernameFetcher provides a UsernameFetcher
-func ProvideUsernameFetcher() users.UsernameFetcher {
-	return ChiUsernameFetcher
+func ProvideUsernameFetcher() users.UserIDFetcher {
+	return ChiUserIDFetcher
 }
 
 // ProvideOAuth2ServiceClientIDFetcher provides a ClientIDFetcher
@@ -48,9 +48,12 @@ func UserIDFetcher(req *http.Request) uint64 {
 	return x
 }
 
-// ChiUsernameFetcher fetches a Username from a request routed by chi.
-func ChiUsernameFetcher(req *http.Request) string {
-	return chi.URLParam(req, users.URIParamKey)
+// ChiUserIDFetcher fetches a Username from a request routed by chi.
+func ChiUserIDFetcher(req *http.Request) uint64 {
+	// we disregard this error only because we're able to validate that the string only
+	// contains numbers via chi's regex things
+	u, _ := strconv.ParseUint(chi.URLParam(req, users.URIParamKey), 10, 64)
+	return u
 }
 
 // chiItemIDFetcher fetches a Username from a request routed by chi.

@@ -17,6 +17,8 @@ import (
 const (
 	// MiddlewareCtxKey is a string alias we can use for referring to item input data in contexts
 	MiddlewareCtxKey models.ContextKey = "item_input"
+
+	serviceName = "items_service"
 )
 
 type (
@@ -39,14 +41,8 @@ var (
 	// Providers is our collection of what we provide to other services
 	Providers = wire.NewSet(
 		ProvideItemsService,
-		ProvideItemsServiceTracer,
 	)
 )
-
-// ProvideItemsServiceTracer provides a UserServiceTracer from an tracer building function
-func ProvideItemsServiceTracer() Tracer {
-	return tracing.ProvideTracer("items-service")
-}
 
 // UserIDFetcher is a function that fetches user IDs
 type UserIDFetcher func(*http.Request) uint64
@@ -60,13 +56,12 @@ func ProvideItemsService(
 	db database.Database,
 	userIDFetcher UserIDFetcher,
 	itemIDFetcher ItemIDFetcher,
-	tracer Tracer,
 	encoder encoding.ResponseEncoder,
 ) *Service {
 	svc := &Service{
-		logger:        logger.WithName("items_service"),
+		logger:        logger.WithName(serviceName),
 		db:            db,
-		tracer:        tracer,
+		tracer:        tracing.ProvideTracer(serviceName),
 		encoder:       encoder,
 		userIDFetcher: userIDFetcher,
 		itemIDFetcher: itemIDFetcher,

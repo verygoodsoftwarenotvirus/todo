@@ -6,6 +6,7 @@
 port = 80
 debug = true
 metrics_namespace = "todo_server"
+frontend_files_directory = "/frontend"
 
 [auth]
 cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"

@@ -3,8 +3,6 @@ package config
 import (
 	"crypto/rand"
 	"encoding/base32"
-	"path/filepath"
-	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
@@ -19,11 +17,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
-	// BaseConfigPath is where our config files are stored under v1
-	BaseConfigPath = "./config_files" // TODO: removeme
-)
-
 var (
 	// Providers represents this package's offering to the dependency manager
 	Providers = wire.NewSet(
@@ -32,6 +25,13 @@ var (
 		ProvideConfigDatabaseSettings,
 	)
 )
+
+func init() {
+	b := make([]byte, 64)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+}
 
 // BEGIN it'd be neat if wire could do this for me one day.
 
@@ -63,9 +63,10 @@ type (
 
 	// ServerSettings is a container struct for dealing with settings pertaining to
 	ServerSettings struct {
-		Port             uint16
-		Debug            bool
-		MetricsNamespace metrics.Namespace `mapstructure:"metrics_namespace"`
+		Port                   uint16
+		Debug                  bool
+		FrontendFilesDirectory string            `mapstructure:"frontend_files_directory"`
+		MetricsNamespace       metrics.Namespace `mapstructure:"metrics_namespace"`
 	}
 
 	// DatabaseSettings is a container struct for dealing with settings pertaining to
@@ -92,8 +93,9 @@ type ServerConfig struct {
 // ParseConfigFile parses a configuration
 func ParseConfigFile(filename string) (*ServerConfig, error) {
 	cfg := viper.New()
-	cfg.SetConfigName(strings.Replace(filename, filepath.Ext(filename), "", 1))
 	setDefaults(cfg)
+
+	cfg.SetConfigFile(filename)
 
 	if err := cfg.ReadInConfig(); err != nil {
 		return nil, errors.Wrap(err, "trying to read the config file")
@@ -105,38 +107,6 @@ func ParseConfigFile(filename string) (*ServerConfig, error) {
 	}
 
 	return serverConfig, nil
-}
-
-func init() {
-	b := make([]byte, 64)
-	if _, err := rand.Read(b); err != nil {
-		panic(err)
-	}
-}
-
-// randString produces a random string
-// https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
-func randString() string {
-	b := make([]byte, 32)
-	_, _ = rand.Read(b)
-	rs := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b)
-	return rs
-}
-
-func setDefaults(cfg *viper.Viper) {
-	cfg.AddConfigPath(BaseConfigPath)
-
-	// server stuff
-	cfg.SetDefault("server.port", 8080)
-	cfg.SetDefault("server.debug", false)
-	cfg.SetDefault("server.metrics_namespace", "todo-server")
-
-	// database stuff
-	cfg.SetDefault("database.type", "sqlite")
-	cfg.SetDefault("database.debug", false)
-
-	// auth stuff
-	cfg.SetDefault("auth.cookie_secret", randString())
 }
 
 // ProvideDatabase provides a database base
@@ -169,4 +139,27 @@ func (cfg *ServerConfig) ProvideDatabase(logger logging.Logger) (database.Databa
 
 		return dbclient.ProvideDatabaseClient(sqliteDB, debug, logger, tracer)
 	}
+}
+
+func setDefaults(cfg *viper.Viper) {
+	// server stuff
+	cfg.SetDefault("server.port", 8080)
+	cfg.SetDefault("server.debug", false)
+	cfg.SetDefault("server.metrics_namespace", "todo-server")
+
+	// database stuff
+	cfg.SetDefault("database.type", "sqlite")
+	cfg.SetDefault("database.debug", false)
+
+	// auth stuff
+	cfg.SetDefault("auth.cookie_secret", randString())
+}
+
+// randString produces a random string
+// https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
+func randString() string {
+	b := make([]byte, 32)
+	_, _ = rand.Read(b)
+	rs := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b)
+	return rs
 }

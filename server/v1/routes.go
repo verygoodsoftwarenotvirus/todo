@@ -3,6 +3,8 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -15,7 +17,7 @@ import (
 	gcontext "github.com/gorilla/context"
 )
 
-func (s *Server) setupRouter(metricsHandler metrics.Handler, metricsMiddleware metrics.Middleware) {
+func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Handler, metricsMiddleware metrics.Middleware) {
 	s.router = chi.NewRouter()
 
 	s.router.Use(
@@ -35,6 +37,20 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler, metricsMiddleware m
 
 	// all middleware must be defined before routes on a mux
 
+	// define client side rendered asset server
+	pwd, _ := os.Getwd()
+	filesDir := filepath.Join(pwd, frontendFilesPath)
+	fs := http.StripPrefix("/", http.FileServer(http.Dir(filesDir)))
+	s.router.Get("/*", http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		switch req.URL.Path {
+		case "/listyourfrontendhistoryroutesrouteshere":
+			req.URL.Path = "/"
+		}
+
+		fs.ServeHTTP(res, req)
+	}))
+
+	// health check
 	s.router.Get("/_meta_/health", func(res http.ResponseWriter, req *http.Request) { res.WriteHeader(http.StatusOK) })
 
 	if metricsHandler != nil {

@@ -127,7 +127,7 @@ func ProvideServer(
 	srv.logger.Info("database migrated!")
 
 	srv.oauth2ClientsService.InitializeOAuth2Clients()
-	srv.setupRouter(metricsHandler, metricsMiddleware)
+	srv.setupRouter(config.Server.FrontendFilesDirectory, metricsHandler, metricsMiddleware)
 	srv.server.Handler = srv.router
 
 	return srv, nil

@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
@@ -10,7 +11,12 @@ import (
 func main() {
 	logger := zerolog.ProvideLogger()
 
-	cfg, err := config.ParseConfigFile("production.toml")
+	configFilepath := os.Getenv("CONFIGURATION_FILEPATH")
+	if configFilepath == "" {
+		panic("no configuration file provided")
+	}
+
+	cfg, err := config.ParseConfigFile(configFilepath)
 	if err != nil || cfg == nil {
 		log.Fatal(err)
 	}

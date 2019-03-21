@@ -15,6 +15,8 @@ FROM alpine:latest
 COPY config_files config_files
 COPY --from=build-stage /todo /todo
 
+ENV CONFIGURATION_FILEPATH=config_files/production.toml
+
 EXPOSE 443 80
 
 ENTRYPOINT ["/todo"]

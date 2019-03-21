@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
@@ -130,31 +128,5 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 		}()
 
 		next.ServeHTTP(ww, req)
-	})
-}
-
-func (s *Server) dualAuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx := req.Context()
-
-		oac := ctx.Value(oauth2clients.MiddlewareCtxKey)
-		u := ctx.Value(users.MiddlewareCtxKey)
-
-		x, ok1 := oac.(*models.OAuth2Client)
-		y, ok2 := u.(*models.User)
-
-		logger := s.logger.WithValues(map[string]interface{}{
-			"oauth2_client":    x,
-			"oauth2_client_ok": ok1,
-			"user":             y,
-			"user_ok":          ok2,
-		})
-
-		if (ok1 && x != nil) || (ok2 && y != nil) {
-			logger.Debug("errythang good")
-			next.ServeHTTP(res, req)
-		} else {
-			http.Redirect(res, req, "/login", http.StatusUnauthorized)
-		}
 	})
 }

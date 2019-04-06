@@ -2,24 +2,20 @@ syntax = "proto3";
 
 package todoproto;
 
+import "v1/item.proto";
+// import "v1/user.proto";
+
 message ErrorResponse {
     string message = 1;
     uint32 code = 2;
 }
-
-message QueryFilter{
-    uint64 page = 1;
-    uint64 limit = 2;
-    uint64 created_after = 3;
-    uint64 created_before = 4;
-    uint64 updated_after = 5;
-    uint64 updated_before = 6;
-    bool include_all = 7;
-    string sort_by = 8;
-}
-
-message Pagination {
-    uint64 page = 1;
-    uint64 limit = 2;
-    uint64 total_count = 3;
+// Interface exported by the server.
+service Todo {
+    // Items
+	rpc GetItem (GetItemRequest) returns (GetItemResponse) {}
+	rpc GetItemCount (ItemListRequest) returns (ItemCountResponse) {}
+	rpc GetItems (ItemListRequest) returns (ItemListResponse) {}
+	rpc CreateItem (CreateItemRequest) returns (CreateItemResponse) {}
+	rpc UpdateItem (UpdateItemRequest) returns (UpdateItemResponse) {}
+	rpc DeleteItem (DeleteItemRequest) returns (ErrorResponse) {}
 }

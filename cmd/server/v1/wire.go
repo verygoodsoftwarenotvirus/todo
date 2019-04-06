@@ -10,6 +10,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1/prometheus"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/grpc"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -31,6 +33,8 @@ func BuildServer(
 		// Server things
 		server.Providers,
 		encoding.Providers,
+		grpcserver.Providers,
+		httpserver.Providers,
 
 		// metrics
 		prometheus.Providers,

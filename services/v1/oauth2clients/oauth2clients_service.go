@@ -121,37 +121,6 @@ func ProvideOAuth2ClientsService(
 	return s
 }
 
-// InitializeOAuth2Clients initializes an OAuth2 client
-func (s *Service) InitializeOAuth2Clients() {
-	//// if you were using an alternative client store, your code might look something like this:
-	//
-	//clientList, err := s.database.GetAllOAuth2Clients(context.Background())
-	//if err == sql.ErrNoRows {
-	//	return
-	//} else if err != nil {
-	//	s.logger.Fatal(errors.Wrap(err, "querying oauth clients to add to the clientStore"))
-	//}
-	//
-	//clientCount := uint(len(clientList))
-	//s.logger.WithValues(map[string]interface{}{
-	//	"client_count": clientCount,
-	//}).Debug("loading OAuth2 clients")
-	//
-	//for _, client := range clientList {
-	//	s.logger.WithValue("client_id", client.ClientID).Debug("loading client")
-	//
-	//	c := &oauth2models.Client{
-	//		ID:     client.ClientID,
-	//		Secret: client.ClientSecret,
-	//		Domain: client.RedirectURI,
-	//		UserID: strconv.FormatUint(client.BelongsTo, 10),
-	//	}
-	//	if err = s.oauth2ClientStore.Set(client.ClientID, c); err != nil {
-	//		s.logger.Fatal(errors.Wrap(err, "error encountered loading oauth clients to the clientStore"))
-	//	}
-	//}
-}
-
 // HandleAuthorizeRequest is a simple wrapper around the internal server's HandleAuthorizeRequest
 func (s *Service) HandleAuthorizeRequest(res http.ResponseWriter, req *http.Request) error {
 	s.logger.Debug("HandleAuthorizeRequest called")

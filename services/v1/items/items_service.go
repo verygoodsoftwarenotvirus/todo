@@ -8,7 +8,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/proto/v1"
 
 	"github.com/gorilla/websocket"
 	"github.com/opentracing/opentracing-go"
@@ -20,8 +19,6 @@ const (
 
 	serviceName = "items_service"
 )
-
-var _ todoproto.TodoServer = (*Service)(nil)
 
 type (
 	// Tracer is an arbitrary type alias we're using for dependency injection

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package todoproto;
 
-import "v1/main.proto";
+import "v1/query_filter.proto";
 
 message CreateItemRequest {
     string name = 1;
@@ -55,14 +55,4 @@ message Item {
     uint64 updated_on = 5;
     uint64 completed_on = 6;
     uint64 belongs_to = 7;
-}
-
-// Interface exported by the server.
-service Todo {
-	rpc GetItem (GetItemRequest) returns (GetItemResponse) {}
-	rpc GetItemCount (ItemListRequest) returns (ItemCountResponse) {}
-	rpc GetItems (ItemListRequest) returns (ItemListResponse) {}
-	rpc CreateItem (CreateItemRequest) returns (CreateItemResponse) {}
-	rpc UpdateItem (UpdateItemRequest) returns (UpdateItemResponse) {}
-	rpc DeleteItem (DeleteItemRequest) returns (ErrorResponse) {}
 }

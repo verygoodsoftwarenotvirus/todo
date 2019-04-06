@@ -35,7 +35,7 @@ func init() {
 	} else {
 		urlToUse = localTestInstanceURL
 	}
-	livenessCheckURI = fmt.Sprintf("http://%s/_meta_/health", strings.ReplaceAll(urlToUse, fmt.Sprintf(":%s", targetGRPCPort), ""))
+	livenessCheckURI = strings.ReplaceAll(urlToUse, fmt.Sprintf(":%s", targetGRPCPort), "")
 
 	ensureServerIsUp()
 
@@ -57,7 +57,7 @@ func ensureServerIsUp() {
 	)
 
 	for isDown {
-		if !isUp() {
+		if !isUp(livenessCheckURI) {
 			log.Printf("waiting before pinging %q again\n", livenessCheckURI)
 			time.Sleep(500 * time.Millisecond)
 			numberOfAttempts++
@@ -70,8 +70,9 @@ func ensureServerIsUp() {
 	}
 }
 
-func isUp() bool {
-	req, _ := http.NewRequest(http.MethodGet, livenessCheckURI, nil)
+func isUp(address string) bool {
+	uri := fmt.Sprintf("http://%s/_meta_/health", address)
+	req, _ := http.NewRequest(http.MethodGet, uri, nil)
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {

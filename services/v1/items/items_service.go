@@ -32,7 +32,7 @@ type (
 		tracer        opentracing.Tracer
 		userIDFetcher UserIDFetcher
 		itemIDFetcher ItemIDFetcher
-		encoder       encoding.ResponseEncoder
+		encoder       encoding.ServerEncoderDecoder
 	}
 )
 
@@ -48,7 +48,7 @@ func ProvideItemsService(
 	db database.Database,
 	userIDFetcher UserIDFetcher,
 	itemIDFetcher ItemIDFetcher,
-	encoder encoding.ResponseEncoder,
+	encoder encoding.ServerEncoderDecoder,
 ) *Service {
 	svc := &Service{
 		logger:        logger.WithName(serviceName),

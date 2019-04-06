@@ -145,7 +145,7 @@ func (cfg *ServerConfig) ProvideDatabase(logger logging.Logger) (database.Databa
 
 func setDefaults(cfg *viper.Viper) {
 	// server stuff
-	cfg.SetDefault("server.grpc_port", 41214)
+	cfg.SetDefault("server.grpc_port", 8888)
 	cfg.SetDefault("server.http_port", 80)
 	cfg.SetDefault("server.debug", false)
 	cfg.SetDefault("server.metrics_namespace", "todo-server")

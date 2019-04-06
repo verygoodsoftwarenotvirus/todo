@@ -25,23 +25,23 @@ import (
 func BuildServer(cfg *config.ServerConfig, logger logging.Logger, database2 database.Database) (*server.Server, error) {
 	userIDFetcher := httpserver.ProvideUserIDFetcher()
 	itemIDFetcher := httpserver.ProvideItemIDFetcher()
-	responseEncoder := encoding.ProvideJSONResponseEncoder()
-	service := items.ProvideItemsService(logger, database2, userIDFetcher, itemIDFetcher, responseEncoder)
+	serverEncoderDecoder := encoding.ProvideJSONResponseEncoder()
+	service := items.ProvideItemsService(logger, database2, userIDFetcher, itemIDFetcher, serverEncoderDecoder)
 	authSettings := config.ProvideConfigAuthSettings(cfg)
 	bcryptHashCost := auth.ProvideBcryptHashCost()
 	enticator := auth.ProvideBcrypt(bcryptHashCost, logger)
 	usersUserIDFetcher := httpserver.ProvideUsernameFetcher()
-	usersService := users.ProvideUsersService(authSettings, logger, database2, enticator, usersUserIDFetcher, responseEncoder)
+	usersService := users.ProvideUsersService(authSettings, logger, database2, enticator, usersUserIDFetcher, serverEncoderDecoder)
 	clientIDFetcher := httpserver.ProvideOAuth2ServiceClientIDFetcher()
-	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(logger, database2, enticator, clientIDFetcher, responseEncoder)
-	grpcServer, err := grpcserver.ProvideGRPCServer(service, usersService, oauth2clientsService)
+	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(logger, database2, enticator, clientIDFetcher, serverEncoderDecoder)
+	grpcServer, err := grpcserver.ProvideGRPCServer(logger, service, usersService, oauth2clientsService)
 	if err != nil {
 		return nil, err
 	}
 	httpServer := httpserver.ProvideHTTPServer()
 	handler := prometheus.ProvideMetricsHandler()
 	middleware := prometheus.ProvideMiddleware()
-	httpserverServer, err := httpserver.ProvideServer(cfg, enticator, service, usersService, oauth2clientsService, database2, logger, httpServer, responseEncoder, handler, middleware)
+	httpserverServer, err := httpserver.ProvideServer(cfg, enticator, service, usersService, oauth2clientsService, database2, logger, httpServer, serverEncoderDecoder, handler, middleware)
 	if err != nil {
 		return nil, err
 	}

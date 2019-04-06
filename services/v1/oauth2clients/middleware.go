@@ -2,7 +2,6 @@ package oauth2clients
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -10,13 +9,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-// OAuth2ClientCreationInputContextMiddleware is a middleware for attaching OAuth2 client info to a request
-func (s *Service) OAuth2ClientCreationInputContextMiddleware(next http.Handler) http.Handler {
+// CreationInputMiddleware is a middleware for attaching OAuth2 client info to a request
+func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 	x := new(models.OAuth2ClientCreationInput)
 
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		s.logger.Debug("OAuth2ClientCreationInputContextMiddleware called")
-		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
+		if err := s.encoder.DecodeResponse(req, x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
 			return

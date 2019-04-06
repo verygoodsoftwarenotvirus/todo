@@ -38,7 +38,7 @@ type (
 		authenticator auth.Enticator
 		logger        logging.Logger
 		tracer        Tracer
-		encoder       encoding.ResponseEncoder
+		encoder       encoding.ServerEncoderDecoder
 		userIDFetcher func(*http.Request) uint64
 	}
 
@@ -53,7 +53,7 @@ func ProvideUsersService(
 	database database.Database,
 	authenticator auth.Enticator,
 	userIDFetcher UserIDFetcher,
-	encoder encoding.ResponseEncoder,
+	encoder encoding.ServerEncoderDecoder,
 ) *Service {
 	if userIDFetcher == nil {
 		panic("usernameFetcher must be provided")

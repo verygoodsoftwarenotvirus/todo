@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 
 	"gopkg.in/oauth2.v3"
@@ -22,6 +23,21 @@ type OAuth2ClientDataManager interface {
 	CreateOAuth2Client(ctx context.Context, input *OAuth2ClientCreationInput) (*OAuth2Client, error)
 	UpdateOAuth2Client(ctx context.Context, updated *OAuth2Client) error
 	DeleteOAuth2Client(ctx context.Context, clientID, userID uint64) error
+}
+
+// Oauth2ClientDataServer describes a structure capable of serving traffic related to oauth2 clients
+type Oauth2ClientDataServer interface {
+	List(res http.ResponseWriter, req *http.Request)
+	Create(res http.ResponseWriter, req *http.Request)
+	Read(res http.ResponseWriter, req *http.Request)
+	// There is deliberately no update function
+	Delete(res http.ResponseWriter, req *http.Request)
+
+	CreationInputMiddleware(next http.Handler) http.Handler
+	OAuth2ClientInfoMiddleware(next http.Handler) http.Handler
+	RequestIsAuthenticated(req *http.Request) (*OAuth2Client, error)
+	HandleAuthorizeRequest(res http.ResponseWriter, req *http.Request) error
+	HandleTokenRequest(res http.ResponseWriter, req *http.Request) error
 }
 
 // OAuth2Client represents a user-authorized API client

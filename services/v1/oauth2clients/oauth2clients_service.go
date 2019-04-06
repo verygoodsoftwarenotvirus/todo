@@ -40,7 +40,7 @@ type (
 		authenticator        auth.Enticator
 		logger               logging.Logger
 		tracer               opentracing.Tracer
-		encoder              encoding.ResponseEncoder
+		encoder              encoding.ServerEncoderDecoder
 		urlClientIDExtractor func(req *http.Request) uint64
 
 		tokenStore        oauth2.TokenStore
@@ -81,7 +81,7 @@ func ProvideOAuth2ClientsService(
 	database database.Database,
 	authenticator auth.Enticator,
 	clientIDFetcher ClientIDFetcher,
-	encoder encoding.ResponseEncoder,
+	encoder encoding.ServerEncoderDecoder,
 ) *Service {
 
 	manager := manage.NewDefaultManager()

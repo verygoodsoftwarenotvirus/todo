@@ -59,13 +59,13 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 	}
 
 	s.router.Route("/users", func(userRouter chi.Router) {
-		userRouter.With(s.usersService.UserLoginInputContextMiddleware).Post("/login", s.login)
+		userRouter.With(s.usersService.UserLoginInputMiddleware).Post("/login", s.login)
 		userRouter.With(s.userCookieAuthenticationMiddleware).Post("/logout", s.logout)
 
 		userIDPattern := fmt.Sprintf(`/{%s:[0-9_\-]+}`, users.URIParamKey)
 
 		userRouter.
-			With(s.usersService.UserInputContextMiddleware).
+			With(s.usersService.UserInputMiddleware).
 			Post("/", s.usersService.Create) // Create
 		userRouter.Get(userIDPattern, s.usersService.Read)      // Read
 		userRouter.Delete(userIDPattern, s.usersService.Delete) // Delete
@@ -74,14 +74,13 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 		// Updates:
 		userRouter.With(
 			s.userCookieAuthenticationMiddleware,
-			s.usersService.TOTPSecretRefreshInputContextMiddleware,
+			s.usersService.TOTPSecretRefreshInputMiddleware,
 		).Post("/totp_secret/new", s.usersService.NewTOTPSecret)
 
 		userRouter.With(
 			s.userCookieAuthenticationMiddleware,
-			s.usersService.PasswordUpdateInputContextMiddleware,
+			s.usersService.PasswordUpdateInputMiddleware,
 		).Post("/password/new", s.usersService.UpdatePassword)
-
 	})
 
 	s.router.Route("/oauth2", func(oauth2Router chi.Router) {
@@ -117,11 +116,11 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 				// Items
 				v1Router.Route("/items", func(itemsRouter chi.Router) {
 					sr := fmt.Sprintf("/{%s:[0-9]+}", items.URIParamKey)
-					itemsRouter.With(s.itemsService.ItemInputMiddleware).Post("/", s.itemsService.Create) // Create
-					itemsRouter.Get(sr, s.itemsService.Read)                                              // Read
-					itemsRouter.With(s.itemsService.ItemInputMiddleware).Put(sr, s.itemsService.Update)   // Update
-					itemsRouter.Delete(sr, s.itemsService.Delete)                                         // Delete
-					itemsRouter.Get("/", s.itemsService.List)                                             // List
+					itemsRouter.With(s.itemsService.CreationInputMiddleware).Post("/", s.itemsService.Create) // Create
+					itemsRouter.Get(sr, s.itemsService.Read)                                                  // Read
+					itemsRouter.With(s.itemsService.UpdateInputMiddleware).Put(sr, s.itemsService.Update)     // Update
+					itemsRouter.Delete(sr, s.itemsService.Delete)                                             // Delete
+					itemsRouter.Get("/", s.itemsService.List)                                                 // List
 				})
 
 				// OAuth2 Clients

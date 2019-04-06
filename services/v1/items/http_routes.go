@@ -1,9 +1,7 @@
 package items
 
 import (
-	"context"
 	"database/sql"
-	"encoding/json"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -15,26 +13,6 @@ const (
 	// URIParamKey is a standard string that we'll use to refer to item IDs with
 	URIParamKey = "itemID"
 )
-
-// ItemInputMiddleware is a middleware for fetching, parsing, and attaching a parsed ItemInput struct from a request
-func (s *Service) ItemInputMiddleware(next http.Handler) http.Handler {
-	x := new(models.ItemInput)
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
-			s.logger.Error(err, "error encountered decoding request body")
-			res.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		s.logger.
-			WithRequest(req).
-			WithValue("itemInput", x).
-			Debug("ItemInputMiddleware called")
-		ctx := context.WithValue(req.Context(), MiddlewareCtxKey, x)
-
-		next.ServeHTTP(res, req.WithContext(ctx))
-	})
-}
 
 // List is our list route
 func (s *Service) List(res http.ResponseWriter, req *http.Request) {

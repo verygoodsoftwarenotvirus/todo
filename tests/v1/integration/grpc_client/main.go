@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	targetGRPCPort = "41214"
+	targetGRPCPort = "8888"
 )
 
 var (

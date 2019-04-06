@@ -7,7 +7,7 @@ services:
       dockerfile: dockerfiles/integration-server.Dockerfile
     ports:
       - '80:80'
-      - '41214:41214'
+      - '8888:8888'
     environment:
       DOCKER: 'true'
     links:

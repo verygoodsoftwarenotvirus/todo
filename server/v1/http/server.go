@@ -15,6 +15,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -38,15 +39,10 @@ type (
 
 		authenticator auth.Enticator
 
-		// // TODO: this is what this section should look like
-		// itemsService         models.ItemDataManager
-		// usersService         models.UserDataManager
-		// oauth2ClientsService models.OAuth2ClientDataManager
-
 		// Services
-		itemsService         *items.Service
-		usersService         *users.Service
-		oauth2ClientsService *oauth2clients.Service
+		itemsService         models.ItemDataServer
+		usersService         models.UserDataServer
+		oauth2ClientsService models.Oauth2ClientDataServer
 
 		// infra things
 		db         database.Database
@@ -55,7 +51,7 @@ type (
 		httpServer *http.Server
 		logger     logging.Logger
 		tracer     opentracing.Tracer
-		encoder    encoding.ResponseEncoder
+		encoder    encoding.ServerEncoderDecoder
 
 		// Auth stuff
 		adminUserExists bool
@@ -77,7 +73,7 @@ func ProvideServer(
 	db database.Database,
 	logger logging.Logger,
 	httpServer *http.Server,
-	encoder encoding.ResponseEncoder,
+	encoder encoding.ServerEncoderDecoder,
 
 	// metrics things
 	metricsHandler metrics.Handler,
@@ -99,10 +95,10 @@ func ProvideServer(
 		// infra things
 		db:            db,
 		config:        config,
-		logger:        logger.WithName("httpServer"),
+		logger:        logger.WithName("httperver"),
 		httpServer:    httpServer,
 		cookieBuilder: cookieBuilder,
-		tracer:        tracing.ProvideTracer("httpServer"),
+		tracer:        tracing.ProvideTracer("httperver"),
 		encoder:       encoder,
 
 		// services

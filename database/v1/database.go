@@ -15,9 +15,9 @@ type (
 
 		AdminUserExists(ctx context.Context) (bool, error)
 
-		models.ItemHandler
-		models.UserHandler
-		models.OAuth2ClientHandler
+		models.ItemDataManager
+		models.UserDataManager
+		models.OAuth2ClientDataManager
 	}
 
 	// ConnectionDetails is a string alias for a Postgres url

@@ -12,7 +12,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/google/wire"
 	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 	"gopkg.in/oauth2.v3"
@@ -48,13 +47,6 @@ type (
 		oauth2Handler     *oauth2server.Server
 		oauth2ClientStore *oauth2store.ClientStore
 	}
-)
-
-var (
-	// Providers are what we provide for dependency injection
-	Providers = wire.NewSet(
-		ProvideOAuth2ClientsService,
-	)
 )
 
 var _ oauth2.ClientStore = (*clientStore)(nil)

@@ -21,7 +21,7 @@ func (s *Server) apiAuthenticationMiddleware(allowValidCookieInLieuOfAValidToken
 			s.logger.Debug("apiAuthenticationMiddleware called")
 
 			// First we check to see if there is an OAuth2 token for a valid client attached to the request.
-			// We do this first because it is presumed to be the primary means by which requests are made to the server.
+			// We do this first because it is presumed to be the primary means by which requests are made to the httpServer.
 			oauth2Client, err := s.oauth2ClientsService.RequestIsAuthenticated(req)
 			if err != nil || oauth2Client == nil && allowValidCookieInLieuOfAValidToken {
 
@@ -103,7 +103,7 @@ func (s *Server) tracingMiddleware(next http.Handler) http.Handler {
 	return nethttp.Middleware(
 		s.tracer,
 		next,
-		nethttp.MWComponentName("todo-server"),
+		nethttp.MWComponentName("todo-httpServer"),
 		nethttp.MWSpanObserver(func(span opentracing.Span, req *http.Request) {
 			span.SetTag("http.method", req.Method)
 			span.SetTag("http.uri", req.URL.EscapedPath())

@@ -6,8 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"time"
+
+	"google.golang.org/grpc"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
@@ -16,6 +19,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/proto/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -39,11 +43,16 @@ type (
 	// Tracer is an arbitrary type we use for dependency injection
 	Tracer opentracing.Tracer
 
-	// Server is our API server
+	// Server is our API httpServer
 	Server struct {
 		DebugMode bool
 
 		authenticator auth.Enticator
+
+		// // TODO: this is what this section should look like
+		// itemsService         models.ItemDataManager
+		// usersService         models.UserDataManager
+		// oauth2ClientsService models.OAuth2ClientDataManager
 
 		// Services
 		itemsService         *items.Service
@@ -51,12 +60,14 @@ type (
 		oauth2ClientsService *oauth2clients.Service
 
 		// infra things
-		db      database.Database
-		router  *chi.Mux
-		server  *http.Server
-		logger  logging.Logger
-		tracer  opentracing.Tracer
-		encoder encoding.ResponseEncoder
+		db         database.Database
+		config     *config.ServerConfig
+		router     *chi.Mux
+		grpcServer *grpc.Server
+		httpServer *http.Server
+		logger     logging.Logger
+		tracer     opentracing.Tracer
+		encoder    encoding.ResponseEncoder
 
 		// Auth stuff
 		adminUserExists bool
@@ -86,7 +97,7 @@ func ProvideServer(
 	// infra things
 	db database.Database,
 	logger logging.Logger,
-	server *http.Server,
+	httpServer *http.Server,
 	encoder encoding.ResponseEncoder,
 
 	// metrics things
@@ -102,16 +113,25 @@ func ProvideServer(
 
 	cookieBuilder := securecookie.New(securecookie.GenerateRandomKey(64), []byte(config.Auth.CookieSecret))
 
+	/// build gRPC server
+	grpcServer := grpc.NewServer(
+		grpc.ConnectionTimeout(30 * time.Second),
+	)
+	todoproto.RegisterTodoServer(grpcServer, itemsService)
+	/// end build
+
 	srv := &Server{
 		DebugMode:     config.Server.Debug,
 		authenticator: authenticator,
 
 		// infra things
 		db:            db,
-		logger:        logger.WithName("server"),
-		server:        server,
+		config:        config,
+		logger:        logger.WithName("httpServer"),
+		grpcServer:    grpcServer,
+		httpServer:    httpServer,
 		cookieBuilder: cookieBuilder,
-		tracer:        tracing.ProvideTracer("server"),
+		tracer:        tracing.ProvideTracer("httpServer"),
 		encoder:       encoder,
 
 		// services
@@ -128,16 +148,28 @@ func ProvideServer(
 
 	srv.oauth2ClientsService.InitializeOAuth2Clients()
 	srv.setupRouter(config.Server.FrontendFilesDirectory, metricsHandler, metricsMiddleware)
-	srv.server.Handler = srv.router
+	srv.httpServer.Handler = srv.router
 
 	return srv, nil
 }
 
 // Serve serves HTTP traffic
 func (s *Server) Serve() {
-	s.server.Addr = ":80"
-	s.logger.Debug(fmt.Sprintf("Listening on %s", s.server.Addr))
-	log.Fatal(s.server.ListenAndServe())
+	s.httpServer.Addr = fmt.Sprintf(":%d", s.config.Server.HTTPPort)
+
+	grpcAddr := fmt.Sprintf(":%d", s.config.Server.GRPCPort)
+	lis, err := net.Listen("tcp", grpcAddr)
+	if err != nil {
+		log.Fatalf("failed to initializa TCP listen: %v", err)
+	}
+	defer lis.Close()
+
+	go s.grpcServer.Serve(lis)
+
+	s.logger.Debug(fmt.Sprintf("Listening for HTTP requests on %s", s.httpServer.Addr))
+	s.logger.Debug(fmt.Sprintf("Listening for gRPC requests on %s", grpcAddr))
+
+	log.Fatal(s.httpServer.ListenAndServe())
 }
 
 type genericResponse struct {
@@ -239,7 +271,7 @@ func (s *Server) notifyOfInvalidRequestCookie(res http.ResponseWriter, req *http
 	}
 }
 
-// ProvideHTTPServer provides an HTTP server
+// ProvideHTTPServer provides an HTTP httpServer
 func ProvideHTTPServer() *http.Server {
 	// heavily inspired by https://blog.cloudflare.com/exposing-go-on-the-internet/
 	srv := &http.Server{

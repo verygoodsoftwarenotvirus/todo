@@ -7,7 +7,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
-var _ models.UserHandler = (*Client)(nil)
+var _ models.UserDataManager = (*Client)(nil)
 
 // AdminUserExists executes a query to determine if an admin user has been established in the database
 func (c *Client) AdminUserExists(ctx context.Context) (bool, error) {

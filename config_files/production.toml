@@ -3,7 +3,8 @@
 # debug = true
 
 [server]
-port = 80
+grpc_port = 41214
+http_port = 80
 debug = true
 metrics_namespace = "todo_server"
 frontend_files_directory = "/frontend"

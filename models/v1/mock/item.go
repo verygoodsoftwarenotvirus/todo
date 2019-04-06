@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var _ models.ItemHandler = (*ItemHandler)(nil)
+var _ models.ItemDataManager = (*ItemHandler)(nil)
 
-// ItemHandler is a mock item handler
+// ItemDataManager is a mock item handler
 type ItemHandler struct {
 	mock.Mock
 }

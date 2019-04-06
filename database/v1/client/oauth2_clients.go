@@ -9,7 +9,7 @@ import (
 
 const scopesSeparator = `,`
 
-var _ models.OAuth2ClientHandler = (*Client)(nil)
+var _ models.OAuth2ClientDataManager = (*Client)(nil)
 
 // GetOAuth2Client gets an OAuth2 client
 func (c *Client) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*models.OAuth2Client, error) {

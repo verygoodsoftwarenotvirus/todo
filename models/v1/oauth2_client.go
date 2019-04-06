@@ -12,8 +12,8 @@ const (
 	OAuth2ClientKey ContextKey = "oauth2_client"
 )
 
-// OAuth2ClientHandler handles OAuth2 clients
-type OAuth2ClientHandler interface {
+// OAuth2ClientDataManager handles OAuth2 clients
+type OAuth2ClientDataManager interface {
 	GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*OAuth2Client, error)
 	GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*OAuth2Client, error)
 	GetOAuth2ClientCount(ctx context.Context, filter *QueryFilter, userID uint64) (uint64, error)

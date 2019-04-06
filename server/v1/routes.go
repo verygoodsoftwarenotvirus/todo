@@ -37,7 +37,7 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 
 	// all middleware must be defined before routes on a mux
 
-	// define client side rendered asset server
+	// define client side rendered asset httpServer
 	pwd, _ := os.Getwd()
 	filesDir := filepath.Join(pwd, frontendFilesPath)
 	fs := http.StripPrefix("/", http.FileServer(http.Dir(filesDir)))

@@ -4,8 +4,8 @@ import (
 	"context"
 )
 
-// UserHandler describes a structure which can manage users in permanent storage
-type UserHandler interface {
+// UserDataManager describes a structure which can manage users in permanent storage
+type UserDataManager interface {
 	GetUser(ctx context.Context, userID uint64) (*User, error)
 	GetUserByUsername(ctx context.Context, username string) (*User, error)
 	GetUserCount(ctx context.Context, filter *QueryFilter) (uint64, error)

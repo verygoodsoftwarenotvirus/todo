@@ -58,21 +58,23 @@ func ProvideConfigDatabaseSettings(c *ServerConfig) DatabaseSettings {
 type (
 	// MetaSettings is a container struct for dealing with settings pertaining to operations matters for the server.
 	MetaSettings struct {
-		Debug bool // NOTE: this debug will override all other debugs. That is to say, if it is enabled, all of them are enabled
+		// NOTE: this debug should override all other debugs. That is to say, if it is enabled, all of them are enabled.
+		Debug bool `mapstructure:"debug"`
 	}
 
 	// ServerSettings is a container struct for dealing with settings pertaining to
 	ServerSettings struct {
-		Port                   uint16
-		Debug                  bool
+		GRPCPort               uint16            `mapstructure:"grpc_port"`
+		HTTPPort               uint16            `mapstructure:"http_port"`
+		Debug                  bool              `mapstructure:"debug"`
 		FrontendFilesDirectory string            `mapstructure:"frontend_files_directory"`
 		MetricsNamespace       metrics.Namespace `mapstructure:"metrics_namespace"`
 	}
 
 	// DatabaseSettings is a container struct for dealing with settings pertaining to
 	DatabaseSettings struct {
-		Type              string
-		Debug             bool
+		Type              string                     `mapstructure:"type"`
+		Debug             bool                       `mapstructure:"debug"`
 		ConnectionDetails database.ConnectionDetails `mapstructure:"connection_details"`
 	}
 
@@ -127,14 +129,14 @@ func (cfg *ServerConfig) ProvideDatabase(logger logging.Logger) (database.Databa
 	case "sqlite":
 		sqliteDB, err := sqlite.ProvideSqlite(debug, logger, connectionDetails)
 		if err != nil {
-			return nil, errors.Wrap(err, "establish postgres database connection")
+			return nil, errors.Wrap(err, "establish sqlite database connection")
 		}
 
 		return dbclient.ProvideDatabaseClient(sqliteDB, debug, logger, tracer)
 	default:
 		sqliteDB, err := sqlite.ProvideSqlite(debug, logger, ":memory:")
 		if err != nil {
-			return nil, errors.Wrap(err, "establish postgres database connection")
+			return nil, errors.Wrap(err, "establish sqlite database connection")
 		}
 
 		return dbclient.ProvideDatabaseClient(sqliteDB, debug, logger, tracer)
@@ -143,7 +145,8 @@ func (cfg *ServerConfig) ProvideDatabase(logger logging.Logger) (database.Databa
 
 func setDefaults(cfg *viper.Viper) {
 	// server stuff
-	cfg.SetDefault("server.port", 8080)
+	cfg.SetDefault("server.grpc_port", 41214)
+	cfg.SetDefault("server.http_port", 80)
 	cfg.SetDefault("server.debug", false)
 	cfg.SetDefault("server.metrics_namespace", "todo-server")
 

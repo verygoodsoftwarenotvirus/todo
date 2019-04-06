@@ -61,7 +61,12 @@ revendor: vendor-clean vendor
 ## Testing things
 
 $(COVERAGE_OUT):
-	./scripts/coverage.sh
+	echo "mode: set" > coverage.out;
+	for pkg in `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|tools)'`; do \
+		go test -coverprofile=profile.out -v -count 5 $$pkg; \
+		cat profile.out | grep -v "mode: atomic" >> coverage.out; \
+	done
+	rm -f profile.out
 
 .PHONY: python-type-check
 python-type-check:
@@ -83,21 +88,21 @@ integration-tests:
 	docker-compose --file compose-files/integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
 
 .PHONY: debug-integration-tests
-debug-integration-tests: wire
+debug-integration-tests: wire proto
 	docker-compose --file compose-files/debug-integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate
 
 .PHONY: locust-load-tests
-locust-load-tests: wire
+locust-load-tests: wire proto
 	docker-compose --file compose-files/locust-load-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
 
 ## Docker things
 
 .PHONY: server-docker-image
-server-docker-image: wire
+server-docker-image: wire proto
 	docker build --tag $(SERVER_DOCKER_IMAGE_NAME):latest --file dockerfiles/server.Dockerfile .
 
 .PHONY: prod-server-docker-image
-prod-server-docker-image: wire
+prod-server-docker-image: wire proto
 	docker build --tag $(SERVER_DOCKER_REPO_NAME):latest --file dockerfiles/server.Dockerfile .
 
 .PHONY: push-server-to-docker
@@ -137,3 +142,8 @@ install-chart:
 		--debug \
 		--namespace=$(KUBERNETES_NAMESPACE)
 
+## gRPC
+
+.PHONY: proto
+proto:
+	protoc -I proto/ `ls proto/v1/*.proto` --go_out=plugins=grpc:proto

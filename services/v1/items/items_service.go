@@ -8,8 +8,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/proto/v1"
 
-	"github.com/google/wire"
 	"github.com/gorilla/websocket"
 	"github.com/opentracing/opentracing-go"
 )
@@ -21,6 +21,8 @@ const (
 	serviceName = "items_service"
 )
 
+var _ todoproto.TodoServer = (*Service)(nil)
+
 type (
 	// Tracer is an arbitrary type alias we're using for dependency injection
 	Tracer opentracing.Tracer
@@ -28,20 +30,13 @@ type (
 	// Service handles TODO List items
 	Service struct {
 		logger        logging.Logger
-		db            database.Database
+		itemDatabase  models.ItemDataManager
 		upgrader      websocket.Upgrader
 		tracer        opentracing.Tracer
 		userIDFetcher UserIDFetcher
 		itemIDFetcher ItemIDFetcher
 		encoder       encoding.ResponseEncoder
 	}
-)
-
-var (
-	// Providers is our collection of what we provide to other services
-	Providers = wire.NewSet(
-		ProvideItemsService,
-	)
 )
 
 // UserIDFetcher is a function that fetches user IDs
@@ -60,7 +55,7 @@ func ProvideItemsService(
 ) *Service {
 	svc := &Service{
 		logger:        logger.WithName(serviceName),
-		db:            db,
+		itemDatabase:  db,
 		tracer:        tracing.ProvideTracer(serviceName),
 		encoder:       encoder,
 		userIDFetcher: userIDFetcher,

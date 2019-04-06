@@ -22,7 +22,7 @@ func main() {
 	}
 
 	db, err := cfg.ProvideDatabase(logger)
-	if err != nil || cfg == nil {
+	if err != nil {
 		log.Fatal(err)
 	}
 

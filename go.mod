@@ -11,6 +11,7 @@ require (
 	github.com/corpix/uarand v0.0.0 // indirect
 	github.com/go-chi/chi v4.0.1+incompatible
 	github.com/go-kit/kit v0.8.0 // indirect
+	github.com/golang/protobuf v1.3.1
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
 	github.com/google/wire v0.2.1
 	github.com/gorilla/context v1.1.1
@@ -42,5 +43,6 @@ require (
 	go.uber.org/zap v1.9.1 // indirect
 	golang.org/x/crypto v0.0.0-20190211182817-74369b46fc67
 	golang.org/x/oauth2 v0.0.0-20190212230446-3e8b2be13635
+	google.golang.org/grpc v1.19.1
 	gopkg.in/oauth2.v3 v3.9.5
 )

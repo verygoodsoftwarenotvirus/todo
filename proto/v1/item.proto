@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package todoproto;
+
+import "v1/main.proto";
+
+message CreateItemRequest {
+    string name = 1;
+    string details = 2;
+}
+
+message CreateItemResponse {
+    Item item = 2;
+}
+
+message UpdateItemRequest {
+    Item item = 1;
+}
+
+message UpdateItemResponse {
+}
+
+message GetItemRequest {
+    uint64 item_id = 1;
+    uint64 user_id = 2;
+}
+
+message GetItemResponse {
+    Item item = 1;
+}
+
+message DeleteItemRequest {
+    uint64 item_id = 1;
+    uint64 user_id = 2;
+}
+
+message ItemListRequest {
+    QueryFilter filter = 1;
+    uint64 user_id = 2;
+}
+
+message ItemListResponse {
+    repeated Item items = 1;
+}
+
+message ItemCountResponse {
+    uint64 count = 1;
+}
+
+message Item {
+    uint64 id = 1;
+    string name = 2;
+    string details = 3;
+    uint64 created_on = 4;
+    uint64 updated_on = 5;
+    uint64 completed_on = 6;
+    uint64 belongs_to = 7;
+}
+
+// Interface exported by the server.
+service Todo {
+	rpc GetItem (GetItemRequest) returns (GetItemResponse) {}
+	rpc GetItemCount (ItemListRequest) returns (ItemCountResponse) {}
+	rpc GetItems (ItemListRequest) returns (ItemListResponse) {}
+	rpc CreateItem (CreateItemRequest) returns (CreateItemResponse) {}
+	rpc UpdateItem (UpdateItemRequest) returns (UpdateItemResponse) {}
+	rpc DeleteItem (DeleteItemRequest) returns (ErrorResponse) {}
+}

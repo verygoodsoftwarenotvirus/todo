@@ -52,7 +52,7 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 		"user_id": userID,
 	})
 
-	items, err := s.db.GetItems(ctx, qf, userID)
+	items, err := s.itemDatabase.GetItems(ctx, qf, userID)
 	if err == sql.ErrNoRows {
 		res.WriteHeader(http.StatusNotFound)
 		return
@@ -87,7 +87,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	input.BelongsTo = userID
 	logger = logger.WithValue("input", input)
 
-	i, err := s.db.CreateItem(ctx, input)
+	i, err := s.itemDatabase.CreateItem(ctx, input)
 	if err != nil {
 		s.logger.Error(err, "error creating item")
 		res.WriteHeader(http.StatusInternalServerError)
@@ -115,13 +115,13 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	})
 	logger.Debug("itemsService.ReadHandler called")
 
-	i, err := s.db.GetItem(ctx, itemID, userID)
+	i, err := s.itemDatabase.GetItem(ctx, itemID, userID)
 	if err == sql.ErrNoRows {
-		logger.Debug("No rows found in database")
+		logger.Debug("No rows found in itemDatabase")
 		res.WriteHeader(http.StatusNotFound)
 		return
 	} else if err != nil {
-		logger.Error(err, "Error fetching item from database")
+		logger.Error(err, "Error fetching item from itemDatabase")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -153,7 +153,7 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 		"input":   input,
 	})
 
-	i, err := s.db.GetItem(ctx, itemID, userID)
+	i, err := s.itemDatabase.GetItem(ctx, itemID, userID)
 	if err == sql.ErrNoRows {
 		logger.Debug("no rows found for item")
 		res.WriteHeader(http.StatusNotFound)
@@ -165,7 +165,7 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 	}
 
 	i.Update(input)
-	if err = s.db.UpdateItem(ctx, i); err != nil {
+	if err = s.itemDatabase.UpdateItem(ctx, i); err != nil {
 		logger.Error(err, "error encountered updating item")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -191,7 +191,7 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	})
 	logger.Debug("ItemsService Deletion handler called")
 
-	err := s.db.DeleteItem(ctx, itemID, userID)
+	err := s.itemDatabase.DeleteItem(ctx, itemID, userID)
 	if err == sql.ErrNoRows {
 		logger.Debug("no rows found for item")
 		res.WriteHeader(http.StatusNotFound)

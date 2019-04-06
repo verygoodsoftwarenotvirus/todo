@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var _ models.OAuth2ClientHandler = (*OAuth2ClientHandler)(nil)
+var _ models.OAuth2ClientDataManager = (*OAuth2ClientHandler)(nil)
 
-// OAuth2ClientHandler is what it says on the tin
+// OAuth2ClientDataManager is what it says on the tin
 type OAuth2ClientHandler struct {
 	mock.Mock
 }

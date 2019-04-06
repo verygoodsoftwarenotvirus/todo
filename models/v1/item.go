@@ -4,8 +4,8 @@ import (
 	"context"
 )
 
-// ItemHandler describes a structure capable of storing items permanently
-type ItemHandler interface {
+// ItemDataManager describes a structure capable of storing items permanently
+type ItemDataManager interface {
 	GetItem(ctx context.Context, itemID, userID uint64) (*Item, error)
 	GetItemCount(ctx context.Context, filter *QueryFilter, userID uint64) (uint64, error)
 	GetItems(ctx context.Context, filter *QueryFilter, userID uint64) (*ItemList, error)

@@ -52,6 +52,3 @@ func init() {
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)
 }
-
-// mostly duplicated code from the http_client
-git

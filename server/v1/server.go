@@ -9,7 +9,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/grpc"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 
 	"github.com/google/wire"
 )
@@ -41,7 +40,6 @@ func ProvideServer(
 	logger logging.Logger,
 	config *config.ServerConfig,
 	grpcServer *grpcserver.GRPCServer,
-	oauth2ClientsService *oauth2clients.Service,
 	httpServer *httpserver.Server,
 ) (*Server, error) {
 

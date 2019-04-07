@@ -45,7 +45,7 @@ func BuildServer(cfg *config.ServerConfig, logger logging.Logger, database2 data
 	if err != nil {
 		return nil, err
 	}
-	serverServer, err := server.ProvideServer(database2, logger, cfg, grpcServer, oauth2clientsService, httpserverServer)
+	serverServer, err := server.ProvideServer(database2, logger, cfg, grpcServer, httpserverServer)
 	if err != nil {
 		return nil, err
 	}

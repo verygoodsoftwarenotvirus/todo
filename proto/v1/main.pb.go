@@ -76,23 +76,34 @@ func init() {
 func init() { proto.RegisterFile("v1/main.proto", fileDescriptor_ea852adc64ca91b7) }
 
 var fileDescriptor_ea852adc64ca91b7 = []byte{
-	// 250 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x91, 0xcd, 0x4e, 0x83, 0x40,
-	0x10, 0x80, 0x8b, 0x36, 0xd6, 0x4e, 0xe4, 0x32, 0x27, 0x44, 0x4d, 0x1a, 0x4e, 0x3d, 0x61, 0xd4,
-	0xb3, 0x17, 0x6b, 0x35, 0xfe, 0x9c, 0x88, 0x3e, 0x00, 0xca, 0xc4, 0x90, 0xb8, 0x0c, 0xee, 0x4e,
-	0x7d, 0x3d, 0x5f, 0xcd, 0x74, 0x61, 0x61, 0x35, 0xab, 0xb7, 0xe1, 0xfb, 0xd8, 0x6f, 0xb2, 0x59,
-	0x88, 0x3f, 0xcf, 0x4e, 0x55, 0x59, 0x37, 0x79, 0xab, 0x59, 0x18, 0xe7, 0xc2, 0x15, 0xdb, 0x31,
-	0xdd, 0x9a, 0x5a, 0x48, 0x75, 0x26, 0xbb, 0x84, 0x78, 0xad, 0x35, 0xeb, 0x82, 0x4c, 0xcb, 0x8d,
-	0x21, 0x4c, 0x60, 0xa6, 0xc8, 0x98, 0xf2, 0x8d, 0x92, 0x68, 0x11, 0x2d, 0xe7, 0x85, 0xfb, 0x44,
-	0x84, 0xe9, 0x2b, 0x57, 0x94, 0xec, 0x2c, 0xa2, 0x65, 0x5c, 0xd8, 0xf9, 0xfc, 0x6b, 0x17, 0xa6,
-	0x4f, 0x5c, 0x31, 0x5e, 0xc1, 0xec, 0x96, 0xe4, 0x4e, 0x48, 0xe1, 0x61, 0x3e, 0x6c, 0xcb, 0x7b,
-	0x56, 0xd0, 0xc7, 0x86, 0x8c, 0xa4, 0x69, 0x48, 0x75, 0x8b, 0xb3, 0x09, 0xde, 0xc3, 0x41, 0x0f,
-	0x57, 0xbc, 0x69, 0x04, 0xfd, 0xbf, 0xb7, 0xf4, 0xb1, 0x36, 0xe2, 0x4a, 0xc7, 0xbf, 0x9c, 0x3d,
-	0xe1, 0xb5, 0xd6, 0xb0, 0xdf, 0xb7, 0xcc, 0xbf, 0x9d, 0xa3, 0xa0, 0x1b, 0x32, 0x0f, 0x00, 0x2b,
-	0x4d, 0xa5, 0x90, 0xbd, 0x99, 0xbf, 0x74, 0xc4, 0x2e, 0x75, 0xf2, 0x87, 0xf5, 0x63, 0xcf, 0x6d,
-	0x15, 0x8a, 0x8d, 0x38, 0x14, 0xf3, 0xed, 0x10, 0xbb, 0x01, 0xb8, 0xa6, 0x77, 0x0a, 0xc4, 0x46,
-	0xec, 0x62, 0x89, 0x67, 0x7f, 0xbc, 0x76, 0x36, 0x79, 0xd9, 0xb3, 0xf8, 0xe2, 0x3b, 0x00, 0x00,
-	0xff, 0xff, 0x23, 0xab, 0x50, 0x5b, 0x32, 0x02, 0x00, 0x00,
+	// 429 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x93, 0x5f, 0x4b, 0xe3, 0x40,
+	0x14, 0xc5, 0xdb, 0xa5, 0x6c, 0xb7, 0x97, 0x2d, 0xbb, 0x0c, 0x22, 0xb1, 0xb5, 0x50, 0x63, 0x85,
+	0x3e, 0xa5, 0xb4, 0x3e, 0xfb, 0xa0, 0xb5, 0x16, 0xff, 0x80, 0x10, 0xac, 0x0f, 0x82, 0x48, 0xda,
+	0x5c, 0x34, 0xd0, 0x64, 0x6a, 0x66, 0xd2, 0x4f, 0xed, 0x87, 0x90, 0xfc, 0x9f, 0x66, 0x26, 0xb1,
+	0x6f, 0x99, 0x73, 0xee, 0xfc, 0x6e, 0xe6, 0x9e, 0x19, 0x68, 0x6f, 0xc7, 0x23, 0xd7, 0x72, 0x3c,
+	0x63, 0xe3, 0x53, 0x4e, 0x49, 0x8b, 0x53, 0x9b, 0x46, 0x9f, 0x9d, 0xd0, 0x71, 0x38, 0xba, 0x46,
+	0xbe, 0x0c, 0x18, 0xfa, 0xc9, 0xf2, 0x70, 0x3b, 0x1e, 0x51, 0x2b, 0xe0, 0x1f, 0x93, 0xb7, 0xd5,
+	0xda, 0x41, 0x8f, 0xc7, 0xba, 0x7e, 0x01, 0xed, 0x99, 0xef, 0x53, 0xdf, 0x44, 0xb6, 0xa1, 0x1e,
+	0x43, 0xa2, 0x41, 0xd3, 0x45, 0xc6, 0xac, 0x77, 0xd4, 0xea, 0xfd, 0xfa, 0xb0, 0x65, 0xa6, 0x4b,
+	0x42, 0xa0, 0xb1, 0xa2, 0x36, 0x6a, 0xbf, 0xfa, 0xf5, 0x61, 0xdb, 0x8c, 0xbe, 0x27, 0x5f, 0x00,
+	0x8d, 0x27, 0x6a, 0x53, 0x72, 0x05, 0xcd, 0x39, 0xf2, 0x5b, 0x8e, 0x2e, 0x39, 0x32, 0xb2, 0x9f,
+	0x32, 0x12, 0xcd, 0xc4, 0xcf, 0x00, 0x19, 0xef, 0x74, 0x54, 0x56, 0xdc, 0x58, 0xaf, 0x91, 0x3b,
+	0xf8, 0x9b, 0x88, 0x53, 0x1a, 0x78, 0x9c, 0x88, 0xd5, 0xa1, 0xfa, 0xe0, 0x30, 0x9e, 0x92, 0x8e,
+	0x0b, 0x5e, 0xb4, 0x43, 0x60, 0xcd, 0xe0, 0x4f, 0xc2, 0x62, 0x95, 0x9c, 0xae, 0xd2, 0xcb, 0x30,
+	0xf7, 0x00, 0x53, 0x1f, 0x2d, 0x8e, 0xd1, 0xc9, 0xc4, 0xa6, 0xb9, 0x9c, 0xa2, 0x7a, 0x25, 0xae,
+	0x08, 0x5b, 0x6c, 0x6c, 0x15, 0x2c, 0x97, 0x55, 0x30, 0xd1, 0xcd, 0x60, 0x37, 0x00, 0xd7, 0xb8,
+	0x46, 0x05, 0x2c, 0x97, 0x53, 0x98, 0x26, 0xb8, 0x3b, 0x69, 0xeb, 0xb5, 0x24, 0xb8, 0x05, 0x43,
+	0xbf, 0x18, 0x5c, 0xa8, 0x95, 0x04, 0x17, 0x5b, 0x85, 0xe0, 0x42, 0x51, 0x0e, 0x2e, 0x54, 0xcb,
+	0x82, 0xcb, 0x76, 0x48, 0xc1, 0x85, 0x0e, 0xab, 0xe4, 0x74, 0x95, 0x9e, 0x1c, 0x5c, 0x74, 0x32,
+	0x39, 0x38, 0xf1, 0x70, 0xbd, 0x12, 0x57, 0x9e, 0xb5, 0x04, 0xcb, 0xe5, 0x7d, 0x66, 0xfd, 0x02,
+	0xff, 0xe6, 0xc8, 0x1f, 0x2f, 0xc3, 0x67, 0x38, 0x8d, 0x5e, 0x21, 0x39, 0xd9, 0x1d, 0xac, 0xe8,
+	0xa5, 0x44, 0xbd, 0xaa, 0x24, 0x63, 0x2f, 0xe1, 0xa0, 0x60, 0xc6, 0x59, 0x88, 0xbb, 0x45, 0x57,
+	0x9c, 0xe5, 0xa0, 0xa4, 0xa6, 0x98, 0xcd, 0x2b, 0xfc, 0x2f, 0xf4, 0x60, 0x7b, 0xf1, 0x4f, 0x2b,
+	0x6b, 0x32, 0xfc, 0x0a, 0x48, 0x3c, 0xfe, 0x9d, 0x09, 0x0d, 0xa4, 0x74, 0x54, 0x43, 0x3a, 0xfb,
+	0xa1, 0x4a, 0x6c, 0x12, 0xbf, 0xa7, 0xd2, 0x26, 0xb2, 0xad, 0x6a, 0xa2, 0xaa, 0xca, 0x9a, 0x3c,
+	0x03, 0x89, 0x6f, 0x46, 0x69, 0x13, 0xd9, 0xde, 0xe3, 0x02, 0x2d, 0x7f, 0x47, 0xf2, 0xf9, 0x77,
+	0x00, 0x00, 0x00, 0xff, 0xff, 0x29, 0xb8, 0xfb, 0xff, 0x06, 0x06, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -114,6 +125,19 @@ type TodoClient interface {
 	CreateItem(ctx context.Context, in *CreateItemRequest, opts ...grpc.CallOption) (*CreateItemResponse, error)
 	UpdateItem(ctx context.Context, in *UpdateItemRequest, opts ...grpc.CallOption) (*UpdateItemResponse, error)
 	DeleteItem(ctx context.Context, in *DeleteItemRequest, opts ...grpc.CallOption) (*ErrorResponse, error)
+	// Users
+	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
+	GetUserCount(ctx context.Context, in *UserListRequest, opts ...grpc.CallOption) (*UserCountResponse, error)
+	GetUsers(ctx context.Context, in *UserListRequest, opts ...grpc.CallOption) (*UserListResponse, error)
+	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
+	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*ErrorResponse, error)
+	// OAuth2Clients
+	GetOAuth2Client(ctx context.Context, in *GetOAuth2ClientRequest, opts ...grpc.CallOption) (*GetOAuth2ClientResponse, error)
+	GetOAuth2ClientCount(ctx context.Context, in *OAuth2ClientListRequest, opts ...grpc.CallOption) (*OAuth2ClientCountResponse, error)
+	GetOAuth2Clients(ctx context.Context, in *OAuth2ClientListRequest, opts ...grpc.CallOption) (*OAuth2ClientListResponse, error)
+	CreateOAuth2Client(ctx context.Context, in *CreateOAuth2ClientRequest, opts ...grpc.CallOption) (*CreateOAuth2ClientResponse, error)
+	UpdateOAuth2Client(ctx context.Context, in *UpdateOAuth2ClientRequest, opts ...grpc.CallOption) (*UpdateOAuth2ClientResponse, error)
+	DeleteOAuth2Client(ctx context.Context, in *DeleteOAuth2ClientRequest, opts ...grpc.CallOption) (*ErrorResponse, error)
 }
 
 type todoClient struct {
@@ -178,6 +202,105 @@ func (c *todoClient) DeleteItem(ctx context.Context, in *DeleteItemRequest, opts
 	return out, nil
 }
 
+func (c *todoClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error) {
+	out := new(GetUserResponse)
+	err := c.cc.Invoke(ctx, "/todoproto.Todo/GetUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *todoClient) GetUserCount(ctx context.Context, in *UserListRequest, opts ...grpc.CallOption) (*UserCountResponse, error) {
+	out := new(UserCountResponse)
+	err := c.cc.Invoke(ctx, "/todoproto.Todo/GetUserCount", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *todoClient) GetUsers(ctx context.Context, in *UserListRequest, opts ...grpc.CallOption) (*UserListResponse, error) {
+	out := new(UserListResponse)
+	err := c.cc.Invoke(ctx, "/todoproto.Todo/GetUsers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *todoClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error) {
+	out := new(CreateUserResponse)
+	err := c.cc.Invoke(ctx, "/todoproto.Todo/CreateUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *todoClient) DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*ErrorResponse, error) {
+	out := new(ErrorResponse)
+	err := c.cc.Invoke(ctx, "/todoproto.Todo/DeleteUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *todoClient) GetOAuth2Client(ctx context.Context, in *GetOAuth2ClientRequest, opts ...grpc.CallOption) (*GetOAuth2ClientResponse, error) {
+	out := new(GetOAuth2ClientResponse)
+	err := c.cc.Invoke(ctx, "/todoproto.Todo/GetOAuth2Client", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *todoClient) GetOAuth2ClientCount(ctx context.Context, in *OAuth2ClientListRequest, opts ...grpc.CallOption) (*OAuth2ClientCountResponse, error) {
+	out := new(OAuth2ClientCountResponse)
+	err := c.cc.Invoke(ctx, "/todoproto.Todo/GetOAuth2ClientCount", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *todoClient) GetOAuth2Clients(ctx context.Context, in *OAuth2ClientListRequest, opts ...grpc.CallOption) (*OAuth2ClientListResponse, error) {
+	out := new(OAuth2ClientListResponse)
+	err := c.cc.Invoke(ctx, "/todoproto.Todo/GetOAuth2Clients", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *todoClient) CreateOAuth2Client(ctx context.Context, in *CreateOAuth2ClientRequest, opts ...grpc.CallOption) (*CreateOAuth2ClientResponse, error) {
+	out := new(CreateOAuth2ClientResponse)
+	err := c.cc.Invoke(ctx, "/todoproto.Todo/CreateOAuth2Client", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *todoClient) UpdateOAuth2Client(ctx context.Context, in *UpdateOAuth2ClientRequest, opts ...grpc.CallOption) (*UpdateOAuth2ClientResponse, error) {
+	out := new(UpdateOAuth2ClientResponse)
+	err := c.cc.Invoke(ctx, "/todoproto.Todo/UpdateOAuth2Client", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *todoClient) DeleteOAuth2Client(ctx context.Context, in *DeleteOAuth2ClientRequest, opts ...grpc.CallOption) (*ErrorResponse, error) {
+	out := new(ErrorResponse)
+	err := c.cc.Invoke(ctx, "/todoproto.Todo/DeleteOAuth2Client", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TodoServer is the server API for Todo service.
 type TodoServer interface {
 	// Items
@@ -187,6 +310,19 @@ type TodoServer interface {
 	CreateItem(context.Context, *CreateItemRequest) (*CreateItemResponse, error)
 	UpdateItem(context.Context, *UpdateItemRequest) (*UpdateItemResponse, error)
 	DeleteItem(context.Context, *DeleteItemRequest) (*ErrorResponse, error)
+	// Users
+	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
+	GetUserCount(context.Context, *UserListRequest) (*UserCountResponse, error)
+	GetUsers(context.Context, *UserListRequest) (*UserListResponse, error)
+	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
+	DeleteUser(context.Context, *DeleteUserRequest) (*ErrorResponse, error)
+	// OAuth2Clients
+	GetOAuth2Client(context.Context, *GetOAuth2ClientRequest) (*GetOAuth2ClientResponse, error)
+	GetOAuth2ClientCount(context.Context, *OAuth2ClientListRequest) (*OAuth2ClientCountResponse, error)
+	GetOAuth2Clients(context.Context, *OAuth2ClientListRequest) (*OAuth2ClientListResponse, error)
+	CreateOAuth2Client(context.Context, *CreateOAuth2ClientRequest) (*CreateOAuth2ClientResponse, error)
+	UpdateOAuth2Client(context.Context, *UpdateOAuth2ClientRequest) (*UpdateOAuth2ClientResponse, error)
+	DeleteOAuth2Client(context.Context, *DeleteOAuth2ClientRequest) (*ErrorResponse, error)
 }
 
 func RegisterTodoServer(s *grpc.Server, srv TodoServer) {
@@ -301,6 +437,204 @@ func _Todo_DeleteItem_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Todo_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TodoServer).GetUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/todoproto.Todo/GetUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TodoServer).GetUser(ctx, req.(*GetUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Todo_GetUserCount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TodoServer).GetUserCount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/todoproto.Todo/GetUserCount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TodoServer).GetUserCount(ctx, req.(*UserListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Todo_GetUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TodoServer).GetUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/todoproto.Todo/GetUsers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TodoServer).GetUsers(ctx, req.(*UserListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Todo_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TodoServer).CreateUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/todoproto.Todo/CreateUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TodoServer).CreateUser(ctx, req.(*CreateUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Todo_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TodoServer).DeleteUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/todoproto.Todo/DeleteUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TodoServer).DeleteUser(ctx, req.(*DeleteUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Todo_GetOAuth2Client_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOAuth2ClientRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TodoServer).GetOAuth2Client(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/todoproto.Todo/GetOAuth2Client",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TodoServer).GetOAuth2Client(ctx, req.(*GetOAuth2ClientRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Todo_GetOAuth2ClientCount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OAuth2ClientListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TodoServer).GetOAuth2ClientCount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/todoproto.Todo/GetOAuth2ClientCount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TodoServer).GetOAuth2ClientCount(ctx, req.(*OAuth2ClientListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Todo_GetOAuth2Clients_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OAuth2ClientListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TodoServer).GetOAuth2Clients(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/todoproto.Todo/GetOAuth2Clients",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TodoServer).GetOAuth2Clients(ctx, req.(*OAuth2ClientListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Todo_CreateOAuth2Client_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateOAuth2ClientRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TodoServer).CreateOAuth2Client(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/todoproto.Todo/CreateOAuth2Client",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TodoServer).CreateOAuth2Client(ctx, req.(*CreateOAuth2ClientRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Todo_UpdateOAuth2Client_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateOAuth2ClientRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TodoServer).UpdateOAuth2Client(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/todoproto.Todo/UpdateOAuth2Client",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TodoServer).UpdateOAuth2Client(ctx, req.(*UpdateOAuth2ClientRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Todo_DeleteOAuth2Client_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteOAuth2ClientRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TodoServer).DeleteOAuth2Client(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/todoproto.Todo/DeleteOAuth2Client",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TodoServer).DeleteOAuth2Client(ctx, req.(*DeleteOAuth2ClientRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Todo_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "todoproto.Todo",
 	HandlerType: (*TodoServer)(nil),
@@ -328,6 +662,50 @@ var _Todo_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteItem",
 			Handler:    _Todo_DeleteItem_Handler,
+		},
+		{
+			MethodName: "GetUser",
+			Handler:    _Todo_GetUser_Handler,
+		},
+		{
+			MethodName: "GetUserCount",
+			Handler:    _Todo_GetUserCount_Handler,
+		},
+		{
+			MethodName: "GetUsers",
+			Handler:    _Todo_GetUsers_Handler,
+		},
+		{
+			MethodName: "CreateUser",
+			Handler:    _Todo_CreateUser_Handler,
+		},
+		{
+			MethodName: "DeleteUser",
+			Handler:    _Todo_DeleteUser_Handler,
+		},
+		{
+			MethodName: "GetOAuth2Client",
+			Handler:    _Todo_GetOAuth2Client_Handler,
+		},
+		{
+			MethodName: "GetOAuth2ClientCount",
+			Handler:    _Todo_GetOAuth2ClientCount_Handler,
+		},
+		{
+			MethodName: "GetOAuth2Clients",
+			Handler:    _Todo_GetOAuth2Clients_Handler,
+		},
+		{
+			MethodName: "CreateOAuth2Client",
+			Handler:    _Todo_CreateOAuth2Client_Handler,
+		},
+		{
+			MethodName: "UpdateOAuth2Client",
+			Handler:    _Todo_UpdateOAuth2Client_Handler,
+		},
+		{
+			MethodName: "DeleteOAuth2Client",
+			Handler:    _Todo_DeleteOAuth2Client_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

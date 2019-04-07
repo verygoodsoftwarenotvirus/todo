@@ -3,7 +3,8 @@ syntax = "proto3";
 package todoproto;
 
 import "v1/item.proto";
-// import "v1/user.proto";
+import "v1/user.proto";
+import "v1/oauth2_client.proto";
 
 message ErrorResponse {
     string message = 1;
@@ -18,4 +19,19 @@ service Todo {
 	rpc CreateItem (CreateItemRequest) returns (CreateItemResponse) {}
 	rpc UpdateItem (UpdateItemRequest) returns (UpdateItemResponse) {}
 	rpc DeleteItem (DeleteItemRequest) returns (ErrorResponse) {}
+
+    // Users
+	rpc GetUser (GetUserRequest) returns (GetUserResponse) {}
+	rpc GetUserCount (UserListRequest) returns (UserCountResponse) {}
+	rpc GetUsers (UserListRequest) returns (UserListResponse) {}
+	rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {}
+	rpc DeleteUser (DeleteUserRequest) returns (ErrorResponse) {}
+
+    // OAuth2Clients
+	rpc GetOAuth2Client (GetOAuth2ClientRequest) returns (GetOAuth2ClientResponse) {}
+	rpc GetOAuth2ClientCount (OAuth2ClientListRequest) returns (OAuth2ClientCountResponse) {}
+	rpc GetOAuth2Clients (OAuth2ClientListRequest) returns (OAuth2ClientListResponse) {}
+	rpc CreateOAuth2Client (CreateOAuth2ClientRequest) returns (CreateOAuth2ClientResponse) {}
+	rpc UpdateOAuth2Client (UpdateOAuth2ClientRequest) returns (UpdateOAuth2ClientResponse) {}
+	rpc DeleteOAuth2Client (DeleteOAuth2ClientRequest) returns (ErrorResponse) {}
 }

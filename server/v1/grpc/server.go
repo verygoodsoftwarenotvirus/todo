@@ -5,14 +5,15 @@ import (
 	"net"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/proto/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
+	// "gitlab.com/verygoodsoftwarenotvirus/todo/proto/v1"
+
 	"google.golang.org/grpc"
 )
 
-var _ todoproto.TodoServer = (*GRPCServer)(nil)
+// var _ todoproto.TodoServer = (*GRPCServer)(nil)
 
 // GRPCServer is a gRPC server implementation
 type GRPCServer struct {

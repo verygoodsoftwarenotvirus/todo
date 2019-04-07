@@ -1,6 +1,7 @@
 package grpcclient
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -8,9 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/grpc_client/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/proto/v1"
 
-	"google.golang.org/grpc"
+	"github.com/icrowley/fake"
 )
 
 const (
@@ -22,14 +24,15 @@ var (
 	defaultTestInstanceURL = fmt.Sprintf("todo-server:%s", targetGRPCPort)
 
 	livenessCheckURI,
+	testUserTwoFactorSecret,
 	urlToUse string
-	grpcConn   *grpc.ClientConn
 	todoClient todoproto.TodoClient
 )
 
 func init() {
-	var err error
+	fake.Seed(time.Now().UnixNano())
 
+	var err error
 	if strings.ToLower(os.Getenv("DOCKER")) == "true" {
 		urlToUse = defaultTestInstanceURL
 	} else {
@@ -39,12 +42,19 @@ func init() {
 
 	ensureServerIsUp()
 
-	grpcConn, err = grpc.Dial(urlToUse, grpc.WithInsecure())
-	if err != nil || grpcConn == nil {
-		log.Fatalf("Failed to start gRPC connection: %v", err)
-	}
+	todoClient, err = grpcclient.NewAuthorizedClient(urlToUse, "clientID", "clientSecret")
 
-	todoClient = todoproto.NewTodoClient(grpcConn)
+	ctx := context.Background()
+	user, err := todoClient.CreateUser(ctx, &todoproto.CreateUserRequest{
+		Username: fake.UserName(),
+		Password: fake.Password(64, 64, true, true, true),
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	testUserTwoFactorSecret = user.GetTwoFactorSecret()
+
+	todoClient.CreateOAuth2Client(ctx, nil)
 }
 
 // mostly duplicated code from the http_client

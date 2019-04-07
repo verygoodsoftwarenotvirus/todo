@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package todoproto;
+
+import "v1/query_filter.proto";
+
+message CreateOAuth2ClientRequest {
+    string name = 1;
+    string details = 2;
+}
+
+message CreateOAuth2ClientResponse {
+    OAuth2Client client = 2;
+}
+
+message UpdateOAuth2ClientRequest {
+    OAuth2Client client = 1;
+}
+
+message UpdateOAuth2ClientResponse {
+}
+
+message GetOAuth2ClientRequest {
+    uint64 client_id = 1;
+    uint64 user_id = 2;
+}
+
+message GetOAuth2ClientResponse {
+    OAuth2Client client = 1;
+}
+
+message DeleteOAuth2ClientRequest {
+    uint64 client_id = 1;
+    uint64 user_id = 2;
+}
+
+message OAuth2ClientListRequest {
+    QueryFilter filter = 1;
+    uint64 user_id = 2;
+}
+
+message OAuth2ClientListResponse {
+    repeated OAuth2Client clients = 1;
+}
+
+message OAuth2ClientCountResponse {
+    uint64 count = 1;
+}
+
+message OAuth2Client {
+    uint64 id = 1;
+    string name = 2;
+    string details = 3;
+    uint64 created_on = 4;
+    uint64 updated_on = 5;
+    uint64 completed_on = 6;
+    uint64 belongs_to = 7;
+}

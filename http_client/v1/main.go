@@ -69,7 +69,7 @@ func buildOAuthClient(uri *url.URL, clientID, clientSecret string) *http.Client 
 	conf := clientcredentials.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		Scopes:       []string{"*"},
+		Scopes:       []string{"*"}, // SECUREME
 		EndpointParams: url.Values{
 			"client_id":     []string{clientID},
 			"client_secret": []string{clientSecret},

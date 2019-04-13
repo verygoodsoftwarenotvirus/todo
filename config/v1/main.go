@@ -64,7 +64,6 @@ type (
 
 	// ServerSettings is a container struct for dealing with settings pertaining to
 	ServerSettings struct {
-		GRPCPort               uint16            `mapstructure:"grpc_port"`
 		HTTPPort               uint16            `mapstructure:"http_port"`
 		Debug                  bool              `mapstructure:"debug"`
 		FrontendFilesDirectory string            `mapstructure:"frontend_files_directory"`
@@ -145,7 +144,6 @@ func (cfg *ServerConfig) ProvideDatabase(logger logging.Logger) (database.Databa
 
 func setDefaults(cfg *viper.Viper) {
 	// server stuff
-	cfg.SetDefault("server.grpc_port", 8888)
 	cfg.SetDefault("server.http_port", 80)
 	cfg.SetDefault("server.debug", false)
 	cfg.SetDefault("server.metrics_namespace", "todo-server")

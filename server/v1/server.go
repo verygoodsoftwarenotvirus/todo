@@ -7,7 +7,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/grpc"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
 
 	"github.com/google/wire"
@@ -22,7 +21,6 @@ type (
 	Server struct {
 		logger     logging.Logger
 		config     *config.ServerConfig
-		grpcServer *grpcserver.GRPCServer
 		httpServer *httpserver.Server
 	}
 )
@@ -39,13 +37,11 @@ func ProvideServer(
 	database database.Database,
 	logger logging.Logger,
 	config *config.ServerConfig,
-	grpcServer *grpcserver.GRPCServer,
 	httpServer *httpserver.Server,
 ) (*Server, error) {
 
 	srv := &Server{
 		config:     config,
-		grpcServer: grpcServer,
 		httpServer: httpServer,
 		logger:     logger,
 	}
@@ -61,6 +57,5 @@ func ProvideServer(
 
 // Serve serves HTTP traffic
 func (s *Server) Serve() {
-	go s.grpcServer.Serve()
 	s.httpServer.Serve()
 }

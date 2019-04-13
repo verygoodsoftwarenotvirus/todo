@@ -42,7 +42,7 @@ func init() {
 		logger.Fatal(err)
 	}
 
-	clientID, clientSecret, err := testutil.CreateObligatoryClient(*u)
+	clientID, clientSecret, err := testutil.CreateObligatoryClient(urlToUse, *u)
 	if err != nil {
 		logger.Fatal(err)
 	}

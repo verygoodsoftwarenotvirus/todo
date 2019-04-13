@@ -13,7 +13,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1/prometheus"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/grpc"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
@@ -23,21 +22,17 @@ import (
 // Injectors from wire.go:
 
 func BuildServer(cfg *config.ServerConfig, logger logging.Logger, database2 database.Database) (*server.Server, error) {
+	bcryptHashCost := auth.ProvideBcryptHashCost()
+	enticator := auth.ProvideBcrypt(bcryptHashCost, logger)
 	userIDFetcher := httpserver.ProvideUserIDFetcher()
 	itemIDFetcher := httpserver.ProvideItemIDFetcher()
 	serverEncoderDecoder := encoding.ProvideJSONResponseEncoder()
 	service := items.ProvideItemsService(logger, database2, userIDFetcher, itemIDFetcher, serverEncoderDecoder)
 	authSettings := config.ProvideConfigAuthSettings(cfg)
-	bcryptHashCost := auth.ProvideBcryptHashCost()
-	enticator := auth.ProvideBcrypt(bcryptHashCost, logger)
 	usersUserIDFetcher := httpserver.ProvideUsernameFetcher()
 	usersService := users.ProvideUsersService(authSettings, logger, database2, enticator, usersUserIDFetcher, serverEncoderDecoder)
 	clientIDFetcher := httpserver.ProvideOAuth2ServiceClientIDFetcher()
 	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(logger, database2, enticator, clientIDFetcher, serverEncoderDecoder)
-	grpcServer, err := grpcserver.ProvideGRPCServer(logger, service, usersService, oauth2clientsService)
-	if err != nil {
-		return nil, err
-	}
 	httpServer := httpserver.ProvideHTTPServer()
 	handler := prometheus.ProvideMetricsHandler()
 	middleware := prometheus.ProvideMiddleware()
@@ -45,7 +40,7 @@ func BuildServer(cfg *config.ServerConfig, logger logging.Logger, database2 data
 	if err != nil {
 		return nil, err
 	}
-	serverServer, err := server.ProvideServer(database2, logger, cfg, grpcServer, httpserverServer)
+	serverServer, err := server.ProvideServer(database2, logger, cfg, httpserverServer)
 	if err != nil {
 		return nil, err
 	}

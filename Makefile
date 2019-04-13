@@ -141,9 +141,3 @@ install-chart:
 		--force \
 		--debug \
 		--namespace=$(KUBERNETES_NAMESPACE)
-
-## gRPC
-
-.PHONY: proto
-proto:
-	protoc -I proto/ `ls proto/v1/*.proto` --go_out=plugins=grpc:proto

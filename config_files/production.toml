@@ -3,7 +3,6 @@
 # debug = true
 
 [server]
-grpc_port = 8888
 http_port = 80
 debug = true
 metrics_namespace = "todo_server"

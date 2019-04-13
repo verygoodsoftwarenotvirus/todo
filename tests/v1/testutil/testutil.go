@@ -3,7 +3,6 @@ package testutil
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -17,6 +16,7 @@ import (
 
 	"github.com/icrowley/fake"
 	"github.com/moul/http2curl"
+	"github.com/pkg/errors"
 	"github.com/pquerna/otp/totp"
 )
 
@@ -108,12 +108,12 @@ func buildURL(address string, parts ...string) string {
 	return tu.ResolveReference(u).String()
 }
 
-func getLoginCookie(u models.User) (*http.Cookie, error) {
-	uri := buildURL("users", "login")
+func getLoginCookie(serviceURL string, u models.User) (*http.Cookie, error) {
+	uri := buildURL(serviceURL, "users", "login")
 
 	code, err := totp.GenerateCode(strings.ToUpper(u.TwoFactorSecret), time.Now())
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "generating totp token")
 	}
 
 	req, err := http.NewRequest(
@@ -134,12 +134,12 @@ func getLoginCookie(u models.User) (*http.Cookie, error) {
 		),
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "building request")
 	}
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "executing request")
 	}
 
 	cookies := res.Cookies()
@@ -151,8 +151,8 @@ func getLoginCookie(u models.User) (*http.Cookie, error) {
 }
 
 // CreateObligatoryClient creates the OAuth2 client we need for tests
-func CreateObligatoryClient(u models.User) (clientID, clientSecret string, err error) {
-	firstOAuth2ClientURI := buildURL("oauth2", "client")
+func CreateObligatoryClient(serviceURL string, u models.User) (clientID, clientSecret string, err error) {
+	firstOAuth2ClientURI := buildURL(serviceURL, "oauth2", "client")
 
 	code, err := totp.GenerateCode(
 		strings.ToUpper(u.TwoFactorSecret),
@@ -181,7 +181,7 @@ func CreateObligatoryClient(u models.User) (clientID, clientSecret string, err e
 		return "", "", err
 	}
 
-	cookie, err := getLoginCookie(u)
+	cookie, err := getLoginCookie(serviceURL, u)
 	if err != nil || cookie == nil {
 		log.Fatalf(`
 cookie problems!

@@ -11,6 +11,7 @@ require (
 	github.com/corpix/uarand v0.0.0 // indirect
 	github.com/go-chi/chi v4.0.1+incompatible
 	github.com/go-kit/kit v0.8.0 // indirect
+	github.com/golang/protobuf v1.3.1 // indirect
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
 	github.com/google/wire v0.2.1
 	github.com/gorilla/context v1.1.1

@@ -11,7 +11,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/google/wire"
 	"github.com/opentracing/opentracing-go"
 )
 
@@ -35,23 +34,16 @@ type (
 	// Service handles our users
 	Service struct {
 		cookieSecret  []byte
-		database      database.Database
+		database      models.UserDataManager
 		authenticator auth.Enticator
 		logger        logging.Logger
 		tracer        Tracer
-		encoder       encoding.ResponseEncoder
+		encoder       encoding.ServerEncoderDecoder
 		userIDFetcher func(*http.Request) uint64
 	}
 
 	// UserIDFetcher fetches usernames from requests
 	UserIDFetcher func(*http.Request) uint64
-)
-
-var (
-	// Providers is what we provide for dependency injectors
-	Providers = wire.NewSet(
-		ProvideUsersService,
-	)
 )
 
 // ProvideUsersService builds a new UsersService
@@ -61,7 +53,7 @@ func ProvideUsersService(
 	database database.Database,
 	authenticator auth.Enticator,
 	userIDFetcher UserIDFetcher,
-	encoder encoding.ResponseEncoder,
+	encoder encoding.ServerEncoderDecoder,
 ) *Service {
 	if userIDFetcher == nil {
 		panic("usernameFetcher must be provided")

@@ -8,11 +8,11 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
-// UserLoginInputContextMiddleware fetches user login input from requests
-func (s *Service) UserLoginInputContextMiddleware(next http.Handler) http.Handler {
+// UserLoginInputMiddleware fetches user login input from requests
+func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 	x := new(models.UserLoginInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		s.logger.WithRequest(req).Debug("UserLoginInputContextMiddleware called")
+		s.logger.WithRequest(req).Debug("UserLoginInputMiddleware called")
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
@@ -23,11 +23,11 @@ func (s *Service) UserLoginInputContextMiddleware(next http.Handler) http.Handle
 	})
 }
 
-// UserInputContextMiddleware fetches user input from requests
-func (s *Service) UserInputContextMiddleware(next http.Handler) http.Handler {
+// UserInputMiddleware fetches user input from requests
+func (s *Service) UserInputMiddleware(next http.Handler) http.Handler {
 	x := new(models.UserInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		s.logger.WithRequest(req).Debug("UserInputContextMiddleware called")
+		s.logger.WithRequest(req).Debug("UserInputMiddleware called")
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
@@ -38,11 +38,11 @@ func (s *Service) UserInputContextMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// PasswordUpdateInputContextMiddleware fetches password update input from requests
-func (s *Service) PasswordUpdateInputContextMiddleware(next http.Handler) http.Handler {
+// PasswordUpdateInputMiddleware fetches password update input from requests
+func (s *Service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler {
 	x := new(models.PasswordUpdateInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		s.logger.WithRequest(req).Debug("PasswordUpdateInputContextMiddleware called")
+		s.logger.WithRequest(req).Debug("PasswordUpdateInputMiddleware called")
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
@@ -53,11 +53,11 @@ func (s *Service) PasswordUpdateInputContextMiddleware(next http.Handler) http.H
 	})
 }
 
-// TOTPSecretRefreshInputContextMiddleware fetches 2FA update input from requests
-func (s *Service) TOTPSecretRefreshInputContextMiddleware(next http.Handler) http.Handler {
+// TOTPSecretRefreshInputMiddleware fetches 2FA update input from requests
+func (s *Service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handler {
 	x := new(models.TOTPSecretRefreshInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		s.logger.WithRequest(req).Debug("TOTPSecretRefreshInputContextMiddleware called")
+		s.logger.WithRequest(req).Debug("TOTPSecretRefreshInputMiddleware called")
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)

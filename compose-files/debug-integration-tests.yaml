@@ -1,5 +1,9 @@
 version: '3.3'
 
+# NOTE:
+#    This compose file should be a combination of the base docker-compose.yaml and integration-tests.yaml, meaning it has jaeger
+#    and grafana and all that cool stuff, and it should be run without --abort-on-container exit, to debug failing integration-tests
+
 services:
   todo-server:
     build:
@@ -22,10 +26,10 @@ services:
     # logging:
     #   driver: none
 
-  integration-test:
+  http-client-integration-tests:
     build:
       context: ../
-      dockerfile: dockerfiles/integration-tests-go.Dockerfile
+      dockerfile: dockerfiles/http-client-integration-tests.Dockerfile
     environment:
       DOCKER: 'true'
       DATABASE_TO_USE: 'postgres'

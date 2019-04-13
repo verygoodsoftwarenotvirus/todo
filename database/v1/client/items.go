@@ -9,7 +9,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
-var _ models.ItemHandler = (*Client)(nil)
+var _ models.ItemDataManager = (*Client)(nil)
 
 // GetItem fetches an item from the postgres database
 func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {

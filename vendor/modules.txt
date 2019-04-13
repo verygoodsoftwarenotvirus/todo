@@ -30,7 +30,7 @@ github.com/go-kit/kit/metrics
 github.com/go-kit/kit/metrics/expvar
 github.com/go-kit/kit/metrics/generic
 github.com/go-kit/kit/metrics/internal/lv
-# github.com/golang/protobuf v1.2.0
+# github.com/golang/protobuf v1.3.1
 github.com/golang/protobuf/proto
 # github.com/google/wire v0.2.1
 github.com/google/wire

@@ -2,10 +2,11 @@ package models
 
 import (
 	"context"
+	"net/http"
 )
 
-// UserHandler describes a structure which can manage users in permanent storage
-type UserHandler interface {
+// UserDataManager describes a structure which can manage users in permanent storage
+type UserDataManager interface {
 	GetUser(ctx context.Context, userID uint64) (*User, error)
 	GetUserByUsername(ctx context.Context, username string) (*User, error)
 	GetUserCount(ctx context.Context, filter *QueryFilter) (uint64, error)
@@ -13,6 +14,21 @@ type UserHandler interface {
 	CreateUser(ctx context.Context, input *UserInput) (*User, error)
 	UpdateUser(ctx context.Context, updated *User) error
 	DeleteUser(ctx context.Context, userID uint64) error
+}
+
+// UserDataServer describes a structure capable of serving traffic related to users
+type UserDataServer interface {
+	UserLoginInputMiddleware(next http.Handler) http.Handler
+	UserInputMiddleware(next http.Handler) http.Handler
+	PasswordUpdateInputMiddleware(next http.Handler) http.Handler
+	TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handler
+
+	List(res http.ResponseWriter, req *http.Request)
+	Create(res http.ResponseWriter, req *http.Request)
+	Read(res http.ResponseWriter, req *http.Request)
+	NewTOTPSecret(res http.ResponseWriter, req *http.Request)
+	UpdatePassword(res http.ResponseWriter, req *http.Request)
+	Delete(res http.ResponseWriter, req *http.Request)
 }
 
 const (

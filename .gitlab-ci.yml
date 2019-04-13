@@ -26,6 +26,7 @@ integration-tests:
   variables:
     GOPATH: '/go'
   script:
-    - apk add --update --no-cache py-pip openssl
+    - apk add --update --no-cache py-pip openssl python-dev libffi-dev
+      openssl-dev gcc libc-dev make
     - pip install docker-compose
     - make integration-tests

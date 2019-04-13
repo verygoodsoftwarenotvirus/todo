@@ -2,16 +2,29 @@ package models
 
 import (
 	"context"
+	"net/http"
 )
 
-// ItemHandler describes a structure capable of storing items permanently
-type ItemHandler interface {
+// ItemDataManager describes a structure capable of storing items permanently
+type ItemDataManager interface {
 	GetItem(ctx context.Context, itemID, userID uint64) (*Item, error)
 	GetItemCount(ctx context.Context, filter *QueryFilter, userID uint64) (uint64, error)
 	GetItems(ctx context.Context, filter *QueryFilter, userID uint64) (*ItemList, error)
 	CreateItem(ctx context.Context, input *ItemInput) (*Item, error)
 	UpdateItem(ctx context.Context, updated *Item) error
 	DeleteItem(ctx context.Context, id uint64, userID uint64) error
+}
+
+// ItemDataServer describes a structure capable of serving traffic related to items
+type ItemDataServer interface {
+	CreationInputMiddleware(next http.Handler) http.Handler
+	UpdateInputMiddleware(next http.Handler) http.Handler
+
+	List(res http.ResponseWriter, req *http.Request)
+	Create(res http.ResponseWriter, req *http.Request)
+	Read(res http.ResponseWriter, req *http.Request)
+	Update(res http.ResponseWriter, req *http.Request)
+	Delete(res http.ResponseWriter, req *http.Request)
 }
 
 // Item represents an item

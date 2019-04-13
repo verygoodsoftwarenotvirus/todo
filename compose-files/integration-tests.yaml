@@ -7,20 +7,20 @@ services:
       dockerfile: dockerfiles/integration-server.Dockerfile
     ports:
       - '80:80'
+      - '8888:8888'
     environment:
       DOCKER: 'true'
     links:
       - database
-    # logging:
-    #   driver: none
+  #    logging:
+  #      driver: none
 
-  integration-test:
+  http-client-integration-test:
     build:
       context: ../
-      dockerfile: dockerfiles/integration-tests-go.Dockerfile
+      dockerfile: dockerfiles/http-client-integration-tests.Dockerfile
     environment:
       DOCKER: 'true'
-      DATABASE_TO_USE: 'postgres'
       JAEGER_SERVICE_NAME: 'todo-server'
       JAEGER_AGENT_HOST: 'tracing-server'
       JAEGER_AGENT_PORT: '6831'
@@ -37,5 +37,5 @@ services:
     environment:
       POSTGRES_USER: todo
       POSTGRES_PASSWORD: hunter2
-    # logging:
-    #   driver: none
+    logging:
+      driver: none

@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -18,6 +19,7 @@ var (
 		ProvideUserIDFetcher,
 		ProvideUsernameFetcher,
 		ProvideOAuth2ServiceClientIDFetcher,
+		ProvideAuthUserIDFetcher,
 		ProvideItemIDFetcher,
 	)
 )
@@ -35,6 +37,11 @@ func ProvideItemIDFetcher() items.ItemIDFetcher {
 // ProvideUsernameFetcher provides a UsernameFetcher
 func ProvideUsernameFetcher() users.UserIDFetcher {
 	return ChiUserIDFetcher
+}
+
+// ProvideAuthUserIDFetcher provides a UsernameFetcher
+func ProvideAuthUserIDFetcher() auth.UserIDFetcher {
+	return UserIDFetcher
 }
 
 // ProvideOAuth2ServiceClientIDFetcher provides a ClientIDFetcher

@@ -10,12 +10,13 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
+	libauth "gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -37,9 +38,10 @@ type (
 	Server struct {
 		DebugMode bool
 
-		authenticator auth.Enticator
+		authenticator libauth.Enticator
 
 		// Services
+		authService          *auth.Service
 		itemsService         models.ItemDataServer
 		usersService         models.UserDataServer
 		oauth2ClientsService models.Oauth2ClientDataServer
@@ -62,9 +64,10 @@ type (
 // ProvideServer builds a new Server instance
 func ProvideServer(
 	config *config.ServerConfig,
-	authenticator auth.Enticator,
+	authenticator libauth.Enticator,
 
 	// services
+	authService *auth.Service,
 	itemsService *items.Service,
 	usersService *users.Service,
 	oauth2Service *oauth2clients.Service,
@@ -86,8 +89,6 @@ func ProvideServer(
 		return nil, err
 	}
 
-	cookieBuilder := securecookie.New(securecookie.GenerateRandomKey(64), []byte(config.Auth.CookieSecret))
-
 	srv := &Server{
 		DebugMode:     config.Server.Debug,
 		authenticator: authenticator,
@@ -95,14 +96,15 @@ func ProvideServer(
 		// infra things
 		db:            db,
 		config:        config,
-		logger:        logger.WithName("httperver"),
-		httpServer:    httpServer,
-		cookieBuilder: cookieBuilder,
-		tracer:        tracing.ProvideTracer("httperver"),
 		encoder:       encoder,
+		httpServer:    httpServer,
+		logger:        logger.WithName("api_server"),
+		tracer:        tracing.ProvideTracer("api_server"),
+		cookieBuilder: securecookie.New(securecookie.GenerateRandomKey(64), []byte(config.Auth.CookieSecret)),
 
 		// services
 		usersService:         usersService,
+		authService:          authService,
 		itemsService:         itemsService,
 		oauth2ClientsService: oauth2Service,
 	}

@@ -5,12 +5,13 @@ package main
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
+	libauth "gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1/prometheus"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -27,7 +28,7 @@ func BuildServer(
 
 	wire.Build(
 		config.Providers,
-		auth.Providers,
+		libauth.Providers,
 
 		// Server things
 		server.Providers,
@@ -38,6 +39,7 @@ func BuildServer(
 		prometheus.Providers,
 
 		// Services
+		auth.Providers,
 		users.Providers,
 		items.Providers,
 		oauth2clients.Providers,

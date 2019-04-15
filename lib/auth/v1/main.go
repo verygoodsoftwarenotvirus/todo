@@ -32,8 +32,8 @@ func ProvideBcryptHashCost() BcryptHashCost {
 
 // PasswordHasher hashes passwords
 type PasswordHasher interface {
-	HashPassword(ctx context.Context, password string) (string, error)
 	PasswordIsAcceptable(password string) bool
+	HashPassword(ctx context.Context, password string) (string, error)
 	PasswordMatches(ctx context.Context, hashedPassword, providedPassword string, salt []byte) bool
 }
 
@@ -49,7 +49,13 @@ func ProvideTracer() Tracer {
 type Enticator interface {
 	PasswordHasher
 
-	ValidateLogin(ctx context.Context, hashedPassword, providedPassword, twoFactorSecret, twoFactorCode string) (bool, error)
+	ValidateLogin(
+		ctx context.Context,
+		HashedPassword,
+		ProvidedPassword,
+		TwoFactorSecret,
+		TwoFactorCode string,
+	) (bool, error)
 }
 
 func init() {

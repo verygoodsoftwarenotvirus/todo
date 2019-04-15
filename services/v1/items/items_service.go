@@ -9,7 +9,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/gorilla/websocket"
 	"github.com/opentracing/opentracing-go"
 )
 
@@ -28,7 +27,6 @@ type (
 	Service struct {
 		logger        logging.Logger
 		itemDatabase  models.ItemDataManager
-		upgrader      websocket.Upgrader
 		tracer        opentracing.Tracer
 		userIDFetcher UserIDFetcher
 		itemIDFetcher ItemIDFetcher
@@ -57,7 +55,6 @@ func ProvideItemsService(
 		encoder:       encoder,
 		userIDFetcher: userIDFetcher,
 		itemIDFetcher: itemIDFetcher,
-		upgrader:      websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024},
 	}
 	return svc
 }

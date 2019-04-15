@@ -1,4 +1,4 @@
-package httpserver
+package auth
 
 import (
 	"context"
@@ -21,7 +21,8 @@ var (
 	errNoCookie = errors.New("no cookie present in request")
 )
 
-func (s *Server) decodeCookieFromRequest(req *http.Request) (*models.CookieAuth, error) {
+// DecodeCookieFromRequest takes a request object and fetches the cookie data if it is present
+func (s *Service) DecodeCookieFromRequest(req *http.Request) (*models.CookieAuth, error) {
 	var ca *models.CookieAuth
 
 	cookie, cerr := req.Cookie(cookieName)
@@ -39,139 +40,153 @@ func (s *Server) decodeCookieFromRequest(req *http.Request) (*models.CookieAuth,
 	return nil, errNoCookie
 }
 
-func (s *Server) fetchUserFromRequest(req *http.Request) (*models.User, error) {
-	ca, cerr := s.decodeCookieFromRequest(req)
+// FetchUserFromRequest takes a request object and fetches the cookie, and then the user for that cookie
+func (s *Service) FetchUserFromRequest(req *http.Request) (*models.User, error) {
+	ca, cerr := s.DecodeCookieFromRequest(req)
 	if cerr != nil {
 		return nil, errors.Wrap(cerr, "fetching cookie data from request")
 	}
 
-	user, uerr := s.db.GetUser(req.Context(), ca.UserID)
+	user, uerr := s.database.GetUser(req.Context(), ca.UserID)
 	if uerr != nil {
 		return nil, errors.Wrap(uerr, "fetching user from request")
 	}
 	return user, nil
 }
 
-// login is our login route
-func (s *Server) login(res http.ResponseWriter, req *http.Request) {
+// Login is our login route
+func (s *Service) Login(res http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	s.logger.Debug("login called")
 
-	loginInput, user, errNotifier, err := s.fetchLoginDataFromRequest(req)
-	if err != nil {
-		s.logger.Error(err, "error encountered fetching login data from request")
-		if errNotifier != nil {
-			errNotifier(res, req, err)
-		} else {
-			s.internalServerError(res, req, err)
+	if s.logger == nil {
+		panic("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+	}
+
+	loginData, errRes := s.fetchLoginDataFromRequest(req)
+	if errRes != nil {
+		s.logger.Error(errRes, "error encountered fetching login data from request")
+		res.WriteHeader(http.StatusUnauthorized)
+		if err := s.encoder.EncodeResponse(res, errRes); err != nil {
+			s.logger.Error(err, "encoding response")
 		}
 		return
 	}
+	logger := s.logger.WithValue("login_input", loginData.loginInput)
 
-	logger := s.logger.WithValue("login_input", loginInput)
-
-	loginValid, errNotifier, err := s.validateLogin(ctx, user, loginInput)
+	loginValid, err := s.validateLogin(ctx, *loginData)
 	if err != nil {
 		logger.Error(err, "error encountered validating login")
-		if errNotifier != nil {
-			errNotifier(res, req, err)
-		} else {
-			s.internalServerError(res, req, err)
-		}
+		res.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-
 	logger = logger.WithValue("valid", loginValid)
 
 	if !loginValid {
 		logger.Debug("login was invalid")
-		s.invalidInput(res, req, nil)
 		res.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	logger.Debug("login was valid, returning cookie")
-	cookie, err := s.buildCookie(user)
+	cookie, err := s.buildCookie(loginData.user)
 	if err != nil {
 		logger.Error(err, "error building cookie")
-		s.internalServerError(res, req, err)
+
+		res.WriteHeader(http.StatusInternalServerError)
+		response := &models.ErrorResponse{
+			Code:    http.StatusInternalServerError,
+			Message: "error encountered building cookie",
+		}
+		if err := s.encoder.EncodeResponse(res, response); err != nil {
+			s.logger.Error(err, "encoding response")
+		}
 		return
 	}
 
 	http.SetCookie(res, cookie)
-	res.WriteHeader(http.StatusOK)
 }
 
-// logout is our logout route
-func (s *Server) logout(res http.ResponseWriter, req *http.Request) {
+// Logout is our logout route
+func (s *Service) Logout(res http.ResponseWriter, req *http.Request) {
 	if cookie, err := req.Cookie(cookieName); err == nil {
 		s.logger.Debug("logout was called, clearing cookie")
 		cookie.MaxAge = -1
 		http.SetCookie(res, cookie)
 	} else {
-		s.logger.Error(err, "logout was called, no cookie was found")
+		s.logger.WithError(err).Debug("logout was called, no cookie was found")
 	}
 
 	res.WriteHeader(http.StatusOK)
 }
 
-func (s *Server) fetchLoginDataFromRequest(req *http.Request) (*models.UserLoginInput, *models.User, ErrorNotifier, error) {
+type loginData struct {
+	loginInput *models.UserLoginInput
+	user       *models.User
+}
+
+func (s *Service) fetchLoginDataFromRequest(req *http.Request) (*loginData, *models.ErrorResponse) {
 	ctx := req.Context()
 	loginInput, ok := ctx.Value(users.MiddlewareCtxKey).(*models.UserLoginInput)
 	if !ok {
 		s.logger.Debug("no UserLoginInput found for /login request")
-		return nil, nil, s.notifyUnauthorized, nil
+		return nil, &models.ErrorResponse{
+			Code: http.StatusUnauthorized,
+		}
 	}
 	username := loginInput.Username
 	logger := s.logger.WithValue("Username", username)
 
-	// you could ensure there isn't an unsatisfied password reset token requested before allowing login here
+	// you could ensure there isn't an unsatisfied
+	// password reset token requested before allowing login here
 
-	user, err := s.db.GetUserByUsername(ctx, username)
+	user, err := s.database.GetUserByUsername(ctx, username)
 	if err == sql.ErrNoRows {
 		logger.WithError(err).Debug("no matching user")
-		return nil, nil, s.invalidInput, err
+		return nil, &models.ErrorResponse{
+			Code: http.StatusBadRequest,
+		}
 	} else if err != nil {
 		logger.WithError(err).Debug("error fetching user")
-		return nil, nil, s.internalServerError, err
+		return nil, &models.ErrorResponse{
+			Code: http.StatusInternalServerError,
+		}
 	}
 
-	return loginInput, user, nil, nil
+	ld := &loginData{
+		loginInput: loginInput,
+		user:       user,
+	}
+
+	return ld, nil
 }
 
-func (s *Server) validateLogin(
-	ctx context.Context,
-	user *models.User,
-	loginInput *models.UserLoginInput,
-) (bool, ErrorNotifier, error) {
+func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool, error) {
+	user := loginInfo.user
+	loginInput := loginInfo.loginInput
 
 	loginValid, err := s.authenticator.ValidateLogin(
-		ctx,
-		user.HashedPassword,
-		loginInput.Password,
-		user.TwoFactorSecret,
-		loginInput.TOTPToken,
+		ctx, user.HashedPassword, loginInput.Password, user.TwoFactorSecret, loginInput.TOTPToken,
 	)
 	if err == auth.ErrPasswordHashTooWeak && loginValid {
 		s.logger.Debug("hashed password was deemed to weak, updating its hash")
 
 		updated, e := s.authenticator.HashPassword(ctx, loginInput.Password)
 		if e != nil {
-			return false, s.internalServerError, e
+			return false, e
 		}
 
 		user.HashedPassword = updated
-		if err = s.db.UpdateUser(ctx, user); err != nil {
-			return false, s.internalServerError, err
+		if err = s.database.UpdateUser(ctx, user); err != nil {
+			return false, err
 		}
 	} else if err != nil {
-		return false, s.internalServerError, err
+		return false, err
 	}
 
-	return loginValid, nil, nil
+	return loginValid, nil
 }
 
-func (s *Server) buildCookie(user *models.User) (*http.Cookie, error) {
+func (s *Service) buildCookie(user *models.User) (*http.Cookie, error) {
 	s.logger.WithValues(map[string]interface{}{
 		"user_id": user.ID,
 	}).Debug("buildCookie called")

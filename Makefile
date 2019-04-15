@@ -62,7 +62,7 @@ revendor: vendor-clean vendor
 
 $(COVERAGE_OUT):
 	echo "mode: set" > coverage.out;
-	for pkg in `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|tools)'`; do \
+	for pkg in `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests)'`; do \
 		go test -coverprofile=profile.out -v -count 5 $$pkg; \
 		cat profile.out | grep -v "mode: atomic" >> coverage.out; \
 	done
@@ -88,21 +88,21 @@ integration-tests:
 	docker-compose --file compose-files/integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
 
 .PHONY: debug-integration-tests
-debug-integration-tests: wire proto
+debug-integration-tests: wire
 	docker-compose --file compose-files/debug-integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate
 
 .PHONY: locust-load-tests
-locust-load-tests: wire proto
+locust-load-tests: wire
 	docker-compose --file compose-files/locust-load-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
 
 ## Docker things
 
 .PHONY: server-docker-image
-server-docker-image: wire proto
+server-docker-image: wire
 	docker build --tag $(SERVER_DOCKER_IMAGE_NAME):latest --file dockerfiles/server.Dockerfile .
 
 .PHONY: prod-server-docker-image
-prod-server-docker-image: wire proto
+prod-server-docker-image: wire
 	docker build --tag $(SERVER_DOCKER_REPO_NAME):latest --file dockerfiles/server.Dockerfile .
 
 .PHONY: push-server-to-docker

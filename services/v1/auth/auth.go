@@ -58,10 +58,6 @@ func (s *Service) FetchUserFromRequest(req *http.Request) (*models.User, error) 
 func (s *Service) Login(res http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	if s.logger == nil {
-		panic("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-	}
-
 	loginData, errRes := s.fetchLoginDataFromRequest(req)
 	if errRes != nil {
 		s.logger.Error(errRes, "error encountered fetching login data from request")

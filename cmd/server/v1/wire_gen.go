@@ -24,23 +24,22 @@ import (
 
 func BuildServer(cfg *config.ServerConfig, logger logging.Logger, database2 database.Database) (*server.Server, error) {
 	bcryptHashCost := auth.ProvideBcryptHashCost()
-	enticator := auth.ProvideBcrypt(bcryptHashCost, logger)
+	authenticator := auth.ProvideBcrypt(bcryptHashCost, logger)
 	userDataManager := users.ProvideUserDataManager(database2)
 	clientIDFetcher := httpserver.ProvideOAuth2ServiceClientIDFetcher()
-	serverEncoderDecoder := encoding.ProvideJSONResponseEncoder()
-	service := oauth2clients.ProvideOAuth2ClientsService(logger, database2, enticator, clientIDFetcher, serverEncoderDecoder)
+	encoderDecoder := encoding.ProvideJSONResponseEncoder()
+	service := oauth2clients.ProvideOAuth2ClientsService(logger, database2, authenticator, clientIDFetcher, encoderDecoder)
 	userIDFetcher := httpserver.ProvideAuthUserIDFetcher()
-	authService := auth2.ProvideAuthService(logger, cfg, enticator, userDataManager, service, userIDFetcher, serverEncoderDecoder)
+	authService := auth2.ProvideAuthService(logger, cfg, authenticator, userDataManager, service, userIDFetcher, encoderDecoder)
 	itemsUserIDFetcher := httpserver.ProvideUserIDFetcher()
 	itemIDFetcher := httpserver.ProvideItemIDFetcher()
-	itemsService := items.ProvideItemsService(logger, database2, itemsUserIDFetcher, itemIDFetcher, serverEncoderDecoder)
+	itemsService := items.ProvideItemsService(logger, database2, itemsUserIDFetcher, itemIDFetcher, encoderDecoder)
 	authSettings := config.ProvideConfigAuthSettings(cfg)
 	usersUserIDFetcher := httpserver.ProvideUsernameFetcher()
-	usersService := users.ProvideUsersService(authSettings, logger, database2, enticator, usersUserIDFetcher, serverEncoderDecoder)
-	httpServer := httpserver.ProvideHTTPServer()
+	usersService := users.ProvideUsersService(authSettings, logger, database2, authenticator, usersUserIDFetcher, encoderDecoder)
 	handler := prometheus.ProvideMetricsHandler()
 	middleware := prometheus.ProvideMiddleware()
-	httpserverServer, err := httpserver.ProvideServer(cfg, enticator, authService, itemsService, usersService, service, database2, logger, httpServer, serverEncoderDecoder, handler, middleware)
+	httpserverServer, err := httpserver.ProvideServer(cfg, authService, itemsService, usersService, service, database2, logger, encoderDecoder, handler, middleware)
 	if err != nil {
 		return nil, err
 	}

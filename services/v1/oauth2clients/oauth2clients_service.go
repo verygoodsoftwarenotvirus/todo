@@ -37,10 +37,10 @@ type (
 	// Service manages our OAuth2 clients via HTTP
 	Service struct {
 		database             database.Database
-		authenticator        auth.Enticator
+		authenticator        auth.Authenticator
 		logger               logging.Logger
 		tracer               opentracing.Tracer
-		encoder              encoding.ServerEncoderDecoder
+		encoder              encoding.EncoderDecoder
 		urlClientIDExtractor func(req *http.Request) uint64
 
 		tokenStore        oauth2.TokenStore
@@ -79,9 +79,9 @@ func newClientStore(database database.Database) *clientStore {
 func ProvideOAuth2ClientsService(
 	logger logging.Logger,
 	database database.Database,
-	authenticator auth.Enticator,
+	authenticator auth.Authenticator,
 	clientIDFetcher ClientIDFetcher,
-	encoder encoding.ServerEncoderDecoder,
+	encoder encoding.EncoderDecoder,
 ) *Service {
 
 	manager := manage.NewDefaultManager()

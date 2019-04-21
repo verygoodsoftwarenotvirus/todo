@@ -45,8 +45,8 @@ func ProvideTracer() Tracer {
 	return tracing.ProvideTracer("password-authentication")
 }
 
-// Enticator is a poorly named Authenticator interface
-type Enticator interface {
+// Authenticator is a poorly named Authenticator interface
+type Authenticator interface {
 	PasswordHasher
 
 	ValidateLogin(

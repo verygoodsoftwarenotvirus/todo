@@ -19,7 +19,7 @@ const (
 )
 
 var (
-	_ Enticator = (*BcryptAuthenticator)(nil)
+	_ Authenticator = (*BcryptAuthenticator)(nil)
 
 	//// ErrCostTooLow indicates that a password has too low a Bcrypt cost
 	//ErrCostTooLow = errors.New("stored password's cost is too low")
@@ -36,8 +36,8 @@ type BcryptAuthenticator struct {
 // BcryptHashCost is an arbitrary type alias for dependency injection's sake.
 type BcryptHashCost uint
 
-// ProvideBcrypt returns a Bcrypt-powered Enticator
-func ProvideBcrypt(hashCost BcryptHashCost, logger logging.Logger) Enticator {
+// ProvideBcrypt returns a Bcrypt-powered Authenticator
+func ProvideBcrypt(hashCost BcryptHashCost, logger logging.Logger) Authenticator {
 	ba := &BcryptAuthenticator{
 		logger:              logger.WithName("bcrypt"),
 		tracer:              tracing.ProvideTracer("authentication"),

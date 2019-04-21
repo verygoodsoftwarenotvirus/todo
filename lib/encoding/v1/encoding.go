@@ -14,14 +14,21 @@ var (
 	)
 )
 
-// ServerEncoderDecoder is an interface that allows for multiple implementations of HTTP response formats
-// RENAMEME
-type ServerEncoderDecoder interface {
-	DecodeResponse(*http.Request, interface{}) error
+type ServerEncoder interface {
 	EncodeResponse(http.ResponseWriter, interface{}) error
 }
 
-// jsonResponseEncoder is a dummy struct that implements our ServerEncoderDecoder interface
+type ServerDecoder interface {
+	DecodeResponse(*http.Request, interface{}) error
+}
+
+// EncoderDecoder is an interface that allows for multiple implementations of HTTP response formats
+type EncoderDecoder interface {
+	ServerDecoder
+	ServerEncoder
+}
+
+// jsonResponseEncoder is a dummy struct that implements our EncoderDecoder interface
 type jsonResponseEncoder struct{}
 
 // EncodeResponse encodes responses for JSON types
@@ -36,6 +43,6 @@ func (r *jsonResponseEncoder) DecodeResponse(req *http.Request, v interface{}) e
 }
 
 // ProvideJSONResponseEncoder provides a jsonResponseEncoder
-func ProvideJSONResponseEncoder() ServerEncoderDecoder {
+func ProvideJSONResponseEncoder() EncoderDecoder {
 	return &jsonResponseEncoder{}
 }

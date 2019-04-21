@@ -25,7 +25,7 @@ type (
 
 	// Service handles auth
 	Service struct {
-		authenticator libauth.Enticator
+		authenticator libauth.Authenticator
 		logger        logging.Logger
 		tracer        opentracing.Tracer
 
@@ -34,7 +34,7 @@ type (
 
 		userIDFetcher UserIDFetcher
 		cookieBuilder *securecookie.SecureCookie
-		encoder       encoding.ServerEncoderDecoder
+		encoder       encoding.EncoderDecoder
 	}
 )
 
@@ -45,11 +45,11 @@ type UserIDFetcher func(*http.Request) uint64
 func ProvideAuthService(
 	logger logging.Logger,
 	config *config.ServerConfig,
-	authenticator libauth.Enticator,
+	authenticator libauth.Authenticator,
 	database models.UserDataManager,
 	oauth2ClientsService *oauth2clients.Service,
 	userIDFetcher UserIDFetcher,
-	encoder encoding.ServerEncoderDecoder,
+	encoder encoding.EncoderDecoder,
 ) *Service {
 	svc := &Service{
 		logger:               logger.WithName(serviceName),

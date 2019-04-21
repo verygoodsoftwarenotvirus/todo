@@ -10,7 +10,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	libauth "gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
@@ -38,8 +37,6 @@ type (
 	Server struct {
 		DebugMode bool
 
-		authenticator libauth.Enticator
-
 		// Services
 		authService          *auth.Service
 		itemsService         models.ItemDataServer
@@ -53,7 +50,7 @@ type (
 		httpServer *http.Server
 		logger     logging.Logger
 		tracer     opentracing.Tracer
-		encoder    encoding.ServerEncoderDecoder
+		encoder    encoding.ServerEncoder
 
 		// Auth stuff
 		adminUserExists bool
@@ -64,7 +61,6 @@ type (
 // ProvideServer builds a new Server instance
 func ProvideServer(
 	config *config.ServerConfig,
-	authenticator libauth.Enticator,
 
 	// services
 	authService *auth.Service,
@@ -75,8 +71,7 @@ func ProvideServer(
 	// infra things
 	db database.Database,
 	logger logging.Logger,
-	httpServer *http.Server,
-	encoder encoding.ServerEncoderDecoder,
+	encoder encoding.EncoderDecoder,
 
 	// metrics things
 	metricsHandler metrics.Handler,
@@ -90,14 +85,13 @@ func ProvideServer(
 	}
 
 	srv := &Server{
-		DebugMode:     config.Server.Debug,
-		authenticator: authenticator,
+		DebugMode: config.Server.Debug,
 
 		// infra things
 		db:            db,
 		config:        config,
 		encoder:       encoder,
-		httpServer:    httpServer,
+		httpServer:    provideHTTPServer(),
 		logger:        logger.WithName("api_server"),
 		tracer:        tracing.ProvideTracer("api_server"),
 		cookieBuilder: securecookie.New(securecookie.GenerateRandomKey(64), []byte(config.Auth.CookieSecret)),

@@ -35,10 +35,10 @@ type (
 	Service struct {
 		cookieSecret  []byte
 		database      models.UserDataManager
-		authenticator auth.Enticator
+		authenticator auth.Authenticator
 		logger        logging.Logger
 		tracer        Tracer
-		encoder       encoding.ServerEncoderDecoder
+		encoder       encoding.EncoderDecoder
 		userIDFetcher func(*http.Request) uint64
 	}
 
@@ -51,9 +51,9 @@ func ProvideUsersService(
 	authSettings config.AuthSettings,
 	logger logging.Logger,
 	database database.Database,
-	authenticator auth.Enticator,
+	authenticator auth.Authenticator,
 	userIDFetcher UserIDFetcher,
-	encoder encoding.ServerEncoderDecoder,
+	encoder encoding.EncoderDecoder,
 ) *Service {
 	if userIDFetcher == nil {
 		panic("usernameFetcher must be provided")

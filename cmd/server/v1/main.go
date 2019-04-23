@@ -27,7 +27,6 @@ func main() {
 	}
 
 	server, err := BuildServer(cfg, logger, db)
-
 	if err != nil {
 		log.Fatal(err)
 	} else {

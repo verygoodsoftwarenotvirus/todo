@@ -3,7 +3,7 @@ FROM ubuntu:18.04
 
 WORKDIR /opt
 
-COPY client client
+COPY http_client http_client
 COPY tests/v1/load/locust .
 COPY requirements.txt requirements.txt
 

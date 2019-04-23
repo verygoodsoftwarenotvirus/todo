@@ -2,7 +2,6 @@ package httpclient
 
 import (
 	"fmt"
-	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -17,12 +16,6 @@ const (
 	localTestInstanceURL   = "http://localhost"
 	defaultTestInstanceURL = "http://todo-server"
 )
-
-func buildURL(parts ...string) string {
-	tu, _ := url.Parse(urlToUse)
-	u, _ := url.Parse(strings.Join(parts, "/"))
-	return tu.ResolveReference(u).String()
-}
 
 func init() {
 	if strings.ToLower(os.Getenv("DOCKER")) == "true" {

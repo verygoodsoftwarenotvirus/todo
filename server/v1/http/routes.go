@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -59,8 +58,8 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 	}
 
 	s.router.Route("/users", func(userRouter chi.Router) {
-		userRouter.With(s.usersService.UserLoginInputMiddleware).Post("/login", s.login)
-		userRouter.With(s.userCookieAuthenticationMiddleware).Post("/logout", s.logout)
+		userRouter.With(s.usersService.UserLoginInputMiddleware).Post("/login", s.authService.Login)
+		userRouter.With(s.authService.CookieAuthenticationMiddleware).Post("/logout", s.authService.Logout)
 
 		userIDPattern := fmt.Sprintf(`/{%s:[0-9_\-]+}`, users.URIParamKey)
 
@@ -73,12 +72,12 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 
 		// Updates:
 		userRouter.With(
-			s.userCookieAuthenticationMiddleware,
+			s.authService.CookieAuthenticationMiddleware,
 			s.usersService.TOTPSecretRefreshInputMiddleware,
 		).Post("/totp_secret/new", s.usersService.NewTOTPSecret)
 
 		userRouter.With(
-			s.userCookieAuthenticationMiddleware,
+			s.authService.CookieAuthenticationMiddleware,
 			s.usersService.PasswordUpdateInputMiddleware,
 		).Post("/password/new", s.usersService.UpdatePassword)
 	})
@@ -86,11 +85,8 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 	s.router.Route("/oauth2", func(oauth2Router chi.Router) {
 		oauth2Router.
 			With(
-				s.userCookieAuthenticationMiddleware,
-				s.buildRouteCtx(
-					oauth2clients.MiddlewareCtxKey,
-					new(models.OAuth2ClientCreationInput),
-				),
+				s.authService.CookieAuthenticationMiddleware,
+				s.oauth2ClientsService.CreationInputMiddleware,
 			).Post("/client", s.oauth2ClientsService.Create) // Create
 
 		oauth2Router.
@@ -109,7 +105,7 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 	})
 
 	s.router.
-		With(s.apiAuthenticationMiddleware(true)).
+		With(s.authService.AuthenticationMiddleware(true)).
 		Route("/api", func(apiRouter chi.Router) {
 			apiRouter.Route("/v1", func(v1Router chi.Router) {
 

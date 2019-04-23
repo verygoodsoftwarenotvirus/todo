@@ -13,12 +13,11 @@ var (
 	Providers = wire.NewSet(
 		paramFetcherProviders,
 		ProvideServer,
-		ProvideHTTPServer,
 	)
 )
 
-// ProvideHTTPServer provides an HTTP httpServer
-func ProvideHTTPServer() *http.Server {
+// provideHTTPServer provides an HTTP httpServer
+func provideHTTPServer() *http.Server {
 	// heavily inspired by https://blog.cloudflare.com/exposing-go-on-the-internet/
 	srv := &http.Server{
 		ReadTimeout:  5 * time.Second,

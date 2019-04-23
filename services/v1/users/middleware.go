@@ -10,8 +10,8 @@ import (
 
 // UserLoginInputMiddleware fetches user login input from requests
 func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
-	x := new(models.UserLoginInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		x := new(models.UserLoginInput)
 		s.logger.WithRequest(req).Debug("UserLoginInputMiddleware called")
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
@@ -25,8 +25,8 @@ func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 
 // UserInputMiddleware fetches user input from requests
 func (s *Service) UserInputMiddleware(next http.Handler) http.Handler {
-	x := new(models.UserInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		x := new(models.UserInput)
 		s.logger.WithRequest(req).Debug("UserInputMiddleware called")
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
@@ -40,8 +40,8 @@ func (s *Service) UserInputMiddleware(next http.Handler) http.Handler {
 
 // PasswordUpdateInputMiddleware fetches password update input from requests
 func (s *Service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler {
-	x := new(models.PasswordUpdateInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		x := new(models.PasswordUpdateInput)
 		s.logger.WithRequest(req).Debug("PasswordUpdateInputMiddleware called")
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
@@ -55,8 +55,8 @@ func (s *Service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler 
 
 // TOTPSecretRefreshInputMiddleware fetches 2FA update input from requests
 func (s *Service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handler {
-	x := new(models.TOTPSecretRefreshInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		x := new(models.TOTPSecretRefreshInput)
 		s.logger.WithRequest(req).Debug("TOTPSecretRefreshInputMiddleware called")
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")

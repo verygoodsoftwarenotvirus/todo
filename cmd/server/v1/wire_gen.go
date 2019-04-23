@@ -14,6 +14,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1/prometheus"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
+	auth2 "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -23,20 +24,22 @@ import (
 
 func BuildServer(cfg *config.ServerConfig, logger logging.Logger, database2 database.Database) (*server.Server, error) {
 	bcryptHashCost := auth.ProvideBcryptHashCost()
-	enticator := auth.ProvideBcrypt(bcryptHashCost, logger)
-	userIDFetcher := httpserver.ProvideUserIDFetcher()
+	authenticator := auth.ProvideBcrypt(bcryptHashCost, logger)
+	userDataManager := users.ProvideUserDataManager(database2)
+	clientIDFetcher := httpserver.ProvideOAuth2ServiceClientIDFetcher()
+	encoderDecoder := encoding.ProvideJSONResponseEncoder()
+	service := oauth2clients.ProvideOAuth2ClientsService(logger, database2, authenticator, clientIDFetcher, encoderDecoder)
+	userIDFetcher := httpserver.ProvideAuthUserIDFetcher()
+	authService := auth2.ProvideAuthService(logger, cfg, authenticator, userDataManager, service, userIDFetcher, encoderDecoder)
+	itemsUserIDFetcher := httpserver.ProvideUserIDFetcher()
 	itemIDFetcher := httpserver.ProvideItemIDFetcher()
-	serverEncoderDecoder := encoding.ProvideJSONResponseEncoder()
-	service := items.ProvideItemsService(logger, database2, userIDFetcher, itemIDFetcher, serverEncoderDecoder)
+	itemsService := items.ProvideItemsService(logger, database2, itemsUserIDFetcher, itemIDFetcher, encoderDecoder)
 	authSettings := config.ProvideConfigAuthSettings(cfg)
 	usersUserIDFetcher := httpserver.ProvideUsernameFetcher()
-	usersService := users.ProvideUsersService(authSettings, logger, database2, enticator, usersUserIDFetcher, serverEncoderDecoder)
-	clientIDFetcher := httpserver.ProvideOAuth2ServiceClientIDFetcher()
-	oauth2clientsService := oauth2clients.ProvideOAuth2ClientsService(logger, database2, enticator, clientIDFetcher, serverEncoderDecoder)
-	httpServer := httpserver.ProvideHTTPServer()
+	usersService := users.ProvideUsersService(authSettings, logger, database2, authenticator, usersUserIDFetcher, encoderDecoder)
 	handler := prometheus.ProvideMetricsHandler()
 	middleware := prometheus.ProvideMiddleware()
-	httpserverServer, err := httpserver.ProvideServer(cfg, enticator, service, usersService, oauth2clientsService, database2, logger, httpServer, serverEncoderDecoder, handler, middleware)
+	httpserverServer, err := httpserver.ProvideServer(cfg, authService, itemsService, usersService, service, database2, logger, encoderDecoder, handler, middleware)
 	if err != nil {
 		return nil, err
 	}

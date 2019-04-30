@@ -4,12 +4,11 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/base32"
-	"fmt"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/opentracing/opentracing-go"
+	"go.opencensus.io/trace"
 )
 
 const (
@@ -50,10 +49,8 @@ func (s *Service) fetchUserID(req *http.Request) uint64 {
 
 // List is a handler that returns a list of OAuth2 clients
 func (s *Service) List(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	span := opentracing.SpanFromContext(ctx)
-	serverSpan := s.tracer.StartSpan("list_route", opentracing.ChildOf(span.Context()))
-	defer serverSpan.Finish()
+	ctx, span := trace.StartSpan(req.Context(), "list_route")
+	defer span.End()
 
 	userID := s.fetchUserID(req)
 	qf := models.ExtractQueryFilter(req)
@@ -80,10 +77,8 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 
 // Create is our OAuth2 client creation route
 func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	span := opentracing.SpanFromContext(ctx)
-	serverSpan := s.tracer.StartSpan("create_route", opentracing.ChildOf(span.Context()))
-	defer serverSpan.Finish()
+	ctx, span := trace.StartSpan(req.Context(), "create_route")
+	defer span.End()
 
 	s.logger.Debug("oauth2Client creation route called")
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.OAuth2ClientCreationInput)
@@ -136,6 +131,8 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	s.oauth2ClientCounter.Increment(ctx)
+
 	logger.WithValues(map[string]interface{}{
 		"client_id":       x.ID,
 		"belongs_to":      x.BelongsTo,
@@ -148,10 +145,8 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 
 // Read is a route handler for retrieving an OAuth2 client
 func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	span := opentracing.SpanFromContext(ctx)
-	serverSpan := s.tracer.StartSpan("read_route", opentracing.ChildOf(span.Context()))
-	defer serverSpan.Finish()
+	ctx, span := trace.StartSpan(req.Context(), "read_route")
+	defer span.End()
 
 	userID := s.fetchUserID(req)
 	oauth2ClientID := s.urlClientIDExtractor(req)
@@ -164,14 +159,6 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	x, err := s.database.GetOAuth2Client(ctx, oauth2ClientID, userID)
 	if err == sql.ErrNoRows {
 		logger.Debug("Read called on nonexistent client")
-
-		clients, _ := s.database.GetAllOAuth2Clients(ctx)
-		if clients != nil && len(clients) > 0 {
-			for _, client := range clients {
-				logger.Debug(fmt.Sprintf("client ID %d belongs to %d", client.ID, client.BelongsTo))
-			}
-		}
-
 		res.WriteHeader(http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -187,11 +174,8 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 
 // Delete is a route handler for deleting an OAuth2 client
 func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
-
-	ctx := req.Context()
-	span := opentracing.SpanFromContext(ctx)
-	serverSpan := s.tracer.StartSpan("delete_route", opentracing.ChildOf(span.Context()))
-	defer serverSpan.Finish()
+	ctx, span := trace.StartSpan(req.Context(), "delete_route")
+	defer span.End()
 
 	userID := s.fetchUserID(req)
 	oauth2ClientID := s.urlClientIDExtractor(req)
@@ -206,6 +190,8 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	s.oauth2ClientCounter.Decrement(ctx)
 
 	res.WriteHeader(http.StatusNoContent)
 }

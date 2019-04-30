@@ -7,15 +7,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 
-	"github.com/google/wire"
 	_ "github.com/mattn/go-sqlite3" // for the init import call
-)
-
-var (
-	// Providers is what we provide for dependency injection
-	Providers = wire.NewSet(
-		ProvideSqlite,
-	)
 )
 
 type (

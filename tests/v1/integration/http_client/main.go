@@ -9,7 +9,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 
 	"github.com/stretchr/testify/require"
 )
@@ -49,7 +48,6 @@ func initializeClient(clientID, clientSecret string) *client.V1Client {
 		uri,
 		zerolog.ProvideLogger(),
 		buildHTTPClient(),
-		tracing.ProvideNoopTracer(),
 		debug,
 	)
 	if err != nil {

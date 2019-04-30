@@ -19,8 +19,8 @@ services:
     depends_on:
       - prometheus
       - grafana
-    logging:
-      driver: none
+    # logging:
+    #   driver: none
 
   locust:
     build:
@@ -44,8 +44,8 @@ services:
       POSTGRES_PASSWORD: hunter2
     volumes:
       - ../database/_postgres_init_.sql:/docker-entrypoint-initdb.d/10-init.sql
-    logging:
-      driver: none
+    # logging:
+    #   driver: none
 
   tracing-server:
     image: jaegertracing/all-in-one:latest

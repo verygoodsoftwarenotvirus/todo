@@ -11,7 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1/prometheus"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1/opencensus"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
 	auth2 "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
@@ -28,18 +28,26 @@ func BuildServer(cfg *config.ServerConfig, logger logging.Logger, database2 data
 	userDataManager := users.ProvideUserDataManager(database2)
 	clientIDFetcher := httpserver.ProvideOAuth2ServiceClientIDFetcher()
 	encoderDecoder := encoding.ProvideJSONResponseEncoder()
-	service := oauth2clients.ProvideOAuth2ClientsService(logger, database2, authenticator, clientIDFetcher, encoderDecoder)
+	unitCounterProvider := opencensus.ProvideUnitCounterProvider()
+	service, err := oauth2clients.ProvideOAuth2ClientsService(logger, database2, authenticator, clientIDFetcher, encoderDecoder, unitCounterProvider)
+	if err != nil {
+		return nil, err
+	}
 	userIDFetcher := httpserver.ProvideAuthUserIDFetcher()
 	authService := auth2.ProvideAuthService(logger, cfg, authenticator, userDataManager, service, userIDFetcher, encoderDecoder)
 	itemsUserIDFetcher := httpserver.ProvideUserIDFetcher()
 	itemIDFetcher := httpserver.ProvideItemIDFetcher()
-	itemsService := items.ProvideItemsService(logger, database2, itemsUserIDFetcher, itemIDFetcher, encoderDecoder)
+	itemsService, err := items.ProvideItemsService(logger, database2, itemsUserIDFetcher, itemIDFetcher, encoderDecoder, unitCounterProvider)
+	if err != nil {
+		return nil, err
+	}
 	authSettings := config.ProvideConfigAuthSettings(cfg)
 	usersUserIDFetcher := httpserver.ProvideUsernameFetcher()
-	usersService := users.ProvideUsersService(authSettings, logger, database2, authenticator, usersUserIDFetcher, encoderDecoder)
-	handler := prometheus.ProvideMetricsHandler()
-	middleware := prometheus.ProvideMiddleware()
-	httpserverServer, err := httpserver.ProvideServer(cfg, authService, itemsService, usersService, service, database2, logger, encoderDecoder, handler, middleware)
+	usersService, err := users.ProvideUsersService(authSettings, logger, database2, authenticator, usersUserIDFetcher, encoderDecoder, unitCounterProvider)
+	if err != nil {
+		return nil, err
+	}
+	httpserverServer, err := httpserver.ProvideServer(cfg, authService, itemsService, usersService, service, database2, logger, encoderDecoder)
 	if err != nil {
 		return nil, err
 	}

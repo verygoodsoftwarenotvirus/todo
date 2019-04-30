@@ -103,7 +103,7 @@ const getUserCountQuery = `
 		COUNT(*)
 	FROM
 		users
-	WHERE archived_on is null
+	WHERE archived_on IS NULL
 `
 
 // GetUserCount fetches a count of users from the postgres database that meet a particular filter
@@ -126,7 +126,7 @@ const getUsersQuery = `
 	FROM
 		users
 	WHERE
-		archived_on is null
+		archived_on IS NULL
 	LIMIT $1
 	OFFSET $2
 `

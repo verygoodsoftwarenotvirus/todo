@@ -4,12 +4,11 @@ import (
 	"context"
 	"math"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
-
-	"github.com/opentracing/opentracing-go"
 	"github.com/pquerna/otp/totp"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"golang.org/x/crypto/bcrypt"
+
+	"go.opencensus.io/trace"
 )
 
 const (
@@ -30,7 +29,6 @@ type BcryptAuthenticator struct {
 	logger              logging.Logger
 	hashCost            uint
 	minimumPasswordSize uint
-	tracer              opentracing.Tracer
 }
 
 // BcryptHashCost is an arbitrary type alias for dependency injection's sake.
@@ -40,7 +38,6 @@ type BcryptHashCost uint
 func ProvideBcrypt(hashCost BcryptHashCost, logger logging.Logger) Authenticator {
 	ba := &BcryptAuthenticator{
 		logger:              logger.WithName("bcrypt"),
-		tracer:              tracing.ProvideTracer("authentication"),
 		hashCost:            uint(math.Min(float64(DefaultBcryptHashCost), float64(hashCost))),
 		minimumPasswordSize: defaultMinimumPasswordSize,
 	}
@@ -49,8 +46,8 @@ func ProvideBcrypt(hashCost BcryptHashCost, logger logging.Logger) Authenticator
 
 // HashPassword takes a password and hashes it using bcrypt
 func (b *BcryptAuthenticator) HashPassword(ctx context.Context, password string) (string, error) {
-	span := tracing.FetchSpanFromContext(ctx, b.tracer, "HashPassword")
-	defer span.Finish()
+	ctx, span := trace.StartSpan(ctx, "HashPassword")
+	defer span.End()
 
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), int(b.hashCost))
 	return string(hashedPass), err
@@ -58,8 +55,8 @@ func (b *BcryptAuthenticator) HashPassword(ctx context.Context, password string)
 
 // ValidateLogin validates a password and two factor code
 func (b *BcryptAuthenticator) ValidateLogin(ctx context.Context, hashedPassword, providedPassword, twoFactorSecret, twoFactorCode string) (bool, error) {
-	span := tracing.FetchSpanFromContext(ctx, b.tracer, "ValidateLogin")
-	defer span.Finish()
+	ctx, span := trace.StartSpan(ctx, "ValidateLogin")
+	defer span.End()
 
 	passwordMatches := b.PasswordMatches(ctx, hashedPassword, providedPassword, nil)
 	if !totp.Validate(twoFactorCode, twoFactorSecret) {

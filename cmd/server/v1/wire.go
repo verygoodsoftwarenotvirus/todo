@@ -8,7 +8,7 @@ import (
 	libauth "gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1/prometheus"
+	metricsProvider "gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1/opencensus"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
@@ -36,7 +36,7 @@ func BuildServer(
 		httpserver.Providers,
 
 		// metrics
-		prometheus.Providers,
+		metricsProvider.Providers,
 
 		// Services
 		auth.Providers,

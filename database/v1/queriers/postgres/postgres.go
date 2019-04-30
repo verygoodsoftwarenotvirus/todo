@@ -9,27 +9,12 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 
 	"github.com/ExpansiveWorlds/instrumentedsql"
-	"github.com/google/wire"
 	postgres "github.com/lib/pq"
-	"github.com/opentracing/opentracing-go"
-)
-
-var (
-	// Providers is what we provide for dependency injection
-	Providers = wire.NewSet(
-		ProvidePostgresDB,
-		ProvidePostgres,
-		ProvidePostgresTracer,
-	)
 )
 
 type (
-	// Tracer is a tracing wrapper
-	Tracer opentracing.Tracer
-
 	// Postgres is our main Postgres interaction database
 	Postgres struct {
 		debug       bool
@@ -53,11 +38,6 @@ type (
 		QueryRowContext(ctx context.Context, args ...interface{}) *sql.Row
 	}
 )
-
-// ProvidePostgresTracer provides a Postgres tracer
-func ProvidePostgresTracer() Tracer {
-	return tracing.ProvideTracer("postgres")
-}
 
 func strictQueryLogger(logger logging.Logger) instrumentedsql.LoggerFunc {
 	return func(ctx context.Context, msg string, keyvals ...interface{}) {

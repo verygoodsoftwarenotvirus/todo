@@ -5,10 +5,7 @@ import (
 	"crypto/rand"
 	"errors"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
-
 	"github.com/google/wire"
-	"github.com/opentracing/opentracing-go"
 )
 
 var (
@@ -20,7 +17,6 @@ var (
 	// Providers represents what this package offers to external libraries in the way of consntructors
 	Providers = wire.NewSet(
 		ProvideBcrypt,
-		ProvideTracer,
 		ProvideBcryptHashCost,
 	)
 )
@@ -35,14 +31,6 @@ type PasswordHasher interface {
 	PasswordIsAcceptable(password string) bool
 	HashPassword(ctx context.Context, password string) (string, error)
 	PasswordMatches(ctx context.Context, hashedPassword, providedPassword string, salt []byte) bool
-}
-
-// Tracer is an obligatory type alias we have for dependency injection's sake
-type Tracer opentracing.Tracer
-
-// ProvideTracer provides a Tracer
-func ProvideTracer() Tracer {
-	return tracing.ProvideTracer("password-authentication")
 }
 
 // Authenticator is a poorly named Authenticator interface

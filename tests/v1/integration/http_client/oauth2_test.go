@@ -7,7 +7,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/noop"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pquerna/otp/totp"
@@ -67,7 +66,6 @@ func TestOAuth2Clients(test *testing.T) {
 		todoClient.URL,
 		noop.ProvideNoopLogger(),
 		todoClient.PlainClient(),
-		tracing.ProvideNoopTracer(),
 		debug,
 	)
 	require.NoError(test, err, "error setting up auxiliary client")
@@ -157,7 +155,6 @@ func TestOAuth2Clients(test *testing.T) {
 				todoClient.URL,
 				noop.ProvideNoopLogger(),
 				buildHTTPClient(),
-				tracing.ProvideNoopTracer(),
 				true,
 			)
 			checkValueAndError(test, c2, err)

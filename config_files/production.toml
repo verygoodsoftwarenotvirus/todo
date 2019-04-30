@@ -1,11 +1,11 @@
 [meta]
+metrics_namespace = "todo_server"
 # tracing_enabled = true
 # debug = true
 
 [server]
 http_port = 80
 debug = true
-metrics_namespace = "todo_server"
 frontend_files_directory = "/frontend"
 
 [auth]

@@ -9,10 +9,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/manage"
@@ -22,15 +21,12 @@ import (
 
 const (
 	// MiddlewareCtxKey is a string alias for referring to OAuth2 clients in contexts
-	MiddlewareCtxKey models.ContextKey = "oauth2_client"
-
-	serviceName = "oauth2_clients_service"
+	MiddlewareCtxKey models.ContextKey   = "oauth2_client"
+	counterName      metrics.CounterName = "oauth2_clients"
+	serviceName                          = "oauth2_clients_service"
 )
 
 type (
-	// Tracer is a type alias we use for dependency injection
-	Tracer opentracing.Tracer
-
 	// ClientIDFetcher is a function for fetching client IDs out of requests
 	ClientIDFetcher func(req *http.Request) uint64
 
@@ -39,13 +35,13 @@ type (
 		database             database.Database
 		authenticator        auth.Authenticator
 		logger               logging.Logger
-		tracer               opentracing.Tracer
 		encoder              encoding.EncoderDecoder
 		urlClientIDExtractor func(req *http.Request) uint64
 
-		tokenStore        oauth2.TokenStore
-		oauth2Handler     *oauth2server.Server
-		oauth2ClientStore *oauth2store.ClientStore
+		tokenStore          oauth2.TokenStore
+		oauth2Handler       *oauth2server.Server
+		oauth2ClientStore   *oauth2store.ClientStore
+		oauth2ClientCounter metrics.UnitCounter
 	}
 )
 
@@ -82,7 +78,13 @@ func ProvideOAuth2ClientsService(
 	authenticator auth.Authenticator,
 	clientIDFetcher ClientIDFetcher,
 	encoder encoding.EncoderDecoder,
-) *Service {
+	counterProvider metrics.UnitCounterProvider,
+) (*Service, error) {
+	ctx := context.Background()
+	counter, err := counterProvider(counterName, "number of oauth2 clients managed by the oauth2 client service")
+	if err != nil {
+		return nil, errors.Wrap(err, "error initializing counter")
+	}
 
 	manager := manage.NewDefaultManager()
 	clientStore := newClientStore(database)
@@ -94,14 +96,20 @@ func ProvideOAuth2ClientsService(
 	s := &Service{
 		database:             database,
 		logger:               logger.WithName(serviceName),
-		tracer:               tracing.ProvideTracer(serviceName),
 		encoder:              encoder,
 		authenticator:        authenticator,
 		urlClientIDExtractor: clientIDFetcher,
 
-		tokenStore:    tokenStore,
-		oauth2Handler: server,
+		oauth2ClientCounter: counter,
+		tokenStore:          tokenStore,
+		oauth2Handler:       server,
 	}
+
+	count, err := database.GetAllOAuth2ClientCount(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "setting count value")
+	}
+	counter.IncrementBy(ctx, count)
 
 	s.oauth2Handler.SetAllowGetAccessRequest(true)
 	s.oauth2Handler.SetClientAuthorizedHandler(s.ClientAuthorizedHandler)
@@ -114,11 +122,11 @@ func ProvideOAuth2ClientsService(
 	s.oauth2Handler.Config.AllowedGrantTypes = []oauth2.GrantType{
 		oauth2.AuthorizationCode,
 		oauth2.ClientCredentials,
-		oauth2.Refreshing,
-		oauth2.Implicit,
+		oauth2.Refreshing, // TODO: maybe these
+		oauth2.Implicit,   // two aren't necessary?
 	}
 
-	return s
+	return s, nil
 }
 
 // HandleAuthorizeRequest is a simple wrapper around the internal server's HandleAuthorizeRequest

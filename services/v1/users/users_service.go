@@ -1,6 +1,7 @@
 package users
 
 import (
+	"context"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
@@ -8,18 +9,18 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/opentracing/opentracing-go"
+	"github.com/pkg/errors"
 )
 
 const (
 
 	// MiddlewareCtxKey is the context key we search for when interacting with user-related requests
-	MiddlewareCtxKey models.ContextKey = "user_input"
-
-	serviceName = "users_service"
+	MiddlewareCtxKey models.ContextKey   = "user_input"
+	counterName      metrics.CounterName = "users"
+	serviceName                          = "users_service"
 )
 
 type (
@@ -28,18 +29,15 @@ type (
 		Validate(req *http.Request) (bool, error)
 	}
 
-	// Tracer is an arbitrary type alias we use for dependency injection
-	Tracer opentracing.Tracer
-
 	// Service handles our users
 	Service struct {
 		cookieSecret  []byte
 		database      models.UserDataManager
 		authenticator auth.Authenticator
 		logger        logging.Logger
-		tracer        Tracer
 		encoder       encoding.EncoderDecoder
 		userIDFetcher func(*http.Request) uint64
+		userCounter   metrics.UnitCounter
 	}
 
 	// UserIDFetcher fetches usernames from requests
@@ -54,10 +52,23 @@ func ProvideUsersService(
 	authenticator auth.Authenticator,
 	userIDFetcher UserIDFetcher,
 	encoder encoding.EncoderDecoder,
-) *Service {
+	counterProvider metrics.UnitCounterProvider,
+) (*Service, error) {
+	ctx := context.Background()
 	if userIDFetcher == nil {
-		panic("usernameFetcher must be provided")
+		return nil, errors.New("usernameFetcher must be provided")
 	}
+
+	counter, err := counterProvider(counterName, "number of users managed by the users service")
+	if err != nil {
+		return nil, errors.Wrap(err, "error initializing counter")
+	}
+
+	userCount, err := database.GetUserCount(ctx, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "fetching user count")
+	}
+	counter.IncrementBy(ctx, userCount)
 
 	us := &Service{
 		cookieSecret:  []byte(authSettings.CookieSecret),
@@ -65,8 +76,8 @@ func ProvideUsersService(
 		database:      database,
 		authenticator: authenticator,
 		userIDFetcher: userIDFetcher,
-		tracer:        tracing.ProvideTracer(serviceName),
 		encoder:       encoder,
+		userCounter:   counter,
 	}
-	return us
+	return us, nil
 }

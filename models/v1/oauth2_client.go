@@ -17,6 +17,7 @@ const (
 type OAuth2ClientDataManager interface {
 	GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*OAuth2Client, error)
 	GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*OAuth2Client, error)
+	GetAllOAuth2ClientCount(ctx context.Context) (uint64, error)
 	GetOAuth2ClientCount(ctx context.Context, filter *QueryFilter, userID uint64) (uint64, error)
 	GetOAuth2Clients(ctx context.Context, filter *QueryFilter, userID uint64) (*OAuth2ClientList, error)
 	GetAllOAuth2Clients(ctx context.Context) ([]OAuth2Client, error)

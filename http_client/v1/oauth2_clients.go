@@ -5,11 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
+	"go.opencensus.io/trace"
 )
 
 const oauth2ClientsBasePath = "oauth2/clients"
@@ -66,12 +65,12 @@ func (c *V1Client) UpdateOAuth2Client(ctx context.Context, updated *models.OAuth
 		"client_id": updated.ClientID,
 	})
 
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "UpdateOAuth2Client")
-	span.SetTag("OAuth2ClientID", updated.ID)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
+	ctx, span := trace.StartSpan(ctx, "UpdateOAuth2Client")
+	defer span.End()
+	idStr := strconv.FormatUint(updated.ID, 10)
+	span.AddAttributes(trace.StringAttribute("oauth2_client_id", idStr))
 
-	uri := c.BuildURL(nil, oauth2ClientsBasePath, strconv.FormatUint(updated.ID, 10))
+	uri := c.BuildURL(nil, oauth2ClientsBasePath, idStr)
 	if err := c.put(ctx, uri, updated, &updated); err != nil {
 		logger.Error(err, "error encountered updating OAuth2 client")
 		return err
@@ -83,10 +82,10 @@ func (c *V1Client) UpdateOAuth2Client(ctx context.Context, updated *models.OAuth
 func (c *V1Client) DeleteOAuth2Client(ctx context.Context, id uint64) error {
 	logger := c.logger.WithValue("oauth2client_id", id)
 
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "DeleteOAuth2Client")
-	span.SetTag("OAuth2ClientID", id)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
+	ctx, span := trace.StartSpan(ctx, "DeleteOAuth2Client")
+	defer span.End()
+	idStr := strconv.FormatUint(id, 10)
+	span.AddAttributes(trace.StringAttribute("oauth2_client_id", idStr))
 
 	uri := c.BuildURL(nil, oauth2ClientsBasePath, strconv.FormatUint(id, 10))
 	if err := c.delete(ctx, uri); err != nil {

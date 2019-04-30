@@ -1,19 +1,16 @@
 package httpserver
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
@@ -22,7 +19,13 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/gorilla/securecookie"
-	"github.com/opentracing/opentracing-go"
+	"github.com/pkg/errors"
+	//
+	"contrib.go.opencensus.io/exporter/jaeger"
+	"contrib.go.opencensus.io/exporter/prometheus"
+	"go.opencensus.io/plugin/ochttp"
+	"go.opencensus.io/stats/view"
+	"go.opencensus.io/trace"
 )
 
 const (
@@ -30,9 +33,6 @@ const (
 )
 
 type (
-	// Tracer is an arbitrary type we use for dependency injection
-	Tracer opentracing.Tracer
-
 	// Server is our API httpServer
 	Server struct {
 		DebugMode bool
@@ -49,7 +49,6 @@ type (
 		router     *chi.Mux
 		httpServer *http.Server
 		logger     logging.Logger
-		tracer     opentracing.Tracer
 		encoder    encoding.ServerEncoder
 
 		// Auth stuff
@@ -72,10 +71,6 @@ func ProvideServer(
 	db database.Database,
 	logger logging.Logger,
 	encoder encoding.EncoderDecoder,
-
-	// metrics things
-	metricsHandler metrics.Handler,
-	metricsMiddleware metrics.Middleware,
 ) (*Server, error) {
 
 	if len(config.Auth.CookieSecret) < 32 {
@@ -93,7 +88,6 @@ func ProvideServer(
 		encoder:       encoder,
 		httpServer:    provideHTTPServer(),
 		logger:        logger.WithName("api_server"),
-		tracer:        tracing.ProvideTracer("api_server"),
 		cookieBuilder: securecookie.New(securecookie.GenerateRandomKey(64), []byte(config.Auth.CookieSecret)),
 
 		// services
@@ -103,14 +97,42 @@ func ProvideServer(
 		oauth2ClientsService: oauth2Service,
 	}
 
-	srv.logger.Info("migrating database")
-	if err := srv.db.Migrate(context.Background()); err != nil {
-		return nil, err
-	}
-	srv.logger.Info("database migrated!")
+	// begin new monitoring stuff
 
-	srv.setupRouter(config.Server.FrontendFilesDirectory, metricsHandler, metricsMiddleware)
-	srv.httpServer.Handler = srv.router
+	// Firstly, we'll register ochttp Server views.
+	if err := view.Register(ochttp.DefaultServerViews...); err != nil {
+		log.Fatalf("Failed to register server views for HTTP metrics: %v", err)
+	}
+
+	pe, err := prometheus.NewExporter(prometheus.Options{
+		Namespace: string(config.Meta.MetricsNamespace),
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create Prometheus exporter")
+	}
+	view.RegisterExporter(pe)
+
+	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
+
+	je, err := jaeger.NewExporter(jaeger.Options{
+		AgentEndpoint: fmt.Sprintf("%s:%s", os.Getenv("JAEGER_AGENT_HOST"), os.Getenv("JAEGER_AGENT_PORT")),
+		Process: jaeger.Process{
+			ServiceName: os.Getenv("JAEGER_SERVICE_NAME"),
+		},
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create Jaeger exporter")
+	}
+
+	trace.RegisterExporter(je)
+
+	// end new monitoring stuff
+
+	srv.setupRouter(config.Server.FrontendFilesDirectory, pe)
+	srv.httpServer.Handler = &ochttp.Handler{
+		Handler:        srv.router,
+		FormatSpanName: formatSpanNameForRequest,
+	}
 
 	return srv, nil
 }

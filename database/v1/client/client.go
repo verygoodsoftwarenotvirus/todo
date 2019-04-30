@@ -5,8 +5,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
-
-	"github.com/opentracing/opentracing-go"
 )
 
 var _ database.Database = (*Client)(nil)
@@ -25,7 +23,6 @@ type Client struct {
 
 	debug  bool
 	logger logging.Logger
-	tracer opentracing.Tracer
 }
 
 // Migrate is a simple wrapper around the core database Migrate call
@@ -43,14 +40,18 @@ func ProvideDatabaseClient(
 	database database.Database,
 	debug bool,
 	logger logging.Logger,
-	tracer Tracer,
 ) (database.Database, error) {
 	c := &Client{
 		database: database,
 		debug:    debug,
 		logger:   logger.WithName("db_client"),
-		tracer:   tracer,
 	}
+
+	logger.Debug("migrating database")
+	if err := c.database.Migrate(context.Background()); err != nil {
+		return nil, err
+	}
+	logger.Debug("database migrated!")
 
 	return c, nil
 }

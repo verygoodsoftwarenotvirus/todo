@@ -10,7 +10,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 
 	"github.com/google/wire"
 	"github.com/pkg/errors"
@@ -59,15 +58,15 @@ type (
 	// MetaSettings is a container struct for dealing with settings pertaining to operations matters for the server.
 	MetaSettings struct {
 		// NOTE: this debug should override all other debugs. That is to say, if it is enabled, all of them are enabled.
-		Debug bool `mapstructure:"debug"`
+		Debug            bool              `mapstructure:"debug"`
+		MetricsNamespace metrics.Namespace `mapstructure:"metrics_namespace"`
 	}
 
 	// ServerSettings is a container struct for dealing with settings pertaining to
 	ServerSettings struct {
-		HTTPPort               uint16            `mapstructure:"http_port"`
-		Debug                  bool              `mapstructure:"debug"`
-		FrontendFilesDirectory string            `mapstructure:"frontend_files_directory"`
-		MetricsNamespace       metrics.Namespace `mapstructure:"metrics_namespace"`
+		HTTPPort               uint16 `mapstructure:"http_port"`
+		Debug                  bool   `mapstructure:"debug"`
+		FrontendFilesDirectory string `mapstructure:"frontend_files_directory"`
 	}
 
 	// DatabaseSettings is a container struct for dealing with settings pertaining to
@@ -110,9 +109,8 @@ func ParseConfigFile(filename string) (*ServerConfig, error) {
 	return serverConfig, nil
 }
 
-// ProvideDatabase provides a database base
+// ProvideDatabase provides a database implementation dependent on the configuration
 func (cfg *ServerConfig) ProvideDatabase(logger logging.Logger) (database.Database, error) {
-	tracer := tracing.ProvideTracer("database-client")
 	debug := cfg.Database.Debug || cfg.Meta.Debug
 	connectionDetails := cfg.Database.ConnectionDetails
 
@@ -124,21 +122,21 @@ func (cfg *ServerConfig) ProvideDatabase(logger logging.Logger) (database.Databa
 		}
 		pg := postgres.ProvidePostgres(debug, rawDB, logger, connectionDetails)
 
-		return dbclient.ProvideDatabaseClient(pg, debug, logger, tracer)
+		return dbclient.ProvideDatabaseClient(pg, debug, logger)
 	case "sqlite":
 		sqliteDB, err := sqlite.ProvideSqlite(debug, logger, connectionDetails)
 		if err != nil {
 			return nil, errors.Wrap(err, "establish sqlite database connection")
 		}
 
-		return dbclient.ProvideDatabaseClient(sqliteDB, debug, logger, tracer)
+		return dbclient.ProvideDatabaseClient(sqliteDB, debug, logger)
 	default:
 		sqliteDB, err := sqlite.ProvideSqlite(debug, logger, ":memory:")
 		if err != nil {
 			return nil, errors.Wrap(err, "establish sqlite database connection")
 		}
 
-		return dbclient.ProvideDatabaseClient(sqliteDB, debug, logger, tracer)
+		return dbclient.ProvideDatabaseClient(sqliteDB, debug, logger)
 	}
 }
 

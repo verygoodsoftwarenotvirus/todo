@@ -2,22 +2,22 @@ package dbclient
 
 import (
 	"context"
+	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/opentracing/opentracing-go"
+	"go.opencensus.io/trace"
 )
 
 var _ models.ItemDataManager = (*Client)(nil)
 
 // GetItem fetches an item from the postgres database
 func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetItem")
-	span.SetTag("item_id", itemID)
-	span.SetTag("user_id", userID)
-	ctx = opentracing.ContextWithSpan(ctx, span)
-	defer span.Finish()
+	ctx, span := trace.StartSpan(ctx, "GetItem")
+	defer span.End()
+
+	span.AddAttributes(trace.StringAttribute("item_id", strconv.FormatUint(itemID, 10)))
+	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
 
 	c.logger.WithValues(map[string]interface{}{
 		"item_id": itemID,
@@ -29,10 +29,9 @@ func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*models.It
 
 // GetItemCount fetches the count of items from the postgres database that meet a particular filter
 func (c *Client) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetItemCount")
-	span.SetTag("user_id", userID)
-	ctx = opentracing.ContextWithSpan(ctx, span)
-	defer span.Finish()
+	ctx, span := trace.StartSpan(ctx, "GetItemCount")
+	defer span.End()
+	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
 
 	c.logger.WithValues(map[string]interface{}{
 		"filter":  filter,
@@ -48,12 +47,29 @@ func (c *Client) GetItemCount(ctx context.Context, filter *models.QueryFilter, u
 	return c.database.GetItemCount(ctx, filter, userID)
 }
 
+// GetAllItemsCount fetches the count of items from the postgres database that meet a particular filter
+func (c *Client) GetAllItemsCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
+	ctx, span := trace.StartSpan(ctx, "GetAllItemsCount")
+	defer span.End()
+
+	c.logger.WithValues(map[string]interface{}{
+		"filter": filter,
+	}).Debug("GetItemCount called")
+
+	if filter == nil {
+		c.logger.Debug("using default query filter")
+		filter = models.DefaultQueryFilter
+	}
+	filter.SetPage(filter.Page)
+
+	return c.database.GetAllItemsCount(ctx, filter)
+}
+
 // GetItems fetches a list of items from the postgres database that meet a particular filter
 func (c *Client) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "GetItems")
-	span.SetTag("user_id", userID)
-	ctx = opentracing.ContextWithSpan(ctx, span)
-	defer span.Finish()
+	ctx, span := trace.StartSpan(ctx, "GetItems")
+	defer span.End()
+	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
 
 	c.logger.WithValues(map[string]interface{}{
 		"filter":  filter,
@@ -71,9 +87,8 @@ func (c *Client) GetItems(ctx context.Context, filter *models.QueryFilter, userI
 
 // CreateItem creates an item in a postgres database
 func (c *Client) CreateItem(ctx context.Context, input *models.ItemInput) (*models.Item, error) {
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "CreateItem")
-	ctx = opentracing.ContextWithSpan(ctx, span)
-	defer span.Finish()
+	ctx, span := trace.StartSpan(ctx, "CreateItem")
+	defer span.End()
 
 	c.logger.WithValue("input", input).Debug("CreateItem called")
 
@@ -82,10 +97,9 @@ func (c *Client) CreateItem(ctx context.Context, input *models.ItemInput) (*mode
 
 // UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
 func (c *Client) UpdateItem(ctx context.Context, input *models.Item) error {
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "UpdateItem")
-	span.SetTag("item_id", input.ID)
-	ctx = opentracing.ContextWithSpan(ctx, span)
-	defer span.Finish()
+	ctx, span := trace.StartSpan(ctx, "UpdateItem")
+	defer span.End()
+	span.AddAttributes(trace.StringAttribute("item_id", strconv.FormatUint(input.ID, 10)))
 
 	c.logger.WithValue("input", input).Debug("UpdateItem called")
 
@@ -94,11 +108,10 @@ func (c *Client) UpdateItem(ctx context.Context, input *models.Item) error {
 
 // DeleteItem deletes an item from the database by its ID
 func (c *Client) DeleteItem(ctx context.Context, itemID uint64, userID uint64) error {
-	span := tracing.FetchSpanFromContext(ctx, c.tracer, "DeleteItem")
-	span.SetTag("item_id", itemID)
-	span.SetTag("user_id", userID)
-	ctx = opentracing.ContextWithSpan(ctx, span)
-	defer span.Finish()
+	ctx, span := trace.StartSpan(ctx, "DeleteItem")
+	defer span.End()
+	span.AddAttributes(trace.StringAttribute("item_id", strconv.FormatUint(itemID, 10)))
+	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
 
 	c.logger.WithValues(map[string]interface{}{
 		"item_id": itemID,

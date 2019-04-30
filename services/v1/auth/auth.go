@@ -10,6 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
 	"github.com/pkg/errors"
+	"go.opencensus.io/trace"
 )
 
 const (
@@ -56,7 +57,8 @@ func (s *Service) FetchUserFromRequest(req *http.Request) (*models.User, error) 
 
 // Login is our login route
 func (s *Service) Login(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
+	ctx, span := trace.StartSpan(req.Context(), "login_route")
+	defer span.End()
 
 	loginData, errRes := s.fetchLoginDataFromRequest(req)
 	if errRes != nil {
@@ -104,6 +106,9 @@ func (s *Service) Login(res http.ResponseWriter, req *http.Request) {
 
 // Logout is our logout route
 func (s *Service) Logout(res http.ResponseWriter, req *http.Request) {
+	_, span := trace.StartSpan(req.Context(), "logout")
+	defer span.End()
+
 	if cookie, err := req.Cookie(cookieName); err == nil {
 		s.logger.Debug("logout was called, clearing cookie")
 		cookie.MaxAge = -1

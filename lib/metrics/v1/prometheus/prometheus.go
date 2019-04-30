@@ -1,6 +1,7 @@
 package prometheus
 
 import (
+	"context"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
@@ -8,18 +9,12 @@ import (
 	"github.com/google/wire"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	dto "github.com/prometheus/client_model/go"
 )
 
 var (
 	// i am bad please don't be mad
-	initialized bool
-
-	// Providers represents what this library offers to external users in the form of dependencies
-	Providers = wire.NewSet(
-		ProvideMiddleware,
-		ProvideMetricsHandler,
-	)
-
+	initialized   bool
 	inFlightGauge = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: "in_flight_requests",
 		Help: "A gauge of requests currently being served by the wrapped handler.",
@@ -73,11 +68,23 @@ var (
 		},
 		[]string{},
 	)
+
+	// Providers represents what this library offers to external users in the form of dependencies
+	Providers = wire.NewSet(
+		ProvideUnitCounter,
+	)
 )
 
 func init() {
 	if !initialized {
-		for _, collector := range []prometheus.Collector{inFlightGauge, counter, duration, timeToWriteHeader, requestSize, responseSize} {
+		for _, collector := range []prometheus.Collector{
+			inFlightGauge,
+			counter,
+			duration,
+			timeToWriteHeader,
+			requestSize,
+			responseSize,
+		} {
 			prometheus.DefaultRegisterer.Register(collector)
 		}
 	}
@@ -104,4 +111,40 @@ func ProvideMiddleware() metrics.Middleware {
 // ProvideMetricsHandler provides a metrics handler
 func ProvideMetricsHandler() metrics.Handler {
 	return promhttp.Handler()
+}
+
+// https://github.com/prometheus/client_golang/issues/412
+
+type unitCounter struct {
+	meta prometheus.Gauge
+}
+
+func (c *unitCounter) SetCount(ctx context.Context, count uint64) {
+	pb := &dto.Metric{}
+	c.meta.Write(pb)
+	currentCount := pb.GetCounter().GetValue()
+	c.meta.Add(currentCount * -1)
+	c.meta.Add(float64(count))
+}
+
+func (c *unitCounter) Increment(ctx context.Context) {
+	c.meta.Inc()
+}
+
+func (c *unitCounter) IncrementBy(ctx context.Context, val uint64) {
+	c.meta.Add(float64(val))
+}
+
+func (c *unitCounter) Decrement(ctx context.Context) {
+	c.meta.Dec()
+}
+
+// ProvideUnitCounter provides a prometheus-backed unit counter
+func ProvideUnitCounter(counterName metrics.CounterName, namespace metrics.Namespace) metrics.UnitCounter {
+	return &unitCounter{
+		meta: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: string(namespace),
+			Name:      string(counterName),
+		}),
+	}
 }

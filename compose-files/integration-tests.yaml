@@ -37,5 +37,6 @@ services:
     environment:
       POSTGRES_USER: dbuser
       POSTGRES_PASSWORD: hunter2
+      POSTGRES_DB: todo
     # logging:
     #   driver: none

@@ -4,12 +4,13 @@ import (
 	"context"
 	"database/sql"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pkg/errors"
 )
 
-func (p Postgres) scanUser(scan Scannable) (*models.User, error) {
+func (p Postgres) scanUser(scan database.Scanner) (*models.User, error) {
 	var (
 		x = &models.User{}
 	)

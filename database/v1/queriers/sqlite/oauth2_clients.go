@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pkg/errors"
@@ -23,7 +24,7 @@ func prepareOAuth2Client(input *models.OAuth2ClientCreationInput) *models.OAuth2
 	return x
 }
 
-func scanOAuth2Client(scan Scannable) (*models.OAuth2Client, error) {
+func scanOAuth2Client(scan database.Scanner) (*models.OAuth2Client, error) {
 	var (
 		x      = &models.OAuth2Client{}
 		scopes string

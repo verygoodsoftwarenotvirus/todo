@@ -3,12 +3,13 @@ package postgres
 import (
 	"context"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pkg/errors"
 )
 
-func (p Postgres) scanItem(scan Scannable) (*models.Item, error) {
+func (p Postgres) scanItem(scan database.Scanner) (*models.Item, error) {
 	var (
 		x = &models.Item{}
 	)

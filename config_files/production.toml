@@ -1,7 +1,11 @@
 [meta]
-metrics_namespace = "todo_server"
 # tracing_enabled = true
 # debug = true
+
+[metrics]
+metrics_namespace = "todo_server"
+metrics_provider = "prometheus"
+tracing_provider = "jaeger"
 
 [server]
 http_port = 80
@@ -14,4 +18,4 @@ cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"
 [database]
 type = "postgres"
 debug = false
-connection_details = "postgres://todo:hunter2@database:5432/todo?sslmode=disable"
+connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"

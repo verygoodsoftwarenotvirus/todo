@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
@@ -20,12 +19,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/gorilla/securecookie"
 	"github.com/pkg/errors"
-	//
-	"contrib.go.opencensus.io/exporter/jaeger"
-	"contrib.go.opencensus.io/exporter/prometheus"
 	"go.opencensus.io/plugin/ochttp"
-	"go.opencensus.io/stats/view"
-	"go.opencensus.io/trace"
 )
 
 const (
@@ -97,38 +91,16 @@ func ProvideServer(
 		oauth2ClientsService: oauth2Service,
 	}
 
-	// begin new monitoring stuff
-
-	// Firstly, we'll register ochttp Server views.
-	if err := view.Register(ochttp.DefaultServerViews...); err != nil {
-		log.Fatalf("Failed to register server views for HTTP metrics: %v", err)
-	}
-
-	pe, err := prometheus.NewExporter(prometheus.Options{
-		Namespace: string(config.Meta.MetricsNamespace),
-	})
+	ih, err := config.ProvideInstrumentationHandler(logger)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create Prometheus exporter")
-	}
-	view.RegisterExporter(pe)
-
-	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
-
-	je, err := jaeger.NewExporter(jaeger.Options{
-		AgentEndpoint: fmt.Sprintf("%s:%s", os.Getenv("JAEGER_AGENT_HOST"), os.Getenv("JAEGER_AGENT_PORT")),
-		Process: jaeger.Process{
-			ServiceName: os.Getenv("JAEGER_SERVICE_NAME"),
-		},
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create Jaeger exporter")
+		return nil, err
 	}
 
-	trace.RegisterExporter(je)
+	if err := config.ProvideTracing(logger); err != nil {
+		return nil, err
+	}
 
-	// end new monitoring stuff
-
-	srv.setupRouter(config.Server.FrontendFilesDirectory, pe)
+	srv.setupRouter(config.Server.FrontendFilesDirectory, ih)
 	srv.httpServer.Handler = &ochttp.Handler{
 		Handler:        srv.router,
 		FormatSpanName: formatSpanNameForRequest,

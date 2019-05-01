@@ -3,6 +3,7 @@ module gitlab.com/verygoodsoftwarenotvirus/todo
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.1.0
 	contrib.go.opencensus.io/exporter/prometheus v0.1.0
+	contrib.go.opencensus.io/integrations/ocsql v0.1.4
 	git.apache.org/thrift.git v0.0.0-20181218151757-9b75e4fe745a // indirect
 	github.com/ExpansiveWorlds/instrumentedsql v0.0.0-20171218214018-45abb4b1947d
 	github.com/GuiaBolso/darwin v0.0.0-20170210191649-86919dfcf808
@@ -12,6 +13,7 @@ require (
 	github.com/boombuler/barcode v1.0.0 // indirect
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
 	github.com/corpix/uarand v0.0.0 // indirect
+	github.com/cznic/ql v1.2.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-chi/chi v4.0.1+incompatible
 	github.com/golang/mock v1.2.0 // indirect
@@ -34,8 +36,7 @@ require (
 	github.com/openzipkin/zipkin-go v0.1.6 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/pquerna/otp v1.1.0
-	github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829
-	github.com/prometheus/client_model v0.0.0-20190115171406-56726106282f
+	github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829 // indirect
 	github.com/rs/zerolog v1.11.0
 	github.com/sirupsen/logrus v1.3.0
 	github.com/spf13/viper v1.3.1

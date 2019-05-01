@@ -4,11 +4,12 @@ import (
 	"context"
 	"math"
 
-	"github.com/pquerna/otp/totp"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
-	"golang.org/x/crypto/bcrypt"
 
+	"github.com/pkg/errors"
+	"github.com/pquerna/otp/totp"
 	"go.opencensus.io/trace"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -20,8 +21,8 @@ const (
 var (
 	_ Authenticator = (*BcryptAuthenticator)(nil)
 
-	//// ErrCostTooLow indicates that a password has too low a Bcrypt cost
-	//ErrCostTooLow = errors.New("stored password's cost is too low")
+	// ErrCostTooLow indicates that a password has too low a Bcrypt cost
+	ErrCostTooLow = errors.New("stored password's cost is too low")
 )
 
 // BcryptAuthenticator is our bcrypt-based authenticator
@@ -54,37 +55,44 @@ func (b *BcryptAuthenticator) HashPassword(ctx context.Context, password string)
 }
 
 // ValidateLogin validates a password and two factor code
-func (b *BcryptAuthenticator) ValidateLogin(ctx context.Context, hashedPassword, providedPassword, twoFactorSecret, twoFactorCode string) (bool, error) {
+func (b *BcryptAuthenticator) ValidateLogin(
+	ctx context.Context,
+	hashedPassword string,
+	salt []byte,
+	providedPassword string,
+	twoFactorSecret string,
+	twoFactorCode string,
+) (passwordMatches bool, err error) {
 	ctx, span := trace.StartSpan(ctx, "ValidateLogin")
 	defer span.End()
 
-	passwordMatches := b.PasswordMatches(ctx, hashedPassword, providedPassword, nil)
+	passwordMatches = b.PasswordMatches(ctx, hashedPassword, providedPassword, nil)
+	tooWeak := b.hashedPasswordIsTooWeak(hashedPassword)
+
 	if !totp.Validate(twoFactorCode, twoFactorSecret) {
 		return passwordMatches, ErrInvalidTwoFactorCode
 	}
+
+	if tooWeak {
+		return passwordMatches, ErrCostTooLow
+	}
+
 	return passwordMatches, nil
 }
 
 // PasswordMatches validates whether or not a bcrypt-hashed password matches a provided password
-func (b *BcryptAuthenticator) PasswordMatches(ctx context.Context, hashedPassword, providedPassword string, _ []byte) bool {
-	matches := bcrypt.CompareHashAndPassword(
-		[]byte(hashedPassword),
-		[]byte(providedPassword),
-	) == nil
-	tooWeak := b.hashedPasswordIsTooWeak(hashedPassword)
-
-	b.logger.WithValues(map[string]interface{}{
-		"too_weak": tooWeak,
-		"matches":  matches,
-	}).Debug("evaluated password match")
-
-	return matches && !tooWeak
+func (b *BcryptAuthenticator) PasswordMatches(
+	ctx context.Context,
+	hashedPassword,
+	providedPassword string,
+	_ []byte) bool {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(providedPassword)) == nil
 }
 
 func (b *BcryptAuthenticator) hashedPasswordIsTooWeak(hashedPassword string) bool {
 	cost, err := bcrypt.Cost([]byte(hashedPassword))
 
-	if err != nil || uint(cost) != b.hashCost {
+	if err != nil || uint(cost) < b.hashCost {
 		return true
 	}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pkg/errors"
@@ -13,7 +14,7 @@ const (
 	scopesSeparator = `,`
 )
 
-func (p Postgres) scanOAuth2Client(scan Scannable) (*models.OAuth2Client, error) {
+func (p Postgres) scanOAuth2Client(scan database.Scanner) (*models.OAuth2Client, error) {
 	var (
 		x      = &models.OAuth2Client{}
 		scopes string

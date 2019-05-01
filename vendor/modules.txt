@@ -3,6 +3,8 @@ contrib.go.opencensus.io/exporter/jaeger
 contrib.go.opencensus.io/exporter/jaeger/internal/gen-go/jaeger
 # contrib.go.opencensus.io/exporter/prometheus v0.1.0
 contrib.go.opencensus.io/exporter/prometheus
+# contrib.go.opencensus.io/integrations/ocsql v0.1.4
+contrib.go.opencensus.io/integrations/ocsql
 # github.com/ExpansiveWorlds/instrumentedsql v0.0.0-20171218214018-45abb4b1947d
 github.com/ExpansiveWorlds/instrumentedsql
 # github.com/GuiaBolso/darwin v0.0.0-20170210191649-86919dfcf808
@@ -176,23 +178,22 @@ github.com/uber/jaeger-lib/metrics/adapters
 github.com/uber/jaeger-lib/metrics/go-kit
 github.com/uber/jaeger-lib/metrics/go-kit/expvar
 # go.opencensus.io v0.21.0
-go.opencensus.io/trace
-go.opencensus.io/metric
-go.opencensus.io/metric/metricdata
 go.opencensus.io/plugin/ochttp
 go.opencensus.io/stats/view
+go.opencensus.io/trace
+go.opencensus.io/stats
+go.opencensus.io/metric/metricdata
+go.opencensus.io/metric/metricexport
+go.opencensus.io/tag
+go.opencensus.io/plugin/ochttp/propagation/b3
+go.opencensus.io/trace/propagation
+go.opencensus.io/internal/tagencoding
+go.opencensus.io/metric/metricproducer
+go.opencensus.io/stats/internal
 go.opencensus.io/internal
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/tracestate
-go.opencensus.io/internal/tagencoding
 go.opencensus.io/resource
-go.opencensus.io/metric/metricexport
-go.opencensus.io/plugin/ochttp/propagation/b3
-go.opencensus.io/stats
-go.opencensus.io/tag
-go.opencensus.io/trace/propagation
-go.opencensus.io/metric/metricproducer
-go.opencensus.io/stats/internal
 go.opencensus.io
 # golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 golang.org/x/crypto/bcrypt

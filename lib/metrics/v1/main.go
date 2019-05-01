@@ -6,15 +6,14 @@ import (
 )
 
 type (
-
 	// Namespace is a string alias for dependency injection's sake
 	Namespace string
 
 	// CounterName is a string alias for dependency injection's sake
 	CounterName string
 
-	// Middleware is our middleware
-	Middleware func(http.Handler) http.Handler
+	// SpanFormatter formats the name of a span given a request
+	SpanFormatter func(*http.Request) string
 
 	// InstrumentationHandler is an obligatory alias
 	InstrumentationHandler http.Handler

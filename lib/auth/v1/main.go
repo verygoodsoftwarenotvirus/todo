@@ -39,11 +39,12 @@ type Authenticator interface {
 
 	ValidateLogin(
 		ctx context.Context,
-		HashedPassword,
-		ProvidedPassword,
-		TwoFactorSecret,
+		HashedPassword string,
+		Salt []byte,
+		ProvidedPassword string,
+		TwoFactorSecret string,
 		TwoFactorCode string,
-	) (bool, error)
+	) (valid bool, err error)
 }
 
 func init() {

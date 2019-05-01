@@ -4,12 +4,13 @@ import (
 	"context"
 	"database/sql"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pkg/errors"
 )
 
-func scanItem(scan Scannable) (*models.Item, error) {
+func scanItem(scan database.Scanner) (*models.Item, error) {
 	x := &models.Item{}
 	err := scan.Scan(
 		&x.ID,

@@ -40,12 +40,12 @@ services:
     ports:
       - '2345:5432'
     environment:
-      POSTGRES_USER: todo
+      POSTGRES_USER: dbuser
       POSTGRES_PASSWORD: hunter2
     volumes:
       - ../database/_postgres_init_.sql:/docker-entrypoint-initdb.d/10-init.sql
-    # logging:
-    #   driver: none
+    logging:
+      driver: none
 
   tracing-server:
     image: jaegertracing/all-in-one:latest
@@ -61,7 +61,7 @@ services:
       driver: none
 
   prometheus:
-    image: quay.io/prometheus/prometheus:v2.0.0
+    image: quay.io/prometheus/prometheus:v2.9.2
     volumes:
       - type: bind
         source: ../deploy/prometheus/local/config.yaml

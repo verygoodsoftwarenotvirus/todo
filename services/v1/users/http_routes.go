@@ -51,6 +51,7 @@ func (s *Service) validateCredentialChangeRequest(req *http.Request, password st
 	valid, err := s.authenticator.ValidateLogin(
 		ctx,
 		user.HashedPassword,
+		user.Salt,
 		password,
 		user.TwoFactorSecret,
 		totpToken,

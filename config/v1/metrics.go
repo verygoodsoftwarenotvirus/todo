@@ -7,6 +7,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1/opencensus"
 
 	"contrib.go.opencensus.io/exporter/jaeger"
 	"contrib.go.opencensus.io/exporter/prometheus"
@@ -45,6 +46,10 @@ func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) (m
 	if err := view.Register(ochttp.DefaultServerViews...); err != nil {
 		return nil, errors.Wrap(err, "Failed to register server views for HTTP metrics")
 	}
+
+	// MOVEME
+	opencensus.RegisterViews()
+	opencensus.RecordStats(time.Second) // CONFIGME
 
 	logger.WithValue("metrics_provider", cfg.Metrics.MetricsProvider).Debug("setting metrics provider")
 

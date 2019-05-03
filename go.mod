@@ -8,6 +8,7 @@ require (
 	github.com/ExpansiveWorlds/instrumentedsql v0.0.0-20171218214018-45abb4b1947d
 	github.com/GuiaBolso/darwin v0.0.0-20170210191649-86919dfcf808
 	github.com/Masterminds/squirrel v1.1.0
+	github.com/StackExchange/wmi v0.0.0-20181212234831-e0a55b97c705 // indirect
 	github.com/VividCortex/gohistogram v1.0.0 // indirect
 	github.com/asaskevich/EventBus v0.0.0-20180315140547-d46933a94f05 // indirect
 	github.com/boombuler/barcode v1.0.0 // indirect
@@ -16,6 +17,7 @@ require (
 	github.com/cznic/ql v1.2.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-chi/chi v4.0.1+incompatible
+	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/golang/mock v1.2.0 // indirect
 	github.com/golang/protobuf v1.3.1 // indirect
 	github.com/google/wire v0.2.1
@@ -38,6 +40,8 @@ require (
 	github.com/pquerna/otp v1.1.0
 	github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829 // indirect
 	github.com/rs/zerolog v1.11.0
+	github.com/shirou/gopsutil v2.18.12+incompatible // indirect
+	github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4 // indirect
 	github.com/sirupsen/logrus v1.3.0
 	github.com/spf13/viper v1.3.1
 	github.com/stretchr/testify v1.3.0

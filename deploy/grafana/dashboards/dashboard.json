@@ -19,10 +19,11 @@
 	"panels": [
 		{
 			"aliasColors": {},
-			"bars": true,
+			"bars": false,
 			"dashLength": 10,
 			"dashes": false,
 			"datasource": "prometheus",
+			"description": "",
 			"fill": 1,
 			"gridPos": {
 				"h": 8,
@@ -30,22 +31,21 @@
 				"x": 0,
 				"y": 0
 			},
-			"id": 18,
+			"id": 30,
 			"legend": {
 				"avg": false,
 				"current": false,
 				"max": false,
 				"min": false,
-				"show": false,
+				"show": true,
 				"total": false,
 				"values": false
 			},
-			"lines": false,
+			"lines": true,
 			"linewidth": 1,
 			"links": [],
 			"nullPointMode": "null",
-			"percentage": false,
-			"pluginVersion": "6.1.4",
+			"percentage": true,
 			"pointradius": 2,
 			"points": false,
 			"renderer": "flot",
@@ -55,10 +55,11 @@
 			"steppedLine": false,
 			"targets": [
 				{
-					"expr": "todo_server_opencensus_io_http_server_response_count_by_status_code",
+					"expr": "todo_server_heap_alloc",
 					"format": "time_series",
+					"hide": false,
 					"intervalFactor": 1,
-					"legendFormat": "{{ http_status }}",
+					"legendFormat": "heap alloc",
 					"refId": "A"
 				}
 			],
@@ -66,24 +67,23 @@
 			"timeFrom": null,
 			"timeRegions": [],
 			"timeShift": null,
-			"title": "Response Codes",
+			"title": "memory use",
 			"tooltip": {
-				"shared": false,
+				"shared": true,
 				"sort": 0,
 				"value_type": "individual"
 			},
-			"transparent": true,
 			"type": "graph",
 			"xaxis": {
 				"buckets": null,
-				"mode": "series",
+				"mode": "time",
 				"name": null,
 				"show": true,
-				"values": ["total"]
+				"values": []
 			},
 			"yaxes": [
 				{
-					"format": "short",
+					"format": "decbytes",
 					"label": null,
 					"logBase": 1,
 					"max": null,
@@ -105,19 +105,13 @@
 			}
 		},
 		{
+			"aliasColors": {},
+			"bars": false,
 			"cacheTimeout": null,
-			"colorBackground": false,
-			"colorValue": false,
-			"colors": ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
+			"dashLength": 10,
+			"dashes": false,
 			"datasource": "prometheus",
-			"format": "none",
-			"gauge": {
-				"maxValue": 100,
-				"minValue": 0,
-				"show": false,
-				"thresholdLabels": false,
-				"thresholdMarkers": true
-			},
+			"fill": 1,
 			"gridPos": {
 				"h": 8,
 				"w": 12,
@@ -125,95 +119,21 @@
 				"y": 0
 			},
 			"id": 20,
-			"interval": null,
-			"links": [],
-			"mappingType": 1,
-			"mappingTypes": [
-				{
-					"name": "value to text",
-					"value": 1
-				},
-				{
-					"name": "range to text",
-					"value": 2
-				}
-			],
-			"maxDataPoints": 100,
-			"nullPointMode": "connected",
-			"nullText": null,
-			"pluginVersion": "6.1.6",
-			"postfix": " items",
-			"postfixFontSize": "50%",
-			"prefix": "",
-			"prefixFontSize": "50%",
-			"rangeMaps": [
-				{
-					"from": "null",
-					"text": "N/A",
-					"to": "null"
-				}
-			],
-			"sparkline": {
-				"fillColor": "rgba(31, 118, 189, 0.18)",
-				"full": false,
-				"lineColor": "rgb(31, 120, 193)",
-				"show": false
-			},
-			"tableColumn": "",
-			"targets": [
-				{
-					"expr": "todo_server_items_count",
-					"format": "time_series",
-					"instant": true,
-					"intervalFactor": 1,
-					"legendFormat": "",
-					"refId": "A"
-				}
-			],
-			"thresholds": "",
-			"timeFrom": null,
-			"timeShift": null,
-			"title": "Item Count",
-			"transparent": true,
-			"type": "singlestat",
-			"valueFontSize": "100%",
-			"valueMaps": [
-				{
-					"op": "=",
-					"text": "N/A",
-					"value": "null"
-				}
-			],
-			"valueName": "current"
-		},
-		{
-			"aliasColors": {},
-			"bars": true,
-			"dashLength": 10,
-			"dashes": false,
-			"datasource": "prometheus",
-			"fill": 1,
-			"gridPos": {
-				"h": 8,
-				"w": 12,
-				"x": 0,
-				"y": 8
-			},
-			"id": 16,
 			"legend": {
 				"avg": false,
 				"current": false,
 				"max": false,
 				"min": false,
-				"show": false,
+				"show": true,
 				"total": false,
 				"values": false
 			},
-			"lines": false,
+			"lines": true,
 			"linewidth": 1,
 			"links": [],
 			"nullPointMode": "null",
 			"percentage": false,
+			"pluginVersion": "6.1.6",
 			"pointradius": 2,
 			"points": false,
 			"renderer": "flot",
@@ -223,20 +143,37 @@
 			"steppedLine": false,
 			"targets": [
 				{
-					"expr": "sum(todo_server_opencensus_io_http_server_request_count_by_method) by (http_method)",
+					"expr": "todo_server_items_count",
 					"format": "time_series",
+					"instant": false,
 					"intervalFactor": 1,
-					"legendFormat": "{{ http_method }}",
+					"legendFormat": "items",
 					"refId": "A"
+				},
+				{
+					"expr": "todo_server_oauth2_clients_count",
+					"format": "time_series",
+					"instant": false,
+					"intervalFactor": 1,
+					"legendFormat": "oauth2 clients",
+					"refId": "C"
+				},
+				{
+					"expr": "todo_server_users_count",
+					"format": "time_series",
+					"instant": false,
+					"intervalFactor": 1,
+					"legendFormat": "users",
+					"refId": "B"
 				}
 			],
 			"thresholds": [],
 			"timeFrom": null,
 			"timeRegions": [],
 			"timeShift": null,
-			"title": "Request Count by Method",
+			"title": "Counts",
 			"tooltip": {
-				"shared": false,
+				"shared": true,
 				"sort": 0,
 				"value_type": "individual"
 			},
@@ -244,10 +181,10 @@
 			"type": "graph",
 			"xaxis": {
 				"buckets": null,
-				"mode": "series",
+				"mode": "time",
 				"name": null,
 				"show": true,
-				"values": ["total"]
+				"values": []
 			},
 			"yaxes": [
 				{
@@ -273,86 +210,91 @@
 			}
 		},
 		{
+			"aliasColors": {},
+			"bars": false,
 			"cacheTimeout": null,
-			"colorBackground": false,
-			"colorValue": false,
-			"colors": ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
+			"dashLength": 10,
+			"dashes": false,
 			"datasource": "prometheus",
-			"format": "none",
-			"gauge": {
-				"maxValue": 100,
-				"minValue": 0,
-				"show": false,
-				"thresholdLabels": false,
-				"thresholdMarkers": true
-			},
+			"fill": 1,
 			"gridPos": {
 				"h": 8,
 				"w": 12,
-				"x": 12,
+				"x": 0,
 				"y": 8
 			},
-			"id": 22,
-			"interval": null,
-			"links": [],
-			"mappingType": 1,
-			"mappingTypes": [
-				{
-					"name": "value to text",
-					"value": 1
-				},
-				{
-					"name": "range to text",
-					"value": 2
-				}
-			],
-			"maxDataPoints": 100,
-			"nullPointMode": "connected",
-			"nullText": null,
-			"pluginVersion": "6.1.6",
-			"postfix": " users",
-			"postfixFontSize": "50%",
-			"prefix": "",
-			"prefixFontSize": "50%",
-			"rangeMaps": [
-				{
-					"from": "null",
-					"text": "N/A",
-					"to": "null"
-				}
-			],
-			"sparkline": {
-				"fillColor": "rgba(31, 118, 189, 0.18)",
-				"full": false,
-				"lineColor": "rgb(31, 120, 193)",
-				"show": false
+			"id": 28,
+			"legend": {
+				"avg": false,
+				"current": false,
+				"max": false,
+				"min": false,
+				"show": true,
+				"total": false,
+				"values": false
 			},
-			"tableColumn": "",
+			"lines": true,
+			"linewidth": 1,
+			"links": [],
+			"nullPointMode": "null",
+			"percentage": false,
+			"pointradius": 2,
+			"points": false,
+			"renderer": "flot",
+			"seriesOverrides": [],
+			"spaceLength": 10,
+			"stack": false,
+			"steppedLine": false,
 			"targets": [
 				{
-					"expr": "todo_server_users_count",
+					"expr": "todo_server_metrics_aggregation_time",
 					"format": "time_series",
-					"instant": true,
 					"intervalFactor": 1,
-					"legendFormat": "",
+					"legendFormat": "{{ job }}",
 					"refId": "A"
 				}
 			],
-			"thresholds": "",
+			"thresholds": [],
 			"timeFrom": null,
+			"timeRegions": [],
 			"timeShift": null,
-			"title": "User Count",
+			"title": "time spent collecting metrics ",
+			"tooltip": {
+				"shared": true,
+				"sort": 0,
+				"value_type": "individual"
+			},
 			"transparent": true,
-			"type": "singlestat",
-			"valueFontSize": "100%",
-			"valueMaps": [
+			"type": "graph",
+			"xaxis": {
+				"buckets": null,
+				"mode": "time",
+				"name": null,
+				"show": true,
+				"values": []
+			},
+			"yaxes": [
 				{
-					"op": "=",
-					"text": "N/A",
-					"value": "null"
+					"format": "ns",
+					"label": null,
+					"logBase": 1,
+					"max": null,
+					"min": null,
+					"show": true
+				},
+				{
+					"format": "short",
+					"label": null,
+					"logBase": 1,
+					"max": null,
+					"min": null,
+					"show": true
 				}
 			],
-			"valueName": "avg"
+			"yaxis": {
+				"align": false,
+				"alignLevel": null
+			}
 		},
 		{
 			"aliasColors": {},
@@ -364,8 +306,8 @@
 			"gridPos": {
 				"h": 8,
 				"w": 12,
-				"x": 0,
-				"y": 16
+				"x": 12,
+				"y": 8
 			},
 			"id": 14,
 			"legend": {
@@ -476,86 +418,351 @@
 			}
 		},
 		{
+			"aliasColors": {},
+			"bars": false,
 			"cacheTimeout": null,
-			"colorBackground": false,
-			"colorValue": false,
-			"colors": ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
+			"dashLength": 10,
+			"dashes": false,
 			"datasource": "prometheus",
-			"format": "none",
-			"gauge": {
-				"maxValue": 100,
-				"minValue": 0,
-				"show": false,
-				"thresholdLabels": false,
-				"thresholdMarkers": true
+			"fill": 1,
+			"gridPos": {
+				"h": 8,
+				"w": 12,
+				"x": 0,
+				"y": 16
 			},
+			"id": 26,
+			"legend": {
+				"avg": false,
+				"current": false,
+				"max": false,
+				"min": false,
+				"show": true,
+				"total": false,
+				"values": false
+			},
+			"lines": true,
+			"linewidth": 1,
+			"links": [],
+			"nullPointMode": "null",
+			"percentage": false,
+			"pluginVersion": "6.1.6",
+			"pointradius": 2,
+			"points": false,
+			"renderer": "flot",
+			"seriesOverrides": [],
+			"spaceLength": 10,
+			"stack": false,
+			"steppedLine": false,
+			"targets": [
+				{
+					"expr": "todo_server_next_gc",
+					"format": "time_series",
+					"intervalFactor": 1,
+					"legendFormat": "target heap size of the next GC cycle",
+					"refId": "A"
+				}
+			],
+			"thresholds": [],
+			"timeFrom": null,
+			"timeRegions": [],
+			"timeShift": null,
+			"title": "next gc size",
+			"tooltip": {
+				"shared": true,
+				"sort": 0,
+				"value_type": "individual"
+			},
+			"transparent": true,
+			"type": "graph",
+			"xaxis": {
+				"buckets": null,
+				"mode": "time",
+				"name": null,
+				"show": true,
+				"values": []
+			},
+			"yaxes": [
+				{
+					"format": "bytes",
+					"label": null,
+					"logBase": 1,
+					"max": null,
+					"min": null,
+					"show": true
+				},
+				{
+					"format": "short",
+					"label": null,
+					"logBase": 1,
+					"max": null,
+					"min": null,
+					"show": true
+				}
+			],
+			"yaxis": {
+				"align": false,
+				"alignLevel": null
+			}
+		},
+		{
+			"aliasColors": {},
+			"bars": true,
+			"dashLength": 10,
+			"dashes": false,
+			"datasource": "prometheus",
+			"fill": 1,
 			"gridPos": {
 				"h": 8,
 				"w": 12,
 				"x": 12,
 				"y": 16
 			},
-			"id": 21,
-			"interval": null,
-			"links": [],
-			"mappingType": 1,
-			"mappingTypes": [
-				{
-					"name": "value to text",
-					"value": 1
-				},
-				{
-					"name": "range to text",
-					"value": 2
-				}
-			],
-			"maxDataPoints": 100,
-			"nullPointMode": "connected",
-			"nullText": null,
-			"pluginVersion": "6.1.6",
-			"postfix": " OAuth2 clients",
-			"postfixFontSize": "50%",
-			"prefix": "",
-			"prefixFontSize": "50%",
-			"rangeMaps": [
-				{
-					"from": "null",
-					"text": "N/A",
-					"to": "null"
-				}
-			],
-			"sparkline": {
-				"fillColor": "rgba(31, 118, 189, 0.18)",
-				"full": false,
-				"lineColor": "rgb(31, 120, 193)",
-				"show": false
+			"id": 16,
+			"legend": {
+				"avg": false,
+				"current": false,
+				"max": false,
+				"min": false,
+				"show": false,
+				"total": false,
+				"values": false
 			},
-			"tableColumn": "",
+			"lines": false,
+			"linewidth": 1,
+			"links": [],
+			"nullPointMode": "null",
+			"percentage": false,
+			"pointradius": 2,
+			"points": false,
+			"renderer": "flot",
+			"seriesOverrides": [],
+			"spaceLength": 10,
+			"stack": false,
+			"steppedLine": false,
 			"targets": [
 				{
-					"expr": "todo_server_oauth2_clients_count",
+					"expr": "sum(todo_server_opencensus_io_http_server_request_count_by_method) by (http_method)",
 					"format": "time_series",
-					"instant": true,
 					"intervalFactor": 1,
-					"legendFormat": "",
+					"legendFormat": "{{ http_method }}",
 					"refId": "A"
 				}
 			],
-			"thresholds": "",
+			"thresholds": [],
 			"timeFrom": null,
+			"timeRegions": [],
 			"timeShift": null,
-			"title": "OAuth2 Clients",
+			"title": "Request Count by Method",
+			"tooltip": {
+				"shared": false,
+				"sort": 0,
+				"value_type": "individual"
+			},
 			"transparent": true,
-			"type": "singlestat",
-			"valueFontSize": "100%",
-			"valueMaps": [
+			"type": "graph",
+			"xaxis": {
+				"buckets": null,
+				"mode": "series",
+				"name": null,
+				"show": true,
+				"values": ["total"]
+			},
+			"yaxes": [
 				{
-					"op": "=",
-					"text": "N/A",
-					"value": "null"
+					"format": "short",
+					"label": null,
+					"logBase": 1,
+					"max": null,
+					"min": null,
+					"show": true
+				},
+				{
+					"format": "short",
+					"label": null,
+					"logBase": 1,
+					"max": null,
+					"min": null,
+					"show": true
 				}
 			],
-			"valueName": "avg"
+			"yaxis": {
+				"align": false,
+				"alignLevel": null
+			}
+		},
+		{
+			"aliasColors": {},
+			"bars": false,
+			"dashLength": 10,
+			"dashes": false,
+			"datasource": "prometheus",
+			"fill": 1,
+			"gridPos": {
+				"h": 8,
+				"w": 12,
+				"x": 0,
+				"y": 24
+			},
+			"id": 24,
+			"legend": {
+				"avg": false,
+				"current": false,
+				"max": false,
+				"min": false,
+				"show": true,
+				"total": false,
+				"values": false
+			},
+			"lines": true,
+			"linewidth": 1,
+			"links": [],
+			"nullPointMode": "null",
+			"percentage": false,
+			"pointradius": 2,
+			"points": false,
+			"renderer": "flot",
+			"seriesOverrides": [],
+			"spaceLength": 10,
+			"stack": false,
+			"steppedLine": false,
+			"targets": [
+				{
+					"expr": "todo_server_gc_cpu_fraction",
+					"format": "time_series",
+					"intervalFactor": 1,
+					"legendFormat": "{{ job }}",
+					"refId": "A"
+				}
+			],
+			"thresholds": [],
+			"timeFrom": null,
+			"timeRegions": [],
+			"timeShift": null,
+			"title": "GC CPU%",
+			"tooltip": {
+				"shared": true,
+				"sort": 0,
+				"value_type": "individual"
+			},
+			"type": "graph",
+			"xaxis": {
+				"buckets": null,
+				"mode": "time",
+				"name": null,
+				"show": true,
+				"values": []
+			},
+			"yaxes": [
+				{
+					"decimals": 5,
+					"format": "percentunit",
+					"label": "% of CPU used by gc",
+					"logBase": 1,
+					"max": null,
+					"min": null,
+					"show": true
+				},
+				{
+					"format": "short",
+					"label": null,
+					"logBase": 1,
+					"max": null,
+					"min": null,
+					"show": true
+				}
+			],
+			"yaxis": {
+				"align": false,
+				"alignLevel": null
+			}
+		},
+		{
+			"aliasColors": {},
+			"bars": true,
+			"dashLength": 10,
+			"dashes": false,
+			"datasource": "prometheus",
+			"fill": 1,
+			"gridPos": {
+				"h": 8,
+				"w": 12,
+				"x": 12,
+				"y": 24
+			},
+			"id": 18,
+			"legend": {
+				"avg": false,
+				"current": false,
+				"max": false,
+				"min": false,
+				"show": false,
+				"total": false,
+				"values": false
+			},
+			"lines": false,
+			"linewidth": 1,
+			"links": [],
+			"nullPointMode": "null",
+			"percentage": false,
+			"pluginVersion": "6.1.4",
+			"pointradius": 2,
+			"points": false,
+			"renderer": "flot",
+			"seriesOverrides": [],
+			"spaceLength": 10,
+			"stack": false,
+			"steppedLine": false,
+			"targets": [
+				{
+					"expr": "todo_server_opencensus_io_http_server_response_count_by_status_code",
+					"format": "time_series",
+					"intervalFactor": 1,
+					"legendFormat": "{{ http_status }}",
+					"refId": "A"
+				}
+			],
+			"thresholds": [],
+			"timeFrom": null,
+			"timeRegions": [],
+			"timeShift": null,
+			"title": "Response Codes",
+			"tooltip": {
+				"shared": false,
+				"sort": 0,
+				"value_type": "individual"
+			},
+			"transparent": true,
+			"type": "graph",
+			"xaxis": {
+				"buckets": null,
+				"mode": "series",
+				"name": null,
+				"show": true,
+				"values": ["total"]
+			},
+			"yaxes": [
+				{
+					"format": "short",
+					"label": null,
+					"logBase": 1,
+					"max": null,
+					"min": null,
+					"show": true
+				},
+				{
+					"format": "short",
+					"label": null,
+					"logBase": 1,
+					"max": null,
+					"min": null,
+					"show": true
+				}
+			],
+			"yaxis": {
+				"align": false,
+				"alignLevel": null
+			}
 		}
 	],
 	"refresh": false,
@@ -566,7 +773,7 @@
 		"list": []
 	},
 	"time": {
-		"from": "now-5m",
+		"from": "now-30m",
 		"to": "now"
 	},
 	"timepicker": {
@@ -586,5 +793,5 @@
 	},
 	"timezone": "",
 	"title": "Todo Server Dashboard",
-	"version": 1
+	"version": 2
 }

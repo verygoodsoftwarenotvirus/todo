@@ -48,8 +48,8 @@ func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) (m
 	}
 
 	// MOVEME
-	opencensus.RegisterViews()
-	opencensus.RecordStats(time.Second) // CONFIGME
+	opencensus.RegisterDefaultViews()
+	opencensus.RecordRuntimeStats(time.Second) // CONFIGME
 
 	logger.WithValue("metrics_provider", cfg.Metrics.MetricsProvider).Debug("setting metrics provider")
 

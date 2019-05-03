@@ -7,7 +7,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1/opencensus"
 
 	"contrib.go.opencensus.io/exporter/jaeger"
 	"contrib.go.opencensus.io/exporter/prometheus"
@@ -35,10 +34,11 @@ var (
 
 // MetricsSettings contains settings about how we report our metrics
 type MetricsSettings struct {
-	Namespace                   metrics.Namespace `mapstructure:"metrics_namespace"`
-	MetricsProvider             metricsProvider   `mapstructure:"metrics_provider"`
-	TracingProvider             tracingProvider   `mapstructure:"tracing_provider"`
-	DBMetricsCollectionInterval time.Duration     `mapstructure:"database_metrics_collection_interval"`
+	Namespace                        metrics.Namespace `mapstructure:"metrics_namespace"`
+	MetricsProvider                  metricsProvider   `mapstructure:"metrics_provider"`
+	TracingProvider                  tracingProvider   `mapstructure:"tracing_provider"`
+	DBMetricsCollectionInterval      time.Duration     `mapstructure:"database_metrics_collection_interval"`
+	RuntimeMetricsCollectionInterval time.Duration     `mapstructure:"runtime_metrics_collection_interval"`
 }
 
 // ProvideInstrumentationHandler provides an instrumentation handler
@@ -47,9 +47,8 @@ func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) (m
 		return nil, errors.Wrap(err, "Failed to register server views for HTTP metrics")
 	}
 
-	// MOVEME
-	opencensus.RegisterDefaultViews()
-	opencensus.RecordRuntimeStats(time.Second) // CONFIGME
+	metrics.RegisterDefaultViews()
+	metrics.RecordRuntimeStats(cfg.Metrics.RuntimeMetricsCollectionInterval)
 
 	logger.WithValue("metrics_provider", cfg.Metrics.MetricsProvider).Debug("setting metrics provider")
 

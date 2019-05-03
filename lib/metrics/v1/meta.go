@@ -1,4 +1,4 @@
-package opencensus
+package metrics
 
 import (
 	"go.opencensus.io/stats"

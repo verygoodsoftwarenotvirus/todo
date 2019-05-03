@@ -1,4 +1,4 @@
-package opencensus
+package metrics
 
 import (
 	"github.com/google/wire"

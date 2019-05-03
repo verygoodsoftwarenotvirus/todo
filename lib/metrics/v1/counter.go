@@ -1,11 +1,9 @@
-package opencensus
+package metrics
 
 import (
 	"context"
 	"fmt"
 	"sync/atomic"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
 
 	"github.com/pkg/errors"
 	"go.opencensus.io/stats"
@@ -49,12 +47,12 @@ func (c *opencensusCounter) SetCount(ctx context.Context, count uint64) {
 }
 
 // ProvideUnitCounterProvider provides UnitCounter providers
-func ProvideUnitCounterProvider() metrics.UnitCounterProvider {
+func ProvideUnitCounterProvider() UnitCounterProvider {
 	return ProvideUnitCounter
 }
 
 // ProvideUnitCounter provides a new counter
-func ProvideUnitCounter(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
+func ProvideUnitCounter(counterName CounterName, description string) (UnitCounter, error) {
 	name := fmt.Sprintf("%s_count", string(counterName))
 	// Counts/groups the lengths of lines read in.
 	count := stats.Int64(name, "", "By")

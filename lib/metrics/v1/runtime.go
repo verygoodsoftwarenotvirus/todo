@@ -1,4 +1,4 @@
-package opencensus
+package metrics
 
 // inspired by https://github.com/opencensus-integrations/caddy/blob/c8498719b7c1c2a3c707355be2395a35f03e434e/caddy/caddymain/exporters.go#L54-L110
 
@@ -13,19 +13,6 @@ import (
 )
 
 var (
-	nanosecondTimeDistribution = view.Distribution(
-		0, 1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9,
-	)
-
-	memoryDistribution = view.Distribution(0,
-		1<<10, 10*1<<10, 100*1<<10,
-		1<<20, 10*1<<20, 100*1<<20,
-		1<<30, 10*1<<30, 100*1<<30,
-		1<<40, 10*1<<40, 100*1<<40,
-		1<<50, 10*1<<50, 100*1<<50,
-		1<<60, 10*1<<60, 1<<64-1,
-	)
-
 	// RuntimeTotalAllocMeasurement captures the runtime memstats TotalAlloc field
 	RuntimeTotalAllocMeasurement = stats.Int64("total_alloc", "cumulative bytes allocated for heap objects", stats.UnitDimensionless)
 	// RuntimeTotalAllocView is the corresponding view for the above field

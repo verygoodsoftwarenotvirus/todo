@@ -77,6 +77,7 @@ func buildConfig() *viper.Viper {
 	cfg.SetDefault("metrics.metrics_provider", DefaultMetricsProvider)
 	cfg.SetDefault("metrics.tracing_provider", DefaultTracingProvider)
 	cfg.SetDefault("metrics.database_metrics_collection_interval", time.Second)
+	cfg.SetDefault("metrics.runtime_metrics_collection_interval", time.Second)
 
 	// server stuff
 	cfg.SetDefault("server.http_port", 80)

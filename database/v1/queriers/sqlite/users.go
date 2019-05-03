@@ -4,12 +4,13 @@ import (
 	"context"
 	"database/sql"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pkg/errors"
 )
 
-func scanUser(scan Scannable) (*models.User, error) {
+func scanUser(scan database.Scanner) (*models.User, error) {
 	x := &models.User{}
 	err := scan.Scan(
 		&x.ID,
@@ -52,9 +53,7 @@ func (s *Sqlite) scanUsers(rows *sql.Rows) ([]models.User, error) {
 	return list, nil
 }
 
-const adminUserExistsQuery = `
-	SELECT EXISTS(SELECT id FROM users WHERE is_admin = true)
-`
+const adminUserExistsQuery = `SELECT EXISTS(SELECT id FROM users WHERE is_admin = true)`
 
 // AdminUserExists validates whether or not an admin user exists
 func (s *Sqlite) AdminUserExists(ctx context.Context) (bool, error) {

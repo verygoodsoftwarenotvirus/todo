@@ -7,12 +7,10 @@ import (
 	libauth "gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 
 	"github.com/gorilla/securecookie"
-	"github.com/opentracing/opentracing-go"
 )
 
 const (
@@ -20,21 +18,15 @@ const (
 )
 
 type (
-	// Tracer is an arbitrary type alias we're using for dependency injection
-	Tracer opentracing.Tracer
-
 	// Service handles auth
 	Service struct {
-		authenticator libauth.Authenticator
-		logger        logging.Logger
-		tracer        opentracing.Tracer
-
+		authenticator        libauth.Authenticator
+		logger               logging.Logger
+		userIDFetcher        UserIDFetcher
 		database             models.UserDataManager
 		oauth2ClientsService *oauth2clients.Service
-
-		userIDFetcher UserIDFetcher
-		cookieBuilder *securecookie.SecureCookie
-		encoder       encoding.EncoderDecoder
+		encoder              encoding.EncoderDecoder
+		cookieBuilder        *securecookie.SecureCookie
 	}
 )
 
@@ -58,8 +50,10 @@ func ProvideAuthService(
 		oauth2ClientsService: oauth2ClientsService,
 		authenticator:        authenticator,
 		userIDFetcher:        userIDFetcher,
-		tracer:               tracing.ProvideTracer(serviceName),
-		cookieBuilder:        securecookie.New(securecookie.GenerateRandomKey(64), []byte(config.Auth.CookieSecret)),
+		cookieBuilder: securecookie.New(
+			securecookie.GenerateRandomKey(64),
+			[]byte(config.Auth.CookieSecret),
+		),
 	}
 
 	return svc

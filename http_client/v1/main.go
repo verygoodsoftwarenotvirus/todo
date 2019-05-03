@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/noop"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -11,12 +10,11 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/noop"
 
 	"github.com/gorilla/websocket"
 	"github.com/moul/http2curl"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
-	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
@@ -34,7 +32,6 @@ type V1Client struct {
 	currentUserCookie *http.Cookie
 
 	logger logging.Logger
-	tracer opentracing.Tracer
 	Debug  bool
 	URL    *url.URL
 
@@ -95,7 +92,6 @@ func NewClient(
 	address *url.URL,
 	logger logging.Logger,
 	hclient *http.Client,
-	tracer opentracing.Tracer,
 	debug bool,
 ) (*V1Client, error) {
 	var client = hclient
@@ -103,10 +99,6 @@ func NewClient(
 		client = &http.Client{
 			Timeout: 5 * time.Second,
 		}
-	}
-
-	if tracer == nil {
-		tracer = &opentracing.NoopTracer{}
 	}
 
 	if debug {
@@ -118,7 +110,6 @@ func NewClient(
 		URL:          address,
 		plainClient:  client,
 		logger:       logger.WithName("v1_client"),
-		tracer:       tracer,
 		Debug:        debug,
 		authedClient: buildOAuthClient(address, clientID, clientSecret),
 	}
@@ -134,8 +125,7 @@ func NewClient(
 func NewSimpleClient(address *url.URL, debug bool) (*V1Client, error) {
 	l := noop.ProvideNoopLogger()
 	h := &http.Client{Timeout: 5 * time.Second}
-	t := tracing.ProvideNoopTracer()
-	c, err := NewClient("", "", address, l, h, t, debug)
+	c, err := NewClient("", "", address, l, h, debug)
 	return c, err
 }
 

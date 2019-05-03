@@ -3,33 +3,29 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"regexp"
-	"strings"
 	"time"
 
+	"contrib.go.opencensus.io/integrations/ocsql"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 
-	"github.com/ExpansiveWorlds/instrumentedsql"
-	"github.com/google/wire"
 	postgres "github.com/lib/pq"
-	"github.com/opentracing/opentracing-go"
 )
 
-var (
-	// Providers is what we provide for dependency injection
-	Providers = wire.NewSet(
-		ProvidePostgresDB,
-		ProvidePostgres,
-		ProvidePostgresTracer,
-	)
+const (
+	postgresDriverName = "wrapped-postgres-driver"
 )
+
+func init() {
+	// Explicitly wrap the SQLite3 driver with ocsql.
+	driver := ocsql.Wrap(&postgres.Driver{}, ocsql.WithQuery(true))
+
+	// Register our ocsql wrapper as a database driver.
+	sql.Register(postgresDriverName, driver)
+
+}
 
 type (
-	// Tracer is a tracing wrapper
-	Tracer opentracing.Tracer
-
 	// Postgres is our main Postgres interaction database
 	Postgres struct {
 		debug       bool
@@ -41,11 +37,6 @@ type (
 	// ConnectionDetails is a string alias for a Postgres url
 	ConnectionDetails string
 
-	// Scannable represents any database response (i.e. either a transaction or a regular execution response)
-	Scannable interface {
-		Scan(dest ...interface{}) error
-	}
-
 	// Querier is a subset interface for sql.{DB|Tx|Stmt} objects
 	Querier interface {
 		ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error)
@@ -54,73 +45,11 @@ type (
 	}
 )
 
-// ProvidePostgresTracer provides a Postgres tracer
-func ProvidePostgresTracer() Tracer {
-	return tracing.ProvideTracer("postgres")
-}
-
-func strictQueryLogger(logger logging.Logger) instrumentedsql.LoggerFunc {
-	return func(ctx context.Context, msg string, keyvals ...interface{}) {
-		var currentKey string
-
-		for i, x := range keyvals {
-			if i%2 == 0 {
-				if y, ok := x.(string); ok && strings.TrimSpace(strings.ToLower(y)) == "query" {
-					currentKey = y
-				}
-			} else if currentKey != "query" && x != nil {
-				if q, ok := x.(string); ok && q != "" {
-					query := regexp.MustCompile(`\s\s+`).ReplaceAllString(q, " ")
-					logger.WithName("sql_debug").WithValue("query", query).Debug(msg)
-					break
-				}
-			}
-		}
-	}
-}
-
-func verboseQueryLogger(logger logging.Logger) instrumentedsql.LoggerFunc {
-	return func(ctx context.Context, msg string, keyvals ...interface{}) {
-		var currentKey string
-
-		for i, x := range keyvals {
-			if i%2 == 0 {
-				if y, ok := x.(string); ok {
-					currentKey = y
-				}
-			} else if currentKey != "" && x != nil {
-				if q, ok := x.(string); ok && q != "" {
-					query := regexp.MustCompile(`\s\s+`).ReplaceAllString(q, " ")
-					logger.WithName("sql_debug").WithValue("query", query).Debug(msg)
-					break
-				}
-			}
-		}
-	}
-}
-
-func buildLoggerFunc(logger logging.Logger) instrumentedsql.LoggerFunc {
-	return strictQueryLogger(logger)
-}
-
 // ProvidePostgresDB provides an instrumented postgres database
-func ProvidePostgresDB(
-	logger logging.Logger,
-	connectionDetails database.ConnectionDetails,
-) (*sql.DB, error) {
+func ProvidePostgresDB(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
 	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to postgres")
 
-	loggerFunc := instrumentedsql.LoggerFunc(buildLoggerFunc(logger))
-
-	sql.Register(
-		"instrumented-postgres",
-		instrumentedsql.WrapDriver(
-			&postgres.Driver{},
-			// instrumentedsql.WithTracer(instrumentedsql.Tracer),
-			instrumentedsql.WithLogger(loggerFunc),
-		),
-	)
-	return sql.Open("instrumented-postgres", string(connectionDetails))
+	return sql.Open(postgresDriverName, string(connectionDetails))
 }
 
 // ProvidePostgres provides a postgres database controller

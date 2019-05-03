@@ -3,25 +3,21 @@ package httpserver
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/go-chi/chi/middleware"
-	"github.com/opentracing-contrib/go-stdlib/nethttp"
-	"github.com/opentracing/opentracing-go"
 )
 
-func (s *Server) tracingMiddleware(next http.Handler) http.Handler {
-	return nethttp.Middleware(
-		s.tracer,
-		next,
-		nethttp.MWComponentName("todo-httpServer"),
-		nethttp.MWSpanObserver(func(span opentracing.Span, req *http.Request) {
-			span.SetTag("http.method", req.Method)
-			span.SetTag("http.uri", req.URL.EscapedPath())
-		}),
-		nethttp.OperationNameFunc(func(req *http.Request) string {
-			return fmt.Sprintf("%s %s", req.Method, req.URL.Path)
-		}),
+var (
+	idReplacementRegex = regexp.MustCompile(`[^(v|oauth)]\d+`)
+)
+
+func formatSpanNameForRequest(req *http.Request) string {
+	return fmt.Sprintf(
+		"%s %s",
+		req.Method,
+		idReplacementRegex.ReplaceAllString(req.URL.Path, `/{id}`),
 	)
 }
 

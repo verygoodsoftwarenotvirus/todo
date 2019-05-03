@@ -5,10 +5,11 @@ import (
 	"database/sql"
 	"encoding/base32"
 	"net/http"
+	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/opentracing/opentracing-go"
+	"go.opencensus.io/trace"
 )
 
 const (
@@ -50,6 +51,7 @@ func (s *Service) validateCredentialChangeRequest(req *http.Request, password st
 	valid, err := s.authenticator.ValidateLogin(
 		ctx,
 		user.HashedPassword,
+		user.Salt,
 		password,
 		user.TwoFactorSecret,
 		totpToken,
@@ -68,10 +70,8 @@ func (s *Service) validateCredentialChangeRequest(req *http.Request, password st
 
 // List is a handler for responding with a list of users
 func (s *Service) List(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	span := opentracing.SpanFromContext(ctx)
-	serverSpan := s.tracer.StartSpan("list_route", opentracing.ChildOf(span.Context()))
-	defer serverSpan.Finish()
+	ctx, span := trace.StartSpan(req.Context(), "list_route")
+	defer span.End()
 
 	qf := models.ExtractQueryFilter(req)
 	logger := s.logger.WithValue("query_filter", qf)
@@ -90,10 +90,8 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 
 // Create is our user creation route
 func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	span := opentracing.SpanFromContext(ctx)
-	serverSpan := s.tracer.StartSpan("create_route", opentracing.ChildOf(span.Context()))
-	defer serverSpan.Finish()
+	ctx, span := trace.StartSpan(req.Context(), "create_route")
+	defer span.End()
 
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.UserInput)
 	if !ok {
@@ -106,6 +104,11 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		"username": input.Username,
 		"is_admin": input.IsAdmin,
 	}).Debug("user creation route hit")
+
+	span.AddAttributes(
+		trace.StringAttribute("username", input.Username),
+		trace.BoolAttribute("is_admin", input.IsAdmin),
+	)
 
 	hp, err := s.authenticator.HashPassword(ctx, input.Password)
 	if err != nil {
@@ -141,6 +144,8 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		ArchivedOn:            user.ArchivedOn,
 	}
 
+	s.userCounter.Increment(ctx)
+
 	if err = s.encoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
@@ -148,13 +153,12 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 
 // Read is our read route
 func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	span := opentracing.SpanFromContext(ctx)
-	serverSpan := s.tracer.StartSpan("read_route", opentracing.ChildOf(span.Context()))
-	defer serverSpan.Finish()
+	ctx, span := trace.StartSpan(req.Context(), "read_route")
+	defer span.End()
 
 	userID := s.userIDFetcher(req)
 	logger := s.logger.WithValue("user_id", userID)
+	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
 
 	x, err := s.database.GetUser(ctx, userID)
 	if err == sql.ErrNoRows {
@@ -176,9 +180,10 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 // that information received from TOTPSecretRefreshInputContextMiddleware is valid
 func (s *Service) NewTOTPSecret(res http.ResponseWriter, req *http.Request) {
 	s.logger.Debug("NewTOTPSecret route hit in UsersService")
+	ctx, span := trace.StartSpan(req.Context(), "new_totp_secret")
+	defer span.End()
 
 	var err error
-	ctx := req.Context()
 	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.TOTPSecretRefreshInput)
 	if !ok {
 		s.logger.Debug("no input found on TOTP Secret refresh request")
@@ -218,10 +223,8 @@ func (s *Service) NewTOTPSecret(res http.ResponseWriter, req *http.Request) {
 // UpdatePassword updates a user's password, after validating that information received
 // from PasswordUpdateInputContextMiddleware is valid
 func (s *Service) UpdatePassword(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	span := opentracing.SpanFromContext(ctx)
-	serverSpan := s.tracer.StartSpan("update_password_route", opentracing.ChildOf(span.Context()))
-	defer serverSpan.Finish()
+	ctx, span := trace.StartSpan(req.Context(), "update_password_route")
+	defer span.End()
 
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.PasswordUpdateInput)
 	if !ok {
@@ -253,27 +256,26 @@ func (s *Service) UpdatePassword(res http.ResponseWriter, req *http.Request) {
 	}
 
 	res.WriteHeader(http.StatusAccepted)
-	//if err := s.encoder.EncodeResponse(res, user); err != nil {
-	//	s.logger.Error(err, "encoding response")
-	//}
 }
 
 // Delete is a handler for deleting a user
 func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	span := opentracing.SpanFromContext(ctx)
-	serverSpan := s.tracer.StartSpan("delete_route", opentracing.ChildOf(span.Context()))
-	defer serverSpan.Finish()
+	ctx, span := trace.StartSpan(req.Context(), "delete_route")
+	defer span.End()
 
 	userID := s.userIDFetcher(req)
+
 	logger := s.logger.WithValue("user_id", userID)
 	logger.Debug("UsersService.Delete called")
+	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
 
 	if err := s.database.DeleteUser(ctx, userID); err != nil {
 		logger.Error(err, "UsersService.Delete called")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	s.userCounter.Decrement(ctx)
 
 	res.WriteHeader(http.StatusNoContent)
 }

@@ -60,8 +60,9 @@ services:
     ports:
       - '2345:5432'
     environment:
-      POSTGRES_USER: todo
+      POSTGRES_USER: dbuser
       POSTGRES_PASSWORD: hunter2
+      POSTGRES_DB: todo
     logging:
       driver: none
 

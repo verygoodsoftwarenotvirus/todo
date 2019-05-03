@@ -3,12 +3,13 @@ package postgres
 import (
 	"context"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pkg/errors"
 )
 
-func (p Postgres) scanItem(scan Scannable) (*models.Item, error) {
+func (p Postgres) scanItem(scan database.Scanner) (*models.Item, error) {
 	var (
 		x = &models.Item{}
 	)
@@ -61,9 +62,24 @@ const getItemCountQuery = `
 		AND belongs_to = $1
 ` // FINISHME: finish adding filters to this query
 
-// GetItemCount WILL fetch the count of items from the postgres database that meet a particular filter
+// GetItemCount will fetch the count of items from the postgres database that meet a particular filter and belong to a particular user.
 func (p *Postgres) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
 	err = p.database.QueryRowContext(ctx, getItemCountQuery, userID).Scan(&count)
+	return
+}
+
+const getAllItemsCountQuery = `
+	SELECT
+		COUNT(*)
+	FROM
+		items
+	WHERE
+		completed_on IS NULL
+` // FINISHME: finish adding filters to this query
+
+// GetAllItemsCount will fetch the count of items from the postgres database that meet a particular filter
+func (p *Postgres) GetAllItemsCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
+	err = p.database.QueryRowContext(ctx, getAllItemsCountQuery).Scan(&count)
 	return
 }
 

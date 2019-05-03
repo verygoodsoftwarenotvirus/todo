@@ -23,8 +23,8 @@ type (
 	// ConnectionDetails is a string alias for a Postgres url
 	ConnectionDetails string
 
-	// Scannable represents any database response (i.e. either a transaction or a regular execution response)
-	Scannable interface {
+	// Scanner represents any database response (i.e. either a transaction or a regular execution response)
+	Scanner interface {
 		Scan(dest ...interface{}) error
 	}
 

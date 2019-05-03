@@ -4,12 +4,13 @@ import (
 	"context"
 	"database/sql"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pkg/errors"
 )
 
-func scanItem(scan Scannable) (*models.Item, error) {
+func scanItem(scan database.Scanner) (*models.Item, error) {
 	x := &models.Item{}
 	err := scan.Scan(
 		&x.ID,
@@ -79,10 +80,27 @@ const getItemCountQuery = `
 		items
 	WHERE
 		completed_on IS NULL
+		AND belongs_to = ?
 `
 
-// GetItemCount fetches the count of items from the sqlite database that meet a particular filter
+// GetItemCount fetches the count of items from the sqlite database that meet a particular filter and belong to a particular user
 func (s *Sqlite) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (uint64, error) {
+	var count uint64
+	err := s.database.QueryRowContext(ctx, getItemCountQuery, userID).Scan(&count)
+	return count, err
+}
+
+const getAllItemsCountQuery = `
+	SELECT
+		COUNT(*)
+	FROM
+		items
+	WHERE
+		completed_on IS NULL
+`
+
+// GetAllItemsCount fetches the count of items from the sqlite database that meet a particular filter
+func (s *Sqlite) GetAllItemsCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
 	var count uint64
 	err := s.database.QueryRowContext(ctx, getItemCountQuery).Scan(&count)
 	return count, err

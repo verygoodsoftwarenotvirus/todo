@@ -6,7 +6,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/opentracing/opentracing-go"
+	"go.opencensus.io/trace"
 )
 
 const (
@@ -16,10 +16,8 @@ const (
 
 // List is our list route
 func (s *Service) List(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	span := opentracing.SpanFromContext(ctx)
-	serverSpan := s.tracer.StartSpan("list_route", opentracing.ChildOf(span.Context()))
-	defer serverSpan.Finish()
+	ctx, span := trace.StartSpan(req.Context(), "list_route")
+	defer span.End()
 
 	s.logger.Debug("ItemsService.List called")
 	qf := models.ExtractQueryFilter(req)
@@ -47,10 +45,8 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 
 // Create is our item creation route
 func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	span := opentracing.SpanFromContext(ctx)
-	serverSpan := s.tracer.StartSpan("create_route", opentracing.ChildOf(span.Context()))
-	defer serverSpan.Finish()
+	ctx, span := trace.StartSpan(req.Context(), "create_route")
+	defer span.End()
 
 	userID := s.userIDFetcher(req)
 	logger := s.logger.WithValue("user_id", userID)
@@ -71,6 +67,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	s.itemCounter.Increment(ctx)
 
 	if err = s.encoder.EncodeResponse(res, i); err != nil {
 		s.logger.Error(err, "encoding response")
@@ -79,10 +76,8 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 
 // Read returns a GET handler that returns an item
 func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	span := opentracing.SpanFromContext(ctx)
-	serverSpan := s.tracer.StartSpan("read_route", opentracing.ChildOf(span.Context()))
-	defer serverSpan.Finish()
+	ctx, span := trace.StartSpan(req.Context(), "read_route")
+	defer span.End()
 
 	userID := s.userIDFetcher(req)
 	itemID := s.itemIDFetcher(req)
@@ -111,10 +106,8 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 
 // Update returns a handler that updates an item
 func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	span := opentracing.SpanFromContext(ctx)
-	serverSpan := s.tracer.StartSpan("update_route", opentracing.ChildOf(span.Context()))
-	defer serverSpan.Finish()
+	ctx, span := trace.StartSpan(req.Context(), "update_route")
+	defer span.End()
 
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.ItemInput)
 	if !ok {
@@ -156,10 +149,8 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 
 // Delete returns a handler that deletes an item
 func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	span := opentracing.SpanFromContext(ctx)
-	serverSpan := s.tracer.StartSpan("delete_route", opentracing.ChildOf(span.Context()))
-	defer serverSpan.Finish()
+	ctx, span := trace.StartSpan(req.Context(), "delete_route")
+	defer span.End()
 
 	userID := s.userIDFetcher(req)
 	itemID := s.itemIDFetcher(req)
@@ -179,6 +170,7 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	s.itemCounter.Decrement(ctx)
 
 	res.WriteHeader(http.StatusNoContent)
 }

@@ -1,8 +1,6 @@
 package httpserver
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,8 +10,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/tracing/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
@@ -22,7 +18,8 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/gorilla/securecookie"
-	"github.com/opentracing/opentracing-go"
+	"github.com/pkg/errors"
+	"go.opencensus.io/plugin/ochttp"
 )
 
 const (
@@ -30,9 +27,6 @@ const (
 )
 
 type (
-	// Tracer is an arbitrary type we use for dependency injection
-	Tracer opentracing.Tracer
-
 	// Server is our API httpServer
 	Server struct {
 		DebugMode bool
@@ -49,7 +43,6 @@ type (
 		router     *chi.Mux
 		httpServer *http.Server
 		logger     logging.Logger
-		tracer     opentracing.Tracer
 		encoder    encoding.ServerEncoder
 
 		// Auth stuff
@@ -72,10 +65,6 @@ func ProvideServer(
 	db database.Database,
 	logger logging.Logger,
 	encoder encoding.EncoderDecoder,
-
-	// metrics things
-	metricsHandler metrics.Handler,
-	metricsMiddleware metrics.Middleware,
 ) (*Server, error) {
 
 	if len(config.Auth.CookieSecret) < 32 {
@@ -93,7 +82,6 @@ func ProvideServer(
 		encoder:       encoder,
 		httpServer:    provideHTTPServer(),
 		logger:        logger.WithName("api_server"),
-		tracer:        tracing.ProvideTracer("api_server"),
 		cookieBuilder: securecookie.New(securecookie.GenerateRandomKey(64), []byte(config.Auth.CookieSecret)),
 
 		// services
@@ -103,14 +91,20 @@ func ProvideServer(
 		oauth2ClientsService: oauth2Service,
 	}
 
-	srv.logger.Info("migrating database")
-	if err := srv.db.Migrate(context.Background()); err != nil {
+	ih, err := config.ProvideInstrumentationHandler(logger)
+	if err != nil {
 		return nil, err
 	}
-	srv.logger.Info("database migrated!")
 
-	srv.setupRouter(config.Server.FrontendFilesDirectory, metricsHandler, metricsMiddleware)
-	srv.httpServer.Handler = srv.router
+	if err := config.ProvideTracing(logger); err != nil {
+		return nil, err
+	}
+
+	srv.setupRouter(config.Server.FrontendFilesDirectory, ih)
+	srv.httpServer.Handler = &ochttp.Handler{
+		Handler:        srv.router,
+		FormatSpanName: formatSpanNameForRequest,
+	}
 
 	return srv, nil
 }

@@ -5,13 +5,17 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"go.opencensus.io/trace"
 )
 
 // CookieAuthenticationMiddleware checks every request for a user cookie
 func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		s.logger.Debug("userCookieAuthenticationMiddleware triggered")
+		ctx, span := trace.StartSpan(req.Context(), "cookie-authentication-middleware")
+		defer span.End()
 
+		s.logger.Debug("userCookieAuthenticationMiddleware triggered")
 		user, err := s.FetchUserFromRequest(req)
 		if err != nil {
 			s.logger.Error(err, "error encountered fetching user")
@@ -21,7 +25,7 @@ func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 
 		if user != nil {
 			req = req.WithContext(context.WithValue(
-				context.WithValue(req.Context(), models.UserKey, user),
+				context.WithValue(ctx, models.UserKey, user),
 				models.UserIDKey,
 				user.ID,
 			))
@@ -37,7 +41,8 @@ func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken bool) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			ctx := req.Context()
+			ctx, span := trace.StartSpan(req.Context(), "authentication-middleware")
+			defer span.End()
 			s.logger.Debug("apiAuthenticationMiddleware called")
 
 			// First we check to see if there is an OAuth2 token for a valid client attached to the request.

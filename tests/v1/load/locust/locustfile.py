@@ -1,16 +1,10 @@
-import os
-import sys
 import typing
 import random
-from http import cookiejar
+from typing import List
 
-sys.path.append(os.getcwd())
-
-import requests
 import pyotp
 from mimesis import Generic
 from locust import HttpLocust, TaskSet, task
-
 
 INSTANCE_URL = "http://todo-server"
 API_URL_PREFIX = "/api/v1"
@@ -21,10 +15,15 @@ OAUTH2_CLIENTS_URL_PREFIX = f"{API_URL_PREFIX}/oauth2/clients"
 
 class UserTasks(TaskSet):
     def __init__(self, *args, **kwargs):
-        self._token = None
-        self._oauth2_authorized = False
-        self.created_item_ids = []
-        self.created_oauth2_client_ids = []
+        self._token: str = ''
+        self._oauth2_authorized: bool = False
+        self.created_item_ids: List[int] = []
+        self.created_oauth2_client_ids: List[str] = []
+        self.username: str = ''
+        self.password: str = ''
+        self.client_id: str = ''
+        self.client_secret: str = ''
+        self.two_factor_secret: str = ''
         self.fake = Generic()
 
         super(UserTasks, self).__init__(*args, **kwargs)
@@ -67,9 +66,9 @@ class UserTasks(TaskSet):
     def token(self):
         # FIXME: :(
         if (
-            self._token is None
-            and self.client_id is not None
-            and self.client_secret is not None
+                self._token != ''
+                and self.client_id != ''
+                and self.client_secret != ''
         ):
             res = self.client.post(
                 url="/oauth2/token",  # authorize
@@ -128,12 +127,12 @@ class UserTasks(TaskSet):
         if 0 < number_of_items:
             return random.choice(self.created_item_ids)
         else:
-            return None
+            return -1
 
     @task(weight=10)
     def get_invalid_item(self):
         with self.client.get(
-            url=f"{ITEMS_URL_PREFIX}/999999999", catch_response=True
+                url=f"{ITEMS_URL_PREFIX}/999999999", catch_response=True
         ) as response:
             if response.status_code != 404:
                 response.failure("service returned irrelevant item")
@@ -154,7 +153,7 @@ class UserTasks(TaskSet):
     @task(weight=100)
     def read_item(self):
         item_id = self.random_item_id()
-        if item_id is not None:
+        if item_id > 0:
             self.client.get(
                 url=f"{ITEMS_URL_PREFIX}/{item_id}",
                 name=f"{ITEMS_URL_PREFIX}/[item_id]",
@@ -164,7 +163,7 @@ class UserTasks(TaskSet):
     @task(75)
     def update_item(self):
         item_id = self.random_item_id()
-        if item_id is not None:
+        if item_id > 0:
             new_name = self.fake.text.word()
             response = self.client.put(
                 url=f"{ITEMS_URL_PREFIX}/{item_id}",
@@ -213,14 +212,14 @@ class UserTasks(TaskSet):
         if 0 < number_of_oauth2_clients:
             return random.choice(self.created_oauth2_client_ids)
         else:
-            return None
+            return -1
 
     @task(weight=10)
     def get_invalid_oauth2_client(self):
         with self.client.get(
-            catch_response=True,
-            url=f"{OAUTH2_CLIENTS_URL_PREFIX}/999999999",
-            headers=self.auth_headers,
+                catch_response=True,
+                url=f"{OAUTH2_CLIENTS_URL_PREFIX}/999999999",
+                headers=self.auth_headers,
         ) as response:
             if response.status_code != 404:
                 response.failure("service returned irrelevant oauth2 client")
@@ -244,7 +243,7 @@ class UserTasks(TaskSet):
     @task(weight=100)
     def read_oauth2_client(self):
         oauth2_client_db_id = self.random_oauth2_client_id()
-        if oauth2_client_db_id is not None:
+        if oauth2_client_db_id > 0:
             self.client.get(
                 url=f"{OAUTH2_CLIENTS_URL_PREFIX}/{oauth2_client_db_id}",
                 name=f"{OAUTH2_CLIENTS_URL_PREFIX}/[oauth2_client_db_id]",

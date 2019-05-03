@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
+
 	"github.com/google/wire"
 )
 
@@ -13,8 +15,14 @@ var (
 	Providers = wire.NewSet(
 		paramFetcherProviders,
 		ProvideServer,
+		ProvideNamespace,
 	)
 )
+
+// ProvideNamespace provides a namespace
+func ProvideNamespace() metrics.Namespace {
+	return "todo-service"
+}
 
 // provideHTTPServer provides an HTTP httpServer
 func provideHTTPServer() *http.Server {

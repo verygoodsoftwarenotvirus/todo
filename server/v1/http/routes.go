@@ -13,25 +13,21 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	gcontext "github.com/gorilla/context"
 )
 
-func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Handler, metricsMiddleware metrics.Middleware) {
-	s.router = chi.NewRouter()
+// func bareMiddlewareBlueprint(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+// 		next.ServeHTTP(res, req)
+// 	})
+// }
 
-	s.router.Use(
-		gcontext.ClearHandler, // because we're using securecookie, but not gorilla/mux
+func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Handler) {
+	router := chi.NewRouter()
+
+	router.Use(
 		middleware.RequestID,
 		middleware.Timeout(maxTimeout),
-	)
-
-	if metricsMiddleware != nil {
-		s.router.Use(metricsMiddleware)
-	}
-
-	s.router.Use(
 		s.loggingMiddleware,
-		s.tracingMiddleware,
 	)
 
 	// all middleware must be defined before routes on a mux
@@ -40,7 +36,7 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 	pwd, _ := os.Getwd()
 	filesDir := filepath.Join(pwd, frontendFilesPath)
 	fs := http.StripPrefix("/", http.FileServer(http.Dir(filesDir)))
-	s.router.Get("/*", http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+	router.Get("/*", http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		switch req.URL.Path {
 		case "/listyourfrontendhistoryroutesrouteshere":
 			req.URL.Path = "/"
@@ -50,27 +46,20 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 	}))
 
 	// health check
-	s.router.Get("/_meta_/health", func(res http.ResponseWriter, req *http.Request) { res.WriteHeader(http.StatusOK) })
+	router.Get("/_meta_/health", func(res http.ResponseWriter, req *http.Request) { res.WriteHeader(http.StatusOK) })
+	router.Handle("/metrics", metricsHandler)
 
-	if metricsHandler != nil {
-		s.logger.Debug("setting metrics handler")
-		s.router.Handle("/metrics", metricsHandler)
-	}
-
-	s.router.Route("/users", func(userRouter chi.Router) {
+	router.Route("/users", func(userRouter chi.Router) {
 		userRouter.With(s.usersService.UserLoginInputMiddleware).Post("/login", s.authService.Login)
 		userRouter.With(s.authService.CookieAuthenticationMiddleware).Post("/logout", s.authService.Logout)
 
 		userIDPattern := fmt.Sprintf(`/{%s:[0-9_\-]+}`, users.URIParamKey)
 
-		userRouter.
-			With(s.usersService.UserInputMiddleware).
-			Post("/", s.usersService.Create) // Create
-		userRouter.Get(userIDPattern, s.usersService.Read)      // Read
-		userRouter.Delete(userIDPattern, s.usersService.Delete) // Delete
-		userRouter.Get("/", s.usersService.List)                // List
+		userRouter.Get("/", s.usersService.List)                                             // List
+		userRouter.With(s.usersService.UserInputMiddleware).Post("/", s.usersService.Create) // Create
+		userRouter.Get(userIDPattern, s.usersService.Read)                                   // Read
+		userRouter.Delete(userIDPattern, s.usersService.Delete)                              // Delete
 
-		// Updates:
 		userRouter.With(
 			s.authService.CookieAuthenticationMiddleware,
 			s.usersService.TOTPSecretRefreshInputMiddleware,
@@ -82,15 +71,13 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 		).Post("/password/new", s.usersService.UpdatePassword)
 	})
 
-	s.router.Route("/oauth2", func(oauth2Router chi.Router) {
-		oauth2Router.
-			With(
-				s.authService.CookieAuthenticationMiddleware,
-				s.oauth2ClientsService.CreationInputMiddleware,
-			).Post("/client", s.oauth2ClientsService.Create) // Create
+	router.Route("/oauth2", func(oauth2Router chi.Router) {
+		oauth2Router.With(
+			s.authService.CookieAuthenticationMiddleware,
+			s.oauth2ClientsService.CreationInputMiddleware,
+		).Post("/client", s.oauth2ClientsService.Create) // Create
 
-		oauth2Router.
-			With(s.oauth2ClientsService.OAuth2ClientInfoMiddleware).
+		oauth2Router.With(s.oauth2ClientsService.OAuth2ClientInfoMiddleware).
 			Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
 				if err := s.oauth2ClientsService.HandleAuthorizeRequest(res, req); err != nil {
 					http.Error(res, err.Error(), http.StatusBadRequest)
@@ -104,7 +91,7 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 		})
 	})
 
-	s.router.
+	router.
 		With(s.authService.AuthenticationMiddleware(true)).
 		Route("/api", func(apiRouter chi.Router) {
 			apiRouter.Route("/v1", func(v1Router chi.Router) {
@@ -120,18 +107,18 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 				})
 
 				// OAuth2 Clients
-				v1Router.Route("/oauth2", func(oauth2Router chi.Router) {
-					oauth2Router.Route("/clients", func(clientRouter chi.Router) {
-						sr := fmt.Sprintf(`/{%s:[0-9]+}`, oauth2clients.URIParamKey)
-						// Create is not bound to an OAuth2 authentication token
-						// Update not supported for OAuth2 clients.
-						clientRouter.Get(sr, s.oauth2ClientsService.Read)      // Read
-						clientRouter.Delete(sr, s.oauth2ClientsService.Delete) // Delete
-						clientRouter.Get("/", s.oauth2ClientsService.List)     // List
-					})
+				v1Router.Route("/oauth2/clients", func(clientRouter chi.Router) {
+					sr := fmt.Sprintf(`/{%s:[0-9]+}`, oauth2clients.URIParamKey)
+					// Create is not bound to an OAuth2 authentication token
+					// Update not supported for OAuth2 clients.
+					clientRouter.Get(sr, s.oauth2ClientsService.Read)      // Read
+					clientRouter.Delete(sr, s.oauth2ClientsService.Delete) // Delete
+					clientRouter.Get("/", s.oauth2ClientsService.List)     // List
 				})
 
 			})
 
 		})
+
+	s.router = router
 }

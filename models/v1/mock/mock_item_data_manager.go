@@ -23,13 +23,19 @@ func (m *ItemDataManager) GetItem(ctx context.Context, itemID, userID uint64) (*
 
 // GetItemCount is a mock function
 func (m *ItemDataManager) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (uint64, error) {
+	args := m.Called(ctx, filter, userID)
+	return args.Get(0).(uint64), args.Error(1)
+}
+
+// GetAllItemsCount is a mock function
+func (m *ItemDataManager) GetAllItemsCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
 	args := m.Called(ctx, filter)
 	return args.Get(0).(uint64), args.Error(1)
 }
 
 // GetItems is a mock function
 func (m *ItemDataManager) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
-	args := m.Called(ctx, filter)
+	args := m.Called(ctx, filter, userID)
 	return args.Get(0).(*models.ItemList), args.Error(1)
 }
 
@@ -46,5 +52,5 @@ func (m *ItemDataManager) UpdateItem(ctx context.Context, updated *models.Item) 
 
 // DeleteItem is a mock function
 func (m *ItemDataManager) DeleteItem(ctx context.Context, id uint64, userID uint64) error {
-	return m.Called(ctx, id).Error(0)
+	return m.Called(ctx, id, userID).Error(0)
 }

@@ -4,12 +4,13 @@ import (
 	"context"
 	"database/sql"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pkg/errors"
 )
 
-func (p Postgres) scanUser(scan Scannable) (*models.User, error) {
+func (p Postgres) scanUser(scan database.Scanner) (*models.User, error) {
 	var (
 		x = &models.User{}
 	)
@@ -103,7 +104,7 @@ const getUserCountQuery = `
 		COUNT(*)
 	FROM
 		users
-	WHERE archived_on is null
+	WHERE archived_on IS NULL
 `
 
 // GetUserCount fetches a count of users from the postgres database that meet a particular filter
@@ -126,7 +127,7 @@ const getUsersQuery = `
 	FROM
 		users
 	WHERE
-		archived_on is null
+		archived_on IS NULL
 	LIMIT $1
 	OFFSET $2
 `

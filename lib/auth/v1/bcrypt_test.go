@@ -79,6 +79,7 @@ func TestBcrypt_ValidateLogin(T *testing.T) {
 		valid, err := x.ValidateLogin(
 			context.Background(),
 			hashedExamplePassword,
+			nil,
 			examplePassword,
 			exampleTwoFactorSecret,
 			code,

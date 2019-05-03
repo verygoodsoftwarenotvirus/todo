@@ -70,6 +70,7 @@ type User struct {
 	ID                    uint64  `json:"id"`
 	Username              string  `json:"username"`
 	HashedPassword        string  `json:"-"`
+	Salt                  []byte  `json:"-"`
 	TwoFactorSecret       string  `json:"-"`
 	IsAdmin               bool    `json:"is_admin"`
 	PasswordLastChangedOn *uint64 `json:"password_last_changed_on"`

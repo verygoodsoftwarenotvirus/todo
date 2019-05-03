@@ -27,15 +27,16 @@ services:
       JAEGER_SAMPLER_MANAGER_HOST_PORT: 'tracing-server:5778'
     links:
       - todo-server
-    # logging:
-    #   driver: none
+    logging:
+      driver: none
 
   database:
     image: postgres:latest
     ports:
       - '2345:5432'
     environment:
-      POSTGRES_USER: todo
+      POSTGRES_USER: dbuser
       POSTGRES_PASSWORD: hunter2
-    logging:
-      driver: none
+      POSTGRES_DB: todo
+    # logging:
+    #   driver: none

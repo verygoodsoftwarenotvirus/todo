@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pkg/errors"
@@ -13,7 +14,7 @@ const (
 	scopesSeparator = `,`
 )
 
-func (p Postgres) scanOAuth2Client(scan Scannable) (*models.OAuth2Client, error) {
+func (p Postgres) scanOAuth2Client(scan database.Scanner) (*models.OAuth2Client, error) {
 	var (
 		x      = &models.OAuth2Client{}
 		scopes string
@@ -127,7 +128,7 @@ const getAllOAuth2ClientsQuery = `
 	FROM
 		oauth_clients
 	WHERE
-		archived_on is null
+		archived_on IS NULL
 `
 
 // GetAllOAuth2Clients gets a list of OAuth2 clients regardless of ownership
@@ -202,10 +203,26 @@ const getOAuth2ClientCountQuery = `
 		AND belongs_to = $1
 `
 
-// GetOAuth2ClientCount WILL get the count of OAuth2 clients that match the current filter
+// GetOAuth2ClientCount will get the count of OAuth2 clients that match the current filter
 func (p *Postgres) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (uint64, error) {
 	var count uint64
 	err := p.database.QueryRowContext(ctx, getOAuth2ClientCountQuery, userID).Scan(&count)
+	return count, err
+}
+
+const getAllOAuth2ClientCountQuery = `
+	SELECT
+		COUNT(*)
+	FROM
+		oauth_clients
+	WHERE
+		archived_on IS NULL
+`
+
+// GetAllOAuth2ClientCount will get the count of OAuth2 clients that match the current filter
+func (p *Postgres) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
+	var count uint64
+	err := p.database.QueryRowContext(ctx, getAllOAuth2ClientCountQuery).Scan(&count)
 	return count, err
 }
 

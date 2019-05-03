@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pkg/errors"
@@ -23,7 +24,7 @@ func prepareOAuth2Client(input *models.OAuth2ClientCreationInput) *models.OAuth2
 	return x
 }
 
-func scanOAuth2Client(scan Scannable) (*models.OAuth2Client, error) {
+func scanOAuth2Client(scan database.Scanner) (*models.OAuth2Client, error) {
 	var (
 		x      = &models.OAuth2Client{}
 		scopes string
@@ -128,12 +129,29 @@ const getOAuth2ClientCountQuery = `
 		oauth_clients
 	WHERE
 		archived_on is null
+	AND belongs_to = ?
 `
 
 // GetOAuth2ClientCount gets the count of OAuth2 clients that match the current filter
 func (s *Sqlite) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (uint64, error) {
 	var count uint64
-	err := s.database.QueryRowContext(ctx, getOAuth2ClientCountQuery).Scan(&count)
+	err := s.database.QueryRowContext(ctx, getOAuth2ClientCountQuery, userID).Scan(&count)
+	return count, err
+}
+
+const getAllOAuth2ClientCountQuery = `
+	SELECT
+		COUNT(*)
+	FROM
+		oauth_clients
+	WHERE
+		archived_on is null
+`
+
+// GetAllOAuth2ClientCount gets the count of OAuth2 clients that match the current filter
+func (s *Sqlite) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
+	var count uint64
+	err := s.database.QueryRowContext(ctx, getAllOAuth2ClientCountQuery).Scan(&count)
 	return count, err
 }
 

@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/metrics/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 
 	"contrib.go.opencensus.io/exporter/jaeger"
 	"contrib.go.opencensus.io/exporter/prometheus"
@@ -53,8 +53,7 @@ func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) (m
 	logger.WithValue("metrics_provider", cfg.Metrics.MetricsProvider).Debug("setting metrics provider")
 
 	switch cfg.Metrics.MetricsProvider {
-	case Prometheus:
-
+	case Prometheus, DefaultMetricsProvider:
 		p, err := prometheus.NewExporter(prometheus.Options{
 			Namespace: string(cfg.Metrics.Namespace),
 		})
@@ -82,7 +81,7 @@ func (cfg *ServerConfig) ProvideTracing(logger logging.Logger) error {
 	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 
 	switch cfg.Metrics.TracingProvider {
-	case Jaeger:
+	case Jaeger, DefaultTracingProvider:
 		logger.WithValue("tracing_provider", cfg.Metrics.TracingProvider).Info("setting tracing provider")
 		je, err := jaeger.NewExporter(jaeger.Options{
 			AgentEndpoint: fmt.Sprintf("%s:%s", os.Getenv("JAEGER_AGENT_HOST"), os.Getenv("JAEGER_AGENT_PORT")),

@@ -4,7 +4,7 @@ import (
 	"context"
 	"math"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"github.com/pkg/errors"
 	"github.com/pquerna/otp/totp"

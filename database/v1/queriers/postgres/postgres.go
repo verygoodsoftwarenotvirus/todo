@@ -7,7 +7,7 @@ import (
 
 	"contrib.go.opencensus.io/integrations/ocsql"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	postgres "github.com/lib/pq"
 )

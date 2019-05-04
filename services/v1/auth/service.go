@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
-	libauth "gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
+	libauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 

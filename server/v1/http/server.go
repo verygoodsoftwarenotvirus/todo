@@ -8,8 +8,8 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/encoding/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
@@ -39,7 +39,7 @@ type (
 
 		// infra things
 		db         database.Database
-		config     *config.ServerConfig
+		config     config.ServerSettings
 		router     *chi.Mux
 		httpServer *http.Server
 		logger     logging.Logger
@@ -78,7 +78,7 @@ func ProvideServer(
 
 		// infra things
 		db:            db,
-		config:        config,
+		config:        config.Server,
 		encoder:       encoder,
 		httpServer:    provideHTTPServer(),
 		logger:        logger.WithName("api_server"),
@@ -111,7 +111,7 @@ func ProvideServer(
 
 // Serve serves HTTP traffic
 func (s *Server) Serve() {
-	s.httpServer.Addr = fmt.Sprintf(":%d", s.config.Server.HTTPPort)
+	s.httpServer.Addr = fmt.Sprintf(":%d", s.config.HTTPPort)
 	s.logger.Debug(fmt.Sprintf("Listening for HTTP requests on %s", s.httpServer.Addr))
 	log.Fatal(s.httpServer.ListenAndServe())
 }

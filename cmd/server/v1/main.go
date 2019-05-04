@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/zerolog"
 )
 
 func main() {

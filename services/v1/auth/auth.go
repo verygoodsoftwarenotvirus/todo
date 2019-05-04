@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/auth/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 

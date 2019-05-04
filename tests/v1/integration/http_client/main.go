@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/zerolog"
 
 	"github.com/stretchr/testify/require"
 )

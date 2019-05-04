@@ -3,7 +3,7 @@ package logrus
 import (
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"github.com/sirupsen/logrus"
 )

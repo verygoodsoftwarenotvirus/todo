@@ -5,7 +5,7 @@ import (
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/sqlite"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/lib/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"contrib.go.opencensus.io/integrations/ocsql"
 	"github.com/pkg/errors"

@@ -74,8 +74,6 @@ func buildConfig() *viper.Viper {
 
 	// metrics stuff
 	cfg.SetDefault("metrics.metrics_namespace", "REPLACE_ME_WITH_A_REAL_NAMESPACE")
-	cfg.SetDefault("metrics.metrics_provider", DefaultMetricsProvider)
-	cfg.SetDefault("metrics.tracing_provider", DefaultTracingProvider)
 	cfg.SetDefault("metrics.database_metrics_collection_interval", time.Second)
 	cfg.SetDefault("metrics.runtime_metrics_collection_interval", time.Second)
 

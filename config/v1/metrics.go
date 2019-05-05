@@ -62,18 +62,10 @@ func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) (m
 		}
 		view.RegisterExporter(p)
 	default:
-		return nil, fmt.Errorf("invalid metrics provider requested: %q", cfg.Metrics.MetricsProvider)
+		return nil, nil // fmt.Errorf("invalid metrics provider requested: %q", cfg.Metrics.MetricsProvider)
 	}
 
-	p, err := prometheus.NewExporter(prometheus.Options{
-		Namespace: string(cfg.Metrics.Namespace),
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create Prometheus exporter")
-	}
-	view.RegisterExporter(p)
-
-	return p, nil
+	return nil, nil
 }
 
 // ProvideTracing provides an instrumentation handler
@@ -95,7 +87,7 @@ func (cfg *ServerConfig) ProvideTracing(logger logging.Logger) error {
 
 		trace.RegisterExporter(je)
 	default:
-		return fmt.Errorf("invalid tracing provider requested: %q", cfg.Metrics.TracingProvider)
+		return nil // fmt.Errorf("invalid tracing provider requested: %q", cfg.Metrics.TracingProvider)
 	}
 
 	return nil

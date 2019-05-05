@@ -1,0 +1,19 @@
+[meta]
+# tracing_enabled = true
+# debug = true
+
+[metrics]
+metrics_namespace = "todo_server"
+
+[server]
+http_port = 80
+debug = true
+frontend_files_directory = "/frontend"
+
+[auth]
+cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"
+
+[database]
+type = "postgres"
+debug = false
+connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"

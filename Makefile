@@ -95,6 +95,14 @@ debug-integration-tests: wire
 locust-load-tests: wire
 	docker-compose --file compose-files/locust-load-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
 
+.PHONY: integration-coverage
+integration-coverage:
+	# big thanks to https://blog.cloudflare.com/go-coverage-with-external-tests/
+	rm -f ./artifacts/integration-coverage.out
+	mkdir -p ./artifacts
+	docker-compose --file compose-files/integration-coverage.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
+	go tool cover -html=./artifacts/integration-coverage.out
+
 ## Docker things
 
 .PHONY: server-docker-image

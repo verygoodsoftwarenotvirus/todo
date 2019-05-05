@@ -1,0 +1,49 @@
+version: '3.3'
+
+services:
+  todo-server:
+    build:
+      context: ../
+      dockerfile: dockerfiles/integration-coverage.Dockerfile
+    ports:
+      - '80:80'
+    environment:
+      DOCKER: 'true'
+      RUNTIME_DURATION: '5m'
+    volumes:
+      - ../artifacts/:/home/
+    links:
+      - database
+    # logging:
+    #   driver: none
+
+  locust:
+    build:
+      context: ../
+      dockerfile: dockerfiles/locust.Dockerfile
+    environment:
+      OAUTHLIB_INSECURE_TRANSPORT: 'true'
+    entrypoint:
+      locust -f locustfile.py --host=http://todo-server --no-web -c 15 -r 1
+      --run-time 10m
+    links:
+      - todo-server
+    ports:
+      - '8089:8089'
+      - '5557:5557'
+      - '5558:5558'
+    logging:
+      driver: none
+
+  database:
+    image: postgres:latest
+    ports:
+      - '2345:5432'
+    environment:
+      POSTGRES_USER: dbuser
+      POSTGRES_PASSWORD: hunter2
+      POSTGRES_DB: todo
+    volumes:
+      - ../database/_postgres_init_.sql:/docker-entrypoint-initdb.d/10-init.sql
+    logging:
+      driver: none

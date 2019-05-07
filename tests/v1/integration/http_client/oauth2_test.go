@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"

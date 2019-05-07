@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 
 	"contrib.go.opencensus.io/exporter/jaeger"
@@ -16,9 +16,10 @@ import (
 	"go.opencensus.io/trace"
 )
 
-type metricsProvider string
-
-type tracingProvider string
+type (
+	metricsProvider string
+	tracingProvider string
+)
 
 var (
 	// Prometheus is one of our supported metrics providers

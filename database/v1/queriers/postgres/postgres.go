@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"contrib.go.opencensus.io/integrations/ocsql"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	postgres "github.com/lib/pq"
 )

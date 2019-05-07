@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 
 	"github.com/gorilla/websocket"
 	"github.com/moul/http2curl"

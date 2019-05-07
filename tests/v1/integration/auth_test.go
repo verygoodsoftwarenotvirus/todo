@@ -1,4 +1,4 @@
-package httpclient
+package integration
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 

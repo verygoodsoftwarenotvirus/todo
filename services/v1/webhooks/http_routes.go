@@ -3,6 +3,8 @@ package webhooks
 import (
 	"database/sql"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
@@ -60,6 +62,22 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	}
 	input.BelongsTo = userID
 	logger = logger.WithValue("input", input)
+
+	if _, err := url.Parse(input.URL); err != nil {
+		s.logger.Error(err, "invalid URL provided")
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	input.Method = strings.ToUpper(input.Method)
+	switch input.Method {
+	case http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodHead:
+		break
+	default:
+		s.logger.Error(nil, "invalid method provided")
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	x, err := s.webhookDatabase.CreateWebhook(ctx, input)
 	if err != nil {

@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -10,8 +11,20 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	eventsSeparator = `,`
+	typesSeparator  = `,`
+	topicsSeparator = `,`
+)
+
 func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
-	x := &models.Webhook{}
+	var (
+		x = &models.Webhook{}
+
+		eventsStr,
+		typesStr,
+		topicsStr string
+	)
 
 	if err := scan.Scan(
 		&x.ID,
@@ -19,6 +32,9 @@ func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 		&x.ContentType,
 		&x.URL,
 		&x.Method,
+		&eventsStr,
+		&typesStr,
+		&topicsStr,
 		&x.CreatedOn,
 		&x.UpdatedOn,
 		&x.CompletedOn,
@@ -26,6 +42,10 @@ func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 	); err != nil {
 		return nil, err
 	}
+
+	x.Events = strings.Split(eventsStr, eventsSeparator)
+	x.DataTypes = strings.Split(typesStr, typesSeparator)
+	x.Topics = strings.Split(topicsStr, topicsSeparator)
 
 	return x, nil
 }
@@ -60,6 +80,9 @@ const getWebhookQuery = `
 		content_type,
 		url,
 		method,
+		events,
+		data_types,
+		topics,
 		created_on,
 		updated_on,
 		completed_on,
@@ -107,7 +130,7 @@ const getAllWebhooksCountQuery = `
 // GetAllWebhooksCount fetches the count of webhooks from the sqlite database that meet a particular filter
 func (s *Sqlite) GetAllWebhooksCount(ctx context.Context) (uint64, error) {
 	var count uint64
-	err := s.database.QueryRowContext(ctx, getWebhookCountQuery).Scan(&count)
+	err := s.database.QueryRowContext(ctx, getAllWebhooksCountQuery).Scan(&count)
 	return count, err
 }
 
@@ -118,6 +141,9 @@ const getAllWebhooksQuery = `
 		content_type,
 		url,
 		method,
+		events,
+		data_types,
+		topics,
 		created_on,
 		updated_on,
 		completed_on,
@@ -126,8 +152,6 @@ const getAllWebhooksQuery = `
 		webhooks
 	WHERE
 		completed_on IS NULL
-	LIMIT ?
-	OFFSET ?
 `
 
 // GetAllWebhooks fetches a list of webhooks from the sqlite database that meet a particular filter
@@ -164,6 +188,9 @@ const getWebhooksQuery = `
 		content_type,
 		url,
 		method,
+		events,
+		data_types,
+		topics,
 		created_on,
 		updated_on,
 		completed_on,
@@ -212,11 +239,14 @@ const createWebhookQuery = `
 		content_type,
 		url,
 		method,
+		events,
+		data_types,
+		topics,
 		belongs_to
 	)
 	VALUES
 	(
-		?, ?, ?, ?, ?
+		?, ?, ?, ?, ?, ?, ?, ?
 	)
 `
 
@@ -230,6 +260,9 @@ func (s *Sqlite) CreateWebhook(ctx context.Context, input *models.WebhookInput) 
 		input.ContentType,
 		input.URL,
 		input.Method,
+		strings.Join(input.Events, eventsSeparator),
+		strings.Join(input.DataTypes, typesSeparator),
+		strings.Join(input.Topics, topicsSeparator),
 		input.BelongsTo,
 	)
 	if err != nil {
@@ -257,6 +290,9 @@ const updateWebhookQuery = `
 		content_type = ?,
 		url = ?,
 		method = ?,
+		events = ?,
+		data_types = ?,
+		topics = ?,
 		updated_on = (strftime('%s','now'))
 	WHERE
 		id = ?
@@ -273,6 +309,9 @@ func (s *Sqlite) UpdateWebhook(ctx context.Context, input *models.Webhook) error
 		input.URL,
 		input.Method,
 		input.ID,
+		strings.Join(input.Events, eventsSeparator),
+		strings.Join(input.DataTypes, typesSeparator),
+		strings.Join(input.Topics, topicsSeparator),
 		input.BelongsTo,
 	)
 	if err != nil {

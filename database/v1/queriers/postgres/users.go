@@ -11,10 +11,7 @@ import (
 )
 
 func (p Postgres) scanUser(scan database.Scanner) (*models.User, error) {
-	var (
-		x = &models.User{}
-	)
-
+	var x = &models.User{}
 	err := scan.Scan(
 		&x.ID,
 		&x.Username,
@@ -104,7 +101,8 @@ const getUserCountQuery = `
 		COUNT(*)
 	FROM
 		users
-	WHERE archived_on IS NULL
+	WHERE
+		archived_on IS NULL
 `
 
 // GetUserCount fetches a count of users from the postgres database that meet a particular filter
@@ -218,7 +216,8 @@ const updateUserQuery = `
 		username = $1,
 		password = $2,
 		updated_on = extract(epoch FROM NOW())
-	WHERE id = $3
+	WHERE
+		id = $3
 	RETURNING
 		updated_on
 `
@@ -239,7 +238,8 @@ const archiveUserQuery = `
 	SET
 		updated_on = extract(epoch FROM NOW()),
 		archived_on = extract(epoch FROM NOW())
-	WHERE id = $1
+	WHERE
+		id = $1
 	RETURNING
 		archived_on
 `

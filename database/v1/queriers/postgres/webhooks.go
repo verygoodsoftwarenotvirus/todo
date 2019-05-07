@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -9,9 +10,19 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	eventsSeparator = `,`
+	typesSeparator  = `,`
+	topicsSeparator = `,`
+)
+
 func (p Postgres) scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 	var (
 		x = &models.Webhook{}
+
+		eventsStr,
+		dataTypesStr,
+		topicsStr string
 	)
 
 	if err := scan.Scan(
@@ -20,6 +31,9 @@ func (p Postgres) scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 		&x.ContentType,
 		&x.URL,
 		&x.Method,
+		&eventsStr,
+		&dataTypesStr,
+		&topicsStr,
 		&x.CreatedOn,
 		&x.UpdatedOn,
 		&x.CompletedOn,
@@ -27,6 +41,10 @@ func (p Postgres) scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 	); err != nil {
 		return nil, err
 	}
+
+	x.Events = strings.Split(eventsStr, eventsSeparator)
+	x.DataTypes = strings.Split(dataTypesStr, typesSeparator)
+	x.Topics = strings.Split(topicsStr, topicsSeparator)
 
 	return x, nil
 }
@@ -38,6 +56,9 @@ const getWebhookQuery = `
 		content_type,
 		url,
 		method,
+		events,
+		data_types,
+		topics,
 		created_on,
 		updated_on,
 		completed_on,
@@ -94,6 +115,9 @@ const getAllWebhooksQuery = `
 		content_type,
 		url,
 		method,
+		events,
+		data_types,
+		topics,
 		created_on,
 		updated_on,
 		completed_on,
@@ -102,7 +126,7 @@ const getAllWebhooksQuery = `
 		webhooks
 	WHERE
 		completed_on IS NULL
-` // FINISHME: finish adding filters to this query
+`
 
 // GetAllWebhooks fetches a list of all webhooks from the postgres database
 func (p *Postgres) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
@@ -152,6 +176,9 @@ const getWebhooksQuery = `
 		content_type,
 		url,
 		method,
+		events,
+		data_types,
+		topics,
 		created_on,
 		updated_on,
 		completed_on,
@@ -215,11 +242,14 @@ const createWebhookQuery = `
 		content_type,
 		url,
 		method,
+		events,
+		data_types,
+		topics,
 		belongs_to
 	)
 	VALUES
 	(
-		$1, $2, $3
+		$1, $2, $3, $4, $5, $6, $7, $8
 	)
 	RETURNING
 		id,
@@ -229,7 +259,14 @@ const createWebhookQuery = `
 // CreateWebhook creates an webhook in a postgres database
 func (p *Postgres) CreateWebhook(ctx context.Context, input *models.WebhookInput) (*models.Webhook, error) {
 	i := &models.Webhook{
-		BelongsTo: input.BelongsTo,
+		Name:        input.Name,
+		ContentType: input.ContentType,
+		URL:         input.URL,
+		Method:      input.Method,
+		Events:      input.Events,
+		DataTypes:   input.DataTypes,
+		Topics:      input.Topics,
+		BelongsTo:   input.BelongsTo,
 	}
 
 	// create the webhook
@@ -240,6 +277,9 @@ func (p *Postgres) CreateWebhook(ctx context.Context, input *models.WebhookInput
 			input.ContentType,
 			input.URL,
 			input.Method,
+			strings.Join(input.Events, eventsSeparator),
+			strings.Join(input.DataTypes, typesSeparator),
+			strings.Join(input.Topics, topicsSeparator),
 			input.BelongsTo,
 		).Scan(&i.ID, &i.CreatedOn); err != nil {
 		return nil, errors.Wrap(err, "error executing webhook creation query")
@@ -254,10 +294,13 @@ const updateWebhookQuery = `
 		content_type = $2,
 		url = $3,
 		method = $4,
+		events = $5,
+		data_types = $6,
+		topics = $7,
 		updated_on = extract(epoch FROM NOW())
 	WHERE
-		id = $5
-		AND belongs_to = $6
+		id = $8
+		AND belongs_to = $9
 	RETURNING
 		updated_on
 `
@@ -273,6 +316,9 @@ func (p *Postgres) UpdateWebhook(ctx context.Context, input *models.Webhook) err
 			input.ContentType,
 			input.URL,
 			input.Method,
+			strings.Join(input.Events, eventsSeparator),
+			strings.Join(input.DataTypes, typesSeparator),
+			strings.Join(input.Topics, topicsSeparator),
 			input.ID,
 			input.BelongsTo,
 		).Scan(&input.UpdatedOn)

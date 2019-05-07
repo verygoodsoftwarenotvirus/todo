@@ -92,6 +92,8 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 		})
 	})
 
+	router.Get("/websockets", s.newsManager.ServeWebsockets)
+
 	router.
 		With(s.authService.AuthenticationMiddleware(true)).
 		Route("/api", func(apiRouter chi.Router) {

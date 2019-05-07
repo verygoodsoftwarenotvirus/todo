@@ -10,20 +10,21 @@ INSTANCE_URL = "http://todo-server"
 API_URL_PREFIX = "/api/v1"
 
 ITEMS_URL_PREFIX = f"{API_URL_PREFIX}/items"
+WEBHOOKS_URL_PREFIX = f"{API_URL_PREFIX}/webhooks"
 OAUTH2_CLIENTS_URL_PREFIX = f"{API_URL_PREFIX}/oauth2/clients"
 
 
 class UserTasks(TaskSet):
     def __init__(self, *args, **kwargs):
-        self._token: str = ''
+        self._token: str = ""
         self._oauth2_authorized: bool = False
         self.created_item_ids: List[int] = []
         self.created_oauth2_client_ids: List[str] = []
-        self.username: str = ''
-        self.password: str = ''
-        self.client_id: str = ''
-        self.client_secret: str = ''
-        self.two_factor_secret: str = ''
+        self.username: str = ""
+        self.password: str = ""
+        self.client_id: str = ""
+        self.client_secret: str = ""
+        self.two_factor_secret: str = ""
         self.fake = Generic()
 
         super(UserTasks, self).__init__(*args, **kwargs)
@@ -65,11 +66,7 @@ class UserTasks(TaskSet):
     @property
     def token(self):
         # FIXME: :(
-        if (
-                self._token != ''
-                and self.client_id != ''
-                and self.client_secret != ''
-        ):
+        if self._token != "" and self.client_id != "" and self.client_secret != "":
             res = self.client.post(
                 url="/oauth2/token",  # authorize
                 data={"grant_type": "client_credentials"},
@@ -132,7 +129,7 @@ class UserTasks(TaskSet):
     @task(weight=10)
     def get_invalid_item(self):
         with self.client.get(
-                url=f"{ITEMS_URL_PREFIX}/999999999", catch_response=True
+            url=f"{ITEMS_URL_PREFIX}/999999999", catch_response=True
         ) as response:
             if response.status_code != 404:
                 response.failure("service returned irrelevant item")
@@ -205,6 +202,95 @@ class UserTasks(TaskSet):
             headers=self.auth_headers,
         )
 
+    # Webhook things
+
+    def random_webhook_id(self) -> int:
+        number_of_webhooks = len(self.created_webhook_ids)
+        if 0 < number_of_webhooks:
+            return random.choice(self.created_webhook_ids)
+        else:
+            return -1
+
+    @task(weight=10)
+    def get_invalid_webhook(self):
+        with self.client.get(
+            url=f"{WEBHOOKS_URL_PREFIX}/999999999", catch_response=True
+        ) as response:
+            if response.status_code != 404:
+                response.failure("service returned irrelevant webhook")
+
+    @task(weight=100)
+    def create_webhook(self):
+        webhook_creation_input = {
+            "name": self.fake.text.word(),
+            "details": self.fake.text.sentence(),
+        }
+
+        res = self.client.post(
+            url=WEBHOOKS_URL_PREFIX,
+            json=webhook_creation_input,
+            headers=self.auth_headers,
+        )
+        webhook_id = res.json().get("id")
+        self.created_webhook_ids.append(webhook_id)
+
+    @task(weight=100)
+    def read_webhook(self):
+        webhook_id = self.random_webhook_id()
+        if webhook_id > 0:
+            self.client.get(
+                url=f"{WEBHOOKS_URL_PREFIX}/{webhook_id}",
+                name=f"{WEBHOOKS_URL_PREFIX}/[webhook_id]",
+                headers=self.auth_headers,
+            )
+
+    @task(75)
+    def update_webhook(self):
+        webhook_id = self.random_webhook_id()
+        if webhook_id > 0:
+            new_name = self.fake.text.word()
+            response = self.client.put(
+                url=f"{WEBHOOKS_URL_PREFIX}/{webhook_id}",
+                name=f"{WEBHOOKS_URL_PREFIX}/[webhook_id]",
+                json={"name": new_name},
+                headers=self.auth_headers,
+            )
+
+            try:
+                body = response.json()
+                if body.get("name") != new_name:
+                    print(body)
+                    response.failure("service returned an unchanged webhook")
+            except:
+                pass
+
+    @task(100)
+    def delete_webhook(self):
+        number_of_webhooks = len(self.created_webhook_ids)
+        if number_of_webhooks > 0:
+            unlucky_webhook = self.created_webhook_ids.pop(
+                random.randrange(number_of_webhooks)
+            )
+            self.client.delete(
+                url=f"{WEBHOOKS_URL_PREFIX}/{unlucky_webhook}",
+                name=f"{WEBHOOKS_URL_PREFIX}/[webhook_id]",
+                headers=self.auth_headers,
+            )
+
+    @task(50)
+    def list_webhooks(self):
+        self.client.get(
+            url=WEBHOOKS_URL_PREFIX, name=WEBHOOKS_URL_PREFIX, headers=self.auth_headers
+        )
+
+    @task(5)
+    def request_high_offset_webhooks(self):
+        self.client.get(
+            url=f"{WEBHOOKS_URL_PREFIX}?page=999999&limit=500",
+            name=WEBHOOKS_URL_PREFIX,
+            headers=self.auth_headers,
+        )
+
     # OAuth2 client things
 
     def random_oauth2_client_id(self) -> int:
@@ -217,9 +303,9 @@ class UserTasks(TaskSet):
     @task(weight=10)
     def get_invalid_oauth2_client(self):
         with self.client.get(
-                catch_response=True,
-                url=f"{OAUTH2_CLIENTS_URL_PREFIX}/999999999",
-                headers=self.auth_headers,
+            catch_response=True,
+            url=f"{OAUTH2_CLIENTS_URL_PREFIX}/999999999",
+            headers=self.auth_headers,
         ) as response:
             if response.status_code != 404:
                 response.failure("service returned irrelevant oauth2 client")
@@ -254,11 +340,11 @@ class UserTasks(TaskSet):
     def delete_oauth2_client(self):
         number_of_oauth2_clients = len(self.created_oauth2_client_ids)
         if number_of_oauth2_clients > 0:
-            unlucky_item = self.created_oauth2_client_ids.pop(
+            unlucky_oauth2_client = self.created_oauth2_client_ids.pop(
                 random.randrange(number_of_oauth2_clients)
             )
             self.client.delete(
-                url=f"{OAUTH2_CLIENTS_URL_PREFIX}/{unlucky_item}",
+                url=f"{OAUTH2_CLIENTS_URL_PREFIX}/{unlucky_oauth2_client}",
                 name=f"{OAUTH2_CLIENTS_URL_PREFIX}/[oauth2_client_db_id]",
                 headers=self.auth_headers,
             )

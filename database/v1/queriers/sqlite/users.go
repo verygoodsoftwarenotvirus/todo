@@ -53,7 +53,9 @@ func (s *Sqlite) scanUsers(rows *sql.Rows) ([]models.User, error) {
 	return list, nil
 }
 
-const adminUserExistsQuery = `SELECT EXISTS(SELECT id FROM users WHERE is_admin = true)`
+const adminUserExistsQuery = `
+	SELECT EXISTS(SELECT id FROM users WHERE is_admin = true)
+`
 
 // AdminUserExists validates whether or not an admin user exists
 func (s *Sqlite) AdminUserExists(ctx context.Context) (bool, error) {
@@ -153,13 +155,28 @@ const getUsersQuery = `
 
 // GetUsers fetches a list of users from the sqlite database that meet a particular filter
 func (s *Sqlite) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
+	var list []models.User
+
 	rows, err := s.database.QueryContext(ctx, getUsersQuery, filter.Limit, filter.QueryPage())
 	if err != nil {
 		return nil, err
 	}
 
-	list, err := s.scanUsers(rows)
-	if err != nil {
+	defer func() {
+		if err = rows.Close(); err != nil {
+			s.logger.Error(err, "closing rows")
+		}
+	}()
+
+	for rows.Next() {
+		var user *models.User
+		user, err = scanUser(rows)
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, *user)
+	}
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 

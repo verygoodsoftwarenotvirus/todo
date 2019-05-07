@@ -31,24 +31,42 @@ type WebhookDataServer interface {
 
 // Webhook represents an item
 type Webhook struct {
-	ID          uint64  `json:"id"`
-	Name        string  `json:"name"`
-	ContentType string  `json:"content_type"`
-	URL         string  `json:"url"`
-	Method      string  `json:"method"`
-	CreatedOn   uint64  `json:"created_on"`
-	UpdatedOn   *uint64 `json:"updated_on"`
-	CompletedOn *uint64 `json:"completed_on"`
-	BelongsTo   uint64  `json:"belongs_to"`
+	ID          uint64   `json:"id"`
+	Name        string   `json:"name"`
+	ContentType string   `json:"content_type"`
+	URL         string   `json:"url"`
+	Method      string   `json:"method"`
+	Events      []string `json:"events"`
+	DataTypes   []string `json:"data_types"`
+	Topics      []string `json:"topics"`
+	CreatedOn   uint64   `json:"created_on"`
+	UpdatedOn   *uint64  `json:"updated_on"`
+	CompletedOn *uint64  `json:"completed_on"`
+	BelongsTo   uint64   `json:"belongs_to"`
 }
 
 // WebhookInput represents what a user could set as input for items
 type WebhookInput struct {
-	Name        string `json:"name"`
-	ContentType string `json:"content_type"`
-	URL         string `json:"url"`
-	Method      string `json:"method"`
-	BelongsTo   uint64 `json:"-"`
+	Name        string   `json:"name"`
+	ContentType string   `json:"content_type"`
+	URL         string   `json:"url"`
+	Method      string   `json:"method"`
+	Events      []string `json:"events"`
+	DataTypes   []string `json:"data_types"`
+	Topics      []string `json:"topics"`
+	BelongsTo   uint64   `json:"-"`
+}
+
+func sliceToMap(s []string) []string {
+	keys := make(map[string]bool)
+	list := []string{}
+	for _, entry := range s {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
 }
 
 // Update merges an WebhookInput with an Webhook
@@ -65,6 +83,19 @@ func (i *Webhook) Update(input *WebhookInput) {
 	if input.Method != "" {
 		i.Method = input.Method
 	}
+
+	if input.Events != nil && len(input.Events) > 0 {
+		i.Events = input.Events
+	}
+
+	if input.DataTypes != nil && len(input.DataTypes) > 0 {
+		i.DataTypes = input.DataTypes
+	}
+
+	if input.Topics != nil && len(input.Topics) > 0 {
+		i.Topics = input.Topics
+	}
+
 }
 
 // WebhookList represents a list of items

@@ -89,6 +89,7 @@ const getOAuth2ClientQuery = `
 	WHERE
 		client_id = ?
 		AND belongs_to = ?
+		AND archived_on IS NULL
 `
 
 // GetOAuth2Client gets an OAuth2 client
@@ -113,6 +114,7 @@ const getOAuth2ClientByClientIDQuery = `
 		oauth_clients
 	WHERE
 		client_id = ?
+		AND archived_on IS NULL
 `
 
 // GetOAuth2ClientByClientID gets an OAuth2 client regardless of ownership
@@ -128,8 +130,8 @@ const getOAuth2ClientCountQuery = `
 	FROM
 		oauth_clients
 	WHERE
-		archived_on is null
-	AND belongs_to = ?
+		archived_on IS NULL
+		AND belongs_to = ?
 `
 
 // GetOAuth2ClientCount gets the count of OAuth2 clients that match the current filter
@@ -145,7 +147,7 @@ const getAllOAuth2ClientCountQuery = `
 	FROM
 		oauth_clients
 	WHERE
-		archived_on is null
+		archived_on IS NULL
 `
 
 // GetAllOAuth2ClientCount gets the count of OAuth2 clients that match the current filter
@@ -169,14 +171,21 @@ const getOAuth2ClientsQuery = `
 	FROM
 		oauth_clients
 	WHERE
-		archived_on is null
+		archived_on IS NULL
+		AND belongs_to = ?
 	LIMIT ?
 	OFFSET ?
 `
 
 // GetOAuth2Clients gets a list of OAuth2 clients
 func (s *Sqlite) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.OAuth2ClientList, error) {
-	rows, err := s.database.QueryContext(ctx, getOAuth2ClientsQuery, filter.Limit, filter.QueryPage())
+	rows, err := s.database.QueryContext(
+		ctx,
+		getOAuth2ClientsQuery,
+		userID,
+		filter.Limit,
+		filter.QueryPage(),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -295,8 +304,7 @@ func (s *Sqlite) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 }
 
 const updateOAuth2ClientQuery = `
-	UPDATE oauth_clients
-	SET
+	UPDATE oauth_clients SET
 		client_id = ?,
 		client_secret = ?,
 		scopes = ?,

@@ -54,7 +54,7 @@ func ProvideWebhooksUserIDFetcher() webhooks.UserIDFetcher {
 
 // ProvideWebhookIDFetcher provides an WebhookIDFetcher
 func ProvideWebhookIDFetcher() webhooks.WebhookIDFetcher {
-	return chiItemIDFetcher
+	return chiWebhookIDFetcher
 }
 
 // ProvideOAuth2ServiceClientIDFetcher provides a ClientIDFetcher
@@ -81,6 +81,14 @@ func chiItemIDFetcher(req *http.Request) uint64 {
 	// we disregard this error only because we're able to validate that the string only
 	// contains numbers via chi's regex things
 	u, _ := strconv.ParseUint(chi.URLParam(req, items.URIParamKey), 10, 64)
+	return u
+}
+
+// chiWebhookIDFetcher fetches a Username from a request routed by chi.
+func chiWebhookIDFetcher(req *http.Request) uint64 {
+	// we disregard this error only because we're able to validate that the string only
+	// contains numbers via chi's regex things
+	u, _ := strconv.ParseUint(chi.URLParam(req, webhooks.URIParamKey), 10, 64)
 	return u
 }
 

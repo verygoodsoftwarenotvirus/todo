@@ -104,7 +104,13 @@ const getItemsQuery = `
 // GetItems fetches a list of items from the postgres database that meet a particular filter
 func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
 	var list []models.Item
-	rows, err := p.database.QueryContext(ctx, getItemsQuery, userID, filter.Limit, filter.QueryPage())
+	rows, err := p.database.QueryContext(
+		ctx,
+		getItemsQuery,
+		userID,
+		filter.Limit,
+		filter.QueryPage(),
+	)
 	if err != nil {
 		return nil, err
 	}

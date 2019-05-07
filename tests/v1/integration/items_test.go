@@ -1,4 +1,4 @@
-package httpclient
+package integration
 
 import (
 	"context"
@@ -148,7 +148,7 @@ func TestItems(test *testing.T) {
 
 			// Fetch item
 			actual, err := todoClient.GetItem(tctx, premade.ID)
-			assert.NoError(t, err)
+			checkValueAndError(t, actual, err)
 
 			// Assert item equality
 			checkItemEquality(t, expected, actual)

@@ -102,7 +102,7 @@ const getAllItemsCountQuery = `
 // GetAllItemsCount fetches the count of items from the sqlite database that meet a particular filter
 func (s *Sqlite) GetAllItemsCount(ctx context.Context) (uint64, error) {
 	var count uint64
-	err := s.database.QueryRowContext(ctx, getItemCountQuery).Scan(&count)
+	err := s.database.QueryRowContext(ctx, getAllItemsCountQuery).Scan(&count)
 	return count, err
 }
 
@@ -119,20 +119,37 @@ const getItemsQuery = `
 		items
 	WHERE
 		completed_on IS NULL
+		AND belongs_to = ?
 	LIMIT ?
 	OFFSET ?
 `
 
 // GetItems fetches a list of items from the sqlite database that meet a particular filter
 func (s *Sqlite) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
-	rows, err := s.database.QueryContext(ctx, getItemsQuery, filter.Limit, filter.QueryPage())
+	var list []models.Item
+	rows, err := s.database.QueryContext(
+		ctx,
+		getItemsQuery,
+		userID,
+		filter.Limit,
+		filter.QueryPage(),
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "querying database for items")
 	}
 
-	list, err := s.scanItems(rows)
-	if err != nil {
-		return nil, errors.Wrap(err, "scanning items")
+	defer func() {
+		if err = rows.Close(); err != nil {
+			s.logger.Error(err, "closing rows")
+		}
+	}()
+
+	for rows.Next() {
+		item, ierr := scanItem(rows)
+		if ierr != nil {
+			return nil, errors.Wrap(err, "scanning items")
+		}
+		list = append(list, *item)
 	}
 
 	count, err := s.GetItemCount(ctx, filter, userID)

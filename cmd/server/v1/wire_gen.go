@@ -18,6 +18,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
 )
 
 // Injectors from wire.go:
@@ -47,7 +48,13 @@ func BuildServer(cfg *config.ServerConfig, logger logging.Logger, database2 data
 	if err != nil {
 		return nil, err
 	}
-	httpserverServer, err := httpserver.ProvideServer(cfg, authService, itemsService, usersService, service, database2, logger, encoderDecoder)
+	webhooksUserIDFetcher := httpserver.ProvideWebhooksUserIDFetcher()
+	webhookIDFetcher := httpserver.ProvideWebhookIDFetcher()
+	webhooksService, err := webhooks.ProvideWebhooksService(logger, database2, webhooksUserIDFetcher, webhookIDFetcher, encoderDecoder, unitCounterProvider)
+	if err != nil {
+		return nil, err
+	}
+	httpserverServer, err := httpserver.ProvideServer(cfg, authService, itemsService, usersService, service, webhooksService, database2, logger, encoderDecoder)
 	if err != nil {
 		return nil, err
 	}

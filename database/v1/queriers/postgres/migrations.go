@@ -62,6 +62,23 @@ var (
 				FOREIGN KEY ("belongs_to") REFERENCES "users"("id")
 			);`,
 		},
+		{
+			Version:     4,
+			Description: "Create webhooks table",
+			Script: `
+			CREATE TABLE IF NOT EXISTS webhooks (
+				"id" bigserial NOT NULL PRIMARY KEY,
+				"name" text NOT NULL,
+				"content_type" text NOT NULL,
+				"url" text NOT NULL,
+				"method" text NOT NULL,
+				"created_on" bigint NOT NULL DEFAULT extract(epoch FROM NOW()),
+				"updated_on" bigint,
+				"completed_on" bigint,
+				"belongs_to" bigint NOT NULL,
+				FOREIGN KEY ("belongs_to") REFERENCES "users"("id")
+			);`,
+		},
 	}
 )
 

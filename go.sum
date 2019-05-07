@@ -208,6 +208,8 @@ github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82/go.mod h1:lgjkn3NuSvDf
 github.com/yudai/pp v2.0.1+incompatible/go.mod h1:PuxR/8QJ7cyCkFp/aUDS+JY727OFEZkTdatxwunjIkc=
 gitlab.com/verygoodsoftwarenotvirus/logging v1.0.2 h1:zAdLudv1NoIMC8NhhNSAiE3OYA8JGT8PgUUfpdeGOn0=
 gitlab.com/verygoodsoftwarenotvirus/logging v1.0.2/go.mod h1:B1IphBAXJv6GQwy4FH7DyeJtI2UIyqKQzKF56gRl+Qc=
+gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.1 h1:nP3j5knR4JitWTiQKBi2NKueoVek/uqC8buqDGTBbbE=
+gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.1/go.mod h1:Hlu5CnB4wxPtbMWHAwZsUGdvOofrntioEWOlxi5TdVM=
 go.opencensus.io v0.20.1/go.mod h1:6WKK9ahsWS3RSO+PY9ZHZUfv2irvY6gN279GOPZjmmk=
 go.opencensus.io v0.21.0 h1:mU6zScU4U1YAFPHEHYk+3JC4SY7JxgkqS10ZOSyksNg=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=

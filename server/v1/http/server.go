@@ -15,6 +15,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
 
 	"github.com/go-chi/chi"
 	"github.com/gorilla/securecookie"
@@ -36,6 +37,7 @@ type (
 		itemsService         models.ItemDataServer
 		usersService         models.UserDataServer
 		oauth2ClientsService models.Oauth2ClientDataServer
+		webhooksService      models.WebhookDataServer
 
 		// infra things
 		db         database.Database
@@ -60,6 +62,7 @@ func ProvideServer(
 	itemsService *items.Service,
 	usersService *users.Service,
 	oauth2Service *oauth2clients.Service,
+	webhooksService *webhooks.Service,
 
 	// infra things
 	db database.Database,
@@ -85,6 +88,7 @@ func ProvideServer(
 		cookieBuilder: securecookie.New(securecookie.GenerateRandomKey(64), []byte(config.Auth.CookieSecret)),
 
 		// services
+		webhooksService:      webhooksService,
 		usersService:         usersService,
 		authService:          authService,
 		itemsService:         itemsService,

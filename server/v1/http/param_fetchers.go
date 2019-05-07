@@ -9,6 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
 
 	"github.com/go-chi/chi"
 	"github.com/google/wire"
@@ -21,6 +22,8 @@ var (
 		ProvideOAuth2ServiceClientIDFetcher,
 		ProvideAuthUserIDFetcher,
 		ProvideItemIDFetcher,
+		ProvideWebhooksUserIDFetcher,
+		ProvideWebhookIDFetcher,
 	)
 )
 
@@ -42,6 +45,16 @@ func ProvideUsernameFetcher() users.UserIDFetcher {
 // ProvideAuthUserIDFetcher provides a UsernameFetcher
 func ProvideAuthUserIDFetcher() auth.UserIDFetcher {
 	return UserIDFetcher
+}
+
+// ProvideWebhooksUserIDFetcher provides a UserIDFetcher
+func ProvideWebhooksUserIDFetcher() webhooks.UserIDFetcher {
+	return UserIDFetcher
+}
+
+// ProvideWebhookIDFetcher provides an WebhookIDFetcher
+func ProvideWebhookIDFetcher() webhooks.WebhookIDFetcher {
+	return chiItemIDFetcher
 }
 
 // ProvideOAuth2ServiceClientIDFetcher provides a ClientIDFetcher

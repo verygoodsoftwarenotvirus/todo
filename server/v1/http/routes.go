@@ -10,6 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -104,6 +105,16 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 					itemsRouter.With(s.itemsService.UpdateInputMiddleware).Put(sr, s.itemsService.Update)     // Update
 					itemsRouter.Delete(sr, s.itemsService.Delete)                                             // Delete
 					itemsRouter.Get("/", s.itemsService.List)                                                 // List
+				})
+
+				// Webhooks
+				v1Router.Route("/webhooks", func(webhookRouter chi.Router) {
+					sr := fmt.Sprintf("/{%s:[0-9]+}", webhooks.URIParamKey)
+					webhookRouter.With(s.webhooksService.CreationInputMiddleware).Post("/", s.webhooksService.Create) // Create
+					webhookRouter.Get(sr, s.webhooksService.Read)                                                     // Read
+					webhookRouter.With(s.webhooksService.UpdateInputMiddleware).Put(sr, s.webhooksService.Update)     // Update
+					webhookRouter.Delete(sr, s.webhooksService.Delete)                                                // Delete
+					webhookRouter.Get("/", s.webhooksService.List)                                                    // List
 				})
 
 				// OAuth2 Clients

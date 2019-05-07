@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
+	client "gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
 
 	"github.com/stretchr/testify/require"
 )
@@ -46,7 +46,7 @@ func initializeClient(clientID, clientSecret string) *client.V1Client {
 		clientID,
 		clientSecret,
 		uri,
-		zerolog.ProvideLogger(),
+		zerolog.NewZeroLogger(),
 		buildHTTPClient(),
 		debug,
 	)

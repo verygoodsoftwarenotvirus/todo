@@ -12,8 +12,8 @@ services:
       DOCKER: 'true'
     links:
       - database
-     logging:
-       driver: none
+    logging:
+      driver: none
 
   http-client-integration-test:
     build:

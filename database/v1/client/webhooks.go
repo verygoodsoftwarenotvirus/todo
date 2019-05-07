@@ -48,21 +48,23 @@ func (c *Client) GetWebhookCount(ctx context.Context, filter *models.QueryFilter
 }
 
 // GetAllWebhooksCount fetches the count of webhooks from the postgres database that meet a particular filter
-func (c *Client) GetAllWebhooksCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
+func (c *Client) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
 	ctx, span := trace.StartSpan(ctx, "GetAllWebhooksCount")
 	defer span.End()
 
-	c.logger.WithValues(map[string]interface{}{
-		"filter": filter,
-	}).Debug("GetWebhookCount called")
+	c.logger.Debug("GetAllWebhooksCount called")
 
-	if filter == nil {
-		c.logger.Debug("using default query filter")
-		filter = models.DefaultQueryFilter
-	}
-	filter.SetPage(filter.Page)
+	return c.database.GetAllWebhooksCount(ctx)
+}
 
-	return c.database.GetAllWebhooksCount(ctx, filter)
+// GetAllWebhooks fetches a list of webhooks from the postgres database that meet a particular filter
+func (c *Client) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
+	ctx, span := trace.StartSpan(ctx, "GetAllWebhooks")
+	defer span.End()
+
+	c.logger.Debug("GetWebhookCount called")
+
+	return c.database.GetAllWebhooks(ctx)
 }
 
 // GetWebhooks fetches a list of webhooks from the postgres database that meet a particular filter

@@ -79,12 +79,70 @@ const getAllWebhooksCountQuery = `
 		webhooks
 	WHERE
 		completed_on IS NULL
-` // FINISHME: finish adding filters to this query
+`
 
 // GetAllWebhooksCount will fetch the count of webhooks from the postgres database that meet a particular filter
-func (p *Postgres) GetAllWebhooksCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
+func (p *Postgres) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
 	err = p.database.QueryRowContext(ctx, getAllWebhooksCountQuery).Scan(&count)
 	return
+}
+
+const getAllWebhooksQuery = `
+	SELECT
+		id,
+		name,
+		content_type,
+		url,
+		method,
+		created_on,
+		updated_on,
+		completed_on,
+		belongs_to
+	FROM
+		webhooks
+	WHERE
+		completed_on IS NULL
+` // FINISHME: finish adding filters to this query
+
+// GetAllWebhooks fetches a list of all webhooks from the postgres database
+func (p *Postgres) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
+	var list []models.Webhook
+	rows, err := p.database.QueryContext(ctx, getAllWebhooksQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if err = rows.Close(); err != nil {
+			p.logger.Error(err, "closing rows")
+		}
+	}()
+
+	for rows.Next() {
+		webhook, ierr := p.scanWebhook(rows)
+		if ierr != nil {
+			return nil, ierr
+		}
+		list = append(list, *webhook)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	count, err := p.GetAllWebhooksCount(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	x := &models.WebhookList{
+		Pagination: models.Pagination{
+			TotalCount: count,
+		},
+		Webhooks: list,
+	}
+
+	return x, err
 }
 
 const getWebhooksQuery = `

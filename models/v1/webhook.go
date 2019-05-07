@@ -9,8 +9,9 @@ import (
 type WebhookDataManager interface {
 	GetWebhook(ctx context.Context, itemID, userID uint64) (*Webhook, error)
 	GetWebhookCount(ctx context.Context, filter *QueryFilter, userID uint64) (uint64, error)
-	GetAllWebhooksCount(ctx context.Context, filter *QueryFilter) (uint64, error)
+	GetAllWebhooksCount(ctx context.Context) (uint64, error)
 	GetWebhooks(ctx context.Context, filter *QueryFilter, userID uint64) (*WebhookList, error)
+	GetAllWebhooks(ctx context.Context) (*WebhookList, error)
 	CreateWebhook(ctx context.Context, input *WebhookInput) (*Webhook, error)
 	UpdateWebhook(ctx context.Context, updated *Webhook) error
 	DeleteWebhook(ctx context.Context, id uint64, userID uint64) error

@@ -62,7 +62,7 @@ func ProvideWebhooksService(
 	}
 
 	ctx := context.Background()
-	webhookCount, err := svc.webhookDatabase.GetAllWebhooksCount(ctx, nil)
+	webhookCount, err := svc.webhookDatabase.GetAllWebhooksCount(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "setting current webhook count")
 	}

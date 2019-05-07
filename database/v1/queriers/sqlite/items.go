@@ -100,7 +100,7 @@ const getAllItemsCountQuery = `
 `
 
 // GetAllItemsCount fetches the count of items from the sqlite database that meet a particular filter
-func (s *Sqlite) GetAllItemsCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
+func (s *Sqlite) GetAllItemsCount(ctx context.Context) (uint64, error) {
 	var count uint64
 	err := s.database.QueryRowContext(ctx, getItemCountQuery).Scan(&count)
 	return count, err

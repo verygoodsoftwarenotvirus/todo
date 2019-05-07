@@ -4,6 +4,7 @@ package main
 
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	libauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
@@ -39,7 +40,9 @@ func BuildServer(
 		// metrics
 		metricsProvider.Providers,
 
-		// Services
+		// external libs
+		newsman.NewNewsman,
+
 		auth.Providers,
 		users.Providers,
 		items.Providers,

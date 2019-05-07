@@ -48,21 +48,13 @@ func (c *Client) GetItemCount(ctx context.Context, filter *models.QueryFilter, u
 }
 
 // GetAllItemsCount fetches the count of items from the postgres database that meet a particular filter
-func (c *Client) GetAllItemsCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
+func (c *Client) GetAllItemsCount(ctx context.Context) (count uint64, err error) {
 	ctx, span := trace.StartSpan(ctx, "GetAllItemsCount")
 	defer span.End()
 
-	c.logger.WithValues(map[string]interface{}{
-		"filter": filter,
-	}).Debug("GetItemCount called")
+	c.logger.Debug("GetAllItemsCount called")
 
-	if filter == nil {
-		c.logger.Debug("using default query filter")
-		filter = models.DefaultQueryFilter
-	}
-	filter.SetPage(filter.Page)
-
-	return c.database.GetAllItemsCount(ctx, filter)
+	return c.database.GetAllItemsCount(ctx)
 }
 
 // GetItems fetches a list of items from the postgres database that meet a particular filter
@@ -74,7 +66,7 @@ func (c *Client) GetItems(ctx context.Context, filter *models.QueryFilter, userI
 	c.logger.WithValues(map[string]interface{}{
 		"filter":  filter,
 		"user_id": userID,
-	}).Debug("GetItemCount called")
+	}).Debug("GetItems called")
 
 	if filter == nil {
 		c.logger.Debug("using default query filter")

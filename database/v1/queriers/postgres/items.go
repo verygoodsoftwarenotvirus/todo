@@ -75,10 +75,10 @@ const getAllItemsCountQuery = `
 		items
 	WHERE
 		completed_on IS NULL
-` // FINISHME: finish adding filters to this query
+`
 
 // GetAllItemsCount will fetch the count of items from the postgres database that meet a particular filter
-func (p *Postgres) GetAllItemsCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
+func (p *Postgres) GetAllItemsCount(ctx context.Context) (count uint64, err error) {
 	err = p.database.QueryRowContext(ctx, getAllItemsCountQuery).Scan(&count)
 	return
 }

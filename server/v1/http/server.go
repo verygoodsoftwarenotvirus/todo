@@ -1,12 +1,14 @@
 package httpserver
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
@@ -18,7 +20,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
 
 	"github.com/go-chi/chi"
-	"github.com/gorilla/securecookie"
 	"github.com/pkg/errors"
 	"go.opencensus.io/plugin/ochttp"
 )
@@ -40,16 +41,16 @@ type (
 		webhooksService      models.WebhookDataServer
 
 		// infra things
-		db         database.Database
-		config     config.ServerSettings
-		router     *chi.Mux
-		httpServer *http.Server
-		logger     logging.Logger
-		encoder    encoding.ServerEncoder
+		db          database.Database
+		config      config.ServerSettings
+		router      *chi.Mux
+		httpServer  *http.Server
+		logger      logging.Logger
+		encoder     encoding.ServerEncoder
+		newsManager *newsman.Newsman
 
 		// Auth stuff
 		adminUserExists bool
-		cookieBuilder   *securecookie.SecureCookie
 	}
 )
 
@@ -68,7 +69,9 @@ func ProvideServer(
 	db database.Database,
 	logger logging.Logger,
 	encoder encoding.EncoderDecoder,
+	newsManager *newsman.Newsman,
 ) (*Server, error) {
+	ctx := context.Background()
 
 	if len(config.Auth.CookieSecret) < 32 {
 		err := errors.New("cookie secret is too short, must be at least 32 characters in length")
@@ -80,12 +83,12 @@ func ProvideServer(
 		DebugMode: config.Server.Debug,
 
 		// infra things
-		db:            db,
-		config:        config.Server,
-		encoder:       encoder,
-		httpServer:    provideHTTPServer(),
-		logger:        logger.WithName("api_server"),
-		cookieBuilder: securecookie.New(securecookie.GenerateRandomKey(64), []byte(config.Auth.CookieSecret)),
+		db:          db,
+		config:      config.Server,
+		encoder:     encoder,
+		httpServer:  provideHTTPServer(),
+		logger:      logger.WithName("api_server"),
+		newsManager: newsManager,
 
 		// services
 		webhooksService:      webhooksService,
@@ -102,6 +105,27 @@ func ProvideServer(
 
 	if err := config.ProvideTracing(logger); err != nil {
 		return nil, err
+	}
+
+	allWebhooks, err := db.GetAllWebhooks(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "initializing webhooks")
+	}
+	for _, wh := range allWebhooks.Webhooks {
+		// NOTE: we must guarantee that whatever is stored in the database is valid, otherwise
+		// newsman will try (and fail) to execute requests constantly
+		l := newsman.NewWebhookListener(
+			func(err error) { srv.logger.Error(err, "executing webhook") },
+			&newsman.WebhookConfig{
+				Method:      wh.Method,
+				ContentType: wh.ContentType,
+				URL:         wh.URL,
+			},
+			&newsman.ListenerConfig{
+				//
+			},
+		)
+		srv.newsManager.TuneIn(l)
 	}
 
 	srv.setupRouter(config.Server.FrontendFilesDirectory, ih)

@@ -41,6 +41,28 @@ func (s *Service) DecodeCookieFromRequest(req *http.Request) (*models.CookieAuth
 	return nil, errNoCookie
 }
 
+// WebsocketAuthFunction is provided to Newsman to determine if a user has access to websockets
+func (s *Service) WebsocketAuthFunction(req *http.Request) bool {
+	// First we check to see if there is an OAuth2 token for a valid client attached to the request.
+	// We do this first because it is presumed to be the primary means by which requests are made to the httpServer.
+	oauth2Client, err := s.oauth2ClientsService.RequestIsAuthenticated(req)
+	if err != nil || oauth2Client == nil {
+		// In the event there's not a valid OAuth2 token attached to the request, or there is some other OAuth2 issue,
+		// we next check to see if a valid cookie is attached to the request
+		cookieAuth, cookieErr := s.DecodeCookieFromRequest(req)
+		if cookieErr != nil || cookieAuth == nil {
+			// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere
+			s.logger.Error(err, "error authenticated token-authed request")
+			return false
+		}
+
+		return true
+	}
+
+	// We found a valid OAuth2 client in the request
+	return oauth2Client != nil
+}
+
 // FetchUserFromRequest takes a request object and fetches the cookie, and then the user for that cookie
 func (s *Service) FetchUserFromRequest(req *http.Request) (*models.User, error) {
 	ca, cerr := s.DecodeCookieFromRequest(req)

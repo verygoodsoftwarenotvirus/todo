@@ -105,10 +105,56 @@ const getAllWebhooksCountQuery = `
 `
 
 // GetAllWebhooksCount fetches the count of webhooks from the sqlite database that meet a particular filter
-func (s *Sqlite) GetAllWebhooksCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
+func (s *Sqlite) GetAllWebhooksCount(ctx context.Context) (uint64, error) {
 	var count uint64
 	err := s.database.QueryRowContext(ctx, getWebhookCountQuery).Scan(&count)
 	return count, err
+}
+
+const getAllWebhooksQuery = `
+	SELECT
+		id,
+		name,
+		content_type,
+		url,
+		method,
+		created_on,
+		updated_on,
+		completed_on,
+		belongs_to
+	FROM
+		webhooks
+	WHERE
+		completed_on IS NULL
+	LIMIT ?
+	OFFSET ?
+`
+
+// GetAllWebhooks fetches a list of webhooks from the sqlite database that meet a particular filter
+func (s *Sqlite) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
+	rows, err := s.database.QueryContext(ctx, getAllWebhooksQuery)
+	if err != nil {
+		return nil, errors.Wrap(err, "querying database for webhooks")
+	}
+
+	list, err := s.scanWebhooks(rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "scanning webhooks")
+	}
+
+	count, err := s.GetAllWebhooksCount(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "fetching webhook count")
+	}
+
+	x := &models.WebhookList{
+		Pagination: models.Pagination{
+			TotalCount: count,
+		},
+		Webhooks: list,
+	}
+
+	return x, nil
 }
 
 const getWebhooksQuery = `

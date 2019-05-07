@@ -62,7 +62,7 @@ func ProvideItemsService(
 	}
 
 	ctx := context.Background()
-	itemCount, err := svc.itemDatabase.GetAllItemsCount(ctx, nil)
+	itemCount, err := svc.itemDatabase.GetAllItemsCount(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "setting current item count")
 	}

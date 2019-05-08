@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
@@ -20,6 +21,7 @@ const (
 	// MiddlewareCtxKey is the context key we search for when interacting with user-related requests
 	MiddlewareCtxKey models.ContextKey   = "user_input"
 	counterName      metrics.CounterName = "users"
+	topicName                            = "users"
 	serviceName                          = "users_service"
 )
 
@@ -38,6 +40,7 @@ type (
 		encoder       encoding.EncoderDecoder
 		userIDFetcher func(*http.Request) uint64
 		userCounter   metrics.UnitCounter
+		newsman       *newsman.Newsman
 	}
 
 	// UserIDFetcher fetches usernames from requests
@@ -53,6 +56,7 @@ func ProvideUsersService(
 	userIDFetcher UserIDFetcher,
 	encoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
+	newsman *newsman.Newsman,
 ) (*Service, error) {
 	ctx := context.Background()
 	if userIDFetcher == nil {
@@ -78,6 +82,7 @@ func ProvideUsersService(
 		userIDFetcher: userIDFetcher,
 		encoder:       encoder,
 		userCounter:   counter,
+		newsman:       newsman,
 	}
 	return us, nil
 }

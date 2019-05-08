@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"go.opencensus.io/trace"
@@ -53,15 +55,15 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 
 	logger.Debug("create route called")
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.ItemInput)
+	logger = logger.WithValue("input", input)
 	if !ok {
 		s.logger.Error(nil, "valid input not attached to request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	input.BelongsTo = userID
-	logger = logger.WithValue("input", input)
 
-	i, err := s.itemDatabase.CreateItem(ctx, input)
+	x, err := s.itemDatabase.CreateItem(ctx, input)
 	if err != nil {
 		s.logger.Error(err, "error creating item")
 		res.WriteHeader(http.StatusInternalServerError)
@@ -69,7 +71,13 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	}
 	s.itemCounter.Increment(ctx)
 
-	if err = s.encoder.EncodeResponse(res, i); err != nil {
+	s.newsman.Report(newsman.Event{
+		EventType: string(events.Create),
+		Data:      x,
+		Topics:    []string{topicName},
+	})
+
+	if err = s.encoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
 }
@@ -124,7 +132,7 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 		"input":   input,
 	})
 
-	i, err := s.itemDatabase.GetItem(ctx, itemID, userID)
+	x, err := s.itemDatabase.GetItem(ctx, itemID, userID)
 	if err == sql.ErrNoRows {
 		logger.Debug("no rows found for item")
 		res.WriteHeader(http.StatusNotFound)
@@ -135,14 +143,20 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	i.Update(input)
-	if err = s.itemDatabase.UpdateItem(ctx, i); err != nil {
+	x.Update(input)
+	if err = s.itemDatabase.UpdateItem(ctx, x); err != nil {
 		logger.Error(err, "error encountered updating item")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	if err = s.encoder.EncodeResponse(res, i); err != nil {
+	s.newsman.Report(newsman.Event{
+		EventType: string(events.Update),
+		Data:      x,
+		Topics:    []string{topicName},
+	})
+
+	if err = s.encoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
 }
@@ -158,7 +172,7 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 		"item_id": itemID,
 		"user_id": userID,
 	})
-	logger.Debug("ItemsService Deletion handler called")
+	logger.Debug("ItemsService deletion handler called")
 
 	err := s.itemDatabase.DeleteItem(ctx, itemID, userID)
 	if err == sql.ErrNoRows {
@@ -171,6 +185,12 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	s.itemCounter.Decrement(ctx)
+
+	s.newsman.Report(newsman.Event{
+		EventType: string(events.Delete),
+		Data:      &models.Item{ID: itemID},
+		Topics:    []string{topicName},
+	})
 
 	res.WriteHeader(http.StatusNoContent)
 }

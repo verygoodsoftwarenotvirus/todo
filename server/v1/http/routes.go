@@ -10,6 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -20,6 +21,11 @@ import (
 // 		next.ServeHTTP(res, req)
 // 	})
 // }
+
+const (
+	numericIDPattern = `/{%s:[0-9]+}`
+	oauth2IDPattern  = `/{%s:[0-9_\-]+}`
+)
 
 func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Handler) {
 	router := chi.NewRouter()
@@ -47,13 +53,17 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 
 	// health check
 	router.Get("/_meta_/health", func(res http.ResponseWriter, req *http.Request) { res.WriteHeader(http.StatusOK) })
-	router.Handle("/metrics", metricsHandler)
+
+	if metricsHandler != nil {
+		s.logger.Debug("establishing metrics handler")
+		router.Handle("/metrics", metricsHandler)
+	}
 
 	router.Route("/users", func(userRouter chi.Router) {
 		userRouter.With(s.usersService.UserLoginInputMiddleware).Post("/login", s.authService.Login)
 		userRouter.With(s.authService.CookieAuthenticationMiddleware).Post("/logout", s.authService.Logout)
 
-		userIDPattern := fmt.Sprintf(`/{%s:[0-9_\-]+}`, users.URIParamKey)
+		userIDPattern := fmt.Sprintf(oauth2IDPattern, users.URIParamKey)
 
 		userRouter.Get("/", s.usersService.List)                                             // List
 		userRouter.With(s.usersService.UserInputMiddleware).Post("/", s.usersService.Create) // Create
@@ -91,6 +101,8 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 		})
 	})
 
+	router.Get("/websockets", s.newsManager.ServeWebsockets)
+
 	router.
 		With(s.authService.AuthenticationMiddleware(true)).
 		Route("/api", func(apiRouter chi.Router) {
@@ -98,7 +110,7 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 
 				// Items
 				v1Router.Route("/items", func(itemsRouter chi.Router) {
-					sr := fmt.Sprintf("/{%s:[0-9]+}", items.URIParamKey)
+					sr := fmt.Sprintf(numericIDPattern, items.URIParamKey)
 					itemsRouter.With(s.itemsService.CreationInputMiddleware).Post("/", s.itemsService.Create) // Create
 					itemsRouter.Get(sr, s.itemsService.Read)                                                  // Read
 					itemsRouter.With(s.itemsService.UpdateInputMiddleware).Put(sr, s.itemsService.Update)     // Update
@@ -106,9 +118,19 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 					itemsRouter.Get("/", s.itemsService.List)                                                 // List
 				})
 
+				// Webhooks
+				v1Router.Route("/webhooks", func(webhookRouter chi.Router) {
+					sr := fmt.Sprintf(numericIDPattern, webhooks.URIParamKey)
+					webhookRouter.With(s.webhooksService.CreationInputMiddleware).Post("/", s.webhooksService.Create) // Create
+					webhookRouter.Get(sr, s.webhooksService.Read)                                                     // Read
+					webhookRouter.With(s.webhooksService.UpdateInputMiddleware).Put(sr, s.webhooksService.Update)     // Update
+					webhookRouter.Delete(sr, s.webhooksService.Delete)                                                // Delete
+					webhookRouter.Get("/", s.webhooksService.List)                                                    // List
+				})
+
 				// OAuth2 Clients
 				v1Router.Route("/oauth2/clients", func(clientRouter chi.Router) {
-					sr := fmt.Sprintf(`/{%s:[0-9]+}`, oauth2clients.URIParamKey)
+					sr := fmt.Sprintf(numericIDPattern, oauth2clients.URIParamKey)
 					// Create is not bound to an OAuth2 authentication token
 					// Update not supported for OAuth2 clients.
 					clientRouter.Get(sr, s.oauth2ClientsService.Read)      // Read

@@ -51,7 +51,8 @@ func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) (m
 	metrics.RegisterDefaultViews()
 	metrics.RecordRuntimeStats(cfg.Metrics.RuntimeMetricsCollectionInterval)
 
-	logger.WithValue("metrics_provider", cfg.Metrics.MetricsProvider).Debug("setting metrics provider")
+	log := logger.WithValue("metrics_provider", cfg.Metrics.MetricsProvider)
+	log.Debug("setting metrics provider")
 
 	switch cfg.Metrics.MetricsProvider {
 	case Prometheus, DefaultMetricsProvider:
@@ -62,20 +63,22 @@ func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) (m
 			return nil, errors.Wrap(err, "failed to create Prometheus exporter")
 		}
 		view.RegisterExporter(p)
+		log.Debug("metrics provider registered")
+		return p, nil
 	default:
-		return nil, nil // fmt.Errorf("invalid metrics provider requested: %q", cfg.Metrics.MetricsProvider)
+		return nil, fmt.Errorf("invalid metrics provider requested: %q", cfg.Metrics.MetricsProvider)
 	}
-
-	return nil, nil
 }
 
 // ProvideTracing provides an instrumentation handler
 func (cfg *ServerConfig) ProvideTracing(logger logging.Logger) error {
-	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
+	trace.ApplyConfig(trace.Config{DefaultSampler: trace.ProbabilitySampler(1)})
+
+	log := logger.WithValue("tracing_provider", cfg.Metrics.TracingProvider)
+	log.Info("setting tracing provider")
 
 	switch cfg.Metrics.TracingProvider {
 	case Jaeger, DefaultTracingProvider:
-		logger.WithValue("tracing_provider", cfg.Metrics.TracingProvider).Info("setting tracing provider")
 		je, err := jaeger.NewExporter(jaeger.Options{
 			AgentEndpoint: fmt.Sprintf("%s:%s", os.Getenv("JAEGER_AGENT_HOST"), os.Getenv("JAEGER_AGENT_PORT")),
 			Process: jaeger.Process{
@@ -87,8 +90,9 @@ func (cfg *ServerConfig) ProvideTracing(logger logging.Logger) error {
 		}
 
 		trace.RegisterExporter(je)
+		log.Debug("tracing provider registered")
 	default:
-		return nil // fmt.Errorf("invalid tracing provider requested: %q", cfg.Metrics.TracingProvider)
+		return fmt.Errorf("invalid tracing provider requested: %q", cfg.Metrics.TracingProvider)
 	}
 
 	return nil

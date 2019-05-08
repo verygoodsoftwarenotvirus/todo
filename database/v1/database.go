@@ -18,6 +18,7 @@ type (
 		models.ItemDataManager
 		models.UserDataManager
 		models.OAuth2ClientDataManager
+		models.WebhookDataManager
 	}
 
 	// ConnectionDetails is a string alias for a Postgres url

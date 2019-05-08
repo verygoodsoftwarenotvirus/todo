@@ -171,6 +171,8 @@ github.com/uber/jaeger-lib/metrics/go-kit/expvar
 gitlab.com/verygoodsoftwarenotvirus/logging/v1
 gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog
 gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop
+# gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.0-20190507231017-beb954c7c2d8
+gitlab.com/verygoodsoftwarenotvirus/newsman
 # go.opencensus.io v0.21.0
 go.opencensus.io/plugin/ochttp
 go.opencensus.io/stats/view
@@ -199,7 +201,7 @@ golang.org/x/net/context/ctxhttp
 golang.org/x/oauth2
 golang.org/x/oauth2/clientcredentials
 golang.org/x/oauth2/internal
-# golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6
+# golang.org/x/sync v0.0.0-20190423024810-112230192c58
 golang.org/x/sync/semaphore
 # golang.org/x/sys v0.0.0-20190412213103-97732733099d
 golang.org/x/sys/unix

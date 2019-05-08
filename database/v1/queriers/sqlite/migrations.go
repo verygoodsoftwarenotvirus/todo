@@ -61,6 +61,26 @@ var (
 				FOREIGN KEY(belongs_to) REFERENCES users(id)
 			);`,
 		},
+		{
+			Version:     4,
+			Description: "Create webhooks table",
+			Script: `
+			CREATE TABLE IF NOT EXISTS webhooks (
+				"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				"name" text NOT NULL,
+				"content_type" text NOT NULL,
+				"url" text NOT NULL,
+				"method" text NOT NULL,
+				"events" text NOT NULL,
+				"data_types" text NOT NULL,
+				"topics" text NOT NULL,
+				"created_on" INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+				"updated_on" INTEGER,
+				"completed_on" INTEGER DEFAULT NULL,
+				"belongs_to" INTEGER NOT NULL,
+				FOREIGN KEY(belongs_to) REFERENCES users(id)
+			);`,
+		},
 	}
 )
 

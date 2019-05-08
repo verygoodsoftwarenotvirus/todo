@@ -24,9 +24,7 @@ type (
 	}
 
 	// ServerEncoderDecoder is our concrete implementation of EncoderDecoder
-	ServerEncoderDecoder struct {
-		//
-	}
+	ServerEncoderDecoder struct{}
 
 	encoder interface {
 		Encode(v interface{}) error
@@ -37,7 +35,7 @@ type (
 	}
 )
 
-// EncodeResponse encodes responses for JSON types
+// EncodeResponse encodes responses
 func (ed *ServerEncoderDecoder) EncodeResponse(res http.ResponseWriter, v interface{}) error {
 	ct := strings.ToLower(res.Header().Get("Content-type"))
 
@@ -58,7 +56,7 @@ func (ed *ServerEncoderDecoder) EncodeResponse(res http.ResponseWriter, v interf
 	return e.Encode(v)
 }
 
-// DecodeResponse decodes responses from JSON types
+// DecodeResponse decodes responses
 func (ed *ServerEncoderDecoder) DecodeResponse(req *http.Request, v interface{}) error {
 	ct := strings.ToLower(req.Header.Get("Content-type"))
 

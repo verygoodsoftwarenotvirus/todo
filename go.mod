@@ -35,5 +35,6 @@ require (
 	go.opencensus.io v0.21.0
 	golang.org/x/crypto v0.0.0-20190506204251-e1dfcc566284
 	golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421
+	golang.org/x/text v0.3.0
 	gopkg.in/oauth2.v3 v3.9.5
 )

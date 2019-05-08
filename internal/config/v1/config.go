@@ -9,6 +9,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+const defaultCookieLifetime = 24 * time.Hour
+
 func init() {
 	b := make([]byte, 64)
 	if _, err := rand.Read(b); err != nil {
@@ -32,17 +34,43 @@ type (
 
 	// AuthSettings is a container struct for dealing with settings pertaining to
 	AuthSettings struct {
-		CookieSecret string `mapstructure:"cookie_secret"`
+		CookieSecret   string        `mapstructure:"cookie_secret"`
+		CookieLifetime time.Duration `mapstructure:"cookie_lifetime"`
+	}
+
+	// ServerConfig is our server configuration struct
+	ServerConfig struct {
+		Meta     MetaSettings     `mapstructure:"meta"`
+		Auth     AuthSettings     `mapstructure:"auth"`
+		Metrics  MetricsSettings  `mapstructure:"metrics"`
+		Server   ServerSettings   `mapstructure:"server"`
+		Database DatabaseSettings `mapstructure:"database"`
 	}
 )
 
-// ServerConfig is our server configuration struct
-type ServerConfig struct {
-	Meta     MetaSettings     `mapstructure:"meta"`
-	Auth     AuthSettings     `mapstructure:"auth"`
-	Metrics  MetricsSettings  `mapstructure:"metrics"`
-	Server   ServerSettings   `mapstructure:"server"`
-	Database DatabaseSettings `mapstructure:"database"`
+func buildConfig() *viper.Viper {
+	cfg := viper.New()
+
+	// meta stuff
+	cfg.SetDefault("meta.debug", false)
+
+	// auth stuff
+	cfg.SetDefault("auth.cookie_secret", randString())
+	cfg.SetDefault("auth.cookie_lifetime", defaultCookieLifetime)
+
+	// metrics stuff
+	cfg.SetDefault("metrics.metrics_namespace", "todo_service")
+	cfg.SetDefault("metrics.database_metrics_collection_interval", time.Second)
+	cfg.SetDefault("metrics.runtime_metrics_collection_interval", time.Second)
+
+	// server stuff
+	cfg.SetDefault("server.http_port", 80)
+	cfg.SetDefault("server.metrics_namespace", "todo-server")
+
+	// database stuff
+	cfg.SetDefault("database.debug", false)
+
+	return cfg
 }
 
 // ParseConfigFile parses a configuration file
@@ -61,30 +89,6 @@ func ParseConfigFile(filename string) (*ServerConfig, error) {
 	}
 
 	return serverConfig, nil
-}
-
-func buildConfig() *viper.Viper {
-	cfg := viper.New()
-
-	// meta stuff
-	cfg.SetDefault("meta.debug", false)
-
-	// auth stuff
-	cfg.SetDefault("auth.cookie_secret", randString())
-
-	// metrics stuff
-	cfg.SetDefault("metrics.metrics_namespace", "todo_service")
-	cfg.SetDefault("metrics.database_metrics_collection_interval", time.Second)
-	cfg.SetDefault("metrics.runtime_metrics_collection_interval", time.Second)
-
-	// server stuff
-	cfg.SetDefault("server.http_port", 80)
-	cfg.SetDefault("server.metrics_namespace", "todo-server")
-
-	// database stuff
-	cfg.SetDefault("database.debug", false)
-
-	return cfg
 }
 
 // randString produces a random string

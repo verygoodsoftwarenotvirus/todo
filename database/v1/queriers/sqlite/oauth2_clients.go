@@ -181,26 +181,6 @@ func (s *Sqlite) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	return count, err
 }
 
-const getOAuth2ClientsQuery = `
-	SELECT
-		id,
-		client_id,
-		scopes,
-		redirect_uri,
-		client_secret,
-		created_on,
-		updated_on,
-		archived_on,
-		belongs_to
-	FROM
-		oauth2_clients
-	WHERE
-		archived_on IS NULL
-		AND belongs_to = ?
-	LIMIT ?
-	OFFSET ?
-`
-
 // GetOAuth2Clients gets a list of OAuth2 clients
 func (s *Sqlite) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.OAuth2ClientList, error) {
 	builder := s.sqlBuilder.

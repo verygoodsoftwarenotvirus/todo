@@ -127,24 +127,6 @@ func (s *Sqlite) GetAllItemsCount(ctx context.Context) (uint64, error) {
 	return count, err
 }
 
-const getItemsQuery = `
-	SELECT
-		id,
-		name,
-		details,
-		created_on,
-		updated_on,
-		completed_on,
-		belongs_to
-	FROM
-		items
-	WHERE
-		completed_on IS NULL
-		AND belongs_to = ?
-	LIMIT ?
-	OFFSET ?
-`
-
 // GetItems fetches a list of items from the sqlite database that meet a particular filter
 func (s *Sqlite) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
 	var list []models.Item

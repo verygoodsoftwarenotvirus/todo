@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -26,7 +27,7 @@ var (
 	}
 )
 
-func (p Postgres) scanItem(scan database.Scanner) (*models.Item, error) {
+func scanItem(scan database.Scanner) (*models.Item, error) {
 	var (
 		x = &models.Item{}
 	)
@@ -44,6 +45,30 @@ func (p Postgres) scanItem(scan database.Scanner) (*models.Item, error) {
 	}
 
 	return x, nil
+}
+
+func (p *Postgres) scanItems(rows *sql.Rows) ([]models.Item, error) {
+	var list []models.Item
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			p.logger.Error(err, "closing rows")
+		}
+	}()
+
+	for rows.Next() {
+		x, err := scanItem(rows)
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, *x)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return list, nil
 }
 
 const getItemQuery = `
@@ -65,7 +90,7 @@ const getItemQuery = `
 // GetItem fetches an item from the postgres database
 func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
 	row := p.database.QueryRowContext(ctx, getItemQuery, itemID, userID)
-	i, err := p.scanItem(row)
+	i, err := scanItem(row)
 	return i, err
 }
 
@@ -107,8 +132,6 @@ func (p *Postgres) GetAllItemsCount(ctx context.Context) (count uint64, err erro
 
 // GetItems fetches a list of items from the postgres database that meet a particular filter
 func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
-	var list []models.Item
-
 	builder := p.sqlBuilder.
 		Select(itemsTableColumns...).
 		From(itemsTableName).
@@ -139,15 +162,8 @@ func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter, use
 		}
 	}()
 
-	for rows.Next() {
-		item, ierr := p.scanItem(rows)
-		if ierr != nil {
-			return nil, ierr
-		}
-		list = append(list, *item)
-	}
-
-	if err = rows.Err(); err != nil {
+	list, err := p.scanItems(rows)
+	if err != nil {
 		return nil, err
 	}
 

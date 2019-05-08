@@ -205,28 +205,6 @@ func (s *Sqlite) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error
 	return x, nil
 }
 
-const getWebhooksQuery = `
-	SELECT
-		id,
-		name,
-		content_type,
-		url,
-		method,
-		events,
-		data_types,
-		topics,
-		created_on,
-		updated_on,
-		archived_on,
-		belongs_to
-	FROM
-		webhooks
-	WHERE
-		archived_on IS NULL
-	LIMIT ?
-	OFFSET ?
-`
-
 // GetWebhooks fetches a list of webhooks from the sqlite database that meet a particular filter
 func (s *Sqlite) GetWebhooks(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.WebhookList, error) {
 	builder := s.sqlBuilder.

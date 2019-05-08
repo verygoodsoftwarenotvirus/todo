@@ -6,7 +6,24 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/pkg/errors"
+)
+
+const (
+	itemsTableName = "items"
+)
+
+var (
+	itemsTableColumns = []string{
+		"id",
+		"name",
+		"details",
+		"created_on",
+		"updated_on",
+		"completed_on",
+		"belongs_to",
+	}
 )
 
 func (p Postgres) scanItem(scan database.Scanner) (*models.Item, error) {
@@ -52,19 +69,24 @@ func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*models.
 	return i, err
 }
 
-const getItemCountQuery = `
-	SELECT
-		COUNT(*)
-	FROM
-		items
-	WHERE
-		completed_on IS NULL
-		AND belongs_to = $1
-` // FINISHME: finish adding filters to this query
-
 // GetItemCount will fetch the count of items from the postgres database that meet a particular filter and belong to a particular user.
 func (p *Postgres) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
-	err = p.database.QueryRowContext(ctx, getItemCountQuery, userID).Scan(&count)
+	builder := p.sqlBuilder.
+		Select("COUNT(*)").
+		From(itemsTableName).
+		Where(squirrel.Eq(map[string]interface{}{
+			"belongs_to":   userID,
+			"completed_on": nil,
+		}))
+
+	builder = filter.ApplyToQueryBuilder(builder)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return 0, errors.Wrap(err, "generating query")
+	}
+
+	err = p.database.QueryRowContext(ctx, query, args...).Scan(&count)
 	return
 }
 
@@ -83,33 +105,29 @@ func (p *Postgres) GetAllItemsCount(ctx context.Context) (count uint64, err erro
 	return
 }
 
-const getItemsQuery = `
-	SELECT
-		id,
-		name,
-		details,
-		created_on,
-		updated_on,
-		completed_on,
-		belongs_to
-	FROM
-		items
-	WHERE
-		completed_on IS NULL
-		AND belongs_to = $1
-	LIMIT $2
-	OFFSET $3
-` // FINISHME: finish adding filters to this query
-
 // GetItems fetches a list of items from the postgres database that meet a particular filter
 func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
 	var list []models.Item
+
+	builder := p.sqlBuilder.
+		Select(itemsTableColumns...).
+		From(itemsTableName).
+		Where(squirrel.Eq(map[string]interface{}{
+			"belongs_to":   userID,
+			"completed_on": nil,
+		}))
+
+	builder = filter.ApplyToQueryBuilder(builder)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "generating query")
+	}
+
 	rows, err := p.database.QueryContext(
 		ctx,
-		getItemsQuery,
-		userID,
-		filter.Limit,
-		filter.QueryPage(),
+		query,
+		args...,
 	)
 	if err != nil {
 		return nil, err

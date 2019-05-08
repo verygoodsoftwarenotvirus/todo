@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 )
@@ -293,16 +294,6 @@ var (
 		Aggregation: view.LastValue(),
 	}
 
-	// MemoryUsageMeasurement captures gopsutil/process's MemoryPercent
-	MemoryUsageMeasurement = stats.Float64("memory_usage", "percent of RAM used by process", stats.UnitDimensionless)
-	// MemoryUsageView is the corresponding view for the above field
-	MemoryUsageView = &view.View{
-		Name:        "memory_usage",
-		Measure:     CPUUsageMeasurement,
-		Description: "percent of RAM used by process",
-		Aggregation: view.LastValue(),
-	}
-
 	// DefaultRuntimeViews represents the pre-configured views
 	DefaultRuntimeViews = []*view.View{
 		RuntimeTotalAllocView,
@@ -333,8 +324,14 @@ var (
 		RuntimeNumForcedGCView,
 		RuntimeGCCPUFractionView,
 		CPUUsageView,
-		MemoryUsageView,
 		MetricAggregationMeasurementView,
+		// provided by ochttp
+		ochttp.ServerRequestCountView,
+		ochttp.ServerRequestBytesView,
+		ochttp.ServerResponseBytesView,
+		ochttp.ServerLatencyView,
+		ochttp.ServerRequestCountByMethod,
+		ochttp.ServerResponseCountByStatusCode,
 	}
 )
 

@@ -44,7 +44,7 @@ type Webhook struct {
 	Topics      []string `json:"topics"`
 	CreatedOn   uint64   `json:"created_on"`
 	UpdatedOn   *uint64  `json:"updated_on"`
-	CompletedOn *uint64  `json:"completed_on"`
+	ArchivedOn  *uint64  `json:"archived_on"`
 	BelongsTo   uint64   `json:"belongs_to"`
 }
 
@@ -58,18 +58,6 @@ type WebhookInput struct {
 	DataTypes   []string `json:"data_types"`
 	Topics      []string `json:"topics"`
 	BelongsTo   uint64   `json:"-"`
-}
-
-func sliceToMap(s []string) []string {
-	keys := make(map[string]bool)
-	list := []string{}
-	for _, entry := range s {
-		if _, value := keys[entry]; !value {
-			keys[entry] = true
-			list = append(list, entry)
-		}
-	}
-	return list
 }
 
 // Update merges an WebhookInput with an Webhook

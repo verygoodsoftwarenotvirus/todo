@@ -32,7 +32,7 @@ var (
 			Version:     2,
 			Description: "Add OAuth2 Clients table",
 			Script: `
-			CREATE TABLE IF NOT EXISTS oauth_clients (
+			CREATE TABLE IF NOT EXISTS oauth2_clients (
 				"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 				"client_id" TEXT NOT NULL,
 				"client_secret" TEXT NOT NULL,
@@ -76,7 +76,7 @@ var (
 				"topics" text NOT NULL,
 				"created_on" INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				"updated_on" INTEGER,
-				"completed_on" INTEGER DEFAULT NULL,
+				"archived_on" INTEGER DEFAULT NULL,
 				"belongs_to" INTEGER NOT NULL,
 				FOREIGN KEY(belongs_to) REFERENCES users(id)
 			);`,

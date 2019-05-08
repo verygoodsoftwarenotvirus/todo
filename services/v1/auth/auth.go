@@ -60,7 +60,7 @@ func (s *Service) WebsocketAuthFunction(req *http.Request) bool {
 	}
 
 	// We found a valid OAuth2 client in the request
-	return oauth2Client != nil
+	return false
 }
 
 // FetchUserFromRequest takes a request object and fetches the cookie, and then the user for that cookie

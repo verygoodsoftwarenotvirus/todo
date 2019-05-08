@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+
 	"contrib.go.opencensus.io/integrations/ocsql"
+	"github.com/Masterminds/squirrel"
 	"github.com/mattn/go-sqlite3"
 )
 
@@ -27,9 +29,10 @@ func init() {
 type (
 	// Sqlite is our main Sqlite3 interaction database
 	Sqlite struct {
-		debug    bool
-		database *sql.DB
-		logger   logging.Logger
+		debug      bool
+		database   *sql.DB
+		logger     logging.Logger
+		sqlBuilder squirrel.StatementBuilderType
 	}
 )
 
@@ -41,9 +44,10 @@ func ProvideSqliteDB(sqliteFilepath database.ConnectionDetails) (*sql.DB, error)
 // ProvideSqlite provides a sqlite database controller
 func ProvideSqlite(debug bool, logger logging.Logger, db *sql.DB) database.Database {
 	s := &Sqlite{
-		database: db,
-		debug:    debug,
-		logger:   logger.WithName("sqlite"),
+		database:   db,
+		debug:      debug,
+		logger:     logger.WithName("sqlite"),
+		sqlBuilder: squirrel.StatementBuilder,
 	}
 
 	return s

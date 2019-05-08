@@ -81,8 +81,8 @@ func (qf *QueryFilter) SetPage(page uint64) {
 }
 
 // QueryPage calculates a query page from the current filter values
-func (qf *QueryFilter) QueryPage() uint {
-	return uint(qf.Limit * (qf.Page - 1))
+func (qf *QueryFilter) QueryPage() uint64 {
+	return uint64(qf.Limit * (qf.Page - 1))
 }
 
 // ToValues returns a url.Values from a QueryFilter
@@ -115,6 +115,41 @@ func (qf *QueryFilter) ToValues() url.Values {
 	}
 
 	return v
+}
+
+// ApplyToQueryBuilder applys the query filter to a select builder
+func (qf *QueryFilter) ApplyToQueryBuilder(builder squirrel.SelectBuilder) squirrel.SelectBuilder {
+	if qf.CreatedAfter > 0 {
+		builder = builder.Where(squirrel.GtOrEq(map[string]interface{}{
+			"created_on": qf.CreatedAfter,
+		}))
+	}
+
+	if qf.CreatedBefore > 0 {
+		builder = builder.Where(squirrel.LtOrEq(map[string]interface{}{
+			"created_on": qf.CreatedAfter,
+		}))
+	}
+
+	if qf.UpdatedAfter > 0 {
+		builder = builder.Where(squirrel.GtOrEq(map[string]interface{}{
+			"updated_on": qf.CreatedAfter,
+		}))
+	}
+
+	if qf.UpdatedBefore > 0 {
+		builder = builder.Where(squirrel.LtOrEq(map[string]interface{}{
+			"updated_on": qf.CreatedAfter,
+		}))
+	}
+
+	if qf.Limit > 0 {
+		builder = builder.Limit(qf.Limit)
+	}
+
+	builder = builder.Offset(qf.QueryPage())
+
+	return builder
 }
 
 // ExtractQueryFilter can extract a QueryFilter from a request

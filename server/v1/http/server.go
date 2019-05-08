@@ -9,8 +9,9 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
@@ -56,7 +57,7 @@ type (
 
 // ProvideServer builds a new Server instance
 func ProvideServer(
-	config *config.ServerConfig,
+	cfg *config.ServerConfig,
 
 	// services
 	authService *auth.Service,
@@ -73,18 +74,18 @@ func ProvideServer(
 ) (*Server, error) {
 	ctx := context.Background()
 
-	if len(config.Auth.CookieSecret) < 32 {
+	if len(cfg.Auth.CookieSecret) < 32 {
 		err := errors.New("cookie secret is too short, must be at least 32 characters in length")
 		logger.Error(err, "cookie secret failure")
 		return nil, err
 	}
 
 	srv := &Server{
-		DebugMode: config.Server.Debug,
+		DebugMode: cfg.Server.Debug,
 
 		// infra things
 		db:          db,
-		config:      config.Server,
+		config:      cfg.Server,
 		encoder:     encoder,
 		httpServer:  provideHTTPServer(),
 		logger:      logger.WithName("api_server"),
@@ -98,12 +99,12 @@ func ProvideServer(
 		oauth2ClientsService: oauth2Service,
 	}
 
-	ih, err := config.ProvideInstrumentationHandler(logger)
-	if err != nil {
+	ih, err := cfg.ProvideInstrumentationHandler(logger)
+	if err != nil && err != config.ErrInvalidMetricsProvider {
 		return nil, err
 	}
 
-	if err := config.ProvideTracing(logger); err != nil {
+	if err := cfg.ProvideTracing(logger); err != nil && err != config.ErrInvalidTracingProvider {
 		return nil, err
 	}
 
@@ -118,7 +119,7 @@ func ProvideServer(
 		srv.newsManager.TuneIn(l)
 	}
 
-	srv.setupRouter(config.Server.FrontendFilesDirectory, ih)
+	srv.setupRouter(cfg.Server.FrontendFilesDirectory, ih)
 	srv.httpServer.Handler = &ochttp.Handler{
 		Handler:        srv.router,
 		FormatSpanName: formatSpanNameForRequest,

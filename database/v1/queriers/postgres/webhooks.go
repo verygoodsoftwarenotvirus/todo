@@ -2,11 +2,13 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/pkg/errors"
 )
 
@@ -14,6 +16,25 @@ const (
 	eventsSeparator = `,`
 	typesSeparator  = `,`
 	topicsSeparator = `,`
+
+	webhooksTableName = "webhooks"
+)
+
+var (
+	webhooksTableColumns = []string{
+		"id",
+		"name",
+		"content_type",
+		"url",
+		"method",
+		"events",
+		"data_types",
+		"topics",
+		"created_on",
+		"updated_on",
+		"archived_on",
+		"belongs_to",
+	}
 )
 
 func (p Postgres) scanWebhook(scan database.Scanner) (*models.Webhook, error) {
@@ -36,7 +57,7 @@ func (p Postgres) scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 		&topicsStr,
 		&x.CreatedOn,
 		&x.UpdatedOn,
-		&x.CompletedOn,
+		&x.ArchivedOn,
 		&x.BelongsTo,
 	); err != nil {
 		return nil, err
@@ -47,6 +68,29 @@ func (p Postgres) scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 	x.Topics = strings.Split(topicsStr, topicsSeparator)
 
 	return x, nil
+}
+
+func (p *Postgres) scanWebhooks(rows *sql.Rows) ([]models.Webhook, error) {
+	var list []models.Webhook
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			p.logger.Error(err, "closing rows")
+		}
+	}()
+
+	for rows.Next() {
+		webhook, err := p.scanWebhook(rows)
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, *webhook)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return list, nil
 }
 
 const getWebhookQuery = `
@@ -61,7 +105,7 @@ const getWebhookQuery = `
 		topics,
 		created_on,
 		updated_on,
-		completed_on,
+		archived_on,
 		belongs_to
 	FROM
 		webhooks
@@ -77,19 +121,24 @@ func (p *Postgres) GetWebhook(ctx context.Context, webhookID, userID uint64) (*m
 	return i, err
 }
 
-const getWebhookCountQuery = `
-	SELECT
-		COUNT(*)
-	FROM
-		webhooks
-	WHERE
-		completed_on IS NULL
-		AND belongs_to = $1
-` // FINISHME: finish adding filters to this query
-
 // GetWebhookCount will fetch the count of webhooks from the postgres database that meet a particular filter and belong to a particular user.
 func (p *Postgres) GetWebhookCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
-	err = p.database.QueryRowContext(ctx, getWebhookCountQuery, userID).Scan(&count)
+	builder := p.sqlBuilder.
+		Select("COUNT(*)").
+		From(webhooksTableName).
+		Where(squirrel.Eq(map[string]interface{}{
+			"belongs_to":  userID,
+			"archived_on": nil,
+		}))
+
+	builder = filter.ApplyToQueryBuilder(builder)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return 0, errors.Wrap(err, "generating query")
+	}
+
+	err = p.database.QueryRowContext(ctx, query, args...).Scan(&count)
 	return
 }
 
@@ -99,7 +148,7 @@ const getAllWebhooksCountQuery = `
 	FROM
 		webhooks
 	WHERE
-		completed_on IS NULL
+		archived_on IS NULL
 `
 
 // GetAllWebhooksCount will fetch the count of webhooks from the postgres database that meet a particular filter
@@ -120,12 +169,12 @@ const getAllWebhooksQuery = `
 		topics,
 		created_on,
 		updated_on,
-		completed_on,
+		archived_on,
 		belongs_to
 	FROM
 		webhooks
 	WHERE
-		completed_on IS NULL
+		archived_on IS NULL
 `
 
 // GetAllWebhooks fetches a list of all webhooks from the postgres database
@@ -169,53 +218,41 @@ func (p *Postgres) GetAllWebhooks(ctx context.Context) (*models.WebhookList, err
 	return x, err
 }
 
-const getWebhooksQuery = `
-	SELECT
-		id,
-		name,
-		content_type,
-		url,
-		method,
-		events,
-		data_types,
-		topics,
-		created_on,
-		updated_on,
-		completed_on,
-		belongs_to
-	FROM
-		webhooks
-	WHERE
-		completed_on IS NULL
-		AND belongs_to = $1
-	LIMIT $2
-	OFFSET $3
-` // FINISHME: finish adding filters to this query
-
 // GetWebhooks fetches a list of webhooks from the postgres database that meet a particular filter
 func (p *Postgres) GetWebhooks(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.WebhookList, error) {
-	var list []models.Webhook
-	rows, err := p.database.QueryContext(ctx, getWebhooksQuery, userID, filter.Limit, filter.QueryPage())
+	builder := p.sqlBuilder.
+		Select(webhooksTableColumns...).
+		From(webhooksTableName).
+		Where(squirrel.Eq(map[string]interface{}{
+			"belongs_to":  userID,
+			"archived_on": nil,
+		}))
+
+	builder = filter.ApplyToQueryBuilder(builder)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "generating query")
+	}
+
+	rows, err := p.database.QueryContext(
+		ctx,
+		query,
+		args...,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	defer func() {
-		if err = rows.Close(); err != nil {
+		if err := rows.Close(); err != nil {
 			p.logger.Error(err, "closing rows")
 		}
 	}()
 
-	for rows.Next() {
-		webhook, ierr := p.scanWebhook(rows)
-		if ierr != nil {
-			return nil, ierr
-		}
-		list = append(list, *webhook)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
+	list, err := p.scanWebhooks(rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "scanning webhooks")
 	}
 
 	count, err := p.GetWebhookCount(ctx, filter, userID)
@@ -258,7 +295,7 @@ const createWebhookQuery = `
 
 // CreateWebhook creates an webhook in a postgres database
 func (p *Postgres) CreateWebhook(ctx context.Context, input *models.WebhookInput) (*models.Webhook, error) {
-	i := &models.Webhook{
+	x := &models.Webhook{
 		Name:        input.Name,
 		ContentType: input.ContentType,
 		URL:         input.URL,
@@ -281,11 +318,11 @@ func (p *Postgres) CreateWebhook(ctx context.Context, input *models.WebhookInput
 			strings.Join(input.DataTypes, typesSeparator),
 			strings.Join(input.Topics, topicsSeparator),
 			input.BelongsTo,
-		).Scan(&i.ID, &i.CreatedOn); err != nil {
+		).Scan(&x.ID, &x.CreatedOn); err != nil {
 		return nil, errors.Wrap(err, "error executing webhook creation query")
 	}
 
-	return i, nil
+	return x, nil
 }
 
 const updateWebhookQuery = `
@@ -328,13 +365,13 @@ func (p *Postgres) UpdateWebhook(ctx context.Context, input *models.Webhook) err
 const archiveWebhookQuery = `
 	UPDATE webhooks SET
 		updated_on = extract(epoch FROM NOW()),
-		completed_on = extract(epoch FROM NOW())
+		archived_on = extract(epoch FROM NOW())
 	WHERE
 		id = $1
-		AND completed_on IS NULL
+		AND archived_on IS NULL
 		AND belongs_to = $2
 	RETURNING
-		completed_on
+		archived_on
 `
 
 // DeleteWebhook deletes an webhook from the database by its ID

@@ -4,9 +4,9 @@ import (
 	"log"
 	"os"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/config/v1"
-
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 )
 
 func main() {

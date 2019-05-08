@@ -5,10 +5,12 @@ import (
 	"database/sql"
 	"time"
 
-	"contrib.go.opencensus.io/integrations/ocsql"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+
+	"contrib.go.opencensus.io/integrations/ocsql"
+	"github.com/Masterminds/squirrel"
 	postgres "github.com/lib/pq"
 )
 
@@ -32,6 +34,7 @@ type (
 		logger      logging.Logger
 		database    *sql.DB
 		databaseURL string
+		sqlBuilder  squirrel.StatementBuilderType
 	}
 
 	// ConnectionDetails is a string alias for a Postgres url
@@ -59,11 +62,13 @@ func ProvidePostgres(
 	logger logging.Logger,
 	connectionDetails database.ConnectionDetails,
 ) database.Database {
+
 	s := &Postgres{
+		database:    db,
 		debug:       debug,
 		logger:      logger.WithName("postgres"),
-		database:    db,
 		databaseURL: string(connectionDetails),
+		sqlBuilder:  squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
 	}
 
 	return s

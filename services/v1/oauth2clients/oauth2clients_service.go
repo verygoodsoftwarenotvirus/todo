@@ -5,12 +5,13 @@ import (
 	"database/sql"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 
 	"github.com/pkg/errors"
 	"gopkg.in/oauth2.v3"

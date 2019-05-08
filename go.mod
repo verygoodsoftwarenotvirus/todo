@@ -18,6 +18,7 @@ require (
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/websocket v1.4.0
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
+	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0
 	github.com/lib/pq v1.0.0
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/moul/http2curl v1.0.0

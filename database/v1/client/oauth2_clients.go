@@ -9,8 +9,6 @@ import (
 	"go.opencensus.io/trace"
 )
 
-const scopesSeparator = `,`
-
 var _ models.OAuth2ClientDataManager = (*Client)(nil)
 
 // GetOAuth2Client gets an OAuth2 client

@@ -14,7 +14,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
+	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
 	auth2 "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
@@ -29,7 +29,7 @@ func BuildServer(cfg *config.ServerConfig, logger logging.Logger, database2 data
 	authenticator := auth.ProvideBcrypt(bcryptHashCost, logger)
 	userDataManager := users.ProvideUserDataManager(database2)
 	clientIDFetcher := httpserver.ProvideOAuth2ServiceClientIDFetcher()
-	encoderDecoder := encoding.ProvideJSONResponseEncoder()
+	encoderDecoder := encoding.ProvideResponseEncoder()
 	unitCounterProvider := metrics.ProvideUnitCounterProvider()
 	service, err := oauth2clients.ProvideOAuth2ClientsService(logger, database2, authenticator, clientIDFetcher, encoderDecoder, unitCounterProvider)
 	if err != nil {

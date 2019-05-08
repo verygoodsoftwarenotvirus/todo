@@ -46,7 +46,7 @@ type (
 		router      *chi.Mux
 		httpServer  *http.Server
 		logger      logging.Logger
-		encoder     encoding.ServerEncoder
+		encoder     encoding.EncoderDecoder
 		newsManager *newsman.Newsman
 
 		// Auth stuff

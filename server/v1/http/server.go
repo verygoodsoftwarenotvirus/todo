@@ -114,17 +114,7 @@ func ProvideServer(
 	for _, wh := range allWebhooks.Webhooks {
 		// NOTE: we must guarantee that whatever is stored in the database is valid, otherwise
 		// newsman will try (and fail) to execute requests constantly
-		l := newsman.NewWebhookListener(
-			func(err error) { srv.logger.Error(err, "executing webhook") },
-			&newsman.WebhookConfig{
-				Method:      wh.Method,
-				ContentType: wh.ContentType,
-				URL:         wh.URL,
-			},
-			&newsman.ListenerConfig{
-				//
-			},
-		)
+		l := wh.ToListener(srv.logger)
 		srv.newsManager.TuneIn(l)
 	}
 

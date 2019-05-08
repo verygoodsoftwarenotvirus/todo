@@ -91,7 +91,7 @@ func typeString(i interface{}) string {
 }
 
 // IsInterested determines whether or not a listener is interested in an event.
-func (fq *ListenerConfig) IsInterested(event Event) bool {
+func (fq *ListenerConfig) IsInterested(event Event, typeNameManipulationFunc TypeNameManipulationFunc) bool {
 	var (
 		interestedInEvent    = len(fq.Events) == 1 && fq.Events[0] == All
 		interestedInDataType = len(fq.DataTypes) == 1 && fq.DataTypes[0] == All
@@ -109,7 +109,12 @@ func (fq *ListenerConfig) IsInterested(event Event) bool {
 
 	if !interestedInDataType {
 		for _, dt := range fq.DataTypes {
-			if typeString(event.Data) == dt {
+			ts := typeString(event.Data)
+			if typeNameManipulationFunc != nil {
+				ts = typeNameManipulationFunc(ts)
+			}
+
+			if strings.ToLower(ts) == strings.ToLower(dt) {
 				interestedInDataType = true
 				break
 			}

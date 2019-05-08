@@ -4,8 +4,12 @@ import (
 	"database/sql"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
+	"github.com/pkg/errors"
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"go.opencensus.io/trace"
@@ -45,6 +49,23 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func validateWebhook(input *models.WebhookInput) (statusCode int, err error) {
+	_, err = url.Parse(input.URL)
+	if err != nil {
+		return http.StatusBadRequest, errors.Wrap(err, "invalid URL provided")
+	}
+
+	input.Method = strings.ToUpper(input.Method)
+	switch input.Method {
+	case http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodHead:
+		break
+	default:
+		return http.StatusBadRequest, errors.Wrap(nil, "invalid method provided")
+	}
+
+	return http.StatusOK, nil
+}
+
 // Create is our webhook creation route
 func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	ctx, span := trace.StartSpan(req.Context(), "create_route")
@@ -52,6 +73,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 
 	userID := s.userIDFetcher(req)
 	logger := s.logger.WithValue("user_id", userID)
+	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
 
 	logger.Debug("create route called")
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.WebhookInput)
@@ -63,17 +85,8 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	input.BelongsTo = userID
 	logger = logger.WithValue("input", input)
 
-	if _, err := url.Parse(input.URL); err != nil {
-		s.logger.Error(err, "invalid URL provided")
-		res.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	input.Method = strings.ToUpper(input.Method)
-	switch input.Method {
-	case http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodHead:
-		break
-	default:
+	code, err := validateWebhook(input)
+	if code != http.StatusOK && err != nil {
 		s.logger.Error(nil, "invalid method provided")
 		res.WriteHeader(http.StatusBadRequest)
 		return
@@ -86,6 +99,15 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	s.webhookCounter.Increment(ctx)
+
+	s.newsman.Report(newsman.Event{
+		EventType: string(events.Create),
+		Data:      x,
+		Topics:    []string{topicName},
+	})
+
+	l := x.ToListener(s.logger)
+	s.newsman.TuneIn(l)
 
 	if err = s.encoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
@@ -160,6 +182,12 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	s.newsman.Report(newsman.Event{
+		EventType: string(events.Update),
+		Data:      x,
+		Topics:    []string{topicName},
+	})
+
 	if err = s.encoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
@@ -189,6 +217,12 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	s.webhookCounter.Decrement(ctx)
+
+	s.newsman.Report(newsman.Event{
+		EventType: string(events.Delete),
+		Data:      models.Webhook{ID: webhookID},
+		Topics:    []string{topicName},
+	})
 
 	res.WriteHeader(http.StatusNoContent)
 }

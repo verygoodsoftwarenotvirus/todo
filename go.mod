@@ -1,6 +1,7 @@
 module gitlab.com/verygoodsoftwarenotvirus/todo
 
 require (
+	cloud.google.com/go v0.34.0
 	contrib.go.opencensus.io/exporter/jaeger v0.1.0
 	contrib.go.opencensus.io/exporter/prometheus v0.1.0
 	contrib.go.opencensus.io/integrations/ocsql v0.1.4
@@ -30,7 +31,7 @@ require (
 	github.com/uber/jaeger-client-go v2.14.0+incompatible
 	github.com/uber/jaeger-lib v1.5.0
 	gitlab.com/verygoodsoftwarenotvirus/logging v1.0.2
-	gitlab.com/verygoodsoftwarenotvirus/newsman v1.0.0
+	gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.0-20190507231017-beb954c7c2d8
 	go.opencensus.io v0.21.0
 	golang.org/x/crypto v0.0.0-20190506204251-e1dfcc566284
 	golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421

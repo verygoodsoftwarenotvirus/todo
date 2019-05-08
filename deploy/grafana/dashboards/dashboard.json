@@ -165,6 +165,14 @@
 					"intervalFactor": 1,
 					"legendFormat": "users",
 					"refId": "B"
+				},
+				{
+					"expr": "todo_server_webhooks_count",
+					"format": "time_series",
+					"instant": false,
+					"intervalFactor": 1,
+					"legendFormat": "webhooks",
+					"refId": "D"
 				}
 			],
 			"thresholds": [],
@@ -793,5 +801,5 @@
 	},
 	"timezone": "",
 	"title": "Todo Server Dashboard",
-	"version": 2
+	"version": 1
 }

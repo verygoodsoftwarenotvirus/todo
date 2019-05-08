@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
@@ -17,7 +18,8 @@ const (
 	// MiddlewareCtxKey is a string alias we can use for referring to webhook input data in contexts
 	MiddlewareCtxKey models.ContextKey   = "webhook_input"
 	counterName      metrics.CounterName = "webhooks"
-	serviceName                          = "webhooks_service"
+	topicName        string              = "webhooks"
+	serviceName      string              = "webhooks_service"
 )
 
 type (
@@ -29,14 +31,15 @@ type (
 		userIDFetcher    UserIDFetcher
 		webhookIDFetcher WebhookIDFetcher
 		encoder          encoding.EncoderDecoder
+		newsman          *newsman.Newsman
 	}
+
+	// UserIDFetcher is a function that fetches user IDs
+	UserIDFetcher func(*http.Request) uint64
+
+	// WebhookIDFetcher is a function that fetches webhook IDs
+	WebhookIDFetcher func(*http.Request) uint64
 )
-
-// UserIDFetcher is a function that fetches user IDs
-type UserIDFetcher func(*http.Request) uint64
-
-// WebhookIDFetcher is a function that fetches webhook IDs
-type WebhookIDFetcher func(*http.Request) uint64
 
 // ProvideWebhooksService builds a new WebhooksService
 func ProvideWebhooksService(
@@ -46,6 +49,7 @@ func ProvideWebhooksService(
 	webhookIDFetcher WebhookIDFetcher,
 	encoder encoding.EncoderDecoder,
 	webhookCounterProvider metrics.UnitCounterProvider,
+	newsman *newsman.Newsman,
 ) (*Service, error) {
 	webhookCounter, err := webhookCounterProvider(counterName, "the number of webhooks managed by the webhooks service")
 	if err != nil {
@@ -59,6 +63,7 @@ func ProvideWebhooksService(
 		webhookCounter:   webhookCounter,
 		userIDFetcher:    userIDFetcher,
 		webhookIDFetcher: webhookIDFetcher,
+		newsman:          newsman,
 	}
 
 	ctx := context.Background()

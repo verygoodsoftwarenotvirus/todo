@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"go.opencensus.io/trace"
@@ -146,6 +148,12 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 
 	s.userCounter.Increment(ctx)
 
+	s.newsman.Report(newsman.Event{
+		EventType: string(events.Create),
+		Data:      x,
+		Topics:    []string{topicName},
+	})
+
 	if err = s.encoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
@@ -276,6 +284,12 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	}
 
 	s.userCounter.Decrement(ctx)
+
+	s.newsman.Report(newsman.Event{
+		EventType: string(events.Delete),
+		Data:      models.User{ID: userID},
+		Topics:    []string{topicName},
+	})
 
 	res.WriteHeader(http.StatusNoContent)
 }

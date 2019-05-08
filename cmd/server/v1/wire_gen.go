@@ -39,24 +39,25 @@ func BuildServer(cfg *config.ServerConfig, logger logging.Logger, database2 data
 	authService := auth2.ProvideAuthService(logger, cfg, authenticator, userDataManager, service, userIDFetcher, encoderDecoder)
 	itemsUserIDFetcher := httpserver.ProvideUserIDFetcher()
 	itemIDFetcher := httpserver.ProvideItemIDFetcher()
-	itemsService, err := items.ProvideItemsService(logger, database2, itemsUserIDFetcher, itemIDFetcher, encoderDecoder, unitCounterProvider)
+	websocketAuthFunc := auth2.ProvideWebsocketAuthFunc(authService)
+	typeNameManipulationFunc := httpserver.ProvideNewsmanTypeNameManipulationFunc(logger)
+	newsmanNewsman := newsman.NewNewsman(websocketAuthFunc, typeNameManipulationFunc)
+	itemsService, err := items.ProvideItemsService(logger, database2, itemsUserIDFetcher, itemIDFetcher, encoderDecoder, unitCounterProvider, newsmanNewsman)
 	if err != nil {
 		return nil, err
 	}
 	authSettings := config.ProvideConfigAuthSettings(cfg)
 	usersUserIDFetcher := httpserver.ProvideUsernameFetcher()
-	usersService, err := users.ProvideUsersService(authSettings, logger, database2, authenticator, usersUserIDFetcher, encoderDecoder, unitCounterProvider)
+	usersService, err := users.ProvideUsersService(authSettings, logger, database2, authenticator, usersUserIDFetcher, encoderDecoder, unitCounterProvider, newsmanNewsman)
 	if err != nil {
 		return nil, err
 	}
 	webhooksUserIDFetcher := httpserver.ProvideWebhooksUserIDFetcher()
 	webhookIDFetcher := httpserver.ProvideWebhookIDFetcher()
-	webhooksService, err := webhooks.ProvideWebhooksService(logger, database2, webhooksUserIDFetcher, webhookIDFetcher, encoderDecoder, unitCounterProvider)
+	webhooksService, err := webhooks.ProvideWebhooksService(logger, database2, webhooksUserIDFetcher, webhookIDFetcher, encoderDecoder, unitCounterProvider, newsmanNewsman)
 	if err != nil {
 		return nil, err
 	}
-	websocketAuthFunc := auth2.ProvideWebsocketAuthFunc(authService)
-	newsmanNewsman := newsman.NewNewsman(websocketAuthFunc)
 	httpserverServer, err := httpserver.ProvideServer(cfg, authService, itemsService, usersService, service, webhooksService, database2, logger, encoderDecoder, newsmanNewsman)
 	if err != nil {
 		return nil, err

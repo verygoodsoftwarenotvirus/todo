@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 
 	"github.com/google/wire"
@@ -16,12 +18,21 @@ var (
 		paramFetcherProviders,
 		ProvideServer,
 		ProvideNamespace,
+		ProvideNewsmanTypeNameManipulationFunc,
 	)
 )
 
 // ProvideNamespace provides a namespace
 func ProvideNamespace() metrics.Namespace {
 	return "todo-service"
+}
+
+// ProvideNewsmanTypeNameManipulationFunc provides an WebhookIDFetcher
+func ProvideNewsmanTypeNameManipulationFunc(logger logging.Logger) newsman.TypeNameManipulationFunc {
+	return func(s string) string {
+		logger.WithName("events").WithValue("type_name", s).Info("event occurred")
+		return s
+	}
 }
 
 // provideHTTPServer provides an HTTP httpServer

@@ -18,6 +18,12 @@ import (
 // is openly authorized
 type WebsocketAuthFunc func(req *http.Request) bool
 
+// TypeNameManipulationFunc is a function newsman will call when it is asked
+// to report on something. It will determine the type's name as a string,
+// call this function with that derived type name, and use the return value
+// (after removing any errant asterisks) as the type name for data type notifications
+type TypeNameManipulationFunc func(string) string
+
 // Newsman maintains the set of active audience and broadcasts messages to the
 // audience.
 type Newsman struct {
@@ -34,17 +40,22 @@ type Newsman struct {
 
 	upgrader *websocket.Upgrader
 
-	websocketAuthFunc WebsocketAuthFunc
+	websocketAuthFunc        WebsocketAuthFunc
+	typeNameManipulationFunc TypeNameManipulationFunc
 }
 
 // NewNewsman builds a Newsman
-func NewNewsman(websocketAuthFunc WebsocketAuthFunc) *Newsman {
+func NewNewsman(
+	websocketAuthFunc WebsocketAuthFunc,
+	typeNameManipulationFunc TypeNameManipulationFunc,
+) *Newsman {
 	x := &Newsman{
-		events:            make(chan Event),
-		listeners:         make(chan Listener),
-		tuneOut:           make(chan Listener),
-		audience:          make(map[Listener]bool),
-		websocketAuthFunc: websocketAuthFunc,
+		events:                   make(chan Event),
+		listeners:                make(chan Listener),
+		tuneOut:                  make(chan Listener),
+		audience:                 make(map[Listener]bool),
+		websocketAuthFunc:        websocketAuthFunc,
+		typeNameManipulationFunc: typeNameManipulationFunc,
 		upgrader: &websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
@@ -116,8 +127,7 @@ func (newsman *Newsman) run() {
 
 			newsman.audienceMutex.RLock()
 			for listener := range newsman.audience {
-				if listener.Config().IsInterested(event) {
-
+				if listener.Config().IsInterested(event, newsman.typeNameManipulationFunc) {
 					select {
 					case listener.Channel() <- event:
 					default:

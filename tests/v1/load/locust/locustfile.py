@@ -19,6 +19,7 @@ class UserTasks(TaskSet):
         self._token: str = ""
         self._oauth2_authorized: bool = False
         self.created_item_ids: List[int] = []
+        self.created_webhook_ids: List[int] = []
         self.created_oauth2_client_ids: List[str] = []
         self.username: str = ""
         self.password: str = ""
@@ -128,11 +129,10 @@ class UserTasks(TaskSet):
 
     @task(weight=10)
     def get_invalid_item(self):
-        with self.client.get(
-            url=f"{ITEMS_URL_PREFIX}/999999999", catch_response=True
-        ) as response:
-            if response.status_code != 404:
-                response.failure("service returned irrelevant item")
+        u: str = f"{ITEMS_URL_PREFIX}/999999999"
+        with self.client.get(url=u, catch_response=True) as response:
+            if response.status_code == 404:
+                response.success()
 
     @task(weight=100)
     def create_item(self):
@@ -213,17 +213,17 @@ class UserTasks(TaskSet):
 
     @task(weight=10)
     def get_invalid_webhook(self):
-        with self.client.get(
-            url=f"{WEBHOOKS_URL_PREFIX}/999999999", catch_response=True
-        ) as response:
-            if response.status_code != 404:
-                response.failure("service returned irrelevant webhook")
+        u: str = f"{WEBHOOKS_URL_PREFIX}/999999999"
+        with self.client.get(url=u, catch_response=True) as response:
+            if response.status_code == 404:
+                response.success()
 
     @task(weight=100)
     def create_webhook(self):
         webhook_creation_input = {
             "name": self.fake.text.word(),
-            "details": self.fake.text.sentence(),
+            "url": self.fake.internet.home_page(),
+            "method": "POST",
         }
 
         res = self.client.post(
@@ -231,6 +231,7 @@ class UserTasks(TaskSet):
             json=webhook_creation_input,
             headers=self.auth_headers,
         )
+
         webhook_id = res.json().get("id")
         self.created_webhook_ids.append(webhook_id)
 
@@ -302,13 +303,12 @@ class UserTasks(TaskSet):
 
     @task(weight=10)
     def get_invalid_oauth2_client(self):
+        u: str = f"{OAUTH2_CLIENTS_URL_PREFIX}/999999999"
         with self.client.get(
-            catch_response=True,
-            url=f"{OAUTH2_CLIENTS_URL_PREFIX}/999999999",
-            headers=self.auth_headers,
+            catch_response=True, url=u, headers=self.auth_headers
         ) as response:
-            if response.status_code != 404:
-                response.failure("service returned irrelevant oauth2 client")
+            if response.status_code == 404:
+                response.success()
 
     @task(weight=50)
     def create_oauth2_client(self):

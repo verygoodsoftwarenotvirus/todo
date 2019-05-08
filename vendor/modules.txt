@@ -171,7 +171,7 @@ github.com/uber/jaeger-lib/metrics/go-kit/expvar
 gitlab.com/verygoodsoftwarenotvirus/logging/v1
 gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog
 gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop
-# gitlab.com/verygoodsoftwarenotvirus/newsman v1.0.0
+# gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.0-20190507231017-beb954c7c2d8
 gitlab.com/verygoodsoftwarenotvirus/newsman
 # go.opencensus.io v0.21.0
 go.opencensus.io/plugin/ochttp

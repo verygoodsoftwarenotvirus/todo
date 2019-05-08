@@ -3,6 +3,9 @@ package models
 import (
 	"context"
 	"net/http"
+
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
 // WebhookDataManager describes a structure capable of storing items permanently
@@ -70,32 +73,54 @@ func sliceToMap(s []string) []string {
 }
 
 // Update merges an WebhookInput with an Webhook
-func (i *Webhook) Update(input *WebhookInput) {
+func (w *Webhook) Update(input *WebhookInput) {
 	if input.Name != "" {
-		i.Name = input.Name
+		w.Name = input.Name
 	}
 	if input.ContentType != "" {
-		i.ContentType = input.ContentType
+		w.ContentType = input.ContentType
 	}
 	if input.URL != "" {
-		i.URL = input.URL
+		w.URL = input.URL
 	}
 	if input.Method != "" {
-		i.Method = input.Method
+		w.Method = input.Method
 	}
 
 	if input.Events != nil && len(input.Events) > 0 {
-		i.Events = input.Events
+		w.Events = input.Events
 	}
 
 	if input.DataTypes != nil && len(input.DataTypes) > 0 {
-		i.DataTypes = input.DataTypes
+		w.DataTypes = input.DataTypes
 	}
 
 	if input.Topics != nil && len(input.Topics) > 0 {
-		i.Topics = input.Topics
+		w.Topics = input.Topics
 	}
+}
 
+// ToListener creates a newsman Listener from a Webhook
+func (w *Webhook) ToListener(logger logging.Logger) newsman.Listener {
+	return newsman.NewWebhookListener(
+		func(err error) {
+			logger.WithValues(map[string]interface{}{
+				"url":          w.URL,
+				"method":       w.Method,
+				"content_type": w.ContentType,
+			}).Error(err, "error executing webhook")
+		},
+		&newsman.WebhookConfig{
+			Method:      w.Method,
+			URL:         w.URL,
+			ContentType: w.ContentType,
+		},
+		&newsman.ListenerConfig{
+			Events:    w.Events,
+			DataTypes: w.DataTypes,
+			Topics:    w.Topics,
+		},
+	)
 }
 
 // WebhookList represents a list of items

@@ -116,7 +116,7 @@ class UserTasks(TaskSet):
 
     @task(weight=5)
     def health(self):
-        self.client.get("/_meta_/health")
+        self.client.get("/_meta_/ready")
 
     # Item things
 

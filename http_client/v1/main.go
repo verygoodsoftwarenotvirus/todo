@@ -193,7 +193,7 @@ func (c *V1Client) BuildWebsocketURL(parts ...string) string {
 // IsUp returns whether or not the service is healthy
 func (c *V1Client) IsUp() bool {
 	u := *c.URL
-	uri := fmt.Sprintf("%s://%s:%s/_meta_/health", u.Scheme, u.Host, u.Port())
+	uri := fmt.Sprintf("%s://%s:%s/_meta_/ready", u.Scheme, u.Host, u.Port())
 
 	logger := c.logger.WithValue("health_check_url", uri)
 

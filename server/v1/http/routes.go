@@ -14,6 +14,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/heptiolabs/healthcheck"
 )
 
 // func bareMiddlewareBlueprint(next http.Handler) http.Handler {
@@ -51,8 +52,13 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 		fs.ServeHTTP(res, req)
 	}))
 
-	// health check
-	router.Get("/_meta_/health", func(res http.ResponseWriter, req *http.Request) { res.WriteHeader(http.StatusOK) })
+	router.Route("/_meta_", func(metaRouter chi.Router) {
+		health := healthcheck.NewHandler()
+		// Expose a liveness check on /live
+		metaRouter.Get("/live", health.LiveEndpoint)
+		// Expose a readiness check on /ready
+		metaRouter.Get("/ready", health.ReadyEndpoint)
+	})
 
 	if metricsHandler != nil {
 		s.logger.Debug("establishing metrics handler")

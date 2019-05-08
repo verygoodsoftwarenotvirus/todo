@@ -1,7 +1,6 @@
 module gitlab.com/verygoodsoftwarenotvirus/todo
 
 require (
-	cloud.google.com/go v0.34.0
 	contrib.go.opencensus.io/exporter/jaeger v0.1.0
 	contrib.go.opencensus.io/exporter/prometheus v0.1.0
 	contrib.go.opencensus.io/integrations/ocsql v0.1.4
@@ -17,8 +16,8 @@ require (
 	github.com/googleapis/gax-go v2.0.2+incompatible // indirect
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/websocket v1.4.0
+	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
-	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0
 	github.com/lib/pq v1.0.0
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/moul/http2curl v1.0.0
@@ -36,6 +35,5 @@ require (
 	go.opencensus.io v0.21.0
 	golang.org/x/crypto v0.0.0-20190506204251-e1dfcc566284
 	golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421
-	golang.org/x/text v0.3.0
 	gopkg.in/oauth2.v3 v3.9.5
 )

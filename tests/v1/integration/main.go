@@ -2,11 +2,8 @@ package integration
 
 import (
 	"net/http"
-	"net/url"
 	"testing"
 	"time"
-
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
 
@@ -37,20 +34,4 @@ func buildHTTPClient() *http.Client {
 	}
 
 	return httpc
-}
-
-func initializeClient(clientID, clientSecret string) *client.V1Client {
-	uri, _ := url.Parse(urlToUse)
-	c, err := client.NewClient(
-		clientID,
-		clientSecret,
-		uri,
-		zerolog.NewZeroLogger(),
-		buildHTTPClient(),
-		debug,
-	)
-	if err != nil {
-		panic(err)
-	}
-	return c
 }

@@ -95,6 +95,10 @@ debug-integration-tests: wire
 locust-load-tests: wire
 	docker-compose --file compose-files/locust-load-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
 
+.PHONY: vegeta-load-tests
+vegeta-load-tests: wire
+	docker-compose --file compose-files/vegeta-load-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
+
 .PHONY: integration-coverage
 integration-coverage:
 	# big thanks to https://blog.cloudflare.com/go-coverage-with-external-tests/

@@ -19,6 +19,7 @@ require (
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
 	github.com/lib/pq v1.0.0
+	github.com/lucasb-eyer/go-colorful v1.0.2 // indirect
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/moul/http2curl v1.0.0
 	github.com/opentracing-contrib/go-stdlib v0.0.0-20190205184154-464eb271c715
@@ -27,7 +28,9 @@ require (
 	github.com/pquerna/otp v1.1.0
 	github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829 // indirect
 	github.com/spf13/viper v1.3.1
+	github.com/streadway/quantile v0.0.0-20150917103942-b0c588724d25 // indirect
 	github.com/stretchr/testify v1.3.0
+	github.com/tsenart/vegeta v9.0.0+incompatible
 	github.com/uber/jaeger-client-go v2.14.0+incompatible
 	github.com/uber/jaeger-lib v1.5.0
 	gitlab.com/verygoodsoftwarenotvirus/logging v1.0.2

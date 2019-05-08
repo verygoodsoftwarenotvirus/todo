@@ -1,7 +1,8 @@
-package integration
+package main
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"strings"
@@ -19,6 +20,20 @@ const (
 	localTestInstanceURL   = "http://localhost"
 	defaultTestInstanceURL = "http://todo-server"
 )
+
+var (
+	urlToUse string
+	debug    bool
+)
+
+func buildHTTPClient() *http.Client {
+	httpc := &http.Client{
+		Transport: http.DefaultTransport,
+		Timeout:   5 * time.Second,
+	}
+
+	return httpc
+}
 
 func init() {
 	if strings.ToLower(os.Getenv("DOCKER")) == "true" {
@@ -43,7 +58,8 @@ func init() {
 		logger.Fatal(err)
 	}
 
-	todoClient = initializeClient(clientID, clientSecret)
+	todoClient := initializeClient(clientID, clientSecret)
+	_ = todoClient
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)

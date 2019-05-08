@@ -15,7 +15,6 @@ type Counter interface {
 	Increment()
 	IncrementBy(val uint64)
 	Decrement()
-	SetCount(count uint64)
 }
 
 type opencensusCounter struct {
@@ -38,12 +37,6 @@ func (c *opencensusCounter) IncrementBy(ctx context.Context, val uint64) {
 func (c *opencensusCounter) Decrement(ctx context.Context) {
 	atomic.AddUint64(&c.actualCount, ^uint64(0))
 	stats.Record(ctx, c.count.M(-1))
-}
-
-func (c *opencensusCounter) SetCount(ctx context.Context, count uint64) {
-	stats.Record(ctx, c.count.M(int64(c.actualCount)*-1))
-	c.actualCount = count
-	// stats.Record(ctx, c.count.M(1))
 }
 
 // ProvideUnitCounterProvider provides UnitCounter providers

@@ -7,11 +7,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
+
+	"github.com/pkg/errors"
 	"go.opencensus.io/trace"
 )
 

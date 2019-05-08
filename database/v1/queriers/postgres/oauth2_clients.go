@@ -7,11 +7,28 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/pkg/errors"
 )
 
 const (
 	scopesSeparator = `,`
+
+	oauth2ClientsTableName = "oauth2_clients"
+)
+
+var (
+	oauth2ClientsTableColumns = []string{
+		"id",
+		"client_id",
+		"scopes",
+		"redirect_uri",
+		"client_secret",
+		"created_on",
+		"updated_on",
+		"archived_on",
+		"belongs_to",
+	}
 )
 
 func (p Postgres) scanOAuth2Client(scan database.Scanner) (*models.OAuth2Client, error) {
@@ -40,7 +57,7 @@ func (p Postgres) scanOAuth2Client(scan database.Scanner) (*models.OAuth2Client,
 }
 
 const createOAuth2ClientQuery = `
-	INSERT INTO oauth_clients
+	INSERT INTO oauth2_clients
 	(
 		client_id,
 		client_secret,
@@ -97,7 +114,7 @@ const getOAuth2ClientByClientIDQuery = `
 		archived_on,
 		belongs_to
 	FROM
-		oauth_clients
+		oauth2_clients
 	WHERE
 		client_id = $1
 		AND archived_on IS NULL
@@ -126,7 +143,7 @@ const getAllOAuth2ClientsQuery = `
 		archived_on,
 		belongs_to
 	FROM
-		oauth_clients
+		oauth2_clients
 	WHERE
 		archived_on IS NULL
 `
@@ -175,7 +192,7 @@ const getOAuth2ClientQuery = `
 		archived_on,
 		belongs_to
 	FROM
-		oauth_clients
+		oauth2_clients
 	WHERE
 		id = $1
 		AND belongs_to = $2
@@ -193,20 +210,25 @@ func (p *Postgres) GetOAuth2Client(ctx context.Context, id, userID uint64) (*mod
 	return client, nil
 }
 
-const getOAuth2ClientCountQuery = `
-	SELECT
-		COUNT(*)
-	FROM
-		oauth_clients
-	WHERE
-		archived_on IS NULL
-		AND belongs_to = $1
-`
-
 // GetOAuth2ClientCount will get the count of OAuth2 clients that match the current filter
 func (p *Postgres) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (uint64, error) {
 	var count uint64
-	err := p.database.QueryRowContext(ctx, getOAuth2ClientCountQuery, userID).Scan(&count)
+
+	builder := p.sqlBuilder.
+		Select("COUNT(*)").
+		From(oauth2ClientsTableName).
+		Where(squirrel.Eq(map[string]interface{}{
+			"belongs_to":  userID,
+			"archived_on": nil,
+		}))
+
+	builder = filter.ApplyToQueryBuilder(builder)
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return 0, errors.Wrap(err, "generating query")
+	}
+
+	err = p.database.QueryRowContext(ctx, query, args...).Scan(&count)
 	return count, err
 }
 
@@ -214,7 +236,7 @@ const getAllOAuth2ClientCountQuery = `
 	SELECT
 		COUNT(*)
 	FROM
-		oauth_clients
+		oauth2_clients
 	WHERE
 		archived_on IS NULL
 `
@@ -226,35 +248,34 @@ func (p *Postgres) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) 
 	return count, err
 }
 
-const getOAuth2ClientsQuery = `
-	SELECT
-		id,
-		client_id,
-		scopes,
-		redirect_uri,
-		client_secret,
-		created_on,
-		updated_on,
-		archived_on,
-		belongs_to
-	FROM
-		oauth_clients
-	WHERE
-		archived_on IS NULL
-		AND belongs_to = $1
-	LIMIT $2
-	OFFSET $3
-`
-
 // GetOAuth2Clients gets a list of OAuth2 clients
 func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.OAuth2ClientList, error) {
-	rows, err := p.database.QueryContext(ctx, getOAuth2ClientsQuery, userID, filter.Limit, filter.QueryPage())
+	builder := p.sqlBuilder.
+		Select(oauth2ClientsTableColumns...).
+		From(oauth2ClientsTableName).
+		Where(squirrel.Eq(map[string]interface{}{
+			"belongs_to":  userID,
+			"archived_on": nil,
+		}))
+
+	builder = filter.ApplyToQueryBuilder(builder)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "generating query")
+	}
+
+	rows, err := p.database.QueryContext(
+		ctx,
+		query,
+		args...,
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "executing query")
 	}
 
 	defer func() {
-		if err = rows.Close(); err != nil {
+		if err := rows.Close(); err != nil {
 			p.logger.Error(err, "closing rows")
 		}
 	}()
@@ -289,7 +310,7 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 }
 
 const updateOAuth2ClientQuery = `
-	UPDATE oauth_clients SET
+	UPDATE oauth2_clients SET
 		client_id = $1,
 		client_secret = $2,
 		scopes = $3,
@@ -324,7 +345,7 @@ func (p *Postgres) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2C
 }
 
 const archiveOAuth2ClientQuery = `
-	UPDATE oauth_clients SET
+	UPDATE oauth2_clients SET
 		updated_on = extract(epoch FROM NOW()),
 		archived_on = extract(epoch FROM NOW())
 	WHERE

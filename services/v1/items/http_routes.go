@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 
 	"go.opencensus.io/trace"
 )

@@ -26,17 +26,17 @@ var (
 func (s *Service) DecodeCookieFromRequest(req *http.Request) (*models.CookieAuth, error) {
 	var ca *models.CookieAuth
 
-	cookie, cerr := req.Cookie(cookieName)
-	if cerr == nil && cookie != nil {
-		derr := s.cookieBuilder.Decode(cookieName, cookie.Value, &ca)
-		if derr != nil {
-			return nil, errors.Wrap(derr, "decoding request cookie")
+	cookie, cookieErr := req.Cookie(cookieName)
+	if cookieErr == nil && cookie != nil {
+		decodeErr := s.cookieBuilder.Decode(cookieName, cookie.Value, &ca)
+		if decodeErr != nil {
+			return nil, errors.Wrap(decodeErr, "decoding request cookie")
 		}
 
 		return ca, nil
 	}
-	if cerr != nil {
-		return nil, cerr
+	if cookieErr != nil {
+		return nil, cookieErr
 	}
 	return nil, errNoCookie
 }
@@ -52,7 +52,7 @@ func (s *Service) WebsocketAuthFunction(req *http.Request) bool {
 		cookieAuth, cookieErr := s.DecodeCookieFromRequest(req)
 		if cookieErr != nil || cookieAuth == nil {
 			// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere
-			s.logger.Error(err, "error authenticated token-authed request")
+			s.logger.Error(err, "error authenticated token-authenticated request")
 			return false
 		}
 
@@ -60,19 +60,19 @@ func (s *Service) WebsocketAuthFunction(req *http.Request) bool {
 	}
 
 	// We found a valid OAuth2 client in the request
-	return oauth2Client != nil
+	return false
 }
 
 // FetchUserFromRequest takes a request object and fetches the cookie, and then the user for that cookie
 func (s *Service) FetchUserFromRequest(req *http.Request) (*models.User, error) {
-	ca, cerr := s.DecodeCookieFromRequest(req)
-	if cerr != nil {
-		return nil, errors.Wrap(cerr, "fetching cookie data from request")
+	ca, decodeErr := s.DecodeCookieFromRequest(req)
+	if decodeErr != nil {
+		return nil, errors.Wrap(decodeErr, "fetching cookie data from request")
 	}
 
-	user, uerr := s.database.GetUser(req.Context(), ca.UserID)
-	if uerr != nil {
-		return nil, errors.Wrap(uerr, "fetching user from request")
+	user, userFetchErr := s.database.GetUser(req.Context(), ca.UserID)
+	if userFetchErr != nil {
+		return nil, errors.Wrap(userFetchErr, "fetching user from request")
 	}
 	return user, nil
 }
@@ -243,8 +243,8 @@ func (s *Service) buildCookie(user *models.User) (*http.Cookie, error) {
 		// O // matching. Only change this to enable subdomains if you
 		// D // need to! The below code would work on any subdomain for
 		// O // yoursite.com
+		// Domain: "yoursite.com",
 		///////
-		// Domain: s.config.Hostname,
 		// Expires: time.Now().Add(s.config.MaxCookieLifetime),
 	}, nil
 }

@@ -22,7 +22,6 @@ type QueryFilter struct {
 	CreatedBefore uint64   `json:"created_after,omitempty"`
 	UpdatedAfter  uint64   `json:"updated_before,omitempty"`
 	UpdatedBefore uint64   `json:"updated_after,omitempty"`
-	IncludeAll    bool     `json:"include_all,omitempty"`
 	SortBy        sortType `json:"sort_by"`
 }
 
@@ -44,27 +43,23 @@ func (qf *QueryFilter) FromParams(params url.Values) {
 	}
 
 	if i, err := strconv.ParseUint(params.Get("limit"), 10, 64); err == nil {
-		qf.Limit = uint64(math.Max(float64(i), 1))
+		qf.Limit = uint64(math.Max(math.Max(float64(i), 0), maxLimit))
 	}
 
 	if i, err := strconv.ParseUint(params.Get("created_before"), 10, 64); err == nil {
-		qf.CreatedBefore = uint64(i)
+		qf.CreatedBefore = uint64(math.Max(float64(i), 0))
 	}
 
 	if i, err := strconv.ParseUint(params.Get("created_after"), 10, 64); err == nil {
-		qf.CreatedAfter = uint64(i)
+		qf.CreatedAfter = uint64(math.Max(float64(i), 0))
 	}
 
 	if i, err := strconv.ParseUint(params.Get("updated_before"), 10, 64); err == nil {
-		qf.UpdatedAfter = uint64(i)
+		qf.UpdatedAfter = uint64(math.Max(float64(i), 0))
 	}
 
 	if i, err := strconv.ParseUint(params.Get("updated_after"), 10, 64); err == nil {
-		qf.UpdatedAfter = uint64(i)
-	}
-
-	if ia, err := strconv.ParseBool(params.Get("include_all")); err == nil {
-		qf.IncludeAll = ia
+		qf.UpdatedAfter = uint64(math.Max(float64(i), 0))
 	}
 
 	switch strings.ToLower(params.Get("sort_by")) {
@@ -81,8 +76,8 @@ func (qf *QueryFilter) SetPage(page uint64) {
 }
 
 // QueryPage calculates a query page from the current filter values
-func (qf *QueryFilter) QueryPage() uint {
-	return uint(qf.Limit * (qf.Page - 1))
+func (qf *QueryFilter) QueryPage() uint64 {
+	return uint64(qf.Limit * (qf.Page - 1))
 }
 
 // ToValues returns a url.Values from a QueryFilter
@@ -117,52 +112,44 @@ func (qf *QueryFilter) ToValues() url.Values {
 	return v
 }
 
+// ApplyToQueryBuilder applys the query filter to a select builder
+func (qf *QueryFilter) ApplyToQueryBuilder(builder squirrel.SelectBuilder) squirrel.SelectBuilder {
+	if qf.CreatedAfter > 0 {
+		builder = builder.Where(squirrel.GtOrEq(map[string]interface{}{
+			"created_on": qf.CreatedAfter,
+		}))
+	}
+
+	if qf.CreatedBefore > 0 {
+		builder = builder.Where(squirrel.LtOrEq(map[string]interface{}{
+			"created_on": qf.CreatedAfter,
+		}))
+	}
+
+	if qf.UpdatedAfter > 0 {
+		builder = builder.Where(squirrel.GtOrEq(map[string]interface{}{
+			"updated_on": qf.CreatedAfter,
+		}))
+	}
+
+	if qf.UpdatedBefore > 0 {
+		builder = builder.Where(squirrel.LtOrEq(map[string]interface{}{
+			"updated_on": qf.CreatedAfter,
+		}))
+	}
+
+	if qf.Limit > 0 {
+		builder = builder.Limit(qf.Limit)
+	}
+
+	builder = builder.Offset(qf.QueryPage())
+
+	return builder
+}
+
 // ExtractQueryFilter can extract a QueryFilter from a request
 func ExtractQueryFilter(req *http.Request) *QueryFilter {
 	qf := buildDefaultQueryFilter()
 	qf.FromParams(req.URL.Query())
 	return qf
-}
-
-// BuildQueryLimits does a thing DOCUMENTME
-func BuildQueryLimits(pf squirrel.PlaceholderFormat, filter *QueryFilter, creationTimeColumnName, updatedTimeColumnName string) string {
-	filter.Limit = uint64(math.Max(float64(filter.Limit), maxLimit))
-	filter.Page = uint64(math.Max(1, float64(filter.Page)))
-	queryPage := uint64(filter.Limit * (filter.Page - 1))
-
-	sb := squirrel.Select("*")
-	if pf != nil {
-		sb = sb.PlaceholderFormat(pf)
-	}
-
-	if filter.Limit != 0 {
-		sb = sb.Limit(filter.Limit)
-	}
-
-	if filter.Page != 0 {
-		sb = sb.Offset(queryPage)
-	}
-
-	if filter.CreatedAfter != 0 {
-		sb = sb.Where(squirrel.GtOrEq{creationTimeColumnName: filter.CreatedAfter})
-	}
-
-	if filter.CreatedBefore != 0 {
-		sb = sb.Where(squirrel.LtOrEq{creationTimeColumnName: filter.CreatedBefore})
-	}
-
-	if filter.UpdatedAfter != 0 {
-		sb = sb.Where(squirrel.GtOrEq{updatedTimeColumnName: filter.UpdatedAfter})
-	}
-
-	if filter.UpdatedBefore != 0 {
-		sb = sb.Where(squirrel.LtOrEq{updatedTimeColumnName: filter.UpdatedBefore})
-	}
-
-	if filter.SortBy != "" {
-		sb = sb.OrderBy(string(filter.SortBy))
-	}
-
-	s, _, _ := sb.ToSql()
-	return strings.Replace(s, "SELECT *", "", 1)
 }

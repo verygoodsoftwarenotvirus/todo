@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
+	client "gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/icrowley/fake"
@@ -48,7 +48,7 @@ func EnsureServerIsUp(address string) {
 
 // IsUp can check if an instance of our server is alive
 func IsUp(address string) bool {
-	uri := fmt.Sprintf("%s/_meta_/health", address)
+	uri := fmt.Sprintf("%s/_meta_/ready", address)
 
 	req, _ := http.NewRequest(http.MethodGet, uri, nil)
 

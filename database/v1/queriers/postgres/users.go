@@ -7,7 +7,26 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/pkg/errors"
+)
+
+const (
+	usersTableName = "users"
+)
+
+var (
+	usersTableColumns = []string{
+		"id",
+		"username",
+		"hashed_password",
+		"password_last_changed_on",
+		"two_factor_secret",
+		"is_admin",
+		"created_on",
+		"updated_on",
+		"archived_on",
+	}
 )
 
 func (p Postgres) scanUser(scan database.Scanner) (*models.User, error) {
@@ -28,6 +47,30 @@ func (p Postgres) scanUser(scan database.Scanner) (*models.User, error) {
 	}
 
 	return x, nil
+}
+
+func (p *Postgres) scanUsers(rows *sql.Rows) ([]models.User, error) {
+	var list []models.User
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			p.logger.Error(err, "closing rows")
+		}
+	}()
+
+	for rows.Next() {
+		user, err := p.scanUser(rows)
+		if err != nil {
+			return nil, errors.Wrap(err, "scanning user result")
+		}
+		list = append(list, *user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return list, nil
 }
 
 const adminUserExistsQuery = `
@@ -96,64 +139,59 @@ func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*mod
 	return u, err
 }
 
-const getUserCountQuery = `
-	SELECT
-		COUNT(*)
-	FROM
-		users
-	WHERE
-		archived_on IS NULL
-`
-
 // GetUserCount fetches a count of users from the postgres database that meet a particular filter
 func (p *Postgres) GetUserCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
-	err = p.database.QueryRowContext(ctx, getUserCountQuery).Scan(&count)
+	builder := p.sqlBuilder.
+		Select("COUNT(*)").
+		From(usersTableName).
+		Where(squirrel.Eq(map[string]interface{}{
+			"archived_on": nil,
+		}))
+
+	builder = filter.ApplyToQueryBuilder(builder)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return 0, errors.Wrap(err, "generating query")
+	}
+
+	err = p.database.QueryRowContext(ctx, query, args...).Scan(&count)
 	return
 }
 
-const getUsersQuery = `
-	SELECT
-		id,
-		username,
-		hashed_password,
-		password_last_changed_on,
-		two_factor_secret,
-		is_admin,
-		created_on,
-		updated_on,
-		archived_on
-	FROM
-		users
-	WHERE
-		archived_on IS NULL
-	LIMIT $1
-	OFFSET $2
-`
-
 // GetUsers fetches a list of users from the postgres database that meet a particular filter
 func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
-	var list []models.User
+	builder := p.sqlBuilder.
+		Select(usersTableColumns...).
+		From(usersTableName).
+		Where(squirrel.Eq(map[string]interface{}{
+			"archived_on": nil,
+		}))
 
-	rows, err := p.database.QueryContext(ctx, getUsersQuery, filter.Limit, filter.QueryPage())
+	builder = filter.ApplyToQueryBuilder(builder)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "generating query")
+	}
+
+	rows, err := p.database.QueryContext(
+		ctx,
+		query,
+		args...,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	defer func() {
-		if err = rows.Close(); err != nil {
+		if err := rows.Close(); err != nil {
 			p.logger.Error(err, "closing rows")
 		}
 	}()
 
-	for rows.Next() {
-		var user *models.User
-		user, err = p.scanUser(rows)
-		if err != nil {
-			return nil, err
-		}
-		list = append(list, *user)
-	}
-	if err = rows.Err(); err != nil {
+	userList, err := p.scanUsers(rows)
+	if err != nil {
 		return nil, err
 	}
 
@@ -168,10 +206,10 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 			Limit:      filter.Limit,
 			TotalCount: count,
 		},
-		Users: list,
+		Users: userList,
 	}
 
-	return x, err
+	return x, nil
 }
 
 const createUserQuery = `

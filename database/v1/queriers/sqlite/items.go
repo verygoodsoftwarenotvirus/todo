@@ -7,7 +7,24 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/pkg/errors"
+)
+
+const (
+	itemsTableName = "items"
+)
+
+var (
+	itemsTableColumns = []string{
+		"id",
+		"name",
+		"details",
+		"created_on",
+		"updated_on",
+		"completed_on",
+		"belongs_to",
+	}
 )
 
 func scanItem(scan database.Scanner) (*models.Item, error) {
@@ -73,21 +90,25 @@ func (s *Sqlite) GetItem(ctx context.Context, itemID, userID uint64) (*models.It
 	return i, err
 }
 
-const getItemCountQuery = `
-	SELECT
-		COUNT(*)
-	FROM
-		items
-	WHERE
-		completed_on IS NULL
-		AND belongs_to = ?
-`
-
 // GetItemCount fetches the count of items from the sqlite database that meet a particular filter and belong to a particular user
-func (s *Sqlite) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (uint64, error) {
-	var count uint64
-	err := s.database.QueryRowContext(ctx, getItemCountQuery, userID).Scan(&count)
-	return count, err
+func (s *Sqlite) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
+	builder := s.sqlBuilder.
+		Select("COUNT(*)").
+		From(itemsTableName).
+		Where(squirrel.Eq(map[string]interface{}{
+			"belongs_to":   userID,
+			"completed_on": nil,
+		}))
+
+	builder = filter.ApplyToQueryBuilder(builder)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return 0, errors.Wrap(err, "generating query")
+	}
+
+	err = s.database.QueryRowContext(ctx, query, args...).Scan(&count)
+	return
 }
 
 const getAllItemsCountQuery = `
@@ -106,33 +127,29 @@ func (s *Sqlite) GetAllItemsCount(ctx context.Context) (uint64, error) {
 	return count, err
 }
 
-const getItemsQuery = `
-	SELECT
-		id,
-		name,
-		details,
-		created_on,
-		updated_on,
-		completed_on,
-		belongs_to
-	FROM
-		items
-	WHERE
-		completed_on IS NULL
-		AND belongs_to = ?
-	LIMIT ?
-	OFFSET ?
-`
-
 // GetItems fetches a list of items from the sqlite database that meet a particular filter
 func (s *Sqlite) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
 	var list []models.Item
+
+	builder := s.sqlBuilder.
+		Select(itemsTableColumns...).
+		From(itemsTableName).
+		Where(squirrel.Eq(map[string]interface{}{
+			"belongs_to":   userID,
+			"completed_on": nil,
+		}))
+
+	builder = filter.ApplyToQueryBuilder(builder)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "generating query")
+	}
+
 	rows, err := s.database.QueryContext(
 		ctx,
-		getItemsQuery,
-		userID,
-		filter.Limit,
-		filter.QueryPage(),
+		query,
+		args...,
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "querying database for items")
@@ -145,8 +162,8 @@ func (s *Sqlite) GetItems(ctx context.Context, filter *models.QueryFilter, userI
 	}()
 
 	for rows.Next() {
-		item, ierr := scanItem(rows)
-		if ierr != nil {
+		item, err := scanItem(rows)
+		if err != nil {
 			return nil, errors.Wrap(err, "scanning items")
 		}
 		list = append(list, *item)

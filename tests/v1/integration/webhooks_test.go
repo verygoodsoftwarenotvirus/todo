@@ -83,7 +83,7 @@ func TestWebhooks(test *testing.T) {
 			actual, err := todoClient.GetWebhook(tctx, premade.ID)
 			checkValueAndError(t, actual, err)
 			checkWebhookEquality(t, expected, actual)
-			assert.NotZero(t, actual.CompletedOn)
+			assert.NotZero(t, actual.ArchivedOn)
 		})
 	})
 

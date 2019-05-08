@@ -7,7 +7,26 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/pkg/errors"
+)
+
+const (
+	usersTableName = "users"
+)
+
+var (
+	usersTableColumns = []string{
+		"id",
+		"username",
+		"hashed_password",
+		"password_last_changed_on",
+		"two_factor_secret",
+		"is_admin",
+		"created_on",
+		"updated_on",
+		"archived_on",
+	}
 )
 
 func scanUser(scan database.Scanner) (*models.User, error) {
@@ -119,64 +138,59 @@ func (s *Sqlite) GetUserByUsername(ctx context.Context, username string) (*model
 	return u, err
 }
 
-const getUserCountQuery = `
-	SELECT
-		COUNT(*)
-	FROM
-		users
-	WHERE
-		archived_on IS NULL
-`
-
 // GetUserCount fetches a count of users from the sqlite database that meet a particular filter
 func (s *Sqlite) GetUserCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
-	err = s.database.QueryRowContext(ctx, getUserCountQuery).Scan(&count)
+	builder := s.sqlBuilder.
+		Select("COUNT(*)").
+		From(usersTableName).
+		Where(squirrel.Eq(map[string]interface{}{
+			"archived_on": nil,
+		}))
+
+	builder = filter.ApplyToQueryBuilder(builder)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return 0, errors.Wrap(err, "generating query")
+	}
+
+	err = s.database.QueryRowContext(ctx, query, args...).Scan(&count)
 	return
 }
 
-const getUsersQuery = `
-	SELECT
-		id,
-		username,
-		hashed_password,
-		password_last_changed_on,
-		two_factor_secret,
-		is_admin,
-		created_on,
-		updated_on,
-		archived_on
-	FROM
-		users
-	WHERE
-		archived_on IS NULL
-	LIMIT ?
-	OFFSET ?
-`
-
 // GetUsers fetches a list of users from the sqlite database that meet a particular filter
 func (s *Sqlite) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
-	var list []models.User
+	builder := s.sqlBuilder.
+		Select(usersTableColumns...).
+		From(usersTableName).
+		Where(squirrel.Eq(map[string]interface{}{
+			"archived_on": nil,
+		}))
 
-	rows, err := s.database.QueryContext(ctx, getUsersQuery, filter.Limit, filter.QueryPage())
+	builder = filter.ApplyToQueryBuilder(builder)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "generating query")
+	}
+
+	rows, err := s.database.QueryContext(
+		ctx,
+		query,
+		args...,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	defer func() {
-		if err = rows.Close(); err != nil {
+		if err := rows.Close(); err != nil {
 			s.logger.Error(err, "closing rows")
 		}
 	}()
 
-	for rows.Next() {
-		var user *models.User
-		user, err = scanUser(rows)
-		if err != nil {
-			return nil, err
-		}
-		list = append(list, *user)
-	}
-	if err = rows.Err(); err != nil {
+	userList, err := s.scanUsers(rows)
+	if err != nil {
 		return nil, err
 	}
 
@@ -191,7 +205,7 @@ func (s *Sqlite) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mod
 			Limit:      filter.Limit,
 			TotalCount: count,
 		},
-		Users: list,
+		Users: userList,
 	}
 
 	return x, nil

@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
+
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
 
 	"github.com/stretchr/testify/require"
@@ -21,7 +21,6 @@ const (
 
 var (
 	urlToUse   string
-	logger     logging.Logger
 	todoClient *client.V1Client
 )
 

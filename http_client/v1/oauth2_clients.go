@@ -35,7 +35,7 @@ func (c *V1Client) CreateOAuth2Client(ctx context.Context, input *models.OAuth2C
 
 	uri := c.buildVersionlessURL(nil, "oauth2", "client")
 	// I can ignore this error because I know that URI will be valid
-	req, _ := c.buildDataRequest(http.MethodPost, uri, input)
+	req, err := c.buildDataRequest(http.MethodPost, uri, input)
 	if err != nil {
 		return nil, err
 	}

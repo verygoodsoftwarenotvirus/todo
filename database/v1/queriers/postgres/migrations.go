@@ -4,6 +4,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	// "database/sql"
 
 	"github.com/GuiaBolso/darwin"
@@ -15,8 +16,8 @@ var (
 		{
 			Version:     1,
 			Description: "Create user table",
-			Script: `
-			CREATE TABLE IF NOT EXISTS users (
+			Script: fmt.Sprintf(`
+			CREATE TABLE IF NOT EXISTS %s (
 				"id" bigserial NOT NULL PRIMARY KEY,
 				"username" text NOT NULL,
 				"hashed_password" text NOT NULL,
@@ -27,13 +28,13 @@ var (
 				"updated_on" bigint,
 				"archived_on" bigint,
 				UNIQUE ("username")
-			);`,
+			);`, usersTableName),
 		},
 		{
 			Version:     2,
 			Description: "Add OAuth2 Clients table",
-			Script: `
-			CREATE TABLE IF NOT EXISTS oauth_clients (
+			Script: fmt.Sprintf(`
+			CREATE TABLE IF NOT EXISTS %s (
 				"id" bigserial NOT NULL PRIMARY KEY,
 				"client_id" text NOT NULL,
 				"client_secret" text NOT NULL,
@@ -45,13 +46,13 @@ var (
 				"archived_on" bigint DEFAULT NULL,
 				"belongs_to" bigint NOT NULL,
 				FOREIGN KEY(belongs_to) REFERENCES users(id)
-			);`,
+			);`, oauth2ClientsTableName),
 		},
 		{
 			Version:     3,
 			Description: "Create items table",
-			Script: `
-			CREATE TABLE IF NOT EXISTS items (
+			Script: fmt.Sprintf(`
+			CREATE TABLE IF NOT EXISTS %s (
 				"id" bigserial NOT NULL PRIMARY KEY,
 				"name" text NOT NULL,
 				"details" text NOT NULL DEFAULT '',
@@ -60,13 +61,13 @@ var (
 				"completed_on" bigint,
 				"belongs_to" bigint NOT NULL,
 				FOREIGN KEY ("belongs_to") REFERENCES "users"("id")
-			);`,
+			);`, itemsTableName),
 		},
 		{
 			Version:     4,
 			Description: "Create webhooks table",
-			Script: `
-			CREATE TABLE IF NOT EXISTS webhooks (
+			Script: fmt.Sprintf(`
+			CREATE TABLE IF NOT EXISTS %s (
 				"id" bigserial NOT NULL PRIMARY KEY,
 				"name" text NOT NULL,
 				"content_type" text NOT NULL,
@@ -77,10 +78,10 @@ var (
 				"topics" text NOT NULL,
 				"created_on" bigint NOT NULL DEFAULT extract(epoch FROM NOW()),
 				"updated_on" bigint,
-				"completed_on" bigint,
+				"archived_on" bigint,
 				"belongs_to" bigint NOT NULL,
 				FOREIGN KEY ("belongs_to") REFERENCES "users"("id")
-			);`,
+			);`, webhooksTableName),
 		},
 	}
 )

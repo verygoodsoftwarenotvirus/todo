@@ -5,16 +5,20 @@ import (
 	"os"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
+
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 
 	"contrib.go.opencensus.io/exporter/jaeger"
 	"contrib.go.opencensus.io/exporter/prometheus"
 	"github.com/pkg/errors"
-	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
+)
+
+const (
+	// MetricsNamespace is the namespace under which we register metrics
+	MetricsNamespace = "todo-service"
 )
 
 type (
@@ -23,11 +27,15 @@ type (
 )
 
 var (
+	// ErrInvalidMetricsProvider is a sentinel error value
+	ErrInvalidMetricsProvider = errors.New("invalid metrics provider")
 	// Prometheus is one of our supported metrics providers
 	Prometheus metricsProvider = "prometheus"
 	// DefaultMetricsProvider indicates what the preferred metrics provider is
 	DefaultMetricsProvider = Prometheus
 
+	// ErrInvalidTracingProvider is a sentinel error value
+	ErrInvalidTracingProvider = errors.New("invalid tracing provider")
 	// Jaeger is one of our supported tracing providers
 	Jaeger tracingProvider = "jaeger"
 	// DefaultTracingProvider indicates what the preferred tracing provider is
@@ -36,21 +44,18 @@ var (
 
 // MetricsSettings contains settings about how we report our metrics
 type MetricsSettings struct {
-	Namespace                        metrics.Namespace `mapstructure:"metrics_namespace"`
-	MetricsProvider                  metricsProvider   `mapstructure:"metrics_provider"`
-	TracingProvider                  tracingProvider   `mapstructure:"tracing_provider"`
-	DBMetricsCollectionInterval      time.Duration     `mapstructure:"database_metrics_collection_interval"`
-	RuntimeMetricsCollectionInterval time.Duration     `mapstructure:"runtime_metrics_collection_interval"`
+	MetricsProvider                  metricsProvider `mapstructure:"metrics_provider"`
+	TracingProvider                  tracingProvider `mapstructure:"tracing_provider"`
+	DBMetricsCollectionInterval      time.Duration   `mapstructure:"database_metrics_collection_interval"`
+	RuntimeMetricsCollectionInterval time.Duration   `mapstructure:"runtime_metrics_collection_interval"`
 }
 
 // ProvideInstrumentationHandler provides an instrumentation handler
 func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) (metrics.InstrumentationHandler, error) {
-	if err := view.Register(ochttp.DefaultServerViews...); err != nil {
-		return nil, errors.Wrap(err, "Failed to register server views for HTTP metrics")
+	if err := metrics.RegisterDefaultViews(); err != nil {
+		return nil, errors.Wrap(err, "registering default metric views")
 	}
-
-	metrics.RegisterDefaultViews()
-	metrics.RecordRuntimeStats(cfg.Metrics.RuntimeMetricsCollectionInterval)
+	_ = metrics.RecordRuntimeStats(cfg.Metrics.RuntimeMetricsCollectionInterval)
 
 	log := logger.WithValue("metrics_provider", cfg.Metrics.MetricsProvider)
 	log.Debug("setting metrics provider")
@@ -58,7 +63,7 @@ func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) (m
 	switch cfg.Metrics.MetricsProvider {
 	case Prometheus, DefaultMetricsProvider:
 		p, err := prometheus.NewExporter(prometheus.Options{
-			Namespace: string(cfg.Metrics.Namespace),
+			Namespace: string(MetricsNamespace),
 		})
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create Prometheus exporter")
@@ -67,7 +72,7 @@ func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) (m
 		log.Debug("metrics provider registered")
 		return p, nil
 	default:
-		return nil, fmt.Errorf("invalid metrics provider requested: %q", cfg.Metrics.MetricsProvider)
+		return nil, ErrInvalidMetricsProvider
 	}
 }
 
@@ -93,7 +98,7 @@ func (cfg *ServerConfig) ProvideTracing(logger logging.Logger) error {
 		trace.RegisterExporter(je)
 		log.Debug("tracing provider registered")
 	default:
-		return fmt.Errorf("invalid tracing provider requested: %q", cfg.Metrics.TracingProvider)
+		return ErrInvalidTracingProvider
 	}
 
 	return nil

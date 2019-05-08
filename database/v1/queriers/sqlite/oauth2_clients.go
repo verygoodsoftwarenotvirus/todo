@@ -8,10 +8,29 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/pkg/errors"
 )
 
-const scopesSeparator = `,`
+const (
+	scopesSeparator = `,`
+
+	oauth2ClientsTableName = "oauth2_clients"
+)
+
+var (
+	oauth2ClientsTableColumns = []string{
+		"id",
+		"client_id",
+		"scopes",
+		"redirect_uri",
+		"client_secret",
+		"created_on",
+		"updated_on",
+		"archived_on",
+		"belongs_to",
+	}
+)
 
 func prepareOAuth2Client(input *models.OAuth2ClientCreationInput) *models.OAuth2Client {
 	x := &models.OAuth2Client{
@@ -85,7 +104,7 @@ const getOAuth2ClientQuery = `
 		archived_on,
 		belongs_to
 	FROM
-		oauth_clients
+		oauth2_clients
 	WHERE
 		client_id = ?
 		AND belongs_to = ?
@@ -111,7 +130,7 @@ const getOAuth2ClientByClientIDQuery = `
 		archived_on,
 		belongs_to
 	FROM
-		oauth_clients
+		oauth2_clients
 	WHERE
 		client_id = ?
 		AND archived_on IS NULL
@@ -124,20 +143,25 @@ func (s *Sqlite) GetOAuth2ClientByClientID(ctx context.Context, clientID string)
 	return scanOAuth2Client(row)
 }
 
-const getOAuth2ClientCountQuery = `
-	SELECT
-		COUNT(*)
-	FROM
-		oauth_clients
-	WHERE
-		archived_on IS NULL
-		AND belongs_to = ?
-`
-
 // GetOAuth2ClientCount gets the count of OAuth2 clients that match the current filter
 func (s *Sqlite) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (uint64, error) {
 	var count uint64
-	err := s.database.QueryRowContext(ctx, getOAuth2ClientCountQuery, userID).Scan(&count)
+
+	builder := s.sqlBuilder.
+		Select("COUNT(*)").
+		From(oauth2ClientsTableName).
+		Where(squirrel.Eq(map[string]interface{}{
+			"belongs_to":  userID,
+			"archived_on": nil,
+		}))
+
+	builder = filter.ApplyToQueryBuilder(builder)
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return 0, errors.Wrap(err, "generating query")
+	}
+
+	err = s.database.QueryRowContext(ctx, query, args...).Scan(&count)
 	return count, err
 }
 
@@ -145,7 +169,7 @@ const getAllOAuth2ClientCountQuery = `
 	SELECT
 		COUNT(*)
 	FROM
-		oauth_clients
+		oauth2_clients
 	WHERE
 		archived_on IS NULL
 `
@@ -157,38 +181,37 @@ func (s *Sqlite) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	return count, err
 }
 
-const getOAuth2ClientsQuery = `
-	SELECT
-		id,
-		client_id,
-		scopes,
-		redirect_uri,
-		client_secret,
-		created_on,
-		updated_on,
-		archived_on,
-		belongs_to
-	FROM
-		oauth_clients
-	WHERE
-		archived_on IS NULL
-		AND belongs_to = ?
-	LIMIT ?
-	OFFSET ?
-`
-
 // GetOAuth2Clients gets a list of OAuth2 clients
 func (s *Sqlite) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.OAuth2ClientList, error) {
+	builder := s.sqlBuilder.
+		Select(oauth2ClientsTableColumns...).
+		From(oauth2ClientsTableName).
+		Where(squirrel.Eq(map[string]interface{}{
+			"belongs_to":  userID,
+			"archived_on": nil,
+		}))
+
+	builder = filter.ApplyToQueryBuilder(builder)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "generating query")
+	}
+
 	rows, err := s.database.QueryContext(
 		ctx,
-		getOAuth2ClientsQuery,
-		userID,
-		filter.Limit,
-		filter.QueryPage(),
+		query,
+		args...,
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "executing query")
 	}
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			s.logger.Error(err, "closing rows")
+		}
+	}()
 
 	list, err := s.scanOAuth2Clients(rows)
 	if err != nil {
@@ -221,7 +244,7 @@ const getAllOAuth2ClientsQuery = `
 		archived_on,
 		belongs_to
 	FROM
-		oauth_clients
+		oauth2_clients
 	WHERE
 		archived_on IS NULL
 `
@@ -253,13 +276,13 @@ const getOAuth2ClientByIDQuery = `
 		archived_on,
 		belongs_to
 	FROM
-		oauth_clients
+		oauth2_clients
 	WHERE
 		id = ?
 `
 
 const createOAuth2ClientQuery = `
-	INSERT INTO oauth_clients
+	INSERT INTO oauth2_clients
 	(
 		client_id,
 		client_secret,
@@ -291,7 +314,7 @@ func (s *Sqlite) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 	// determine its id
 	id, err := res.LastInsertId()
 	if err != nil {
-		return nil, errors.Wrap(err, "error fetching last inserted item ID")
+		return nil, errors.Wrap(err, "error fetching last inserted oauth2 client database ID")
 	}
 
 	// fetch full updated client
@@ -304,7 +327,7 @@ func (s *Sqlite) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 }
 
 const updateOAuth2ClientQuery = `
-	UPDATE oauth_clients SET
+	UPDATE oauth2_clients SET
 		client_id = ?,
 		client_secret = ?,
 		scopes = ?,
@@ -332,7 +355,7 @@ func (s *Sqlite) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 }
 
 const archiveOAuth2ClientQuery = `
-	UPDATE oauth_clients
+	UPDATE oauth2_clients
 	SET
 		updated_on = (strftime('%s','now')),
 		archived_on = (strftime('%s','now'))

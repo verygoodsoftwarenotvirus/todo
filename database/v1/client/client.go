@@ -3,8 +3,9 @@ package dbclient
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
 var _ database.Database = (*Client)(nil)

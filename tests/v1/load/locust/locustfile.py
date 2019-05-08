@@ -116,7 +116,7 @@ class UserTasks(TaskSet):
 
     @task(weight=5)
     def health(self):
-        self.client.get("/_meta_/health")
+        self.client.get("/_meta_/ready")
 
     # Item things
 
@@ -126,13 +126,6 @@ class UserTasks(TaskSet):
             return random.choice(self.created_item_ids)
         else:
             return -1
-
-    @task(weight=10)
-    def get_invalid_item(self):
-        u: str = f"{ITEMS_URL_PREFIX}/999999999"
-        with self.client.get(url=u, catch_response=True) as response:
-            if response.status_code == 404:
-                response.success()
 
     @task(weight=100)
     def create_item(self):
@@ -157,7 +150,14 @@ class UserTasks(TaskSet):
                 headers=self.auth_headers,
             )
 
-    @task(75)
+    @task(weight=10)
+    def read_invalid_item(self):
+        u: str = f"{ITEMS_URL_PREFIX}/999999999"
+        with self.client.get(url=u, catch_response=True) as response:
+            if response.status_code == 404:
+                response.success()
+
+    @task(weight=75)
     def update_item(self):
         item_id = self.random_item_id()
         if item_id > 0:
@@ -177,7 +177,18 @@ class UserTasks(TaskSet):
             except:
                 pass
 
-    @task(100)
+    @task(weight=10)
+    def update_invalid_item(self):
+        new_name = self.fake.text.word()
+        with self.client.put(
+            url=f"{ITEMS_URL_PREFIX}/999999999",
+            json={"name": new_name},
+            catch_response=True,
+        ) as response:
+            if response.status_code == 404:
+                response.success()
+
+    @task(weight=100)
     def delete_item(self):
         number_of_items = len(self.created_item_ids)
         if number_of_items > 0:
@@ -188,13 +199,20 @@ class UserTasks(TaskSet):
                 headers=self.auth_headers,
             )
 
-    @task(50)
+    @task(weight=10)
+    def delete_invalid_item(self):
+        u: str = f"{ITEMS_URL_PREFIX}/999999999"
+        with self.client.get(url=u, catch_response=True) as response:
+            if response.status_code == 404:
+                response.success()
+
+    @task(weight=50)
     def list_items(self):
         self.client.get(
             url=ITEMS_URL_PREFIX, name=ITEMS_URL_PREFIX, headers=self.auth_headers
         )
 
-    @task(5)
+    @task(weight=5)
     def request_high_offset_items(self):
         self.client.get(
             url=f"{ITEMS_URL_PREFIX}?page=999999&limit=500",
@@ -210,13 +228,6 @@ class UserTasks(TaskSet):
             return random.choice(self.created_webhook_ids)
         else:
             return -1
-
-    @task(weight=10)
-    def get_invalid_webhook(self):
-        u: str = f"{WEBHOOKS_URL_PREFIX}/999999999"
-        with self.client.get(url=u, catch_response=True) as response:
-            if response.status_code == 404:
-                response.success()
 
     @task(weight=100)
     def create_webhook(self):
@@ -245,7 +256,14 @@ class UserTasks(TaskSet):
                 headers=self.auth_headers,
             )
 
-    @task(75)
+    @task(weight=10)
+    def read_invalid_webhook(self):
+        u: str = f"{WEBHOOKS_URL_PREFIX}/999999999"
+        with self.client.get(url=u, catch_response=True) as response:
+            if response.status_code == 404:
+                response.success()
+
+    @task(weight=75)
     def update_webhook(self):
         webhook_id = self.random_webhook_id()
         if webhook_id > 0:
@@ -265,7 +283,18 @@ class UserTasks(TaskSet):
             except:
                 pass
 
-    @task(100)
+    @task(weight=10)
+    def update_invalid_webhook(self):
+        new_name = self.fake.text.word()
+        with self.client.put(
+            url=f"{WEBHOOKS_URL_PREFIX}/999999999",
+            json={"name": new_name},
+            headers=self.auth_headers,
+        ) as response:
+            if response.status_code == 404:
+                response.success()
+
+    @task(weight=100)
     def delete_webhook(self):
         number_of_webhooks = len(self.created_webhook_ids)
         if number_of_webhooks > 0:
@@ -278,13 +307,20 @@ class UserTasks(TaskSet):
                 headers=self.auth_headers,
             )
 
-    @task(50)
+    @task(weight=10)
+    def delete_invalid_webhook(self):
+        u: str = f"{WEBHOOKS_URL_PREFIX}/999999999"
+        with self.client.delete(url=u, catch_response=True) as response:
+            if response.status_code == 404:
+                response.success()
+
+    @task(weight=50)
     def list_webhooks(self):
         self.client.get(
             url=WEBHOOKS_URL_PREFIX, name=WEBHOOKS_URL_PREFIX, headers=self.auth_headers
         )
 
-    @task(5)
+    @task(weight=5)
     def request_high_offset_webhooks(self):
         self.client.get(
             url=f"{WEBHOOKS_URL_PREFIX}?page=999999&limit=500",

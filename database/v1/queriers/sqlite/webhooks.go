@@ -8,6 +8,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/pkg/errors"
 )
 
@@ -15,6 +16,25 @@ const (
 	eventsSeparator = `,`
 	typesSeparator  = `,`
 	topicsSeparator = `,`
+
+	webhooksTableName = "webhooks"
+)
+
+var (
+	webhooksTableColumns = []string{
+		"id",
+		"name",
+		"content_type",
+		"url",
+		"method",
+		"events",
+		"data_types",
+		"topics",
+		"created_on",
+		"updated_on",
+		"archived_on",
+		"belongs_to",
+	}
 )
 
 func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
@@ -37,7 +57,7 @@ func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 		&topicsStr,
 		&x.CreatedOn,
 		&x.UpdatedOn,
-		&x.CompletedOn,
+		&x.ArchivedOn,
 		&x.BelongsTo,
 	); err != nil {
 		return nil, err
@@ -85,7 +105,7 @@ const getWebhookQuery = `
 		topics,
 		created_on,
 		updated_on,
-		completed_on,
+		archived_on,
 		belongs_to
 	FROM
 		webhooks
@@ -101,21 +121,25 @@ func (s *Sqlite) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mod
 	return i, err
 }
 
-const getWebhookCountQuery = `
-	SELECT
-		COUNT(*)
-	FROM
-		webhooks
-	WHERE
-		completed_on IS NULL
-		AND belongs_to = ?
-`
-
 // GetWebhookCount fetches the count of webhooks from the sqlite database that meet a particular filter and belong to a particular user
-func (s *Sqlite) GetWebhookCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (uint64, error) {
-	var count uint64
-	err := s.database.QueryRowContext(ctx, getWebhookCountQuery, userID).Scan(&count)
-	return count, err
+func (s *Sqlite) GetWebhookCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
+	builder := s.sqlBuilder.
+		Select("COUNT(*)").
+		From(webhooksTableName).
+		Where(squirrel.Eq(map[string]interface{}{
+			"belongs_to":  userID,
+			"archived_on": nil,
+		}))
+
+	builder = filter.ApplyToQueryBuilder(builder)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return 0, errors.Wrap(err, "generating query")
+	}
+
+	err = s.database.QueryRowContext(ctx, query, args...).Scan(&count)
+	return
 }
 
 const getAllWebhooksCountQuery = `
@@ -124,7 +148,7 @@ const getAllWebhooksCountQuery = `
 	FROM
 		webhooks
 	WHERE
-		completed_on IS NULL
+		archived_on IS NULL
 `
 
 // GetAllWebhooksCount fetches the count of webhooks from the sqlite database that meet a particular filter
@@ -146,12 +170,12 @@ const getAllWebhooksQuery = `
 		topics,
 		created_on,
 		updated_on,
-		completed_on,
+		archived_on,
 		belongs_to
 	FROM
 		webhooks
 	WHERE
-		completed_on IS NULL
+		archived_on IS NULL
 `
 
 // GetAllWebhooks fetches a list of webhooks from the sqlite database that meet a particular filter
@@ -181,34 +205,37 @@ func (s *Sqlite) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error
 	return x, nil
 }
 
-const getWebhooksQuery = `
-	SELECT
-		id,
-		name,
-		content_type,
-		url,
-		method,
-		events,
-		data_types,
-		topics,
-		created_on,
-		updated_on,
-		completed_on,
-		belongs_to
-	FROM
-		webhooks
-	WHERE
-		completed_on IS NULL
-	LIMIT ?
-	OFFSET ?
-`
-
 // GetWebhooks fetches a list of webhooks from the sqlite database that meet a particular filter
 func (s *Sqlite) GetWebhooks(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.WebhookList, error) {
-	rows, err := s.database.QueryContext(ctx, getWebhooksQuery, filter.Limit, filter.QueryPage())
+	builder := s.sqlBuilder.
+		Select(webhooksTableColumns...).
+		From(webhooksTableName).
+		Where(squirrel.Eq(map[string]interface{}{
+			"belongs_to":  userID,
+			"archived_on": nil,
+		}))
+
+	builder = filter.ApplyToQueryBuilder(builder)
+
+	query, args, err := builder.ToSql()
 	if err != nil {
-		return nil, errors.Wrap(err, "querying database for webhooks")
+		return nil, errors.Wrap(err, "generating query")
 	}
+
+	rows, err := s.database.QueryContext(
+		ctx,
+		query,
+		args...,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			s.logger.Error(err, "closing rows")
+		}
+	}()
 
 	list, err := s.scanWebhooks(rows)
 	if err != nil {
@@ -276,12 +303,12 @@ func (s *Sqlite) CreateWebhook(ctx context.Context, input *models.WebhookInput) 
 	}
 
 	// fetch full updated webhook
-	i, err := s.GetWebhook(ctx, uint64(id), input.BelongsTo)
+	x, err := s.GetWebhook(ctx, uint64(id), input.BelongsTo)
 	if err != nil {
 		return nil, errors.Wrap(err, "error fetching newly created webhook")
 	}
 
-	return i, nil
+	return x, nil
 }
 
 const updateWebhookQuery = `
@@ -324,11 +351,11 @@ func (s *Sqlite) UpdateWebhook(ctx context.Context, input *models.Webhook) error
 const archiveWebhookQuery = `
 	UPDATE webhooks SET
 		updated_on = (strftime('%s','now')),
-		completed_on = (strftime('%s','now'))
+		archived_on = (strftime('%s','now'))
 	WHERE
 		id = ?
 		AND belongs_to = ?
-		AND completed_on IS NULL
+		AND archived_on IS NULL
 `
 
 // DeleteWebhook deletes an webhook from the database by its ID

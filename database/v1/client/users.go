@@ -27,7 +27,6 @@ func (c *Client) GetUser(ctx context.Context, userID uint64) (*models.User, erro
 	defer span.End()
 
 	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
-
 	c.logger.WithValue("user_id", userID).Debug("GetUser called")
 
 	return c.database.GetUser(ctx, userID)
@@ -49,6 +48,9 @@ func (c *Client) GetUserCount(ctx context.Context, filter *models.QueryFilter) (
 	ctx, span := trace.StartSpan(ctx, "GetUserCount")
 	defer span.End()
 
+	logger := c.logger.WithValue("filter", filter)
+	logger.Debug("GetUserCount called")
+
 	if filter == nil {
 		c.logger.Debug("using default query filter")
 		filter = models.DefaultQueryFilter
@@ -64,8 +66,11 @@ func (c *Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mod
 	ctx, span := trace.StartSpan(ctx, "GetUsers")
 	defer span.End()
 
+	logger := c.logger.WithValue("filter", filter)
+	logger.Debug("GetUsers called")
+
 	if filter == nil {
-		c.logger.Debug("using default query filter")
+		logger.Debug("using default query filter")
 		filter = models.DefaultQueryFilter
 	}
 

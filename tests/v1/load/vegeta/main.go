@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -24,8 +23,12 @@ var (
 )
 
 func reqToTarget(req *http.Request) (*vegeta.Target, error) {
-	bb := new(bytes.Buffer)
-	_, _ = bb.ReadFrom(req.Body)
+	var body []byte
+	if req.Body != nil {
+		bb := new(bytes.Buffer)
+		_, _ = bb.ReadFrom(req.Body)
+		body = bb.Bytes()
+	}
 
 	ts := todoClient.TokenSource()
 	token, err := ts.Token()
@@ -37,32 +40,22 @@ func reqToTarget(req *http.Request) (*vegeta.Target, error) {
 	return &vegeta.Target{
 		Method: req.Method,
 		URL:    req.URL.String(),
-		Body:   bb.Bytes(),
+		Body:   body,
 		Header: req.Header,
 	}, nil
-}
-
-func (p *targetProvider) Read(retVal []byte) (int, error) {
-	b, _ := json.Marshal(&vegeta.Target{
-		Method: "GET",
-		URL:    "https://www.google.com",
-		Body:   nil,
-		Header: nil,
-	})
-
-	return bytes.NewReader(append(b, []byte("\n")[0])).Read(retVal)
 }
 
 func main() {
 	var times uint64 = 50
 	duration := 10 * time.Second
 
+	provider := buildJobPoolFromClient(todoClient)
+
 	attacker := vegeta.NewAttacker()
-	targeter := vegeta.NewJSONTargeter(new(targetProvider), nil, nil)
+	targeter := vegeta.NewJSONTargeter(provider, nil, nil)
 
 	metrics := &vegeta.Metrics{}
-	for res := range attacker.Attack(targeter, uint64(times/10), duration, "Big Bang!") {
-
+	for res := range attacker.Attack(targeter, uint64(times/10), duration, "Todo Server Testing") {
 		metrics.Add(res)
 	}
 	metrics.Close()

@@ -15,7 +15,7 @@ services:
     # logging:
     #   driver: none
 
-  http-client-integration-test:
+  test:
     build:
       context: ../
       dockerfile: dockerfiles/http-client-integration-tests.Dockerfile

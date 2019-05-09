@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
@@ -102,7 +102,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	s.webhookCounter.Increment(ctx)
 
 	s.newsman.Report(newsman.Event{
-		EventType: string(events.Create),
+		EventType: string(v1.Create),
 		Data:      x,
 		Topics:    []string{topicName},
 	})
@@ -184,7 +184,7 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 	}
 
 	s.newsman.Report(newsman.Event{
-		EventType: string(events.Update),
+		EventType: string(v1.Update),
 		Data:      x,
 		Topics:    []string{topicName},
 	})
@@ -220,7 +220,7 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	s.webhookCounter.Decrement(ctx)
 
 	s.newsman.Report(newsman.Event{
-		EventType: string(events.Delete),
+		EventType: string(v1.Delete),
 		Data:      models.Webhook{ID: webhookID},
 		Topics:    []string{topicName},
 	})

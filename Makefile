@@ -31,21 +31,6 @@ wire:
 .PHONY: rewire
 rewire: wire-clean wire
 
-## Python-specific prerequisite stuff
-.env:
-	python3 -m venv .env
-
-.PHONY: env
-env: .env
-	. .env/bin/activate
-
-requirements.txt: .env
-	./.env/bin/pip freeze --local > requirements.txt
-
-.PHONY: python-prereqs
-python-prereqs: .env
-	./.env/bin/pip install -r requirements.txt
-
 ## Go-specific prerequisite stuff
 .PHONY: vendor-clean
 vendor-clean:
@@ -68,16 +53,6 @@ $(COVERAGE_OUT):
 	done
 	rm -f profile.out
 
-.PHONY: python-type-check
-python-type-check:
-	docker build --tag python-type-check-local:latest --file dockerfiles/python-type-check.Dockerfile .
-	docker run --rm --volume `pwd`:`pwd` --workdir `pwd` mypy-local:latest
-
-.PHONY: python-client-unit-tests
-python-client-unit-tests: python-type-check
-	docker build --tag python-client-unit-tests:latest --file dockerfiles/python-client-unit-tests.Dockerfile .
-	docker run python-client-unit-tests:latest
-
 .PHONY: test
 test:
 	docker build --tag coverage-$(SERVER_DOCKER_IMAGE_NAME):latest --file dockerfiles/coverage.Dockerfile .
@@ -91,9 +66,9 @@ integration-tests:
 debug-integration-tests: wire
 	docker-compose --file compose-files/debug-integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate
 
-.PHONY: locust-load-tests
-locust-load-tests: wire
-	docker-compose --file compose-files/locust-load-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
+.PHONY: load-tests
+load-tests: wire
+	docker-compose --file compose-files/load-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
 
 .PHONY: integration-coverage
 integration-coverage:

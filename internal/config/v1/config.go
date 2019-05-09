@@ -59,9 +59,9 @@ func buildConfig() *viper.Viper {
 	cfg.SetDefault("auth.cookie_lifetime", defaultCookieLifetime)
 
 	// metrics stuff
-	cfg.SetDefault("metrics.metrics_namespace", "todo_service")
-	cfg.SetDefault("metrics.database_metrics_collection_interval", time.Second)
-	cfg.SetDefault("metrics.runtime_metrics_collection_interval", time.Second)
+	cfg.SetDefault("metrics.metrics_namespace", MetricsNamespace)
+	cfg.SetDefault("metrics.database_metrics_collection_interval", 2*time.Second)
+	cfg.SetDefault("metrics.runtime_metrics_collection_interval", 2*time.Second)
 
 	// server stuff
 	cfg.SetDefault("server.http_port", 80)

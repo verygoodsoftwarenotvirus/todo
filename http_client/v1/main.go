@@ -12,13 +12,14 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 
-	"github.com/gorilla/websocket"
 	"github.com/moul/http2curl"
-	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/pkg/errors"
+	"go.opencensus.io/plugin/ochttp"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )
+
+const defaultTimeout = 5 * time.Second
 
 var (
 	// ErrNotFound is a handy error to return when we receive a 404 response
@@ -35,11 +36,11 @@ type V1Client struct {
 	Debug  bool
 	URL    *url.URL
 
-	// new hotness
 	clientID     string
 	clientSecret string
 	Scopes       []string
 	redirectURI  string
+	tokenSource  oauth2.TokenSource
 }
 
 // AuthenticatedClient returns the authenticated *http.Client that we use to make most requests
@@ -52,37 +53,9 @@ func (c *V1Client) PlainClient() *http.Client {
 	return c.plainClient
 }
 
-func tokenEndpoint(baseURL *url.URL) oauth2.Endpoint {
-	tu, au := *baseURL, *baseURL
-	tu.Path, au.Path = "oauth2/token", "oauth2/authorize"
-
-	return oauth2.Endpoint{
-		TokenURL: tu.String(),
-		AuthURL:  au.String(),
-	}
-}
-
-func buildOAuthClient(uri *url.URL, clientID, clientSecret string) *http.Client {
-	conf := clientcredentials.Config{
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
-		Scopes:       []string{"*"}, // SECUREME
-		EndpointParams: url.Values{
-			"client_id":     []string{clientID},
-			"client_secret": []string{clientSecret},
-		},
-		TokenURL: tokenEndpoint(uri).TokenURL,
-	}
-
-	client := &http.Client{
-		Transport: &oauth2.Transport{
-			Base:   &nethttp.Transport{},
-			Source: oauth2.ReuseTokenSource(nil, conf.TokenSource(context.Background())),
-		},
-		Timeout: 5 * time.Second,
-	}
-
-	return client
+// Cookie returns the unauthenticated *http.Client that we use to make certain requests
+func (c *V1Client) Cookie() *http.Cookie {
+	return c.currentUserCookie
 }
 
 // NewClient builds a new API client for us
@@ -97,7 +70,7 @@ func NewClient(
 	var client = hclient
 	if client == nil {
 		client = &http.Client{
-			Timeout: 5 * time.Second,
+			Timeout: defaultTimeout,
 		}
 	}
 
@@ -106,16 +79,58 @@ func NewClient(
 		logger.Debug("level set to debug!")
 	}
 
+	ac, ts := buildOAuthClient(address, clientID, clientSecret)
+
 	c := &V1Client{
 		URL:          address,
 		plainClient:  client,
 		logger:       logger.WithName("v1_client"),
 		Debug:        debug,
-		authedClient: buildOAuthClient(address, clientID, clientSecret),
+		authedClient: ac,
+		tokenSource:  ts,
 	}
 
 	logger.WithValue("url", address.String()).Debug("returning client")
 	return c, nil
+}
+
+func buildOAuthClient(uri *url.URL, clientID, clientSecret string) (*http.Client, oauth2.TokenSource) {
+	conf := clientcredentials.Config{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Scopes:       []string{"*"}, // SECUREME
+		EndpointParams: url.Values{
+			"client_id":     []string{clientID},
+			"client_secret": []string{clientSecret},
+		},
+		TokenURL: tokenEndpoint(uri).TokenURL,
+	}
+
+	ts := oauth2.ReuseTokenSource(nil, conf.TokenSource(context.Background()))
+	client := &http.Client{
+		Transport: &oauth2.Transport{
+			Base: &ochttp.Transport{
+				Base: http.DefaultTransport,
+				// Base: &http.Transport{
+				// 	MaxIdleConnsPerHost: 100,
+				// },
+			},
+			Source: ts,
+		},
+		Timeout: 5 * time.Second,
+	}
+
+	return client, ts
+}
+
+func tokenEndpoint(baseURL *url.URL) oauth2.Endpoint {
+	tu, au := *baseURL, *baseURL
+	tu.Path, au.Path = "oauth2/token", "oauth2/authorize"
+
+	return oauth2.Endpoint{
+		TokenURL: tu.String(),
+		AuthURL:  au.String(),
+	}
 }
 
 // NewSimpleClient is a client that is capable of much less than the normal client
@@ -135,16 +150,6 @@ func (c *V1Client) executeRequest(ctx context.Context, client *http.Client, req 
 		logger = c.logger.WithValue("curl", command.String())
 	}
 
-	//// attach ClientTrace to the Context, and Context to request
-	// err := c.tracer.Inject(
-	// 	span.Context(),
-	// 	opentracing.HTTPHeaders,
-	// 	opentracing.HTTPHeadersCarrier(req.Header),
-	// )
-	// if err != nil {
-	// 	return nil, errors.Wrap(err, "injecting span into headers")
-	// }
-
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "executing request")
@@ -159,6 +164,11 @@ func (c *V1Client) executeRequest(ctx context.Context, client *http.Client, req 
 
 	logger.Debug("request executed")
 	return res, nil
+}
+
+// TokenSource builds URLs
+func (c *V1Client) TokenSource() oauth2.TokenSource {
+	return c.tokenSource
 }
 
 // BuildURL builds URLs
@@ -190,22 +200,29 @@ func (c *V1Client) BuildWebsocketURL(parts ...string) string {
 	return u.String()
 }
 
-// IsUp returns whether or not the service is healthy
-func (c *V1Client) IsUp() bool {
+//BuildHealthCheckRequest builds a health check HTTP Request
+func (c *V1Client) BuildHealthCheckRequest() (*http.Request, error) {
 	u := *c.URL
 	uri := fmt.Sprintf("%s://%s:%s/_meta_/ready", u.Scheme, u.Host, u.Port())
 
-	logger := c.logger.WithValue("health_check_url", uri)
+	return http.NewRequest(http.MethodGet, uri, nil)
+}
 
-	req, _ := http.NewRequest(http.MethodGet, uri, nil)
-	res, err := c.plainClient.Do(req)
-
+// IsUp returns whether or not the service is healthy
+func (c *V1Client) IsUp() bool {
+	req, err := c.BuildHealthCheckRequest()
 	if err != nil {
-		logger.Error(err, "health check")
+		c.logger.Error(err, "building request")
 		return false
 	}
 
-	logger.WithValue("status_code", res.StatusCode)
+	res, err := c.plainClient.Do(req)
+	if err != nil {
+		c.logger.Error(err, "health check")
+		return false
+	}
+
+	c.logger.WithValue("status_code", res.StatusCode).Debug("health check executed")
 
 	return res.StatusCode == http.StatusOK
 }
@@ -219,20 +236,7 @@ func (c *V1Client) buildDataRequest(method, uri string, in interface{}) (*http.R
 	return http.NewRequest(method, uri, body)
 }
 
-func (c *V1Client) makeDataRequest(method string, uri string, in interface{}, out interface{}) error {
-	// sometimes we want to make requests with data attached, but we don't really care about the response
-	// so we give this function a nil `out` value. That said, if you provide us a value, it needs to be a pointer.
-	if out != nil {
-		if np, err := argIsNotPointer(out); np || err != nil {
-			return errors.Wrap(err, "struct to load must be a pointer")
-		}
-	}
-
-	req, err := c.buildDataRequest(method, uri, in)
-	if err != nil {
-		return errors.Wrap(err, "encountered error building request")
-	}
-
+func (c *V1Client) makeRequest(ctx context.Context, req *http.Request, out interface{}) error {
 	res, err := c.executeRequest(context.Background(), c.authedClient, req)
 	if err != nil {
 		return errors.Wrap(err, "encountered error executing request")
@@ -253,7 +257,24 @@ func (c *V1Client) makeDataRequest(method string, uri string, in interface{}, ou
 	return nil
 }
 
-func (c *V1Client) makeUnauthedDataRequest(method string, uri string, in interface{}, out interface{}) error {
+func (c *V1Client) makeDataRequest(ctx context.Context, method string, uri string, in interface{}, out interface{}) error {
+	// sometimes we want to make requests with data attached, but we don't really care about the response
+	// so we give this function a nil `out` value. That said, if you provide us a value, it needs to be a pointer.
+	if out != nil {
+		if np, err := argIsNotPointer(out); np || err != nil {
+			return errors.Wrap(err, "struct to load must be a pointer")
+		}
+	}
+
+	req, err := c.buildDataRequest(method, uri, in)
+	if err != nil {
+		return errors.Wrap(err, "encountered error building request")
+	}
+
+	return c.makeRequest(ctx, req, out)
+}
+
+func (c *V1Client) makeUnauthedDataRequest(ctx context.Context, method string, uri string, in interface{}, out interface{}) error {
 	// sometimes we want to make requests with data attached, but we don't really care about the response
 	// so we give this function a nil `out` value. That said, if you provide us a value, it needs to be a pointer.
 	if out != nil {
@@ -297,6 +318,23 @@ func (c *V1Client) exists(ctx context.Context, uri string) (bool, error) {
 	return res.StatusCode == http.StatusOK, nil
 }
 
+func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interface{}) error {
+	if err := argIsNotPointerOrNil(obj); err != nil {
+		return errors.Wrap(err, "struct to load must be a pointer")
+	}
+
+	res, err := c.executeRequest(context.Background(), c.authedClient, req)
+	if err != nil {
+		return errors.Wrap(err, "encountered error executing request")
+	}
+
+	if res.StatusCode == http.StatusNotFound {
+		return ErrNotFound
+	}
+
+	return unmarshalBody(res, &obj)
+}
+
 func (c *V1Client) get(ctx context.Context, uri string, obj interface{}) error {
 	ce := &Error{}
 
@@ -305,7 +343,12 @@ func (c *V1Client) get(ctx context.Context, uri string, obj interface{}) error {
 		return ce
 	}
 
-	req, _ := http.NewRequest(http.MethodGet, uri, nil)
+	req, err := http.NewRequest(http.MethodGet, uri, nil)
+	if err != nil {
+		ce.Err = errors.Wrap(err, "encountered error building request")
+		return ce
+	}
+
 	res, err := c.executeRequest(context.Background(), c.authedClient, req)
 	if err != nil {
 		ce.Err = errors.Wrap(err, "encountered error executing request")
@@ -313,7 +356,7 @@ func (c *V1Client) get(ctx context.Context, uri string, obj interface{}) error {
 	}
 
 	if res.StatusCode == http.StatusNotFound {
-		ce.Err = errors.New("404 Not Found")
+		ce.Err = ErrNotFound
 		return ce
 	}
 
@@ -333,48 +376,43 @@ func (c *V1Client) delete(ctx context.Context, uri string) error {
 }
 
 func (c *V1Client) post(ctx context.Context, uri string, in interface{}, out interface{}) error {
-	return c.makeDataRequest(http.MethodPost, uri, in, out)
-}
-
-// This function is, at the time of this writing, exclusively for the use of creating users
-func (c *V1Client) postPlain(ctx context.Context, uri string, in interface{}, out interface{}) error {
-	return c.makeUnauthedDataRequest(http.MethodPost, uri, in, out)
+	return c.makeDataRequest(ctx, http.MethodPost, uri, in, out)
 }
 
 func (c *V1Client) put(ctx context.Context, uri string, in interface{}, out interface{}) error {
-	return c.makeDataRequest(http.MethodPut, uri, in, out)
+	return c.makeDataRequest(ctx, http.MethodPut, uri, in, out)
 }
 
-// DialWebsocket dials a websocket
-func (c *V1Client) DialWebsocket(ctx context.Context, fq *FeedQuery) (*websocket.Conn, error) {
-	u := c.buildURL(fq.Values(), "event_feed")
-	u.Scheme = "wss"
+// // DialWebsocket dials a websocket
+// func (c *V1Client) DialWebsocket(ctx context.Context, fq *FeedQuery) (*websocket.Conn, error) {
+// 	u := c.buildURL(fq.Values(), "event_feed")
+// 	u.Scheme = "wss"
 
-	logger := c.logger.WithValues(map[string]interface{}{
-		"feed_query":    fq,
-		"websocket_url": u.String(),
-	})
+// 	logger := c.logger.WithValues(map[string]interface{}{
+// 		"feed_query":    fq,
+// 		"websocket_url": u.String(),
+// 	})
 
-	if fq == nil {
-		return nil, errors.New("Valid feed query required")
-	}
+// 	if fq == nil {
+// 		return nil, errors.New("Valid feed query required")
+// 	}
 
-	if !c.IsUp() {
-		logger.Debug("websocket service is down")
-		return nil, errors.New("service is down")
-	}
+// 	if !c.IsUp() {
+// 		logger.Debug("websocket service is down")
+// 		return nil, errors.New("service is down")
+// 	}
 
-	dialer := websocket.DefaultDialer
-	logger.Debug("connecting to websocket")
+// 	dialer := websocket.DefaultDialer
+// 	logger.Debug("connecting to websocket")
 
-	conn, res, err := dialer.Dial(u.String(), nil)
-	if err != nil {
-		logger.Debug("encountered error dialing websocket")
-		return nil, err
-	}
+// 	conn, res, err := dialer.Dial(u.String(), nil)
+// 	if err != nil {
+// 		logger.Debug("encountered error dialing websocket")
+// 		return nil, err
+// 	}
 
-	if res.StatusCode < http.StatusBadRequest {
-		return conn, nil
-	}
-	return nil, fmt.Errorf("encountered status code: %d when trying to reach websocket", res.StatusCode)
-}
+// 	if res.StatusCode < http.StatusBadRequest {
+// 		return conn, nil
+// 	}
+// 	return nil, fmt.Errorf("encountered status code: %d when trying to reach websocket", res.StatusCode)
+// }

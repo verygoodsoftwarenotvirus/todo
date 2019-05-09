@@ -2,10 +2,12 @@ package integration
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 	"time"
 
+	client "gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
@@ -45,4 +47,20 @@ func init() {
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)
+}
+
+func initializeClient(clientID, clientSecret string) *client.V1Client {
+	uri, _ := url.Parse(urlToUse)
+	c, err := client.NewClient(
+		clientID,
+		clientSecret,
+		uri,
+		zerolog.NewZeroLogger(),
+		buildHTTPClient(),
+		debug,
+	)
+	if err != nil {
+		panic(err)
+	}
+	return c
 }

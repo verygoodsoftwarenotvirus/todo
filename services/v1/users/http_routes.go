@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
@@ -150,7 +150,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	s.userCounter.Increment(ctx)
 
 	s.newsman.Report(newsman.Event{
-		EventType: string(events.Create),
+		EventType: string(v1.Create),
 		Data:      x,
 		Topics:    []string{topicName},
 	})
@@ -287,7 +287,7 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	s.userCounter.Decrement(ctx)
 
 	s.newsman.Report(newsman.Event{
-		EventType: string(events.Delete),
+		EventType: string(v1.Delete),
 		Data:      models.User{ID: userID},
 		Topics:    []string{topicName},
 	})

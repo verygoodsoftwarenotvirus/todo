@@ -46,6 +46,7 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 	router.Get("/*", http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		switch req.URL.Path {
 		case "/listyourfrontendhistoryroutesrouteshere":
+		default:
 			req.URL.Path = "/"
 		}
 

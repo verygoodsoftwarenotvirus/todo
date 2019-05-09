@@ -26,27 +26,61 @@ func (c *V1Client) buildVersionlessURL(qp url.Values, parts ...string) string {
 	return tu.ResolveReference(u).String()
 }
 
+// BuildGetUserRequest builds an http Request for fetching a user
+func (c *V1Client) BuildGetUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
+	uri := c.buildVersionlessURL(nil, usersBasePath, strconv.FormatUint(userID, 10))
+
+	return http.NewRequest(http.MethodGet, uri, nil)
+}
+
 // GetUser gets a user
 func (c *V1Client) GetUser(ctx context.Context, userID uint64) (user *models.User, err error) {
-	uri := c.buildVersionlessURL(nil, usersBasePath, strconv.FormatUint(userID, 10))
-	return user, c.get(ctx, uri, &user)
+	req, err := c.BuildGetUserRequest(ctx, userID)
+	if err != nil {
+		return nil, errors.Wrap(err, "building request")
+	}
+
+	err = c.retrieve(ctx, req, &user)
+	return user, err
+}
+
+// BuildGetUsersRequest builds an http Request for fetching a user
+func (c *V1Client) BuildGetUsersRequest(ctx context.Context, filter *models.QueryFilter) (*http.Request, error) {
+	uri := c.buildVersionlessURL(filter.ToValues(), usersBasePath)
+
+	return http.NewRequest(http.MethodGet, uri, nil)
 }
 
 // GetUsers gets a list of users
 func (c *V1Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
 	users := &models.UserList{}
 
-	uri := c.buildVersionlessURL(filter.ToValues(), usersBasePath)
-	err := c.get(ctx, uri, &users)
+	req, err := c.BuildGetUsersRequest(ctx, filter)
+	if err != nil {
+		return nil, errors.Wrap(err, "building request")
+	}
+
+	err = c.retrieve(ctx, req, &users)
 	return users, err
+}
+
+// BuildCreateUserRequest builds an http Request for creating a user
+func (c *V1Client) BuildCreateUserRequest(ctx context.Context, body *models.UserInput) (*http.Request, error) {
+	uri := c.buildVersionlessURL(nil, usersBasePath)
+
+	return c.buildDataRequest(http.MethodPost, uri, body)
 }
 
 // CreateUser creates a user
 func (c *V1Client) CreateUser(ctx context.Context, input *models.UserInput) (*models.UserCreationResponse, error) {
 	user := &models.UserCreationResponse{}
 
-	uri := c.buildVersionlessURL(nil, usersBasePath)
-	err := c.post(ctx, uri, input, &user)
+	req, err := c.BuildCreateUserRequest(ctx, input)
+	if err != nil {
+		return nil, errors.Wrap(err, "building request")
+	}
+
+	err = c.makeRequest(ctx, req, &user)
 	return user, err
 }
 
@@ -55,15 +89,41 @@ func (c *V1Client) CreateNewUser(ctx context.Context, input *models.UserInput) (
 	user := &models.UserCreationResponse{}
 
 	uri := c.buildVersionlessURL(nil, usersBasePath)
-	err := c.postPlain(ctx, uri, input, &user)
+	err := c.makeUnauthedDataRequest(ctx, http.MethodPost, uri, input, &user)
+
 	return user, err
+}
+
+// BuildDeleteUserRequest builds an http Request for updating a user
+func (c *V1Client) BuildDeleteUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
+	uri := c.buildVersionlessURL(nil, usersBasePath, strconv.FormatUint(userID, 10))
+
+	return http.NewRequest(http.MethodDelete, uri, nil)
 }
 
 // DeleteUser deletes a user
 func (c *V1Client) DeleteUser(ctx context.Context, userID uint64) error {
-	uri := c.buildVersionlessURL(nil, usersBasePath, strconv.FormatUint(userID, 10))
-	err := c.delete(ctx, uri)
-	return err
+	req, err := c.BuildDeleteUserRequest(ctx, userID)
+	if err != nil {
+		return errors.Wrap(err, "building request")
+	}
+
+	return c.makeRequest(ctx, req, nil)
+}
+
+// BuildLoginRequest builds an authenticating HTTP request
+func (c *V1Client) BuildLoginRequest(username, password, TOTPToken string) (*http.Request, error) {
+	body, err := createBodyFromStruct(&models.UserLoginInput{
+		Username:  username,
+		Password:  password,
+		TOTPToken: TOTPToken,
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "creating body from struct")
+	}
+
+	uri := c.buildVersionlessURL(nil, usersBasePath, "login")
+	return c.buildDataRequest(http.MethodPost, uri, body)
 }
 
 // Login logs a user in
@@ -76,19 +136,11 @@ func (c *V1Client) Login(ctx context.Context, username, password, TOTPToken stri
 		return c.currentUserCookie, nil
 	}
 
-	body, err := createBodyFromStruct(&models.UserLoginInput{
-		Username:  username,
-		Password:  password,
-		TOTPToken: TOTPToken,
-	})
-
+	req, err := c.BuildLoginRequest(username, password, TOTPToken)
 	if err != nil {
-		logger.Error(err, "")
+		logger.Error(err, "building login request")
 		return nil, err
 	}
-
-	uri := c.buildVersionlessURL(nil, usersBasePath, "login")
-	req, _ := c.buildDataRequest(http.MethodPost, uri, body)
 
 	res, err := c.plainClient.Do(req)
 	if err != nil {

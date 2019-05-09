@@ -8,10 +8,9 @@ import (
 	"strings"
 	"time"
 
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
-
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
+
+	client "gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
 
 	"github.com/icrowley/fake"
 )
@@ -41,25 +40,25 @@ func init() {
 	} else {
 		urlToUse = localTestInstanceURL
 	}
-	logger := zerolog.NewZeroLogger()
+	//logger := zerolog.NewZeroLogger()
 
-	logger.WithValue("url", urlToUse).Info("checking server")
-	testutil.EnsureServerIsUp(urlToUse)
+	//logger.WithValue("url", urlToUse).Info("checking server")
+	//testutil.EnsureServerIsUp(urlToUse)
 
 	fake.Seed(time.Now().UnixNano())
 
-	u, err := testutil.CreateObligatoryUser(urlToUse, debug)
-	if err != nil {
-		logger.Fatal(err)
-	}
+	// u, err := testutil.CreateObligatoryUser(urlToUse, debug)
+	// if err != nil {
+	// 	logger.Fatal(err)
+	// }
 
-	clientID, clientSecret, err := testutil.CreateObligatoryClient(urlToUse, *u)
-	if err != nil {
-		logger.Fatal(err)
-	}
+	// clientID, clientSecret, err := testutil.CreateObligatoryClient(urlToUse, *u)
+	// if err != nil {
+	// 	logger.Fatal(err)
+	// }
 
-	todoClient := initializeClient(clientID, clientSecret)
-	_ = todoClient
+	// todoClient := initializeClient(clientID, clientSecret)
+	// _ = todoClient
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)

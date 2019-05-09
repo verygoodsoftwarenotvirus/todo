@@ -18,7 +18,7 @@ import (
 
 const (
 	// MetricsNamespace is the namespace under which we register metrics
-	MetricsNamespace = "todo-service"
+	MetricsNamespace = "todo_server"
 )
 
 type (
@@ -63,6 +63,9 @@ func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) (m
 	switch cfg.Metrics.MetricsProvider {
 	case Prometheus, DefaultMetricsProvider:
 		p, err := prometheus.NewExporter(prometheus.Options{
+			OnError: func(err error) {
+				logger.Error(err, "setting up prometheus export")
+			},
 			Namespace: string(MetricsNamespace),
 		})
 		if err != nil {

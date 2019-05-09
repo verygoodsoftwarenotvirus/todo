@@ -53,6 +53,11 @@ func (c *V1Client) PlainClient() *http.Client {
 	return c.plainClient
 }
 
+// Cookie returns the unauthenticated *http.Client that we use to make certain requests
+func (c *V1Client) Cookie() *http.Cookie {
+	return c.currentUserCookie
+}
+
 // NewClient builds a new API client for us
 func NewClient(
 	clientID,
@@ -104,7 +109,12 @@ func buildOAuthClient(uri *url.URL, clientID, clientSecret string) (*http.Client
 	ts := oauth2.ReuseTokenSource(nil, conf.TokenSource(context.Background()))
 	client := &http.Client{
 		Transport: &oauth2.Transport{
-			Base:   &ochttp.Transport{},
+			Base: &ochttp.Transport{
+				Base: http.DefaultTransport,
+				// Base: &http.Transport{
+				// 	MaxIdleConnsPerHost: 100,
+				// },
+			},
 			Source: ts,
 		},
 		Timeout: 5 * time.Second,
@@ -190,22 +200,29 @@ func (c *V1Client) BuildWebsocketURL(parts ...string) string {
 	return u.String()
 }
 
-// IsUp returns whether or not the service is healthy
-func (c *V1Client) IsUp() bool {
+//BuildHealthCheckRequest builds a health check HTTP Request
+func (c *V1Client) BuildHealthCheckRequest() (*http.Request, error) {
 	u := *c.URL
 	uri := fmt.Sprintf("%s://%s:%s/_meta_/ready", u.Scheme, u.Host, u.Port())
 
-	logger := c.logger.WithValue("health_check_url", uri)
+	return http.NewRequest(http.MethodGet, uri, nil)
+}
 
-	req, _ := http.NewRequest(http.MethodGet, uri, nil)
-	res, err := c.plainClient.Do(req)
-
+// IsUp returns whether or not the service is healthy
+func (c *V1Client) IsUp() bool {
+	req, err := c.BuildHealthCheckRequest()
 	if err != nil {
-		logger.Error(err, "health check")
+		c.logger.Error(err, "building request")
 		return false
 	}
 
-	logger.WithValue("status_code", res.StatusCode)
+	res, err := c.plainClient.Do(req)
+	if err != nil {
+		c.logger.Error(err, "health check")
+		return false
+	}
+
+	c.logger.WithValue("status_code", res.StatusCode).Debug("health check executed")
 
 	return res.StatusCode == http.StatusOK
 }

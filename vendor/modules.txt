@@ -19,17 +19,17 @@ github.com/beorn7/perks/quantile
 github.com/boombuler/barcode
 github.com/boombuler/barcode/qr
 github.com/boombuler/barcode/utils
-# github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd
-github.com/codahale/hdrhistogram
 # github.com/corpix/uarand v0.1.0
 github.com/corpix/uarand
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 github.com/dgrijalva/jwt-go
+# github.com/emicklei/hazana v1.6.1
+github.com/emicklei/hazana
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
-# github.com/go-chi/chi v4.0.1+incompatible
+# github.com/go-chi/chi v4.0.2+incompatible
 github.com/go-chi/chi
 github.com/go-chi/chi/middleware
 # github.com/go-kit/kit v0.8.0
@@ -66,11 +66,10 @@ github.com/icrowley/fake
 github.com/lann/builder
 # github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0
 github.com/lann/ps
-# github.com/lib/pq v1.0.0
+# github.com/lib/pq v1.1.1
 github.com/lib/pq
 github.com/lib/pq/oid
-# github.com/lucasb-eyer/go-colorful v1.0.2
-github.com/lucasb-eyer/go-colorful
+github.com/lib/pq/scram
 # github.com/magiconair/properties v1.8.0
 github.com/magiconair/properties
 # github.com/mattn/go-sqlite3 v1.10.0
@@ -81,12 +80,10 @@ github.com/matttproud/golang_protobuf_extensions/pbutil
 github.com/mitchellh/mapstructure
 # github.com/moul/http2curl v1.0.0
 github.com/moul/http2curl
-# github.com/opentracing-contrib/go-stdlib v0.0.0-20190205184154-464eb271c715
-github.com/opentracing-contrib/go-stdlib/nethttp
-# github.com/opentracing/opentracing-go v1.0.2
+# github.com/opentracing/opentracing-go v1.1.0
 github.com/opentracing/opentracing-go
-github.com/opentracing/opentracing-go/ext
 github.com/opentracing/opentracing-go/log
+github.com/opentracing/opentracing-go/ext
 # github.com/pelletier/go-toml v1.2.0
 github.com/pelletier/go-toml
 # github.com/pkg/errors v0.8.1
@@ -125,7 +122,7 @@ github.com/spf13/cast
 github.com/spf13/jwalterweatherman
 # github.com/spf13/pflag v1.0.3
 github.com/spf13/pflag
-# github.com/spf13/viper v1.3.1
+# github.com/spf13/viper v1.3.2
 github.com/spf13/viper
 # github.com/streadway/quantile v0.0.0-20150917103942-b0c588724d25
 github.com/streadway/quantile
@@ -150,14 +147,13 @@ github.com/tidwall/rtree
 github.com/tidwall/rtree/base
 # github.com/tidwall/tinyqueue v0.0.0-20180302190814-1e39f5511563
 github.com/tidwall/tinyqueue
-# github.com/tsenart/vegeta v9.0.0+incompatible
-github.com/tsenart/vegeta/lib
-# github.com/uber/jaeger-client-go v2.14.0+incompatible
+# github.com/uber/jaeger-client-go v2.16.0+incompatible
 github.com/uber/jaeger-client-go/config
 github.com/uber/jaeger-client-go
 github.com/uber/jaeger-client-go/internal/baggage/remote
 github.com/uber/jaeger-client-go/internal/throttler/remote
 github.com/uber/jaeger-client-go/rpcmetrics
+github.com/uber/jaeger-client-go/transport
 github.com/uber/jaeger-client-go/internal/baggage
 github.com/uber/jaeger-client-go/internal/spanlog
 github.com/uber/jaeger-client-go/internal/throttler
@@ -169,7 +165,7 @@ github.com/uber/jaeger-client-go/thrift-gen/zipkincore
 github.com/uber/jaeger-client-go/utils
 github.com/uber/jaeger-client-go/thrift-gen/baggage
 github.com/uber/jaeger-client-go/thrift-gen/agent
-# github.com/uber/jaeger-lib v1.5.0
+# github.com/uber/jaeger-lib v2.0.0+incompatible
 github.com/uber/jaeger-lib/metrics/expvar
 github.com/uber/jaeger-lib/metrics
 github.com/uber/jaeger-lib/metrics/adapters
@@ -183,33 +179,32 @@ gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop
 gitlab.com/verygoodsoftwarenotvirus/newsman
 # go.opencensus.io v0.21.0
 go.opencensus.io/trace
-go.opencensus.io/stats/view
 go.opencensus.io/plugin/ochttp
+go.opencensus.io/stats/view
 go.opencensus.io/stats
 go.opencensus.io/internal
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/tracestate
 go.opencensus.io/tag
+go.opencensus.io/plugin/ochttp/propagation/b3
+go.opencensus.io/trace/propagation
 go.opencensus.io/metric/metricdata
 go.opencensus.io/metric/metricexport
 go.opencensus.io/internal/tagencoding
 go.opencensus.io/metric/metricproducer
 go.opencensus.io/stats/internal
-go.opencensus.io/plugin/ochttp/propagation/b3
-go.opencensus.io/trace/propagation
 go.opencensus.io
 go.opencensus.io/resource
+# go.uber.org/ratelimit v0.0.0-20180316092928-c15da0234277
+go.uber.org/ratelimit
+go.uber.org/ratelimit/internal/clock
 # golang.org/x/crypto v0.0.0-20190506204251-e1dfcc566284
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 # golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3
-golang.org/x/net/context
-golang.org/x/net/http2
 golang.org/x/net/context/ctxhttp
-golang.org/x/net/http/httpguts
-golang.org/x/net/http2/hpack
-golang.org/x/net/idna
-# golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421
+golang.org/x/net/context
+# golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a
 golang.org/x/oauth2
 golang.org/x/oauth2/clientcredentials
 golang.org/x/oauth2/internal
@@ -220,8 +215,6 @@ golang.org/x/sys/unix
 # golang.org/x/text v0.3.0
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
-golang.org/x/text/secure/bidirule
-golang.org/x/text/unicode/bidi
 # google.golang.org/api v0.3.2
 google.golang.org/api/support/bundler
 # google.golang.org/appengine v1.4.0
@@ -232,7 +225,7 @@ google.golang.org/appengine/internal/base
 google.golang.org/appengine/internal/datastore
 google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/remote_api
-# gopkg.in/oauth2.v3 v3.9.5
+# gopkg.in/oauth2.v3 v3.10.0
 gopkg.in/oauth2.v3
 gopkg.in/oauth2.v3/errors
 gopkg.in/oauth2.v3/manage

@@ -3,7 +3,6 @@
 # debug = true
 
 [metrics]
-metrics_namespace = "todo_server"
 metrics_provider = "prometheus"
 tracing_provider = "jaeger"
 

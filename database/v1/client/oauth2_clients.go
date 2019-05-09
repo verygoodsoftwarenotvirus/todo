@@ -47,7 +47,7 @@ func (c *Client) GetOAuth2ClientByClientID(ctx context.Context, clientID string)
 	defer span.End()
 	span.AddAttributes(trace.StringAttribute("client_id", clientID))
 
-	c.logger.WithValue("oauth2_client_id", clientID).Debug("looking for an oauth2 client by this client ID")
+	c.logger.WithValue("oauth2_client_id", clientID).Debug("GetOAuth2ClientByClientID called")
 
 	client, err := c.database.GetOAuth2ClientByClientID(ctx, clientID)
 	if err != nil {
@@ -58,8 +58,6 @@ func (c *Client) GetOAuth2ClientByClientID(ctx context.Context, clientID string)
 
 		return nil, err
 	}
-
-	c.logger.WithValue("client_id", client.ID).Debug("returning safely from fetching oauth2 client by ID only")
 
 	return client, nil
 }

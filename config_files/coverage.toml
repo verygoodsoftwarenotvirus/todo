@@ -2,9 +2,6 @@
 # tracing_enabled = true
 # debug = true
 
-[metrics]
-metrics_namespace = "todo_server"
-
 [server]
 http_port = 80
 debug = true

@@ -106,6 +106,17 @@ func ProvideOAuth2ClientsService(
 		oauth2Handler:       server,
 	}
 
+	clients, err := database.GetAllOAuth2Clients(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "fetching oauth2 clients")
+	}
+
+	for _, client := range clients {
+		if err := s.oauth2ClientStore.Set(client.ClientID, &client); err != nil {
+			return nil, errors.Wrapf(err, "error establishing oauth2 client: %d\n", client.ID)
+		}
+	}
+
 	count, err := database.GetAllOAuth2ClientCount(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "setting count value")

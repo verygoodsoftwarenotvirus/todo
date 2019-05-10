@@ -60,7 +60,7 @@ test:
 
 .PHONY: integration-tests
 integration-tests:
-	docker-compose --file compose-files/integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
+	docker-compose --file compose-files/integration-tests.yaml up --always-recreate-deps --build --remove-orphans --abort-on-container-exit --force-recreate
 
 .PHONY: debug-integration-tests
 debug-integration-tests: wire
@@ -68,14 +68,14 @@ debug-integration-tests: wire
 
 .PHONY: load-tests
 load-tests: wire
-	docker-compose --file compose-files/load-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
+	docker-compose --file compose-files/load-tests.yaml up --always-recreate-deps --build --remove-orphans --abort-on-container-exit --force-recreate
 
 .PHONY: integration-coverage
 integration-coverage:
 	# big thanks to https://blog.cloudflare.com/go-coverage-with-external-tests/
 	rm -f ./artifacts/integration-coverage.out
 	mkdir -p ./artifacts
-	docker-compose --file compose-files/integration-coverage.yaml up --always-recreate-deps --build --remove-orphans --force-recreate --abort-on-container-exit
+	docker-compose --file compose-files/integration-coverage.yaml up --always-recreate-deps --build --remove-orphans --force-recreate
 	go tool cover -html=./artifacts/integration-coverage.out
 
 ## Docker things

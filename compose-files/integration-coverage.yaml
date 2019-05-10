@@ -1,7 +1,7 @@
 version: '3.3'
 
 services:
-  todo-server:
+  coverage-server:
     build:
       context: ../
       dockerfile: dockerfiles/integration-coverage.Dockerfile
@@ -9,7 +9,7 @@ services:
       - '80:80'
     environment:
       DOCKER: 'true'
-      RUNTIME_DURATION: '5m'
+      RUNTIME_DURATION: '1m'
     volumes:
       - ../artifacts/:/home/
     links:
@@ -17,14 +17,19 @@ services:
     # logging:
     #   driver: none
 
-  load-tests:
+  test:
     build:
       context: ../
-      dockerfile: dockerfiles/load-tests.Dockerfile
+      dockerfile: dockerfiles/http-client-integration-tests.Dockerfile
     environment:
-      OAUTHLIB_INSECURE_TRANSPORT: 'true'
+      TARGET_ADDRESS: 'http://coverage-server'
+      DOCKER: 'true'
+      JAEGER_SERVICE_NAME: 'coverage-server'
+      JAEGER_AGENT_HOST: 'tracing-server'
+      JAEGER_AGENT_PORT: '6831'
+      JAEGER_SAMPLER_MANAGER_HOST_PORT: 'tracing-server:5778'
     links:
-      - todo-server
+      - coverage-server
     # logging:
     #   driver: none
 

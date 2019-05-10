@@ -8,7 +8,7 @@ RUN apk add --update make git gcc musl-dev
 ADD . .
 
 RUN go test -o /todo -c -coverpkg \
-    gitlab.com/verygoodsoftwarenotvirus/todo/internal/...,gitlab.com/verygoodsoftwarenotvirus/todo/database/...,gitlab.com/verygoodsoftwarenotvirus/todo/server/...,gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/... \
+    gitlab.com/verygoodsoftwarenotvirus/todo/internal/...,gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/...,gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/...,gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1/ \
     gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
 
 

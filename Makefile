@@ -37,7 +37,7 @@ revendor: vendor-clean vendor
 
 ## Testing things
 
-$(COVERAGE_OUT):
+coverage.out:
 	echo "mode: set" > coverage.out;
 	for pkg in `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests)'`; do \
 		go test -coverprofile=profile.out -v -count 5 $$pkg; \

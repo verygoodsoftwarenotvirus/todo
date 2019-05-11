@@ -1,14 +1,10 @@
 GOPATH       := $(GOPATH)
-COVERAGE_OUT := coverage.out
+ARTIFACTS_DIR := artifacts
+INTEGRATION_COVERAGE_OUT := coverage.out
 
 KUBERNETES_NAMESPACE     := todo
 SERVER_DOCKER_IMAGE_NAME := todo-server
 SERVER_DOCKER_REPO_NAME  := docker.io/verygoodsoftwarenotvirus/$(SERVER_DOCKER_IMAGE_NAME)
-
-.PHONY: clean
-clean:
-	rm -f $(COVERAGE_OUT)
-	rm -f example.db
 
 ## dependency injectdion
 
@@ -78,7 +74,7 @@ load-tests:
 
 .PHONY: integration-coverage
 integration-coverage:
-	# big thanks to https://blog.cloudflare.com/go-coverage-with-external-tests/
+	@# big thanks to https://blog.cloudflare.com/go-coverage-with-external-tests/
 	rm -f ./artifacts/integration-coverage.out
 	mkdir -p ./artifacts
 	docker-compose \

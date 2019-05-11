@@ -102,8 +102,9 @@ type UserList struct {
 
 // PasswordUpdateInput represents input a user would provide when updating their password
 type PasswordUpdateInput struct {
-	NewPassword string `json:"new_password"`
-	TOTPSecretRefreshInput
+	NewPassword     string `json:"new_password"`
+	CurrentPassword string `json:"current_password"`
+	TOTPToken       string `json:"totp_token"`
 }
 
 // TOTPSecretRefreshInput represents input a user would provide when updating their 2FA secret

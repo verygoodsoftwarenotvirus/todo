@@ -223,14 +223,17 @@ func (s *Service) NewTOTPSecret(res http.ResponseWriter, req *http.Request) {
 	}
 	user.TwoFactorSecret = tfc
 
+	logger.WithValue("generated_totp_secret", user.TwoFactorSecret)
+
 	if err := s.database.UpdateUser(ctx, user); err != nil {
 		logger.Error(err, "error encountered updating TOTP token")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	res.WriteHeader(http.StatusCreated)
 	if err := s.encoder.EncodeResponse(
-		res, &models.TOTPSecretRefreshResponse{TwoFactorSecret: tfc},
+		res, &models.TOTPSecretRefreshResponse{TwoFactorSecret: user.TwoFactorSecret},
 	); err != nil {
 		s.logger.Error(err, "encoding response")
 	}

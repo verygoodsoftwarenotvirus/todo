@@ -271,11 +271,9 @@ func TestAuth(test *testing.T) {
 		token, err := totp.GenerateCode(user.TwoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, token, err)
 		r := &models.PasswordUpdateInput{
-			TOTPSecretRefreshInput: models.TOTPSecretRefreshInput{
-				CurrentPassword: ui.Password,
-				TOTPToken:       token,
-			},
-			NewPassword: backwardsPass,
+			CurrentPassword: ui.Password,
+			TOTPToken:       token,
+			NewPassword:     backwardsPass,
 		}
 		out, err := json.Marshal(r)
 		require.NoError(t, err)
@@ -314,6 +312,82 @@ func TestAuth(test *testing.T) {
 		l, err := json.Marshal(&models.UserLoginInput{
 			Username:  user.Username,
 			Password:  backwardsPass,
+			TOTPToken: newToken,
+		})
+		require.NoError(t, err)
+		body = bytes.NewReader(l)
+
+		u3, err := url.Parse(todoClient.BuildURL(nil))
+		require.NoError(t, err)
+		u3.Path = "/users/login"
+
+		req, err = http.NewRequest(http.MethodPost, u3.String(), body)
+		checkValueAndError(t, req, err)
+
+		// execute login request
+		res, err = todoClient.PlainClient().Do(req)
+		checkValueAndError(t, res, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+
+		cookies := res.Cookies()
+		require.Len(t, cookies, 1)
+		assert.NotEqual(t, cookie, cookies[0])
+	})
+
+	test.Run("should be able to change 2FA Token", func(t *testing.T) {
+		// create user
+		user, ui, cookie := buildDummyUser(test)
+		require.NotNil(test, cookie)
+
+		// create TOTP secret update request
+		token, err := totp.GenerateCode(user.TwoFactorSecret, time.Now().UTC())
+		checkValueAndError(t, token, err)
+		ir := &models.TOTPSecretRefreshInput{
+			CurrentPassword: ui.Password,
+			TOTPToken:       token,
+		}
+		out, err := json.Marshal(ir)
+		require.NoError(t, err)
+		body := bytes.NewReader(out)
+
+		u, err := url.Parse(todoClient.BuildURL(nil))
+		require.NoError(t, err)
+		u.Path = "/users/totp_secret/new"
+
+		req, err := http.NewRequest(http.MethodPost, u.String(), body)
+		checkValueAndError(t, req, err)
+		req.AddCookie(cookie)
+
+		// execute TOTP secret update request
+		res, err := todoClient.PlainClient().Do(req)
+		checkValueAndError(t, res, err)
+		assert.Equal(t, http.StatusCreated, res.StatusCode)
+
+		// load user response
+		r := &models.TOTPSecretRefreshResponse{}
+		require.NoError(t, json.NewDecoder(res.Body).Decode(r))
+		require.NotEqual(t, user.TwoFactorSecret, r.TwoFactorSecret)
+
+		// logout
+
+		u2, err := url.Parse(todoClient.BuildURL(nil))
+		require.NoError(t, err)
+		u2.Path = "/users/logout"
+
+		req, err = http.NewRequest(http.MethodPost, u2.String(), nil)
+		checkValueAndError(t, req, err)
+		req.AddCookie(cookie)
+
+		res, err = todoClient.PlainClient().Do(req)
+		checkValueAndError(t, res, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+
+		// create login request
+		newToken, err := totp.GenerateCode(r.TwoFactorSecret, time.Now().UTC())
+		checkValueAndError(t, newToken, err)
+		l, err := json.Marshal(&models.UserLoginInput{
+			Username:  user.Username,
+			Password:  ui.Password,
 			TOTPToken: newToken,
 		})
 		require.NoError(t, err)

@@ -70,6 +70,12 @@ func (b *BcryptAuthenticator) ValidateLogin(
 	tooWeak := b.hashedPasswordIsTooWeak(hashedPassword)
 
 	if !totp.Validate(twoFactorCode, twoFactorSecret) {
+		b.logger.WithValues(map[string]interface{}{
+			"password_matches": passwordMatches,
+			"2fa_secret":       twoFactorSecret,
+			"provided_code":    twoFactorCode,
+		}).Debug("invalid code provided")
+
 		return passwordMatches, ErrInvalidTwoFactorCode
 	}
 

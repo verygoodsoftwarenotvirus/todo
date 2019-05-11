@@ -18,7 +18,7 @@ services:
   test:
     build:
       context: ../
-      dockerfile: dockerfiles/http-client-integration-tests.Dockerfile
+      dockerfile: dockerfiles/integration-tests.Dockerfile
     environment:
       DOCKER: 'true'
       JAEGER_SERVICE_NAME: 'todo-server'

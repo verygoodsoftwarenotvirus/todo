@@ -239,8 +239,14 @@ func (p *Postgres) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 
 	// create the user
 	err := p.database.
-		QueryRow(createUserQuery, input.Username, input.Password, input.TwoFactorSecret, input.IsAdmin).
-		Scan(&x.ID, &x.CreatedOn)
+		QueryRowContext(
+			ctx,
+			createUserQuery,
+			input.Username,
+			input.Password,
+			input.TwoFactorSecret,
+			input.IsAdmin,
+		).Scan(&x.ID, &x.CreatedOn)
 	if err != nil {
 		return nil, errors.Wrap(err, "error executing user creation query")
 	}
@@ -252,10 +258,11 @@ const updateUserQuery = `
 	UPDATE users
 	SET
 		username = $1,
-		password = $2,
+		hashed_password = $2,
+		two_factor_secret = $3,
 		updated_on = extract(epoch FROM NOW())
 	WHERE
-		id = $3
+		id = $4
 	RETURNING
 		updated_on
 `
@@ -264,9 +271,14 @@ const updateUserQuery = `
 // NOTE this function uses the ID provided in the input to make its query.
 func (p *Postgres) UpdateUser(ctx context.Context, input *models.User) error {
 	// update the user
-	err := p.database.
-		QueryRow(updateUserQuery, input.Username, input.HashedPassword, input.ID).
-		Scan(&input.UpdatedOn)
+	err := p.database.QueryRowContext(
+		ctx,
+		updateUserQuery,
+		input.Username,
+		input.HashedPassword,
+		input.TwoFactorSecret,
+		input.ID,
+	).Scan(&input.UpdatedOn)
 
 	return err
 }

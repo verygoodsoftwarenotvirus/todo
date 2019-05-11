@@ -144,7 +144,7 @@ func (c *V1Client) Login(ctx context.Context, username, password, TOTPToken stri
 
 	res, err := c.plainClient.Do(req)
 	if err != nil {
-		return nil, errors.Wrap(err, "encountered error executing request")
+		return nil, errors.Wrap(err, "encountered error executing login request")
 	}
 
 	b, _ := httputil.DumpResponse(res, true)

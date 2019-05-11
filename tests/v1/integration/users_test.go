@@ -37,17 +37,11 @@ func randString() (string, error) {
 func buildDummyUserInput(t *testing.T) *models.UserInput {
 	t.Helper()
 
-	tfs, err := randString()
-	if err != nil {
-		panic(err)
-	}
-
 	fake.Seed(time.Now().UnixNano())
 
 	userInput := &models.UserInput{
-		Username:        fake.UserName(),
-		Password:        fake.Password(8, 64, true, true, true),
-		TwoFactorSecret: tfs,
+		Username: fake.UserName(),
+		Password: fake.Password(8, 64, true, true, true),
 	}
 
 	return userInput
@@ -62,7 +56,6 @@ func buildDummyUser(t *testing.T) (*models.UserCreationResponse, *models.UserInp
 	user, err := todoClient.CreateUser(ctx, userInput)
 	assert.NotNil(t, user)
 	require.NoError(t, err)
-	t.Logf("created dummy user #%d: %q", user.ID, user.Username)
 
 	if user == nil || err != nil {
 		t.FailNow()
@@ -154,7 +147,6 @@ func TestUsers(test *testing.T) {
 			if err != nil {
 				t.Logf("error encountered trying to fetch user %q: %v\n", premade.Username, err)
 			}
-
 			checkValueAndError(t, actual, err)
 
 			// Assert user equality
@@ -176,7 +168,7 @@ func TestUsers(test *testing.T) {
 			assert.NotNil(t, u)
 
 			if u == nil || err != nil {
-				t.Log("TestUsers something has gone awry, user returned is nil")
+				t.Log("something has gone awry, user returned is nil")
 				t.FailNow()
 			}
 

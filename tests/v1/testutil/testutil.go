@@ -111,7 +111,7 @@ func buildURL(address string, parts ...string) string {
 func getLoginCookie(serviceURL string, u models.User) (*http.Cookie, error) {
 	uri := buildURL(serviceURL, "users", "login")
 
-	code, err := totp.GenerateCode(strings.ToUpper(u.TwoFactorSecret), time.Now())
+	code, err := totp.GenerateCode(strings.ToUpper(u.TwoFactorSecret), time.Now().UTC())
 	if err != nil {
 		return nil, errors.Wrap(err, "generating totp token")
 	}
@@ -156,7 +156,7 @@ func CreateObligatoryClient(serviceURL string, u models.User) (clientID, clientS
 
 	code, err := totp.GenerateCode(
 		strings.ToUpper(u.TwoFactorSecret),
-		time.Now(),
+		time.Now().UTC(),
 	)
 	if err != nil {
 		return "", "", err

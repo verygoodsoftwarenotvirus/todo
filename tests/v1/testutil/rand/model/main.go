@@ -31,7 +31,7 @@ func RandomWebhookInput() *models.WebhookInput {
 }
 
 func mustBuildCode(totpSecret string) string {
-	code, err := totp.GenerateCode(totpSecret, time.Now())
+	code, err := totp.GenerateCode(totpSecret, time.Now().UTC())
 	if err != nil {
 		panic(err)
 	}

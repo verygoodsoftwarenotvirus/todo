@@ -3,8 +3,8 @@ package httpserver
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
@@ -132,7 +132,15 @@ func ProvideServer(
 func (s *Server) Serve() {
 	s.httpServer.Addr = fmt.Sprintf(":%d", s.config.HTTPPort)
 	s.logger.Debug(fmt.Sprintf("Listening for HTTP requests on %s", s.httpServer.Addr))
-	log.Fatal(s.httpServer.ListenAndServe())
+
+	// returns ErrServerClosed on graceful close
+	if err := s.httpServer.ListenAndServe(); err != nil {
+		if err == http.ErrServerClosed {
+			// NOTE: there is a chance that next line won't have time to run,
+			// as main() doesn't wait for this goroutine to stop.
+			os.Exit(0)
+		}
+	}
 }
 
 type genericResponse struct {

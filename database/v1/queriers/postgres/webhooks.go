@@ -192,9 +192,9 @@ func (p *Postgres) GetAllWebhooks(ctx context.Context) (*models.WebhookList, err
 	}()
 
 	for rows.Next() {
-		webhook, ierr := p.scanWebhook(rows)
-		if ierr != nil {
-			return nil, ierr
+		webhook, err := p.scanWebhook(rows)
+		if err != nil {
+			return nil, err
 		}
 		list = append(list, *webhook)
 	}

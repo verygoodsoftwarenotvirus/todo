@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
+	client "gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
@@ -17,7 +17,7 @@ import (
 
 func mustBuildCode(t *testing.T, totpSecret string) string {
 	t.Helper()
-	code, err := totp.GenerateCode(totpSecret, time.Now())
+	code, err := totp.GenerateCode(totpSecret, time.Now().UTC())
 	require.NoError(t, err)
 	return code
 }
@@ -105,9 +105,6 @@ func TestOAuth2Clients(test *testing.T) {
 			c, err := testClient.CreateOAuth2Client(tctx, input, cookie)
 			checkValueAndError(t, c, err)
 
-			t.Logf("premade.ID:       %d\n", c.ID)
-			t.Logf("premade.ClientID: %s\n", c.ClientID)
-
 			// Fetch oauth2Client
 			actual, err := testClient.GetOAuth2Client(tctx, c.ID)
 			checkValueAndError(t, actual, err)
@@ -161,9 +158,7 @@ func TestOAuth2Clients(test *testing.T) {
 			checkValueAndError(test, c2, err)
 
 			_, err = c2.GetItems(tctx, nil)
-			t.Logf("%v", err)
 			assert.Error(t, err, "expected error from what should be an unauthorized client")
-			// assert.Equal(t, "", err.Error())
 		})
 	})
 

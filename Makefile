@@ -1,18 +1,10 @@
 GOPATH       := $(GOPATH)
-COVERAGE_OUT := coverage.out
+ARTIFACTS_DIR := artifacts
+INTEGRATION_COVERAGE_OUT := coverage.out
 
 KUBERNETES_NAMESPACE     := todo
 SERVER_DOCKER_IMAGE_NAME := todo-server
 SERVER_DOCKER_REPO_NAME  := docker.io/verygoodsoftwarenotvirus/$(SERVER_DOCKER_IMAGE_NAME)
-
-.PHONY: clean
-clean:
-	rm -f $(COVERAGE_OUT)
-	rm -f example.db
-
-.PHONY: dockercide
-dockercide:
-	docker system prune --force --all --volumes
 
 ## dependency injectdion
 
@@ -45,7 +37,7 @@ revendor: vendor-clean vendor
 
 ## Testing things
 
-$(COVERAGE_OUT):
+coverage.out:
 	echo "mode: set" > coverage.out;
 	for pkg in `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests)'`; do \
 		go test -coverprofile=profile.out -v -count 5 $$pkg; \
@@ -60,22 +52,39 @@ test:
 
 .PHONY: integration-tests
 integration-tests:
-	docker-compose --file compose-files/integration-tests.yaml up --always-recreate-deps --build --remove-orphans --abort-on-container-exit --force-recreate
-
-.PHONY: debug-integration-tests
-debug-integration-tests: wire
-	docker-compose --file compose-files/debug-integration-tests.yaml up --always-recreate-deps --build --remove-orphans --force-recreate
+	docker-compose \
+	--file compose-files/integration-tests.yaml up \
+	--renew-anon-volumes \
+	--always-recreate-deps \
+	--build \
+	--remove-orphans \
+	--force-recreate \
+	--abort-on-container-exit
 
 .PHONY: load-tests
-load-tests: wire
-	docker-compose --file compose-files/load-tests.yaml up --always-recreate-deps --build --remove-orphans --abort-on-container-exit --force-recreate
+load-tests:
+	docker-compose \
+	--file compose-files/load-tests.yaml up \
+	--renew-anon-volumes \
+	--always-recreate-deps \
+	--build \
+	--remove-orphans \
+	--force-recreate \
+	--abort-on-container-exit
 
 .PHONY: integration-coverage
 integration-coverage:
-	# big thanks to https://blog.cloudflare.com/go-coverage-with-external-tests/
+	@# big thanks to https://blog.cloudflare.com/go-coverage-with-external-tests/
 	rm -f ./artifacts/integration-coverage.out
 	mkdir -p ./artifacts
-	docker-compose --file compose-files/integration-coverage.yaml up --always-recreate-deps --build --remove-orphans --force-recreate
+	docker-compose \
+	--file compose-files/integration-coverage.yaml up \
+	--renew-anon-volumes \
+	--timeout 30 --always-recreate-deps \
+	--build \
+	--remove-orphans \
+	--force-recreate \
+	--abort-on-container-exit
 	go tool cover -html=./artifacts/integration-coverage.out
 
 ## Docker things
@@ -96,7 +105,8 @@ push-server-to-docker: prod-server-docker-image
 
 .PHONY: run
 run: server-docker-image
-	docker-compose --file compose-files/docker-compose.yaml up --always-recreate-deps --build --remove-orphans --abort-on-container-exit --force-recreate
+	docker-compose \
+	--file compose-files/docker-compose.yaml up --renew-anon-volumes --always-recreate-deps --build --remove-orphans --abort-on-container-exit --force-recreate
 
 ## Minikube
 

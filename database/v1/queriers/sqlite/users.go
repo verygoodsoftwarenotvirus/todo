@@ -271,6 +271,7 @@ const updateUserQuery = `
 	SET
 		username = ?,
 		password = ?,
+		two_factor_secret = ?
 		updated_on = (strftime('%s','now'))
 	WHERE
 		id = ?
@@ -278,11 +279,15 @@ const updateUserQuery = `
 
 // UpdateUser updates a user. Note that this function expects the provided user to have a valid ID.
 func (s *Sqlite) UpdateUser(ctx context.Context, input *models.User) error {
-	if _, err := s.database.ExecContext(ctx, updateUserQuery, input.Username, input.HashedPassword, input.ID); err != nil {
-		return err
-	}
+	_, err := s.database.ExecContext(
+		ctx,
+		updateUserQuery,
+		input.Username,
+		input.HashedPassword,
+		input.TwoFactorSecret,
+		input.ID)
 
-	return nil
+	return err
 }
 
 const archiveUserQuery = `

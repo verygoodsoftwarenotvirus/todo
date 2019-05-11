@@ -187,8 +187,16 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 	user := loginInfo.user
 	loginInput := loginInfo.loginInput
 
+	logger := s.logger.WithValue("2fa_secret", user.TwoFactorSecret)
+	logger.Debug("validating login")
+
 	loginValid, err := s.authenticator.ValidateLogin(
-		ctx, user.HashedPassword, user.Salt, loginInput.Password, user.TwoFactorSecret, loginInput.TOTPToken,
+		ctx,
+		user.HashedPassword,
+		user.Salt,
+		loginInput.Password,
+		user.TwoFactorSecret,
+		loginInput.TOTPToken,
 	)
 	if err == auth.ErrPasswordHashTooWeak && loginValid {
 		s.logger.Debug("hashed password was deemed to weak, updating its hash")
@@ -203,6 +211,7 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 			return false, err
 		}
 	} else if err != nil {
+		logger.Error(err, "issue validating login")
 		return false, err
 	}
 

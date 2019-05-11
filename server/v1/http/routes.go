@@ -85,7 +85,7 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 		userRouter.With(
 			s.authService.CookieAuthenticationMiddleware,
 			s.usersService.PasswordUpdateInputMiddleware,
-		).Post("/password/new", s.usersService.UpdatePassword)
+		).Put("/password/new", s.usersService.UpdatePassword)
 	})
 
 	router.Route("/oauth2", func(oauth2Router chi.Router) {

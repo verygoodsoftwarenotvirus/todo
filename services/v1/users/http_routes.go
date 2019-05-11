@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events/v1"
+	v1 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/events/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
@@ -39,17 +39,17 @@ func randString() (string, error) {
 	return base32.StdEncoding.EncodeToString(b), nil
 }
 
-func (s *Service) validateCredentialChangeRequest(req *http.Request, password string, totpToken string) (*models.User, int) {
-	userID := s.userIDFetcher(req)
+func (s *Service) validateCredentialChangeRequest(req *http.Request, userID uint64, password, totpToken string) (*models.User, int) {
+	logger := s.logger.WithValue("user_id", userID)
 
 	ctx := req.Context()
 	user, err := s.database.GetUser(ctx, userID)
 	if err != nil {
-		s.logger.Error(err, "error encountered fetching user")
+		logger.Error(err, "error encountered fetching user")
 		return nil, http.StatusInternalServerError
 	}
 
-	logger := s.logger.WithValue("username", user.Username)
+	logger = s.logger.WithValue("username", user.Username)
 
 	valid, err := s.authenticator.ValidateLogin(
 		ctx,
@@ -195,12 +195,19 @@ func (s *Service) NewTOTPSecret(res http.ResponseWriter, req *http.Request) {
 	var err error
 	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.TOTPSecretRefreshInput)
 	if !ok {
-		s.logger.Debug("no input found on TOTP Secret refresh request")
+		s.logger.Debug("no input found on TOTP secret refresh request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	user, sc := s.validateCredentialChangeRequest(req, input.CurrentPassword, input.TOTPToken)
+	userID, ok := ctx.Value(models.UserIDKey).(uint64)
+	if !ok {
+		s.logger.Debug("no user ID attached to TOTP secret refresh request")
+		res.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	user, sc := s.validateCredentialChangeRequest(req, userID, input.CurrentPassword, input.TOTPToken)
 	if sc != 0 {
 		res.WriteHeader(sc)
 		return
@@ -237,12 +244,19 @@ func (s *Service) UpdatePassword(res http.ResponseWriter, req *http.Request) {
 
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.PasswordUpdateInput)
 	if !ok {
-		s.logger.Debug("no input found on TOTP Secret refresh request")
+		s.logger.Debug("no input found on UpdatePassword request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	user, sc := s.validateCredentialChangeRequest(req, input.CurrentPassword, input.TOTPToken)
+	userID, ok := ctx.Value(models.UserIDKey).(uint64)
+	if !ok {
+		s.logger.Debug("no user ID attached to UpdatePassword request")
+		res.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	user, sc := s.validateCredentialChangeRequest(req, userID, input.CurrentPassword, input.TOTPToken)
 	if sc != 0 {
 		res.WriteHeader(sc)
 		return

@@ -73,7 +73,7 @@ func TestBcrypt_ValidateLogin(T *testing.T) {
 	T.Run("normal operation", func(t *testing.T) {
 		t.Parallel()
 
-		code, err := totp.GenerateCode(exampleTwoFactorSecret, time.Now())
+		code, err := totp.GenerateCode(exampleTwoFactorSecret, time.Now().UTC())
 		assert.NoError(t, err, "error generating code to validate login")
 
 		valid, err := x.ValidateLogin(

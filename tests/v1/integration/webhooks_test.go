@@ -182,27 +182,19 @@ func TestWebhooks(test *testing.T) {
 			)
 			checkValueAndError(t, premade, err)
 
-			t.Logf("about to Change webhook #%d\n", premade.ID)
-
 			// Change webhook
 			premade.Name = reverse(premade.Name)
 			expected.Name = premade.Name
 			err = todoClient.UpdateWebhook(tctx, premade)
 			assert.NoError(t, err)
 
-			t.Log("about to Fetch webhook")
-
 			// Fetch webhook
 			actual, err := todoClient.GetWebhook(tctx, premade.ID)
 			checkValueAndError(t, actual, err)
 
-			t.Log("about to Assert webhook equality")
-
 			// Assert webhook equality
 			checkWebhookEquality(t, expected, actual)
 			assert.NotNil(t, actual.UpdatedOn)
-
-			t.Log("about to Clean up")
 
 			// Clean up
 			err = todoClient.DeleteWebhook(tctx, actual.ID)

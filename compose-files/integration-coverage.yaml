@@ -4,12 +4,12 @@ services:
   coverage-server:
     build:
       context: ../
-      dockerfile: dockerfiles/integration-coverage.Dockerfile
+      dockerfile: dockerfiles/integration-coverage-server.Dockerfile
     ports:
       - '80:80'
     environment:
       DOCKER: 'true'
-      RUNTIME_DURATION: '1m'
+      RUNTIME_DURATION: '30s'
     volumes:
       - ../artifacts/:/home/
     links:
@@ -20,7 +20,7 @@ services:
   test:
     build:
       context: ../
-      dockerfile: dockerfiles/http-client-integration-tests.Dockerfile
+      dockerfile: dockerfiles/integration-tests.Dockerfile
     environment:
       TARGET_ADDRESS: 'http://coverage-server'
       DOCKER: 'true'
@@ -28,6 +28,7 @@ services:
       JAEGER_AGENT_HOST: 'tracing-server'
       JAEGER_AGENT_PORT: '6831'
       JAEGER_SAMPLER_MANAGER_HOST_PORT: 'tracing-server:5778'
+      WAIT_FOR_COVERAGE: 'yes'
     links:
       - coverage-server
     # logging:

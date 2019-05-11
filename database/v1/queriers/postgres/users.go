@@ -252,7 +252,7 @@ const updateUserQuery = `
 	UPDATE users
 	SET
 		username = $1,
-		password = $2,
+		hashed_password = $2,
 		updated_on = extract(epoch FROM NOW())
 	WHERE
 		id = $3

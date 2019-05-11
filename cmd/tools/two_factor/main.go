@@ -84,7 +84,7 @@ func buildTheThing(token string) string {
 
 func doTheThing(secret string) {
 	t := strings.ToUpper(secret)
-	n := time.Now()
+	n := time.Now().UTC()
 	code, err := totp.GenerateCode(t, n)
 	mustnt(err)
 

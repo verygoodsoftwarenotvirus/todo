@@ -213,7 +213,6 @@ func TestAuth(test *testing.T) {
 		res, err = todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
-
 	})
 
 	test.Run("should not be able to login as someone that doesn't exist", func(t *testing.T) {
@@ -294,6 +293,47 @@ func TestAuth(test *testing.T) {
 		res, err := todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
 		assert.Equal(t, http.StatusAccepted, res.StatusCode)
+
+		// logout
+
+		u2, err := url.Parse(todoClient.BuildURL(nil))
+		require.NoError(t, err)
+		u2.Path = "/users/logout"
+
+		req, err = http.NewRequest(http.MethodPost, u2.String(), nil)
+		checkValueAndError(t, req, err)
+		req.AddCookie(cookie)
+
+		res, err = todoClient.PlainClient().Do(req)
+		checkValueAndError(t, res, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+
+		// create login request
+		newToken, err := totp.GenerateCode(user.TwoFactorSecret, time.Now().UTC())
+		checkValueAndError(t, newToken, err)
+		l, err := json.Marshal(&models.UserLoginInput{
+			Username:  user.Username,
+			Password:  backwardsPass,
+			TOTPToken: newToken,
+		})
+		require.NoError(t, err)
+		body = bytes.NewReader(l)
+
+		u3, err := url.Parse(todoClient.BuildURL(nil))
+		require.NoError(t, err)
+		u3.Path = "/users/login"
+
+		req, err = http.NewRequest(http.MethodPost, u3.String(), body)
+		checkValueAndError(t, req, err)
+
+		// execute login request
+		res, err = todoClient.PlainClient().Do(req)
+		checkValueAndError(t, res, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+
+		cookies := res.Cookies()
+		require.Len(t, cookies, 1)
+		assert.NotEqual(t, cookie, cookies[0])
 	})
 
 	test.Run("should accept a login cookie if a token is missing", func(t *testing.T) {

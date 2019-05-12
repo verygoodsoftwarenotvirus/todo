@@ -7,7 +7,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 
 	"github.com/pkg/errors"
 	"go.opencensus.io/trace"
@@ -77,6 +76,17 @@ func (s *Service) FetchUserFromRequest(req *http.Request) (*models.User, error) 
 	return user, nil
 }
 
+func parseLoginInputFromForm(req *http.Request) *models.UserLoginInput {
+	if perr := req.ParseForm(); perr != nil {
+		return &models.UserLoginInput{
+			Username:  req.FormValue("username"),
+			Password:  req.FormValue("password"),
+			TOTPToken: req.FormValue("totp_token"),
+		}
+	}
+	return nil
+}
+
 // Login is our login route
 func (s *Service) Login(res http.ResponseWriter, req *http.Request) {
 	ctx, span := trace.StartSpan(req.Context(), "login_route")
@@ -124,6 +134,7 @@ func (s *Service) Login(res http.ResponseWriter, req *http.Request) {
 	}
 
 	http.SetCookie(res, cookie)
+	res.WriteHeader(http.StatusNoContent)
 }
 
 // Logout is our logout route
@@ -149,7 +160,7 @@ type loginData struct {
 
 func (s *Service) fetchLoginDataFromRequest(req *http.Request) (*loginData, *models.ErrorResponse) {
 	ctx := req.Context()
-	loginInput, ok := ctx.Value(users.MiddlewareCtxKey).(*models.UserLoginInput)
+	loginInput, ok := ctx.Value(UserLoginInputMiddlewareCtxKey).(*models.UserLoginInput)
 	if !ok {
 		s.logger.Debug("no UserLoginInput found for /login request")
 		return nil, &models.ErrorResponse{
@@ -210,7 +221,7 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 		if err = s.database.UpdateUser(ctx, user); err != nil {
 			return false, err
 		}
-	} else if err != nil {
+	} else if err != nil && err != auth.ErrPasswordHashTooWeak {
 		logger.Error(err, "issue validating login")
 		return false, err
 	}

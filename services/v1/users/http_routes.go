@@ -1,9 +1,13 @@
 package users
 
 import (
+	"bytes"
 	"crypto/rand"
 	"database/sql"
 	"encoding/base32"
+	"encoding/base64"
+	"fmt"
+	"image/png"
 	"net/http"
 	"strconv"
 
@@ -12,6 +16,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 
+	"github.com/boombuler/barcode/qr"
 	"go.opencensus.io/trace"
 )
 
@@ -96,7 +101,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	ctx, span := trace.StartSpan(req.Context(), "create_route")
 	defer span.End()
 
-	input, ok := ctx.Value(MiddlewareCtxKey).(*models.UserInput)
+	input, ok := ctx.Value(UserCreationMiddlewareCtxKey).(*models.UserInput)
 	if !ok {
 		s.logger.Error(nil, "valid input not attached to UsersService Create request")
 		res.WriteHeader(http.StatusBadRequest)
@@ -135,6 +140,29 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	qrcode, err := qr.Encode(
+		// "otpauth://totp/{{ .Issuer }}:{{ .Username }}?secret={{ .Secret }}&issuer={{ .Issuer }}",
+		fmt.Sprintf(
+			"otpauth://totp/%s:%s?secret=%s&issuer=%s",
+			"todoservice",
+			user.Username,
+			user.TwoFactorSecret,
+			"todoService",
+		),
+		qr.L,
+		qr.Auto,
+	)
+	if err != nil {
+		s.logger.Error(err, "trying to encode secret to qr code")
+	}
+
+	var b bytes.Buffer
+	if err := png.Encode(&b, qrcode); err != nil {
+		s.logger.Error(err, "trying to encode qr code to png")
+	}
+
+	qrCode := fmt.Sprintf("data:image/jpeg;base64,%s", base64.StdEncoding.EncodeToString(b.Bytes()))
+
 	// UserCreationResponse is a struct we can use to notify the user of
 	// their two factor secret, but ideally just this once and then never again.
 	x := &models.UserCreationResponse{
@@ -145,6 +173,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		CreatedOn:             user.CreatedOn,
 		UpdatedOn:             user.UpdatedOn,
 		ArchivedOn:            user.ArchivedOn,
+		TwoFactorQRCode:       qrCode,
 	}
 
 	s.userCounter.Increment(ctx)

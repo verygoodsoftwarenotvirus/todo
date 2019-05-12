@@ -2,11 +2,17 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"go.opencensus.io/trace"
+)
+
+const (
+	// UserLoginInputMiddlewareCtxKey is the context key for login input
+	UserLoginInputMiddlewareCtxKey models.ContextKey = "user_login_input"
 )
 
 // CookieAuthenticationMiddleware checks every request for a user cookie
@@ -83,4 +89,19 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 			return
 		})
 	}
+}
+
+// UserLoginInputMiddleware fetches user login input from requests
+func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		x := new(models.UserLoginInput)
+		s.logger.WithRequest(req).Debug("UserLoginInputMiddleware called")
+		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
+			s.logger.Error(err, "error encountered decoding request body")
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		ctx := context.WithValue(req.Context(), UserLoginInputMiddlewareCtxKey, x)
+		next.ServeHTTP(res, req.WithContext(ctx))
+	})
 }

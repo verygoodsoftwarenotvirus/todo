@@ -67,7 +67,7 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 	}
 
 	router.Route("/users", func(userRouter chi.Router) {
-		userRouter.With(s.usersService.UserLoginInputMiddleware).Post("/login", s.authService.Login)
+		userRouter.With(s.authService.UserLoginInputMiddleware).Post("/login", s.authService.Login)
 		userRouter.With(s.authService.CookieAuthenticationMiddleware).Post("/logout", s.authService.Logout)
 
 		userIDPattern := fmt.Sprintf(oauth2IDPattern, users.URIParamKey)

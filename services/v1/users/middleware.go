@@ -9,9 +9,6 @@ import (
 )
 
 const (
-	// UserLoginInputMiddlewareCtxKey is the context key for login input
-	UserLoginInputMiddlewareCtxKey models.ContextKey = "user_login_input"
-
 	// UserCreationMiddlewareCtxKey is the context key for creation input
 	UserCreationMiddlewareCtxKey models.ContextKey = "user_creation_input"
 
@@ -47,7 +44,7 @@ func (s *Service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler 
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		ctx := context.WithValue(req.Context(), MiddlewareCtxKey, x)
+		ctx := context.WithValue(req.Context(), PasswordChangeMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }
@@ -62,7 +59,7 @@ func (s *Service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handl
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		ctx := context.WithValue(req.Context(), MiddlewareCtxKey, x)
+		ctx := context.WithValue(req.Context(), TOTPSecretRefreshMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }

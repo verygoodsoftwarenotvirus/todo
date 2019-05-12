@@ -222,7 +222,7 @@ func (s *Service) NewTOTPSecret(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	var err error
-	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.TOTPSecretRefreshInput)
+	input, ok := req.Context().Value(TOTPSecretRefreshMiddlewareCtxKey).(*models.TOTPSecretRefreshInput)
 	if !ok {
 		s.logger.Debug("no input found on TOTP secret refresh request")
 		res.WriteHeader(http.StatusBadRequest)
@@ -274,7 +274,7 @@ func (s *Service) UpdatePassword(res http.ResponseWriter, req *http.Request) {
 	ctx, span := trace.StartSpan(req.Context(), "update_password_route")
 	defer span.End()
 
-	input, ok := ctx.Value(MiddlewareCtxKey).(*models.PasswordUpdateInput)
+	input, ok := ctx.Value(PasswordChangeMiddlewareCtxKey).(*models.PasswordUpdateInput)
 	if !ok {
 		s.logger.Debug("no input found on UpdatePassword request")
 		res.WriteHeader(http.StatusBadRequest)

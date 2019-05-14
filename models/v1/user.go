@@ -62,7 +62,7 @@ type UserCreationResponse struct {
 	CreatedOn             uint64  `json:"created_on"`
 	UpdatedOn             *uint64 `json:"updated_on"`
 	ArchivedOn            *uint64 `json:"archived_on"`
-	TwoFactorQRCode       string  `json:"2fa_qr_code"`
+	TwoFactorQRCode       string  `json:"qr_code"`
 }
 
 // User represents a user

@@ -20,6 +20,7 @@ var (
 		ProvideServer,
 		ProvideNamespace,
 		ProvideLoginRoute,
+		ProvideRegistrationRoute,
 		ProvideNewsmanTypeNameManipulationFunc,
 	)
 )

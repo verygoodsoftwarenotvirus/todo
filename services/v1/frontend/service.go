@@ -12,10 +12,14 @@ type (
 	// LoginRoute is a string alias for dependency injection's sake
 	LoginRoute string
 
+	// RegistrationRoute is a string alias for dependency injection's sake
+	RegistrationRoute string
+
 	// Service is responsible for serving HTML (and relevant resources)
 	Service struct {
-		logger    logging.Logger
-		loginPage []byte
+		logger           logging.Logger
+		loginPage        []byte
+		registrationPage []byte
 	}
 )
 
@@ -23,10 +27,12 @@ type (
 func ProvideFrontendService(
 	logger logging.Logger,
 	loginRoute LoginRoute,
+	registerRoute RegistrationRoute,
 ) *Service {
 	svc := &Service{
-		logger:    logger.WithName(serviceName),
-		loginPage: buildLoginPage(loginRoute),
+		logger:           logger.WithName(serviceName),
+		loginPage:        buildLoginPage(loginRoute),
+		registrationPage: buildRegisterPage(registerRoute),
 	}
 	return svc
 }

@@ -25,9 +25,10 @@ import (
 // }
 
 const (
-	loginRoute       = `/users/login`
-	numericIDPattern = `/{%s:[0-9]+}`
-	oauth2IDPattern  = `/{%s:[0-9_\-]+}`
+	registrationRoute = `/users`
+	loginRoute        = `/users/login`
+	numericIDPattern  = `/{%s:[0-9]+}`
+	oauth2IDPattern   = `/{%s:[0-9_\-]+}`
 )
 
 func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Handler) {
@@ -55,7 +56,9 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 		fs.ServeHTTP(res, req)
 	}))
 
+	// Frontend routes
 	router.Get("/login", s.frontendService.LoginPage)
+	router.Get("/register", s.frontendService.RegistrationPage)
 
 	router.Route("/_meta_", func(metaRouter chi.Router) {
 		health := healthcheck.NewHandler()
@@ -116,39 +119,36 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 
 	router.
 		With(s.authService.AuthenticationMiddleware(true)).
-		Route("/api", func(apiRouter chi.Router) {
-			apiRouter.Route("/v1", func(v1Router chi.Router) {
+		Route("/api/v1", func(v1Router chi.Router) {
 
-				// Items
-				v1Router.Route("/items", func(itemsRouter chi.Router) {
-					sr := fmt.Sprintf(numericIDPattern, items.URIParamKey)
-					itemsRouter.With(s.itemsService.CreationInputMiddleware).Post("/", s.itemsService.Create) // Create
-					itemsRouter.Get(sr, s.itemsService.Read)                                                  // Read
-					itemsRouter.With(s.itemsService.UpdateInputMiddleware).Put(sr, s.itemsService.Update)     // Update
-					itemsRouter.Delete(sr, s.itemsService.Delete)                                             // Delete
-					itemsRouter.Get("/", s.itemsService.List)                                                 // List
-				})
+			// Items
+			v1Router.Route("/items", func(itemsRouter chi.Router) {
+				sr := fmt.Sprintf(numericIDPattern, items.URIParamKey)
+				itemsRouter.With(s.itemsService.CreationInputMiddleware).Post("/", s.itemsService.Create) // Create
+				itemsRouter.Get(sr, s.itemsService.Read)                                                  // Read
+				itemsRouter.With(s.itemsService.UpdateInputMiddleware).Put(sr, s.itemsService.Update)     // Update
+				itemsRouter.Delete(sr, s.itemsService.Delete)                                             // Delete
+				itemsRouter.Get("/", s.itemsService.List)                                                 // List
+			})
 
-				// Webhooks
-				v1Router.Route("/webhooks", func(webhookRouter chi.Router) {
-					sr := fmt.Sprintf(numericIDPattern, webhooks.URIParamKey)
-					webhookRouter.With(s.webhooksService.CreationInputMiddleware).Post("/", s.webhooksService.Create) // Create
-					webhookRouter.Get(sr, s.webhooksService.Read)                                                     // Read
-					webhookRouter.With(s.webhooksService.UpdateInputMiddleware).Put(sr, s.webhooksService.Update)     // Update
-					webhookRouter.Delete(sr, s.webhooksService.Delete)                                                // Delete
-					webhookRouter.Get("/", s.webhooksService.List)                                                    // List
-				})
+			// Webhooks
+			v1Router.Route("/webhooks", func(webhookRouter chi.Router) {
+				sr := fmt.Sprintf(numericIDPattern, webhooks.URIParamKey)
+				webhookRouter.With(s.webhooksService.CreationInputMiddleware).Post("/", s.webhooksService.Create) // Create
+				webhookRouter.Get(sr, s.webhooksService.Read)                                                     // Read
+				webhookRouter.With(s.webhooksService.UpdateInputMiddleware).Put(sr, s.webhooksService.Update)     // Update
+				webhookRouter.Delete(sr, s.webhooksService.Delete)                                                // Delete
+				webhookRouter.Get("/", s.webhooksService.List)                                                    // List
+			})
 
-				// OAuth2 Clients
-				v1Router.Route("/oauth2/clients", func(clientRouter chi.Router) {
-					sr := fmt.Sprintf(numericIDPattern, oauth2clients.URIParamKey)
-					// Create is not bound to an OAuth2 authentication token
-					// Update not supported for OAuth2 clients.
-					clientRouter.Get(sr, s.oauth2ClientsService.Read)      // Read
-					clientRouter.Delete(sr, s.oauth2ClientsService.Delete) // Delete
-					clientRouter.Get("/", s.oauth2ClientsService.List)     // List
-				})
-
+			// OAuth2 Clients
+			v1Router.Route("/oauth2/clients", func(clientRouter chi.Router) {
+				sr := fmt.Sprintf(numericIDPattern, oauth2clients.URIParamKey)
+				// Create is not bound to an OAuth2 authentication token
+				// Update not supported for OAuth2 clients.
+				clientRouter.Get(sr, s.oauth2ClientsService.Read)      // Read
+				clientRouter.Delete(sr, s.oauth2ClientsService.Delete) // Delete
+				clientRouter.Get("/", s.oauth2ClientsService.List)     // List
 			})
 
 		})
@@ -159,4 +159,9 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 // ProvideLoginRoute provides a LoginRoute
 func ProvideLoginRoute() frontend.LoginRoute {
 	return frontend.LoginRoute(loginRoute)
+}
+
+// ProvideRegistrationRoute provides a RegistrationRoute
+func ProvideRegistrationRoute() frontend.RegistrationRoute {
+	return frontend.RegistrationRoute(registrationRoute)
 }

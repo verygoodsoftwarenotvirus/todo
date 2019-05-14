@@ -19,6 +19,7 @@ var (
 		paramFetcherProviders,
 		ProvideServer,
 		ProvideNamespace,
+		ProvideLoginRoute,
 		ProvideNewsmanTypeNameManipulationFunc,
 	)
 )

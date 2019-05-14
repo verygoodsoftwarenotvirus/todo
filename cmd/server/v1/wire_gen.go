@@ -16,6 +16,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
 	auth2 "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -37,6 +38,8 @@ func BuildServer(cfg *config.ServerConfig, logger logging.Logger, database2 data
 	}
 	userIDFetcher := httpserver.ProvideAuthUserIDFetcher()
 	authService := auth2.ProvideAuthService(logger, cfg, authenticator, userDataManager, service, userIDFetcher, encoderDecoder)
+	loginRoute := httpserver.ProvideLoginRoute()
+	frontendService := frontend.ProvideFrontendService(logger, loginRoute)
 	itemsUserIDFetcher := httpserver.ProvideUserIDFetcher()
 	itemIDFetcher := httpserver.ProvideItemIDFetcher()
 	websocketAuthFunc := auth2.ProvideWebsocketAuthFunc(authService)
@@ -58,7 +61,7 @@ func BuildServer(cfg *config.ServerConfig, logger logging.Logger, database2 data
 	if err != nil {
 		return nil, err
 	}
-	httpserverServer, err := httpserver.ProvideServer(cfg, authService, itemsService, usersService, service, webhooksService, database2, logger, encoderDecoder, newsmanNewsman)
+	httpserverServer, err := httpserver.ProvideServer(cfg, authService, frontendService, itemsService, usersService, service, webhooksService, database2, logger, encoderDecoder, newsmanNewsman)
 	if err != nil {
 		return nil, err
 	}

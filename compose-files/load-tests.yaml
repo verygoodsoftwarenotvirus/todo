@@ -26,8 +26,6 @@ services:
     build:
       context: ../
       dockerfile: dockerfiles/load-tests.Dockerfile
-    environment:
-      OAUTHLIB_INSECURE_TRANSPORT: 'true'
     links:
       - todo-server
 

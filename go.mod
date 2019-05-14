@@ -15,6 +15,7 @@ require (
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/gogo/protobuf v1.2.0 // indirect
 	github.com/google/wire v0.2.1
+	github.com/googleapis/gax-go v2.0.2+incompatible // indirect
 	github.com/gorilla/securecookie v1.1.1
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428

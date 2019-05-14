@@ -7,7 +7,7 @@ RUN apk add --update make git gcc musl-dev
 
 ADD . .
 
-RUN go build -o /loadtester gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/load/hazana
+RUN go build -o /loadtester gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/load/
 
 # final stage
 FROM alpine:latest

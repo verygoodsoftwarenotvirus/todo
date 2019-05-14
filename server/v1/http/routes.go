@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -24,6 +25,7 @@ import (
 // }
 
 const (
+	loginRoute       = `/users/login`
 	numericIDPattern = `/{%s:[0-9]+}`
 	oauth2IDPattern  = `/{%s:[0-9_\-]+}`
 )
@@ -52,6 +54,8 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 
 		fs.ServeHTTP(res, req)
 	}))
+
+	router.Get("/login", s.frontendService.LoginPage)
 
 	router.Route("/_meta_", func(metaRouter chi.Router) {
 		health := healthcheck.NewHandler()
@@ -150,4 +154,9 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 		})
 
 	s.router = router
+}
+
+// ProvideLoginRoute provides a LoginRoute
+func ProvideLoginRoute() frontend.LoginRoute {
+	return frontend.LoginRoute(loginRoute)
 }

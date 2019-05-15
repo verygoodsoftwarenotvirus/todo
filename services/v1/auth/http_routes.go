@@ -76,17 +76,6 @@ func (s *Service) FetchUserFromRequest(req *http.Request) (*models.User, error) 
 	return user, nil
 }
 
-func parseLoginInputFromForm(req *http.Request) *models.UserLoginInput {
-	if perr := req.ParseForm(); perr != nil {
-		return &models.UserLoginInput{
-			Username:  req.FormValue("username"),
-			Password:  req.FormValue("password"),
-			TOTPToken: req.FormValue("totp_token"),
-		}
-	}
-	return nil
-}
-
 // Login is our login route
 func (s *Service) Login(res http.ResponseWriter, req *http.Request) {
 	ctx, span := trace.StartSpan(req.Context(), "login_route")

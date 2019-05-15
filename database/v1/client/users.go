@@ -2,6 +2,7 @@ package dbclient
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -9,7 +10,12 @@ import (
 	"go.opencensus.io/trace"
 )
 
-var _ models.UserDataManager = (*Client)(nil)
+var (
+	_ models.UserDataManager = (*Client)(nil)
+
+	// ErrUserExists is a sentinel error for returning when a username is taken
+	ErrUserExists = errors.New("error: username already exists")
+)
 
 // AdminUserExists executes a query to determine if an admin user has been established in the database
 func (c *Client) AdminUserExists(ctx context.Context) (bool, error) {

@@ -91,12 +91,29 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 	}
 }
 
+func parseLoginInputFromForm(req *http.Request) *models.UserLoginInput {
+	if perr := req.ParseForm(); perr != nil {
+		return &models.UserLoginInput{
+			Username:  req.FormValue("username"),
+			Password:  req.FormValue("password"),
+			TOTPToken: req.FormValue("totp_token"),
+		}
+	}
+	return nil
+}
+
 // UserLoginInputMiddleware fetches user login input from requests
 func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(models.UserLoginInput)
 		s.logger.WithRequest(req).Debug("UserLoginInputMiddleware called")
 		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
+			if formInput := parseLoginInputFromForm(req); formInput != nil {
+				ctx := context.WithValue(req.Context(), UserLoginInputMiddlewareCtxKey, formInput)
+				next.ServeHTTP(res, req.WithContext(ctx))
+				return
+			}
+
 			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
 			return

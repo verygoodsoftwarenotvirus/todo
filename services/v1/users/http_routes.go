@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strconv"
 
+	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	v1 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/events/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
@@ -108,10 +109,11 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	s.logger.WithValues(map[string]interface{}{
+	logger := s.logger.WithValues(map[string]interface{}{
 		"username": input.Username,
 		"is_admin": input.IsAdmin,
-	}).Debug("user creation route hit")
+	})
+	logger.Debug("user creation route hit")
 
 	span.AddAttributes(
 		trace.StringAttribute("username", input.Username),
@@ -120,7 +122,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 
 	hp, err := s.authenticator.HashPassword(ctx, input.Password)
 	if err != nil {
-		s.logger.Error(err, "valid input not attached to request")
+		logger.Error(err, "valid input not attached to request")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -135,6 +137,11 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 
 	user, err := s.database.CreateUser(ctx, input)
 	if err != nil {
+		if err == dbclient.ErrUserExists {
+			s.logger.Debug("duplicate username attempted")
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
 		s.logger.Error(err, "error creating user")
 		res.WriteHeader(http.StatusInternalServerError)
 		return

@@ -57,8 +57,9 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 	}))
 
 	// Frontend routes
-	router.Get("/login", s.frontendService.LoginPage)
-	router.Get("/register", s.frontendService.RegistrationPage)
+	for route, handler := range s.frontendService.Routes() {
+		router.Get(route, handler)
+	}
 
 	router.Route("/_meta_", func(metaRouter chi.Router) {
 		health := healthcheck.NewHandler()

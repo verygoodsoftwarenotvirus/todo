@@ -5,16 +5,53 @@ import (
 	"net/http"
 )
 
+// Routes returns a map of route to handlerfunc for the parent router to set
+// this keeps routing logic in the frontend service and not in the server itself.
+func (s *Service) Routes() map[string]http.HandlerFunc {
+	return map[string]http.HandlerFunc{
+		"/":         s.HomePage,
+		"/login":    s.LoginPage,
+		"/register": s.RegistrationPage,
+	}
+}
+
 const loginShell = `<html>
 	<head>
 		<title>Login</title>
+		<script>
+			function login() {
+				var request = new XMLHttpRequest();
+				request.open('POST', '%s', true);
+
+				request.onload = function() {
+					if (this.status >= 200 && this.status < 400) {
+						window.location.replace("/");
+					}
+				}
+
+				request.onerror = () => {
+					// There was a connection error of some sort
+					console.error('something has gone awry!');
+				};
+
+				request.setRequestHeader('Content-Type', 'application/json');
+				const body = JSON.stringify({
+					username: document.getElementById('username').value,
+					password: document.getElementById('password').value,
+					totp_token: document.getElementById('totp_token').value,
+				})
+				request.send(body);
+
+				return false;
+			}
+		</script>
 	</head>
 	<body>
-		<form id="loginForm" action="%s" method="POST" style="margin-top: 15%%; text-align: center;">
-			<p>username: <input type="text" name="username"></p>
-			<p>password: <input type="password" name="password"></p>
-			<p>2FA code: <input type="text" name="2fa_code"></p>
-			<button>login</button>
+		<form id="loginForm" action="#" onsubmit="return login(this);" style="margin-top: 15%%; text-align: center;">
+			<p>username: <input id="username" type="text" name="username"></p>
+			<p>password: <input id="password" type="password" name="password"></p>
+			<p>2FA code: <input id="totp_token" type="text" name="totp_token"></p>
+			<input type="submit" value="login"> <a href="/register">register instead</a>
 		</form>
 	</body>
 </html>`
@@ -43,9 +80,11 @@ const registerShell = `<html>
 
 				request.onload = function() {
 					if (this.status >= 200 && this.status < 400) {
-						// Success!
-						var twoFactorQRCode = JSON.parse(this.response).qr_code || '';
+						var res = JSON.parse(this.response);
+						var twoFactorQRCode = res.qr_code || '';
 						if (twoFactorQRCode.length !== 0) {
+							console.debug(res.two_factor_secret)
+
 							// gather our container
 							var containerDiv = document.getElementById("qrCodeContainer");
 
@@ -94,11 +133,11 @@ const registerShell = `<html>
 		</script>
 	</head>
 	<body>
-		<div id="registrationForm" onsubmit="createUser()" style="margin-top: 15%%; text-align: center;">
+		<form id="registrationForm" action="#" onsubmit="return createUser(this);" style="margin-top: 15%%; text-align: center;">
 			<p>username: <input id="username" type="text" name="username"></p>
 			<p>password: <input id="password" type="password" name="password"></p>
-			<button onclick="createUser()">register</button>
-		</div>
+			<input type="submit" value="register"> <a href="/login">log in instead</a>
+		</form>
 		<div id="qrCodeContainer" style="text-align: center;">
 		</div>
 	</body>
@@ -111,4 +150,25 @@ func buildRegisterPage(registerRoute RegistrationRoute) []byte {
 // RegistrationPage serves the registration page
 func (s *Service) RegistrationPage(res http.ResponseWriter, req *http.Request) {
 	res.Write(s.registrationPage)
+}
+
+const homePage = `<html>
+	<head>
+		<title>Home</title>
+	</head>
+	<body>
+		<ul>
+			<li><a href="/">Here</a></li>
+			<li><a href="/items">Items</a></li>
+			<li><a href="/webhooks">Webhooks</a></li>
+			<li><a href="/oauth2_clients">OAuth2 Clients</a></li>
+			<li><a href="/login">Login</a></li>
+			<li><a href="/register">Register</a></li>
+		</ul>
+	</body>
+</html>`
+
+// HomePage serves our homepage
+func (s *Service) HomePage(res http.ResponseWriter, req *http.Request) {
+	res.Write([]byte(homePage))
 }

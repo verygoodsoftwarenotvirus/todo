@@ -15,6 +15,10 @@ type (
 	// RegistrationRoute is a string alias for dependency injection's sake
 	RegistrationRoute string
 
+	// Service interface{
+	//	Routes() map[string]http.HandlerFunc
+	// }
+
 	// Service is responsible for serving HTML (and relevant resources)
 	Service struct {
 		logger           logging.Logger

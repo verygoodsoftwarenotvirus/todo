@@ -12,11 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
-
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	randmodel "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/rand/model"
+
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"

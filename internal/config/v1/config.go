@@ -19,17 +19,22 @@ func init() {
 }
 
 type (
-	// MetaSettings is a container struct for dealing with settings pertaining to operations matters for the server.
+	// MetaSettings is primarily used for development
 	MetaSettings struct {
 		// NOTE: this debug should override all other debugs. That is to say, if it is enabled, all of them are enabled.
 		Debug bool `mapstructure:"debug"`
 	}
 
-	// ServerSettings is a container struct for dealing with settings pertaining to
+	// ServerSettings describes the settings pertinent to the
 	ServerSettings struct {
-		HTTPPort               uint16 `mapstructure:"http_port"`
-		Debug                  bool   `mapstructure:"debug"`
-		FrontendFilesDirectory string `mapstructure:"frontend_files_directory"`
+		HTTPPort uint16 `mapstructure:"http_port"`
+		Debug    bool   `mapstructure:"debug"`
+	}
+
+	// FrontendSettings describes the settings pertinent to the frontend
+	FrontendSettings struct {
+		StaticFilesDirectory string `mapstructure:"static_files_dir"`
+		WASMClientPackage    string `mapstructure:"wasm_client_package"`
 	}
 
 	// AuthSettings is a container struct for dealing with settings pertaining to
@@ -41,6 +46,7 @@ type (
 	// ServerConfig is our server configuration struct
 	ServerConfig struct {
 		Meta     MetaSettings     `mapstructure:"meta"`
+		Frontend FrontendSettings `mapstructure:"frontend"`
 		Auth     AuthSettings     `mapstructure:"auth"`
 		Metrics  MetricsSettings  `mapstructure:"metrics"`
 		Server   ServerSettings   `mapstructure:"server"`

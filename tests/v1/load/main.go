@@ -6,9 +6,9 @@ import (
 	"io/ioutil"
 	"log"
 
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
-
 	"github.com/emicklei/hazana"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 )
 
 // TodoServiceAttacker implements hazana's Attacker interface

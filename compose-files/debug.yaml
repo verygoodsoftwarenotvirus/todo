@@ -4,7 +4,7 @@ services:
   todo-server:
     build:
       context: ../
-      dockerfile: dockerfiles/server.Dockerfile
+      dockerfile: dockerfiles/server-debug.Dockerfile
     ports:
       - '80:80'
     environment:
@@ -13,6 +13,10 @@ services:
       JAEGER_AGENT_HOST: 'tracing-server'
       JAEGER_AGENT_PORT: '6831'
       JAEGER_SAMPLER_MANAGER_HOST_PORT: 'tracing-server:5778'
+    volumes:
+      - type: bind
+        source: ../client/v1/frontend
+        target: /go/src/gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/frontend
     links:
       - tracing-server
       - database
@@ -21,6 +25,17 @@ services:
       - grafana
     # logging:
     #   driver: none
+
+  database:
+    image: postgres:latest
+    ports:
+      - '2345:5432'
+    environment:
+      POSTGRES_USER: dbuser
+      POSTGRES_PASSWORD: hunter2
+      POSTGRES_DB: todo
+    logging:
+      driver: none
 
   tracing-server:
     image: jaegertracing/all-in-one:latest
@@ -32,17 +47,6 @@ services:
       - 16686:16686
       - 14268:14268
       - 9411:9411
-    logging:
-      driver: none
-
-  database:
-    image: postgres:latest
-    ports:
-      - '2345:5432'
-    environment:
-      POSTGRES_USER: dbuser
-      POSTGRES_PASSWORD: hunter2
-      POSTGRES_DB: todo
     logging:
       driver: none
 

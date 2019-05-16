@@ -5,7 +5,9 @@
 [server]
 http_port = 80
 debug = true
-frontend_files_directory = "/frontend"
+
+[frontend]
+wasm_client_package = "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/frontend"
 
 [auth]
 cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"

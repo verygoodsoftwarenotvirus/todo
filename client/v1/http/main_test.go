@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
+	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

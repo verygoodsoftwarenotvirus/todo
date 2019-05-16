@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
+	http2 "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/rand/model"
 )
@@ -29,7 +29,7 @@ type (
 	}
 )
 
-func fetchRandomItem(client *client.V1Client) *models.Item {
+func fetchRandomItem(client *http2.V1Client) *models.Item {
 	itemsRes, err := client.GetItems(context.Background(), nil)
 	if err != nil || itemsRes == nil || len(itemsRes.Items) == 0 {
 		return nil
@@ -39,7 +39,7 @@ func fetchRandomItem(client *client.V1Client) *models.Item {
 	return &itemsRes.Items[randIndex]
 }
 
-func fetchRandomWebhook(client *client.V1Client) *models.Webhook {
+func fetchRandomWebhook(client *http2.V1Client) *models.Webhook {
 	webhookRes, err := client.GetWebhooks(context.Background(), nil)
 	if err != nil || webhookRes == nil || len(webhookRes.Webhooks) == 0 {
 		return nil
@@ -49,7 +49,7 @@ func fetchRandomWebhook(client *client.V1Client) *models.Webhook {
 	return &webhookRes.Webhooks[randIndex]
 }
 
-func fetchRandomOAuth2Client(client *client.V1Client) *models.OAuth2Client {
+func fetchRandomOAuth2Client(client *http2.V1Client) *models.OAuth2Client {
 	clientsRes, err := client.GetOAuth2Clients(context.Background(), nil)
 	if err != nil || clientsRes == nil || len(clientsRes.Clients) <= 1 {
 		return nil
@@ -68,7 +68,7 @@ func fetchRandomOAuth2Client(client *client.V1Client) *models.OAuth2Client {
 }
 
 // RandomAction takes a client and returns a closure which is an action
-func RandomAction(client *client.V1Client) *Action {
+func RandomAction(client *http2.V1Client) *Action {
 	ctx := context.Background()
 	allActions := map[string]*Action{
 		"GetHealthCheck": {

@@ -123,7 +123,7 @@ func ProvideServer(
 		srv.newsManager.TuneIn(l)
 	}
 
-	srv.setupRouter(cfg.Server.FrontendFilesDirectory, ih)
+	srv.setupRouter(cfg.Frontend, ih)
 	srv.httpServer.Handler = &ochttp.Handler{
 		Handler:        srv.router,
 		FormatSpanName: formatSpanNameForRequest,

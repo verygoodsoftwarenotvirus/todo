@@ -12,6 +12,7 @@ require (
 	github.com/boombuler/barcode v1.0.0
 	github.com/corpix/uarand v0.1.0 // indirect
 	github.com/emicklei/hazana v1.6.1
+	github.com/fsnotify/fsnotify v1.4.7
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/gogo/protobuf v1.2.0 // indirect
 	github.com/google/wire v0.2.1
@@ -30,6 +31,7 @@ require (
 	github.com/stretchr/testify v1.3.0
 	github.com/uber/jaeger-client-go v2.16.0+incompatible // indirect
 	github.com/uber/jaeger-lib v2.0.0+incompatible // indirect
+	gitlab.com/verygoodsoftwarenotvirus/hot-tomale v0.0.0-20190331084919-baed752ca61a // indirect
 	gitlab.com/verygoodsoftwarenotvirus/logging v1.0.2
 	gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.0-20190507231017-beb954c7c2d8
 	go.opencensus.io v0.21.0

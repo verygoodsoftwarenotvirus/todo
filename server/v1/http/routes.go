@@ -3,9 +3,8 @@ package httpserver
 import (
 	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
@@ -31,7 +30,7 @@ const (
 	oauth2IDPattern   = `/{%s:[0-9_\-]+}`
 )
 
-func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Handler) {
+func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHandler metrics.Handler) {
 	router := chi.NewRouter()
 
 	router.Use(
@@ -42,23 +41,23 @@ func (s *Server) setupRouter(frontendFilesPath string, metricsHandler metrics.Ha
 
 	// all middleware must be defined before routes on a mux
 
-	// define client side rendered asset httpServer
-	pwd, _ := os.Getwd()
-	filesDir := filepath.Join(pwd, frontendFilesPath)
-	fs := http.StripPrefix("/", http.FileServer(http.Dir(filesDir)))
-	router.Get("/*", http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		switch req.URL.Path {
-		case "/listyourfrontendhistoryroutesrouteshere":
-		default:
-			req.URL.Path = "/"
-		}
-
-		fs.ServeHTTP(res, req)
-	}))
-
 	// Frontend routes
+	staticFileServer, err := s.frontendService.StaticDir(frontendConfig.StaticFilesDirectory)
+	if err != nil {
+		s.logger.Error(err, "establishing static file server")
+	}
+
+	router.Get("/*", staticFileServer)
 	for route, handler := range s.frontendService.Routes() {
 		router.Get(route, handler)
+	}
+
+	// watch the wasm client package for changes
+	if s.config.Debug && frontendConfig.WASMClientPackage != "" {
+		s.logger.WithValue("wasm_dir", frontendConfig.WASMClientPackage).Debug("watching WASM directory")
+		if err := s.frontendService.DebugWASMPackage(frontendConfig.WASMClientPackage); err != nil {
+			s.logger.Error(err, "wasm folder troubles")
+		}
 	}
 
 	router.Route("/_meta_", func(metaRouter chi.Router) {

@@ -90,18 +90,24 @@ integration-coverage:
 server-docker-image: wire
 	docker build --tag $(SERVER_DOCKER_IMAGE_NAME):latest --file dockerfiles/server.Dockerfile .
 
-.PHONY: prod-server-docker-image
-prod-server-docker-image: wire
-	docker build --tag $(SERVER_DOCKER_REPO_NAME):latest --file dockerfiles/server.Dockerfile .
-
 .PHONY: push-server-to-docker
 push-server-to-docker: prod-server-docker-image
 	docker push $(SERVER_DOCKER_REPO_NAME):latest
 
 ## Running
 
+.PHONY: debug
+debug:
+	docker-compose --file compose-files/debug.yaml up \
+	--build \
+	--force-recreate \
+	--remove-orphans \
+	--renew-anon-volumes \
+	--always-recreate-deps \
+	--abort-on-container-exit
+
 .PHONY: run
-run: server-docker-image
+run:
 	docker-compose --file compose-files/docker-compose.yaml up \
 	--build \
 	--force-recreate \

@@ -71,10 +71,8 @@ func (c *V1Client) BuildCreateOAuth2ClientRequest(ctx context.Context, cookie *h
 
 // CreateOAuth2Client creates an OAuth2 client
 func (c *V1Client) CreateOAuth2Client(ctx context.Context, input *models.OAuth2ClientCreationInput, cookie *http.Cookie) (oauth2Client *models.OAuth2Client, err error) {
-	if cookie == nil && c.currentUserCookie == nil {
-		return nil, errors.New("no cookie available for authenticated request")
-	} else if cookie == nil {
-		cookie = c.currentUserCookie
+	if cookie == nil {
+		return nil, errors.New("cookie required for request")
 	}
 
 	// I can ignore this error because I know that URI will be valid

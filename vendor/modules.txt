@@ -138,21 +138,23 @@ github.com/tidwall/rtree/base
 github.com/tidwall/tinyqueue
 # gitlab.com/verygoodsoftwarenotvirus/logging v1.0.2
 gitlab.com/verygoodsoftwarenotvirus/logging/v1
-gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog
 gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop
+gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog
 # gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.0-20190507231017-beb954c7c2d8
 gitlab.com/verygoodsoftwarenotvirus/newsman
+# gitlab.com/verygoodsoftwarenotvirus/verso v1.0.1
+gitlab.com/verygoodsoftwarenotvirus/verso/html
 # go.opencensus.io v0.21.0
-go.opencensus.io/trace
 go.opencensus.io/plugin/ochttp
+go.opencensus.io/trace
 go.opencensus.io/stats/view
 go.opencensus.io/stats
+go.opencensus.io/plugin/ochttp/propagation/b3
+go.opencensus.io/tag
+go.opencensus.io/trace/propagation
 go.opencensus.io/internal
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/tracestate
-go.opencensus.io/tag
-go.opencensus.io/plugin/ochttp/propagation/b3
-go.opencensus.io/trace/propagation
 go.opencensus.io/metric/metricdata
 go.opencensus.io/metric/metricexport
 go.opencensus.io/internal/tagencoding

@@ -131,11 +131,6 @@ func (c *V1Client) Login(ctx context.Context, username, password, TOTPToken stri
 	logger := c.logger.WithValue("username", username)
 	logger.Debug("login called")
 
-	if c.currentUserCookie != nil {
-		logger.Debug("returning user cookie from cache")
-		return c.currentUserCookie, nil
-	}
-
 	req, err := c.BuildLoginRequest(username, password, TOTPToken)
 	if err != nil {
 		logger.Error(err, "building login request")
@@ -152,8 +147,7 @@ func (c *V1Client) Login(ctx context.Context, username, password, TOTPToken stri
 
 	cookies := res.Cookies()
 	if len(cookies) > 0 {
-		c.currentUserCookie = cookies[0]
-		return c.currentUserCookie, nil
+		return cookies[0], nil
 	}
 
 	return nil, errors.New("no cookies returned from request")

@@ -18,6 +18,6 @@ COPY --from=build-stage /todo /todo
 ENV CONFIGURATION_FILEPATH=config_files/debug.toml
 ENV DOCKER=true
 
-RUN go build -o /frontend/website.wasm gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/frontend
+RUN GOOS=js GOARCH=wasm go build -o /frontend/website.wasm gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/frontend
 
 ENTRYPOINT ["/todo"]

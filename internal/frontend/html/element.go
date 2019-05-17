@@ -108,22 +108,19 @@ func (e *Element) OrphanChildren() {
 
 	`, nodeCount)
 
+	removedCount := 0
 	for i := 0; i < nodeCount; i++ {
 		node := nodes.Index(i)
-		if node.Type() != js.TypeObject {
-			e.RemoveChild(node)
-		} else {
-			log.Printf("not removing child %d: %+v\n", i, node)
-		}
+		e.RemoveChild(node)
+		removedCount++
 	}
-}
 
-// // SwapChildren can reverse the order two children appear in the list of child nodes, which can sometimes affect appearance.
-// func (e *Element) SwapChildren(child1, child2 Valuer) {
-// 	// https://stackoverflow.com/a/9732839
-// 	child := child1.JSValue()
-// 	child.Get("parentNode").Call("insertBefore", child, child2.JSValue())
-// }
+	log.Printf(`
+
+	removed %d child nodes
+
+	`, removedCount)
+}
 
 // OnClick registers a function to run upon click
 func (e *Element) OnClick(f func()) {

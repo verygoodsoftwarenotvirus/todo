@@ -4,6 +4,7 @@ package router
 
 import (
 	"errors"
+	"log"
 	"strings"
 	"syscall/js"
 
@@ -56,14 +57,26 @@ func NewClientSideRouter(logger logging.Logger, hostElement *html.Element) *Clie
 }
 
 // RouteFunc returns a jsFunc that should be assigned to hashchange events
-func (r *ClientSideRouter) RouteFunc() js.Func {
+func (r *ClientSideRouter) RouteFunc(hostElement *html.Element) js.Func {
 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		return r.Route()
+		r.logger.Info(`
+
+	RouteFunc called
+
+		`)
+
+		content, err := r.Route()
+		if err != nil {
+			log.Fatal(err)
+		}
+		hostElement.OrphanChildren()
+		hostElement.AppendChild(content)
+		return nil
 	})
 }
 
 // Route is our main function which determines what page we're on, what that page should show, and reconciles the difference
-func (r *ClientSideRouter) Route() error {
+func (r *ClientSideRouter) Route() (*html.Div, error) {
 	var url = "/"
 	fullHash := html.GetLocation().Hash()
 	urlParts := strings.Split(fullHash, "#")
@@ -76,18 +89,10 @@ func (r *ClientSideRouter) Route() error {
 	route, ok := r.routes[url]
 	if !ok {
 		logger.Debug("route not found")
-		return errors.New("blah")
+		return nil, errors.New("blah")
 	}
 
-	view, err := route.Render()
-	if err != nil {
-		return err
-	}
-
-	r.hostElement.OrphanChildren()
-	r.hostElement.AppendChild(view)
-
-	return nil
+	return route.Render()
 }
 
 // AddRoute adds a new route to the router

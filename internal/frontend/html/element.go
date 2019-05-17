@@ -3,6 +3,8 @@
 package html
 
 import (
+	"log"
+	"sync/atomic"
 	"syscall/js"
 )
 
@@ -58,6 +60,16 @@ func (e *Element) SetInnerHTML(html string) {
 	e.this.Set("innerHTML", html)
 }
 
+// SetStyle sets the `.style` field
+func (e *Element) SetStyle(css string) {
+	e.this.Set("style", css)
+}
+
+// ToHTML returns the `.outerHTML` field
+func (e *Element) ToHTML() string {
+	return e.this.Get("outerHTML").String()
+}
+
 // SetID sets the `id` field
 func (e *Element) SetID(id string) {
 	e.this.Set("id", id)
@@ -73,9 +85,37 @@ func (e *Element) AppendChild(child Valuer) {
 	e.this.Call("appendChild", child.JSValue())
 }
 
+// AppendChildren appends multiple children
+func (e *Element) AppendChildren(children ...Valuer) {
+	for _, child := range children {
+		e.this.Call("appendChild", child.JSValue())
+	}
+}
+
 // RemoveChild removes a child
 func (e *Element) RemoveChild(child Valuer) {
 	e.this.Call("removeChild", child.JSValue())
+}
+
+// OrphanChildren removes all child elements from the element
+func (e *Element) OrphanChildren() {
+	nodes := e.this.Get("childNodes")
+	nodeCount := nodes.Length()
+
+	log.Printf(`
+
+	iterating over %d child nodes
+
+	`, nodeCount)
+
+	for i := 0; i < nodeCount; i++ {
+		node := nodes.Index(i)
+		if node.Type() != js.TypeObject {
+			e.RemoveChild(node)
+		} else {
+			log.Printf("not removing child %d: %+v\n", i, node)
+		}
+	}
 }
 
 // // SwapChildren can reverse the order two children appear in the list of child nodes, which can sometimes affect appearance.
@@ -86,12 +126,26 @@ func (e *Element) RemoveChild(child Valuer) {
 // }
 
 // OnClick registers a function to run upon click
-func (e *Element) OnClick(f func(), once bool) {
+func (e *Element) OnClick(f func()) {
 	var cb js.Func
 	cb = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		go func() {
 			f()
-			if once {
+		}()
+		return nil
+	})
+	e.this.Set("onclick", cb)
+}
+
+// OnClickN registers a function to run upon clicking, but only N times
+func (e *Element) OnClickN(f func(), n uint64) {
+	var cb js.Func
+	var callCount uint64
+	cb = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		go func() {
+			atomic.AddUint64(&callCount, 1)
+			f()
+			if callCount >= n {
 				cb.Release()
 			}
 		}()

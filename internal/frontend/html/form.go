@@ -2,9 +2,6 @@
 
 package html
 
-import (
-// "syscall/js"
-)
 
 // Form represents a form tag
 type Form struct {
@@ -19,6 +16,8 @@ func NewForm(action string) *Form {
 		Element: *(NewElement("form")),
 		action: action,
 	}
+
+	f.Element.JSValue().Set("action", action)
 
 	return f
 }

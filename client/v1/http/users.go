@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"path"
 	"strconv"
-	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
@@ -18,7 +18,7 @@ const usersBasePath = "users"
 func (c *V1Client) buildVersionlessURL(qp url.Values, parts ...string) string {
 	tu := *c.URL
 
-	u, _ := url.Parse(strings.Join(parts, "/"))
+	u, _ := url.Parse(path.Join(parts...))
 	if qp != nil {
 		u.RawQuery = qp.Encode()
 	}

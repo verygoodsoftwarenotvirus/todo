@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -73,6 +74,9 @@ func NewClient(
 			Timeout: defaultTimeout,
 		}
 	}
+	if client.Timeout == 0 {
+		client.Timeout = defaultTimeout
+	}
 
 	if debug {
 		logger.SetLevel(logging.DebugLevel)
@@ -110,10 +114,19 @@ func buildOAuthClient(uri *url.URL, clientID, clientSecret string) (*http.Client
 	client := &http.Client{
 		Transport: &oauth2.Transport{
 			Base: &ochttp.Transport{
-				Base: http.DefaultTransport,
-				// Base: &http.Transport{
-				// 	MaxIdleConnsPerHost: 100,
-				// },
+				Base: &http.Transport{
+					Proxy: http.ProxyFromEnvironment,
+					DialContext: (&net.Dialer{
+						Timeout:   30 * time.Second,
+						KeepAlive: 30 * time.Second,
+						DualStack: true,
+					}).DialContext,
+					MaxIdleConns:          100,
+					MaxIdleConnsPerHost:   100,
+					IdleConnTimeout:       90 * time.Second,
+					TLSHandshakeTimeout:   10 * time.Second,
+					ExpectContinueTimeout: 1 * time.Second,
+				},
 			},
 			Source: ts,
 		},
@@ -233,7 +246,13 @@ func (c *V1Client) buildDataRequest(method, uri string, in interface{}) (*http.R
 		return nil, err
 	}
 
-	return http.NewRequest(method, uri, body)
+	req, err := http.NewRequest(method, uri, body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-type", "application/json")
+	return req, nil
 }
 
 func (c *V1Client) makeRequest(ctx context.Context, req *http.Request, out interface{}) error {

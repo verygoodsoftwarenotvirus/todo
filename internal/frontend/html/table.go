@@ -6,8 +6,6 @@ import (
 	"syscall/js"
 )
 
-// TODO: the variable scope of these fields is whack
-
 /////////////////////////////////////////////////////////////////////////// TABLE ROW
 
 // Table represents a table element

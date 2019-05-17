@@ -21,6 +21,9 @@ github.com/boombuler/barcode/utils
 github.com/corpix/uarand
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
+# github.com/dennwc/dom v0.3.0
+github.com/dennwc/dom
+github.com/dennwc/dom/js
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 github.com/dgrijalva/jwt-go
 # github.com/emicklei/hazana v1.6.1
@@ -142,8 +145,6 @@ gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop
 gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog
 # gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.0-20190507231017-beb954c7c2d8
 gitlab.com/verygoodsoftwarenotvirus/newsman
-# gitlab.com/verygoodsoftwarenotvirus/verso v1.0.1
-gitlab.com/verygoodsoftwarenotvirus/verso/html
 # go.opencensus.io v0.21.0
 go.opencensus.io/plugin/ochttp
 go.opencensus.io/trace

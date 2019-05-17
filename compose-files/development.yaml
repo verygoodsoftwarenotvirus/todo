@@ -4,7 +4,7 @@ services:
   todo-server:
     build:
       context: ../
-      dockerfile: dockerfiles/server-debug.Dockerfile
+      dockerfile: dockerfiles/development.Dockerfile
     ports:
       - '80:80'
     environment:
@@ -17,6 +17,9 @@ services:
       - type: bind
         source: ../client/v1/frontend
         target: /go/src/gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/frontend
+      - type: bind
+        source: ../internal/frontend
+        target: /go/src/gitlab.com/verygoodsoftwarenotvirus/todo/internal/frontend
     links:
       - tracing-server
       - database

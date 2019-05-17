@@ -11,6 +11,7 @@ require (
 	github.com/VividCortex/gohistogram v1.0.0 // indirect
 	github.com/boombuler/barcode v1.0.0
 	github.com/corpix/uarand v0.1.0 // indirect
+	github.com/dennwc/dom v0.3.0
 	github.com/emicklei/hazana v1.6.1
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/go-chi/chi v4.0.2+incompatible
@@ -33,7 +34,6 @@ require (
 	github.com/uber/jaeger-lib v2.0.0+incompatible // indirect
 	gitlab.com/verygoodsoftwarenotvirus/logging v1.0.2
 	gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.0-20190507231017-beb954c7c2d8
-	gitlab.com/verygoodsoftwarenotvirus/verso v1.0.1
 	go.opencensus.io v0.21.0
 	golang.org/x/crypto v0.0.0-20190506204251-e1dfcc566284
 	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a

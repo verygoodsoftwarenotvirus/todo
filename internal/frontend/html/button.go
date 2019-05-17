@@ -2,10 +2,6 @@
 
 package html
 
-import (
-// "syscall/js"
-)
-
 // Button represents a Button
 type Button struct {
 	Element

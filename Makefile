@@ -96,9 +96,9 @@ push-server-to-docker: prod-server-docker-image
 
 ## Running
 
-.PHONY: debug
-debug:
-	docker-compose --file compose-files/debug.yaml up \
+.PHONY: dev
+dev:
+	docker-compose --file compose-files/development.yaml up \
 	--build \
 	--force-recreate \
 	--remove-orphans \

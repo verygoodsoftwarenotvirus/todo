@@ -44,6 +44,7 @@ github.com/corpix/uarand v0.1.0/go.mod h1:SFKZvkcRoLqVRFZ4u25xPmp6m9ktANfbpXZ7SJ
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/dennwc/dom v0.3.0 h1:u89+QvT1OPRSSTFf54o9RuK7C0Uoq2jFo4VCa4rnjtI=
 github.com/dennwc/dom v0.3.0/go.mod h1:/z5w9Stx19m8RUwolsmsqTs9rDxKgJO5T9UEumilgk4=
 github.com/dennwc/testproxy v1.0.1/go.mod h1:EHGV9tzWhMPLmEoVJ2KGyC149XqwKZwBDViCjhKD5d8=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible h1:7qlOGliEKZXTDg6OTjfoBKDXWrumCAMpl/TFQ4/5kLM=
@@ -228,8 +229,6 @@ gitlab.com/verygoodsoftwarenotvirus/logging v1.0.2 h1:zAdLudv1NoIMC8NhhNSAiE3OYA
 gitlab.com/verygoodsoftwarenotvirus/logging v1.0.2/go.mod h1:B1IphBAXJv6GQwy4FH7DyeJtI2UIyqKQzKF56gRl+Qc=
 gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.0-20190507231017-beb954c7c2d8 h1:BuweF1RJAn+w+qR4EAKaSX5BvX1GxnPLkYUaTL9bJnc=
 gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.0-20190507231017-beb954c7c2d8/go.mod h1:3rAiaFYbSCqvPtg4Pkw4jsNSaKUAo6Mz/MBIiQ9IWSQ=
-gitlab.com/verygoodsoftwarenotvirus/verso v1.0.1 h1:Kr7Mo511u+VuDvJhOsTLwgeSK9E7ikLMnOmQ24H64fA=
-gitlab.com/verygoodsoftwarenotvirus/verso v1.0.1/go.mod h1:12gQnP3vtASbbKropVAWJ/4JY2Q2Xx2sss5knhwYUwo=
 go.opencensus.io v0.20.1/go.mod h1:6WKK9ahsWS3RSO+PY9ZHZUfv2irvY6gN279GOPZjmmk=
 go.opencensus.io v0.21.0 h1:mU6zScU4U1YAFPHEHYk+3JC4SY7JxgkqS10ZOSyksNg=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=

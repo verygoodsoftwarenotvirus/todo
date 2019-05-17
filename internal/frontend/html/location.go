@@ -1,7 +1,10 @@
+// +build wasm
+
 package html
 
 import (
 	"net/url"
+	"strconv"
 	"syscall/js"
 )
 
@@ -11,7 +14,7 @@ var (
 
 // Location is a stand-in for a browser's `location` object
 type Location interface {
-	Href() string
+	Href() *url.URL
 	Protocol() string
 	Host() string
 	Hostname() string
@@ -28,8 +31,12 @@ type location struct {
 	jsLocation js.Value
 }
 
-func (w *location) Href() string {
-	return w.jsLocation.Get("href").String()
+func (w *location) Href() *url.URL {
+	uri := w.jsLocation.Get("href").String()
+	// we assume this code only runs in browsers, and a browser
+	// probably cannot call code from an invalid url
+	u, _ := url.Parse(uri)
+	return u
 }
 
 func (w *location) Protocol() string {
@@ -45,7 +52,16 @@ func (w *location) Hostname() string {
 }
 
 func (w *location) Port() uint16 {
-	return 0
+	// `syscall/js.Value's `.Int()` method panics if
+	// the value is not a JavaScript number.
+	// ❯ typeof(window.location.port);
+	// ❯ "string"
+	p := w.jsLocation.Get("port").String()
+	i, err := strconv.Atoi(p)
+	if err != nil {
+		return 0
+	}
+	return uint16(i)
 }
 
 func (w *location) Pathname() string {

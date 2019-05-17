@@ -3,7 +3,6 @@
 package html
 
 import (
-	"log"
 	"sync/atomic"
 	"syscall/js"
 )
@@ -97,29 +96,26 @@ func (e *Element) RemoveChild(child Valuer) {
 	e.this.Call("removeChild", child.JSValue())
 }
 
+// RemoveChildren appends multiple children
+func (e *Element) RemoveChildren(children ...Valuer) {
+	for _, child := range children {
+		e.this.Call("removeChild", child.JSValue())
+	}
+}
+
 // OrphanChildren removes all child elements from the element
 func (e *Element) OrphanChildren() {
 	nodes := e.this.Get("childNodes")
 	nodeCount := nodes.Length()
 
-	log.Printf(`
-
-	iterating over %d child nodes
-
-	`, nodeCount)
-
 	removedCount := 0
 	for i := 0; i < nodeCount; i++ {
 		node := nodes.Index(i)
-		e.RemoveChild(node)
-		removedCount++
+		if node.Type() == js.TypeObject {
+			e.RemoveChild(node)
+			removedCount++
+		}
 	}
-
-	log.Printf(`
-
-	removed %d child nodes
-
-	`, removedCount)
 }
 
 // OnClick registers a function to run upon click

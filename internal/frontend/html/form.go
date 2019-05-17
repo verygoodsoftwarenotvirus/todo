@@ -2,7 +2,6 @@
 
 package html
 
-
 // Form represents a form tag
 type Form struct {
 	Element
@@ -14,7 +13,7 @@ type Form struct {
 func NewForm(action string) *Form {
 	f := &Form{
 		Element: *(NewElement("form")),
-		action: action,
+		action:  action,
 	}
 
 	f.Element.JSValue().Set("action", action)

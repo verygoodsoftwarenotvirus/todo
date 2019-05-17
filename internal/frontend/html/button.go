@@ -15,8 +15,3 @@ func NewButton(name string) *Button {
 	b.SetTextContent(name)
 	return b
 }
-
-// SetFormAction sets the formaction value of a button
-func (b *Button) SetFormAction(action string) {
-	b.Element.JSValue().Set("formaction", action)
-}

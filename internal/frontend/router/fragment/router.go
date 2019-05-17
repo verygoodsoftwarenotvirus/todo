@@ -49,28 +49,25 @@ func NewClientSideRouter(logger logging.Logger, hostElement *html.Element) *Clie
 	if hostElement == nil {
 		panic("nil host element passed to client-side router")
 	}
-	return &ClientSideRouter{
+	r := &ClientSideRouter{
 		logger:      logger.WithName("frontend_router"),
 		routes:      make(map[string]ViewRenderer),
 		hostElement: hostElement,
 	}
+
+	window := html.GetWindow()
+	window.AddEventListener("hashchange", r.RouteFunc(hostElement))
+
+	return r
 }
 
 // RouteFunc returns a jsFunc that should be assigned to hashchange events
 func (r *ClientSideRouter) RouteFunc(hostElement *html.Element) js.Func {
 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		r.logger.Info(`
-
-	RouteFunc called
-
-		`)
-
-		content, err := r.Route()
+		_, err := r.Route()
 		if err != nil {
 			log.Fatal(err)
 		}
-		hostElement.OrphanChildren()
-		hostElement.AppendChild(content)
 		return nil
 	})
 }
@@ -92,7 +89,15 @@ func (r *ClientSideRouter) Route() (*html.Div, error) {
 		return nil, errors.New("blah")
 	}
 
-	return route.Render()
+	content, err := route.Render()
+	if err != nil {
+		return nil, err
+	}
+
+	r.hostElement.OrphanChildren()
+	r.hostElement.AppendChild(content)
+
+	return nil, nil
 }
 
 // AddRoute adds a new route to the router

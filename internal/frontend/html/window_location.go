@@ -25,6 +25,8 @@ type Location interface {
 	Username() string
 	Password() string
 	Origin() string
+
+	Replace(string)
 }
 
 type location struct {
@@ -91,6 +93,10 @@ func (w *location) Password() string {
 
 func (w *location) Origin() string {
 	return w.jsLocation.Get("origin").String()
+}
+
+func (w *location) Replace(uri string) {
+	w.jsLocation.Call("replace", uri)
 }
 
 // GetLocation returns the js.Value for the `location` object in a browser

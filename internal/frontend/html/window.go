@@ -13,6 +13,7 @@ var (
 // Window is a stand-in for a browser's `window` object
 type Window interface {
 	AddEventListener(eventName string, callback js.Func)
+	Location() Location
 }
 
 type window struct {
@@ -21,6 +22,13 @@ type window struct {
 
 func (w *window) AddEventListener(eventName string, callback js.Func) {
 	w.jsWindow.Call("addEventListener", eventName, callback)
+}
+
+func (w *window) Location() Location {
+	l := &location{
+		jsLocation: w.jsWindow.Get("location").JSValue(),
+	}
+	return l
 }
 
 // GetWindow returns the js.Value for the `window` object in a browser

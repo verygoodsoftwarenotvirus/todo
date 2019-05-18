@@ -18,6 +18,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 
 	"github.com/boombuler/barcode/qr"
+	"github.com/boombuler/barcode"
 	"go.opencensus.io/trace"
 )
 
@@ -162,6 +163,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s.logger.Error(err, "trying to encode secret to qr code")
 	}
+	barcode.Scale(qrcode, 256, 256)
 
 	var b bytes.Buffer
 	if err := png.Encode(&b, qrcode); err != nil {

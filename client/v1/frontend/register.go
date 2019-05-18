@@ -18,7 +18,7 @@ func (a *frontendApp) buildRegistrationPage() *html.Div {
 	container := html.NewDiv()
 
 	formDiv := html.NewDiv()
-	formDiv.SetStyle("margin-top: 15%; text-align: center;")
+	formDiv.SetStyle("margin-top: 3rem; text-align: center;")
 
 	usernameP, usernameInput := buildFormP("username", "username")
 	passwordP, passwordInput := buildFormP("password", "password")
@@ -33,13 +33,11 @@ func (a *frontendApp) buildRegistrationPage() *html.Div {
 		username := usernameInput.Value()
 		password := passwordInput.Value()
 
-		/////////////////////////
-
-		loginBody, _ := json.Marshal(&models.UserLoginInput{
+		registerBody, _ := json.Marshal(&models.UserLoginInput{
 			Username: username,
 			Password: password,
 		})
-		req, _ := http.NewRequest(http.MethodPost, "/users/", bytes.NewReader(loginBody))
+		req, _ := http.NewRequest(http.MethodPost, "/users/", bytes.NewReader(registerBody))
 		res, err := http.DefaultClient.Do(req)
 		if err != nil {
 			a.logger.Fatal(errors.Wrap(err, "executing request"))
@@ -47,7 +45,7 @@ func (a *frontendApp) buildRegistrationPage() *html.Div {
 		var ucr models.UserCreationResponse
 		json.NewDecoder(res.Body).Decode(&ucr)
 
-		a.logger.Info(ucr.TwoFactorQRCode)
+		a.logger.Info(ucr.TwoFactorSecret)
 
 		formDiv.RemoveChildren(
 			usernameP,
@@ -68,7 +66,6 @@ func (a *frontendApp) buildRegistrationPage() *html.Div {
 		})
 
 		formDiv.AppendChildren(img, disclaimer, b)
-
 	})
 
 	formDiv.AppendChildren(

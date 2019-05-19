@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events/v1"
+	v1 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/events/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
@@ -78,6 +78,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		Topics:    []string{topicName},
 	})
 
+	res.WriteHeader(http.StatusCreated)
 	if err = s.encoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}

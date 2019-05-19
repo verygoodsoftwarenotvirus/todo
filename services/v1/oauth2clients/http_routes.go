@@ -139,6 +139,8 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		"belongs_to":      x.BelongsTo,
 		"client_oauth_id": x.ClientID,
 	}).Debug("CreateOAuth2Client route returning successfully")
+
+	res.WriteHeader(http.StatusCreated)
 	if err = s.encoder.EncodeResponse(res, x); err != nil {
 		logger.Error(err, "encoding response")
 	}

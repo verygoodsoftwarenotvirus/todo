@@ -17,8 +17,8 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 
-	"github.com/boombuler/barcode/qr"
 	"github.com/boombuler/barcode"
+	"github.com/boombuler/barcode/qr"
 	"go.opencensus.io/trace"
 )
 
@@ -193,6 +193,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		Topics:    []string{topicName},
 	})
 
+	res.WriteHeader(http.StatusCreated)
 	if err = s.encoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}

@@ -43,10 +43,8 @@ func (ed *ServerEncoderDecoder) EncodeResponse(res http.ResponseWriter, v interf
 	switch ct {
 	case "application/xml":
 		e = xml.NewEncoder(res)
-		break
 	case "application/json":
 		e = json.NewEncoder(res)
-		break
 	default:
 		ct = "application/json"
 		e = json.NewEncoder(res)
@@ -64,10 +62,8 @@ func (ed *ServerEncoderDecoder) DecodeResponse(req *http.Request, v interface{})
 	switch ct {
 	case "application/xml":
 		d = xml.NewDecoder(req.Body)
-		break
 	case "application/json":
 		d = json.NewDecoder(req.Body)
-		break
 	default:
 		ct = "application/json"
 		d = json.NewDecoder(req.Body)

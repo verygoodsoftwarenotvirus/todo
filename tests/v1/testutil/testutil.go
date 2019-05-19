@@ -200,7 +200,7 @@ cookie problems!
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", "", err
-	} else if res.StatusCode >= http.StatusCreated {
+	} else if res.StatusCode != http.StatusCreated {
 		return "", "", fmt.Errorf("bad status: %d", res.StatusCode)
 	}
 

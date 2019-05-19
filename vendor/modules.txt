@@ -14,16 +14,13 @@ github.com/apache/thrift/lib/go/thrift
 # github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
 github.com/beorn7/perks/quantile
 # github.com/boombuler/barcode v1.0.0
-github.com/boombuler/barcode/qr
 github.com/boombuler/barcode
+github.com/boombuler/barcode/qr
 github.com/boombuler/barcode/utils
 # github.com/corpix/uarand v0.1.0
 github.com/corpix/uarand
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/dennwc/dom v0.3.0
-github.com/dennwc/dom
-github.com/dennwc/dom/js
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 github.com/dgrijalva/jwt-go
 # github.com/emicklei/hazana v1.6.1
@@ -141,8 +138,8 @@ github.com/tidwall/rtree/base
 github.com/tidwall/tinyqueue
 # gitlab.com/verygoodsoftwarenotvirus/logging v1.0.2
 gitlab.com/verygoodsoftwarenotvirus/logging/v1
-gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop
 gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog
+gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop
 # gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.0-20190507231017-beb954c7c2d8
 gitlab.com/verygoodsoftwarenotvirus/newsman
 # go.opencensus.io v0.21.0

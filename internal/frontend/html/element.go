@@ -79,6 +79,10 @@ func (e *Element) GetID() string {
 	return e.this.Get("id").String()
 }
 
+func (e *Element) ParentElement() *Element {
+	return AsElement(e.this.Get("parentElement"))
+}
+
 // AppendChild appends a child
 func (e *Element) AppendChild(child Valuer) {
 	e.this.Call("appendChild", child.JSValue())
@@ -93,7 +97,7 @@ func (e *Element) AppendChildren(children ...Valuer) {
 
 // RemoveChild removes a child
 func (e *Element) RemoveChild(child Valuer) {
-	e.this.Call("removeChild", child.JSValue())
+	AsElement(e.this.Call("removeChild", child.JSValue()))
 }
 
 // RemoveChildren appends multiple children
@@ -119,11 +123,11 @@ func (e *Element) OrphanChildren() {
 }
 
 // OnClick registers a function to run upon click
-func (e *Element) OnClick(f func()) {
+func (e *Element) OnClick(fun func()) {
 	var cb js.Func
 	cb = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		go func() {
-			f()
+			fun()
 		}()
 		return nil
 	})

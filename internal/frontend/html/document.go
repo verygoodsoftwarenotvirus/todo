@@ -16,6 +16,8 @@ type Document interface {
 	CreateElement(tagName string) *Element
 	GetElementByID(id string) *Element
 	QuerySelector(selectors string) *Element
+	QuerySelectorAll(selectors string) []Element
+	Cookie() string
 }
 
 type document struct {
@@ -23,19 +25,25 @@ type document struct {
 }
 
 func (d *document) CreateElement(tagName string) *Element {
-	return NewElement(tagName)
+	this := d.jsDocument.Call("createElement", tagName)
+	e := &Element{
+		tagType:   tagName,
+		this:      this,
+		ClassList: NewClassList(this.Get("classList")),
+	}
+	return e
 }
 
 func (d *document) GetElementByID(id string) *Element {
-	return AsElement(fetchDocument().Call("getElementById", id))
+	return AsElement(d.jsDocument.Call("getElementById", id))
 }
 
 func (d *document) QuerySelector(selectors string) *Element {
-	return AsElement(fetchDocument().Call("querySelector", selectors))
+	return AsElement(d.jsDocument.Call("querySelector", selectors))
 }
 
 func (d *document) QuerySelectorAll(selectors string) []Element {
-	val := fetchDocument().Call("querySelectorAll", selectors)
+	val := d.jsDocument.Call("querySelectorAll", selectors)
 
 	var out []Element
 	for i := 0; i < val.Length(); i++ {
@@ -44,6 +52,10 @@ func (d *document) QuerySelectorAll(selectors string) []Element {
 	}
 
 	return out
+}
+
+func (d *document) Cookie() string {
+	return d.jsDocument.Get("cookie").String()
 }
 
 func fetchDocument() js.Value {

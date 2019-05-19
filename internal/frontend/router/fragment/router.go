@@ -4,7 +4,7 @@ package router
 
 import (
 	"errors"
-	"log"
+	"fmt"
 	"strings"
 	"syscall/js"
 
@@ -39,9 +39,10 @@ func ViewRendererFunc(f func() (*html.Div, error)) ViewRenderer {
 
 // ClientSideRouter manages view renderers
 type ClientSideRouter struct {
-	hostElement *html.Element
-	routes      map[string]ViewRenderer
-	logger      logging.Logger
+	hostElement          *html.Element
+	logger               logging.Logger
+	routes               map[string]ViewRenderer
+	unauthenticatedRoute string
 }
 
 // NewClientSideRouter instantiates a new ClientSideRouter
@@ -56,51 +57,67 @@ func NewClientSideRouter(logger logging.Logger, hostElement *html.Element) *Clie
 	}
 
 	window := html.GetWindow()
-	window.AddEventListener("hashchange", r.RouteFunc(hostElement))
+	window.AddEventListener("hashchange", r.routeFunc(hostElement))
 
 	return r
 }
 
 // RouteFunc returns a jsFunc that should be assigned to hashchange events
-func (r *ClientSideRouter) RouteFunc(hostElement *html.Element) js.Func {
+func (r *ClientSideRouter) routeFunc(hostElement *html.Element) js.Func {
 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		_, err := r.Route()
-		if err != nil {
-			log.Fatal(err)
-		}
-		return nil
+		return r.Route()
 	})
 }
 
 // Route is our main function which determines what page we're on, what that page should show, and reconciles the difference
-func (r *ClientSideRouter) Route() (*html.Div, error) {
-	var url = "/"
-	fullHash := html.GetLocation().Hash()
-	urlParts := strings.Split(fullHash, "#")
+func (r *ClientSideRouter) Route() error {
+	var (
+		content  *html.Div
+		err      error
+		url      = "/"
+		loggedIn = html.GetDocument().Cookie() == ""
+	)
+
+	urlParts := strings.Split(html.GetLocation().Hash(), "#")
 	if len(urlParts) > 1 {
 		url = urlParts[1]
 	}
-	logger := r.logger.WithValue("url", url)
-	logger.Debug("route called")
 
-	route, ok := r.routes[url]
-	if !ok {
-		logger.Debug("route not found")
-		return nil, errors.New("blah")
+	if content == nil {
+		route, ok := r.routes[url]
+		if !ok {
+			if loggedIn && r.unauthenticatedRoute != "" && url != r.unauthenticatedRoute {
+				html.GetWindow().Location().Replace(fmt.Sprintf("/#%s", r.unauthenticatedRoute))
+				return nil
+			}
+
+			r.logger.WithValue("url", url).Debug("route not found!")
+			return errors.New("route not found")
+		}
+		content, err = route.Render()
 	}
 
-	content, err := route.Render()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	r.hostElement.OrphanChildren()
 	r.hostElement.AppendChild(content)
 
-	return nil, nil
+	return nil
 }
 
 // AddRoute adds a new route to the router
 func (r *ClientSideRouter) AddRoute(path string, vr ViewRenderer) {
 	r.routes[path] = vr
+}
+
+// SetUnauthenticatedRoute sets the default route to use in the event that a user isn't logged in
+// this MUST be called AFTER you initialize the route if you want it to not return an error
+func (r *ClientSideRouter) SetUnauthenticatedRoute(path string) error {
+	if _, ok := r.routes[path]; !ok {
+		return fmt.Errorf("invalid default route: %q", path)
+	}
+	r.unauthenticatedRoute = path
+	return nil
 }

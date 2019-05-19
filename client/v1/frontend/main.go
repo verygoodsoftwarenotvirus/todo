@@ -1,16 +1,14 @@
-
 // +build wasm
 
 package main
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/frontend/html"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/frontend/router/fragment"
+	router "gitlab.com/verygoodsoftwarenotvirus/todo/internal/frontend/router/fragment"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
@@ -40,11 +38,16 @@ func buildFormP(title, formName string) (*html.Element, *html.Input) {
 
 type frontendApp struct {
 	hostElement *html.Element
-	logger logging.Logger
+	logger      logging.Logger
 }
 
 func (a *frontendApp) setupRoutes() {
 	r := router.NewClientSideRouter(a.logger, a.hostElement)
+
+	// r.AddRoute("/", router.ViewRendererFunc(func() (*html.Div, error) {
+	// 	// REPLACEME
+	// 	return a.buildLoginPage(), nil
+	// }))
 	r.AddRoute("/register", router.ViewRendererFunc(func() (*html.Div, error) {
 		return a.buildRegistrationPage(), nil
 	}))
@@ -55,24 +58,27 @@ func (a *frontendApp) setupRoutes() {
 		return a.buildLoginPage(), nil
 	}))
 	r.AddRoute("/items", router.ViewRendererFunc(func() (*html.Div, error) {
-		container := html.NewDiv()
-		container.SetTextContent("how'd you get here? :)")
-		return container, nil
+		return a.buildItemsPage(), nil
 	}))
-	_, err := r.Route()
-	if err != nil {
-		log.Fatal(err)
+	r.AddRoute("/items/new", router.ViewRendererFunc(func() (*html.Div, error) {
+		return a.buildItemCreationPage(), nil
+	}))
+
+	r.SetUnauthenticatedRoute("/register")
+	// r.Set404Handler(router.ViewRendererFunc(func() (*html.Div, error) {
+	// 	return a.buildItemCreationPage(), nil
+	// }))
+
+	if err := r.Route(); err != nil {
+		a.logger.Fatal(err)
 	}
 }
 
-
 func main() {
 	logger := zerolog.NewZeroLogger()
-	logger.SetLevel(logging.InfoLevel)
-	logger.Info("hi there")
+	// logger.SetLevel(logging.InfoLevel)
 
 	body := html.Body()
-
 	appDiv := html.NewDiv()
 	appDiv.SetID(appDivID)
 
@@ -80,16 +86,15 @@ func main() {
 	appElement := &appDiv.Element
 
 	a := frontendApp{
-		logger: logger,
+		logger:      logger,
 		hostElement: appElement,
 	}
 	a.setupRoutes()
 
-	logger.Info("awaiting activity")
 	// suspend loop
 	for {
 		select {
-		case <-time.NewTicker((1<<31 - 1) * time.Second).C:
+		case <-time.NewTicker(time.Second / 60).C:
 			//
 		}
 	}

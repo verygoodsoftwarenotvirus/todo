@@ -6,8 +6,6 @@ import (
 	"syscall/js"
 )
 
-/////////////////////////////////////////////////////////////////////////// TABLE ROW
-
 // Table represents a table element
 type Table struct {
 	Element
@@ -54,19 +52,10 @@ func (t *Table) AddRawTableHeader(th *TableHeader) {
 }
 
 // AddRow adds a row to the table
-func (t *Table) AddRow(cells map[string]string) {
-	headers := []string{}
-	for k := range cells {
-		headers = append(headers, k)
-	}
-	tr := NewTableRow(headers, cells)
+func (t *Table) AddRow(columns []string, cells map[string]string) {
+	tr := NewTableRow(columns, cells)
 	t.Rows = append(t.Rows, tr)
 	t.body.AppendChild(tr)
-}
-
-// AddRawTableRow adds a TableRow to the table
-func (t *Table) AddRawTableRow(tr *TableRow) {
-	t.Rows = append(t.Rows, tr)
 }
 
 // Render returns the table as a js.Value, with all its child html attached
@@ -79,7 +68,7 @@ func (t *Table) Render() {
 	}
 
 	for _, v := range t.FooterElements {
-		t.footer.JSValue().Call("appendChild", v)
+		t.footer.AppendChild(v)
 	}
 }
 
@@ -87,8 +76,6 @@ func (t *Table) Render() {
 func (t *Table) AppendToFooter(value js.Value) {
 	t.FooterElements = append(t.FooterElements, value)
 }
-
-/////////////////////////////////////////////////////////////////////////// TABLE ROW
 
 // TableHeader represents a <th> tag
 type TableHeader struct {
@@ -113,21 +100,21 @@ type TableRow struct {
 }
 
 // NewTableRow builds a TableRow
-func NewTableRow(headers []string, data map[string]string) *TableRow {
+func NewTableRow(columns []string, data map[string]string) *TableRow {
 	tr := &TableRow{
 		Element: *(NewElement("tr")),
 		headers: []string{},
 		data:    map[string]*TableCell{},
 	}
-	if headers != nil {
-		tr.headers = headers
+	if columns != nil {
+		tr.headers = columns
 	}
 
 	for _, col := range tr.headers {
 		if cell, ok := data[col]; ok {
 			tr.addCell(col, cell)
 		} else {
-			tr.addCell(col, "")
+			tr.addCell(col, "__NOTFOUND__")
 		}
 	}
 	return tr

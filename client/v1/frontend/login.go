@@ -13,8 +13,19 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
-func (a *frontendApp) buildLoginFunc(usernameInput, passwordInput, totpTokenInput *html.Input) func() {
-	return func() {
+func (a *frontendApp) buildLoginPage() *html.Div {
+	container := html.NewDiv()
+
+	formDiv := html.NewDiv()
+	formDiv.SetStyle("margin-top: 3rem; text-align: center;")
+
+	usernameP, usernameInput := buildFormP("username", "username")
+	passwordP, passwordInput := buildFormP("password", "password")
+	tokenP, totpTokenInput := buildFormP("2FA Code", "totp_token")
+
+	submit := html.NewInput(html.SubmitInputType)
+	submit.SetValue("login")
+	submit.OnClick(func() {
 		username := usernameInput.Value()
 		password := passwordInput.Value()
 		totpToken := totpTokenInput.Value()
@@ -33,22 +44,7 @@ func (a *frontendApp) buildLoginFunc(usernameInput, passwordInput, totpTokenInpu
 		if res.StatusCode == http.StatusNoContent {
 			html.GetWindow().Location().Replace("/#/items")
 		}
-	}
-}
-
-func (a *frontendApp) buildLoginPage() *html.Div {
-	container := html.NewDiv()
-
-	formDiv := html.NewDiv()
-	formDiv.SetStyle("margin-top: 3rem; text-align: center;")
-
-	usernameP, usernameInput := buildFormP("username", "username")
-	passwordP, passwordInput := buildFormP("password", "password")
-	tokenP, totpTokenInput := buildFormP("2FA Code", "totp_token")
-
-	submit := html.NewInput(html.SubmitInputType)
-	submit.SetValue("login")
-	submit.OnClick(a.buildLoginFunc(usernameInput, passwordInput, totpTokenInput))
+	})
 
 	registerLink := html.NewAnchor("#/register")
 	registerLink.SetTextContent("register instead")

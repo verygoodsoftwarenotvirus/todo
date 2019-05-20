@@ -5,7 +5,6 @@ package main
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/frontend/html"
 	router "gitlab.com/verygoodsoftwarenotvirus/todo/internal/frontend/router/fragment"
@@ -54,9 +53,6 @@ func (a *frontendApp) setupRoutes() {
 	r.AddRoute("/login", router.ViewRendererFunc(func() (*html.Div, error) {
 		return a.buildLoginPage(), nil
 	}))
-	r.AddRoute("/accept_token", router.ViewRendererFunc(func() (*html.Div, error) {
-		return a.buildLoginPage(), nil
-	}))
 	r.AddRoute("/items", router.ViewRendererFunc(func() (*html.Div, error) {
 		return a.buildItemsPage(), nil
 	}))
@@ -91,11 +87,6 @@ func main() {
 	}
 	a.setupRoutes()
 
-	// suspend loop
-	for {
-		select {
-		case <-time.NewTicker(time.Second / 60).C:
-			//
-		}
-	}
+	// prevent to program to terminate
+	<-make(chan struct{}, 0)
 }

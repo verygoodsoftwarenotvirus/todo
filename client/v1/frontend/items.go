@@ -6,8 +6,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"sync"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/frontend/html"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/frontend/html/components/table"
@@ -38,10 +40,13 @@ func (a *frontendApp) buildItemCreationFunc(nameInput, detailsInput *html.Input)
 
 func (a *frontendApp) buildItemCreationPage() *html.Div {
 	container := html.NewDiv()
+	container.SetStyle("margin-top: 3rem; text-align: center;")
+
+	listLink := html.NewAnchor("/#/items")
+	listLink.SetTextContent("view items")
+	container.AppendChild(listLink)
 
 	formDiv := html.NewDiv()
-	formDiv.SetStyle("margin-top: 3rem; text-align: center;")
-
 	nameP, nameInput := buildFormP("name", "name")
 	detailsP, detailsInput := buildFormP("details", "details")
 
@@ -64,15 +69,32 @@ func up(u uint64) *uint64 {
 }
 
 func (a *frontendApp) buildItemsPage() *html.Div {
-	res, err := http.Get("/api/v1/items")
-	if err != nil {
-		log.Fatal(err)
-	}
+	var (
+		done = &sync.WaitGroup{}
+		body io.Reader
+	)
+
+	done.Add(1)
+
+	go func() {
+		res, err := http.Get("/api/v1/items")
+		if err != nil {
+			log.Fatal(err)
+		}
+		body = res.Body
+		done.Done()
+	}()
+
+	done.Wait()
 
 	var itemsRes *models.ItemList
-	json.NewDecoder(res.Body).Decode(&itemsRes)
+	json.NewDecoder(body).Decode(&itemsRes)
 
 	container := html.NewDiv()
+
+	newLink := html.NewAnchor("/#/items/new")
+	newLink.SetTextContent("create item")
+	container.AppendChild(newLink)
 
 	table, err := table.NewTableFromStructs("items", itemsRes.Items)
 	if err != nil {

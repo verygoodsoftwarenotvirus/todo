@@ -44,10 +44,6 @@ func (s *Service) DebugWASMPackage(clientPkg string) error {
 		return err
 	}
 
-	if err := watcher.Add("/go/src/gitlab.com/verygoodsoftwarenotvirus/todo/internal/frontend"); err != nil {
-		return err
-	}
-
 	go func() {
 		for {
 			select {

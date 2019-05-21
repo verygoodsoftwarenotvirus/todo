@@ -32,4 +32,15 @@
 __pycache__
 artifacts
 
-*.wasm
+# typescript noise
+node_modules
+frontend/dist
+
+# frontend testing stuff
+/tests/e2e/reports/
+selenium-debug.log
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

@@ -18,7 +18,6 @@ type UserDataManager interface {
 
 // UserDataServer describes a structure capable of serving traffic related to users
 type UserDataServer interface {
-	UserLoginInputMiddleware(next http.Handler) http.Handler
 	UserInputMiddleware(next http.Handler) http.Handler
 	PasswordUpdateInputMiddleware(next http.Handler) http.Handler
 	TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handler
@@ -63,6 +62,7 @@ type UserCreationResponse struct {
 	CreatedOn             uint64  `json:"created_on"`
 	UpdatedOn             *uint64 `json:"updated_on"`
 	ArchivedOn            *uint64 `json:"archived_on"`
+	TwoFactorQRCode       string  `json:"qr_code"`
 }
 
 // User represents a user

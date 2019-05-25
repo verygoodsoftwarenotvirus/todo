@@ -1,17 +1,24 @@
 package users
 
 import (
+	"bytes"
 	"crypto/rand"
 	"database/sql"
 	"encoding/base32"
+	"encoding/base64"
+	"fmt"
+	"image/png"
 	"net/http"
 	"strconv"
 
+	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	v1 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/events/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 
+	"github.com/boombuler/barcode"
+	"github.com/boombuler/barcode/qr"
 	"go.opencensus.io/trace"
 )
 
@@ -96,17 +103,18 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	ctx, span := trace.StartSpan(req.Context(), "create_route")
 	defer span.End()
 
-	input, ok := ctx.Value(MiddlewareCtxKey).(*models.UserInput)
+	input, ok := ctx.Value(UserCreationMiddlewareCtxKey).(*models.UserInput)
 	if !ok {
 		s.logger.Error(nil, "valid input not attached to UsersService Create request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	s.logger.WithValues(map[string]interface{}{
+	logger := s.logger.WithValues(map[string]interface{}{
 		"username": input.Username,
 		"is_admin": input.IsAdmin,
-	}).Debug("user creation route hit")
+	})
+	logger.Debug("user creation route hit")
 
 	span.AddAttributes(
 		trace.StringAttribute("username", input.Username),
@@ -115,7 +123,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 
 	hp, err := s.authenticator.HashPassword(ctx, input.Password)
 	if err != nil {
-		s.logger.Error(err, "valid input not attached to request")
+		logger.Error(err, "valid input not attached to request")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -130,10 +138,42 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 
 	user, err := s.database.CreateUser(ctx, input)
 	if err != nil {
+		if err == dbclient.ErrUserExists {
+			s.logger.Debug("duplicate username attempted")
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
 		s.logger.Error(err, "error creating user")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	// "otpauth://totp/{{ .Issuer }}:{{ .Username }}?secret={{ .Secret }}&issuer={{ .Issuer }}",
+	qrcode, err := qr.Encode(
+		fmt.Sprintf(
+			"otpauth://totp/%s:%s?secret=%s&issuer=%s",
+			"todoservice",
+			user.Username,
+			user.TwoFactorSecret,
+			"todoService",
+		),
+		qr.L,
+		qr.Auto,
+	)
+	if err != nil {
+		s.logger.Error(err, "trying to encode secret to qr code")
+	}
+	qrcode, err = barcode.Scale(qrcode, 256, 256)
+	if err != nil {
+		s.logger.Error(err, "trying to enlarge qr code")
+	}
+
+	var b bytes.Buffer
+	if err := png.Encode(&b, qrcode); err != nil {
+		s.logger.Error(err, "trying to encode qr code to png")
+	}
+
+	qrCode := fmt.Sprintf("data:image/jpeg;base64,%s", base64.StdEncoding.EncodeToString(b.Bytes()))
 
 	// UserCreationResponse is a struct we can use to notify the user of
 	// their two factor secret, but ideally just this once and then never again.
@@ -145,6 +185,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		CreatedOn:             user.CreatedOn,
 		UpdatedOn:             user.UpdatedOn,
 		ArchivedOn:            user.ArchivedOn,
+		TwoFactorQRCode:       qrCode,
 	}
 
 	s.userCounter.Increment(ctx)
@@ -155,6 +196,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		Topics:    []string{topicName},
 	})
 
+	res.WriteHeader(http.StatusCreated)
 	if err = s.encoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
@@ -193,7 +235,7 @@ func (s *Service) NewTOTPSecret(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	var err error
-	input, ok := req.Context().Value(MiddlewareCtxKey).(*models.TOTPSecretRefreshInput)
+	input, ok := req.Context().Value(TOTPSecretRefreshMiddlewareCtxKey).(*models.TOTPSecretRefreshInput)
 	if !ok {
 		s.logger.Debug("no input found on TOTP secret refresh request")
 		res.WriteHeader(http.StatusBadRequest)
@@ -245,7 +287,7 @@ func (s *Service) UpdatePassword(res http.ResponseWriter, req *http.Request) {
 	ctx, span := trace.StartSpan(req.Context(), "update_password_route")
 	defer span.End()
 
-	input, ok := ctx.Value(MiddlewareCtxKey).(*models.PasswordUpdateInput)
+	input, ok := ctx.Value(PasswordChangeMiddlewareCtxKey).(*models.PasswordUpdateInput)
 	if !ok {
 		s.logger.Debug("no input found on UpdatePassword request")
 		res.WriteHeader(http.StatusBadRequest)

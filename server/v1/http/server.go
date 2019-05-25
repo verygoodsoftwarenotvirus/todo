@@ -15,6 +15,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -36,6 +37,7 @@ type (
 
 		// Services
 		authService          *auth.Service
+		frontendService      *frontend.Service
 		itemsService         models.ItemDataServer
 		usersService         models.UserDataServer
 		oauth2ClientsService models.Oauth2ClientDataServer
@@ -61,6 +63,7 @@ func ProvideServer(
 
 	// services
 	authService *auth.Service,
+	frontendService *frontend.Service,
 	itemsService *items.Service,
 	usersService *users.Service,
 	oauth2Service *oauth2clients.Service,
@@ -93,6 +96,7 @@ func ProvideServer(
 
 		// services
 		webhooksService:      webhooksService,
+		frontendService:      frontendService,
 		usersService:         usersService,
 		authService:          authService,
 		itemsService:         itemsService,
@@ -119,7 +123,7 @@ func ProvideServer(
 		srv.newsManager.TuneIn(l)
 	}
 
-	srv.setupRouter(cfg.Server.FrontendFilesDirectory, ih)
+	srv.setupRouter(cfg.Frontend, ih)
 	srv.httpServer.Handler = &ochttp.Handler{
 		Handler:        srv.router,
 		FormatSpanName: formatSpanNameForRequest,

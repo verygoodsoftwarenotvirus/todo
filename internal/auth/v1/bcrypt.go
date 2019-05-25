@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"math"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 
@@ -69,11 +70,14 @@ func (b *BcryptAuthenticator) ValidateLogin(
 	passwordMatches = b.PasswordMatches(ctx, hashedPassword, providedPassword, nil)
 	tooWeak := b.hashedPasswordIsTooWeak(hashedPassword)
 
+	validCode, _ := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
+
 	if !totp.Validate(twoFactorCode, twoFactorSecret) {
 		b.logger.WithValues(map[string]interface{}{
 			"password_matches": passwordMatches,
 			"2fa_secret":       twoFactorSecret,
 			"provided_code":    twoFactorCode,
+			"valid_code":       validCode,
 		}).Debug("invalid code provided")
 
 		return passwordMatches, ErrInvalidTwoFactorCode

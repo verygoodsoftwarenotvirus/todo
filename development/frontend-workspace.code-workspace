@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "/home/jeffrey/src/gitlab.com/verygoodsoftwarenotvirus/todo/internal/frontend"
+		},
+		{
+			"path": "/home/jeffrey/src/gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/frontend"
+		}
+	],
+	"settings": {
+		"go.toolsEnvVars": {
+			"GOARCH": "wasm",
+			"GOOS": "js"
+		}
+	}
+}

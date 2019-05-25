@@ -5,9 +5,11 @@ import (
 	"database/sql"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
+	"github.com/lib/pq"
 	"github.com/pkg/errors"
 )
 
@@ -248,6 +250,13 @@ func (p *Postgres) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 			input.IsAdmin,
 		).Scan(&x.ID, &x.CreatedOn)
 	if err != nil {
+		if e, ok := err.(*pq.Error); ok {
+			if e.Code == pq.ErrorCode("23505") {
+				return nil, dbclient.ErrUserExists
+			}
+
+		}
+
 		return nil, errors.Wrap(err, "error executing user creation query")
 	}
 

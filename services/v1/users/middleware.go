@@ -8,20 +8,16 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
-// UserLoginInputMiddleware fetches user login input from requests
-func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		x := new(models.UserLoginInput)
-		s.logger.WithRequest(req).Debug("UserLoginInputMiddleware called")
-		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
-			s.logger.Error(err, "error encountered decoding request body")
-			res.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		ctx := context.WithValue(req.Context(), MiddlewareCtxKey, x)
-		next.ServeHTTP(res, req.WithContext(ctx))
-	})
-}
+const (
+	// UserCreationMiddlewareCtxKey is the context key for creation input
+	UserCreationMiddlewareCtxKey models.ContextKey = "user_creation_input"
+
+	// PasswordChangeMiddlewareCtxKey is the context key for password changes
+	PasswordChangeMiddlewareCtxKey models.ContextKey = "user_password_change"
+
+	// TOTPSecretRefreshMiddlewareCtxKey is the context key for 2fa token refreshes
+	TOTPSecretRefreshMiddlewareCtxKey models.ContextKey = "user_totp_refresh"
+)
 
 // UserInputMiddleware fetches user input from requests
 func (s *Service) UserInputMiddleware(next http.Handler) http.Handler {
@@ -33,7 +29,7 @@ func (s *Service) UserInputMiddleware(next http.Handler) http.Handler {
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		ctx := context.WithValue(req.Context(), MiddlewareCtxKey, x)
+		ctx := context.WithValue(req.Context(), UserCreationMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }
@@ -48,7 +44,7 @@ func (s *Service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler 
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		ctx := context.WithValue(req.Context(), MiddlewareCtxKey, x)
+		ctx := context.WithValue(req.Context(), PasswordChangeMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }
@@ -63,7 +59,7 @@ func (s *Service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handl
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		ctx := context.WithValue(req.Context(), MiddlewareCtxKey, x)
+		ctx := context.WithValue(req.Context(), TOTPSecretRefreshMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }

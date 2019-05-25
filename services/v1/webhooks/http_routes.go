@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events/v1"
+	v1 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/events/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
@@ -110,6 +110,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	l := x.ToListener(s.logger)
 	s.newsman.TuneIn(l)
 
+	res.WriteHeader(http.StatusCreated)
 	if err = s.encoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}

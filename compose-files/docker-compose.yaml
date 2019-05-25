@@ -4,7 +4,7 @@ services:
   todo-server:
     build:
       context: ../
-      dockerfile: dockerfiles/integration-server.Dockerfile
+      dockerfile: dockerfiles/server.Dockerfile
     ports:
       - '80:80'
     environment:

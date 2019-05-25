@@ -52,24 +52,22 @@ test:
 
 .PHONY: integration-tests
 integration-tests:
-	docker-compose \
-	--file compose-files/integration-tests.yaml up \
+	docker-compose --file compose-files/integration-tests.yaml up \
+	--build \
+	--force-recreate \
+	--remove-orphans \
 	--renew-anon-volumes \
 	--always-recreate-deps \
-	--build \
-	--remove-orphans \
-	--force-recreate \
 	--abort-on-container-exit
 
 .PHONY: load-tests
 load-tests:
-	docker-compose \
-	--file compose-files/load-tests.yaml up \
+	docker-compose --file compose-files/load-tests.yaml up \
+	--build \
+	--force-recreate \
+	--remove-orphans \
 	--renew-anon-volumes \
 	--always-recreate-deps \
-	--build \
-	--remove-orphans \
-	--force-recreate \
 	--abort-on-container-exit
 
 .PHONY: integration-coverage
@@ -77,15 +75,21 @@ integration-coverage:
 	@# big thanks to https://blog.cloudflare.com/go-coverage-with-external-tests/
 	rm -f ./artifacts/integration-coverage.out
 	mkdir -p ./artifacts
-	docker-compose \
-	--file compose-files/integration-coverage.yaml up \
-	--renew-anon-volumes \
-	--timeout 30 --always-recreate-deps \
+	docker-compose --file compose-files/integration-coverage.yaml up \
 	--build \
-	--remove-orphans \
 	--force-recreate \
+	--remove-orphans \
+	--renew-anon-volumes \
+	--always-recreate-deps \
 	--abort-on-container-exit
 	go tool cover -html=./artifacts/integration-coverage.out
+
+## Frontend things
+
+.PHONY: frontend-dev
+frontend-dev:
+	docker build --tag frontend:latest --file=dockerfiles/frontend-dev.Dockerfile .
+	docker run --publish 80 frontend:latest
 
 ## Docker things
 
@@ -93,20 +97,31 @@ integration-coverage:
 server-docker-image: wire
 	docker build --tag $(SERVER_DOCKER_IMAGE_NAME):latest --file dockerfiles/server.Dockerfile .
 
-.PHONY: prod-server-docker-image
-prod-server-docker-image: wire
-	docker build --tag $(SERVER_DOCKER_REPO_NAME):latest --file dockerfiles/server.Dockerfile .
-
 .PHONY: push-server-to-docker
 push-server-to-docker: prod-server-docker-image
 	docker push $(SERVER_DOCKER_REPO_NAME):latest
 
 ## Running
 
+.PHONY: dev
+dev:
+	docker-compose --file compose-files/development.yaml up \
+	--build \
+	--force-recreate \
+	--remove-orphans \
+	--renew-anon-volumes \
+	--always-recreate-deps \
+	--abort-on-container-exit
+
 .PHONY: run
-run: server-docker-image
-	docker-compose \
-	--file compose-files/docker-compose.yaml up --renew-anon-volumes --always-recreate-deps --build --remove-orphans --abort-on-container-exit --force-recreate
+run:
+	docker-compose --file compose-files/docker-compose.yaml up \
+	--build \
+	--force-recreate \
+	--remove-orphans \
+	--renew-anon-volumes \
+	--always-recreate-deps \
+	--abort-on-container-exit
 
 ## Minikube
 

@@ -14,6 +14,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -47,6 +48,7 @@ func BuildServer(
 		auth.Providers,
 		users.Providers,
 		items.Providers,
+		frontend.Providers,
 		webhooks.Providers,
 		oauth2clients.Providers,
 	)

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
+	http2 "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/icrowley/fake"
@@ -67,7 +67,7 @@ func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
 		return nil, err
 	}
 
-	c, err := client.NewSimpleClient(tu, debug)
+	c, err := http2.NewSimpleClient(tu, debug)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +200,7 @@ cookie problems!
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", "", err
-	} else if res.StatusCode >= http.StatusCreated {
+	} else if res.StatusCode != http.StatusCreated {
 		return "", "", fmt.Errorf("bad status: %d", res.StatusCode)
 	}
 

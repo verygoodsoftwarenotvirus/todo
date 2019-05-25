@@ -12,11 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
-
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
+	http2 "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	randmodel "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/rand/model"
+
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -45,7 +45,7 @@ func loginUser(t *testing.T, username, password, totpSecret string) *http.Cookie
 		log.Fatal(err)
 	}
 
-	assert.Equal(t, http.StatusOK, resp.StatusCode, "login should be successful")
+	assert.Equal(t, http.StatusNoContent, resp.StatusCode, "login should be successful")
 
 	cookies := resp.Cookies()
 	if len(cookies) == 1 {
@@ -96,10 +96,67 @@ func TestAuth(test *testing.T) {
 		// execute login request
 		res, err = todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
-		assert.Equal(t, http.StatusOK, res.StatusCode)
+		assert.Equal(t, http.StatusNoContent, res.StatusCode)
 
 		cookies := res.Cookies()
 		assert.Len(t, cookies, 1)
+	})
+
+	test.Run("should be able to logout", func(t *testing.T) {
+		tctx := context.Background()
+
+		ui := randmodel.RandomUserInput()
+
+		req, err := todoClient.BuildCreateUserRequest(tctx, ui)
+		checkValueAndError(t, req, err)
+
+		res, err := todoClient.PlainClient().Do(req)
+		checkValueAndError(t, res, err)
+
+		ucr := &models.UserCreationResponse{}
+		require.NoError(t, json.NewDecoder(res.Body).Decode(ucr))
+
+		token, err := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
+		checkValueAndError(t, token, err)
+		r := &models.UserLoginInput{
+			Username:  ucr.Username,
+			Password:  ui.Password,
+			TOTPToken: token,
+		}
+		out, err := json.Marshal(r)
+		require.NoError(t, err)
+		body := bytes.NewReader(out)
+
+		u, err := url.Parse(todoClient.BuildURL(nil))
+		require.NoError(t, err)
+		u.Path = "/users/login"
+
+		req, err = http.NewRequest(http.MethodPost, u.String(), body)
+		checkValueAndError(t, req, err)
+
+		// execute login request
+		res, err = todoClient.PlainClient().Do(req)
+		checkValueAndError(t, res, err)
+		assert.Equal(t, http.StatusNoContent, res.StatusCode)
+
+		// extract cookie
+		cookies := res.Cookies()
+		require.Len(t, cookies, 1)
+		loginCookie := cookies[0]
+
+		/// build logout request
+		u2, err := url.Parse(todoClient.BuildURL(nil))
+		require.NoError(t, err)
+		u2.Path = "/users/logout"
+
+		req, err = http.NewRequest(http.MethodPost, u2.String(), nil)
+		checkValueAndError(t, req, err)
+		req.AddCookie(loginCookie)
+
+		// execute logout request
+		res, err = todoClient.PlainClient().Do(req)
+		checkValueAndError(t, res, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
 	})
 
 	test.Run("login request without body fails", func(t *testing.T) {
@@ -160,59 +217,6 @@ func TestAuth(test *testing.T) {
 		res, err = todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
 		assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
-	})
-
-	test.Run("should be able to logout", func(t *testing.T) {
-		tctx := context.Background()
-
-		ui := randmodel.RandomUserInput()
-
-		req, err := todoClient.BuildCreateUserRequest(tctx, ui)
-		checkValueAndError(t, req, err)
-
-		res, err := todoClient.PlainClient().Do(req)
-		checkValueAndError(t, res, err)
-
-		ucr := &models.UserCreationResponse{}
-		require.NoError(t, json.NewDecoder(res.Body).Decode(ucr))
-
-		token, err := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
-		checkValueAndError(t, token, err)
-		r := &models.UserLoginInput{
-			Username:  ucr.Username,
-			Password:  ui.Password,
-			TOTPToken: token,
-		}
-		out, err := json.Marshal(r)
-		require.NoError(t, err)
-		body := bytes.NewReader(out)
-
-		u, err := url.Parse(todoClient.BuildURL(nil))
-		require.NoError(t, err)
-		u.Path = "/users/login"
-
-		req, err = http.NewRequest(http.MethodPost, u.String(), body)
-		checkValueAndError(t, req, err)
-
-		res, err = todoClient.PlainClient().Do(req)
-		checkValueAndError(t, res, err)
-		assert.Equal(t, http.StatusOK, res.StatusCode)
-
-		cookies := res.Cookies()
-		require.Len(t, cookies, 1)
-		loginCookie := cookies[0]
-
-		u2, err := url.Parse(todoClient.BuildURL(nil))
-		require.NoError(t, err)
-		u2.Path = "/users/logout"
-
-		req, err = http.NewRequest(http.MethodPost, u2.String(), nil)
-		checkValueAndError(t, req, err)
-		req.AddCookie(loginCookie)
-
-		res, err = todoClient.PlainClient().Do(req)
-		checkValueAndError(t, res, err)
-		assert.Equal(t, http.StatusOK, res.StatusCode)
 	})
 
 	test.Run("should not be able to login as someone that doesn't exist", func(t *testing.T) {
@@ -327,7 +331,7 @@ func TestAuth(test *testing.T) {
 		// execute login request
 		res, err = todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
-		assert.Equal(t, http.StatusOK, res.StatusCode)
+		assert.Equal(t, http.StatusNoContent, res.StatusCode)
 
 		cookies := res.Cookies()
 		require.Len(t, cookies, 1)
@@ -403,7 +407,7 @@ func TestAuth(test *testing.T) {
 		// execute login request
 		res, err = todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
-		assert.Equal(t, http.StatusOK, res.StatusCode)
+		assert.Equal(t, http.StatusNoContent, res.StatusCode)
 
 		cookies := res.Cookies()
 		require.Len(t, cookies, 1)
@@ -435,7 +439,7 @@ func TestAuth(test *testing.T) {
 		premade, err := todoClient.CreateOAuth2Client(tctx, input, cookie)
 		checkValueAndError(test, premade, err)
 
-		c, err := client.NewClient(
+		c, err := http2.NewClient(
 			premade.ClientID,
 			premade.ClientSecret,
 			todoClient.URL,

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/http_client/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"

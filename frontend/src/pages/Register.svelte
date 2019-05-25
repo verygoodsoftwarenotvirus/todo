@@ -41,7 +41,6 @@
       })
       .then(data => {
         twoFactorQRCode = data["qr_code"];
-        console.log(data["two_factor_secret"]);
         showingSecret = true;
       });
   }

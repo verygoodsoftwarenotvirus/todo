@@ -34,9 +34,7 @@ func ProvideFrontendService(
 	registerRoute RegistrationRoute,
 ) *Service {
 	svc := &Service{
-		logger:           logger.WithName(serviceName),
-		loginPage:        buildLoginPage(loginRoute),
-		registrationPage: buildRegisterPage(registerRoute),
+		logger: logger.WithName(serviceName),
 	}
 	return svc
 }

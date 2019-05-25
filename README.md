@@ -15,7 +15,7 @@ you'll need:
 
 1. clone this repository
 2. run `make dev`
-3. http://localhost
+3. [http://localhost](http://localhost)
 
 ## working on the frontend
 

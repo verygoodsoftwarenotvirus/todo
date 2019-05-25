@@ -15,8 +15,8 @@ services:
       JAEGER_SAMPLER_MANAGER_HOST_PORT: 'tracing-server:5778'
     volumes:
       - type: bind
-        source: ../frontend
-        target: /go/src/gitlab.com/verygoodsoftwarenotvirus/todo/frontend
+        source: ../frontend/public
+        target: /frontend
     links:
       - tracing-server
       - database

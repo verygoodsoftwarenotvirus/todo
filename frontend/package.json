@@ -1,74 +1,25 @@
 {
-	"name": "todo",
-	"version": "0.1.0",
-	"private": true,
-	"scripts": {
-		"serve": "vue-cli-service serve",
-		"build": "vue-cli-service build",
-		"watch": "vue-cli-service build --watch --mode=development",
-		"lint": "vue-cli-service lint",
-		"test:e2e": "vue-cli-service test:e2e",
-		"test:unit": "vue-cli-service test:unit"
-	},
-	"dependencies": {
-		"axios": "^0.18.0",
-		"buefy": "^0.7.3",
-		"vue": "^2.6.6",
-		"vue-class-component": "^6.0.0",
-		"vue-property-decorator": "^7.0.0",
-		"vue-router": "^3.0.1",
-		"vuex": "^3.0.1"
-	},
-	"devDependencies": {
-		"@vue/cli-service": "^3.5.0",
-		"@types/jest": "^23.1.4",
-		"@vue/cli-plugin-typescript": "^3.5.0",
-		"@vue/cli-plugin-unit-jest": "^3.5.1",
-		"@vue/test-utils": "1.0.0-beta.29",
-		"ts-jest": "^23.0.0",
-		"typescript": "^3.2.1",
-		"vue-template-compiler": "^2.5.21"
-	},
-	"postcss": {
-		"plugins": {
-			"autoprefixer": {}
-		}
-	},
-	"browserslist": [
-		"> 1%",
-		"last 2 versions",
-		"not ie <= 8"
-	],
-	"vue": {
-		"configureWebpack": {
-			"optimization": {
-				"splitChunks": false
-			}
-		}
-	},
-	"jest": {
-		"moduleFileExtensions": [
-			"js",
-			"jsx",
-			"json",
-			"vue",
-			"ts",
-			"tsx"
-		],
-		"transform": {
-			"^.+\\.vue$": "vue-jest",
-			".+\\.(css|styl|less|sass|scss|svg|png|jpg|ttf|woff|woff2)$": "jest-transform-stub",
-			"^.+\\.tsx?$": "ts-jest"
-		},
-		"moduleNameMapper": {
-			"^@/(.*)$": "<rootDir>/src/$1"
-		},
-		"snapshotSerializers": [
-			"jest-serializer-vue"
-		],
-		"testMatch": [
-			"**/tests/unit/**/*.spec.(js|jsx|ts|tsx)|**/__tests__/*.(js|jsx|ts|tsx)"
-		],
-		"testURL": "http://localhost/"
-	}
+  "name": "svelte-app",
+  "version": "1.0.0",
+  "devDependencies": {
+    "npm-run-all": "^4.1.5",
+    "rollup": "^1.10.1",
+    "rollup-plugin-commonjs": "^9.3.4",
+    "rollup-plugin-livereload": "^1.0.0",
+    "rollup-plugin-node-resolve": "^4.2.3",
+    "rollup-plugin-svelte": "^5.0.3",
+    "rollup-plugin-terser": "^4.0.4",
+    "sirv-cli": "^0.4.0",
+    "svelte": "^3.0.0"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "autobuild": "rollup -c -w",
+    "dev": "run-p start:dev autobuild",
+    "start": "sirv public",
+    "start:dev": "sirv public --dev"
+  },
+  "dependencies": {
+    "svelte-routing": "^1.1.1"
+  }
 }

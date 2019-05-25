@@ -1,39 +1,16 @@
-# todo
+# Get started
 
-## Project setup
-```
+Install the dependencies...
+
+```bash
+cd svelte-app
 npm install
 ```
 
-### Compiles and hot-reloads for development
-```
-npm run serve
+...then start [Rollup](https://rollupjs.org):
+
+```bash
+npm run dev
 ```
 
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Run your tests
-```
-npm run test
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Run your end-to-end tests
-```
-npm run test:e2e
-```
-
-### Run your unit tests
-```
-npm run test:unit
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+Navigate to [localhost:5000](http://localhost:5000). You should see your app running. Edit a component file in `src`, save it, and reload the page to see your changes.

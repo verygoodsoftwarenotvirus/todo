@@ -12,7 +12,7 @@ FROM golang:stretch
 WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
 COPY . .
-COPY --from=frontend-build-stage /app/dist /frontend
+COPY --from=frontend-build-stage /app/public /frontend
 
 RUN go build -o /todo gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
 

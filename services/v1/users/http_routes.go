@@ -148,8 +148,8 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// "otpauth://totp/{{ .Issuer }}:{{ .Username }}?secret={{ .Secret }}&issuer={{ .Issuer }}",
 	qrcode, err := qr.Encode(
-		// "otpauth://totp/{{ .Issuer }}:{{ .Username }}?secret={{ .Secret }}&issuer={{ .Issuer }}",
 		fmt.Sprintf(
 			"otpauth://totp/%s:%s?secret=%s&issuer=%s",
 			"todoservice",
@@ -163,7 +163,10 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s.logger.Error(err, "trying to encode secret to qr code")
 	}
-	barcode.Scale(qrcode, 256, 256)
+	qrcode, err = barcode.Scale(qrcode, 256, 256)
+	if err != nil {
+		s.logger.Error(err, "trying to enlarge qr code")
+	}
 
 	var b bytes.Buffer
 	if err := png.Encode(&b, qrcode); err != nil {

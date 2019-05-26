@@ -125,7 +125,7 @@ func TestOAuth2Clients(test *testing.T) {
 			// Create oauth2Client
 			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
 			premade, err := testClient.CreateOAuth2Client(tctx, input, cookie)
-			checkValueAndError(t, premade, nil)
+			checkValueAndError(t, premade, err)
 
 			// Clean up
 			err = testClient.DeleteOAuth2Client(tctx, premade.ID)

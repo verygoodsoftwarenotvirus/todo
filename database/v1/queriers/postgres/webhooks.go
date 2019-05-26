@@ -192,7 +192,8 @@ func (p *Postgres) GetAllWebhooks(ctx context.Context) (*models.WebhookList, err
 	}()
 
 	for rows.Next() {
-		webhook, err := p.scanWebhook(rows)
+		var webhook *models.Webhook
+		webhook, err = p.scanWebhook(rows)
 		if err != nil {
 			return nil, err
 		}
@@ -245,8 +246,8 @@ func (p *Postgres) GetWebhooks(ctx context.Context, filter *models.QueryFilter, 
 	}
 
 	defer func() {
-		if err := rows.Close(); err != nil {
-			p.logger.Error(err, "closing rows")
+		if e := rows.Close(); e != nil {
+			p.logger.Error(e, "closing rows")
 		}
 	}()
 

@@ -71,7 +71,10 @@ func buildTheThing(token string) string {
 			out += "\n"
 		}
 		for _, x := range strings.Split(token, "") {
-			y, _ := strconv.Atoi(x)
+			y, err := strconv.Atoi(x)
+			if err != nil {
+				panic(err)
+			}
 			out += "  "
 			out += numbers[y][i]
 		}

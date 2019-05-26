@@ -37,11 +37,14 @@ revendor: vendor-clean vendor
 
 ## Testing things
 
-coverage.out:
-	echo "mode: set" > coverage.out;
+lint:
+	GO111MODULE=on golangci-lint run --config=.golangci.yml ./...
+
+$(INTEGRATION_COVERAGE_OUT):
+	echo "mode: set" > $(INTEGRATION_COVERAGE_OUT);
 	for pkg in `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests)'`; do \
 		go test -coverprofile=profile.out -v -count 5 $$pkg; \
-		cat profile.out | grep -v "mode: atomic" >> coverage.out; \
+		cat profile.out | grep -v "mode: atomic" >> $(INTEGRATION_COVERAGE_OUT); \
 	done
 	rm -f profile.out
 

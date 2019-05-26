@@ -21,6 +21,16 @@ unit-tests:
   script:
     - make coverage.out
 
+linting:
+  stage: testing
+  image: golang:alpine
+  variables:
+    GOPATH: '/go'
+  before_script:
+    - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.16.0
+  script:
+    - make lint
+
 integration-tests:
   stage: testing
   variables:

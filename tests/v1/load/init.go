@@ -2,13 +2,10 @@ package load
 
 import (
 	"fmt"
-	"net/http"
-	"net/url"
 	"os"
 	"strings"
 	"time"
 
-	http2 "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
@@ -22,18 +19,9 @@ const (
 )
 
 var (
-	debug                                   bool
-	urlToUse, hcURL, clientID, clientSecret string
+	debug                            bool
+	urlToUse, clientID, clientSecret string
 )
-
-func buildHTTPClient() *http.Client {
-	httpc := &http.Client{
-		Transport: http.DefaultTransport,
-		Timeout:   5 * time.Second,
-	}
-
-	return httpc
-}
 
 func init() {
 	if strings.ToLower(os.Getenv("DOCKER")) == "true" {
@@ -60,20 +48,4 @@ func init() {
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)
-}
-
-func initializeClient(clientID, clientSecret string) *http2.V1Client {
-	uri, _ := url.Parse(urlToUse)
-	c, err := http2.NewClient(
-		clientID,
-		clientSecret,
-		uri,
-		zerolog.NewZeroLogger(),
-		buildHTTPClient(),
-		debug,
-	)
-	if err != nil {
-		panic(err)
-	}
-	return c
 }

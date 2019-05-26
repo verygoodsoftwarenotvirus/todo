@@ -232,8 +232,8 @@ func (s *Sqlite) GetWebhooks(ctx context.Context, filter *models.QueryFilter, us
 	}
 
 	defer func() {
-		if err := rows.Close(); err != nil {
-			s.logger.Error(err, "closing rows")
+		if e := rows.Close(); e != nil {
+			s.logger.Error(e, "closing rows")
 		}
 	}()
 

@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"math"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 
@@ -47,8 +46,8 @@ func ProvideBcrypt(hashCost BcryptHashCost, logger logging.Logger) Authenticator
 }
 
 // HashPassword takes a password and hashes it using bcrypt
-func (b *BcryptAuthenticator) HashPassword(ctx context.Context, password string) (string, error) {
-	ctx, span := trace.StartSpan(ctx, "HashPassword")
+func (b *BcryptAuthenticator) HashPassword(c context.Context, password string) (string, error) {
+	_, span := trace.StartSpan(c, "HashPassword")
 	defer span.End()
 
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), int(b.hashCost))
@@ -70,14 +69,11 @@ func (b *BcryptAuthenticator) ValidateLogin(
 	passwordMatches = b.PasswordMatches(ctx, hashedPassword, providedPassword, nil)
 	tooWeak := b.hashedPasswordIsTooWeak(hashedPassword)
 
-	validCode, _ := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
-
 	if !totp.Validate(twoFactorCode, twoFactorSecret) {
 		b.logger.WithValues(map[string]interface{}{
 			"password_matches": passwordMatches,
 			"2fa_secret":       twoFactorSecret,
 			"provided_code":    twoFactorCode,
-			"valid_code":       validCode,
 		}).Debug("invalid code provided")
 
 		return passwordMatches, ErrInvalidTwoFactorCode

@@ -68,8 +68,8 @@ func scanOAuth2Client(scan database.Scanner) (*models.OAuth2Client, error) {
 	return x, nil
 }
 
-func (s *Sqlite) scanOAuth2Clients(rows *sql.Rows) ([]models.OAuth2Client, error) {
-	var list []models.OAuth2Client
+func (s *Sqlite) scanOAuth2Clients(rows *sql.Rows) ([]*models.OAuth2Client, error) {
+	var list []*models.OAuth2Client
 
 	defer func() {
 		if err := rows.Close(); err != nil {
@@ -82,7 +82,7 @@ func (s *Sqlite) scanOAuth2Clients(rows *sql.Rows) ([]models.OAuth2Client, error
 		if err != nil {
 			return nil, err
 		}
-		list = append(list, *x)
+		list = append(list, x)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -208,8 +208,8 @@ func (s *Sqlite) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilte
 	}
 
 	defer func() {
-		if err := rows.Close(); err != nil {
-			s.logger.Error(err, "closing rows")
+		if e := rows.Close(); e != nil {
+			s.logger.Error(e, "closing rows")
 		}
 	}()
 
@@ -217,13 +217,18 @@ func (s *Sqlite) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilte
 	if err != nil {
 		return nil, err
 	}
+	var l []models.OAuth2Client
+
+	for _, l1 := range list {
+		l = append(l, *l1)
+	}
 
 	ocl := &models.OAuth2ClientList{
 		Pagination: models.Pagination{
 			Page:  filter.Page,
 			Limit: filter.Limit,
 		},
-		Clients: list,
+		Clients: l,
 	}
 	if ocl.TotalCount, err = s.GetOAuth2ClientCount(ctx, filter, userID); err != nil {
 		return nil, err
@@ -250,7 +255,7 @@ const getAllOAuth2ClientsQuery = `
 `
 
 // GetAllOAuth2Clients gets a list of all OAuth2 clients, regardless of ownership
-func (s *Sqlite) GetAllOAuth2Clients(ctx context.Context) ([]models.OAuth2Client, error) {
+func (s *Sqlite) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Client, error) {
 	rows, err := s.database.QueryContext(ctx, getAllOAuth2ClientsQuery)
 	if err != nil {
 		return nil, err

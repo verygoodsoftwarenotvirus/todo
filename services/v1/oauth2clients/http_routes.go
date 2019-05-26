@@ -15,11 +15,10 @@ const (
 	// URIParamKey is used for referring to OAuth2 client IDs in router params
 	URIParamKey = "oauth2ClientID"
 
-	scopesKey   models.ContextKey = "scopes"
-	clientIDKey models.ContextKey = "client_id"
+	oauth2ClientIDURIParamKey                   = "client_id"
+	clientIDKey               models.ContextKey = "client_id"
 
-	scopesSeparator           = ","
-	oauth2ClientIDURIParamKey = "client_id"
+	scopesSeparator = ","
 )
 
 func init() {
@@ -33,11 +32,12 @@ func init() {
 // https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
 func randString() string {
 	b := make([]byte, 32)
-	_, _ = rand.Read(b)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
 
 	// this is so that we don't end up with `=` in IDs
-	rs := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b)
-	return rs
+	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b)
 }
 
 func (s *Service) fetchUserID(req *http.Request) uint64 {

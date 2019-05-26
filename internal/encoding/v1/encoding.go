@@ -37,16 +37,16 @@ type (
 
 // EncodeResponse encodes responses
 func (ed *ServerEncoderDecoder) EncodeResponse(res http.ResponseWriter, v interface{}) error {
-	ct := strings.ToLower(res.Header().Get("Content-type"))
+	var ct = strings.ToLower(res.Header().Get("Content-type"))
+	if ct == "" {
+		ct = "application/json"
+	}
 
 	var e encoder
 	switch ct {
 	case "application/xml":
 		e = xml.NewEncoder(res)
-	case "application/json":
-		e = json.NewEncoder(res)
 	default:
-		ct = "application/json"
 		e = json.NewEncoder(res)
 	}
 
@@ -56,16 +56,16 @@ func (ed *ServerEncoderDecoder) EncodeResponse(res http.ResponseWriter, v interf
 
 // DecodeResponse decodes responses
 func (ed *ServerEncoderDecoder) DecodeResponse(req *http.Request, v interface{}) error {
-	ct := strings.ToLower(req.Header.Get("Content-type"))
+	var ct = strings.ToLower(req.Header.Get("Content-type"))
+	if ct == "" {
+		ct = "application/json"
+	}
 
 	var d decoder
 	switch ct {
 	case "application/xml":
 		d = xml.NewDecoder(req.Body)
-	case "application/json":
-		d = json.NewDecoder(req.Body)
 	default:
-		ct = "application/json"
 		d = json.NewDecoder(req.Body)
 	}
 

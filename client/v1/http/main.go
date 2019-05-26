@@ -37,11 +37,8 @@ type V1Client struct {
 	Debug  bool
 	URL    *url.URL
 
-	clientID     string
-	clientSecret string
-	Scopes       []string
-	redirectURI  string
-	tokenSource  oauth2.TokenSource
+	Scopes      []string
+	tokenSource oauth2.TokenSource
 }
 
 // AuthenticatedClient returns the authenticated *http.Client that we use to make most requests
@@ -163,7 +160,7 @@ func (c *V1Client) executeRequest(ctx context.Context, client *http.Client, req 
 		logger = c.logger.WithValue("curl", command.String())
 	}
 
-	res, err := client.Do(req)
+	res, err := client.Do(req.WithContext(ctx))
 	if err != nil {
 		return nil, errors.Wrap(err, "executing request")
 	}
@@ -196,7 +193,10 @@ func (c *V1Client) buildURL(queryParams url.Values, parts ...string) *url.URL {
 	tu := *c.URL
 
 	parts = append([]string{"api", "v1"}, parts...)
-	u, _ := url.Parse(strings.Join(parts, "/"))
+	u, err := url.Parse(strings.Join(parts, "/"))
+	if err != nil {
+		panic(fmt.Sprintf("was asked to build an invalid URL: %v", err))
+	}
 
 	if queryParams != nil {
 		u.RawQuery = queryParams.Encode()
@@ -256,9 +256,9 @@ func (c *V1Client) buildDataRequest(method, uri string, in interface{}) (*http.R
 }
 
 func (c *V1Client) makeRequest(ctx context.Context, req *http.Request, out interface{}) error {
-	res, err := c.executeRequest(context.Background(), c.authedClient, req)
+	res, err := c.executeRequest(ctx, c.authedClient, req)
 	if err != nil {
-		return errors.Wrap(err, "encountered error executing request")
+		return errors.Wrap(err, "executing request")
 	}
 
 	if res.StatusCode == http.StatusNotFound {
@@ -268,29 +268,12 @@ func (c *V1Client) makeRequest(ctx context.Context, req *http.Request, out inter
 	if out != nil {
 		resErr := unmarshalBody(res, &out)
 		if resErr != nil {
-			return errors.Wrap(err, "encountered error loading response from server")
+			return errors.Wrap(err, "loading response from server")
 		}
 		c.logger.WithValue("loaded_value", out).Debug("data request returned")
 	}
 
 	return nil
-}
-
-func (c *V1Client) makeDataRequest(ctx context.Context, method string, uri string, in interface{}, out interface{}) error {
-	// sometimes we want to make requests with data attached, but we don't really care about the response
-	// so we give this function a nil `out` value. That said, if you provide us a value, it needs to be a pointer.
-	if out != nil {
-		if np, err := argIsNotPointer(out); np || err != nil {
-			return errors.Wrap(err, "struct to load must be a pointer")
-		}
-	}
-
-	req, err := c.buildDataRequest(method, uri, in)
-	if err != nil {
-		return errors.Wrap(err, "encountered error building request")
-	}
-
-	return c.makeRequest(ctx, req, out)
 }
 
 func (c *V1Client) makeUnauthedDataRequest(ctx context.Context, method string, uri string, in interface{}, out interface{}) error {
@@ -304,12 +287,12 @@ func (c *V1Client) makeUnauthedDataRequest(ctx context.Context, method string, u
 
 	req, err := c.buildDataRequest(method, uri, in)
 	if err != nil {
-		return errors.Wrap(err, "encountered error building request")
+		return errors.Wrap(err, "building request")
 	}
 
-	res, err := c.executeRequest(context.Background(), c.plainClient, req)
+	res, err := c.executeRequest(ctx, c.plainClient, req)
 	if err != nil {
-		return errors.Wrap(err, "encountered error executing request")
+		return errors.Wrap(err, "executing request")
 	}
 
 	if res.StatusCode == http.StatusNotFound {
@@ -319,7 +302,7 @@ func (c *V1Client) makeUnauthedDataRequest(ctx context.Context, method string, u
 	if out != nil {
 		resErr := unmarshalBody(res, &out)
 		if resErr != nil {
-			return errors.Wrap(err, "encountered error loading response from server")
+			return errors.Wrap(err, "loading response from server")
 		}
 		c.logger.WithValue("loaded_value", out).Debug("unauthenticated data request returned")
 	}
@@ -327,24 +310,14 @@ func (c *V1Client) makeUnauthedDataRequest(ctx context.Context, method string, u
 	return nil
 }
 
-func (c *V1Client) exists(ctx context.Context, uri string) (bool, error) {
-	req, _ := http.NewRequest(http.MethodHead, uri, nil)
-	res, err := c.executeRequest(context.Background(), c.authedClient, req)
-	if err != nil {
-		return false, errors.Wrap(err, "encountered error executing request")
-	}
-
-	return res.StatusCode == http.StatusOK, nil
-}
-
 func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interface{}) error {
 	if err := argIsNotPointerOrNil(obj); err != nil {
 		return errors.Wrap(err, "struct to load must be a pointer")
 	}
 
-	res, err := c.executeRequest(context.Background(), c.authedClient, req)
+	res, err := c.executeRequest(ctx, c.authedClient, req)
 	if err != nil {
-		return errors.Wrap(err, "encountered error executing request")
+		return errors.Wrap(err, "executing request")
 	}
 
 	if res.StatusCode == http.StatusNotFound {
@@ -352,54 +325,6 @@ func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interfac
 	}
 
 	return unmarshalBody(res, &obj)
-}
-
-func (c *V1Client) get(ctx context.Context, uri string, obj interface{}) error {
-	ce := &Error{}
-
-	if err := argIsNotPointerOrNil(obj); err != nil {
-		ce.Err = errors.Wrap(err, "struct to load must be a pointer")
-		return ce
-	}
-
-	req, err := http.NewRequest(http.MethodGet, uri, nil)
-	if err != nil {
-		ce.Err = errors.Wrap(err, "encountered error building request")
-		return ce
-	}
-
-	res, err := c.executeRequest(context.Background(), c.authedClient, req)
-	if err != nil {
-		ce.Err = errors.Wrap(err, "encountered error executing request")
-		return ce
-	}
-
-	if res.StatusCode == http.StatusNotFound {
-		ce.Err = ErrNotFound
-		return ce
-	}
-
-	return unmarshalBody(res, &obj)
-}
-
-func (c *V1Client) delete(ctx context.Context, uri string) error {
-	req, _ := http.NewRequest(http.MethodDelete, uri, nil)
-	res, err := c.executeRequest(context.Background(), c.authedClient, req)
-	if err != nil {
-		return &Error{Err: err}
-	} else if res.StatusCode != http.StatusNoContent {
-		return &Error{Err: errors.New(fmt.Sprintf("status returned: %d", res.StatusCode))}
-	}
-
-	return nil
-}
-
-func (c *V1Client) post(ctx context.Context, uri string, in interface{}, out interface{}) error {
-	return c.makeDataRequest(ctx, http.MethodPost, uri, in, out)
-}
-
-func (c *V1Client) put(ctx context.Context, uri string, in interface{}, out interface{}) error {
-	return c.makeDataRequest(ctx, http.MethodPut, uri, in, out)
 }
 
 // // DialWebsocket dials a websocket
@@ -426,7 +351,7 @@ func (c *V1Client) put(ctx context.Context, uri string, in interface{}, out inte
 
 // 	conn, res, err := dialer.Dial(u.String(), nil)
 // 	if err != nil {
-// 		logger.Debug("encountered error dialing websocket")
+// 		logger.Debug("dialing websocket")
 // 		return nil, err
 // 	}
 

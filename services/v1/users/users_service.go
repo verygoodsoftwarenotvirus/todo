@@ -39,7 +39,7 @@ type (
 		authenticator auth.Authenticator
 		logger        logging.Logger
 		encoder       encoding.EncoderDecoder
-		userIDFetcher func(*http.Request) uint64
+		userIDFetcher UserIDFetcher
 		userCounter   metrics.UnitCounter
 		newsman       *newsman.Newsman
 	}

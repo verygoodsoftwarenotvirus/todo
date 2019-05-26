@@ -8,6 +8,7 @@ you'll need:
 
 - make
 - go >= 1.12
+- [wire](https://github.com/google/wire) for dependency management
 - docker
 - docker-compose
 

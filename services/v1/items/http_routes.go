@@ -58,7 +58,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.ItemInput)
 	logger = logger.WithValue("input", input)
 	if !ok {
-		s.logger.Error(nil, "valid input not attached to request")
+		logger.Error(nil, "valid input not attached to request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}

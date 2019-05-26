@@ -65,7 +65,7 @@ func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reque
 				return "", err
 			}
 
-			req = req.WithContext(context.WithValue(ctx, models.OAuth2ClientKey, client))
+			// req = req.WithContext(context.WithValue(ctx, models.OAuth2ClientKey, client))
 			return strings.Join(client.Scopes, scopesSeparator), nil
 		}
 	} else {

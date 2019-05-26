@@ -39,16 +39,6 @@ func fetchRandomItem(client *http2.V1Client) *models.Item {
 	return &itemsRes.Items[randIndex]
 }
 
-func fetchRandomWebhook(client *http2.V1Client) *models.Webhook {
-	webhookRes, err := client.GetWebhooks(context.Background(), nil)
-	if err != nil || webhookRes == nil || len(webhookRes.Webhooks) == 0 {
-		return nil
-	}
-
-	randIndex := rand.Intn(len(webhookRes.Webhooks))
-	return &webhookRes.Webhooks[randIndex]
-}
-
 func fetchRandomOAuth2Client(client *http2.V1Client) *models.OAuth2Client {
 	clientsRes, err := client.GetOAuth2Clients(context.Background(), nil)
 	if err != nil || clientsRes == nil || len(clientsRes.Clients) <= 1 {

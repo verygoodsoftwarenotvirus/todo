@@ -86,7 +86,6 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 			}
 
 			http.Redirect(res, req, "/login", http.StatusUnauthorized)
-			return
 		})
 	}
 }

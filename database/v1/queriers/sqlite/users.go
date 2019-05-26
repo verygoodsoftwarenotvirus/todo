@@ -52,8 +52,8 @@ func (s *Sqlite) scanUsers(rows *sql.Rows) ([]models.User, error) {
 	var list []models.User
 
 	defer func() {
-		if err := rows.Close(); err != nil {
-			s.logger.Error(err, "closing rows")
+		if e := rows.Close(); e != nil {
+			s.logger.Error(e, "closing rows")
 		}
 	}()
 
@@ -184,8 +184,8 @@ func (s *Sqlite) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mod
 	}
 
 	defer func() {
-		if err := rows.Close(); err != nil {
-			s.logger.Error(err, "closing rows")
+		if e := rows.Close(); e != nil {
+			s.logger.Error(e, "closing rows")
 		}
 	}()
 

@@ -16,7 +16,7 @@ before_script:
 
 unit-tests:
   stage: testing
-  image: golang:alpine
+  image: golang:stretch
   variables:
     GOPATH: '/go'
   script:

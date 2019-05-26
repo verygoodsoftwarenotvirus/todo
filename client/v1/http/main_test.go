@@ -6,6 +6,8 @@ import (
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,7 +29,7 @@ func TestBuildURL(T *testing.T) {
 		t.Parallel()
 
 		u, _ := url.Parse(exampleURL)
-		c, err := client.NewClient("", "", u, nil, nil, false)
+		c, err := client.NewClient("", "", u, noop.ProvideNoopLogger(), nil, false)
 		require.NoError(t, err)
 
 		testCases := []struct {

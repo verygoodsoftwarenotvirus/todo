@@ -1,16 +1,16 @@
 # build stage
-FROM golang:alpine AS build-stage
+FROM golang:stretch AS build-stage
 
 WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
-RUN apk add --update make git gcc musl-dev
+RUN apt-get update -y && apt-get install -y make git gcc musl-dev
 
 ADD . .
 
 RUN go build -o /loadtester gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/load
 
 # final stage
-FROM alpine:latest
+FROM debian:stable
 
 COPY --from=build-stage /loadtester /loadtester
 

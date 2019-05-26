@@ -73,6 +73,16 @@ load-tests:
 	--always-recreate-deps \
 	--abort-on-container-exit
 
+.PHONY: ci-load-tests
+ci-load-tests:
+	docker-compose --file compose-files/ci-load-tests.yaml up \
+	--build \
+	--force-recreate \
+	--remove-orphans \
+	--renew-anon-volumes \
+	--always-recreate-deps \
+	--abort-on-container-exit
+
 .PHONY: integration-coverage
 integration-coverage:
 	@# big thanks to https://blog.cloudflare.com/go-coverage-with-external-tests/

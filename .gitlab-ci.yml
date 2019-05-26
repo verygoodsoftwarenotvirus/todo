@@ -32,6 +32,17 @@ integration-tests:
     - pip install docker-compose
     - make integration-tests
 
+load-tests:
+  stage: testing
+  variables:
+    GOPATH: '/go'
+    LOADTEST_RUN_TIME: '2m30s'
+  script:
+    - apk add --update --no-cache py-pip openssl python-dev libffi-dev
+      openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - make load-tests
+
 build-frontend:
   stage: quality
   image: node:10

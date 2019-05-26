@@ -1,11 +1,14 @@
-package load
+package main
 
 import (
 	"fmt"
+	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
@@ -48,4 +51,33 @@ func init() {
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)
+}
+
+func buildHTTPClient() *http.Client {
+	httpc := &http.Client{
+		Transport: http.DefaultTransport,
+		Timeout:   5 * time.Second,
+	}
+
+	return httpc
+}
+
+func initializeClient(clientID, clientSecret string) *client.V1Client {
+	uri, err := url.Parse(urlToUse)
+	if err != nil {
+		panic(err)
+	}
+
+	c, err := client.NewClient(
+		clientID,
+		clientSecret,
+		uri,
+		zerolog.NewZeroLogger(),
+		buildHTTPClient(),
+		debug,
+	)
+	if err != nil {
+		panic(err)
+	}
+	return c
 }

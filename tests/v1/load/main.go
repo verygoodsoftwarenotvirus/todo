@@ -1,10 +1,12 @@
-package load
+package main
 
 import (
 	"bytes"
 	"context"
 	"io/ioutil"
 	"log"
+	"os"
+	"time"
 
 	"github.com/emicklei/hazana"
 
@@ -82,27 +84,36 @@ func (a *TodoServiceAttacker) Clone() hazana.Attack {
 	return a
 }
 
-// func main() {
-// 	todoClient := initializeClient(clientID, clientSecret)
+func main() {
+	todoClient := initializeClient(clientID, clientSecret)
 
-// 	attacker := &TodoServiceAttacker{todoClient: todoClient}
-// 	cfg := hazana.Config{
-// 		RPS:           50,
-// 		AttackTimeSec: 1<<32 - 1, // run basically forever
-// 		RampupTimeSec: 5,
-// 		// RampupStrategy: "", string            `json:"rampupStrategy"`
-// 		MaxAttackers: 50,
-// 		// OutputFilename: "", string            `json:"outputFilename,omitempty"`
-// 		Verbose: true,
-// 		// Metadata: "",       map[string]string `json:"metadata,omitempty"`
-// 		DoTimeoutSec: 10,
-// 	}
+	var runTime = 150 * time.Second
+	if rt := os.Getenv("LOADTEST_RUN_TIME"); rt != "" {
+		_rt, err := time.ParseDuration(rt)
+		if err != nil {
+			panic(err)
+		}
+		runTime = _rt
+	}
 
-// 	r := hazana.Run(attacker, cfg)
+	attacker := &TodoServiceAttacker{todoClient: todoClient}
+	cfg := hazana.Config{
+		RPS:           50,
+		AttackTimeSec: int(runTime.Seconds()), // run basically forever
+		RampupTimeSec: 5,
+		// RampupStrategy: "", string            `json:"rampupStrategy"`
+		MaxAttackers: 50,
+		// OutputFilename: "", string            `json:"outputFilename,omitempty"`
+		Verbose: true,
+		// Metadata: "",       map[string]string `json:"metadata,omitempty"`
+		DoTimeoutSec: 10,
+	}
 
-// 	// inspect the report and compute whether the test has failed
-// 	// e.g by looking at the success percentage and mean response time of each metric.
-// 	r.Failed = false
+	r := hazana.Run(attacker, cfg)
 
-// 	hazana.PrintReport(r)
-// }
+	// inspect the report and compute whether the test has failed
+	// e.g by looking at the success percentage and mean response time of each metric.
+	r.Failed = false
+
+	hazana.PrintReport(r)
+}

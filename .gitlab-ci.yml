@@ -1,5 +1,6 @@
 stages:
   - testing
+  - quality
 
 image: docker:latest
 
@@ -21,17 +22,6 @@ unit-tests:
   script:
     - make coverage.out
 
-linting:
-  stage: testing
-  image: golang:stretch
-  variables:
-    GOPATH: '/go'
-  before_script:
-    - apt-get install -y curl
-    - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.16.0
-  script:
-    - make lint
-
 integration-tests:
   stage: testing
   variables:
@@ -41,3 +31,22 @@ integration-tests:
       openssl-dev gcc libc-dev make
     - pip install docker-compose
     - make integration-tests
+
+build-frontend:
+  stage: quality
+  image: node:10
+  before_script:
+    - npm install
+  script:
+    - npm run build
+
+linting:
+  stage: quality
+  image: golang:stretch
+  variables:
+    GOPATH: '/go'
+  before_script:
+    - apt-get install -y curl
+    - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.16.0
+  script:
+    - make lint

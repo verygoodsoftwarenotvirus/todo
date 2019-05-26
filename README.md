@@ -11,6 +11,7 @@ you'll need:
 - [wire](https://github.com/google/wire) for dependency management
 - docker
 - docker-compose
+- [golangci-lint](https://github.com/golangci/golangci-lint) for linting (see included config file)
 
 ## running the server
 

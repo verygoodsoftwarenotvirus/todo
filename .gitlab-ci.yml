@@ -33,7 +33,7 @@ before_script:
 #     - make integration-tests
 
 build-frontend:
-  stage: quality1
+  stage: quality
   image: node:10
   before_script:
     - npm install

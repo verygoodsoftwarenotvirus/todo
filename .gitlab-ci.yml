@@ -12,7 +12,7 @@ before_script:
   - cp -rf /builds/verygoodsoftwarenotvirus/todo
     /go/src/gitlab.com/verygoodsoftwarenotvirus/
   - cd /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
-  - apk add --update --no-cache make git gcc musl-dev
+  - apt-get update -y && apt-get install -y make git gcc musl-dev
 
 unit-tests:
   stage: testing

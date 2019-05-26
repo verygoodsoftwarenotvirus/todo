@@ -23,10 +23,11 @@ unit-tests:
 
 linting:
   stage: testing
-  image: golang:alpine
+  image: golang:stretch
   variables:
     GOPATH: '/go'
   before_script:
+    - apt-get install -y curl
     - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.16.0
   script:
     - make lint

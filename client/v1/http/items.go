@@ -31,8 +31,7 @@ func (c *V1Client) GetItem(ctx context.Context, id uint64) (item *models.Item, e
 		return nil, errors.Wrap(err, "building request")
 	}
 
-	err = c.retrieve(ctx, req, &item)
-	return item, err
+	return item, c.retrieve(ctx, req, &item)
 }
 
 // BuildGetItemsRequest builds an http Request for fetching items
@@ -52,8 +51,7 @@ func (c *V1Client) GetItems(ctx context.Context, filter *models.QueryFilter) (it
 		return nil, errors.Wrap(err, "building request")
 	}
 
-	err = c.retrieve(ctx, req, &items)
-	return items, err
+	return items, c.retrieve(ctx, req, &items)
 }
 
 // BuildCreateItemRequest builds an http Request for creating an item

@@ -76,7 +76,7 @@ func (c *V1Client) BuildCreateUserRequest(ctx context.Context, body *models.User
 	return c.buildDataRequest(http.MethodPost, uri, body)
 }
 
-// CreateUser creates a user
+// CreateUser creates a new user
 func (c *V1Client) CreateUser(ctx context.Context, input *models.UserInput) (*models.UserCreationResponse, error) {
 	user := &models.UserCreationResponse{}
 
@@ -85,17 +85,7 @@ func (c *V1Client) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 		return nil, errors.Wrap(err, "building request")
 	}
 
-	err = c.makeRequest(ctx, req, &user)
-	return user, err
-}
-
-// CreateNewUser creates a new user
-func (c *V1Client) CreateNewUser(ctx context.Context, input *models.UserInput) (*models.UserCreationResponse, error) {
-	user := &models.UserCreationResponse{}
-
-	uri := c.buildVersionlessURL(nil, usersBasePath)
-	err := c.makeUnauthedDataRequest(ctx, http.MethodPost, uri, input, &user)
-
+	err = c.makeUnauthedDataRequest(ctx, req, &user)
 	return user, err
 }
 
@@ -147,11 +137,14 @@ func (c *V1Client) Login(ctx context.Context, username, password, TOTPToken stri
 		return nil, errors.Wrap(err, "encountered error executing login request")
 	}
 
-	b, err := httputil.DumpResponse(res, true)
-	if err != nil {
-		logger.WithError(err).Debug("error dumping response")
+	if c.Debug {
+		b, err := httputil.DumpResponse(res, true)
+		if err != nil {
+			logger.WithError(err).Debug("error dumping response")
+		}
+		logger = logger.WithValue("response", string(b))
 	}
-	logger.WithValue("response", string(b)).Debug("login response received")
+	logger.Debug("login response received")
 
 	cookies := res.Cookies()
 	if len(cookies) > 0 {

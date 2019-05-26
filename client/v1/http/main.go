@@ -51,9 +51,9 @@ func (c *V1Client) PlainClient() *http.Client {
 	return c.plainClient
 }
 
-// Cookie returns the unauthenticated *http.Client that we use to make certain requests
-func (c *V1Client) Cookie() *http.Cookie {
-	return c.currentUserCookie
+// TokenSource builds URLs
+func (c *V1Client) TokenSource() oauth2.TokenSource {
+	return c.tokenSource
 }
 
 // NewClient builds a new API client for us
@@ -154,9 +154,9 @@ func NewSimpleClient(address *url.URL, debug bool) (*V1Client, error) {
 	return c, err
 }
 
-func (c *V1Client) executeRequest(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
+func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
 	var logger = c.logger
-	if command, err := http2curl.GetCurlCommand(req); err == nil {
+	if command, err := http2curl.GetCurlCommand(req); err == nil && c.Debug {
 		logger = c.logger.WithValue("curl", command.String())
 	}
 
@@ -174,11 +174,6 @@ func (c *V1Client) executeRequest(ctx context.Context, client *http.Client, req 
 
 	logger.Debug("request executed")
 	return res, nil
-}
-
-// TokenSource builds URLs
-func (c *V1Client) TokenSource() oauth2.TokenSource {
-	return c.tokenSource
 }
 
 // BuildURL builds URLs
@@ -216,7 +211,7 @@ func (c *V1Client) BuildWebsocketURL(parts ...string) string {
 //BuildHealthCheckRequest builds a health check HTTP Request
 func (c *V1Client) BuildHealthCheckRequest() (*http.Request, error) {
 	u := *c.URL
-	uri := fmt.Sprintf("%s://%s:%s/_meta_/ready", u.Scheme, u.Host, u.Port())
+	uri := fmt.Sprintf("%s://%s/_meta_/ready", u.Scheme, u.Host)
 
 	return http.NewRequest(http.MethodGet, uri, nil)
 }
@@ -256,7 +251,7 @@ func (c *V1Client) buildDataRequest(method, uri string, in interface{}) (*http.R
 }
 
 func (c *V1Client) makeRequest(ctx context.Context, req *http.Request, out interface{}) error {
-	res, err := c.executeRequest(ctx, c.authedClient, req)
+	res, err := c.executeRawRequest(ctx, c.authedClient, req)
 	if err != nil {
 		return errors.Wrap(err, "executing request")
 	}
@@ -276,7 +271,7 @@ func (c *V1Client) makeRequest(ctx context.Context, req *http.Request, out inter
 	return nil
 }
 
-func (c *V1Client) makeUnauthedDataRequest(ctx context.Context, method string, uri string, in interface{}, out interface{}) error {
+func (c *V1Client) makeUnauthedDataRequest(ctx context.Context, req *http.Request, out interface{}) error {
 	// sometimes we want to make requests with data attached, but we don't really care about the response
 	// so we give this function a nil `out` value. That said, if you provide us a value, it needs to be a pointer.
 	if out != nil {
@@ -285,12 +280,7 @@ func (c *V1Client) makeUnauthedDataRequest(ctx context.Context, method string, u
 		}
 	}
 
-	req, err := c.buildDataRequest(method, uri, in)
-	if err != nil {
-		return errors.Wrap(err, "building request")
-	}
-
-	res, err := c.executeRequest(ctx, c.plainClient, req)
+	res, err := c.executeRawRequest(ctx, c.plainClient, req)
 	if err != nil {
 		return errors.Wrap(err, "executing request")
 	}
@@ -304,7 +294,8 @@ func (c *V1Client) makeUnauthedDataRequest(ctx context.Context, method string, u
 		if resErr != nil {
 			return errors.Wrap(err, "loading response from server")
 		}
-		c.logger.WithValue("loaded_value", out).Debug("unauthenticated data request returned")
+		c.logger.WithValue("loaded_value", out).
+			Debug("unauthenticated data request returned")
 	}
 
 	return nil
@@ -315,7 +306,7 @@ func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interfac
 		return errors.Wrap(err, "struct to load must be a pointer")
 	}
 
-	res, err := c.executeRequest(ctx, c.authedClient, req)
+	res, err := c.executeRawRequest(ctx, c.authedClient, req)
 	if err != nil {
 		return errors.Wrap(err, "executing request")
 	}

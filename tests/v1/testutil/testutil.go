@@ -83,7 +83,7 @@ func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
 		Password: fake.Password(64, 128, true, true, true),
 	}
 
-	ucr, err := c.CreateNewUser(context.Background(), in)
+	ucr, err := c.CreateUser(context.Background(), in)
 	if err != nil {
 		return nil, err
 	} else if ucr == nil {

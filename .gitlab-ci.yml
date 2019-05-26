@@ -36,9 +36,9 @@ build-frontend:
   stage: quality
   image: node:10
   before_script:
+    - cd frontend
     - npm install
   script:
-    - cd frontend
     - npm run build
 
 # linting:

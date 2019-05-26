@@ -66,14 +66,6 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		router.Get(route, handler)
 	}
 
-	// watch the wasm client package for changes
-	if s.config.Debug && frontendConfig.WASMClientPackage != "" {
-		s.logger.WithValue("wasm_dir", frontendConfig.WASMClientPackage).Debug("watching WASM directory")
-		if err := s.frontendService.DebugWASMPackage(frontendConfig.WASMClientPackage); err != nil {
-			s.logger.Error(err, "wasm folder troubles")
-		}
-	}
-
 	router.Route("/_meta_", func(metaRouter chi.Router) {
 		health := healthcheck.NewHandler()
 		// Expose a liveness check on /live

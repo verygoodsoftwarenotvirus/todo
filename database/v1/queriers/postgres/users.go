@@ -187,8 +187,8 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 	}
 
 	defer func() {
-		if err := rows.Close(); err != nil {
-			p.logger.Error(err, "closing rows")
+		if e := rows.Close(); e != nil {
+			p.logger.Error(e, "closing rows")
 		}
 	}()
 

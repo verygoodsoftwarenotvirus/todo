@@ -9,6 +9,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+// const (
+// scopesKey models.ContextKey = "scopes"
+// )
+
 // CreationInputMiddleware is a middleware for attaching OAuth2 client info to a request
 func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 	x := new(models.OAuth2ClientCreationInput)
@@ -107,16 +111,6 @@ func (s *Service) fetchOAuth2ClientFromRequest(req *http.Request) *models.OAuth2
 		return nil
 	}
 	return client
-}
-
-func (s *Service) fetchOAuth2ClientScopesFromRequest(req *http.Request) []string {
-	s.logger.Debug("fetchOAuth2ClientScopesFromRequest called")
-	ctx := req.Context()
-	scopes, ok := ctx.Value(scopesKey).([]string)
-	if !ok {
-		return nil
-	}
-	return scopes
 }
 
 func (s *Service) fetchOAuth2ClientIDFromRequest(req *http.Request) string {

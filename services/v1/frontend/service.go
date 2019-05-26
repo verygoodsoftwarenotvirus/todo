@@ -21,9 +21,7 @@ type (
 
 	// Service is responsible for serving HTML (and relevant resources)
 	Service struct {
-		logger           logging.Logger
-		loginPage        []byte
-		registrationPage []byte
+		logger logging.Logger
 	}
 )
 

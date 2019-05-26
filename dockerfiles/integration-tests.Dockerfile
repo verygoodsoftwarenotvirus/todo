@@ -1,8 +1,8 @@
-FROM golang:alpine
+FROM golang:stretch
 
 WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
-RUN apk add --update make git gcc musl-dev
+RUN apt-get update -y && apt-get install -y make git gcc musl-dev
 
 ADD . .
 

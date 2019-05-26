@@ -20,7 +20,7 @@ type OAuth2ClientDataManager interface {
 	GetAllOAuth2ClientCount(ctx context.Context) (uint64, error)
 	GetOAuth2ClientCount(ctx context.Context, filter *QueryFilter, userID uint64) (uint64, error)
 	GetOAuth2Clients(ctx context.Context, filter *QueryFilter, userID uint64) (*OAuth2ClientList, error)
-	GetAllOAuth2Clients(ctx context.Context) ([]OAuth2Client, error)
+	GetAllOAuth2Clients(ctx context.Context) ([]*OAuth2Client, error)
 	CreateOAuth2Client(ctx context.Context, input *OAuth2ClientCreationInput) (*OAuth2Client, error)
 	UpdateOAuth2Client(ctx context.Context, updated *OAuth2Client) error
 	DeleteOAuth2Client(ctx context.Context, clientID, userID uint64) error

@@ -1,9 +1,9 @@
 # build stage
-FROM golang:alpine AS build-stage
+FROM golang:stretch AS build-stage
 
 WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
-RUN apk add --update make git gcc musl-dev
+RUN apt-get update -y && apt-get install -y make git gcc musl-dev
 
 ADD . .
 
@@ -19,7 +19,7 @@ ADD frontend .
 RUN npm install && npm run build
 
 # final stage
-FROM alpine:latest
+FROM debian:stable
 
 COPY config_files config_files
 COPY --from=build-stage /todo /todo

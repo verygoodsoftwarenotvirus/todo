@@ -88,7 +88,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 
 	code, err := validateWebhook(input)
 	if code != http.StatusOK && err != nil {
-		s.logger.Error(nil, "invalid method provided")
+		logger.Error(nil, "invalid method provided")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}

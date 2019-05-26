@@ -1,4 +1,4 @@
-package load
+package main
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	http2 "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
@@ -22,18 +22,9 @@ const (
 )
 
 var (
-	debug                                   bool
-	urlToUse, hcURL, clientID, clientSecret string
+	debug                            bool
+	urlToUse, clientID, clientSecret string
 )
-
-func buildHTTPClient() *http.Client {
-	httpc := &http.Client{
-		Transport: http.DefaultTransport,
-		Timeout:   5 * time.Second,
-	}
-
-	return httpc
-}
 
 func init() {
 	if strings.ToLower(os.Getenv("DOCKER")) == "true" {
@@ -62,9 +53,22 @@ func init() {
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)
 }
 
-func initializeClient(clientID, clientSecret string) *http2.V1Client {
-	uri, _ := url.Parse(urlToUse)
-	c, err := http2.NewClient(
+func buildHTTPClient() *http.Client {
+	httpc := &http.Client{
+		Transport: http.DefaultTransport,
+		Timeout:   5 * time.Second,
+	}
+
+	return httpc
+}
+
+func initializeClient(clientID, clientSecret string) *client.V1Client {
+	uri, err := url.Parse(urlToUse)
+	if err != nil {
+		panic(err)
+	}
+
+	c, err := client.NewClient(
 		clientID,
 		clientSecret,
 		uri,

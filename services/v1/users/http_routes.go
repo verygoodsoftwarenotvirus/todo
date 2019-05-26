@@ -169,7 +169,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	}
 
 	var b bytes.Buffer
-	if err := png.Encode(&b, qrcode); err != nil {
+	if err = png.Encode(&b, qrcode); err != nil {
 		s.logger.Error(err, "trying to encode qr code to png")
 	}
 

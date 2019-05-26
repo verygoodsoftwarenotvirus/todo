@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func TestRunMain(t *testing.T) {
+func TestRunMain(_ *testing.T) {
 	d, err := time.ParseDuration(os.Getenv("RUNTIME_DURATION"))
 	if err != nil {
 		log.Fatal(err)

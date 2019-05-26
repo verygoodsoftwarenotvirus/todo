@@ -129,8 +129,6 @@ func (s *Sqlite) GetAllItemsCount(ctx context.Context) (uint64, error) {
 
 // GetItems fetches a list of items from the sqlite database that meet a particular filter
 func (s *Sqlite) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
-	var list []models.Item
-
 	builder := s.sqlBuilder.
 		Select(itemsTableColumns...).
 		From(itemsTableName).
@@ -155,18 +153,9 @@ func (s *Sqlite) GetItems(ctx context.Context, filter *models.QueryFilter, userI
 		return nil, errors.Wrap(err, "querying database for items")
 	}
 
-	defer func() {
-		if err = rows.Close(); err != nil {
-			s.logger.Error(err, "closing rows")
-		}
-	}()
-
-	for rows.Next() {
-		item, err := scanItem(rows)
-		if err != nil {
-			return nil, errors.Wrap(err, "scanning items")
-		}
-		list = append(list, *item)
+	items, err := s.scanItems(rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "scanning items")
 	}
 
 	count, err := s.GetItemCount(ctx, filter, userID)
@@ -180,7 +169,7 @@ func (s *Sqlite) GetItems(ctx context.Context, filter *models.QueryFilter, userI
 			TotalCount: count,
 			Limit:      filter.Limit,
 		},
-		Items: list,
+		Items: items,
 	}
 
 	return x, nil

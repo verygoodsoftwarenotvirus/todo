@@ -101,7 +101,8 @@ func ParseConfigFile(filename string) (*ServerConfig, error) {
 // https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
 func randString() string {
 	b := make([]byte, 32)
-	_, _ = rand.Read(b)
-	rs := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b)
-	return rs
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b)
 }

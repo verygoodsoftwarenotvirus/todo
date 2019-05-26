@@ -51,9 +51,6 @@ type (
 		logger      logging.Logger
 		encoder     encoding.EncoderDecoder
 		newsManager *newsman.Newsman
-
-		// Auth stuff
-		adminUserExists bool
 	}
 )
 
@@ -108,7 +105,7 @@ func ProvideServer(
 		return nil, err
 	}
 
-	if err := cfg.ProvideTracing(logger); err != nil && err != config.ErrInvalidTracingProvider {
+	if err = cfg.ProvideTracing(logger); err != nil && err != config.ErrInvalidTracingProvider {
 		return nil, err
 	}
 
@@ -147,101 +144,5 @@ func (s *Server) Serve() {
 	}
 }
 
-type genericResponse struct {
-	Status  int    `json:"status"`
-	Message string `json:"message"`
-}
-
 // ErrorNotifier is a function which can notify a user of an error
 type ErrorNotifier func(res http.ResponseWriter, req *http.Request, err error)
-
-func (s *Server) internalServerError(res http.ResponseWriter, req *http.Request, err error) {
-	s.logger.WithValues(map[string]interface{}{
-		"path":   req.URL.Path,
-		"method": req.Method,
-		"error":  err,
-	}).Debug("internalServerError called")
-
-	sc := http.StatusInternalServerError
-	s.logger.Error(err, "Encountered internal error")
-	res.WriteHeader(sc)
-
-	if err = s.encoder.EncodeResponse(res, genericResponse{Status: sc, Message: "Unexpected internal error occurred"}); err != nil {
-		s.logger.Error(err, "encoding response")
-	}
-}
-
-func (s *Server) notifyUnauthorized(res http.ResponseWriter, req *http.Request, err error) {
-	s.logger.WithValues(map[string]interface{}{
-		"path":   req.URL.Path,
-		"method": req.Method,
-		"error":  err,
-	}).Debug("notifyUnauthorized called")
-
-	sc := http.StatusUnauthorized
-	if err != nil {
-		s.logger.WithError(err).Debug("notifyUnauthorized called")
-	}
-	res.WriteHeader(sc)
-
-	if err = s.encoder.EncodeResponse(res, genericResponse{Status: sc, Message: "Unauthorized"}); err != nil {
-		s.logger.Error(err, "encoding response")
-	}
-}
-
-func (s *Server) invalidInput(res http.ResponseWriter, req *http.Request, err error) {
-	s.logger.WithValues(map[string]interface{}{
-		"path":   req.URL.Path,
-		"method": req.Method,
-		"error":  err,
-	}).Debug("invalidInput called")
-
-	sc := http.StatusBadRequest
-	s.logger.WithValue("route", req.URL.Path).Debug("invalidInput called for route")
-	if err != nil {
-		s.logger.WithError(err).Debug("invalidInput called")
-	}
-	res.WriteHeader(sc)
-
-	if err = s.encoder.EncodeResponse(res, genericResponse{Status: sc, Message: "invalid input"}); err != nil {
-		s.logger.Error(err, "encoding response")
-	}
-}
-
-func (s *Server) notFound(res http.ResponseWriter, req *http.Request, err error) {
-	s.logger.WithValues(map[string]interface{}{
-		"path":   req.URL.Path,
-		"method": req.Method,
-		"error":  err,
-	}).Debug("notFound called")
-
-	sc := http.StatusNotFound
-	s.logger.WithValue("route", req.URL.Path).Debug("notFound called for route")
-	if err != nil {
-		s.logger.WithError(err).Debug("notFound called")
-	}
-	res.WriteHeader(sc)
-
-	if err = s.encoder.EncodeResponse(res, genericResponse{Status: sc, Message: "not found"}); err != nil {
-		s.logger.Error(err, "encoding response")
-	}
-}
-
-func (s *Server) notifyOfInvalidRequestCookie(res http.ResponseWriter, req *http.Request, err error) {
-	s.logger.WithValues(map[string]interface{}{
-		"path":   req.URL.Path,
-		"method": req.Method,
-		"error":  err,
-	}).Debug("notifyOfInvalidRequestCookie called")
-
-	sc := http.StatusBadRequest
-	s.logger.WithValue("route", req.URL.Path).Debug("notifyOfInvalidRequestCookie called for route")
-	if err != nil {
-		s.logger.WithError(err).Debug("notifyOfInvalidRequestCookie called")
-	}
-	res.WriteHeader(sc)
-
-	if err = s.encoder.EncodeResponse(res, genericResponse{Status: sc, Message: "invalid cookie"}); err != nil {
-		s.logger.Error(err, "encoding response")
-	}
-}

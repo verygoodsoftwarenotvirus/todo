@@ -1,10 +1,12 @@
-package load
+package main
 
 import (
 	"bytes"
 	"context"
 	"io/ioutil"
 	"log"
+	"os"
+	"time"
 
 	"github.com/emicklei/hazana"
 
@@ -40,11 +42,15 @@ func (a *TodoServiceAttacker) Do(ctx context.Context) hazana.DoResult {
 	}
 
 	var (
-		sc     int
-		bo, bi int64
+		sc int
+		bo int64
+		bi []byte
 	)
 	if req.Body != nil {
-		bi, _ := ioutil.ReadAll(req.Body)
+		bi, err = ioutil.ReadAll(req.Body)
+		if err != nil {
+			return hazana.DoResult{Error: err}
+		}
 		rdr := ioutil.NopCloser(bytes.NewBuffer(bi))
 		req.Body = rdr
 	}
@@ -59,7 +65,7 @@ func (a *TodoServiceAttacker) Do(ctx context.Context) hazana.DoResult {
 		RequestLabel: act.Name,
 		Error:        err,
 		StatusCode:   sc,
-		BytesIn:      bi,
+		BytesIn:      int64(len(bi)),
 		BytesOut:     bo,
 	}
 	return dr
@@ -81,10 +87,19 @@ func (a *TodoServiceAttacker) Clone() hazana.Attack {
 func main() {
 	todoClient := initializeClient(clientID, clientSecret)
 
+	var runTime = 150 * time.Second
+	if rt := os.Getenv("LOADTEST_RUN_TIME"); rt != "" {
+		_rt, err := time.ParseDuration(rt)
+		if err != nil {
+			panic(err)
+		}
+		runTime = _rt
+	}
+
 	attacker := &TodoServiceAttacker{todoClient: todoClient}
 	cfg := hazana.Config{
 		RPS:           50,
-		AttackTimeSec: 1<<32 - 1, // run basically forever
+		AttackTimeSec: int(runTime.Seconds()), // run basically forever
 		RampupTimeSec: 5,
 		// RampupStrategy: "", string            `json:"rampupStrategy"`
 		MaxAttackers: 50,

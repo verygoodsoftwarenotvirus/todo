@@ -149,7 +149,7 @@ const getAllOAuth2ClientsQuery = `
 `
 
 // GetAllOAuth2Clients gets a list of OAuth2 clients regardless of ownership
-func (p *Postgres) GetAllOAuth2Clients(ctx context.Context) ([]models.OAuth2Client, error) {
+func (p *Postgres) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Client, error) {
 	rows, err := p.database.QueryContext(ctx, getAllOAuth2ClientsQuery)
 	if err != nil {
 		return nil, err
@@ -161,14 +161,14 @@ func (p *Postgres) GetAllOAuth2Clients(ctx context.Context) ([]models.OAuth2Clie
 		}
 	}()
 
-	var list []models.OAuth2Client
+	var list []*models.OAuth2Client
 	for rows.Next() {
 		var x *models.OAuth2Client
 		x, err = p.scanOAuth2Client(rows)
 		if err != nil {
 			return nil, errors.Wrap(err, "scanning OAuth2Client")
 		}
-		list = append(list, *x)
+		list = append(list, x)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -275,8 +275,8 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 	}
 
 	defer func() {
-		if err := rows.Close(); err != nil {
-			p.logger.Error(err, "closing rows")
+		if e := rows.Close(); e != nil {
+			p.logger.Error(e, "closing rows")
 		}
 	}()
 

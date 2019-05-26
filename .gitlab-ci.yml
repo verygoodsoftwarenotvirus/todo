@@ -1,4 +1,5 @@
 stages:
+  - quality
   - testing
 
 image: docker:latest
@@ -11,11 +12,11 @@ before_script:
   - cp -rf /builds/verygoodsoftwarenotvirus/todo
     /go/src/gitlab.com/verygoodsoftwarenotvirus/
   - cd /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
-  - apk add --update --no-cache make git gcc musl-dev
+  - apt-get update -y && apt-get install -y make git gcc musl-dev
 
 unit-tests:
   stage: testing
-  image: golang:alpine
+  image: golang:stretch
   variables:
     GOPATH: '/go'
   script:
@@ -30,3 +31,34 @@ integration-tests:
       openssl-dev gcc libc-dev make
     - pip install docker-compose
     - make integration-tests
+
+load-tests:
+  stage: testing
+  variables:
+    GOPATH: '/go'
+    LOADTEST_RUN_TIME: '2m30s'
+  script:
+    - apk add --update --no-cache py-pip openssl python-dev libffi-dev
+      openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - make ci-load-tests
+
+build-frontend:
+  stage: quality
+  image: node:10
+  before_script:
+    - cd frontend
+    - npm install
+  script:
+    - npm run build
+
+linting:
+  stage: quality
+  image: golang:stretch
+  variables:
+    GOPATH: '/go'
+  before_script:
+    - apt-get install -y curl
+    - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.16.0
+  script:
+    - make lint

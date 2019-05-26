@@ -50,7 +50,10 @@ func EnsureServerIsUp(address string) {
 func IsUp(address string) bool {
 	uri := fmt.Sprintf("%s/_meta_/ready", address)
 
-	req, _ := http.NewRequest(http.MethodGet, uri, nil)
+	req, err := http.NewRequest(http.MethodGet, uri, nil)
+	if err != nil {
+		panic(err)
+	}
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -103,8 +106,16 @@ func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
 }
 
 func buildURL(address string, parts ...string) string {
-	tu, _ := url.Parse(address)
-	u, _ := url.Parse(strings.Join(parts, "/"))
+	tu, err := url.Parse(address)
+	if err != nil {
+		panic(err)
+	}
+
+	u, err := url.Parse(strings.Join(parts, "/"))
+	if err != nil {
+		panic(err)
+	}
+
 	return tu.ResolveReference(u).String()
 }
 
@@ -191,7 +202,8 @@ cookie problems!
 	}
 	req.AddCookie(cookie)
 
-	if command, err := http2curl.GetCurlCommand(req); err == nil {
+	var command fmt.Stringer
+	if command, err = http2curl.GetCurlCommand(req); err == nil {
 		log.Println(command.String())
 	}
 

@@ -40,9 +40,9 @@ func (m *OAuth2ClientDataManager) GetAllOAuth2ClientCount(ctx context.Context) (
 }
 
 // GetAllOAuth2Clients is a mock function
-func (m *OAuth2ClientDataManager) GetAllOAuth2Clients(ctx context.Context) ([]models.OAuth2Client, error) {
+func (m *OAuth2ClientDataManager) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Client, error) {
 	args := m.Called(ctx)
-	return args.Get(0).([]models.OAuth2Client), args.Error(1)
+	return args.Get(0).([]*models.OAuth2Client), args.Error(1)
 }
 
 // GetOAuth2Clients is a mock function

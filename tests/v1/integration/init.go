@@ -60,7 +60,11 @@ func init() {
 }
 
 func initializeClient(clientID, clientSecret string) *client.V1Client {
-	uri, _ := url.Parse(urlToUse)
+	uri, err := url.Parse(urlToUse)
+	if err != nil {
+		panic(err)
+	}
+
 	c, err := client.NewClient(
 		clientID,
 		clientSecret,

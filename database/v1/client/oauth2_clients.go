@@ -94,7 +94,7 @@ func (c *Client) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 
 // GetAllOAuth2Clients returns all OAuth2 clients, irrespective of ownershic. It is called on startup to populate
 // the OAuth2 Client handler
-func (c *Client) GetAllOAuth2Clients(ctx context.Context) ([]models.OAuth2Client, error) {
+func (c *Client) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Client, error) {
 	ctx, span := trace.StartSpan(ctx, "GetAllOAuth2Clients")
 	defer span.End()
 

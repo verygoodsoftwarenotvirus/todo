@@ -112,7 +112,7 @@ func ProvideOAuth2ClientsService(
 	}
 
 	for _, client := range clients {
-		if err := s.oauth2ClientStore.Set(client.ClientID, &client); err != nil {
+		if err = s.oauth2ClientStore.Set(client.ClientID, client); err != nil {
 			return nil, errors.Wrapf(err, "error establishing oauth2 client: %d\n", client.ID)
 		}
 	}

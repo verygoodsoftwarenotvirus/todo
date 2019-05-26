@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -18,7 +19,11 @@ const usersBasePath = "users"
 func (c *V1Client) buildVersionlessURL(qp url.Values, parts ...string) string {
 	tu := *c.URL
 
-	u, _ := url.Parse(path.Join(parts...))
+	u, err := url.Parse(path.Join(parts...))
+	if err != nil {
+		panic(fmt.Sprintf("user tried to build an invalid URL: %v", err))
+	}
+
 	if qp != nil {
 		u.RawQuery = qp.Encode()
 	}
@@ -142,7 +147,10 @@ func (c *V1Client) Login(ctx context.Context, username, password, TOTPToken stri
 		return nil, errors.Wrap(err, "encountered error executing login request")
 	}
 
-	b, _ := httputil.DumpResponse(res, true)
+	b, err := httputil.DumpResponse(res, true)
+	if err != nil {
+		logger.WithError(err).Debug("error dumping response")
+	}
 	logger.WithValue("response", string(b)).Debug("login response received")
 
 	cookies := res.Cookies()

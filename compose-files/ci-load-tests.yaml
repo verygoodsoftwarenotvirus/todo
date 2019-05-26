@@ -7,28 +7,23 @@ services:
       dockerfile: dockerfiles/integration-server.Dockerfile
     ports:
       - '80:80'
-      - '8888:8888'
     environment:
       DOCKER: 'true'
     links:
       - database
-    # logging:
-    #   driver: none
+    depends_on:
+      - database
+    logging:
+      driver: none
 
-  test:
+  load-tests:
     build:
       context: ../
-      dockerfile: dockerfiles/integration-tests.Dockerfile
-    environment:
-      DOCKER: 'true'
-      JAEGER_SERVICE_NAME: 'todo-server'
-      JAEGER_AGENT_HOST: 'tracing-server'
-      JAEGER_AGENT_PORT: '6831'
-      JAEGER_SAMPLER_MANAGER_HOST_PORT: 'tracing-server:5778'
+      dockerfile: dockerfiles/load-tests.Dockerfile
     links:
       - todo-server
-    # logging:
-    #   driver: none
+    logging:
+      driver: none
 
   database:
     image: postgres:latest

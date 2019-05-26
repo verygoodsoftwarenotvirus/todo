@@ -16,7 +16,7 @@ const (
 	PasswordChangeMiddlewareCtxKey models.ContextKey = "user_password_change"
 
 	// TOTPSecretRefreshMiddlewareCtxKey is the context key for 2fa token refreshes
-	TOTPSecretRefreshMiddlewareCtxKey models.ContextKey = "user_totp_refresh"
+	TOTPSecretRefreshMiddlewareCtxKey models.ContextKey = "totp_refresh"
 )
 
 // UserInputMiddleware fetches user input from requests

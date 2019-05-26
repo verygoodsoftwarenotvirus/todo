@@ -1,6 +1,6 @@
 stages:
-  - testing
   - quality
+  - testing
 
 image: docker:latest
 
@@ -41,7 +41,7 @@ load-tests:
     - apk add --update --no-cache py-pip openssl python-dev libffi-dev
       openssl-dev gcc libc-dev make
     - pip install docker-compose
-    - make load-tests
+    - make ci-load-tests
 
 build-frontend:
   stage: quality

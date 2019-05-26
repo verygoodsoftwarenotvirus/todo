@@ -29,9 +29,8 @@ var (
 
 // V1Client is a client for interacting with v1 of our API
 type V1Client struct {
-	plainClient       *http.Client
-	authedClient      *http.Client
-	currentUserCookie *http.Cookie
+	plainClient  *http.Client
+	authedClient *http.Client
 
 	logger logging.Logger
 	Debug  bool

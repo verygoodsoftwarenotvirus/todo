@@ -201,9 +201,11 @@ func TestCreateBodyFromStruct(T *testing.T) {
 		x := &testingType{Name: "expected"}
 
 		actual, err := createBodyFromStruct(x)
-
 		assert.NoError(t, err, "expected no error creating JSON from valid struct")
+
 		bs, err := ioutil.ReadAll(actual)
+		assert.NoError(t, err, "expected no error reading JSON from valid struct")
+
 		assert.Equal(t, expected, string(bs), "expected and actual JSON bodies don't match")
 	})
 

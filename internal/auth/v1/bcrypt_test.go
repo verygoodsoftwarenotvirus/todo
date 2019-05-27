@@ -14,9 +14,10 @@ import (
 )
 
 const (
-	examplePassword        = "Pa$$w0rdPa$$w0rdPa$$w0rdPa$$w0rd"
-	hashedExamplePassword  = "$2a$13$hxMAo/ZRDmyaWcwvIem/vuUJkmeNytg3rwHUj6bRZR1d/cQHXjFvW"
-	exampleTwoFactorSecret = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
+	examplePassword             = "Pa$$w0rdPa$$w0rdPa$$w0rdPa$$w0rd"
+	weaklyHashedExamplePassword = "$2a$04$7G7dHZe7MeWjOMsYKO8uCu/CRKnDMMBHOfXaB6YgyQL/cl8nhwf/2"
+	hashedExamplePassword       = "$2a$13$hxMAo/ZRDmyaWcwvIem/vuUJkmeNytg3rwHUj6bRZR1d/cQHXjFvW"
+	exampleTwoFactorSecret      = "HEREISASECRETWHICHIVEMADEUPBECAUSEIWANNATESTRELIABLY"
 )
 
 func TestBcrypt_HashPassword(T *testing.T) {
@@ -86,32 +87,66 @@ func TestBcrypt_ValidateLogin(T *testing.T) {
 			exampleTwoFactorSecret,
 			code,
 		)
-		assert.NoError(t, err, "unexpected eror encountered validating login: %v", err)
+		assert.NoError(t, err, "unexpected error encountered validating login: %v", err)
+		assert.True(t, valid)
+	})
+
+	T.Run("with weak hash", func(t *testing.T) {
+		t.Parallel()
+
+		code, err := totp.GenerateCode(exampleTwoFactorSecret, time.Now().UTC())
+		assert.NoError(t, err, "error generating code to validate login")
+
+		valid, err := x.ValidateLogin(
+			context.Background(),
+			weaklyHashedExamplePassword,
+			nil,
+			examplePassword,
+			exampleTwoFactorSecret,
+			code,
+		)
+		assert.Error(t, err, "unexpected error encountered validating login: %v", err)
+		assert.True(t, valid)
+	})
+
+	T.Run("with non-matching password", func(t *testing.T) {
+		t.Parallel()
+
+		code, err := totp.GenerateCode(exampleTwoFactorSecret, time.Now().UTC())
+		assert.NoError(t, err, "error generating code to validate login")
+
+		valid, err := x.ValidateLogin(
+			context.Background(),
+			hashedExamplePassword,
+			nil,
+			"examplePassword",
+			exampleTwoFactorSecret,
+			code,
+		)
+		assert.NoError(t, err, "unexpected error encountered validating login: %v", err)
+		assert.False(t, valid)
+	})
+
+	T.Run("with invalid code", func(t *testing.T) {
+		t.Parallel()
+
+		valid, err := x.ValidateLogin(
+			context.Background(),
+			hashedExamplePassword,
+			nil,
+			examplePassword,
+			exampleTwoFactorSecret,
+			"CODE",
+		)
+		assert.Error(t, err, "unexpected error encountered validating login: %v", err)
 		assert.True(t, valid)
 	})
 }
 
-func TestPasswordIsAcceptable(T *testing.T) {
-	T.SkipNow()
-
-}
-
-func TestValidateLogin(T *testing.T) {
-	T.SkipNow()
-
-}
-
 func TestProvideBcrypt(T *testing.T) {
-	T.SkipNow()
+	T.Parallel()
 
-}
-
-func TestHashPassword(T *testing.T) {
-	T.SkipNow()
-
-}
-
-func TestPasswordMatches(T *testing.T) {
-	T.SkipNow()
-
+	T.Run("obligatory", func(t *testing.T) {
+		auth.ProvideBcrypt(auth.DefaultBcryptHashCost, noop.ProvideNoopLogger())
+	})
 }

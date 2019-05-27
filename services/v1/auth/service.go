@@ -5,13 +5,11 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 
+	"github.com/gorilla/securecookie"
 	libauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
-
-	"github.com/gorilla/securecookie"
 )
 
 const (
@@ -19,13 +17,17 @@ const (
 )
 
 type (
+	oauth2ClientValidator interface {
+		RequestIsAuthenticated(req *http.Request) (*models.OAuth2Client, error)
+	}
+
 	// Service handles auth
 	Service struct {
 		authenticator        libauth.Authenticator
 		logger               logging.Logger
 		userIDFetcher        UserIDFetcher
 		database             models.UserDataManager
-		oauth2ClientsService *oauth2clients.Service
+		oauth2ClientsService oauth2ClientValidator
 		encoder              encoding.EncoderDecoder
 		cookieBuilder        *securecookie.SecureCookie
 	}
@@ -40,7 +42,7 @@ func ProvideAuthService(
 	config *config.ServerConfig,
 	authenticator libauth.Authenticator,
 	database models.UserDataManager,
-	oauth2ClientsService *oauth2clients.Service,
+	oauth2ClientsService oauth2ClientValidator,
 	userIDFetcher UserIDFetcher,
 	encoder encoding.EncoderDecoder,
 ) *Service {

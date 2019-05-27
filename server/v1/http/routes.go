@@ -6,7 +6,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -160,14 +159,4 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		})
 
 	s.router = router
-}
-
-// ProvideLoginRoute provides a LoginRoute
-func ProvideLoginRoute() frontend.LoginRoute {
-	return frontend.LoginRoute(loginRoute)
-}
-
-// ProvideRegistrationRoute provides a RegistrationRoute
-func ProvideRegistrationRoute() frontend.RegistrationRoute {
-	return frontend.RegistrationRoute(registrationRoute)
 }

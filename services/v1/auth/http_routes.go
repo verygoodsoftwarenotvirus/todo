@@ -13,31 +13,25 @@ import (
 )
 
 const (
-	// cookieName is the name of the cookie we attach to requests
-	cookieName = "todocookie"
-)
-
-var (
-	errNoCookie = errors.New("no cookie present in request")
+	// CookieName is the name of the cookie we attach to requests
+	CookieName = "todocookie"
 )
 
 // DecodeCookieFromRequest takes a request object and fetches the cookie data if it is present
 func (s *Service) DecodeCookieFromRequest(req *http.Request) (*models.CookieAuth, error) {
 	var ca *models.CookieAuth
 
-	cookie, cookieErr := req.Cookie(cookieName)
-	if cookieErr == nil && cookie != nil {
-		decodeErr := s.cookieBuilder.Decode(cookieName, cookie.Value, &ca)
+	cookie, err := req.Cookie(CookieName)
+	// we don't need the nil check here, but linters won't stop complaining if we don't do it
+	if err != http.ErrNoCookie && cookie != nil {
+		decodeErr := s.cookieBuilder.Decode(CookieName, cookie.Value, &ca)
 		if decodeErr != nil {
 			return nil, errors.Wrap(decodeErr, "decoding request cookie")
 		}
 
 		return ca, nil
 	}
-	if cookieErr != nil {
-		return nil, cookieErr
-	}
-	return nil, errNoCookie
+	return nil, err
 }
 
 // WebsocketAuthFunction is provided to Newsman to determine if a user has access to websockets
@@ -59,7 +53,7 @@ func (s *Service) WebsocketAuthFunction(req *http.Request) bool {
 	}
 
 	// We found a valid OAuth2 client in the request
-	return false
+	return true
 }
 
 // FetchUserFromRequest takes a request object and fetches the cookie, and then the user for that cookie
@@ -131,7 +125,7 @@ func (s *Service) Logout(res http.ResponseWriter, req *http.Request) {
 	_, span := trace.StartSpan(req.Context(), "logout")
 	defer span.End()
 
-	if cookie, err := req.Cookie(cookieName); err == nil {
+	if cookie, err := req.Cookie(CookieName); err == nil {
 		s.logger.Debug("logout was called, clearing cookie")
 		cookie.MaxAge = -1
 		http.SetCookie(res, cookie)
@@ -223,8 +217,10 @@ func (s *Service) buildCookie(user *models.User) (*http.Cookie, error) {
 		"user_id": user.ID,
 	}).Debug("buildCookie called")
 
+	// NOTE: code here is duplicated into the unit tests for DecodeCookieFromRequest
+	// any changes made here might need to be reflected there
 	encoded, err := s.cookieBuilder.Encode(
-		cookieName, models.CookieAuth{
+		CookieName, models.CookieAuth{
 			UserID:   user.ID,
 			Admin:    user.IsAdmin,
 			Username: user.Username,
@@ -238,7 +234,7 @@ func (s *Service) buildCookie(user *models.User) (*http.Cookie, error) {
 
 	// https://www.calhoun.io/securing-cookies-in-go/
 	return &http.Cookie{
-		Name:  cookieName,
+		Name:  CookieName,
 		Value: encoded,
 		// Defaults to any path on your app, but you can use this
 		// to limit to a specific subdirectory.

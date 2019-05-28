@@ -12,7 +12,6 @@ require (
 	github.com/boombuler/barcode v1.0.0
 	github.com/corpix/uarand v0.1.0 // indirect
 	github.com/emicklei/hazana v1.6.1
-	github.com/fsnotify/fsnotify v1.4.7
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-chi/cors v1.0.0
 	github.com/gogo/protobuf v1.2.0 // indirect
@@ -34,10 +33,11 @@ require (
 	github.com/uber/jaeger-client-go v2.16.0+incompatible // indirect
 	github.com/uber/jaeger-lib v2.0.0+incompatible // indirect
 	gitlab.com/verygoodsoftwarenotvirus/logging v1.0.2
-	gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.0-20190507231017-beb954c7c2d8
+	gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.0-20190528023929-c49dc073f989
 	gitlab.com/verygoodsoftwarenotvirus/verso v1.1.0 // indirect
 	go.opencensus.io v0.21.0
 	golang.org/x/crypto v0.0.0-20190506204251-e1dfcc566284
 	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a
+	golang.org/x/tools v0.0.0-20190503185657-3b6f9c0030f7
 	gopkg.in/oauth2.v3 v3.10.0
 )

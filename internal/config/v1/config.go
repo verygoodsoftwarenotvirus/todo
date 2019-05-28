@@ -9,7 +9,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-const defaultCookieLifetime = 24 * time.Hour
+const (
+	defaultCookieLifetime = 24 * time.Hour
+	randStringSize        = 32
+)
 
 func init() {
 	b := make([]byte, 64)
@@ -100,7 +103,7 @@ func ParseConfigFile(filename string) (*ServerConfig, error) {
 // randString produces a random string
 // https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
 func randString() string {
-	b := make([]byte, 32)
+	b := make([]byte, randStringSize)
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}

@@ -15,7 +15,7 @@ type Authenticator struct {
 	mock.Mock
 }
 
-// ValidateLogin satifies our authenticator interrface
+// ValidateLogin satisfies our authenticator interface
 func (m *Authenticator) ValidateLogin(
 	ctx context.Context,
 	HashedPassword string,
@@ -34,18 +34,18 @@ func (m *Authenticator) ValidateLogin(
 	return args.Bool(0), args.Error(1)
 }
 
-// PasswordIsAcceptable satifies our authenticator interrface
+// PasswordIsAcceptable satisfies our authenticator interface
 func (m *Authenticator) PasswordIsAcceptable(password string) bool {
 	return m.Called(password).Bool(0)
 }
 
-// HashPassword satifies our authenticator interrface
+// HashPassword satisfies our authenticator interface
 func (m *Authenticator) HashPassword(ctx context.Context, password string) (string, error) {
 	args := m.Called(ctx, password)
 	return args.String(0), args.Error(1)
 }
 
-// PasswordMatches satifies our authenticator interrface
+// PasswordMatches satisfies our authenticator interface
 func (m *Authenticator) PasswordMatches(
 	ctx context.Context,
 	hashedPassword,

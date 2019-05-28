@@ -9,6 +9,12 @@ import (
 	"github.com/google/wire"
 )
 
+const (
+	ContentTypeHeader = "Content-type"
+	XMLContentType    = "application/xml"
+	JSONContentType   = "application/json"
+)
+
 var (
 	// Providers provides ResponseEncoders for dependency injection
 	Providers = wire.NewSet(
@@ -37,33 +43,33 @@ type (
 
 // EncodeResponse encodes responses
 func (ed *ServerEncoderDecoder) EncodeResponse(res http.ResponseWriter, v interface{}) error {
-	var ct = strings.ToLower(res.Header().Get("Content-type"))
+	var ct = strings.ToLower(res.Header().Get(ContentTypeHeader))
 	if ct == "" {
-		ct = "application/json"
+		ct = JSONContentType
 	}
 
 	var e encoder
 	switch ct {
-	case "application/xml":
+	case XMLContentType:
 		e = xml.NewEncoder(res)
 	default:
 		e = json.NewEncoder(res)
 	}
 
-	res.Header().Set("Content-type", ct)
+	res.Header().Set(ContentTypeHeader, ct)
 	return e.Encode(v)
 }
 
 // DecodeRequest decodes responses
 func (ed *ServerEncoderDecoder) DecodeRequest(req *http.Request, v interface{}) error {
-	var ct = strings.ToLower(req.Header.Get("Content-type"))
+	var ct = strings.ToLower(req.Header.Get(ContentTypeHeader))
 	if ct == "" {
-		ct = "application/json"
+		ct = JSONContentType
 	}
 
 	var d decoder
 	switch ct {
-	case "application/xml":
+	case XMLContentType:
 		d = xml.NewDecoder(req.Body)
 	default:
 		d = json.NewDecoder(req.Body)

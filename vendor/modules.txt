@@ -142,8 +142,9 @@ github.com/tidwall/tinyqueue
 gitlab.com/verygoodsoftwarenotvirus/logging/v1
 gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop
 gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog
-# gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.0-20190507231017-beb954c7c2d8
+# gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.0-20190528023929-c49dc073f989
 gitlab.com/verygoodsoftwarenotvirus/newsman
+gitlab.com/verygoodsoftwarenotvirus/newsman/mock
 # go.opencensus.io v0.21.0
 go.opencensus.io/plugin/ochttp
 go.opencensus.io/trace
@@ -182,6 +183,8 @@ golang.org/x/sys/unix
 # golang.org/x/text v0.3.0
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
+# golang.org/x/tools v0.0.0-20190503185657-3b6f9c0030f7
+golang.org/x/tools/cover
 # google.golang.org/api v0.3.2
 google.golang.org/api/support/bundler
 # google.golang.org/appengine v1.4.0

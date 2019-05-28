@@ -21,15 +21,20 @@ type (
 		RequestIsAuthenticated(req *http.Request) (*models.OAuth2Client, error)
 	}
 
+	cookieEncoderDecoder interface {
+		Encode(name string, value interface{}) (string, error)
+		Decode(name, value string, dst interface{}) error
+	}
+
 	// Service handles auth
 	Service struct {
-		authenticator        libauth.Authenticator
 		logger               logging.Logger
+		authenticator        libauth.Authenticator
 		userIDFetcher        UserIDFetcher
-		database             models.UserDataManager
+		userDB               models.UserDataManager
 		oauth2ClientsService oauth2ClientValidator
-		encoder              encoding.EncoderDecoder
-		cookieBuilder        *securecookie.SecureCookie
+		encoderDecoder       encoding.EncoderDecoder
+		cookieBuilder        cookieEncoderDecoder
 	}
 )
 
@@ -48,8 +53,8 @@ func ProvideAuthService(
 ) *Service {
 	svc := &Service{
 		logger:               logger.WithName(serviceName),
-		encoder:              encoder,
-		database:             database,
+		encoderDecoder:       encoder,
+		userDB:               database,
 		oauth2ClientsService: oauth2ClientsService,
 		authenticator:        authenticator,
 		userIDFetcher:        userIDFetcher,

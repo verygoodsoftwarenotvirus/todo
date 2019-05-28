@@ -12,9 +12,11 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 	mauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
+	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 )
@@ -181,7 +183,7 @@ func TestService_FetchUserFromRequest(T *testing.T) {
 		require.NoError(t, err)
 		req.AddCookie(c)
 
-		s.database.(*mmodels.UserDataManager).
+		s.userDB.(*mmodels.UserDataManager).
 			On("GetUser", mock.Anything, userID).
 			Return(expectedUser, nil)
 
@@ -203,7 +205,7 @@ func TestService_FetchUserFromRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.database.(*mmodels.UserDataManager).
+		s.userDB.(*mmodels.UserDataManager).
 			On("GetUser", mock.Anything, userID).
 			Return(expectedUser, nil)
 
@@ -231,7 +233,7 @@ func TestService_FetchUserFromRequest(T *testing.T) {
 
 		expectedError := errors.New("blah")
 
-		s.database.(*mmodels.UserDataManager).
+		s.userDB.(*mmodels.UserDataManager).
 			On("GetUser", mock.Anything, userID).
 			Return((*models.User)(nil), expectedError)
 
@@ -241,23 +243,294 @@ func TestService_FetchUserFromRequest(T *testing.T) {
 	})
 }
 
-//func TestService_Login(T *testing.T) {
-//	T.Parallel()
-//
-//	T.Run("normal operation", func(t *testing.T) {
-//		s := buildTestService(t)
-//		userID := uint64(1)
-//
-//		expectedUser := &models.User{
-//			ID:       userID,
-//			Username: "username",
-//		}
-//
-//		s.database.(*mmodels.UserDataManager).
-//			On("GetUser", mock.Anything, userID).
-//			Return(expectedUser, nil)
-//	})
-//}
+func TestService_Login(T *testing.T) {
+	T.Parallel()
+
+	T.Run("normal operation", func(t *testing.T) {
+		s := buildTestService(t)
+
+		expectedUser := &models.User{
+			Username: "username",
+		}
+
+		s.userDB.(*mmodels.UserDataManager).
+			On("GetUserByUsername", mock.Anything, expectedUser.Username).
+			Return(expectedUser, nil)
+
+		s.authenticator.(*mauth.Authenticator).
+			On(
+				"ValidateLogin",
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+			).Return(true, nil)
+
+		exampleLoginData := &models.UserLoginInput{
+			Username:  expectedUser.Username,
+			Password:  "password",
+			TOTPToken: "123456",
+		}
+
+		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		res := httptest.NewRecorder()
+		req = req.WithContext(context.WithValue(req.Context(), UserLoginInputMiddlewareCtxKey, exampleLoginData))
+
+		s.Login(res, req)
+
+		assert.Equal(t, res.Code, http.StatusNoContent)
+		assert.NotEmpty(t, res.Header().Get("Set-Cookie"))
+	})
+
+	T.Run("with error fetching login data from request", func(t *testing.T) {
+		s := buildTestService(t)
+
+		expectedUser := &models.User{
+			Username: "username",
+		}
+
+		s.userDB.(*mmodels.UserDataManager).
+			On("GetUserByUsername", mock.Anything, expectedUser.Username).
+			Return(expectedUser, errors.New("arbitrary"))
+
+		exampleLoginData := &models.UserLoginInput{
+			Username:  expectedUser.Username,
+			Password:  "password",
+			TOTPToken: "123456",
+		}
+
+		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		res := httptest.NewRecorder()
+		req = req.WithContext(context.WithValue(req.Context(), UserLoginInputMiddlewareCtxKey, exampleLoginData))
+
+		s.Login(res, req)
+
+		assert.Equal(t, res.Code, http.StatusUnauthorized)
+		assert.Empty(t, res.Header().Get("Set-Cookie"))
+	})
+
+	T.Run("with error encoding error fetching login dataa", func(t *testing.T) {
+		s := buildTestService(t)
+		ed := &mencoding.EncoderDecoder{}
+		ed.On("EncodeResponse", mock.Anything, mock.Anything).
+			Return(errors.New("blah"))
+		s.encoderDecoder = ed
+
+		expectedUser := &models.User{
+			Username: "username",
+		}
+
+		s.userDB.(*mmodels.UserDataManager).
+			On("GetUserByUsername", mock.Anything, expectedUser.Username).
+			Return(expectedUser, errors.New("arbitrary"))
+
+		exampleLoginData := &models.UserLoginInput{
+			Username:  expectedUser.Username,
+			Password:  "password",
+			TOTPToken: "123456",
+		}
+
+		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		res := httptest.NewRecorder()
+		req = req.WithContext(context.WithValue(req.Context(), UserLoginInputMiddlewareCtxKey, exampleLoginData))
+
+		s.Login(res, req)
+
+		assert.Equal(t, res.Code, http.StatusUnauthorized)
+		assert.Empty(t, res.Header().Get("Set-Cookie"))
+	})
+
+	T.Run("with invalid login", func(t *testing.T) {
+		s := buildTestService(t)
+
+		expectedUser := &models.User{
+			Username: "username",
+		}
+
+		s.userDB.(*mmodels.UserDataManager).
+			On("GetUserByUsername", mock.Anything, expectedUser.Username).
+			Return(expectedUser, nil)
+
+		s.authenticator.(*mauth.Authenticator).
+			On(
+				"ValidateLogin",
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+			).Return(false, nil)
+
+		exampleLoginData := &models.UserLoginInput{
+			Username:  expectedUser.Username,
+			Password:  "password",
+			TOTPToken: "123456",
+		}
+
+		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		res := httptest.NewRecorder()
+		req = req.WithContext(context.WithValue(req.Context(), UserLoginInputMiddlewareCtxKey, exampleLoginData))
+
+		s.Login(res, req)
+
+		assert.Equal(t, res.Code, http.StatusUnauthorized)
+		assert.Empty(t, res.Header().Get("Set-Cookie"))
+	})
+
+	T.Run("with error validating login", func(t *testing.T) {
+		s := buildTestService(t)
+
+		expectedUser := &models.User{
+			Username: "username",
+		}
+
+		s.userDB.(*mmodels.UserDataManager).
+			On("GetUserByUsername", mock.Anything, expectedUser.Username).
+			Return(expectedUser, nil)
+
+		s.authenticator.(*mauth.Authenticator).
+			On(
+				"ValidateLogin",
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+			).Return(true, errors.New("blah"))
+
+		exampleLoginData := &models.UserLoginInput{
+			Username:  expectedUser.Username,
+			Password:  "password",
+			TOTPToken: "123456",
+		}
+
+		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		res := httptest.NewRecorder()
+		req = req.WithContext(context.WithValue(req.Context(), UserLoginInputMiddlewareCtxKey, exampleLoginData))
+
+		s.Login(res, req)
+
+		assert.Equal(t, res.Code, http.StatusUnauthorized)
+		assert.Empty(t, res.Header().Get("Set-Cookie"))
+	})
+
+	T.Run("with error building cookie", func(t *testing.T) {
+		s := buildTestService(t)
+
+		cb := &mockCookieEncoderDecoder{}
+		cb.On("Encode", mock.Anything, mock.Anything).
+			Return("", errors.New("blah"))
+		s.cookieBuilder = cb
+
+		expectedUser := &models.User{
+			Username: "username",
+		}
+
+		s.userDB.(*mmodels.UserDataManager).
+			On("GetUserByUsername", mock.Anything, expectedUser.Username).
+			Return(expectedUser, nil)
+
+		s.authenticator.(*mauth.Authenticator).
+			On(
+				"ValidateLogin",
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+			).Return(true, nil)
+
+		exampleLoginData := &models.UserLoginInput{
+			Username:  expectedUser.Username,
+			Password:  "password",
+			TOTPToken: "123456",
+		}
+
+		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		res := httptest.NewRecorder()
+		req = req.WithContext(context.WithValue(req.Context(), UserLoginInputMiddlewareCtxKey, exampleLoginData))
+
+		s.Login(res, req)
+
+		assert.Equal(t, res.Code, http.StatusInternalServerError)
+		assert.Empty(t, res.Header().Get("Set-Cookie"))
+	})
+
+	T.Run("with error building cookie and error encoding cookie response", func(t *testing.T) {
+		s := buildTestService(t)
+
+		cb := &mockCookieEncoderDecoder{}
+		cb.On("Encode", mock.Anything, mock.Anything).
+			Return("", errors.New("blah"))
+		s.cookieBuilder = cb
+
+		ed := &mencoding.EncoderDecoder{}
+		ed.On("EncodeResponse", mock.Anything, mock.Anything).
+			Return(errors.New("blah"))
+		s.encoderDecoder = ed
+
+		expectedUser := &models.User{
+			Username: "username",
+		}
+
+		s.userDB.(*mmodels.UserDataManager).
+			On("GetUserByUsername", mock.Anything, expectedUser.Username).
+			Return(expectedUser, nil)
+
+		s.authenticator.(*mauth.Authenticator).
+			On(
+				"ValidateLogin",
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+			).Return(true, nil)
+
+		exampleLoginData := &models.UserLoginInput{
+			Username:  expectedUser.Username,
+			Password:  "password",
+			TOTPToken: "123456",
+		}
+
+		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		res := httptest.NewRecorder()
+		req = req.WithContext(context.WithValue(req.Context(), UserLoginInputMiddlewareCtxKey, exampleLoginData))
+
+		s.Login(res, req)
+
+		assert.Equal(t, res.Code, http.StatusInternalServerError)
+		assert.Empty(t, res.Header().Get("Set-Cookie"))
+	})
+
+}
 
 func TestService_Logout(T *testing.T) {
 	T.Parallel()
@@ -302,7 +575,7 @@ func TestService_fetchLoginDataFromRequest(T *testing.T) {
 			Username: "username",
 		}
 
-		s.database.(*mmodels.UserDataManager).
+		s.userDB.(*mmodels.UserDataManager).
 			On("GetUserByUsername", mock.Anything, expectedUser.Username).
 			Return(expectedUser, nil)
 
@@ -342,7 +615,7 @@ func TestService_fetchLoginDataFromRequest(T *testing.T) {
 			Username: "username",
 		}
 
-		s.database.(*mmodels.UserDataManager).
+		s.userDB.(*mmodels.UserDataManager).
 			On("GetUserByUsername", mock.Anything, expectedUser.Username).
 			Return((*models.User)(nil), sql.ErrNoRows)
 
@@ -369,7 +642,7 @@ func TestService_fetchLoginDataFromRequest(T *testing.T) {
 			Username: "username",
 		}
 
-		s.database.(*mmodels.UserDataManager).
+		s.userDB.(*mmodels.UserDataManager).
 			On("GetUserByUsername", mock.Anything, expectedUser.Username).
 			Return((*models.User)(nil), errors.New("blah"))
 
@@ -389,4 +662,237 @@ func TestService_fetchLoginDataFromRequest(T *testing.T) {
 		assert.Error(t, err)
 	})
 
+}
+
+func TestService_validateLogin(T *testing.T) {
+	T.Parallel()
+
+	T.Run("normal operation", func(t *testing.T) {
+		s := buildTestService(t)
+		expected := true
+		ctx := context.Background()
+		exampleInput := loginData{
+			loginInput: &models.UserLoginInput{
+				Username:  "username",
+				Password:  "password",
+				TOTPToken: "012345",
+			},
+			user: &models.User{},
+		}
+
+		s.authenticator.(*mauth.Authenticator).
+			On(
+				"ValidateLogin",
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+			).Return(expected, nil)
+
+		actual, err := s.validateLogin(ctx, exampleInput)
+		assert.Equal(t, expected, actual)
+		assert.NoError(t, err)
+	})
+
+	T.Run("with too weak a password hash", func(t *testing.T) {
+		s := buildTestService(t)
+		expected := true
+		ctx := context.Background()
+		exampleInput := loginData{
+			loginInput: &models.UserLoginInput{
+				Username:  "username",
+				Password:  "password",
+				TOTPToken: "012345",
+			},
+			user: &models.User{},
+		}
+
+		s.authenticator.(*mauth.Authenticator).
+			On(
+				"ValidateLogin",
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+			).Return(expected, auth.ErrPasswordHashTooWeak)
+
+		s.authenticator.(*mauth.Authenticator).
+			On("HashPassword", mock.Anything, mock.Anything).
+			Return("blah", nil)
+
+		s.userDB.(*mmodels.UserDataManager).
+			On("UpdateUser", mock.Anything, mock.Anything).
+			Return(nil)
+
+		actual, err := s.validateLogin(ctx, exampleInput)
+		assert.Equal(t, expected, actual)
+		assert.NoError(t, err)
+	})
+
+	T.Run("with too weak a password hash and error hashing the password", func(t *testing.T) {
+		s := buildTestService(t)
+		expected := false
+		expectedErr := errors.New("arbitrary")
+		ctx := context.Background()
+		exampleInput := loginData{
+			loginInput: &models.UserLoginInput{
+				Username:  "username",
+				Password:  "password",
+				TOTPToken: "012345",
+			},
+			user: &models.User{},
+		}
+
+		s.authenticator.(*mauth.Authenticator).
+			On(
+				"ValidateLogin",
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+			).Return(true, auth.ErrPasswordHashTooWeak)
+
+		s.authenticator.(*mauth.Authenticator).
+			On("HashPassword", mock.Anything, mock.Anything).
+			Return("", expectedErr)
+
+		actual, err := s.validateLogin(ctx, exampleInput)
+		assert.Equal(t, expected, actual)
+		assert.Error(t, err)
+	})
+
+	T.Run("with too weak a password hash and error updating user", func(t *testing.T) {
+		s := buildTestService(t)
+		expected := false
+		expectedErr := errors.New("arbitrary")
+		ctx := context.Background()
+		exampleInput := loginData{
+			loginInput: &models.UserLoginInput{
+				Username:  "username",
+				Password:  "password",
+				TOTPToken: "012345",
+			},
+			user: &models.User{},
+		}
+
+		s.authenticator.(*mauth.Authenticator).
+			On(
+				"ValidateLogin",
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+			).Return(true, auth.ErrPasswordHashTooWeak)
+
+		s.authenticator.(*mauth.Authenticator).
+			On("HashPassword", mock.Anything, mock.Anything).
+			Return("blah", nil)
+
+		s.userDB.(*mmodels.UserDataManager).
+			On("UpdateUser", mock.Anything, mock.Anything).
+			Return(expectedErr)
+
+		actual, err := s.validateLogin(ctx, exampleInput)
+		assert.Equal(t, expected, actual)
+		assert.Error(t, err)
+		assert.Equal(t, err, expectedErr)
+	})
+
+	T.Run("with error validating login", func(t *testing.T) {
+		s := buildTestService(t)
+		expected := false
+		expectedErr := errors.New("arbitrary")
+		ctx := context.Background()
+		exampleInput := loginData{
+			loginInput: &models.UserLoginInput{
+				Username:  "username",
+				Password:  "password",
+				TOTPToken: "012345",
+			},
+			user: &models.User{},
+		}
+
+		s.authenticator.(*mauth.Authenticator).
+			On(
+				"ValidateLogin",
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+			).Return(expected, expectedErr)
+
+		actual, err := s.validateLogin(ctx, exampleInput)
+		assert.Equal(t, expected, actual)
+		assert.Error(t, err)
+		assert.Equal(t, err, expectedErr)
+	})
+
+	T.Run("with invalid login", func(t *testing.T) {
+		s := buildTestService(t)
+		expected := false
+		s.authenticator.(*mauth.Authenticator).
+			On(
+				"ValidateLogin",
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+			).Return(expected, nil)
+
+		ctx := context.Background()
+		exampleInput := loginData{
+			loginInput: &models.UserLoginInput{
+				Username:  "username",
+				Password:  "password",
+				TOTPToken: "012345",
+			},
+			user: &models.User{},
+		}
+
+		actual, err := s.validateLogin(ctx, exampleInput)
+		assert.Equal(t, expected, actual)
+		assert.NoError(t, err)
+	})
+}
+
+func TestService_buildCookie(T *testing.T) {
+	T.Parallel()
+
+	T.Run("normal operation", func(t *testing.T) {
+		s := buildTestService(t)
+		exampleInput := &models.User{
+			Username: "username",
+		}
+
+		cookie, err := s.buildCookie(exampleInput)
+		assert.NotNil(t, cookie)
+		assert.NoError(t, err)
+	})
+
+	T.Run("with error encoding", func(t *testing.T) {
+		s := buildTestService(t)
+		cb := &mockCookieEncoderDecoder{}
+		cb.On("Encode", mock.Anything, mock.Anything).
+			Return("", errors.New("blah"))
+		s.cookieBuilder = cb
+		exampleInput := &models.User{
+			Username: "username",
+		}
+
+		cookie, err := s.buildCookie(exampleInput)
+		assert.Nil(t, cookie)
+		assert.Error(t, err)
+	})
 }

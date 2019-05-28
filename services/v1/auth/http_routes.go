@@ -63,7 +63,7 @@ func (s *Service) FetchUserFromRequest(req *http.Request) (*models.User, error) 
 		return nil, errors.Wrap(decodeErr, "fetching cookie data from request")
 	}
 
-	user, userFetchErr := s.database.GetUser(req.Context(), ca.UserID)
+	user, userFetchErr := s.userDB.GetUser(req.Context(), ca.UserID)
 	if userFetchErr != nil {
 		return nil, errors.Wrap(userFetchErr, "fetching user from request")
 	}
@@ -79,7 +79,7 @@ func (s *Service) Login(res http.ResponseWriter, req *http.Request) {
 	if errRes != nil {
 		s.logger.Error(errRes, "error encountered fetching login data from request")
 		res.WriteHeader(http.StatusUnauthorized)
-		if err := s.encoder.EncodeResponse(res, errRes); err != nil {
+		if err := s.encoderDecoder.EncodeResponse(res, errRes); err != nil {
 			s.logger.Error(err, "encoding response")
 		}
 		return
@@ -110,7 +110,7 @@ func (s *Service) Login(res http.ResponseWriter, req *http.Request) {
 			Code:    http.StatusInternalServerError,
 			Message: "error encountered building cookie",
 		}
-		if err := s.encoder.EncodeResponse(res, response); err != nil {
+		if err := s.encoderDecoder.EncodeResponse(res, response); err != nil {
 			s.logger.Error(err, "encoding response")
 		}
 		return
@@ -156,7 +156,7 @@ func (s *Service) fetchLoginDataFromRequest(req *http.Request) (*loginData, *mod
 	// you could ensure there isn't an unsatisfied
 	// password reset token requested before allowing login here
 
-	user, err := s.database.GetUserByUsername(ctx, username)
+	user, err := s.userDB.GetUserByUsername(ctx, username)
 	if err == sql.ErrNoRows {
 		logger.WithError(err).Debug("no matching user")
 		return nil, &models.ErrorResponse{
@@ -201,7 +201,7 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 		}
 
 		user.HashedPassword = updated
-		if err = s.database.UpdateUser(ctx, user); err != nil {
+		if err = s.userDB.UpdateUser(ctx, user); err != nil {
 			return false, err
 		}
 	} else if err != nil && err != auth.ErrPasswordHashTooWeak {

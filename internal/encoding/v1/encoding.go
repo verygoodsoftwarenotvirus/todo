@@ -20,7 +20,7 @@ type (
 	// EncoderDecoder is an interface that allows for multiple implementations of HTTP response formats
 	EncoderDecoder interface {
 		EncodeResponse(http.ResponseWriter, interface{}) error
-		DecodeResponse(*http.Request, interface{}) error
+		DecodeRequest(*http.Request, interface{}) error
 	}
 
 	// ServerEncoderDecoder is our concrete implementation of EncoderDecoder
@@ -54,8 +54,8 @@ func (ed *ServerEncoderDecoder) EncodeResponse(res http.ResponseWriter, v interf
 	return e.Encode(v)
 }
 
-// DecodeResponse decodes responses
-func (ed *ServerEncoderDecoder) DecodeResponse(req *http.Request, v interface{}) error {
+// DecodeRequest decodes responses
+func (ed *ServerEncoderDecoder) DecodeRequest(req *http.Request, v interface{}) error {
 	var ct = strings.ToLower(req.Header.Get("Content-type"))
 	if ct == "" {
 		ct = "application/json"

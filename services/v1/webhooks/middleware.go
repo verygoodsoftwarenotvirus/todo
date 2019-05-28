@@ -11,7 +11,7 @@ import (
 func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 	x := new(models.WebhookInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		if err := s.encoder.DecodeResponse(req, x); err != nil {
+		if err := s.encoder.DecodeRequest(req, x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
 			return
@@ -32,7 +32,7 @@ func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 func (s *Service) UpdateInputMiddleware(next http.Handler) http.Handler {
 	x := new(models.WebhookInput)
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		if err := s.encoder.DecodeResponse(req, x); err != nil {
+		if err := s.encoder.DecodeRequest(req, x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
 			return

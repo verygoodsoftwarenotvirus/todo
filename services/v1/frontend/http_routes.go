@@ -20,10 +20,6 @@ var (
 	itemsFrontendPathRegex = regexp.MustCompile(`/items/\d+`)
 )
 
-func init() {
-
-}
-
 // StaticDir establishes a static directory handler
 func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, error) {
 	fileDir, err := filepath.Abs(staticFilesDirectory)

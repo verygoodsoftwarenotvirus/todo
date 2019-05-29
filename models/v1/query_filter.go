@@ -12,6 +12,14 @@ import (
 
 const (
 	maxLimit = 50
+
+	pageKey          = "page"
+	limitKey         = "limit"
+	createdBeforeKey = "created_before"
+	createdAfterKey  = "created_after"
+	updatedBeforeKey = "updated_before"
+	updatedAfterKey  = "updated_after"
+	sortByKey        = "sort_by"
 )
 
 // QueryFilter represents all the filters a user could apply to a list query
@@ -38,31 +46,31 @@ func buildDefaultQueryFilter() *QueryFilter {
 
 // FromParams overrides the core QueryFilter values with values retrieved from url.Params
 func (qf *QueryFilter) FromParams(params url.Values) {
-	if i, err := strconv.ParseUint(params.Get("page"), 10, 64); err == nil {
+	if i, err := strconv.ParseUint(params.Get(pageKey), 10, 64); err == nil {
 		qf.Page = uint64(math.Max(float64(i), 1))
 	}
 
-	if i, err := strconv.ParseUint(params.Get("limit"), 10, 64); err == nil {
+	if i, err := strconv.ParseUint(params.Get(limitKey), 10, 64); err == nil {
 		qf.Limit = uint64(math.Max(math.Max(float64(i), 0), maxLimit))
 	}
 
-	if i, err := strconv.ParseUint(params.Get("created_before"), 10, 64); err == nil {
+	if i, err := strconv.ParseUint(params.Get(createdBeforeKey), 10, 64); err == nil {
 		qf.CreatedBefore = uint64(math.Max(float64(i), 0))
 	}
 
-	if i, err := strconv.ParseUint(params.Get("created_after"), 10, 64); err == nil {
+	if i, err := strconv.ParseUint(params.Get(createdAfterKey), 10, 64); err == nil {
 		qf.CreatedAfter = uint64(math.Max(float64(i), 0))
 	}
 
-	if i, err := strconv.ParseUint(params.Get("updated_before"), 10, 64); err == nil {
+	if i, err := strconv.ParseUint(params.Get(updatedBeforeKey), 10, 64); err == nil {
+		qf.UpdatedBefore = uint64(math.Max(float64(i), 0))
+	}
+
+	if i, err := strconv.ParseUint(params.Get(updatedAfterKey), 10, 64); err == nil {
 		qf.UpdatedAfter = uint64(math.Max(float64(i), 0))
 	}
 
-	if i, err := strconv.ParseUint(params.Get("updated_after"), 10, 64); err == nil {
-		qf.UpdatedAfter = uint64(math.Max(float64(i), 0))
-	}
-
-	switch strings.ToLower(params.Get("sort_by")) {
+	switch strings.ToLower(params.Get(sortByKey)) {
 	case strSortAsc:
 		qf.SortBy = SortAscending
 	case strSortDesc:

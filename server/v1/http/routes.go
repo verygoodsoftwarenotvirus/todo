@@ -34,7 +34,7 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 	router := chi.NewRouter()
 
 	// Basic CORS, for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
-	cors := cors.New(cors.Options{
+	ch := cors.New(cors.Options{
 		// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts
 		AllowedOrigins: []string{"*"},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
@@ -49,7 +49,7 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		middleware.RequestID,
 		middleware.Timeout(maxTimeout),
 		s.loggingMiddleware,
-		cors.Handler,
+		ch.Handler,
 	)
 
 	// all middleware must be defined before routes on a mux

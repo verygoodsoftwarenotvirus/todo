@@ -1,7 +1,7 @@
 package webhooks
 
 import (
-	"github.com/pkg/errors"
+	"errors"
 	"net/http"
 	"testing"
 

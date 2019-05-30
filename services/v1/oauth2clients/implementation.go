@@ -2,6 +2,7 @@ package oauth2clients
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"strconv"
 	"strings"
@@ -20,6 +21,8 @@ var _ oauth2server.InternalErrorHandler = (*Service)(nil).OAuth2InternalErrorHan
 
 // OAuth2InternalErrorHandler fulfills a role for the OAuth2 server-side provider
 func (s *Service) OAuth2InternalErrorHandler(err error) *oauth2errors.Response {
+	s.logger.Error(err, "OAuth2 Internal Error")
+
 	res := &oauth2errors.Response{
 		Error:       err,
 		Description: "Internal error",
@@ -27,7 +30,6 @@ func (s *Service) OAuth2InternalErrorHandler(err error) *oauth2errors.Response {
 		StatusCode:  http.StatusInternalServerError,
 	}
 
-	s.logger.Error(err, "OAuth2 Internal Error")
 	return res
 }
 
@@ -45,33 +47,37 @@ func (s *Service) OAuth2ResponseErrorHandler(re *oauth2errors.Response) {
 	})
 }
 
-// gopkg.in/oauth2.v3/server specific implementations
-
 var _ oauth2server.AuthorizeScopeHandler = (*Service)(nil).AuthorizeScopeHandler
 
 // AuthorizeScopeHandler satisfies the oauth2server AuthorizeScopeHandler interface
 func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Request) (scope string, err error) {
-	ctx := req.Context()
-	client := s.fetchOAuth2ClientFromRequest(req)
-
 	s.logger.Debug("AuthorizeScopeHandler called")
 
-	if client == nil {
-		clientID := s.fetchOAuth2ClientIDFromRequest(req)
-		if clientID != "" {
+	ctx := req.Context()
+
+	if client := s.fetchOAuth2ClientFromRequest(req); client == nil {
+		if clientID := s.fetchOAuth2ClientIDFromRequest(req); clientID != "" {
 			client, err = s.database.GetOAuth2ClientByClientID(ctx, clientID)
-			if err != nil {
+			if err == sql.ErrNoRows {
 				s.logger.Error(err, "error fetching OAuth2 Client")
+				res.WriteHeader(http.StatusNotFound)
+				return "", err
+			} else if err != nil {
+				s.logger.Error(err, "error fetching OAuth2 Client")
+				res.WriteHeader(http.StatusInternalServerError)
 				return "", err
 			}
 
 			// req = req.WithContext(context.WithValue(ctx, models.OAuth2ClientKey, client))
+			res.WriteHeader(http.StatusOK)
 			return strings.Join(client.Scopes, scopesSeparator), nil
 		}
 	} else {
+		res.WriteHeader(http.StatusOK)
 		return strings.Join(client.Scopes, scopesSeparator), nil
 	}
 
+	res.WriteHeader(http.StatusBadRequest)
 	return "", errors.New("no scope information found")
 }
 

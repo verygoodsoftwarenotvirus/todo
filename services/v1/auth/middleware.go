@@ -13,8 +13,11 @@ const (
 	// UserLoginInputMiddlewareCtxKey is the context key for login input
 	UserLoginInputMiddlewareCtxKey models.ContextKey = "user_login_input"
 
-	UsernameFormKey  = "username"
-	PasswordFormKey  = "password"
+	// UsernameFormKey is the string we look for in request forms for username information
+	UsernameFormKey = "username"
+	// PasswordFormKey is the string we look for in request forms for password information
+	PasswordFormKey = "password"
+	// TOTPTokenFormKey is the string we look for in request forms for TOTP token information
 	TOTPTokenFormKey = "totp_token"
 )
 
@@ -102,9 +105,8 @@ func parseLoginInputFromForm(req *http.Request) *models.UserLoginInput {
 		}
 		if uli.Username == "" && uli.Password == "" && uli.TOTPToken == "" {
 			return nil
-		} else {
-			return uli
 		}
+		return uli
 	}
 	return nil
 }

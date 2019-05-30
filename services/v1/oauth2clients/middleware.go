@@ -19,7 +19,7 @@ func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		s.logger.Debug("OAuth2ClientCreationInputContextMiddleware called")
-		if err := s.encoder.DecodeRequest(req, x); err != nil {
+		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
 			return

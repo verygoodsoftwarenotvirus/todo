@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
@@ -270,7 +271,9 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 		query,
 		args...,
 	)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return nil, err
+	} else if err != nil {
 		return nil, errors.Wrap(err, "executing query")
 	}
 

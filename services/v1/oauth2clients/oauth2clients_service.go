@@ -33,10 +33,10 @@ type (
 
 	// Service manages our OAuth2 clients via HTTP
 	Service struct {
+		logger               logging.Logger
 		database             database.Database
 		authenticator        auth.Authenticator
-		logger               logging.Logger
-		encoder              encoding.EncoderDecoder
+		encoderDecoder       encoding.EncoderDecoder
 		urlClientIDExtractor func(req *http.Request) uint64
 
 		tokenStore          oauth2.TokenStore
@@ -78,7 +78,7 @@ func ProvideOAuth2ClientsService(
 	database database.Database,
 	authenticator auth.Authenticator,
 	clientIDFetcher ClientIDFetcher,
-	encoder encoding.EncoderDecoder,
+	encoderDecoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
 ) (*Service, error) {
 	ctx := context.Background()
@@ -97,7 +97,7 @@ func ProvideOAuth2ClientsService(
 	s := &Service{
 		database:             database,
 		logger:               logger.WithName(serviceName),
-		encoder:              encoder,
+		encoderDecoder:       encoderDecoder,
 		authenticator:        authenticator,
 		urlClientIDExtractor: clientIDFetcher,
 
@@ -117,11 +117,7 @@ func ProvideOAuth2ClientsService(
 		}
 	}
 
-	count, err := database.GetAllOAuth2ClientCount(ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "setting count value")
-	}
-	counter.IncrementBy(ctx, count)
+	counter.IncrementBy(ctx, uint64(len(clients)))
 
 	s.oauth2Handler.SetAllowGetAccessRequest(true)
 	s.oauth2Handler.SetClientAuthorizedHandler(s.ClientAuthorizedHandler)

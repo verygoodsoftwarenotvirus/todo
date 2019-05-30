@@ -47,12 +47,6 @@ func (er *ErrorResponse) Error() string {
 	return fmt.Sprintf("%d - %s", er.Code, er.Message)
 }
 
-// ResponseMetadata is a struct for future use
-type ResponseMetadata struct {
-	RequestID string         `json:"request_id"`
-	Error     *ErrorResponse `json:"error"`
-}
-
 // CountResponse is what we respond with when a user requests a count of data types
 type CountResponse struct {
 	Count uint64 `json:"count"`

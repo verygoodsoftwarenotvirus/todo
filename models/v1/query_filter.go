@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	maxLimit = 50
+	// MaxLimit is the maximum value for list queries
+	MaxLimit = 250
 
 	pageKey          = "page"
 	limitKey         = "limit"
@@ -33,7 +34,7 @@ type QueryFilter struct {
 	SortBy        sortType `json:"sort_by"`
 }
 
-// DefaultQueryFilter represents the standard filter collection
+// DefaultQueryFilter represents the standard filter
 var DefaultQueryFilter = buildDefaultQueryFilter()
 
 func buildDefaultQueryFilter() *QueryFilter {
@@ -51,7 +52,7 @@ func (qf *QueryFilter) FromParams(params url.Values) {
 	}
 
 	if i, err := strconv.ParseUint(params.Get(limitKey), 10, 64); err == nil {
-		qf.Limit = uint64(math.Max(math.Max(float64(i), 0), maxLimit))
+		qf.Limit = uint64(math.Max(math.Max(float64(i), 0), MaxLimit))
 	}
 
 	if i, err := strconv.ParseUint(params.Get(createdBeforeKey), 10, 64); err == nil {
@@ -120,39 +121,39 @@ func (qf *QueryFilter) ToValues() url.Values {
 	return v
 }
 
-// ApplyToQueryBuilder applys the query filter to a select builder
-func (qf *QueryFilter) ApplyToQueryBuilder(builder squirrel.SelectBuilder) squirrel.SelectBuilder {
-	if qf.CreatedAfter > 0 {
-		builder = builder.Where(squirrel.GtOrEq(map[string]interface{}{
-			"created_on": qf.CreatedAfter,
-		}))
+// ApplyToQueryBuilder applies the query filter to a SelectBuilder
+func (qf *QueryFilter) ApplyToQueryBuilder(queryBuilder squirrel.SelectBuilder) squirrel.SelectBuilder {
+	if qf == nil {
+		return queryBuilder
 	}
 
-	if qf.CreatedBefore > 0 {
-		builder = builder.Where(squirrel.LtOrEq(map[string]interface{}{
-			"created_on": qf.CreatedAfter,
-		}))
-	}
-
-	if qf.UpdatedAfter > 0 {
-		builder = builder.Where(squirrel.GtOrEq(map[string]interface{}{
-			"updated_on": qf.CreatedAfter,
-		}))
-	}
-
-	if qf.UpdatedBefore > 0 {
-		builder = builder.Where(squirrel.LtOrEq(map[string]interface{}{
-			"updated_on": qf.CreatedAfter,
-		}))
+	if qp := qf.QueryPage(); qp > 0 {
+		queryBuilder = queryBuilder.Offset(qp)
 	}
 
 	if qf.Limit > 0 {
-		builder = builder.Limit(qf.Limit)
+		queryBuilder = queryBuilder.Limit(qf.Limit)
+	} else {
+		queryBuilder = queryBuilder.Limit(MaxLimit)
 	}
 
-	builder = builder.Offset(qf.QueryPage())
+	if qf.CreatedAfter > 0 {
+		queryBuilder = queryBuilder.Where(squirrel.Gt{"created_on": qf.CreatedAfter})
+	}
 
-	return builder
+	if qf.CreatedBefore > 0 {
+		queryBuilder = queryBuilder.Where(squirrel.Lt{"created_on": qf.CreatedBefore})
+	}
+
+	if qf.UpdatedAfter > 0 {
+		queryBuilder = queryBuilder.Where(squirrel.Gt{"updated_on": qf.UpdatedAfter})
+	}
+
+	if qf.UpdatedBefore > 0 {
+		queryBuilder = queryBuilder.Where(squirrel.Lt{"updated_on": qf.UpdatedBefore})
+	}
+
+	return queryBuilder
 }
 
 // ExtractQueryFilter can extract a QueryFilter from a request

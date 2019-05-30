@@ -1,7 +1,6 @@
 package oauth2clients
 
 import (
-	"crypto/rand"
 	"database/sql"
 	"encoding/base32"
 	"net/http"
@@ -23,18 +22,14 @@ const (
 
 func init() {
 	b := make([]byte, 64)
-	if _, err := rand.Read(b); err != nil {
-		panic(err)
-	}
+	mustCryptoRandRead(b)
 }
 
 // randString produces a random string
 // https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
 func randString() string {
 	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		panic(err)
-	}
+	mustCryptoRandRead(b)
 
 	// this is so that we don't end up with `=` in IDs
 	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b)
@@ -62,15 +57,16 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 
 	oauth2Clients, err := s.database.GetOAuth2Clients(ctx, qf, userID)
 	if err == sql.ErrNoRows {
-		res.WriteHeader(http.StatusNotFound)
-		return
+		oauth2Clients = &models.OAuth2ClientList{
+			Clients: []models.OAuth2Client{},
+		}
 	} else if err != nil {
 		logger.Error(err, "encountered error getting list of oauth2 clients from database")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	if err = s.encoder.EncodeResponse(res, oauth2Clients); err != nil {
+	if err = s.encoderDecoder.EncodeResponse(res, oauth2Clients); err != nil {
 		logger.Error(err, "encoding response")
 	}
 }
@@ -141,7 +137,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	}).Debug("CreateOAuth2Client route returning successfully")
 
 	res.WriteHeader(http.StatusCreated)
-	if err = s.encoder.EncodeResponse(res, x); err != nil {
+	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 		logger.Error(err, "encoding response")
 	}
 }
@@ -170,7 +166,7 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err = s.encoder.EncodeResponse(res, x); err != nil {
+	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 		logger.Error(err, "encoding response")
 	}
 }
@@ -188,7 +184,11 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	})
 	logger.Debug("oauth2Client deletion route called")
 
-	if err := s.database.DeleteOAuth2Client(ctx, oauth2ClientID, userID); err != nil {
+	err := s.database.DeleteOAuth2Client(ctx, oauth2ClientID, userID)
+	if err == sql.ErrNoRows {
+		res.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
 		logger.Error(err, "encountered error deleting oauth2 client")
 		res.WriteHeader(http.StatusInternalServerError)
 		return

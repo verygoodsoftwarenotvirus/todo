@@ -1,7 +1,7 @@
 package items
 
 import (
-	"github.com/pkg/errors"
+	"errors"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"

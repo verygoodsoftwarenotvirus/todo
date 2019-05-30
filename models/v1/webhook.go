@@ -88,16 +88,20 @@ func (w *Webhook) Update(input *WebhookInput) {
 	}
 }
 
+func buildErrorLogFunc(w *Webhook, logger logging.Logger) func(error) {
+	return func(err error) {
+		logger.WithValues(map[string]interface{}{
+			"url":          w.URL,
+			"method":       w.Method,
+			"content_type": w.ContentType,
+		}).Error(err, "error executing webhook")
+	}
+}
+
 // ToListener creates a newsman Listener from a Webhook
 func (w *Webhook) ToListener(logger logging.Logger) newsman.Listener {
 	return newsman.NewWebhookListener(
-		func(err error) {
-			logger.WithValues(map[string]interface{}{
-				"url":          w.URL,
-				"method":       w.Method,
-				"content_type": w.ContentType,
-			}).Error(err, "error executing webhook")
-		},
+		buildErrorLogFunc(w, logger),
 		&newsman.WebhookConfig{
 			Method:      w.Method,
 			URL:         w.URL,

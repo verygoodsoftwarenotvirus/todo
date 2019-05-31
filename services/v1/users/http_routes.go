@@ -93,7 +93,7 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err = s.encoder.EncodeResponse(res, users); err != nil {
+	if err = s.encoderDecoder.EncodeResponse(res, users); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
 }
@@ -197,7 +197,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	})
 
 	res.WriteHeader(http.StatusCreated)
-	if err = s.encoder.EncodeResponse(res, x); err != nil {
+	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
 }
@@ -222,7 +222,7 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err = s.encoder.EncodeResponse(res, x); err != nil {
+	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
 }
@@ -274,7 +274,7 @@ func (s *Service) NewTOTPSecret(res http.ResponseWriter, req *http.Request) {
 	}
 
 	res.WriteHeader(http.StatusCreated)
-	if err := s.encoder.EncodeResponse(
+	if err := s.encoderDecoder.EncodeResponse(
 		res, &models.TOTPSecretRefreshResponse{TwoFactorSecret: user.TwoFactorSecret},
 	); err != nil {
 		s.logger.Error(err, "encoding response")

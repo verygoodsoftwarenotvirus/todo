@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var _ oauth2ClientValidator = (*mockOAuth2ClientValidator)(nil)
+var _ OAuth2ClientValidator = (*mockOAuth2ClientValidator)(nil)
 
 type mockOAuth2ClientValidator struct {
 	mock.Mock

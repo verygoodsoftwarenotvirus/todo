@@ -36,17 +36,17 @@ func BuildServer(cfg *config.ServerConfig, logger logging.Logger, database2 data
 	if err != nil {
 		return nil, err
 	}
+	oAuth2ClientValidator := auth2.ProvideOAuth2ClientValidator(service)
 	userIDFetcher := httpserver.ProvideAuthUserIDFetcher()
-	authService := auth2.ProvideAuthService(logger, cfg, authenticator, userDataManager, service, userIDFetcher, encoderDecoder)
-	loginRoute := httpserver.ProvideLoginRoute()
-	registrationRoute := httpserver.ProvideRegistrationRoute()
-	frontendService := frontend.ProvideFrontendService(logger, loginRoute, registrationRoute)
+	authService := auth2.ProvideAuthService(logger, cfg, authenticator, userDataManager, oAuth2ClientValidator, userIDFetcher, encoderDecoder)
+	frontendService := frontend.ProvideFrontendService(logger)
+	itemDataManager := items.ProvideItemDataManager(database2)
 	itemsUserIDFetcher := httpserver.ProvideUserIDFetcher()
 	itemIDFetcher := httpserver.ProvideItemIDFetcher(logger)
 	websocketAuthFunc := auth2.ProvideWebsocketAuthFunc(authService)
 	typeNameManipulationFunc := httpserver.ProvideNewsmanTypeNameManipulationFunc(logger)
 	newsmanNewsman := newsman.NewNewsman(websocketAuthFunc, typeNameManipulationFunc)
-	itemsService, err := items.ProvideItemsService(logger, database2, itemsUserIDFetcher, itemIDFetcher, encoderDecoder, unitCounterProvider, newsmanNewsman)
+	itemsService, err := items.ProvideItemsService(logger, itemDataManager, itemsUserIDFetcher, itemIDFetcher, encoderDecoder, unitCounterProvider, newsmanNewsman)
 	if err != nil {
 		return nil, err
 	}
@@ -56,9 +56,10 @@ func BuildServer(cfg *config.ServerConfig, logger logging.Logger, database2 data
 	if err != nil {
 		return nil, err
 	}
+	webhookDataManager := webhooks.ProvideWebhookDataManager(database2)
 	webhooksUserIDFetcher := httpserver.ProvideWebhooksUserIDFetcher()
 	webhookIDFetcher := httpserver.ProvideWebhookIDFetcher(logger)
-	webhooksService, err := webhooks.ProvideWebhooksService(logger, database2, webhooksUserIDFetcher, webhookIDFetcher, encoderDecoder, unitCounterProvider, newsmanNewsman)
+	webhooksService, err := webhooks.ProvideWebhooksService(logger, webhookDataManager, webhooksUserIDFetcher, webhookIDFetcher, encoderDecoder, unitCounterProvider, newsmanNewsman)
 	if err != nil {
 		return nil, err
 	}

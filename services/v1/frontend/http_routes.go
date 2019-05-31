@@ -7,7 +7,7 @@ import (
 	"regexp"
 )
 
-// Routes returns a map of route to handlerfunc for the parent router to set
+// Routes returns a map of route to HandlerFunc for the parent router to set
 // this keeps routing logic in the frontend service and not in the server itself.
 func (s *Service) Routes() map[string]http.HandlerFunc {
 	return map[string]http.HandlerFunc{

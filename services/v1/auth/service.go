@@ -17,7 +17,9 @@ const (
 )
 
 type (
-	oauth2ClientValidator interface {
+	// OAuth2ClientValidator is a stand-in interface, where we needed to abstract
+	// a regular structure with an interface for testing purposes
+	OAuth2ClientValidator interface {
 		RequestIsAuthenticated(req *http.Request) (*models.OAuth2Client, error)
 	}
 
@@ -32,7 +34,7 @@ type (
 		authenticator        libauth.Authenticator
 		userIDFetcher        UserIDFetcher
 		userDB               models.UserDataManager
-		oauth2ClientsService oauth2ClientValidator
+		oauth2ClientsService OAuth2ClientValidator
 		encoderDecoder       encoding.EncoderDecoder
 		cookieBuilder        cookieEncoderDecoder
 	}
@@ -47,7 +49,7 @@ func ProvideAuthService(
 	config *config.ServerConfig,
 	authenticator libauth.Authenticator,
 	database models.UserDataManager,
-	oauth2ClientsService oauth2ClientValidator,
+	oauth2ClientsService OAuth2ClientValidator,
 	userIDFetcher UserIDFetcher,
 	encoder encoding.EncoderDecoder,
 ) *Service {

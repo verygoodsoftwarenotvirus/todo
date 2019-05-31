@@ -2,9 +2,8 @@ package oauth2clients
 
 import (
 	"context"
-	"net/http"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"net/http"
 
 	"github.com/pkg/errors"
 )
@@ -38,8 +37,6 @@ func (s *Service) RequestIsAuthenticated(req *http.Request) (*models.OAuth2Clien
 	token, err := s.oauth2Handler.ValidationBearerToken(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "validating bearer token")
-	} else if token == nil {
-		return nil, nil
 	}
 
 	// ignoring this error because the User ID source should only ever provide uints
@@ -70,9 +67,8 @@ func (s *Service) OAuth2TokenAuthenticationMiddleware(next http.Handler) http.Ha
 			return
 		}
 
-		// attach both the user ID and the client object to the request. it might seem superfluous,
-		// but some things should only need to know to look for user IDs, and not trouble themselves
-		// with foolish concerns of OAuth2 clients and their fields
+		// attach both the user ID and the client object to the request. it might seem
+		// superfluous, but some things should only need to know to look for user IDs
 		ctx2 := context.WithValue(ctx, models.UserIDKey, c.BelongsTo)
 		ctx3 := context.WithValue(ctx2, models.OAuth2ClientKey, c)
 		req2 := req.WithContext(ctx3)

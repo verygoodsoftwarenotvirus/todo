@@ -1,10 +1,13 @@
 package oauth2clients
 
 import (
-	"github.com/stretchr/testify/assert"
+	"database/sql"
+	"errors"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	mauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1/mock"
 	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
@@ -12,8 +15,7 @@ import (
 	mmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
-
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/oauth2.v3/manage"
@@ -45,33 +47,173 @@ func buildTestService(t *testing.T) *Service {
 	return service
 }
 
-func TestProvideOAuth2ClientsService(t *testing.T) {
-	t.Helper()
+func TestProvideOAuth2ClientsService(T *testing.T) {
+	T.Parallel()
 
-	mockDB := database.BuildMockDatabase()
-	mockDB.OAuth2ClientDataManager.On("GetAllOAuth2Clients", mock.Anything).
-		Return([]*models.OAuth2Client{}, nil)
-	mockDB.OAuth2ClientDataManager.On("GetAllOAuth2ClientCount", mock.Anything).
-		Return(0)
+	T.Run("happy path", func(t *testing.T) {
+		mockDB := database.BuildMockDatabase()
+		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2Clients", mock.Anything).
+			Return([]*models.OAuth2Client{}, nil)
+		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2ClientCount", mock.Anything).
+			Return(0)
 
-	uc := &mmetrics.UnitCounter{}
-	uc.On("IncrementBy", uint64(0)).Return()
+		uc := &mmetrics.UnitCounter{}
+		uc.On("IncrementBy", uint64(0)).Return()
 
-	var ucp metrics.UnitCounterProvider = func(
-		counterName metrics.CounterName,
-		description string,
-	) (metrics.UnitCounter, error) {
-		return uc, nil
-	}
+		var ucp metrics.UnitCounterProvider = func(
+			counterName metrics.CounterName,
+			description string,
+		) (metrics.UnitCounter, error) {
+			return uc, nil
+		}
 
-	service, err := ProvideOAuth2ClientsService(
-		noop.ProvideNoopLogger(),
-		mockDB,
-		&mauth.Authenticator{},
-		func(req *http.Request) uint64 { return 0 },
-		&mencoding.EncoderDecoder{},
-		ucp,
-	)
-	assert.NoError(t, err)
-	assert.NotNil(t, service)
+		service, err := ProvideOAuth2ClientsService(
+			noop.ProvideNoopLogger(),
+			mockDB,
+			&mauth.Authenticator{},
+			func(req *http.Request) uint64 { return 0 },
+			&mencoding.EncoderDecoder{},
+			ucp,
+		)
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+	})
+
+	T.Run("with error providing counter", func(t *testing.T) {
+		mockDB := database.BuildMockDatabase()
+		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2Clients", mock.Anything).
+			Return([]*models.OAuth2Client{}, nil)
+		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2ClientCount", mock.Anything).
+			Return(0)
+
+		uc := &mmetrics.UnitCounter{}
+		uc.On("IncrementBy", uint64(0)).Return()
+
+		var ucp metrics.UnitCounterProvider = func(
+			counterName metrics.CounterName,
+			description string,
+		) (metrics.UnitCounter, error) {
+			return nil, errors.New("blah")
+		}
+
+		service, err := ProvideOAuth2ClientsService(
+			noop.ProvideNoopLogger(),
+			mockDB,
+			&mauth.Authenticator{},
+			func(req *http.Request) uint64 { return 0 },
+			&mencoding.EncoderDecoder{},
+			ucp,
+		)
+		assert.Error(t, err)
+		assert.Nil(t, service)
+	})
+
+	T.Run("with error fetching oauth2 clients", func(t *testing.T) {
+		mockDB := database.BuildMockDatabase()
+		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2Clients", mock.Anything).
+			Return([]*models.OAuth2Client{}, errors.New("blah"))
+		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2ClientCount", mock.Anything).
+			Return(0)
+
+		uc := &mmetrics.UnitCounter{}
+		uc.On("IncrementBy", uint64(0)).Return()
+
+		var ucp metrics.UnitCounterProvider = func(
+			counterName metrics.CounterName,
+			description string,
+		) (metrics.UnitCounter, error) {
+			return uc, nil
+		}
+
+		service, err := ProvideOAuth2ClientsService(
+			noop.ProvideNoopLogger(),
+			mockDB,
+			&mauth.Authenticator{},
+			func(req *http.Request) uint64 { return 0 },
+			&mencoding.EncoderDecoder{},
+			ucp,
+		)
+		assert.Error(t, err)
+		assert.Nil(t, service)
+	})
+
+}
+
+func Test_clientStore_GetByID(T *testing.T) {
+	T.Parallel()
+
+	T.Run("normal operation", func(t *testing.T) {
+		exampleID := "blah"
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.OAuth2ClientDataManager.
+			On("GetOAuth2ClientByClientID", mock.Anything, exampleID).
+			Return(&models.OAuth2Client{ClientID: exampleID}, nil)
+
+		c := &clientStore{database: mockDB}
+
+		actual, err := c.GetByID(exampleID)
+		assert.NoError(t, err)
+		assert.Equal(t, exampleID, actual.GetID())
+	})
+
+	T.Run("with no rows", func(t *testing.T) {
+		exampleID := "blah"
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.OAuth2ClientDataManager.
+			On("GetOAuth2ClientByClientID", mock.Anything, exampleID).
+			Return((*models.OAuth2Client)(nil), sql.ErrNoRows)
+
+		c := &clientStore{database: mockDB}
+
+		_, err := c.GetByID(exampleID)
+		assert.Error(t, err)
+	})
+
+	T.Run("with error reading from database", func(t *testing.T) {
+		exampleID := "blah"
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.OAuth2ClientDataManager.
+			On("GetOAuth2ClientByClientID", mock.Anything, exampleID).
+			Return((*models.OAuth2Client)(nil), errors.New(exampleID))
+
+		c := &clientStore{database: mockDB}
+
+		_, err := c.GetByID(exampleID)
+		assert.Error(t, err)
+	})
+}
+
+func TestService_HandleAuthorizeRequest(T *testing.T) {
+	T.Parallel()
+
+	T.Run("normal operation", func(t *testing.T) {
+		s := buildTestService(t)
+		moah := &mockOauth2Handler{}
+		moah.On("HandleAuthorizeRequest", mock.Anything, mock.Anything).
+			Return(nil)
+		s.oauth2Handler = moah
+
+		req, res := buildRequest(t), httptest.NewRecorder()
+
+		assert.NoError(t, s.HandleAuthorizeRequest(res, req))
+	})
+}
+
+func TestService_HandleTokenRequest(T *testing.T) {
+	T.Parallel()
+
+	T.Run("normal operation", func(t *testing.T) {
+		s := buildTestService(t)
+		moah := &mockOauth2Handler{}
+		moah.On("HandleTokenRequest", mock.Anything, mock.Anything).
+			Return(nil)
+		s.oauth2Handler = moah
+
+		req, res := buildRequest(t), httptest.NewRecorder()
+
+		assert.NoError(t, s.HandleTokenRequest(res, req))
+	})
 }

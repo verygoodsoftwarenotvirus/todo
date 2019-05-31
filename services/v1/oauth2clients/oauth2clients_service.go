@@ -28,6 +28,20 @@ const (
 )
 
 type (
+	oauth2Handler interface {
+		SetAllowGetAccessRequest(bool)
+		SetClientAuthorizedHandler(handler oauth2server.ClientAuthorizedHandler)
+		SetClientScopeHandler(handler oauth2server.ClientScopeHandler)
+		SetClientInfoHandler(handler oauth2server.ClientInfoHandler)
+		SetUserAuthorizationHandler(handler oauth2server.UserAuthorizationHandler)
+		SetAuthorizeScopeHandler(handler oauth2server.AuthorizeScopeHandler)
+		SetResponseErrorHandler(handler oauth2server.ResponseErrorHandler)
+		SetInternalErrorHandler(handler oauth2server.InternalErrorHandler)
+		ValidationBearerToken(*http.Request) (oauth2.TokenInfo, error)
+		HandleAuthorizeRequest(res http.ResponseWriter, req *http.Request) error
+		HandleTokenRequest(res http.ResponseWriter, req *http.Request) error
+	}
+
 	// ClientIDFetcher is a function for fetching client IDs out of requests
 	ClientIDFetcher func(req *http.Request) uint64
 
@@ -40,7 +54,7 @@ type (
 		urlClientIDExtractor func(req *http.Request) uint64
 
 		tokenStore          oauth2.TokenStore
-		oauth2Handler       *oauth2server.Server
+		oauth2Handler       oauth2Handler
 		oauth2ClientStore   *oauth2store.ClientStore
 		oauth2ClientCounter metrics.UnitCounter
 	}
@@ -106,19 +120,24 @@ func ProvideOAuth2ClientsService(
 		oauth2Handler:       server,
 	}
 
-	clients, err := database.GetAllOAuth2Clients(ctx)
-	if err != nil {
+	clients, err := s.database.GetAllOAuth2Clients(ctx)
+	if err != nil && err != sql.ErrNoRows {
 		return nil, errors.Wrap(err, "fetching oauth2 clients")
 	}
 
 	for _, client := range clients {
+		counter.Increment(ctx)
 		if err = s.oauth2ClientStore.Set(client.ClientID, client); err != nil {
 			return nil, errors.Wrapf(err, "error establishing oauth2 client: %d\n", client.ID)
 		}
 	}
 
-	counter.IncrementBy(ctx, uint64(len(clients)))
+	s.initializeOAuth2Handler()
 
+	return s, nil
+}
+
+func (s *Service) initializeOAuth2Handler() {
 	s.oauth2Handler.SetAllowGetAccessRequest(true)
 	s.oauth2Handler.SetClientAuthorizedHandler(s.ClientAuthorizedHandler)
 	s.oauth2Handler.SetClientScopeHandler(s.ClientScopeHandler)
@@ -127,14 +146,17 @@ func ProvideOAuth2ClientsService(
 	s.oauth2Handler.SetAuthorizeScopeHandler(s.AuthorizeScopeHandler)
 	s.oauth2Handler.SetResponseErrorHandler(s.OAuth2ResponseErrorHandler)
 	s.oauth2Handler.SetInternalErrorHandler(s.OAuth2InternalErrorHandler)
-	s.oauth2Handler.Config.AllowedGrantTypes = []oauth2.GrantType{
-		oauth2.AuthorizationCode,
-		oauth2.ClientCredentials,
-		oauth2.Refreshing, // TODO: maybe these
-		oauth2.Implicit,   // two aren't necessary?
-	}
 
-	return s, nil
+	// this sad type cast is here because I have an arbitrary
+	// test-only interface for OAuth2 interactions.
+	if x, ok := s.oauth2Handler.(*oauth2server.Server); ok {
+		x.Config.AllowedGrantTypes = []oauth2.GrantType{
+			oauth2.AuthorizationCode,
+			oauth2.ClientCredentials,
+			oauth2.Refreshing, // TODO: maybe these
+			oauth2.Implicit,   // two aren't necessary?
+		}
+	}
 }
 
 // HandleAuthorizeRequest is a simple wrapper around the internal server's HandleAuthorizeRequest

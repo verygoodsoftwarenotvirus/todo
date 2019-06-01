@@ -6,6 +6,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 
+	"github.com/Masterminds/squirrel"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 )
 
@@ -23,6 +24,7 @@ var _ database.Database = (*Client)(nil)
 type Client struct {
 	db *sql.DB
 	database database.Database
+	sqlBuilder  squirrel.StatementBuilderType
 
 	debug  bool
 	logger logging.Logger
@@ -50,6 +52,7 @@ func ProvideDatabaseClient(
 		database: database,
 		debug:    debug,
 		logger:   logger.WithName("db_client"),
+		sqlBuilder:  squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
 	}
 
 	logger.Debug("migrating database")

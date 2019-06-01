@@ -114,14 +114,14 @@ const getWebhookQuery = `
 		AND belongs_to = $2
 `
 
-// GetWebhook fetches an webhook from the postgres database
+// GetWebhook fetches an webhook from the postgres db
 func (p *Postgres) GetWebhook(ctx context.Context, webhookID, userID uint64) (*models.Webhook, error) {
-	row := p.database.QueryRowContext(ctx, getWebhookQuery, webhookID, userID)
+	row := p.db.QueryRowContext(ctx, getWebhookQuery, webhookID, userID)
 	i, err := p.scanWebhook(row)
 	return i, err
 }
 
-// GetWebhookCount will fetch the count of webhooks from the postgres database that meet a particular filter and belong to a particular user.
+// GetWebhookCount will fetch the count of webhooks from the postgres db that meet a particular filter and belong to a particular user.
 func (p *Postgres) GetWebhookCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
 	builder := p.sqlBuilder.
 		Select("COUNT(*)").
@@ -138,7 +138,7 @@ func (p *Postgres) GetWebhookCount(ctx context.Context, filter *models.QueryFilt
 		return 0, errors.Wrap(err, "generating query")
 	}
 
-	err = p.database.QueryRowContext(ctx, query, args...).Scan(&count)
+	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return
 }
 
@@ -151,9 +151,9 @@ const getAllWebhooksCountQuery = `
 		archived_on IS NULL
 `
 
-// GetAllWebhooksCount will fetch the count of webhooks from the postgres database that meet a particular filter
+// GetAllWebhooksCount will fetch the count of webhooks from the postgres db that meet a particular filter
 func (p *Postgres) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
-	err = p.database.QueryRowContext(ctx, getAllWebhooksCountQuery).Scan(&count)
+	err = p.db.QueryRowContext(ctx, getAllWebhooksCountQuery).Scan(&count)
 	return
 }
 
@@ -177,10 +177,10 @@ const getAllWebhooksQuery = `
 		archived_on IS NULL
 `
 
-// GetAllWebhooks fetches a list of all webhooks from the postgres database
+// GetAllWebhooks fetches a list of all webhooks from the postgres db
 func (p *Postgres) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
 	var list []models.Webhook
-	rows, err := p.database.QueryContext(ctx, getAllWebhooksQuery)
+	rows, err := p.db.QueryContext(ctx, getAllWebhooksQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +219,7 @@ func (p *Postgres) GetAllWebhooks(ctx context.Context) (*models.WebhookList, err
 	return x, err
 }
 
-// GetWebhooks fetches a list of webhooks from the postgres database that meet a particular filter
+// GetWebhooks fetches a list of webhooks from the postgres db that meet a particular filter
 func (p *Postgres) GetWebhooks(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.WebhookList, error) {
 	builder := p.sqlBuilder.
 		Select(webhooksTableColumns...).
@@ -236,7 +236,7 @@ func (p *Postgres) GetWebhooks(ctx context.Context, filter *models.QueryFilter, 
 		return nil, errors.Wrap(err, "generating query")
 	}
 
-	rows, err := p.database.QueryContext(
+	rows, err := p.db.QueryContext(
 		ctx,
 		query,
 		args...,
@@ -294,7 +294,7 @@ const createWebhookQuery = `
 		created_on
 `
 
-// CreateWebhook creates an webhook in a postgres database
+// CreateWebhook creates an webhook in a postgres db
 func (p *Postgres) CreateWebhook(ctx context.Context, input *models.WebhookInput) (*models.Webhook, error) {
 	x := &models.Webhook{
 		Name:        input.Name,
@@ -308,7 +308,7 @@ func (p *Postgres) CreateWebhook(ctx context.Context, input *models.WebhookInput
 	}
 
 	// create the webhook
-	if err := p.database.
+	if err := p.db.
 		QueryRow(
 			createWebhookQuery,
 			input.Name,
@@ -346,7 +346,7 @@ const updateWebhookQuery = `
 // UpdateWebhook updates a particular webhook. Note that UpdateWebhook expects the provided input to have a valid ID.
 func (p *Postgres) UpdateWebhook(ctx context.Context, input *models.Webhook) error {
 	// update the webhook
-	err := p.database.
+	err := p.db.
 		QueryRowContext(
 			ctx,
 			updateWebhookQuery,
@@ -375,8 +375,8 @@ const archiveWebhookQuery = `
 		archived_on
 `
 
-// DeleteWebhook deletes an webhook from the database by its ID
+// DeleteWebhook deletes an webhook from the db by its ID
 func (p *Postgres) DeleteWebhook(ctx context.Context, webhookID uint64, userID uint64) error {
-	_, err := p.database.ExecContext(ctx, archiveWebhookQuery, webhookID, userID)
+	_, err := p.db.ExecContext(ctx, archiveWebhookQuery, webhookID, userID)
 	return err
 }

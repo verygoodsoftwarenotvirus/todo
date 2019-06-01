@@ -1,6 +1,7 @@
 package dbclient
 
 import (
+	"database/sql"
 	"context"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
@@ -20,6 +21,7 @@ var _ database.Database = (*Client)(nil)
 
 // Client is a wrapper around a database
 type Client struct {
+	db *sql.DB
 	database database.Database
 
 	debug  bool
@@ -38,11 +40,13 @@ func (c *Client) IsReady(ctx context.Context) (ready bool) {
 
 // ProvideDatabaseClient provides a database client
 func ProvideDatabaseClient(
+	db *sql.DB,
 	database database.Database,
 	debug bool,
 	logger logging.Logger,
 ) (database.Database, error) {
 	c := &Client{
+		db: db,
 		database: database,
 		debug:    debug,
 		logger:   logger.WithName("db_client"),

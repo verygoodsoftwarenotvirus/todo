@@ -36,7 +36,7 @@ func (cfg *ServerConfig) ProvideDatabase(logger logging.Logger) (database.Databa
 
 		pg := postgres.ProvidePostgres(debug, rawDB, logger, connectionDetails)
 
-		return dbclient.ProvideDatabaseClient(pg, debug, logger)
+		return dbclient.ProvideDatabaseClient(rawDB, pg, debug, logger)
 	default:
 		return nil, errors.New("invalid database type selected")
 	}

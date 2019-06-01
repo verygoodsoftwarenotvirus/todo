@@ -91,7 +91,7 @@ const getUserQuery = `
 
 // GetUser fetches a user by their username
 func (p *Postgres) GetUser(ctx context.Context, userID uint64) (*models.User, error) {
-	row := p.database.QueryRowContext(ctx, getUserQuery, userID)
+	row := p.db.QueryRowContext(ctx, getUserQuery, userID)
 	u, err := p.scanUser(row)
 	return u, err
 }
@@ -114,12 +114,12 @@ const getUserByUsernameQuery = `
 
 // GetUserByUsername fetches a user by their username
 func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
-	row := p.database.QueryRowContext(ctx, getUserByUsernameQuery, username)
+	row := p.db.QueryRowContext(ctx, getUserByUsernameQuery, username)
 	u, err := p.scanUser(row)
 	return u, err
 }
 
-// GetUserCount fetches a count of users from the postgres database that meet a particular filter
+// GetUserCount fetches a count of users from the postgres db that meet a particular filter
 func (p *Postgres) GetUserCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
 	builder := p.sqlBuilder.
 		Select("COUNT(*)").
@@ -135,11 +135,11 @@ func (p *Postgres) GetUserCount(ctx context.Context, filter *models.QueryFilter)
 		return 0, errors.Wrap(err, "generating query")
 	}
 
-	err = p.database.QueryRowContext(ctx, query, args...).Scan(&count)
+	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return
 }
 
-// GetUsers fetches a list of users from the postgres database that meet a particular filter
+// GetUsers fetches a list of users from the postgres db that meet a particular filter
 func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
 	builder := p.sqlBuilder.
 		Select(usersTableColumns...).
@@ -155,7 +155,7 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 		return nil, errors.Wrap(err, "generating query")
 	}
 
-	rows, err := p.database.QueryContext(
+	rows, err := p.db.QueryContext(
 		ctx,
 		query,
 		args...,
@@ -201,7 +201,7 @@ const createUserQuery = `
 	)
 	VALUES
 	(
-		$1, $2, $3, $4
+		$1, $2, $3
 	)
 	RETURNING
 		id,
@@ -216,7 +216,7 @@ func (p *Postgres) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 	}
 
 	// create the user
-	err := p.database.
+	err := p.db.
 		QueryRowContext(
 			ctx,
 			createUserQuery,
@@ -251,11 +251,11 @@ const updateUserQuery = `
 		updated_on
 `
 
-// UpdateUser receives a complete User struct and updates its place in the database.
+// UpdateUser receives a complete User struct and updates its place in the db.
 // NOTE this function uses the ID provided in the input to make its query.
 func (p *Postgres) UpdateUser(ctx context.Context, input *models.User) error {
 	// update the user
-	err := p.database.QueryRowContext(
+	err := p.db.QueryRowContext(
 		ctx,
 		updateUserQuery,
 		input.Username,
@@ -280,6 +280,6 @@ const archiveUserQuery = `
 
 // DeleteUser deletes a user by their username
 func (p *Postgres) DeleteUser(ctx context.Context, userID uint64) error {
-	_, err := p.database.ExecContext(ctx, archiveUserQuery, userID)
+	_, err := p.db.ExecContext(ctx, archiveUserQuery, userID)
 	return err
 }

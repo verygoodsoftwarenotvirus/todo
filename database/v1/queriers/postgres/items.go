@@ -87,14 +87,14 @@ const getItemQuery = `
 		AND belongs_to = $2
 `
 
-// GetItem fetches an item from the postgres database
+// GetItem fetches an item from the postgres db
 func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
-	row := p.database.QueryRowContext(ctx, getItemQuery, itemID, userID)
+	row := p.db.QueryRowContext(ctx, getItemQuery, itemID, userID)
 	i, err := scanItem(row)
 	return i, err
 }
 
-// GetItemCount will fetch the count of items from the postgres database that meet a particular filter and belong to a particular user.
+// GetItemCount will fetch the count of items from the postgres db that meet a particular filter and belong to a particular user.
 func (p *Postgres) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
 	builder := p.sqlBuilder.
 		Select("COUNT(*)").
@@ -111,7 +111,7 @@ func (p *Postgres) GetItemCount(ctx context.Context, filter *models.QueryFilter,
 		return 0, errors.Wrap(err, "generating query")
 	}
 
-	err = p.database.QueryRowContext(ctx, query, args...).Scan(&count)
+	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return
 }
 
@@ -124,13 +124,13 @@ const getAllItemsCountQuery = `
 		completed_on IS NULL
 `
 
-// GetAllItemsCount will fetch the count of items from the postgres database that meet a particular filter
+// GetAllItemsCount will fetch the count of items from the postgres db that meet a particular filter
 func (p *Postgres) GetAllItemsCount(ctx context.Context) (count uint64, err error) {
-	err = p.database.QueryRowContext(ctx, getAllItemsCountQuery).Scan(&count)
+	err = p.db.QueryRowContext(ctx, getAllItemsCountQuery).Scan(&count)
 	return
 }
 
-// GetItems fetches a list of items from the postgres database that meet a particular filter
+// GetItems fetches a list of items from the postgres db that meet a particular filter
 func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
 	builder := p.sqlBuilder.
 		Select(itemsTableColumns...).
@@ -147,7 +147,7 @@ func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter, use
 		return nil, errors.Wrap(err, "generating query")
 	}
 
-	rows, err := p.database.QueryContext(
+	rows, err := p.db.QueryContext(
 		ctx,
 		query,
 		args...,
@@ -200,7 +200,7 @@ const createItemQuery = `
 		created_on
 `
 
-// CreateItem creates an item in a postgres database
+// CreateItem creates an item in a postgres db
 func (p *Postgres) CreateItem(ctx context.Context, input *models.ItemInput) (*models.Item, error) {
 	i := &models.Item{
 		Name:      input.Name,
@@ -209,7 +209,7 @@ func (p *Postgres) CreateItem(ctx context.Context, input *models.ItemInput) (*mo
 	}
 
 	// create the item
-	if err := p.database.
+	if err := p.db.
 		QueryRow(createItemQuery, input.Name, input.Details, input.BelongsTo).
 		Scan(&i.ID, &i.CreatedOn); err != nil {
 		return nil, errors.Wrap(err, "error executing item creation query")
@@ -233,7 +233,7 @@ const updateItemQuery = `
 // UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
 func (p *Postgres) UpdateItem(ctx context.Context, input *models.Item) error {
 	// update the item
-	err := p.database.
+	err := p.db.
 		QueryRowContext(
 			ctx,
 			updateItemQuery,
@@ -257,8 +257,8 @@ const archiveItemQuery = `
 		completed_on
 `
 
-// DeleteItem deletes an item from the database by its ID
+// DeleteItem deletes an item from the db by its ID
 func (p *Postgres) DeleteItem(ctx context.Context, itemID uint64, userID uint64) error {
-	_, err := p.database.ExecContext(ctx, archiveItemQuery, itemID, userID)
+	_, err := p.db.ExecContext(ctx, archiveItemQuery, itemID, userID)
 	return err
 }

@@ -22,17 +22,17 @@ func init() {
 	// Explicitly wrap the SQLite3 driver with ocsql.
 	driver := ocsql.Wrap(&postgres.Driver{}, ocsql.WithQuery(true))
 
-	// Register our ocsql wrapper as a database driver.
+	// Register our ocsql wrapper as a db driver.
 	sql.Register(postgresDriverName, driver)
 
 }
 
 type (
-	// Postgres is our main Postgres interaction database
+	// Postgres is our main Postgres interaction db
 	Postgres struct {
 		debug       bool
 		logger      logging.Logger
-		database    *sql.DB
+		db          *sql.DB
 		databaseURL string
 		sqlBuilder  squirrel.StatementBuilderType
 	}
@@ -48,14 +48,14 @@ type (
 	}
 )
 
-// ProvidePostgresDB provides an instrumented postgres database
+// ProvidePostgresDB provides an instrumented postgres db
 func ProvidePostgresDB(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
 	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to postgres")
 
 	return sql.Open(postgresDriverName, string(connectionDetails))
 }
 
-// ProvidePostgres provides a postgres database controller
+// ProvidePostgres provides a postgres db controller
 func ProvidePostgres(
 	debug bool,
 	db *sql.DB,
@@ -64,7 +64,7 @@ func ProvidePostgres(
 ) database.Database {
 
 	s := &Postgres{
-		database:    db,
+		db:          db,
 		debug:       debug,
 		logger:      logger.WithName("postgres"),
 		databaseURL: string(connectionDetails),
@@ -74,7 +74,7 @@ func ProvidePostgres(
 	return s
 }
 
-// IsReady reports whether or not the database is ready
+// IsReady reports whether or not the db is ready
 func (p *Postgres) IsReady(ctx context.Context) (ready bool) {
 	numberOfUnsuccessfulAttempts := 0
 
@@ -85,9 +85,9 @@ func (p *Postgres) IsReady(ctx context.Context) (ready bool) {
 	}).Debug("IsReady called")
 
 	for !ready {
-		err := p.database.Ping()
+		err := p.db.Ping()
 		if err != nil {
-			p.logger.Debug("ping failed, waiting for database")
+			p.logger.Debug("ping failed, waiting for db")
 			time.Sleep(time.Second)
 			numberOfUnsuccessfulAttempts++
 			if numberOfUnsuccessfulAttempts >= 50 {

@@ -83,18 +83,18 @@ var (
 	}
 )
 
-// Migrate migrates a postgres database
+// Migrate migrates a postgres db
 func (p *Postgres) Migrate(ctx context.Context) error {
-	p.logger.Info("migrating database")
+	p.logger.Info("migrating db")
 	if !p.IsReady(ctx) {
-		return errors.New("database is not ready yet")
+		return errors.New("db is not ready yet")
 	}
 
-	driver := darwin.NewGenericDriver(p.database, darwin.PostgresDialect{})
+	driver := darwin.NewGenericDriver(p.db, darwin.PostgresDialect{})
 	err := darwin.New(driver, migrations, nil).Migrate()
 
 	if err != nil {
-		p.logger.Error(err, "migrating database")
+		p.logger.Error(err, "migrating db")
 	}
 
 	return err

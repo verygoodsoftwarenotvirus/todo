@@ -85,7 +85,7 @@ func (p *Postgres) CreateOAuth2Client(ctx context.Context, input *models.OAuth2C
 		BelongsTo:    input.BelongsTo,
 	}
 
-	err := p.database.QueryRowContext(
+	err := p.db.QueryRowContext(
 		ctx,
 		createOAuth2ClientQuery,
 		x.ClientID,
@@ -123,7 +123,7 @@ const getOAuth2ClientByClientIDQuery = `
 
 // GetOAuth2ClientByClientID gets an OAuth2 client
 func (p *Postgres) GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*models.OAuth2Client, error) {
-	row := p.database.QueryRowContext(ctx, getOAuth2ClientByClientIDQuery, clientID)
+	row := p.db.QueryRowContext(ctx, getOAuth2ClientByClientIDQuery, clientID)
 	client, err := p.scanOAuth2Client(row)
 
 	if err != nil {
@@ -151,7 +151,7 @@ const getAllOAuth2ClientsQuery = `
 
 // GetAllOAuth2Clients gets a list of OAuth2 clients regardless of ownership
 func (p *Postgres) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Client, error) {
-	rows, err := p.database.QueryContext(ctx, getAllOAuth2ClientsQuery)
+	rows, err := p.db.QueryContext(ctx, getAllOAuth2ClientsQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +202,7 @@ const getOAuth2ClientQuery = `
 
 // GetOAuth2Client gets an OAuth2 client
 func (p *Postgres) GetOAuth2Client(ctx context.Context, id, userID uint64) (*models.OAuth2Client, error) {
-	row := p.database.QueryRowContext(ctx, getOAuth2ClientQuery, id, userID)
+	row := p.db.QueryRowContext(ctx, getOAuth2ClientQuery, id, userID)
 	client, err := p.scanOAuth2Client(row)
 
 	if err != nil {
@@ -229,7 +229,7 @@ func (p *Postgres) GetOAuth2ClientCount(ctx context.Context, filter *models.Quer
 		return 0, errors.Wrap(err, "generating query")
 	}
 
-	err = p.database.QueryRowContext(ctx, query, args...).Scan(&count)
+	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return count, err
 }
 
@@ -245,7 +245,7 @@ const getAllOAuth2ClientCountQuery = `
 // GetAllOAuth2ClientCount will get the count of OAuth2 clients that match the current filter
 func (p *Postgres) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	var count uint64
-	err := p.database.QueryRowContext(ctx, getAllOAuth2ClientCountQuery).Scan(&count)
+	err := p.db.QueryRowContext(ctx, getAllOAuth2ClientCountQuery).Scan(&count)
 	return count, err
 }
 
@@ -266,7 +266,7 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 		return nil, errors.Wrap(err, "generating query")
 	}
 
-	rows, err := p.database.QueryContext(
+	rows, err := p.db.QueryContext(
 		ctx,
 		query,
 		args...,
@@ -329,7 +329,7 @@ const updateOAuth2ClientQuery = `
 // UpdateOAuth2Client updates a OAuth2 client. Note that this function expects the input's
 // ID field to be valid.
 func (p *Postgres) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2Client) error {
-	err := p.database.QueryRowContext(
+	err := p.db.QueryRowContext(
 		ctx,
 		updateOAuth2ClientQuery,
 		input.ClientID,
@@ -360,7 +360,7 @@ const archiveOAuth2ClientQuery = `
 
 // DeleteOAuth2Client deletes an OAuth2 client
 func (p *Postgres) DeleteOAuth2Client(ctx context.Context, clientID, userID uint64) error {
-	_, err := p.database.ExecContext(ctx, archiveOAuth2ClientQuery, clientID, userID)
+	_, err := p.db.ExecContext(ctx, archiveOAuth2ClientQuery, clientID, userID)
 
 	return err
 }

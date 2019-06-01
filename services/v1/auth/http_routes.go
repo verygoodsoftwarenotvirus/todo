@@ -222,7 +222,6 @@ func (s *Service) buildCookie(user *models.User) (*http.Cookie, error) {
 	encoded, err := s.cookieBuilder.Encode(
 		CookieName, models.CookieAuth{
 			UserID:   user.ID,
-			Admin:    user.IsAdmin,
 			Username: user.Username,
 		},
 	)

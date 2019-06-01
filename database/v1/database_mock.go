@@ -9,6 +9,7 @@ import (
 
 var _ Database = (*MockDatabase)(nil)
 
+// BuildMockDatabase builds a mock database
 func BuildMockDatabase() *MockDatabase {
 	return &MockDatabase{
 		ItemDataManager:         &mmodels.ItemDataManager{},
@@ -18,6 +19,7 @@ func BuildMockDatabase() *MockDatabase {
 	}
 }
 
+// MockDatabase is our mock database structure
 type MockDatabase struct {
 	mock.Mock
 
@@ -27,17 +29,14 @@ type MockDatabase struct {
 	*mmodels.WebhookDataManager
 }
 
+// Migrate satisfies the database.Database interface
 func (m *MockDatabase) Migrate(ctx context.Context) error {
 	args := m.Called(ctx)
 	return args.Error(0)
 }
 
+// IsReady satisfies the database.Database interface
 func (m *MockDatabase) IsReady(ctx context.Context) (ready bool) {
 	args := m.Called(ctx)
 	return args.Bool(0)
-}
-
-func (m *MockDatabase) AdminUserExists(ctx context.Context) (bool, error) {
-	args := m.Called(ctx)
-	return args.Bool(0), args.Error(1)
 }

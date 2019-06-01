@@ -13,8 +13,6 @@ type (
 		Migrate(ctx context.Context) error
 		IsReady(ctx context.Context) (ready bool)
 
-		AdminUserExists(ctx context.Context) (bool, error)
-
 		models.ItemDataManager
 		models.UserDataManager
 		models.OAuth2ClientDataManager

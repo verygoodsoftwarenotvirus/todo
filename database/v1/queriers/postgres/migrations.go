@@ -21,7 +21,6 @@ var (
 				"hashed_password" text NOT NULL,
 				"password_last_changed_on" integer,
 				"two_factor_secret" text NOT NULL,
-				"is_admin" bool NOT NULL DEFAULT 'false',
 				"created_on" bigint NOT NULL DEFAULT extract(epoch FROM NOW()),
 				"updated_on" bigint,
 				"archived_on" bigint,

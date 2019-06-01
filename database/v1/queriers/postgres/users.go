@@ -24,7 +24,6 @@ var (
 		"hashed_password",
 		"password_last_changed_on",
 		"two_factor_secret",
-		"is_admin",
 		"created_on",
 		"updated_on",
 		"archived_on",
@@ -39,7 +38,6 @@ func (p Postgres) scanUser(scan database.Scanner) (*models.User, error) {
 		&x.HashedPassword,
 		&x.PasswordLastChangedOn,
 		&x.TwoFactorSecret,
-		&x.IsAdmin,
 		&x.CreatedOn,
 		&x.UpdatedOn,
 		&x.ArchivedOn,
@@ -75,24 +73,6 @@ func (p *Postgres) scanUsers(rows *sql.Rows) ([]models.User, error) {
 	return list, nil
 }
 
-const adminUserExistsQuery = `
-	SELECT EXISTS(SELECT id FROM users WHERE is_admin = true)
-`
-
-// AdminUserExists validates whether or not an admin user exists
-func (p *Postgres) AdminUserExists(ctx context.Context) (bool, error) {
-	var exists string
-
-	err := p.database.QueryRowContext(ctx, adminUserExistsQuery).Scan(&exists)
-	if err == sql.ErrNoRows {
-		return false, nil
-	} else if err != nil {
-		return false, err
-	}
-
-	return exists == "true", err
-}
-
 const getUserQuery = `
 	SELECT
 		id,
@@ -100,7 +80,6 @@ const getUserQuery = `
 		hashed_password,
 		password_last_changed_on,
 		two_factor_secret,
-		is_admin,
 		created_on,
 		updated_on,
 		archived_on
@@ -124,7 +103,6 @@ const getUserByUsernameQuery = `
 		hashed_password,
 		password_last_changed_on,
 		two_factor_secret,
-		is_admin,
 		created_on,
 		updated_on,
 		archived_on
@@ -219,8 +197,7 @@ const createUserQuery = `
 	(
 		username,
 		hashed_password,
-		two_factor_secret,
-		is_admin
+		two_factor_secret
 	)
 	VALUES
 	(
@@ -236,7 +213,6 @@ func (p *Postgres) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 	x := &models.User{
 		Username:        input.Username,
 		TwoFactorSecret: input.TwoFactorSecret,
-		IsAdmin:         input.IsAdmin,
 	}
 
 	// create the user
@@ -247,7 +223,6 @@ func (p *Postgres) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 			input.Username,
 			input.Password,
 			input.TwoFactorSecret,
-			input.IsAdmin,
 		).Scan(&x.ID, &x.CreatedOn)
 	if err != nil {
 		if e, ok := err.(*pq.Error); ok {

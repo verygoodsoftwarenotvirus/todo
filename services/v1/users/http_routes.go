@@ -120,13 +120,11 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 
 	logger := s.logger.WithValues(map[string]interface{}{
 		"username": input.Username,
-		"is_admin": input.IsAdmin,
 	})
 	logger.Debug("user creation route hit")
 
 	span.AddAttributes(
 		trace.StringAttribute("username", input.Username),
-		trace.BoolAttribute("is_admin", input.IsAdmin),
 	)
 
 	hp, err := s.authenticator.HashPassword(ctx, input.Password)

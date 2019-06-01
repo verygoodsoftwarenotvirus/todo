@@ -17,16 +17,6 @@ var (
 	ErrUserExists = errors.New("error: username already exists")
 )
 
-// AdminUserExists executes a query to determine if an admin user has been established in the database
-func (c *Client) AdminUserExists(ctx context.Context) (bool, error) {
-	ctx, span := trace.StartSpan(ctx, "AdminUserExists")
-	defer span.End()
-
-	c.logger.Debug("AdminUserExists called")
-
-	return c.database.AdminUserExists(ctx)
-}
-
 // GetUser fetches a user
 func (c *Client) GetUser(ctx context.Context, userID uint64) (*models.User, error) {
 	ctx, span := trace.StartSpan(ctx, "GetUser")
@@ -91,12 +81,10 @@ func (c *Client) CreateUser(ctx context.Context, input *models.UserInput) (*mode
 	defer span.End()
 	span.AddAttributes(
 		trace.StringAttribute("username", input.Username),
-		trace.BoolAttribute("is_admin", input.IsAdmin),
 	)
 
 	logger := c.logger.WithValues(map[string]interface{}{
 		"username": input.Username,
-		"is_admin": input.IsAdmin,
 	})
 	logger.Debug("CreateUser called")
 
@@ -110,12 +98,10 @@ func (c *Client) UpdateUser(ctx context.Context, updated *models.User) error {
 	defer span.End()
 	span.AddAttributes(
 		trace.StringAttribute("username", updated.Username),
-		trace.BoolAttribute("is_admin", updated.IsAdmin),
 	)
 
 	c.logger.WithValues(map[string]interface{}{
 		"username": updated.Username,
-		"is_admin": updated.IsAdmin,
 	}).Debug("UpdateUser called")
 
 	return c.database.UpdateUser(ctx, updated)

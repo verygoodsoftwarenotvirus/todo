@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"os"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"github.com/rs/zerolog"
 )

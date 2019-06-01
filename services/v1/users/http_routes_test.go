@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -367,6 +368,106 @@ func TestService_Create(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
+
+	T.Run("with error creating entry in database", func(t *testing.T) {
+		s := buildTestService(t)
+		exampleInput := &models.UserInput{
+			Username: "username",
+			Password: "password",
+		}
+		expectedUser := &models.User{
+			Username:       exampleInput.Username,
+			HashedPassword: "blahblah",
+		}
+		auth := &mauth.Authenticator{}
+		auth.On("HashPassword", mock.Anything, exampleInput.Password).
+			Return(expectedUser.HashedPassword, nil)
+		s.authenticator = auth
+
+		db := &mmodels.UserDataManager{}
+		db.On("CreateUser", mock.Anything, exampleInput).
+			Return(expectedUser, errors.New("blah"))
+		s.database = db
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+
+		req = req.WithContext(context.WithValue(req.Context(), UserCreationMiddlewareCtxKey, exampleInput))
+
+		s.Create(res, req)
+
+		assert.Equal(t, http.StatusInternalServerError, res.Code)
+	})
+
+	T.Run("with pre-existing entry in database", func(t *testing.T) {
+		s := buildTestService(t)
+		exampleInput := &models.UserInput{
+			Username: "username",
+			Password: "password",
+		}
+		expectedUser := &models.User{
+			Username:       exampleInput.Username,
+			HashedPassword: "blahblah",
+		}
+		auth := &mauth.Authenticator{}
+		auth.On("HashPassword", mock.Anything, exampleInput.Password).
+			Return(expectedUser.HashedPassword, nil)
+		s.authenticator = auth
+
+		db := &mmodels.UserDataManager{}
+		db.On("CreateUser", mock.Anything, exampleInput).
+			Return(expectedUser, dbclient.ErrUserExists)
+		s.database = db
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+
+		req = req.WithContext(context.WithValue(req.Context(), UserCreationMiddlewareCtxKey, exampleInput))
+
+		s.Create(res, req)
+
+		assert.Equal(t, http.StatusBadRequest, res.Code)
+	})
+
+	T.Run("with error encoding response", func(t *testing.T) {
+		s := buildTestService(t)
+		exampleInput := &models.UserInput{
+			Username: "username",
+			Password: "password",
+		}
+		expectedUser := &models.User{
+			Username:       exampleInput.Username,
+			HashedPassword: "blahblah",
+		}
+		auth := &mauth.Authenticator{}
+		auth.On("HashPassword", mock.Anything, exampleInput.Password).
+			Return(expectedUser.HashedPassword, nil)
+		s.authenticator = auth
+
+		db := &mmodels.UserDataManager{}
+		db.On("CreateUser", mock.Anything, exampleInput).
+			Return(expectedUser, nil)
+		s.database = db
+
+		mc := &mmetrics.UnitCounter{}
+		mc.On("Increment", mock.Anything)
+		s.userCounter = mc
+
+		r := &mockman.Reporter{}
+		r.On("Report", mock.Anything).Return()
+		s.reporter = r
+
+		ed := &mencoding.EncoderDecoder{}
+		ed.On("EncodeResponse", mock.Anything, mock.Anything).
+			Return(errors.New("blah"))
+		s.encoderDecoder = ed
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+
+		req = req.WithContext(context.WithValue(req.Context(), UserCreationMiddlewareCtxKey, exampleInput))
+
+		s.Create(res, req)
+
+		assert.Equal(t, http.StatusCreated, res.Code)
+	})
 }
 
 func TestService_Read(T *testing.T) {
@@ -391,6 +492,57 @@ func TestService_Read(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, res.Code)
 	})
+
+	T.Run("with no rows found", func(t *testing.T) {
+		s := buildTestService(t)
+
+		mockDB := &mmodels.UserDataManager{}
+		mockDB.On("GetUser", mock.Anything, mock.Anything).
+			Return(&models.User{}, sql.ErrNoRows)
+		s.database = mockDB
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+
+		s.Read(res, req)
+
+		assert.Equal(t, http.StatusNotFound, res.Code)
+	})
+
+	T.Run("with error reading from database", func(t *testing.T) {
+		s := buildTestService(t)
+
+		mockDB := &mmodels.UserDataManager{}
+		mockDB.On("GetUser", mock.Anything, mock.Anything).
+			Return(&models.User{}, errors.New("blah"))
+		s.database = mockDB
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+
+		s.Read(res, req)
+
+		assert.Equal(t, http.StatusInternalServerError, res.Code)
+	})
+
+	T.Run("with error encoding response", func(t *testing.T) {
+		s := buildTestService(t)
+
+		mockDB := &mmodels.UserDataManager{}
+		mockDB.On("GetUser", mock.Anything, mock.Anything).
+			Return(&models.User{}, nil)
+		s.database = mockDB
+
+		ed := &mencoding.EncoderDecoder{}
+		ed.On("EncodeResponse", mock.Anything, mock.Anything).
+			Return(errors.New("blah"))
+		s.encoderDecoder = ed
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+
+		s.Read(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+	})
+
 }
 
 func TestService_NewTOTPSecret(T *testing.T) {
@@ -398,9 +550,7 @@ func TestService_NewTOTPSecret(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
-		exampleInput := &models.TOTPSecretRefreshInput{
-			//
-		}
+		exampleInput := &models.TOTPSecretRefreshInput{}
 		exampleUser := &models.User{
 			ID:              uint64(123),
 			HashedPassword:  "not really lol",
@@ -443,6 +593,188 @@ func TestService_NewTOTPSecret(T *testing.T) {
 		ed := &mencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.Anything).
 			Return(nil)
+		s.encoderDecoder = ed
+
+		s.NewTOTPSecret(res, req)
+
+		assert.Equal(t, http.StatusAccepted, res.Code)
+	})
+
+	T.Run("without input attached to request", func(t *testing.T) {
+		s := buildTestService(t)
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+
+		s.NewTOTPSecret(res, req)
+
+		assert.Equal(t, http.StatusBadRequest, res.Code)
+	})
+
+	T.Run("with input attached but without user information", func(t *testing.T) {
+		s := buildTestService(t)
+		exampleInput := &models.TOTPSecretRefreshInput{}
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(), TOTPSecretRefreshMiddlewareCtxKey, exampleInput,
+			))
+
+		s.NewTOTPSecret(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
+	})
+
+	T.Run("with error validating login", func(t *testing.T) {
+		s := buildTestService(t)
+		exampleInput := &models.TOTPSecretRefreshInput{}
+		exampleUser := &models.User{
+			ID:              uint64(123),
+			HashedPassword:  "not really lol",
+			Salt:            []byte(`nah`),
+			TwoFactorSecret: "still no",
+		}
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(), TOTPSecretRefreshMiddlewareCtxKey, exampleInput,
+			))
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(), models.UserIDKey, exampleUser.ID,
+			))
+
+		mockDB := &mmodels.UserDataManager{}
+		mockDB.On("GetUser", mock.Anything, exampleUser.ID).
+			Return(exampleUser, nil)
+		mockDB.On("UpdateUser",
+			mock.Anything,
+			mock.Anything, // bonus points for making this second expectation explicit
+		).Return(nil)
+		s.database = mockDB
+
+		auth := &mauth.Authenticator{}
+		auth.On(
+			"ValidateLogin",
+			mock.Anything,
+			exampleUser.HashedPassword,
+			exampleUser.Salt,
+			exampleInput.CurrentPassword,
+			exampleUser.TwoFactorSecret,
+			exampleInput.TOTPToken,
+		).Return(false, errors.New("blah"))
+		s.authenticator = auth
+
+		ed := &mencoding.EncoderDecoder{}
+		ed.On("EncodeResponse", mock.Anything, mock.Anything).
+			Return(nil)
+		s.encoderDecoder = ed
+
+		s.NewTOTPSecret(res, req)
+
+		assert.Equal(t, http.StatusInternalServerError, res.Code)
+	})
+
+	T.Run("with error updating in database", func(t *testing.T) {
+		s := buildTestService(t)
+		exampleInput := &models.TOTPSecretRefreshInput{}
+		exampleUser := &models.User{
+			ID:              uint64(123),
+			HashedPassword:  "not really lol",
+			Salt:            []byte(`nah`),
+			TwoFactorSecret: "still no",
+		}
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(), TOTPSecretRefreshMiddlewareCtxKey, exampleInput,
+			))
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(), models.UserIDKey, exampleUser.ID,
+			))
+
+		mockDB := &mmodels.UserDataManager{}
+		mockDB.On("GetUser", mock.Anything, exampleUser.ID).
+			Return(exampleUser, nil)
+		mockDB.On("UpdateUser",
+			mock.Anything,
+			mock.Anything, // bonus points for making this second expectation explicit
+		).Return(errors.New("blah"))
+		s.database = mockDB
+
+		auth := &mauth.Authenticator{}
+		auth.On(
+			"ValidateLogin",
+			mock.Anything,
+			exampleUser.HashedPassword,
+			exampleUser.Salt,
+			exampleInput.CurrentPassword,
+			exampleUser.TwoFactorSecret,
+			exampleInput.TOTPToken,
+		).Return(true, nil)
+		s.authenticator = auth
+
+		ed := &mencoding.EncoderDecoder{}
+		ed.On("EncodeResponse", mock.Anything, mock.Anything).
+			Return(nil)
+		s.encoderDecoder = ed
+
+		s.NewTOTPSecret(res, req)
+
+		assert.Equal(t, http.StatusInternalServerError, res.Code)
+	})
+
+	T.Run("with error encoding response", func(t *testing.T) {
+		s := buildTestService(t)
+		exampleInput := &models.TOTPSecretRefreshInput{}
+		exampleUser := &models.User{
+			ID:              uint64(123),
+			HashedPassword:  "not really lol",
+			Salt:            []byte(`nah`),
+			TwoFactorSecret: "still no",
+		}
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(), TOTPSecretRefreshMiddlewareCtxKey, exampleInput,
+			))
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(), models.UserIDKey, exampleUser.ID,
+			))
+
+		mockDB := &mmodels.UserDataManager{}
+		mockDB.On("GetUser", mock.Anything, exampleUser.ID).
+			Return(exampleUser, nil)
+		mockDB.On("UpdateUser",
+			mock.Anything,
+			mock.Anything, // bonus points for making this second expectation explicit
+		).Return(nil)
+		s.database = mockDB
+
+		auth := &mauth.Authenticator{}
+		auth.On(
+			"ValidateLogin",
+			mock.Anything,
+			exampleUser.HashedPassword,
+			exampleUser.Salt,
+			exampleInput.CurrentPassword,
+			exampleUser.TwoFactorSecret,
+			exampleInput.TOTPToken,
+		).Return(true, nil)
+		s.authenticator = auth
+
+		ed := &mencoding.EncoderDecoder{}
+		ed.On("EncodeResponse", mock.Anything, mock.Anything).
+			Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		s.NewTOTPSecret(res, req)
@@ -516,6 +848,210 @@ func TestService_UpdatePassword(T *testing.T) {
 
 		assert.Equal(t, http.StatusAccepted, res.Code)
 	})
+
+	T.Run("without input attached to request", func(t *testing.T) {
+		s := buildTestService(t)
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+
+		s.UpdatePassword(res, req)
+
+		assert.Equal(t, http.StatusBadRequest, res.Code)
+	})
+
+	T.Run("with input but without user info", func(t *testing.T) {
+		s := buildTestService(t)
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+		exampleInput := &models.PasswordUpdateInput{
+			NewPassword:     "new_password",
+			CurrentPassword: "old_password",
+			TOTPToken:       "123456",
+		}
+
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(), PasswordChangeMiddlewareCtxKey, exampleInput,
+			))
+
+		s.UpdatePassword(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
+	})
+
+	T.Run("with error validating login", func(t *testing.T) {
+		s := buildTestService(t)
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+		exampleUser := &models.User{
+			ID:              uint64(123),
+			HashedPassword:  "not really lol",
+			Salt:            []byte(`nah`),
+			TwoFactorSecret: "still no",
+		}
+		exampleInput := &models.PasswordUpdateInput{
+			NewPassword:     "new_password",
+			CurrentPassword: "old_password",
+			TOTPToken:       "123456",
+		}
+
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(), PasswordChangeMiddlewareCtxKey, exampleInput,
+			))
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(), models.UserIDKey, exampleUser.ID,
+			))
+
+		mockDB := &mmodels.UserDataManager{}
+		mockDB.On("GetUser", mock.Anything, exampleUser.ID).
+			Return(exampleUser, nil)
+		mockDB.On("UpdateUser",
+			mock.Anything,
+			mock.Anything, // bonus points for making this second expectation explicit
+		).Return(nil)
+		s.database = mockDB
+
+		auth := &mauth.Authenticator{}
+
+		auth.On(
+			"ValidateLogin",
+			mock.Anything,
+			exampleUser.HashedPassword,
+			exampleUser.Salt,
+			exampleInput.CurrentPassword,
+			exampleUser.TwoFactorSecret,
+			exampleInput.TOTPToken,
+		).Return(false, errors.New("blah"))
+		s.authenticator = auth
+
+		s.UpdatePassword(res, req)
+
+		assert.Equal(t, http.StatusInternalServerError, res.Code)
+	})
+
+	T.Run("with error hashing password", func(t *testing.T) {
+		s := buildTestService(t)
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+		exampleUser := &models.User{
+			ID:              uint64(123),
+			HashedPassword:  "not really lol",
+			Salt:            []byte(`nah`),
+			TwoFactorSecret: "still no",
+		}
+		exampleInput := &models.PasswordUpdateInput{
+			NewPassword:     "new_password",
+			CurrentPassword: "old_password",
+			TOTPToken:       "123456",
+		}
+
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(), PasswordChangeMiddlewareCtxKey, exampleInput,
+			))
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(), models.UserIDKey, exampleUser.ID,
+			))
+
+		mockDB := &mmodels.UserDataManager{}
+		mockDB.On("GetUser", mock.Anything, exampleUser.ID).
+			Return(exampleUser, nil)
+		mockDB.On("UpdateUser",
+			mock.Anything,
+			mock.Anything, // bonus points for making this second expectation explicit
+		).Return(nil)
+		s.database = mockDB
+
+		auth := &mauth.Authenticator{}
+
+		auth.On(
+			"ValidateLogin",
+			mock.Anything,
+			exampleUser.HashedPassword,
+			exampleUser.Salt,
+			exampleInput.CurrentPassword,
+			exampleUser.TwoFactorSecret,
+			exampleInput.TOTPToken,
+		).Return(true, nil)
+		auth.On(
+			"HashPassword",
+			mock.Anything,
+			exampleInput.NewPassword,
+		).Return("blah", errors.New("blah"))
+
+		s.authenticator = auth
+
+		ed := &mencoding.EncoderDecoder{}
+		ed.On("EncodeResponse", mock.Anything, mock.Anything).
+			Return(nil)
+		s.encoderDecoder = ed
+
+		s.UpdatePassword(res, req)
+
+		assert.Equal(t, http.StatusInternalServerError, res.Code)
+	})
+
+	T.Run("with error updating user", func(t *testing.T) {
+		s := buildTestService(t)
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+		exampleUser := &models.User{
+			ID:              uint64(123),
+			HashedPassword:  "not really lol",
+			Salt:            []byte(`nah`),
+			TwoFactorSecret: "still no",
+		}
+		exampleInput := &models.PasswordUpdateInput{
+			NewPassword:     "new_password",
+			CurrentPassword: "old_password",
+			TOTPToken:       "123456",
+		}
+
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(), PasswordChangeMiddlewareCtxKey, exampleInput,
+			))
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(), models.UserIDKey, exampleUser.ID,
+			))
+
+		mockDB := &mmodels.UserDataManager{}
+		mockDB.On("GetUser", mock.Anything, exampleUser.ID).
+			Return(exampleUser, nil)
+		mockDB.On("UpdateUser",
+			mock.Anything,
+			mock.Anything, // bonus points for making this second expectation explicit
+		).Return(errors.New("blah"))
+		s.database = mockDB
+
+		auth := &mauth.Authenticator{}
+
+		auth.On(
+			"ValidateLogin",
+			mock.Anything,
+			exampleUser.HashedPassword,
+			exampleUser.Salt,
+			exampleInput.CurrentPassword,
+			exampleUser.TwoFactorSecret,
+			exampleInput.TOTPToken,
+		).Return(true, nil)
+		auth.On(
+			"HashPassword",
+			mock.Anything,
+			exampleInput.NewPassword,
+		).Return("blah", nil)
+
+		s.authenticator = auth
+
+		s.UpdatePassword(res, req)
+
+		assert.Equal(t, http.StatusInternalServerError, res.Code)
+	})
+
 }
 
 func TestService_Delete(T *testing.T) {
@@ -550,5 +1086,24 @@ func TestService_Delete(T *testing.T) {
 		s.Delete(res, req)
 
 		assert.Equal(t, http.StatusNoContent, res.Code)
+	})
+
+	T.Run("with error updating database", func(t *testing.T) {
+		s := buildTestService(t)
+		expectedUserID := uint64(123)
+		s.userIDFetcher = func(req *http.Request) uint64 {
+			return expectedUserID
+		}
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+
+		mockDB := &mmodels.UserDataManager{}
+		mockDB.On("DeleteUser", mock.Anything, expectedUserID).
+			Return(errors.New("blah"))
+		s.database = mockDB
+
+		s.Delete(res, req)
+
+		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
 }

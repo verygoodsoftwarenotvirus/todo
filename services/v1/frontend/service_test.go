@@ -1,7 +1,7 @@
 package frontend
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 	"testing"
 )
 

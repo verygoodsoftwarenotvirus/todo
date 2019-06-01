@@ -12,7 +12,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 )
 
 const (

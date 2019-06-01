@@ -7,7 +7,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"contrib.go.opencensus.io/integrations/ocsql"
 	"github.com/Masterminds/squirrel"

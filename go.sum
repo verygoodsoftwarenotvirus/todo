@@ -290,6 +290,7 @@ gitlab.com/verygoodsoftwarenotvirus/logging v1.0.2 h1:zAdLudv1NoIMC8NhhNSAiE3OYA
 gitlab.com/verygoodsoftwarenotvirus/logging v1.0.2/go.mod h1:B1IphBAXJv6GQwy4FH7DyeJtI2UIyqKQzKF56gRl+Qc=
 gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.0-20190528023929-c49dc073f989 h1:xzgKZ8zRk2hyvMVdSVN80t54FsTjM3KIWz8RFdFERrg=
 gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.0-20190528023929-c49dc073f989/go.mod h1:3rAiaFYbSCqvPtg4Pkw4jsNSaKUAo6Mz/MBIiQ9IWSQ=
+gitlab.com/verygoodsoftwarenotvirus/newsman v1.0.0 h1:x2sresYUwgOAcsxXtbpIGLx84ixi9M6uBrzFr7BkywU=
 gitlab.com/verygoodsoftwarenotvirus/verso v1.1.0/go.mod h1:12gQnP3vtASbbKropVAWJ/4JY2Q2Xx2sss5knhwYUwo=
 go.opencensus.io v0.20.1/go.mod h1:6WKK9ahsWS3RSO+PY9ZHZUfv2irvY6gN279GOPZjmmk=
 go.opencensus.io v0.21.0 h1:mU6zScU4U1YAFPHEHYk+3JC4SY7JxgkqS10ZOSyksNg=

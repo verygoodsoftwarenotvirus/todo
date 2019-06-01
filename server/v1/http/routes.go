@@ -55,12 +55,14 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 	// all middleware must be defined before routes on a mux
 
 	// Frontend routes
-	staticFileServer, err := s.frontendService.StaticDir(frontendConfig.StaticFilesDirectory)
-	if err != nil {
-		s.logger.Error(err, "establishing static file server")
+	if frontendConfig.StaticFilesDirectory != "" {
+		staticFileServer, err := s.frontendService.StaticDir(frontendConfig.StaticFilesDirectory)
+		if err != nil {
+			s.logger.Error(err, "establishing static file server")
+		}
+		router.Get("/*", staticFileServer)
 	}
 
-	router.Get("/*", staticFileServer)
 	for route, handler := range s.frontendService.Routes() {
 		router.Get(route, handler)
 	}
@@ -120,7 +122,6 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		})
 	})
 
-	router.Get("/websockets", s.newsManager.ServeWebsockets)
 
 	router.
 		With(s.authService.AuthenticationMiddleware(true)).

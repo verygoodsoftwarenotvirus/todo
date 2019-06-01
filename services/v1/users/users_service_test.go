@@ -2,18 +2,19 @@ package users
 
 import (
 	"errors"
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"net/http"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	mauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	mmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1/mock"
+
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -54,7 +55,6 @@ func buildTestService(t *testing.T) *Service {
 }
 
 func TestProvideUsersService(T *testing.T) {
-
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -174,5 +174,4 @@ func TestProvideUsersService(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, service)
 	})
-
 }

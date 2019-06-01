@@ -12,8 +12,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
-	mockman "gitlab.com/verygoodsoftwarenotvirus/newsman/mock"
-
 	"errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -238,13 +236,6 @@ func TestWebhooksService_Create(T *testing.T) {
 		mc.On("Increment", mock.Anything)
 		s.webhookCounter = mc
 
-		r := &eventMan{
-			Reporter: &mockman.Reporter{},
-		}
-		r.Reporter.On("Report", mock.Anything).Return()
-		r.On("TuneIn", mock.Anything).Return()
-		s.newsman = r
-
 		s.userIDFetcher = func(req *http.Request) uint64 {
 			return requestingUser.ID
 		}
@@ -292,13 +283,6 @@ func TestWebhooksService_Create(T *testing.T) {
 		mc := &mmetrics.UnitCounter{}
 		mc.On("Increment", mock.Anything)
 		s.webhookCounter = mc
-
-		r := &eventMan{
-			Reporter: &mockman.Reporter{},
-		}
-		r.Reporter.On("Report", mock.Anything).Return()
-		r.On("TuneIn", mock.Anything).Return()
-		s.newsman = r
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
 			return requestingUser.ID
@@ -419,11 +403,6 @@ func TestWebhooksService_Create(T *testing.T) {
 		mc := &mmetrics.UnitCounter{}
 		mc.On("Increment", mock.Anything)
 		s.webhookCounter = mc
-
-		r := &eventMan{Reporter: &mockman.Reporter{}}
-		r.Reporter.On("Report", mock.Anything).Return()
-		r.On("TuneIn", mock.Anything).Return()
-		s.newsman = r
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
 			return requestingUser.ID
@@ -646,10 +625,6 @@ func TestWebhooksService_Update(T *testing.T) {
 		mc.On("Increment", mock.Anything)
 		s.webhookCounter = mc
 
-		r := &eventMan{Reporter: &mockman.Reporter{}}
-		r.Reporter.On("Report", mock.Anything).Return()
-		s.newsman = r
-
 		s.userIDFetcher = func(req *http.Request) uint64 {
 			return requestingUser.ID
 		}
@@ -817,10 +792,6 @@ func TestWebhooksService_Update(T *testing.T) {
 		mc.On("Increment", mock.Anything)
 		s.webhookCounter = mc
 
-		r := &eventMan{Reporter: &mockman.Reporter{}}
-		r.Reporter.On("Report", mock.Anything).Return()
-		s.newsman = r
-
 		s.userIDFetcher = func(req *http.Request) uint64 {
 			return requestingUser.ID
 		}
@@ -880,10 +851,6 @@ func TestWebhooksService_Update(T *testing.T) {
 		mc := &mmetrics.UnitCounter{}
 		mc.On("Increment", mock.Anything)
 		s.webhookCounter = mc
-
-		r := &eventMan{Reporter: &mockman.Reporter{}}
-		r.Reporter.On("Report", mock.Anything).Return()
-		s.newsman = r
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
 			return requestingUser.ID
@@ -945,10 +912,6 @@ func TestWebhooksService_Delete(T *testing.T) {
 			ID:   123,
 			Name: "name",
 		}
-
-		r := &eventMan{Reporter: &mockman.Reporter{}}
-		r.Reporter.On("Report", mock.Anything).Return()
-		s.newsman = r
 
 		mc := &mmetrics.UnitCounter{}
 		mc.On("Decrement").Return()

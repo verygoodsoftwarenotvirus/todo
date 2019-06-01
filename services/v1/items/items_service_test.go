@@ -2,17 +2,20 @@ package items
 
 import (
 	"errors"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	"net/http"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 	mmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1/mock"
 	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
+
+
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
+
 
 func buildTestService() *Service {
 	return &Service{

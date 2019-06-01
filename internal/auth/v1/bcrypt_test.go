@@ -7,7 +7,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"

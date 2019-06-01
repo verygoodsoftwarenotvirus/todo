@@ -5,16 +5,16 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
-	"github.com/stretchr/testify/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
-	mockman "gitlab.com/verygoodsoftwarenotvirus/newsman/mock"
 	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	mmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1/mock"
 	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
+
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func buildTestService() *Service {
@@ -25,21 +25,9 @@ func buildTestService() *Service {
 		userIDFetcher:    func(req *http.Request) uint64 { return 0 },
 		webhookIDFetcher: func(req *http.Request) uint64 { return 0 },
 		encoderDecoder:   &mencoding.EncoderDecoder{},
-		newsman:          nil,
 	}
 }
 
-var _ eventManager = (*eventMan)(nil)
-
-type eventMan struct {
-	mock.Mock
-
-	*mockman.Reporter
-}
-
-func (m *eventMan) TuneIn(l newsman.Listener) {
-	m.Called(l)
-}
 
 func TestProvideWebhooksService(T *testing.T) {
 	T.Parallel()

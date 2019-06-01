@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 	"testing"
 	"time"
 )

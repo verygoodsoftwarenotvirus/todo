@@ -2,6 +2,7 @@ package oauth2clients
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
 	"net/http"
 
@@ -11,7 +12,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"github.com/pkg/errors"
 	"gopkg.in/oauth2.v3"
@@ -19,6 +20,13 @@ import (
 	oauth2server "gopkg.in/oauth2.v3/server"
 	oauth2store "gopkg.in/oauth2.v3/store"
 )
+
+func init() {
+	b := make([]byte, 64)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+}
 
 const (
 	// MiddlewareCtxKey is a string alias for referring to OAuth2 clients in contexts

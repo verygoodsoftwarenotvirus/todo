@@ -16,7 +16,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	randmodel "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/rand/model"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -365,7 +365,7 @@ func TestAuth(test *testing.T) {
 		// execute TOTP secret update request
 		res, err := todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
-		assert.Equal(t, http.StatusCreated, res.StatusCode)
+		assert.Equal(t, http.StatusAccepted, res.StatusCode)
 
 		// load user response
 		r := &models.TOTPSecretRefreshResponse{}

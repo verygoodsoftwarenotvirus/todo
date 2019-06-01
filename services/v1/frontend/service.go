@@ -1,7 +1,7 @@
 package frontend
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 )
 
 const (

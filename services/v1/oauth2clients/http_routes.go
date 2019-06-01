@@ -21,18 +21,13 @@ const (
 	scopesSeparator = ","
 )
 
-func init() {
-	b := make([]byte, 64)
-	if _, err := rand.Read(b); err != nil {
-		panic(err)
-	}
-}
-
 // randString produces a random string
 // https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
 func randString() string {
 	b := make([]byte, 32)
-	mustCryptoRandRead(b)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
 
 	// this is so that we don't end up with `=` in IDs
 	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b)

@@ -13,13 +13,13 @@ import (
 	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
 )
 
-var _ http.Handler = (*MockHTTPHandler)(nil)
+var _ http.Handler = (*mockHTTPHandler)(nil)
 
-type MockHTTPHandler struct {
+type mockHTTPHandler struct {
 	mock.Mock
 }
 
-func (m *MockHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+func (m *mockHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 
@@ -35,7 +35,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 		s.encoderDecoder = ed
 
-		mh := &MockHTTPHandler{}
+		mh := &mockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).
 			Return()
 
@@ -59,7 +59,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 		s.encoderDecoder = ed
 
-		mh := &MockHTTPHandler{}
+		mh := &mockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).
 			Return()
 
@@ -87,7 +87,7 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 
 		s.encoderDecoder = ed
 
-		mh := &MockHTTPHandler{}
+		mh := &mockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).
 			Return()
 
@@ -111,7 +111,7 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 
 		s.encoderDecoder = ed
 
-		mh := &MockHTTPHandler{}
+		mh := &mockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).
 			Return()
 

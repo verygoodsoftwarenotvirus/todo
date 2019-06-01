@@ -3,7 +3,7 @@ package noop
 import (
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 )
 
 // Logger is a default logger we can provide that does nothing in case of dire emergencies

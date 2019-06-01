@@ -3,7 +3,7 @@ package auth
 import (
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"github.com/gorilla/securecookie"
 	libauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"

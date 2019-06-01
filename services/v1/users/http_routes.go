@@ -164,9 +164,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 			user.Username,
 			user.TwoFactorSecret,
 			"todoService",
-		),
-		qr.L,
-		qr.Auto,
+		), qr.L, qr.Auto,
 	)
 	if err != nil {
 		s.logger.Error(err, "trying to encode secret to qr code")

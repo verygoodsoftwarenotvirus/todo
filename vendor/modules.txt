@@ -136,10 +136,6 @@ github.com/tidwall/rtree
 github.com/tidwall/rtree/base
 # github.com/tidwall/tinyqueue v0.0.0-20180302190814-1e39f5511563
 github.com/tidwall/tinyqueue
-# gitlab.com/verygoodsoftwarenotvirus/logging v1.0.2
-gitlab.com/verygoodsoftwarenotvirus/logging/v1
-gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop
-gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog
 # gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.0-20190528023929-c49dc073f989
 gitlab.com/verygoodsoftwarenotvirus/newsman
 gitlab.com/verygoodsoftwarenotvirus/newsman/mock

@@ -11,7 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"github.com/go-chi/chi"
 	"github.com/google/wire"
@@ -41,7 +41,7 @@ func ProvideItemIDFetcher(logger logging.Logger) items.ItemIDFetcher {
 
 // ProvideUsernameFetcher provides a UsernameFetcher
 func ProvideUsernameFetcher(logger logging.Logger) users.UserIDFetcher {
-	return BuildChiUserIDFetcher(logger)
+	return buildChiUserIDFetcher(logger)
 }
 
 // ProvideAuthUserIDFetcher provides a UsernameFetcher
@@ -69,8 +69,8 @@ func UserIDFetcher(req *http.Request) uint64 {
 	return req.Context().Value(models.UserIDKey).(uint64)
 }
 
-// BuildChiUserIDFetcher builds a function that fetches a Username from a request routed by chi.
-func BuildChiUserIDFetcher(logger logging.Logger) users.UserIDFetcher {
+// buildChiUserIDFetcher builds a function that fetches a Username from a request routed by chi.
+func buildChiUserIDFetcher(logger logging.Logger) users.UserIDFetcher {
 	return func(req *http.Request) uint64 {
 		u, err := strconv.ParseUint(chi.URLParam(req, users.URIParamKey), 10, 64)
 		if err != nil {

@@ -2,7 +2,7 @@ package users
 
 import (
 	"errors"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"net/http"
 	"net/http/httptest"

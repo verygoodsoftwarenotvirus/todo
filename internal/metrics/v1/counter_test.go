@@ -12,7 +12,7 @@ import (
 func Test_opencensusCounter_Increment(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		ct, err := ProvideUnitCounter("counter", "description")
 		c := ct.(*opencensusCounter)
 
@@ -26,7 +26,7 @@ func Test_opencensusCounter_Increment(T *testing.T) {
 func Test_opencensusCounter_IncrementBy(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		ct, err := ProvideUnitCounter("counter", "description")
 		c := ct.(*opencensusCounter)
 
@@ -40,7 +40,7 @@ func Test_opencensusCounter_IncrementBy(T *testing.T) {
 func Test_opencensusCounter_Decrement(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		ct, err := ProvideUnitCounter("counter", "description")
 		c := ct.(*opencensusCounter)
 

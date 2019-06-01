@@ -12,7 +12,7 @@ import (
 func TestWebhook_Update(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		actual := &Webhook{
 			Name:        "name",
 			ContentType: "application/json",

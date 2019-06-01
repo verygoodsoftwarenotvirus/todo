@@ -23,7 +23,7 @@ import (
 func TestWebhooksService_List(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.WebhookList{
@@ -183,7 +183,7 @@ func TestWebhooksService_List(T *testing.T) {
 func TestValidateWebhook(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		exampleInput := &models.WebhookInput{
 			Method: http.MethodPost,
 			URL:    "https://todo.verygoodsoftwarenotvirus.ru",
@@ -226,7 +226,7 @@ func TestValidateWebhook(T *testing.T) {
 func TestWebhooksService_Create(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Webhook{
@@ -465,7 +465,7 @@ func TestWebhooksService_Create(T *testing.T) {
 func TestWebhooksService_Read(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Webhook{
@@ -635,7 +635,7 @@ func TestWebhooksService_Read(T *testing.T) {
 func TestWebhooksService_Update(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Webhook{
@@ -938,7 +938,7 @@ func TestWebhooksService_Update(T *testing.T) {
 func TestWebhooksService_Delete(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Webhook{

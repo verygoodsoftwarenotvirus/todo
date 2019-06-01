@@ -29,7 +29,7 @@ func buildTestService() *Service {
 func TestProvideItemsService(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		uc := &mmetrics.UnitCounter{}
 		expectation := uint64(123)
 

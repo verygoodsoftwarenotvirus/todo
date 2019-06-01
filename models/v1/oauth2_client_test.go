@@ -9,7 +9,7 @@ import (
 func TestOAuth2Client_GetID(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := "uint64(123)"
 		oac := &OAuth2Client{
 			ClientID: expected,
@@ -21,7 +21,7 @@ func TestOAuth2Client_GetID(T *testing.T) {
 func TestOAuth2Client_GetSecret(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := "uint64(123)"
 		oac := &OAuth2Client{
 			ClientSecret: expected,
@@ -33,7 +33,7 @@ func TestOAuth2Client_GetSecret(T *testing.T) {
 func TestOAuth2Client_GetDomain(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := "uint64(123)"
 		oac := &OAuth2Client{
 			RedirectURI: expected,
@@ -45,7 +45,7 @@ func TestOAuth2Client_GetDomain(T *testing.T) {
 func TestOAuth2Client_GetUserID(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectation := uint64(123)
 		expected := "123"
 		oac := &OAuth2Client{

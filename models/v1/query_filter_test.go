@@ -65,7 +65,7 @@ func TestFromParams(T *testing.T) {
 func TestQueryFilter_SetPage(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		qf := &QueryFilter{}
 		expected := uint64(123)
 		qf.SetPage(expected)
@@ -76,7 +76,7 @@ func TestQueryFilter_SetPage(T *testing.T) {
 func TestQueryFilter_QueryPage(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		qf := &QueryFilter{
 			Limit: 10,
 			Page:  11,
@@ -90,7 +90,7 @@ func TestQueryFilter_QueryPage(T *testing.T) {
 func TestQueryFilter_ToValues(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		qf := &QueryFilter{
 			Page:          100,
 			Limit:         50,
@@ -147,7 +147,7 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 		From("stuff").
 		Where(squirrel.Eq{"condition": true})
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		qf := &QueryFilter{
 			Page:          100,
 			Limit:         50,
@@ -230,7 +230,7 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 func TestExtractQueryFilter(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := &QueryFilter{
 			Page:          100,
 			Limit:         MaxLimit,

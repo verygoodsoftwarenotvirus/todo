@@ -55,7 +55,7 @@ func buildTestService(t *testing.T) *Service {
 func TestService_DecodeCookieFromRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/api/v1/items", nil)
@@ -167,7 +167,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 func TestService_FetchUserFromRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 		userID := uint64(1)
 
@@ -247,7 +247,7 @@ func TestService_FetchUserFromRequest(T *testing.T) {
 func TestService_Login(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
 		expectedUser := &models.User{
@@ -536,7 +536,7 @@ func TestService_Login(T *testing.T) {
 func TestService_Logout(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
@@ -569,7 +569,7 @@ func TestService_Logout(T *testing.T) {
 func TestService_fetchLoginDataFromRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
 		expectedUser := &models.User{
@@ -668,7 +668,7 @@ func TestService_fetchLoginDataFromRequest(T *testing.T) {
 func TestService_validateLogin(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 		expected := true
 		ctx := context.Background()
@@ -871,7 +871,7 @@ func TestService_validateLogin(T *testing.T) {
 func TestService_buildCookie(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 		exampleInput := &models.User{
 			Username: "username",

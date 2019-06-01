@@ -8,7 +8,7 @@ import (
 func TestUser_Update(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		actual := User{
 			Username:        "username",
 			HashedPassword:  "hashed_pass",

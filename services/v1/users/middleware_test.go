@@ -3,6 +3,7 @@ package users
 import (
 	"errors"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -26,7 +27,7 @@ func (m *MockHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) 
 func TestService_UserInputMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := &Service{
 			logger: noop.ProvideNoopLogger(),
 		}
@@ -76,7 +77,7 @@ func TestService_UserInputMiddleware(T *testing.T) {
 func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := &Service{
 			logger: noop.ProvideNoopLogger(),
 		}
@@ -100,9 +101,12 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 	})
 
 	T.Run("with error decoding request", func(t *testing.T) {
-		s := &Service{
-			logger: noop.ProvideNoopLogger(),
-		}
+		s := &Service{logger: noop.ProvideNoopLogger()}
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).
+			Return(uint64(123), nil)
+		s.database = mockDB
 
 		ed := &mencoding.EncoderDecoder{}
 		ed.On("DecodeRequest", mock.Anything, mock.Anything).
@@ -126,7 +130,7 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := &Service{
 			logger: noop.ProvideNoopLogger(),
 		}

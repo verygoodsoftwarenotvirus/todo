@@ -19,7 +19,7 @@ import (
 func TestV1Client_BuildGetUserRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectedMethod := http.MethodGet
 		ctx := context.Background()
 
@@ -44,7 +44,7 @@ func TestV1Client_BuildGetUserRequest(T *testing.T) {
 func TestV1Client_GetUser(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := &models.User{
 			ID: 1,
 		}
@@ -80,7 +80,7 @@ func TestV1Client_GetUser(T *testing.T) {
 func TestV1Client_BuildGetUsersRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectedMethod := http.MethodGet
 		ctx := context.Background()
 
@@ -103,7 +103,7 @@ func TestV1Client_BuildGetUsersRequest(T *testing.T) {
 func TestV1Client_GetUsers(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := &models.UserList{
 			Users: []models.User{
 				{
@@ -137,7 +137,7 @@ func TestV1Client_GetUsers(T *testing.T) {
 func TestV1Client_BuildCreateUserRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectedMethod := http.MethodPost
 		ctx := context.Background()
 
@@ -163,7 +163,7 @@ func TestV1Client_BuildCreateUserRequest(T *testing.T) {
 func TestV1Client_CreateUser(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := &models.UserCreationResponse{
 			ID: 1,
 		}
@@ -203,7 +203,7 @@ func TestV1Client_CreateUser(T *testing.T) {
 func TestV1Client_BuildDeleteUserRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectedMethod := http.MethodDelete
 		expectedID := uint64(1)
 		ctx := context.Background()
@@ -229,7 +229,7 @@ func TestV1Client_BuildDeleteUserRequest(T *testing.T) {
 func TestV1Client_DeleteUser(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := uint64(1)
 		ctx := context.Background()
 
@@ -253,7 +253,7 @@ func TestV1Client_DeleteUser(T *testing.T) {
 func TestV1Client_BuildLoginRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
@@ -267,7 +267,7 @@ func TestV1Client_BuildLoginRequest(T *testing.T) {
 func TestV1Client_Login(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(

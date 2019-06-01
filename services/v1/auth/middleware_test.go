@@ -22,7 +22,7 @@ import (
 func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 		exampleUser := &models.User{
 			Username: "username",
@@ -98,7 +98,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 func TestService_AuthenticationMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
 		exampleClient := &models.OAuth2Client{
@@ -197,7 +197,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 func Test_parseLoginInputFromForm(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
@@ -235,7 +235,7 @@ func Test_parseLoginInputFromForm(T *testing.T) {
 func TestService_UserLoginInputMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		exampleInput := &models.UserLoginInput{
 			Username:  "username",
 			Password:  "password",

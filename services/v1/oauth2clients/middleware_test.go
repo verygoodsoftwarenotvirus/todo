@@ -33,7 +33,7 @@ func (m *mockHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) 
 func TestService_CreationInputMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
 		ed := &mencoding.EncoderDecoder{}
@@ -88,7 +88,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 func TestService_RequestIsAuthenticated(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
 		expected := &models.OAuth2Client{
@@ -169,7 +169,7 @@ func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 
 	// These tests have a lot of overlap to those of RequestIsAuthenticated, which is deliberate
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
 		expected := &models.OAuth2Client{
@@ -230,7 +230,7 @@ func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 func TestService_OAuth2ClientInfoMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 		expected := "blah"
 
@@ -286,7 +286,7 @@ func TestService_OAuth2ClientInfoMiddleware(T *testing.T) {
 func TestService_fetchOAuth2ClientFromRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
 		expected := &models.OAuth2Client{
@@ -314,7 +314,7 @@ func TestService_fetchOAuth2ClientFromRequest(T *testing.T) {
 func TestService_fetchOAuth2ClientIDFromRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
 		expected := &models.OAuth2Client{

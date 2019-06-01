@@ -25,7 +25,7 @@ func TestBcrypt_HashPassword(T *testing.T) {
 
 	x := auth.ProvideBcrypt(auth.DefaultBcryptHashCost, noop.ProvideNoopLogger())
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		tctx := context.Background()
 
@@ -61,7 +61,7 @@ func TestBcrypt_PasswordIsAcceptable(T *testing.T) {
 
 	x := auth.ProvideBcrypt(auth.DefaultBcryptHashCost, noop.ProvideNoopLogger())
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
 		assert.True(t, x.PasswordIsAcceptable(examplePassword))
@@ -73,7 +73,7 @@ func TestBcrypt_ValidateLogin(T *testing.T) {
 
 	x := auth.ProvideBcrypt(auth.DefaultBcryptHashCost, noop.ProvideNoopLogger())
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
 		code, err := totp.GenerateCode(exampleTwoFactorSecret, time.Now().UTC())

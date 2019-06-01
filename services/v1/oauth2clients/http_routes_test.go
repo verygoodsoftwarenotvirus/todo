@@ -22,7 +22,7 @@ import (
 func Test_randString(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		actual := randString()
 		assert.NotEmpty(t, actual)
 	})
@@ -45,7 +45,7 @@ func buildRequest(t *testing.T) *http.Request {
 func Test_fetchUserID(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		req := buildRequest(t)
 
 		expected := uint64(123)
@@ -74,7 +74,7 @@ func Test_fetchUserID(T *testing.T) {
 func TestService_List(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 		userID := uint64(1)
 
@@ -202,7 +202,7 @@ func TestService_List(T *testing.T) {
 func TestService_Create(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		exampleUser := &models.User{
 			ID:              123,
 			HashedPassword:  "hashed_pass",
@@ -566,7 +566,7 @@ func TestService_Create(T *testing.T) {
 func TestService_Read(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 		userID := uint64(1)
 		exampleOAuth2ClientID := uint64(2)
@@ -714,7 +714,7 @@ func TestService_Read(T *testing.T) {
 func TestService_Delete(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 		userID := uint64(1)
 		exampleOAuth2ClientID := uint64(2)

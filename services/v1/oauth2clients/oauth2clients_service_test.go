@@ -142,7 +142,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 func Test_clientStore_GetByID(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		exampleID := "blah"
 
 		mockDB := database.BuildMockDatabase()
@@ -189,7 +189,7 @@ func Test_clientStore_GetByID(T *testing.T) {
 func TestService_HandleAuthorizeRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 		moah := &mockOauth2Handler{}
 		moah.On("HandleAuthorizeRequest", mock.Anything, mock.Anything).
@@ -205,7 +205,7 @@ func TestService_HandleAuthorizeRequest(T *testing.T) {
 func TestService_HandleTokenRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 		moah := &mockOauth2Handler{}
 		moah.On("HandleTokenRequest", mock.Anything, mock.Anything).

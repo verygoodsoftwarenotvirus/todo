@@ -31,7 +31,7 @@ func Test_buildConfig(t *testing.T) {
 func TestParseConfigFile(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		tf, err := ioutil.TempFile(os.TempDir(), "*.toml")
 		require.NoError(t, err)
 		expected := "thisisatest"

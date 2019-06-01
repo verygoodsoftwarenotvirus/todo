@@ -96,7 +96,7 @@ func TestV1Client_TokenSource(T *testing.T) {
 func TestNewClient(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		ts := httptest.NewTLSServer(nil)
 		c, err := NewClient(
 			"",
@@ -221,7 +221,7 @@ func TestBuildURL(T *testing.T) {
 func TestV1Client_BuildWebsocketURL(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 
 		u, _ := url.Parse(exampleURI)
 		c, err := NewClient("", "", u, noop.ProvideNoopLogger(), nil, false)
@@ -237,7 +237,7 @@ func TestV1Client_BuildWebsocketURL(T *testing.T) {
 func TestV1Client_BuildHealthCheckRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectedMethod := http.MethodGet
 		ts := httptest.NewTLSServer(nil)
 
@@ -258,7 +258,7 @@ func TestV1Client_BuildHealthCheckRequest(T *testing.T) {
 func TestV1Client_IsUp(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
@@ -308,7 +308,7 @@ func TestV1Client_IsUp(T *testing.T) {
 func TestV1Client_buildDataRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
@@ -325,7 +325,7 @@ func TestV1Client_buildDataRequest(T *testing.T) {
 func TestV1Client_makeRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expectedMethod := http.MethodPost
 		ts := httptest.NewTLSServer(
@@ -372,7 +372,7 @@ func TestV1Client_makeRequest(T *testing.T) {
 func TestV1Client_makeUnauthedDataRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expectedMethod := http.MethodPost
 		ts := httptest.NewTLSServer(
@@ -480,7 +480,7 @@ func TestV1Client_makeUnauthedDataRequest(T *testing.T) {
 func TestV1Client_retrieve(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expectedMethod := http.MethodPost
 		ts := httptest.NewTLSServer(

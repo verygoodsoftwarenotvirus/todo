@@ -18,7 +18,7 @@ import (
 func TestV1Client_BuildGetItemRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectedMethod := http.MethodGet
 		ctx := context.Background()
 
@@ -43,7 +43,7 @@ func TestV1Client_BuildGetItemRequest(T *testing.T) {
 func TestV1Client_GetItem(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := &models.Item{
 			ID:      1,
 			Name:    "example",
@@ -81,7 +81,7 @@ func TestV1Client_GetItem(T *testing.T) {
 func TestV1Client_BuildGetItemsRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectedMethod := http.MethodGet
 		ctx := context.Background()
 
@@ -104,7 +104,7 @@ func TestV1Client_BuildGetItemsRequest(T *testing.T) {
 func TestV1Client_GetItems(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := &models.ItemList{
 			Items: []models.Item{
 				{
@@ -140,7 +140,7 @@ func TestV1Client_GetItems(T *testing.T) {
 func TestV1Client_BuildCreateItemRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectedMethod := http.MethodPost
 		ctx := context.Background()
 
@@ -167,7 +167,7 @@ func TestV1Client_BuildCreateItemRequest(T *testing.T) {
 func TestV1Client_CreateItem(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := &models.Item{
 			ID:      1,
 			Name:    "example",
@@ -210,7 +210,7 @@ func TestV1Client_CreateItem(T *testing.T) {
 func TestV1Client_BuildUpdateItemRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectedMethod := http.MethodPut
 		ctx := context.Background()
 
@@ -237,7 +237,7 @@ func TestV1Client_BuildUpdateItemRequest(T *testing.T) {
 func TestV1Client_UpdateItem(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := &models.Item{
 			ID:      1,
 			Name:    "example",
@@ -265,7 +265,7 @@ func TestV1Client_UpdateItem(T *testing.T) {
 func TestV1Client_BuildDeleteItemRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectedMethod := http.MethodDelete
 		ctx := context.Background()
 
@@ -291,7 +291,7 @@ func TestV1Client_BuildDeleteItemRequest(T *testing.T) {
 func TestV1Client_DeleteItem(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := uint64(1)
 		ctx := context.Background()
 

@@ -44,7 +44,7 @@ func (m *eventMan) TuneIn(l newsman.Listener) {
 func TestProvideWebhooksService(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectation := uint64(123)
 		uc := &mmetrics.UnitCounter{}
 		uc.On("IncrementBy", expectation).Return()

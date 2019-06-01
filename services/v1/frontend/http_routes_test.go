@@ -27,7 +27,7 @@ func buildRequest(t *testing.T) *http.Request {
 func TestService_StaticDir(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := &Service{logger: noop.ProvideNoopLogger()}
 		exampleDir := "."
 

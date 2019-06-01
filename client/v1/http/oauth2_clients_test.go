@@ -19,7 +19,7 @@ import (
 func TestV1Client_BuildGetOAuth2ClientRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectedMethod := http.MethodGet
 		ctx := context.Background()
 
@@ -44,7 +44,7 @@ func TestV1Client_BuildGetOAuth2ClientRequest(T *testing.T) {
 func TestV1Client_GetOAuth2Client(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := &models.OAuth2Client{
 			ID:           1,
 			ClientID:     "example",
@@ -82,7 +82,7 @@ func TestV1Client_GetOAuth2Client(T *testing.T) {
 func TestV1Client_BuildGetOAuth2ClientsRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectedMethod := http.MethodGet
 		ctx := context.Background()
 
@@ -105,7 +105,7 @@ func TestV1Client_BuildGetOAuth2ClientsRequest(T *testing.T) {
 func TestV1Client_GetOAuth2Clients(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := &models.OAuth2ClientList{
 			Clients: []models.OAuth2Client{
 				{
@@ -141,7 +141,7 @@ func TestV1Client_GetOAuth2Clients(T *testing.T) {
 func TestV1Client_BuildCreateOAuth2ClientRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
 		ts := httptest.NewTLSServer(nil)
@@ -166,7 +166,7 @@ func TestV1Client_BuildCreateOAuth2ClientRequest(T *testing.T) {
 func TestV1Client_CreateOAuth2Client(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		exampleInput := &models.OAuth2ClientCreationInput{
 			UserLoginInput: models.UserLoginInput{
@@ -289,7 +289,7 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 func TestV1Client_BuildDeleteOAuth2ClientRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectedMethod := http.MethodDelete
 		ctx := context.Background()
 
@@ -315,7 +315,7 @@ func TestV1Client_BuildDeleteOAuth2ClientRequest(T *testing.T) {
 func TestV1Client_DeleteOAuth2Client(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := uint64(1)
 		ctx := context.Background()
 

@@ -1,6 +1,7 @@
 package oauth2clients
 
 import (
+	"crypto/rand"
 	"database/sql"
 	"encoding/base32"
 	"net/http"
@@ -22,7 +23,9 @@ const (
 
 func init() {
 	b := make([]byte, 64)
-	mustCryptoRandRead(b)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
 }
 
 // randString produces a random string

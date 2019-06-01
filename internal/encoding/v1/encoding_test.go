@@ -18,7 +18,7 @@ type example struct {
 func TestServerEncoderDecoder_EncodeResponse(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectation := "name"
 		ex := &example{Name: expectation}
 		ed := ProvideResponseEncoder()
@@ -49,7 +49,7 @@ func TestServerEncoderDecoder_EncodeResponse(T *testing.T) {
 func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectation := "name"
 		e := &example{Name: expectation}
 		ed := ProvideResponseEncoder()

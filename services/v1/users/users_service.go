@@ -41,7 +41,7 @@ type (
 		encoderDecoder encoding.EncoderDecoder
 		userIDFetcher  UserIDFetcher
 		userCounter    metrics.UnitCounter
-		newsman        *newsman.Newsman
+		reporter       newsman.Reporter
 	}
 
 	// UserIDFetcher fetches usernames from requests
@@ -83,7 +83,7 @@ func ProvideUsersService(
 		userIDFetcher:  userIDFetcher,
 		encoderDecoder: encoder,
 		userCounter:    counter,
-		newsman:        newsman,
+		reporter:       newsman,
 	}
 	return us, nil
 }

@@ -22,7 +22,7 @@ import (
 func TestService_OAuth2InternalErrorHandler(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 		expected := errors.New("blah")
 
@@ -45,7 +45,7 @@ func TestService_OAuth2ResponseErrorHandler(T *testing.T) {
 func TestService_AuthorizeScopeHandler(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 		expected := "blah,flarg"
 		exampleClient := &models.OAuth2Client{
@@ -164,7 +164,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 func TestService_UserAuthorizationHandler(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
 		exampleClient := &models.OAuth2Client{BelongsTo: 1}
@@ -216,7 +216,7 @@ func TestService_UserAuthorizationHandler(T *testing.T) {
 func TestService_ClientAuthorizedHandler(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 		expected := true
 
@@ -312,7 +312,7 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 func TestService_ClientScopeHandler(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 		expected := true
 

@@ -23,7 +23,7 @@ import (
 func TestItemsService_List(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.ItemList{
@@ -184,7 +184,7 @@ func TestItemsService_List(T *testing.T) {
 func TestItemsService_Create(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
@@ -369,7 +369,7 @@ func TestItemsService_Create(T *testing.T) {
 func TestItemsService_Read(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
@@ -543,7 +543,7 @@ func TestItemsService_Read(T *testing.T) {
 func TestItemsService_Update(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
@@ -851,7 +851,7 @@ func TestItemsService_Update(T *testing.T) {
 func TestItemsService_Delete(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{

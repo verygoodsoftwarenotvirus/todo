@@ -26,7 +26,7 @@ func (m *MockHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) 
 func TestService_CreationInputMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 
 		ed := &mencoding.EncoderDecoder{}
@@ -78,7 +78,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 func TestService_UpdateInputMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 
 		ed := &mencoding.EncoderDecoder{}

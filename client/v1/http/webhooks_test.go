@@ -18,7 +18,7 @@ import (
 func TestV1Client_BuildGetWebhookRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectedMethod := http.MethodGet
 		ctx := context.Background()
 
@@ -43,7 +43,7 @@ func TestV1Client_BuildGetWebhookRequest(T *testing.T) {
 func TestV1Client_GetWebhook(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := &models.Webhook{
 			ID:   1,
 			Name: "example",
@@ -80,7 +80,7 @@ func TestV1Client_GetWebhook(T *testing.T) {
 func TestV1Client_BuildGetWebhooksRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectedMethod := http.MethodGet
 		ctx := context.Background()
 
@@ -103,7 +103,7 @@ func TestV1Client_BuildGetWebhooksRequest(T *testing.T) {
 func TestV1Client_GetWebhooks(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := &models.WebhookList{
 			Webhooks: []models.Webhook{
 				{
@@ -138,7 +138,7 @@ func TestV1Client_GetWebhooks(T *testing.T) {
 func TestV1Client_BuildCreateWebhookRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectedMethod := http.MethodPost
 		ctx := context.Background()
 
@@ -164,7 +164,7 @@ func TestV1Client_BuildCreateWebhookRequest(T *testing.T) {
 func TestV1Client_CreateWebhook(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := &models.Webhook{
 			ID:   1,
 			Name: "example",
@@ -205,7 +205,7 @@ func TestV1Client_CreateWebhook(T *testing.T) {
 func TestV1Client_BuildUpdateWebhookRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectedMethod := http.MethodPut
 		ctx := context.Background()
 
@@ -231,7 +231,7 @@ func TestV1Client_BuildUpdateWebhookRequest(T *testing.T) {
 func TestV1Client_UpdateWebhook(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := &models.Webhook{
 			ID:   1,
 			Name: "example",
@@ -258,7 +258,7 @@ func TestV1Client_UpdateWebhook(T *testing.T) {
 func TestV1Client_BuildDeleteWebhookRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expectedMethod := http.MethodDelete
 		ctx := context.Background()
 
@@ -284,7 +284,7 @@ func TestV1Client_BuildDeleteWebhookRequest(T *testing.T) {
 func TestV1Client_DeleteWebhook(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		expected := uint64(1)
 		ctx := context.Background()
 

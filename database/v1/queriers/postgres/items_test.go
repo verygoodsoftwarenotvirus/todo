@@ -60,6 +60,7 @@ func TestPostgres_buildGetItemQuery(T *testing.T) {
 		assert.Equal(t, exampleItemID, args[1].(uint64))
 	})
 }
+
 func TestPostgres_GetItem(T *testing.T) {
 	T.Parallel()
 

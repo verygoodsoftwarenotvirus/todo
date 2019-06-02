@@ -63,18 +63,26 @@ func (c *Client) GetItems(ctx context.Context, filter *models.QueryFilter, userI
 	defer span.End()
 	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
 
-	c.logger.WithValues(map[string]interface{}{
+	logger := c.logger.WithValues(map[string]interface{}{
 		"filter":  filter,
 		"user_id": userID,
-	}).Debug("GetItems called")
+	})
+	logger.Debug("GetItems called")
 
 	if filter == nil {
-		c.logger.Debug("using default query filter")
+		logger.Debug("using default query filter")
 		filter = models.DefaultQueryFilter
 	}
 	filter.SetPage(filter.Page)
 
-	return c.querier.GetItems(ctx, filter, userID)
+	itemList, err := c.querier.GetItems(ctx, filter, userID)
+
+	logger.WithValues(map[string]interface{}{
+		"itemList": itemList,
+		"err": err,
+	}).Debug("returning from GetItems")
+
+	return itemList, err
 }
 
 // CreateItem creates an item in a postgres querier

@@ -50,23 +50,24 @@ func scanItem(scan database.Scanner) (*models.Item, error) {
 func scanItems(logger logging.Logger, rows *sql.Rows) ([]models.Item, error) {
 	var list []models.Item
 
-	defer func() {
-		if err := rows.Close(); err != nil {
-			logger.Error(err, "closing rows")
-		}
-	}()
+	// RENAMEME this call proves this function's name is bad
+	defer logQueryBuildingError(logger, rows.Close())
 
+	var rowCount int
 	for rows.Next() {
 		x, err := scanItem(rows)
 		if err != nil {
 			return nil, err
 		}
 		list = append(list, *x)
+		rowCount++
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
+	logger.WithValue("row_count", rowCount).Debug("returning fine from scanItems")
 
 	return list, nil
 }
@@ -115,7 +116,7 @@ func (p *Postgres) buildGetItemCountQuery(filter *models.QueryFilter, userID uin
 func (p *Postgres) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
 	query, args := p.buildGetItemCountQuery(filter, userID)
 	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
-	return
+	return count, err
 }
 
 func (p *Postgres) buildGetAllItemsCountQuery() string {
@@ -129,7 +130,8 @@ func (p *Postgres) buildGetAllItemsCountQuery() string {
 
 // GetAllItemsCount will fetch the count of items from the postgres db that meet a particular filter
 func (p *Postgres) GetAllItemsCount(ctx context.Context) (count uint64, err error) {
-	return count, p.db.QueryRowContext(ctx, p.buildGetAllItemsCountQuery()).Scan(&count)
+	err = p.db.QueryRowContext(ctx, p.buildGetAllItemsCountQuery()).Scan(&count)
+	return count, err
 }
 
 func (p *Postgres) buildGetItemsQuery(filter *models.QueryFilter, userID uint64) (string, []interface{}) {
@@ -172,8 +174,8 @@ func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter, use
 	x := &models.ItemList{
 		Pagination: models.Pagination{
 			Page:       filter.Page,
-			TotalCount: count,
 			Limit:      filter.Limit,
+			TotalCount: count,
 		},
 		Items: list,
 	}

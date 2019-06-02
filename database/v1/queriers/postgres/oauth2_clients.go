@@ -150,12 +150,7 @@ func (p *Postgres) buildGetOAuth2ClientByClientIDQuery(clientID string) (string,
 func (p *Postgres) GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*models.OAuth2Client, error) {
 	query, args := p.buildGetOAuth2ClientByClientIDQuery(clientID)
 	row := p.db.QueryRowContext(ctx, query, args...)
-	client, err := scanOAuth2Client(row)
-
-	if err != nil {
-		return nil, err
-	}
-	return client, nil
+	return scanOAuth2Client(row)
 }
 
 func (p *Postgres) buildGetAllOAuth2ClientsQuery() (string, []interface{}) {
@@ -233,9 +228,10 @@ func (p *Postgres) buildGetOAuth2ClientCountQuery(filter *models.QueryFilter, us
 }
 
 // GetOAuth2ClientCount will get the count of OAuth2 clients that match the current filter
-func (p *Postgres) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, error error) {
+func (p *Postgres) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
 	query, args := p.buildGetOAuth2ClientCountQuery(filter, userID)
-	return count, p.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	return
 }
 
 func (p *Postgres) buildGetAllOAuth2ClientCountQuery() string {
@@ -294,7 +290,7 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 		return nil, errors.Wrap(err, "scanning results")
 	}
 
-	// depointerize clients
+	// de-pointer-ize clients
 	var tmpL []models.OAuth2Client
 	for _, t := range list {
 		tmpL = append(tmpL, *t)
@@ -342,13 +338,7 @@ func (p *Postgres) buildUpdateOAuth2ClientQuery(input *models.OAuth2Client) (str
 // ID field to be valid.
 func (p *Postgres) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2Client) error {
 	query, args := p.buildUpdateOAuth2ClientQuery(input)
-	err := p.db.QueryRowContext(ctx, query, args...).Scan(&input.UpdatedOn)
-
-	if err != nil {
-		return errors.Wrap(err, "error preparing query")
-	}
-
-	return nil
+	return p.db.QueryRowContext(ctx, query, args...).Scan(&input.UpdatedOn)
 }
 
 func (p *Postgres) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (string, []interface{}) {

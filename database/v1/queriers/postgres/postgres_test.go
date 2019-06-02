@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
@@ -20,11 +19,23 @@ func buildTestService(t *testing.T) (*Postgres, sqlmock.Sqlmock) {
 	return p.(*Postgres), mock
 }
 
+var (
+	sqlMockReplacer = strings.NewReplacer(
+		"$", `\$`,
+		"(", `\(`,
+		")", `\)`,
+		"=", `\=`,
+		"*", `\*`,
+		".", `\.`,
+		"+", `\+`,
+		"?", `\?`,
+		",", `\,`,
+		"-", `\-`,
+	)
+)
+
 func formatQueryForSQLMock(query string) string {
-	for _, x := range []string{"$", "(", ")", "=", "*", ".", "+", "?", ",", "-"} {
-		query = strings.Replace(query, x, fmt.Sprintf(`\%s`, x), -1)
-	}
-	return query
+	return sqlMockReplacer.Replace(query)
 }
 
 func TestProvidePostgres(T *testing.T) {

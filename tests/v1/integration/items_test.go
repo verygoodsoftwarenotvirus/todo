@@ -76,7 +76,13 @@ func TestItems(test *testing.T) {
 			// Assert item list equality
 			actual, err := todoClient.GetItems(tctx, nil)
 			checkValueAndError(t, actual, err)
-			assert.True(t, len(expected) <= len(actual.Items))
+			assert.True(
+				t,
+				len(expected) <= len(actual.Items),
+				"expected %d to be <= %d",
+				len(expected),
+				len(actual.Items),
+			)
 
 			// Clean up
 			for _, item := range actual.Items {

@@ -197,8 +197,7 @@ func (p *Postgres) GetAllWebhooks(ctx context.Context) (*models.WebhookList, err
 	return x, err
 }
 
-// GetWebhooks fetches a list of webhooks from the postgres db that meet a particular filter
-func (p *Postgres) GetWebhooks(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.WebhookList, error) {
+func (p *Postgres) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint64) (string, []interface{}) {
 	builder := p.sqlBuilder.
 		Select(webhooksTableColumns...).
 		From(webhooksTableName).
@@ -207,18 +206,22 @@ func (p *Postgres) GetWebhooks(ctx context.Context, filter *models.QueryFilter, 
 			"archived_on": nil,
 		}))
 
-	builder = filter.ApplyToQueryBuilder(builder)
-
-	query, args, err := builder.ToSql()
-	if err != nil {
-		return nil, errors.Wrap(err, "generating query")
+	if filter != nil {
+		builder = filter.ApplyToQueryBuilder(builder)
 	}
 
-	rows, err := p.db.QueryContext(
-		ctx,
-		query,
-		args...,
-	)
+	query, args, err := builder.ToSql()
+
+	logQueryBuildingError(p.logger, err)
+
+	return query, args
+}
+
+// GetWebhooks fetches a list of webhooks from the postgres db that meet a particular filter
+func (p *Postgres) GetWebhooks(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.WebhookList, error) {
+	query, args := p.buildGetWebhooksQuery(filter, userID)
+
+	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

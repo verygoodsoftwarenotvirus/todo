@@ -3,12 +3,22 @@ package dbclient
 import (
 	"context"
 	"errors"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+	"testing"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
-	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
+
+func buildTestClient() (*Client, *database.MockDatabase) {
+	db := database.BuildMockDatabase()
+	return &Client{
+		logger: noop.ProvideNoopLogger(),
+		querier: db,
+	}, db
+}
 
 func TestMigrate(T *testing.T) {
 	T.Parallel()

@@ -114,8 +114,7 @@ func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*mod
 	return u, err
 }
 
-// GetUserCount fetches a count of users from the postgres db that meet a particular filter
-func (p *Postgres) GetUserCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
+func (p *Postgres) buildGetUserCountQuery(filter *models.QueryFilter) (string, []interface{}) {
 	builder := p.sqlBuilder.
 		Select("COUNT(*)").
 		From(usersTableName).
@@ -126,10 +125,15 @@ func (p *Postgres) GetUserCount(ctx context.Context, filter *models.QueryFilter)
 	builder = filter.ApplyToQueryBuilder(builder)
 
 	query, args, err := builder.ToSql()
-	if err != nil {
-		return 0, errors.Wrap(err, "generating query")
-	}
 
+	logQueryBuildingError(p.logger, err)
+
+	return query, args
+}
+
+// GetUserCount fetches a count of users from the postgres db that meet a particular filter
+func (p *Postgres) GetUserCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
+	query, args := p.buildGetUserCountQuery(filter)
 	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return
 }

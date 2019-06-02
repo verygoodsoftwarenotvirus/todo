@@ -35,8 +35,6 @@ func (c *Client) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (
 		return nil, err
 	}
 
-	c.logger.WithValue("retrieved_client.id", client.ID).Debug("returning safely from fetching oauth2 client")
-
 	return client, nil
 }
 

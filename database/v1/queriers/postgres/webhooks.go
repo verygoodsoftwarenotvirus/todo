@@ -103,9 +103,7 @@ func (p *Postgres) buildGetWebhookQuery(webhookID, userID uint64) (string, []int
 			"belongs_to": userID,
 		}).ToSql()
 
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 	return query, args
 }
 
@@ -130,9 +128,7 @@ func (p *Postgres) buildGetWebhookCountQuery(filter *models.QueryFilter, userID 
 	}
 
 	query, args, err := builder.ToSql()
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }
@@ -150,9 +146,7 @@ func (p *Postgres) buildGetAllWebhooksCountQuery() (string, []interface{}) {
 		Where(squirrel.Eq{"archived_on": nil}).
 		ToSql()
 
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }
@@ -170,9 +164,7 @@ func (p *Postgres) buildGetAllWebhooksQuery() (string, []interface{}) {
 			"archived_on": nil,
 		}).ToSql()
 
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }
@@ -279,9 +271,7 @@ func (p *Postgres) buildWebhookCreationQuery(x *models.Webhook) (string, []inter
 		Suffix("RETURNING id, created_on").
 		ToSql()
 
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }
@@ -323,9 +313,7 @@ func (p *Postgres) buildUpdateWebhookQuery(input *models.Webhook) (string, []int
 		}).Suffix("RETURNING updated_on").
 		ToSql()
 
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }
@@ -348,9 +336,7 @@ func (p *Postgres) buildArchiveWebhookQuery(webhookID uint64, userID uint64) (st
 		Suffix("RETURNING archived_on").
 		ToSql()
 
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }

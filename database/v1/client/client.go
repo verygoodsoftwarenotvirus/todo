@@ -12,11 +12,8 @@ import (
 var _ database.Database = (*Client)(nil)
 
 /*
-	NOTE: the original purpose of this client is to allow convenient wrapping of actual query execution.
-
-	I didn't want to neglect one querier implementation while another flourished, so I created this wrapper.
-	In reality, a better abstraction is needed, but I need some time to think about what that should look like,
-	but it probably will look more like this and less like it did.
+	NOTE: the primary purpose of this client is to allow convenient
+	wrapping of actual query execution.
 */
 
 // Client is a wrapper around a querier

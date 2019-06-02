@@ -100,3 +100,9 @@ func (p *Postgres) IsReady(ctx context.Context) (ready bool) {
 	}
 	return
 }
+
+func logQueryBuildingError(logger logging.Logger, err error) {
+	if err != nil {
+		logger.Error(err, "building query")
+	}
+}

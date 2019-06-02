@@ -44,6 +44,7 @@ type Oauth2ClientDataServer interface {
 // OAuth2Client represents a user-authorized API client
 type OAuth2Client struct {
 	ID              uint64   `json:"id"`
+	Name            string   `json:"name"`
 	ClientID        string   `json:"client_id"`
 	ClientSecret    string   `json:"client_secret"`
 	RedirectURI     string   `json:"redirect_uri"`
@@ -86,6 +87,7 @@ type OAuth2ClientList struct {
 // OAuth2ClientCreationInput is a struct for use when creating OAuth2 clients.
 type OAuth2ClientCreationInput struct {
 	UserLoginInput
+	ClientName   string   `json:"name"`
 	ClientID     string   `json:"-"`
 	ClientSecret string   `json:"-"`
 	RedirectURI  string   `json:"redirect_uri"`

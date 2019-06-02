@@ -29,11 +29,9 @@ var (
 )
 
 func scanItem(scan database.Scanner) (*models.Item, error) {
-	var (
-		x = &models.Item{}
-	)
+	x := &models.Item{}
 
-	if err := scan.Scan(
+	err := scan.Scan(
 		&x.ID,
 		&x.Name,
 		&x.Details,
@@ -41,7 +39,8 @@ func scanItem(scan database.Scanner) (*models.Item, error) {
 		&x.UpdatedOn,
 		&x.ArchivedOn,
 		&x.BelongsTo,
-	); err != nil {
+	)
+	if err != nil {
 		return nil, err
 	}
 
@@ -81,9 +80,7 @@ func (p *Postgres) buildGetItemQuery(itemID, userID uint64) (string, []interface
 			"belongs_to": userID,
 		}).ToSql()
 
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }
@@ -92,8 +89,7 @@ func (p *Postgres) buildGetItemQuery(itemID, userID uint64) (string, []interface
 func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
 	query, args := p.buildGetItemQuery(itemID, userID)
 	row := p.db.QueryRowContext(ctx, query, args...)
-	i, err := scanItem(row)
-	return i, err
+	return scanItem(row)
 }
 
 func (p *Postgres) buildGetItemCountQuery(filter *models.QueryFilter, userID uint64) (string, []interface{}) {
@@ -110,9 +106,7 @@ func (p *Postgres) buildGetItemCountQuery(filter *models.QueryFilter, userID uin
 	}
 
 	query, args, err := builder.ToSql()
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }
@@ -129,9 +123,7 @@ func (p *Postgres) buildGetAllItemsCountQuery() string {
 		From(itemsTableName).
 		Where(squirrel.Eq{"archived_on": nil}).
 		ToSql()
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 	return query
 }
 
@@ -154,9 +146,7 @@ func (p *Postgres) buildGetItemsQuery(filter *models.QueryFilter, userID uint64)
 	}
 
 	query, args, err := builder.ToSql()
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }
@@ -188,7 +178,7 @@ func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter, use
 		Items: list,
 	}
 
-	return x, err
+	return x, nil
 }
 
 func (p *Postgres) buildCreateItemQuery(input *models.Item) (string, []interface{}) {
@@ -207,9 +197,7 @@ func (p *Postgres) buildCreateItemQuery(input *models.Item) (string, []interface
 		Suffix("RETURNING id, created_on").
 		ToSql()
 
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }
@@ -245,9 +233,7 @@ func (p *Postgres) buildUpdateItemQuery(input *models.Item) (string, []interface
 		Suffix("RETURNING updated_on").
 		ToSql()
 
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }
@@ -271,9 +257,7 @@ func (p *Postgres) buildArchiveItemQuery(itemID, userID uint64) (string, []inter
 		Suffix("RETURNING archived_on").
 		ToSql()
 
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }

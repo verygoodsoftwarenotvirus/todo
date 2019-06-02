@@ -33,6 +33,7 @@ var (
 			Script: `
 			CREATE TABLE IF NOT EXISTS oauth2_clients (
 				"id" bigserial NOT NULL PRIMARY KEY,
+				"name" text DEFAULT '',
 				"client_id" text NOT NULL,
 				"client_secret" text NOT NULL,
 				"redirect_uri" text DEFAULT '',

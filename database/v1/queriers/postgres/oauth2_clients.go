@@ -22,6 +22,7 @@ const (
 var (
 	oauth2ClientsTableColumns = []string{
 		"id",
+		"name",
 		"client_id",
 		"scopes",
 		"redirect_uri",
@@ -41,6 +42,7 @@ func scanOAuth2Client(scan database.Scanner) (*models.OAuth2Client, error) {
 
 	err := scan.Scan(
 		&x.ID,
+		&x.Name,
 		&x.ClientID,
 		&scopes,
 		&x.RedirectURI,
@@ -85,6 +87,7 @@ func (p *Postgres) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (str
 	query, args, err := p.sqlBuilder.
 		Insert(oauth2ClientsTableName).
 		Columns(
+			"name",
 			"client_id",
 			"client_secret",
 			"scopes",
@@ -92,6 +95,7 @@ func (p *Postgres) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (str
 			"belongs_to",
 		).
 		Values(
+			input.Name,
 			input.ClientID,
 			input.ClientSecret,
 			strings.Join(input.Scopes, scopesSeparator),
@@ -101,9 +105,7 @@ func (p *Postgres) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (str
 		Suffix("RETURNING id, created_on").
 		ToSql()
 
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }
@@ -111,6 +113,7 @@ func (p *Postgres) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (str
 // CreateOAuth2Client creates an OAuth2 client
 func (p *Postgres) CreateOAuth2Client(ctx context.Context, input *models.OAuth2ClientCreationInput) (*models.OAuth2Client, error) {
 	x := &models.OAuth2Client{
+		Name:         input.ClientName,
 		ClientID:     input.ClientID,
 		ClientSecret: input.ClientSecret,
 		RedirectURI:  input.RedirectURI,
@@ -138,9 +141,7 @@ func (p *Postgres) buildGetOAuth2ClientByClientIDQuery(clientID string) (string,
 			"archived_on": nil,
 		}).ToSql()
 
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }
@@ -164,9 +165,7 @@ func (p *Postgres) buildGetAllOAuth2ClientsQuery() (string, []interface{}) {
 		Where(squirrel.Eq{"archived_on": nil}).
 		ToSql()
 
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }
@@ -197,9 +196,7 @@ func (p *Postgres) buildGetOAuth2ClientQuery(clientID, userID uint64) (string, [
 			"archived_on": nil,
 		}).ToSql()
 
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }
@@ -230,9 +227,7 @@ func (p *Postgres) buildGetOAuth2ClientCountQuery(filter *models.QueryFilter, us
 	}
 
 	query, args, err := builder.ToSql()
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }
@@ -249,9 +244,7 @@ func (p *Postgres) buildGetAllOAuth2ClientCountQuery() string {
 		Where(squirrel.Eq{"archived_on": nil}).
 		ToSql()
 
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query
 }
@@ -278,9 +271,7 @@ func (p *Postgres) buildGetOAuth2ClientsQuery(filter *models.QueryFilter, userID
 
 	query, args, err := builder.ToSql()
 
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }
@@ -303,6 +294,7 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 		return nil, errors.Wrap(err, "scanning results")
 	}
 
+	// depointerize clients
 	var tmpL []models.OAuth2Client
 	for _, t := range list {
 		tmpL = append(tmpL, *t)
@@ -311,6 +303,7 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 	totalCount, err := p.GetOAuth2ClientCount(ctx, filter, userID)
 	if err != nil {
 		logger.Error(err, "error fetching client count for user")
+		return nil, err
 	}
 
 	ocl := &models.OAuth2ClientList{
@@ -321,11 +314,8 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 		},
 		Clients: tmpL,
 	}
-	if ocl.TotalCount, err = p.GetOAuth2ClientCount(ctx, filter, userID); err != nil {
-		return nil, err
-	}
 
-	return ocl, err
+	return ocl, nil
 }
 
 func (p *Postgres) buildUpdateOAuth2ClientQuery(input *models.OAuth2Client) (string, []interface{}) {
@@ -343,9 +333,7 @@ func (p *Postgres) buildUpdateOAuth2ClientQuery(input *models.OAuth2Client) (str
 		Suffix("RETURNING updated_on").
 		ToSql()
 
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }
@@ -375,9 +363,7 @@ func (p *Postgres) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (strin
 		Suffix("RETURNING archived_on").
 		ToSql()
 
-	if err != nil {
-		p.logger.Error(err, "building query")
-	}
+	logQueryBuildingError(p.logger, err)
 
 	return query, args
 }

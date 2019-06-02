@@ -11,14 +11,13 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"github.com/pkg/errors"
 )
 
 const (
-
 	// MiddlewareCtxKey is the context key we search for when interacting with user-related requests
 	MiddlewareCtxKey models.ContextKey   = "user_input"
 	counterName      metrics.CounterName = "users"

@@ -5,13 +5,12 @@ import (
 	"net/http"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	mmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1/mock"
 	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
-
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -27,7 +26,6 @@ func buildTestService() *Service {
 		encoderDecoder:   &mencoding.EncoderDecoder{},
 	}
 }
-
 
 func TestProvideWebhooksService(T *testing.T) {
 	T.Parallel()

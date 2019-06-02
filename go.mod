@@ -6,6 +6,7 @@ require (
 	contrib.go.opencensus.io/exporter/jaeger v0.1.0
 	contrib.go.opencensus.io/exporter/prometheus v0.1.0
 	contrib.go.opencensus.io/integrations/ocsql v0.1.4
+	github.com/DATA-DOG/go-sqlmock v1.3.3
 	github.com/GuiaBolso/darwin v0.0.0-20170210191649-86919dfcf808
 	github.com/Masterminds/squirrel v1.1.0
 	github.com/VividCortex/gohistogram v1.0.0 // indirect

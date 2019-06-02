@@ -30,13 +30,13 @@ type ItemDataServer interface {
 
 // Item represents an item
 type Item struct {
-	ID          uint64  `json:"id"`
-	Name        string  `json:"name"`
-	Details     string  `json:"details"`
-	CreatedOn   uint64  `json:"created_on"`
-	UpdatedOn   *uint64 `json:"updated_on"`
-	CompletedOn *uint64 `json:"completed_on"`
-	BelongsTo   uint64  `json:"belongs_to"`
+	ID         uint64  `json:"id"`
+	Name       string  `json:"name"`
+	Details    string  `json:"details"`
+	CreatedOn  uint64  `json:"created_on"`
+	UpdatedOn  *uint64 `json:"updated_on"`
+	ArchivedOn *uint64 `json:"archived_on"`
+	BelongsTo  uint64  `json:"belongs_to"`
 }
 
 // Update merges an ItemInput with an Item

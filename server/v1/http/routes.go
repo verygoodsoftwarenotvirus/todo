@@ -122,7 +122,6 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		})
 	})
 
-
 	router.
 		With(s.authService.AuthenticationMiddleware(true)).
 		Route("/api/v1", func(v1Router chi.Router) {

@@ -24,13 +24,13 @@ func (c *Client) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (
 		"user_id":   userID,
 	}).Debug("looking for an oauth2 client by this ID, for this user")
 
-	client, err := c.database.GetOAuth2Client(ctx, clientID, userID)
+	client, err := c.querier.GetOAuth2Client(ctx, clientID, userID)
 	if err != nil {
 		c.logger.WithValues(map[string]interface{}{
 			"error":     err,
 			"user_id":   userID,
 			"client_id": clientID,
-		}).Debug("error fetching oauth2 client from the database")
+		}).Debug("error fetching oauth2 client from the querier")
 
 		return nil, err
 	}
@@ -49,12 +49,12 @@ func (c *Client) GetOAuth2ClientByClientID(ctx context.Context, clientID string)
 
 	c.logger.WithValue("oauth2_client_id", clientID).Debug("GetOAuth2ClientByClientID called")
 
-	client, err := c.database.GetOAuth2ClientByClientID(ctx, clientID)
+	client, err := c.querier.GetOAuth2ClientByClientID(ctx, clientID)
 	if err != nil {
 		c.logger.WithValues(map[string]interface{}{
 			"error":            err,
 			"oauth2_client_id": clientID,
-		}).Debug("error fetching oauth2 client from the database")
+		}).Debug("error fetching oauth2 client from the querier")
 
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (c *Client) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryF
 	})
 	logger.Debug("GetOAuth2ClientCount called")
 
-	return c.database.GetOAuth2ClientCount(ctx, filter, userID)
+	return c.querier.GetOAuth2ClientCount(ctx, filter, userID)
 }
 
 // GetAllOAuth2ClientCount gets the count of OAuth2 clients that match the current filter
@@ -89,7 +89,7 @@ func (c *Client) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 
 	c.logger.Debug("GetAllOAuth2ClientCount called")
 
-	return c.database.GetAllOAuth2ClientCount(ctx)
+	return c.querier.GetAllOAuth2ClientCount(ctx)
 }
 
 // GetAllOAuth2Clients returns all OAuth2 clients, irrespective of ownershic. It is called on startup to populate
@@ -100,7 +100,7 @@ func (c *Client) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Clien
 
 	c.logger.Debug("GetAllOAuth2Clients called")
 
-	return c.database.GetAllOAuth2Clients(ctx)
+	return c.querier.GetAllOAuth2Clients(ctx)
 }
 
 // GetOAuth2Clients gets a list of OAuth2 clients
@@ -122,7 +122,7 @@ func (c *Client) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilte
 
 	filter.SetPage(filter.Page)
 
-	return c.database.GetOAuth2Clients(ctx, filter, userID)
+	return c.querier.GetOAuth2Clients(ctx, filter, userID)
 }
 
 // CreateOAuth2Client creates an OAuth2 client
@@ -130,7 +130,7 @@ func (c *Client) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 	ctx, span := trace.StartSpan(ctx, "CreateOAuth2Client")
 	defer span.End()
 
-	client, err := c.database.CreateOAuth2Client(ctx, input)
+	client, err := c.querier.CreateOAuth2Client(ctx, input)
 	if err != nil {
 		c.logger.
 			WithValues(map[string]interface{}{
@@ -138,7 +138,7 @@ func (c *Client) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 				"belongs_to": input.BelongsTo,
 			}).
 			WithError(err).
-			Debug("error writing oauth2 client to the database")
+			Debug("error writing oauth2 client to the querier")
 		return nil, err
 	}
 
@@ -163,7 +163,7 @@ func (c *Client) UpdateOAuth2Client(ctx context.Context, updated *models.OAuth2C
 	})
 	logger.Debug("UpdateOAuth2Client called.")
 
-	return c.database.UpdateOAuth2Client(ctx, updated)
+	return c.querier.UpdateOAuth2Client(ctx, updated)
 }
 
 // DeleteOAuth2Client deletes an OAuth2 client
@@ -171,11 +171,11 @@ func (c *Client) DeleteOAuth2Client(ctx context.Context, clientID, userID uint64
 	ctx, span := trace.StartSpan(ctx, "DeleteOAuth2Client")
 	defer span.End()
 
-	err := c.database.DeleteOAuth2Client(ctx, clientID, userID)
+	err := c.querier.DeleteOAuth2Client(ctx, clientID, userID)
 	if err != nil {
 		c.logger.
 			WithError(err).
-			Debug("error deleting oauth2 client to the database")
+			Debug("error deleting oauth2 client to the querier")
 		return err
 	}
 

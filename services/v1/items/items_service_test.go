@@ -7,15 +7,13 @@ import (
 
 	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	mmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1/mock"
 	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
-
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
-
 
 func buildTestService() *Service {
 	return &Service{

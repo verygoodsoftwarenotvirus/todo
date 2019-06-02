@@ -59,7 +59,7 @@ func TestItems(test *testing.T) {
 			actual, err := todoClient.GetItem(tctx, premade.ID)
 			checkValueAndError(t, actual, err)
 			checkItemEquality(t, expected, actual)
-			assert.NotZero(t, actual.CompletedOn)
+			assert.NotZero(t, actual.ArchivedOn)
 		})
 	})
 

@@ -19,7 +19,7 @@ func TestMigrate(T *testing.T) {
 			Return(nil)
 
 		c := &Client{
-			database: mockDB,
+			querier: mockDB,
 		}
 
 		actual := c.Migrate(context.Background())
@@ -33,7 +33,7 @@ func TestMigrate(T *testing.T) {
 			Return(errors.New("blah"))
 
 		c := &Client{
-			database: mockDB,
+			querier: mockDB,
 		}
 
 		actual := c.Migrate(context.Background())
@@ -51,7 +51,7 @@ func TestIsReady(T *testing.T) {
 			Return(true)
 
 		c := &Client{
-			database: mockDB,
+			querier: mockDB,
 		}
 
 		c.IsReady(context.Background())
@@ -73,7 +73,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	T.Run("with error migrating database", func(t *testing.T) {
+	T.Run("with error migrating querier", func(t *testing.T) {
 		expected := errors.New("blah")
 		mockDB := database.BuildMockDatabase()
 		mockDB.On("Migrate", mock.Anything).

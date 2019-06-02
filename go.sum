@@ -8,6 +8,8 @@ contrib.go.opencensus.io/integrations/ocsql v0.1.4 h1:kfg5Yyy1nYUrqzyfW5XX+dzMAS
 contrib.go.opencensus.io/integrations/ocsql v0.1.4/go.mod h1:8DsSdjz3F+APR+0z0WkU1aRorQCFfRxvqjUUPMbF3fE=
 github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78/go.mod h1:LmzpDX56iTiv29bbRTIsUNlaFfuhWRQBWjQdVyAevI8=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
+github.com/DATA-DOG/go-sqlmock v1.3.3 h1:CWUqKXe0s8A2z6qCgkP4Kru7wC11YoAnoupUKFDnH08=
+github.com/DATA-DOG/go-sqlmock v1.3.3/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/GuiaBolso/darwin v0.0.0-20170210191649-86919dfcf808 h1:rxDa2t7Ep7E26WMVHjl+mdLr9Un7yRSzz1CwRW6fWNY=
 github.com/GuiaBolso/darwin v0.0.0-20170210191649-86919dfcf808/go.mod h1:3sqgkckuISJ5rs1EpOp6vCvwOUKe/z9vPmyuIlq8Q/A=
 github.com/Masterminds/glide v0.13.2/go.mod h1:STyF5vcenH/rUqTEv+/hBXlSTo7KYwg2oc2f4tzPWic=

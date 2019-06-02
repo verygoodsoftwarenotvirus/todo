@@ -22,8 +22,8 @@ var (
 				"password_last_changed_on" integer,
 				"two_factor_secret" text NOT NULL,
 				"created_on" bigint NOT NULL DEFAULT extract(epoch FROM NOW()),
-				"updated_on" bigint,
-				"archived_on" bigint,
+				"updated_on" bigint DEFAULT NULL,
+				"archived_on" bigint DEFAULT NULL,
 				UNIQUE ("username")
 			);`,
 		},
@@ -54,8 +54,8 @@ var (
 				"name" text NOT NULL,
 				"details" text NOT NULL DEFAULT '',
 				"created_on" bigint NOT NULL DEFAULT extract(epoch FROM NOW()),
-				"updated_on" bigint,
-				"completed_on" bigint,
+				"updated_on" bigint DEFAULT NULL,
+				"archived_on" bigint DEFAULT NULL,
 				"belongs_to" bigint NOT NULL,
 				FOREIGN KEY ("belongs_to") REFERENCES "users"("id")
 			);`,
@@ -74,8 +74,8 @@ var (
 				"data_types" text NOT NULL,
 				"topics" text NOT NULL,
 				"created_on" bigint NOT NULL DEFAULT extract(epoch FROM NOW()),
-				"updated_on" bigint,
-				"archived_on" bigint,
+				"updated_on" bigint DEFAULT NULL,
+				"archived_on" bigint DEFAULT NULL,
 				"belongs_to" bigint NOT NULL,
 				FOREIGN KEY ("belongs_to") REFERENCES "users"("id")
 			);`,
@@ -91,11 +91,10 @@ func (p *Postgres) Migrate(ctx context.Context) error {
 	}
 
 	driver := darwin.NewGenericDriver(p.db, darwin.PostgresDialect{})
-	err := darwin.New(driver, migrations, nil).Migrate()
-
-	if err != nil {
-		p.logger.Error(err, "migrating db")
+	if err := darwin.New(driver, migrations, nil).Migrate(); err != nil {
+		p.logger.Error(err, "migrating database")
+		return errors.Wrap(err, "migrating database")
 	}
 
-	return err
+	return nil
 }

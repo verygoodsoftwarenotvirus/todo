@@ -228,7 +228,6 @@ func RandomAction(client *http2.V1Client) *Action {
 		// 	Weight: 100,
 		// },
 		//
-
 	}
 
 	totalWeight := 0

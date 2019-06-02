@@ -5,6 +5,8 @@ contrib.go.opencensus.io/exporter/jaeger/internal/gen-go/jaeger
 contrib.go.opencensus.io/exporter/prometheus
 # contrib.go.opencensus.io/integrations/ocsql v0.1.4
 contrib.go.opencensus.io/integrations/ocsql
+# github.com/DATA-DOG/go-sqlmock v1.3.3
+github.com/DATA-DOG/go-sqlmock
 # github.com/GuiaBolso/darwin v0.0.0-20170210191649-86919dfcf808
 github.com/GuiaBolso/darwin
 # github.com/Masterminds/squirrel v1.1.0

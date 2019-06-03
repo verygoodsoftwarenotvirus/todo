@@ -20,7 +20,14 @@ const (
 
 func init() {
 	// Explicitly wrap the SQLite3 driver with ocsql.
-	driver := ocsql.Wrap(&postgres.Driver{}, ocsql.WithQuery(true))
+	driver := ocsql.Wrap(
+		&postgres.Driver{},
+		ocsql.WithQuery(true),
+		ocsql.WithAllowRoot(false),
+		ocsql.WithRowsNext(true),
+		ocsql.WithRowsClose(true),
+		ocsql.WithQueryParams(true),
+	)
 
 	// Register our ocsql wrapper as a db driver.
 	sql.Register(postgresDriverName, driver)

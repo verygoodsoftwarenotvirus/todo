@@ -3,12 +3,14 @@ package encoding
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type example struct {
@@ -71,7 +73,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 		e := &example{Name: expectation}
 		ed := ProvideResponseEncoder()
 
-		bs, err := json.Marshal(e)
+		bs, err := xml.Marshal(e)
 		require.NoError(t, err)
 
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(bs))

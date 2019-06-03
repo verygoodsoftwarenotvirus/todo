@@ -1,5 +1,3 @@
-// +build !migrations
-
 package postgres
 
 import (

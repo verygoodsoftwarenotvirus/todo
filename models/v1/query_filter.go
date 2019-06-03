@@ -34,10 +34,8 @@ type QueryFilter struct {
 	SortBy        sortType `json:"sort_by"`
 }
 
-// DefaultQueryFilter represents the standard filter
-var DefaultQueryFilter = buildDefaultQueryFilter()
-
-func buildDefaultQueryFilter() *QueryFilter {
+// DefaultQueryFilter builds the default query filter
+func DefaultQueryFilter() *QueryFilter {
 	return &QueryFilter{
 		Page:   1,
 		Limit:  DefaultLimit,
@@ -92,7 +90,7 @@ func (qf *QueryFilter) QueryPage() uint64 {
 // ToValues returns a url.Values from a QueryFilter
 func (qf *QueryFilter) ToValues() url.Values {
 	if qf == nil {
-		return DefaultQueryFilter.ToValues()
+		return DefaultQueryFilter().ToValues()
 	}
 
 	v := url.Values{}
@@ -158,7 +156,7 @@ func (qf *QueryFilter) ApplyToQueryBuilder(queryBuilder squirrel.SelectBuilder) 
 
 // ExtractQueryFilter can extract a QueryFilter from a request
 func ExtractQueryFilter(req *http.Request) *QueryFilter {
-	qf := buildDefaultQueryFilter()
+	qf := DefaultQueryFilter()
 	qf.FromParams(req.URL.Query())
 	return qf
 }

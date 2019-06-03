@@ -131,7 +131,7 @@ func TestQueryFilter_ToValues(T *testing.T) {
 	T.Run("with nil", func(t *testing.T) {
 		qf := (*QueryFilter)(nil)
 
-		expected := DefaultQueryFilter.ToValues()
+		expected := DefaultQueryFilter().ToValues()
 		actual := qf.ToValues()
 
 		assert.Equal(t, expected, actual)

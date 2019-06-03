@@ -40,7 +40,7 @@ func (c *Client) GetItemCount(ctx context.Context, filter *models.QueryFilter, u
 
 	if filter == nil {
 		c.logger.Debug("using default query filter")
-		filter = models.DefaultQueryFilter
+		filter = models.DefaultQueryFilter()
 	}
 	filter.SetPage(filter.Page)
 
@@ -71,15 +71,16 @@ func (c *Client) GetItems(ctx context.Context, filter *models.QueryFilter, userI
 
 	if filter == nil {
 		logger.Debug("using default query filter")
-		filter = models.DefaultQueryFilter
+		filter = models.DefaultQueryFilter()
 	}
 	filter.SetPage(filter.Page)
 
 	itemList, err := c.querier.GetItems(ctx, filter, userID)
 
 	logger.WithValues(map[string]interface{}{
-		"itemList": itemList,
-		"err": err,
+		"item_count": itemList.TotalCount,
+		"item_list":  itemList.Items,
+		"err":        err,
 	}).Debug("returning from GetItems")
 
 	return itemList, err

@@ -394,7 +394,7 @@ func TestPostgres_buildGetOAuth2ClientCountQuery(T *testing.T) {
 		expectedArgCount := 1
 		expectedQuery := "SELECT COUNT(*) FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
 
-		actualQuery, args := p.buildGetOAuth2ClientCountQuery(models.DefaultQueryFilter, expectedUserID)
+		actualQuery, args := p.buildGetOAuth2ClientCountQuery(models.DefaultQueryFilter(), expectedUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 		assert.Equal(t, expectedUserID, args[0].(uint64))
@@ -416,7 +416,7 @@ func TestPostgres_GetOAuth2ClientCount(T *testing.T) {
 				sqlmock.NewRows([]string{"count"}).AddRow(expectedCount),
 			)
 
-		actualCount, err := p.GetOAuth2ClientCount(context.Background(), models.DefaultQueryFilter, expectedUserID)
+		actualCount, err := p.GetOAuth2ClientCount(context.Background(), models.DefaultQueryFilter(), expectedUserID)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedCount, actualCount)
 
@@ -466,7 +466,7 @@ func TestPostgres_buildGetOAuth2ClientsQuery(T *testing.T) {
 		expectedArgCount := 1
 		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
 
-		actualQuery, args := p.buildGetOAuth2ClientsQuery(models.DefaultQueryFilter, expectedUserID)
+		actualQuery, args := p.buildGetOAuth2ClientsQuery(models.DefaultQueryFilter(), expectedUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 		assert.Equal(t, expectedUserID, args[0].(uint64))
@@ -511,7 +511,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 				sqlmock.NewRows([]string{"count"}).AddRow(expected.TotalCount),
 			)
 
-		actual, err := p.GetOAuth2Clients(context.Background(), models.DefaultQueryFilter, expectedUserID)
+		actual, err := p.GetOAuth2Clients(context.Background(), models.DefaultQueryFilter(), expectedUserID)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -526,7 +526,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := p.GetOAuth2Clients(context.Background(), models.DefaultQueryFilter, expectedUserID)
+		actual, err := p.GetOAuth2Clients(context.Background(), models.DefaultQueryFilter(), expectedUserID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -542,7 +542,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := p.GetOAuth2Clients(context.Background(), models.DefaultQueryFilter, expectedUserID)
+		actual, err := p.GetOAuth2Clients(context.Background(), models.DefaultQueryFilter(), expectedUserID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -576,7 +576,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 				buildErroneousMockRowFromOAuth2Client(&expected.Clients[0]),
 			)
 
-		actual, err := p.GetOAuth2Clients(context.Background(), models.DefaultQueryFilter, expectedUserID)
+		actual, err := p.GetOAuth2Clients(context.Background(), models.DefaultQueryFilter(), expectedUserID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -616,7 +616,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := p.GetOAuth2Clients(context.Background(), models.DefaultQueryFilter, expectedUserID)
+		actual, err := p.GetOAuth2Clients(context.Background(), models.DefaultQueryFilter(), expectedUserID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 

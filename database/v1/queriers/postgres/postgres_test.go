@@ -53,6 +53,7 @@ func TestPostgres_IsReady(T *testing.T) {
 		p, _ := buildTestService(t)
 		assert.True(t, p.IsReady(context.Background()))
 	})
+
 }
 
 func Test_logQueryBuildingError(T *testing.T) {

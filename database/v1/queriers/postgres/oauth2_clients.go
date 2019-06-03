@@ -3,8 +3,9 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"strings"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -63,12 +64,6 @@ func scanOAuth2Client(scan database.Scanner) (*models.OAuth2Client, error) {
 func scanOAuth2Clients(logger logging.Logger, rows *sql.Rows) ([]*models.OAuth2Client, error) {
 	var list []*models.OAuth2Client
 
-	defer func() {
-		if err := rows.Close(); err != nil {
-			logger.Error(err, "closing rows")
-		}
-	}()
-
 	for rows.Next() {
 		client, err := scanOAuth2Client(rows)
 		if err != nil {
@@ -79,6 +74,8 @@ func scanOAuth2Clients(logger logging.Logger, rows *sql.Rows) ([]*models.OAuth2C
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
+	logQueryBuildingError(logger, rows.Close())
 
 	return list, nil
 }

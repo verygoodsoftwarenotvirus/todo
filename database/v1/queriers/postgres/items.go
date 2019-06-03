@@ -3,13 +3,15 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"github.com/pkg/errors"
+	"strings"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -31,7 +33,7 @@ var (
 func scanItem(scan database.Scanner) (*models.Item, error) {
 	x := &models.Item{}
 
-	err := scan.Scan(
+	if err := scan.Scan(
 		&x.ID,
 		&x.Name,
 		&x.Details,
@@ -39,8 +41,7 @@ func scanItem(scan database.Scanner) (*models.Item, error) {
 		&x.UpdatedOn,
 		&x.ArchivedOn,
 		&x.BelongsTo,
-	)
-	if err != nil {
+	); err != nil {
 		return nil, err
 	}
 
@@ -50,24 +51,28 @@ func scanItem(scan database.Scanner) (*models.Item, error) {
 func scanItems(logger logging.Logger, rows *sql.Rows) ([]models.Item, error) {
 	var list []models.Item
 
-	// RENAMEME this call proves this function's name is bad
-	defer logQueryBuildingError(logger, rows.Close())
+	cols, err := rows.Columns()
+	logger.
+		WithError(err).
+		WithValue("columns", strings.Join(cols, "|")).
+		Debug("scanItems Called")
 
-	var rowCount int
 	for rows.Next() {
 		x, err := scanItem(rows)
 		if err != nil {
 			return nil, err
 		}
 		list = append(list, *x)
-		rowCount++
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	logger.WithValue("row_count", rowCount).Debug("returning fine from scanItems")
+	logger.WithValue("row_count", len(list)).Debug("returning fine from scanItems")
+
+	// RENAMEME this call proves this function's name is bad
+	logQueryBuildingError(logger, rows.Close())
 
 	return list, nil
 }

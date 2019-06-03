@@ -68,7 +68,7 @@ func (c *Client) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryF
 
 	if filter == nil {
 		c.logger.Debug("using default query filter")
-		filter = models.DefaultQueryFilter
+		filter = models.DefaultQueryFilter()
 	}
 
 	logger := c.logger.WithValues(map[string]interface{}{
@@ -115,7 +115,7 @@ func (c *Client) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilte
 
 	if filter == nil {
 		logger.Debug("using default query filter")
-		filter = models.DefaultQueryFilter
+		filter = models.DefaultQueryFilter()
 	}
 
 	filter.SetPage(filter.Page)

@@ -74,12 +74,6 @@ func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 func scanWebhooks(logger logging.Logger, rows *sql.Rows) ([]models.Webhook, error) {
 	var list []models.Webhook
 
-	defer func() {
-		if err := rows.Close(); err != nil {
-			logger.Error(err, "closing rows")
-		}
-	}()
-
 	for rows.Next() {
 		webhook, err := scanWebhook(rows)
 		if err != nil {
@@ -90,6 +84,8 @@ func scanWebhooks(logger logging.Logger, rows *sql.Rows) ([]models.Webhook, erro
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
+	logQueryBuildingError(logger, rows.Close())
 
 	return list, nil
 }

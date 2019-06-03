@@ -3,12 +3,13 @@ package postgres
 import (
 	"context"
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/lib/pq"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -95,7 +96,7 @@ func TestPostgres_buildGetUsersQuery(T *testing.T) {
 		expectedArgCount := 0
 		expectedQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, created_on, updated_on, archived_on FROM users WHERE archived_on IS NULL LIMIT 20"
 
-		actualQuery, args := p.buildGetUsersQuery(models.DefaultQueryFilter)
+		actualQuery, args := p.buildGetUsersQuery(models.DefaultQueryFilter())
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 	})
@@ -134,7 +135,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 				sqlmock.NewRows([]string{"count"}).AddRow(expectedCount),
 			)
 
-		actual, err := p.GetUsers(context.Background(), models.DefaultQueryFilter)
+		actual, err := p.GetUsers(context.Background(), models.DefaultQueryFilter())
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -148,7 +149,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := p.GetUsers(context.Background(), models.DefaultQueryFilter)
+		actual, err := p.GetUsers(context.Background(), models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -183,7 +184,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := p.GetUsers(context.Background(), models.DefaultQueryFilter)
+		actual, err := p.GetUsers(context.Background(), models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -261,7 +262,7 @@ func TestPostgres_buildGetUserCountQuery(T *testing.T) {
 		expectedArgCount := 0
 		expectedQuery := "SELECT COUNT(*) FROM users WHERE archived_on IS NULL LIMIT 20"
 
-		actualQuery, args := p.buildGetUserCountQuery(models.DefaultQueryFilter)
+		actualQuery, args := p.buildGetUserCountQuery(models.DefaultQueryFilter())
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 	})
@@ -280,7 +281,7 @@ func TestPostgres_GetUserCount(T *testing.T) {
 				sqlmock.NewRows([]string{"count"}).AddRow(expected),
 			)
 
-		actual, err := p.GetUserCount(context.Background(), models.DefaultQueryFilter)
+		actual, err := p.GetUserCount(context.Background(), models.DefaultQueryFilter())
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -294,7 +295,7 @@ func TestPostgres_GetUserCount(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := p.GetUserCount(context.Background(), models.DefaultQueryFilter)
+		actual, err := p.GetUserCount(context.Background(), models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Zero(t, actual)
 

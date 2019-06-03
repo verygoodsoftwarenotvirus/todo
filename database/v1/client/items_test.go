@@ -18,14 +18,16 @@ func TestClient_GetItem(T *testing.T) {
 		exampleUserID := uint64(123)
 		expected := &models.Item{}
 
-		c, db := buildTestClient()
-		db.ItemDataManager.
+		c, mockDB := buildTestClient()
+		mockDB.ItemDataManager.
 			On("GetItem", mock.Anything, exampleItemID, exampleUserID).
 			Return(expected, nil)
 
 		actual, err := c.GetItem(context.Background(), exampleItemID, exampleUserID)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
+
+		mockDB.AssertExpectations(t)
 	})
 }
 
@@ -36,14 +38,32 @@ func TestClient_GetItemCount(T *testing.T) {
 		expected := uint64(321)
 		exampleUserID := uint64(123)
 
-		c, db := buildTestClient()
-		db.ItemDataManager.
-			On("GetItemCount", mock.Anything, models.DefaultQueryFilter, exampleUserID).
+		c, mockDB := buildTestClient()
+		mockDB.ItemDataManager.
+			On("GetItemCount", mock.Anything, models.DefaultQueryFilter(), exampleUserID).
 			Return(expected, nil)
 
-		actual, err := c.GetItemCount(context.Background(), models.DefaultQueryFilter, exampleUserID)
+		actual, err := c.GetItemCount(context.Background(), models.DefaultQueryFilter(), exampleUserID)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
+
+		mockDB.AssertExpectations(t)
+	})
+
+	T.Run("with nil filter", func(t *testing.T) {
+		expected := uint64(321)
+		exampleUserID := uint64(123)
+
+		c, mockDB := buildTestClient()
+		mockDB.ItemDataManager.
+			On("GetItemCount", mock.Anything, models.DefaultQueryFilter(), exampleUserID).
+			Return(expected, nil)
+
+		actual, err := c.GetItemCount(context.Background(), nil, exampleUserID)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+
+		mockDB.AssertExpectations(t)
 	})
 }
 
@@ -52,14 +72,16 @@ func TestClient_GetAllItemsCount(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		expected := uint64(321)
-		c, db := buildTestClient()
-		db.ItemDataManager.
+		c, mockDB := buildTestClient()
+		mockDB.ItemDataManager.
 			On("GetAllItemsCount", mock.Anything).
 			Return(expected, nil)
 
 		actual, err := c.GetAllItemsCount(context.Background())
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
+
+		mockDB.AssertExpectations(t)
 	})
 }
 
@@ -68,16 +90,34 @@ func TestClient_GetItems(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		exampleUserID := uint64(123)
-		c, db := buildTestClient()
+		c, mockDB := buildTestClient()
 		expected := &models.ItemList{}
 
-		db.ItemDataManager.
-			On("GetItems", mock.Anything, models.DefaultQueryFilter, exampleUserID).
+		mockDB.ItemDataManager.
+			On("GetItems", mock.Anything, models.DefaultQueryFilter(), exampleUserID).
 			Return(expected, nil)
 
-		actual, err := c.GetItems(context.Background(), models.DefaultQueryFilter, exampleUserID)
+		actual, err := c.GetItems(context.Background(), models.DefaultQueryFilter(), exampleUserID)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
+
+		mockDB.AssertExpectations(t)
+	})
+
+	T.Run("with nil filter", func(t *testing.T) {
+		exampleUserID := uint64(123)
+		c, mockDB := buildTestClient()
+		expected := &models.ItemList{}
+
+		mockDB.ItemDataManager.
+			On("GetItems", mock.Anything, models.DefaultQueryFilter(), exampleUserID).
+			Return(expected, nil)
+
+		actual, err := c.GetItems(context.Background(), nil, exampleUserID)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+
+		mockDB.AssertExpectations(t)
 	})
 }
 
@@ -86,16 +126,18 @@ func TestClient_CreateItem(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		exampleInput := &models.ItemInput{}
-		c, db := buildTestClient()
+		c, mockDB := buildTestClient()
 		expected := &models.Item{}
 
-		db.ItemDataManager.
+		mockDB.ItemDataManager.
 			On("CreateItem", mock.Anything, exampleInput).
 			Return(expected, nil)
 
 		actual, err := c.CreateItem(context.Background(), exampleInput)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
+
+		mockDB.AssertExpectations(t)
 	})
 }
 
@@ -104,10 +146,10 @@ func TestClient_UpdateItem(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		exampleInput := &models.Item{}
-		c, db := buildTestClient()
+		c, mockDB := buildTestClient()
 		var expected error
 
-		db.ItemDataManager.
+		mockDB.ItemDataManager.
 			On("UpdateItem", mock.Anything, exampleInput).
 			Return(expected)
 
@@ -124,8 +166,8 @@ func TestClient_DeleteItem(T *testing.T) {
 		exampleItemID := uint64(123)
 		var expected error
 
-		c, db := buildTestClient()
-		db.ItemDataManager.On("DeleteItem", mock.Anything, exampleItemID, exampleUserID).
+		c, mockDB := buildTestClient()
+		mockDB.ItemDataManager.On("DeleteItem", mock.Anything, exampleItemID, exampleUserID).
 			Return(expected)
 
 		err := c.DeleteItem(context.Background(), exampleUserID, exampleItemID)

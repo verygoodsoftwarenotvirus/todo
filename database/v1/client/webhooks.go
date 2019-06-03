@@ -40,7 +40,7 @@ func (c *Client) GetWebhookCount(ctx context.Context, filter *models.QueryFilter
 
 	if filter == nil {
 		c.logger.Debug("using default query filter")
-		filter = models.DefaultQueryFilter
+		filter = models.DefaultQueryFilter()
 	}
 	filter.SetPage(filter.Page)
 
@@ -80,7 +80,7 @@ func (c *Client) GetWebhooks(ctx context.Context, filter *models.QueryFilter, us
 
 	if filter == nil {
 		c.logger.Debug("using default query filter")
-		filter = models.DefaultQueryFilter
+		filter = models.DefaultQueryFilter()
 	}
 	filter.SetPage(filter.Page)
 

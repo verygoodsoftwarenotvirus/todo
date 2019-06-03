@@ -22,6 +22,17 @@ services:
     # logging:
     #   driver: none
 
+  database:
+    image: postgres:latest
+    ports:
+      - '2345:5432'
+    environment:
+      POSTGRES_DB: todo
+      POSTGRES_USER: dbuser
+      POSTGRES_PASSWORD: hunter2
+    logging:
+      driver: none
+
   tracing-server:
     image: jaegertracing/all-in-one:latest
     ports:
@@ -32,17 +43,6 @@ services:
       - 16686:16686
       - 14268:14268
       - 9411:9411
-    logging:
-      driver: none
-
-  database:
-    image: postgres:latest
-    ports:
-      - '2345:5432'
-    environment:
-      POSTGRES_DB: todo
-      POSTGRES_USER: dbuser
-      POSTGRES_PASSWORD: hunter2
     logging:
       driver: none
 

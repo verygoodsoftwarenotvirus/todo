@@ -9,6 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
@@ -18,6 +19,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func buildTestServer() *Server {
@@ -44,6 +46,8 @@ func TestProvideServer(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		mockDB := database.BuildMockDatabase()
+		mockDB.WebhookDataManager.On("GetAllWebhooks", mock.Anything).
+			Return(&models.WebhookList{}, nil)
 
 		actual, err := ProvideServer(
 			&config.ServerConfig{

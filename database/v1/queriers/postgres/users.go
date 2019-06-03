@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
@@ -53,12 +54,6 @@ func scanUser(scan database.Scanner) (*models.User, error) {
 func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, error) {
 	var list []models.User
 
-	defer func() {
-		if err := rows.Close(); err != nil {
-			logger.Error(err, "closing rows")
-		}
-	}()
-
 	for rows.Next() {
 		user, err := scanUser(rows)
 		if err != nil {
@@ -70,6 +65,8 @@ func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, error) {
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
+	logQueryBuildingError(logger, rows.Close())
 
 	return list, nil
 }

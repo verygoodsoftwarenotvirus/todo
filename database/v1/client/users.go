@@ -49,7 +49,7 @@ func (c *Client) GetUserCount(ctx context.Context, filter *models.QueryFilter) (
 
 	if filter == nil {
 		c.logger.Debug("using default query filter")
-		filter = models.DefaultQueryFilter
+		filter = models.DefaultQueryFilter()
 	}
 
 	c.logger.WithValue("filter", filter).Debug("GetUserCount called")
@@ -67,7 +67,7 @@ func (c *Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mod
 
 	if filter == nil {
 		logger.Debug("using default query filter")
-		filter = models.DefaultQueryFilter
+		filter = models.DefaultQueryFilter()
 	}
 
 	c.logger.WithValue("filter", filter).Debug("GetUsers called")

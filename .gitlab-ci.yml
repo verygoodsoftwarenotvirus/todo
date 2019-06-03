@@ -19,6 +19,7 @@ coverage:
   variables:
     GOPATH: '/go'
   script:
+    - apk add --update --no-cache make git gcc musl-dev
     - make coverage
 
 integration-tests:

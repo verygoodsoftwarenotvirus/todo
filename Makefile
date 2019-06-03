@@ -62,6 +62,16 @@ test:
 	docker build --tag coverage-$(SERVER_DOCKER_IMAGE_NAME):latest --file dockerfiles/coverage.Dockerfile .
 	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` coverage-$(SERVER_DOCKER_IMAGE_NAME):latest
 
+.PHONY: frontend-tests
+frontend-tests:
+	docker-compose --file compose-files/frontend-tests.yaml up \
+	--build \
+	--force-recreate \
+	--remove-orphans \
+	--renew-anon-volumes \
+	--always-recreate-deps \
+	--abort-on-container-exit
+
 .PHONY: integration-tests
 integration-tests:
 	docker-compose --file compose-files/integration-tests.yaml up \

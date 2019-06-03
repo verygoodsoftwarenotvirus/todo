@@ -59,6 +59,6 @@
     2FA code:
     <input bind:value={totp_token} on:keyup={evaluateSubmission} type="text" />
   </p>
-  <input type="submit" value="login" disabled={!canSubmit} />
+  <input id="loginButton" type="submit" value="login" disabled={!canSubmit} />
   <Link to="/register">register instead</Link>
 </form>

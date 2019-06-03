@@ -22,6 +22,7 @@ func stripQuery(q string) (s string) {
 // configured through an option when sqlmock.New or sqlmock.NewWithDSN
 // is called, default QueryMatcher is QueryMatcherRegexp.
 type QueryMatcher interface {
+
 	// Match expected SQL query string without whitespace to
 	// actual SQL.
 	Match(expectedSQL, actualSQL string) error

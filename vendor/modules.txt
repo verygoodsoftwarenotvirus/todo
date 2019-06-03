@@ -13,9 +13,11 @@ github.com/GuiaBolso/darwin
 github.com/Masterminds/squirrel
 # github.com/apache/thrift v0.12.0
 github.com/apache/thrift/lib/go/thrift
-# github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
+# github.com/beorn7/perks v1.0.0
 github.com/beorn7/perks/quantile
-# github.com/boombuler/barcode v1.0.0
+# github.com/blang/semver v3.5.1+incompatible
+github.com/blang/semver
+# github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc
 github.com/boombuler/barcode
 github.com/boombuler/barcode/qr
 github.com/boombuler/barcode/utils
@@ -34,15 +36,15 @@ github.com/go-chi/chi
 github.com/go-chi/chi/middleware
 # github.com/go-chi/cors v1.0.0
 github.com/go-chi/cors
-# github.com/golang/protobuf v1.2.0
+# github.com/golang/protobuf v1.3.1
 github.com/golang/protobuf/proto
-# github.com/google/wire v0.2.1
+# github.com/google/wire v0.2.2
 github.com/google/wire
 # github.com/gorilla/securecookie v1.1.1
 github.com/gorilla/securecookie
 # github.com/gorilla/websocket v1.4.0
 github.com/gorilla/websocket
-# github.com/hashicorp/golang-lru v0.5.0
+# github.com/hashicorp/golang-lru v0.5.1
 github.com/hashicorp/golang-lru/simplelru
 # github.com/hashicorp/hcl v1.0.0
 github.com/hashicorp/hcl
@@ -81,26 +83,24 @@ github.com/pelletier/go-toml
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
-# github.com/pquerna/otp v1.1.0
+# github.com/pquerna/otp v1.2.0
 github.com/pquerna/otp/totp
 github.com/pquerna/otp
 github.com/pquerna/otp/hotp
-# github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829
+# github.com/prometheus/client_golang v0.9.3
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/promhttp
 github.com/prometheus/client_golang/prometheus/internal
-# github.com/prometheus/client_model v0.0.0-20190115171406-56726106282f
+# github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.2.0
+# github.com/prometheus/common v0.4.0
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/model
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
-# github.com/prometheus/procfs v0.0.0-20190117184657-bf6a532e95b1
+# github.com/prometheus/procfs v0.0.0-20190507164030-5867b95ac084
 github.com/prometheus/procfs
-github.com/prometheus/procfs/nfs
-github.com/prometheus/procfs/xfs
-github.com/prometheus/procfs/internal/util
-# github.com/rs/zerolog v1.11.0
+github.com/prometheus/procfs/internal/fs
+# github.com/rs/zerolog v1.14.3
 github.com/rs/zerolog
 github.com/rs/zerolog/internal/cbor
 github.com/rs/zerolog/internal/json
@@ -113,7 +113,7 @@ github.com/spf13/cast
 github.com/spf13/jwalterweatherman
 # github.com/spf13/pflag v1.0.3
 github.com/spf13/pflag
-# github.com/spf13/viper v1.3.2
+# github.com/spf13/viper v1.4.0
 github.com/spf13/viper
 # github.com/streadway/quantile v0.0.0-20150917103942-b0c588724d25
 github.com/streadway/quantile
@@ -123,6 +123,12 @@ github.com/stretchr/objx
 github.com/stretchr/testify/mock
 github.com/stretchr/testify/require
 github.com/stretchr/testify/assert
+# github.com/tebeka/selenium v0.9.4-0.20181011202039-edf31bb7fd71
+github.com/tebeka/selenium
+github.com/tebeka/selenium/chrome
+github.com/tebeka/selenium/firefox
+github.com/tebeka/selenium/log
+github.com/tebeka/selenium/internal/zip
 # github.com/tidwall/btree v0.0.0-20170113224114-9876f1454cf0
 github.com/tidwall/btree
 # github.com/tidwall/buntdb v1.0.0
@@ -141,7 +147,7 @@ github.com/tidwall/tinyqueue
 # gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.0-20190528023929-c49dc073f989
 gitlab.com/verygoodsoftwarenotvirus/newsman
 gitlab.com/verygoodsoftwarenotvirus/newsman/mock
-# go.opencensus.io v0.21.0
+# go.opencensus.io v0.22.0
 go.opencensus.io/plugin/ochttp
 go.opencensus.io/trace
 go.opencensus.io/stats/view
@@ -162,24 +168,24 @@ go.opencensus.io/resource
 # go.uber.org/ratelimit v0.0.0-20180316092928-c15da0234277
 go.uber.org/ratelimit
 go.uber.org/ratelimit/internal/clock
-# golang.org/x/crypto v0.0.0-20190506204251-e1dfcc566284
+# golang.org/x/crypto v0.0.0-20190530122614-20be4c3c3ed5
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
-# golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3
+# golang.org/x/net v0.0.0-20190522155817-f3200d17e092
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/context
-# golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a
+# golang.org/x/oauth2 v0.0.0-20190523182746-aaccbc9213b0
 golang.org/x/oauth2
 golang.org/x/oauth2/clientcredentials
 golang.org/x/oauth2/internal
 # golang.org/x/sync v0.0.0-20190423024810-112230192c58
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.0.0-20190412213103-97732733099d
+# golang.org/x/sys v0.0.0-20190502145724-3ef323f4f1fd
 golang.org/x/sys/unix
-# golang.org/x/text v0.3.0
+# golang.org/x/text v0.3.2
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
-# golang.org/x/tools v0.0.0-20190503185657-3b6f9c0030f7
+# golang.org/x/tools v0.0.0-20190602112858-2de7f9bf822c
 golang.org/x/tools/cover
 # google.golang.org/api v0.3.2
 google.golang.org/api/support/bundler

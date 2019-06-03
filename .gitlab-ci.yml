@@ -14,13 +14,14 @@ before_script:
   - cd /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
   - apt-get update -y && apt-get install -y make git gcc musl-dev
 
-unit-tests:
+coverage:
   stage: testing
   image: golang:stretch
   variables:
     GOPATH: '/go'
   script:
-    - make coverage.out
+    - go get -u github.com/axw/gocov/gocov
+    - make coverage
 
 integration-tests:
   stage: testing

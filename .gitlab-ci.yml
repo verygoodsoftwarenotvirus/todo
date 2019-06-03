@@ -16,11 +16,13 @@ before_script:
 
 coverage:
   stage: testing
+  image: golang:stretch
   variables:
     GOPATH: '/go'
   script:
-    - apk add --update --no-cache make git gcc musl-dev
-    - make coverage
+    - apt-get update -y && apt-get install -y make git gcc musl-dev
+    - GO111MODULES=off go get -u github.com/axw/gocov/gocov
+    - make coverage.out
 
 integration-tests:
   stage: testing

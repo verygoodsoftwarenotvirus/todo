@@ -83,7 +83,7 @@ func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
 		Password: fake.Password(64, 128, true, true, true),
 	}
 
-	ucr, err := c.CreateNewUser(context.Background(), in)
+	ucr, err := c.CreateUser(context.Background(), in)
 	if err != nil {
 		return nil, err
 	} else if ucr == nil {
@@ -95,7 +95,6 @@ func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
 		Username:              ucr.Username,
 		HashedPassword:        in.Password, // this is a dirty trick to reuse most of this model
 		TwoFactorSecret:       ucr.TwoFactorSecret,
-		IsAdmin:               ucr.IsAdmin,
 		PasswordLastChangedOn: ucr.PasswordLastChangedOn,
 		CreatedOn:             ucr.CreatedOn,
 		UpdatedOn:             ucr.UpdatedOn,

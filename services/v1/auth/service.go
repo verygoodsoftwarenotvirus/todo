@@ -3,15 +3,13 @@ package auth
 import (
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
+	"github.com/gorilla/securecookie"
 	libauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
-
-	"github.com/gorilla/securecookie"
 )
 
 const (
@@ -19,15 +17,26 @@ const (
 )
 
 type (
+	// OAuth2ClientValidator is a stand-in interface, where we needed to abstract
+	// a regular structure with an interface for testing purposes
+	OAuth2ClientValidator interface {
+		RequestIsAuthenticated(req *http.Request) (*models.OAuth2Client, error)
+	}
+
+	cookieEncoderDecoder interface {
+		Encode(name string, value interface{}) (string, error)
+		Decode(name, value string, dst interface{}) error
+	}
+
 	// Service handles auth
 	Service struct {
-		authenticator        libauth.Authenticator
 		logger               logging.Logger
+		authenticator        libauth.Authenticator
 		userIDFetcher        UserIDFetcher
-		database             models.UserDataManager
-		oauth2ClientsService *oauth2clients.Service
-		encoder              encoding.EncoderDecoder
-		cookieBuilder        *securecookie.SecureCookie
+		userDB               models.UserDataManager
+		oauth2ClientsService OAuth2ClientValidator
+		encoderDecoder       encoding.EncoderDecoder
+		cookieBuilder        cookieEncoderDecoder
 	}
 )
 
@@ -40,14 +49,14 @@ func ProvideAuthService(
 	config *config.ServerConfig,
 	authenticator libauth.Authenticator,
 	database models.UserDataManager,
-	oauth2ClientsService *oauth2clients.Service,
+	oauth2ClientsService OAuth2ClientValidator,
 	userIDFetcher UserIDFetcher,
 	encoder encoding.EncoderDecoder,
 ) *Service {
 	svc := &Service{
 		logger:               logger.WithName(serviceName),
-		encoder:              encoder,
-		database:             database,
+		encoderDecoder:       encoder,
+		userDB:               database,
 		oauth2ClientsService: oauth2ClientsService,
 		authenticator:        authenticator,
 		userIDFetcher:        userIDFetcher,

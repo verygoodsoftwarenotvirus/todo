@@ -2,12 +2,13 @@ package config
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"contrib.go.opencensus.io/exporter/jaeger"
 	"contrib.go.opencensus.io/exporter/prometheus"
@@ -19,6 +20,10 @@ import (
 const (
 	// MetricsNamespace is the namespace under which we register metrics
 	MetricsNamespace = "todo_server"
+
+	// MinimumRuntimeCollectionInterval is the smallest interval we can collect metrics at
+	// this value is used to guard against zero values
+	MinimumRuntimeCollectionInterval = time.Second
 )
 
 type (
@@ -55,7 +60,12 @@ func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) (m
 	if err := metrics.RegisterDefaultViews(); err != nil {
 		return nil, errors.Wrap(err, "registering default metric views")
 	}
-	_ = metrics.RecordRuntimeStats(cfg.Metrics.RuntimeMetricsCollectionInterval)
+	_ = metrics.RecordRuntimeStats(time.Duration(
+		math.Max(
+			float64(MinimumRuntimeCollectionInterval),
+			float64(cfg.Metrics.RuntimeMetricsCollectionInterval),
+		),
+	))
 
 	log := logger.WithValue("metrics_provider", cfg.Metrics.MetricsProvider)
 	log.Debug("setting metrics provider")

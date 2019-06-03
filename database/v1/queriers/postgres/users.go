@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -24,14 +26,13 @@ var (
 		"hashed_password",
 		"password_last_changed_on",
 		"two_factor_secret",
-		"is_admin",
 		"created_on",
 		"updated_on",
 		"archived_on",
 	}
 )
 
-func (p Postgres) scanUser(scan database.Scanner) (*models.User, error) {
+func scanUser(scan database.Scanner) (*models.User, error) {
 	var x = &models.User{}
 	err := scan.Scan(
 		&x.ID,
@@ -39,7 +40,6 @@ func (p Postgres) scanUser(scan database.Scanner) (*models.User, error) {
 		&x.HashedPassword,
 		&x.PasswordLastChangedOn,
 		&x.TwoFactorSecret,
-		&x.IsAdmin,
 		&x.CreatedOn,
 		&x.UpdatedOn,
 		&x.ArchivedOn,
@@ -51,17 +51,11 @@ func (p Postgres) scanUser(scan database.Scanner) (*models.User, error) {
 	return x, nil
 }
 
-func (p *Postgres) scanUsers(rows *sql.Rows) ([]models.User, error) {
+func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, error) {
 	var list []models.User
 
-	defer func() {
-		if err := rows.Close(); err != nil {
-			p.logger.Error(err, "closing rows")
-		}
-	}()
-
 	for rows.Next() {
-		user, err := p.scanUser(rows)
+		user, err := scanUser(rows)
 		if err != nil {
 			return nil, errors.Wrap(err, "scanning user result")
 		}
@@ -72,77 +66,52 @@ func (p *Postgres) scanUsers(rows *sql.Rows) ([]models.User, error) {
 		return nil, err
 	}
 
+	logQueryBuildingError(logger, rows.Close())
+
 	return list, nil
 }
 
-const adminUserExistsQuery = `
-	SELECT EXISTS(SELECT id FROM users WHERE is_admin = true)
-`
+func (p *Postgres) buildGetUserQuery(userID uint64) (string, []interface{}) {
+	query, args, err := p.sqlBuilder.
+		Select(usersTableColumns...).
+		From(usersTableName).
+		Where(squirrel.Eq{"id": userID}).
+		ToSql()
 
-// AdminUserExists validates whether or not an admin user exists
-func (p *Postgres) AdminUserExists(ctx context.Context) (bool, error) {
-	var exists string
+	logQueryBuildingError(p.logger, err)
 
-	err := p.database.QueryRowContext(ctx, adminUserExistsQuery).Scan(&exists)
-	if err == sql.ErrNoRows {
-		return false, nil
-	} else if err != nil {
-		return false, err
-	}
-
-	return exists == "true", err
+	return query, args
 }
-
-const getUserQuery = `
-	SELECT
-		id,
-		username,
-		hashed_password,
-		password_last_changed_on,
-		two_factor_secret,
-		is_admin,
-		created_on,
-		updated_on,
-		archived_on
-	FROM
-		users
-	WHERE
-		id = $1
-`
 
 // GetUser fetches a user by their username
 func (p *Postgres) GetUser(ctx context.Context, userID uint64) (*models.User, error) {
-	row := p.database.QueryRowContext(ctx, getUserQuery, userID)
-	u, err := p.scanUser(row)
+	query, args := p.buildGetUserQuery(userID)
+	row := p.db.QueryRowContext(ctx, query, args...)
+	u, err := scanUser(row)
 	return u, err
 }
 
-const getUserByUsernameQuery = `
-	SELECT
-		id,
-		username,
-		hashed_password,
-		password_last_changed_on,
-		two_factor_secret,
-		is_admin,
-		created_on,
-		updated_on,
-		archived_on
-	FROM
-		users
-	WHERE
-		username = $1
-`
+func (p *Postgres) buildGetUserByUsernameQuery(username string) (string, []interface{}) {
+	query, args, err := p.sqlBuilder.
+		Select(usersTableColumns...).
+		From(usersTableName).
+		Where(squirrel.Eq{"username": username}).
+		ToSql()
+
+	logQueryBuildingError(p.logger, err)
+
+	return query, args
+}
 
 // GetUserByUsername fetches a user by their username
 func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
-	row := p.database.QueryRowContext(ctx, getUserByUsernameQuery, username)
-	u, err := p.scanUser(row)
+	query, args := p.buildGetUserByUsernameQuery(username)
+	row := p.db.QueryRowContext(ctx, query, args...)
+	u, err := scanUser(row)
 	return u, err
 }
 
-// GetUserCount fetches a count of users from the postgres database that meet a particular filter
-func (p *Postgres) GetUserCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
+func (p *Postgres) buildGetUserCountQuery(filter *models.QueryFilter) (string, []interface{}) {
 	builder := p.sqlBuilder.
 		Select("COUNT(*)").
 		From(usersTableName).
@@ -153,16 +122,20 @@ func (p *Postgres) GetUserCount(ctx context.Context, filter *models.QueryFilter)
 	builder = filter.ApplyToQueryBuilder(builder)
 
 	query, args, err := builder.ToSql()
-	if err != nil {
-		return 0, errors.Wrap(err, "generating query")
-	}
 
-	err = p.database.QueryRowContext(ctx, query, args...).Scan(&count)
+	logQueryBuildingError(p.logger, err)
+
+	return query, args
+}
+
+// GetUserCount fetches a count of users from the postgres db that meet a particular filter
+func (p *Postgres) GetUserCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
+	query, args := p.buildGetUserCountQuery(filter)
+	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return
 }
 
-// GetUsers fetches a list of users from the postgres database that meet a particular filter
-func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
+func (p *Postgres) buildGetUsersQuery(filter *models.QueryFilter) (string, []interface{}) {
 	builder := p.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
@@ -170,29 +143,23 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 			"archived_on": nil,
 		}))
 
-	builder = filter.ApplyToQueryBuilder(builder)
-
-	query, args, err := builder.ToSql()
-	if err != nil {
-		return nil, errors.Wrap(err, "generating query")
+	if filter != nil {
+		builder = filter.ApplyToQueryBuilder(builder)
 	}
 
-	rows, err := p.database.QueryContext(
-		ctx,
-		query,
-		args...,
-	)
+	query, args, err := builder.ToSql()
+	logQueryBuildingError(p.logger, err)
+	return query, args
+}
+
+// GetUsers fetches a list of users from the postgres db that meet a particular filter
+func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
+	query, args := p.buildGetUsersQuery(filter)
+	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
-
-	defer func() {
-		if e := rows.Close(); e != nil {
-			p.logger.Error(e, "closing rows")
-		}
-	}()
-
-	userList, err := p.scanUsers(rows)
+	userList, err := scanUsers(p.logger, rows)
 	if err != nil {
 		return nil, err
 	}
@@ -214,97 +181,90 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 	return x, nil
 }
 
-const createUserQuery = `
-	INSERT INTO users
-	(
-		username,
-		hashed_password,
-		two_factor_secret,
-		is_admin
-	)
-	VALUES
-	(
-		$1, $2, $3, $4
-	)
-	RETURNING
-		id,
-		created_on
-`
+func (p *Postgres) buildCreateUserQuery(input *models.UserInput) (string, []interface{}) {
+	query, args, err := p.sqlBuilder.Insert(usersTableName).
+		Columns(
+			"username",
+			"hashed_password",
+			"two_factor_secret",
+		).
+		Values(
+			input.Username,
+			input.Password,
+			input.TwoFactorSecret,
+		).
+		Suffix("RETURNING id, created_on").
+		ToSql()
+
+	logQueryBuildingError(p.logger, err)
+
+	return query, args
+}
 
 // CreateUser creates a user
 func (p *Postgres) CreateUser(ctx context.Context, input *models.UserInput) (*models.User, error) {
 	x := &models.User{
 		Username:        input.Username,
 		TwoFactorSecret: input.TwoFactorSecret,
-		IsAdmin:         input.IsAdmin,
 	}
 
+	query, args := p.buildCreateUserQuery(input)
+
 	// create the user
-	err := p.database.
-		QueryRowContext(
-			ctx,
-			createUserQuery,
-			input.Username,
-			input.Password,
-			input.TwoFactorSecret,
-			input.IsAdmin,
-		).Scan(&x.ID, &x.CreatedOn)
+	err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
 	if err != nil {
-		if e, ok := err.(*pq.Error); ok {
+		switch e := err.(type) {
+		case *pq.Error:
 			if e.Code == pq.ErrorCode("23505") {
 				return nil, dbclient.ErrUserExists
 			}
-
+		default:
+			return nil, errors.Wrap(err, "error executing user creation query")
 		}
-
-		return nil, errors.Wrap(err, "error executing user creation query")
 	}
 
 	return x, nil
 }
 
-const updateUserQuery = `
-	UPDATE users
-	SET
-		username = $1,
-		hashed_password = $2,
-		two_factor_secret = $3,
-		updated_on = extract(epoch FROM NOW())
-	WHERE
-		id = $4
-	RETURNING
-		updated_on
-`
+func (p *Postgres) buildUpdateUserQuery(input *models.User) (string, []interface{}) {
+	query, args, err := p.sqlBuilder.Update(usersTableName).
+		Set("username", input.Username).
+		Set("hashed_password", input.HashedPassword).
+		Set("two_factor_secret", input.TwoFactorSecret).
+		Set("updated_on", squirrel.Expr("extract(epoch FROM NOW())")).
+		Where(squirrel.Eq{"id": input.ID}).
+		Suffix("RETURNING updated_on").
+		ToSql()
 
-// UpdateUser receives a complete User struct and updates its place in the database.
-// NOTE this function uses the ID provided in the input to make its query.
-func (p *Postgres) UpdateUser(ctx context.Context, input *models.User) error {
-	// update the user
-	err := p.database.QueryRowContext(
-		ctx,
-		updateUserQuery,
-		input.Username,
-		input.HashedPassword,
-		input.TwoFactorSecret,
-		input.ID,
-	).Scan(&input.UpdatedOn)
+	logQueryBuildingError(p.logger, err)
 
-	return err
+	return query, args
 }
 
-const archiveUserQuery = `
-	UPDATE users
-	SET
-		updated_on = extract(epoch FROM NOW()),
-		archived_on = extract(epoch FROM NOW())
-	WHERE
-		id = $1
-	RETURNING
-		archived_on
-`
+// UpdateUser receives a complete User struct and updates its place in the db.
+// NOTE this function uses the ID provided in the input to make its query. Pass in
+// anonymous structs or incomplete models at your peril.
+func (p *Postgres) UpdateUser(ctx context.Context, input *models.User) error {
+	query, args := p.buildUpdateUserQuery(input)
+	return p.db.QueryRowContext(ctx, query, args...).Scan(&input.UpdatedOn)
+}
+
+func (p *Postgres) buildArchiveUserQuery(userID uint64) (string, []interface{}) {
+	query, args, err := p.sqlBuilder.Update(usersTableName).
+		Set("updated_on", squirrel.Expr("extract(epoch FROM NOW())")).
+		Set("archived_on", squirrel.Expr("extract(epoch FROM NOW())")).
+		Where(squirrel.Eq{"id": userID}).
+		Suffix("RETURNING archived_on").
+		ToSql()
+
+	logQueryBuildingError(p.logger, err)
+
+	return query, args
+}
 
 // DeleteUser deletes a user by their username
 func (p *Postgres) DeleteUser(ctx context.Context, userID uint64) error {
-	_, err := p.database.ExecContext(ctx, archiveUserQuery, userID)
+	query, args := p.buildArchiveUserQuery(userID)
+	_, err := p.db.ExecContext(ctx, query, args...)
 	return err
 }

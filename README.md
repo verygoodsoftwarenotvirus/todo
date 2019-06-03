@@ -12,6 +12,7 @@ you'll need:
 - docker
 - docker-compose
 - [golangci-lint](https://github.com/golangci/golangci-lint) for linting (see included config file)
+- [gocov](https://github.com/axw/gocov) for coverage report generation
 
 ## running the server
 

@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/zerolog"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 )

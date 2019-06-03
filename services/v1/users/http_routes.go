@@ -46,12 +46,20 @@ func randString() (string, error) {
 	return base32.StdEncoding.EncodeToString(b), nil
 }
 
-func (s *Service) validateCredentialChangeRequest(req *http.Request, userID uint64, password, totpToken string) (*models.User, int) {
+func (s *Service) validateCredentialChangeRequest(
+	req *http.Request,
+	userID uint64,
+	password string,
+	totpToken string,
+) (*models.User, int) {
 	logger := s.logger.WithValue("user_id", userID)
 
 	ctx := req.Context()
 	user, err := s.database.GetUser(ctx, userID)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		logger.Info("no such user")
+		return nil, http.StatusNotFound
+	} else if err != nil {
 		logger.Error(err, "error encountered fetching user")
 		return nil, http.StatusInternalServerError
 	}
@@ -75,7 +83,7 @@ func (s *Service) validateCredentialChangeRequest(req *http.Request, userID uint
 		return nil, http.StatusUnauthorized
 	}
 
-	return user, 0
+	return user, http.StatusOK
 }
 
 // List is a handler for responding with a list of users
@@ -93,7 +101,7 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err = s.encoder.EncodeResponse(res, users); err != nil {
+	if err = s.encoderDecoder.EncodeResponse(res, users); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
 }
@@ -112,13 +120,11 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 
 	logger := s.logger.WithValues(map[string]interface{}{
 		"username": input.Username,
-		"is_admin": input.IsAdmin,
 	})
 	logger.Debug("user creation route hit")
 
 	span.AddAttributes(
 		trace.StringAttribute("username", input.Username),
-		trace.BoolAttribute("is_admin", input.IsAdmin),
 	)
 
 	hp, err := s.authenticator.HashPassword(ctx, input.Password)
@@ -156,9 +162,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 			user.Username,
 			user.TwoFactorSecret,
 			"todoService",
-		),
-		qr.L,
-		qr.Auto,
+		), qr.L, qr.Auto,
 	)
 	if err != nil {
 		s.logger.Error(err, "trying to encode secret to qr code")
@@ -190,14 +194,14 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 
 	s.userCounter.Increment(ctx)
 
-	s.newsman.Report(newsman.Event{
+	s.reporter.Report(newsman.Event{
 		EventType: string(v1.Create),
 		Data:      x,
 		Topics:    []string{topicName},
 	})
 
 	res.WriteHeader(http.StatusCreated)
-	if err = s.encoder.EncodeResponse(res, x); err != nil {
+	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
 }
@@ -222,7 +226,7 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err = s.encoder.EncodeResponse(res, x); err != nil {
+	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
 }
@@ -250,7 +254,7 @@ func (s *Service) NewTOTPSecret(res http.ResponseWriter, req *http.Request) {
 	}
 
 	user, sc := s.validateCredentialChangeRequest(req, userID, input.CurrentPassword, input.TOTPToken)
-	if sc != 0 {
+	if sc != http.StatusOK {
 		res.WriteHeader(sc)
 		return
 	}
@@ -273,8 +277,8 @@ func (s *Service) NewTOTPSecret(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	res.WriteHeader(http.StatusCreated)
-	if err := s.encoder.EncodeResponse(
+	res.WriteHeader(http.StatusAccepted)
+	if err := s.encoderDecoder.EncodeResponse(
 		res, &models.TOTPSecretRefreshResponse{TwoFactorSecret: user.TwoFactorSecret},
 	); err != nil {
 		s.logger.Error(err, "encoding response")
@@ -302,7 +306,7 @@ func (s *Service) UpdatePassword(res http.ResponseWriter, req *http.Request) {
 	}
 
 	user, sc := s.validateCredentialChangeRequest(req, userID, input.CurrentPassword, input.TOTPToken)
-	if sc != 0 {
+	if sc != http.StatusOK {
 		res.WriteHeader(sc)
 		return
 	}
@@ -345,7 +349,7 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 
 	s.userCounter.Decrement(ctx)
 
-	s.newsman.Report(newsman.Event{
+	s.reporter.Report(newsman.Event{
 		EventType: string(v1.Delete),
 		Data:      models.User{ID: userID},
 		Topics:    []string{topicName},

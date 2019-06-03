@@ -6,7 +6,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -35,7 +34,7 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 	router := chi.NewRouter()
 
 	// Basic CORS, for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
-	cors := cors.New(cors.Options{
+	ch := cors.New(cors.Options{
 		// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts
 		AllowedOrigins: []string{"*"},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
@@ -50,18 +49,20 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		middleware.RequestID,
 		middleware.Timeout(maxTimeout),
 		s.loggingMiddleware,
-		cors.Handler,
+		ch.Handler,
 	)
 
 	// all middleware must be defined before routes on a mux
 
 	// Frontend routes
-	staticFileServer, err := s.frontendService.StaticDir(frontendConfig.StaticFilesDirectory)
-	if err != nil {
-		s.logger.Error(err, "establishing static file server")
+	if frontendConfig.StaticFilesDirectory != "" {
+		staticFileServer, err := s.frontendService.StaticDir(frontendConfig.StaticFilesDirectory)
+		if err != nil {
+			s.logger.Error(err, "establishing static file server")
+		}
+		router.Get("/*", staticFileServer)
 	}
 
-	router.Get("/*", staticFileServer)
 	for route, handler := range s.frontendService.Routes() {
 		router.Get(route, handler)
 	}
@@ -121,8 +122,6 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		})
 	})
 
-	router.Get("/websockets", s.newsManager.ServeWebsockets)
-
 	router.
 		With(s.authService.AuthenticationMiddleware(true)).
 		Route("/api/v1", func(v1Router chi.Router) {
@@ -160,14 +159,4 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		})
 
 	s.router = router
-}
-
-// ProvideLoginRoute provides a LoginRoute
-func ProvideLoginRoute() frontend.LoginRoute {
-	return frontend.LoginRoute(loginRoute)
-}
-
-// ProvideRegistrationRoute provides a RegistrationRoute
-func ProvideRegistrationRoute() frontend.RegistrationRoute {
-	return frontend.RegistrationRoute(registrationRoute)
 }

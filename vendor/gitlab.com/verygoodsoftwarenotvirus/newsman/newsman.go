@@ -24,6 +24,10 @@ type WebsocketAuthFunc func(req *http.Request) bool
 // (after removing any errant asterisks) as the type name for data type notifications
 type TypeNameManipulationFunc func(string) string
 
+type Reporter interface {
+	Report(event Event)
+}
+
 // Newsman maintains the set of active audience and broadcasts messages to the
 // audience.
 type Newsman struct {

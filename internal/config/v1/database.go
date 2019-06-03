@@ -4,9 +4,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/postgres"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/sqlite"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"contrib.go.opencensus.io/integrations/ocsql"
 	"github.com/pkg/errors"
@@ -37,18 +36,7 @@ func (cfg *ServerConfig) ProvideDatabase(logger logging.Logger) (database.Databa
 
 		pg := postgres.ProvidePostgres(debug, rawDB, logger, connectionDetails)
 
-		return dbclient.ProvideDatabaseClient(pg, debug, logger)
-	case "sqlite":
-		rawDB, err := sqlite.ProvideSqliteDB(connectionDetails)
-		if err != nil {
-			return nil, errors.Wrap(err, "establish sqlite database connection")
-		}
-		ocsql.RegisterAllViews()
-		ocsql.RecordStats(rawDB, cfg.Metrics.DBMetricsCollectionInterval)
-
-		sqliteDB := sqlite.ProvideSqlite(debug, logger, rawDB)
-
-		return dbclient.ProvideDatabaseClient(sqliteDB, debug, logger)
+		return dbclient.ProvideDatabaseClient(rawDB, pg, debug, logger)
 	default:
 		return nil, errors.New("invalid database type selected")
 	}

@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
+	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -58,7 +58,7 @@ func TestOAuth2Clients(test *testing.T) {
 	assert.NotNil(test, cookie)
 
 	input := buildDummyOAuth2ClientInput(test, x.Username, y.Password, x.TwoFactorSecret)
-	premade, err := todoClient.CreateOAuth2Client(context.Background(), input, cookie)
+	premade, err := todoClient.CreateOAuth2Client(context.Background(), cookie, input)
 	checkValueAndError(test, premade, err)
 
 	testClient, err := client.NewClient(
@@ -76,7 +76,7 @@ func TestOAuth2Clients(test *testing.T) {
 			tctx := context.Background()
 
 			// Create oauth2Client
-			actual, err := testClient.CreateOAuth2Client(tctx, input, cookie)
+			actual, err := testClient.CreateOAuth2Client(tctx, cookie, input)
 			checkValueAndError(t, actual, err)
 
 			// Assert oauth2Client equality
@@ -102,7 +102,7 @@ func TestOAuth2Clients(test *testing.T) {
 
 			// Create oauth2Client
 			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
-			c, err := testClient.CreateOAuth2Client(tctx, input, cookie)
+			c, err := testClient.CreateOAuth2Client(tctx, cookie, input)
 			checkValueAndError(t, c, err)
 
 			// Fetch oauth2Client
@@ -124,7 +124,7 @@ func TestOAuth2Clients(test *testing.T) {
 
 			// Create oauth2Client
 			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
-			premade, err := testClient.CreateOAuth2Client(tctx, input, cookie)
+			premade, err := testClient.CreateOAuth2Client(tctx, cookie, input)
 			checkValueAndError(t, premade, err)
 
 			// Clean up
@@ -140,7 +140,7 @@ func TestOAuth2Clients(test *testing.T) {
 			assert.NotNil(test, cookie)
 
 			input := buildDummyOAuth2ClientInput(test, createdUserInput.Username, createdUserInput.Password, createdUser.TwoFactorSecret)
-			premade, err := todoClient.CreateOAuth2Client(context.Background(), input, cookie)
+			premade, err := todoClient.CreateOAuth2Client(context.Background(), cookie, input)
 			checkValueAndError(test, premade, err)
 
 			// Delete oauth2Client
@@ -170,7 +170,7 @@ func TestOAuth2Clients(test *testing.T) {
 			var expected []*models.OAuth2Client
 			for i := 0; i < 5; i++ {
 				input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
-				oac, err := testClient.CreateOAuth2Client(tctx, input, cookie)
+				oac, err := testClient.CreateOAuth2Client(tctx, cookie, input)
 				checkValueAndError(t, oac, err)
 				expected = append(expected, oac)
 			}

@@ -14,12 +14,14 @@ before_script:
   - cd /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
   - apt-get update -y && apt-get install -y make git gcc musl-dev
 
-unit-tests:
+coverage:
   stage: testing
   image: golang:stretch
   variables:
     GOPATH: '/go'
   script:
+    - apt-get update -y && apt-get install -y make git gcc musl-dev
+    - GO111MODULES=off go get -u github.com/axw/gocov/gocov
     - make coverage.out
 
 integration-tests:
@@ -32,7 +34,10 @@ integration-tests:
     - pip install docker-compose
     - make integration-tests
 
-load-tests:
+
+daily-load-tests:on-schedule:
+  only:
+    - schedules
   stage: testing
   variables:
     GOPATH: '/go'
@@ -42,6 +47,21 @@ load-tests:
       openssl-dev gcc libc-dev make
     - pip install docker-compose
     - make ci-load-tests
+
+load-tests:
+  except:
+    - schedules
+  stage: testing
+  variables:
+    GOPATH: '/go'
+    LOADTEST_RUN_TIME: '2m30s'
+  script:
+    - apk add --update --no-cache py-pip openssl python-dev libffi-dev
+      openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - make ci-load-tests
+  only:
+    - master
 
 build-frontend:
   stage: quality

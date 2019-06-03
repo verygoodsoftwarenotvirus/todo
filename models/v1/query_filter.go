@@ -11,7 +11,16 @@ import (
 )
 
 const (
-	maxLimit = 50
+	// MaxLimit is the maximum value for list queries
+	MaxLimit = 250
+
+	pageKey          = "page"
+	limitKey         = "limit"
+	createdBeforeKey = "created_before"
+	createdAfterKey  = "created_after"
+	updatedBeforeKey = "updated_before"
+	updatedAfterKey  = "updated_after"
+	sortByKey        = "sort_by"
 )
 
 // QueryFilter represents all the filters a user could apply to a list query
@@ -25,10 +34,8 @@ type QueryFilter struct {
 	SortBy        sortType `json:"sort_by"`
 }
 
-// DefaultQueryFilter represents the standard filter collection
-var DefaultQueryFilter = buildDefaultQueryFilter()
-
-func buildDefaultQueryFilter() *QueryFilter {
+// DefaultQueryFilter builds the default query filter
+func DefaultQueryFilter() *QueryFilter {
 	return &QueryFilter{
 		Page:   1,
 		Limit:  DefaultLimit,
@@ -38,31 +45,31 @@ func buildDefaultQueryFilter() *QueryFilter {
 
 // FromParams overrides the core QueryFilter values with values retrieved from url.Params
 func (qf *QueryFilter) FromParams(params url.Values) {
-	if i, err := strconv.ParseUint(params.Get("page"), 10, 64); err == nil {
+	if i, err := strconv.ParseUint(params.Get(pageKey), 10, 64); err == nil {
 		qf.Page = uint64(math.Max(float64(i), 1))
 	}
 
-	if i, err := strconv.ParseUint(params.Get("limit"), 10, 64); err == nil {
-		qf.Limit = uint64(math.Max(math.Max(float64(i), 0), maxLimit))
+	if i, err := strconv.ParseUint(params.Get(limitKey), 10, 64); err == nil {
+		qf.Limit = uint64(math.Max(math.Max(float64(i), 0), MaxLimit))
 	}
 
-	if i, err := strconv.ParseUint(params.Get("created_before"), 10, 64); err == nil {
+	if i, err := strconv.ParseUint(params.Get(createdBeforeKey), 10, 64); err == nil {
 		qf.CreatedBefore = uint64(math.Max(float64(i), 0))
 	}
 
-	if i, err := strconv.ParseUint(params.Get("created_after"), 10, 64); err == nil {
+	if i, err := strconv.ParseUint(params.Get(createdAfterKey), 10, 64); err == nil {
 		qf.CreatedAfter = uint64(math.Max(float64(i), 0))
 	}
 
-	if i, err := strconv.ParseUint(params.Get("updated_before"), 10, 64); err == nil {
+	if i, err := strconv.ParseUint(params.Get(updatedBeforeKey), 10, 64); err == nil {
+		qf.UpdatedBefore = uint64(math.Max(float64(i), 0))
+	}
+
+	if i, err := strconv.ParseUint(params.Get(updatedAfterKey), 10, 64); err == nil {
 		qf.UpdatedAfter = uint64(math.Max(float64(i), 0))
 	}
 
-	if i, err := strconv.ParseUint(params.Get("updated_after"), 10, 64); err == nil {
-		qf.UpdatedAfter = uint64(math.Max(float64(i), 0))
-	}
-
-	switch strings.ToLower(params.Get("sort_by")) {
+	switch strings.ToLower(params.Get(sortByKey)) {
 	case strSortAsc:
 		qf.SortBy = SortAscending
 	case strSortDesc:
@@ -83,7 +90,7 @@ func (qf *QueryFilter) QueryPage() uint64 {
 // ToValues returns a url.Values from a QueryFilter
 func (qf *QueryFilter) ToValues() url.Values {
 	if qf == nil {
-		return DefaultQueryFilter.ToValues()
+		return DefaultQueryFilter().ToValues()
 	}
 
 	v := url.Values{}
@@ -112,44 +119,44 @@ func (qf *QueryFilter) ToValues() url.Values {
 	return v
 }
 
-// ApplyToQueryBuilder applys the query filter to a select builder
-func (qf *QueryFilter) ApplyToQueryBuilder(builder squirrel.SelectBuilder) squirrel.SelectBuilder {
-	if qf.CreatedAfter > 0 {
-		builder = builder.Where(squirrel.GtOrEq(map[string]interface{}{
-			"created_on": qf.CreatedAfter,
-		}))
+// ApplyToQueryBuilder applies the query filter to a SelectBuilder
+func (qf *QueryFilter) ApplyToQueryBuilder(queryBuilder squirrel.SelectBuilder) squirrel.SelectBuilder {
+	if qf == nil {
+		return queryBuilder
 	}
 
-	if qf.CreatedBefore > 0 {
-		builder = builder.Where(squirrel.LtOrEq(map[string]interface{}{
-			"created_on": qf.CreatedAfter,
-		}))
-	}
-
-	if qf.UpdatedAfter > 0 {
-		builder = builder.Where(squirrel.GtOrEq(map[string]interface{}{
-			"updated_on": qf.CreatedAfter,
-		}))
-	}
-
-	if qf.UpdatedBefore > 0 {
-		builder = builder.Where(squirrel.LtOrEq(map[string]interface{}{
-			"updated_on": qf.CreatedAfter,
-		}))
+	if qp := qf.QueryPage(); qp > 0 {
+		queryBuilder = queryBuilder.Offset(qp)
 	}
 
 	if qf.Limit > 0 {
-		builder = builder.Limit(qf.Limit)
+		queryBuilder = queryBuilder.Limit(qf.Limit)
+	} else {
+		queryBuilder = queryBuilder.Limit(MaxLimit)
 	}
 
-	builder = builder.Offset(qf.QueryPage())
+	if qf.CreatedAfter > 0 {
+		queryBuilder = queryBuilder.Where(squirrel.Gt{"created_on": qf.CreatedAfter})
+	}
 
-	return builder
+	if qf.CreatedBefore > 0 {
+		queryBuilder = queryBuilder.Where(squirrel.Lt{"created_on": qf.CreatedBefore})
+	}
+
+	if qf.UpdatedAfter > 0 {
+		queryBuilder = queryBuilder.Where(squirrel.Gt{"updated_on": qf.UpdatedAfter})
+	}
+
+	if qf.UpdatedBefore > 0 {
+		queryBuilder = queryBuilder.Where(squirrel.Lt{"updated_on": qf.UpdatedBefore})
+	}
+
+	return queryBuilder
 }
 
 // ExtractQueryFilter can extract a QueryFilter from a request
 func ExtractQueryFilter(req *http.Request) *QueryFilter {
-	qf := buildDefaultQueryFilter()
+	qf := DefaultQueryFilter()
 	qf.FromParams(req.URL.Query())
 	return qf
 }

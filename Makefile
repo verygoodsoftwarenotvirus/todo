@@ -1,6 +1,6 @@
 GOPATH       := $(GOPATH)
 ARTIFACTS_DIR := artifacts
-INTEGRATION_COVERAGE_OUT := coverage.out
+COVERAGE_OUT := coverage.out
 
 KUBERNETES_NAMESPACE     := todo
 SERVER_DOCKER_IMAGE_NAME := todo-server
@@ -40,13 +40,22 @@ revendor: vendor-clean vendor
 lint:
 	GO111MODULE=on golangci-lint run --config=.golangci.yml ./...
 
-$(INTEGRATION_COVERAGE_OUT):
-	echo "mode: set" > $(INTEGRATION_COVERAGE_OUT);
-	for pkg in `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests)'`; do \
-		go test -coverprofile=profile.out -v -count 5 $$pkg; \
-		cat profile.out | grep -v "mode: atomic" >> $(INTEGRATION_COVERAGE_OUT); \
-	done
-	rm -f profile.out
+.PHONY: $(COVERAGE_OUT)
+$(COVERAGE_OUT):
+	@rm -f $(COVERAGE_OUT) profile.out;
+	set -ex; \
+	echo "mode: set" > $(COVERAGE_OUT);
+	for pkg in `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|mock)'`; do \
+		go test -coverprofile=profile.out -v -count 5 -race -failfast $$pkg; \
+		if [ $$? -ne 0 ]; then break; fi; \
+		cat profile.out | grep -v "mode: atomic" >> $(COVERAGE_OUT); \
+	rm -f profile.out; \
+	done || exit 1
+	gocov convert $(COVERAGE_OUT) | gocov report
+
+coverage:
+	docker build --tag overall-coverage:latest  --file dockerfiles/coverage.Dockerfile .
+	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` overall-coverage:latest
 
 .PHONY: test
 test:

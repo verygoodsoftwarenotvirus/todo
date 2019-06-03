@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -13,6 +12,13 @@ import (
 const (
 	// UserLoginInputMiddlewareCtxKey is the context key for login input
 	UserLoginInputMiddlewareCtxKey models.ContextKey = "user_login_input"
+
+	// UsernameFormKey is the string we look for in request forms for username information
+	UsernameFormKey = "username"
+	// PasswordFormKey is the string we look for in request forms for password information
+	PasswordFormKey = "password"
+	// TOTPTokenFormKey is the string we look for in request forms for TOTP token information
+	TOTPTokenFormKey = "totp_token"
 )
 
 // CookieAuthenticationMiddleware checks every request for a user cookie
@@ -55,7 +61,6 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 			// We do this first because it is presumed to be the primary means by which requests are made to the httpServer.
 			oauth2Client, err := s.oauth2ClientsService.RequestIsAuthenticated(req)
 			if err != nil || oauth2Client == nil && allowValidCookieInLieuOfAValidToken {
-
 				// In the event there's not a valid OAuth2 token attached to the request, or there is some other OAuth2 issue,
 				// we next check to see if a valid cookie is attached to the request
 				cookieAuth, cookieErr := s.DecodeCookieFromRequest(req)
@@ -91,12 +96,17 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 }
 
 func parseLoginInputFromForm(req *http.Request) *models.UserLoginInput {
-	if perr := req.ParseForm(); perr != nil {
-		return &models.UserLoginInput{
-			Username:  req.FormValue("username"),
-			Password:  req.FormValue("password"),
-			TOTPToken: req.FormValue("totp_token"),
+	err := req.ParseForm()
+	if err == nil {
+		uli := &models.UserLoginInput{
+			Username:  req.FormValue(UsernameFormKey),
+			Password:  req.FormValue(PasswordFormKey),
+			TOTPToken: req.FormValue(TOTPTokenFormKey),
 		}
+		if uli.Username == "" && uli.Password == "" && uli.TOTPToken == "" {
+			return nil
+		}
+		return uli
 	}
 	return nil
 }
@@ -106,7 +116,8 @@ func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(models.UserLoginInput)
 		s.logger.WithRequest(req).Debug("UserLoginInputMiddleware called")
-		if err := json.NewDecoder(req.Body).Decode(x); err != nil {
+
+		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
 			if formInput := parseLoginInputFromForm(req); formInput != nil {
 				ctx := context.WithValue(req.Context(), UserLoginInputMiddlewareCtxKey, formInput)
 				next.ServeHTTP(res, req.WithContext(ctx))

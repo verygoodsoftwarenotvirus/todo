@@ -11,14 +11,13 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"github.com/pkg/errors"
 )
 
 const (
-
 	// MiddlewareCtxKey is the context key we search for when interacting with user-related requests
 	MiddlewareCtxKey models.ContextKey   = "user_input"
 	counterName      metrics.CounterName = "users"
@@ -34,14 +33,14 @@ type (
 
 	// Service handles our users
 	Service struct {
-		cookieSecret  []byte
-		database      models.UserDataManager
-		authenticator auth.Authenticator
-		logger        logging.Logger
-		encoder       encoding.EncoderDecoder
-		userIDFetcher UserIDFetcher
-		userCounter   metrics.UnitCounter
-		newsman       *newsman.Newsman
+		cookieSecret   []byte
+		database       models.UserDataManager
+		authenticator  auth.Authenticator
+		logger         logging.Logger
+		encoderDecoder encoding.EncoderDecoder
+		userIDFetcher  UserIDFetcher
+		userCounter    metrics.UnitCounter
+		reporter       newsman.Reporter
 	}
 
 	// UserIDFetcher fetches usernames from requests
@@ -61,7 +60,7 @@ func ProvideUsersService(
 ) (*Service, error) {
 	ctx := context.Background()
 	if userIDFetcher == nil {
-		return nil, errors.New("usernameFetcher must be provided")
+		return nil, errors.New("userIDFetcher must be provided")
 	}
 
 	counter, err := counterProvider(counterName, "number of users managed by the users service")
@@ -76,14 +75,14 @@ func ProvideUsersService(
 	counter.IncrementBy(ctx, userCount)
 
 	us := &Service{
-		cookieSecret:  []byte(authSettings.CookieSecret),
-		logger:        logger.WithName(serviceName),
-		database:      database,
-		authenticator: authenticator,
-		userIDFetcher: userIDFetcher,
-		encoder:       encoder,
-		userCounter:   counter,
-		newsman:       newsman,
+		cookieSecret:   []byte(authSettings.CookieSecret),
+		logger:         logger.WithName(serviceName),
+		database:       database,
+		authenticator:  authenticator,
+		userIDFetcher:  userIDFetcher,
+		encoderDecoder: encoder,
+		userCounter:    counter,
+		reporter:       newsman,
 	}
 	return us, nil
 }

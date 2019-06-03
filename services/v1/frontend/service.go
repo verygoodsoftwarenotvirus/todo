@@ -1,7 +1,7 @@
 package frontend
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 )
 
 const (
@@ -26,13 +26,7 @@ type (
 )
 
 // ProvideFrontendService provides the frontend service to dependency injection
-func ProvideFrontendService(
-	logger logging.Logger,
-	loginRoute LoginRoute,
-	registerRoute RegistrationRoute,
-) *Service {
-	svc := &Service{
-		logger: logger.WithName(serviceName),
-	}
+func ProvideFrontendService(logger logging.Logger) *Service {
+	svc := &Service{logger: logger.WithName(serviceName)}
 	return svc
 }

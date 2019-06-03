@@ -87,7 +87,7 @@ func (a *TodoServiceAttacker) Clone() hazana.Attack {
 func main() {
 	todoClient := initializeClient(clientID, clientSecret)
 
-	var runTime = 150 * time.Second
+	var runTime = 10 * time.Minute
 	if rt := os.Getenv("LOADTEST_RUN_TIME"); rt != "" {
 		_rt, err := time.ParseDuration(rt)
 		if err != nil {

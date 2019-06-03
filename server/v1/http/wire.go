@@ -2,12 +2,13 @@ package httpserver
 
 import (
 	"crypto/tls"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
 	"net/http"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 
 	"github.com/google/wire"
@@ -64,4 +65,14 @@ func provideHTTPServer() *http.Server {
 		},
 	}
 	return srv
+}
+
+// ProvideLoginRoute provides a LoginRoute
+func ProvideLoginRoute() frontend.LoginRoute {
+	return frontend.LoginRoute(loginRoute)
+}
+
+// ProvideRegistrationRoute provides a RegistrationRoute
+func ProvideRegistrationRoute() frontend.RegistrationRoute {
+	return frontend.RegistrationRoute(registrationRoute)
 }

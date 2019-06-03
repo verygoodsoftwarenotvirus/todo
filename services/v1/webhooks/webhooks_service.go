@@ -4,13 +4,12 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"github.com/pkg/errors"
 )
@@ -24,6 +23,12 @@ const (
 )
 
 type (
+	eventManager interface {
+		newsman.Reporter
+
+		TuneIn(newsman.Listener)
+	}
+
 	// Service handles TODO List webhooks
 	Service struct {
 		logger           logging.Logger
@@ -31,8 +36,8 @@ type (
 		webhookDatabase  models.WebhookDataManager
 		userIDFetcher    UserIDFetcher
 		webhookIDFetcher WebhookIDFetcher
-		encoder          encoding.EncoderDecoder
-		newsman          *newsman.Newsman
+		encoderDecoder   encoding.EncoderDecoder
+		newsman          eventManager
 	}
 
 	// UserIDFetcher is a function that fetches user IDs
@@ -45,7 +50,7 @@ type (
 // ProvideWebhooksService builds a new WebhooksService
 func ProvideWebhooksService(
 	logger logging.Logger,
-	db database.Database,
+	webhookDatabase models.WebhookDataManager,
 	userIDFetcher UserIDFetcher,
 	webhookIDFetcher WebhookIDFetcher,
 	encoder encoding.EncoderDecoder,
@@ -59,8 +64,8 @@ func ProvideWebhooksService(
 
 	svc := &Service{
 		logger:           logger.WithName(serviceName),
-		webhookDatabase:  db,
-		encoder:          encoder,
+		webhookDatabase:  webhookDatabase,
+		encoderDecoder:   encoder,
 		webhookCounter:   webhookCounter,
 		userIDFetcher:    userIDFetcher,
 		webhookIDFetcher: webhookIDFetcher,

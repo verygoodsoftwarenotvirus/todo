@@ -12,11 +12,11 @@ import (
 	"testing"
 	"time"
 
-	http2 "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
+	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	randmodel "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/rand/model"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -365,7 +365,7 @@ func TestAuth(test *testing.T) {
 		// execute TOTP secret update request
 		res, err := todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
-		assert.Equal(t, http.StatusCreated, res.StatusCode)
+		assert.Equal(t, http.StatusAccepted, res.StatusCode)
 
 		// load user response
 		r := &models.TOTPSecretRefreshResponse{}
@@ -436,10 +436,10 @@ func TestAuth(test *testing.T) {
 		assert.NotNil(test, cookie)
 
 		input := buildDummyOAuth2ClientInput(test, x.Username, y.Password, x.TwoFactorSecret)
-		premade, err := todoClient.CreateOAuth2Client(tctx, input, cookie)
+		premade, err := todoClient.CreateOAuth2Client(tctx, cookie, input)
 		checkValueAndError(test, premade, err)
 
-		c, err := http2.NewClient(
+		c, err := client.NewClient(
 			premade.ClientID,
 			premade.ClientSecret,
 			todoClient.URL,

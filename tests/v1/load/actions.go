@@ -137,7 +137,7 @@ func RandomAction(client *http2.V1Client) *Action {
 			Name: "CreateOAuth2Client",
 			Action: func() (*http.Request, error) {
 				ui := model.RandomUserInput()
-				u, err := client.CreateNewUser(ctx, ui)
+				u, err := client.CreateUser(ctx, ui)
 				if err != nil {
 					return client.BuildHealthCheckRequest()
 				}
@@ -228,7 +228,6 @@ func RandomAction(client *http2.V1Client) *Action {
 		// 	Weight: 100,
 		// },
 		//
-
 	}
 
 	totalWeight := 0

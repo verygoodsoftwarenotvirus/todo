@@ -33,15 +33,16 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 
 	items, err := s.itemDatabase.GetItems(ctx, qf, userID)
 	if err == sql.ErrNoRows {
-		res.WriteHeader(http.StatusNotFound)
-		return
+		items = &models.ItemList{
+			Items: []models.Item{},
+		}
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching items")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	if err = s.encoder.EncodeResponse(res, items); err != nil {
+	if err = s.encoderDecoder.EncodeResponse(res, items); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
 }
@@ -72,14 +73,14 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	}
 	s.itemCounter.Increment(ctx)
 
-	s.newsman.Report(newsman.Event{
+	s.reporter.Report(newsman.Event{
 		EventType: string(v1.Create),
 		Data:      x,
 		Topics:    []string{topicName},
 	})
 
 	res.WriteHeader(http.StatusCreated)
-	if err = s.encoder.EncodeResponse(res, x); err != nil {
+	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
 }
@@ -109,7 +110,7 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err = s.encoder.EncodeResponse(res, i); err != nil {
+	if err = s.encoderDecoder.EncodeResponse(res, i); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
 }
@@ -152,13 +153,13 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	s.newsman.Report(newsman.Event{
+	s.reporter.Report(newsman.Event{
 		EventType: string(v1.Update),
 		Data:      x,
 		Topics:    []string{topicName},
 	})
 
-	if err = s.encoder.EncodeResponse(res, x); err != nil {
+	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
 }
@@ -188,7 +189,7 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	}
 	s.itemCounter.Decrement(ctx)
 
-	s.newsman.Report(newsman.Event{
+	s.reporter.Report(newsman.Event{
 		EventType: string(v1.Delete),
 		Data:      &models.Item{ID: itemID},
 		Topics:    []string{topicName},

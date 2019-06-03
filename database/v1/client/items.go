@@ -11,7 +11,7 @@ import (
 
 var _ models.ItemDataManager = (*Client)(nil)
 
-// GetItem fetches an item from the postgres database
+// GetItem fetches an item from the postgres querier
 func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
 	ctx, span := trace.StartSpan(ctx, "GetItem")
 	defer span.End()
@@ -24,10 +24,10 @@ func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*models.It
 		"user_id": userID,
 	}).Debug("GetItem called")
 
-	return c.database.GetItem(ctx, itemID, userID)
+	return c.querier.GetItem(ctx, itemID, userID)
 }
 
-// GetItemCount fetches the count of items from the postgres database that meet a particular filter
+// GetItemCount fetches the count of items from the postgres querier that meet a particular filter
 func (c *Client) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
 	ctx, span := trace.StartSpan(ctx, "GetItemCount")
 	defer span.End()
@@ -40,51 +40,60 @@ func (c *Client) GetItemCount(ctx context.Context, filter *models.QueryFilter, u
 
 	if filter == nil {
 		c.logger.Debug("using default query filter")
-		filter = models.DefaultQueryFilter
+		filter = models.DefaultQueryFilter()
 	}
 	filter.SetPage(filter.Page)
 
-	return c.database.GetItemCount(ctx, filter, userID)
+	return c.querier.GetItemCount(ctx, filter, userID)
 }
 
-// GetAllItemsCount fetches the count of items from the postgres database that meet a particular filter
+// GetAllItemsCount fetches the count of items from the postgres querier that meet a particular filter
 func (c *Client) GetAllItemsCount(ctx context.Context) (count uint64, err error) {
 	ctx, span := trace.StartSpan(ctx, "GetAllItemsCount")
 	defer span.End()
 
 	c.logger.Debug("GetAllItemsCount called")
 
-	return c.database.GetAllItemsCount(ctx)
+	return c.querier.GetAllItemsCount(ctx)
 }
 
-// GetItems fetches a list of items from the postgres database that meet a particular filter
+// GetItems fetches a list of items from the postgres querier that meet a particular filter
 func (c *Client) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
 	ctx, span := trace.StartSpan(ctx, "GetItems")
 	defer span.End()
 	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
 
-	c.logger.WithValues(map[string]interface{}{
+	logger := c.logger.WithValues(map[string]interface{}{
 		"filter":  filter,
 		"user_id": userID,
-	}).Debug("GetItems called")
+	})
+	logger.Debug("GetItems called")
 
 	if filter == nil {
-		c.logger.Debug("using default query filter")
-		filter = models.DefaultQueryFilter
+		logger.Debug("using default query filter")
+		filter = models.DefaultQueryFilter()
 	}
 	filter.SetPage(filter.Page)
 
-	return c.database.GetItems(ctx, filter, userID)
+	itemList, err := c.querier.GetItems(ctx, filter, userID)
+
+	logger.WithValues(map[string]interface{}{
+		"item_count": itemList.TotalCount,
+		"item_list":  itemList.Items,
+		"err":        err,
+	}).Debug("returning from GetItems")
+
+	return itemList, err
 }
 
-// CreateItem creates an item in a postgres database
+// CreateItem creates an item in a postgres querier
 func (c *Client) CreateItem(ctx context.Context, input *models.ItemInput) (*models.Item, error) {
 	ctx, span := trace.StartSpan(ctx, "CreateItem")
 	defer span.End()
 
 	c.logger.WithValue("input", input).Debug("CreateItem called")
 
-	return c.database.CreateItem(ctx, input)
+	return c.querier.CreateItem(ctx, input)
 }
 
 // UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
@@ -95,10 +104,10 @@ func (c *Client) UpdateItem(ctx context.Context, input *models.Item) error {
 
 	c.logger.WithValue("input", input).Debug("UpdateItem called")
 
-	return c.database.UpdateItem(ctx, input)
+	return c.querier.UpdateItem(ctx, input)
 }
 
-// DeleteItem deletes an item from the database by its ID
+// DeleteItem deletes an item from the querier by its ID
 func (c *Client) DeleteItem(ctx context.Context, itemID uint64, userID uint64) error {
 	ctx, span := trace.StartSpan(ctx, "DeleteItem")
 	defer span.End()
@@ -110,5 +119,5 @@ func (c *Client) DeleteItem(ctx context.Context, itemID uint64, userID uint64) e
 		"user_id": userID,
 	}).Debug("DeleteItem called")
 
-	return c.database.DeleteItem(ctx, itemID, userID)
+	return c.querier.DeleteItem(ctx, itemID, userID)
 }

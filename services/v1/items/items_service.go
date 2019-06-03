@@ -4,12 +4,11 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 
 	"github.com/pkg/errors"
@@ -26,13 +25,13 @@ const (
 type (
 	// Service handles TODO List items
 	Service struct {
-		logger        logging.Logger
-		itemCounter   metrics.UnitCounter
-		itemDatabase  models.ItemDataManager
-		userIDFetcher UserIDFetcher
-		itemIDFetcher ItemIDFetcher
-		encoder       encoding.EncoderDecoder
-		newsman       *newsman.Newsman
+		logger         logging.Logger
+		itemCounter    metrics.UnitCounter
+		itemDatabase   models.ItemDataManager
+		userIDFetcher  UserIDFetcher
+		itemIDFetcher  ItemIDFetcher
+		encoderDecoder encoding.EncoderDecoder
+		reporter       newsman.Reporter
 	}
 
 	// UserIDFetcher is a function that fetches user IDs
@@ -45,7 +44,7 @@ type (
 // ProvideItemsService builds a new ItemsService
 func ProvideItemsService(
 	logger logging.Logger,
-	db database.Database,
+	db models.ItemDataManager,
 	userIDFetcher UserIDFetcher,
 	itemIDFetcher ItemIDFetcher,
 	encoder encoding.EncoderDecoder,
@@ -58,13 +57,13 @@ func ProvideItemsService(
 	}
 
 	svc := &Service{
-		logger:        logger.WithName(serviceName),
-		itemDatabase:  db,
-		encoder:       encoder,
-		itemCounter:   itemCounter,
-		userIDFetcher: userIDFetcher,
-		itemIDFetcher: itemIDFetcher,
-		newsman:       newsman,
+		logger:         logger.WithName(serviceName),
+		itemDatabase:   db,
+		encoderDecoder: encoder,
+		itemCounter:    itemCounter,
+		userIDFetcher:  userIDFetcher,
+		itemIDFetcher:  itemIDFetcher,
+		reporter:       newsman,
 	}
 
 	ctx := context.Background()

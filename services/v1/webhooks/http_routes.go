@@ -37,15 +37,16 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 
 	webhooks, err := s.webhookDatabase.GetWebhooks(ctx, qf, userID)
 	if err == sql.ErrNoRows {
-		res.WriteHeader(http.StatusNotFound)
-		return
+		webhooks = &models.WebhookList{
+			Webhooks: []models.Webhook{},
+		}
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching webhooks")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	if err = s.encoder.EncodeResponse(res, webhooks); err != nil {
+	if err = s.encoderDecoder.EncodeResponse(res, webhooks); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
 }
@@ -111,7 +112,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	s.newsman.TuneIn(l)
 
 	res.WriteHeader(http.StatusCreated)
-	if err = s.encoder.EncodeResponse(res, x); err != nil {
+	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
 }
@@ -141,7 +142,7 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err = s.encoder.EncodeResponse(res, x); err != nil {
+	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
 }
@@ -190,7 +191,7 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 		Topics:    []string{topicName},
 	})
 
-	if err = s.encoder.EncodeResponse(res, x); err != nil {
+	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
 }

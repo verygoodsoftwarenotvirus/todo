@@ -16,11 +16,9 @@ before_script:
 
 coverage:
   stage: testing
-  image: golang:stretch
   variables:
     GOPATH: '/go'
   script:
-    - GO111MODULE=off go get -u github.com/axw/gocov/gocov
     - make coverage
 
 integration-tests:

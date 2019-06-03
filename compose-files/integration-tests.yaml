@@ -10,16 +10,8 @@ services:
       - '8888:8888'
     environment:
       DOCKER: 'true'
-      JAEGER_SERVICE_NAME: 'todo-server'
-      JAEGER_AGENT_HOST: 'tracing-server'
-      JAEGER_AGENT_PORT: '6831'
-      JAEGER_SAMPLER_MANAGER_HOST_PORT: 'tracing-server:5778'
     links:
-      - tracing-server
       - database
-    depends_on:
-      - prometheus
-      - grafana
     # logging:
     #   driver: none
 

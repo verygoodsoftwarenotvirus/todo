@@ -1,6 +1,6 @@
 GOPATH       := $(GOPATH)
 ARTIFACTS_DIR := artifacts
-COVERAGE_OUT := coverage.out
+COVERAGE_OUT := $(ARTIFACTS_DIR)/coverage.out
 
 KUBERNETES_NAMESPACE     := todo
 SERVER_DOCKER_IMAGE_NAME := todo-server

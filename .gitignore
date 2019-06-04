@@ -32,17 +32,12 @@
 __pycache__
 artifacts
 
-# typescript noise
+# frontend things
 node_modules
-frontend/dist
-
-# frontend testing stuff
-/tests/e2e/reports/
-selenium-debug.log
 
 # Log files
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-frontend/public/bundle.*
+frontend/v1/public/bundle.*

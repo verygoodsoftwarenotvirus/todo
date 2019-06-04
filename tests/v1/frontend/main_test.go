@@ -8,30 +8,42 @@ import (
 	"github.com/tebeka/selenium"
 )
 
-func TestLoginPage(t *testing.T) {
-	// Connect to the WebDriver instance running in docker-compose.
-	caps := selenium.Capabilities{"browserName": "firefox"}
-	wd, err := selenium.NewRemote(caps, seleniumHubAddr)
-	if err != nil {
-		panic(err)
+func runTestOnAllSupportedBrowsers(T *testing.T, tp testProvider) {
+	for _, bn := range []string{"firefox", "chrome"} {
+		browserName := bn
+		caps := selenium.Capabilities{"browserName": browserName}
+		wd, err := selenium.NewRemote(caps, seleniumHubAddr)
+		if err != nil {
+			panic(err)
+		}
+		defer wd.Quit()
+
+		T.Run(bn, tp(wd))
 	}
-	defer wd.Quit()
+}
 
-	// Navigate to the login page.
-	require.NoError(t, wd.Get(urlToUse+"/login"))
+type testProvider func(driver selenium.WebDriver) func(t *testing.T)
 
-	ps, err := wd.PageSource()
-	t.Log(ps)
-	require.NoError(t, err)
+func TestLoginPage(T *testing.T) {
+	runTestOnAllSupportedBrowsers(T, func(driver selenium.WebDriver) func(t *testing.T) {
+		return func(t *testing.T) {
+			// Navigate to the login page.
+			require.NoError(t, driver.Get(urlToUse+"/login"))
 
-	// fetch the button.
-	elem, err := wd.FindElement(selenium.ByID, "loginButton")
-	if err != nil {
-		panic(err)
-	}
+			ps, err := driver.PageSource()
+			t.Log(ps)
+			require.NoError(t, err)
 
-	// check that it is visible
-	actual, err := elem.IsDisplayed()
-	assert.NoError(t, err)
-	assert.True(t, actual)
+			// fetch the button.
+			elem, err := driver.FindElement(selenium.ByID, "loginButton")
+			if err != nil {
+				panic(err)
+			}
+
+			// check that it is visible
+			actual, err := elem.IsDisplayed()
+			assert.NoError(t, err)
+			assert.True(t, actual)
+		}
+	})
 }

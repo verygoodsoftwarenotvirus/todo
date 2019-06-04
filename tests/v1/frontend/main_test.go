@@ -17,12 +17,8 @@ func TestLoginPage(t *testing.T) {
 	}
 	defer wd.Quit()
 
-	t.Log("hitting", urlToUse+"/login")
-
 	// Navigate to the login page.
-	if err := wd.Get(urlToUse + "/login"); err != nil {
-		panic(err)
-	}
+	require.NoError(t, wd.Get(urlToUse+"/login"))
 
 	ps, err := wd.PageSource()
 	t.Log(ps)

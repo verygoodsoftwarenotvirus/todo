@@ -16,11 +16,7 @@ import (
 var urlToUse string
 
 const (
-	seleniumHubAddr = "http://selenium-hub:4444/wd/hub"
-	// These paths will be different on your system.
-	geckoDriverPath = "/usr/local/bin/chromedriver"
-	port            = 4444
-
+	seleniumHubAddr        = "http://selenium-hub:4444/wd/hub"
 	localTestInstanceURL   = "http://localhost"
 	defaultTestInstanceURL = "http://todo-server"
 )

@@ -22,7 +22,7 @@ coverage:
   script:
     - apt-get update -y && apt-get install -y make git gcc musl-dev
     - GO111MODULES=off go get -u github.com/axw/gocov/gocov
-    - make coverage.out
+    - make artifacts/coverage.out
 
 integration-tests:
   stage: testing
@@ -33,6 +33,25 @@ integration-tests:
       openssl-dev gcc libc-dev make
     - pip install docker-compose
     - make integration-tests
+
+build-frontend:
+  stage: quality
+  image: node:10
+  before_script:
+    - cd frontend/v1
+    - npm install
+  script:
+    - npm run build
+
+frontend-selenium-tests:
+  stage: testing
+  variables:
+    GOPATH: '/go'
+  script:
+    - apk add --update --no-cache py-pip openssl python-dev libffi-dev
+      openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - make frontend-tests
 
 
 daily-load-tests:on-schedule:
@@ -62,15 +81,6 @@ load-tests:
     - make ci-load-tests
   only:
     - master
-
-build-frontend:
-  stage: quality
-  image: node:10
-  before_script:
-    - cd frontend
-    - npm install
-  script:
-    - npm run build
 
 linting:
   stage: quality

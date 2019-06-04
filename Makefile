@@ -1,6 +1,6 @@
 GOPATH       := $(GOPATH)
 ARTIFACTS_DIR := artifacts
-COVERAGE_OUT := coverage.out
+COVERAGE_OUT := $(ARTIFACTS_DIR)/coverage.out
 
 KUBERNETES_NAMESPACE     := todo
 SERVER_DOCKER_IMAGE_NAME := todo-server
@@ -40,8 +40,10 @@ revendor: vendor-clean vendor
 lint:
 	GO111MODULE=on golangci-lint run --config=.golangci.yml ./...
 
-.PHONY: $(COVERAGE_OUT)
-$(COVERAGE_OUT):
+$(ARTIFACTS_DIR):
+	mkdir -p $(ARTIFACTS_DIR)
+
+$(COVERAGE_OUT): $(ARTIFACTS_DIR)
 	@rm -f $(COVERAGE_OUT) profile.out;
 	set -ex; \
 	echo "mode: set" > $(COVERAGE_OUT);
@@ -61,6 +63,16 @@ coverage:
 test:
 	docker build --tag coverage-$(SERVER_DOCKER_IMAGE_NAME):latest --file dockerfiles/coverage.Dockerfile .
 	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` coverage-$(SERVER_DOCKER_IMAGE_NAME):latest
+
+.PHONY: frontend-tests
+frontend-tests:
+	docker-compose --file compose-files/frontend-tests.yaml up \
+	--build \
+	--force-recreate \
+	--remove-orphans \
+	--renew-anon-volumes \
+	--always-recreate-deps \
+	--abort-on-container-exit
 
 .PHONY: integration-tests
 integration-tests:

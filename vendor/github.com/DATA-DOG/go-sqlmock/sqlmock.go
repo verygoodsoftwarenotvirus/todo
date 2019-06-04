@@ -21,6 +21,7 @@ import (
 // for any kind of database action in order to mock
 // and test real database behavior.
 type Sqlmock interface {
+
 	// ExpectClose queues an expectation for this database
 	// action to be triggered. the *ExpectedClose allows
 	// to mock database response

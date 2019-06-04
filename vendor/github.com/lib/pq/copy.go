@@ -53,7 +53,7 @@ type copyin struct {
 	closed bool
 
 	sync.Mutex // guards err
-	err error
+	err        error
 }
 
 const ciBufferSize = 64 * 1024

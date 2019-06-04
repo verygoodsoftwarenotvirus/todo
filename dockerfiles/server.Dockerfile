@@ -14,16 +14,17 @@ FROM node:latest AS frontend-build-stage
 
 WORKDIR /app
 
-ADD frontend .
+ADD frontend/v1 .
 
 RUN npm install && npm run build
+RUN ls -Al
 
 # final stage
 FROM debian:stable
 
 COPY config_files config_files
 COPY --from=build-stage /todo /todo
-COPY --from=frontend-build-stage /app/dist /frontend
+COPY --from=frontend-build-stage /app/public /frontend
 
 ENV CONFIGURATION_FILEPATH=config_files/production.toml
 

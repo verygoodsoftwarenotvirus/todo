@@ -3,7 +3,7 @@ FROM node:10
 
 WORKDIR /app
 
-ADD frontend .
+ADD frontend/v1 .
 
 RUN npm install
 RUN npm run build

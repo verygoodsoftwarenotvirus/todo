@@ -22,7 +22,7 @@ coverage:
   script:
     - apt-get update -y && apt-get install -y make git gcc musl-dev
     - GO111MODULES=off go get -u github.com/axw/gocov/gocov
-    - make coverage.out
+    - make artifacts/coverage.out
 
 integration-tests:
   stage: testing

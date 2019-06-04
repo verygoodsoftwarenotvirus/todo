@@ -40,8 +40,10 @@ revendor: vendor-clean vendor
 lint:
 	GO111MODULE=on golangci-lint run --config=.golangci.yml ./...
 
-.PHONY: $(COVERAGE_OUT)
-$(COVERAGE_OUT):
+$(ARTIFACTS_DIR):
+	mkdir -p $(ARTIFACTS_DIR)
+
+$(COVERAGE_OUT): $(ARTIFACTS_DIR)
 	@rm -f $(COVERAGE_OUT) profile.out;
 	set -ex; \
 	echo "mode: set" > $(COVERAGE_OUT);

@@ -34,6 +34,15 @@ integration-tests:
     - pip install docker-compose
     - make integration-tests
 
+build-frontend:
+  stage: quality
+  image: node:10
+  before_script:
+    - cd frontend/v1
+    - npm install
+  script:
+    - npm run build
+
 frontend-selenium-tests:
   stage: testing
   variables:
@@ -72,15 +81,6 @@ load-tests:
     - make ci-load-tests
   only:
     - master
-
-build-frontend:
-  stage: quality
-  image: node:10
-  before_script:
-    - cd frontend
-    - npm install
-  script:
-    - npm run build
 
 linting:
   stage: quality

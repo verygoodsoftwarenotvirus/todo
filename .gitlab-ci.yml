@@ -34,6 +34,16 @@ integration-tests:
     - pip install docker-compose
     - make integration-tests
 
+frontend-selenium-tests:
+  stage: testing
+  variables:
+    GOPATH: '/go'
+  script:
+    - apk add --update --no-cache py-pip openssl python-dev libffi-dev
+      openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - make frontend-tests
+
 
 daily-load-tests:on-schedule:
   only:

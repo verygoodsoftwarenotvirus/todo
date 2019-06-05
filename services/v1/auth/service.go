@@ -3,13 +3,13 @@ package auth
 import (
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
-
-	"github.com/gorilla/securecookie"
 	libauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"github.com/gorilla/securecookie"
 )
 
 const (
@@ -27,6 +27,13 @@ type (
 		Encode(name string, value interface{}) (string, error)
 		Decode(name, value string, dst interface{}) error
 	}
+
+	// sessionManager interface {
+	// // Set establishes the session
+	// Set(context.Context, http.ResponseWriter, []byte, ...[]byte) error
+	// // Clear clears the session
+	// Clear(context.Context, http.ResponseWriter)
+	// }
 
 	// Service handles auth
 	Service struct {

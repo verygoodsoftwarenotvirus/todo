@@ -23,4 +23,4 @@ you'll need:
 ## working on the frontend
 
 1. run `make dev`
-2. in a different terminal window, run `npm run autobuild`
+2. in a different terminal, cd into `frontend/v1` and run `npm run autobuild`

@@ -38,7 +38,8 @@ func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, erro
 		case "/register",
 			"/login",
 			"/items",
-			"/items/new":
+			"/items/new",
+			"/password/new":
 			s.logger.Debug(fmt.Sprintf("rerouting %q", req.URL.Path))
 			req.URL.Path = "/"
 		}

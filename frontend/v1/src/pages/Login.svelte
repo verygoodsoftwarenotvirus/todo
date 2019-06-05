@@ -12,9 +12,8 @@
   }
 
   function handleLogin() {
-    fetch("http://localhost/users/login", {
+    fetch("/users/login", {
       method: "POST",
-      mode: "cors", // no-cors, cors, *same-origin
       headers: {
         "Content-Type": "application/json"
       },

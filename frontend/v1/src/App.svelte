@@ -5,6 +5,7 @@
   // Auth routes
   import Login from "./pages/Login.svelte";
   import Register from "./pages/Register.svelte";
+  import ChangePassword from "./pages/ChangePassword.svelte";
 
   // Items routes
   import ReadItem from "./pages/items/Read.svelte";
@@ -24,6 +25,7 @@
     <Link to="webhooks">Webhooks</Link>
     <Link to="login">Login</Link>
     <Link to="register">Register</Link>
+    <Link to="password/new">Change Password</Link>
   </nav>
   <div>
     <Route path="items" component={Items} />
@@ -31,6 +33,7 @@
     <Route path="items/new" component={CreateItem} />
     <Route path="login" component={Login} />
     <Route path="register" component={Register} />
+    <Route path="password/new" component={ChangePassword} />
     <Route path="/">
       <Home />
     </Route>

@@ -305,7 +305,12 @@ func (s *Service) UpdatePassword(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	user, sc := s.validateCredentialChangeRequest(req, userID, input.CurrentPassword, input.TOTPToken)
+	user, sc := s.validateCredentialChangeRequest(
+		req,
+		userID,
+		input.CurrentPassword,
+		input.TOTPToken,
+	)
 	if sc != http.StatusOK {
 		res.WriteHeader(sc)
 		return

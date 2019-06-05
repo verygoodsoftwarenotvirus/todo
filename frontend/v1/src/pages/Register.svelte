@@ -20,9 +20,8 @@
   }
 
   function handleRegistration() {
-    fetch("http://localhost/users/", {
+    fetch("/users/", {
       method: "POST",
-      mode: "cors", // no-cors, cors, *same-origin
       headers: {
         "Content-Type": "application/json"
       },

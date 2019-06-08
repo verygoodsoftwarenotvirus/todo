@@ -29,7 +29,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		c, err := s.buildCookie(&models.User{ID: 1, Username: "username"})
+		c, err := s.buildAuthCookie(&models.User{ID: 1, Username: "username"})
 		require.NoError(t, err)
 		req.AddCookie(c)
 
@@ -46,7 +46,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		require.NoError(t, err)
 
 		// begin building bad cookie
-		// NOTE: any code here is duplicated from service.buildCookie
+		// NOTE: any code here is duplicated from service.buildAuthCookie
 		// any changes made there might need to be reflected here
 		c := &http.Cookie{
 			Name:     CookieName,
@@ -106,7 +106,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		c, err := s.buildCookie(&models.User{ID: 1, Username: "username"})
+		c, err := s.buildAuthCookie(&models.User{ID: 1, Username: "username"})
 		require.NoError(t, err)
 		req.AddCookie(c)
 
@@ -147,7 +147,7 @@ func TestService_FetchUserFromRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		c, err := s.buildCookie(expectedUser)
+		c, err := s.buildAuthCookie(expectedUser)
 		require.NoError(t, err)
 		req.AddCookie(c)
 
@@ -195,7 +195,7 @@ func TestService_FetchUserFromRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		c, err := s.buildCookie(expectedUser)
+		c, err := s.buildAuthCookie(expectedUser)
 		require.NoError(t, err)
 		req.AddCookie(c)
 
@@ -510,7 +510,7 @@ func TestService_Logout(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		c, err := s.buildCookie(&models.User{ID: 1, Username: "username"})
+		c, err := s.buildAuthCookie(&models.User{ID: 1, Username: "username"})
 		require.NoError(t, err)
 		req.AddCookie(c)
 
@@ -844,7 +844,7 @@ func TestService_buildCookie(T *testing.T) {
 			Username: "username",
 		}
 
-		cookie, err := s.buildCookie(exampleInput)
+		cookie, err := s.buildAuthCookie(exampleInput)
 		assert.NotNil(t, cookie)
 		assert.NoError(t, err)
 	})
@@ -859,7 +859,7 @@ func TestService_buildCookie(T *testing.T) {
 			Username: "username",
 		}
 
-		cookie, err := s.buildCookie(exampleInput)
+		cookie, err := s.buildAuthCookie(exampleInput)
 		assert.Nil(t, cookie)
 		assert.Error(t, err)
 	})

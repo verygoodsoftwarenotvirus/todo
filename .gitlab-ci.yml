@@ -1,9 +1,9 @@
 stages:
   - quality
   - testing
+  - publish
 
 image: docker:latest
-
 services:
   - docker:dind
 
@@ -92,3 +92,12 @@ linting:
     - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.16.0
   script:
     - make lint
+
+gitlabcr:
+  stage: publish
+  script:
+    - docker login -u=gitlab-ci-token -p=$CI_JOB_TOKEN registry.gitlab.com
+    - docker build -t registry.gitlab.com/verygoodsoftwarenotvirus/todo:latest --file dockerfiles/server.Dockerfile .
+    - docker push registry.gitlab.com/verygoodsoftwarenotvirus/todo:latest
+  only:
+    - master

@@ -3,10 +3,6 @@ stages:
   - testing
   - publish
 
-image: docker:latest
-services:
-  - docker:dind
-
 before_script:
   - mkdir -p /go/src/gitlab.com/verygoodsoftwarenotvirus/
   - cp -rf /builds/verygoodsoftwarenotvirus/todo
@@ -25,6 +21,9 @@ coverage:
     - make artifacts/coverage.out
 
 integration-tests:
+  image: docker:latest
+  services:
+    - docker:dind
   stage: testing
   variables:
     GOPATH: '/go'
@@ -44,17 +43,38 @@ build-frontend:
     - npm run build
 
 frontend-selenium-tests:
+  image: docker:latest
+  services:
+    - docker:dind
   stage: testing
   variables:
     GOPATH: '/go'
+  image: docker:latest
+  services:
+    - docker:dind
   script:
-    - apk add --update --no-cache py-pip openssl python-dev libffi-dev
-      openssl-dev gcc libc-dev make
-    - pip install docker-compose
-    - make frontend-tests
+    - apk add --u
+  image: docker:latest
+  services:
+    - docker:dind
+      openssl-dev
+  image: docker:latest
+  services:
+    - docker:dind
+    - pip install
+  image: docker:latest
+  services:
+    - docker:dind
+    - make fronte
+  image: docker:latest
+  services:
+    - docker:dind
 
 
 daily-load-tests:on-schedule:
+  image: docker:latest
+  services:
+    - docker:dind
   only:
     - schedules
   stage: testing
@@ -68,6 +88,9 @@ daily-load-tests:on-schedule:
     - make ci-load-tests
 
 load-tests:
+  image: docker:latest
+  services:
+    - docker:dind
   except:
     - schedules
   stage: testing
@@ -94,6 +117,9 @@ linting:
     - make lint
 
 gitlabcr:
+  image: docker:latest
+  services:
+    - docker:dind
   stage: publish
   script:
     - docker login -u=gitlab-ci-token -p=$CI_JOB_TOKEN registry.gitlab.com

@@ -42,8 +42,10 @@ type (
 
 	// AuthSettings is a container struct for dealing with settings pertaining to
 	AuthSettings struct {
-		CookieSecret   string        `mapstructure:"cookie_secret"`
-		CookieLifetime time.Duration `mapstructure:"cookie_lifetime"`
+		SecureCookiesOnly bool          `mapstructure:"secure_cookies_only"`
+		CookieDomain      string        `mapstructure:"cookie_domain"`
+		CookieSecret      string        `mapstructure:"cookie_secret"`
+		CookieLifetime    time.Duration `mapstructure:"cookie_lifetime"`
 	}
 
 	// ServerConfig is our server configuration struct

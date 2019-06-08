@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -101,7 +102,7 @@ func (s *Service) Login(res http.ResponseWriter, req *http.Request) {
 	}
 
 	logger.Debug("login was valid, returning cookie")
-	cookie, err := s.buildCookie(loginData.user)
+	cookie, err := s.buildAuthCookie(loginData.user)
 	if err != nil {
 		logger.Error(err, "error building cookie")
 
@@ -125,10 +126,12 @@ func (s *Service) Logout(res http.ResponseWriter, req *http.Request) {
 	_, span := trace.StartSpan(req.Context(), "logout")
 	defer span.End()
 
-	if cookie, err := req.Cookie(CookieName); err == nil {
+	if cookie, err := req.Cookie(CookieName); err == nil && cookie != nil {
 		s.logger.Debug("logout was called, clearing cookie")
-		cookie.MaxAge = -1
-		http.SetCookie(res, cookie)
+		c := s.buildCookie("deleted")
+		c.Expires = time.Time{}
+		c.MaxAge = -1
+		http.SetCookie(res, c)
 	} else {
 		s.logger.WithError(err).Debug("logout was called, no cookie was found")
 	}
@@ -153,8 +156,8 @@ func (s *Service) fetchLoginDataFromRequest(req *http.Request) (*loginData, *mod
 	username := loginInput.Username
 	logger := s.logger.WithValue("Username", username)
 
-	// you could ensure there isn't an unsatisfied
-	// password reset token requested before allowing login here
+	// you could ensure there isn't an unsatisfied password reset token
+	// requested before allowing login here
 
 	user, err := s.userDB.GetUserByUsername(ctx, username)
 	if err == sql.ErrNoRows {
@@ -212,10 +215,10 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 	return loginValid, nil
 }
 
-func (s *Service) buildCookie(user *models.User) (*http.Cookie, error) {
+func (s *Service) buildAuthCookie(user *models.User) (*http.Cookie, error) {
 	s.logger.WithValues(map[string]interface{}{
 		"user_id": user.ID,
-	}).Debug("buildCookie called")
+	}).Debug("buildAuthCookie called")
 
 	// NOTE: code here is duplicated into the unit tests for DecodeCookieFromRequest
 	// any changes made here might need to be reflected there
@@ -231,24 +234,18 @@ func (s *Service) buildCookie(user *models.User) (*http.Cookie, error) {
 		return nil, err
 	}
 
+	return s.buildCookie(encoded), nil
+}
+
+func (s *Service) buildCookie(value string) *http.Cookie {
 	// https://www.calhoun.io/securing-cookies-in-go/
 	return &http.Cookie{
-		Name:  CookieName,
-		Value: encoded,
-		// Defaults to any path on your app, but you can use this
-		// to limit to a specific subdirectory.
-		Path: "/",
-		// true means no scripts, http requests only. This has
-		// nothing to do with https vs http
+		Name:     CookieName,
+		Value:    value,
+		Path:     "/",
 		HttpOnly: true,
-		// https vs http
-		// Secure: true, // SECUREME
-		// T // Defaults to host-only, which means exact subdomain
-		// O // matching. Only change this to enable subdomains if you
-		// D // need to! The below code would work on any subdomain for
-		// O // yoursite.com
-		// Domain: "yoursite.com",
-		///////
-		// Expires: time.Now().Add(s.config.MaxCookieLifetime),
-	}, nil
+		Secure:   s.config.SecureCookiesOnly,
+		Domain:   s.config.CookieDomain,
+		Expires:  time.Now().Add(s.config.CookieLifetime),
+	}
 }

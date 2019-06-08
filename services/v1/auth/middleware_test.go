@@ -37,7 +37,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 		require.NotNil(t, req)
 		res := httptest.NewRecorder()
 
-		cookie, err := s.buildCookie(exampleUser)
+		cookie, err := s.buildAuthCookie(exampleUser)
 		require.NotNil(t, cookie)
 		require.NoError(t, err)
 		req.AddCookie(cookie)
@@ -65,7 +65,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 		require.NotNil(t, req)
 		res := httptest.NewRecorder()
 
-		cookie, err := s.buildCookie(exampleUser)
+		cookie, err := s.buildAuthCookie(exampleUser)
 		require.NotNil(t, cookie)
 		require.NoError(t, err)
 		req.AddCookie(cookie)
@@ -138,7 +138,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		require.NotNil(t, req)
 		res := httptest.NewRecorder()
 
-		c, err := s.buildCookie(&models.User{ID: 1, Username: "username"})
+		c, err := s.buildAuthCookie(&models.User{ID: 1, Username: "username"})
 		require.NoError(t, err)
 		req.AddCookie(c)
 
@@ -161,7 +161,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		require.NotNil(t, req)
 		res := httptest.NewRecorder()
 
-		c, err := s.buildCookie(&models.User{ID: 1, Username: "username"})
+		c, err := s.buildAuthCookie(&models.User{ID: 1, Username: "username"})
 		require.NoError(t, err)
 		req.AddCookie(c)
 

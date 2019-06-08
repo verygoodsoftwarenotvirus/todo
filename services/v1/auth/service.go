@@ -37,6 +37,7 @@ type (
 
 	// Service handles auth
 	Service struct {
+		config               config.AuthSettings
 		logger               logging.Logger
 		authenticator        libauth.Authenticator
 		userIDFetcher        UserIDFetcher
@@ -63,6 +64,7 @@ func ProvideAuthService(
 	svc := &Service{
 		logger:               logger.WithName(serviceName),
 		encoderDecoder:       encoder,
+		config:               config.Auth,
 		userDB:               database,
 		oauth2ClientsService: oauth2ClientsService,
 		authenticator:        authenticator,

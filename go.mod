@@ -24,6 +24,7 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/pquerna/otp v1.2.0
 	github.com/rs/zerolog v1.14.3
+	github.com/spf13/afero v1.1.2
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.3.0
 	github.com/tebeka/selenium v0.9.4-0.20181011202039-edf31bb7fd71

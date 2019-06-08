@@ -2,9 +2,13 @@ package frontend
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"path/filepath"
 	"regexp"
+
+	"github.com/pkg/errors"
+	"github.com/spf13/afero"
 )
 
 // Routes returns a map of route to HandlerFunc for the parent router to set
@@ -20,14 +24,47 @@ var (
 	itemsFrontendPathRegex = regexp.MustCompile(`/items/\d+`)
 )
 
+func buildMemoryFilesystemForServer(fileDir string) (*afero.HttpFs, error) {
+	afs := afero.NewMemMapFs()
+	files, err := ioutil.ReadDir(fileDir)
+	if err != nil {
+		return nil, errors.Wrap(err, "reading directory for frontend files")
+	}
+	for _, file := range files {
+		if !file.IsDir() {
+			fp := filepath.Join(fileDir, file.Name())
+			f, err := afs.Create(fp)
+			if err != nil {
+				return nil, errors.Wrap(err, "creating static file in memory")
+			}
+
+			bs, err := ioutil.ReadFile(fp)
+			if err != nil {
+				return nil, errors.Wrap(err, "reading static file from directory")
+			}
+
+			if _, err = f.Write(bs); err != nil {
+				return nil, errors.Wrap(err, "loading static file into memory")
+			}
+		}
+	}
+	return afero.NewHttpFs(afs), nil
+}
+
 // StaticDir establishes a static directory handler
 func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, error) {
 	fileDir, err := filepath.Abs(staticFilesDirectory)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "determining absolute path of static files directory")
 	}
+
+	httpFs, err := buildMemoryFilesystemForServer(fileDir)
+	if err != nil {
+		return nil, errors.Wrap(err, "establishing static server filesystem")
+	}
+
 	s.logger.WithValue("static_dir", fileDir).Debug("setting static file server")
-	fs := http.StripPrefix("/", http.FileServer(http.Dir(fileDir)))
+	fs := http.StripPrefix("/", http.FileServer(httpFs.Dir(fileDir)))
 
 	return func(res http.ResponseWriter, req *http.Request) {
 		logger := s.logger.WithRequest(req)

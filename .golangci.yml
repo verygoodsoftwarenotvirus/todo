@@ -91,6 +91,9 @@ linters-settings:
   gocyclo:
     # minimal code complexity to report, 30 by default (but we recommend 10-20)
     min-complexity: 10
+  gosec:
+    exclude:
+      - G304
   maligned:
     # print struct with more effective memory layout or not, false by default
     suggest-new: true
@@ -202,10 +205,10 @@ issues:
       linters:
         - gosec
 
-    # Exclude some staticcheck messages
+    # ignore this error type because it isn't defined anywhere, and it's detecting a false positive
     - linters:
-        - staticcheck
-      text: 'SA9003:'
+        - gosec
+      text: 'G304:'
 
     # Exclude lll issues for long lines with go:generate
     - linters:

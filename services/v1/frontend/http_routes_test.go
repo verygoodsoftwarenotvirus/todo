@@ -1,10 +1,12 @@
 package frontend
 
 import (
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
@@ -29,7 +31,9 @@ func TestService_StaticDir(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := &Service{logger: noop.ProvideNoopLogger()}
-		exampleDir := "."
+		exampleDir := "frontend/v1/public/"
+
+		require.NoError(t, os.Chdir("/home/jeffrey/src/gitlab.com/verygoodsoftwarenotvirus/todo/"))
 
 		hf, err := s.StaticDir(exampleDir)
 		assert.NoError(t, err)

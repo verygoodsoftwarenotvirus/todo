@@ -21,10 +21,10 @@ coverage:
     - make artifacts/coverage.out
 
 integration-tests:
+  stage: testing
   image: docker:latest
   services:
     - docker:dind
-  stage: testing
   variables:
     GOPATH: '/go'
   script:
@@ -43,57 +43,40 @@ build-frontend:
     - npm run build
 
 frontend-selenium-tests:
+  stage: testing
   image: docker:latest
   services:
     - docker:dind
-  stage: testing
   variables:
     GOPATH: '/go'
-  image: docker:latest
-  services:
-    - docker:dind
   script:
-    - apk add --u
-  image: docker:latest
-  services:
-    - docker:dind
-      openssl-dev
-  image: docker:latest
-  services:
-    - docker:dind
-    - pip install
-  image: docker:latest
-  services:
-    - docker:dind
-    - make fronte
-  image: docker:latest
-  services:
-    - docker:dind
+    - apk add --update --no-cache py-pip openssl python-dev libffi-dev
+      openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - make frontend-tests
 
 
 daily-load-tests:on-schedule:
+  stage: testing
   image: docker:latest
   services:
     - docker:dind
+  variables:
+    GOPATH: '/go'
+    LOADTEST_RUN_TIME: '2m30s'
+  script:
+    - apk add --update --no-cache py-pip openssl python-dev libffi-dev
+      openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - make ci-load-tests
   only:
     - schedules
-  stage: testing
-  variables:
-    GOPATH: '/go'
-    LOADTEST_RUN_TIME: '2m30s'
-  script:
-    - apk add --update --no-cache py-pip openssl python-dev libffi-dev
-      openssl-dev gcc libc-dev make
-    - pip install docker-compose
-    - make ci-load-tests
 
 load-tests:
+  stage: testing
   image: docker:latest
   services:
     - docker:dind
-  except:
-    - schedules
-  stage: testing
   variables:
     GOPATH: '/go'
     LOADTEST_RUN_TIME: '2m30s'
@@ -102,6 +85,8 @@ load-tests:
       openssl-dev gcc libc-dev make
     - pip install docker-compose
     - make ci-load-tests
+  except:
+    - schedules
   only:
     - master
 
@@ -117,10 +102,10 @@ linting:
     - make lint
 
 gitlabcr:
+  stage: publish
   image: docker:latest
   services:
     - docker:dind
-  stage: publish
   script:
     - docker login -u=gitlab-ci-token -p=$CI_JOB_TOKEN registry.gitlab.com
     - docker build -t registry.gitlab.com/verygoodsoftwarenotvirus/todo:latest --file dockerfiles/server.Dockerfile .

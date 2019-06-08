@@ -149,7 +149,7 @@ dev:
 
 .PHONY: run
 run:
-	docker-compose --file compose-files/docker-compose.yaml up \
+	docker-compose --file compose-files/production.yaml up \
 	--build \
 	--force-recreate \
 	--remove-orphans \

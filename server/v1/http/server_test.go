@@ -31,7 +31,10 @@ func buildTestServer() *Server {
 		httpServer: provideHTTPServer(),
 		logger:     noop.ProvideNoopLogger(),
 
-		frontendService:      frontend.ProvideFrontendService(noop.ProvideNoopLogger()),
+		frontendService: frontend.ProvideFrontendService(
+			noop.ProvideNoopLogger(),
+			config.FrontendSettings{},
+		),
 		webhooksService:      &mmodels.WebhookDataServer{},
 		usersService:         &mmodels.UserDataServer{},
 		authService:          &auth.Service{},

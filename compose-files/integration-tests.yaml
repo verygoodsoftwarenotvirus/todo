@@ -6,8 +6,7 @@ services:
       context: ../
       dockerfile: dockerfiles/integration-server.Dockerfile
     ports:
-      - '80:80'
-      - '8888:8888'
+      - '80:8888'
     environment:
       DOCKER: 'true'
     links:
@@ -21,6 +20,7 @@ services:
       dockerfile: dockerfiles/integration-tests.Dockerfile
     environment:
       DOCKER: 'true'
+      TARGET_ADDRESS: 'http://todo-server:8888'
     links:
       - todo-server
     # logging:

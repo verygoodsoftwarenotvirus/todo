@@ -4,9 +4,11 @@ WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
 RUN apt-get update -y && apt-get install -y make git gcc musl-dev
 
-ADD . .
+RUN groupadd -g 999 appuser && \
+	useradd -r -u 999 -g appuser appuser
+USER appuser
 
-ADD ./scripts/coverage.sh /coverage.sh
+ADD . .
 
 RUN echo "mode: set" > coverage.out;
 

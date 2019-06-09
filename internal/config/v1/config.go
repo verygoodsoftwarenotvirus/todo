@@ -36,6 +36,7 @@ type (
 
 	// FrontendSettings describes the settings pertinent to the frontend
 	FrontendSettings struct {
+		CacheStaticFiles     bool   `mapstructure:"cache_static_files"`
 		StaticFilesDirectory string `mapstructure:"static_files_dir"`
 		WASMClientPackage    string `mapstructure:"wasm_client_package"`
 	}

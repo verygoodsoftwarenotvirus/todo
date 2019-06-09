@@ -32,7 +32,7 @@ func buildDummyOAuth2ClientInput(t *testing.T, username, password, TOTPToken str
 			TOTPToken: mustBuildCode(t, TOTPToken),
 		},
 		Scopes:      []string{"*"},
-		RedirectURI: localTestInstanceURL,
+		RedirectURI: "http://localhost",
 	}
 
 	return x

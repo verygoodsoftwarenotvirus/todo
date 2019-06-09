@@ -2,8 +2,6 @@ package frontend
 
 import (
 	"fmt"
-	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -22,20 +20,7 @@ const (
 )
 
 func init() {
-	if strings.ToLower(os.Getenv("DOCKER")) == "true" {
-		ta := os.Getenv("TARGET_ADDRESS")
-		if ta == "" {
-			urlToUse = defaultTestInstanceURL
-		} else {
-			u, err := url.Parse(ta)
-			if err != nil {
-				panic(err)
-			}
-			urlToUse = u.String()
-		}
-	} else {
-		urlToUse = localTestInstanceURL
-	}
+	urlToUse = testutil.DetermineServiceURL()
 
 	logger := zerolog.NewZeroLogger()
 	logger.WithValue("url", urlToUse).Info("checking server")

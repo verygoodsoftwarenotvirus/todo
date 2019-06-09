@@ -118,13 +118,6 @@ integration-coverage:
 	--abort-on-container-exit
 	go tool cover -html=./artifacts/integration-coverage.out
 
-## Frontend things
-
-.PHONY: frontend-dev
-frontend-dev:
-	docker build --tag frontend:latest --file=dockerfiles/frontend-dev.Dockerfile .
-	docker run --publish 80 frontend:latest
-
 ## Docker things
 
 .PHONY: server-docker-image

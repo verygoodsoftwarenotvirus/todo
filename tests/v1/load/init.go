@@ -4,21 +4,15 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
+	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/zerolog"
 
 	"github.com/icrowley/fake"
-)
-
-const (
-	localTestInstanceURL   = "http://localhost"
-	defaultTestInstanceURL = "http://todo-server"
 )
 
 var (
@@ -27,11 +21,7 @@ var (
 )
 
 func init() {
-	if strings.ToLower(os.Getenv("DOCKER")) == "true" {
-		urlToUse = defaultTestInstanceURL
-	} else {
-		urlToUse = localTestInstanceURL
-	}
+	urlToUse = testutil.DetermineServiceURL()
 	logger := zerolog.NewZeroLogger()
 
 	logger.WithValue("url", urlToUse).Info("checking server")

@@ -7,7 +7,7 @@ metrics_provider = "prometheus"
 tracing_provider = "jaeger"
 
 [server]
-http_port = 80
+http_port = 8888
 debug = true
 
 [frontend]

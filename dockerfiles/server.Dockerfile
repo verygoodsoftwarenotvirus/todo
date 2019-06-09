@@ -22,6 +22,10 @@ RUN ls -Al
 # final stage
 FROM debian:stable
 
+RUN groupadd -g 999 appuser && \
+    useradd -r -u 999 -g appuser appuser
+USER appuser
+
 COPY config_files config_files
 COPY --from=build-stage /todo /todo
 COPY --from=frontend-build-stage /app/public /frontend
@@ -29,6 +33,5 @@ COPY --from=frontend-build-stage /app/public /frontend
 ENV CONFIGURATION_FILEPATH=config_files/production.toml
 
 ENV DOCKER=true
-EXPOSE 443 80
 
 ENTRYPOINT ["/todo"]

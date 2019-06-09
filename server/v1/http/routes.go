@@ -108,12 +108,16 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 			s.oauth2ClientsService.CreationInputMiddleware,
 		).Post("/client", s.oauth2ClientsService.Create) // Create
 
-		oauth2Router.With(s.oauth2ClientsService.OAuth2ClientInfoMiddleware).
-			Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
+		oauth2Router.With(s.oauth2ClientsService.OAuth2ClientInfoMiddleware).Route("/authorize", func(authRouter chi.Router) {
+			hf := func(res http.ResponseWriter, req *http.Request) {
+				s.logger.WithRequest(req).Debug("oauth2 authorize route hit")
 				if err := s.oauth2ClientsService.HandleAuthorizeRequest(res, req); err != nil {
 					http.Error(res, err.Error(), http.StatusBadRequest)
 				}
-			})
+			}
+			authRouter.Post("/", hf)
+			authRouter.Get("/", hf)
+		})
 
 		oauth2Router.Post("/token", func(res http.ResponseWriter, req *http.Request) {
 			if err := s.oauth2ClientsService.HandleTokenRequest(res, req); err != nil {

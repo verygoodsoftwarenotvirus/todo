@@ -6,12 +6,26 @@ services:
       context: ../
       dockerfile: dockerfiles/server.Dockerfile
     ports:
-      - '80:80'
-      - '8888:8888'
+      - '80:8888'
     environment:
       DOCKER: 'true'
     links:
       - database
+    # logging:
+    #   driver: none
+
+  test:
+    build:
+      context: ../
+      dockerfile: dockerfiles/frontend-tests.Dockerfile
+    environment:
+      DOCKER: 'true'
+      TARGET_ADDRESS: 'http://todo-server:8888'
+    links:
+      - todo-server
+      - selenium-hub
+    depends_on:
+      - firefox
     # logging:
     #   driver: none
 
@@ -57,17 +71,3 @@ services:
       - HUB_PORT=4444
     logging:
       driver: none
-
-  test:
-    build:
-      context: ../
-      dockerfile: dockerfiles/frontend-tests.Dockerfile
-    environment:
-      DOCKER: 'true'
-    links:
-      - todo-server
-      - selenium-hub
-    depends_on:
-      - firefox
-    # logging:
-    #   driver: none

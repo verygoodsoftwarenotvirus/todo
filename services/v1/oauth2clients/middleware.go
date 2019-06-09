@@ -2,8 +2,9 @@ package oauth2clients
 
 import (
 	"context"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"net/http"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pkg/errors"
 )
@@ -100,10 +101,14 @@ func (s *Service) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 }
 
 func (s *Service) fetchOAuth2ClientFromRequest(req *http.Request) *models.OAuth2Client {
-	s.logger.Debug("fetchOAuth2ClientFromRequest called")
+	logger := s.logger.WithValue("function_name", "fetchOAuth2ClientFromRequest")
+	logger.Debug("called")
+
 	ctx := req.Context()
 	client, ok := ctx.Value(models.OAuth2ClientKey).(*models.OAuth2Client)
+
 	if !ok {
+		logger.Debug("returning nil, no oauth2 client found")
 		return nil
 	}
 	return client

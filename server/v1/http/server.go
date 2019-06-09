@@ -40,7 +40,7 @@ type (
 		frontendService      *frontend.Service
 		itemsService         models.ItemDataServer
 		usersService         models.UserDataServer
-		oauth2ClientsService models.Oauth2ClientDataServer
+		oauth2ClientsService models.OAuth2ClientDataServer
 		webhooksService      models.WebhookDataServer
 
 		// infra things
@@ -56,6 +56,7 @@ type (
 
 // ProvideServer builds a new Server instance
 func ProvideServer(
+	ctx context.Context,
 	cfg *config.ServerConfig,
 
 	// services
@@ -72,8 +73,6 @@ func ProvideServer(
 	encoder encoding.EncoderDecoder,
 	newsManager *newsman.Newsman,
 ) (*Server, error) {
-	ctx := context.Background()
-
 	if len(cfg.Auth.CookieSecret) < 32 {
 		err := errors.New("cookie secret is too short, must be at least 32 characters in length")
 		logger.Error(err, "cookie secret failure")
@@ -136,6 +135,7 @@ func (s *Server) Serve() {
 
 	// returns ErrServerClosed on graceful close
 	if err := s.httpServer.ListenAndServe(); err != nil {
+		s.logger.Error(err, "server shutting down")
 		if err == http.ErrServerClosed {
 			// NOTE: there is a chance that next line won't have time to run,
 			// as main() doesn't wait for this goroutine to stop.

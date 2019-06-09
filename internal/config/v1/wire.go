@@ -24,6 +24,12 @@ func ProvideConfigDatabaseSettings(c *ServerConfig) DatabaseSettings {
 	return c.Database
 }
 
+// ProvideConfigFrontendSettings is an obligatory function that
+//  we're required to have because wire doesn't do it for us.
+func ProvideConfigFrontendSettings(c *ServerConfig) FrontendSettings {
+	return c.Frontend
+}
+
 // END it'd be neat if wire could do this for me one day.
 
 var (
@@ -32,5 +38,6 @@ var (
 		ProvideConfigServerSettings,
 		ProvideConfigAuthSettings,
 		ProvideConfigDatabaseSettings,
+		ProvideConfigFrontendSettings,
 	)
 )

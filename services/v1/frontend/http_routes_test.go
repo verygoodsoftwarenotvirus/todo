@@ -6,10 +6,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	"github.com/stretchr/testify/assert"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
+
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func buildRequest(t *testing.T) *http.Request {

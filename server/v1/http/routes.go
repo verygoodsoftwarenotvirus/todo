@@ -81,15 +81,18 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 	}
 
 	router.Route("/users", func(userRouter chi.Router) {
-		userRouter.With(s.authService.UserLoginInputMiddleware).Post("/login", s.authService.Login)
-		userRouter.With(s.authService.CookieAuthenticationMiddleware).Post("/logout", s.authService.Logout)
+		userRouter.With(s.authService.UserLoginInputMiddleware).
+			Post("/login", s.authService.Login)
+		userRouter.With(s.authService.CookieAuthenticationMiddleware).
+			Post("/logout", s.authService.Logout)
 
 		userIDPattern := fmt.Sprintf(oauth2IDPattern, users.URIParamKey)
 
-		userRouter.Get("/", s.usersService.List)                                             // List
-		userRouter.With(s.usersService.UserInputMiddleware).Post("/", s.usersService.Create) // Create
-		userRouter.Get(userIDPattern, s.usersService.Read)                                   // Read
-		userRouter.Delete(userIDPattern, s.usersService.Delete)                              // Delete
+		userRouter.Get("/", s.usersService.List) // List
+		userRouter.With(s.usersService.UserInputMiddleware).
+			Post("/", s.usersService.Create) // Create
+		userRouter.Get(userIDPattern, s.usersService.Read)      // Read
+		userRouter.Delete(userIDPattern, s.usersService.Delete) // Delete
 
 		userRouter.With(
 			s.authService.CookieAuthenticationMiddleware,
@@ -110,6 +113,7 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 
 		oauth2Router.With(s.oauth2ClientsService.OAuth2ClientInfoMiddleware).
 			Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
+				s.logger.WithRequest(req).Debug("oauth2 authorize route hit")
 				if err := s.oauth2ClientsService.HandleAuthorizeRequest(res, req); err != nil {
 					http.Error(res, err.Error(), http.StatusBadRequest)
 				}
@@ -129,21 +133,25 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 			// Items
 			v1Router.Route("/items", func(itemsRouter chi.Router) {
 				sr := fmt.Sprintf(numericIDPattern, items.URIParamKey)
-				itemsRouter.With(s.itemsService.CreationInputMiddleware).Post("/", s.itemsService.Create) // Create
-				itemsRouter.Get(sr, s.itemsService.Read)                                                  // Read
-				itemsRouter.With(s.itemsService.UpdateInputMiddleware).Put(sr, s.itemsService.Update)     // Update
-				itemsRouter.Delete(sr, s.itemsService.Delete)                                             // Delete
-				itemsRouter.Get("/", s.itemsService.List)                                                 // List
+				itemsRouter.With(s.itemsService.CreationInputMiddleware).
+					Post("/", s.itemsService.Create) // Create
+				itemsRouter.Get(sr, s.itemsService.Read) // Read
+				itemsRouter.With(s.itemsService.UpdateInputMiddleware).
+					Put(sr, s.itemsService.Update) // Update
+				itemsRouter.Delete(sr, s.itemsService.Delete) // Delete
+				itemsRouter.Get("/", s.itemsService.List)     // List
 			})
 
 			// Webhooks
 			v1Router.Route("/webhooks", func(webhookRouter chi.Router) {
 				sr := fmt.Sprintf(numericIDPattern, webhooks.URIParamKey)
-				webhookRouter.With(s.webhooksService.CreationInputMiddleware).Post("/", s.webhooksService.Create) // Create
-				webhookRouter.Get(sr, s.webhooksService.Read)                                                     // Read
-				webhookRouter.With(s.webhooksService.UpdateInputMiddleware).Put(sr, s.webhooksService.Update)     // Update
-				webhookRouter.Delete(sr, s.webhooksService.Delete)                                                // Delete
-				webhookRouter.Get("/", s.webhooksService.List)                                                    // List
+				webhookRouter.With(s.webhooksService.CreationInputMiddleware).
+					Post("/", s.webhooksService.Create) // Create
+				webhookRouter.Get(sr, s.webhooksService.Read) // Read
+				webhookRouter.With(s.webhooksService.UpdateInputMiddleware).
+					Put(sr, s.webhooksService.Update) // Update
+				webhookRouter.Delete(sr, s.webhooksService.Delete) // Delete
+				webhookRouter.Get("/", s.webhooksService.List)     // List
 			})
 
 			// OAuth2 Clients

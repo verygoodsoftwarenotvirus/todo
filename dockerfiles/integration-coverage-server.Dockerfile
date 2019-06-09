@@ -11,6 +11,14 @@ RUN go test -o /todo -c -coverpkg \
     gitlab.com/verygoodsoftwarenotvirus/todo/internal/...,gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/...,gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/...,gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1/ \
     gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
 
+# frontend-build-stage
+FROM node:latest AS frontend-build-stage
+
+WORKDIR /app
+
+ADD frontend/v1 .
+
+RUN npm install && npm run build
 
 # final stage
 FROM debian:stable

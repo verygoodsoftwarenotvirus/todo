@@ -2,10 +2,11 @@ package config
 
 import (
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

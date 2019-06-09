@@ -30,10 +30,6 @@ func TestLoginPage(T *testing.T) {
 			// Navigate to the login page.
 			require.NoError(t, driver.Get(urlToUse+"/login"))
 
-			ps, err := driver.PageSource()
-			t.Log(ps)
-			require.NoError(t, err)
-
 			// fetch the button.
 			elem, err := driver.FindElement(selenium.ByID, "loginButton")
 			if err != nil {

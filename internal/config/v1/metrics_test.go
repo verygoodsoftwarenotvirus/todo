@@ -1,10 +1,12 @@
 package config
 
 import (
-	"github.com/stretchr/testify/assert"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 	"testing"
 	"time"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestServerConfig_ProvideInstrumentationHandler(T *testing.T) {

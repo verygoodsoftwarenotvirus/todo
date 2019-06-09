@@ -1,41 +1,21 @@
 package integration
 
 import (
+	"context"
 	"fmt"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/zerolog"
 
 	"github.com/icrowley/fake"
 )
 
-const (
-	localTestInstanceURL   = "http://localhost"
-	defaultTestInstanceURL = "http://todo-server"
-)
-
 func init() {
-	if strings.ToLower(os.Getenv("DOCKER")) == "true" {
-		ta := os.Getenv("TARGET_ADDRESS")
-		if ta == "" {
-			urlToUse = defaultTestInstanceURL
-		} else {
-			u, err := url.Parse(ta)
-			if err != nil {
-				panic(err)
-			}
-			urlToUse = u.String()
-		}
-
-	} else {
-		urlToUse = localTestInstanceURL
-	}
+	urlToUse = testutil.DetermineServiceURL()
 	logger := zerolog.NewZeroLogger()
 
 	logger.WithValue("url", urlToUse).Info("checking server")
@@ -66,6 +46,7 @@ func initializeClient(clientID, clientSecret string) *client.V1Client {
 	}
 
 	c, err := client.NewClient(
+		context.Background(),
 		clientID,
 		clientSecret,
 		uri,

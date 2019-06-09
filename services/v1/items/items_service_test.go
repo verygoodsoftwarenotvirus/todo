@@ -1,6 +1,7 @@
 package items
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"testing"
@@ -48,6 +49,7 @@ func TestProvideItemsService(T *testing.T) {
 		uc.On("IncrementBy", expectation).Return()
 
 		s, err := ProvideItemsService(
+			context.Background(),
 			noop.ProvideNoopLogger(),
 			idm,
 			func(req *http.Request) uint64 { return 0 },
@@ -79,6 +81,7 @@ func TestProvideItemsService(T *testing.T) {
 		uc.On("IncrementBy", expectation).Return()
 
 		s, err := ProvideItemsService(
+			context.Background(),
 			noop.ProvideNoopLogger(),
 			idm,
 			func(req *http.Request) uint64 { return 0 },
@@ -110,6 +113,7 @@ func TestProvideItemsService(T *testing.T) {
 		uc.On("IncrementBy", expectation).Return()
 
 		s, err := ProvideItemsService(
+			context.Background(),
 			noop.ProvideNoopLogger(),
 			idm,
 			func(req *http.Request) uint64 { return 0 },

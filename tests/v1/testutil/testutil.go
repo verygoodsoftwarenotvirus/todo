@@ -8,10 +8,11 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
-	http2 "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
+	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/icrowley/fake"
@@ -22,6 +23,20 @@ import (
 
 func init() {
 	fake.Seed(time.Now().UnixNano())
+}
+
+// DetermineServiceURL returns the URL, if properly configured
+func DetermineServiceURL() string {
+	ta := os.Getenv("TARGET_ADDRESS")
+	if ta == "" {
+		panic("must provide target address!")
+	}
+	u, err := url.Parse(ta)
+	if err != nil {
+		panic(err)
+	}
+
+	return u.String()
 }
 
 // EnsureServerIsUp checks that a server is up and doesn't return until it's certain one way or the other
@@ -70,7 +85,7 @@ func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
 		return nil, err
 	}
 
-	c, err := http2.NewSimpleClient(tu, debug)
+	c, err := client.NewSimpleClient(context.Background(), tu, debug)
 	if err != nil {
 		return nil, err
 	}

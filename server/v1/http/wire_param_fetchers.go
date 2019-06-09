@@ -10,7 +10,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"github.com/go-chi/chi"

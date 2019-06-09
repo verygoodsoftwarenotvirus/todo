@@ -340,7 +340,6 @@ var (
 func RecordRuntimeStats(interval time.Duration) (stopFn func()) {
 	var (
 		closeOnce sync.Once
-		ctx       = context.Background()
 		ticker    = time.NewTicker(interval)
 		done      = make(chan struct{})
 	)
@@ -351,6 +350,7 @@ func RecordRuntimeStats(interval time.Duration) (stopFn func()) {
 			select {
 			case <-ticker.C:
 				startTime := time.Now()
+				ctx := context.Background()
 
 				runtime.ReadMemStats(ms)
 				stats.Record(

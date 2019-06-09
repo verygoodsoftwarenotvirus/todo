@@ -44,7 +44,6 @@ $(ARTIFACTS_DIR):
 	mkdir -p $(ARTIFACTS_DIR)
 
 $(COVERAGE_OUT): $(ARTIFACTS_DIR)
-	@rm -f $(COVERAGE_OUT) profile.out;
 	set -ex; \
 	echo "mode: set" > $(COVERAGE_OUT);
 	for pkg in `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|mock)'`; do \
@@ -55,9 +54,12 @@ $(COVERAGE_OUT): $(ARTIFACTS_DIR)
 	done || exit 1
 	gocov convert $(COVERAGE_OUT) | gocov report
 
-coverage:
-	docker build --tag overall-coverage:latest  --file dockerfiles/coverage.Dockerfile .
-	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` overall-coverage:latest
+.PHONY: coverage-clean
+coverage-clean:
+	@rm -f $(COVERAGE_OUT) profile.out;
+
+.PHONY: coverage
+coverage: coverage-clean $(COVERAGE_OUT)
 
 .PHONY: test
 test:
@@ -117,13 +119,6 @@ integration-coverage:
 	--always-recreate-deps \
 	--abort-on-container-exit
 	go tool cover -html=./artifacts/integration-coverage.out
-
-## Frontend things
-
-.PHONY: frontend-dev
-frontend-dev:
-	docker build --tag frontend:latest --file=dockerfiles/frontend-dev.Dockerfile .
-	docker run --publish 80 frontend:latest
 
 ## Docker things
 

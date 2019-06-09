@@ -3,6 +3,7 @@ package items
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,7 +15,6 @@ import (
 
 	mockman "gitlab.com/verygoodsoftwarenotvirus/newsman/mock"
 
-	"errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

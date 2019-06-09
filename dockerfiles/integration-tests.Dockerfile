@@ -1,8 +1,8 @@
 FROM golang:stretch
 
-WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
-
 RUN apt-get update -y && apt-get install -y make git gcc musl-dev
+
+WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
 ADD . .
 

@@ -24,30 +24,42 @@ var (
 	itemsFrontendPathRegex = regexp.MustCompile(`/items/\d+`)
 )
 
-func buildMemoryFilesystemForServer(fileDir string) (*afero.HttpFs, error) {
-	afs := afero.NewMemMapFs()
-	files, err := ioutil.ReadDir(fileDir)
-	if err != nil {
-		return nil, errors.Wrap(err, "reading directory for frontend files")
-	}
-	for _, file := range files {
-		if !file.IsDir() {
-			fp := filepath.Join(fileDir, file.Name())
-			f, err := afs.Create(fp)
-			if err != nil {
-				return nil, errors.Wrap(err, "creating static file in memory")
-			}
+func (s *Service) buildStaticFileServer(fileDir string) (*afero.HttpFs, error) {
+	var afs afero.Fs
+	if s.config.CacheStaticFiles {
+		afs = afero.NewMemMapFs()
+		files, err := ioutil.ReadDir(fileDir)
+		if err != nil {
+			return nil, errors.Wrap(err, "reading directory for frontend files")
+		}
 
-			bs, err := ioutil.ReadFile(fp)
-			if err != nil {
-				return nil, errors.Wrap(err, "reading static file from directory")
-			}
+		for _, file := range files {
+			if !file.IsDir() {
+				fp := filepath.Join(fileDir, file.Name())
+				f, err := afs.Create(fp)
+				if err != nil {
+					return nil, errors.Wrap(err, "creating static file in memory")
+				}
 
-			if _, err = f.Write(bs); err != nil {
-				return nil, errors.Wrap(err, "loading static file into memory")
+				bs, err := ioutil.ReadFile(fp)
+				if err != nil {
+					return nil, errors.Wrap(err, "reading static file from directory")
+				}
+
+				if _, err = f.Write(bs); err != nil {
+					return nil, errors.Wrap(err, "loading static file into memory")
+				}
+
+				if err = f.Close(); err != nil {
+					s.logger.Error(err, "closing file while setting up static dir")
+				}
 			}
 		}
+		afs = afero.NewReadOnlyFs(afs)
+	} else {
+		afs = afero.NewOsFs()
 	}
+
 	return afero.NewHttpFs(afs), nil
 }
 
@@ -58,7 +70,7 @@ func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, erro
 		return nil, errors.Wrap(err, "determining absolute path of static files directory")
 	}
 
-	httpFs, err := buildMemoryFilesystemForServer(fileDir)
+	httpFs, err := s.buildStaticFileServer(fileDir)
 	if err != nil {
 		return nil, errors.Wrap(err, "establishing static server filesystem")
 	}

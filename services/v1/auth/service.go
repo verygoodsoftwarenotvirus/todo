@@ -28,13 +28,6 @@ type (
 		Decode(name, value string, dst interface{}) error
 	}
 
-	// sessionManager interface {
-	// // Set establishes the session
-	// Set(context.Context, http.ResponseWriter, []byte, ...[]byte) error
-	// // Clear clears the session
-	// Clear(context.Context, http.ResponseWriter)
-	// }
-
 	// Service handles auth
 	Service struct {
 		config               config.AuthSettings

@@ -9,10 +9,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"github.com/pkg/errors"
 	"gopkg.in/oauth2.v3"
@@ -63,7 +62,6 @@ type (
 
 		tokenStore          oauth2.TokenStore
 		oauth2Handler       oauth2Handler
-		oauth2ClientStore   *oauth2store.ClientStore
 		oauth2ClientCounter metrics.UnitCounter
 	}
 )
@@ -81,7 +79,7 @@ func (s *clientStore) GetByID(id string) (oauth2.ClientInfo, error) {
 	if err == sql.ErrNoRows {
 		return nil, errors.New("invalid client")
 	} else if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "querying for client")
 	}
 
 	return client, nil
@@ -96,6 +94,7 @@ func newClientStore(database database.Database) *clientStore {
 
 // ProvideOAuth2ClientsService builds a new OAuth2ClientsService
 func ProvideOAuth2ClientsService(
+	ctx context.Context,
 	logger logging.Logger,
 	database database.Database,
 	authenticator auth.Authenticator,
@@ -103,7 +102,6 @@ func ProvideOAuth2ClientsService(
 	encoderDecoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
 ) (*Service, error) {
-	ctx := context.Background()
 	counter, err := counterProvider(counterName, "number of oauth2 clients managed by the oauth2 client service")
 	if err != nil {
 		return nil, errors.Wrap(err, "error initializing counter")
@@ -111,10 +109,13 @@ func ProvideOAuth2ClientsService(
 
 	manager := manage.NewDefaultManager()
 	clientStore := newClientStore(database)
-	manager.MapClientStorage(clientStore)
 	tokenStore, err := oauth2store.NewMemoryTokenStore()
+	manager.MapClientStorage(clientStore)
 	manager.MustTokenStorage(tokenStore, err)
-	server := oauth2server.NewDefaultServer(manager)
+	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
+	manager.SetRefreshTokenCfg(manage.DefaultRefreshTokenCfg)
+	oHandler := oauth2server.NewDefaultServer(manager)
+	oHandler.SetAllowGetAccessRequest(true)
 
 	s := &Service{
 		database:             database,
@@ -122,23 +123,16 @@ func ProvideOAuth2ClientsService(
 		encoderDecoder:       encoderDecoder,
 		authenticator:        authenticator,
 		urlClientIDExtractor: clientIDFetcher,
-
-		oauth2ClientCounter: counter,
-		tokenStore:          tokenStore,
-		oauth2Handler:       server,
+		oauth2ClientCounter:  counter,
+		tokenStore:           tokenStore,
+		oauth2Handler:        oHandler,
 	}
 
 	clients, err := s.database.GetAllOAuth2Clients(ctx)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, errors.Wrap(err, "fetching oauth2 clients")
 	}
-
-	for _, client := range clients {
-		counter.Increment(ctx)
-		if err = s.oauth2ClientStore.Set(client.ClientID, client); err != nil {
-			return nil, errors.Wrapf(err, "error establishing oauth2 client: %d\n", client.ID)
-		}
-	}
+	counter.IncrementBy(ctx, uint64(len(clients)))
 
 	s.initializeOAuth2Handler()
 
@@ -150,19 +144,19 @@ func (s *Service) initializeOAuth2Handler() {
 	s.oauth2Handler.SetClientAuthorizedHandler(s.ClientAuthorizedHandler)
 	s.oauth2Handler.SetClientScopeHandler(s.ClientScopeHandler)
 	s.oauth2Handler.SetClientInfoHandler(oauth2server.ClientFormHandler)
-	s.oauth2Handler.SetUserAuthorizationHandler(s.UserAuthorizationHandler)
 	s.oauth2Handler.SetAuthorizeScopeHandler(s.AuthorizeScopeHandler)
 	s.oauth2Handler.SetResponseErrorHandler(s.OAuth2ResponseErrorHandler)
 	s.oauth2Handler.SetInternalErrorHandler(s.OAuth2InternalErrorHandler)
+	s.oauth2Handler.SetUserAuthorizationHandler(s.UserAuthorizationHandler)
 
 	// this sad type cast is here because I have an arbitrary
 	// test-only interface for OAuth2 interactions.
 	if x, ok := s.oauth2Handler.(*oauth2server.Server); ok {
 		x.Config.AllowedGrantTypes = []oauth2.GrantType{
-			oauth2.AuthorizationCode,
+			// oauth2.AuthorizationCode,
 			oauth2.ClientCredentials,
-			oauth2.Refreshing, // TODO: maybe these
-			oauth2.Implicit,   // two aren't necessary?
+			// oauth2.Refreshing,
+			// oauth2.Implicit
 		}
 	}
 }

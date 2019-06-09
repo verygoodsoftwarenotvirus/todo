@@ -1,18 +1,19 @@
 package users
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	mauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	mmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 
@@ -40,6 +41,7 @@ func buildTestService(t *testing.T) *Service {
 	}
 
 	service, err := ProvideUsersService(
+		context.Background(),
 		config.AuthSettings{},
 		noop.ProvideNoopLogger(),
 		mockDB,
@@ -74,6 +76,7 @@ func TestProvideUsersService(T *testing.T) {
 		}
 
 		service, err := ProvideUsersService(
+			context.Background(),
 			config.AuthSettings{},
 			noop.ProvideNoopLogger(),
 			mockDB,
@@ -104,6 +107,7 @@ func TestProvideUsersService(T *testing.T) {
 		}
 
 		service, err := ProvideUsersService(
+			context.Background(),
 			config.AuthSettings{},
 			noop.ProvideNoopLogger(),
 			mockDB,
@@ -134,6 +138,7 @@ func TestProvideUsersService(T *testing.T) {
 		}
 
 		service, err := ProvideUsersService(
+			context.Background(),
 			config.AuthSettings{},
 			noop.ProvideNoopLogger(),
 			mockDB,
@@ -162,6 +167,7 @@ func TestProvideUsersService(T *testing.T) {
 		}
 
 		service, err := ProvideUsersService(
+			context.Background(),
 			config.AuthSettings{},
 			noop.ProvideNoopLogger(),
 			mockDB,

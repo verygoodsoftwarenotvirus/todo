@@ -1,9 +1,8 @@
 package httpserver
 
 import (
+	"context"
 	"testing"
-
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
@@ -18,6 +17,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
 
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -31,7 +32,10 @@ func buildTestServer() *Server {
 		httpServer: provideHTTPServer(),
 		logger:     noop.ProvideNoopLogger(),
 
-		frontendService:      frontend.ProvideFrontendService(noop.ProvideNoopLogger()),
+		frontendService: frontend.ProvideFrontendService(
+			noop.ProvideNoopLogger(),
+			config.FrontendSettings{},
+		),
 		webhooksService:      &mmodels.WebhookDataServer{},
 		usersService:         &mmodels.UserDataServer{},
 		authService:          &auth.Service{},
@@ -50,6 +54,7 @@ func TestProvideServer(T *testing.T) {
 			Return(&models.WebhookList{}, nil)
 
 		actual, err := ProvideServer(
+			context.Background(),
 			&config.ServerConfig{
 				Auth: config.AuthSettings{
 					CookieSecret: "THISISAVERYLONGSTRINGFORTESTPURPOSES",

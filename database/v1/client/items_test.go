@@ -2,11 +2,11 @@ package dbclient
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 

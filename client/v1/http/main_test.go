@@ -3,16 +3,17 @@ package client
 import (
 	"context"
 	"encoding/json"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 )
 
 const (
@@ -77,7 +78,7 @@ func TestV1Client_TokenSource(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		ts := httptest.NewTLSServer(nil)
-		c, err := NewClient(
+		c, err := NewClient(context.Background(),
 			"",
 			"",
 			mustParseURL(exampleURI),
@@ -98,7 +99,7 @@ func TestNewClient(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ts := httptest.NewTLSServer(nil)
-		c, err := NewClient(
+		c, err := NewClient(context.Background(),
 			"",
 			"",
 			mustParseURL(exampleURI),
@@ -112,7 +113,7 @@ func TestNewClient(T *testing.T) {
 	})
 
 	T.Run("with client but invalid timeout", func(t *testing.T) {
-		c, err := NewClient(
+		c, err := NewClient(context.Background(),
 			"",
 			"",
 			mustParseURL(exampleURI),
@@ -133,7 +134,11 @@ func TestNewSimpleClient(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		c, err := NewSimpleClient(mustParseURL(exampleURI), true)
+		c, err := NewSimpleClient(
+			context.Background(),
+			mustParseURL(exampleURI),
+			true,
+		)
 		require.NotNil(t, c)
 		require.NoError(t, err)
 	})
@@ -182,7 +187,7 @@ func TestBuildURL(T *testing.T) {
 		t.Parallel()
 
 		u, _ := url.Parse(exampleURI)
-		c, err := NewClient("", "", u, noop.ProvideNoopLogger(), nil, false)
+		c, err := NewClient(context.Background(), "", "", u, noop.ProvideNoopLogger(), nil, false)
 		require.NoError(t, err)
 
 		testCases := []struct {
@@ -224,7 +229,7 @@ func TestV1Client_BuildWebsocketURL(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 
 		u, _ := url.Parse(exampleURI)
-		c, err := NewClient("", "", u, noop.ProvideNoopLogger(), nil, false)
+		c, err := NewClient(context.Background(), "", "", u, noop.ProvideNoopLogger(), nil, false)
 		require.NoError(t, err)
 
 		expected := "ws://todo.verygoodsoftwarenotvirus.ru/api/v1/things/and/stuff"

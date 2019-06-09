@@ -6,7 +6,7 @@ services:
       context: ../
       dockerfile: dockerfiles/integration-coverage-server.Dockerfile
     ports:
-      - '80:80'
+      - '80:8888'
     environment:
       DOCKER: 'true'
       RUNTIME_DURATION: '30s'

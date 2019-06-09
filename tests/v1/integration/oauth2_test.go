@@ -7,7 +7,6 @@ import (
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 
 	"github.com/pquerna/otp/totp"
@@ -32,7 +31,7 @@ func buildDummyOAuth2ClientInput(t *testing.T, username, password, TOTPToken str
 			TOTPToken: mustBuildCode(t, TOTPToken),
 		},
 		Scopes:      []string{"*"},
-		RedirectURI: localTestInstanceURL,
+		RedirectURI: "http://localhost",
 	}
 
 	return x
@@ -62,6 +61,7 @@ func TestOAuth2Clients(test *testing.T) {
 	checkValueAndError(test, premade, err)
 
 	testClient, err := client.NewClient(
+		context.Background(),
 		premade.ClientID,
 		premade.ClientSecret,
 		todoClient.URL,
@@ -148,6 +148,7 @@ func TestOAuth2Clients(test *testing.T) {
 			assert.NoError(t, err)
 
 			c2, err := client.NewClient(
+				context.Background(),
 				premade.ClientID,
 				premade.ClientSecret,
 				todoClient.URL,

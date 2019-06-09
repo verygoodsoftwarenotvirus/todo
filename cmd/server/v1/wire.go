@@ -3,13 +3,13 @@
 package main
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
+	"context"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	libauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	metricsProvider "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
@@ -20,11 +20,14 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
 
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
+
 	"github.com/google/wire"
 )
 
 // BuildServer builds a server
 func BuildServer(
+	ctx context.Context,
 	cfg *config.ServerConfig,
 	logger logging.Logger,
 	database database.Database,

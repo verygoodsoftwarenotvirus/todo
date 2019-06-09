@@ -2,8 +2,6 @@ package frontend
 
 import (
 	"fmt"
-	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -16,26 +14,11 @@ import (
 var urlToUse string
 
 const (
-	seleniumHubAddr        = "http://selenium-hub:4444/wd/hub"
-	localTestInstanceURL   = "http://localhost"
-	defaultTestInstanceURL = "http://todo-server"
+	seleniumHubAddr = "http://selenium-hub:4444/wd/hub"
 )
 
 func init() {
-	if strings.ToLower(os.Getenv("DOCKER")) == "true" {
-		ta := os.Getenv("TARGET_ADDRESS")
-		if ta == "" {
-			urlToUse = defaultTestInstanceURL
-		} else {
-			u, err := url.Parse(ta)
-			if err != nil {
-				panic(err)
-			}
-			urlToUse = u.String()
-		}
-	} else {
-		urlToUse = localTestInstanceURL
-	}
+	urlToUse = testutil.DetermineServiceURL()
 
 	logger := zerolog.NewZeroLogger()
 	logger.WithValue("url", urlToUse).Info("checking server")

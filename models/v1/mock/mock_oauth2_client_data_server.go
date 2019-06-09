@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var _ models.Oauth2ClientDataServer = (*OAuth2ClientDataServer)(nil)
+var _ models.OAuth2ClientDataServer = (*OAuth2ClientDataServer)(nil)
 
 // OAuth2ClientDataServer describes a structure capable of serving traffic related to oauth2 clients
 type OAuth2ClientDataServer struct {

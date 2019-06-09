@@ -40,7 +40,7 @@ type (
 		frontendService      *frontend.Service
 		itemsService         models.ItemDataServer
 		usersService         models.UserDataServer
-		oauth2ClientsService models.Oauth2ClientDataServer
+		oauth2ClientsService models.OAuth2ClientDataServer
 		webhooksService      models.WebhookDataServer
 
 		// infra things
@@ -126,6 +126,26 @@ func ProvideServer(
 		FormatSpanName: formatSpanNameForRequest,
 	}
 
+	// DELETE ME AND BELOW ME
+	u, err := usersService.CreateUser(ctx, &models.UserInput{
+		Username: "username",
+		Password: "password",
+	})
+	if err != nil {
+		return nil, err
+	}
+	if err = oauth2Service.CreateOAuth2Client(ctx, &models.OAuth2ClientCreationInput{
+		ClientName:   "obligatory",
+		ClientID:     "OBLIGATORYCLIENTID",
+		ClientSecret: "OBLIGATORYCLIENTSECRET",
+		RedirectURI:  "http://localhost:9094/oauth2",
+		BelongsTo:    u.ID,
+		Scopes:       []string{"*"},
+	}); err != nil {
+		return nil, err
+	}
+	// DELETE ME AND ABOVE ME
+
 	return srv, nil
 }
 
@@ -136,6 +156,7 @@ func (s *Server) Serve() {
 
 	// returns ErrServerClosed on graceful close
 	if err := s.httpServer.ListenAndServe(); err != nil {
+		s.logger.Error(err, "server shutting down")
 		if err == http.ErrServerClosed {
 			// NOTE: there is a chance that next line won't have time to run,
 			// as main() doesn't wait for this goroutine to stop.

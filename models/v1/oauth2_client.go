@@ -26,8 +26,8 @@ type OAuth2ClientDataManager interface {
 	DeleteOAuth2Client(ctx context.Context, clientID, userID uint64) error
 }
 
-// Oauth2ClientDataServer describes a structure capable of serving traffic related to oauth2 clients
-type Oauth2ClientDataServer interface {
+// OAuth2ClientDataServer describes a structure capable of serving traffic related to oauth2 clients
+type OAuth2ClientDataServer interface {
 	List(res http.ResponseWriter, req *http.Request)
 	Create(res http.ResponseWriter, req *http.Request)
 	Read(res http.ResponseWriter, req *http.Request)

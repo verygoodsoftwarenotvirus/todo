@@ -154,10 +154,10 @@ func (s *Service) initializeOAuth2Handler() {
 	// test-only interface for OAuth2 interactions.
 	if x, ok := s.oauth2Handler.(*oauth2server.Server); ok {
 		x.Config.AllowedGrantTypes = []oauth2.GrantType{
-			oauth2.AuthorizationCode,
+			// oauth2.AuthorizationCode,
 			oauth2.ClientCredentials,
-			oauth2.Refreshing, // TODO: maybe these
-			oauth2.Implicit,   // two aren't necessary?
+			// oauth2.Refreshing,
+			// oauth2.Implicit
 		}
 	}
 }

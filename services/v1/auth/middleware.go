@@ -74,6 +74,7 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 				s.logger.WithValue("user_id", cookieAuth.UserID).Debug("attaching userID to request")
 				ctx = context.WithValue(ctx, models.UserIDKey, cookieAuth.UserID)
 				req = req.WithContext(ctx)
+
 				next.ServeHTTP(res, req)
 				return
 			}

@@ -476,4 +476,31 @@ func TestAuth(test *testing.T) {
 		assert.NoError(t, todoClient.DeleteItem(tctx, b.ID))
 	})
 
+	test.Run("should only allow clients with a given scope to see that scope's content", func(t *testing.T) {
+		tctx := context.Background()
+
+		// create user
+		x, y, cookie := buildDummyUser(test)
+		assert.NotNil(test, cookie)
+
+		input := buildDummyOAuth2ClientInput(test, x.Username, y.Password, x.TwoFactorSecret)
+		input.Scopes = []string{"pb&j"}
+		premade, err := todoClient.CreateOAuth2Client(tctx, cookie, input)
+		checkValueAndError(test, premade, err)
+
+		c, err := client.NewClient(
+			premade.ClientID,
+			premade.ClientSecret,
+			todoClient.URL,
+			noop.ProvideNoopLogger(),
+			buildHTTPClient(),
+			true,
+		)
+		checkValueAndError(test, c, err)
+
+		i, err := c.GetItems(tctx, nil)
+		assert.Nil(t, i)
+		assert.Error(t, err, "should experience error trying to fetch item they're not authorized for")
+	})
+
 }

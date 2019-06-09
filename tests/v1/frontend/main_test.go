@@ -27,8 +27,6 @@ type testProvider func(driver selenium.WebDriver) func(t *testing.T)
 func TestLoginPage(T *testing.T) {
 	runTestOnAllSupportedBrowsers(T, func(driver selenium.WebDriver) func(t *testing.T) {
 		return func(t *testing.T) {
-			t.Parallel()
-
 			// Navigate to the login page.
 			require.NoError(t, driver.Get(urlToUse+"/login"))
 

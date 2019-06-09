@@ -9,9 +9,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"github.com/pkg/errors"
 	"gopkg.in/oauth2.v3"
@@ -79,7 +79,7 @@ func (s *clientStore) GetByID(id string) (oauth2.ClientInfo, error) {
 	if err == sql.ErrNoRows {
 		return nil, errors.New("invalid client")
 	} else if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "querying for client")
 	}
 
 	return client, nil

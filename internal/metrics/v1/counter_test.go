@@ -17,6 +17,7 @@ func Test_opencensusCounter_Increment(T *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, c.actualCount, uint64(0))
+
 		c.Increment(context.Background())
 		assert.Equal(t, c.actualCount, uint64(1))
 	})
@@ -31,6 +32,7 @@ func Test_opencensusCounter_IncrementBy(T *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, c.actualCount, uint64(0))
+
 		c.IncrementBy(context.Background(), 666)
 		assert.Equal(t, c.actualCount, uint64(666))
 	})
@@ -45,8 +47,10 @@ func Test_opencensusCounter_Decrement(T *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, c.actualCount, uint64(0))
+
 		c.Increment(context.Background())
 		assert.Equal(t, c.actualCount, uint64(1))
+
 		c.Decrement(context.Background())
 		assert.Equal(t, c.actualCount, uint64(0))
 	})

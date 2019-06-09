@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	defaultStartupDeadline = time.Minute
 	defaultCookieLifetime = 24 * time.Hour
 	randStringSize        = 32
 )
@@ -26,6 +27,7 @@ type (
 	MetaSettings struct {
 		// NOTE: this debug should override all other debugs. That is to say, if it is enabled, all of them are enabled.
 		Debug bool `mapstructure:"debug"`
+		StartupDeadline time.Duration `mapstructure:"startup_deadline"`
 	}
 
 	// ServerSettings describes the settings pertinent to the
@@ -65,6 +67,7 @@ func buildConfig() *viper.Viper {
 
 	// meta stuff
 	cfg.SetDefault("meta.debug", false)
+	cfg.SetDefault("meta.startup_deadline", defaultStartupDeadline)
 
 	// auth stuff
 	cfg.SetDefault("auth.cookie_secret", randString())

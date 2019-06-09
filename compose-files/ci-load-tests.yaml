@@ -22,6 +22,8 @@ services:
       dockerfile: dockerfiles/load-tests.Dockerfile
     links:
       - todo-server
+    environment:
+      TARGET_ADDRESS: 'http://todo-server:8888'
     logging:
       driver: none
 

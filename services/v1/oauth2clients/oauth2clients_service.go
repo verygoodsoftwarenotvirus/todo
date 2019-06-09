@@ -29,9 +29,10 @@ func init() {
 
 const (
 	// MiddlewareCtxKey is a string alias for referring to OAuth2 clients in contexts
-	MiddlewareCtxKey models.ContextKey   = "oauth2_client"
-	counterName      metrics.CounterName = "oauth2_clients"
-	serviceName                          = "oauth2_clients_service"
+	MiddlewareCtxKey   models.ContextKey   = "oauth2_client"
+	counterName        metrics.CounterName = "oauth2_clients"
+	counterDescription                     = "number of oauth2 clients managed by the oauth2 client service"
+	serviceName                            = "oauth2_clients_service"
 )
 
 type (
@@ -102,7 +103,7 @@ func ProvideOAuth2ClientsService(
 	encoderDecoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
 ) (*Service, error) {
-	counter, err := counterProvider(counterName, "number of oauth2 clients managed by the oauth2 client service")
+	counter, err := counterProvider(counterName, counterDescription)
 	if err != nil {
 		return nil, errors.Wrap(err, "error initializing counter")
 	}

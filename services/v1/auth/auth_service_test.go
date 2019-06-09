@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	mauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
-	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
+	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 )
 
 func buildTestService(t *testing.T) *Service {

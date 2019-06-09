@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
@@ -16,10 +16,11 @@ import (
 
 const (
 	// MiddlewareCtxKey is a string alias we can use for referring to item input data in contexts
-	MiddlewareCtxKey models.ContextKey   = "item_input"
-	counterName      metrics.CounterName = "items"
-	topicName        string              = "items"
-	serviceName      string              = "items_service"
+	MiddlewareCtxKey   models.ContextKey   = "item_input"
+	counterName        metrics.CounterName = "items"
+	counterDescription                     = "the number of items managed by the items service"
+	topicName          string              = "items"
+	serviceName        string              = "items_service"
 )
 
 type (
@@ -52,7 +53,7 @@ func ProvideItemsService(
 	itemCounterProvider metrics.UnitCounterProvider,
 	newsman *newsman.Newsman,
 ) (*Service, error) {
-	itemCounter, err := itemCounterProvider(counterName, "the number of items managed by the items service")
+	itemCounter, err := itemCounterProvider(counterName, counterDescription)
 	if err != nil {
 		return nil, errors.Wrap(err, "error initializing counter")
 	}

@@ -111,10 +111,13 @@ func ProvideOAuth2ClientsService(
 
 	manager := manage.NewDefaultManager()
 	clientStore := newClientStore(database)
-	manager.MapClientStorage(clientStore)
 	tokenStore, err := oauth2store.NewMemoryTokenStore()
+	manager.MapClientStorage(clientStore)
 	manager.MustTokenStorage(tokenStore, err)
-	server := oauth2server.NewDefaultServer(manager)
+	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
+	manager.SetRefreshTokenCfg(manage.DefaultRefreshTokenCfg)
+	oHandler := oauth2server.NewDefaultServer(manager)
+	oHandler.SetAllowGetAccessRequest(true)
 
 	s := &Service{
 		database:             database,
@@ -122,23 +125,16 @@ func ProvideOAuth2ClientsService(
 		encoderDecoder:       encoderDecoder,
 		authenticator:        authenticator,
 		urlClientIDExtractor: clientIDFetcher,
-
-		oauth2ClientCounter: counter,
-		tokenStore:          tokenStore,
-		oauth2Handler:       server,
+		oauth2ClientCounter:  counter,
+		tokenStore:           tokenStore,
+		oauth2Handler:        oHandler,
 	}
 
 	clients, err := s.database.GetAllOAuth2Clients(ctx)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, errors.Wrap(err, "fetching oauth2 clients")
 	}
-
-	for _, client := range clients {
-		counter.Increment(ctx)
-		if err = s.oauth2ClientStore.Set(client.ClientID, client); err != nil {
-			return nil, errors.Wrapf(err, "error establishing oauth2 client: %d\n", client.ID)
-		}
-	}
+	counter.IncrementBy(ctx, uint64(len(clients)))
 
 	s.initializeOAuth2Handler()
 
@@ -150,10 +146,10 @@ func (s *Service) initializeOAuth2Handler() {
 	s.oauth2Handler.SetClientAuthorizedHandler(s.ClientAuthorizedHandler)
 	s.oauth2Handler.SetClientScopeHandler(s.ClientScopeHandler)
 	s.oauth2Handler.SetClientInfoHandler(oauth2server.ClientFormHandler)
-	s.oauth2Handler.SetUserAuthorizationHandler(s.UserAuthorizationHandler)
 	s.oauth2Handler.SetAuthorizeScopeHandler(s.AuthorizeScopeHandler)
 	s.oauth2Handler.SetResponseErrorHandler(s.OAuth2ResponseErrorHandler)
 	s.oauth2Handler.SetInternalErrorHandler(s.OAuth2InternalErrorHandler)
+	s.oauth2Handler.SetUserAuthorizationHandler(s.UserAuthorizationHandler)
 
 	// this sad type cast is here because I have an arbitrary
 	// test-only interface for OAuth2 interactions.

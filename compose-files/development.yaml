@@ -26,15 +26,6 @@ services:
     # logging:
     #   driver: none
 
-  external-service:
-    build:
-      context: ../
-      dockerfile: dockerfiles/temp_external_service.Dockerfile
-    ports:
-      - '9094:9094'
-    environment:
-      DOCKER: 'true'
-
   database:
     image: postgres:latest
     ports:

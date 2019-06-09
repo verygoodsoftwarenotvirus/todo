@@ -90,7 +90,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 
 	user, err := s.database.GetUserByUsername(ctx, input.Username)
 	if err != nil {
-		logger.Error(err, "error fetching user by username")
+		logger.Error(err, "fetching user by username")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -110,7 +110,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusUnauthorized)
 		return
 	} else if err != nil {
-		logger.Error(err, "error validating user credentials")
+		logger.Error(err, "validating user credentials")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -119,9 +119,9 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	input.ClientSecret = randString()
 	input.BelongsTo = s.fetchUserID(req)
 
-	x, err := s.database.CreateOAuth2Client(ctx, input)
+	client, err := s.database.CreateOAuth2Client(ctx, input)
 	if err != nil {
-		logger.Error(err, "error creating oauth2Client in the database")
+		logger.Error(err, "creating oauth2Client in the database")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -129,13 +129,13 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	s.oauth2ClientCounter.Increment(ctx)
 
 	logger.WithValues(map[string]interface{}{
-		"client_id":       x.ID,
-		"belongs_to":      x.BelongsTo,
-		"client_oauth_id": x.ClientID,
+		"client_id":       client.ID,
+		"belongs_to":      client.BelongsTo,
+		"client_oauth_id": client.ClientID,
 	}).Debug("CreateOAuth2Client route returning successfully")
 
 	res.WriteHeader(http.StatusCreated)
-	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
+	if err = s.encoderDecoder.EncodeResponse(res, client); err != nil {
 		logger.Error(err, "encoding response")
 	}
 }

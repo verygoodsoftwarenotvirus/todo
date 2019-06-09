@@ -14,9 +14,7 @@ import (
 var urlToUse string
 
 const (
-	seleniumHubAddr        = "http://selenium-hub:4444/wd/hub"
-	localTestInstanceURL   = "http://localhost"
-	defaultTestInstanceURL = "http://todo-server"
+	seleniumHubAddr = "http://selenium-hub:4444/wd/hub"
 )
 
 func init() {

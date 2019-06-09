@@ -126,26 +126,6 @@ func ProvideServer(
 		FormatSpanName: formatSpanNameForRequest,
 	}
 
-	// DELETE ME AND BELOW ME
-	u, err := usersService.CreateUser(ctx, &models.UserInput{
-		Username: "username",
-		Password: "password",
-	})
-	if err != nil {
-		return nil, err
-	}
-	if err = oauth2Service.CreateOAuth2Client(ctx, &models.OAuth2ClientCreationInput{
-		ClientName:   "obligatory",
-		ClientID:     "OBLIGATORYCLIENTID",
-		ClientSecret: "OBLIGATORYCLIENTSECRET",
-		RedirectURI:  "http://localhost:9094/oauth2",
-		BelongsTo:    u.ID,
-		Scopes:       []string{"*"},
-	}); err != nil {
-		return nil, err
-	}
-	// DELETE ME AND ABOVE ME
-
 	return srv, nil
 }
 

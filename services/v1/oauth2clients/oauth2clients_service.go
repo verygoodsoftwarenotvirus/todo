@@ -63,7 +63,6 @@ type (
 
 		tokenStore          oauth2.TokenStore
 		oauth2Handler       oauth2Handler
-		oauth2ClientStore   *oauth2store.ClientStore
 		oauth2ClientCounter metrics.UnitCounter
 	}
 )

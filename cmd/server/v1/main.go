@@ -25,10 +25,7 @@ func main() {
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Meta.StartupDeadline)
-	defer cancel()
-
 	ctx, span := trace.StartSpan(ctx, "initialization")
-	defer span.End()
 
 	db, err := cfg.ProvideDatabase(ctx, logger)
 	if err != nil {
@@ -36,6 +33,9 @@ func main() {
 	}
 
 	server, err := BuildServer(ctx, cfg, logger, db)
+	cancel()
+	span.End()
+
 	if err != nil {
 		log.Fatal(err)
 	} else {

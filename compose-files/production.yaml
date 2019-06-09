@@ -6,7 +6,7 @@ services:
       context: ../
       dockerfile: dockerfiles/server.Dockerfile
     ports:
-      - '80:80'
+      - '80:8888'
     environment:
       DOCKER: 'true'
       JAEGER_SERVICE_NAME: 'todo-server'

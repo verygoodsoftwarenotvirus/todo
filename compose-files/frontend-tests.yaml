@@ -6,7 +6,7 @@ services:
       context: ../
       dockerfile: dockerfiles/server.Dockerfile
     ports:
-      - '8888:80'
+      - '80:8888'
     environment:
       DOCKER: 'true'
     links:

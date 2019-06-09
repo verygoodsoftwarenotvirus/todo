@@ -9,10 +9,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"github.com/pkg/errors"
 )
@@ -49,6 +49,7 @@ type (
 
 // ProvideUsersService builds a new UsersService
 func ProvideUsersService(
+	ctx context.Context,
 	authSettings config.AuthSettings,
 	logger logging.Logger,
 	database database.Database,
@@ -58,7 +59,6 @@ func ProvideUsersService(
 	counterProvider metrics.UnitCounterProvider,
 	newsman *newsman.Newsman,
 ) (*Service, error) {
-	ctx := context.Background()
 	if userIDFetcher == nil {
 		return nil, errors.New("userIDFetcher must be provided")
 	}

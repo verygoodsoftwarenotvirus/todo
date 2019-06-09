@@ -3,14 +3,15 @@ package postgres
 import (
 	"context"
 	"errors"
-	"github.com/DATA-DOG/go-sqlmock"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/assert"
 )
 
 func buildMockRowFromWebhook(w *models.Webhook) *sqlmock.Rows {

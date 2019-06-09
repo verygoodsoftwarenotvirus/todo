@@ -4,14 +4,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
 	"errors"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	"github.com/stretchr/testify/mock"
 
 	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/mock"
 )
 
 var _ http.Handler = (*MockHTTPHandler)(nil)

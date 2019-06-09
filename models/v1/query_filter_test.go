@@ -1,7 +1,6 @@
 package models
 
 import (
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFromParams(T *testing.T) {

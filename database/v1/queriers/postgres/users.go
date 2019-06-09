@@ -4,10 +4,9 @@ import (
 	"context"
 	"database/sql"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"

@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
@@ -8,7 +9,6 @@ import (
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/zerolog"
 
 	"github.com/icrowley/fake"
@@ -46,6 +46,7 @@ func initializeClient(clientID, clientSecret string) *client.V1Client {
 	}
 
 	c, err := client.NewClient(
+		context.Background(),
 		clientID,
 		clientSecret,
 		uri,

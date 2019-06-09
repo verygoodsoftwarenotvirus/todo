@@ -7,9 +7,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"github.com/pkg/errors"
 )
@@ -49,6 +49,7 @@ type (
 
 // ProvideWebhooksService builds a new WebhooksService
 func ProvideWebhooksService(
+	ctx context.Context,
 	logger logging.Logger,
 	webhookDatabase models.WebhookDataManager,
 	userIDFetcher UserIDFetcher,
@@ -72,7 +73,6 @@ func ProvideWebhooksService(
 		newsman:          newsman,
 	}
 
-	ctx := context.Background()
 	webhookCount, err := svc.webhookDatabase.GetAllWebhooksCount(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "setting current webhook count")

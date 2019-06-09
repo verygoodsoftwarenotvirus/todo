@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
+	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 
-	http2 "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 
 var (
 	urlToUse   string
-	todoClient *http2.V1Client
+	todoClient *client.V1Client
 )
 
 func checkValueAndError(t *testing.T, i interface{}, err error) {

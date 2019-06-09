@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 
 	"github.com/pquerna/otp/totp"

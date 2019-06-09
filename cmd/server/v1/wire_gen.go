@@ -6,6 +6,7 @@
 package main
 
 import (
+	"context"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
@@ -25,14 +26,14 @@ import (
 
 // Injectors from wire.go:
 
-func BuildServer(cfg *config.ServerConfig, logger logging.Logger, database2 database.Database) (*server.Server, error) {
+func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, database2 database.Database) (*server.Server, error) {
 	bcryptHashCost := auth.ProvideBcryptHashCost()
 	authenticator := auth.ProvideBcrypt(bcryptHashCost, logger)
 	userDataManager := users.ProvideUserDataManager(database2)
 	clientIDFetcher := httpserver.ProvideOAuth2ServiceClientIDFetcher(logger)
 	encoderDecoder := encoding.ProvideResponseEncoder()
 	unitCounterProvider := metrics.ProvideUnitCounterProvider()
-	service, err := oauth2clients.ProvideOAuth2ClientsService(logger, database2, authenticator, clientIDFetcher, encoderDecoder, unitCounterProvider)
+	service, err := oauth2clients.ProvideOAuth2ClientsService(ctx, logger, database2, authenticator, clientIDFetcher, encoderDecoder, unitCounterProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -47,24 +48,24 @@ func BuildServer(cfg *config.ServerConfig, logger logging.Logger, database2 data
 	websocketAuthFunc := auth2.ProvideWebsocketAuthFunc(authService)
 	typeNameManipulationFunc := httpserver.ProvideNewsmanTypeNameManipulationFunc(logger)
 	newsmanNewsman := newsman.NewNewsman(websocketAuthFunc, typeNameManipulationFunc)
-	itemsService, err := items.ProvideItemsService(logger, itemDataManager, itemsUserIDFetcher, itemIDFetcher, encoderDecoder, unitCounterProvider, newsmanNewsman)
+	itemsService, err := items.ProvideItemsService(ctx, logger, itemDataManager, itemsUserIDFetcher, itemIDFetcher, encoderDecoder, unitCounterProvider, newsmanNewsman)
 	if err != nil {
 		return nil, err
 	}
 	authSettings := config.ProvideConfigAuthSettings(cfg)
 	usersUserIDFetcher := httpserver.ProvideUsernameFetcher(logger)
-	usersService, err := users.ProvideUsersService(authSettings, logger, database2, authenticator, usersUserIDFetcher, encoderDecoder, unitCounterProvider, newsmanNewsman)
+	usersService, err := users.ProvideUsersService(ctx, authSettings, logger, database2, authenticator, usersUserIDFetcher, encoderDecoder, unitCounterProvider, newsmanNewsman)
 	if err != nil {
 		return nil, err
 	}
 	webhookDataManager := webhooks.ProvideWebhookDataManager(database2)
 	webhooksUserIDFetcher := httpserver.ProvideWebhooksUserIDFetcher()
 	webhookIDFetcher := httpserver.ProvideWebhookIDFetcher(logger)
-	webhooksService, err := webhooks.ProvideWebhooksService(logger, webhookDataManager, webhooksUserIDFetcher, webhookIDFetcher, encoderDecoder, unitCounterProvider, newsmanNewsman)
+	webhooksService, err := webhooks.ProvideWebhooksService(ctx, logger, webhookDataManager, webhooksUserIDFetcher, webhookIDFetcher, encoderDecoder, unitCounterProvider, newsmanNewsman)
 	if err != nil {
 		return nil, err
 	}
-	httpserverServer, err := httpserver.ProvideServer(cfg, authService, frontendService, itemsService, usersService, service, webhooksService, database2, logger, encoderDecoder, newsmanNewsman)
+	httpserverServer, err := httpserver.ProvideServer(ctx, cfg, authService, frontendService, itemsService, usersService, service, webhooksService, database2, logger, encoderDecoder, newsmanNewsman)
 	if err != nil {
 		return nil, err
 	}

@@ -111,7 +111,11 @@ func (s *Service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantTyp
 	if grant == oauth2.PasswordCredentials {
 		return false, errors.New("invalid grant type: password")
 	}
-	client, err := s.database.GetOAuth2ClientByClientID(context.Background(), clientID)
+
+	// NOTE: it's a shame the interface we're implementing doesn't have this as its first argument
+	ctx := context.Background()
+
+	client, err := s.database.GetOAuth2ClientByClientID(ctx, clientID)
 	if err != nil {
 		return false, err
 	}
@@ -134,7 +138,10 @@ func (s *Service) ClientScopeHandler(clientID, scope string) (authed bool, err e
 	})
 	logger.Debug("ClientScopeHandler called")
 
-	c, err := s.database.GetOAuth2ClientByClientID(context.Background(), clientID)
+	// NOTE: it's a shame the interface we're implementing doesn't have this as its first argument
+	ctx := context.Background()
+
+	c, err := s.database.GetOAuth2ClientByClientID(ctx, clientID)
 	if err != nil {
 		logger.Error(err, "error fetching OAuth2 client for ClientScopeHandler")
 		return false, err

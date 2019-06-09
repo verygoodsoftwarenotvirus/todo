@@ -3,13 +3,14 @@ package postgres
 import (
 	"context"
 	"errors"
-	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
+
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func buildTestService(t *testing.T) (*Postgres, sqlmock.Sqlmock) {

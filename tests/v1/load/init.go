@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -8,9 +9,8 @@ import (
 	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 
 	"github.com/icrowley/fake"
 )
@@ -59,6 +59,7 @@ func initializeClient(clientID, clientSecret string) *client.V1Client {
 	}
 
 	c, err := client.NewClient(
+		context.Background(),
 		clientID,
 		clientSecret,
 		uri,

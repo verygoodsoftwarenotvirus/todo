@@ -6,9 +6,9 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 
 	"github.com/pkg/errors"
@@ -43,6 +43,7 @@ type (
 
 // ProvideItemsService builds a new ItemsService
 func ProvideItemsService(
+	ctx context.Context,
 	logger logging.Logger,
 	db models.ItemDataManager,
 	userIDFetcher UserIDFetcher,
@@ -66,7 +67,6 @@ func ProvideItemsService(
 		reporter:       newsman,
 	}
 
-	ctx := context.Background()
 	itemCount, err := svc.itemDatabase.GetAllItemsCount(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "setting current item count")

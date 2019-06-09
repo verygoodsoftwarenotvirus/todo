@@ -57,6 +57,7 @@ func (c *V1Client) TokenSource() oauth2.TokenSource {
 
 // NewClient builds a new API client for us
 func NewClient(
+	ctx context.Context,
 	clientID,
 	clientSecret string,
 	address *url.URL,
@@ -79,7 +80,7 @@ func NewClient(
 		logger.Debug("level set to debug!")
 	}
 
-	ac, ts := buildOAuthClient(address, clientID, clientSecret)
+	ac, ts := buildOAuthClient(ctx, address, clientID, clientSecret)
 
 	c := &V1Client{
 		URL:          address,
@@ -94,7 +95,7 @@ func NewClient(
 	return c, nil
 }
 
-func buildOAuthClient(uri *url.URL, clientID, clientSecret string) (*http.Client, oauth2.TokenSource) {
+func buildOAuthClient(ctx context.Context, uri *url.URL, clientID, clientSecret string) (*http.Client, oauth2.TokenSource) {
 	conf := clientcredentials.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
@@ -106,7 +107,7 @@ func buildOAuthClient(uri *url.URL, clientID, clientSecret string) (*http.Client
 		TokenURL: tokenEndpoint(uri).TokenURL,
 	}
 
-	ts := oauth2.ReuseTokenSource(nil, conf.TokenSource(context.Background()))
+	ts := oauth2.ReuseTokenSource(nil, conf.TokenSource(ctx))
 	client := &http.Client{
 		Transport: &oauth2.Transport{
 			Base: &ochttp.Transport{
@@ -146,10 +147,10 @@ func tokenEndpoint(baseURL *url.URL) oauth2.Endpoint {
 // and has noops or empty values for most of its authentication and debug parts.
 // Its purpose at the time of this writing is merely so I can make users (which
 // is a route that doesn't require authentication)
-func NewSimpleClient(address *url.URL, debug bool) (*V1Client, error) {
+func NewSimpleClient(ctx context.Context, address *url.URL, debug bool) (*V1Client, error) {
 	l := noop.ProvideNoopLogger()
 	h := &http.Client{Timeout: 5 * time.Second}
-	c, err := NewClient("", "", address, l, h, debug)
+	c, err := NewClient(ctx, "", "", address, l, h, debug)
 	return c, err
 }
 

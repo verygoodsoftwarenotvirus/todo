@@ -11,7 +11,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"github.com/pkg/errors"
@@ -95,6 +94,7 @@ func newClientStore(database database.Database) *clientStore {
 
 // ProvideOAuth2ClientsService builds a new OAuth2ClientsService
 func ProvideOAuth2ClientsService(
+	ctx context.Context,
 	logger logging.Logger,
 	database database.Database,
 	authenticator auth.Authenticator,
@@ -102,7 +102,6 @@ func ProvideOAuth2ClientsService(
 	encoderDecoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
 ) (*Service, error) {
-	ctx := context.Background()
 	counter, err := counterProvider(counterName, "number of oauth2 clients managed by the oauth2 client service")
 	if err != nil {
 		return nil, errors.Wrap(err, "error initializing counter")

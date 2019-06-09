@@ -58,6 +58,7 @@ func loginUser(t *testing.T, username, password, totpSecret string) *http.Cookie
 }
 
 func TestAuth(test *testing.T) {
+	test.Parallel()
 
 	test.Run("should be able to login", func(t *testing.T) {
 		tctx := context.Background()
@@ -440,6 +441,7 @@ func TestAuth(test *testing.T) {
 		checkValueAndError(test, premade, err)
 
 		c, err := client.NewClient(
+			context.Background(),
 			premade.ClientID,
 			premade.ClientSecret,
 			todoClient.URL,
@@ -489,6 +491,7 @@ func TestAuth(test *testing.T) {
 		checkValueAndError(test, premade, err)
 
 		c, err := client.NewClient(
+			context.Background(),
 			premade.ClientID,
 			premade.ClientSecret,
 			todoClient.URL,

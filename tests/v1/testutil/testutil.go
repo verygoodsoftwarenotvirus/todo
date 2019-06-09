@@ -85,7 +85,7 @@ func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
 		return nil, err
 	}
 
-	c, err := client.NewSimpleClient(tu, debug)
+	c, err := client.NewSimpleClient(context.Background(), tu, debug)
 	if err != nil {
 		return nil, err
 	}

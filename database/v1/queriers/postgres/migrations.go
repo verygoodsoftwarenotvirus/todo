@@ -2,6 +2,9 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"github.com/GuiaBolso/darwin"
 	"github.com/pkg/errors"
@@ -82,6 +85,16 @@ var (
 	}
 )
 
+func buildMigrationFunc(db *sql.DB, logger logging.Logger) func() {
+	return func() {
+		driver := darwin.NewGenericDriver(db, darwin.PostgresDialect{})
+		if err := darwin.New(driver, migrations, nil).Migrate(); err != nil {
+			logger.Error(err, "migrating database")
+			panic(err)
+		}
+	}
+}
+
 // Migrate migrates a postgres db
 func (p *Postgres) Migrate(ctx context.Context) error {
 	p.logger.Info("migrating db")
@@ -89,11 +102,7 @@ func (p *Postgres) Migrate(ctx context.Context) error {
 		return errors.New("db is not ready yet")
 	}
 
-	driver := darwin.NewGenericDriver(p.db, darwin.PostgresDialect{})
-	if err := darwin.New(driver, migrations, nil).Migrate(); err != nil {
-		p.logger.Error(err, "migrating database")
-		return errors.Wrap(err, "migrating database")
-	}
+	p.migration.Do(buildMigrationFunc(p.db, p.logger))
 
 	return nil
 }

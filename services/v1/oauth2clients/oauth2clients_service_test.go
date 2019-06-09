@@ -1,16 +1,17 @@
 package oauth2clients
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	mauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1/mock"
 	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	mmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -68,6 +69,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		}
 
 		service, err := ProvideOAuth2ClientsService(
+			context.Background(),
 			noop.ProvideNoopLogger(),
 			mockDB,
 			&mauth.Authenticator{},
@@ -97,6 +99,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		}
 
 		service, err := ProvideOAuth2ClientsService(
+			context.Background(),
 			noop.ProvideNoopLogger(),
 			mockDB,
 			&mauth.Authenticator{},
@@ -126,6 +129,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		}
 
 		service, err := ProvideOAuth2ClientsService(
+			context.Background(),
 			noop.ProvideNoopLogger(),
 			mockDB,
 			&mauth.Authenticator{},

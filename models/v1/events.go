@@ -1,4 +1,4 @@
-package v1
+package models
 
 // Event is a simple string alias
 type Event string

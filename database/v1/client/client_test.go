@@ -15,7 +15,7 @@ import (
 func buildTestClient() (*Client, *database.MockDatabase) {
 	db := database.BuildMockDatabase()
 	return &Client{
-		logger: noop.ProvideNoopLogger(),
+		logger:  noop.ProvideNoopLogger(),
 		querier: db,
 	}, db
 }
@@ -78,7 +78,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 		mockDB.On("Migrate", mock.Anything).
 			Return(nil)
 
-		actual, err := ProvideDatabaseClient(nil, mockDB, false, noop.ProvideNoopLogger())
+		actual, err := ProvideDatabaseClient(context.Background(), nil, mockDB, false, noop.ProvideNoopLogger())
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 	})
@@ -89,7 +89,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 		mockDB.On("Migrate", mock.Anything).
 			Return(expected)
 
-		x, actual := ProvideDatabaseClient(nil, mockDB, false, noop.ProvideNoopLogger())
+		x, actual := ProvideDatabaseClient(context.Background(), nil, mockDB, false, noop.ProvideNoopLogger())
 		assert.Nil(t, x)
 		assert.Error(t, actual)
 		assert.Equal(t, expected, actual)

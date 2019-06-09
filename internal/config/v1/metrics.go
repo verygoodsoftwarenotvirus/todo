@@ -6,9 +6,8 @@ import (
 	"os"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 
 	"contrib.go.opencensus.io/exporter/jaeger"
 	"contrib.go.opencensus.io/exporter/prometheus"

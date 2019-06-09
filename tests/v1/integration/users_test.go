@@ -92,7 +92,7 @@ func checkUserEquality(t *testing.T, expected *models.UserInput, actual *models.
 }
 
 func TestUsers(test *testing.T) {
-	// test.Parallel()
+	test.Parallel()
 
 	test.Run("Creating", func(T *testing.T) {
 		T.Run("should be creatable", func(t *testing.T) {

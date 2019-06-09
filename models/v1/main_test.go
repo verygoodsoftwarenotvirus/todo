@@ -1,6 +1,8 @@
 package models
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestErrorResponse_Error(T *testing.T) {
 	T.Parallel()

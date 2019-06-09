@@ -3,10 +3,10 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"sync"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"contrib.go.opencensus.io/integrations/ocsql"
@@ -42,6 +42,7 @@ type (
 		db          *sql.DB
 		databaseURL string
 		sqlBuilder  squirrel.StatementBuilderType
+		migration   sync.Once
 	}
 
 	// ConnectionDetails is a string alias for a Postgres url

@@ -3,11 +3,13 @@ package dbclient
 import (
 	"context"
 	"fmt"
+	"testing"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	"testing"
 )
 
 func TestClient_GetOAuth2Client(T *testing.T) {

@@ -56,6 +56,7 @@ type (
 
 // ProvideServer builds a new Server instance
 func ProvideServer(
+	ctx context.Context,
 	cfg *config.ServerConfig,
 
 	// services
@@ -72,8 +73,6 @@ func ProvideServer(
 	encoder encoding.EncoderDecoder,
 	newsManager *newsman.Newsman,
 ) (*Server, error) {
-	ctx := context.Background()
-
 	if len(cfg.Auth.CookieSecret) < 32 {
 		err := errors.New("cookie secret is too short, must be at least 32 characters in length")
 		logger.Error(err, "cookie secret failure")

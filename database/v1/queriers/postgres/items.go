@@ -3,15 +3,14 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"github.com/pkg/errors"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
+	"github.com/pkg/errors"
 )
 
 const (

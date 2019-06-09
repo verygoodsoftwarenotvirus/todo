@@ -1,8 +1,9 @@
 package auth_test
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 	"testing"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 )
 
 func TestProvideBcryptHashCost(T *testing.T) {
@@ -11,5 +12,4 @@ func TestProvideBcryptHashCost(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		auth.ProvideBcryptHashCost()
 	})
-
 }

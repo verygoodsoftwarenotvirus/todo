@@ -2,13 +2,13 @@ package httpserver
 
 import (
 	"crypto/tls"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
 	"net/http"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
+
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 
 	"github.com/google/wire"

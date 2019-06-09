@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 )
 
 // WebhookDataManager describes a structure capable of storing items permanently

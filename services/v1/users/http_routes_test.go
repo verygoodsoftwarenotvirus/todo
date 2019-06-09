@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	mauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1/mock"
 	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
 	mmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1/mock"

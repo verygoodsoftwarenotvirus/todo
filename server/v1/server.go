@@ -1,10 +1,7 @@
 package server
 
 import (
-	"context"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
@@ -35,18 +32,11 @@ func ProvideServer(
 	cfg *config.ServerConfig,
 	httpServer *httpserver.Server,
 ) (*Server, error) {
-
 	srv := &Server{
 		config:     cfg,
 		httpServer: httpServer,
 		logger:     logger,
 	}
-
-	logger.Info("migrating database")
-	if err := database.Migrate(context.Background()); err != nil {
-		return nil, err
-	}
-	logger.Info("database migrated!")
 
 	return srv, nil
 }

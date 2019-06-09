@@ -37,6 +37,7 @@ func (c *Client) IsReady(ctx context.Context) (ready bool) {
 
 // ProvideDatabaseClient provides a querier client
 func ProvideDatabaseClient(
+	ctx context.Context,
 	db *sql.DB,
 	database database.Database,
 	debug bool,
@@ -50,7 +51,7 @@ func ProvideDatabaseClient(
 	}
 
 	logger.Debug("migrating querier")
-	if err := c.querier.Migrate(context.Background()); err != nil {
+	if err := c.querier.Migrate(ctx); err != nil {
 		return nil, err
 	}
 	logger.Debug("querier migrated!")

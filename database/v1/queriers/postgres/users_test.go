@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/lib/pq"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"github.com/DATA-DOG/go-sqlmock"
+	postgres "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,22 +29,6 @@ func buildMockRowFromUser(user *models.User) *sqlmock.Rows {
 
 	return exampleRows
 }
-
-// func buildErroneousMockRowFromUser(user *models.User) *sqlmock.Rows {
-// 	exampleRows := sqlmock.NewRows(usersTableColumns).
-// 		AddRow(
-// 			user.ArchivedOn,
-// 			user.Username,
-// 			user.HashedPassword,
-// 			user.PasswordLastChangedOn,
-// 			user.TwoFactorSecret,
-// 			user.CreatedOn,
-// 			user.UpdatedOn,
-// 			user.ID,
-// 		)
-
-// 	return exampleRows
-// }
 
 func TestPostgres_buildGetUserQuery(T *testing.T) {
 	T.Parallel()
@@ -375,8 +359,8 @@ func TestPostgres_CreateUser(T *testing.T) {
 				expected.HashedPassword,
 				expected.TwoFactorSecret,
 			).
-			WillReturnError(&pq.Error{
-				Code: pq.ErrorCode("23505"),
+			WillReturnError(&postgres.Error{
+				Code: postgres.ErrorCode("23505"),
 			})
 
 		actual, err := p.CreateUser(context.Background(), expectedInput)

@@ -83,7 +83,7 @@ func RandomAction(client *http2.V1Client) *Action {
 			Name: "GetItem",
 			Action: func() (*http.Request, error) {
 				if randomItem := fetchRandomItem(client); randomItem != nil {
-					return client.BuildGetItemRequest(context.Background(), randomItem.ID)
+					return client.BuildGetItemRequest(ctx, randomItem.ID)
 				}
 				return nil, ErrUnavailableYet
 			},
@@ -165,7 +165,7 @@ func RandomAction(client *http2.V1Client) *Action {
 			Name: "GetOAuth2Client",
 			Action: func() (*http.Request, error) {
 				if randomOAuth2Client := fetchRandomOAuth2Client(client); randomOAuth2Client != nil {
-					return client.BuildGetOAuth2ClientRequest(context.Background(), randomOAuth2Client.ID)
+					return client.BuildGetOAuth2ClientRequest(ctx, randomOAuth2Client.ID)
 				}
 				return nil, ErrUnavailableYet
 			},
@@ -200,7 +200,7 @@ func RandomAction(client *http2.V1Client) *Action {
 		// 	Name: "GetWebhook",
 		// 	Action: func() (*http.Request, error) {
 		// 		if randomWebhook := fetchRandomWebhook(client); randomWebhook != nil {
-		// 			return client.BuildGetWebhookRequest(context.Background(), randomWebhook.ID)
+		// 			return client.BuildGetWebhookRequest(ctx, randomWebhook.ID)
 		// 		}
 		// 		return nil, ErrUnavailableYet
 		// 	},

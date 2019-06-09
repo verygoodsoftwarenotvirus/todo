@@ -2,12 +2,12 @@ package users
 
 import (
 	"errors"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
 
 	"github.com/stretchr/testify/assert"

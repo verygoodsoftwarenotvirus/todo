@@ -1,16 +1,18 @@
 package webhooks
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	mmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1/mock"
 	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
+
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -48,6 +50,7 @@ func TestProvideWebhooksService(T *testing.T) {
 			Return(expectation, nil)
 
 		actual, err := ProvideWebhooksService(
+			context.Background(),
 			noop.ProvideNoopLogger(),
 			dm,
 			func(req *http.Request) uint64 { return 0 },
@@ -69,6 +72,7 @@ func TestProvideWebhooksService(T *testing.T) {
 		}
 
 		actual, err := ProvideWebhooksService(
+			context.Background(),
 			noop.ProvideNoopLogger(),
 			&mmodels.WebhookDataManager{},
 			func(req *http.Request) uint64 { return 0 },
@@ -98,6 +102,7 @@ func TestProvideWebhooksService(T *testing.T) {
 			Return(expectation, errors.New("blah"))
 
 		actual, err := ProvideWebhooksService(
+			context.Background(),
 			noop.ProvideNoopLogger(),
 			dm,
 			func(req *http.Request) uint64 { return 0 },

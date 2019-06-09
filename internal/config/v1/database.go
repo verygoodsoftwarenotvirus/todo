@@ -1,10 +1,11 @@
 package config
 
 import (
+	"context"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/postgres"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"contrib.go.opencensus.io/integrations/ocsql"
@@ -19,7 +20,7 @@ type DatabaseSettings struct {
 }
 
 // ProvideDatabase provides a database implementation dependent on the configuration
-func (cfg *ServerConfig) ProvideDatabase(logger logging.Logger) (database.Database, error) {
+func (cfg *ServerConfig) ProvideDatabase(ctx context.Context, logger logging.Logger) (database.Database, error) {
 	var (
 		debug             = cfg.Database.Debug || cfg.Meta.Debug
 		connectionDetails = cfg.Database.ConnectionDetails
@@ -36,7 +37,7 @@ func (cfg *ServerConfig) ProvideDatabase(logger logging.Logger) (database.Databa
 
 		pg := postgres.ProvidePostgres(debug, rawDB, logger, connectionDetails)
 
-		return dbclient.ProvideDatabaseClient(rawDB, pg, debug, logger)
+		return dbclient.ProvideDatabaseClient(ctx, rawDB, pg, debug, logger)
 	default:
 		return nil, errors.New("invalid database type selected")
 	}

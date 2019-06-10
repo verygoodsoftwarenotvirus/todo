@@ -17,7 +17,6 @@ WORKDIR /app
 ADD frontend/v1 .
 
 RUN npm install && npm run build
-RUN ls -Al
 
 # final stage
 FROM debian:stable

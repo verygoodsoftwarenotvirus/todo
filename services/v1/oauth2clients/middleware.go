@@ -3,6 +3,7 @@ package oauth2clients
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
@@ -30,10 +31,11 @@ func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// RequestIsAuthenticated returns whether or not the request is authenticated
+// RequestIsAuthenticated RENAMEME returns whether or not the request is authenticated
 func (s *Service) RequestIsAuthenticated(req *http.Request) (*models.OAuth2Client, error) {
 	ctx := req.Context()
-	s.logger.Debug("RequestIsAuthenticated called")
+	logger := s.logger.WithValue("function_name", "RequestIsAuthenticated")
+	logger.Debug("RequestIsAuthenticated called")
 
 	token, err := s.oauth2Handler.ValidationBearerToken(req)
 	if err != nil {
@@ -42,9 +44,7 @@ func (s *Service) RequestIsAuthenticated(req *http.Request) (*models.OAuth2Clien
 
 	// ignoring this error because the User ID source should only ever provide uints
 	clientID := token.GetClientID()
-	logger := s.logger.WithValues(map[string]interface{}{
-		"client_id": clientID,
-	})
+	logger = logger.WithValue("client_id", clientID)
 
 	c, err := s.database.GetOAuth2ClientByClientID(ctx, clientID)
 	if err != nil {
@@ -52,7 +52,28 @@ func (s *Service) RequestIsAuthenticated(req *http.Request) (*models.OAuth2Clien
 		return nil, err
 	}
 
+	scope := determineScope(req)
+	hasScope := c.HasScope(scope)
+
+	logger = logger.WithValue("scope", scope).
+		WithValue("scopes", c.Scopes).
+		WithValue("has_scope", hasScope)
+
+	if !hasScope {
+		logger.Info("rejecting client for invalid scope")
+		return nil, errors.New("client not authorized for scope")
+	}
+
+	logger.Info("accepting client for valid scope")
 	return c, nil
+}
+
+func determineScope(req *http.Request) string {
+	x := strings.TrimPrefix(req.URL.Path, "/api/v1/")
+	if y := strings.Split(x, "/"); len(y) > 0 {
+		x = y[0]
+	}
+	return x
 }
 
 // OAuth2TokenAuthenticationMiddleware authenticates Oauth tokens

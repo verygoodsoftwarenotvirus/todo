@@ -16,6 +16,9 @@ import (
 
 const (
 	postgresDriverName = "wrapped-postgres-driver"
+
+	// CountQuery is a generic counter query used in a few query builders
+	CountQuery = "COUNT(id)"
 )
 
 func init() {

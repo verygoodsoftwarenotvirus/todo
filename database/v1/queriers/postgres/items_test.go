@@ -3,9 +3,10 @@ package postgres
 import (
 	"context"
 	"errors"
-	"github.com/DATA-DOG/go-sqlmock"
 	"testing"
 	"time"
+
+	"github.com/DATA-DOG/go-sqlmock"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
@@ -53,7 +54,7 @@ func TestPostgres_buildGetItemQuery(T *testing.T) {
 		expectedArgCount := 2
 		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE belongs_to = $1 AND id = $2"
 
-		actualQuery, args := p.buildGetItemQuery(exampleItemID, exampleUserID)
+		actualQuery, args := p.buildGetItemQuery(exampleItemID, exampleUserID, false)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 		assert.Equal(t, exampleUserID, args[0].(uint64))
@@ -96,9 +97,9 @@ func TestPostgres_buildGetItemCountQuery(T *testing.T) {
 		exampleUserID := uint64(321)
 
 		expectedArgCount := 1
-		expectedQuery := "SELECT COUNT(*) FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
+		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
 
-		actualQuery, args := p.buildGetItemCountQuery(models.DefaultQueryFilter(), exampleUserID)
+		actualQuery, args := p.buildGetItemCountQuery(models.DefaultQueryFilter(), exampleUserID, false)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 		assert.Equal(t, exampleUserID, args[0].(uint64))
@@ -110,7 +111,7 @@ func TestPostgres_GetItemCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
-		expectedQuery := "SELECT COUNT(*) FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
+		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
 		expectedCount := uint64(666)
 
 		p, mockDB := buildTestService(t)
@@ -133,7 +134,7 @@ func TestPostgres_buildGetAllItemsCountQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		expectedQuery := "SELECT COUNT(*) FROM items WHERE archived_on IS NULL"
+		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
 
 		actualQuery := p.buildGetAllItemsCountQuery()
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -144,7 +145,7 @@ func TestPostgres_GetAllItemsCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		expectedQuery := "SELECT COUNT(*) FROM items WHERE archived_on IS NULL"
+		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
 		expectedCount := uint64(666)
 
 		p, mockDB := buildTestService(t)
@@ -171,7 +172,7 @@ func TestPostgres_buildGetItemsQuery(T *testing.T) {
 		expectedArgCount := 1
 		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
 
-		actualQuery, args := p.buildGetItemsQuery(models.DefaultQueryFilter(), exampleUserID)
+		actualQuery, args := p.buildGetItemsQuery(models.DefaultQueryFilter(), exampleUserID, false)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 		assert.Equal(t, exampleUserID, args[0].(uint64))
@@ -188,7 +189,7 @@ func TestPostgres_GetItems(T *testing.T) {
 		}
 
 		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
-		expectedCountQuery := "SELECT COUNT(*) FROM items WHERE archived_on IS NULL"
+		expectedCountQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
 		expectedCount := uint64(666)
 
 		p, mockDB := buildTestService(t)
@@ -265,7 +266,7 @@ func TestPostgres_GetItems(T *testing.T) {
 		}
 
 		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
-		expectedCountQuery := "SELECT COUNT(*) FROM items WHERE archived_on IS NULL"
+		expectedCountQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -476,7 +477,7 @@ func TestPostgres_buildArchiveItemQuery(T *testing.T) {
 		expectedArgCount := 2
 		expectedQuery := "UPDATE items SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to = $1 AND id = $2 RETURNING archived_on"
 
-		actualQuery, args := p.buildArchiveItemQuery(expected.ID, expected.BelongsTo)
+		actualQuery, args := p.buildArchiveItemQuery(expected.ID, expected.BelongsTo, false)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 		assert.Equal(t, expected.BelongsTo, args[0].(uint64))

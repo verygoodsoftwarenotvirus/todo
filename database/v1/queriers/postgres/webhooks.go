@@ -112,12 +112,12 @@ func (p *Postgres) GetWebhook(ctx context.Context, webhookID, userID uint64) (*m
 
 func (p *Postgres) buildGetWebhookCountQuery(filter *models.QueryFilter, userID uint64) (string, []interface{}) {
 	builder := p.sqlBuilder.
-		Select("COUNT(*)").
+		Select(CountQuery).
 		From(webhooksTableName).
-		Where(squirrel.Eq(map[string]interface{}{
+		Where(squirrel.Eq{
 			"belongs_to":  userID,
 			"archived_on": nil,
-		}))
+		})
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder)
@@ -137,7 +137,7 @@ func (p *Postgres) GetWebhookCount(ctx context.Context, filter *models.QueryFilt
 
 func (p *Postgres) buildGetAllWebhooksCountQuery() (string, []interface{}) {
 	query, args, err := p.sqlBuilder.
-		Select("COUNT(*)").
+		Select(CountQuery).
 		From(webhooksTableName).
 		Where(squirrel.Eq{"archived_on": nil}).
 		ToSql()
@@ -197,10 +197,10 @@ func (p *Postgres) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint
 	builder := p.sqlBuilder.
 		Select(webhooksTableColumns...).
 		From(webhooksTableName).
-		Where(squirrel.Eq(map[string]interface{}{
+		Where(squirrel.Eq{
 			"belongs_to":  userID,
 			"archived_on": nil,
-		}))
+		})
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder)

@@ -84,6 +84,7 @@ func TestV1Client_TokenSource(T *testing.T) {
 			mustParseURL(exampleURI),
 			noop.ProvideNoopLogger(),
 			ts.Client(),
+			[]string{"*"},
 			false,
 		)
 		require.NoError(t, err)
@@ -105,6 +106,7 @@ func TestNewClient(T *testing.T) {
 			mustParseURL(exampleURI),
 			noop.ProvideNoopLogger(),
 			ts.Client(),
+			[]string{"*"},
 			false,
 		)
 
@@ -121,6 +123,7 @@ func TestNewClient(T *testing.T) {
 			&http.Client{
 				Timeout: 0,
 			},
+			[]string{"*"},
 			true,
 		)
 
@@ -137,6 +140,7 @@ func TestNewSimpleClient(T *testing.T) {
 		c, err := NewSimpleClient(
 			context.Background(),
 			mustParseURL(exampleURI),
+			[]string{"*"},
 			true,
 		)
 		require.NotNil(t, c)
@@ -187,7 +191,7 @@ func TestBuildURL(T *testing.T) {
 		t.Parallel()
 
 		u, _ := url.Parse(exampleURI)
-		c, err := NewClient(context.Background(), "", "", u, noop.ProvideNoopLogger(), nil, false)
+		c, err := NewClient(context.Background(), "", "", u, noop.ProvideNoopLogger(), nil, []string{"*"}, false)
 		require.NoError(t, err)
 
 		testCases := []struct {
@@ -229,7 +233,7 @@ func TestV1Client_BuildWebsocketURL(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 
 		u, _ := url.Parse(exampleURI)
-		c, err := NewClient(context.Background(), "", "", u, noop.ProvideNoopLogger(), nil, false)
+		c, err := NewClient(context.Background(), "", "", u, noop.ProvideNoopLogger(), nil, []string{"*"}, false)
 		require.NoError(t, err)
 
 		expected := "ws://todo.verygoodsoftwarenotvirus.ru/api/v1/things/and/stuff"

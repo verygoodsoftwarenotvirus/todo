@@ -35,6 +35,8 @@ const (
 	UserKey ContextKey = "user"
 	// UserIDKey is the non-string type we use for referencing a user ID in a context
 	UserIDKey ContextKey = "user_id"
+	// UserIsAdminKey is the non-string type we use for referencing a user ID in a context
+	UserIsAdminKey ContextKey = "is_admin"
 )
 
 // UserLoginInput represents the payload used to log in a user
@@ -57,6 +59,7 @@ type UserCreationResponse struct {
 	Username              string  `json:"username"`
 	TwoFactorSecret       string  `json:"two_factor_secret"`
 	PasswordLastChangedOn *uint64 `json:"password_last_changed_on"`
+	IsAdmin               bool    `json:"is_admin"`
 	CreatedOn             uint64  `json:"created_on"`
 	UpdatedOn             *uint64 `json:"updated_on"`
 	ArchivedOn            *uint64 `json:"archived_on"`
@@ -69,8 +72,9 @@ type User struct {
 	Username              string  `json:"username"`
 	HashedPassword        string  `json:"-"`
 	Salt                  []byte  `json:"-"`
-	TwoFactorSecret       string  `json:""`
+	TwoFactorSecret       string  `json:"-"`
 	PasswordLastChangedOn *uint64 `json:"password_last_changed_on"`
+	IsAdmin               bool    `json:"is_admin"`
 	CreatedOn             uint64  `json:"created_on"`
 	UpdatedOn             *uint64 `json:"updated_on"`
 	ArchivedOn            *uint64 `json:"archived_on"`

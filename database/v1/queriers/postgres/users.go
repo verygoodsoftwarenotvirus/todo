@@ -25,6 +25,7 @@ var (
 		"hashed_password",
 		"password_last_changed_on",
 		"two_factor_secret",
+		"is_admin",
 		"created_on",
 		"updated_on",
 		"archived_on",
@@ -39,6 +40,7 @@ func scanUser(scan database.Scanner) (*models.User, error) {
 		&x.HashedPassword,
 		&x.PasswordLastChangedOn,
 		&x.TwoFactorSecret,
+		&x.IsAdmin,
 		&x.CreatedOn,
 		&x.UpdatedOn,
 		&x.ArchivedOn,
@@ -112,11 +114,11 @@ func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*mod
 
 func (p *Postgres) buildGetUserCountQuery(filter *models.QueryFilter) (string, []interface{}) {
 	builder := p.sqlBuilder.
-		Select("COUNT(*)").
+		Select(CountQuery).
 		From(usersTableName).
-		Where(squirrel.Eq(map[string]interface{}{
+		Where(squirrel.Eq{
 			"archived_on": nil,
-		}))
+		})
 
 	builder = filter.ApplyToQueryBuilder(builder)
 
@@ -138,9 +140,9 @@ func (p *Postgres) buildGetUsersQuery(filter *models.QueryFilter) (string, []int
 	builder := p.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
-		Where(squirrel.Eq(map[string]interface{}{
+		Where(squirrel.Eq{
 			"archived_on": nil,
-		}))
+		})
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder)
@@ -186,11 +188,17 @@ func (p *Postgres) buildCreateUserQuery(input *models.UserInput) (string, []inte
 			"username",
 			"hashed_password",
 			"two_factor_secret",
+			"is_admin",
 		).
 		Values(
 			input.Username,
 			input.Password,
 			input.TwoFactorSecret,
+			// NOTE: we always default is_admin to false, on the assumption that
+			// admins have DB access and will change that value via SQL query.
+			// There should also be no way to update a user via this structure
+			// such that they would have admin privileges
+			false,
 		).
 		Suffix("RETURNING id, created_on").
 		ToSql()

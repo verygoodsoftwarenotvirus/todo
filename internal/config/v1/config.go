@@ -10,11 +10,11 @@ import (
 )
 
 const (
-	defaultStartupDeadline = time.Minute
-	defaultCookieLifetime = 24 * time.Hour
-	defaultMetricsCollectionInterval = 2 * time.Second
+	defaultStartupDeadline                   = time.Minute
+	defaultCookieLifetime                    = 24 * time.Hour
+	defaultMetricsCollectionInterval         = 2 * time.Second
 	defaultDatabaseMetricsCollectionInterval = 2 * time.Second
-	randStringSize        = 32
+	randStringSize                           = 32
 )
 
 func init() {
@@ -40,7 +40,7 @@ type (
 		// HTTPPort indicates which port to serve HTTP traffic on
 		HTTPPort uint16 `mapstructure:"http_port"`
 		// Whether or not to enable debug settings for the server
-		Debug    bool   `mapstructure:"debug"`
+		Debug bool `mapstructure:"debug"`
 	}
 
 	// FrontendSettings describes the settings pertinent to the frontend
@@ -48,19 +48,21 @@ type (
 		// StaticFilesDirectory indicates which directory contains our static files for the frontend (i.e. CSS/JS/HTML files)
 		StaticFilesDirectory string `mapstructure:"static_files_dir"`
 		// CacheStaticFiles indicates whether or not to load the static files directory into memory via afero's MemMapFs.
-		CacheStaticFiles     bool   `mapstructure:"cache_static_files"`
+		CacheStaticFiles bool `mapstructure:"cache_static_files"`
 	}
 
 	// AuthSettings is a container struct for dealing with settings pertaining to
 	AuthSettings struct {
 		// SecureCookiesOnly indicates if the cookies built should be marked as HTTPS only
-		SecureCookiesOnly bool          `mapstructure:"secure_cookies_only"`
+		SecureCookiesOnly bool `mapstructure:"secure_cookies_only"`
 		// CookieDomain reflects what domain the cookies will have set for them
-		CookieDomain      string        `mapstructure:"cookie_domain"`
+		CookieDomain string `mapstructure:"cookie_domain"`
 		// CookieSecret indicates the secret the cookie builder should use
-		CookieSecret      string        `mapstructure:"cookie_secret"`
+		CookieSecret string `mapstructure:"cookie_secret"`
 		// CookieLifetime indicates how long the cookies built should last
-		CookieLifetime    time.Duration `mapstructure:"cookie_lifetime"`
+		CookieLifetime time.Duration `mapstructure:"cookie_lifetime"`
+		// EnableUserSignup enables user signups
+		EnableUserSignup bool `mapstructure:"enable_user_signup"`
 	}
 
 	// ServerConfig is our server configuration struct
@@ -84,6 +86,7 @@ func buildConfig() *viper.Viper {
 	// NOTE: this will result in an ever-changing cookie secret per server instance running.
 	cfg.SetDefault("auth.cookie_secret", randString())
 	cfg.SetDefault("auth.cookie_lifetime", defaultCookieLifetime)
+	cfg.SetDefault("auth.enable_user_signup", true)
 
 	// metrics stuff
 	cfg.SetDefault("metrics.metrics_namespace", MetricsNamespace)

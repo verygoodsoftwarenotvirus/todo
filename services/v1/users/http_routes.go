@@ -110,6 +110,12 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	ctx, span := trace.StartSpan(req.Context(), "create_route")
 	defer span.End()
 
+	if !s.userCreationEnabled {
+		s.logger.Info("disallowing user creation")
+		res.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	input, ok := ctx.Value(UserCreationMiddlewareCtxKey).(*models.UserInput)
 	if !ok {
 		s.logger.Error(nil, "valid input not attached to UsersService Create request")

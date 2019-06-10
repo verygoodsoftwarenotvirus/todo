@@ -57,41 +57,54 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 			defer span.End()
 			s.logger.Debug("apiAuthenticationMiddleware called")
 
-			// First we check to see if there is an OAuth2 token for a valid client attached to the request.
-			// We do this first because it is presumed to be the primary means by which requests are made to the httpServer.
-			oauth2Client, err := s.oauth2ClientsService.RequestIsAuthenticated(req)
-			if err != nil || oauth2Client == nil && allowValidCookieInLieuOfAValidToken {
-				// In the event there's not a valid OAuth2 token attached to the request, or there is some other OAuth2 issue,
-				// we next check to see if a valid cookie is attached to the request
-				cookieAuth, cookieErr := s.DecodeCookieFromRequest(req)
-				if cookieErr != nil || cookieAuth == nil {
-					// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere
-					s.logger.Error(err, "error authenticated token-authed request")
-					http.Error(res, "invalid token", http.StatusUnauthorized)
+			// let's figure out who the user is
+			var user *models.User
+
+			// check for a cookie first:
+			if allowValidCookieInLieuOfAValidToken {
+				cookieAuth, err := s.DecodeCookieFromRequest(req)
+				if err == nil && cookieAuth != nil {
+					user, err = s.userDB.GetUser(ctx, cookieAuth.UserID)
+					if err != nil {
+						s.logger.Error(err, "error authenticating request")
+						http.Error(res, "fetching user", http.StatusInternalServerError)
+						return
+					}
+				}
+			}
+
+			if user == nil {
+				// check to see if there is an OAuth2 token for a valid client attached to the request.
+				// We do this first because it is presumed to be the primary means by which requests are made to the httpServer.
+				oauth2Client, err := s.oauth2ClientsService.RequestIsAuthenticated(req)
+				if err != nil || oauth2Client == nil {
+					s.logger.Error(err, "fetching oauth2 client")
+					http.Redirect(res, req, "/login", http.StatusUnauthorized)
 					return
 				}
 
-				s.logger.WithValue("user_id", cookieAuth.UserID).Debug("attaching userID to request")
-				ctx = context.WithValue(ctx, models.UserIDKey, cookieAuth.UserID)
-				req = req.WithContext(ctx)
-
-				next.ServeHTTP(res, req)
-				return
-			}
-
-			// We found a valid OAuth2 client in the request, let's attach it and move on with our lives
-			if oauth2Client != nil {
-				// Attach both the user ID and the client object to the request. It might seem superfluous,
-				// but some things should only need to know to look for user IDs, and not trouble themselves
-				// with foolish concerns of OAuth2 clients and their fields
-				ctx = context.WithValue(ctx, models.UserIDKey, oauth2Client.BelongsTo)
 				ctx = context.WithValue(ctx, models.OAuth2ClientKey, oauth2Client)
-				req = req.WithContext(ctx)
-				next.ServeHTTP(res, req)
+				user, err = s.userDB.GetUser(ctx, oauth2Client.BelongsTo)
+				if err != nil {
+					s.logger.Error(err, "error authenticating request")
+					http.Error(res, "fetching user", http.StatusInternalServerError)
+					return
+				}
+			}
+
+			if user == nil {
+				// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere
+				s.logger.Debug("no user attached to request request")
+				http.Redirect(res, req, "/login", http.StatusUnauthorized)
 				return
 			}
 
-			http.Redirect(res, req, "/login", http.StatusUnauthorized)
+			ctx = context.WithValue(ctx, models.UserIDKey, user.ID)
+			ctx = context.WithValue(ctx, models.UserIsAdminKey, user.IsAdmin)
+			req = req.WithContext(ctx)
+
+			next.ServeHTTP(res, req)
+
 		})
 	}
 }

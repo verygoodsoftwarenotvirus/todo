@@ -83,7 +83,8 @@ func (p *Postgres) buildGetItemQuery(itemID, userID uint64) (string, []interface
 		Where(squirrel.Eq{
 			"id":         itemID,
 			"belongs_to": userID,
-		}).ToSql()
+		}).
+		ToSql()
 
 	logQueryBuildingError(p.logger, err)
 
@@ -99,12 +100,12 @@ func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*models.
 
 func (p *Postgres) buildGetItemCountQuery(filter *models.QueryFilter, userID uint64) (string, []interface{}) {
 	builder := p.sqlBuilder.
-		Select("COUNT(*)").
+		Select(CountQuery).
 		From(itemsTableName).
-		Where(squirrel.Eq(map[string]interface{}{
-			"belongs_to":  userID,
+		Where(squirrel.Eq{
 			"archived_on": nil,
-		}))
+			"belongs_to":  userID,
+		})
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder)
@@ -118,7 +119,7 @@ func (p *Postgres) buildGetItemCountQuery(filter *models.QueryFilter, userID uin
 
 // GetItemCount will fetch the count of items from the postgres db that meet a particular filter and belong to a particular user.
 func (p *Postgres) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
-	query, args := p.buildGetItemCountQuery(filter, userID)
+	query, args := p.buildGetItemCountQuery(filter, userID, false)
 	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return count, err
 }
@@ -132,7 +133,7 @@ func (p *Postgres) buildGetAllItemsCountQuery() string {
 	return query
 }
 
-// GetAllItemsCount will fetch the count of items from the postgres db that meet a particular filter
+// GetAllItemsCount will fetch the count of items from the postgres db
 func (p *Postgres) GetAllItemsCount(ctx context.Context) (count uint64, err error) {
 	err = p.db.QueryRowContext(ctx, p.buildGetAllItemsCountQuery()).Scan(&count)
 	return count, err
@@ -142,10 +143,10 @@ func (p *Postgres) buildGetItemsQuery(filter *models.QueryFilter, userID uint64)
 	builder := p.sqlBuilder.
 		Select(itemsTableColumns...).
 		From(itemsTableName).
-		Where(squirrel.Eq(map[string]interface{}{
-			"belongs_to":  userID,
+		Where(squirrel.Eq{
 			"archived_on": nil,
-		}))
+			"belongs_to":  userID,
+		})
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder)
@@ -257,8 +258,8 @@ func (p *Postgres) buildArchiveItemQuery(itemID, userID uint64) (string, []inter
 		Set("archived_on", squirrel.Expr("extract(epoch FROM NOW())")).
 		Where(squirrel.Eq{
 			"id":          itemID,
-			"belongs_to":  userID,
 			"archived_on": nil,
+			"belongs_to":  userID,
 		}).
 		Suffix("RETURNING archived_on").
 		ToSql()

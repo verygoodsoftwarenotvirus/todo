@@ -51,30 +51,38 @@ var _ oauth2server.AuthorizeScopeHandler = (*Service)(nil).AuthorizeScopeHandler
 
 // AuthorizeScopeHandler satisfies the oauth2server AuthorizeScopeHandler interface
 func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Request) (scope string, err error) {
-	s.logger.Debug("AuthorizeScopeHandler called")
-
 	ctx := req.Context()
+	scope = determineScope(req)
 
-	if client := s.fetchOAuth2ClientFromRequest(req); client == nil {
-		if clientID := s.fetchOAuth2ClientIDFromRequest(req); clientID != "" {
-			client, err = s.database.GetOAuth2ClientByClientID(ctx, clientID)
-			if err == sql.ErrNoRows {
-				s.logger.Error(err, "error fetching OAuth2 Client")
-				res.WriteHeader(http.StatusNotFound)
-				return "", err
-			} else if err != nil {
-				s.logger.Error(err, "error fetching OAuth2 Client")
-				res.WriteHeader(http.StatusInternalServerError)
-				return "", err
-			}
+	logger := s.logger.WithValue("scope", scope).WithValue("BLAHBLAHBLAH", "BLAHBLAHBLAH").WithRequest(req)
+	logger.Debug("AuthorizeScopeHandler called")
 
-			// req = req.WithContext(context.WithValue(ctx, models.OAuth2ClientKey, client))
-			res.WriteHeader(http.StatusOK)
-			return strings.Join(client.Scopes, scopesSeparator), nil
-		}
-	} else {
+	var client = s.fetchOAuth2ClientFromRequest(req)
+	if client != nil {
 		res.WriteHeader(http.StatusOK)
 		return strings.Join(client.Scopes, scopesSeparator), nil
+	}
+
+	if clientID := s.fetchOAuth2ClientIDFromRequest(req); clientID != "" {
+		client, err = s.database.GetOAuth2ClientByClientID(ctx, clientID)
+
+		if err == sql.ErrNoRows {
+			s.logger.Error(err, "error fetching OAuth2 Client")
+			res.WriteHeader(http.StatusNotFound)
+			return "", err
+		} else if err != nil {
+			s.logger.Error(err, "error fetching OAuth2 Client")
+			res.WriteHeader(http.StatusInternalServerError)
+			return "", err
+		}
+
+		if client.HasScope(scope) {
+			res.WriteHeader(http.StatusOK)
+			return scope, nil
+		}
+
+		res.WriteHeader(http.StatusUnauthorized)
+		return "", errors.New("not authorized for scope")
 	}
 
 	res.WriteHeader(http.StatusBadRequest)
@@ -119,7 +127,6 @@ func (s *Service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantTyp
 	if err != nil {
 		return false, err
 	}
-	// FINISHME: what if client is deactivated?!
 
 	if grant == oauth2.Implicit && !client.ImplicitAllowed {
 		return false, errors.New("client not authorized for implicit grants")
@@ -147,11 +154,10 @@ func (s *Service) ClientScopeHandler(clientID, scope string) (authed bool, err e
 		return false, err
 	}
 
-	for _, cscope := range c.Scopes {
-		if cscope == scope || cscope == "*" {
-			authed = true
-		}
+	has := c.HasScope(scope)
+	if has {
+		return has, nil
 	}
 
-	return authed, nil
+	return false, errors.New("unauthorized")
 }

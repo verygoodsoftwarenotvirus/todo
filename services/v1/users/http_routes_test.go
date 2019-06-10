@@ -330,9 +330,21 @@ func TestService_Create(T *testing.T) {
 
 		req = req.WithContext(context.WithValue(req.Context(), UserCreationMiddlewareCtxKey, exampleInput))
 
+		s.userCreationEnabled = true
 		s.Create(res, req)
 
 		assert.Equal(t, http.StatusCreated, res.Code)
+	})
+
+	T.Run("with user creation disabled", func(t *testing.T) {
+		s := buildTestService(t)
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+
+		s.userCreationEnabled = false
+		s.Create(res, req)
+
+		assert.Equal(t, http.StatusForbidden, res.Code)
 	})
 
 	T.Run("with missing input", func(t *testing.T) {
@@ -340,6 +352,7 @@ func TestService_Create(T *testing.T) {
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 
+		s.userCreationEnabled = true
 		s.Create(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
@@ -364,6 +377,7 @@ func TestService_Create(T *testing.T) {
 
 		req = req.WithContext(context.WithValue(req.Context(), UserCreationMiddlewareCtxKey, exampleInput))
 
+		s.userCreationEnabled = true
 		s.Create(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
@@ -393,6 +407,7 @@ func TestService_Create(T *testing.T) {
 
 		req = req.WithContext(context.WithValue(req.Context(), UserCreationMiddlewareCtxKey, exampleInput))
 
+		s.userCreationEnabled = true
 		s.Create(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
@@ -422,6 +437,7 @@ func TestService_Create(T *testing.T) {
 
 		req = req.WithContext(context.WithValue(req.Context(), UserCreationMiddlewareCtxKey, exampleInput))
 
+		s.userCreationEnabled = true
 		s.Create(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
@@ -464,6 +480,7 @@ func TestService_Create(T *testing.T) {
 
 		req = req.WithContext(context.WithValue(req.Context(), UserCreationMiddlewareCtxKey, exampleInput))
 
+		s.userCreationEnabled = true
 		s.Create(res, req)
 
 		assert.Equal(t, http.StatusCreated, res.Code)

@@ -206,12 +206,12 @@ func (p *Postgres) GetOAuth2Client(ctx context.Context, clientID, userID uint64)
 
 func (p *Postgres) buildGetOAuth2ClientCountQuery(filter *models.QueryFilter, userID uint64) (string, []interface{}) {
 	builder := p.sqlBuilder.
-		Select("COUNT(*)").
+		Select(CountQuery).
 		From(oauth2ClientsTableName).
-		Where(squirrel.Eq(map[string]interface{}{
+		Where(squirrel.Eq{
 			"belongs_to":  userID,
 			"archived_on": nil,
-		}))
+		})
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder)
@@ -231,7 +231,7 @@ func (p *Postgres) GetOAuth2ClientCount(ctx context.Context, filter *models.Quer
 }
 
 func (p *Postgres) buildGetAllOAuth2ClientCountQuery() string {
-	query, _, err := p.sqlBuilder.Select("COUNT(*)").
+	query, _, err := p.sqlBuilder.Select(CountQuery).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{"archived_on": nil}).
 		ToSql()
@@ -252,10 +252,10 @@ func (p *Postgres) buildGetOAuth2ClientsQuery(filter *models.QueryFilter, userID
 	builder := p.sqlBuilder.
 		Select(oauth2ClientsTableColumns...).
 		From(oauth2ClientsTableName).
-		Where(squirrel.Eq(map[string]interface{}{
+		Where(squirrel.Eq{
 			"belongs_to":  userID,
 			"archived_on": nil,
-		}))
+		})
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder)

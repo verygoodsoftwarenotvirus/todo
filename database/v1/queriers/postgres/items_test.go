@@ -54,7 +54,7 @@ func TestPostgres_buildGetItemQuery(T *testing.T) {
 		expectedArgCount := 2
 		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE belongs_to = $1 AND id = $2"
 
-		actualQuery, args := p.buildGetItemQuery(exampleItemID, exampleUserID, false)
+		actualQuery, args := p.buildGetItemQuery(exampleItemID, exampleUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 		assert.Equal(t, exampleUserID, args[0].(uint64))
@@ -99,7 +99,7 @@ func TestPostgres_buildGetItemCountQuery(T *testing.T) {
 		expectedArgCount := 1
 		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
 
-		actualQuery, args := p.buildGetItemCountQuery(models.DefaultQueryFilter(), exampleUserID, false)
+		actualQuery, args := p.buildGetItemCountQuery(models.DefaultQueryFilter(), exampleUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 		assert.Equal(t, exampleUserID, args[0].(uint64))
@@ -172,7 +172,7 @@ func TestPostgres_buildGetItemsQuery(T *testing.T) {
 		expectedArgCount := 1
 		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
 
-		actualQuery, args := p.buildGetItemsQuery(models.DefaultQueryFilter(), exampleUserID, false)
+		actualQuery, args := p.buildGetItemsQuery(models.DefaultQueryFilter(), exampleUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 		assert.Equal(t, exampleUserID, args[0].(uint64))
@@ -477,7 +477,7 @@ func TestPostgres_buildArchiveItemQuery(T *testing.T) {
 		expectedArgCount := 2
 		expectedQuery := "UPDATE items SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to = $1 AND id = $2 RETURNING archived_on"
 
-		actualQuery, args := p.buildArchiveItemQuery(expected.ID, expected.BelongsTo, false)
+		actualQuery, args := p.buildArchiveItemQuery(expected.ID, expected.BelongsTo)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 		assert.Equal(t, expected.BelongsTo, args[0].(uint64))

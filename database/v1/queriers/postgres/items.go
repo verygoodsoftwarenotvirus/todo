@@ -119,7 +119,7 @@ func (p *Postgres) buildGetItemCountQuery(filter *models.QueryFilter, userID uin
 
 // GetItemCount will fetch the count of items from the postgres db that meet a particular filter and belong to a particular user.
 func (p *Postgres) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
-	query, args := p.buildGetItemCountQuery(filter, userID, false)
+	query, args := p.buildGetItemCountQuery(filter, userID)
 	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return count, err
 }

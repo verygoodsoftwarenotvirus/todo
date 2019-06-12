@@ -68,10 +68,10 @@ func (s *Service) validateCredentialChangeRequest(
 	valid, err := s.authenticator.ValidateLogin(
 		ctx,
 		user.HashedPassword,
-		user.Salt,
 		password,
 		user.TwoFactorSecret,
 		totpToken,
+		user.Salt,
 	)
 
 	if err != nil {

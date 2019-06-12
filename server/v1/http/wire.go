@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 

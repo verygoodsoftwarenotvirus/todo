@@ -3,6 +3,7 @@ package webhooks
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,7 +13,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
-	"errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

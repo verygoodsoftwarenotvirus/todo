@@ -39,12 +39,12 @@ func mustBuildCode(totpSecret string) string {
 }
 
 // RandomOAuth2ClientInput creates a random OAuth2ClientCreationInput
-func RandomOAuth2ClientInput(username, password, TOTPToken string) *models.OAuth2ClientCreationInput {
+func RandomOAuth2ClientInput(username, password, totpToken string) *models.OAuth2ClientCreationInput {
 	x := &models.OAuth2ClientCreationInput{
 		UserLoginInput: models.UserLoginInput{
 			Username:  username,
 			Password:  password,
-			TOTPToken: mustBuildCode(TOTPToken),
+			TOTPToken: mustBuildCode(totpToken),
 		},
 	}
 

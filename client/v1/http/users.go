@@ -107,11 +107,11 @@ func (c *V1Client) DeleteUser(ctx context.Context, userID uint64) error {
 }
 
 // BuildLoginRequest builds an authenticating HTTP request
-func (c *V1Client) BuildLoginRequest(username, password, TOTPToken string) (*http.Request, error) {
+func (c *V1Client) BuildLoginRequest(username, password, totpToken string) (*http.Request, error) {
 	body, err := createBodyFromStruct(&models.UserLoginInput{
 		Username:  username,
 		Password:  password,
-		TOTPToken: TOTPToken,
+		TOTPToken: totpToken,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "creating body from struct")
@@ -122,11 +122,11 @@ func (c *V1Client) BuildLoginRequest(username, password, TOTPToken string) (*htt
 }
 
 // Login logs a user in
-func (c *V1Client) Login(ctx context.Context, username, password, TOTPToken string) (*http.Cookie, error) {
+func (c *V1Client) Login(ctx context.Context, username, password, totpToken string) (*http.Cookie, error) {
 	logger := c.logger.WithValue("username", username)
 	logger.Debug("login called")
 
-	req, err := c.BuildLoginRequest(username, password, TOTPToken)
+	req, err := c.BuildLoginRequest(username, password, totpToken)
 	if err != nil {
 		logger.Error(err, "building login request")
 		return nil, err

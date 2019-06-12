@@ -17,12 +17,6 @@ import (
 	"github.com/heptiolabs/healthcheck"
 )
 
-// func bareMiddlewareBlueprint(next http.Handler) http.Handler {
-// 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-// 		next.ServeHTTP(res, req)
-// 	})
-// }
-
 const (
 	registrationRoute = `/users`
 	loginRoute        = `/users/login`

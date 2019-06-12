@@ -29,7 +29,7 @@ func init() {
 		logger.Fatal(err)
 	}
 
-	oa2Client, err := testutil.CreateObligatoryClient(urlToUse, *u)
+	oa2Client, err := testutil.CreateObligatoryClient(urlToUse, u)
 	if err != nil {
 		logger.Fatal(err)
 	}

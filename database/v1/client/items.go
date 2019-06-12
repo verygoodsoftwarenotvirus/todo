@@ -108,7 +108,7 @@ func (c *Client) UpdateItem(ctx context.Context, input *models.Item) error {
 }
 
 // DeleteItem deletes an item from the querier by its ID
-func (c *Client) DeleteItem(ctx context.Context, itemID uint64, userID uint64) error {
+func (c *Client) DeleteItem(ctx context.Context, itemID, userID uint64) error {
 	ctx, span := trace.StartSpan(ctx, "DeleteItem")
 	defer span.End()
 	span.AddAttributes(trace.StringAttribute("item_id", strconv.FormatUint(itemID, 10)))

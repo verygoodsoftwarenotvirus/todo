@@ -17,7 +17,7 @@ type WebhookDataManager interface {
 	GetAllWebhooks(ctx context.Context) (*WebhookList, error)
 	CreateWebhook(ctx context.Context, input *WebhookInput) (*Webhook, error)
 	UpdateWebhook(ctx context.Context, updated *Webhook) error
-	DeleteWebhook(ctx context.Context, id uint64, userID uint64) error
+	DeleteWebhook(ctx context.Context, id, userID uint64) error
 }
 
 // WebhookDataServer describes a structure capable of serving traffic related to items

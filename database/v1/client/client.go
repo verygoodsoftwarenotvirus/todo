@@ -39,13 +39,13 @@ func (c *Client) IsReady(ctx context.Context) (ready bool) {
 func ProvideDatabaseClient(
 	ctx context.Context,
 	db *sql.DB,
-	database database.Database,
+	querier database.Database,
 	debug bool,
 	logger logging.Logger,
 ) (database.Database, error) {
 	c := &Client{
 		db:      db,
-		querier: database,
+		querier: querier,
 		debug:   debug,
 		logger:  logger.WithName("db_client"),
 	}

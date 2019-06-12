@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestWebhook_Update(T *testing.T) {

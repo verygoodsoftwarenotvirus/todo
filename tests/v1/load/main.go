@@ -8,8 +8,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/emicklei/hazana"
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
+
+	"github.com/emicklei/hazana"
 )
 
 // TodoServiceAttacker implements hazana's Attacker interface

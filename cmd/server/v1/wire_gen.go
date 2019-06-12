@@ -48,7 +48,8 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	websocketAuthFunc := auth2.ProvideWebsocketAuthFunc(authService)
 	typeNameManipulationFunc := httpserver.ProvideNewsmanTypeNameManipulationFunc(logger)
 	newsmanNewsman := newsman.NewNewsman(websocketAuthFunc, typeNameManipulationFunc)
-	itemsService, err := items.ProvideItemsService(ctx, logger, itemDataManager, itemsUserIDFetcher, itemIDFetcher, encoderDecoder, unitCounterProvider, newsmanNewsman)
+	reporter := items.ProvideReporter(newsmanNewsman)
+	itemsService, err := items.ProvideItemsService(ctx, logger, itemDataManager, itemsUserIDFetcher, itemIDFetcher, encoderDecoder, unitCounterProvider, reporter)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +70,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
-	serverServer, err := server.ProvideServer(database2, logger, cfg, httpserverServer)
+	serverServer, err := server.ProvideServer(logger, cfg, httpserverServer)
 	if err != nil {
 		return nil, err
 	}

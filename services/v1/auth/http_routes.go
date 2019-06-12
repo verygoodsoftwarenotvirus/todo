@@ -3,13 +3,13 @@ package auth
 import (
 	"context"
 	"database/sql"
-	"github.com/gorilla/securecookie"
 	"net/http"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"github.com/gorilla/securecookie"
 	"github.com/pkg/errors"
 	"go.opencensus.io/trace"
 )
@@ -204,10 +204,10 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 	loginValid, err := s.authenticator.ValidateLogin(
 		ctx,
 		user.HashedPassword,
-		user.Salt,
 		loginInput.Password,
 		user.TwoFactorSecret,
 		loginInput.TOTPToken,
+		user.Salt,
 	)
 	if err == auth.ErrPasswordHashTooWeak && loginValid {
 		s.logger.Debug("hashed password was deemed to weak, updating its hash")

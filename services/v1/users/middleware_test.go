@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

@@ -133,7 +133,7 @@ func buildURL(address string, parts ...string) string {
 	return tu.ResolveReference(u).String()
 }
 
-func getLoginCookie(serviceURL string, u models.User) (*http.Cookie, error) {
+func getLoginCookie(serviceURL string, u *models.User) (*http.Cookie, error) {
 	uri := buildURL(serviceURL, "users", "login")
 
 	code, err := totp.GenerateCode(strings.ToUpper(u.TwoFactorSecret), time.Now().UTC())
@@ -176,7 +176,7 @@ func getLoginCookie(serviceURL string, u models.User) (*http.Cookie, error) {
 }
 
 // CreateObligatoryClient creates the OAuth2 client we need for tests
-func CreateObligatoryClient(serviceURL string, u models.User) (*models.OAuth2Client, error) {
+func CreateObligatoryClient(serviceURL string, u *models.User) (*models.OAuth2Client, error) {
 	firstOAuth2ClientURI := buildURL(serviceURL, "oauth2", "client")
 
 	code, err := totp.GenerateCode(

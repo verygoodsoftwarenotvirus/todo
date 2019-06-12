@@ -21,14 +21,14 @@ func mustBuildCode(t *testing.T, totpSecret string) string {
 	return code
 }
 
-func buildDummyOAuth2ClientInput(t *testing.T, username, password, TOTPToken string) *models.OAuth2ClientCreationInput {
+func buildDummyOAuth2ClientInput(t *testing.T, username, password, totpToken string) *models.OAuth2ClientCreationInput {
 	t.Helper()
 
 	x := &models.OAuth2ClientCreationInput{
 		UserLoginInput: models.UserLoginInput{
 			Username:  username,
 			Password:  password,
-			TOTPToken: mustBuildCode(t, TOTPToken),
+			TOTPToken: mustBuildCode(t, totpToken),
 		},
 		Scopes:      []string{"*"},
 		RedirectURI: "http://localhost",

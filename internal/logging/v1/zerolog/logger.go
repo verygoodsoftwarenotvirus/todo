@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	zerolog.CallerSkipFrameCount = zerolog.CallerSkipFrameCount + 1
+	zerolog.CallerSkipFrameCount++
 }
 
 // Logger is our log wrapper

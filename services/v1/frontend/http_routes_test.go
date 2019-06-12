@@ -8,8 +8,8 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func buildRequest(t *testing.T) *http.Request {

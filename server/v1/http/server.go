@@ -7,12 +7,10 @@ import (
 	"os"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
@@ -20,6 +18,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
+
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 
 	"github.com/go-chi/chi"
 	"github.com/pkg/errors"

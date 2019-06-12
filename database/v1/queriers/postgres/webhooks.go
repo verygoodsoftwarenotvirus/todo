@@ -323,7 +323,7 @@ func (p *Postgres) UpdateWebhook(ctx context.Context, input *models.Webhook) err
 	return p.db.QueryRowContext(ctx, query, args...).Scan(&input.UpdatedOn)
 }
 
-func (p *Postgres) buildArchiveWebhookQuery(webhookID uint64, userID uint64) (string, []interface{}) {
+func (p *Postgres) buildArchiveWebhookQuery(webhookID, userID uint64) (string, []interface{}) {
 	query, args, err := p.sqlBuilder.Update(webhooksTableName).
 		Set("updated_on", squirrel.Expr("extract(epoch FROM NOW())")).
 		Set("archived_on", squirrel.Expr("extract(epoch FROM NOW())")).
@@ -341,7 +341,7 @@ func (p *Postgres) buildArchiveWebhookQuery(webhookID uint64, userID uint64) (st
 }
 
 // DeleteWebhook deletes an webhook from the db by its ID
-func (p *Postgres) DeleteWebhook(ctx context.Context, webhookID uint64, userID uint64) error {
+func (p *Postgres) DeleteWebhook(ctx context.Context, webhookID, userID uint64) error {
 	query, args := p.buildArchiveWebhookQuery(webhookID, userID)
 	_, err := p.db.ExecContext(ctx, query, args...)
 	return err

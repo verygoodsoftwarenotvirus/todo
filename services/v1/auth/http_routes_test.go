@@ -8,14 +8,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 	mauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1/mock"
 	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestService_DecodeCookieFromRequest(T *testing.T) {

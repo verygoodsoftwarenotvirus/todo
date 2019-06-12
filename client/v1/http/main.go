@@ -212,7 +212,7 @@ func (c *V1Client) BuildWebsocketURL(parts ...string) string {
 	return u.String()
 }
 
-//BuildHealthCheckRequest builds a health check HTTP Request
+// BuildHealthCheckRequest builds a health check HTTP Request
 func (c *V1Client) BuildHealthCheckRequest() (*http.Request, error) {
 	u := *c.URL
 	uri := fmt.Sprintf("%s://%s/_meta_/ready", u.Scheme, u.Host)

@@ -51,7 +51,7 @@ func ProvideItemsService(
 	itemIDFetcher ItemIDFetcher,
 	encoder encoding.EncoderDecoder,
 	itemCounterProvider metrics.UnitCounterProvider,
-	newsman *newsman.Newsman,
+	reporter newsman.Reporter,
 ) (*Service, error) {
 	itemCounter, err := itemCounterProvider(counterName, counterDescription)
 	if err != nil {
@@ -65,7 +65,7 @@ func ProvideItemsService(
 		itemCounter:    itemCounter,
 		userIDFetcher:  userIDFetcher,
 		itemIDFetcher:  itemIDFetcher,
-		reporter:       newsman,
+		reporter:       reporter,
 	}
 
 	itemCount, err := svc.itemDatabase.GetAllItemsCount(ctx)

@@ -37,7 +37,7 @@ type (
 		userDB               models.UserDataManager
 		oauth2ClientsService OAuth2ClientValidator
 		encoderDecoder       encoding.EncoderDecoder
-		cookieBuilder        cookieEncoderDecoder
+		cookieManager        cookieEncoderDecoder
 	}
 )
 
@@ -62,7 +62,7 @@ func ProvideAuthService(
 		oauth2ClientsService: oauth2ClientsService,
 		authenticator:        authenticator,
 		userIDFetcher:        userIDFetcher,
-		cookieBuilder: securecookie.New(
+		cookieManager: securecookie.New(
 			securecookie.GenerateRandomKey(64),
 			[]byte(config.Auth.CookieSecret),
 		),

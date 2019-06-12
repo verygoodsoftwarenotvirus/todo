@@ -99,6 +99,7 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 				return
 			}
 
+			ctx = context.WithValue(ctx, models.UserKey, user)
 			ctx = context.WithValue(ctx, models.UserIDKey, user.ID)
 			ctx = context.WithValue(ctx, models.UserIsAdminKey, user.IsAdmin)
 			req = req.WithContext(ctx)
@@ -107,6 +108,29 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 
 		})
 	}
+}
+
+// AdminMiddleware restricts requests to admin users only
+func (s *Service) AdminMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
+
+		user, ok := ctx.Value(models.UserKey).(*models.User)
+
+		if !ok || user == nil {
+			s.logger.WithRequest(req).Info("AdminMiddleware called without user attached to context")
+			res.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		if !user.IsAdmin {
+			s.logger.WithRequest(req).Info("AdminMiddleware called by non-admin user")
+			res.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		next.ServeHTTP(res, req)
+	})
 }
 
 func parseLoginInputFromForm(req *http.Request) *models.UserLoginInput {

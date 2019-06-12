@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
@@ -101,15 +103,22 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
+		exampleUser := &models.User{ID: 123}
 		exampleClient := &models.OAuth2Client{
 			ClientID:     "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
 			ClientSecret: "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
+			BelongsTo:    exampleUser.ID,
 		}
 
 		ocv := &mockOAuth2ClientValidator{}
 		ocv.On("RequestIsAuthenticated", mock.Anything).
 			Return(exampleClient, nil)
 		s.oauth2ClientsService = ocv
+
+		mockDB := database.BuildMockDatabase().UserDataManager
+		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).
+			Return(exampleUser, nil)
+		s.userDB = mockDB
 
 		h := &MockHTTPHandler{}
 		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
@@ -120,10 +129,49 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		res := httptest.NewRecorder()
 
 		s.AuthenticationMiddleware(true)(h).ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+	})
+
+	T.Run("happy path without allowing cookies", func(t *testing.T) {
+		s := buildTestService(t)
+
+		exampleUser := &models.User{ID: 123}
+		exampleClient := &models.OAuth2Client{
+			ClientID:     "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
+			ClientSecret: "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
+			BelongsTo:    exampleUser.ID,
+		}
+
+		ocv := &mockOAuth2ClientValidator{}
+		ocv.On("RequestIsAuthenticated", mock.Anything).
+			Return(exampleClient, nil)
+		s.oauth2ClientsService = ocv
+
+		mockDB := database.BuildMockDatabase().UserDataManager
+		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).
+			Return(exampleUser, nil)
+		s.userDB = mockDB
+
+		h := &MockHTTPHandler{}
+		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+
+		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+		res := httptest.NewRecorder()
+
+		s.AuthenticationMiddleware(false)(h).ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
 	})
 
 	T.Run("with error fetching client but able to use cookie", func(t *testing.T) {
 		s := buildTestService(t)
+		exampleUser := &models.User{
+			ID:       1,
+			Username: "username",
+		}
 
 		ocv := &mockOAuth2ClientValidator{}
 		ocv.On("RequestIsAuthenticated", mock.Anything).
@@ -138,11 +186,89 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		require.NotNil(t, req)
 		res := httptest.NewRecorder()
 
-		c, err := s.buildAuthCookie(&models.User{ID: 1, Username: "username"})
+		c, err := s.buildAuthCookie(exampleUser)
+		require.NoError(t, err)
+		req.AddCookie(c)
+
+		mockDB := database.BuildMockDatabase().UserDataManager
+		mockDB.On("GetUser", mock.Anything, exampleUser.ID).
+			Return(exampleUser, nil)
+		s.userDB = mockDB
+
+		s.AuthenticationMiddleware(true)(h).ServeHTTP(res, req)
+	})
+
+	T.Run("able to use cookies but error fetching user info", func(t *testing.T) {
+		s := buildTestService(t)
+		exampleUser := &models.User{
+			ID:       1,
+			Username: "username",
+		}
+
+		exampleClient := &models.OAuth2Client{
+			ClientID:     "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
+			ClientSecret: "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
+			BelongsTo:    exampleUser.ID,
+		}
+
+		ocv := &mockOAuth2ClientValidator{}
+		ocv.On("RequestIsAuthenticated", mock.Anything).
+			Return(exampleClient, nil)
+		s.oauth2ClientsService = ocv
+
+		mockDB := database.BuildMockDatabase().UserDataManager
+		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).
+			Return((*models.User)(nil), errors.New("blah"))
+		s.userDB = mockDB
+
+		h := &MockHTTPHandler{}
+		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+
+		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+		res := httptest.NewRecorder()
+
+		c, err := s.buildAuthCookie(exampleUser)
 		require.NoError(t, err)
 		req.AddCookie(c)
 
 		s.AuthenticationMiddleware(true)(h).ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusInternalServerError, res.Code)
+	})
+
+	T.Run("no cookies allowed, with error fetching user info", func(t *testing.T) {
+		s := buildTestService(t)
+
+		exampleUser := &models.User{ID: 123}
+		exampleClient := &models.OAuth2Client{
+			ClientID:     "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
+			ClientSecret: "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
+			BelongsTo:    exampleUser.ID,
+		}
+
+		ocv := &mockOAuth2ClientValidator{}
+		ocv.On("RequestIsAuthenticated", mock.Anything).
+			Return(exampleClient, nil)
+		s.oauth2ClientsService = ocv
+
+		mockDB := database.BuildMockDatabase().UserDataManager
+		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).
+			Return((*models.User)(nil), errors.New("blah"))
+		s.userDB = mockDB
+
+		h := &MockHTTPHandler{}
+		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+
+		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+		res := httptest.NewRecorder()
+
+		s.AuthenticationMiddleware(false)(h).ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
 
 	T.Run("with error fetching client but able to use cookie but unable to decode cookie", func(t *testing.T) {
@@ -168,7 +294,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		cb := &mockCookieEncoderDecoder{}
 		cb.On("Decode", CookieName, mock.Anything, mock.Anything).
 			Return(errors.New("blah"))
-		s.cookieBuilder = cb
+		s.cookieManager = cb
 
 		s.AuthenticationMiddleware(true)(h).ServeHTTP(res, req)
 	})
@@ -192,6 +318,40 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		s.AuthenticationMiddleware(false)(h).ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusUnauthorized)
 	})
+
+	T.Run("nightmare path", func(t *testing.T) {
+		s := buildTestService(t)
+
+		exampleUser := &models.User{ID: 123}
+		exampleClient := &models.OAuth2Client{
+			ClientID:     "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
+			ClientSecret: "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
+			BelongsTo:    exampleUser.ID,
+		}
+
+		ocv := &mockOAuth2ClientValidator{}
+		ocv.On("RequestIsAuthenticated", mock.Anything).
+			Return(exampleClient, nil)
+		s.oauth2ClientsService = ocv
+
+		mockDB := database.BuildMockDatabase().UserDataManager
+		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).
+			Return((*models.User)(nil), nil) // lolwut
+		s.userDB = mockDB
+
+		h := &MockHTTPHandler{}
+		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+
+		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+		res := httptest.NewRecorder()
+
+		s.AuthenticationMiddleware(false)(h).ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
+	})
+
 }
 
 func Test_parseLoginInputFromForm(T *testing.T) {
@@ -257,6 +417,7 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 		h := s.UserLoginInputMiddleware(ms)
 		h.ServeHTTP(res, req)
 
+		ms.AssertExpectations(t)
 	})
 
 	T.Run("with error decoding request", func(t *testing.T) {
@@ -281,10 +442,11 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 		s.encoderDecoder = ed
 
 		ms := &MockHTTPHandler{}
-		ms.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		h := s.UserLoginInputMiddleware(ms)
 		h.ServeHTTP(res, req)
+
+		ms.AssertExpectations(t)
 	})
 
 	T.Run("with error decoding request but valid value attached to form", func(t *testing.T) {
@@ -320,5 +482,79 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 
 		h := s.UserLoginInputMiddleware(ms)
 		h.ServeHTTP(res, req)
+
+		ms.AssertExpectations(t)
 	})
+}
+
+func TestService_AdminMiddleware(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+		res := httptest.NewRecorder()
+
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(),
+				models.UserKey,
+				&models.User{IsAdmin: true},
+			),
+		)
+
+		s := buildTestService(t)
+		ms := &MockHTTPHandler{}
+		ms.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+
+		h := s.AdminMiddleware(ms)
+		h.ServeHTTP(res, req)
+
+		ms.AssertExpectations(t)
+		assert.Equal(t, http.StatusOK, res.Code)
+	})
+
+	T.Run("without user attached", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+		res := httptest.NewRecorder()
+
+		s := buildTestService(t)
+		ms := &MockHTTPHandler{}
+		ms.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+
+		h := s.AdminMiddleware(ms)
+		h.ServeHTTP(res, req)
+
+		ms.AssertExpectations(t)
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
+	})
+
+	T.Run("with non-admin user", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+		res := httptest.NewRecorder()
+
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(),
+				models.UserKey,
+				&models.User{IsAdmin: false},
+			),
+		)
+
+		s := buildTestService(t)
+		ms := &MockHTTPHandler{}
+		ms.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+
+		h := s.AdminMiddleware(ms)
+		h.ServeHTTP(res, req)
+
+		ms.AssertExpectations(t)
+		assert.Equal(t, http.StatusOK, res.Code)
+	})
+
 }

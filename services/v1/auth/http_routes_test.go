@@ -8,15 +8,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 	mauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1/mock"
 	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestService_DecodeCookieFromRequest(T *testing.T) {
@@ -407,7 +406,7 @@ func TestService_Login(T *testing.T) {
 		cb := &mockCookieEncoderDecoder{}
 		cb.On("Encode", mock.Anything, mock.Anything).
 			Return("", errors.New("blah"))
-		s.cookieBuilder = cb
+		s.cookieManager = cb
 
 		expectedUser := &models.User{
 			Username: "username",
@@ -453,7 +452,7 @@ func TestService_Login(T *testing.T) {
 		cb := &mockCookieEncoderDecoder{}
 		cb.On("Encode", mock.Anything, mock.Anything).
 			Return("", errors.New("blah"))
-		s.cookieBuilder = cb
+		s.cookieManager = cb
 
 		ed := &mencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.Anything).
@@ -854,7 +853,7 @@ func TestService_buildCookie(T *testing.T) {
 		cb := &mockCookieEncoderDecoder{}
 		cb.On("Encode", mock.Anything, mock.Anything).
 			Return("", errors.New("blah"))
-		s.cookieBuilder = cb
+		s.cookieManager = cb
 		exampleInput := &models.User{
 			Username: "username",
 		}
@@ -862,5 +861,34 @@ func TestService_buildCookie(T *testing.T) {
 		cookie, err := s.buildAuthCookie(exampleInput)
 		assert.Nil(t, cookie)
 		assert.Error(t, err)
+	})
+}
+
+func TestService_CycleSecret(T *testing.T) {
+	T.Parallel()
+
+	T.Run("normal operation", func(t *testing.T) {
+		s := buildTestService(t)
+		exampleUser := &models.User{
+			ID:       123,
+			Username: "username",
+		}
+		c, err := s.buildAuthCookie(exampleUser)
+		assert.NotNil(t, c)
+		assert.NoError(t, err)
+
+		var ca models.CookieAuth
+		decodeErr := s.cookieManager.Decode(CookieName, c.Value, &ca)
+		assert.NoError(t, decodeErr)
+
+		req, err := http.NewRequest(http.MethodPost, "https://blah.com", nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+		res := httptest.NewRecorder()
+
+		s.CycleSecret(res, req)
+
+		decodeErr2 := s.cookieManager.Decode(CookieName, c.Value, &ca)
+		assert.Error(t, decodeErr2)
 	})
 }

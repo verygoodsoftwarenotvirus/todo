@@ -54,6 +54,19 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 
 	// all middleware must be defined before routes on a mux
 
+	router.Route("/_meta_", func(metaRouter chi.Router) {
+		health := healthcheck.NewHandler()
+		// Expose a liveness check on /live
+		metaRouter.Get("/live", health.LiveEndpoint)
+		// Expose a readiness check on /ready
+		metaRouter.Get("/ready", health.ReadyEndpoint)
+	})
+
+	if metricsHandler != nil {
+		s.logger.Debug("establishing metrics handler")
+		router.Handle("/metrics", metricsHandler)
+	}
+
 	// Frontend routes
 	if frontendConfig.StaticFilesDirectory != "" {
 		staticFileServer, err := s.frontendService.StaticDir(frontendConfig.StaticFilesDirectory)
@@ -67,18 +80,12 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		router.Get(route, handler)
 	}
 
-	router.Route("/_meta_", func(metaRouter chi.Router) {
-		health := healthcheck.NewHandler()
-		// Expose a liveness check on /live
-		metaRouter.Get("/live", health.LiveEndpoint)
-		// Expose a readiness check on /ready
-		metaRouter.Get("/ready", health.ReadyEndpoint)
+	router.With(
+		s.authService.AuthenticationMiddleware(true),
+		s.authService.AdminMiddleware,
+	).Route("/admin", func(adminRouter chi.Router) {
+		adminRouter.Post("/cycle_cookie_secret", s.authService.CycleSecret)
 	})
-
-	if metricsHandler != nil {
-		s.logger.Debug("establishing metrics handler")
-		router.Handle("/metrics", metricsHandler)
-	}
 
 	router.Route("/users", func(userRouter chi.Router) {
 		userRouter.With(s.authService.UserLoginInputMiddleware).

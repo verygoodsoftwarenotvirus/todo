@@ -26,7 +26,7 @@ func buildTestService() *Service {
 		userIDFetcher:    func(req *http.Request) uint64 { return 0 },
 		webhookIDFetcher: func(req *http.Request) uint64 { return 0 },
 		encoderDecoder:   &mencoding.EncoderDecoder{},
-		newsman:          newsman.NewNewsman(nil, nil),
+		eventManager:     newsman.NewNewsman(nil, nil),
 	}
 }
 

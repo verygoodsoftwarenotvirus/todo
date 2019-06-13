@@ -89,7 +89,7 @@ func (c *OAuth2Client) HasScope(scope string) (found bool) {
 			}
 		}
 	}
-	return
+	return false
 }
 
 // OAuth2ClientList is a response struct containing a list of OAuth2Clients

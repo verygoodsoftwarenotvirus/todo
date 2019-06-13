@@ -34,25 +34,27 @@ func (s *Service) buildStaticFileServer(fileDir string) (*afero.HttpFs, error) {
 		}
 
 		for _, file := range files {
-			if !file.IsDir() {
-				fp := filepath.Join(fileDir, file.Name())
-				f, err := afs.Create(fp)
-				if err != nil {
-					return nil, errors.Wrap(err, "creating static file in memory")
-				}
+			if file.IsDir() {
+				continue
+			}
 
-				bs, err := ioutil.ReadFile(fp)
-				if err != nil {
-					return nil, errors.Wrap(err, "reading static file from directory")
-				}
+			fp := filepath.Join(fileDir, file.Name())
+			f, err := afs.Create(fp)
+			if err != nil {
+				return nil, errors.Wrap(err, "creating static file in memory")
+			}
 
-				if _, err = f.Write(bs); err != nil {
-					return nil, errors.Wrap(err, "loading static file into memory")
-				}
+			bs, err := ioutil.ReadFile(fp)
+			if err != nil {
+				return nil, errors.Wrap(err, "reading static file from directory")
+			}
 
-				if err = f.Close(); err != nil {
-					s.logger.Error(err, "closing file while setting up static dir")
-				}
+			if _, err = f.Write(bs); err != nil {
+				return nil, errors.Wrap(err, "loading static file into memory")
+			}
+
+			if err = f.Close(); err != nil {
+				s.logger.Error(err, "closing file while setting up static dir")
 			}
 		}
 		afs = afero.NewReadOnlyFs(afs)

@@ -81,7 +81,7 @@ type User struct {
 }
 
 // Update accepts a User as input and merges those values if they're set
-func (u *User) Update(input User) {
+func (u *User) Update(input *User) {
 	if input.Username != "" && input.Username != u.Username {
 		u.Username = input.Username
 	}

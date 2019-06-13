@@ -145,7 +145,7 @@ func TestAuth(test *testing.T) {
 		require.Len(t, cookies, 1)
 		loginCookie := cookies[0]
 
-		/// build logout request
+		// build logout request
 		u2, err := url.Parse(todoClient.BuildURL(nil))
 		require.NoError(t, err)
 		u2.Path = "/users/logout"
@@ -424,7 +424,7 @@ func TestAuth(test *testing.T) {
 		assert.NoError(t, err)
 		req.AddCookie(cookie)
 
-		res, err := (*http.Client)(&http.Client{Timeout: 10 * time.Second}).Do(req)
+		res, err := (&http.Client{Timeout: 10 * time.Second}).Do(req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 	})

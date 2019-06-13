@@ -53,12 +53,15 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
+	itemDataServer := items.ProvideItemDataServer(itemsService)
 	authSettings := config.ProvideConfigAuthSettings(cfg)
 	usersUserIDFetcher := httpserver.ProvideUsernameFetcher(logger)
-	usersService, err := users.ProvideUsersService(ctx, authSettings, logger, database2, authenticator, usersUserIDFetcher, encoderDecoder, unitCounterProvider, newsmanNewsman)
+	usersService, err := users.ProvideUsersService(ctx, authSettings, logger, userDataManager, authenticator, usersUserIDFetcher, encoderDecoder, unitCounterProvider, reporter)
 	if err != nil {
 		return nil, err
 	}
+	userDataServer := users.ProvideUserDataServer(usersService)
+	oAuth2ClientDataServer := oauth2clients.ProvideOAuth2ClientDataServer(service)
 	webhookDataManager := webhooks.ProvideWebhookDataManager(database2)
 	webhooksUserIDFetcher := httpserver.ProvideWebhooksUserIDFetcher()
 	webhookIDFetcher := httpserver.ProvideWebhookIDFetcher(logger)
@@ -66,7 +69,8 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
-	httpserverServer, err := httpserver.ProvideServer(ctx, cfg, authService, frontendService, itemsService, usersService, service, webhooksService, database2, logger, encoderDecoder, newsmanNewsman)
+	webhookDataServer := webhooks.ProvideWebhookDataServer(webhooksService)
+	httpserverServer, err := httpserver.ProvideServer(ctx, cfg, authService, frontendService, itemDataServer, userDataServer, oAuth2ClientDataServer, webhookDataServer, database2, logger, encoderDecoder, newsmanNewsman)
 	if err != nil {
 		return nil, err
 	}

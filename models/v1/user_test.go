@@ -16,7 +16,7 @@ func TestUser_Update(T *testing.T) {
 			TwoFactorSecret: "two factor secret",
 		}
 
-		exampleInput := User{
+		exampleInput := &User{
 			Username:        "newUsername",
 			HashedPassword:  "updated_hashed_pass",
 			TwoFactorSecret: "new fancy secret",

@@ -35,7 +35,7 @@ func (cfg *ServerConfig) ProvideDatabase(ctx context.Context, logger logging.Log
 		ocsql.RegisterAllViews()
 		ocsql.RecordStats(rawDB, cfg.Metrics.DBMetricsCollectionInterval)
 
-		pg := postgres.ProvidePostgres(debug, rawDB, logger, connectionDetails)
+		pg := postgres.ProvidePostgres(debug, rawDB, logger)
 
 		return dbclient.ProvideDatabaseClient(ctx, rawDB, pg, debug, logger)
 	default:

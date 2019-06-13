@@ -47,7 +47,7 @@ type UserIDFetcher func(*http.Request) uint64
 // ProvideAuthService builds a new AuthService
 func ProvideAuthService(
 	logger logging.Logger,
-	config *config.ServerConfig,
+	cfg *config.ServerConfig,
 	authenticator libauth.Authenticator,
 	database models.UserDataManager,
 	oauth2ClientsService OAuth2ClientValidator,
@@ -57,14 +57,14 @@ func ProvideAuthService(
 	svc := &Service{
 		logger:               logger.WithName(serviceName),
 		encoderDecoder:       encoder,
-		config:               config.Auth,
+		config:               cfg.Auth,
 		userDB:               database,
 		oauth2ClientsService: oauth2ClientsService,
 		authenticator:        authenticator,
 		userIDFetcher:        userIDFetcher,
 		cookieManager: securecookie.New(
 			securecookie.GenerateRandomKey(64),
-			[]byte(config.Auth.CookieSecret),
+			[]byte(cfg.Auth.CookieSecret),
 		),
 	}
 

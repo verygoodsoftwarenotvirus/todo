@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
@@ -53,12 +52,12 @@ func ProvideUsersService(
 	ctx context.Context,
 	authSettings config.AuthSettings,
 	logger logging.Logger,
-	database database.Database,
+	db models.UserDataManager,
 	authenticator auth.Authenticator,
 	userIDFetcher UserIDFetcher,
 	encoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
-	newsman *newsman.Newsman,
+	reporter newsman.Reporter,
 ) (*Service, error) {
 	if userIDFetcher == nil {
 		return nil, errors.New("userIDFetcher must be provided")
@@ -69,7 +68,7 @@ func ProvideUsersService(
 		return nil, errors.Wrap(err, "error initializing counter")
 	}
 
-	userCount, err := database.GetUserCount(ctx, nil)
+	userCount, err := db.GetUserCount(ctx, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "fetching user count")
 	}
@@ -78,12 +77,12 @@ func ProvideUsersService(
 	us := &Service{
 		cookieSecret:        []byte(authSettings.CookieSecret),
 		logger:              logger.WithName(serviceName),
-		database:            database,
+		database:            db,
 		authenticator:       authenticator,
 		userIDFetcher:       userIDFetcher,
 		encoderDecoder:      encoder,
 		userCounter:         counter,
-		reporter:            newsman,
+		reporter:            reporter,
 		userCreationEnabled: authSettings.EnableUserSignup,
 	}
 	return us, nil

@@ -70,9 +70,9 @@ func (qf *QueryFilter) FromParams(params url.Values) {
 	}
 
 	switch strings.ToLower(params.Get(sortByKey)) {
-	case strSortAsc:
+	case string(SortAscending):
 		qf.SortBy = SortAscending
-	case strSortDesc:
+	case string(SortDescending):
 		qf.SortBy = SortDescending
 	}
 }
@@ -84,7 +84,7 @@ func (qf *QueryFilter) SetPage(page uint64) {
 
 // QueryPage calculates a query page from the current filter values
 func (qf *QueryFilter) QueryPage() uint64 {
-	return uint64(qf.Limit * (qf.Page - 1))
+	return qf.Limit * (qf.Page - 1)
 }
 
 // ToValues returns a url.Values from a QueryFilter

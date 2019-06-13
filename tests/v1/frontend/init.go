@@ -26,18 +26,18 @@ func init() {
 
 	fake.Seed(time.Now().UnixNano())
 
-	//for {
-	//	res, err := http.Head(seleniumHubAddr + "/status")
-	//	if err != nil {
-	//		time.Sleep(time.Second / 2)
-	//	} else if res != nil {
-	//		if res.StatusCode != http.StatusOK {
-	//			log.Println(res.StatusCode)
-	//		} else {
-	//			break
-	//		}
-	//	}
-	//}
+	// for {
+	// 	res, err := http.Head(seleniumHubAddr + "/status")
+	// 	if err != nil {
+	// 		time.Sleep(time.Second / 2)
+	// 	} else if res != nil {
+	// 		if res.StatusCode != http.StatusOK {
+	// 			log.Println(res.StatusCode)
+	// 		} else {
+	// 			break
+	// 		}
+	// 	}
+	// }
 	// NOTE: this is sad, but also the only thing that consistently works
 	// see above for my vain attempts at a real solution to this problem
 	time.Sleep(10 * time.Second)

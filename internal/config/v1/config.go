@@ -53,14 +53,14 @@ type (
 
 	// AuthSettings is a container struct for dealing with settings pertaining to
 	AuthSettings struct {
-		// SecureCookiesOnly indicates if the cookies built should be marked as HTTPS only
-		SecureCookiesOnly bool `mapstructure:"secure_cookies_only"`
 		// CookieDomain reflects what domain the cookies will have set for them
 		CookieDomain string `mapstructure:"cookie_domain"`
 		// CookieSecret indicates the secret the cookie builder should use
 		CookieSecret string `mapstructure:"cookie_secret"`
 		// CookieLifetime indicates how long the cookies built should last
 		CookieLifetime time.Duration `mapstructure:"cookie_lifetime"`
+		// SecureCookiesOnly indicates if the cookies built should be marked as HTTPS only
+		SecureCookiesOnly bool `mapstructure:"secure_cookies_only"`
 		// EnableUserSignup enables user signups
 		EnableUserSignup bool `mapstructure:"enable_user_signup"`
 	}

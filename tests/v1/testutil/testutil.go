@@ -215,13 +215,12 @@ cookie problems!
 	`, cookie == nil, err)
 	}
 	req.AddCookie(cookie)
+	var o models.OAuth2Client
 
 	var command fmt.Stringer
 	if command, err = http2curl.GetCurlCommand(req); err == nil {
 		log.Println(command.String())
 	}
-
-	var o models.OAuth2Client
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {

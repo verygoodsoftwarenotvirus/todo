@@ -218,8 +218,8 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 		}
 
 		user.HashedPassword = updated
-		if err = s.userDB.UpdateUser(ctx, user); err != nil {
-			return false, err
+		if updateErr := s.userDB.UpdateUser(ctx, user); updateErr != nil {
+			return false, updateErr
 		}
 	} else if err != nil && err != auth.ErrPasswordHashTooWeak {
 		logger.Error(err, "issue validating login")

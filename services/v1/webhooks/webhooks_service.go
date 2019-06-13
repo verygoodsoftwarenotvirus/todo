@@ -37,7 +37,7 @@ type (
 		userIDFetcher    UserIDFetcher
 		webhookIDFetcher WebhookIDFetcher
 		encoderDecoder   encoding.EncoderDecoder
-		newsman          eventManager
+		eventManager     eventManager
 	}
 
 	// UserIDFetcher is a function that fetches user IDs
@@ -56,7 +56,7 @@ func ProvideWebhooksService(
 	webhookIDFetcher WebhookIDFetcher,
 	encoder encoding.EncoderDecoder,
 	webhookCounterProvider metrics.UnitCounterProvider,
-	newsman *newsman.Newsman,
+	em *newsman.Newsman,
 ) (*Service, error) {
 	webhookCounter, err := webhookCounterProvider(counterName, "the number of webhooks managed by the webhooks service")
 	if err != nil {
@@ -70,7 +70,7 @@ func ProvideWebhooksService(
 		webhookCounter:   webhookCounter,
 		userIDFetcher:    userIDFetcher,
 		webhookIDFetcher: webhookIDFetcher,
-		newsman:          newsman,
+		eventManager:     em,
 	}
 
 	webhookCount, err := svc.webhookDatabase.GetAllWebhooksCount(ctx)

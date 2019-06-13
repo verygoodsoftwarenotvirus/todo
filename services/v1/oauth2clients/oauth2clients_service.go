@@ -86,9 +86,9 @@ func (s *clientStore) GetByID(id string) (oauth2.ClientInfo, error) {
 	return client, nil
 }
 
-func newClientStore(database database.Database) *clientStore {
+func newClientStore(db database.Database) *clientStore {
 	cs := &clientStore{
-		database: database,
+		database: db,
 	}
 	return cs
 }
@@ -97,7 +97,7 @@ func newClientStore(database database.Database) *clientStore {
 func ProvideOAuth2ClientsService(
 	ctx context.Context,
 	logger logging.Logger,
-	database database.Database,
+	db database.Database,
 	authenticator auth.Authenticator,
 	clientIDFetcher ClientIDFetcher,
 	encoderDecoder encoding.EncoderDecoder,
@@ -109,7 +109,7 @@ func ProvideOAuth2ClientsService(
 	}
 
 	manager := manage.NewDefaultManager()
-	clientStore := newClientStore(database)
+	clientStore := newClientStore(db)
 	tokenStore, err := oauth2store.NewMemoryTokenStore()
 	manager.MapClientStorage(clientStore)
 	manager.MustTokenStorage(tokenStore, err)
@@ -119,7 +119,7 @@ func ProvideOAuth2ClientsService(
 	oHandler.SetAllowGetAccessRequest(true)
 
 	s := &Service{
-		database:             database,
+		database:             db,
 		logger:               logger.WithName(serviceName),
 		encoderDecoder:       encoderDecoder,
 		authenticator:        authenticator,

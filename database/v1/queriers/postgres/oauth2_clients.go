@@ -79,8 +79,9 @@ func scanOAuth2Clients(logger logging.Logger, rows *sql.Rows) ([]*models.OAuth2C
 	return list, nil
 }
 
-func (p *Postgres) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (string, []interface{}) {
-	query, args, err := p.sqlBuilder.
+func (p *Postgres) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (query string, args []interface{}) {
+	var err error
+	query, args, err = p.sqlBuilder.
 		Insert(oauth2ClientsTableName).
 		Columns(
 			"name",
@@ -126,10 +127,11 @@ func (p *Postgres) CreateOAuth2Client(ctx context.Context, input *models.OAuth2C
 	return x, nil
 }
 
-func (p *Postgres) buildGetOAuth2ClientByClientIDQuery(clientID string) (string, []interface{}) {
+func (p *Postgres) buildGetOAuth2ClientByClientIDQuery(clientID string) (query string, args []interface{}) {
+	var err error
 	// This query is more or less the same as the normal OAuth2 client retrieval query, only that it doesn't
 	// care about ownership. It does still care about archived status
-	query, args, err := p.sqlBuilder.
+	query, args, err = p.sqlBuilder.
 		Select(oauth2ClientsTableColumns...).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{
@@ -149,8 +151,9 @@ func (p *Postgres) GetOAuth2ClientByClientID(ctx context.Context, clientID strin
 	return scanOAuth2Client(row)
 }
 
-func (p *Postgres) buildGetAllOAuth2ClientsQuery() (string, []interface{}) {
-	query, args, err := p.sqlBuilder.
+func (p *Postgres) buildGetAllOAuth2ClientsQuery() (query string, args []interface{}) {
+	var err error
+	query, args, err = p.sqlBuilder.
 		Select(oauth2ClientsTableColumns...).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{"archived_on": nil}).
@@ -177,8 +180,9 @@ func (p *Postgres) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Cli
 	return list, nil
 }
 
-func (p *Postgres) buildGetOAuth2ClientQuery(clientID, userID uint64) (string, []interface{}) {
-	query, args, err := p.sqlBuilder.
+func (p *Postgres) buildGetOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
+	var err error
+	query, args, err = p.sqlBuilder.
 		Select(oauth2ClientsTableColumns...).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{
@@ -204,7 +208,8 @@ func (p *Postgres) GetOAuth2Client(ctx context.Context, clientID, userID uint64)
 	return client, nil
 }
 
-func (p *Postgres) buildGetOAuth2ClientCountQuery(filter *models.QueryFilter, userID uint64) (string, []interface{}) {
+func (p *Postgres) buildGetOAuth2ClientCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
+	var err error
 	builder := p.sqlBuilder.
 		Select(CountQuery).
 		From(oauth2ClientsTableName).
@@ -217,7 +222,7 @@ func (p *Postgres) buildGetOAuth2ClientCountQuery(filter *models.QueryFilter, us
 		builder = filter.ApplyToQueryBuilder(builder)
 	}
 
-	query, args, err := builder.ToSql()
+	query, args, err = builder.ToSql()
 	logQueryBuildingError(p.logger, err)
 
 	return query, args
@@ -248,7 +253,8 @@ func (p *Postgres) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) 
 	return count, err
 }
 
-func (p *Postgres) buildGetOAuth2ClientsQuery(filter *models.QueryFilter, userID uint64) (string, []interface{}) {
+func (p *Postgres) buildGetOAuth2ClientsQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
+	var err error
 	builder := p.sqlBuilder.
 		Select(oauth2ClientsTableColumns...).
 		From(oauth2ClientsTableName).
@@ -261,7 +267,7 @@ func (p *Postgres) buildGetOAuth2ClientsQuery(filter *models.QueryFilter, userID
 		builder = filter.ApplyToQueryBuilder(builder)
 	}
 
-	query, args, err := builder.ToSql()
+	query, args, err = builder.ToSql()
 
 	logQueryBuildingError(p.logger, err)
 
@@ -287,7 +293,7 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 	}
 
 	// de-pointer-ize clients
-	var tmpL []models.OAuth2Client
+	var tmpL = []models.OAuth2Client{}
 	for _, t := range list {
 		tmpL = append(tmpL, *t)
 	}
@@ -310,8 +316,9 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 	return ocl, nil
 }
 
-func (p *Postgres) buildUpdateOAuth2ClientQuery(input *models.OAuth2Client) (string, []interface{}) {
-	query, args, err := p.sqlBuilder.
+func (p *Postgres) buildUpdateOAuth2ClientQuery(input *models.OAuth2Client) (query string, args []interface{}) {
+	var err error
+	query, args, err = p.sqlBuilder.
 		Update(oauth2ClientsTableName).
 		Set("client_id", input.ClientID).
 		Set("client_secret", input.ClientSecret).
@@ -337,8 +344,9 @@ func (p *Postgres) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2C
 	return p.db.QueryRowContext(ctx, query, args...).Scan(&input.UpdatedOn)
 }
 
-func (p *Postgres) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (string, []interface{}) {
-	query, args, err := p.sqlBuilder.
+func (p *Postgres) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
+	var err error
+	query, args, err = p.sqlBuilder.
 		Update(oauth2ClientsTableName).
 		Set("updated_on", squirrel.Expr("extract(epoch FROM NOW())")).
 		Set("archived_on", squirrel.Expr("extract(epoch FROM NOW())")).

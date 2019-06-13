@@ -24,7 +24,7 @@ const (
 )
 
 type (
-	// Service handles TODO List items
+	// Service handles to-do list items
 	Service struct {
 		logger         logging.Logger
 		itemCounter    metrics.UnitCounter

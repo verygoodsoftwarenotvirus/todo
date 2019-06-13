@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
@@ -14,12 +15,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
-
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 
 	"github.com/go-chi/chi"
 	"github.com/pkg/errors"
@@ -62,10 +57,10 @@ func ProvideServer(
 	// services
 	authService *auth.Service,
 	frontendService *frontend.Service,
-	itemsService *items.Service,
-	usersService *users.Service,
-	oauth2Service *oauth2clients.Service,
-	webhooksService *webhooks.Service,
+	itemsService models.ItemDataServer,
+	usersService models.UserDataServer,
+	oauth2Service models.OAuth2ClientDataServer,
+	webhooksService models.WebhookDataServer,
 
 	// infra things
 	db database.Database,
@@ -112,7 +107,9 @@ func ProvideServer(
 	if err != nil {
 		return nil, errors.Wrap(err, "initializing webhooks")
 	}
-	for _, wh := range allWebhooks.Webhooks {
+
+	for i := 0; i < len(allWebhooks.Webhooks); i++ {
+		wh := allWebhooks.Webhooks[i]
 		// NOTE: we must guarantee that whatever is stored in the database is valid, otherwise
 		// newsman will try (and fail) to execute requests constantly
 		l := wh.ToListener(srv.logger)

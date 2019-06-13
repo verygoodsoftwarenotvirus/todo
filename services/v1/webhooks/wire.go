@@ -12,10 +12,16 @@ var (
 	Providers = wire.NewSet(
 		ProvideWebhooksService,
 		ProvideWebhookDataManager,
+		ProvideWebhookDataServer,
 	)
 )
 
-// ProvideWebhookDataManager turns a database into an ItemDataManager
+// ProvideWebhookDataManager is an arbitrary function for dependency injection's sake
 func ProvideWebhookDataManager(db database.Database) models.WebhookDataManager {
 	return db
+}
+
+// ProvideWebhookDataServer is an arbitrary function for dependency injection's sake
+func ProvideWebhookDataServer(s *Service) models.WebhookDataServer {
+	return s
 }

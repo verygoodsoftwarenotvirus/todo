@@ -179,7 +179,6 @@ func TestPostgres_GetOAuth2ClientByClientID(T *testing.T) {
 			Name:      "name",
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
-			Scopes:    []string{""},
 		}
 
 		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL AND client_id = $1"
@@ -204,7 +203,6 @@ func TestPostgres_GetOAuth2ClientByClientID(T *testing.T) {
 			Name:      "name",
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
-			Scopes:    []string{""},
 		}
 
 		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL AND client_id = $1"
@@ -247,7 +245,6 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 				Name:      "name",
 				BelongsTo: expectedUserID,
 				CreatedOn: uint64(time.Now().Unix()),
-				Scopes:    []string{""},
 			},
 		}
 
@@ -290,7 +287,6 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 				Name:      "name",
 				BelongsTo: expectedUserID,
 				CreatedOn: uint64(time.Now().Unix()),
-				Scopes:    []string{""},
 			},
 		}
 
@@ -309,6 +305,80 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
+}
+
+func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		expectedUserID := uint64(321)
+		exampleUser := &models.User{ID: 123}
+		expected := []*models.OAuth2Client{
+			{
+				ID:        123,
+				Name:      "name",
+				BelongsTo: expectedUserID,
+				CreatedOn: uint64(time.Now().Unix()),
+			},
+		}
+
+		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WillReturnRows(
+				buildMockRowFromOAuth2Client(expected[0]),
+				buildMockRowFromOAuth2Client(expected[0]),
+				buildMockRowFromOAuth2Client(expected[0]),
+			)
+
+		actual, err := p.GetAllOAuth2ClientsForUser(context.Background(), exampleUser.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("with erroneous response from database", func(t *testing.T) {
+		exampleUser := &models.User{ID: 123}
+
+		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WillReturnError(errors.New("blah"))
+
+		actual, err := p.GetAllOAuth2ClientsForUser(context.Background(), exampleUser.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("with unscannable response", func(t *testing.T) {
+		expectedUserID := uint64(321)
+		exampleUser := &models.User{ID: 123}
+		expected := &models.OAuth2Client{
+			ID:        123,
+			Name:      "name",
+			BelongsTo: expectedUserID,
+			CreatedOn: uint64(time.Now().Unix()),
+		}
+
+		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WillReturnRows(
+				buildErroneousMockRowFromOAuth2Client(expected),
+			)
+
+		actual, err := p.GetAllOAuth2ClientsForUser(context.Background(), exampleUser.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
 }
 
 func TestPostgres_buildGetOAuth2ClientQuery(T *testing.T) {
@@ -339,7 +409,7 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 			Name:      "name",
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
-			Scopes:    []string{""},
+			Scopes:    []string{"things"},
 		}
 
 		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to = $1 AND id = $2"
@@ -365,7 +435,6 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 			Name:      "name",
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
-			Scopes:    []string{""},
 		}
 
 		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to = $1 AND id = $2"
@@ -490,7 +559,6 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 					Name:      "name",
 					BelongsTo: expectedUserID,
 					CreatedOn: uint64(time.Now().Unix()),
-					Scopes:    []string{""},
 				},
 			},
 		}
@@ -563,7 +631,6 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 					Name:      "name",
 					BelongsTo: expectedUserID,
 					CreatedOn: uint64(time.Now().Unix()),
-					Scopes:    []string{""},
 				},
 			},
 		}
@@ -597,7 +664,6 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 					Name:      "name",
 					BelongsTo: expectedUserID,
 					CreatedOn: uint64(time.Now().Unix()),
-					Scopes:    []string{""},
 				},
 			},
 		}

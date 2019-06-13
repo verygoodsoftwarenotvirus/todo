@@ -11,6 +11,7 @@ type ItemDataManager interface {
 	GetItemCount(ctx context.Context, filter *QueryFilter, userID uint64) (uint64, error)
 	GetAllItemsCount(ctx context.Context) (uint64, error)
 	GetItems(ctx context.Context, filter *QueryFilter, userID uint64) (*ItemList, error)
+	GetAllItemsForUser(ctx context.Context, userID uint64) ([]Item, error)
 	CreateItem(ctx context.Context, input *ItemInput) (*Item, error)
 	UpdateItem(ctx context.Context, updated *Item) error
 	DeleteItem(ctx context.Context, id, userID uint64) error

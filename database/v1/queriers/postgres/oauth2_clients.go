@@ -40,7 +40,7 @@ func scanOAuth2Client(scan database.Scanner) (*models.OAuth2Client, error) {
 		scopes string
 	)
 
-	err := scan.Scan(
+	if err := scan.Scan(
 		&x.ID,
 		&x.Name,
 		&x.ClientID,
@@ -51,11 +51,13 @@ func scanOAuth2Client(scan database.Scanner) (*models.OAuth2Client, error) {
 		&x.UpdatedOn,
 		&x.ArchivedOn,
 		&x.BelongsTo,
-	)
-	if err != nil {
+	); err != nil {
 		return nil, err
 	}
-	x.Scopes = strings.Split(scopes, scopesSeparator)
+
+	if scopes := strings.Split(scopes, scopesSeparator); len(scopes) >= 1 && scopes[0] != "" {
+		x.Scopes = scopes
+	}
 
 	return x, nil
 }
@@ -167,6 +169,22 @@ func (p *Postgres) buildGetAllOAuth2ClientsQuery() (query string, args []interfa
 // GetAllOAuth2Clients gets a list of OAuth2 clients regardless of ownership
 func (p *Postgres) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Client, error) {
 	query, args := p.buildGetAllOAuth2ClientsQuery()
+	rows, err := p.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	list, err := scanOAuth2Clients(p.logger, rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "fetching list of OAuth2Clients")
+	}
+
+	return list, nil
+}
+
+// GetAllOAuth2ClientsForUser gets a list of OAuth2 clients regardless of ownership
+func (p *Postgres) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64) ([]*models.OAuth2Client, error) {
+	query, args := p.buildGetOAuth2ClientsQuery(nil, userID)
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err

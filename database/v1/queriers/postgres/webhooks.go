@@ -64,9 +64,15 @@ func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 		return nil, err
 	}
 
-	x.Events = strings.Split(eventsStr, eventsSeparator)
-	x.DataTypes = strings.Split(dataTypesStr, typesSeparator)
-	x.Topics = strings.Split(topicsStr, topicsSeparator)
+	if events := strings.Split(eventsStr, eventsSeparator); len(events) >= 1 && events[0] != "" {
+		x.Events = events
+	}
+	if dataTypes := strings.Split(dataTypesStr, typesSeparator); len(dataTypes) >= 1 && dataTypes[0] != "" {
+		x.DataTypes = dataTypes
+	}
+	if topics := strings.Split(topicsStr, topicsSeparator); len(topics) >= 1 && topics[0] != "" {
+		x.Topics = topics
+	}
 
 	return x, nil
 }
@@ -195,6 +201,22 @@ func (p *Postgres) GetAllWebhooks(ctx context.Context) (*models.WebhookList, err
 	}
 
 	return x, err
+}
+
+// GetAllWebhooksForUser fetches a list of all webhooks from the postgres db
+func (p *Postgres) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]models.Webhook, error) {
+	query, args := p.buildGetWebhooksQuery(nil, userID)
+	rows, err := p.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	list, err := scanWebhooks(p.logger, rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return list, nil
 }
 
 func (p *Postgres) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {

@@ -45,6 +45,12 @@ func (m *WebhookDataManager) GetAllWebhooks(ctx context.Context) (*models.Webhoo
 	return args.Get(0).(*models.WebhookList), args.Error(1)
 }
 
+// GetAllWebhooksForUser satisfies our WebhookDataManager interface
+func (m *WebhookDataManager) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]models.Webhook, error) {
+	args := m.Called(ctx, userID)
+	return args.Get(0).([]models.Webhook), args.Error(1)
+}
+
 // CreateWebhook satisfies our WebhookDataManager interface
 func (m *WebhookDataManager) CreateWebhook(ctx context.Context, input *models.WebhookInput) (*models.Webhook, error) {
 	args := m.Called(ctx, input)

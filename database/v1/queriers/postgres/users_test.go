@@ -22,9 +22,27 @@ func buildMockRowFromUser(user *models.User) *sqlmock.Rows {
 			user.HashedPassword,
 			user.PasswordLastChangedOn,
 			user.TwoFactorSecret,
+			user.IsAdmin,
 			user.CreatedOn,
 			user.UpdatedOn,
 			user.ArchivedOn,
+		)
+
+	return exampleRows
+}
+
+func buildErroneousMockRowFromUser(user *models.User) *sqlmock.Rows {
+	exampleRows := sqlmock.NewRows(usersTableColumns).
+		AddRow(
+			user.ArchivedOn,
+			user.ID,
+			user.Username,
+			user.HashedPassword,
+			user.PasswordLastChangedOn,
+			user.TwoFactorSecret,
+			user.IsAdmin,
+			user.CreatedOn,
+			user.UpdatedOn,
 		)
 
 	return exampleRows
@@ -37,7 +55,7 @@ func TestPostgres_buildGetUserQuery(T *testing.T) {
 		p, _ := buildTestService(t)
 		expectedUserID := uint64(123)
 		expectedArgCount := 1
-		expectedQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, created_on, updated_on, archived_on FROM users WHERE id = $1"
+		expectedQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, is_admin, created_on, updated_on, archived_on FROM users WHERE id = $1"
 
 		actualQuery, args := p.buildGetUserQuery(expectedUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -50,7 +68,7 @@ func TestPostgres_GetUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		expectedQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, created_on, updated_on, archived_on FROM users WHERE id = $1"
+		expectedQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, is_admin, created_on, updated_on, archived_on FROM users WHERE id = $1"
 		expected := &models.User{
 			ID:       123,
 			Username: "username",
@@ -78,7 +96,7 @@ func TestPostgres_buildGetUsersQuery(T *testing.T) {
 		p, _ := buildTestService(t)
 
 		expectedArgCount := 0
-		expectedQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, created_on, updated_on, archived_on FROM users WHERE archived_on IS NULL LIMIT 20"
+		expectedQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, is_admin, created_on, updated_on, archived_on FROM users WHERE archived_on IS NULL LIMIT 20"
 
 		actualQuery, args := p.buildGetUsersQuery(models.DefaultQueryFilter())
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -91,7 +109,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedCountQuery := "SELECT COUNT(id) FROM users WHERE archived_on IS NULL LIMIT 20"
-		expectedUsersQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, created_on, updated_on, archived_on FROM users WHERE archived_on IS NULL LIMIT 20"
+		expectedUsersQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, is_admin, created_on, updated_on, archived_on FROM users WHERE archived_on IS NULL LIMIT 20"
 		expectedCount := uint64(321)
 		expected := &models.UserList{
 			Pagination: models.Pagination{
@@ -126,8 +144,8 @@ func TestPostgres_GetUsers(T *testing.T) {
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
-	T.Run("with erroneous response from database", func(t *testing.T) {
-		expectedUsersQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, created_on, updated_on, archived_on FROM users WHERE archived_on IS NULL LIMIT 20"
+	T.Run("with error querying database", func(t *testing.T) {
+		expectedUsersQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, is_admin, created_on, updated_on, archived_on FROM users WHERE archived_on IS NULL LIMIT 20"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).
@@ -140,9 +158,33 @@ func TestPostgres_GetUsers(T *testing.T) {
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
+	T.Run("with erroneous response from database", func(t *testing.T) {
+		expectedUsersQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, is_admin, created_on, updated_on, archived_on FROM users WHERE archived_on IS NULL LIMIT 20"
+		expected := &models.UserList{
+			Users: []models.User{
+				{
+					ID:       123,
+					Username: "username",
+				},
+			},
+		}
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).
+			WillReturnRows(
+				buildErroneousMockRowFromUser(&expected.Users[0]),
+			)
+
+		actual, err := p.GetUsers(context.Background(), models.DefaultQueryFilter())
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
 	T.Run("with error fetching count", func(t *testing.T) {
 		expectedCountQuery := "SELECT COUNT(id) FROM users WHERE archived_on IS NULL LIMIT 20"
-		expectedUsersQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, created_on, updated_on, archived_on FROM users WHERE archived_on IS NULL LIMIT 20"
+		expectedUsersQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, is_admin, created_on, updated_on, archived_on FROM users WHERE archived_on IS NULL LIMIT 20"
 		expectedCount := uint64(321)
 		expected := &models.UserList{
 			Pagination: models.Pagination{
@@ -184,7 +226,7 @@ func TestPostgres_buildGetUserByUsernameQuery(T *testing.T) {
 
 		expectedUsername := "username"
 		expectedArgCount := 1
-		expectedQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, created_on, updated_on, archived_on FROM users WHERE username = $1"
+		expectedQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, is_admin, created_on, updated_on, archived_on FROM users WHERE username = $1"
 
 		actualQuery, args := p.buildGetUserByUsernameQuery(expectedUsername)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -197,7 +239,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		expectedQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, created_on, updated_on, archived_on FROM users WHERE username = $1"
+		expectedQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, is_admin, created_on, updated_on, archived_on FROM users WHERE username = $1"
 		expected := &models.User{
 			ID:       123,
 			Username: "username",
@@ -218,7 +260,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
-		expectedQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, created_on, updated_on, archived_on FROM users WHERE username = $1"
+		expectedQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, is_admin, created_on, updated_on, archived_on FROM users WHERE username = $1"
 		expected := &models.User{
 			ID:       123,
 			Username: "username",
@@ -298,8 +340,8 @@ func TestPostgres_buildCreateUserQuery(T *testing.T) {
 			TwoFactorSecret: "two factor secret",
 		}
 
-		expectedArgCount := 3
-		expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret) VALUES ($1,$2,$3) RETURNING id, created_on"
+		expectedArgCount := 4
+		expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret,is_admin) VALUES ($1,$2,$3,$4) RETURNING id, created_on"
 
 		actualQuery, args := p.buildCreateUserQuery(exampleUser)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -322,7 +364,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).
 			AddRow(expected.ID, uint64(time.Now().Unix()))
 
-		expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret) VALUES ($1,$2,$3) RETURNING id, created_on"
+		expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret,is_admin) VALUES ($1,$2,$3,$4) RETURNING id, created_on"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -330,6 +372,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 				expected.Username,
 				expected.HashedPassword,
 				expected.TwoFactorSecret,
+				expected.IsAdmin,
 			).
 			WillReturnRows(exampleRows)
 
@@ -350,7 +393,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 			Username: expected.Username,
 		}
 
-		expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret) VALUES ($1,$2,$3) RETURNING id, created_on"
+		expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret,is_admin) VALUES ($1,$2,$3,$4) RETURNING id, created_on"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -358,6 +401,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 				expected.Username,
 				expected.HashedPassword,
 				expected.TwoFactorSecret,
+				expected.IsAdmin,
 			).
 			WillReturnError(&postgres.Error{
 				Code: postgres.ErrorCode("23505"),
@@ -381,7 +425,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 			Username: expected.Username,
 		}
 
-		expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret) VALUES ($1,$2,$3) RETURNING id, created_on"
+		expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret,is_admin) VALUES ($1,$2,$3,$4) RETURNING id, created_on"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -389,6 +433,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 				expected.Username,
 				expected.HashedPassword,
 				expected.TwoFactorSecret,
+				expected.IsAdmin,
 			).
 			WillReturnError(errors.New("blah"))
 

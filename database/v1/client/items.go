@@ -86,6 +86,20 @@ func (c *Client) GetItems(ctx context.Context, filter *models.QueryFilter, userI
 	return itemList, err
 }
 
+// GetAllItemsForUser fetches a list of items from the postgres querier that meet a particular filter
+func (c *Client) GetAllItemsForUser(ctx context.Context, userID uint64) ([]models.Item, error) {
+	ctx, span := trace.StartSpan(ctx, "GetItems")
+	defer span.End()
+	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
+
+	logger := c.logger.WithValue("user_id", userID)
+	logger.Debug("GetItems called")
+
+	itemList, err := c.querier.GetAllItemsForUser(ctx, userID)
+
+	return itemList, err
+}
+
 // CreateItem creates an item in a postgres querier
 func (c *Client) CreateItem(ctx context.Context, input *models.ItemInput) (*models.Item, error) {
 	ctx, span := trace.StartSpan(ctx, "CreateItem")

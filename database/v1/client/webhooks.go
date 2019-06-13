@@ -67,6 +67,16 @@ func (c *Client) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error
 	return c.querier.GetAllWebhooks(ctx)
 }
 
+// GetAllWebhooksForUser fetches a list of webhooks from the postgres querier that meet a particular filter
+func (c *Client) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]models.Webhook, error) {
+	ctx, span := trace.StartSpan(ctx, "GetAllWebhooksForUser")
+	defer span.End()
+
+	c.logger.WithValue("user_id", userID).Debug("GetAllWebhooksForUser called")
+
+	return c.querier.GetAllWebhooksForUser(ctx, userID)
+}
+
 // GetWebhooks fetches a list of webhooks from the postgres querier that meet a particular filter
 func (c *Client) GetWebhooks(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.WebhookList, error) {
 	ctx, span := trace.StartSpan(ctx, "GetWebhooks")

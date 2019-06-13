@@ -69,11 +69,14 @@ func (s *Service) RequestIsAuthenticated(req *http.Request) (*models.OAuth2Clien
 }
 
 func determineScope(req *http.Request) string {
-	x := strings.TrimPrefix(req.URL.Path, "/api/v1/")
-	if y := strings.Split(x, "/"); len(y) > 0 {
-		x = y[0]
+	if strings.HasPrefix(req.URL.Path, "/api/v1/") {
+		x := strings.TrimPrefix(req.URL.Path, "/api/v1/")
+		if y := strings.Split(x, "/"); len(y) > 0 {
+			x = y[0]
+		}
+		return x
 	}
-	return x
+	return ""
 }
 
 // OAuth2TokenAuthenticationMiddleware authenticates Oauth tokens

@@ -57,11 +57,11 @@ func (b *BcryptAuthenticator) HashPassword(c context.Context, password string) (
 // ValidateLogin validates a password and two factor code
 func (b *BcryptAuthenticator) ValidateLogin(
 	ctx context.Context,
-	hashedPassword string,
-	salt []byte,
-	providedPassword string,
-	twoFactorSecret string,
+	hashedPassword,
+	providedPassword,
+	twoFactorSecret,
 	twoFactorCode string,
+	salt []byte,
 ) (passwordMatches bool, err error) {
 	ctx, span := trace.StartSpan(ctx, "ValidateLogin")
 	defer span.End()

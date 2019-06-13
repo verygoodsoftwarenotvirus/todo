@@ -48,9 +48,9 @@ func randString() (string, error) {
 func (s *Service) validateCredentialChangeRequest(
 	req *http.Request,
 	userID uint64,
-	password string,
+	password,
 	totpToken string,
-) (*models.User, int) {
+) (user *models.User, httpStatus int) {
 	logger := s.logger.WithValue("user_id", userID)
 
 	ctx := req.Context()
@@ -68,10 +68,10 @@ func (s *Service) validateCredentialChangeRequest(
 	valid, err := s.authenticator.ValidateLogin(
 		ctx,
 		user.HashedPassword,
-		user.Salt,
 		password,
 		user.TwoFactorSecret,
 		totpToken,
+		user.Salt,
 	)
 
 	if err != nil {
@@ -110,6 +110,12 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	ctx, span := trace.StartSpan(req.Context(), "create_route")
 	defer span.End()
 
+	if !s.userCreationEnabled {
+		s.logger.Info("disallowing user creation")
+		res.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	input, ok := ctx.Value(UserCreationMiddlewareCtxKey).(*models.UserInput)
 	if !ok {
 		s.logger.Error(nil, "valid input not attached to UsersService Create request")
@@ -117,14 +123,11 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	span.AddAttributes(trace.StringAttribute("username", input.Username))
 	logger := s.logger.WithValues(map[string]interface{}{
 		"username": input.Username,
 	})
 	logger.Debug("user creation route hit")
-
-	span.AddAttributes(
-		trace.StringAttribute("username", input.Username),
-	)
 
 	hp, err := s.authenticator.HashPassword(ctx, input.Password)
 	if err != nil {
@@ -153,30 +156,7 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// "otpauth://totp/{{ .Issuer }}:{{ .Username }}?secret={{ .Secret }}&issuer={{ .Issuer }}",
-	qrcode, err := qr.Encode(
-		fmt.Sprintf(
-			"otpauth://totp/%s:%s?secret=%s&issuer=%s",
-			"todoservice",
-			user.Username,
-			user.TwoFactorSecret,
-			"todoService",
-		), qr.L, qr.Auto,
-	)
-	if err != nil {
-		s.logger.Error(err, "trying to encode secret to qr code")
-	}
-	qrcode, err = barcode.Scale(qrcode, 256, 256)
-	if err != nil {
-		s.logger.Error(err, "trying to enlarge qr code")
-	}
-
-	var b bytes.Buffer
-	if err = png.Encode(&b, qrcode); err != nil {
-		s.logger.Error(err, "trying to encode qr code to png")
-	}
-
-	qrCode := fmt.Sprintf("data:image/jpeg;base64,%s", base64.StdEncoding.EncodeToString(b.Bytes()))
+	qrCode := s.buildQRCode(user)
 
 	// UserCreationResponse is a struct we can use to notify the user of
 	// their two factor secret, but ideally just this once and then never again.
@@ -203,6 +183,33 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
+}
+
+func (s *Service) buildQRCode(user *models.User) string {
+	// "otpauth://totp/{{ .Issuer }}:{{ .Username }}?secret={{ .Secret }}&issuer={{ .Issuer }}",
+	qrcode, err := qr.Encode(
+		fmt.Sprintf(
+			"otpauth://totp/%s:%s?secret=%s&issuer=%s",
+			"todoservice",
+			user.Username,
+			user.TwoFactorSecret,
+			"todoService",
+		), qr.L, qr.Auto,
+	)
+	if err != nil {
+		s.logger.Error(err, "trying to encode secret to qr code")
+	}
+	qrcode, err = barcode.Scale(qrcode, 256, 256)
+	if err != nil {
+		s.logger.Error(err, "trying to enlarge qr code")
+	}
+
+	var b bytes.Buffer
+	if err = png.Encode(&b, qrcode); err != nil {
+		s.logger.Error(err, "trying to encode qr code to png")
+	}
+
+	return fmt.Sprintf("data:image/jpeg;base64,%s", base64.StdEncoding.EncodeToString(b.Bytes()))
 }
 
 // Read is our read route

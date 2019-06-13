@@ -3,9 +3,10 @@ package postgres
 import (
 	"context"
 	"errors"
-	"github.com/DATA-DOG/go-sqlmock"
 	"testing"
 	"time"
+
+	"github.com/DATA-DOG/go-sqlmock"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
@@ -96,7 +97,7 @@ func TestPostgres_buildGetItemCountQuery(T *testing.T) {
 		exampleUserID := uint64(321)
 
 		expectedArgCount := 1
-		expectedQuery := "SELECT COUNT(*) FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
+		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
 
 		actualQuery, args := p.buildGetItemCountQuery(models.DefaultQueryFilter(), exampleUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -110,7 +111,7 @@ func TestPostgres_GetItemCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
-		expectedQuery := "SELECT COUNT(*) FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
+		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
 		expectedCount := uint64(666)
 
 		p, mockDB := buildTestService(t)
@@ -133,7 +134,7 @@ func TestPostgres_buildGetAllItemsCountQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		expectedQuery := "SELECT COUNT(*) FROM items WHERE archived_on IS NULL"
+		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
 
 		actualQuery := p.buildGetAllItemsCountQuery()
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -144,7 +145,7 @@ func TestPostgres_GetAllItemsCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		expectedQuery := "SELECT COUNT(*) FROM items WHERE archived_on IS NULL"
+		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
 		expectedCount := uint64(666)
 
 		p, mockDB := buildTestService(t)
@@ -188,7 +189,7 @@ func TestPostgres_GetItems(T *testing.T) {
 		}
 
 		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
-		expectedCountQuery := "SELECT COUNT(*) FROM items WHERE archived_on IS NULL"
+		expectedCountQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
 		expectedCount := uint64(666)
 
 		p, mockDB := buildTestService(t)
@@ -265,7 +266,7 @@ func TestPostgres_GetItems(T *testing.T) {
 		}
 
 		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
-		expectedCountQuery := "SELECT COUNT(*) FROM items WHERE archived_on IS NULL"
+		expectedCountQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).

@@ -13,7 +13,7 @@ type ItemDataManager interface {
 	GetItems(ctx context.Context, filter *QueryFilter, userID uint64) (*ItemList, error)
 	CreateItem(ctx context.Context, input *ItemInput) (*Item, error)
 	UpdateItem(ctx context.Context, updated *Item) error
-	DeleteItem(ctx context.Context, id uint64, userID uint64) error
+	DeleteItem(ctx context.Context, id, userID uint64) error
 }
 
 // ItemDataServer describes a structure capable of serving traffic related to items

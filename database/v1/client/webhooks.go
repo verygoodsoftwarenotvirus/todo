@@ -109,7 +109,7 @@ func (c *Client) UpdateWebhook(ctx context.Context, input *models.Webhook) error
 }
 
 // DeleteWebhook deletes an webhook from the querier by its ID
-func (c *Client) DeleteWebhook(ctx context.Context, webhookID uint64, userID uint64) error {
+func (c *Client) DeleteWebhook(ctx context.Context, webhookID, userID uint64) error {
 	ctx, span := trace.StartSpan(ctx, "DeleteWebhook")
 	defer span.End()
 	span.AddAttributes(trace.StringAttribute("webhook_id", strconv.FormatUint(webhookID, 10)))

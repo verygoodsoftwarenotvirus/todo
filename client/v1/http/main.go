@@ -25,6 +25,9 @@ const defaultTimeout = 5 * time.Second
 var (
 	// ErrNotFound is a handy error to return when we receive a 404 response
 	ErrNotFound = errors.New("404: not found")
+
+	// ErrUnauthorized is a handy error to return when we receive a 404 response
+	ErrUnauthorized = errors.New("401: not authorized")
 )
 
 // V1Client is a client for interacting with v1 of our API
@@ -63,6 +66,7 @@ func NewClient(
 	address *url.URL,
 	logger logging.Logger,
 	hclient *http.Client,
+	scopes []string,
 	debug bool,
 ) (*V1Client, error) {
 	var client = hclient
@@ -77,10 +81,10 @@ func NewClient(
 
 	if debug {
 		logger.SetLevel(logging.DebugLevel)
-		logger.Debug("level set to debug!")
+		logger.Debug("log level set to debug!")
 	}
 
-	ac, ts := buildOAuthClient(ctx, address, clientID, clientSecret)
+	ac, ts := buildOAuthClient(ctx, address, clientID, clientSecret, scopes)
 
 	c := &V1Client{
 		URL:          address,
@@ -95,11 +99,11 @@ func NewClient(
 	return c, nil
 }
 
-func buildOAuthClient(ctx context.Context, uri *url.URL, clientID, clientSecret string) (*http.Client, oauth2.TokenSource) {
+func buildOAuthClient(ctx context.Context, uri *url.URL, clientID, clientSecret string, scopes []string) (*http.Client, oauth2.TokenSource) {
 	conf := clientcredentials.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		Scopes:       []string{"*"}, // SECUREME
+		Scopes:       scopes,
 		EndpointParams: url.Values{
 			"client_id":     []string{clientID},
 			"client_secret": []string{clientSecret},
@@ -147,10 +151,10 @@ func tokenEndpoint(baseURL *url.URL) oauth2.Endpoint {
 // and has noops or empty values for most of its authentication and debug parts.
 // Its purpose at the time of this writing is merely so I can make users (which
 // is a route that doesn't require authentication)
-func NewSimpleClient(ctx context.Context, address *url.URL, debug bool) (*V1Client, error) {
+func NewSimpleClient(ctx context.Context, address *url.URL, scopes []string, debug bool) (*V1Client, error) {
 	l := noop.ProvideNoopLogger()
 	h := &http.Client{Timeout: 5 * time.Second}
-	c, err := NewClient(ctx, "", "", address, l, h, debug)
+	c, err := NewClient(ctx, "", "", address, l, h, scopes, debug)
 	return c, err
 }
 
@@ -208,7 +212,7 @@ func (c *V1Client) BuildWebsocketURL(parts ...string) string {
 	return u.String()
 }
 
-//BuildHealthCheckRequest builds a health check HTTP Request
+// BuildHealthCheckRequest builds a health check HTTP Request
 func (c *V1Client) BuildHealthCheckRequest() (*http.Request, error) {
 	u := *c.URL
 	uri := fmt.Sprintf("%s://%s/_meta_/ready", u.Scheme, u.Host)
@@ -250,7 +254,11 @@ func (c *V1Client) buildDataRequest(method, uri string, in interface{}) (*http.R
 	return req, nil
 }
 
-func (c *V1Client) makeRequest(ctx context.Context, req *http.Request, out interface{}) error {
+func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interface{}) error {
+	if err := argIsNotPointerOrNil(obj); err != nil {
+		return errors.Wrap(err, "struct to load must be a pointer")
+	}
+
 	res, err := c.executeRawRequest(ctx, c.authedClient, req)
 	if err != nil {
 		return errors.Wrap(err, "executing request")
@@ -259,6 +267,24 @@ func (c *V1Client) makeRequest(ctx context.Context, req *http.Request, out inter
 	if res.StatusCode == http.StatusNotFound {
 		return ErrNotFound
 	}
+
+	return unmarshalBody(res, &obj)
+}
+
+func (c *V1Client) makeRequest(ctx context.Context, req *http.Request, out interface{}) error {
+	res, err := c.executeRawRequest(ctx, c.authedClient, req)
+	if err != nil {
+		return errors.Wrap(err, "executing request")
+	}
+
+	switch res.StatusCode {
+	case http.StatusNotFound:
+		return ErrNotFound
+	case http.StatusUnauthorized:
+		return ErrUnauthorized
+	}
+
+	c.logger.WithValue("status_code", res.StatusCode).Info("horses are radishes")
 
 	if out != nil {
 		resErr := unmarshalBody(res, &out)
@@ -294,60 +320,8 @@ func (c *V1Client) makeUnauthedDataRequest(ctx context.Context, req *http.Reques
 		if resErr != nil {
 			return errors.Wrap(err, "loading response from server")
 		}
-		c.logger.WithValue("loaded_value", out).
-			Debug("unauthenticated data request returned")
+		c.logger.WithValue("loaded_value", out).Debug("unauthenticated data request returned")
 	}
 
 	return nil
 }
-
-func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interface{}) error {
-	if err := argIsNotPointerOrNil(obj); err != nil {
-		return errors.Wrap(err, "struct to load must be a pointer")
-	}
-
-	res, err := c.executeRawRequest(ctx, c.authedClient, req)
-	if err != nil {
-		return errors.Wrap(err, "executing request")
-	}
-
-	if res.StatusCode == http.StatusNotFound {
-		return ErrNotFound
-	}
-
-	return unmarshalBody(res, &obj)
-}
-
-// // DialWebsocket dials a websocket
-// func (c *V1Client) DialWebsocket(ctx context.Context, fq *FeedQuery) (*websocket.Conn, error) {
-// 	u := c.buildURL(fq.Values(), "event_feed")
-// 	u.Scheme = "wss"
-
-// 	logger := c.logger.WithValues(map[string]interface{}{
-// 		"feed_query":    fq,
-// 		"websocket_url": u.String(),
-// 	})
-
-// 	if fq == nil {
-// 		return nil, errors.New("Valid feed query required")
-// 	}
-
-// 	if !c.IsUp() {
-// 		logger.Debug("websocket service is down")
-// 		return nil, errors.New("service is down")
-// 	}
-
-// 	dialer := websocket.DefaultDialer
-// 	logger.Debug("connecting to websocket")
-
-// 	conn, res, err := dialer.Dial(u.String(), nil)
-// 	if err != nil {
-// 		logger.Debug("dialing websocket")
-// 		return nil, err
-// 	}
-
-// 	if res.StatusCode < http.StatusBadRequest {
-// 		return conn, nil
-// 	}
-// 	return nil, fmt.Errorf("encountered status code: %d when trying to reach websocket", res.StatusCode)
-// }

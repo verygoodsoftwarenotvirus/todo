@@ -6,4 +6,4 @@ RUN apt-get update -y && apt-get install -y make git gcc musl-dev
 
 ADD . .
 
-ENTRYPOINT go test -v -failfast gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/frontend
+ENTRYPOINT [ "go", "test", "-v", "-failfast", "-parallel=1", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/frontend" ]

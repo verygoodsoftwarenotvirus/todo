@@ -19,8 +19,10 @@ run:
   # from this option's value:
   #   	vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
   skip-dirs:
+    # javascript
     - client/v1/frontend
-    - internal/frontend
+    # borrowed code/utilities
+    - cmd/tools
 
   # which files to skip: they will be analyzed, but issues from them
   # won't be reported. Default value is empty list, but there is
@@ -117,12 +119,6 @@ linters-settings:
     locale: US
     # ignore-words:
     #   - someword
-  lll:
-    # max line length, lines longer will be reported. Default is 120.
-    # '\t' is counted as 1 character by default, and can be changed with the tab-width option
-    line-length: 120
-    # tab width in spaces. Default to 1.
-    tab-width: 4
   unused:
     # treat code as a program (not a library) and report unused exported identifiers; default is false.
     # XXX: if you enable this setting, unused will report a lot of false-positives in text editors:
@@ -149,8 +145,8 @@ linters-settings:
     for-loops: false # Report preallocation suggestions on for loops, false by default
   gocritic:
     # # Which checks should be disabled; can't be combined with 'enabled-checks'; default is empty
-    # disabled-checks:
-    #   -
+    disabled-checks:
+      - captLocal
 
     # Enable multiple checks by tags, run `GL_DEBUG=gocritic golangci-lint` run to see all tags and checks.
     # Empty list by default. See https://github.com/go-critic/go-critic#usage -> section "Tags".
@@ -161,24 +157,18 @@ linters-settings:
       - opinionated
 
     settings: # settings passed to gocritic
-      captLocal: # must be valid enabled check name
-        paramsOnly: true
       rangeValCopy:
         sizeThreshold: 32
 
 linters:
-  enable:
-    - megacheck
-    - govet
-  enable-all: false
-  disable:
-    - maligned
-    - prealloc
+  enable-all: true
   disable-all: false
-  presets:
-    - bugs
-    - unused
   fast: false
+  disable:
+    - gochecknoinits
+    - gochecknoglobals
+    - lll
+    - dupl
 
 issues:
   # # List of regexps of issue texts to exclude, empty list by default.
@@ -194,9 +184,30 @@ issues:
     - path: _test\.go
       linters:
         - gocyclo
+        - goconst # I want my tests to repeat themselves
         - errcheck
         - dupl
         - gosec
+
+    - path: tests/v1/testutil/
+      linters:
+        - gocyclo
+
+    - path: models/
+      linters:
+        - gocyclo # the update funcs can have very high cyclomatic complexities
+
+    ## BEGIN SPECIAL SNOWFLAKES
+
+    - path: tests/v1/load/main.go
+      linters:
+        - gocritic # gocritic complains about an interface implementation I have no control over
+
+    - path: server/v1/http/server.go
+      linters:
+        - maligned # these structs are never copied and are structured for documentation purposes
+
+    ## END SPECIAL SNOWFLAKES
 
     # Exclude known linters from partially hard-vendored code,
     # which is impossible to exclude via "nolint" comments.

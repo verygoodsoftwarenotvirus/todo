@@ -13,11 +13,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////// //
 //                                                    //
 //                 Helper Functions                   //
 //                                                    //
-////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////// //
 
 func argIsNotPointerOrNil(i interface{}) error {
 	if nn, err := argIsNotNil(i); nn || err != nil {
@@ -36,7 +36,7 @@ func argIsNotPointer(i interface{}) (notAPointer bool, err error) {
 	if i == nil || reflect.TypeOf(i).Kind() != reflect.Ptr {
 		return true, errors.New("value is not a pointer")
 	}
-	return
+	return false, nil
 }
 
 // argIsNotNil checks an argument and returns whether or not it is nil
@@ -44,7 +44,7 @@ func argIsNotNil(i interface{}) (isNil bool, err error) {
 	if i == nil {
 		return true, errors.New("value is nil")
 	}
-	return
+	return false, nil
 }
 
 func unmarshalBody(res *http.Response, dest interface{}) error {

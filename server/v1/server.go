@@ -1,9 +1,8 @@
 package server
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
 
 	"github.com/google/wire"
@@ -27,7 +26,6 @@ var (
 
 // ProvideServer builds a new Server instance
 func ProvideServer(
-	database database.Database,
 	logger logging.Logger,
 	cfg *config.ServerConfig,
 	httpServer *httpserver.Server,

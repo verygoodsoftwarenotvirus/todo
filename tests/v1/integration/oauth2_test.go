@@ -6,8 +6,8 @@ import (
 	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -21,14 +21,14 @@ func mustBuildCode(t *testing.T, totpSecret string) string {
 	return code
 }
 
-func buildDummyOAuth2ClientInput(t *testing.T, username, password, TOTPToken string) *models.OAuth2ClientCreationInput {
+func buildDummyOAuth2ClientInput(t *testing.T, username, password, totpToken string) *models.OAuth2ClientCreationInput {
 	t.Helper()
 
 	x := &models.OAuth2ClientCreationInput{
 		UserLoginInput: models.UserLoginInput{
 			Username:  username,
 			Password:  password,
-			TOTPToken: mustBuildCode(t, TOTPToken),
+			TOTPToken: mustBuildCode(t, totpToken),
 		},
 		Scopes:      []string{"*"},
 		RedirectURI: "http://localhost",
@@ -67,6 +67,7 @@ func TestOAuth2Clients(test *testing.T) {
 		todoClient.URL,
 		noop.ProvideNoopLogger(),
 		todoClient.PlainClient(),
+		premade.Scopes,
 		debug,
 	)
 	require.NoError(test, err, "error setting up auxiliary client")
@@ -154,6 +155,7 @@ func TestOAuth2Clients(test *testing.T) {
 				todoClient.URL,
 				noop.ProvideNoopLogger(),
 				buildHTTPClient(),
+				premade.Scopes,
 				true,
 			)
 			checkValueAndError(test, c2, err)

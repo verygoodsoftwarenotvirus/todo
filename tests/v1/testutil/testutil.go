@@ -85,7 +85,7 @@ func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
 		return nil, err
 	}
 
-	c, err := client.NewSimpleClient(context.Background(), tu, debug)
+	c, err := client.NewSimpleClient(context.Background(), tu, []string{"*"}, debug)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +133,7 @@ func buildURL(address string, parts ...string) string {
 	return tu.ResolveReference(u).String()
 }
 
-func getLoginCookie(serviceURL string, u models.User) (*http.Cookie, error) {
+func getLoginCookie(serviceURL string, u *models.User) (*http.Cookie, error) {
 	uri := buildURL(serviceURL, "users", "login")
 
 	code, err := totp.GenerateCode(strings.ToUpper(u.TwoFactorSecret), time.Now().UTC())
@@ -176,7 +176,7 @@ func getLoginCookie(serviceURL string, u models.User) (*http.Cookie, error) {
 }
 
 // CreateObligatoryClient creates the OAuth2 client we need for tests
-func CreateObligatoryClient(serviceURL string, u models.User) (clientID, clientSecret string, err error) {
+func CreateObligatoryClient(serviceURL string, u *models.User) (*models.OAuth2Client, error) {
 	firstOAuth2ClientURI := buildURL(serviceURL, "oauth2", "client")
 
 	code, err := totp.GenerateCode(
@@ -184,7 +184,7 @@ func CreateObligatoryClient(serviceURL string, u models.User) (clientID, clientS
 		time.Now().UTC(),
 	)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
 	req, err := http.NewRequest(
@@ -203,7 +203,7 @@ func CreateObligatoryClient(serviceURL string, u models.User) (clientID, clientS
 		),
 	)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
 	cookie, err := getLoginCookie(serviceURL, u)
@@ -215,19 +215,18 @@ cookie problems!
 	`, cookie == nil, err)
 	}
 	req.AddCookie(cookie)
+	var o models.OAuth2Client
 
 	var command fmt.Stringer
 	if command, err = http2curl.GetCurlCommand(req); err == nil {
 		log.Println(command.String())
 	}
 
-	var o models.OAuth2Client
-
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	} else if res.StatusCode != http.StatusCreated {
-		return "", "", fmt.Errorf("bad status: %d", res.StatusCode)
+		return nil, fmt.Errorf("bad status: %d", res.StatusCode)
 	}
 
 	defer func() {
@@ -243,5 +242,5 @@ cookie problems!
 
 	err = json.NewDecoder(res.Body).Decode(&o)
 
-	return o.ClientID, o.ClientSecret, nil
+	return &o, nil
 }

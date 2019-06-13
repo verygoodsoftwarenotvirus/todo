@@ -16,6 +16,9 @@ import (
 
 const (
 	postgresDriverName = "wrapped-postgres-driver"
+
+	// CountQuery is a generic counter query used in a few query builders
+	CountQuery = "COUNT(id)"
 )
 
 func init() {
@@ -37,12 +40,11 @@ func init() {
 type (
 	// Postgres is our main Postgres interaction db
 	Postgres struct {
-		debug       bool
-		logger      logging.Logger
-		db          *sql.DB
-		databaseURL string
-		sqlBuilder  squirrel.StatementBuilderType
-		migration   sync.Once
+		logger     logging.Logger
+		db         *sql.DB
+		sqlBuilder squirrel.StatementBuilderType
+		migration  sync.Once
+		debug      bool
 	}
 
 	// ConnectionDetails is a string alias for a Postgres url
@@ -68,15 +70,13 @@ func ProvidePostgres(
 	debug bool,
 	db *sql.DB,
 	logger logging.Logger,
-	connectionDetails database.ConnectionDetails,
 ) database.Database {
 
 	s := &Postgres{
-		db:          db,
-		debug:       debug,
-		logger:      logger.WithName("postgres"),
-		databaseURL: string(connectionDetails),
-		sqlBuilder:  squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		db:         db,
+		debug:      debug,
+		logger:     logger.WithName("postgres"),
+		sqlBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
 	}
 
 	return s
@@ -87,7 +87,6 @@ func (p *Postgres) IsReady(ctx context.Context) (ready bool) {
 	numberOfUnsuccessfulAttempts := 0
 
 	p.logger.WithValues(map[string]interface{}{
-		"database_url": p.databaseURL,
 		"interval":     time.Second,
 		"max_attempts": 50,
 	}).Debug("IsReady called")
@@ -97,16 +96,17 @@ func (p *Postgres) IsReady(ctx context.Context) (ready bool) {
 		if err != nil {
 			p.logger.Debug("ping failed, waiting for db")
 			time.Sleep(time.Second)
+
 			numberOfUnsuccessfulAttempts++
 			if numberOfUnsuccessfulAttempts >= 50 {
-				return
+				return false
 			}
 		} else {
 			ready = true
-			return
+			return ready
 		}
 	}
-	return
+	return false
 }
 
 func logQueryBuildingError(logger logging.Logger, err error) {

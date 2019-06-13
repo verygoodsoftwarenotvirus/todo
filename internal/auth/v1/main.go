@@ -39,11 +39,11 @@ type Authenticator interface {
 
 	ValidateLogin(
 		ctx context.Context,
-		HashedPassword string,
-		Salt []byte,
-		ProvidedPassword string,
-		TwoFactorSecret string,
+		HashedPassword,
+		ProvidedPassword,
+		TwoFactorSecret,
 		TwoFactorCode string,
+		Salt []byte,
 	) (valid bool, err error)
 }
 

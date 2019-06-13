@@ -145,7 +145,7 @@ func TestAuth(test *testing.T) {
 		require.Len(t, cookies, 1)
 		loginCookie := cookies[0]
 
-		/// build logout request
+		// build logout request
 		u2, err := url.Parse(todoClient.BuildURL(nil))
 		require.NoError(t, err)
 		u2.Path = "/users/logout"
@@ -424,7 +424,7 @@ func TestAuth(test *testing.T) {
 		assert.NoError(t, err)
 		req.AddCookie(cookie)
 
-		res, err := (*http.Client)(&http.Client{Timeout: 10 * time.Second}).Do(req)
+		res, err := (&http.Client{Timeout: 10 * time.Second}).Do(req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 	})
@@ -447,6 +447,7 @@ func TestAuth(test *testing.T) {
 			todoClient.URL,
 			noop.ProvideNoopLogger(),
 			buildHTTPClient(),
+			premade.Scopes,
 			true,
 		)
 		checkValueAndError(test, c, err)
@@ -486,7 +487,7 @@ func TestAuth(test *testing.T) {
 		assert.NotNil(test, cookie)
 
 		input := buildDummyOAuth2ClientInput(test, x.Username, y.Password, x.TwoFactorSecret)
-		input.Scopes = []string{"pb&j"}
+		input.Scopes = []string{"webhooks"}
 		premade, err := todoClient.CreateOAuth2Client(tctx, cookie, input)
 		checkValueAndError(test, premade, err)
 
@@ -497,6 +498,7 @@ func TestAuth(test *testing.T) {
 			todoClient.URL,
 			noop.ProvideNoopLogger(),
 			buildHTTPClient(),
+			premade.Scopes,
 			true,
 		)
 		checkValueAndError(test, c, err)

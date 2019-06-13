@@ -76,14 +76,16 @@ func scanItems(logger logging.Logger, rows *sql.Rows) ([]models.Item, error) {
 	return list, nil
 }
 
-func (p *Postgres) buildGetItemQuery(itemID, userID uint64) (string, []interface{}) {
-	query, args, err := p.sqlBuilder.
+func (p *Postgres) buildGetItemQuery(itemID, userID uint64) (query string, args []interface{}) {
+	var err error
+	query, args, err = p.sqlBuilder.
 		Select(itemsTableColumns...).
 		From(itemsTableName).
 		Where(squirrel.Eq{
 			"id":         itemID,
 			"belongs_to": userID,
-		}).ToSql()
+		}).
+		ToSql()
 
 	logQueryBuildingError(p.logger, err)
 
@@ -97,20 +99,21 @@ func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*models.
 	return scanItem(row)
 }
 
-func (p *Postgres) buildGetItemCountQuery(filter *models.QueryFilter, userID uint64) (string, []interface{}) {
+func (p *Postgres) buildGetItemCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
+	var err error
 	builder := p.sqlBuilder.
-		Select("COUNT(*)").
+		Select(CountQuery).
 		From(itemsTableName).
-		Where(squirrel.Eq(map[string]interface{}{
-			"belongs_to":  userID,
+		Where(squirrel.Eq{
 			"archived_on": nil,
-		}))
+			"belongs_to":  userID,
+		})
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder)
 	}
 
-	query, args, err := builder.ToSql()
+	query, args, err = builder.ToSql()
 	logQueryBuildingError(p.logger, err)
 
 	return query, args
@@ -132,26 +135,27 @@ func (p *Postgres) buildGetAllItemsCountQuery() string {
 	return query
 }
 
-// GetAllItemsCount will fetch the count of items from the postgres db that meet a particular filter
+// GetAllItemsCount will fetch the count of items from the postgres db
 func (p *Postgres) GetAllItemsCount(ctx context.Context) (count uint64, err error) {
 	err = p.db.QueryRowContext(ctx, p.buildGetAllItemsCountQuery()).Scan(&count)
 	return count, err
 }
 
-func (p *Postgres) buildGetItemsQuery(filter *models.QueryFilter, userID uint64) (string, []interface{}) {
+func (p *Postgres) buildGetItemsQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
+	var err error
 	builder := p.sqlBuilder.
 		Select(itemsTableColumns...).
 		From(itemsTableName).
-		Where(squirrel.Eq(map[string]interface{}{
-			"belongs_to":  userID,
+		Where(squirrel.Eq{
 			"archived_on": nil,
-		}))
+			"belongs_to":  userID,
+		})
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder)
 	}
 
-	query, args, err := builder.ToSql()
+	query, args, err = builder.ToSql()
 	logQueryBuildingError(p.logger, err)
 
 	return query, args
@@ -187,8 +191,9 @@ func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter, use
 	return x, nil
 }
 
-func (p *Postgres) buildCreateItemQuery(input *models.Item) (string, []interface{}) {
-	query, args, err := p.sqlBuilder.
+func (p *Postgres) buildCreateItemQuery(input *models.Item) (query string, args []interface{}) {
+	var err error
+	query, args, err = p.sqlBuilder.
 		Insert(itemsTableName).
 		Columns(
 			"name",
@@ -227,8 +232,9 @@ func (p *Postgres) CreateItem(ctx context.Context, input *models.ItemInput) (*mo
 	return i, nil
 }
 
-func (p *Postgres) buildUpdateItemQuery(input *models.Item) (string, []interface{}) {
-	query, args, err := p.sqlBuilder.Update(itemsTableName).
+func (p *Postgres) buildUpdateItemQuery(input *models.Item) (query string, args []interface{}) {
+	var err error
+	query, args, err = p.sqlBuilder.Update(itemsTableName).
 		Set("name", input.Name).
 		Set("details", input.Details).
 		Set("updated_on", squirrel.Expr("extract(epoch FROM NOW())")).
@@ -250,15 +256,16 @@ func (p *Postgres) UpdateItem(ctx context.Context, input *models.Item) error {
 	return p.db.QueryRowContext(ctx, query, args...).Scan(&input.UpdatedOn)
 }
 
-func (p *Postgres) buildArchiveItemQuery(itemID, userID uint64) (string, []interface{}) {
-	query, args, err := p.sqlBuilder.
+func (p *Postgres) buildArchiveItemQuery(itemID, userID uint64) (query string, args []interface{}) {
+	var err error
+	query, args, err = p.sqlBuilder.
 		Update(itemsTableName).
 		Set("updated_on", squirrel.Expr("extract(epoch FROM NOW())")).
 		Set("archived_on", squirrel.Expr("extract(epoch FROM NOW())")).
 		Where(squirrel.Eq{
 			"id":          itemID,
-			"belongs_to":  userID,
 			"archived_on": nil,
+			"belongs_to":  userID,
 		}).
 		Suffix("RETURNING archived_on").
 		ToSql()
@@ -269,7 +276,7 @@ func (p *Postgres) buildArchiveItemQuery(itemID, userID uint64) (string, []inter
 }
 
 // DeleteItem deletes an item from the db by its ID
-func (p *Postgres) DeleteItem(ctx context.Context, itemID uint64, userID uint64) error {
+func (p *Postgres) DeleteItem(ctx context.Context, itemID, userID uint64) error {
 	query, args := p.buildArchiveItemQuery(itemID, userID)
 	_, err := p.db.ExecContext(ctx, query, args...)
 	return err

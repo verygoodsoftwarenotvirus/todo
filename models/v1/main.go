@@ -18,13 +18,10 @@ type (
 )
 
 var (
-	strSortAsc  = "asc"
-	strSortDesc = "desc"
-
 	// SortAscending is the pre-determined Ascending sortType for external use
-	SortAscending = (sortType)(strSortAsc)
+	SortAscending sortType = "asc"
 	// SortDescending is the pre-determined Descending sortType for external use
-	SortDescending = (sortType)(strSortDesc)
+	SortDescending sortType = "desc"
 )
 
 // Pagination represents a pagination request

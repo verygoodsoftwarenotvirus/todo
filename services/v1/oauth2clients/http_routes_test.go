@@ -238,10 +238,10 @@ func TestService_Create(T *testing.T) {
 		a.On("ValidateLogin",
 			mock.Anything,
 			exampleUser.HashedPassword,
-			exampleUser.Salt,
 			exampleInput.Password,
 			exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
+			exampleUser.Salt,
 		).Return(true, nil)
 		s.authenticator = a
 
@@ -357,10 +357,10 @@ func TestService_Create(T *testing.T) {
 		a.On("ValidateLogin",
 			mock.Anything,
 			exampleUser.HashedPassword,
-			exampleUser.Salt,
 			exampleInput.Password,
 			exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
+			exampleUser.Salt,
 		).Return(false, nil)
 		s.authenticator = a
 
@@ -415,10 +415,10 @@ func TestService_Create(T *testing.T) {
 		a.On("ValidateLogin",
 			mock.Anything,
 			exampleUser.HashedPassword,
-			exampleUser.Salt,
 			exampleInput.Password,
 			exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
+			exampleUser.Salt,
 		).Return(true, errors.New("blah"))
 		s.authenticator = a
 
@@ -473,10 +473,10 @@ func TestService_Create(T *testing.T) {
 		a.On("ValidateLogin",
 			mock.Anything,
 			exampleUser.HashedPassword,
-			exampleUser.Salt,
 			exampleInput.Password,
 			exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
+			exampleUser.Salt,
 		).Return(true, nil)
 		s.authenticator = a
 
@@ -531,10 +531,10 @@ func TestService_Create(T *testing.T) {
 		a.On("ValidateLogin",
 			mock.Anything,
 			exampleUser.HashedPassword,
-			exampleUser.Salt,
 			exampleInput.Password,
 			exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
+			exampleUser.Salt,
 		).Return(true, nil)
 		s.authenticator = a
 

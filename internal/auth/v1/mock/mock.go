@@ -18,18 +18,18 @@ type Authenticator struct {
 // ValidateLogin satisfies our authenticator interface
 func (m *Authenticator) ValidateLogin(
 	ctx context.Context,
-	HashedPassword string,
-	Salt []byte,
-	ProvidedPassword string,
-	TwoFactorSecret string,
-	TwoFactorCode string,
+	hashedPassword,
+	providedPassword,
+	twoFactorSecret,
+	twoFactorCode string,
+	salt []byte,
 ) (valid bool, err error) {
 	args := m.Called(ctx,
-		HashedPassword,
-		Salt,
-		ProvidedPassword,
-		TwoFactorSecret,
-		TwoFactorCode,
+		hashedPassword,
+		providedPassword,
+		twoFactorSecret,
+		twoFactorCode,
+		salt,
 	)
 	return args.Bool(0), args.Error(1)
 }

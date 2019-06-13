@@ -101,14 +101,14 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	}
 	s.webhookCounter.Increment(ctx)
 
-	s.newsman.Report(newsman.Event{
+	s.eventManager.Report(newsman.Event{
 		EventType: string(models.Create),
 		Data:      x,
 		Topics:    []string{topicName},
 	})
 
 	l := x.ToListener(s.logger)
-	s.newsman.TuneIn(l)
+	s.eventManager.TuneIn(l)
 
 	res.WriteHeader(http.StatusCreated)
 	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
@@ -184,7 +184,7 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	s.newsman.Report(newsman.Event{
+	s.eventManager.Report(newsman.Event{
 		EventType: string(models.Update),
 		Data:      x,
 		Topics:    []string{topicName},
@@ -220,7 +220,7 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	}
 	s.webhookCounter.Decrement(ctx)
 
-	s.newsman.Report(newsman.Event{
+	s.eventManager.Report(newsman.Event{
 		EventType: string(models.Delete),
 		Data:      models.Webhook{ID: webhookID},
 		Topics:    []string{topicName},

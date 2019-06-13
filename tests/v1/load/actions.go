@@ -62,10 +62,8 @@ func RandomAction(client *http2.V1Client) *Action {
 	ctx := context.Background()
 	allActions := map[string]*Action{
 		"GetHealthCheck": {
-			Name: "GetHealthCheck",
-			Action: func() (*http.Request, error) {
-				return client.BuildHealthCheckRequest()
-			},
+			Name:   "GetHealthCheck",
+			Action: client.BuildHealthCheckRequest,
 			Weight: 100,
 		},
 		/*

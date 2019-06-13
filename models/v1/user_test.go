@@ -1,8 +1,9 @@
 package models
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUser_Update(T *testing.T) {
@@ -15,7 +16,7 @@ func TestUser_Update(T *testing.T) {
 			TwoFactorSecret: "two factor secret",
 		}
 
-		exampleInput := User{
+		exampleInput := &User{
 			Username:        "newUsername",
 			HashedPassword:  "updated_hashed_pass",
 			TwoFactorSecret: "new fancy secret",

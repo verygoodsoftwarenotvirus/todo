@@ -107,7 +107,7 @@ func (c *V1Client) CreateOAuth2Client(
 		return nil, errors.Wrap(resErr, "loading response from server")
 	}
 
-	return
+	return oauth2Client, nil
 }
 
 // BuildDeleteOAuth2ClientRequest builds an http Request for updating oauth2 clients

@@ -25,6 +25,7 @@ var (
 		"hashed_password",
 		"password_last_changed_on",
 		"two_factor_secret",
+		"is_admin",
 		"created_on",
 		"updated_on",
 		"archived_on",
@@ -39,6 +40,7 @@ func scanUser(scan database.Scanner) (*models.User, error) {
 		&x.HashedPassword,
 		&x.PasswordLastChangedOn,
 		&x.TwoFactorSecret,
+		&x.IsAdmin,
 		&x.CreatedOn,
 		&x.UpdatedOn,
 		&x.ArchivedOn,
@@ -70,8 +72,9 @@ func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, error) {
 	return list, nil
 }
 
-func (p *Postgres) buildGetUserQuery(userID uint64) (string, []interface{}) {
-	query, args, err := p.sqlBuilder.
+func (p *Postgres) buildGetUserQuery(userID uint64) (query string, args []interface{}) {
+	var err error
+	query, args, err = p.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
 		Where(squirrel.Eq{"id": userID}).
@@ -90,8 +93,9 @@ func (p *Postgres) GetUser(ctx context.Context, userID uint64) (*models.User, er
 	return u, err
 }
 
-func (p *Postgres) buildGetUserByUsernameQuery(username string) (string, []interface{}) {
-	query, args, err := p.sqlBuilder.
+func (p *Postgres) buildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
+	var err error
+	query, args, err = p.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
 		Where(squirrel.Eq{"username": username}).
@@ -110,17 +114,18 @@ func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*mod
 	return u, err
 }
 
-func (p *Postgres) buildGetUserCountQuery(filter *models.QueryFilter) (string, []interface{}) {
+func (p *Postgres) buildGetUserCountQuery(filter *models.QueryFilter) (query string, args []interface{}) {
+	var err error
 	builder := p.sqlBuilder.
-		Select("COUNT(*)").
+		Select(CountQuery).
 		From(usersTableName).
-		Where(squirrel.Eq(map[string]interface{}{
+		Where(squirrel.Eq{
 			"archived_on": nil,
-		}))
+		})
 
 	builder = filter.ApplyToQueryBuilder(builder)
 
-	query, args, err := builder.ToSql()
+	query, args, err = builder.ToSql()
 
 	logQueryBuildingError(p.logger, err)
 
@@ -134,19 +139,20 @@ func (p *Postgres) GetUserCount(ctx context.Context, filter *models.QueryFilter)
 	return
 }
 
-func (p *Postgres) buildGetUsersQuery(filter *models.QueryFilter) (string, []interface{}) {
+func (p *Postgres) buildGetUsersQuery(filter *models.QueryFilter) (query string, args []interface{}) {
+	var err error
 	builder := p.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
-		Where(squirrel.Eq(map[string]interface{}{
+		Where(squirrel.Eq{
 			"archived_on": nil,
-		}))
+		})
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder)
 	}
 
-	query, args, err := builder.ToSql()
+	query, args, err = builder.ToSql()
 	logQueryBuildingError(p.logger, err)
 	return query, args
 }
@@ -180,17 +186,24 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 	return x, nil
 }
 
-func (p *Postgres) buildCreateUserQuery(input *models.UserInput) (string, []interface{}) {
-	query, args, err := p.sqlBuilder.Insert(usersTableName).
+func (p *Postgres) buildCreateUserQuery(input *models.UserInput) (query string, args []interface{}) {
+	var err error
+	query, args, err = p.sqlBuilder.Insert(usersTableName).
 		Columns(
 			"username",
 			"hashed_password",
 			"two_factor_secret",
+			"is_admin",
 		).
 		Values(
 			input.Username,
 			input.Password,
 			input.TwoFactorSecret,
+			// NOTE: we always default is_admin to false, on the assumption that
+			// admins have DB access and will change that value via SQL query.
+			// There should also be no way to update a user via this structure
+			// such that they would have admin privileges
+			false,
 		).
 		Suffix("RETURNING id, created_on").
 		ToSql()
@@ -225,8 +238,9 @@ func (p *Postgres) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 	return x, nil
 }
 
-func (p *Postgres) buildUpdateUserQuery(input *models.User) (string, []interface{}) {
-	query, args, err := p.sqlBuilder.Update(usersTableName).
+func (p *Postgres) buildUpdateUserQuery(input *models.User) (query string, args []interface{}) {
+	var err error
+	query, args, err = p.sqlBuilder.Update(usersTableName).
 		Set("username", input.Username).
 		Set("hashed_password", input.HashedPassword).
 		Set("two_factor_secret", input.TwoFactorSecret).
@@ -248,8 +262,9 @@ func (p *Postgres) UpdateUser(ctx context.Context, input *models.User) error {
 	return p.db.QueryRowContext(ctx, query, args...).Scan(&input.UpdatedOn)
 }
 
-func (p *Postgres) buildArchiveUserQuery(userID uint64) (string, []interface{}) {
-	query, args, err := p.sqlBuilder.Update(usersTableName).
+func (p *Postgres) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
+	var err error
+	query, args, err = p.sqlBuilder.Update(usersTableName).
 		Set("updated_on", squirrel.Expr("extract(epoch FROM NOW())")).
 		Set("archived_on", squirrel.Expr("extract(epoch FROM NOW())")).
 		Where(squirrel.Eq{"id": userID}).

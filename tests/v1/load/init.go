@@ -10,14 +10,16 @@ import (
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 
 	"github.com/icrowley/fake"
 )
 
 var (
-	debug                            bool
-	urlToUse, clientID, clientSecret string
+	debug     bool
+	urlToUse  string
+	oa2Client *models.OAuth2Client
 )
 
 func init() {
@@ -34,7 +36,7 @@ func init() {
 		logger.Fatal(err)
 	}
 
-	clientID, clientSecret, err = testutil.CreateObligatoryClient(urlToUse, *u)
+	oa2Client, err = testutil.CreateObligatoryClient(urlToUse, u)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -52,7 +54,7 @@ func buildHTTPClient() *http.Client {
 	return httpc
 }
 
-func initializeClient(clientID, clientSecret string) *client.V1Client {
+func initializeClient(oa2Client *models.OAuth2Client) *client.V1Client {
 	uri, err := url.Parse(urlToUse)
 	if err != nil {
 		panic(err)
@@ -60,11 +62,12 @@ func initializeClient(clientID, clientSecret string) *client.V1Client {
 
 	c, err := client.NewClient(
 		context.Background(),
-		clientID,
-		clientSecret,
+		oa2Client.ClientID,
+		oa2Client.ClientSecret,
 		uri,
 		zerolog.NewZeroLogger(),
 		buildHTTPClient(),
+		oa2Client.Scopes,
 		debug,
 	)
 	if err != nil {

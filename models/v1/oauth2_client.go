@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"gopkg.in/oauth2.v3"
 )
@@ -76,6 +77,19 @@ func (c *OAuth2Client) GetDomain() string {
 // GetUserID returns the client's UserID
 func (c *OAuth2Client) GetUserID() string {
 	return strconv.FormatUint(c.BelongsTo, 10)
+}
+
+// HasScope returns whether or not the provided scope is included in the scope list
+func (c *OAuth2Client) HasScope(scope string) (found bool) {
+	if c != nil && c.Scopes != nil {
+		for _, s := range c.Scopes {
+			if strings.TrimSpace(strings.ToLower(s)) == strings.TrimSpace(strings.ToLower(scope)) ||
+				strings.TrimSpace(s) == "*" {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // OAuth2ClientList is a response struct containing a list of OAuth2Clients

@@ -9,6 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"github.com/gorilla/securecookie"
 	"github.com/pkg/errors"
 	"go.opencensus.io/trace"
 )
@@ -25,7 +26,7 @@ func (s *Service) DecodeCookieFromRequest(req *http.Request) (*models.CookieAuth
 	cookie, err := req.Cookie(CookieName)
 	// we don't need the nil check here, but linters won't stop complaining if we don't do it
 	if err != http.ErrNoCookie && cookie != nil {
-		decodeErr := s.cookieBuilder.Decode(CookieName, cookie.Value, &ca)
+		decodeErr := s.cookieManager.Decode(CookieName, cookie.Value, &ca)
 		if decodeErr != nil {
 			return nil, errors.Wrap(decodeErr, "decoding request cookie")
 		}
@@ -73,7 +74,7 @@ func (s *Service) FetchUserFromRequest(req *http.Request) (*models.User, error) 
 
 // Login is our login route
 func (s *Service) Login(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "login_route")
+	ctx, span := trace.StartSpan(req.Context(), "Login")
 	defer span.End()
 
 	loginData, errRes := s.fetchLoginDataFromRequest(req)
@@ -123,7 +124,7 @@ func (s *Service) Login(res http.ResponseWriter, req *http.Request) {
 
 // Logout is our logout route
 func (s *Service) Logout(res http.ResponseWriter, req *http.Request) {
-	_, span := trace.StartSpan(req.Context(), "logout")
+	_, span := trace.StartSpan(req.Context(), "Logout")
 	defer span.End()
 
 	if cookie, err := req.Cookie(CookieName); err == nil && cookie != nil {
@@ -137,6 +138,19 @@ func (s *Service) Logout(res http.ResponseWriter, req *http.Request) {
 	}
 
 	res.WriteHeader(http.StatusOK)
+}
+
+// CycleSecret rotates the cookie building secret with a new random secret
+func (s *Service) CycleSecret(res http.ResponseWriter, req *http.Request) {
+	_, span := trace.StartSpan(req.Context(), "CycleSecret")
+	defer span.End()
+
+	s.cookieManager = securecookie.New(
+		securecookie.GenerateRandomKey(64),
+		[]byte(s.config.CookieSecret),
+	)
+
+	res.WriteHeader(http.StatusCreated)
 }
 
 type loginData struct {
@@ -190,10 +204,10 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 	loginValid, err := s.authenticator.ValidateLogin(
 		ctx,
 		user.HashedPassword,
-		user.Salt,
 		loginInput.Password,
 		user.TwoFactorSecret,
 		loginInput.TOTPToken,
+		user.Salt,
 	)
 	if err == auth.ErrPasswordHashTooWeak && loginValid {
 		s.logger.Debug("hashed password was deemed to weak, updating its hash")
@@ -204,8 +218,8 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 		}
 
 		user.HashedPassword = updated
-		if err = s.userDB.UpdateUser(ctx, user); err != nil {
-			return false, err
+		if updateErr := s.userDB.UpdateUser(ctx, user); updateErr != nil {
+			return false, updateErr
 		}
 	} else if err != nil && err != auth.ErrPasswordHashTooWeak {
 		logger.Error(err, "issue validating login")
@@ -222,9 +236,10 @@ func (s *Service) buildAuthCookie(user *models.User) (*http.Cookie, error) {
 
 	// NOTE: code here is duplicated into the unit tests for DecodeCookieFromRequest
 	// any changes made here might need to be reflected there
-	encoded, err := s.cookieBuilder.Encode(
+	encoded, err := s.cookieManager.Encode(
 		CookieName, models.CookieAuth{
 			UserID:   user.ID,
+			Admin:    user.IsAdmin,
 			Username: user.Username,
 		},
 	)

@@ -79,10 +79,10 @@ func TestBcrypt_ValidateLogin(T *testing.T) {
 		valid, err := x.ValidateLogin(
 			context.Background(),
 			hashedExamplePassword,
-			nil,
 			examplePassword,
 			exampleTwoFactorSecret,
 			code,
+			nil,
 		)
 		assert.NoError(t, err, "unexpected error encountered validating login: %v", err)
 		assert.True(t, valid)
@@ -95,10 +95,10 @@ func TestBcrypt_ValidateLogin(T *testing.T) {
 		valid, err := x.ValidateLogin(
 			context.Background(),
 			weaklyHashedExamplePassword,
-			nil,
 			examplePassword,
 			exampleTwoFactorSecret,
 			code,
+			nil,
 		)
 		assert.Error(t, err, "unexpected error encountered validating login: %v", err)
 		assert.True(t, valid)
@@ -111,10 +111,10 @@ func TestBcrypt_ValidateLogin(T *testing.T) {
 		valid, err := x.ValidateLogin(
 			context.Background(),
 			hashedExamplePassword,
-			nil,
 			"examplePassword",
 			exampleTwoFactorSecret,
 			code,
+			nil,
 		)
 		assert.NoError(t, err, "unexpected error encountered validating login: %v", err)
 		assert.False(t, valid)
@@ -124,10 +124,10 @@ func TestBcrypt_ValidateLogin(T *testing.T) {
 		valid, err := x.ValidateLogin(
 			context.Background(),
 			hashedExamplePassword,
-			nil,
 			examplePassword,
 			exampleTwoFactorSecret,
 			"CODE",
+			nil,
 		)
 		assert.Error(t, err, "unexpected error encountered validating login: %v", err)
 		assert.True(t, valid)

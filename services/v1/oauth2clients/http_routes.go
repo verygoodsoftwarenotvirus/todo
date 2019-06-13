@@ -99,10 +99,10 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	valid, err := s.authenticator.ValidateLogin(
 		ctx,
 		user.HashedPassword,
-		user.Salt,
 		input.Password,
 		user.TwoFactorSecret,
 		input.TOTPToken,
+		user.Salt,
 	)
 
 	if !valid {

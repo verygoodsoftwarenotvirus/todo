@@ -8,10 +8,9 @@ import (
 	"os"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
+	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 
 	"github.com/emicklei/hazana"
-
 )
 
 // TodoServiceAttacker implements hazana's Attacker interface
@@ -86,7 +85,7 @@ func (a *TodoServiceAttacker) Clone() hazana.Attack {
 }
 
 func main() {
-	todoClient := initializeClient(clientID, clientSecret)
+	todoClient := initializeClient(oa2Client)
 
 	var runTime = 10 * time.Minute
 	if rt := os.Getenv("LOADTEST_RUN_TIME"); rt != "" {

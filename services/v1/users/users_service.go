@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
@@ -33,7 +34,7 @@ type (
 	// Service handles our users
 	Service struct {
 		cookieSecret        []byte
-		database            models.UserDataManager
+		database            database.Database
 		authenticator       auth.Authenticator
 		logger              logging.Logger
 		encoderDecoder      encoding.EncoderDecoder
@@ -52,7 +53,7 @@ func ProvideUsersService(
 	ctx context.Context,
 	authSettings config.AuthSettings,
 	logger logging.Logger,
-	db models.UserDataManager,
+	db database.Database,
 	authenticator auth.Authenticator,
 	userIDFetcher UserIDFetcher,
 	encoder encoding.EncoderDecoder,

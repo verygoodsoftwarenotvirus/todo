@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/base32"
 	"encoding/base64"
+	"encoding/gob"
 	"fmt"
 	"image/png"
 	"net/http"
@@ -353,7 +354,7 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
 
 	if err := s.database.DeleteUser(ctx, userID); err != nil {
-		logger.Error(err, "UsersService.Delete called")
+		logger.Error(err, "deleting user from database")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -367,4 +368,40 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	})
 
 	res.WriteHeader(http.StatusNoContent)
+}
+
+// ExportData is our data export route
+func (s *Service) ExportData(res http.ResponseWriter, req *http.Request) {
+	ctx, span := trace.StartSpan(req.Context(), "export_data_route")
+	defer span.End()
+
+	s.logger.Debug("ExportData called")
+
+	user, ok := ctx.Value(models.UserKey).(*models.User)
+	if !ok || user == nil {
+		s.logger.Debug("no user attached to ExportData request")
+		res.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	dataExport, err := s.database.ExportData(ctx, user)
+	if err != nil {
+		s.logger.Error(err, "fetching export from database")
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var a bytes.Buffer
+	if encodeErr := gob.NewEncoder(&a).Encode(dataExport); encodeErr != nil {
+		s.logger.Error(err, "encoding export from database")
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	_, err = base64.NewEncoder(base64.URLEncoding, res).Write(a.Bytes())
+	if err != nil {
+		s.logger.Error(err, "encoding export from database")
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }

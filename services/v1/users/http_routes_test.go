@@ -8,12 +8,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	mauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1/mock"
 	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
 	mmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
 	mockman "gitlab.com/verygoodsoftwarenotvirus/newsman/mock"
 
@@ -62,8 +62,9 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		req := buildRequest(t)
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUser", mock.Anything, expected.ID).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.
+			On("GetUser", mock.Anything, expected.ID).
 			Return(expected, nil)
 		s.database = mockDB
 
@@ -72,10 +73,10 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 			"ValidateLogin",
 			mock.Anything,
 			expected.HashedPassword,
-			expected.Salt,
 			examplePassword,
 			expected.TwoFactorSecret,
 			exampleTOTPToken,
+			expected.Salt,
 		).Return(true, nil)
 		s.authenticator = auth
 
@@ -102,8 +103,9 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		req := buildRequest(t)
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUser", mock.Anything, expected.ID).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.
+			On("GetUser", mock.Anything, expected.ID).
 			Return((*models.User)(nil), sql.ErrNoRows)
 		s.database = mockDB
 
@@ -130,8 +132,9 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		req := buildRequest(t)
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUser", mock.Anything, expected.ID).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.
+			On("GetUser", mock.Anything, expected.ID).
 			Return((*models.User)(nil), errors.New("blah"))
 		s.database = mockDB
 
@@ -158,8 +161,9 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		req := buildRequest(t)
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUser", mock.Anything, expected.ID).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.
+			On("GetUser", mock.Anything, expected.ID).
 			Return(expected, nil)
 		s.database = mockDB
 
@@ -168,10 +172,10 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 			"ValidateLogin",
 			mock.Anything,
 			expected.HashedPassword,
-			expected.Salt,
 			examplePassword,
 			expected.TwoFactorSecret,
 			exampleTOTPToken,
+			expected.Salt,
 		).Return(false, errors.New("blah"))
 		s.authenticator = auth
 
@@ -198,8 +202,9 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		req := buildRequest(t)
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUser", mock.Anything, expected.ID).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.
+			On("GetUser", mock.Anything, expected.ID).
 			Return(expected, nil)
 		s.database = mockDB
 
@@ -208,10 +213,10 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 			"ValidateLogin",
 			mock.Anything,
 			expected.HashedPassword,
-			expected.Salt,
 			examplePassword,
 			expected.TwoFactorSecret,
 			exampleTOTPToken,
+			expected.Salt,
 		).Return(false, nil)
 		s.authenticator = auth
 
@@ -232,8 +237,9 @@ func TestService_List(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUsers", mock.Anything, mock.Anything).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.
+			On("GetUsers", mock.Anything, mock.Anything).
 			Return(&models.UserList{}, nil)
 		s.database = mockDB
 
@@ -252,8 +258,9 @@ func TestService_List(T *testing.T) {
 	T.Run("with error reading from database", func(t *testing.T) {
 		s := buildTestService(t)
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUsers", mock.Anything, mock.Anything).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.
+			On("GetUsers", mock.Anything, mock.Anything).
 			Return((*models.UserList)(nil), errors.New("blah"))
 		s.database = mockDB
 
@@ -272,8 +279,9 @@ func TestService_List(T *testing.T) {
 	T.Run("with error encoding response", func(t *testing.T) {
 		s := buildTestService(t)
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUsers", mock.Anything, mock.Anything).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.
+			On("GetUsers", mock.Anything, mock.Anything).
 			Return(&models.UserList{}, nil)
 		s.database = mockDB
 
@@ -309,8 +317,9 @@ func TestService_Create(T *testing.T) {
 			Return(expectedUser.HashedPassword, nil)
 		s.authenticator = auth
 
-		db := &mmodels.UserDataManager{}
-		db.On("CreateUser", mock.Anything, exampleInput).
+		db := database.BuildMockDatabase()
+		db.UserDataManager.
+			On("CreateUser", mock.Anything, exampleInput).
 			Return(expectedUser, nil)
 		s.database = db
 
@@ -398,8 +407,9 @@ func TestService_Create(T *testing.T) {
 			Return(expectedUser.HashedPassword, nil)
 		s.authenticator = auth
 
-		db := &mmodels.UserDataManager{}
-		db.On("CreateUser", mock.Anything, exampleInput).
+		db := database.BuildMockDatabase()
+		db.UserDataManager.
+			On("CreateUser", mock.Anything, exampleInput).
 			Return(expectedUser, errors.New("blah"))
 		s.database = db
 
@@ -428,8 +438,9 @@ func TestService_Create(T *testing.T) {
 			Return(expectedUser.HashedPassword, nil)
 		s.authenticator = auth
 
-		db := &mmodels.UserDataManager{}
-		db.On("CreateUser", mock.Anything, exampleInput).
+		db := database.BuildMockDatabase()
+		db.UserDataManager.
+			On("CreateUser", mock.Anything, exampleInput).
 			Return(expectedUser, dbclient.ErrUserExists)
 		s.database = db
 
@@ -458,8 +469,9 @@ func TestService_Create(T *testing.T) {
 			Return(expectedUser.HashedPassword, nil)
 		s.authenticator = auth
 
-		db := &mmodels.UserDataManager{}
-		db.On("CreateUser", mock.Anything, exampleInput).
+		db := database.BuildMockDatabase()
+		db.UserDataManager.
+			On("CreateUser", mock.Anything, exampleInput).
 			Return(expectedUser, nil)
 		s.database = db
 
@@ -493,8 +505,8 @@ func TestService_Read(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUser", mock.Anything, mock.Anything).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On("GetUser", mock.Anything, mock.Anything).
 			Return(&models.User{}, nil)
 		s.database = mockDB
 
@@ -513,8 +525,8 @@ func TestService_Read(T *testing.T) {
 	T.Run("with no rows found", func(t *testing.T) {
 		s := buildTestService(t)
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUser", mock.Anything, mock.Anything).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On("GetUser", mock.Anything, mock.Anything).
 			Return(&models.User{}, sql.ErrNoRows)
 		s.database = mockDB
 
@@ -528,8 +540,8 @@ func TestService_Read(T *testing.T) {
 	T.Run("with error reading from database", func(t *testing.T) {
 		s := buildTestService(t)
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUser", mock.Anything, mock.Anything).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On("GetUser", mock.Anything, mock.Anything).
 			Return(&models.User{}, errors.New("blah"))
 		s.database = mockDB
 
@@ -543,8 +555,8 @@ func TestService_Read(T *testing.T) {
 	T.Run("with error encoding response", func(t *testing.T) {
 		s := buildTestService(t)
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUser", mock.Anything, mock.Anything).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On("GetUser", mock.Anything, mock.Anything).
 			Return(&models.User{}, nil)
 		s.database = mockDB
 
@@ -586,10 +598,10 @@ func TestService_NewTOTPSecret(T *testing.T) {
 				req.Context(), models.UserIDKey, exampleUser.ID,
 			))
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUser", mock.Anything, exampleUser.ID).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).
 			Return(exampleUser, nil)
-		mockDB.On("UpdateUser",
+		mockDB.UserDataManager.On("UpdateUser",
 			mock.Anything,
 			mock.Anything, // bonus points for making this second expectation explicit
 		).Return(nil)
@@ -600,10 +612,10 @@ func TestService_NewTOTPSecret(T *testing.T) {
 			"ValidateLogin",
 			mock.Anything,
 			exampleUser.HashedPassword,
-			exampleUser.Salt,
 			exampleInput.CurrentPassword,
 			exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
+			exampleUser.Salt,
 		).Return(true, nil)
 		s.authenticator = auth
 
@@ -664,10 +676,10 @@ func TestService_NewTOTPSecret(T *testing.T) {
 				req.Context(), models.UserIDKey, exampleUser.ID,
 			))
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUser", mock.Anything, exampleUser.ID).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).
 			Return(exampleUser, nil)
-		mockDB.On("UpdateUser",
+		mockDB.UserDataManager.On("UpdateUser",
 			mock.Anything,
 			mock.Anything, // bonus points for making this second expectation explicit
 		).Return(nil)
@@ -678,10 +690,10 @@ func TestService_NewTOTPSecret(T *testing.T) {
 			"ValidateLogin",
 			mock.Anything,
 			exampleUser.HashedPassword,
-			exampleUser.Salt,
 			exampleInput.CurrentPassword,
 			exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
+			exampleUser.Salt,
 		).Return(false, errors.New("blah"))
 		s.authenticator = auth
 
@@ -716,10 +728,10 @@ func TestService_NewTOTPSecret(T *testing.T) {
 				req.Context(), models.UserIDKey, exampleUser.ID,
 			))
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUser", mock.Anything, exampleUser.ID).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).
 			Return(exampleUser, nil)
-		mockDB.On("UpdateUser",
+		mockDB.UserDataManager.On("UpdateUser",
 			mock.Anything,
 			mock.Anything, // bonus points for making this second expectation explicit
 		).Return(errors.New("blah"))
@@ -730,10 +742,10 @@ func TestService_NewTOTPSecret(T *testing.T) {
 			"ValidateLogin",
 			mock.Anything,
 			exampleUser.HashedPassword,
-			exampleUser.Salt,
 			exampleInput.CurrentPassword,
 			exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
+			exampleUser.Salt,
 		).Return(true, nil)
 		s.authenticator = auth
 
@@ -768,10 +780,10 @@ func TestService_NewTOTPSecret(T *testing.T) {
 				req.Context(), models.UserIDKey, exampleUser.ID,
 			))
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUser", mock.Anything, exampleUser.ID).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).
 			Return(exampleUser, nil)
-		mockDB.On("UpdateUser",
+		mockDB.UserDataManager.On("UpdateUser",
 			mock.Anything,
 			mock.Anything, // bonus points for making this second expectation explicit
 		).Return(nil)
@@ -782,10 +794,10 @@ func TestService_NewTOTPSecret(T *testing.T) {
 			"ValidateLogin",
 			mock.Anything,
 			exampleUser.HashedPassword,
-			exampleUser.Salt,
 			exampleInput.CurrentPassword,
 			exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
+			exampleUser.Salt,
 		).Return(true, nil)
 		s.authenticator = auth
 
@@ -828,10 +840,10 @@ func TestService_UpdatePassword(T *testing.T) {
 				req.Context(), models.UserIDKey, exampleUser.ID,
 			))
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUser", mock.Anything, exampleUser.ID).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).
 			Return(exampleUser, nil)
-		mockDB.On("UpdateUser",
+		mockDB.UserDataManager.On("UpdateUser",
 			mock.Anything,
 			mock.Anything, // bonus points for making this second expectation explicit
 		).Return(nil)
@@ -843,10 +855,10 @@ func TestService_UpdatePassword(T *testing.T) {
 			"ValidateLogin",
 			mock.Anything,
 			exampleUser.HashedPassword,
-			exampleUser.Salt,
 			exampleInput.CurrentPassword,
 			exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
+			exampleUser.Salt,
 		).Return(true, nil)
 		auth.On(
 			"HashPassword",
@@ -921,13 +933,15 @@ func TestService_UpdatePassword(T *testing.T) {
 				req.Context(), models.UserIDKey, exampleUser.ID,
 			))
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUser", mock.Anything, exampleUser.ID).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.
+			On("GetUser", mock.Anything, exampleUser.ID).
 			Return(exampleUser, nil)
-		mockDB.On("UpdateUser",
-			mock.Anything,
-			mock.Anything, // bonus points for making this second expectation explicit
-		).Return(nil)
+		mockDB.UserDataManager.
+			On("UpdateUser",
+				mock.Anything,
+				mock.Anything, // bonus points for making this second expectation explicit
+			).Return(nil)
 		s.database = mockDB
 
 		auth := &mauth.Authenticator{}
@@ -936,10 +950,10 @@ func TestService_UpdatePassword(T *testing.T) {
 			"ValidateLogin",
 			mock.Anything,
 			exampleUser.HashedPassword,
-			exampleUser.Salt,
 			exampleInput.CurrentPassword,
 			exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
+			exampleUser.Salt,
 		).Return(false, errors.New("blah"))
 		s.authenticator = auth
 
@@ -973,13 +987,15 @@ func TestService_UpdatePassword(T *testing.T) {
 				req.Context(), models.UserIDKey, exampleUser.ID,
 			))
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUser", mock.Anything, exampleUser.ID).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.
+			On("GetUser", mock.Anything, exampleUser.ID).
 			Return(exampleUser, nil)
-		mockDB.On("UpdateUser",
-			mock.Anything,
-			mock.Anything, // bonus points for making this second expectation explicit
-		).Return(nil)
+		mockDB.UserDataManager.
+			On("UpdateUser",
+				mock.Anything,
+				mock.Anything, // bonus points for making this second expectation explicit
+			).Return(nil)
 		s.database = mockDB
 
 		auth := &mauth.Authenticator{}
@@ -988,10 +1004,10 @@ func TestService_UpdatePassword(T *testing.T) {
 			"ValidateLogin",
 			mock.Anything,
 			exampleUser.HashedPassword,
-			exampleUser.Salt,
 			exampleInput.CurrentPassword,
 			exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
+			exampleUser.Salt,
 		).Return(true, nil)
 		auth.On(
 			"HashPassword",
@@ -1036,13 +1052,15 @@ func TestService_UpdatePassword(T *testing.T) {
 				req.Context(), models.UserIDKey, exampleUser.ID,
 			))
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("GetUser", mock.Anything, exampleUser.ID).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.
+			On("GetUser", mock.Anything, exampleUser.ID).
 			Return(exampleUser, nil)
-		mockDB.On("UpdateUser",
-			mock.Anything,
-			mock.Anything, // bonus points for making this second expectation explicit
-		).Return(errors.New("blah"))
+		mockDB.UserDataManager.
+			On("UpdateUser",
+				mock.Anything,
+				mock.Anything, // bonus points for making this second expectation explicit
+			).Return(errors.New("blah"))
 		s.database = mockDB
 
 		auth := &mauth.Authenticator{}
@@ -1051,10 +1069,10 @@ func TestService_UpdatePassword(T *testing.T) {
 			"ValidateLogin",
 			mock.Anything,
 			exampleUser.HashedPassword,
-			exampleUser.Salt,
 			exampleInput.CurrentPassword,
 			exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
+			exampleUser.Salt,
 		).Return(true, nil)
 		auth.On(
 			"HashPassword",
@@ -1083,8 +1101,8 @@ func TestService_Delete(T *testing.T) {
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("DeleteUser", mock.Anything, expectedUserID).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On("DeleteUser", mock.Anything, expectedUserID).
 			Return(nil)
 		s.database = mockDB
 
@@ -1114,8 +1132,9 @@ func TestService_Delete(T *testing.T) {
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 
-		mockDB := &mmodels.UserDataManager{}
-		mockDB.On("DeleteUser", mock.Anything, expectedUserID).
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.
+			On("DeleteUser", mock.Anything, expectedUserID).
 			Return(errors.New("blah"))
 		s.database = mockDB
 
@@ -1123,4 +1142,128 @@ func TestService_Delete(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
+}
+
+func TestService_ExportData(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		s := buildTestService(t)
+		expectedLength := 1352
+		expectedUser := &models.User{ID: 123}
+		expectedData := &models.DataExport{
+			User:          *expectedUser,
+			Items:         []models.Item{{ID: 123}},
+			OAuth2Clients: []models.OAuth2Client{{ID: 123}},
+			Webhooks:      []models.Webhook{{ID: 123}},
+		}
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+		req = req.WithContext(context.WithValue(req.Context(), models.UserKey, expectedUser))
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.
+			On("ExportData", mock.Anything, expectedUser).
+			Return(expectedData, nil)
+		s.database = mockDB
+
+		s.ExportData(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Len(t, res.Body.String(), expectedLength)
+	})
+
+	T.Run("without user attached to request", func(t *testing.T) {
+		s := buildTestService(t)
+		expectedUser := &models.User{ID: 123}
+		expectedData := &models.DataExport{
+			User:          *expectedUser,
+			Items:         []models.Item{{ID: 123}},
+			OAuth2Clients: []models.OAuth2Client{{ID: 123}},
+			Webhooks:      []models.Webhook{{ID: 123}},
+		}
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.
+			On("ExportData", mock.Anything, expectedUser).
+			Return(expectedData, nil)
+		s.database = mockDB
+
+		s.ExportData(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
+	})
+
+	T.Run("with error exporting data from database", func(t *testing.T) {
+		s := buildTestService(t)
+		expectedUser := &models.User{ID: 123}
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+		req = req.WithContext(context.WithValue(req.Context(), models.UserKey, expectedUser))
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.
+			On("ExportData", mock.Anything, expectedUser).
+			Return((*models.DataExport)(nil), errors.New("blah"))
+		s.database = mockDB
+
+		s.ExportData(res, req)
+
+		assert.Equal(t, http.StatusInternalServerError, res.Code)
+	})
+
+	T.Run("with error encoding data export to gob", func(t *testing.T) {
+		s := buildTestService(t)
+		expectedLength := 1352
+		expectedUser := &models.User{ID: 123}
+		expectedData := &models.DataExport{
+			User:          *expectedUser,
+			Items:         []models.Item{{ID: 123}},
+			OAuth2Clients: []models.OAuth2Client{{ID: 123}},
+			Webhooks:      []models.Webhook{{ID: 123}},
+		}
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+		req = req.WithContext(context.WithValue(req.Context(), models.UserKey, expectedUser))
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.
+			On("ExportData", mock.Anything, expectedUser).
+			Return(expectedData, nil)
+		s.database = mockDB
+
+		s.ExportData(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Len(t, res.Body.String(), expectedLength)
+	})
+
+	T.Run("with error encoding gob to base32", func(t *testing.T) {
+		s := buildTestService(t)
+		expectedLength := 1352
+		expectedUser := &models.User{ID: 123}
+		expectedData := &models.DataExport{
+			User:          *expectedUser,
+			Items:         []models.Item{{ID: 123}},
+			OAuth2Clients: []models.OAuth2Client{{ID: 123}},
+			Webhooks:      []models.Webhook{{ID: 123}},
+		}
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+		req = req.WithContext(context.WithValue(req.Context(), models.UserKey, expectedUser))
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.
+			On("ExportData", mock.Anything, expectedUser).
+			Return(expectedData, nil)
+		s.database = mockDB
+
+		s.ExportData(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Len(t, res.Body.String(), expectedLength)
+	})
+
 }

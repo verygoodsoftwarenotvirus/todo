@@ -37,7 +37,17 @@ func buildDummyOAuth2ClientInput(t *testing.T, username, password, totpToken str
 	return x
 }
 
-func checkOAuth2ClientEquality(t *testing.T, expected *models.OAuth2ClientCreationInput, actual *models.OAuth2Client) {
+func convertInputToClient(input *models.OAuth2ClientCreationInput) *models.OAuth2Client {
+	return &models.OAuth2Client{
+		ClientID:     input.ClientID,
+		ClientSecret: input.ClientSecret,
+		RedirectURI:  input.RedirectURI,
+		Scopes:       input.Scopes,
+		BelongsTo:    input.BelongsTo,
+	}
+}
+
+func checkOAuth2ClientEquality(t *testing.T, expected, actual *models.OAuth2Client) {
 	t.Helper()
 
 	assert.NotZero(t, actual.ID)
@@ -81,7 +91,7 @@ func TestOAuth2Clients(test *testing.T) {
 			checkValueAndError(t, actual, err)
 
 			// Assert oauth2Client equality
-			checkOAuth2ClientEquality(t, input, actual)
+			checkOAuth2ClientEquality(t, convertInputToClient(input), actual)
 
 			// Clean up
 			err = testClient.DeleteOAuth2Client(tctx, actual.ID)
@@ -111,7 +121,7 @@ func TestOAuth2Clients(test *testing.T) {
 			checkValueAndError(t, actual, err)
 
 			// Assert oauth2Client equality
-			checkOAuth2ClientEquality(t, input, actual)
+			checkOAuth2ClientEquality(t, convertInputToClient(input), actual)
 
 			// Clean up
 			err = testClient.DeleteOAuth2Client(tctx, actual.ID)

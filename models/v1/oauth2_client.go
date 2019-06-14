@@ -82,6 +82,10 @@ func (c *OAuth2Client) GetUserID() string {
 
 // HasScope returns whether or not the provided scope is included in the scope list
 func (c *OAuth2Client) HasScope(scope string) (found bool) {
+	scope = strings.TrimSpace(scope)
+	if scope == "" {
+		return false
+	}
 	if c != nil && c.Scopes != nil {
 		for _, s := range c.Scopes {
 			if strings.TrimSpace(strings.ToLower(s)) == strings.TrimSpace(strings.ToLower(scope)) ||
@@ -102,7 +106,7 @@ type OAuth2ClientList struct {
 // OAuth2ClientCreationInput is a struct for use when creating OAuth2 clients.
 type OAuth2ClientCreationInput struct {
 	UserLoginInput
-	ClientName   string   `json:"name"`
+	Name         string   `json:"name"`
 	ClientID     string   `json:"-"`
 	ClientSecret string   `json:"-"`
 	RedirectURI  string   `json:"redirect_uri"`

@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 
 	"github.com/stretchr/testify/assert"
@@ -31,11 +32,13 @@ func TestService_StaticDir(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := &Service{logger: noop.ProvideNoopLogger()}
-		exampleDir := "frontend/v1/public/"
+
+		cwd, err := os.Getwd()
+		require.NoError(t, err)
 
 		require.NoError(t, os.Chdir("/home/jeffrey/src/gitlab.com/verygoodsoftwarenotvirus/todo/"))
 
-		hf, err := s.StaticDir(exampleDir)
+		hf, err := s.StaticDir(cwd)
 		assert.NoError(t, err)
 		assert.NotNil(t, hf)
 
@@ -86,5 +89,25 @@ func TestService_Routes(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		assert.NotNil(t, (&Service{}).Routes())
+	})
+}
+
+func TestService_buildStaticFileServer(T *testing.T) {
+	T.Parallel()
+
+	T.Run("obligatory", func(t *testing.T) {
+		s := &Service{
+			config: config.FrontendSettings{
+				CacheStaticFiles: true,
+			},
+		}
+
+		cwd, err := os.Getwd()
+		require.NoError(t, err)
+
+		actual, err := s.buildStaticFileServer(cwd)
+
+		assert.NotNil(t, actual)
+		assert.NoError(t, err)
 	})
 }

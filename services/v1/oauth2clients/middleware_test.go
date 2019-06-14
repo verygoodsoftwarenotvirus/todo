@@ -94,6 +94,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 
 		expected := &models.OAuth2Client{
 			ClientID: "THIS IS A FAKE CLIENT ID",
+			Scopes:   []string{"things"},
 		}
 
 		mh := &mockOauth2Handler{}
@@ -113,6 +114,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 		s.database = mockDB
 
 		req := buildRequest(t)
+		req.URL.Path = "/api/v1/things"
 
 		actual, err := s.RequestIsAuthenticated(req)
 		assert.NoError(t, err)

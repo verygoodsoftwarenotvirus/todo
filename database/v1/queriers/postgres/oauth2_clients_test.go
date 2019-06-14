@@ -90,8 +90,8 @@ func TestPostgres_CreateOAuth2Client(T *testing.T) {
 			CreatedOn: uint64(time.Now().Unix()),
 		}
 		expectedInput := &models.OAuth2ClientCreationInput{
-			ClientName: expected.Name,
-			BelongsTo:  expected.BelongsTo,
+			Name:      expected.Name,
+			BelongsTo: expected.BelongsTo,
 		}
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).
 			AddRow(expected.ID, uint64(time.Now().Unix()))
@@ -126,8 +126,8 @@ func TestPostgres_CreateOAuth2Client(T *testing.T) {
 			CreatedOn: uint64(time.Now().Unix()),
 		}
 		expectedInput := &models.OAuth2ClientCreationInput{
-			ClientName: expected.Name,
-			BelongsTo:  expected.BelongsTo,
+			Name:      expected.Name,
+			BelongsTo: expected.BelongsTo,
 		}
 
 		expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_on"

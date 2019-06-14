@@ -112,7 +112,7 @@ func (p *Postgres) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (que
 // CreateOAuth2Client creates an OAuth2 client
 func (p *Postgres) CreateOAuth2Client(ctx context.Context, input *models.OAuth2ClientCreationInput) (*models.OAuth2Client, error) {
 	x := &models.OAuth2Client{
-		Name:         input.ClientName,
+		Name:         input.Name,
 		ClientID:     input.ClientID,
 		ClientSecret: input.ClientSecret,
 		RedirectURI:  input.RedirectURI,

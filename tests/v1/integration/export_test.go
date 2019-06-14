@@ -2,19 +2,19 @@ package integration
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/zerolog"
 	"testing"
 
+	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	// "github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.opencensus.io/trace"
 )
 
 func TestExport(test *testing.T) {
-	test.SkipNow()
+	test.Parallel()
 
 	test.Run("Exporting", func(T *testing.T) {
 		T.Run("should be exportable", func(t *testing.T) {
@@ -76,7 +76,6 @@ func TestExport(test *testing.T) {
 				User: models.User{
 					ID:                    x.ID,
 					Username:              x.Username,
-					TwoFactorSecret:       x.TwoFactorSecret,
 					PasswordLastChangedOn: x.PasswordLastChangedOn,
 					IsAdmin:               x.IsAdmin,
 					CreatedOn:             x.CreatedOn,
@@ -85,11 +84,33 @@ func TestExport(test *testing.T) {
 				},
 				Items:         []models.Item{*item},
 				Webhooks:      []models.Webhook{*webhook},
-				OAuth2Clients: []models.OAuth2Client{*oac},
+				OAuth2Clients: []models.OAuth2Client{*premade, *oac},
 			}
 
 			actual, err := c.ExportData(ctx)
 			checkValueAndError(t, actual, err)
+
+			require.Equal(t, len(expected.Items), len(actual.Items))
+			for i := range actual.Items {
+				e := &expected.Items[i]
+				a := &actual.Items[i]
+				checkItemEquality(t, e, a)
+			}
+
+			require.Equal(t, len(expected.Webhooks), len(actual.Webhooks))
+			for i := range actual.Webhooks {
+				e := &expected.Webhooks[i]
+				a := &actual.Webhooks[i]
+				checkWebhookEquality(t, e, a)
+			}
+
+			require.Equal(t, len(expected.OAuth2Clients), len(actual.OAuth2Clients))
+			for i := range actual.OAuth2Clients {
+				e := &expected.OAuth2Clients[i]
+				a := &actual.OAuth2Clients[i]
+				checkOAuth2ClientEquality(t, e, a)
+			}
+
 			assert.Equal(t, expected, actual)
 		})
 	})

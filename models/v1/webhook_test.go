@@ -55,7 +55,6 @@ func TestWebhook_ToListener(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		w := &Webhook{}
 		w.ToListener(noop.ProvideNoopLogger())
-
 	})
 }
 

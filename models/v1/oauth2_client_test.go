@@ -54,3 +54,17 @@ func TestOAuth2Client_GetUserID(T *testing.T) {
 		assert.Equal(t, expected, oac.GetUserID())
 	})
 }
+
+func TestOAuth2Client_HasScope(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		oac := &OAuth2Client{
+			Scopes: []string{"things", "and", "stuff"},
+		}
+
+		assert.True(t, oac.HasScope(oac.Scopes[0]))
+		assert.False(t, oac.HasScope("blah"))
+		assert.False(t, oac.HasScope(""))
+	})
+}

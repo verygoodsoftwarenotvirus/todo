@@ -19,6 +19,8 @@ import (
 	oauth2errors "gopkg.in/oauth2.v3/errors"
 )
 
+const apiURLPrefix = "/api/v1"
+
 func TestService_OAuth2InternalErrorHandler(T *testing.T) {
 	T.Parallel()
 
@@ -68,7 +70,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 
 	T.Run("without client attached to request but with client ID attached", func(t *testing.T) {
 		s := buildTestService(t)
-		expected := "blah,flarg"
+		expected := "blah"
 		exampleClient := &models.OAuth2Client{
 			ClientID: "blargh",
 			Scopes:   strings.Split(expected, ","),
@@ -86,6 +88,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(req.Context(), clientIDKey, exampleClient.ClientID),
 		)
+		req.URL.Path = fmt.Sprintf("%s/blah", apiURLPrefix)
 
 		actual, err := s.AuthorizeScopeHandler(res, req)
 

@@ -17,8 +17,6 @@ const (
 
 	oauth2ClientIDURIParamKey                   = "client_id"
 	clientIDKey               models.ContextKey = "client_id"
-
-	scopesSeparator = ","
 )
 
 // randString produces a random string

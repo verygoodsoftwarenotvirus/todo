@@ -1144,6 +1144,36 @@ func TestService_Delete(T *testing.T) {
 	})
 }
 
+func TestService_ExportData(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		s := buildTestService(t)
+		expectedLength := 1128
+		expectedUser := &models.User{ID: 123}
+		expectedData := &models.DataExport{
+			User:          *expectedUser,
+			Items:         []models.Item{{ID: 123}},
+			OAuth2Clients: []models.OAuth2Client{{ID: 123}},
+			Webhooks:      []models.Webhook{{ID: 123}},
+		}
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+		req = req.WithContext(context.WithValue(req.Context(), models.UserKey, expectedUser))
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.
+			On("ExportData", mock.Anything, expectedUser).
+			Return(expectedData, nil)
+		s.database = mockDB
+
+		s.ExportData(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Len(t, res.Body.String(), expectedLength)
+	})
+}
+
 func TestService_BuildExportDataHandler(T *testing.T) {
 	T.Parallel()
 

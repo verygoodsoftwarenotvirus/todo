@@ -41,30 +41,35 @@ func (m *UserDataServer) TOTPSecretRefreshInputMiddleware(next http.Handler) htt
 
 // List is a mock method to satisfy our interface requirements
 func (m *UserDataServer) List(res http.ResponseWriter, req *http.Request) {
-	m.Called()
+	m.Called(res, req)
 }
 
 // Create is a mock method to satisfy our interface requirements
 func (m *UserDataServer) Create(res http.ResponseWriter, req *http.Request) {
-	m.Called()
+	m.Called(res, req)
 }
 
 // Read is a mock method to satisfy our interface requirements
 func (m *UserDataServer) Read(res http.ResponseWriter, req *http.Request) {
-	m.Called()
+	m.Called(res, req)
 }
 
 // NewTOTPSecret is a mock method to satisfy our interface requirements
 func (m *UserDataServer) NewTOTPSecret(res http.ResponseWriter, req *http.Request) {
-	m.Called()
+	m.Called(res, req)
 }
 
 // UpdatePassword is a mock method to satisfy our interface requirements
 func (m *UserDataServer) UpdatePassword(res http.ResponseWriter, req *http.Request) {
-	m.Called()
+	m.Called(res, req)
 }
 
 // Delete is a mock method to satisfy our interface requirements
 func (m *UserDataServer) Delete(res http.ResponseWriter, req *http.Request) {
-	m.Called()
+	m.Called(res, req)
+}
+
+// ExportData is a mock method to satisfy our interface requirements
+func (m *UserDataServer) ExportData(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
 }

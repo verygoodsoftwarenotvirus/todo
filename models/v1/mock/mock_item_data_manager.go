@@ -39,6 +39,12 @@ func (m *ItemDataManager) GetItems(ctx context.Context, filter *models.QueryFilt
 	return args.Get(0).(*models.ItemList), args.Error(1)
 }
 
+// GetAllItemsForUser is a mock function
+func (m *ItemDataManager) GetAllItemsForUser(ctx context.Context, userID uint64) ([]models.Item, error) {
+	args := m.Called(ctx, userID)
+	return args.Get(0).([]models.Item), args.Error(1)
+}
+
 // CreateItem is a mock function
 func (m *ItemDataManager) CreateItem(ctx context.Context, input *models.ItemInput) (*models.Item, error) {
 	args := m.Called(ctx, input)

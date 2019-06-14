@@ -7,3 +7,12 @@ type DataExport struct {
 	Webhooks      []Webhook
 	OAuth2Clients []OAuth2Client
 }
+
+// NewDataExport creates a new DataExport
+func NewDataExport() *DataExport {
+	return &DataExport{
+		Items:         []Item{},
+		Webhooks:      []Webhook{},
+		OAuth2Clients: []OAuth2Client{},
+	}
+}

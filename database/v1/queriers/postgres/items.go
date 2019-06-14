@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
@@ -49,12 +48,6 @@ func scanItem(scan database.Scanner) (*models.Item, error) {
 
 func scanItems(logger logging.Logger, rows *sql.Rows) ([]models.Item, error) {
 	var list []models.Item
-
-	cols, err := rows.Columns()
-	logger.
-		WithError(err).
-		WithValue("columns", strings.Join(cols, "|")).
-		Debug("scanItems Called")
 
 	for rows.Next() {
 		x, err := scanItem(rows)
@@ -127,7 +120,7 @@ func (p *Postgres) GetItemCount(ctx context.Context, filter *models.QueryFilter,
 }
 
 func (p *Postgres) buildGetAllItemsCountQuery() string {
-	query, _, err := p.sqlBuilder.Select("COUNT(*)").
+	query, _, err := p.sqlBuilder.Select(CountQuery).
 		From(itemsTableName).
 		Where(squirrel.Eq{"archived_on": nil}).
 		ToSql()
@@ -189,6 +182,22 @@ func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter, use
 	}
 
 	return x, nil
+}
+
+// GetAllItemsForUser fetches every item belonging to a user
+func (p *Postgres) GetAllItemsForUser(ctx context.Context, userID uint64) ([]models.Item, error) {
+	query, args := p.buildGetItemsQuery(nil, userID)
+	rows, err := p.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	list, err := scanItems(p.logger, rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return list, nil
 }
 
 func (p *Postgres) buildCreateItemQuery(input *models.Item) (query string, args []interface{}) {

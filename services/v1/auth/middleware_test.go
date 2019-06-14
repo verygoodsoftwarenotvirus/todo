@@ -523,7 +523,6 @@ func TestService_AdminMiddleware(T *testing.T) {
 
 		s := buildTestService(t)
 		ms := &MockHTTPHandler{}
-		ms.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		h := s.AdminMiddleware(ms)
 		h.ServeHTTP(res, req)
@@ -548,13 +547,12 @@ func TestService_AdminMiddleware(T *testing.T) {
 
 		s := buildTestService(t)
 		ms := &MockHTTPHandler{}
-		ms.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		h := s.AdminMiddleware(ms)
 		h.ServeHTTP(res, req)
 
 		ms.AssertExpectations(t)
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
 	})
 
 }

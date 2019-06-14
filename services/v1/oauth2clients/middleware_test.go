@@ -94,6 +94,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 
 		expected := &models.OAuth2Client{
 			ClientID: "THIS IS A FAKE CLIENT ID",
+			Scopes:   []string{"things"},
 		}
 
 		mh := &mockOauth2Handler{}
@@ -113,6 +114,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 		s.database = mockDB
 
 		req := buildRequest(t)
+		req.URL.Path = "/api/v1/things"
 
 		actual, err := s.RequestIsAuthenticated(req)
 		assert.NoError(t, err)
@@ -163,18 +165,13 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
-}
 
-func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
-	T.Parallel()
-
-	// These tests have a lot of overlap to those of RequestIsAuthenticated, which is deliberate
-
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("with invalid scope", func(t *testing.T) {
 		s := buildTestService(t)
 
 		expected := &models.OAuth2Client{
 			ClientID: "THIS IS A FAKE CLIENT ID",
+			Scopes:   []string{"things"},
 		}
 
 		mh := &mockOauth2Handler{}
@@ -193,8 +190,47 @@ func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 		).Return(expected, nil)
 		s.database = mockDB
 
-		res := httptest.NewRecorder()
 		req := buildRequest(t)
+		req.URL.Path = "/api/v1/stuff"
+
+		actual, err := s.RequestIsAuthenticated(req)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+}
+
+func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
+	T.Parallel()
+
+	// These tests have a lot of overlap to those of RequestIsAuthenticated, which is deliberate
+
+	T.Run("happy path", func(t *testing.T) {
+		s := buildTestService(t)
+
+		expected := &models.OAuth2Client{
+			ClientID: "THIS IS A FAKE CLIENT ID",
+			Scopes:   []string{"things"},
+		}
+
+		mh := &mockOauth2Handler{}
+		mh.On("ValidationBearerToken", mock.AnythingOfType("*http.Request")).
+			Return(
+				&oauth2models.Token{ClientID: expected.ClientID},
+				nil,
+			)
+		s.oauth2Handler = mh
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.OAuth2ClientDataManager.On(
+			"GetOAuth2ClientByClientID",
+			mock.Anything,
+			expected.ClientID,
+		).Return(expected, nil)
+		s.database = mockDB
+
+		req := buildRequest(t)
+		req.URL.Path = "/api/v1/things"
+		res := httptest.NewRecorder()
 
 		mhh := &mockHTTPHandler{}
 		mhh.On("ServeHTTP",

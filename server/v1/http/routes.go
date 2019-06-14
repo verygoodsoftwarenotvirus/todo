@@ -131,6 +131,11 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		With(s.authService.AuthenticationMiddleware(true)).
 		Route("/api/v1", func(v1Router chi.Router) {
 
+			// Data management
+			v1Router.Route("/data", func(dataRouter chi.Router) {
+				dataRouter.Get("/export", s.usersService.ExportData)
+			})
+
 			// Items
 			v1Router.Route("/items", func(itemsRouter chi.Router) {
 				sr := fmt.Sprintf(numericIDPattern, items.URIParamKey)

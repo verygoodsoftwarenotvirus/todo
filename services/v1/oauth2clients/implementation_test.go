@@ -19,6 +19,8 @@ import (
 	oauth2errors "gopkg.in/oauth2.v3/errors"
 )
 
+const apiURLPrefix = "/api/v1"
+
 func TestService_OAuth2InternalErrorHandler(T *testing.T) {
 	T.Parallel()
 
@@ -47,7 +49,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
-		expected := "blah,flarg"
+		expected := "blah"
 		exampleClient := &models.OAuth2Client{
 			Scopes: strings.Split(expected, ","),
 		}
@@ -58,6 +60,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(req.Context(), models.OAuth2ClientKey, exampleClient),
 		)
+		req.URL.Path = fmt.Sprintf("%s/blah", apiURLPrefix)
 
 		actual, err := s.AuthorizeScopeHandler(res, req)
 
@@ -68,7 +71,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 
 	T.Run("without client attached to request but with client ID attached", func(t *testing.T) {
 		s := buildTestService(t)
-		expected := "blah,flarg"
+		expected := "blah"
 		exampleClient := &models.OAuth2Client{
 			ClientID: "blargh",
 			Scopes:   strings.Split(expected, ","),
@@ -86,6 +89,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(req.Context(), clientIDKey, exampleClient.ClientID),
 		)
+		req.URL.Path = fmt.Sprintf("%s/blah", apiURLPrefix)
 
 		actual, err := s.AuthorizeScopeHandler(res, req)
 
@@ -115,10 +119,11 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 			context.WithValue(req.Context(), clientIDKey, exampleClient.ClientID),
 		)
 
-		_, err := s.AuthorizeScopeHandler(res, req)
+		actual, err := s.AuthorizeScopeHandler(res, req)
 
 		assert.Error(t, err)
 		assert.Equal(t, http.StatusNotFound, res.Code)
+		assert.Empty(t, actual)
 	})
 
 	T.Run("without client attached to request and error fetching client info", func(t *testing.T) {
@@ -142,10 +147,11 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 			context.WithValue(req.Context(), clientIDKey, exampleClient.ClientID),
 		)
 
-		_, err := s.AuthorizeScopeHandler(res, req)
+		actual, err := s.AuthorizeScopeHandler(res, req)
 
 		assert.Error(t, err)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
+		assert.Empty(t, actual)
 	})
 
 	T.Run("without client attached to request", func(t *testing.T) {
@@ -154,11 +160,41 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
 
-		_, err := s.AuthorizeScopeHandler(res, req)
+		actual, err := s.AuthorizeScopeHandler(res, req)
 
 		assert.Error(t, err)
 		assert.Equal(t, http.StatusBadRequest, res.Code)
+		assert.Empty(t, actual)
 	})
+
+	T.Run("with invalid scope & client ID but no client", func(t *testing.T) {
+		s := buildTestService(t)
+		exampleClient := &models.OAuth2Client{
+			ClientID: "blargh",
+			Scopes:   []string{},
+		}
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.OAuth2ClientDataManager.
+			On("GetOAuth2ClientByClientID", mock.Anything, exampleClient.ClientID).
+			Return(exampleClient, nil)
+		s.database = mockDB
+
+		req := buildRequest(t)
+		res := httptest.NewRecorder()
+
+		req = req.WithContext(
+			context.WithValue(req.Context(), clientIDKey, exampleClient.ClientID),
+		)
+		req.URL.Path = fmt.Sprintf("%s/blah", apiURLPrefix)
+
+		actual, err := s.AuthorizeScopeHandler(res, req)
+
+		assert.Error(t, err)
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
+		assert.Empty(t, actual)
+	})
+
 }
 
 func TestService_UserAuthorizationHandler(T *testing.T) {
@@ -363,4 +399,31 @@ func TestService_ClientScopeHandler(T *testing.T) {
 		assert.Equal(t, expected, actual)
 		assert.Error(t, err)
 	})
+
+	T.Run("without valid scope", func(t *testing.T) {
+		s := buildTestService(t)
+
+		expected := false
+		exampleScope := "halb"
+		exampleClient := &models.OAuth2Client{
+			ID:       1,
+			ClientID: "blah",
+			Scopes:   []string{},
+		}
+		stringID := fmt.Sprintf("%d", exampleClient.ID)
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.OAuth2ClientDataManager.
+			On("GetOAuth2ClientByClientID", mock.Anything, stringID).
+			Return(exampleClient, nil)
+		s.database = mockDB
+
+		actual, err := s.ClientScopeHandler(
+			stringID,
+			exampleScope,
+		)
+		assert.Equal(t, expected, actual)
+		assert.Error(t, err)
+	})
+
 }

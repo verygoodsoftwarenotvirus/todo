@@ -86,6 +86,10 @@ integration-tests:
 	--always-recreate-deps \
 	--abort-on-container-exit
 
+# this is just a handy lil' helper I use sometimes
+.PHONY: lintegration-tests
+lintegration-tests: integration-tests lint
+
 .PHONY: load-tests
 load-tests:
 	docker-compose --file compose-files/load-tests.yaml up \

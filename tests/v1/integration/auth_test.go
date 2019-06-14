@@ -487,7 +487,7 @@ func TestAuth(test *testing.T) {
 		assert.NotNil(test, cookie)
 
 		input := buildDummyOAuth2ClientInput(test, x.Username, y.Password, x.TwoFactorSecret)
-		input.Scopes = []string{"webhooks"}
+		input.Scopes = []string{"absolutelynevergonnaexistascopelikethis"}
 		premade, err := todoClient.CreateOAuth2Client(tctx, cookie, input)
 		checkValueAndError(test, premade, err)
 

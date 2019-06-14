@@ -90,6 +90,16 @@ func (c *Client) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	return c.querier.GetAllOAuth2ClientCount(ctx)
 }
 
+// GetAllOAuth2ClientsForUser returns all OAuth2 clients belonging to a given user
+func (c *Client) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64) ([]*models.OAuth2Client, error) {
+	ctx, span := trace.StartSpan(ctx, "GetAllOAuth2ClientsForUser")
+	defer span.End()
+
+	c.logger.Debug("GetAllOAuth2ClientsForUser called")
+
+	return c.querier.GetAllOAuth2ClientsForUser(ctx, userID)
+}
+
 // GetAllOAuth2Clients returns all OAuth2 clients, irrespective of ownershic. It is called on startup to populate
 // the OAuth2 Client handler
 func (c *Client) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Client, error) {

@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
@@ -58,9 +57,9 @@ func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reque
 	logger.Debug("AuthorizeScopeHandler called")
 
 	var client = s.fetchOAuth2ClientFromRequest(req)
-	if client != nil {
+	if client != nil && client.HasScope(scope) {
 		res.WriteHeader(http.StatusOK)
-		return strings.Join(client.Scopes, scopesSeparator), nil
+		return scope, nil
 	}
 
 	if clientID := s.fetchOAuth2ClientIDFromRequest(req); clientID != "" {
@@ -154,9 +153,8 @@ func (s *Service) ClientScopeHandler(clientID, scope string) (authed bool, err e
 		return false, err
 	}
 
-	has := c.HasScope(scope)
-	if has {
-		return has, nil
+	if c.HasScope(scope) {
+		return true, nil
 	}
 
 	return false, errors.New("unauthorized")

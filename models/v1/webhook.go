@@ -15,6 +15,7 @@ type WebhookDataManager interface {
 	GetAllWebhooksCount(ctx context.Context) (uint64, error)
 	GetWebhooks(ctx context.Context, filter *QueryFilter, userID uint64) (*WebhookList, error)
 	GetAllWebhooks(ctx context.Context) (*WebhookList, error)
+	GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]Webhook, error)
 	CreateWebhook(ctx context.Context, input *WebhookInput) (*Webhook, error)
 	UpdateWebhook(ctx context.Context, updated *Webhook) error
 	DeleteWebhook(ctx context.Context, id, userID uint64) error

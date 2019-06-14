@@ -286,6 +286,70 @@ func TestPostgres_GetItems(T *testing.T) {
 
 }
 
+func TestPostgres_GetAllItemsForUser(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		expectedUserID := uint64(123)
+		expectedItem := &models.Item{
+			Name: "name",
+		}
+		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1"
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+			WithArgs(expectedUserID).
+			WillReturnRows(
+				buildMockRowFromItem(expectedItem),
+			)
+
+		expected := []models.Item{*expectedItem}
+
+		actual, err := p.GetAllItemsForUser(context.Background(), expectedUserID)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("with error querying database", func(t *testing.T) {
+		expectedUserID := uint64(123)
+		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1"
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+			WithArgs(expectedUserID).
+			WillReturnError(errors.New("blah"))
+
+		actual, err := p.GetAllItemsForUser(context.Background(), expectedUserID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("with unscannable response", func(t *testing.T) {
+		expectedUserID := uint64(123)
+		expectedItem := &models.Item{
+			Name: "name",
+		}
+		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1"
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+			WithArgs(expectedUserID).
+			WillReturnRows(
+				buildErroneousMockRowFromItem(expectedItem),
+			)
+
+		actual, err := p.GetAllItemsForUser(context.Background(), expectedUserID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
 func TestPostgres_buildCreateItemQuery(T *testing.T) {
 	T.Parallel()
 

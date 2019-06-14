@@ -37,6 +37,7 @@ func buildMockRowFromWebhook(w *models.Webhook) *sqlmock.Rows {
 func buildErroneousMockRowFromWebhook(w *models.Webhook) *sqlmock.Rows {
 	exampleRows := sqlmock.NewRows(webhooksTableColumns).
 		AddRow(
+			w.ArchivedOn,
 			w.BelongsTo,
 			w.Name,
 			w.ContentType,
@@ -47,7 +48,6 @@ func buildErroneousMockRowFromWebhook(w *models.Webhook) *sqlmock.Rows {
 			strings.Join(w.Topics, topicsSeparator),
 			w.CreatedOn,
 			w.UpdatedOn,
-			w.ArchivedOn,
 			w.ID,
 		)
 
@@ -81,9 +81,9 @@ func TestPostgres_GetWebhook(T *testing.T) {
 		expected := &models.Webhook{
 			ID:        123,
 			Name:      "name",
-			Events:    []string{""},
-			DataTypes: []string{""},
-			Topics:    []string{""},
+			Events:    []string{"things"},
+			DataTypes: []string{"things"},
+			Topics:    []string{"things"},
 		}
 		expectedUserID := uint64(321)
 
@@ -104,11 +104,8 @@ func TestPostgres_GetWebhook(T *testing.T) {
 	T.Run("with error from database", func(t *testing.T) {
 		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE belongs_to = $1 AND id = $2"
 		expected := &models.Webhook{
-			ID:        123,
-			Name:      "name",
-			Events:    []string{""},
-			DataTypes: []string{""},
-			Topics:    []string{""},
+			ID:   123,
+			Name: "name",
 		}
 		expectedUserID := uint64(321)
 
@@ -259,11 +256,8 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 			},
 			Webhooks: []models.Webhook{
 				{
-					ID:        123,
-					Name:      "name",
-					Events:    []string{""},
-					DataTypes: []string{""},
-					Topics:    []string{""},
+					ID:   123,
+					Name: "name",
 				},
 			},
 		}
@@ -287,7 +281,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
-	T.Run("with erroneous response from database", func(t *testing.T) {
+	T.Run("with error querying database", func(t *testing.T) {
 		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 
 		p, mockDB := buildTestService(t)
@@ -303,10 +297,14 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 
 	T.Run("with error from database", func(t *testing.T) {
 		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+		example := &models.Webhook{
+			ID:   123,
+			Name: "name",
+		}
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WillReturnError(errors.New("blah"))
+			WillReturnRows(buildErroneousMockRowFromWebhook(example))
 
 		actual, err := p.GetAllWebhooks(context.Background())
 		assert.Error(t, err)
@@ -325,11 +323,8 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 			},
 			Webhooks: []models.Webhook{
 				{
-					ID:        123,
-					Name:      "name",
-					Events:    []string{""},
-					DataTypes: []string{""},
-					Topics:    []string{""},
+					ID:   123,
+					Name: "name",
 				},
 			},
 		}
@@ -351,6 +346,73 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
+}
+
+func TestPostgres_GetAllWebhooksForUser(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		exampleUser := &models.User{ID: 123}
+		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+		expected := []models.Webhook{
+			{
+				ID:   123,
+				Name: "name",
+			},
+		}
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+			WillReturnRows(
+				buildMockRowFromWebhook(&expected[0]),
+				buildMockRowFromWebhook(&expected[0]),
+				buildMockRowFromWebhook(&expected[0]),
+			)
+
+		actual, err := p.GetAllWebhooksForUser(context.Background(), exampleUser.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("with error querying database", func(t *testing.T) {
+		exampleUser := &models.User{ID: 123}
+		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+			WillReturnError(errors.New("blah"))
+
+		actual, err := p.GetAllWebhooksForUser(context.Background(), exampleUser.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("with erroneous response from database", func(t *testing.T) {
+		exampleUser := &models.User{ID: 123}
+		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+		expected := []models.Webhook{
+			{
+				ID:   123,
+				Name: "name",
+			},
+		}
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+			WillReturnRows(
+				buildErroneousMockRowFromWebhook(&expected[0]),
+			)
+
+		actual, err := p.GetAllWebhooksForUser(context.Background(), exampleUser.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
 }
 
 func TestPostgres_buildGetWebhooksQuery(T *testing.T) {
@@ -386,11 +448,8 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 			},
 			Webhooks: []models.Webhook{
 				{
-					ID:        123,
-					Name:      "name",
-					Events:    []string{""},
-					DataTypes: []string{""},
-					Topics:    []string{""},
+					ID:   123,
+					Name: "name",
 				},
 			},
 		}
@@ -433,11 +492,8 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 		exampleUserID := uint64(123)
 		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.Webhook{
-			ID:        123,
-			Name:      "name",
-			Events:    []string{""},
-			DataTypes: []string{""},
-			Topics:    []string{""},
+			ID:   123,
+			Name: "name",
 		}
 
 		p, mockDB := buildTestService(t)
@@ -445,6 +501,42 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 			WillReturnRows(
 				buildErroneousMockRowFromWebhook(expected),
 			)
+
+		actual, err := p.GetWebhooks(context.Background(), models.DefaultQueryFilter(), exampleUserID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("with error fetching count", func(t *testing.T) {
+		exampleUserID := uint64(123)
+		expectedCount := uint64(321)
+		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+		expectedCountQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
+		expected := &models.WebhookList{
+			Pagination: models.Pagination{
+				Page:       1,
+				Limit:      20,
+				TotalCount: expectedCount,
+			},
+			Webhooks: []models.Webhook{
+				{
+					ID:   123,
+					Name: "name",
+				},
+			},
+		}
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+			WillReturnRows(
+				buildMockRowFromWebhook(&expected.Webhooks[0]),
+				buildMockRowFromWebhook(&expected.Webhooks[0]),
+				buildMockRowFromWebhook(&expected.Webhooks[0]),
+			)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
+			WillReturnError(errors.New("blah"))
 
 		actual, err := p.GetWebhooks(context.Background(), models.DefaultQueryFilter(), exampleUserID)
 		assert.Error(t, err)

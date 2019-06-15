@@ -6,13 +6,10 @@ import (
 	"database/sql"
 	"encoding/base32"
 	"encoding/base64"
-	"encoding/gob"
 	"fmt"
 	"image/png"
 	"net/http"
 	"strconv"
-	"strings"
-	"time"
 
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -370,63 +367,4 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 	})
 
 	res.WriteHeader(http.StatusNoContent)
-}
-
-// ExportData satisfies our interface requirements
-func (s *Service) ExportData(res http.ResponseWriter, req *http.Request) {
-	s.BuildExportDataHandler(false)(res, req)
-}
-
-// BuildExportDataHandler is a constructor function for a database export handler
-// when includeDatabaseSecrets is set to true, the data exported will contain password
-// hashes and two factor authentication secrets.
-func (s *Service) BuildExportDataHandler(includeDatabaseSecrets bool) http.HandlerFunc {
-	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "export_data_route")
-		defer span.End()
-
-		s.logger.Debug("ExportData called")
-
-		user, ok := ctx.Value(models.UserKey).(*models.User)
-		if !ok || user == nil {
-			s.logger.Debug("no user attached to ExportData request")
-			res.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		if !includeDatabaseSecrets {
-			user.TwoFactorSecret = ""
-			user.HashedPassword = ""
-			user.Salt = []byte{}
-		}
-
-		dataExport, err := s.database.ExportData(ctx, user)
-		if err != nil {
-			s.logger.Error(err, "fetching export from database")
-			res.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		var b bytes.Buffer
-		if err = gob.NewEncoder(&b).Encode(dataExport); err != nil {
-			s.logger.Error(err, "encoding export")
-			res.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		filename := fmt.Sprintf("%s.export", user.Username)
-
-		res.Header().Set(
-			"Content-Disposition",
-			fmt.Sprintf("attachment; filename=%s", filename),
-		)
-
-		http.ServeContent(
-			res,
-			req,
-			filename,
-			time.Now(),
-			strings.NewReader(base64.URLEncoding.EncodeToString(b.Bytes())),
-		)
-	}
 }

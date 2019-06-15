@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
 	"github.com/stretchr/testify/mock"
@@ -41,10 +40,4 @@ func (m *MockDatabase) Migrate(ctx context.Context) error {
 func (m *MockDatabase) IsReady(ctx context.Context) (ready bool) {
 	args := m.Called(ctx)
 	return args.Bool(0)
-}
-
-// ExportData satisfies the database.Database interface
-func (m *MockDatabase) ExportData(ctx context.Context, user *models.User) (*models.DataExport, error) {
-	args := m.Called(ctx, user)
-	return args.Get(0).(*models.DataExport), args.Error(1)
 }

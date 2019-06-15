@@ -311,7 +311,7 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 	}
 
 	// de-pointer-ize clients
-	var tmpL = []models.OAuth2Client{}
+	var tmpL = make([]models.OAuth2Client, len(list))
 	for _, t := range list {
 		tmpL = append(tmpL, *t)
 	}

@@ -28,10 +28,13 @@ type (
 		Scan(dest ...interface{}) error
 	}
 
-	// Querier is a subset interface for sql.{DB|Tx|Stmt} objects
+	// Querier is a subset interface for sql.{DB|Tx} objects
 	Querier interface {
-		ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error)
-		QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows, error)
-		QueryRowContext(ctx context.Context, args ...interface{}) *sql.Row
+		ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+		QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
+		QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
 	}
 )
+
+var _ Querier = (*sql.DB)(nil)
+var _ Querier = (*sql.Tx)(nil)

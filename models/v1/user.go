@@ -28,7 +28,6 @@ type UserDataServer interface {
 	NewTOTPSecret(res http.ResponseWriter, req *http.Request)
 	UpdatePassword(res http.ResponseWriter, req *http.Request)
 	Delete(res http.ResponseWriter, req *http.Request)
-	ExportData(res http.ResponseWriter, req *http.Request)
 }
 
 const (

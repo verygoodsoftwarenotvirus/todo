@@ -12,7 +12,6 @@ type (
 	Database interface {
 		Migrate(ctx context.Context) error
 		IsReady(ctx context.Context) (ready bool)
-		ExportData(ctx context.Context, user *models.User) (*models.DataExport, error)
 
 		models.ItemDataManager
 		models.UserDataManager

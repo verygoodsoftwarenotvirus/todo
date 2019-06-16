@@ -285,13 +285,13 @@ func (s *Service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	)
 
 	attachUserIDToSpan(span, userID)
-	attachUsernameToSpan(span, user.Username)
 
 	if sc != http.StatusOK {
 		res.WriteHeader(sc)
 		return
 	}
 
+	attachUsernameToSpan(span, user.Username)
 	logger := s.logger.WithValue("user", user.ID)
 
 	tfc, err := randString()
@@ -345,7 +345,6 @@ func (s *Service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 		input.TOTPToken,
 	)
 
-	attachUsernameToSpan(span, user.Username)
 	attachUserIDToSpan(span, userID)
 
 	if sc != http.StatusOK {
@@ -353,6 +352,7 @@ func (s *Service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 		return
 	}
 
+	attachUsernameToSpan(span, user.Username)
 	logger := s.logger.WithValue("user", user.ID)
 
 	var err error

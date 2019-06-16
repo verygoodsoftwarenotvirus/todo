@@ -11,7 +11,7 @@ before_script:
   - apt-get update -y && apt-get install -y make git gcc musl-dev
 
 coverage:
-  stage: testing
+  stage: quality
   image: golang:stretch
   variables:
     GOPATH: '/go'

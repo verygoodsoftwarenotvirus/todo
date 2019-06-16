@@ -2,16 +2,17 @@ package server
 
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
 
 	"github.com/google/wire"
 )
 
 type (
-	// Server is our API server
+	// Server is the structure responsible for hosting all available protocols.
+	// In the events we adopted a gRPC implementation of the surface, this is
+	// the structure that would contain it and be responsible for calling its
+	// serve method
 	Server struct {
-		logger     logging.Logger
 		config     *config.ServerConfig
 		httpServer *httpserver.Server
 	}
@@ -25,15 +26,10 @@ var (
 )
 
 // ProvideServer builds a new Server instance
-func ProvideServer(
-	logger logging.Logger,
-	cfg *config.ServerConfig,
-	httpServer *httpserver.Server,
-) (*Server, error) {
+func ProvideServer(cfg *config.ServerConfig, httpServer *httpserver.Server) (*Server, error) {
 	srv := &Server{
 		config:     cfg,
 		httpServer: httpServer,
-		logger:     logger,
 	}
 
 	return srv, nil

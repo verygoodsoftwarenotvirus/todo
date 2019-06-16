@@ -9,6 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pkg/errors"
+	"go.opencensus.io/trace"
 	"gopkg.in/oauth2.v3"
 	oauth2errors "gopkg.in/oauth2.v3/errors"
 	oauth2server "gopkg.in/oauth2.v3/server"
@@ -37,24 +38,24 @@ var _ oauth2server.ResponseErrorHandler = (*Service)(nil).OAuth2ResponseErrorHan
 // OAuth2ResponseErrorHandler fulfills a role for the OAuth2 server-side provider
 func (s *Service) OAuth2ResponseErrorHandler(re *oauth2errors.Response) {
 	s.logger.WithValues(map[string]interface{}{
-		"error":       re.Error,
 		"error_code":  re.ErrorCode,
 		"description": re.Description,
 		"uri":         re.URI,
 		"status_code": re.StatusCode,
 		"header":      re.Header,
-	})
+	}).Error(re.Error, "OAuth2ResponseErrorHandler")
 }
 
 var _ oauth2server.AuthorizeScopeHandler = (*Service)(nil).AuthorizeScopeHandler
 
 // AuthorizeScopeHandler satisfies the oauth2server AuthorizeScopeHandler interface
 func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Request) (scope string, err error) {
-	ctx := req.Context()
+	ctx, span := trace.StartSpan(req.Context(), "AuthorizeScopeHandler")
+	defer span.End()
+
 	scope = determineScope(req)
 
-	logger := s.logger.WithValue("scope", scope).WithValue("BLAHBLAHBLAH", "BLAHBLAHBLAH").WithRequest(req)
-	logger.Debug("AuthorizeScopeHandler called")
+	logger := s.logger.WithValue("scope", scope).WithRequest(req)
 
 	var client = s.fetchOAuth2ClientFromRequest(req)
 	if client != nil && client.HasScope(scope) {
@@ -66,22 +67,21 @@ func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reque
 		client, err = s.database.GetOAuth2ClientByClientID(ctx, clientID)
 
 		if err == sql.ErrNoRows {
-			s.logger.Error(err, "error fetching OAuth2 Client")
+			logger.Error(err, "error fetching OAuth2 Client")
 			res.WriteHeader(http.StatusNotFound)
 			return "", err
 		} else if err != nil {
-			s.logger.Error(err, "error fetching OAuth2 Client")
+			logger.Error(err, "error fetching OAuth2 Client")
 			res.WriteHeader(http.StatusInternalServerError)
 			return "", err
 		}
 
-		if client.HasScope(scope) {
-			res.WriteHeader(http.StatusOK)
-			return scope, nil
+		if !client.HasScope(scope) {
+			res.WriteHeader(http.StatusUnauthorized)
+			return "", errors.New("not authorized for scope")
 		}
 
-		res.WriteHeader(http.StatusUnauthorized)
-		return "", errors.New("not authorized for scope")
+		return scope, nil
 	}
 
 	res.WriteHeader(http.StatusBadRequest)
@@ -92,8 +92,8 @@ var _ oauth2server.UserAuthorizationHandler = (*Service)(nil).UserAuthorizationH
 
 // UserAuthorizationHandler satisfies the oauth2server UserAuthorizationHandler interface
 func (s *Service) UserAuthorizationHandler(res http.ResponseWriter, req *http.Request) (userID string, err error) {
-	ctx := req.Context()
-	s.logger.Debug("UserAuthorizationHandler called")
+	ctx, span := trace.StartSpan(req.Context(), "UserAuthorizationHandler")
+	defer span.End()
 
 	var uid uint64
 	if client, clientOk := ctx.Value(models.OAuth2ClientKey).(*models.OAuth2Client); !clientOk {
@@ -106,6 +106,7 @@ func (s *Service) UserAuthorizationHandler(res http.ResponseWriter, req *http.Re
 	} else {
 		uid = client.BelongsTo
 	}
+
 	return strconv.FormatUint(uid, 10), nil
 }
 
@@ -113,18 +114,23 @@ var _ oauth2server.ClientAuthorizedHandler = (*Service)(nil).ClientAuthorizedHan
 
 // ClientAuthorizedHandler satisfies the oauth2server ClientAuthorizedHandler interface
 func (s *Service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantType) (allowed bool, err error) {
-	s.logger.Debug("ClientAuthorizedHandler called")
+	// NOTE: it's a shame the interface we're implementing doesn't have this as its first argument
+	ctx, span := trace.StartSpan(context.Background(), "ClientAuthorizedHandler")
+	defer span.End()
+
+	logger := s.logger.WithValues(map[string]interface{}{
+		"grant":     grant,
+		"client_id": clientID,
+	})
 
 	if grant == oauth2.PasswordCredentials {
 		return false, errors.New("invalid grant type: password")
 	}
 
-	// NOTE: it's a shame the interface we're implementing doesn't have this as its first argument
-	ctx := context.Background()
-
 	client, err := s.database.GetOAuth2ClientByClientID(ctx, clientID)
 	if err != nil {
-		return false, err
+		logger.Error(err, "fetching oauth2 client from database")
+		return false, errors.Wrap(err, "fetching oauth2 client from database")
 	}
 
 	if grant == oauth2.Implicit && !client.ImplicitAllowed {
@@ -138,14 +144,14 @@ var _ oauth2server.ClientScopeHandler = (*Service)(nil).ClientScopeHandler
 
 // ClientScopeHandler satisfies the oauth2server ClientScopeHandler interface
 func (s *Service) ClientScopeHandler(clientID, scope string) (authed bool, err error) {
+	// NOTE: it's a shame the interface we're implementing doesn't have this as its first argument
+	ctx, span := trace.StartSpan(context.Background(), "UserAuthorizationHandler")
+	defer span.End()
+
 	logger := s.logger.WithValues(map[string]interface{}{
 		"client_id": clientID,
 		"scope":     scope,
 	})
-	logger.Debug("ClientScopeHandler called")
-
-	// NOTE: it's a shame the interface we're implementing doesn't have this as its first argument
-	ctx := context.Background()
 
 	c, err := s.database.GetOAuth2ClientByClientID(ctx, clientID)
 	if err != nil {

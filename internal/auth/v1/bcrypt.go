@@ -25,18 +25,20 @@ var (
 	ErrCostTooLow = errors.New("stored password's cost is too low")
 )
 
-// BcryptAuthenticator is our bcrypt-based authenticator
-type BcryptAuthenticator struct {
-	logger              logging.Logger
-	hashCost            uint
-	minimumPasswordSize uint
-}
+type (
+	// BcryptAuthenticator is our bcrypt-based authenticator
+	BcryptAuthenticator struct {
+		logger              logging.Logger
+		hashCost            uint
+		minimumPasswordSize uint
+	}
 
-// BcryptHashCost is an arbitrary type alias for dependency injection's sake.
-type BcryptHashCost uint
+	// BcryptHashCost is an arbitrary type alias for dependency injection's sake.
+	BcryptHashCost uint
+)
 
-// ProvideBcrypt returns a Bcrypt-powered Authenticator
-func ProvideBcrypt(hashCost BcryptHashCost, logger logging.Logger) Authenticator {
+// ProvideBcryptAuthenticator returns a bcrypt powered Authenticator
+func ProvideBcryptAuthenticator(hashCost BcryptHashCost, logger logging.Logger) Authenticator {
 	ba := &BcryptAuthenticator{
 		logger:              logger.WithName("bcrypt"),
 		hashCost:            uint(math.Min(float64(DefaultBcryptHashCost), float64(hashCost))),
@@ -87,11 +89,7 @@ func (b *BcryptAuthenticator) ValidateLogin(
 }
 
 // PasswordMatches validates whether or not a bcrypt-hashed password matches a provided password
-func (b *BcryptAuthenticator) PasswordMatches(
-	ctx context.Context,
-	hashedPassword,
-	providedPassword string,
-	_ []byte) bool {
+func (b *BcryptAuthenticator) PasswordMatches(ctx context.Context, hashedPassword, providedPassword string, _ []byte) bool {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(providedPassword)) == nil
 }
 

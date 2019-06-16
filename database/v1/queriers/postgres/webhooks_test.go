@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"net/http"
 	"strings"
@@ -101,6 +102,30 @@ func TestPostgres_GetWebhook(T *testing.T) {
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
+	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE belongs_to = $1 AND id = $2"
+		expected := &models.Webhook{
+			ID:        123,
+			Name:      "name",
+			Events:    []string{"things"},
+			DataTypes: []string{"things"},
+			Topics:    []string{"things"},
+		}
+		expectedUserID := uint64(321)
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(expectedUserID, expected.ID).
+			WillReturnError(sql.ErrNoRows)
+
+		actual, err := p.GetWebhook(context.Background(), expected.ID, expectedUserID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+		assert.Equal(t, sql.ErrNoRows, err)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
 	T.Run("with error from database", func(t *testing.T) {
 		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE belongs_to = $1 AND id = $2"
 		expected := &models.Webhook{
@@ -115,6 +140,32 @@ func TestPostgres_GetWebhook(T *testing.T) {
 			WillReturnError(errors.New("blah"))
 
 		actual, err := p.GetWebhook(context.Background(), expected.ID, expectedUserID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("with invalid response from database", func(t *testing.T) {
+		ctx := context.Background()
+		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE belongs_to = $1 AND id = $2"
+		expected := &models.Webhook{
+			ID:        123,
+			Name:      "name",
+			Events:    []string{"things"},
+			DataTypes: []string{"things"},
+			Topics:    []string{"things"},
+		}
+		expectedUserID := uint64(321)
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(expectedUserID, expected.ID).
+			WillReturnRows(
+				buildErroneousMockRowFromWebhook(expected),
+			)
+
+		actual, err := p.GetWebhook(ctx, expected.ID, expectedUserID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -252,6 +303,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 		expectedCountQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
+				Page:       1,
 				TotalCount: expectedCount,
 			},
 			Webhooks: []models.Webhook{
@@ -277,6 +329,21 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 		actual, err := p.GetAllWebhooks(context.Background())
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+			WillReturnError(sql.ErrNoRows)
+
+		actual, err := p.GetAllWebhooks(context.Background())
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+		assert.Equal(t, sql.ErrNoRows, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -376,6 +443,22 @@ func TestPostgres_GetAllWebhooksForUser(T *testing.T) {
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
+	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		exampleUser := &models.User{ID: 123}
+		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+			WillReturnError(sql.ErrNoRows)
+
+		actual, err := p.GetAllWebhooksForUser(context.Background(), exampleUser.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+		assert.Equal(t, sql.ErrNoRows, err)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
 	T.Run("with error querying database", func(t *testing.T) {
 		exampleUser := &models.User{ID: 123}
 		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
@@ -469,6 +552,22 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 		actual, err := p.GetWebhooks(context.Background(), models.DefaultQueryFilter(), exampleUserID)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		exampleUserID := uint64(123)
+		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+			WillReturnError(sql.ErrNoRows)
+
+		actual, err := p.GetWebhooks(context.Background(), models.DefaultQueryFilter(), exampleUserID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+		assert.Equal(t, sql.ErrNoRows, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

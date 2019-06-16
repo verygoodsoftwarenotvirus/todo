@@ -26,11 +26,11 @@ type WebhookDataServer interface {
 	CreationInputMiddleware(next http.Handler) http.Handler
 	UpdateInputMiddleware(next http.Handler) http.Handler
 
-	List(res http.ResponseWriter, req *http.Request)
-	Create(res http.ResponseWriter, req *http.Request)
-	Read(res http.ResponseWriter, req *http.Request)
-	Update(res http.ResponseWriter, req *http.Request)
-	Delete(res http.ResponseWriter, req *http.Request)
+	ListHandler(res http.ResponseWriter, req *http.Request)
+	CreateHandler(res http.ResponseWriter, req *http.Request)
+	ReadHandler(res http.ResponseWriter, req *http.Request)
+	UpdateHandler(res http.ResponseWriter, req *http.Request)
+	DeleteHandler(res http.ResponseWriter, req *http.Request)
 }
 
 // Webhook represents an item

@@ -124,6 +124,7 @@ func (qf *QueryFilter) ApplyToQueryBuilder(queryBuilder squirrel.SelectBuilder) 
 	if qf == nil {
 		return queryBuilder
 	}
+	qf.SetPage(qf.Page)
 
 	if qp := qf.QueryPage(); qp > 0 {
 		queryBuilder = queryBuilder.Offset(qp)

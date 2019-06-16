@@ -50,108 +50,6 @@ func buildErroneousMockRowFromOAuth2Client(c *models.OAuth2Client) *sqlmock.Rows
 	return exampleRows
 }
 
-func TestPostgres_buildCreateOAuth2ClientQuery(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		p, _ := buildTestService(t)
-		exampleInput := &models.OAuth2Client{
-			ClientID:     "ClientID",
-			ClientSecret: "ClientSecret",
-			Scopes:       []string{"blah"},
-			RedirectURI:  "RedirectURI",
-			BelongsTo:    123,
-		}
-
-		expectedArgCount := 6
-		expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_on"
-
-		actualQuery, args := p.buildCreateOAuth2ClientQuery(exampleInput)
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Len(t, args, expectedArgCount)
-		assert.Equal(t, exampleInput.Name, args[0].(string))
-		assert.Equal(t, exampleInput.ClientID, args[1].(string))
-		assert.Equal(t, exampleInput.ClientSecret, args[2].(string))
-		assert.Equal(t, exampleInput.Scopes[0], args[3].(string))
-		assert.Equal(t, exampleInput.RedirectURI, args[4].(string))
-		assert.Equal(t, exampleInput.BelongsTo, args[5].(uint64))
-	})
-}
-
-func TestPostgres_CreateOAuth2Client(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		expectedUserID := uint64(321)
-		expected := &models.OAuth2Client{
-			ID:        123,
-			Name:      "name",
-			BelongsTo: expectedUserID,
-			CreatedOn: uint64(time.Now().Unix()),
-		}
-		expectedInput := &models.OAuth2ClientCreationInput{
-			Name:      expected.Name,
-			BelongsTo: expected.BelongsTo,
-		}
-		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).
-			AddRow(expected.ID, uint64(time.Now().Unix()))
-
-		expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_on"
-
-		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				expected.Name,
-				expected.ClientID,
-				expected.ClientSecret,
-				strings.Join(expected.Scopes, scopesSeparator),
-				expected.RedirectURI,
-				expected.BelongsTo,
-			).
-			WillReturnRows(exampleRows)
-
-		actual, err := p.CreateOAuth2Client(context.Background(), expectedInput)
-		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-
-	T.Run("with error writing to database", func(t *testing.T) {
-		expectedUserID := uint64(321)
-		expected := &models.OAuth2Client{
-			ID:        123,
-			Name:      "name",
-			BelongsTo: expectedUserID,
-			CreatedOn: uint64(time.Now().Unix()),
-		}
-		expectedInput := &models.OAuth2ClientCreationInput{
-			Name:      expected.Name,
-			BelongsTo: expected.BelongsTo,
-		}
-
-		expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_on"
-
-		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				expected.Name,
-				expected.ClientID,
-				expected.ClientSecret,
-				strings.Join(expected.Scopes, scopesSeparator),
-				expected.RedirectURI,
-				expected.BelongsTo,
-			).
-			WillReturnError(errors.New("blah"))
-
-		actual, err := p.CreateOAuth2Client(context.Background(), expectedInput)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
 func TestPostgres_buildGetOAuth2ClientByClientIDQuery(T *testing.T) {
 	T.Parallel()
 
@@ -195,7 +93,24 @@ func TestPostgres_GetOAuth2ClientByClientID(T *testing.T) {
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
-	T.Run("with errorenous row", func(t *testing.T) {
+	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		exampleClientID := "EXAMPLE"
+		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL AND client_id = $1"
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(exampleClientID).
+			WillReturnError(sql.ErrNoRows)
+
+		actual, err := p.GetOAuth2ClientByClientID(context.Background(), exampleClientID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+		assert.Equal(t, sql.ErrNoRows, err)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("with erroneous row", func(t *testing.T) {
 		exampleClientID := "EXAMPLE"
 		expectedUserID := uint64(321)
 		expected := &models.OAuth2Client{
@@ -261,6 +176,20 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 		actual, err := p.GetAllOAuth2Clients(context.Background())
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WillReturnError(sql.ErrNoRows)
+
+		actual, err := p.GetAllOAuth2Clients(context.Background())
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+		assert.Equal(t, sql.ErrNoRows, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -335,6 +264,21 @@ func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 		actual, err := p.GetAllOAuth2ClientsForUser(context.Background(), exampleUser.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		exampleUser := &models.User{ID: 123}
+		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WillReturnError(sql.ErrNoRows)
+
+		actual, err := p.GetAllOAuth2ClientsForUser(context.Background(), exampleUser.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+		assert.Equal(t, sql.ErrNoRows, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -424,6 +368,31 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 		actual, err := p.GetOAuth2Client(context.Background(), expected.ID, expected.BelongsTo)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		expectedUserID := uint64(321)
+		expected := &models.OAuth2Client{
+			ID:        123,
+			Name:      "name",
+			BelongsTo: expectedUserID,
+			CreatedOn: uint64(time.Now().Unix()),
+			Scopes:    []string{"things"},
+		}
+
+		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to = $1 AND id = $2"
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(expected.BelongsTo, expected.ID).
+			WillReturnError(sql.ErrNoRows)
+
+		actual, err := p.GetOAuth2Client(context.Background(), expected.ID, expected.BelongsTo)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+		assert.Equal(t, sql.ErrNoRows, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -546,6 +515,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 		expected := &models.OAuth2ClientList{
 			Pagination: models.Pagination{
@@ -563,6 +533,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 			},
 		}
 
+		filter := models.DefaultQueryFilter()
 		expectedListQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 		expectedCountQuery := "SELECT COUNT(id) FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
 
@@ -579,7 +550,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 				sqlmock.NewRows([]string{"count"}).AddRow(expected.TotalCount),
 			)
 
-		actual, err := p.GetOAuth2Clients(context.Background(), models.DefaultQueryFilter(), expectedUserID)
+		actual, err := p.GetOAuth2Clients(ctx, filter, expectedUserID)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -689,6 +660,108 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
+}
+
+func TestPostgres_buildCreateOAuth2ClientQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		p, _ := buildTestService(t)
+		exampleInput := &models.OAuth2Client{
+			ClientID:     "ClientID",
+			ClientSecret: "ClientSecret",
+			Scopes:       []string{"blah"},
+			RedirectURI:  "RedirectURI",
+			BelongsTo:    123,
+		}
+
+		expectedArgCount := 6
+		expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_on"
+
+		actualQuery, args := p.buildCreateOAuth2ClientQuery(exampleInput)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Len(t, args, expectedArgCount)
+		assert.Equal(t, exampleInput.Name, args[0].(string))
+		assert.Equal(t, exampleInput.ClientID, args[1].(string))
+		assert.Equal(t, exampleInput.ClientSecret, args[2].(string))
+		assert.Equal(t, exampleInput.Scopes[0], args[3].(string))
+		assert.Equal(t, exampleInput.RedirectURI, args[4].(string))
+		assert.Equal(t, exampleInput.BelongsTo, args[5].(uint64))
+	})
+}
+
+func TestPostgres_CreateOAuth2Client(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		expectedUserID := uint64(321)
+		expected := &models.OAuth2Client{
+			ID:        123,
+			Name:      "name",
+			BelongsTo: expectedUserID,
+			CreatedOn: uint64(time.Now().Unix()),
+		}
+		expectedInput := &models.OAuth2ClientCreationInput{
+			Name:      expected.Name,
+			BelongsTo: expected.BelongsTo,
+		}
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).
+			AddRow(expected.ID, uint64(time.Now().Unix()))
+
+		expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_on"
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				expected.Name,
+				expected.ClientID,
+				expected.ClientSecret,
+				strings.Join(expected.Scopes, scopesSeparator),
+				expected.RedirectURI,
+				expected.BelongsTo,
+			).
+			WillReturnRows(exampleRows)
+
+		actual, err := p.CreateOAuth2Client(context.Background(), expectedInput)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("with error writing to database", func(t *testing.T) {
+		expectedUserID := uint64(321)
+		expected := &models.OAuth2Client{
+			ID:        123,
+			Name:      "name",
+			BelongsTo: expectedUserID,
+			CreatedOn: uint64(time.Now().Unix()),
+		}
+		expectedInput := &models.OAuth2ClientCreationInput{
+			Name:      expected.Name,
+			BelongsTo: expected.BelongsTo,
+		}
+
+		expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_on"
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				expected.Name,
+				expected.ClientID,
+				expected.ClientSecret,
+				strings.Join(expected.Scopes, scopesSeparator),
+				expected.RedirectURI,
+				expected.BelongsTo,
+			).
+			WillReturnError(errors.New("blah"))
+
+		actual, err := p.CreateOAuth2Client(context.Background(), expectedInput)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
 }
 
 func TestPostgres_buildUpdateOAuth2ClientQuery(T *testing.T) {

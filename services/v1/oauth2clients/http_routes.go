@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/base32"
 	"net/http"
+	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
@@ -18,6 +19,24 @@ const (
 	oauth2ClientIDURIParamKey                   = "client_id"
 	clientIDKey               models.ContextKey = "client_id"
 )
+
+func attachUserIDToSpan(span *trace.Span, userID uint64) {
+	if span != nil {
+		span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
+	}
+}
+
+func attachOAuth2ClientDatabaseIDToSpan(span *trace.Span, itemID uint64) {
+	if span != nil {
+		span.AddAttributes(trace.StringAttribute("outh2client_id", strconv.FormatUint(itemID, 10)))
+	}
+}
+
+func attachOAuth2ClientIDToSpan(span *trace.Span, clientID string) {
+	if span != nil {
+		span.AddAttributes(trace.StringAttribute("client_id", clientID))
+	}
+}
 
 // randString produces a random string
 // https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
@@ -38,18 +57,16 @@ func (s *Service) fetchUserID(req *http.Request) uint64 {
 	return 0
 }
 
-// List is a handler that returns a list of OAuth2 clients
-func (s *Service) List(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "list_route")
+// ListHandler is a handler that returns a list of OAuth2 clients
+func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := trace.StartSpan(req.Context(), "ListHandler")
 	defer span.End()
 
-	userID := s.fetchUserID(req)
 	qf := models.ExtractQueryFilter(req)
-	logger := s.logger.WithValues(map[string]interface{}{
-		"filter":  qf,
-		"user_id": userID,
-	})
-	logger.Debug("oauth2Client list route called")
+
+	userID := s.fetchUserID(req)
+	attachUserIDToSpan(span, userID)
+	logger := s.logger.WithValue("user_id", userID)
 
 	oauth2Clients, err := s.database.GetOAuth2Clients(ctx, qf, userID)
 	if err == sql.ErrNoRows {
@@ -67,15 +84,14 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// Create is our OAuth2 client creation route
-func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "create_route")
+// CreateHandler is our OAuth2 client creation route
+func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := trace.StartSpan(req.Context(), "CreateHandler")
 	defer span.End()
 
-	s.logger.Debug("oauth2Client creation route called")
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.OAuth2ClientCreationInput)
 	if !ok {
-		s.logger.Error(nil, "valid input not attached to request")
+		s.logger.Info("valid input not attached to request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -93,6 +109,8 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	input.BelongsTo = user.ID
+
+	attachUserIDToSpan(span, user.ID)
 
 	valid, err := s.authenticator.ValidateLogin(
 		ctx,
@@ -124,13 +142,8 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	attachOAuth2ClientDatabaseIDToSpan(span, client.ID)
 	s.oauth2ClientCounter.Increment(ctx)
-
-	logger.WithValues(map[string]interface{}{
-		"client_id":       client.ID,
-		"belongs_to":      client.BelongsTo,
-		"client_oauth_id": client.ClientID,
-	}).Debug("CreateOAuth2Client route returning successfully")
 
 	res.WriteHeader(http.StatusCreated)
 	if err = s.encoderDecoder.EncodeResponse(res, client); err != nil {
@@ -138,22 +151,25 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// Read is a route handler for retrieving an OAuth2 client
-func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "read_route")
+// ReadHandler is a route handler for retrieving an OAuth2 client
+func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := trace.StartSpan(req.Context(), "ReadHandler")
 	defer span.End()
 
 	userID := s.fetchUserID(req)
 	oauth2ClientID := s.urlClientIDExtractor(req)
+
 	logger := s.logger.WithValues(map[string]interface{}{
 		"oauth2_client_id": oauth2ClientID,
 		"user_id":          userID,
 	})
-	logger.Debug("oauth2Client read route called")
+
+	attachUserIDToSpan(span, userID)
+	attachOAuth2ClientDatabaseIDToSpan(span, oauth2ClientID)
 
 	x, err := s.database.GetOAuth2Client(ctx, oauth2ClientID, userID)
 	if err == sql.ErrNoRows {
-		logger.Debug("Read called on nonexistent client")
+		logger.Debug("ReadHandler called on nonexistent client")
 		res.WriteHeader(http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -167,9 +183,9 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// Delete is a route handler for deleting an OAuth2 client
-func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "delete_route")
+// DeleteHandler is a route handler for deleting an OAuth2 client
+func (s *Service) DeleteHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := trace.StartSpan(req.Context(), "DeleteHandler")
 	defer span.End()
 
 	userID := s.fetchUserID(req)
@@ -178,7 +194,9 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 		"oauth2_client_id": oauth2ClientID,
 		"user_id":          userID,
 	})
-	logger.Debug("oauth2Client deletion route called")
+
+	attachUserIDToSpan(span, userID)
+	attachOAuth2ClientDatabaseIDToSpan(span, oauth2ClientID)
 
 	err := s.database.DeleteOAuth2Client(ctx, oauth2ClientID, userID)
 	if err == sql.ErrNoRows {

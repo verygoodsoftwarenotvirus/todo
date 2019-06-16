@@ -11,13 +11,19 @@ import (
 
 var _ models.ItemDataManager = (*Client)(nil)
 
+func attachItemIDToSpan(span *trace.Span, itemID uint64) {
+	if span != nil {
+		span.AddAttributes(trace.StringAttribute("item_id", strconv.FormatUint(itemID, 10)))
+	}
+}
+
 // GetItem fetches an item from the postgres querier
 func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
 	ctx, span := trace.StartSpan(ctx, "GetItem")
 	defer span.End()
 
-	span.AddAttributes(trace.StringAttribute("item_id", strconv.FormatUint(itemID, 10)))
-	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
+	attachUserIDToSpan(span, userID)
+	attachItemIDToSpan(span, itemID)
 
 	c.logger.WithValues(map[string]interface{}{
 		"item_id": itemID,
@@ -31,18 +37,15 @@ func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*models.It
 func (c *Client) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
 	ctx, span := trace.StartSpan(ctx, "GetItemCount")
 	defer span.End()
-	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
-
-	c.logger.WithValues(map[string]interface{}{
-		"filter":  filter,
-		"user_id": userID,
-	}).Debug("GetItemCount called")
 
 	if filter == nil {
-		c.logger.Debug("using default query filter")
 		filter = models.DefaultQueryFilter()
 	}
-	filter.SetPage(filter.Page)
+
+	attachUserIDToSpan(span, userID)
+	attachFilterToSpan(span, filter)
+
+	c.logger.WithValue("user_id", userID).Debug("GetItemCount called")
 
 	return c.querier.GetItemCount(ctx, filter, userID)
 }
@@ -61,39 +64,28 @@ func (c *Client) GetAllItemsCount(ctx context.Context) (count uint64, err error)
 func (c *Client) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
 	ctx, span := trace.StartSpan(ctx, "GetItems")
 	defer span.End()
-	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
-
-	logger := c.logger.WithValues(map[string]interface{}{
-		"filter":  filter,
-		"user_id": userID,
-	})
-	logger.Debug("GetItems called")
 
 	if filter == nil {
-		logger.Debug("using default query filter")
 		filter = models.DefaultQueryFilter()
 	}
-	filter.SetPage(filter.Page)
+
+	attachUserIDToSpan(span, userID)
+	attachFilterToSpan(span, filter)
+
+	c.logger.WithValue("user_id", userID).Debug("GetItems called")
 
 	itemList, err := c.querier.GetItems(ctx, filter, userID)
-
-	logger.WithValues(map[string]interface{}{
-		"item_count": itemList.TotalCount,
-		"item_list":  itemList.Items,
-		"err":        err,
-	}).Debug("returning from GetItems")
 
 	return itemList, err
 }
 
 // GetAllItemsForUser fetches a list of items from the postgres querier that meet a particular filter
 func (c *Client) GetAllItemsForUser(ctx context.Context, userID uint64) ([]models.Item, error) {
-	ctx, span := trace.StartSpan(ctx, "GetItems")
+	ctx, span := trace.StartSpan(ctx, "GetAllItemsForUser")
 	defer span.End()
-	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
 
-	logger := c.logger.WithValue("user_id", userID)
-	logger.Debug("GetItems called")
+	attachUserIDToSpan(span, userID)
+	c.logger.WithValue("user_id", userID).Debug("GetAllItemsForUser called")
 
 	itemList, err := c.querier.GetAllItemsForUser(ctx, userID)
 
@@ -114,9 +106,9 @@ func (c *Client) CreateItem(ctx context.Context, input *models.ItemInput) (*mode
 func (c *Client) UpdateItem(ctx context.Context, input *models.Item) error {
 	ctx, span := trace.StartSpan(ctx, "UpdateItem")
 	defer span.End()
-	span.AddAttributes(trace.StringAttribute("item_id", strconv.FormatUint(input.ID, 10)))
 
-	c.logger.WithValue("input", input).Debug("UpdateItem called")
+	attachItemIDToSpan(span, input.ID)
+	c.logger.WithValue("item_id", input.ID).Debug("UpdateItem called")
 
 	return c.querier.UpdateItem(ctx, input)
 }
@@ -125,8 +117,9 @@ func (c *Client) UpdateItem(ctx context.Context, input *models.Item) error {
 func (c *Client) DeleteItem(ctx context.Context, itemID, userID uint64) error {
 	ctx, span := trace.StartSpan(ctx, "DeleteItem")
 	defer span.End()
-	span.AddAttributes(trace.StringAttribute("item_id", strconv.FormatUint(itemID, 10)))
-	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
+
+	attachUserIDToSpan(span, userID)
+	attachItemIDToSpan(span, itemID)
 
 	c.logger.WithValues(map[string]interface{}{
 		"item_id": itemID,

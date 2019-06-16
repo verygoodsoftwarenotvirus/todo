@@ -36,8 +36,6 @@ func TestService_StaticDir(T *testing.T) {
 		cwd, err := os.Getwd()
 		require.NoError(t, err)
 
-		require.NoError(t, os.Chdir("/home/jeffrey/src/gitlab.com/verygoodsoftwarenotvirus/todo/"))
-
 		hf, err := s.StaticDir(cwd)
 		assert.NoError(t, err)
 		assert.NotNil(t, hf)

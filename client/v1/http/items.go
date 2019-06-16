@@ -23,9 +23,6 @@ func (c *V1Client) BuildGetItemRequest(ctx context.Context, id uint64) (*http.Re
 
 // GetItem gets an item
 func (c *V1Client) GetItem(ctx context.Context, id uint64) (item *models.Item, err error) {
-	logger := c.logger.WithValue("id", id)
-	logger.Debug("GetItem called")
-
 	req, err := c.BuildGetItemRequest(ctx, id)
 	if err != nil {
 		return nil, errors.Wrap(err, "building request")
@@ -43,9 +40,6 @@ func (c *V1Client) BuildGetItemsRequest(ctx context.Context, filter *models.Quer
 
 // GetItems gets a list of items
 func (c *V1Client) GetItems(ctx context.Context, filter *models.QueryFilter) (items *models.ItemList, err error) {
-	logger := c.logger.WithValue("filter", filter)
-	logger.Debug("GetItems called")
-
 	req, err := c.BuildGetItemsRequest(ctx, filter)
 	if err != nil {
 		return nil, errors.Wrap(err, "building request")
@@ -63,12 +57,6 @@ func (c *V1Client) BuildCreateItemRequest(ctx context.Context, body *models.Item
 
 // CreateItem creates an item
 func (c *V1Client) CreateItem(ctx context.Context, input *models.ItemInput) (item *models.Item, err error) {
-	logger := c.logger.WithValues(map[string]interface{}{
-		"input_name":    input.Name,
-		"input_details": input.Details,
-	})
-	logger.Debug("CreateItem called")
-
 	req, err := c.BuildCreateItemRequest(ctx, input)
 	if err != nil {
 		return nil, errors.Wrap(err, "building request")
@@ -87,9 +75,6 @@ func (c *V1Client) BuildUpdateItemRequest(ctx context.Context, updated *models.I
 
 // UpdateItem updates an item
 func (c *V1Client) UpdateItem(ctx context.Context, updated *models.Item) error {
-	logger := c.logger.WithValue("id", updated.ID)
-	logger.Debug("UpdateItem called")
-
 	req, err := c.BuildUpdateItemRequest(ctx, updated)
 	if err != nil {
 		return errors.Wrap(err, "building request")
@@ -107,8 +92,6 @@ func (c *V1Client) BuildDeleteItemRequest(ctx context.Context, id uint64) (*http
 
 // DeleteItem deletes an item
 func (c *V1Client) DeleteItem(ctx context.Context, id uint64) error {
-	c.logger.WithValue("id", id).Debug("DeleteItem called")
-
 	req, err := c.BuildDeleteItemRequest(ctx, id)
 	if err != nil {
 		return errors.Wrap(err, "building request")

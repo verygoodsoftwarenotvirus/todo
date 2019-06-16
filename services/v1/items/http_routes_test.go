@@ -64,7 +64,7 @@ func TestItemsService_List(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.List(res, req)
+		s.ListHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusOK)
 	})
@@ -100,7 +100,7 @@ func TestItemsService_List(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.List(res, req)
+		s.ListHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusOK)
 	})
@@ -136,7 +136,7 @@ func TestItemsService_List(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.List(res, req)
+		s.ListHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusInternalServerError)
 	})
@@ -175,7 +175,7 @@ func TestItemsService_List(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.List(res, req)
+		s.ListHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusOK)
 	})
@@ -233,7 +233,7 @@ func TestItemsService_Create(T *testing.T) {
 		}
 		req = req.WithContext(context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput))
 
-		s.Create(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusCreated)
 	})
@@ -260,7 +260,7 @@ func TestItemsService_Create(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.Create(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusBadRequest)
 	})
@@ -306,7 +306,7 @@ func TestItemsService_Create(T *testing.T) {
 		}
 		req = req.WithContext(context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput))
 
-		s.Create(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusInternalServerError)
 	})
@@ -360,7 +360,7 @@ func TestItemsService_Create(T *testing.T) {
 		}
 		req = req.WithContext(context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput))
 
-		s.Create(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusCreated)
 	})
@@ -409,7 +409,7 @@ func TestItemsService_Read(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.Read(res, req)
+		s.ReadHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusOK)
 	})
@@ -449,7 +449,7 @@ func TestItemsService_Read(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.Read(res, req)
+		s.ReadHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusNotFound)
 	})
@@ -489,7 +489,7 @@ func TestItemsService_Read(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.Read(res, req)
+		s.ReadHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusInternalServerError)
 	})
@@ -534,7 +534,7 @@ func TestItemsService_Read(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.Read(res, req)
+		s.ReadHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusOK)
 	})
@@ -603,7 +603,7 @@ func TestItemsService_Update(T *testing.T) {
 		}
 		req = req.WithContext(context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput))
 
-		s.Update(res, req)
+		s.UpdateHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusOK)
 	})
@@ -620,7 +620,7 @@ func TestItemsService_Update(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.Update(res, req)
+		s.UpdateHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusBadRequest)
 	})
@@ -666,7 +666,7 @@ func TestItemsService_Update(T *testing.T) {
 		}
 		req = req.WithContext(context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput))
 
-		s.Update(res, req)
+		s.UpdateHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusNotFound)
 	})
@@ -712,7 +712,7 @@ func TestItemsService_Update(T *testing.T) {
 		}
 		req = req.WithContext(context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput))
 
-		s.Update(res, req)
+		s.UpdateHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusInternalServerError)
 	})
@@ -777,7 +777,7 @@ func TestItemsService_Update(T *testing.T) {
 		}
 		req = req.WithContext(context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput))
 
-		s.Update(res, req)
+		s.UpdateHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusInternalServerError)
 	})
@@ -842,7 +842,7 @@ func TestItemsService_Update(T *testing.T) {
 		}
 		req = req.WithContext(context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput))
 
-		s.Update(res, req)
+		s.UpdateHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusOK)
 	})
@@ -899,7 +899,7 @@ func TestItemsService_Delete(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.Delete(res, req)
+		s.DeleteHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusNoContent)
 	})
@@ -939,7 +939,7 @@ func TestItemsService_Delete(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.Delete(res, req)
+		s.DeleteHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusNotFound)
 	})
@@ -979,7 +979,7 @@ func TestItemsService_Delete(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.Delete(res, req)
+		s.DeleteHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusInternalServerError)
 	})

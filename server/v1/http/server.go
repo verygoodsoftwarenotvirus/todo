@@ -128,7 +128,7 @@ func ProvideServer(
 // Serve serves HTTP traffic
 func (s *Server) Serve() {
 	s.httpServer.Addr = fmt.Sprintf(":%d", s.config.HTTPPort)
-	s.logger.Debug(fmt.Sprintf("Listening for HTTP requests on %s", s.httpServer.Addr))
+	s.logger.Debug(fmt.Sprintf("Listening for HTTP requests on %q", s.httpServer.Addr))
 
 	// returns ErrServerClosed on graceful close
 	if err := s.httpServer.ListenAndServe(); err != nil {
@@ -140,6 +140,3 @@ func (s *Server) Serve() {
 		}
 	}
 }
-
-// ErrorNotifier is a function which can notify a user of an error
-type ErrorNotifier func(res http.ResponseWriter, req *http.Request, err error)

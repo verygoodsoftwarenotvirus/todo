@@ -39,33 +39,33 @@ func (m *UserDataServer) TOTPSecretRefreshInputMiddleware(next http.Handler) htt
 	return args.Get(0).(http.Handler)
 }
 
-// List is a mock method to satisfy our interface requirements
-func (m *UserDataServer) List(res http.ResponseWriter, req *http.Request) {
+// ListHandler is a mock method to satisfy our interface requirements
+func (m *UserDataServer) ListHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 
-// Create is a mock method to satisfy our interface requirements
-func (m *UserDataServer) Create(res http.ResponseWriter, req *http.Request) {
+// CreateHandler is a mock method to satisfy our interface requirements
+func (m *UserDataServer) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 
-// Read is a mock method to satisfy our interface requirements
-func (m *UserDataServer) Read(res http.ResponseWriter, req *http.Request) {
+// ReadHandler is a mock method to satisfy our interface requirements
+func (m *UserDataServer) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 
-// NewTOTPSecret is a mock method to satisfy our interface requirements
-func (m *UserDataServer) NewTOTPSecret(res http.ResponseWriter, req *http.Request) {
+// NewTOTPSecretHandler is a mock method to satisfy our interface requirements
+func (m *UserDataServer) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 
-// UpdatePassword is a mock method to satisfy our interface requirements
-func (m *UserDataServer) UpdatePassword(res http.ResponseWriter, req *http.Request) {
+// UpdatePasswordHandler is a mock method to satisfy our interface requirements
+func (m *UserDataServer) UpdatePasswordHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 
-// Delete is a mock method to satisfy our interface requirements
-func (m *UserDataServer) Delete(res http.ResponseWriter, req *http.Request) {
+// DeleteHandler is a mock method to satisfy our interface requirements
+func (m *UserDataServer) DeleteHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 

@@ -42,7 +42,7 @@ func TestItems(test *testing.T) {
 			ctx, span := trace.StartSpan(tctx, t.Name())
 			defer span.End()
 
-			// Create item
+			// CreateHandler item
 			expected := &models.Item{Name: "name", Details: "details"}
 			premade, err := todoClient.CreateItem(
 				ctx,
@@ -72,7 +72,7 @@ func TestItems(test *testing.T) {
 			ctx, span := trace.StartSpan(tctx, t.Name())
 			defer span.End()
 
-			// Create items
+			// CreateHandler items
 			var expected []*models.Item
 			for i := 0; i < 5; i++ {
 				expected = append(expected, buildDummyItem(t))
@@ -113,7 +113,7 @@ func TestItems(test *testing.T) {
 			ctx, span := trace.StartSpan(tctx, t.Name())
 			defer span.End()
 
-			// Create item
+			// CreateHandler item
 			expected := &models.Item{Name: "name", Details: "details"}
 			premade, err := todoClient.CreateItem(ctx, &models.ItemInput{
 				Name: expected.Name, Details: expected.Details,
@@ -149,7 +149,7 @@ func TestItems(test *testing.T) {
 			ctx, span := trace.StartSpan(tctx, t.Name())
 			defer span.End()
 
-			// Create item
+			// CreateHandler item
 			expected := &models.Item{Name: "new name", Details: "new details"}
 			premade, err := todoClient.CreateItem(
 				tctx,
@@ -185,7 +185,7 @@ func TestItems(test *testing.T) {
 			ctx, span := trace.StartSpan(tctx, t.Name())
 			defer span.End()
 
-			// Create item
+			// CreateHandler item
 			expected := &models.Item{Name: "name", Details: "details"}
 			premade, err := todoClient.CreateItem(ctx, &models.ItemInput{
 				Name: expected.Name, Details: expected.Details,

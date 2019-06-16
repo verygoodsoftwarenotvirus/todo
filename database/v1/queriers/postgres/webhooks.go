@@ -114,7 +114,16 @@ func (p *Postgres) buildGetWebhookQuery(webhookID, userID uint64) (query string,
 func (p *Postgres) GetWebhook(ctx context.Context, webhookID, userID uint64) (*models.Webhook, error) {
 	query, args := p.buildGetWebhookQuery(webhookID, userID)
 	row := p.db.QueryRowContext(ctx, query, args...)
-	return scanWebhook(row)
+
+	webhook, err := scanWebhook(row)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, err
+		}
+		return nil, errors.Wrap(err, "querying for webhook")
+	}
+
+	return webhook, nil
 }
 
 func (p *Postgres) buildGetWebhookCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
@@ -180,21 +189,25 @@ func (p *Postgres) GetAllWebhooks(ctx context.Context) (*models.WebhookList, err
 	query, args := p.buildGetAllWebhooksQuery()
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, err
+		}
+		return nil, errors.Wrap(err, "querying for webhooks")
 	}
 
 	list, err := scanWebhooks(p.logger, rows)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "scanning response from database")
 	}
 
 	count, err := p.GetAllWebhooksCount(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "fetching webhook count")
 	}
 
 	x := &models.WebhookList{
 		Pagination: models.Pagination{
+			Page:       1,
 			TotalCount: count,
 		},
 		Webhooks: list,
@@ -206,14 +219,18 @@ func (p *Postgres) GetAllWebhooks(ctx context.Context) (*models.WebhookList, err
 // GetAllWebhooksForUser fetches a list of all webhooks from the postgres db
 func (p *Postgres) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]models.Webhook, error) {
 	query, args := p.buildGetWebhooksQuery(nil, userID)
+
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, err
+		}
+		return nil, errors.Wrap(err, "querying database for webhooks")
 	}
 
 	list, err := scanWebhooks(p.logger, rows)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "scanning response from database")
 	}
 
 	return list, nil
@@ -246,17 +263,20 @@ func (p *Postgres) GetWebhooks(ctx context.Context, filter *models.QueryFilter, 
 
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, err
+		}
+		return nil, errors.Wrap(err, "querying database")
 	}
 
 	list, err := scanWebhooks(p.logger, rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "scanning webhooks")
+		return nil, errors.Wrap(err, "scanning response from database")
 	}
 
 	count, err := p.GetWebhookCount(ctx, filter, userID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "fetching count")
 	}
 
 	x := &models.WebhookList{

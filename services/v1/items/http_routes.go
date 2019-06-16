@@ -3,6 +3,7 @@ package items
 import (
 	"database/sql"
 	"net/http"
+	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
@@ -16,19 +17,29 @@ const (
 	URIParamKey = "itemID"
 )
 
-// List is our list route
-func (s *Service) List(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "list_route")
+func attachItemIDToSpan(span *trace.Span, itemID uint64) {
+	if span != nil {
+		span.AddAttributes(trace.StringAttribute("item_id", strconv.FormatUint(itemID, 10)))
+	}
+}
+
+func attachUserIDToSpan(span *trace.Span, userID uint64) {
+	if span != nil {
+		span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
+	}
+}
+
+// ListHandler is our list route
+func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := trace.StartSpan(req.Context(), "ListHandler")
 	defer span.End()
 
-	s.logger.Debug("ItemsService.List called")
 	qf := models.ExtractQueryFilter(req)
 
 	userID := s.userIDFetcher(req)
-	logger := s.logger.WithValues(map[string]interface{}{
-		"filter":  qf,
-		"user_id": userID,
-	})
+	logger := s.logger.WithValue("user_id", userID)
+
+	attachUserIDToSpan(span, userID)
 
 	items, err := s.itemDatabase.GetItems(ctx, qf, userID)
 	if err == sql.ErrNoRows {
@@ -46,19 +57,19 @@ func (s *Service) List(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// Create is our item creation route
-func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "create_route")
+// CreateHandler is our item creation route
+func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := trace.StartSpan(req.Context(), "CreateHandler")
 	defer span.End()
 
 	userID := s.userIDFetcher(req)
+	attachUserIDToSpan(span, userID)
 	logger := s.logger.WithValue("user_id", userID)
 
-	logger.Debug("create route called")
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.ItemInput)
 	logger = logger.WithValue("input", input)
 	if !ok {
-		logger.Error(nil, "valid input not attached to request")
+		logger.Info("valid input not attached to request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -70,7 +81,9 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	s.itemCounter.Increment(ctx)
+	attachItemIDToSpan(span, x.ID)
 
 	s.reporter.Report(newsman.Event{
 		EventType: string(models.Create),
@@ -84,9 +97,9 @@ func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// Read returns a GET handler that returns an item
-func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "read_route")
+// ReadHandler returns a GET handler that returns an item
+func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := trace.StartSpan(req.Context(), "ReadHandler")
 	defer span.End()
 
 	userID := s.userIDFetcher(req)
@@ -96,15 +109,15 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 		"user_id": userID,
 		"item_id": itemID,
 	})
-	logger.Debug("itemsService.ReadHandler called")
+	attachItemIDToSpan(span, itemID)
+	attachUserIDToSpan(span, userID)
 
 	i, err := s.itemDatabase.GetItem(ctx, itemID, userID)
 	if err == sql.ErrNoRows {
-		logger.Debug("No rows found in itemDatabase")
 		res.WriteHeader(http.StatusNotFound)
 		return
 	} else if err != nil {
-		logger.Error(err, "Error fetching item from itemDatabase")
+		logger.Error(err, "error fetching item from database")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -114,29 +127,30 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// Update returns a handler that updates an item
-func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "update_route")
+// UpdateHandler returns a handler that updates an item
+func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := trace.StartSpan(req.Context(), "UpdateHandler")
 	defer span.End()
 
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.ItemInput)
 	if !ok {
-		s.logger.Error(nil, "no input attached to request")
+		s.logger.Info("no input attached to request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	userID := s.userIDFetcher(req)
 	itemID := s.itemIDFetcher(req)
+
 	logger := s.logger.WithValues(map[string]interface{}{
 		"user_id": userID,
 		"item_id": itemID,
-		"input":   input,
 	})
+	attachItemIDToSpan(span, itemID)
+	attachUserIDToSpan(span, userID)
 
 	x, err := s.itemDatabase.GetItem(ctx, itemID, userID)
 	if err == sql.ErrNoRows {
-		logger.Debug("no rows found for item")
 		res.WriteHeader(http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -163,9 +177,9 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// Delete returns a handler that deletes an item
-func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "delete_route")
+// DeleteHandler returns a handler that deletes an item
+func (s *Service) DeleteHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := trace.StartSpan(req.Context(), "DeleteHandler")
 	defer span.End()
 
 	userID := s.userIDFetcher(req)
@@ -174,11 +188,12 @@ func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
 		"item_id": itemID,
 		"user_id": userID,
 	})
-	logger.Debug("ItemsService deletion handler called")
+
+	attachItemIDToSpan(span, itemID)
+	attachUserIDToSpan(span, userID)
 
 	err := s.itemDatabase.DeleteItem(ctx, itemID, userID)
 	if err == sql.ErrNoRows {
-		logger.Debug("no rows found for item")
 		res.WriteHeader(http.StatusNotFound)
 		return
 	} else if err != nil {

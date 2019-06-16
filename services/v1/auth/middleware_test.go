@@ -111,7 +111,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		}
 
 		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("RequestIsAuthenticated", mock.Anything).
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).
 			Return(exampleClient, nil)
 		s.oauth2ClientsService = ocv
 
@@ -144,7 +144,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		}
 
 		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("RequestIsAuthenticated", mock.Anything).
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).
 			Return(exampleClient, nil)
 		s.oauth2ClientsService = ocv
 
@@ -174,7 +174,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		}
 
 		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("RequestIsAuthenticated", mock.Anything).
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).
 			Return((*models.OAuth2Client)(nil), errors.New("blah"))
 		s.oauth2ClientsService = ocv
 
@@ -212,7 +212,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		}
 
 		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("RequestIsAuthenticated", mock.Anything).
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).
 			Return(exampleClient, nil)
 		s.oauth2ClientsService = ocv
 
@@ -249,7 +249,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		}
 
 		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("RequestIsAuthenticated", mock.Anything).
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).
 			Return(exampleClient, nil)
 		s.oauth2ClientsService = ocv
 
@@ -275,7 +275,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		s := buildTestService(t)
 
 		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("RequestIsAuthenticated", mock.Anything).
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).
 			Return((*models.OAuth2Client)(nil), errors.New("blah"))
 		s.oauth2ClientsService = ocv
 
@@ -303,7 +303,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		s := buildTestService(t)
 
 		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("RequestIsAuthenticated", mock.Anything).
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).
 			Return((*models.OAuth2Client)(nil), nil)
 		s.oauth2ClientsService = ocv
 
@@ -330,7 +330,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		}
 
 		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("RequestIsAuthenticated", mock.Anything).
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).
 			Return(exampleClient, nil)
 		s.oauth2ClientsService = ocv
 

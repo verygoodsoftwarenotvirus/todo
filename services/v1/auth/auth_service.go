@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"net/http"
 
 	libauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
@@ -20,13 +21,16 @@ type (
 	// OAuth2ClientValidator is a stand-in interface, where we needed to abstract
 	// a regular structure with an interface for testing purposes
 	OAuth2ClientValidator interface {
-		RequestIsAuthenticated(req *http.Request) (*models.OAuth2Client, error)
+		ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.Request) (*models.OAuth2Client, error)
 	}
 
 	cookieEncoderDecoder interface {
 		Encode(name string, value interface{}) (string, error)
 		Decode(name, value string, dst interface{}) error
 	}
+
+	// UserIDFetcher is a function that fetches user IDs
+	UserIDFetcher func(*http.Request) uint64
 
 	// Service handles auth
 	Service struct {
@@ -40,9 +44,6 @@ type (
 		cookieManager        cookieEncoderDecoder
 	}
 )
-
-// UserIDFetcher is a function that fetches user IDs
-type UserIDFetcher func(*http.Request) uint64
 
 // ProvideAuthService builds a new AuthService
 func ProvideAuthService(

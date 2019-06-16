@@ -3,10 +3,13 @@ package dbclient
 import (
 	"context"
 	"database/sql"
+	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"go.opencensus.io/trace"
 )
 
 var _ database.Database = (*Client)(nil)
@@ -16,13 +19,14 @@ var _ database.Database = (*Client)(nil)
 	wrapping of actual query execution.
 */
 
-// Client is a wrapper around a querier
+// Client is a wrapper around a database querier. Client is where all
+// logging and trace propagation should happen, the querier is where
+// the actual database querying is performed.
 type Client struct {
 	db      *sql.DB
 	querier database.Database
-
-	debug  bool
-	logger logging.Logger
+	debug   bool
+	logger  logging.Logger
 }
 
 // Migrate is a simple wrapper around the core querier Migrate call
@@ -50,6 +54,10 @@ func ProvideDatabaseClient(
 		logger:  logger.WithName("db_client"),
 	}
 
+	if debug {
+		c.logger.SetLevel(logging.DebugLevel)
+	}
+
 	logger.Debug("migrating querier")
 	if err := c.querier.Migrate(ctx); err != nil {
 		return nil, err
@@ -57,4 +65,21 @@ func ProvideDatabaseClient(
 	logger.Debug("querier migrated!")
 
 	return c, nil
+}
+
+func attachUserIDToSpan(span *trace.Span, userID uint64) {
+	if span != nil {
+		span.AddAttributes(
+			trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)),
+		)
+	}
+}
+
+func attachFilterToSpan(span *trace.Span, filter *models.QueryFilter) {
+	if filter != nil && span != nil {
+		span.AddAttributes(
+			trace.StringAttribute("filter_page", strconv.FormatUint(filter.QueryPage(), 10)),
+			trace.StringAttribute("filter_limit", strconv.FormatUint(filter.Limit, 10)),
+		)
+	}
 }

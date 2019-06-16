@@ -116,7 +116,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 		req := buildRequest(t)
 		req.URL.Path = "/api/v1/things"
 
-		actual, err := s.RequestIsAuthenticated(req)
+		actual, err := s.ExtractOAuth2ClientFromRequest(req.Context(), req)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 	})
@@ -131,7 +131,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 
 		req := buildRequest(t)
 
-		actual, err := s.RequestIsAuthenticated(req)
+		actual, err := s.ExtractOAuth2ClientFromRequest(req.Context(), req)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -161,7 +161,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 
 		req := buildRequest(t)
 
-		actual, err := s.RequestIsAuthenticated(req)
+		actual, err := s.ExtractOAuth2ClientFromRequest(req.Context(), req)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -193,7 +193,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 		req := buildRequest(t)
 		req.URL.Path = "/api/v1/stuff"
 
-		actual, err := s.RequestIsAuthenticated(req)
+		actual, err := s.ExtractOAuth2ClientFromRequest(req.Context(), req)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -202,7 +202,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 	T.Parallel()
 
-	// These tests have a lot of overlap to those of RequestIsAuthenticated, which is deliberate
+	// These tests have a lot of overlap to those of ExtractOAuth2ClientFromRequest, which is deliberate
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)

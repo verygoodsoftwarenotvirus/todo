@@ -33,7 +33,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		require.NoError(t, err)
 		req.AddCookie(c)
 
-		cookie, err := s.DecodeCookieFromRequest(req)
+		cookie, err := s.DecodeCookieFromRequest(req.Context(), req)
 		assert.NoError(t, err)
 		assert.NotNil(t, cookie)
 	})
@@ -57,7 +57,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		// end building bad cookie
 
 		req.AddCookie(c)
-		cookie, err := s.DecodeCookieFromRequest(req)
+		cookie, err := s.DecodeCookieFromRequest(req.Context(), req)
 		assert.Error(t, err)
 		assert.Nil(t, cookie)
 	})
@@ -69,7 +69,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		cookie, err := s.DecodeCookieFromRequest(req)
+		cookie, err := s.DecodeCookieFromRequest(req.Context(), req)
 		assert.Error(t, err)
 		assert.Equal(t, err, http.ErrNoCookie)
 		assert.Nil(t, cookie)
@@ -84,7 +84,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 		expected := &models.OAuth2Client{}
 
 		s.oauth2ClientsService.(*mockOAuth2ClientValidator).
-			On("RequestIsAuthenticated", mock.Anything).
+			On("ExtractOAuth2ClientFromRequest", mock.Anything).
 			Return(expected, nil)
 
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
@@ -99,7 +99,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 		s := buildTestService(t)
 		oac := &models.OAuth2Client{}
 		s.oauth2ClientsService.(*mockOAuth2ClientValidator).
-			On("RequestIsAuthenticated", mock.Anything).
+			On("ExtractOAuth2ClientFromRequest", mock.Anything).
 			Return(oac, errors.New("blah"))
 
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
@@ -118,7 +118,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 		s := buildTestService(t)
 		oac := &models.OAuth2Client{}
 		s.oauth2ClientsService.(*mockOAuth2ClientValidator).
-			On("RequestIsAuthenticated", mock.Anything).
+			On("ExtractOAuth2ClientFromRequest", mock.Anything).
 			Return(oac, errors.New("blah"))
 
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
@@ -155,7 +155,7 @@ func TestService_FetchUserFromRequest(T *testing.T) {
 			On("GetUser", mock.Anything, userID).
 			Return(expectedUser, nil)
 
-		actualUser, err := s.FetchUserFromRequest(req)
+		actualUser, err := s.FetchUserFromRequest(req.Context(), req)
 		assert.Equal(t, expectedUser, actualUser)
 		assert.NoError(t, err)
 	})
@@ -177,7 +177,7 @@ func TestService_FetchUserFromRequest(T *testing.T) {
 			On("GetUser", mock.Anything, userID).
 			Return(expectedUser, nil)
 
-		actualUser, err := s.FetchUserFromRequest(req)
+		actualUser, err := s.FetchUserFromRequest(req.Context(), req)
 		assert.Nil(t, actualUser)
 		assert.Error(t, err)
 	})
@@ -205,7 +205,7 @@ func TestService_FetchUserFromRequest(T *testing.T) {
 			On("GetUser", mock.Anything, userID).
 			Return((*models.User)(nil), expectedError)
 
-		actualUser, err := s.FetchUserFromRequest(req)
+		actualUser, err := s.FetchUserFromRequest(req.Context(), req)
 		assert.Nil(t, actualUser)
 		assert.Error(t, err)
 	})

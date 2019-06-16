@@ -20,19 +20,27 @@ const (
 	URIParamKey = "webhookID"
 )
 
-// List is our list route
-func (s *Service) List(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "list_route")
+func attachWebhookIDToSpan(span *trace.Span, webhookID uint64) {
+	if span != nil {
+		span.AddAttributes(trace.StringAttribute("webhook_id", strconv.FormatUint(webhookID, 10)))
+	}
+}
+
+func attachUserIDToSpan(span *trace.Span, userID uint64) {
+	if span != nil {
+		span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
+	}
+}
+
+// ListHandler is our list route
+func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := trace.StartSpan(req.Context(), "ListHandler")
 	defer span.End()
 
-	s.logger.Debug("WebhooksService.List called")
 	qf := models.ExtractQueryFilter(req)
-
 	userID := s.userIDFetcher(req)
-	logger := s.logger.WithValues(map[string]interface{}{
-		"filter":  qf,
-		"user_id": userID,
-	})
+	logger := s.logger.WithValue("user_id", userID)
+	attachUserIDToSpan(span, userID)
 
 	webhooks, err := s.webhookDatabase.GetWebhooks(ctx, qf, userID)
 	if err == sql.ErrNoRows {
@@ -58,7 +66,11 @@ func validateWebhook(input *models.WebhookInput) (statusCode int, err error) {
 
 	input.Method = strings.ToUpper(input.Method)
 	switch input.Method {
-	case http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodHead:
+	case http.MethodGet, // allowed methods
+		http.MethodPost,
+		http.MethodPut,
+		http.MethodDelete,
+		http.MethodHead:
 		break
 	default:
 		return http.StatusBadRequest, errors.Wrap(nil, "invalid method provided")
@@ -67,68 +79,70 @@ func validateWebhook(input *models.WebhookInput) (statusCode int, err error) {
 	return http.StatusOK, nil
 }
 
-// Create is our webhook creation route
-func (s *Service) Create(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "create_route")
+// CreateHandler is our webhook creation route
+func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := trace.StartSpan(req.Context(), "CreateHandler")
 	defer span.End()
 
 	userID := s.userIDFetcher(req)
-	logger := s.logger.WithValue("user_id", userID)
-	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
+	logger := s.logger.WithValue("user", userID)
+	attachUserIDToSpan(span, userID)
 
-	logger.Debug("create route called")
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.WebhookInput)
 	if !ok {
-		s.logger.Error(nil, "valid input not attached to request")
+		logger.Info("valid input not attached to request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	input.BelongsTo = userID
-	logger = logger.WithValue("input", input)
 
 	code, err := validateWebhook(input)
 	if code != http.StatusOK && err != nil {
-		logger.Error(nil, "invalid method provided")
+		logger.Info("invalid method provided")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	x, err := s.webhookDatabase.CreateWebhook(ctx, input)
+	wh, err := s.webhookDatabase.CreateWebhook(ctx, input)
 	if err != nil {
-		s.logger.Error(err, "error creating webhook")
+		logger.Error(err, "error creating webhook")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	attachWebhookIDToSpan(span, wh.ID)
 	s.webhookCounter.Increment(ctx)
 
 	s.eventManager.Report(newsman.Event{
 		EventType: string(models.Create),
-		Data:      x,
+		Data:      wh,
 		Topics:    []string{topicName},
 	})
 
-	l := x.ToListener(s.logger)
+	l := wh.ToListener(s.logger)
 	s.eventManager.TuneIn(l)
 
 	res.WriteHeader(http.StatusCreated)
-	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
-		s.logger.Error(err, "encoding response")
+	if err = s.encoderDecoder.EncodeResponse(res, wh); err != nil {
+		logger.Error(err, "encoding response")
 	}
 }
 
-// Read returns a GET handler that returns an webhook
-func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "read_route")
+// ReadHandler returns a GET handler that returns an webhook
+func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := trace.StartSpan(req.Context(), "ReadHandler")
 	defer span.End()
 
 	userID := s.userIDFetcher(req)
 	webhookID := s.webhookIDFetcher(req)
 
+	attachUserIDToSpan(span, userID)
+	attachWebhookIDToSpan(span, webhookID)
+
 	logger := s.logger.WithValues(map[string]interface{}{
-		"user_id":    userID,
-		"webhook_id": webhookID,
+		"user":    userID,
+		"webhook": webhookID,
 	})
-	logger.Debug("webhooksService.ReadHandler called")
 
 	x, err := s.webhookDatabase.GetWebhook(ctx, webhookID, userID)
 	if err == sql.ErrNoRows {
@@ -142,31 +156,34 @@ func (s *Service) Read(res http.ResponseWriter, req *http.Request) {
 	}
 
 	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
-		s.logger.Error(err, "encoding response")
+		logger.Error(err, "encoding response")
 	}
 }
 
-// Update returns a handler that updates an webhook
-func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "update_route")
+// UpdateHandler returns a handler that updates an webhook
+func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := trace.StartSpan(req.Context(), "UpdateHandler")
 	defer span.End()
 
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.WebhookInput)
 	if !ok {
-		s.logger.Error(nil, "no input attached to request")
+		s.logger.Info("no input attached to request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	userID := s.userIDFetcher(req)
 	webhookID := s.webhookIDFetcher(req)
+
+	attachUserIDToSpan(span, userID)
+	attachWebhookIDToSpan(span, webhookID)
+
 	logger := s.logger.WithValues(map[string]interface{}{
 		"user_id":    userID,
 		"webhook_id": webhookID,
-		"input":      input,
 	})
 
-	x, err := s.webhookDatabase.GetWebhook(ctx, webhookID, userID)
+	wh, err := s.webhookDatabase.GetWebhook(ctx, webhookID, userID)
 	if err == sql.ErrNoRows {
 		logger.Debug("no rows found for webhook")
 		res.WriteHeader(http.StatusNotFound)
@@ -177,8 +194,8 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	x.Update(input)
-	if err = s.webhookDatabase.UpdateWebhook(ctx, x); err != nil {
+	wh.Update(input)
+	if err = s.webhookDatabase.UpdateWebhook(ctx, wh); err != nil {
 		logger.Error(err, "error encountered updating webhook")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -186,27 +203,30 @@ func (s *Service) Update(res http.ResponseWriter, req *http.Request) {
 
 	s.eventManager.Report(newsman.Event{
 		EventType: string(models.Update),
-		Data:      x,
+		Data:      wh,
 		Topics:    []string{topicName},
 	})
 
-	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
-		s.logger.Error(err, "encoding response")
+	if err = s.encoderDecoder.EncodeResponse(res, wh); err != nil {
+		logger.Error(err, "encoding response")
 	}
 }
 
-// Delete returns a handler that deletes an webhook
-func (s *Service) Delete(res http.ResponseWriter, req *http.Request) {
+// DeleteHandler returns a handler that deletes an webhook
+func (s *Service) DeleteHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := trace.StartSpan(req.Context(), "delete_route")
 	defer span.End()
 
 	userID := s.userIDFetcher(req)
 	webhookID := s.webhookIDFetcher(req)
+
+	attachUserIDToSpan(span, userID)
+	attachWebhookIDToSpan(span, webhookID)
+
 	logger := s.logger.WithValues(map[string]interface{}{
 		"webhook_id": webhookID,
 		"user_id":    userID,
 	})
-	logger.Debug("WebhooksService Deletion handler called")
 
 	err := s.webhookDatabase.DeleteWebhook(ctx, webhookID, userID)
 	if err == sql.ErrNoRows {

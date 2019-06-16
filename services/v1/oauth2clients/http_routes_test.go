@@ -100,7 +100,7 @@ func TestService_List(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.List(res, req)
+		s.ListHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 	})
@@ -131,7 +131,7 @@ func TestService_List(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.List(res, req)
+		s.ListHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 	})
@@ -162,7 +162,7 @@ func TestService_List(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.List(res, req)
+		s.ListHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
@@ -193,7 +193,7 @@ func TestService_List(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.List(res, req)
+		s.ListHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 	})
@@ -264,7 +264,7 @@ func TestService_Create(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.Create(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusCreated, res.Code)
 	})
@@ -275,7 +275,7 @@ func TestService_Create(T *testing.T) {
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
 
-		s.Create(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
@@ -316,7 +316,7 @@ func TestService_Create(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.Create(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
@@ -374,7 +374,7 @@ func TestService_Create(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.Create(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 	})
@@ -432,7 +432,7 @@ func TestService_Create(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.Create(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
@@ -490,7 +490,7 @@ func TestService_Create(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.Create(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
@@ -557,7 +557,7 @@ func TestService_Create(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.Create(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusCreated, res.Code)
 	})
@@ -597,7 +597,7 @@ func TestService_Read(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.Read(res, req)
+		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 	})
@@ -633,7 +633,7 @@ func TestService_Read(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.Read(res, req)
+		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
 	})
@@ -669,7 +669,7 @@ func TestService_Read(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.Read(res, req)
+		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
@@ -705,7 +705,7 @@ func TestService_Read(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.Read(res, req)
+		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 	})
@@ -749,7 +749,7 @@ func TestService_Delete(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.Delete(res, req)
+		s.DeleteHandler(res, req)
 
 		assert.Equal(t, http.StatusNoContent, res.Code)
 	})
@@ -780,7 +780,7 @@ func TestService_Delete(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.Delete(res, req)
+		s.DeleteHandler(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
 	})
@@ -811,7 +811,7 @@ func TestService_Delete(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.Delete(res, req)
+		s.DeleteHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})

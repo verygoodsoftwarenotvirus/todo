@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"os"
 
@@ -16,12 +17,12 @@ func main() {
 
 	configFilepath := os.Getenv("CONFIGURATION_FILEPATH")
 	if configFilepath == "" {
-		panic("no configuration file provided")
+		logger.Fatal(errors.New("no configuration file provided"))
 	}
 
 	cfg, err := config.ParseConfigFile(configFilepath)
 	if err != nil || cfg == nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Meta.StartupDeadline)
@@ -29,7 +30,7 @@ func main() {
 
 	db, err := cfg.ProvideDatabase(ctx, logger)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	server, err := BuildServer(ctx, cfg, logger, db)

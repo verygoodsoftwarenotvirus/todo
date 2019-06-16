@@ -34,7 +34,8 @@ var (
 
 func scanUser(scan database.Scanner) (*models.User, error) {
 	var x = &models.User{}
-	err := scan.Scan(
+
+	if err := scan.Scan(
 		&x.ID,
 		&x.Username,
 		&x.HashedPassword,
@@ -44,8 +45,7 @@ func scanUser(scan database.Scanner) (*models.User, error) {
 		&x.CreatedOn,
 		&x.UpdatedOn,
 		&x.ArchivedOn,
-	)
-	if err != nil {
+	); err != nil {
 		return nil, err
 	}
 
@@ -90,6 +90,14 @@ func (p *Postgres) GetUser(ctx context.Context, userID uint64) (*models.User, er
 	query, args := p.buildGetUserQuery(userID)
 	row := p.db.QueryRowContext(ctx, query, args...)
 	u, err := scanUser(row)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, err
+		}
+		return nil, errors.Wrap(err, "fetching user from database")
+	}
+
 	return u, err
 }
 
@@ -111,7 +119,15 @@ func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*mod
 	query, args := p.buildGetUserByUsernameQuery(username)
 	row := p.db.QueryRowContext(ctx, query, args...)
 	u, err := scanUser(row)
-	return u, err
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, err
+		}
+		return nil, errors.Wrap(err, "fetching user from database")
+	}
+
+	return u, nil
 }
 
 func (p *Postgres) buildGetUserCountQuery(filter *models.QueryFilter) (query string, args []interface{}) {
@@ -123,7 +139,9 @@ func (p *Postgres) buildGetUserCountQuery(filter *models.QueryFilter) (query str
 			"archived_on": nil,
 		})
 
-	builder = filter.ApplyToQueryBuilder(builder)
+	if filter != nil {
+		builder = filter.ApplyToQueryBuilder(builder)
+	}
 
 	query, args, err = builder.ToSql()
 
@@ -160,18 +178,23 @@ func (p *Postgres) buildGetUsersQuery(filter *models.QueryFilter) (query string,
 // GetUsers fetches a list of users from the postgres db that meet a particular filter
 func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
 	query, args := p.buildGetUsersQuery(filter)
+
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, err
+		}
+		return nil, errors.Wrap(err, "querying for user")
 	}
+
 	userList, err := scanUsers(p.logger, rows)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "loading response from database")
 	}
 
 	count, err := p.GetUserCount(ctx, filter)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "fetching user count")
 	}
 
 	x := &models.UserList{

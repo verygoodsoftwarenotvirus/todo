@@ -81,9 +81,6 @@ func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, erro
 	fs := http.StripPrefix("/", http.FileServer(httpFs.Dir(fileDir)))
 
 	return func(res http.ResponseWriter, req *http.Request) {
-		logger := s.logger.WithRequest(req)
-		logger.Debug("static file requested")
-
 		switch req.URL.Path {
 		// list your frontend routes here
 		case "/register",
@@ -99,6 +96,5 @@ func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, erro
 		}
 
 		fs.ServeHTTP(res, req)
-		logger.WithValue("content_type", res.Header().Get("Content-type")).Debug("serving static file")
 	}, nil
 }

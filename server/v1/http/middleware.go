@@ -26,14 +26,12 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 		ww := middleware.NewWrapResponseWriter(res, req.ProtoMajor)
 
 		start := time.Now()
-		defer func() {
-			s.logger.WithValues(map[string]interface{}{
-				"status":        ww.Status(),
-				"bytes_written": ww.BytesWritten(),
-				"elapsed":       time.Since(start),
-			})
-		}()
-
 		next.ServeHTTP(ww, req)
+
+		s.logger.WithRequest(req).WithValues(map[string]interface{}{
+			"status":        ww.Status(),
+			"bytes_written": ww.BytesWritten(),
+			"elapsed":       time.Since(start),
+		}).Debug("request received")
 	})
 }

@@ -10,12 +10,6 @@ const (
 )
 
 type (
-	// LoginRoute is a string alias for dependency injection's sake
-	LoginRoute string
-
-	// RegistrationRoute is a string alias for dependency injection's sake
-	RegistrationRoute string
-
 	// Service is responsible for serving HTML (and relevant resources)
 	Service struct {
 		logger logging.Logger

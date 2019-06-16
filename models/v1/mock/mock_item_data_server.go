@@ -27,27 +27,27 @@ func (m *ItemDataServer) UpdateInputMiddleware(next http.Handler) http.Handler {
 	return args.Get(0).(http.Handler)
 }
 
-// List implements our interface requirements
-func (m *ItemDataServer) List(res http.ResponseWriter, req *http.Request) {
+// ListHandler implements our interface requirements
+func (m *ItemDataServer) ListHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 
-// Create implements our interface requirements
-func (m *ItemDataServer) Create(res http.ResponseWriter, req *http.Request) {
+// CreateHandler implements our interface requirements
+func (m *ItemDataServer) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 
-// Read implements our interface requirements
-func (m *ItemDataServer) Read(res http.ResponseWriter, req *http.Request) {
+// ReadHandler implements our interface requirements
+func (m *ItemDataServer) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 
-// Update implements our interface requirements
-func (m *ItemDataServer) Update(res http.ResponseWriter, req *http.Request) {
+// UpdateHandler implements our interface requirements
+func (m *ItemDataServer) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 
-// Delete implements our interface requirements
-func (m *ItemDataServer) Delete(res http.ResponseWriter, req *http.Request) {
+// DeleteHandler implements our interface requirements
+func (m *ItemDataServer) DeleteHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }

@@ -35,6 +35,11 @@ const (
 	serviceName                            = "oauth2_clients_service"
 )
 
+var (
+	_ models.OAuth2ClientDataServer = (*Service)(nil)
+	_ oauth2.ClientStore            = (*clientStore)(nil)
+)
+
 type (
 	oauth2Handler interface {
 		SetAllowGetAccessRequest(bool)
@@ -65,12 +70,17 @@ type (
 		oauth2Handler       oauth2Handler
 		oauth2ClientCounter metrics.UnitCounter
 	}
+
+	clientStore struct {
+		database database.Database
+	}
 )
 
-var _ oauth2.ClientStore = (*clientStore)(nil)
-
-type clientStore struct {
-	database database.Database
+func newClientStore(db database.Database) *clientStore {
+	cs := &clientStore{
+		database: db,
+	}
+	return cs
 }
 
 // according to the ID for the client information
@@ -84,13 +94,6 @@ func (s *clientStore) GetByID(id string) (oauth2.ClientInfo, error) {
 	}
 
 	return client, nil
-}
-
-func newClientStore(db database.Database) *clientStore {
-	cs := &clientStore{
-		database: db,
-	}
-	return cs
 }
 
 // ProvideOAuth2ClientsService builds a new OAuth2ClientsService
@@ -164,14 +167,10 @@ func (s *Service) initializeOAuth2Handler() {
 
 // HandleAuthorizeRequest is a simple wrapper around the internal server's HandleAuthorizeRequest
 func (s *Service) HandleAuthorizeRequest(res http.ResponseWriter, req *http.Request) error {
-	s.logger.Debug("HandleAuthorizeRequest called")
-	err := s.oauth2Handler.HandleAuthorizeRequest(res, req)
-	return err
+	return s.oauth2Handler.HandleAuthorizeRequest(res, req)
 }
 
 // HandleTokenRequest is a simple wrapper around the internal server's HandleTokenRequest
 func (s *Service) HandleTokenRequest(res http.ResponseWriter, req *http.Request) error {
-	s.logger.Debug("HandleTokenRequest called")
-	err := s.oauth2Handler.HandleTokenRequest(res, req)
-	return err
+	return s.oauth2Handler.HandleTokenRequest(res, req)
 }

@@ -123,12 +123,8 @@ func (c *V1Client) BuildLoginRequest(username, password, totpToken string) (*htt
 
 // Login logs a user in
 func (c *V1Client) Login(ctx context.Context, username, password, totpToken string) (*http.Cookie, error) {
-	logger := c.logger.WithValue("username", username)
-	logger.Debug("login called")
-
 	req, err := c.BuildLoginRequest(username, password, totpToken)
 	if err != nil {
-		logger.Error(err, "building login request")
 		return nil, err
 	}
 
@@ -140,11 +136,10 @@ func (c *V1Client) Login(ctx context.Context, username, password, totpToken stri
 	if c.Debug {
 		b, err := httputil.DumpResponse(res, true)
 		if err != nil {
-			logger.WithError(err).Debug("error dumping response")
+			c.logger.Error(err, "dumping response")
 		}
-		logger = logger.WithValue("response", string(b))
+		c.logger.WithValue("response", string(b)).Debug("login response received")
 	}
-	logger.Debug("login response received")
 
 	cookies := res.Cookies()
 	if len(cookies) > 0 {

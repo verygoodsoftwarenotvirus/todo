@@ -97,7 +97,7 @@ func TestUsers(test *testing.T) {
 		T.Run("should be creatable", func(t *testing.T) {
 			tctx := context.Background()
 
-			// Create user
+			// CreateHandler user
 			expected := buildDummyUserInput(t)
 			actual, err := todoClient.CreateUser(
 				tctx,
@@ -129,7 +129,7 @@ func TestUsers(test *testing.T) {
 		T.Run("it should be readable", func(t *testing.T) {
 			tctx := context.Background()
 
-			// Create user
+			// CreateHandler user
 			expected := buildDummyUserInput(t)
 			premade, err := todoClient.CreateUser(
 				tctx,
@@ -160,7 +160,7 @@ func TestUsers(test *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
 			tctx := context.Background()
 
-			// Create user
+			// CreateHandler user
 			y := buildDummyUserInput(t)
 			u, err := todoClient.CreateUser(tctx, y)
 			assert.NoError(t, err)
@@ -181,7 +181,7 @@ func TestUsers(test *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
 			tctx := context.Background()
 
-			// Create users
+			// CreateHandler users
 			var expected []*models.UserCreationResponse
 			for i := 0; i < 5; i++ {
 				user, _, c := buildDummyUser(t)

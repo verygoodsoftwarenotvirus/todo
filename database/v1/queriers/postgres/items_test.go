@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"testing"
 	"time"
@@ -84,6 +85,28 @@ func TestPostgres_GetItem(T *testing.T) {
 		actual, err := p.GetItem(context.Background(), expected.ID, expectedUserID)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE belongs_to = $1 AND id = $2"
+		expected := &models.Item{
+			ID:      123,
+			Name:    "name",
+			Details: "details",
+		}
+		expectedUserID := uint64(321)
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(expectedUserID, expected.ID).
+			WillReturnError(sql.ErrNoRows)
+
+		actual, err := p.GetItem(context.Background(), expected.ID, expectedUserID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+		assert.Equal(t, sql.ErrNoRows, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -221,6 +244,23 @@ func TestPostgres_GetItems(T *testing.T) {
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
+	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		expectedUserID := uint64(123)
+		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+			WithArgs(expectedUserID).
+			WillReturnError(sql.ErrNoRows)
+
+		actual, err := p.GetItems(context.Background(), models.DefaultQueryFilter(), expectedUserID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+		assert.Equal(t, sql.ErrNoRows, err)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
 	T.Run("with error executing read query", func(t *testing.T) {
 		expectedUserID := uint64(123)
 
@@ -308,6 +348,23 @@ func TestPostgres_GetAllItemsForUser(T *testing.T) {
 		actual, err := p.GetAllItemsForUser(context.Background(), expectedUserID)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		expectedUserID := uint64(123)
+		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1"
+
+		p, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+			WithArgs(expectedUserID).
+			WillReturnError(sql.ErrNoRows)
+
+		actual, err := p.GetAllItemsForUser(context.Background(), expectedUserID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+		assert.Equal(t, sql.ErrNoRows, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

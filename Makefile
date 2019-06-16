@@ -48,7 +48,7 @@ $(COVERAGE_OUT): $(ARTIFACTS_DIR)
 	echo "mode: set" > $(COVERAGE_OUT);
 	for pkg in `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|mock)'`; do \
 		go test -coverprofile=profile.out -v -count 5 -race -failfast $$pkg; \
-		if [ $$? -ne 0 ]; then break; fi; \
+		if [ $$? -ne 0 ]; then exit 1; fi; \
 		cat profile.out | grep -v "mode: atomic" >> $(COVERAGE_OUT); \
 	rm -f profile.out; \
 	done || exit 1

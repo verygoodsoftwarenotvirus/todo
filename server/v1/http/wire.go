@@ -7,7 +7,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 
@@ -20,8 +19,6 @@ var (
 		paramFetcherProviders,
 		ProvideServer,
 		ProvideNamespace,
-		ProvideLoginRoute,
-		ProvideRegistrationRoute,
 		ProvideNewsmanTypeNameManipulationFunc,
 	)
 )
@@ -65,14 +62,4 @@ func provideHTTPServer() *http.Server {
 		},
 	}
 	return srv
-}
-
-// ProvideLoginRoute provides a LoginRoute
-func ProvideLoginRoute() frontend.LoginRoute {
-	return frontend.LoginRoute(loginRoute)
-}
-
-// ProvideRegistrationRoute provides a RegistrationRoute
-func ProvideRegistrationRoute() frontend.RegistrationRoute {
-	return frontend.RegistrationRoute(registrationRoute)
 }

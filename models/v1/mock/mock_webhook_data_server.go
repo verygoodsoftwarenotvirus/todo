@@ -27,27 +27,27 @@ func (m *WebhookDataServer) UpdateInputMiddleware(next http.Handler) http.Handle
 	return args.Get(0).(http.Handler)
 }
 
-// List implements our interface requirements
-func (m *WebhookDataServer) List(res http.ResponseWriter, req *http.Request) {
+// ListHandler implements our interface requirements
+func (m *WebhookDataServer) ListHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 
-// Create implements our interface requirements
-func (m *WebhookDataServer) Create(res http.ResponseWriter, req *http.Request) {
+// CreateHandler implements our interface requirements
+func (m *WebhookDataServer) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 
-// Read implements our interface requirements
-func (m *WebhookDataServer) Read(res http.ResponseWriter, req *http.Request) {
+// ReadHandler implements our interface requirements
+func (m *WebhookDataServer) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 
-// Update implements our interface requirements
-func (m *WebhookDataServer) Update(res http.ResponseWriter, req *http.Request) {
+// UpdateHandler implements our interface requirements
+func (m *WebhookDataServer) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 
-// Delete implements our interface requirements
-func (m *WebhookDataServer) Delete(res http.ResponseWriter, req *http.Request) {
+// DeleteHandler implements our interface requirements
+func (m *WebhookDataServer) DeleteHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }

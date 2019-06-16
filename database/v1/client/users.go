@@ -3,7 +3,6 @@ package dbclient
 import (
 	"context"
 	"errors"
-	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
@@ -17,12 +16,18 @@ var (
 	ErrUserExists = errors.New("error: username already exists")
 )
 
+func attachUsernameToSpan(span *trace.Span, username string) {
+	if span != nil {
+		span.AddAttributes(trace.StringAttribute("username", username))
+	}
+}
+
 // GetUser fetches a user
 func (c *Client) GetUser(ctx context.Context, userID uint64) (*models.User, error) {
 	ctx, span := trace.StartSpan(ctx, "GetUser")
 	defer span.End()
 
-	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
+	attachUserIDToSpan(span, userID)
 	c.logger.WithValue("user_id", userID).Debug("GetUser called")
 
 	return c.querier.GetUser(ctx, userID)
@@ -33,7 +38,7 @@ func (c *Client) GetUserByUsername(ctx context.Context, username string) (*model
 	ctx, span := trace.StartSpan(ctx, "GetUserByUsername")
 	defer span.End()
 
-	span.AddAttributes(trace.StringAttribute("username", username))
+	attachUsernameToSpan(span, username)
 	c.logger.WithValue("username", username).Debug("GetUserByUsername called")
 
 	return c.querier.GetUserByUsername(ctx, username)
@@ -44,15 +49,12 @@ func (c *Client) GetUserCount(ctx context.Context, filter *models.QueryFilter) (
 	ctx, span := trace.StartSpan(ctx, "GetUserCount")
 	defer span.End()
 
-	logger := c.logger.WithValue("filter", filter)
-	logger.Debug("GetUserCount called")
-
 	if filter == nil {
-		c.logger.Debug("using default query filter")
 		filter = models.DefaultQueryFilter()
 	}
+	attachFilterToSpan(span, filter)
 
-	c.logger.WithValue("filter", filter).Debug("GetUserCount called")
+	c.logger.Debug("GetUserCount called")
 
 	return c.querier.GetUserCount(ctx, filter)
 }
@@ -62,13 +64,10 @@ func (c *Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mod
 	ctx, span := trace.StartSpan(ctx, "GetUsers")
 	defer span.End()
 
-	logger := c.logger.WithValue("filter", filter)
-	logger.Debug("GetUsers called")
-
 	if filter == nil {
-		logger.Debug("using default query filter")
 		filter = models.DefaultQueryFilter()
 	}
+	attachFilterToSpan(span, filter)
 
 	c.logger.WithValue("filter", filter).Debug("GetUsers called")
 
@@ -79,14 +78,9 @@ func (c *Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mod
 func (c *Client) CreateUser(ctx context.Context, input *models.UserInput) (*models.User, error) {
 	ctx, span := trace.StartSpan(ctx, "CreateUser")
 	defer span.End()
-	span.AddAttributes(
-		trace.StringAttribute("username", input.Username),
-	)
 
-	logger := c.logger.WithValues(map[string]interface{}{
-		"username": input.Username,
-	})
-	logger.Debug("CreateUser called")
+	attachUsernameToSpan(span, input.Username)
+	c.logger.WithValue("username", input.Username).Debug("CreateUser called")
 
 	return c.querier.CreateUser(ctx, input)
 }
@@ -96,13 +90,9 @@ func (c *Client) CreateUser(ctx context.Context, input *models.UserInput) (*mode
 func (c *Client) UpdateUser(ctx context.Context, updated *models.User) error {
 	ctx, span := trace.StartSpan(ctx, "UpdateUser")
 	defer span.End()
-	span.AddAttributes(
-		trace.StringAttribute("username", updated.Username),
-	)
 
-	c.logger.WithValues(map[string]interface{}{
-		"username": updated.Username,
-	}).Debug("UpdateUser called")
+	attachUsernameToSpan(span, updated.Username)
+	c.logger.WithValue("username", updated.Username).Debug("UpdateUser called")
 
 	return c.querier.UpdateUser(ctx, updated)
 }
@@ -111,8 +101,8 @@ func (c *Client) UpdateUser(ctx context.Context, updated *models.User) error {
 func (c *Client) DeleteUser(ctx context.Context, userID uint64) error {
 	ctx, span := trace.StartSpan(ctx, "DeleteUser")
 	defer span.End()
-	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
 
+	attachUserIDToSpan(span, userID)
 	c.logger.WithValue("user_id", userID).Debug("DeleteUser called")
 
 	return c.querier.DeleteUser(ctx, userID)

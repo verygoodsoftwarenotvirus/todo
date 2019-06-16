@@ -174,9 +174,9 @@ func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, r
 		if err == nil && req.Method != http.MethodGet {
 			logger = logger.WithValue("response_body", string(bdump))
 		}
+		logger.Debug("request executed")
 	}
 
-	logger.Debug("request executed")
 	return res, nil
 }
 
@@ -234,8 +234,6 @@ func (c *V1Client) IsUp() bool {
 		return false
 	}
 
-	c.logger.WithValue("status_code", res.StatusCode).Debug("health check executed")
-
 	return res.StatusCode == http.StatusOK
 }
 
@@ -284,14 +282,11 @@ func (c *V1Client) makeRequest(ctx context.Context, req *http.Request, out inter
 		return ErrUnauthorized
 	}
 
-	c.logger.WithValue("status_code", res.StatusCode).Info("horses are radishes")
-
 	if out != nil {
 		resErr := unmarshalBody(res, &out)
 		if resErr != nil {
 			return errors.Wrap(err, "loading response from server")
 		}
-		c.logger.WithValue("loaded_value", out).Debug("data request returned")
 	}
 
 	return nil
@@ -320,7 +315,6 @@ func (c *V1Client) makeUnauthedDataRequest(ctx context.Context, req *http.Reques
 		if resErr != nil {
 			return errors.Wrap(err, "loading response from server")
 		}
-		c.logger.WithValue("loaded_value", out).Debug("unauthenticated data request returned")
 	}
 
 	return nil

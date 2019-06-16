@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"sync"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
@@ -61,10 +62,9 @@ func scanItems(logger logging.Logger, rows *sql.Rows) ([]models.Item, error) {
 		return nil, err
 	}
 
-	logger.WithValue("row_count", len(list)).Debug("returning fine from scanItems")
-
-	// RENAMEME this call proves this function's name is bad
-	logQueryBuildingError(logger, rows.Close())
+	if closeErr := rows.Close(); closeErr != nil {
+		logger.Error(closeErr, "closing database rows")
+	}
 
 	return list, nil
 }
@@ -119,12 +119,18 @@ func (p *Postgres) GetItemCount(ctx context.Context, filter *models.QueryFilter,
 	return count, err
 }
 
-func (p *Postgres) buildGetAllItemsCountQuery() string {
-	query, _, err := p.sqlBuilder.Select(CountQuery).
-		From(itemsTableName).
-		Where(squirrel.Eq{"archived_on": nil}).
-		ToSql()
-	logQueryBuildingError(p.logger, err)
+func (p *Postgres) buildGetAllItemsCountQuery() (query string) {
+	var once sync.Once
+
+	once.Do(func() {
+		var err error
+		query, _, err = p.sqlBuilder.Select(CountQuery).
+			From(itemsTableName).
+			Where(squirrel.Eq{"archived_on": nil}).
+			ToSql()
+		logQueryBuildingError(p.logger, err)
+	})
+
 	return query
 }
 
@@ -157,19 +163,23 @@ func (p *Postgres) buildGetItemsQuery(filter *models.QueryFilter, userID uint64)
 // GetItems fetches a list of items from the postgres db that meet a particular filter
 func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
 	query, args := p.buildGetItemsQuery(filter, userID)
+
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, err
+		}
+		return nil, errors.Wrap(err, "querying database for items")
 	}
 
 	list, err := scanItems(p.logger, rows)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "scanning response from database")
 	}
 
 	count, err := p.GetItemCount(ctx, filter, userID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "fetching item count")
 	}
 
 	x := &models.ItemList{
@@ -187,6 +197,7 @@ func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter, use
 // GetAllItemsForUser fetches every item belonging to a user
 func (p *Postgres) GetAllItemsForUser(ctx context.Context, userID uint64) ([]models.Item, error) {
 	query, args := p.buildGetItemsQuery(nil, userID)
+
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err

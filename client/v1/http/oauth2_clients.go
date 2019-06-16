@@ -23,9 +23,6 @@ func (c *V1Client) BuildGetOAuth2ClientRequest(ctx context.Context, id uint64) (
 
 // GetOAuth2Client gets an OAuth2 client
 func (c *V1Client) GetOAuth2Client(ctx context.Context, id uint64) (oauth2Client *models.OAuth2Client, err error) {
-	logger := c.logger.WithValue("oauth2_client_id", id)
-	logger.Debug("GetOAuth2Client called")
-
 	req, err := c.BuildGetOAuth2ClientRequest(ctx, id)
 	if err != nil {
 		return nil, errors.Wrap(err, "building request")
@@ -36,10 +33,7 @@ func (c *V1Client) GetOAuth2Client(ctx context.Context, id uint64) (oauth2Client
 }
 
 // BuildGetOAuth2ClientsRequest builds an http Request for fetching a list of oauth2 clients
-func (c *V1Client) BuildGetOAuth2ClientsRequest(
-	ctx context.Context,
-	filter *models.QueryFilter,
-) (*http.Request, error) {
+func (c *V1Client) BuildGetOAuth2ClientsRequest(ctx context.Context, filter *models.QueryFilter) (*http.Request, error) {
 	uri := c.BuildURL(filter.ToValues(), oauth2ClientsBasePath)
 
 	return http.NewRequest(http.MethodGet, uri, nil)
@@ -50,9 +44,6 @@ func (c *V1Client) GetOAuth2Clients(
 	ctx context.Context,
 	filter *models.QueryFilter,
 ) (oauth2Clients *models.OAuth2ClientList, err error) {
-	logger := c.logger.WithValue("filter", filter)
-	logger.Debug("GetOAuth2Clients called")
-
 	req, err := c.BuildGetOAuth2ClientsRequest(ctx, filter)
 	if err != nil {
 		return nil, errors.Wrap(err, "building request")
@@ -119,8 +110,6 @@ func (c *V1Client) BuildDeleteOAuth2ClientRequest(ctx context.Context, id uint64
 
 // DeleteOAuth2Client deletes an OAuth2 client
 func (c *V1Client) DeleteOAuth2Client(ctx context.Context, id uint64) error {
-	c.logger.WithValue("oauth2client_id", id).Debug("DeleteOAuth2Client called")
-
 	req, err := c.BuildDeleteOAuth2ClientRequest(ctx, id)
 	if err != nil {
 		return errors.Wrap(err, "building request")

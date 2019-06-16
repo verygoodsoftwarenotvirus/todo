@@ -11,13 +11,19 @@ import (
 
 var _ models.WebhookDataManager = (*Client)(nil)
 
+func attachWebhookIDToSpan(span *trace.Span, webhookID uint64) {
+	if span != nil {
+		span.AddAttributes(trace.StringAttribute("webhook_id", strconv.FormatUint(webhookID, 10)))
+	}
+}
+
 // GetWebhook fetches an webhook from the postgres querier
 func (c *Client) GetWebhook(ctx context.Context, webhookID, userID uint64) (*models.Webhook, error) {
 	ctx, span := trace.StartSpan(ctx, "GetWebhook")
 	defer span.End()
 
-	span.AddAttributes(trace.StringAttribute("webhook_id", strconv.FormatUint(webhookID, 10)))
-	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
+	attachUserIDToSpan(span, userID)
+	attachWebhookIDToSpan(span, webhookID)
 
 	c.logger.WithValues(map[string]interface{}{
 		"webhook_id": webhookID,
@@ -31,18 +37,18 @@ func (c *Client) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mod
 func (c *Client) GetWebhookCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
 	ctx, span := trace.StartSpan(ctx, "GetWebhookCount")
 	defer span.End()
-	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
+
+	if filter == nil {
+		filter = models.DefaultQueryFilter()
+	}
+
+	attachFilterToSpan(span, filter)
+	attachUserIDToSpan(span, userID)
 
 	c.logger.WithValues(map[string]interface{}{
 		"filter":  filter,
 		"user_id": userID,
 	}).Debug("GetWebhookCount called")
-
-	if filter == nil {
-		c.logger.Debug("using default query filter")
-		filter = models.DefaultQueryFilter()
-	}
-	filter.SetPage(filter.Page)
 
 	return c.querier.GetWebhookCount(ctx, filter, userID)
 }
@@ -72,6 +78,7 @@ func (c *Client) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]mo
 	ctx, span := trace.StartSpan(ctx, "GetAllWebhooksForUser")
 	defer span.End()
 
+	attachUserIDToSpan(span, userID)
 	c.logger.WithValue("user_id", userID).Debug("GetAllWebhooksForUser called")
 
 	return c.querier.GetAllWebhooksForUser(ctx, userID)
@@ -81,18 +88,15 @@ func (c *Client) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]mo
 func (c *Client) GetWebhooks(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.WebhookList, error) {
 	ctx, span := trace.StartSpan(ctx, "GetWebhooks")
 	defer span.End()
-	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
-
-	c.logger.WithValues(map[string]interface{}{
-		"filter":  filter,
-		"user_id": userID,
-	}).Debug("GetWebhookCount called")
 
 	if filter == nil {
-		c.logger.Debug("using default query filter")
 		filter = models.DefaultQueryFilter()
 	}
-	filter.SetPage(filter.Page)
+
+	attachUserIDToSpan(span, userID)
+	attachFilterToSpan(span, filter)
+
+	c.logger.WithValue("user_id", userID).Debug("GetWebhookCount called")
 
 	return c.querier.GetWebhooks(ctx, filter, userID)
 }
@@ -102,7 +106,8 @@ func (c *Client) CreateWebhook(ctx context.Context, input *models.WebhookInput) 
 	ctx, span := trace.StartSpan(ctx, "CreateWebhook")
 	defer span.End()
 
-	c.logger.WithValue("input", input).Debug("CreateWebhook called")
+	attachUserIDToSpan(span, input.BelongsTo)
+	c.logger.WithValue("user_id", input.BelongsTo).Debug("CreateWebhook called")
 
 	return c.querier.CreateWebhook(ctx, input)
 }
@@ -111,9 +116,11 @@ func (c *Client) CreateWebhook(ctx context.Context, input *models.WebhookInput) 
 func (c *Client) UpdateWebhook(ctx context.Context, input *models.Webhook) error {
 	ctx, span := trace.StartSpan(ctx, "UpdateWebhook")
 	defer span.End()
-	span.AddAttributes(trace.StringAttribute("webhook_id", strconv.FormatUint(input.ID, 10)))
 
-	c.logger.WithValue("input", input).Debug("UpdateWebhook called")
+	attachWebhookIDToSpan(span, input.ID)
+	attachUserIDToSpan(span, input.BelongsTo)
+
+	c.logger.WithValue("webhook_id", input.ID).Debug("UpdateWebhook called")
 
 	return c.querier.UpdateWebhook(ctx, input)
 }
@@ -122,8 +129,9 @@ func (c *Client) UpdateWebhook(ctx context.Context, input *models.Webhook) error
 func (c *Client) DeleteWebhook(ctx context.Context, webhookID, userID uint64) error {
 	ctx, span := trace.StartSpan(ctx, "DeleteWebhook")
 	defer span.End()
-	span.AddAttributes(trace.StringAttribute("webhook_id", strconv.FormatUint(webhookID, 10)))
-	span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
+
+	attachUserIDToSpan(span, userID)
+	attachWebhookIDToSpan(span, webhookID)
 
 	c.logger.WithValues(map[string]interface{}{
 		"webhook_id": webhookID,

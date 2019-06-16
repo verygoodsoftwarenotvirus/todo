@@ -30,15 +30,17 @@ type OAuth2ClientDataManager interface {
 
 // OAuth2ClientDataServer describes a structure capable of serving traffic related to oauth2 clients
 type OAuth2ClientDataServer interface {
-	List(res http.ResponseWriter, req *http.Request)
-	Create(res http.ResponseWriter, req *http.Request)
-	Read(res http.ResponseWriter, req *http.Request)
+	ListHandler(res http.ResponseWriter, req *http.Request)
+	CreateHandler(res http.ResponseWriter, req *http.Request)
+	ReadHandler(res http.ResponseWriter, req *http.Request)
 	// There is deliberately no update function
-	Delete(res http.ResponseWriter, req *http.Request)
+	DeleteHandler(res http.ResponseWriter, req *http.Request)
 
 	CreationInputMiddleware(next http.Handler) http.Handler
 	OAuth2ClientInfoMiddleware(next http.Handler) http.Handler
-	RequestIsAuthenticated(req *http.Request) (*OAuth2Client, error)
+	ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.Request) (*OAuth2Client, error)
+
+	// wrappers for our implementation library
 	HandleAuthorizeRequest(res http.ResponseWriter, req *http.Request) error
 	HandleTokenRequest(res http.ResponseWriter, req *http.Request) error
 }

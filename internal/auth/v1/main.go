@@ -16,7 +16,7 @@ var (
 
 	// Providers represents what this package offers to external libraries in the way of consntructors
 	Providers = wire.NewSet(
-		ProvideBcrypt,
+		ProvideBcryptAuthenticator,
 		ProvideBcryptHashCost,
 	)
 )
@@ -26,26 +26,28 @@ func ProvideBcryptHashCost() BcryptHashCost {
 	return DefaultBcryptHashCost
 }
 
-// PasswordHasher hashes passwords
-type PasswordHasher interface {
-	PasswordIsAcceptable(password string) bool
-	HashPassword(ctx context.Context, password string) (string, error)
-	PasswordMatches(ctx context.Context, hashedPassword, providedPassword string, salt []byte) bool
-}
+type (
+	// PasswordHasher hashes passwords
+	PasswordHasher interface {
+		PasswordIsAcceptable(password string) bool
+		HashPassword(ctx context.Context, password string) (string, error)
+		PasswordMatches(ctx context.Context, hashedPassword, providedPassword string, salt []byte) bool
+	}
 
-// Authenticator is a poorly named Authenticator interface
-type Authenticator interface {
-	PasswordHasher
+	// Authenticator is a poorly named Authenticator interface
+	Authenticator interface {
+		PasswordHasher
 
-	ValidateLogin(
-		ctx context.Context,
-		HashedPassword,
-		ProvidedPassword,
-		TwoFactorSecret,
-		TwoFactorCode string,
-		Salt []byte,
-	) (valid bool, err error)
-}
+		ValidateLogin(
+			ctx context.Context,
+			HashedPassword,
+			ProvidedPassword,
+			TwoFactorSecret,
+			TwoFactorCode string,
+			Salt []byte,
+		) (valid bool, err error)
+	}
+)
 
 func init() {
 	b := make([]byte, 64)

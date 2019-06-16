@@ -23,6 +23,10 @@ const (
 	serviceName        string              = "items_service"
 )
 
+var (
+	_ models.ItemDataServer = (*Service)(nil)
+)
+
 type (
 	// Service handles to-do list items
 	Service struct {

@@ -28,7 +28,7 @@ import (
 
 func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, database2 database.Database) (*server.Server, error) {
 	bcryptHashCost := auth.ProvideBcryptHashCost()
-	authenticator := auth.ProvideBcrypt(bcryptHashCost, logger)
+	authenticator := auth.ProvideBcryptAuthenticator(bcryptHashCost, logger)
 	userDataManager := users.ProvideUserDataManager(database2)
 	clientIDFetcher := httpserver.ProvideOAuth2ServiceClientIDFetcher(logger)
 	encoderDecoder := encoding.ProvideResponseEncoder()
@@ -74,7 +74,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
-	serverServer, err := server.ProvideServer(logger, cfg, httpserverServer)
+	serverServer, err := server.ProvideServer(cfg, httpserverServer)
 	if err != nil {
 		return nil, err
 	}

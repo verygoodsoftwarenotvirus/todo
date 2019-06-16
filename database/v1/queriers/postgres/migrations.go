@@ -14,7 +14,7 @@ var (
 	migrations = []darwin.Migration{
 		{
 			Version:     1,
-			Description: "Create users table",
+			Description: "CreateHandler users table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS users (
 				"id" bigserial NOT NULL PRIMARY KEY,
@@ -50,7 +50,7 @@ var (
 		},
 		{
 			Version:     3,
-			Description: "Create items table",
+			Description: "CreateHandler items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (
 				"id" bigserial NOT NULL PRIMARY KEY,
@@ -65,7 +65,7 @@ var (
 		},
 		{
 			Version:     4,
-			Description: "Create webhooks table",
+			Description: "CreateHandler webhooks table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
 				"id" bigserial NOT NULL PRIMARY KEY,

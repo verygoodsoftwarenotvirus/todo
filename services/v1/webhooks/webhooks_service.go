@@ -22,6 +22,10 @@ const (
 	serviceName      string              = "webhooks_service"
 )
 
+var (
+	_ models.WebhookDataServer = (*Service)(nil)
+)
+
 type (
 	eventManager interface {
 		newsman.Reporter
@@ -29,7 +33,7 @@ type (
 		TuneIn(newsman.Listener)
 	}
 
-	// Service handles TODO List webhooks
+	// Service handles TODO ListHandler webhooks
 	Service struct {
 		logger           logging.Logger
 		webhookCounter   metrics.UnitCounter

@@ -23,9 +23,6 @@ func (c *V1Client) BuildGetWebhookRequest(ctx context.Context, id uint64) (*http
 
 // GetWebhook gets an webhook
 func (c *V1Client) GetWebhook(ctx context.Context, id uint64) (webhook *models.Webhook, err error) {
-	logger := c.logger.WithValue("id", id)
-	logger.Debug("GetWebhook called")
-
 	req, err := c.BuildGetWebhookRequest(ctx, id)
 	if err != nil {
 		return nil, errors.Wrap(err, "building request")
@@ -44,9 +41,6 @@ func (c *V1Client) BuildGetWebhooksRequest(ctx context.Context, filter *models.Q
 
 // GetWebhooks gets a list of webhooks
 func (c *V1Client) GetWebhooks(ctx context.Context, filter *models.QueryFilter) (webhooks *models.WebhookList, err error) {
-	logger := c.logger.WithValue("filter", filter)
-	logger.Debug("GetWebhooks called")
-
 	req, err := c.BuildGetWebhooksRequest(ctx, filter)
 	if err != nil {
 		return nil, errors.Wrap(err, "building request")
@@ -65,11 +59,6 @@ func (c *V1Client) BuildCreateWebhookRequest(ctx context.Context, body *models.W
 
 // CreateWebhook creates an webhook
 func (c *V1Client) CreateWebhook(ctx context.Context, input *models.WebhookInput) (webhook *models.Webhook, err error) {
-	logger := c.logger.WithValues(map[string]interface{}{
-		"input_name": input.Name,
-	})
-	logger.Debug("CreateWebhook called")
-
 	req, err := c.BuildCreateWebhookRequest(ctx, input)
 	if err != nil {
 		return nil, errors.Wrap(err, "building request")
@@ -88,9 +77,6 @@ func (c *V1Client) BuildUpdateWebhookRequest(ctx context.Context, updated *model
 
 // UpdateWebhook updates an webhook
 func (c *V1Client) UpdateWebhook(ctx context.Context, updated *models.Webhook) error {
-	logger := c.logger.WithValue("id", updated.ID)
-	logger.Debug("UpdateWebhook called")
-
 	req, err := c.BuildUpdateWebhookRequest(ctx, updated)
 	if err != nil {
 		return errors.Wrap(err, "building request")
@@ -108,9 +94,6 @@ func (c *V1Client) BuildDeleteWebhookRequest(ctx context.Context, id uint64) (*h
 
 // DeleteWebhook deletes an webhook
 func (c *V1Client) DeleteWebhook(ctx context.Context, id uint64) error {
-	logger := c.logger.WithValue("id", id)
-	logger.Debug("DeleteWebhook called")
-
 	req, err := c.BuildDeleteWebhookRequest(ctx, id)
 	if err != nil {
 		return errors.Wrap(err, "building request")

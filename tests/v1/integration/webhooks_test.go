@@ -55,7 +55,7 @@ func TestWebhooks(test *testing.T) {
 		T.Run("should be createable", func(t *testing.T) {
 			tctx := context.Background()
 
-			// Create webhook
+			// CreateHandler webhook
 			input := buildDummyWebhookInput()
 			expected := &models.Webhook{
 				Name:        input.Name,
@@ -91,7 +91,7 @@ func TestWebhooks(test *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
 			tctx := context.Background()
 
-			// Create webhooks
+			// CreateHandler webhooks
 			var expected []*models.Webhook
 			for i := 0; i < 5; i++ {
 				expected = append(expected, buildDummyWebhook(t))
@@ -122,7 +122,7 @@ func TestWebhooks(test *testing.T) {
 		T.Run("it should be readable", func(t *testing.T) {
 			tctx := context.Background()
 
-			// Create webhook
+			// CreateHandler webhook
 			input := buildDummyWebhookInput()
 			expected := &models.Webhook{
 				Name:        input.Name,
@@ -163,7 +163,7 @@ func TestWebhooks(test *testing.T) {
 		T.Run("it should be updatable", func(t *testing.T) {
 			tctx := context.Background()
 
-			// Create webhook
+			// CreateHandler webhook
 			input := buildDummyWebhookInput()
 			expected := &models.Webhook{
 				Name:        input.Name,
@@ -206,7 +206,7 @@ func TestWebhooks(test *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
 			tctx := context.Background()
 
-			// Create webhook
+			// CreateHandler webhook
 			input := buildDummyWebhookInput()
 			expected := &models.Webhook{
 				Name:        input.Name,

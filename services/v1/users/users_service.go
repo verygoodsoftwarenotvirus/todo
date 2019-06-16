@@ -25,6 +25,10 @@ const (
 	serviceName                          = "users_service"
 )
 
+var (
+	_ models.UserDataServer = (*Service)(nil)
+)
+
 type (
 	// RequestValidator validates request
 	RequestValidator interface {

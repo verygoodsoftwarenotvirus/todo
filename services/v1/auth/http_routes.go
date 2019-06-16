@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
+	"strconv"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
@@ -19,48 +20,67 @@ const (
 	CookieName = "todocookie"
 )
 
+func attachUserIDToSpan(span *trace.Span, userID uint64) {
+	if span != nil {
+		span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
+	}
+}
+
+func attachUsernameToSpan(span *trace.Span, username string) {
+	if span != nil {
+		span.AddAttributes(trace.StringAttribute("username", username))
+	}
+}
+
 // DecodeCookieFromRequest takes a request object and fetches the cookie data if it is present
-func (s *Service) DecodeCookieFromRequest(req *http.Request) (*models.CookieAuth, error) {
-	var ca *models.CookieAuth
+func (s *Service) DecodeCookieFromRequest(ctx context.Context, req *http.Request) (ca *models.CookieAuth, err error) {
+	_, span := trace.StartSpan(ctx, "DecodeCookieFromRequest")
+	defer span.End()
 
 	cookie, err := req.Cookie(CookieName)
-	// we don't need the nil check here, but linters won't stop complaining if we don't do it
 	if err != http.ErrNoCookie && cookie != nil {
 		decodeErr := s.cookieManager.Decode(CookieName, cookie.Value, &ca)
 		if decodeErr != nil {
+			s.logger.Error(err, "decoding request cookie")
 			return nil, errors.Wrap(decodeErr, "decoding request cookie")
 		}
 
 		return ca, nil
 	}
-	return nil, err
+
+	return nil, http.ErrNoCookie
 }
 
 // WebsocketAuthFunction is provided to Newsman to determine if a user has access to websockets
 func (s *Service) WebsocketAuthFunction(req *http.Request) bool {
+	ctx, span := trace.StartSpan(req.Context(), "WebsocketAuthFunction")
+	defer span.End()
+
 	// First we check to see if there is an OAuth2 token for a valid client attached to the request.
 	// We do this first because it is presumed to be the primary means by which requests are made to the httpServer.
-	oauth2Client, err := s.oauth2ClientsService.RequestIsAuthenticated(req)
-	if err != nil || oauth2Client == nil {
-		// In the event there's not a valid OAuth2 token attached to the request, or there is some other OAuth2 issue,
-		// we next check to see if a valid cookie is attached to the request
-		cookieAuth, cookieErr := s.DecodeCookieFromRequest(req)
-		if cookieErr != nil || cookieAuth == nil {
-			// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere
-			s.logger.Error(err, "error authenticated token-authenticated request")
-			return false
-		}
-
+	oauth2Client, err := s.oauth2ClientsService.ExtractOAuth2ClientFromRequest(ctx, req)
+	if err == nil && oauth2Client != nil {
 		return true
 	}
 
-	// We found a valid OAuth2 client in the request
-	return true
+	// In the event there's not a valid OAuth2 token attached to the request, or there is some other OAuth2 issue,
+	// we next check to see if a valid cookie is attached to the request
+	cookieAuth, cookieErr := s.DecodeCookieFromRequest(ctx, req)
+	if cookieErr == nil && cookieAuth != nil {
+		return true
+	}
+
+	// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere
+	s.logger.Error(err, "error authenticated token-authenticated request")
+	return false
 }
 
 // FetchUserFromRequest takes a request object and fetches the cookie, and then the user for that cookie
-func (s *Service) FetchUserFromRequest(req *http.Request) (*models.User, error) {
-	ca, decodeErr := s.DecodeCookieFromRequest(req)
+func (s *Service) FetchUserFromRequest(ctx context.Context, req *http.Request) (*models.User, error) {
+	ctx, span := trace.StartSpan(ctx, "FetchUserFromRequest")
+	defer span.End()
+
+	ca, decodeErr := s.DecodeCookieFromRequest(ctx, req)
 	if decodeErr != nil {
 		return nil, errors.Wrap(decodeErr, "fetching cookie data from request")
 	}
@@ -69,6 +89,9 @@ func (s *Service) FetchUserFromRequest(req *http.Request) (*models.User, error) 
 	if userFetchErr != nil {
 		return nil, errors.Wrap(userFetchErr, "fetching user from request")
 	}
+	attachUserIDToSpan(span, ca.UserID)
+	attachUsernameToSpan(span, ca.Username)
+
 	return user, nil
 }
 
@@ -85,8 +108,15 @@ func (s *Service) Login(res http.ResponseWriter, req *http.Request) {
 			s.logger.Error(err, "encoding response")
 		}
 		return
+	} else if loginData == nil {
+		res.WriteHeader(http.StatusUnauthorized)
+		return
 	}
-	logger := s.logger.WithValue("login_input", loginData.loginInput)
+
+	attachUserIDToSpan(span, loginData.user.ID)
+	attachUsernameToSpan(span, loginData.user.Username)
+
+	logger := s.logger.WithValue("user", loginData.user.ID)
 
 	loginValid, err := s.validateLogin(ctx, *loginData)
 	if err != nil {
@@ -102,7 +132,7 @@ func (s *Service) Login(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger.Debug("login was valid, returning cookie")
+	logger.Debug("login was valid")
 	cookie, err := s.buildAuthCookie(loginData.user)
 	if err != nil {
 		logger.Error(err, "error building cookie")
@@ -128,7 +158,6 @@ func (s *Service) Logout(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	if cookie, err := req.Cookie(CookieName); err == nil && cookie != nil {
-		s.logger.Debug("logout was called, clearing cookie")
 		c := s.buildCookie("deleted")
 		c.Expires = time.Time{}
 		c.MaxAge = -1
@@ -142,6 +171,7 @@ func (s *Service) Logout(res http.ResponseWriter, req *http.Request) {
 
 // CycleSecret rotates the cookie building secret with a new random secret
 func (s *Service) CycleSecret(res http.ResponseWriter, req *http.Request) {
+	s.logger.Info("cycling cookie secret!")
 	_, span := trace.StartSpan(req.Context(), "CycleSecret")
 	defer span.End()
 
@@ -159,7 +189,9 @@ type loginData struct {
 }
 
 func (s *Service) fetchLoginDataFromRequest(req *http.Request) (*loginData, *models.ErrorResponse) {
-	ctx := req.Context()
+	ctx, span := trace.StartSpan(req.Context(), "fetchLoginDataFromRequest")
+	defer span.End()
+
 	loginInput, ok := ctx.Value(UserLoginInputMiddlewareCtxKey).(*models.UserLoginInput)
 	if !ok {
 		s.logger.Debug("no UserLoginInput found for /login request")
@@ -167,24 +199,26 @@ func (s *Service) fetchLoginDataFromRequest(req *http.Request) (*loginData, *mod
 			Code: http.StatusUnauthorized,
 		}
 	}
+
 	username := loginInput.Username
-	logger := s.logger.WithValue("Username", username)
+	attachUsernameToSpan(span, username)
 
 	// you could ensure there isn't an unsatisfied password reset token
 	// requested before allowing login here
 
 	user, err := s.userDB.GetUserByUsername(ctx, username)
 	if err == sql.ErrNoRows {
-		logger.WithError(err).Debug("no matching user")
+		s.logger.Error(err, "no matching user")
 		return nil, &models.ErrorResponse{
 			Code: http.StatusBadRequest,
 		}
 	} else if err != nil {
-		logger.WithError(err).Debug("error fetching user")
+		s.logger.Error(err, "error fetching user")
 		return nil, &models.ErrorResponse{
 			Code: http.StatusInternalServerError,
 		}
 	}
+	attachUserIDToSpan(span, user.ID)
 
 	ld := &loginData{
 		loginInput: loginInput,
@@ -195,12 +229,12 @@ func (s *Service) fetchLoginDataFromRequest(req *http.Request) (*loginData, *mod
 }
 
 func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool, error) {
+	ctx, span := trace.StartSpan(ctx, "validateLogin")
+	defer span.End()
+
 	user := loginInfo.user
 	loginInput := loginInfo.loginInput
-
-	logger := s.logger.WithValue("2fa_secret", user.TwoFactorSecret)
-	logger.Debug("validating login")
-
+	logger := s.logger.WithValue("username", user.Username)
 	loginValid, err := s.authenticator.ValidateLogin(
 		ctx,
 		user.HashedPassword,
@@ -209,17 +243,18 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 		loginInput.TOTPToken,
 		user.Salt,
 	)
-	if err == auth.ErrPasswordHashTooWeak && loginValid {
-		s.logger.Debug("hashed password was deemed to weak, updating its hash")
 
-		updated, e := s.authenticator.HashPassword(ctx, loginInput.Password)
-		if e != nil {
-			return false, e
+	if err == auth.ErrPasswordHashTooWeak && loginValid {
+		logger.Debug("hashed password was deemed to weak, updating its hash")
+
+		updated, hashErr := s.authenticator.HashPassword(ctx, loginInput.Password)
+		if hashErr != nil {
+			return false, errors.Wrap(hashErr, "updating password hash")
 		}
 
 		user.HashedPassword = updated
 		if updateErr := s.userDB.UpdateUser(ctx, user); updateErr != nil {
-			return false, updateErr
+			return false, errors.Wrap(updateErr, "saving updated password hash")
 		}
 	} else if err != nil && err != auth.ErrPasswordHashTooWeak {
 		logger.Error(err, "issue validating login")
@@ -230,12 +265,9 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 }
 
 func (s *Service) buildAuthCookie(user *models.User) (*http.Cookie, error) {
-	s.logger.WithValues(map[string]interface{}{
-		"user_id": user.ID,
-	}).Debug("buildAuthCookie called")
-
-	// NOTE: code here is duplicated into the unit tests for DecodeCookieFromRequest
-	// any changes made here might need to be reflected there
+	// NOTE: code here is duplicated into the unit tests for
+	// DecodeCookieFromRequest any changes made here might need
+	// to be reflected there
 	encoded, err := s.cookieManager.Encode(
 		CookieName, models.CookieAuth{
 			UserID:   user.ID,
@@ -245,7 +277,7 @@ func (s *Service) buildAuthCookie(user *models.User) (*http.Cookie, error) {
 	)
 
 	if err != nil {
-		s.logger.Error(err, "error encoding cookie")
+		s.logger.WithValue("user_id", user.ID).Error(err, "error encoding cookie")
 		return nil, err
 	}
 

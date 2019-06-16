@@ -22,12 +22,12 @@ type UserDataServer interface {
 	PasswordUpdateInputMiddleware(next http.Handler) http.Handler
 	TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handler
 
-	List(res http.ResponseWriter, req *http.Request)
-	Create(res http.ResponseWriter, req *http.Request)
-	Read(res http.ResponseWriter, req *http.Request)
-	NewTOTPSecret(res http.ResponseWriter, req *http.Request)
-	UpdatePassword(res http.ResponseWriter, req *http.Request)
-	Delete(res http.ResponseWriter, req *http.Request)
+	ListHandler(res http.ResponseWriter, req *http.Request)
+	CreateHandler(res http.ResponseWriter, req *http.Request)
+	ReadHandler(res http.ResponseWriter, req *http.Request)
+	NewTOTPSecretHandler(res http.ResponseWriter, req *http.Request)
+	UpdatePasswordHandler(res http.ResponseWriter, req *http.Request)
+	DeleteHandler(res http.ResponseWriter, req *http.Request)
 }
 
 const (

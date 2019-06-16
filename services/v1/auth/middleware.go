@@ -24,11 +24,10 @@ const (
 // CookieAuthenticationMiddleware checks every request for a user cookie
 func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "cookie-authentication-middleware")
+		ctx, span := trace.StartSpan(req.Context(), "CookieAuthenticationMiddleware")
 		defer span.End()
 
-		s.logger.Debug("userCookieAuthenticationMiddleware triggered")
-		user, err := s.FetchUserFromRequest(req)
+		user, err := s.FetchUserFromRequest(ctx, req)
 		if err != nil {
 			s.logger.Error(err, "error encountered fetching user")
 			res.WriteHeader(http.StatusUnauthorized)
@@ -53,16 +52,15 @@ func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken bool) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			ctx, span := trace.StartSpan(req.Context(), "authentication-middleware")
+			ctx, span := trace.StartSpan(req.Context(), "AuthenticationMiddleware")
 			defer span.End()
-			s.logger.Debug("apiAuthenticationMiddleware called")
 
 			// let's figure out who the user is
 			var user *models.User
 
 			// check for a cookie first:
 			if allowValidCookieInLieuOfAValidToken {
-				cookieAuth, err := s.DecodeCookieFromRequest(req)
+				cookieAuth, err := s.DecodeCookieFromRequest(ctx, req)
 				if err == nil && cookieAuth != nil {
 					user, err = s.userDB.GetUser(ctx, cookieAuth.UserID)
 					if err != nil {
@@ -73,10 +71,11 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 				}
 			}
 
+			// if the cookie wasn't present, or didn't indicate who the user is
 			if user == nil {
 				// check to see if there is an OAuth2 token for a valid client attached to the request.
 				// We do this first because it is presumed to be the primary means by which requests are made to the httpServer.
-				oauth2Client, err := s.oauth2ClientsService.RequestIsAuthenticated(req)
+				oauth2Client, err := s.oauth2ClientsService.ExtractOAuth2ClientFromRequest(ctx, req)
 				if err != nil || oauth2Client == nil {
 					s.logger.Error(err, "fetching oauth2 client")
 					http.Redirect(res, req, "/login", http.StatusUnauthorized)
@@ -113,18 +112,20 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 // AdminMiddleware restricts requests to admin users only
 func (s *Service) AdminMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx := req.Context()
+		ctx, span := trace.StartSpan(req.Context(), "AdminMiddleware")
+		defer span.End()
 
+		logger := s.logger.WithRequest(req)
 		user, ok := ctx.Value(models.UserKey).(*models.User)
 
 		if !ok || user == nil {
-			s.logger.WithRequest(req).Info("AdminMiddleware called without user attached to context")
+			logger.Debug("AdminMiddleware called without user attached to context")
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
 		if !user.IsAdmin {
-			s.logger.WithRequest(req).Info("AdminMiddleware called by non-admin user")
+			logger.Debug("AdminMiddleware called by non-admin user")
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -134,17 +135,16 @@ func (s *Service) AdminMiddleware(next http.Handler) http.Handler {
 }
 
 func parseLoginInputFromForm(req *http.Request) *models.UserLoginInput {
-	err := req.ParseForm()
-	if err == nil {
+	if err := req.ParseForm(); err == nil {
 		uli := &models.UserLoginInput{
 			Username:  req.FormValue(UsernameFormKey),
 			Password:  req.FormValue(PasswordFormKey),
 			TOTPToken: req.FormValue(TOTPTokenFormKey),
 		}
-		if uli.Username == "" && uli.Password == "" && uli.TOTPToken == "" {
-			return nil
+
+		if uli.Username != "" && uli.Password != "" && uli.TOTPToken != "" {
+			return uli
 		}
-		return uli
 	}
 	return nil
 }
@@ -152,21 +152,20 @@ func parseLoginInputFromForm(req *http.Request) *models.UserLoginInput {
 // UserLoginInputMiddleware fetches user login input from requests
 func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := trace.StartSpan(req.Context(), "UserLoginInputMiddleware")
+		defer span.End()
+
 		x := new(models.UserLoginInput)
-		s.logger.WithRequest(req).Debug("UserLoginInputMiddleware called")
 
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
-			if formInput := parseLoginInputFromForm(req); formInput != nil {
-				ctx := context.WithValue(req.Context(), UserLoginInputMiddlewareCtxKey, formInput)
-				next.ServeHTTP(res, req.WithContext(ctx))
+			if x = parseLoginInputFromForm(req); x == nil {
+				s.logger.Error(err, "error encountered decoding request body")
+				res.WriteHeader(http.StatusBadRequest)
 				return
 			}
-
-			s.logger.Error(err, "error encountered decoding request body")
-			res.WriteHeader(http.StatusBadRequest)
-			return
 		}
-		ctx := context.WithValue(req.Context(), UserLoginInputMiddlewareCtxKey, x)
+
+		ctx = context.WithValue(ctx, UserLoginInputMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }

@@ -141,6 +141,12 @@ func (c *V1Client) Login(ctx context.Context, username, password, totpToken stri
 		c.logger.WithValue("response", string(b)).Debug("login response received")
 	}
 
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			c.logger.Error(err, "closing response body")
+		}
+	}()
+
 	cookies := res.Cookies()
 	if len(cookies) > 0 {
 		return cookies[0], nil

@@ -28,8 +28,8 @@ func (c *V1Client) GetItem(ctx context.Context, id uint64) (item *models.Item, e
 		return nil, errors.Wrap(err, "building request")
 	}
 
-	if err = c.retrieve(ctx, req, &item); err != nil {
-		return nil, err
+	if retrieveErr := c.retrieve(ctx, req, &item); retrieveErr != nil {
+		return nil, retrieveErr
 	}
 
 	return item, nil
@@ -49,8 +49,8 @@ func (c *V1Client) GetItems(ctx context.Context, filter *models.QueryFilter) (it
 		return nil, errors.Wrap(err, "building request")
 	}
 
-	if err = c.retrieve(ctx, req, &items); err != nil  {
-		return nil, err
+	if retrieveErr := c.retrieve(ctx, req, &items); retrieveErr != nil {
+		return nil, retrieveErr
 	}
 
 	return items, nil

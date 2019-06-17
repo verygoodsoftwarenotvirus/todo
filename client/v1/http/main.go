@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -201,7 +200,7 @@ func (c *V1Client) buildURL(queryParams url.Values, parts ...string) *url.URL {
 	if queryParams != nil {
 		u.RawQuery = queryParams.Encode()
 	}
-	err
+
 	return tu.ResolveReference(u)
 }
 
@@ -235,11 +234,11 @@ func (c *V1Client) IsUp() bool {
 		return false
 	}
 
-	if err =res.Body.Close(); err != nil {
-		// this will probably never happen
-		log.Println("error closing body")
-	}
-
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			c.logger.Error(err, "closing response body")
+		}
+	}()
 
 	return res.StatusCode == http.StatusOK
 }

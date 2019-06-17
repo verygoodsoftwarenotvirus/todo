@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -151,10 +152,10 @@ func tokenEndpoint(baseURL *url.URL) oauth2.Endpoint {
 // and has noops or empty values for most of its authentication and debug parts.
 // Its purpose at the time of this writing is merely so I can make users (which
 // is a route that doesn't require authentication)
-func NewSimpleClient(ctx context.Context, address *url.URL, scopes []string, debug bool) (*V1Client, error) {
+func NewSimpleClient(ctx context.Context, address *url.URL, debug bool) (*V1Client, error) {
 	l := noop.ProvideNoopLogger()
 	h := &http.Client{Timeout: 5 * time.Second}
-	c, err := NewClient(ctx, "", "", address, l, h, scopes, debug)
+	c, err := NewClient(ctx, "", "", address, l, h, []string{"*"}, debug)
 	return c, err
 }
 
@@ -200,7 +201,7 @@ func (c *V1Client) buildURL(queryParams url.Values, parts ...string) *url.URL {
 	if queryParams != nil {
 		u.RawQuery = queryParams.Encode()
 	}
-
+	err
 	return tu.ResolveReference(u)
 }
 
@@ -233,6 +234,12 @@ func (c *V1Client) IsUp() bool {
 		c.logger.Error(err, "health check")
 		return false
 	}
+
+	if err =res.Body.Close(); err != nil {
+		// this will probably never happen
+		log.Println("error closing body")
+	}
+
 
 	return res.StatusCode == http.StatusOK
 }

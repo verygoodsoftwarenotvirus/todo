@@ -19,18 +19,6 @@ import (
 //                                                    //
 // ////////////////////////////////////////////////// //
 
-func argIsNotPointerOrNil(i interface{}) error {
-	if nn, err := argIsNotNil(i); nn || err != nil {
-		return err
-	}
-
-	if np, err := argIsNotPointer(i); np || err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // argIsNotPointer checks an argument and returns whether or not it is a pointer
 func argIsNotPointer(i interface{}) (notAPointer bool, err error) {
 	if i == nil || reflect.TypeOf(i).Kind() != reflect.Ptr {
@@ -47,8 +35,27 @@ func argIsNotNil(i interface{}) (isNil bool, err error) {
 	return false, nil
 }
 
+// argIsNotPointerOrNil does what it says on the tin. This function
+// is primarily useful for detecting if a destination value is valid
+// before decoding an HTTP response, for instance
+func argIsNotPointerOrNil(i interface{}) error {
+	if nn, err := argIsNotNil(i); nn || err != nil {
+		return err
+	}
+
+	if np, err := argIsNotPointer(i); np || err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// unmarshalBody takes an HTTP response and JSON decodes its
+// body into a destination value. `dest` must be a non-nil
+// pointer to an object. Ideally, response is also not nil.
+// The error returned here should only ever be received in
+// testing, and should never be encountered by an end-user.
 func unmarshalBody(res *http.Response, dest interface{}) error {
-	// These paths should only ever be reached in tests, and should never be encountered by an end user.
 	if err := argIsNotPointerOrNil(dest); err != nil {
 		return err
 	}
@@ -60,15 +67,11 @@ func unmarshalBody(res *http.Response, dest interface{}) error {
 
 	if res.StatusCode >= http.StatusBadRequest {
 		apiErr := &models.ErrorResponse{}
-		// eating this error because it would have been caught above
 		if err = json.Unmarshal(bodyBytes, &apiErr); err != nil {
 			return errors.Wrap(err, "unmarshaling error")
 		}
 		return apiErr
 	}
-
-	s := string(bodyBytes)
-	_ = s
 
 	if err = json.Unmarshal(bodyBytes, &dest); err != nil {
 		return errors.Wrap(err, "unmarshaling body")
@@ -77,6 +80,8 @@ func unmarshalBody(res *http.Response, dest interface{}) error {
 	return nil
 }
 
+// createBodyFromStruct takes any value in and returns an io.Reader
+// for placement within http.NewRequest's last argument.
 func createBodyFromStruct(in interface{}) (io.Reader, error) {
 	out, err := json.Marshal(in)
 	if err != nil {

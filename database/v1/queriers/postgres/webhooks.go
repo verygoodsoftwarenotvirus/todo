@@ -149,7 +149,8 @@ func (p *Postgres) buildGetWebhookCountQuery(filter *models.QueryFilter, userID 
 // GetWebhookCount will fetch the count of webhooks from the postgres db that meet a particular filter and belong to a particular user.
 func (p *Postgres) GetWebhookCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
 	query, args := p.buildGetWebhookCountQuery(filter, userID)
-	return count, p.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	return count, err
 }
 
 func (p *Postgres) buildGetAllWebhooksCountQuery() (query string, args []interface{}) {
@@ -168,7 +169,8 @@ func (p *Postgres) buildGetAllWebhooksCountQuery() (query string, args []interfa
 // GetAllWebhooksCount will fetch the count of webhooks from the postgres db that meet a particular filter
 func (p *Postgres) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
 	query, args := p.buildGetAllWebhooksCountQuery()
-	return count, p.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	return count, err
 }
 
 func (p *Postgres) buildGetAllWebhooksQuery() (query string, args []interface{}) {

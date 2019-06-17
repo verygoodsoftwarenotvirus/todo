@@ -188,9 +188,11 @@ issues:
         - errcheck
         - dupl
         - gosec
+        - bodyclose
 
     - path: tests/v1/testutil/
       linters:
+        - bodyclose
         - gocyclo
 
     - path: models/

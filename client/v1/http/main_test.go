@@ -140,7 +140,6 @@ func TestNewSimpleClient(T *testing.T) {
 		c, err := NewSimpleClient(
 			context.Background(),
 			mustParseURL(exampleURI),
-			[]string{"*"},
 			true,
 		)
 		require.NotNil(t, c)

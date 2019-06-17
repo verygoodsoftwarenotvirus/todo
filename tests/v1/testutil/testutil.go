@@ -75,6 +75,10 @@ func IsUp(address string) bool {
 		return false
 	}
 
+	if err = res.Body.Close(); err != nil {
+		log.Println("error closing body")
+	}
+
 	return res.StatusCode == http.StatusOK
 }
 
@@ -85,7 +89,7 @@ func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
 		return nil, err
 	}
 
-	c, err := client.NewSimpleClient(context.Background(), tu, []string{"*"}, debug)
+	c, err := client.NewSimpleClient(context.Background(), tu, debug)
 	if err != nil {
 		return nil, err
 	}
@@ -165,6 +169,10 @@ func getLoginCookie(serviceURL string, u *models.User) (*http.Cookie, error) {
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "executing request")
+	}
+
+	if err = res.Body.Close(); err != nil {
+		log.Println("error closing body")
 	}
 
 	cookies := res.Cookies()

@@ -39,6 +39,7 @@ var (
 	}
 )
 
+// scanWebhook is a consistent way to turn a *sql.Row into a webhook struct
 func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 	var (
 		x = &models.Webhook{}
@@ -78,6 +79,7 @@ func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 	return x, nil
 }
 
+// scanWebhooks provides a consistent way to turn sql rows into a slice of webhooks
 func scanWebhooks(logger logging.Logger, rows *sql.Rows) ([]models.Webhook, error) {
 	var list []models.Webhook
 
@@ -97,6 +99,7 @@ func scanWebhooks(logger logging.Logger, rows *sql.Rows) ([]models.Webhook, erro
 	return list, nil
 }
 
+// buildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook
 func (p *Postgres) buildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
 	query, args, err = p.sqlBuilder.
@@ -124,6 +127,8 @@ func (p *Postgres) GetWebhook(ctx context.Context, webhookID, userID uint64) (*m
 	return webhook, nil
 }
 
+// buildGetWebhookCountQuery returns a SQL query (and arguments) that returns a list of webhooks
+// meeting a given filter's criteria and belonging to a given user.
 func (p *Postgres) buildGetWebhookCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
 	builder := p.sqlBuilder.
@@ -144,7 +149,8 @@ func (p *Postgres) buildGetWebhookCountQuery(filter *models.QueryFilter, userID 
 	return query, args
 }
 
-// GetWebhookCount will fetch the count of webhooks from the database that meet a particular filter and belong to a particular user.
+// GetWebhookCount will fetch the count of webhooks from the database that meet a particular filter,
+// and belong to a particular user.
 func (p *Postgres) GetWebhookCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
 	query, args := p.buildGetWebhookCountQuery(filter, userID)
 	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
@@ -156,6 +162,7 @@ var (
 	getAllWebhooksCountQuery        string
 )
 
+// buildGetAllWebhooksCountQuery returns a query which would return the count of webhooks regardless of ownership.
 func (p *Postgres) buildGetAllWebhooksCountQuery() string {
 	getAllWebhooksCountQueryBuilder.Do(func() {
 		var err error
@@ -171,7 +178,7 @@ func (p *Postgres) buildGetAllWebhooksCountQuery() string {
 	return getAllWebhooksCountQuery
 }
 
-// GetAllWebhooksCount will fetch the count of webhooks from the database that meet a particular filter
+// GetAllWebhooksCount will fetch the count of every active webhook in the database
 func (p *Postgres) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
 	err = p.db.QueryRowContext(ctx, p.buildGetAllWebhooksCountQuery()).Scan(&count)
 	return count, err
@@ -182,6 +189,7 @@ var (
 	getAllWebhooksQuery        string
 )
 
+// buildGetAllWebhooksQuery returns a SQL query which will return all webhooks, regardless of ownership
 func (p *Postgres) buildGetAllWebhooksQuery() string {
 	getAllWebhooksQueryBuilder.Do(func() {
 		var err error
@@ -248,6 +256,7 @@ func (p *Postgres) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]
 	return list, nil
 }
 
+// buildGetWebhooksQuery returns a SQL query (and arguments) that would return a
 func (p *Postgres) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
 	builder := p.sqlBuilder.

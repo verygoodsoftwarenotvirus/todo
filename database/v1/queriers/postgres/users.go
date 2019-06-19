@@ -32,6 +32,7 @@ var (
 	}
 )
 
+// scanUser provides a consistent way to scan something like a *sql.Row into a User struct
 func scanUser(scan database.Scanner) (*models.User, error) {
 	var x = &models.User{}
 
@@ -52,6 +53,7 @@ func scanUser(scan database.Scanner) (*models.User, error) {
 	return x, nil
 }
 
+// scanUsers takes database rows and loads them into a slice of User structs
 func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, error) {
 	var list []models.User
 
@@ -72,6 +74,7 @@ func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, error) {
 	return list, nil
 }
 
+// buildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID
 func (p *Postgres) buildGetUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 	query, args, err = p.sqlBuilder.
@@ -85,7 +88,7 @@ func (p *Postgres) buildGetUserQuery(userID uint64) (query string, args []interf
 	return query, args
 }
 
-// GetUser fetches a user by their username
+// GetUser fetches a user
 func (p *Postgres) GetUser(ctx context.Context, userID uint64) (*models.User, error) {
 	query, args := p.buildGetUserQuery(userID)
 	row := p.db.QueryRowContext(ctx, query, args...)
@@ -98,6 +101,7 @@ func (p *Postgres) GetUser(ctx context.Context, userID uint64) (*models.User, er
 	return u, err
 }
 
+// buildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username
 func (p *Postgres) buildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
 	var err error
 	query, args, err = p.sqlBuilder.
@@ -127,6 +131,8 @@ func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*mod
 	return u, nil
 }
 
+// buildGetUserCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
+// to a given filter's criteria.
 func (p *Postgres) buildGetUserCountQuery(filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 	builder := p.sqlBuilder.
@@ -154,6 +160,8 @@ func (p *Postgres) GetUserCount(ctx context.Context, filter *models.QueryFilter)
 	return
 }
 
+// buildGetUserCountQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
+// to a given filter's criteria.
 func (p *Postgres) buildGetUsersQuery(filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 	builder := p.sqlBuilder.
@@ -203,6 +211,7 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 	return x, nil
 }
 
+// buildCreateUserQuery returns a SQL query (and arguments) that would create a given User
 func (p *Postgres) buildCreateUserQuery(input *models.UserInput) (query string, args []interface{}) {
 	var err error
 	query, args, err = p.sqlBuilder.Insert(usersTableName).
@@ -255,6 +264,7 @@ func (p *Postgres) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 	return x, nil
 }
 
+// buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row
 func (p *Postgres) buildUpdateUserQuery(input *models.User) (query string, args []interface{}) {
 	var err error
 	query, args, err = p.sqlBuilder.Update(usersTableName).

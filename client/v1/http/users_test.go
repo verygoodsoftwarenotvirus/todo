@@ -201,7 +201,7 @@ func TestV1Client_CreateUser(T *testing.T) {
 	})
 }
 
-func TestV1Client_BuildDeleteUserRequest(T *testing.T) {
+func TestV1Client_BuildArchiveUserRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -212,7 +212,7 @@ func TestV1Client_BuildDeleteUserRequest(T *testing.T) {
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
-		actual, err := c.BuildDeleteUserRequest(ctx, expectedID)
+		actual, err := c.BuildArchiveUserRequest(ctx, expectedID)
 
 		require.NotNil(t, actual)
 		require.NotNil(t, actual.URL)
@@ -227,7 +227,7 @@ func TestV1Client_BuildDeleteUserRequest(T *testing.T) {
 	})
 }
 
-func TestV1Client_DeleteUser(T *testing.T) {
+func TestV1Client_ArchiveUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -245,7 +245,7 @@ func TestV1Client_DeleteUser(T *testing.T) {
 			),
 		)
 
-		err := buildTestClient(t, ts).DeleteUser(ctx, expected)
+		err := buildTestClient(t, ts).ArchiveUser(ctx, expected)
 
 		assert.NoError(t, err, "no error should be returned")
 	})

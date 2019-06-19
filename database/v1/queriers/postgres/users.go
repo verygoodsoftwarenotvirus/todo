@@ -150,7 +150,7 @@ func (p *Postgres) buildGetUserCountQuery(filter *models.QueryFilter) (query str
 	return query, args
 }
 
-// GetUserCount fetches a count of users from the postgres db that meet a particular filter
+// GetUserCount fetches a count of users from the database that meet a particular filter
 func (p *Postgres) GetUserCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
 	query, args := p.buildGetUserCountQuery(filter)
 	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
@@ -175,7 +175,7 @@ func (p *Postgres) buildGetUsersQuery(filter *models.QueryFilter) (query string,
 	return query, args
 }
 
-// GetUsers fetches a list of users from the postgres db that meet a particular filter
+// GetUsers fetches a list of users from the database that meet a particular filter
 func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
 	query, args := p.buildGetUsersQuery(filter)
 
@@ -299,8 +299,8 @@ func (p *Postgres) buildArchiveUserQuery(userID uint64) (query string, args []in
 	return query, args
 }
 
-// DeleteUser deletes a user by their username
-func (p *Postgres) DeleteUser(ctx context.Context, userID uint64) error {
+// ArchiveUser archives a user by their username
+func (p *Postgres) ArchiveUser(ctx context.Context, userID uint64) error {
 	query, args := p.buildArchiveUserQuery(userID)
 	_, err := p.db.ExecContext(ctx, query, args...)
 	return err

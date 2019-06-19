@@ -11,13 +11,14 @@ import (
 
 var _ models.WebhookDataManager = (*Client)(nil)
 
+// attachWebhookIDToSpan provides a consistent way to attach a webhook's ID to a span
 func attachWebhookIDToSpan(span *trace.Span, webhookID uint64) {
 	if span != nil {
 		span.AddAttributes(trace.StringAttribute("webhook_id", strconv.FormatUint(webhookID, 10)))
 	}
 }
 
-// GetWebhook fetches an webhook from the postgres querier
+// GetWebhook fetches a webhook from the database
 func (c *Client) GetWebhook(ctx context.Context, webhookID, userID uint64) (*models.Webhook, error) {
 	ctx, span := trace.StartSpan(ctx, "GetWebhook")
 	defer span.End()
@@ -33,14 +34,10 @@ func (c *Client) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mod
 	return c.querier.GetWebhook(ctx, webhookID, userID)
 }
 
-// GetWebhookCount fetches the count of webhooks from the postgres querier that meet a particular filter
+// GetWebhookCount fetches the count of webhooks from the database that meet a particular filter
 func (c *Client) GetWebhookCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
 	ctx, span := trace.StartSpan(ctx, "GetWebhookCount")
 	defer span.End()
-
-	if filter == nil {
-		filter = models.DefaultQueryFilter()
-	}
 
 	attachFilterToSpan(span, filter)
 	attachUserIDToSpan(span, userID)
@@ -53,7 +50,7 @@ func (c *Client) GetWebhookCount(ctx context.Context, filter *models.QueryFilter
 	return c.querier.GetWebhookCount(ctx, filter, userID)
 }
 
-// GetAllWebhooksCount fetches the count of webhooks from the postgres querier that meet a particular filter
+// GetAllWebhooksCount fetches the count of webhooks from the database that meet a particular filter
 func (c *Client) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
 	ctx, span := trace.StartSpan(ctx, "GetAllWebhooksCount")
 	defer span.End()
@@ -63,7 +60,7 @@ func (c *Client) GetAllWebhooksCount(ctx context.Context) (count uint64, err err
 	return c.querier.GetAllWebhooksCount(ctx)
 }
 
-// GetAllWebhooks fetches a list of webhooks from the postgres querier that meet a particular filter
+// GetAllWebhooks fetches a list of webhooks from the database that meet a particular filter
 func (c *Client) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
 	ctx, span := trace.StartSpan(ctx, "GetAllWebhooks")
 	defer span.End()
@@ -73,7 +70,7 @@ func (c *Client) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error
 	return c.querier.GetAllWebhooks(ctx)
 }
 
-// GetAllWebhooksForUser fetches a list of webhooks from the postgres querier that meet a particular filter
+// GetAllWebhooksForUser fetches a list of webhooks from the database that meet a particular filter
 func (c *Client) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]models.Webhook, error) {
 	ctx, span := trace.StartSpan(ctx, "GetAllWebhooksForUser")
 	defer span.End()
@@ -84,14 +81,10 @@ func (c *Client) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]mo
 	return c.querier.GetAllWebhooksForUser(ctx, userID)
 }
 
-// GetWebhooks fetches a list of webhooks from the postgres querier that meet a particular filter
+// GetWebhooks fetches a list of webhooks from the database that meet a particular filter
 func (c *Client) GetWebhooks(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.WebhookList, error) {
 	ctx, span := trace.StartSpan(ctx, "GetWebhooks")
 	defer span.End()
-
-	if filter == nil {
-		filter = models.DefaultQueryFilter()
-	}
 
 	attachUserIDToSpan(span, userID)
 	attachFilterToSpan(span, filter)
@@ -101,7 +94,7 @@ func (c *Client) GetWebhooks(ctx context.Context, filter *models.QueryFilter, us
 	return c.querier.GetWebhooks(ctx, filter, userID)
 }
 
-// CreateWebhook creates an webhook in a postgres querier
+// CreateWebhook creates a webhook in a database
 func (c *Client) CreateWebhook(ctx context.Context, input *models.WebhookInput) (*models.Webhook, error) {
 	ctx, span := trace.StartSpan(ctx, "CreateWebhook")
 	defer span.End()
@@ -112,7 +105,8 @@ func (c *Client) CreateWebhook(ctx context.Context, input *models.WebhookInput) 
 	return c.querier.CreateWebhook(ctx, input)
 }
 
-// UpdateWebhook updates a particular webhook. Note that UpdateWebhook expects the provided input to have a valid ID.
+// UpdateWebhook updates a particular webhook.
+// NOTE: this function expects the provided input to have a non-zero ID.
 func (c *Client) UpdateWebhook(ctx context.Context, input *models.Webhook) error {
 	ctx, span := trace.StartSpan(ctx, "UpdateWebhook")
 	defer span.End()
@@ -125,9 +119,9 @@ func (c *Client) UpdateWebhook(ctx context.Context, input *models.Webhook) error
 	return c.querier.UpdateWebhook(ctx, input)
 }
 
-// DeleteWebhook deletes an webhook from the querier by its ID
-func (c *Client) DeleteWebhook(ctx context.Context, webhookID, userID uint64) error {
-	ctx, span := trace.StartSpan(ctx, "DeleteWebhook")
+// ArchiveWebhook archives a webhook from the database
+func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error {
+	ctx, span := trace.StartSpan(ctx, "ArchiveWebhook")
 	defer span.End()
 
 	attachUserIDToSpan(span, userID)
@@ -136,7 +130,7 @@ func (c *Client) DeleteWebhook(ctx context.Context, webhookID, userID uint64) er
 	c.logger.WithValues(map[string]interface{}{
 		"webhook_id": webhookID,
 		"user_id":    userID,
-	}).Debug("DeleteWebhook called")
+	}).Debug("ArchiveWebhook called")
 
-	return c.querier.DeleteWebhook(ctx, webhookID, userID)
+	return c.querier.ArchiveWebhook(ctx, webhookID, userID)
 }

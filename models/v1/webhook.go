@@ -18,7 +18,7 @@ type WebhookDataManager interface {
 	GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]Webhook, error)
 	CreateWebhook(ctx context.Context, input *WebhookInput) (*Webhook, error)
 	UpdateWebhook(ctx context.Context, updated *Webhook) error
-	DeleteWebhook(ctx context.Context, id, userID uint64) error
+	ArchiveWebhook(ctx context.Context, id, userID uint64) error
 }
 
 // WebhookDataServer describes a structure capable of serving traffic related to items
@@ -30,7 +30,7 @@ type WebhookDataServer interface {
 	CreateHandler(res http.ResponseWriter, req *http.Request)
 	ReadHandler(res http.ResponseWriter, req *http.Request)
 	UpdateHandler(res http.ResponseWriter, req *http.Request)
-	DeleteHandler(res http.ResponseWriter, req *http.Request)
+	ArchiveHandler(res http.ResponseWriter, req *http.Request)
 }
 
 // Webhook represents an item

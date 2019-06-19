@@ -711,7 +711,7 @@ func TestService_Read(T *testing.T) {
 	})
 }
 
-func TestService_Delete(T *testing.T) {
+func TestService_Archive(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -726,7 +726,7 @@ func TestService_Delete(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.
 			On(
-				"DeleteOAuth2Client",
+				"ArchiveOAuth2Client",
 				mock.Anything,
 				exampleOAuth2ClientID,
 				userID,
@@ -749,7 +749,7 @@ func TestService_Delete(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.DeleteHandler(res, req)
+		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, http.StatusNoContent, res.Code)
 	})
@@ -766,7 +766,7 @@ func TestService_Delete(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.
 			On(
-				"DeleteOAuth2Client",
+				"ArchiveOAuth2Client",
 				mock.Anything,
 				exampleOAuth2ClientID,
 				userID,
@@ -780,7 +780,7 @@ func TestService_Delete(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.DeleteHandler(res, req)
+		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
 	})
@@ -797,7 +797,7 @@ func TestService_Delete(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.
 			On(
-				"DeleteOAuth2Client",
+				"ArchiveOAuth2Client",
 				mock.Anything,
 				exampleOAuth2ClientID,
 				userID,
@@ -811,7 +811,7 @@ func TestService_Delete(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.DeleteHandler(res, req)
+		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})

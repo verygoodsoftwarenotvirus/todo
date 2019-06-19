@@ -571,7 +571,7 @@ func TestPostgres_buildArchiveUserQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_DeleteUser(T *testing.T) {
+func TestPostgres_ArchiveUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -590,7 +590,7 @@ func TestPostgres_DeleteUser(T *testing.T) {
 			).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := p.DeleteUser(context.Background(), expected.ID)
+		err := p.ArchiveUser(context.Background(), expected.ID)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")

@@ -101,16 +101,16 @@ func (c *V1Client) CreateOAuth2Client(
 	return oauth2Client, nil
 }
 
-// BuildDeleteOAuth2ClientRequest builds an HTTP request for updating OAuth2 clients
-func (c *V1Client) BuildDeleteOAuth2ClientRequest(ctx context.Context, id uint64) (*http.Request, error) {
+// BuildArchiveOAuth2ClientRequest builds an HTTP request for archiving an oauth2 client
+func (c *V1Client) BuildArchiveOAuth2ClientRequest(ctx context.Context, id uint64) (*http.Request, error) {
 	uri := c.BuildURL(nil, oauth2ClientsBasePath, strconv.FormatUint(id, 10))
 
 	return http.NewRequest(http.MethodDelete, uri, nil)
 }
 
-// DeleteOAuth2Client deletes an OAuth2 client
-func (c *V1Client) DeleteOAuth2Client(ctx context.Context, id uint64) error {
-	req, err := c.BuildDeleteOAuth2ClientRequest(ctx, id)
+// ArchiveOAuth2Client archives an OAuth2 client
+func (c *V1Client) ArchiveOAuth2Client(ctx context.Context, id uint64) error {
+	req, err := c.BuildArchiveOAuth2ClientRequest(ctx, id)
 	if err != nil {
 		return errors.Wrap(err, "building request")
 	}

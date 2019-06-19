@@ -864,7 +864,7 @@ func TestPostgres_buildArchiveWebhookQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_DeleteWebhook(T *testing.T) {
+func TestPostgres_ArchiveWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -885,7 +885,7 @@ func TestPostgres_DeleteWebhook(T *testing.T) {
 			).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := p.DeleteWebhook(context.Background(), expected.ID, expected.BelongsTo)
+		err := p.ArchiveWebhook(context.Background(), expected.ID, expected.BelongsTo)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")

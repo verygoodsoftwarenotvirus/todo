@@ -14,7 +14,7 @@ type ItemDataManager interface {
 	GetAllItemsForUser(ctx context.Context, userID uint64) ([]Item, error)
 	CreateItem(ctx context.Context, input *ItemInput) (*Item, error)
 	UpdateItem(ctx context.Context, updated *Item) error
-	DeleteItem(ctx context.Context, id, userID uint64) error
+	ArchiveItem(ctx context.Context, id, userID uint64) error
 }
 
 // ItemDataServer describes a structure capable of serving traffic related to items
@@ -26,7 +26,7 @@ type ItemDataServer interface {
 	CreateHandler(res http.ResponseWriter, req *http.Request)
 	ReadHandler(res http.ResponseWriter, req *http.Request)
 	UpdateHandler(res http.ResponseWriter, req *http.Request)
-	DeleteHandler(res http.ResponseWriter, req *http.Request)
+	ArchiveHandler(res http.ResponseWriter, req *http.Request)
 }
 
 // Item represents an item

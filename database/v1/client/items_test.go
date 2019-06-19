@@ -158,7 +158,7 @@ func TestClient_UpdateItem(T *testing.T) {
 	})
 }
 
-func TestClient_DeleteItem(T *testing.T) {
+func TestClient_ArchiveItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -167,10 +167,10 @@ func TestClient_DeleteItem(T *testing.T) {
 		var expected error
 
 		c, mockDB := buildTestClient()
-		mockDB.ItemDataManager.On("DeleteItem", mock.Anything, exampleItemID, exampleUserID).
+		mockDB.ItemDataManager.On("ArchiveItem", mock.Anything, exampleItemID, exampleUserID).
 			Return(expected)
 
-		err := c.DeleteItem(context.Background(), exampleUserID, exampleItemID)
+		err := c.ArchiveItem(context.Background(), exampleUserID, exampleItemID)
 		assert.NoError(t, err)
 	})
 }

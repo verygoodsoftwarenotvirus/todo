@@ -183,9 +183,9 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// DeleteHandler is a route handler for deleting an OAuth2 client
-func (s *Service) DeleteHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "DeleteHandler")
+// ArchiveHandler is a route handler for archiving an OAuth2 client
+func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := trace.StartSpan(req.Context(), "ArchiveHandler")
 	defer span.End()
 
 	userID := s.fetchUserID(req)
@@ -198,7 +198,7 @@ func (s *Service) DeleteHandler(res http.ResponseWriter, req *http.Request) {
 	attachUserIDToSpan(span, userID)
 	attachOAuth2ClientDatabaseIDToSpan(span, oauth2ClientID)
 
-	err := s.database.DeleteOAuth2Client(ctx, oauth2ClientID, userID)
+	err := s.database.ArchiveOAuth2Client(ctx, oauth2ClientID, userID)
 	if err == sql.ErrNoRows {
 		res.WriteHeader(http.StatusNotFound)
 		return

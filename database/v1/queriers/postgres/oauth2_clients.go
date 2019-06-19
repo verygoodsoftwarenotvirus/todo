@@ -401,8 +401,8 @@ func (p *Postgres) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query
 	return query, args
 }
 
-// DeleteOAuth2Client deletes an OAuth2 client
-func (p *Postgres) DeleteOAuth2Client(ctx context.Context, clientID, userID uint64) error {
+// ArchiveOAuth2Client archives an OAuth2 client
+func (p *Postgres) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error {
 	query, args := p.buildArchiveOAuth2ClientQuery(clientID, userID)
 	_, err := p.db.ExecContext(ctx, query, args...)
 	return err

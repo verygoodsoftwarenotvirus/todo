@@ -606,7 +606,7 @@ func TestPostgres_buildArchiveItemQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_DeleteItem(T *testing.T) {
+func TestPostgres_ArchiveItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -628,7 +628,7 @@ func TestPostgres_DeleteItem(T *testing.T) {
 			).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := p.DeleteItem(context.Background(), expected.ID, expectedUserID)
+		err := p.ArchiveItem(context.Background(), expected.ID, expectedUserID)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -653,7 +653,7 @@ func TestPostgres_DeleteItem(T *testing.T) {
 			).
 			WillReturnError(errors.New("blah"))
 
-		err := p.DeleteItem(context.Background(), example.ID, expectedUserID)
+		err := p.ArchiveItem(context.Background(), example.ID, expectedUserID)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")

@@ -44,31 +44,23 @@ func (c *Client) GetUserByUsername(ctx context.Context, username string) (*model
 	return c.querier.GetUserByUsername(ctx, username)
 }
 
-// GetUserCount fetches a count of users from the postgres querier that meet a particular filter
+// GetUserCount fetches a count of users from the database that meet a particular filter
 func (c *Client) GetUserCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
 	ctx, span := trace.StartSpan(ctx, "GetUserCount")
 	defer span.End()
 
-	if filter == nil {
-		filter = models.DefaultQueryFilter()
-	}
 	attachFilterToSpan(span, filter)
-
 	c.logger.Debug("GetUserCount called")
 
 	return c.querier.GetUserCount(ctx, filter)
 }
 
-// GetUsers fetches a list of users from the postgres querier that meet a particular filter
+// GetUsers fetches a list of users from the database that meet a particular filter
 func (c *Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
 	ctx, span := trace.StartSpan(ctx, "GetUsers")
 	defer span.End()
 
-	if filter == nil {
-		filter = models.DefaultQueryFilter()
-	}
 	attachFilterToSpan(span, filter)
-
 	c.logger.WithValue("filter", filter).Debug("GetUsers called")
 
 	return c.querier.GetUsers(ctx, filter)
@@ -85,8 +77,8 @@ func (c *Client) CreateUser(ctx context.Context, input *models.UserInput) (*mode
 	return c.querier.CreateUser(ctx, input)
 }
 
-// UpdateUser receives a complete User struct and updates its place in the querier.
-// NOTE this function uses the ID provided in the input to make its query.
+// UpdateUser receives a complete User struct and updates its record in the database.
+// NOTE: this function uses the ID provided in the input to make its query.
 func (c *Client) UpdateUser(ctx context.Context, updated *models.User) error {
 	ctx, span := trace.StartSpan(ctx, "UpdateUser")
 	defer span.End()
@@ -97,13 +89,13 @@ func (c *Client) UpdateUser(ctx context.Context, updated *models.User) error {
 	return c.querier.UpdateUser(ctx, updated)
 }
 
-// DeleteUser deletes a user by their username
-func (c *Client) DeleteUser(ctx context.Context, userID uint64) error {
-	ctx, span := trace.StartSpan(ctx, "DeleteUser")
+// ArchiveUser archives a user
+func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
+	ctx, span := trace.StartSpan(ctx, "ArchiveUser")
 	defer span.End()
 
 	attachUserIDToSpan(span, userID)
-	c.logger.WithValue("user_id", userID).Debug("DeleteUser called")
+	c.logger.WithValue("user_id", userID).Debug("ArchiveUser called")
 
-	return c.querier.DeleteUser(ctx, userID)
+	return c.querier.ArchiveUser(ctx, userID)
 }

@@ -287,7 +287,7 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 	})
 }
 
-func TestV1Client_BuildDeleteOAuth2ClientRequest(T *testing.T) {
+func TestV1Client_BuildArchiveOAuth2ClientRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -298,7 +298,7 @@ func TestV1Client_BuildDeleteOAuth2ClientRequest(T *testing.T) {
 
 		expectedID := uint64(1)
 		c := buildTestClient(t, ts)
-		actual, err := c.BuildDeleteOAuth2ClientRequest(ctx, expectedID)
+		actual, err := c.BuildArchiveOAuth2ClientRequest(ctx, expectedID)
 
 		require.NotNil(t, actual)
 		require.NotNil(t, actual.URL)
@@ -313,7 +313,7 @@ func TestV1Client_BuildDeleteOAuth2ClientRequest(T *testing.T) {
 	})
 }
 
-func TestV1Client_DeleteOAuth2Client(T *testing.T) {
+func TestV1Client_ArchiveOAuth2Client(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -331,7 +331,7 @@ func TestV1Client_DeleteOAuth2Client(T *testing.T) {
 			),
 		)
 
-		err := buildTestClient(t, ts).DeleteOAuth2Client(ctx, expected)
+		err := buildTestClient(t, ts).ArchiveOAuth2Client(ctx, expected)
 
 		assert.NoError(t, err, "no error should be returned")
 	})

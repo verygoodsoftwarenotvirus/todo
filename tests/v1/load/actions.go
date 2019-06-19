@@ -105,11 +105,11 @@ func RandomAction(client *http2.V1Client) *Action {
 			},
 			Weight: 100,
 		},
-		"DeleteItem": {
-			Name: "DeleteItem",
+		"ArchiveItem": {
+			Name: "ArchiveItem",
 			Action: func() (*http.Request, error) {
 				if randomItem := fetchRandomItem(client); randomItem != nil {
-					return client.BuildDeleteItemRequest(ctx, randomItem.ID)
+					return client.BuildArchiveItemRequest(ctx, randomItem.ID)
 				}
 				return nil, ErrUnavailableYet
 			},
@@ -215,11 +215,11 @@ func RandomAction(client *http2.V1Client) *Action {
 		// 	},
 		// 	Weight: 100,
 		// },
-		// "DeleteWebhook": {
-		// 	Name: "DeleteWebhook",
+		// "ArchiveWebhook": {
+		// 	Name: "ArchiveWebhook",
 		// 	Action: func() (*http.Request, error) {
 		// 		if randomWebhook := fetchRandomWebhook(client); randomWebhook != nil {
-		// 			return client.BuildDeleteWebhookRequest(ctx, randomWebhook.ID)
+		// 			return client.BuildArchiveWebhookRequest(ctx, randomWebhook.ID)
 		// 		}
 		// 		return nil, ErrUnavailableYet
 		// 	},

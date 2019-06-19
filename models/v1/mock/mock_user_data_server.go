@@ -64,8 +64,8 @@ func (m *UserDataServer) UpdatePasswordHandler(res http.ResponseWriter, req *htt
 	m.Called(res, req)
 }
 
-// DeleteHandler is a mock method to satisfy our interface requirements
-func (m *UserDataServer) DeleteHandler(res http.ResponseWriter, req *http.Request) {
+// ArchiveHandler is a mock method to satisfy our interface requirements
+func (m *UserDataServer) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 

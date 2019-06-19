@@ -91,16 +91,16 @@ func (c *V1Client) UpdateItem(ctx context.Context, updated *models.Item) error {
 	return c.executeRequest(ctx, req, &updated)
 }
 
-// BuildDeleteItemRequest builds an HTTP request for updating an item
-func (c *V1Client) BuildDeleteItemRequest(ctx context.Context, id uint64) (*http.Request, error) {
+// BuildArchiveItemRequest builds an HTTP request for updating an item
+func (c *V1Client) BuildArchiveItemRequest(ctx context.Context, id uint64) (*http.Request, error) {
 	uri := c.BuildURL(nil, itemsBasePath, strconv.FormatUint(id, 10))
 
 	return http.NewRequest(http.MethodDelete, uri, nil)
 }
 
-// DeleteItem deletes an item
-func (c *V1Client) DeleteItem(ctx context.Context, id uint64) error {
-	req, err := c.BuildDeleteItemRequest(ctx, id)
+// ArchiveItem archives an item
+func (c *V1Client) ArchiveItem(ctx context.Context, id uint64) error {
+	req, err := c.BuildArchiveItemRequest(ctx, id)
 	if err != nil {
 		return errors.Wrap(err, "building request")
 	}

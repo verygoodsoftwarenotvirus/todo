@@ -71,16 +71,16 @@ func (c *V1Client) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 	return user, err
 }
 
-// BuildDeleteUserRequest builds an HTTP request for updating a user
-func (c *V1Client) BuildDeleteUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
+// BuildArchiveUserRequest builds an HTTP request for updating a user
+func (c *V1Client) BuildArchiveUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
 	uri := c.buildVersionlessURL(nil, usersBasePath, strconv.FormatUint(userID, 10))
 
 	return http.NewRequest(http.MethodDelete, uri, nil)
 }
 
-// DeleteUser deletes a user
-func (c *V1Client) DeleteUser(ctx context.Context, userID uint64) error {
-	req, err := c.BuildDeleteUserRequest(ctx, userID)
+// ArchiveUser archives a user
+func (c *V1Client) ArchiveUser(ctx context.Context, userID uint64) error {
+	req, err := c.BuildArchiveUserRequest(ctx, userID)
 	if err != nil {
 		return errors.Wrap(err, "building request")
 	}

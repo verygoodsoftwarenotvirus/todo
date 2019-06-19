@@ -372,16 +372,16 @@ func (s *Service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	res.WriteHeader(http.StatusAccepted)
 }
 
-// DeleteHandler is a handler for deleting a user
-func (s *Service) DeleteHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "DeleteHandler")
+// ArchiveHandler is a handler for archiving a user
+func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := trace.StartSpan(req.Context(), "ArchiveHandler")
 	defer span.End()
 
 	userID := s.userIDFetcher(req)
 	logger := s.logger.WithValue("user_id", userID)
 	attachUserIDToSpan(span, userID)
 
-	if err := s.database.DeleteUser(ctx, userID); err != nil {
+	if err := s.database.ArchiveUser(ctx, userID); err != nil {
 		logger.Error(err, "deleting user from database")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -390,7 +390,7 @@ func (s *Service) DeleteHandler(res http.ResponseWriter, req *http.Request) {
 	s.userCounter.Decrement(ctx)
 
 	s.reporter.Report(newsman.Event{
-		EventType: string(models.Delete),
+		EventType: string(models.Archive),
 		Data:      models.User{ID: userID},
 		Topics:    []string{topicName},
 	})

@@ -212,8 +212,8 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// DeleteHandler returns a handler that deletes an webhook
-func (s *Service) DeleteHandler(res http.ResponseWriter, req *http.Request) {
+// ArchiveHandler returns a handler that archives an webhook
+func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := trace.StartSpan(req.Context(), "delete_route")
 	defer span.End()
 
@@ -228,7 +228,7 @@ func (s *Service) DeleteHandler(res http.ResponseWriter, req *http.Request) {
 		"user_id":    userID,
 	})
 
-	err := s.webhookDatabase.DeleteWebhook(ctx, webhookID, userID)
+	err := s.webhookDatabase.ArchiveWebhook(ctx, webhookID, userID)
 	if err == sql.ErrNoRows {
 		logger.Debug("no rows found for webhook")
 		res.WriteHeader(http.StatusNotFound)
@@ -241,7 +241,7 @@ func (s *Service) DeleteHandler(res http.ResponseWriter, req *http.Request) {
 	s.webhookCounter.Decrement(ctx)
 
 	s.eventManager.Report(newsman.Event{
-		EventType: string(models.Delete),
+		EventType: string(models.Archive),
 		Data:      models.Webhook{ID: webhookID},
 		Topics:    []string{topicName},
 	})

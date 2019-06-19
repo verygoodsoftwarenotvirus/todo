@@ -50,7 +50,7 @@ func (m *UserDataManager) UpdateUser(ctx context.Context, updated *models.User) 
 	return m.Called(ctx, updated).Error(0)
 }
 
-// DeleteUser is a mock function
-func (m *UserDataManager) DeleteUser(ctx context.Context, userID uint64) error {
+// ArchiveUser is a mock function
+func (m *UserDataManager) ArchiveUser(ctx context.Context, userID uint64) error {
 	return m.Called(ctx, userID).Error(0)
 }

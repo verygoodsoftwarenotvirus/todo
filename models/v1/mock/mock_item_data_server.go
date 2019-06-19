@@ -47,7 +47,7 @@ func (m *ItemDataServer) UpdateHandler(res http.ResponseWriter, req *http.Reques
 	m.Called(res, req)
 }
 
-// DeleteHandler implements our interface requirements
-func (m *ItemDataServer) DeleteHandler(res http.ResponseWriter, req *http.Request) {
+// ArchiveHandler implements our interface requirements
+func (m *ItemDataServer) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }

@@ -256,7 +256,7 @@ func TestV1Client_UpdateWebhook(T *testing.T) {
 	})
 }
 
-func TestV1Client_BuildDeleteWebhookRequest(T *testing.T) {
+func TestV1Client_BuildArchiveWebhookRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -267,7 +267,7 @@ func TestV1Client_BuildDeleteWebhookRequest(T *testing.T) {
 
 		expectedID := uint64(1)
 		c := buildTestClient(t, ts)
-		actual, err := c.BuildDeleteWebhookRequest(ctx, expectedID)
+		actual, err := c.BuildArchiveWebhookRequest(ctx, expectedID)
 
 		require.NotNil(t, actual)
 		require.NotNil(t, actual.URL)
@@ -282,7 +282,7 @@ func TestV1Client_BuildDeleteWebhookRequest(T *testing.T) {
 	})
 }
 
-func TestV1Client_DeleteWebhook(T *testing.T) {
+func TestV1Client_ArchiveWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -300,7 +300,7 @@ func TestV1Client_DeleteWebhook(T *testing.T) {
 			),
 		)
 
-		err := buildTestClient(t, ts).DeleteWebhook(ctx, expected)
+		err := buildTestClient(t, ts).ArchiveWebhook(ctx, expected)
 
 		assert.NoError(t, err, "no error should be returned")
 	})

@@ -177,9 +177,9 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// DeleteHandler returns a handler that deletes an item
-func (s *Service) DeleteHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "DeleteHandler")
+// ArchiveHandler returns a handler that archives an item
+func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := trace.StartSpan(req.Context(), "ArchiveHandler")
 	defer span.End()
 
 	userID := s.userIDFetcher(req)
@@ -192,7 +192,7 @@ func (s *Service) DeleteHandler(res http.ResponseWriter, req *http.Request) {
 	attachItemIDToSpan(span, itemID)
 	attachUserIDToSpan(span, userID)
 
-	err := s.itemDatabase.DeleteItem(ctx, itemID, userID)
+	err := s.itemDatabase.ArchiveItem(ctx, itemID, userID)
 	if err == sql.ErrNoRows {
 		res.WriteHeader(http.StatusNotFound)
 		return
@@ -204,7 +204,7 @@ func (s *Service) DeleteHandler(res http.ResponseWriter, req *http.Request) {
 	s.itemCounter.Decrement(ctx)
 
 	s.reporter.Report(newsman.Event{
-		EventType: string(models.Delete),
+		EventType: string(models.Archive),
 		Data:      &models.Item{ID: itemID},
 		Topics:    []string{topicName},
 	})

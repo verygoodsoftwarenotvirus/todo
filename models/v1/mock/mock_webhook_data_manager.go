@@ -62,7 +62,7 @@ func (m *WebhookDataManager) UpdateWebhook(ctx context.Context, updated *models.
 	return m.Called(ctx, updated).Error(0)
 }
 
-// DeleteWebhook satisfies our WebhookDataManager interface
-func (m *WebhookDataManager) DeleteWebhook(ctx context.Context, id, userID uint64) error {
+// ArchiveWebhook satisfies our WebhookDataManager interface
+func (m *WebhookDataManager) ArchiveWebhook(ctx context.Context, id, userID uint64) error {
 	return m.Called(ctx, id, userID).Error(0)
 }

@@ -56,7 +56,7 @@ func (m *ItemDataManager) UpdateItem(ctx context.Context, updated *models.Item) 
 	return m.Called(ctx, updated).Error(0)
 }
 
-// DeleteItem is a mock function
-func (m *ItemDataManager) DeleteItem(ctx context.Context, id, userID uint64) error {
+// ArchiveItem is a mock function
+func (m *ItemDataManager) ArchiveItem(ctx context.Context, id, userID uint64) error {
 	return m.Called(ctx, id, userID).Error(0)
 }

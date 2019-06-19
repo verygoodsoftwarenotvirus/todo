@@ -848,7 +848,7 @@ func TestItemsService_Update(T *testing.T) {
 	})
 }
 
-func TestItemsService_Delete(T *testing.T) {
+func TestItemsService_Archive(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -878,7 +878,7 @@ func TestItemsService_Delete(T *testing.T) {
 
 		id := &mmodels.ItemDataManager{}
 		id.On(
-			"DeleteItem",
+			"ArchiveItem",
 			mock.Anything,
 			expected.ID,
 			requestingUser.ID,
@@ -899,7 +899,7 @@ func TestItemsService_Delete(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.DeleteHandler(res, req)
+		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusNoContent)
 	})
@@ -923,7 +923,7 @@ func TestItemsService_Delete(T *testing.T) {
 
 		id := &mmodels.ItemDataManager{}
 		id.On(
-			"DeleteItem",
+			"ArchiveItem",
 			mock.Anything,
 			expected.ID,
 			requestingUser.ID,
@@ -939,7 +939,7 @@ func TestItemsService_Delete(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.DeleteHandler(res, req)
+		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusNotFound)
 	})
@@ -963,7 +963,7 @@ func TestItemsService_Delete(T *testing.T) {
 
 		id := &mmodels.ItemDataManager{}
 		id.On(
-			"DeleteItem",
+			"ArchiveItem",
 			mock.Anything,
 			expected.ID,
 			requestingUser.ID,
@@ -979,7 +979,7 @@ func TestItemsService_Delete(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.DeleteHandler(res, req)
+		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusInternalServerError)
 	})

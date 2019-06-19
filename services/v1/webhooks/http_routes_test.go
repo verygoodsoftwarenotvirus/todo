@@ -902,7 +902,7 @@ func TestWebhooksService_Update(T *testing.T) {
 	})
 }
 
-func TestWebhooksService_Delete(T *testing.T) {
+func TestWebhooksService_Archive(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -927,7 +927,7 @@ func TestWebhooksService_Delete(T *testing.T) {
 
 		id := &mmodels.WebhookDataManager{}
 		id.On(
-			"DeleteWebhook",
+			"ArchiveWebhook",
 			mock.Anything,
 			expected.ID,
 			requestingUser.ID,
@@ -948,7 +948,7 @@ func TestWebhooksService_Delete(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.DeleteHandler(res, req)
+		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusNoContent)
 	})
@@ -971,7 +971,7 @@ func TestWebhooksService_Delete(T *testing.T) {
 
 		id := &mmodels.WebhookDataManager{}
 		id.On(
-			"DeleteWebhook",
+			"ArchiveWebhook",
 			mock.Anything,
 			expected.ID,
 			requestingUser.ID,
@@ -987,7 +987,7 @@ func TestWebhooksService_Delete(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.DeleteHandler(res, req)
+		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusNotFound)
 	})
@@ -1010,7 +1010,7 @@ func TestWebhooksService_Delete(T *testing.T) {
 
 		id := &mmodels.WebhookDataManager{}
 		id.On(
-			"DeleteWebhook",
+			"ArchiveWebhook",
 			mock.Anything,
 			expected.ID,
 			requestingUser.ID,
@@ -1026,7 +1026,7 @@ func TestWebhooksService_Delete(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.DeleteHandler(res, req)
+		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusInternalServerError)
 	})

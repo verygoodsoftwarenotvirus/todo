@@ -85,16 +85,16 @@ func (c *V1Client) UpdateWebhook(ctx context.Context, updated *models.Webhook) e
 	return c.executeRequest(ctx, req, &updated)
 }
 
-// BuildDeleteWebhookRequest builds an HTTP request for updating a webhook
-func (c *V1Client) BuildDeleteWebhookRequest(ctx context.Context, id uint64) (*http.Request, error) {
+// BuildArchiveWebhookRequest builds an HTTP request for updating a webhook
+func (c *V1Client) BuildArchiveWebhookRequest(ctx context.Context, id uint64) (*http.Request, error) {
 	uri := c.BuildURL(nil, webhooksBasePath, strconv.FormatUint(id, 10))
 
 	return http.NewRequest(http.MethodDelete, uri, nil)
 }
 
-// DeleteWebhook deletes a webhook
-func (c *V1Client) DeleteWebhook(ctx context.Context, id uint64) error {
-	req, err := c.BuildDeleteWebhookRequest(ctx, id)
+// ArchiveWebhook archives a webhook
+func (c *V1Client) ArchiveWebhook(ctx context.Context, id uint64) error {
+	req, err := c.BuildArchiveWebhookRequest(ctx, id)
 	if err != nil {
 		return errors.Wrap(err, "building request")
 	}

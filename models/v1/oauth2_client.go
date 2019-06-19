@@ -25,7 +25,7 @@ type OAuth2ClientDataManager interface {
 	GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64) ([]*OAuth2Client, error)
 	CreateOAuth2Client(ctx context.Context, input *OAuth2ClientCreationInput) (*OAuth2Client, error)
 	UpdateOAuth2Client(ctx context.Context, updated *OAuth2Client) error
-	DeleteOAuth2Client(ctx context.Context, clientID, userID uint64) error
+	ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error
 }
 
 // OAuth2ClientDataServer describes a structure capable of serving traffic related to oauth2 clients
@@ -34,7 +34,7 @@ type OAuth2ClientDataServer interface {
 	CreateHandler(res http.ResponseWriter, req *http.Request)
 	ReadHandler(res http.ResponseWriter, req *http.Request)
 	// There is deliberately no update function
-	DeleteHandler(res http.ResponseWriter, req *http.Request)
+	ArchiveHandler(res http.ResponseWriter, req *http.Request)
 
 	CreationInputMiddleware(next http.Handler) http.Handler
 	OAuth2ClientInfoMiddleware(next http.Handler) http.Handler

@@ -13,7 +13,7 @@ type UserDataManager interface {
 	GetUsers(ctx context.Context, filter *QueryFilter) (*UserList, error)
 	CreateUser(ctx context.Context, input *UserInput) (*User, error)
 	UpdateUser(ctx context.Context, updated *User) error
-	DeleteUser(ctx context.Context, userID uint64) error
+	ArchiveUser(ctx context.Context, userID uint64) error
 }
 
 // UserDataServer describes a structure capable of serving traffic related to users
@@ -27,7 +27,7 @@ type UserDataServer interface {
 	ReadHandler(res http.ResponseWriter, req *http.Request)
 	NewTOTPSecretHandler(res http.ResponseWriter, req *http.Request)
 	UpdatePasswordHandler(res http.ResponseWriter, req *http.Request)
-	DeleteHandler(res http.ResponseWriter, req *http.Request)
+	ArchiveHandler(res http.ResponseWriter, req *http.Request)
 }
 
 const (

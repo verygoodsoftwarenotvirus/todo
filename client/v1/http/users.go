@@ -103,7 +103,7 @@ func (c *V1Client) BuildLoginRequest(username, password, totpToken string) (*htt
 	return c.buildDataRequest(http.MethodPost, uri, body)
 }
 
-// Login, provided the correct credentials, fetches a login cookie
+// Login will, when provided the correct credentials, fetch a login cookie
 func (c *V1Client) Login(ctx context.Context, username, password, totpToken string) (*http.Cookie, error) {
 	req, err := c.BuildLoginRequest(username, password, totpToken)
 	if err != nil {

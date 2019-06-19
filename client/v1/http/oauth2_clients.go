@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	oauth2ClientsBasePath = "oauth2/clients"
+	oauth2ClientsBasePath = "OAuth2/clients"
 )
 
-// BuildGetOAuth2ClientRequest builds an http Request for fetching an oauth2 client
+// BuildGetOAuth2ClientRequest builds an HTTP request for fetching an OAuth2 client
 func (c *V1Client) BuildGetOAuth2ClientRequest(ctx context.Context, id uint64) (*http.Request, error) {
 	uri := c.BuildURL(nil, oauth2ClientsBasePath, strconv.FormatUint(id, 10))
 
@@ -32,7 +32,7 @@ func (c *V1Client) GetOAuth2Client(ctx context.Context, id uint64) (oauth2Client
 	return oauth2Client, err
 }
 
-// BuildGetOAuth2ClientsRequest builds an http Request for fetching a list of oauth2 clients
+// BuildGetOAuth2ClientsRequest builds an HTTP request for fetching a list of OAuth2 clients
 func (c *V1Client) BuildGetOAuth2ClientsRequest(ctx context.Context, filter *models.QueryFilter) (*http.Request, error) {
 	uri := c.BuildURL(filter.ToValues(), oauth2ClientsBasePath)
 
@@ -40,26 +40,24 @@ func (c *V1Client) BuildGetOAuth2ClientsRequest(ctx context.Context, filter *mod
 }
 
 // GetOAuth2Clients gets a list of OAuth2 clients
-func (c *V1Client) GetOAuth2Clients(
-	ctx context.Context,
-	filter *models.QueryFilter,
-) (oauth2Clients *models.OAuth2ClientList, err error) {
+func (c *V1Client) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
 	req, err := c.BuildGetOAuth2ClientsRequest(ctx, filter)
 	if err != nil {
 		return nil, errors.Wrap(err, "building request")
 	}
 
+	var oauth2Clients *models.OAuth2ClientList
 	err = c.retrieve(ctx, req, &oauth2Clients)
 	return oauth2Clients, err
 }
 
-// BuildCreateOAuth2ClientRequest builds an http Request for creating oauth2 clients
+// BuildCreateOAuth2ClientRequest builds an HTTP request for creating OAuth2 clients
 func (c *V1Client) BuildCreateOAuth2ClientRequest(
 	ctx context.Context,
 	cookie *http.Cookie,
 	body *models.OAuth2ClientCreationInput,
 ) (*http.Request, error) {
-	uri := c.buildVersionlessURL(nil, "oauth2", "client")
+	uri := c.buildVersionlessURL(nil, "OAuth2", "client")
 
 	req, err := c.buildDataRequest(http.MethodPost, uri, body)
 	if err != nil {
@@ -70,12 +68,14 @@ func (c *V1Client) BuildCreateOAuth2ClientRequest(
 	return req, nil
 }
 
-// CreateOAuth2Client creates an OAuth2 client
+// CreateOAuth2Client creates an OAuth2 client. Note that cookie must not be nil
+// in order to receive a valid response
 func (c *V1Client) CreateOAuth2Client(
 	ctx context.Context,
 	cookie *http.Cookie,
 	input *models.OAuth2ClientCreationInput,
-) (oauth2Client *models.OAuth2Client, err error) {
+) (*models.OAuth2Client, error) {
+	var oauth2Client *models.OAuth2Client
 	if cookie == nil {
 		return nil, errors.New("cookie required for request")
 	}
@@ -101,7 +101,7 @@ func (c *V1Client) CreateOAuth2Client(
 	return oauth2Client, nil
 }
 
-// BuildDeleteOAuth2ClientRequest builds an http Request for updating oauth2 clients
+// BuildDeleteOAuth2ClientRequest builds an HTTP request for updating OAuth2 clients
 func (c *V1Client) BuildDeleteOAuth2ClientRequest(ctx context.Context, id uint64) (*http.Request, error) {
 	uri := c.BuildURL(nil, oauth2ClientsBasePath, strconv.FormatUint(id, 10))
 
@@ -115,5 +115,5 @@ func (c *V1Client) DeleteOAuth2Client(ctx context.Context, id uint64) error {
 		return errors.Wrap(err, "building request")
 	}
 
-	return c.makeRequest(ctx, req, nil)
+	return c.executeRequest(ctx, req, nil)
 }

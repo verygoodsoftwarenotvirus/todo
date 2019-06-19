@@ -14,7 +14,7 @@ const (
 	itemsBasePath = "items"
 )
 
-// BuildGetItemRequest builds an http Request for fetching an item
+// BuildGetItemRequest builds an HTTP request for fetching an item
 func (c *V1Client) BuildGetItemRequest(ctx context.Context, id uint64) (*http.Request, error) {
 	uri := c.BuildURL(nil, itemsBasePath, strconv.FormatUint(id, 10))
 
@@ -35,7 +35,7 @@ func (c *V1Client) GetItem(ctx context.Context, id uint64) (item *models.Item, e
 	return item, nil
 }
 
-// BuildGetItemsRequest builds an http Request for fetching items
+// BuildGetItemsRequest builds an HTTP request for fetching items
 func (c *V1Client) BuildGetItemsRequest(ctx context.Context, filter *models.QueryFilter) (*http.Request, error) {
 	uri := c.BuildURL(filter.ToValues(), itemsBasePath)
 
@@ -56,7 +56,7 @@ func (c *V1Client) GetItems(ctx context.Context, filter *models.QueryFilter) (it
 	return items, nil
 }
 
-// BuildCreateItemRequest builds an http Request for creating an item
+// BuildCreateItemRequest builds an HTTP request for creating an item
 func (c *V1Client) BuildCreateItemRequest(ctx context.Context, body *models.ItemInput) (*http.Request, error) {
 	uri := c.BuildURL(nil, itemsBasePath)
 
@@ -70,11 +70,11 @@ func (c *V1Client) CreateItem(ctx context.Context, input *models.ItemInput) (ite
 		return nil, errors.Wrap(err, "building request")
 	}
 
-	err = c.makeRequest(ctx, req, &item)
+	err = c.executeRequest(ctx, req, &item)
 	return item, err
 }
 
-// BuildUpdateItemRequest builds an http Request for updating an item
+// BuildUpdateItemRequest builds an HTTP request for updating an item
 func (c *V1Client) BuildUpdateItemRequest(ctx context.Context, updated *models.Item) (*http.Request, error) {
 	uri := c.BuildURL(nil, itemsBasePath, strconv.FormatUint(updated.ID, 10))
 
@@ -88,10 +88,10 @@ func (c *V1Client) UpdateItem(ctx context.Context, updated *models.Item) error {
 		return errors.Wrap(err, "building request")
 	}
 
-	return c.makeRequest(ctx, req, &updated)
+	return c.executeRequest(ctx, req, &updated)
 }
 
-// BuildDeleteItemRequest builds an http Request for updating an item
+// BuildDeleteItemRequest builds an HTTP request for updating an item
 func (c *V1Client) BuildDeleteItemRequest(ctx context.Context, id uint64) (*http.Request, error) {
 	uri := c.BuildURL(nil, itemsBasePath, strconv.FormatUint(id, 10))
 
@@ -105,5 +105,5 @@ func (c *V1Client) DeleteItem(ctx context.Context, id uint64) error {
 		return errors.Wrap(err, "building request")
 	}
 
-	return c.makeRequest(ctx, req, nil)
+	return c.executeRequest(ctx, req, nil)
 }

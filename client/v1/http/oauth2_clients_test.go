@@ -63,7 +63,7 @@ func TestV1Client_GetOAuth2Client(T *testing.T) {
 							strconv.Itoa(int(expected.ID)),
 						),
 					)
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/oauth2/clients/%d", expected.ID), "expected and actual path don't match")
+					assert.Equal(t, fmt.Sprintf("/api/v1/oauth2/clients/%d", expected.ID), req.URL.Path, "expected and actual path don't match")
 					assert.Equal(t, req.Method, http.MethodGet)
 					require.NoError(t, json.NewEncoder(res).Encode(expected))
 				},
@@ -184,7 +184,7 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 
 		ts := httptest.NewTLSServer(http.HandlerFunc(
 			func(res http.ResponseWriter, req *http.Request) {
-				assert.Equal(t, req.URL.Path, "/oauth2/client", "expected and actual path don't match")
+				assert.Equal(t, "/oauth2/client", req.URL.Path, "expected and actual path don't match")
 				assert.Equal(t, req.Method, http.MethodPost)
 				require.NoError(t, json.NewEncoder(res).Encode(exampleOutput))
 			},

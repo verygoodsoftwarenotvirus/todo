@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	oauth2ClientsBasePath = "OAuth2/clients"
+	oauth2ClientsBasePath = "oauth2/clients"
 )
 
 // BuildGetOAuth2ClientRequest builds an HTTP request for fetching an OAuth2 client
@@ -57,7 +57,7 @@ func (c *V1Client) BuildCreateOAuth2ClientRequest(
 	cookie *http.Cookie,
 	body *models.OAuth2ClientCreationInput,
 ) (*http.Request, error) {
-	uri := c.buildVersionlessURL(nil, "OAuth2", "client")
+	uri := c.buildVersionlessURL(nil, "oauth2", "client")
 
 	req, err := c.buildDataRequest(http.MethodPost, uri, body)
 	if err != nil {

@@ -12,6 +12,7 @@ import (
 	"contrib.go.opencensus.io/integrations/ocsql"
 	"github.com/Masterminds/squirrel"
 	postgres "github.com/lib/pq"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -40,11 +41,11 @@ func init() {
 type (
 	// Postgres is our main Postgres interaction db
 	Postgres struct {
-		logger     logging.Logger
-		db         *sql.DB
-		sqlBuilder squirrel.StatementBuilderType
-		migration  sync.Once
-		debug      bool
+		logger      logging.Logger
+		db          *sql.DB
+		sqlBuilder  squirrel.StatementBuilderType
+		migrateOnce sync.Once
+		debug       bool
 	}
 
 	// ConnectionDetails is a string alias for a Postgres url
@@ -113,4 +114,11 @@ func logQueryBuildingError(logger logging.Logger, err error) {
 	if err != nil {
 		logger.WithName("QUERY_ERROR").Error(err, "building query")
 	}
+}
+
+func buildError(err error, msg string) error {
+	if err == sql.ErrNoRows {
+		return err
+	}
+	return errors.Wrap(err, msg)
 }

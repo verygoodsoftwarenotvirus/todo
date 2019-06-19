@@ -235,12 +235,10 @@ func TestPostgres_buildGetAllWebhooksCountQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
 
-		expectedArgCount := 0
 		expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
 
-		actualQuery, args := p.buildGetAllWebhooksCountQuery()
+		actualQuery := p.buildGetAllWebhooksCountQuery()
 		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Len(t, args, expectedArgCount)
 	})
 }
 
@@ -285,12 +283,10 @@ func TestPostgres_buildGetAllWebhooksQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
 
-		expectedArgCount := 0
-		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+		expected := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 
-		actualQuery, args := p.buildGetAllWebhooksQuery()
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Len(t, args, expectedArgCount)
+		actual := p.buildGetAllWebhooksQuery()
+		assert.Equal(t, expected, actual)
 	})
 }
 

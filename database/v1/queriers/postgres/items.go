@@ -125,14 +125,15 @@ func (p *Postgres) GetItemCount(ctx context.Context, filter *models.QueryFilter,
 	return count, err
 }
 
-var allItemsCountQuery string
+var (
+	allItemsCountQueryBuilder sync.Once
+	allItemsCountQuery        string
+)
 
 // buildGetAllItemsCountQuery returns a query that fetches the total number of items in the database.
 // This query only gets generated once, and is otherwise returned from cache.
 func (p *Postgres) buildGetAllItemsCountQuery() string {
-	var once sync.Once
-
-	once.Do(func() {
+	allItemsCountQueryBuilder.Do(func() {
 		var err error
 		allItemsCountQuery, _, err = p.sqlBuilder.Select(CountQuery).
 			From(itemsTableName).
@@ -178,10 +179,7 @@ func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter, use
 
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, err
-		}
-		return nil, errors.Wrap(err, "querying database for items")
+		return nil, buildError(err, "querying database for items")
 	}
 
 	list, err := scanItems(p.logger, rows)
@@ -212,10 +210,7 @@ func (p *Postgres) GetAllItemsForUser(ctx context.Context, userID uint64) ([]mod
 
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, err
-		}
-		return nil, errors.Wrap(err, "fetching items for user")
+		return nil, buildError(err, "fetching items for user")
 	}
 
 	list, err := scanItems(p.logger, rows)

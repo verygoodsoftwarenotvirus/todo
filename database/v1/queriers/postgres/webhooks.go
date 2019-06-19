@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"strings"
+	"sync"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
@@ -117,10 +118,7 @@ func (p *Postgres) GetWebhook(ctx context.Context, webhookID, userID uint64) (*m
 
 	webhook, err := scanWebhook(row)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, err
-		}
-		return nil, errors.Wrap(err, "querying for webhook")
+		return nil, buildError(err, "querying for webhook")
 	}
 
 	return webhook, nil
@@ -153,43 +151,55 @@ func (p *Postgres) GetWebhookCount(ctx context.Context, filter *models.QueryFilt
 	return count, err
 }
 
-func (p *Postgres) buildGetAllWebhooksCountQuery() (query string, args []interface{}) {
-	var err error
-	query, args, err = p.sqlBuilder.
-		Select(CountQuery).
-		From(webhooksTableName).
-		Where(squirrel.Eq{"archived_on": nil}).
-		ToSql()
+var (
+	getAllWebhooksCountQueryBuilder sync.Once
+	getAllWebhooksCountQuery        string
+)
 
-	logQueryBuildingError(p.logger, err)
+func (p *Postgres) buildGetAllWebhooksCountQuery() string {
+	getAllWebhooksCountQueryBuilder.Do(func() {
+		var err error
+		getAllWebhooksCountQuery, _, err = p.sqlBuilder.
+			Select(CountQuery).
+			From(webhooksTableName).
+			Where(squirrel.Eq{"archived_on": nil}).
+			ToSql()
 
-	return query, args
+		logQueryBuildingError(p.logger, err)
+	})
+
+	return getAllWebhooksCountQuery
 }
 
 // GetAllWebhooksCount will fetch the count of webhooks from the database that meet a particular filter
 func (p *Postgres) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
-	query, args := p.buildGetAllWebhooksCountQuery()
-	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	err = p.db.QueryRowContext(ctx, p.buildGetAllWebhooksCountQuery()).Scan(&count)
 	return count, err
 }
 
-func (p *Postgres) buildGetAllWebhooksQuery() (query string, args []interface{}) {
-	var err error
-	query, args, err = p.sqlBuilder.Select(webhooksTableColumns...).
-		From(webhooksTableName).
-		Where(squirrel.Eq{
-			"archived_on": nil,
-		}).ToSql()
+var (
+	getAllWebhooksQueryBuilder sync.Once
+	getAllWebhooksQuery        string
+)
 
-	logQueryBuildingError(p.logger, err)
+func (p *Postgres) buildGetAllWebhooksQuery() string {
+	getAllWebhooksQueryBuilder.Do(func() {
+		var err error
+		getAllWebhooksQuery, _, err = p.sqlBuilder.Select(webhooksTableColumns...).
+			From(webhooksTableName).
+			Where(squirrel.Eq{
+				"archived_on": nil,
+			}).ToSql()
 
-	return query, args
+		logQueryBuildingError(p.logger, err)
+	})
+
+	return getAllWebhooksQuery
 }
 
 // GetAllWebhooks fetches a list of all webhooks from the database
 func (p *Postgres) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
-	query, args := p.buildGetAllWebhooksQuery()
-	rows, err := p.db.QueryContext(ctx, query, args...)
+	rows, err := p.db.QueryContext(ctx, p.buildGetAllWebhooksQuery())
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, err

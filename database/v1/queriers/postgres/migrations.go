@@ -95,7 +95,7 @@ func buildMigrationFunc(db *sql.DB) func() {
 	}
 }
 
-// Migrate migrates the database. It does so by invoking the migration function via sync.Once, so it should be
+// Migrate migrates the database. It does so by invoking the migrateOnce function via sync.Once, so it should be
 // safe (as in idempotent, though not recommended) to call this function multiple times.
 func (p *Postgres) Migrate(ctx context.Context) error {
 	p.logger.Info("migrating db")
@@ -103,7 +103,7 @@ func (p *Postgres) Migrate(ctx context.Context) error {
 		return errors.New("db is not ready yet")
 	}
 
-	p.migration.Do(buildMigrationFunc(p.db))
+	p.migrateOnce.Do(buildMigrationFunc(p.db))
 
 	return nil
 }

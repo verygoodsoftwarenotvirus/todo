@@ -35,6 +35,7 @@ var (
 	}
 )
 
+// scanOAuth2Client takes a Scanner (i.e. *sql.Row) and scans its ressults into an OAuth2Client struct
 func scanOAuth2Client(scan database.Scanner) (*models.OAuth2Client, error) {
 	var (
 		x      = &models.OAuth2Client{}
@@ -63,6 +64,7 @@ func scanOAuth2Client(scan database.Scanner) (*models.OAuth2Client, error) {
 	return x, nil
 }
 
+// scanOAuth2Clients takes sql rows and turns them into a slice of OAuth2Clients
 func scanOAuth2Clients(logger logging.Logger, rows *sql.Rows) ([]*models.OAuth2Client, error) {
 	var list []*models.OAuth2Client
 
@@ -82,6 +84,7 @@ func scanOAuth2Clients(logger logging.Logger, rows *sql.Rows) ([]*models.OAuth2C
 	return list, nil
 }
 
+// buildGetOAuth2ClientByClientIDQuery builds a SQL query for fetching an OAuth2 client by its ClientID
 func (p *Postgres) buildGetOAuth2ClientByClientIDQuery(clientID string) (query string, args []interface{}) {
 	var err error
 	// This query is more or less the same as the normal OAuth2 client retrieval query, only that it doesn't
@@ -106,12 +109,15 @@ func (p *Postgres) GetOAuth2ClientByClientID(ctx context.Context, clientID strin
 	return scanOAuth2Client(row)
 }
 
-func (p *Postgres) buildGetAllOAuth2ClientsQuery() (query string, args []interface{}) {
+var getAllOAuth2ClientsQuery string
+
+// buildGetAllOAuth2ClientsQuery builds a SQL query
+func (p *Postgres) buildGetAllOAuth2ClientsQuery() (query string) {
 	var once sync.Once
 
 	once.Do(func() {
 		var err error
-		query, args, err = p.sqlBuilder.
+		getAllOAuth2ClientsQuery, _, err = p.sqlBuilder.
 			Select(oauth2ClientsTableColumns...).
 			From(oauth2ClientsTableName).
 			Where(squirrel.Eq{"archived_on": nil}).
@@ -120,14 +126,12 @@ func (p *Postgres) buildGetAllOAuth2ClientsQuery() (query string, args []interfa
 		logQueryBuildingError(p.logger, err)
 	})
 
-	return query, args
+	return getAllOAuth2ClientsQuery
 }
 
 // GetAllOAuth2Clients gets a list of OAuth2 clients regardless of ownership
 func (p *Postgres) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Client, error) {
-	query, args := p.buildGetAllOAuth2ClientsQuery()
-
-	rows, err := p.db.QueryContext(ctx, query, args...)
+	rows, err := p.db.QueryContext(ctx, p.buildGetAllOAuth2ClientsQuery())
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, err
@@ -163,6 +167,7 @@ func (p *Postgres) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64
 	return list, nil
 }
 
+// buildGetOAuth2ClientQuery returns a SQL query which requests a given OAuth2 client by its database ID
 func (p *Postgres) buildGetOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	var err error
 	query, args, err = p.sqlBuilder.

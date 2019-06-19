@@ -92,10 +92,7 @@ func (p *Postgres) GetUser(ctx context.Context, userID uint64) (*models.User, er
 	u, err := scanUser(row)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, err
-		}
-		return nil, errors.Wrap(err, "fetching user from database")
+		return nil, buildError(err, "fetching user from database")
 	}
 
 	return u, err
@@ -181,10 +178,7 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, err
-		}
-		return nil, errors.Wrap(err, "querying for user")
+		return nil, buildError(err, "querying for user")
 	}
 
 	userList, err := scanUsers(p.logger, rows)

@@ -67,20 +67,13 @@ func ProvidePostgresDB(logger logging.Logger, connectionDetails database.Connect
 }
 
 // ProvidePostgres provides a postgres db controller
-func ProvidePostgres(
-	debug bool,
-	db *sql.DB,
-	logger logging.Logger,
-) database.Database {
-
-	s := &Postgres{
+func ProvidePostgres(debug bool, db *sql.DB, logger logging.Logger) database.Database {
+	return &Postgres{
 		db:         db,
 		debug:      debug,
 		logger:     logger.WithName("postgres"),
 		sqlBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
 	}
-
-	return s
 }
 
 // IsReady reports whether or not the db is ready
@@ -110,12 +103,19 @@ func (p *Postgres) IsReady(ctx context.Context) (ready bool) {
 	return false
 }
 
+// logQueryBuildingError logs errors that may occur during query construction.
+// Such errors should be few and far between, as the generally only occur with
+// type discrepancies or other misuses of SQL. An alert should be set up for
+// any log entries with the given name, and those alerts should be investigated
+// with the utmost priority.
 func logQueryBuildingError(logger logging.Logger, err error) {
 	if err != nil {
 		logger.WithName("QUERY_ERROR").Error(err, "building query")
 	}
 }
 
+// buildError takes a given error and wraps it with a message, provided that it
+// IS NOT sql.ErrNoRows, which we want to preserve and surface to the services.
 func buildError(err error, msg string) error {
 	if err == sql.ErrNoRows {
 		return err

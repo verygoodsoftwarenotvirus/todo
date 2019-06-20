@@ -312,6 +312,7 @@ func (p *Postgres) GetWebhooks(ctx context.Context, filter *models.QueryFilter, 
 	return x, err
 }
 
+// buildWebhookCreationQuery returns a SQL query (and arguments) that would create a given webhook
 func (p *Postgres) buildWebhookCreationQuery(x *models.Webhook) (query string, args []interface{}) {
 	var err error
 	query, args, err = p.sqlBuilder.
@@ -365,6 +366,7 @@ func (p *Postgres) CreateWebhook(ctx context.Context, input *models.WebhookInput
 	return x, nil
 }
 
+// buildUpdateWebhookQuery takes a given webhook and returns a SQL query to update
 func (p *Postgres) buildUpdateWebhookQuery(input *models.Webhook) (query string, args []interface{}) {
 	var err error
 	query, args, err = p.sqlBuilder.Update(webhooksTableName).
@@ -375,7 +377,7 @@ func (p *Postgres) buildUpdateWebhookQuery(input *models.Webhook) (query string,
 		Set("events", strings.Join(input.Events, topicsSeparator)).
 		Set("data_types", strings.Join(input.DataTypes, typesSeparator)).
 		Set("topics", strings.Join(input.Topics, topicsSeparator)).
-		Set("updated_on", squirrel.Expr("extract(epoch FROM NOW())")).
+		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			"id":         input.ID,
 			"belongs_to": input.BelongsTo,
@@ -393,11 +395,12 @@ func (p *Postgres) UpdateWebhook(ctx context.Context, input *models.Webhook) err
 	return p.db.QueryRowContext(ctx, query, args...).Scan(&input.UpdatedOn)
 }
 
+// buildArchiveWebhookQuery returns a SQL query (and arguments) that will mark a webhook as archived.
 func (p *Postgres) buildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
 	query, args, err = p.sqlBuilder.Update(webhooksTableName).
-		Set("updated_on", squirrel.Expr("extract(epoch FROM NOW())")).
-		Set("archived_on", squirrel.Expr("extract(epoch FROM NOW())")).
+		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
+		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			"id":          webhookID,
 			"belongs_to":  userID,
@@ -411,7 +414,7 @@ func (p *Postgres) buildArchiveWebhookQuery(webhookID, userID uint64) (query str
 	return query, args
 }
 
-// ArchiveWebhook archives a webhook from the db by its ID
+// ArchiveWebhook archives a webhook from the database by its ID
 func (p *Postgres) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error {
 	query, args := p.buildArchiveWebhookQuery(webhookID, userID)
 	_, err := p.db.ExecContext(ctx, query, args...)

@@ -24,7 +24,7 @@ func checkItemEquality(t *testing.T, expected, actual *models.Item) {
 func buildDummyItem(t *testing.T) *models.Item {
 	t.Helper()
 
-	x := &models.ItemInput{
+	x := &models.ItemCreationInput{
 		Name:    fake.Word(),
 		Details: fake.Sentence(),
 	}
@@ -46,7 +46,7 @@ func TestItems(test *testing.T) {
 			expected := &models.Item{Name: "name", Details: "details"}
 			premade, err := todoClient.CreateItem(
 				ctx,
-				&models.ItemInput{
+				&models.ItemCreationInput{
 					Name:    expected.Name,
 					Details: expected.Details,
 				})
@@ -115,9 +115,11 @@ func TestItems(test *testing.T) {
 
 			// CreateHandler item
 			expected := &models.Item{Name: "name", Details: "details"}
-			premade, err := todoClient.CreateItem(ctx, &models.ItemInput{
-				Name: expected.Name, Details: expected.Details,
-			})
+			premade, err := todoClient.CreateItem(
+				ctx,
+				&models.ItemCreationInput{
+					Name: expected.Name, Details: expected.Details,
+				})
 			checkValueAndError(t, premade, err)
 
 			// Fetch item
@@ -153,7 +155,7 @@ func TestItems(test *testing.T) {
 			expected := &models.Item{Name: "new name", Details: "new details"}
 			premade, err := todoClient.CreateItem(
 				tctx,
-				&models.ItemInput{
+				&models.ItemCreationInput{
 					Name:    "old name",
 					Details: "old details",
 				},
@@ -187,9 +189,10 @@ func TestItems(test *testing.T) {
 
 			// CreateHandler item
 			expected := &models.Item{Name: "name", Details: "details"}
-			premade, err := todoClient.CreateItem(ctx, &models.ItemInput{
-				Name: expected.Name, Details: expected.Details,
-			})
+			premade, err := todoClient.CreateItem(ctx,
+				&models.ItemCreationInput{
+					Name: expected.Name, Details: expected.Details,
+				})
 			checkValueAndError(t, premade, err)
 
 			// Clean up

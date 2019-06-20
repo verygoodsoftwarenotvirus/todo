@@ -25,7 +25,7 @@ type (
 	HandlerInstrumentationFunc func(http.HandlerFunc) http.HandlerFunc
 
 	// UnitCounter describes a counting interface for things like total user counts
-	// it is meant to handle integers exclusively
+	// Meant to handle integers exclusively
 	UnitCounter interface {
 		Increment(ctx context.Context)
 		IncrementBy(ctx context.Context, val uint64)

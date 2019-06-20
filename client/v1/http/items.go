@@ -57,14 +57,14 @@ func (c *V1Client) GetItems(ctx context.Context, filter *models.QueryFilter) (it
 }
 
 // BuildCreateItemRequest builds an HTTP request for creating an item
-func (c *V1Client) BuildCreateItemRequest(ctx context.Context, body *models.ItemInput) (*http.Request, error) {
+func (c *V1Client) BuildCreateItemRequest(ctx context.Context, body *models.ItemCreationInput) (*http.Request, error) {
 	uri := c.BuildURL(nil, itemsBasePath)
 
 	return c.buildDataRequest(http.MethodPost, uri, body)
 }
 
 // CreateItem creates an item
-func (c *V1Client) CreateItem(ctx context.Context, input *models.ItemInput) (item *models.Item, err error) {
+func (c *V1Client) CreateItem(ctx context.Context, input *models.ItemCreationInput) (item *models.Item, err error) {
 	req, err := c.BuildCreateItemRequest(ctx, input)
 	if err != nil {
 		return nil, errors.Wrap(err, "building request")

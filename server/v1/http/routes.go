@@ -31,7 +31,7 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		AllowedOrigins: []string{"*"},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Provider", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
@@ -76,14 +76,14 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		s.authService.AuthenticationMiddleware(true),
 		s.authService.AdminMiddleware,
 	).Route("/admin", func(adminRouter chi.Router) {
-		adminRouter.Post("/cycle_cookie_secret", s.authService.CycleSecret)
+		adminRouter.Post("/cycle_cookie_secret", s.authService.CycleSecretHandler)
 	})
 
 	router.Route("/users", func(userRouter chi.Router) {
 		userRouter.With(s.authService.UserLoginInputMiddleware).
-			Post("/login", s.authService.Login)
+			Post("/login", s.authService.LoginHandler)
 		userRouter.With(s.authService.CookieAuthenticationMiddleware).
-			Post("/logout", s.authService.Logout)
+			Post("/logout", s.authService.LogoutHandler)
 
 		userIDPattern := fmt.Sprintf(oauth2IDPattern, users.URIParamKey)
 

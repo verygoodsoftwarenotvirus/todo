@@ -20,6 +20,9 @@ const (
 
 	// CountQuery is a generic counter query used in a few query builders
 	CountQuery = "COUNT(id)"
+
+	// CurrentUnixTimeQuery is the query postgres uses to determine the current unix time
+	CurrentUnixTimeQuery = "extract(epoch FROM NOW())"
 )
 
 func init() {

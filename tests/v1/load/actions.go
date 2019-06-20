@@ -73,7 +73,7 @@ func RandomAction(client *http2.V1Client) *Action {
 		"CreateItem": {
 			Name: "CreateItem",
 			Action: func() (*http.Request, error) {
-				return client.BuildCreateItemRequest(ctx, model.RandomItemInput())
+				return client.BuildCreateItemRequest(ctx, model.RandomItemCreationInput())
 			},
 			Weight: 100,
 		},
@@ -98,7 +98,7 @@ func RandomAction(client *http2.V1Client) *Action {
 			Name: "UpdateItem",
 			Action: func() (*http.Request, error) {
 				if randomItem := fetchRandomItem(client); randomItem != nil {
-					randomItem.Name = model.RandomItemInput().Name
+					randomItem.Name = model.RandomItemCreationInput().Name
 					return client.BuildUpdateItemRequest(ctx, randomItem)
 				}
 				return nil, ErrUnavailableYet

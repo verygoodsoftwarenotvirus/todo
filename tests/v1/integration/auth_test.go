@@ -455,7 +455,7 @@ func TestAuth(test *testing.T) {
 		// CreateHandler item for user A
 		a, err := todoClient.CreateItem(
 			tctx,
-			&models.ItemInput{
+			&models.ItemCreationInput{
 				Name:    "name A",
 				Details: "details A",
 			})
@@ -464,7 +464,7 @@ func TestAuth(test *testing.T) {
 		// CreateHandler item for user B
 		b, err := c.CreateItem(
 			tctx,
-			&models.ItemInput{
+			&models.ItemCreationInput{
 				Name:    "name B",
 				Details: "details B",
 			})

@@ -125,7 +125,7 @@ func TestClient_CreateItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		exampleInput := &models.ItemInput{}
+		exampleInput := &models.ItemCreationInput{}
 		c, mockDB := buildTestClient()
 		expected := &models.Item{}
 

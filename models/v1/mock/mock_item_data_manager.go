@@ -46,7 +46,7 @@ func (m *ItemDataManager) GetAllItemsForUser(ctx context.Context, userID uint64)
 }
 
 // CreateItem is a mock function
-func (m *ItemDataManager) CreateItem(ctx context.Context, input *models.ItemInput) (*models.Item, error) {
+func (m *ItemDataManager) CreateItem(ctx context.Context, input *models.ItemCreationInput) (*models.Item, error) {
 	args := m.Called(ctx, input)
 	return args.Get(0).(*models.Item), args.Error(1)
 }

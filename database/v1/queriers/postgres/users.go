@@ -271,7 +271,7 @@ func (p *Postgres) buildUpdateUserQuery(input *models.User) (query string, args 
 		Set("username", input.Username).
 		Set("hashed_password", input.HashedPassword).
 		Set("two_factor_secret", input.TwoFactorSecret).
-		Set("updated_on", squirrel.Expr("extract(epoch FROM NOW())")).
+		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{"id": input.ID}).
 		Suffix("RETURNING updated_on").
 		ToSql()
@@ -292,8 +292,8 @@ func (p *Postgres) UpdateUser(ctx context.Context, input *models.User) error {
 func (p *Postgres) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 	query, args, err = p.sqlBuilder.Update(usersTableName).
-		Set("updated_on", squirrel.Expr("extract(epoch FROM NOW())")).
-		Set("archived_on", squirrel.Expr("extract(epoch FROM NOW())")).
+		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
+		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{"id": userID}).
 		Suffix("RETURNING archived_on").
 		ToSql()

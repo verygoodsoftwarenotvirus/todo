@@ -15,7 +15,7 @@ func TestItem_Update(T *testing.T) {
 			Details: "deets",
 		}
 
-		expected := &ItemInput{
+		expected := &ItemUpdateInput{
 			Name:    "expected name",
 			Details: "expected details",
 		}

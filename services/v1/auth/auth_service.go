@@ -24,6 +24,7 @@ type (
 		ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.Request) (*models.OAuth2Client, error)
 	}
 
+	// cookieEncoderDecoder is a stand-in interface for gorilla/securecookie
 	cookieEncoderDecoder interface {
 		Encode(name string, value interface{}) (string, error)
 		Decode(name, value string, dst interface{}) error
@@ -32,7 +33,7 @@ type (
 	// UserIDFetcher is a function that fetches user IDs
 	UserIDFetcher func(*http.Request) uint64
 
-	// Service handles auth
+	// Service handles authentication service-wide
 	Service struct {
 		config               config.AuthSettings
 		logger               logging.Logger

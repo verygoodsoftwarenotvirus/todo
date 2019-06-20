@@ -380,7 +380,7 @@ func (p *Postgres) buildUpdateOAuth2ClientQuery(input *models.OAuth2Client) (que
 		Set("client_secret", input.ClientSecret).
 		Set("scopes", strings.Join(input.Scopes, scopesSeparator)).
 		Set("redirect_uri", input.RedirectURI).
-		Set("updated_on", squirrel.Expr("extract(epoch FROM NOW())")).
+		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			"id":         input.ID,
 			"belongs_to": input.BelongsTo,
@@ -405,8 +405,8 @@ func (p *Postgres) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query
 	var err error
 	query, args, err = p.sqlBuilder.
 		Update(oauth2ClientsTableName).
-		Set("updated_on", squirrel.Expr("extract(epoch FROM NOW())")).
-		Set("archived_on", squirrel.Expr("extract(epoch FROM NOW())")).
+		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
+		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			"id":         clientID,
 			"belongs_to": userID,

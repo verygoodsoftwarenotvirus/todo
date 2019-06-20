@@ -37,7 +37,7 @@ type Logger interface {
 
 	SetLevel(Level)
 
-	// Builder funcs
+	// Builder functions
 	WithName(string) Logger
 	WithValues(map[string]interface{}) Logger
 	WithValue(string, interface{}) Logger

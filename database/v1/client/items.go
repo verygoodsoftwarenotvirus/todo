@@ -86,7 +86,7 @@ func (c *Client) GetAllItemsForUser(ctx context.Context, userID uint64) ([]model
 }
 
 // CreateItem creates an item in the database
-func (c *Client) CreateItem(ctx context.Context, input *models.ItemInput) (*models.Item, error) {
+func (c *Client) CreateItem(ctx context.Context, input *models.ItemCreationInput) (*models.Item, error) {
 	ctx, span := trace.StartSpan(ctx, "CreateItem")
 	defer span.End()
 

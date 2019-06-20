@@ -20,12 +20,14 @@ const (
 	CookieName = "todocookie"
 )
 
+// attachUserIDToSpan provides a consistent way to attach a userID to a given span
 func attachUserIDToSpan(span *trace.Span, userID uint64) {
 	if span != nil {
 		span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
 	}
 }
 
+// attachUsernameToSpan provides a consistent way to attach a username to a given span
 func attachUsernameToSpan(span *trace.Span, username string) {
 	if span != nil {
 		span.AddAttributes(trace.StringAttribute("username", username))
@@ -95,9 +97,9 @@ func (s *Service) FetchUserFromRequest(ctx context.Context, req *http.Request) (
 	return user, nil
 }
 
-// Login is our login route
-func (s *Service) Login(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "Login")
+// LoginHandler is our login route
+func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := trace.StartSpan(req.Context(), "LoginHandler")
 	defer span.End()
 
 	loginData, errRes := s.fetchLoginDataFromRequest(req)
@@ -152,9 +154,9 @@ func (s *Service) Login(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusNoContent)
 }
 
-// Logout is our logout route
-func (s *Service) Logout(res http.ResponseWriter, req *http.Request) {
-	_, span := trace.StartSpan(req.Context(), "Logout")
+// LogoutHandler is our logout route
+func (s *Service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
+	_, span := trace.StartSpan(req.Context(), "LogoutHandler")
 	defer span.End()
 
 	if cookie, err := req.Cookie(CookieName); err == nil && cookie != nil {
@@ -169,10 +171,10 @@ func (s *Service) Logout(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusOK)
 }
 
-// CycleSecret rotates the cookie building secret with a new random secret
-func (s *Service) CycleSecret(res http.ResponseWriter, req *http.Request) {
+// CycleSecretHandler rotates the cookie building secret with a new random secret
+func (s *Service) CycleSecretHandler(res http.ResponseWriter, req *http.Request) {
 	s.logger.Info("cycling cookie secret!")
-	_, span := trace.StartSpan(req.Context(), "CycleSecret")
+	_, span := trace.StartSpan(req.Context(), "CycleSecretHandler")
 	defer span.End()
 
 	s.cookieManager = securecookie.New(
@@ -188,6 +190,8 @@ type loginData struct {
 	user       *models.User
 }
 
+// fetchLoginDataFromRequest searches a given HTTP request for parsed login input data, and
+// returns a helper struct with the relevant login information
 func (s *Service) fetchLoginDataFromRequest(req *http.Request) (*loginData, *models.ErrorResponse) {
 	ctx, span := trace.StartSpan(req.Context(), "fetchLoginDataFromRequest")
 	defer span.End()
@@ -228,13 +232,19 @@ func (s *Service) fetchLoginDataFromRequest(req *http.Request) (*loginData, *mod
 	return ld, nil
 }
 
+// validateLogin takes login information and returns whether or not the login is valid.
+// In the event that there's an error, this function will return false and the error.
 func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool, error) {
 	ctx, span := trace.StartSpan(ctx, "validateLogin")
 	defer span.End()
 
+	// alias the relevant data
 	user := loginInfo.user
 	loginInput := loginInfo.loginInput
+
 	logger := s.logger.WithValue("username", user.Username)
+
+	// check for login validity
 	loginValid, err := s.authenticator.ValidateLogin(
 		ctx,
 		user.HashedPassword,
@@ -244,26 +254,30 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 		user.Salt,
 	)
 
+	// if the login is otherwise valid, but the password is too weak, try to rehash it.
 	if err == auth.ErrPasswordHashTooWeak && loginValid {
 		logger.Debug("hashed password was deemed to weak, updating its hash")
 
+		// rehash the password
 		updated, hashErr := s.authenticator.HashPassword(ctx, loginInput.Password)
 		if hashErr != nil {
 			return false, errors.Wrap(hashErr, "updating password hash")
 		}
 
+		// update stored hashed password in the database
 		user.HashedPassword = updated
 		if updateErr := s.userDB.UpdateUser(ctx, user); updateErr != nil {
 			return false, errors.Wrap(updateErr, "saving updated password hash")
 		}
 	} else if err != nil && err != auth.ErrPasswordHashTooWeak {
 		logger.Error(err, "issue validating login")
-		return false, err
+		return false, errors.Wrap(err, "validating login")
 	}
 
 	return loginValid, nil
 }
 
+// buildAuthCookie returns an authentication cookie for a given user
 func (s *Service) buildAuthCookie(user *models.User) (*http.Cookie, error) {
 	// NOTE: code here is duplicated into the unit tests for
 	// DecodeCookieFromRequest any changes made here might need
@@ -277,13 +291,17 @@ func (s *Service) buildAuthCookie(user *models.User) (*http.Cookie, error) {
 	)
 
 	if err != nil {
-		s.logger.WithValue("user_id", user.ID).Error(err, "error encoding cookie")
+		// NOTE: these errors should be infrequent, and should cause alarm when they do occur
+		s.logger.WithName("_COOKIE_CONSTRUCTION_ERROR_").
+			WithValue("user_id", user.ID).
+			Error(err, "error encoding cookie")
 		return nil, err
 	}
 
 	return s.buildCookie(encoded), nil
 }
 
+// buildCookie provides a consistent way of constructing an HTTP cookie
 func (s *Service) buildCookie(value string) *http.Cookie {
 	// https://www.calhoun.io/securing-cookies-in-go/
 	return &http.Cookie{

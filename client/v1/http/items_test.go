@@ -147,7 +147,7 @@ func TestV1Client_BuildCreateItemRequest(T *testing.T) {
 
 		ts := httptest.NewTLSServer(nil)
 
-		exampleInput := &models.ItemInput{
+		exampleInput := &models.ItemCreationInput{
 			Name:    "expected name",
 			Details: "expected details",
 		}
@@ -175,7 +175,7 @@ func TestV1Client_CreateItem(T *testing.T) {
 			Details: "blah",
 		}
 
-		exampleInput := &models.ItemInput{
+		exampleInput := &models.ItemCreationInput{
 			Name:    expected.Name,
 			Details: expected.Details,
 		}
@@ -188,7 +188,7 @@ func TestV1Client_CreateItem(T *testing.T) {
 					assert.Equal(t, req.URL.Path, "/api/v1/items", "expected and actual path don't match")
 					assert.Equal(t, req.Method, http.MethodPost)
 
-					var x *models.ItemInput
+					var x *models.ItemCreationInput
 					require.NoError(t, json.NewDecoder(req.Body).Decode(&x))
 					assert.Equal(t, exampleInput, x)
 

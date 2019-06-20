@@ -227,11 +227,11 @@ func TestItemsService_Create(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		exampleInput := &models.ItemInput{
+		exampleInput := &models.ItemCreationInput{
 			Name:    expected.Name,
 			Details: expected.Details,
 		}
-		req = req.WithContext(context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput))
+		req = req.WithContext(context.WithValue(req.Context(), CreateMiddlewareCtxKey, exampleInput))
 
 		s.CreateHandler(res, req)
 
@@ -300,11 +300,11 @@ func TestItemsService_Create(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		exampleInput := &models.ItemInput{
+		exampleInput := &models.ItemCreationInput{
 			Name:    expected.Name,
 			Details: expected.Details,
 		}
-		req = req.WithContext(context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput))
+		req = req.WithContext(context.WithValue(req.Context(), CreateMiddlewareCtxKey, exampleInput))
 
 		s.CreateHandler(res, req)
 
@@ -354,11 +354,11 @@ func TestItemsService_Create(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		exampleInput := &models.ItemInput{
+		exampleInput := &models.ItemCreationInput{
 			Name:    expected.Name,
 			Details: expected.Details,
 		}
-		req = req.WithContext(context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput))
+		req = req.WithContext(context.WithValue(req.Context(), CreateMiddlewareCtxKey, exampleInput))
 
 		s.CreateHandler(res, req)
 
@@ -597,11 +597,11 @@ func TestItemsService_Update(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		exampleInput := &models.ItemInput{
+		exampleInput := &models.ItemUpdateInput{
 			Name:    expected.Name,
 			Details: expected.Details,
 		}
-		req = req.WithContext(context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput))
+		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
 
 		s.UpdateHandler(res, req)
 
@@ -660,11 +660,11 @@ func TestItemsService_Update(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		exampleInput := &models.ItemInput{
+		exampleInput := &models.ItemUpdateInput{
 			Name:    expected.Name,
 			Details: expected.Details,
 		}
-		req = req.WithContext(context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput))
+		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
 
 		s.UpdateHandler(res, req)
 
@@ -706,11 +706,11 @@ func TestItemsService_Update(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		exampleInput := &models.ItemInput{
+		exampleInput := &models.ItemUpdateInput{
 			Name:    expected.Name,
 			Details: expected.Details,
 		}
-		req = req.WithContext(context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput))
+		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
 
 		s.UpdateHandler(res, req)
 
@@ -771,11 +771,11 @@ func TestItemsService_Update(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		exampleInput := &models.ItemInput{
+		exampleInput := &models.ItemUpdateInput{
 			Name:    expected.Name,
 			Details: expected.Details,
 		}
-		req = req.WithContext(context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput))
+		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
 
 		s.UpdateHandler(res, req)
 
@@ -836,11 +836,11 @@ func TestItemsService_Update(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		exampleInput := &models.ItemInput{
+		exampleInput := &models.ItemUpdateInput{
 			Name:    expected.Name,
 			Details: expected.Details,
 		}
-		req = req.WithContext(context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput))
+		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
 
 		s.UpdateHandler(res, req)
 

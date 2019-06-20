@@ -17,6 +17,7 @@ type Counter interface {
 	Decrement()
 }
 
+// opencensusCounter is a Counter that interfaces with opencensus
 type opencensusCounter struct {
 	name        string
 	actualCount uint64
@@ -24,16 +25,19 @@ type opencensusCounter struct {
 	counter     *view.View
 }
 
+// Increment satisfies our Counter interface
 func (c *opencensusCounter) Increment(ctx context.Context) {
 	atomic.AddUint64(&c.actualCount, 1)
 	stats.Record(ctx, c.count.M(1))
 }
 
+// IncrementBy satisfies our Counter interface
 func (c *opencensusCounter) IncrementBy(ctx context.Context, val uint64) {
 	atomic.AddUint64(&c.actualCount, val)
 	stats.Record(ctx, c.count.M(int64(val)))
 }
 
+// Decrement satisfies our Counter interface
 func (c *opencensusCounter) Decrement(ctx context.Context) {
 	atomic.AddUint64(&c.actualCount, ^uint64(0))
 	stats.Record(ctx, c.count.M(-1))

@@ -9,9 +9,9 @@ import (
 	"github.com/pquerna/otp/totp"
 )
 
-// RandomItemInput creates a random ItemInput
-func RandomItemInput() *models.ItemInput {
-	x := &models.ItemInput{
+// RandomItemCreationInput creates a random ItemInput
+func RandomItemCreationInput() *models.ItemCreationInput {
+	x := &models.ItemCreationInput{
 		Name:    fake.Word(),
 		Details: fake.Sentence(),
 	}

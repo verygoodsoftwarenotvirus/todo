@@ -245,7 +245,7 @@ func (p *Postgres) buildCreateItemQuery(input *models.Item) (query string, args 
 }
 
 // CreateItem creates an item in the database
-func (p *Postgres) CreateItem(ctx context.Context, input *models.ItemInput) (*models.Item, error) {
+func (p *Postgres) CreateItem(ctx context.Context, input *models.ItemCreationInput) (*models.Item, error) {
 	i := &models.Item{
 		Name:      input.Name,
 		Details:   input.Details,
@@ -269,7 +269,7 @@ func (p *Postgres) buildUpdateItemQuery(input *models.Item) (query string, args 
 	query, args, err = p.sqlBuilder.Update(itemsTableName).
 		Set("name", input.Name).
 		Set("details", input.Details).
-		Set("updated_on", squirrel.Expr("extract(epoch FROM NOW())")).
+		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			"id":         input.ID,
 			"belongs_to": input.BelongsTo,
@@ -293,8 +293,8 @@ func (p *Postgres) buildArchiveItemQuery(itemID, userID uint64) (query string, a
 	var err error
 	query, args, err = p.sqlBuilder.
 		Update(itemsTableName).
-		Set("updated_on", squirrel.Expr("extract(epoch FROM NOW())")).
-		Set("archived_on", squirrel.Expr("extract(epoch FROM NOW())")).
+		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
+		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			"id":          itemID,
 			"archived_on": nil,

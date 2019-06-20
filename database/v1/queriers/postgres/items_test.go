@@ -441,7 +441,7 @@ func TestPostgres_CreateItem(T *testing.T) {
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
-		expectedInput := &models.ItemInput{
+		expectedInput := &models.ItemCreationInput{
 			Name:      expected.Name,
 			BelongsTo: expected.BelongsTo,
 		}
@@ -474,7 +474,7 @@ func TestPostgres_CreateItem(T *testing.T) {
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
-		expectedInput := &models.ItemInput{
+		expectedInput := &models.ItemCreationInput{
 			Name:      example.Name,
 			BelongsTo: example.BelongsTo,
 		}

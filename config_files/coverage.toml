@@ -13,6 +13,6 @@ wasm_client_package = "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/fronte
 cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"
 
 [database]
-type = "postgres"
+provider = "postgres"
 debug = false
 connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"

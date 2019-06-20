@@ -119,7 +119,7 @@ func (qf *QueryFilter) ToValues() url.Values {
 	return v
 }
 
-// ApplyToQueryBuilder applies the query filter to a SelectBuilder
+// ApplyToQueryBuilder applies the query filter to a query builder
 func (qf *QueryFilter) ApplyToQueryBuilder(queryBuilder squirrel.SelectBuilder) squirrel.SelectBuilder {
 	if qf == nil {
 		return queryBuilder
@@ -157,7 +157,7 @@ func (qf *QueryFilter) ApplyToQueryBuilder(queryBuilder squirrel.SelectBuilder) 
 
 // ExtractQueryFilter can extract a QueryFilter from a request
 func ExtractQueryFilter(req *http.Request) *QueryFilter {
-	qf := DefaultQueryFilter()
+	qf := &QueryFilter{}
 	qf.FromParams(req.URL.Query())
 	return qf
 }

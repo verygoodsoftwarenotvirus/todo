@@ -7,7 +7,11 @@ import (
 
 var (
 	// MetricAggregationMeasurement keeps track of how much time we spend collecting metrics
-	MetricAggregationMeasurement = stats.Int64("metrics_aggregation_time", "cumulative time in nanoseconds spent aggregating metrics", stats.UnitDimensionless)
+	MetricAggregationMeasurement = stats.Int64(
+		"metrics_aggregation_time",
+		"cumulative time in nanoseconds spent aggregating metrics",
+		stats.UnitDimensionless,
+	)
 	// MetricAggregationMeasurementView is the corresponding view for the above metric
 	MetricAggregationMeasurementView = &view.View{
 		Name:        "metrics_aggregation_time",

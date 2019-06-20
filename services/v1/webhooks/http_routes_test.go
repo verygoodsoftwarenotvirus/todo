@@ -652,7 +652,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		exampleInput := &models.WebhookCreationInput{
+		exampleInput := &models.WebhookUpdateInput{
 			Name: expected.Name,
 		}
 		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
@@ -714,7 +714,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		exampleInput := &models.WebhookCreationInput{
+		exampleInput := &models.WebhookUpdateInput{
 			Name: expected.Name,
 		}
 		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
@@ -759,7 +759,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		exampleInput := &models.WebhookCreationInput{
+		exampleInput := &models.WebhookUpdateInput{
 			Name: expected.Name,
 		}
 		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
@@ -819,7 +819,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		exampleInput := &models.WebhookCreationInput{
+		exampleInput := &models.WebhookUpdateInput{
 			Name: expected.Name,
 		}
 		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
@@ -879,7 +879,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		exampleInput := &models.WebhookCreationInput{
+		exampleInput := &models.WebhookUpdateInput{
 			Name: expected.Name,
 		}
 		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))

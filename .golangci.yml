@@ -211,6 +211,10 @@ issues:
 
     ## BEGIN SPECIAL SNOWFLAKES
 
+    - path: tests/v1/load/actions.go
+      linters:
+        - gocyclo
+
     - path: tests/v1/load/main.go
       linters:
         - gocritic # gocritic complains about an interface implementation I have no control over

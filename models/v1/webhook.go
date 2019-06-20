@@ -17,7 +17,7 @@ type (
 		GetWebhooks(ctx context.Context, filter *QueryFilter, userID uint64) (*WebhookList, error)
 		GetAllWebhooks(ctx context.Context) (*WebhookList, error)
 		GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]Webhook, error)
-		CreateWebhook(ctx context.Context, input *WebhookInput) (*Webhook, error)
+		CreateWebhook(ctx context.Context, input *WebhookCreationInput) (*Webhook, error)
 		UpdateWebhook(ctx context.Context, updated *Webhook) error
 		ArchiveWebhook(ctx context.Context, id, userID uint64) error
 	}
@@ -50,8 +50,20 @@ type (
 		BelongsTo   uint64   `json:"belongs_to"`
 	}
 
-	// WebhookInput represents what a user could set as input for items
-	WebhookInput struct {
+	// WebhookCreationInput represents what a user could set as input for creating a webhook
+	WebhookCreationInput struct {
+		Name        string   `json:"name"`
+		ContentType string   `json:"content_type"`
+		URL         string   `json:"url"`
+		Method      string   `json:"method"`
+		Events      []string `json:"events"`
+		DataTypes   []string `json:"data_types"`
+		Topics      []string `json:"topics"`
+		BelongsTo   uint64   `json:"-"`
+	}
+
+	// WebhookUpdateInput  represents what a user could set as input for updating a webhook
+	WebhookUpdateInput struct {
 		Name        string   `json:"name"`
 		ContentType string   `json:"content_type"`
 		URL         string   `json:"url"`
@@ -69,8 +81,8 @@ type (
 	}
 )
 
-// Update merges an WebhookInput with an Webhook
-func (w *Webhook) Update(input *WebhookInput) {
+// Update merges an WebhookCreationInput with an Webhook
+func (w *Webhook) Update(input *WebhookUpdateInput) {
 	if input.Name != "" {
 		w.Name = input.Name
 	}

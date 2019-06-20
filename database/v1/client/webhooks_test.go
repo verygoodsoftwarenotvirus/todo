@@ -145,7 +145,7 @@ func TestClient_CreateWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		exampleInput := &models.WebhookInput{}
+		exampleInput := &models.WebhookCreationInput{}
 		expected := &models.Webhook{}
 
 		c, mockDB := buildTestClient()

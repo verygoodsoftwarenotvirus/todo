@@ -256,7 +256,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput),
+			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext( // for the service.fetchUserID() call
 			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
@@ -308,7 +308,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput),
+			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext( // for the service.fetchUserID() call
 			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
@@ -366,7 +366,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput),
+			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext( // for the service.fetchUserID() call
 			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
@@ -424,7 +424,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput),
+			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext( // for the service.fetchUserID() call
 			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
@@ -482,7 +482,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput),
+			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext( // for the service.fetchUserID() call
 			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
@@ -549,7 +549,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput),
+			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext( // for the service.fetchUserID() call
 			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),

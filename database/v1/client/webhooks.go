@@ -95,7 +95,7 @@ func (c *Client) GetWebhooks(ctx context.Context, filter *models.QueryFilter, us
 }
 
 // CreateWebhook creates a webhook in a database
-func (c *Client) CreateWebhook(ctx context.Context, input *models.WebhookInput) (*models.Webhook, error) {
+func (c *Client) CreateWebhook(ctx context.Context, input *models.WebhookCreationInput) (*models.Webhook, error) {
 	ctx, span := trace.StartSpan(ctx, "CreateWebhook")
 	defer span.End()
 

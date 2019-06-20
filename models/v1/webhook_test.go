@@ -24,7 +24,7 @@ func TestWebhook_Update(T *testing.T) {
 			Topics:      []string{"blah"},
 		}
 
-		exampleInput := &WebhookInput{
+		exampleInput := &WebhookUpdateInput{
 			Name:        "new name",
 			ContentType: "application/xml",
 			URL:         "https://blah.verygoodsoftwarenotvirus.ru",

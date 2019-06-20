@@ -22,8 +22,8 @@ func checkWebhookEquality(t *testing.T, expected, actual *models.Webhook) {
 	assert.NotZero(t, actual.CreatedOn)
 }
 
-func buildDummyWebhookInput() *models.WebhookInput {
-	x := &models.WebhookInput{
+func buildDummyWebhookInput() *models.WebhookCreationInput {
+	x := &models.WebhookCreationInput{
 		Name:        fake.Word(),
 		URL:         fake.DomainName(),
 		ContentType: "application/json",
@@ -65,7 +65,7 @@ func TestWebhooks(test *testing.T) {
 			}
 			premade, err := todoClient.CreateWebhook(
 				tctx,
-				&models.WebhookInput{
+				&models.WebhookCreationInput{
 					Name:        expected.Name,
 					ContentType: expected.ContentType,
 					URL:         expected.URL,
@@ -130,7 +130,7 @@ func TestWebhooks(test *testing.T) {
 				ContentType: input.ContentType,
 				Method:      input.Method,
 			}
-			premade, err := todoClient.CreateWebhook(tctx, &models.WebhookInput{
+			premade, err := todoClient.CreateWebhook(tctx, &models.WebhookCreationInput{
 				Name:        expected.Name,
 				ContentType: expected.ContentType,
 				URL:         expected.URL,
@@ -173,7 +173,7 @@ func TestWebhooks(test *testing.T) {
 			}
 			premade, err := todoClient.CreateWebhook(
 				tctx,
-				&models.WebhookInput{
+				&models.WebhookCreationInput{
 					Name:        expected.Name,
 					ContentType: expected.ContentType,
 					URL:         expected.URL,
@@ -214,7 +214,7 @@ func TestWebhooks(test *testing.T) {
 				ContentType: input.ContentType,
 				Method:      input.Method,
 			}
-			premade, err := todoClient.CreateWebhook(tctx, &models.WebhookInput{
+			premade, err := todoClient.CreateWebhook(tctx, &models.WebhookCreationInput{
 				Name:        expected.Name,
 				ContentType: expected.ContentType,
 				URL:         expected.URL,

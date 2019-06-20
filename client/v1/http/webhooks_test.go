@@ -145,7 +145,7 @@ func TestV1Client_BuildCreateWebhookRequest(T *testing.T) {
 
 		ts := httptest.NewTLSServer(nil)
 
-		exampleInput := &models.WebhookInput{
+		exampleInput := &models.WebhookCreationInput{
 			Name: "expected name",
 		}
 		c := buildTestClient(t, ts)
@@ -171,7 +171,7 @@ func TestV1Client_CreateWebhook(T *testing.T) {
 			Name: "example",
 		}
 
-		exampleInput := &models.WebhookInput{
+		exampleInput := &models.WebhookCreationInput{
 			Name: expected.Name,
 		}
 
@@ -183,7 +183,7 @@ func TestV1Client_CreateWebhook(T *testing.T) {
 					assert.Equal(t, req.URL.Path, "/api/v1/webhooks", "expected and actual path don't match")
 					assert.Equal(t, req.Method, http.MethodPost)
 
-					var x *models.WebhookInput
+					var x *models.WebhookCreationInput
 					require.NoError(t, json.NewDecoder(req.Body).Decode(&x))
 					assert.Equal(t, exampleInput, x)
 

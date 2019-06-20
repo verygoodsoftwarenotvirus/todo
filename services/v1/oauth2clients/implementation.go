@@ -129,16 +129,19 @@ func (s *Service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantTyp
 		"client_id": clientID,
 	})
 
+	// reject invalid grant type
 	if grant == oauth2.PasswordCredentials {
 		return false, errors.New("invalid grant type: password")
 	}
 
+	// fetch client data
 	client, err := s.database.GetOAuth2ClientByClientID(ctx, clientID)
 	if err != nil {
 		logger.Error(err, "fetching oauth2 client from database")
 		return false, errors.Wrap(err, "fetching oauth2 client from database")
 	}
 
+	// disallow implicit grants unless authorized
 	if grant == oauth2.Implicit && !client.ImplicitAllowed {
 		return false, errors.New("client not authorized for implicit grants")
 	}
@@ -159,12 +162,14 @@ func (s *Service) ClientScopeHandler(clientID, scope string) (authed bool, err e
 		"scope":     scope,
 	})
 
+	// fetch client info
 	c, err := s.database.GetOAuth2ClientByClientID(ctx, clientID)
 	if err != nil {
 		logger.Error(err, "error fetching OAuth2 client for ClientScopeHandler")
 		return false, err
 	}
 
+	// check for scope
 	if c.HasScope(scope) {
 		return true, nil
 	}

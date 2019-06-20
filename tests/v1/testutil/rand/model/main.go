@@ -19,9 +19,9 @@ func RandomItemCreationInput() *models.ItemCreationInput {
 	return x
 }
 
-// RandomWebhookInput creates a random WebhookInput
-func RandomWebhookInput() *models.WebhookInput {
-	x := &models.WebhookInput{
+// RandomWebhookInput creates a random WebhookCreationInput
+func RandomWebhookInput() *models.WebhookCreationInput {
+	x := &models.WebhookCreationInput{
 		Name:        fake.Word(),
 		URL:         fake.DomainName(),
 		ContentType: "application/json",

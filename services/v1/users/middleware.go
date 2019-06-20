@@ -27,12 +27,14 @@ func (s *Service) UserInputMiddleware(next http.Handler) http.Handler {
 		ctx, span := trace.StartSpan(req.Context(), "UserInputMiddleware")
 		defer span.End()
 
+		// decode the request
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
+		// attach parsed value to context
 		ctx = context.WithValue(ctx, UserCreationMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
@@ -45,12 +47,14 @@ func (s *Service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler 
 		ctx, span := trace.StartSpan(req.Context(), "PasswordUpdateInputMiddleware")
 		defer span.End()
 
+		// decode the request
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
+		// attach parsed value to context
 		ctx = context.WithValue(ctx, PasswordChangeMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
@@ -63,12 +67,14 @@ func (s *Service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handl
 		ctx, span := trace.StartSpan(req.Context(), "TOTPSecretRefreshInputMiddleware")
 		defer span.End()
 
+		// decode the request
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
+		// attach parsed value to context
 		ctx = context.WithValue(ctx, TOTPSecretRefreshMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})

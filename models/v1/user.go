@@ -49,7 +49,7 @@ type (
 		TwoFactorSecret string `json:"-"`
 	}
 
-	// UserCreationResponse is a response structure for Users that doesn't contain password fields
+	// UserCreationResponse is a response structure for Users that doesn't contain password fields, but does contain the two factor secret
 	UserCreationResponse struct {
 		ID                    uint64  `json:"id"`
 		Username              string  `json:"username"`

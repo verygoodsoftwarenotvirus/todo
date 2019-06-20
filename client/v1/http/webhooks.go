@@ -51,14 +51,14 @@ func (c *V1Client) GetWebhooks(ctx context.Context, filter *models.QueryFilter) 
 }
 
 // BuildCreateWebhookRequest builds an HTTP request for creating a webhook
-func (c *V1Client) BuildCreateWebhookRequest(ctx context.Context, body *models.WebhookInput) (*http.Request, error) {
+func (c *V1Client) BuildCreateWebhookRequest(ctx context.Context, body *models.WebhookCreationInput) (*http.Request, error) {
 	uri := c.BuildURL(nil, webhooksBasePath)
 
 	return c.buildDataRequest(http.MethodPost, uri, body)
 }
 
 // CreateWebhook creates a webhook
-func (c *V1Client) CreateWebhook(ctx context.Context, input *models.WebhookInput) (webhook *models.Webhook, err error) {
+func (c *V1Client) CreateWebhook(ctx context.Context, input *models.WebhookCreationInput) (webhook *models.Webhook, err error) {
 	req, err := c.BuildCreateWebhookRequest(ctx, input)
 	if err != nil {
 		return nil, errors.Wrap(err, "building request")

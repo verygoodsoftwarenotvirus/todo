@@ -99,7 +99,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	// fetch creation input from request context
-	input, ok := ctx.Value(MiddlewareCtxKey).(*models.OAuth2ClientCreationInput)
+	input, ok := ctx.Value(CreationMiddlewareCtxKey).(*models.OAuth2ClientCreationInput)
 	if !ok {
 		s.logger.Info("valid input not attached to request")
 		res.WriteHeader(http.StatusBadRequest)

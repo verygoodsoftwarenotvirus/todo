@@ -676,7 +676,7 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
-		expectedInput := &models.WebhookInput{
+		expectedInput := &models.WebhookCreationInput{
 			Name:      expected.Name,
 			BelongsTo: expected.BelongsTo,
 		}
@@ -714,7 +714,7 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
-		expectedInput := &models.WebhookInput{
+		expectedInput := &models.WebhookCreationInput{
 			Name:      expected.Name,
 			BelongsTo: expected.BelongsTo,
 		}

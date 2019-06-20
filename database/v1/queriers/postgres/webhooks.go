@@ -346,7 +346,7 @@ func (p *Postgres) buildWebhookCreationQuery(x *models.Webhook) (query string, a
 }
 
 // CreateWebhook creates a webhook in the database
-func (p *Postgres) CreateWebhook(ctx context.Context, input *models.WebhookInput) (*models.Webhook, error) {
+func (p *Postgres) CreateWebhook(ctx context.Context, input *models.WebhookCreationInput) (*models.Webhook, error) {
 	x := &models.Webhook{
 		Name:        input.Name,
 		ContentType: input.ContentType,

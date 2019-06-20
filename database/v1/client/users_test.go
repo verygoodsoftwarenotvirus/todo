@@ -73,7 +73,7 @@ func TestClient_GetUserCount(T *testing.T) {
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.
-			On("GetUserCount", mock.Anything, models.DefaultQueryFilter()).
+			On("GetUserCount", mock.Anything, (*models.QueryFilter)(nil)).
 			Return(expected, nil)
 
 		actual, err := c.GetUserCount(context.Background(), nil)
@@ -107,7 +107,7 @@ func TestClient_GetUsers(T *testing.T) {
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.
-			On("GetUsers", mock.Anything, models.DefaultQueryFilter()).
+			On("GetUsers", mock.Anything, (*models.QueryFilter)(nil)).
 			Return(expected, nil)
 
 		actual, err := c.GetUsers(context.Background(), nil)

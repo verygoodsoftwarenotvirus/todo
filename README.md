@@ -8,11 +8,16 @@ you'll need:
 
 - make
 - go >= 1.12
-- [wire](https://github.com/google/wire) for dependency management
 - docker
 - docker-compose
+
+the following tools are occasionally required for development:
+
+- [wire](https://github.com/google/wire) for dependency management
 - [golangci-lint](https://github.com/golangci/golangci-lint) for linting (see included config file)
 - [gocov](https://github.com/axw/gocov) for coverage report generation
+
+you can install these by running `make go-tools`
 
 ## running the server
 

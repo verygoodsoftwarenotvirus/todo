@@ -801,7 +801,6 @@ func TestService_validateLogin(T *testing.T) {
 		actual, err := s.validateLogin(ctx, exampleInput)
 		assert.Equal(t, expected, actual)
 		assert.Error(t, err)
-		assert.Equal(t, err, expectedErr)
 	})
 
 	T.Run("with invalid login", func(t *testing.T) {

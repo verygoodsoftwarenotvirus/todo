@@ -109,7 +109,7 @@ func TestClient_GetOAuth2ClientCount(T *testing.T) {
 		expected := uint64(123)
 		c, mockDB := buildTestClient()
 		mockDB.OAuth2ClientDataManager.
-			On("GetOAuth2ClientCount", mock.Anything, models.DefaultQueryFilter(), exampleUserID).
+			On("GetOAuth2ClientCount", mock.Anything, mock.AnythingOfType("*models.QueryFilter"), exampleUserID).
 			Return(expected, nil)
 
 		actual, err := c.GetOAuth2ClientCount(context.Background(), nil, exampleUserID)
@@ -192,7 +192,7 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 		exampleUserID := uint64(123)
 		expected := &models.OAuth2ClientList{}
 		mockDB.OAuth2ClientDataManager.
-			On("GetOAuth2Clients", mock.Anything, models.DefaultQueryFilter(), exampleUserID).
+			On("GetOAuth2Clients", mock.Anything, (*models.QueryFilter)(nil), exampleUserID).
 			Return(expected, nil)
 
 		actual, err := c.GetOAuth2Clients(context.Background(), nil, exampleUserID)

@@ -56,7 +56,7 @@ func TestClient_GetWebhookCount(T *testing.T) {
 
 		c, mockDB := buildTestClient()
 		mockDB.WebhookDataManager.
-			On("GetWebhookCount", mock.Anything, models.DefaultQueryFilter(), exampleUserID).
+			On("GetWebhookCount", mock.Anything, (*models.QueryFilter)(nil), exampleUserID).
 			Return(expected, nil)
 
 		actual, err := c.GetWebhookCount(context.Background(), nil, exampleUserID)
@@ -130,7 +130,7 @@ func TestClient_GetWebhooks(T *testing.T) {
 
 		c, mockDB := buildTestClient()
 		mockDB.WebhookDataManager.
-			On("GetWebhooks", mock.Anything, models.DefaultQueryFilter(), exampleUserID).
+			On("GetWebhooks", mock.Anything, (*models.QueryFilter)(nil), exampleUserID).
 			Return(expected, nil)
 
 		actual, err := c.GetWebhooks(context.Background(), nil, exampleUserID)

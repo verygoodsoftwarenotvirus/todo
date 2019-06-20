@@ -26,6 +26,7 @@ rewire: wire-clean wire
 ## Go-specific prerequisite stuff
 .PHONY: go-tools
 go-tools:
+	GO111MODULE=off go get -u github.com/google/wire/cmd/wire
 	GO111MODULE=off go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
 	GO111MODULE=off go get -u github.com/axw/gocov/gocov
 

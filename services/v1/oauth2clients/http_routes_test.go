@@ -71,7 +71,7 @@ func Test_fetchUserID(T *testing.T) {
 	})
 }
 
-func TestService_List(T *testing.T) {
+func TestService_ListHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -199,7 +199,7 @@ func TestService_List(T *testing.T) {
 	})
 }
 
-func TestService_Create(T *testing.T) {
+func TestService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -563,7 +563,7 @@ func TestService_Create(T *testing.T) {
 	})
 }
 
-func TestService_Read(T *testing.T) {
+func TestService_ReadHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -711,7 +711,7 @@ func TestService_Read(T *testing.T) {
 	})
 }
 
-func TestService_Archive(T *testing.T) {
+func TestService_ArchiveHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {

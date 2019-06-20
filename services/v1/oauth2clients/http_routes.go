@@ -20,18 +20,21 @@ const (
 	clientIDKey               models.ContextKey = "client_id"
 )
 
+// attachUserIDToSpan provides a consistent way of attaching an user ID to a given span
 func attachUserIDToSpan(span *trace.Span, userID uint64) {
 	if span != nil {
 		span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
 	}
 }
 
+// attachOAuth2ClientDatabaseIDToSpan provides a consistent way of attaching an item ID to a given span
 func attachOAuth2ClientDatabaseIDToSpan(span *trace.Span, itemID uint64) {
 	if span != nil {
 		span.AddAttributes(trace.StringAttribute("outh2client_id", strconv.FormatUint(itemID, 10)))
 	}
 }
 
+// attachOAuth2ClientIDToSpan provides a consistent way of attaching a client ID to a given span
 func attachOAuth2ClientIDToSpan(span *trace.Span, clientID string) {
 	if span != nil {
 		span.AddAttributes(trace.StringAttribute("client_id", clientID))
@@ -50,9 +53,10 @@ func randString() string {
 	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b)
 }
 
+// fetchUserID grabs a userID out of the request context
 func (s *Service) fetchUserID(req *http.Request) uint64 {
-	if x, ok := req.Context().Value(models.UserIDKey).(uint64); ok {
-		return x
+	if id, ok := req.Context().Value(models.UserIDKey).(uint64); ok {
+		return id
 	}
 	return 0
 }
@@ -62,14 +66,18 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := trace.StartSpan(req.Context(), "ListHandler")
 	defer span.End()
 
+	// extract filter
 	qf := models.ExtractQueryFilter(req)
 
+	// determine user
 	userID := s.fetchUserID(req)
 	attachUserIDToSpan(span, userID)
 	logger := s.logger.WithValue("user_id", userID)
 
+	// fetch oauth2 clients
 	oauth2Clients, err := s.database.GetOAuth2Clients(ctx, qf, userID)
 	if err == sql.ErrNoRows {
+		// just return an empty list if there are no results
 		oauth2Clients = &models.OAuth2ClientList{
 			Clients: []models.OAuth2Client{},
 		}
@@ -79,6 +87,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// encode response and peace
 	if err = s.encoderDecoder.EncodeResponse(res, oauth2Clients); err != nil {
 		logger.Error(err, "encoding response")
 	}
@@ -89,6 +98,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := trace.StartSpan(req.Context(), "CreateHandler")
 	defer span.End()
 
+	// fetch creation input from request context
 	input, ok := ctx.Value(MiddlewareCtxKey).(*models.OAuth2ClientCreationInput)
 	if !ok {
 		s.logger.Info("valid input not attached to request")
@@ -96,12 +106,14 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// keep relevant data in mind
 	logger := s.logger.WithValues(map[string]interface{}{
 		"username":     input.Username,
 		"scopes":       input.Scopes,
 		"redirect_uri": input.RedirectURI,
 	})
 
+	// retrieve user
 	user, err := s.database.GetUserByUsername(ctx, input.Username)
 	if err != nil {
 		logger.Error(err, "fetching user by username")
@@ -110,8 +122,10 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 	input.BelongsTo = user.ID
 
+	// tag span since we have the info
 	attachUserIDToSpan(span, user.ID)
 
+	// check credentials
 	valid, err := s.authenticator.ValidateLogin(
 		ctx,
 		user.HashedPassword,
@@ -131,10 +145,12 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// set some data
 	input.ClientID = randString()
 	input.ClientSecret = randString()
 	input.BelongsTo = s.fetchUserID(req)
 
+	// create the client
 	client, err := s.database.CreateOAuth2Client(ctx, input)
 	if err != nil {
 		logger.Error(err, "creating oauth2Client in the database")
@@ -142,6 +158,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// notify interested parties
 	attachOAuth2ClientDatabaseIDToSpan(span, client.ID)
 	s.oauth2ClientCounter.Increment(ctx)
 
@@ -156,17 +173,19 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := trace.StartSpan(req.Context(), "ReadHandler")
 	defer span.End()
 
+	// determine subject of request
 	userID := s.fetchUserID(req)
 	oauth2ClientID := s.urlClientIDExtractor(req)
 
+	// keep the aforementioned in mind
 	logger := s.logger.WithValues(map[string]interface{}{
 		"oauth2_client_id": oauth2ClientID,
 		"user_id":          userID,
 	})
-
 	attachUserIDToSpan(span, userID)
 	attachOAuth2ClientDatabaseIDToSpan(span, oauth2ClientID)
 
+	// fetch oauth2 client
 	x, err := s.database.GetOAuth2Client(ctx, oauth2ClientID, userID)
 	if err == sql.ErrNoRows {
 		logger.Debug("ReadHandler called on nonexistent client")
@@ -178,6 +197,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// encode response and peace
 	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 		logger.Error(err, "encoding response")
 	}
@@ -188,16 +208,18 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := trace.StartSpan(req.Context(), "ArchiveHandler")
 	defer span.End()
 
+	// determine subject matter
 	userID := s.fetchUserID(req)
 	oauth2ClientID := s.urlClientIDExtractor(req)
+
 	logger := s.logger.WithValues(map[string]interface{}{
 		"oauth2_client_id": oauth2ClientID,
 		"user_id":          userID,
 	})
-
 	attachUserIDToSpan(span, userID)
 	attachOAuth2ClientDatabaseIDToSpan(span, oauth2ClientID)
 
+	// mark client as archived
 	err := s.database.ArchiveOAuth2Client(ctx, oauth2ClientID, userID)
 	if err == sql.ErrNoRows {
 		res.WriteHeader(http.StatusNotFound)
@@ -208,6 +230,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// notify relevant parties
 	s.oauth2ClientCounter.Decrement(ctx)
 
 	res.WriteHeader(http.StatusNoContent)

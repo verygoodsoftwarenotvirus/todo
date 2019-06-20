@@ -130,8 +130,10 @@ func (s *Service) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 			attachOAuth2ClientDatabaseIDToSpan(span, client.ID)
 			attachUserIDToSpan(span, client.BelongsTo)
 
-			req = req.WithContext(context.WithValue(ctx, models.OAuth2ClientKey, client))
-			req = req.WithContext(context.WithValue(ctx, models.UserIDKey, client.BelongsTo))
+			ctx2 := context.WithValue(ctx, models.OAuth2ClientKey, client)
+			ctx3 := context.WithValue(ctx2, models.UserIDKey, client.BelongsTo)
+
+			req = req.WithContext(ctx3)
 		}
 
 		next.ServeHTTP(res, req)

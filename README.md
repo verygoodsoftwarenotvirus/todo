@@ -17,7 +17,7 @@ the following tools are occasionally required for development:
 - [golangci-lint](https://github.com/golangci/golangci-lint) for linting (see included config file)
 - [gocov](https://github.com/axw/gocov) for coverage report generation
 
-you can install these by running `make go-tools`
+assuming you have go installed, you can install these by running `make dev-tools`
 
 ## running the server
 
@@ -29,3 +29,4 @@ you can install these by running `make go-tools`
 
 1. run `make dev`
 2. in a different terminal, cd into `frontend/v1` and run `npm run autobuild`
+3. edit and have fun

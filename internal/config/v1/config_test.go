@@ -43,7 +43,7 @@ http_port = 1234
 debug = false
 
 [database]
-type = "postgres"
+provider = "postgres"
 debug = true
 connection_details = "%s"
 `, expected)))
@@ -55,7 +55,7 @@ connection_details = "%s"
 				Debug:    false,
 			},
 			Database: DatabaseSettings{
-				Type:              "postgres",
+				Provider:          "postgres",
 				Debug:             true,
 				ConnectionDetails: database.ConnectionDetails(expected),
 			},
@@ -66,9 +66,11 @@ connection_details = "%s"
 
 		assert.Equal(t, expectedConfig.Server.HTTPPort, cfg.Server.HTTPPort)
 		assert.Equal(t, expectedConfig.Server.Debug, cfg.Server.Debug)
-		assert.Equal(t, expectedConfig.Database.Type, cfg.Database.Type)
+		assert.Equal(t, expectedConfig.Database.Provider, cfg.Database.Provider)
 		assert.Equal(t, expectedConfig.Database.Debug, cfg.Database.Debug)
 		assert.Equal(t, expectedConfig.Database.ConnectionDetails, cfg.Database.ConnectionDetails)
+
+		os.Remove(tf.Name())
 	})
 
 	T.Run("with nonexistent file", func(t *testing.T) {

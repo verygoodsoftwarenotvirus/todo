@@ -455,7 +455,7 @@ func TestAuth(test *testing.T) {
 		// CreateHandler item for user A
 		a, err := todoClient.CreateItem(
 			tctx,
-			&models.ItemInput{
+			&models.ItemCreationInput{
 				Name:    "name A",
 				Details: "details A",
 			})
@@ -464,7 +464,7 @@ func TestAuth(test *testing.T) {
 		// CreateHandler item for user B
 		b, err := c.CreateItem(
 			tctx,
-			&models.ItemInput{
+			&models.ItemCreationInput{
 				Name:    "name B",
 				Details: "details B",
 			})
@@ -475,8 +475,8 @@ func TestAuth(test *testing.T) {
 		assert.Error(t, err, "should experience error trying to fetch item they're not authorized for")
 
 		// Clean up
-		assert.NoError(t, todoClient.DeleteItem(tctx, a.ID))
-		assert.NoError(t, todoClient.DeleteItem(tctx, b.ID))
+		assert.NoError(t, todoClient.ArchiveItem(tctx, a.ID))
+		assert.NoError(t, todoClient.ArchiveItem(tctx, b.ID))
 	})
 
 	test.Run("should only allow clients with a given scope to see that scope's content", func(t *testing.T) {

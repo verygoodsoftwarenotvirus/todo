@@ -17,11 +17,6 @@ static_files_dir = "/frontend"
 cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"
 
 [database]
-type = "postgres"
+provider = "postgres"
 debug = false
 connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
-
-# [database]
-# type = "sqlite"
-# debug = false
-# connection_details = ":memory:"

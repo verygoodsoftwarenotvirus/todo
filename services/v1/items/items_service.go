@@ -15,8 +15,11 @@ import (
 )
 
 const (
-	// MiddlewareCtxKey is a string alias we can use for referring to item input data in contexts
-	MiddlewareCtxKey   models.ContextKey   = "item_input"
+	// CreateMiddlewareCtxKey is a string alias we can use for referring to item input data in contexts
+	CreateMiddlewareCtxKey models.ContextKey = "item_create_input"
+	// UpdateMiddlewareCtxKey is a string alias we can use for referring to item update data in contexts
+	UpdateMiddlewareCtxKey models.ContextKey = "item_update_input"
+
 	counterName        metrics.CounterName = "items"
 	counterDescription                     = "the number of items managed by the items service"
 	topicName          string              = "items"

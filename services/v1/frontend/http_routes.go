@@ -20,10 +20,6 @@ func (s *Service) Routes() map[string]http.HandlerFunc {
 	}
 }
 
-var (
-	itemsFrontendPathRegex = regexp.MustCompile(`/items/\d+`)
-)
-
 func (s *Service) buildStaticFileServer(fileDir string) (*afero.HttpFs, error) {
 	var afs afero.Fs
 	if s.config.CacheStaticFiles {
@@ -65,7 +61,17 @@ func (s *Service) buildStaticFileServer(fileDir string) (*afero.HttpFs, error) {
 	return afero.NewHttpFs(afs), nil
 }
 
-// StaticDir establishes a static directory handler
+var (
+	// Here is where you should put route regexes that need to be ignored by the static file server.
+	// For instance, if you allow someone to see an event in the frontend via a URL that contains dynamic
+	// information, such as `/event/123`, you would want to put something like this below:
+	// 		eventsFrontendPathRegex = regexp.MustCompile(`/event/\d+`)
+
+	// itemsFrontendPathRegex matches URLs against our frontend router's specification for specific item routes
+	itemsFrontendPathRegex = regexp.MustCompile(`/items/\d+`)
+)
+
+// StaticDir builds a static directory handler
 func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, error) {
 	fileDir, err := filepath.Abs(staticFilesDirectory)
 	if err != nil {
@@ -82,7 +88,7 @@ func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, erro
 
 	return func(res http.ResponseWriter, req *http.Request) {
 		switch req.URL.Path {
-		// list your frontend routes here
+		// list your frontend history routes here
 		case "/register",
 			"/login",
 			"/items",

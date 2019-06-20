@@ -52,14 +52,15 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		expected := uint64(0)
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2Clients", mock.Anything).
 			Return([]*models.OAuth2Client{}, nil)
 		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2ClientCount", mock.Anything).
-			Return(0)
+			Return(expected, nil)
 
 		uc := &mmetrics.UnitCounter{}
-		uc.On("IncrementBy", uint64(0)).Return()
+		uc.On("IncrementBy", expected).Return()
 
 		var ucp metrics.UnitCounterProvider = func(
 			counterName metrics.CounterName,
@@ -82,14 +83,15 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 	})
 
 	T.Run("with error providing counter", func(t *testing.T) {
+		expected := uint64(0)
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2Clients", mock.Anything).
 			Return([]*models.OAuth2Client{}, nil)
 		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2ClientCount", mock.Anything).
-			Return(0)
+			Return(expected, nil)
 
 		uc := &mmetrics.UnitCounter{}
-		uc.On("IncrementBy", uint64(0)).Return()
+		uc.On("IncrementBy", expected).Return()
 
 		var ucp metrics.UnitCounterProvider = func(
 			counterName metrics.CounterName,
@@ -112,14 +114,15 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 	})
 
 	T.Run("with error fetching oauth2 clients", func(t *testing.T) {
+		expected := uint64(0)
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2Clients", mock.Anything).
 			Return([]*models.OAuth2Client{}, errors.New("blah"))
 		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2ClientCount", mock.Anything).
-			Return(0)
+			Return(expected, errors.New("blah"))
 
 		uc := &mmetrics.UnitCounter{}
-		uc.On("IncrementBy", uint64(0)).Return()
+		uc.On("IncrementBy", expected).Return()
 
 		var ucp metrics.UnitCounterProvider = func(
 			counterName metrics.CounterName,

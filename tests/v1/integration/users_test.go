@@ -112,7 +112,7 @@ func TestUsers(test *testing.T) {
 			checkUserCreationEquality(t, expected, actual)
 
 			// Clean up
-			assert.NoError(t, todoClient.DeleteUser(tctx, actual.ID))
+			assert.NoError(t, todoClient.ArchiveUser(tctx, actual.ID))
 		})
 	})
 
@@ -152,7 +152,7 @@ func TestUsers(test *testing.T) {
 			checkUserEquality(t, expected, actual)
 
 			// Clean up
-			assert.NoError(t, todoClient.DeleteUser(tctx, actual.ID))
+			assert.NoError(t, todoClient.ArchiveUser(tctx, actual.ID))
 		})
 	})
 
@@ -172,7 +172,7 @@ func TestUsers(test *testing.T) {
 			}
 
 			// Execute
-			err = todoClient.DeleteUser(tctx, u.ID)
+			err = todoClient.ArchiveUser(tctx, u.ID)
 			assert.NoError(t, err)
 		})
 	})
@@ -196,7 +196,7 @@ func TestUsers(test *testing.T) {
 
 			// Clean up
 			for _, user := range actual.Users {
-				err = todoClient.DeleteUser(tctx, user.ID)
+				err = todoClient.ArchiveUser(tctx, user.ID)
 				assert.NoError(t, err)
 			}
 		})

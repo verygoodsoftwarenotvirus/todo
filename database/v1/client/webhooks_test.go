@@ -56,7 +56,7 @@ func TestClient_GetWebhookCount(T *testing.T) {
 
 		c, mockDB := buildTestClient()
 		mockDB.WebhookDataManager.
-			On("GetWebhookCount", mock.Anything, models.DefaultQueryFilter(), exampleUserID).
+			On("GetWebhookCount", mock.Anything, (*models.QueryFilter)(nil), exampleUserID).
 			Return(expected, nil)
 
 		actual, err := c.GetWebhookCount(context.Background(), nil, exampleUserID)
@@ -130,7 +130,7 @@ func TestClient_GetWebhooks(T *testing.T) {
 
 		c, mockDB := buildTestClient()
 		mockDB.WebhookDataManager.
-			On("GetWebhooks", mock.Anything, models.DefaultQueryFilter(), exampleUserID).
+			On("GetWebhooks", mock.Anything, (*models.QueryFilter)(nil), exampleUserID).
 			Return(expected, nil)
 
 		actual, err := c.GetWebhooks(context.Background(), nil, exampleUserID)
@@ -145,7 +145,7 @@ func TestClient_CreateWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		exampleInput := &models.WebhookInput{}
+		exampleInput := &models.WebhookCreationInput{}
 		expected := &models.Webhook{}
 
 		c, mockDB := buildTestClient()
@@ -181,7 +181,7 @@ func TestClient_UpdateWebhook(T *testing.T) {
 	})
 }
 
-func TestClient_DeleteWebhook(T *testing.T) {
+func TestClient_ArchiveWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -191,10 +191,10 @@ func TestClient_DeleteWebhook(T *testing.T) {
 
 		c, mockDB := buildTestClient()
 		mockDB.WebhookDataManager.
-			On("DeleteWebhook", mock.Anything, exampleID, exampleUserID).
+			On("ArchiveWebhook", mock.Anything, exampleID, exampleUserID).
 			Return(expected)
 
-		actual := c.DeleteWebhook(context.Background(), exampleID, exampleUserID)
+		actual := c.ArchiveWebhook(context.Background(), exampleID, exampleUserID)
 		assert.NoError(t, actual)
 		assert.Equal(t, expected, actual)
 

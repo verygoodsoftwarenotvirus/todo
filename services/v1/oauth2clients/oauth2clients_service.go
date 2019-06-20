@@ -28,11 +28,11 @@ func init() {
 }
 
 const (
-	// MiddlewareCtxKey is a string alias for referring to OAuth2 clients in contexts
-	MiddlewareCtxKey   models.ContextKey   = "oauth2_client"
-	counterName        metrics.CounterName = "oauth2_clients"
-	counterDescription                     = "number of oauth2 clients managed by the oauth2 client service"
-	serviceName                            = "oauth2_clients_service"
+	// CreationMiddlewareCtxKey is a string alias for referring to OAuth2 client creation data
+	CreationMiddlewareCtxKey models.ContextKey   = "create_oauth2_client"
+	counterName              metrics.CounterName = "oauth2_clients"
+	counterDescription       string              = "number of oauth2 clients managed by the oauth2 client service"
+	serviceName              string              = "oauth2_clients_service"
 )
 
 var (
@@ -83,7 +83,7 @@ func newClientStore(db database.Database) *clientStore {
 	return cs
 }
 
-// according to the ID for the client information
+// GetByID implements oauth2.ClientStorage
 func (s *clientStore) GetByID(id string) (oauth2.ClientInfo, error) {
 	client, err := s.database.GetOAuth2ClientByClientID(context.Background(), id)
 
@@ -132,30 +132,30 @@ func ProvideOAuth2ClientsService(
 		oauth2Handler:        oHandler,
 	}
 
-	clients, err := s.database.GetAllOAuth2Clients(ctx)
+	initializeOAuth2Handler(s.oauth2Handler, s)
+	count, err := s.database.GetAllOAuth2ClientCount(ctx)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, errors.Wrap(err, "fetching oauth2 clients")
 	}
-	counter.IncrementBy(ctx, uint64(len(clients)))
-
-	s.initializeOAuth2Handler()
+	counter.IncrementBy(ctx, count)
 
 	return s, nil
 }
 
-func (s *Service) initializeOAuth2Handler() {
-	s.oauth2Handler.SetAllowGetAccessRequest(true)
-	s.oauth2Handler.SetClientAuthorizedHandler(s.ClientAuthorizedHandler)
-	s.oauth2Handler.SetClientScopeHandler(s.ClientScopeHandler)
-	s.oauth2Handler.SetClientInfoHandler(oauth2server.ClientFormHandler)
-	s.oauth2Handler.SetAuthorizeScopeHandler(s.AuthorizeScopeHandler)
-	s.oauth2Handler.SetResponseErrorHandler(s.OAuth2ResponseErrorHandler)
-	s.oauth2Handler.SetInternalErrorHandler(s.OAuth2InternalErrorHandler)
-	s.oauth2Handler.SetUserAuthorizationHandler(s.UserAuthorizationHandler)
+// initializeOAuth2Handler
+func initializeOAuth2Handler(handler oauth2Handler, s *Service) {
+	handler.SetAllowGetAccessRequest(true)
+	handler.SetClientAuthorizedHandler(s.ClientAuthorizedHandler)
+	handler.SetClientScopeHandler(s.ClientScopeHandler)
+	handler.SetClientInfoHandler(oauth2server.ClientFormHandler)
+	handler.SetAuthorizeScopeHandler(s.AuthorizeScopeHandler)
+	handler.SetResponseErrorHandler(s.OAuth2ResponseErrorHandler)
+	handler.SetInternalErrorHandler(s.OAuth2InternalErrorHandler)
+	handler.SetUserAuthorizationHandler(s.UserAuthorizationHandler)
 
 	// this sad type cast is here because I have an arbitrary
 	// test-only interface for OAuth2 interactions.
-	if x, ok := s.oauth2Handler.(*oauth2server.Server); ok {
+	if x, ok := handler.(*oauth2server.Server); ok {
 		x.Config.AllowedGrantTypes = []oauth2.GrantType{
 			oauth2.ClientCredentials,
 			// oauth2.AuthorizationCode,

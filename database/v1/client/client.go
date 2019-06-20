@@ -39,7 +39,7 @@ func (c *Client) IsReady(ctx context.Context) (ready bool) {
 	return c.querier.IsReady(ctx)
 }
 
-// ProvideDatabaseClient provides a querier client
+// ProvideDatabaseClient provides a new Database client
 func ProvideDatabaseClient(
 	ctx context.Context,
 	db *sql.DB,
@@ -58,15 +58,16 @@ func ProvideDatabaseClient(
 		c.logger.SetLevel(logging.DebugLevel)
 	}
 
-	logger.Debug("migrating querier")
+	c.logger.Debug("migrating querier")
 	if err := c.querier.Migrate(ctx); err != nil {
 		return nil, err
 	}
-	logger.Debug("querier migrated!")
+	c.logger.Debug("querier migrated!")
 
 	return c, nil
 }
 
+// attachUserIDToSpan provides a consistent way to attach a user's ID to a span
 func attachUserIDToSpan(span *trace.Span, userID uint64) {
 	if span != nil {
 		span.AddAttributes(
@@ -75,6 +76,7 @@ func attachUserIDToSpan(span *trace.Span, userID uint64) {
 	}
 }
 
+// attachFilterToSpan provides a consistent way to attach a filter's info to a span
 func attachFilterToSpan(span *trace.Span, filter *models.QueryFilter) {
 	if filter != nil && span != nil {
 		span.AddAttributes(

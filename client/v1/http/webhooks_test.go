@@ -145,7 +145,7 @@ func TestV1Client_BuildCreateWebhookRequest(T *testing.T) {
 
 		ts := httptest.NewTLSServer(nil)
 
-		exampleInput := &models.WebhookInput{
+		exampleInput := &models.WebhookCreationInput{
 			Name: "expected name",
 		}
 		c := buildTestClient(t, ts)
@@ -171,7 +171,7 @@ func TestV1Client_CreateWebhook(T *testing.T) {
 			Name: "example",
 		}
 
-		exampleInput := &models.WebhookInput{
+		exampleInput := &models.WebhookCreationInput{
 			Name: expected.Name,
 		}
 
@@ -183,7 +183,7 @@ func TestV1Client_CreateWebhook(T *testing.T) {
 					assert.Equal(t, req.URL.Path, "/api/v1/webhooks", "expected and actual path don't match")
 					assert.Equal(t, req.Method, http.MethodPost)
 
-					var x *models.WebhookInput
+					var x *models.WebhookCreationInput
 					require.NoError(t, json.NewDecoder(req.Body).Decode(&x))
 					assert.Equal(t, exampleInput, x)
 
@@ -256,7 +256,7 @@ func TestV1Client_UpdateWebhook(T *testing.T) {
 	})
 }
 
-func TestV1Client_BuildDeleteWebhookRequest(T *testing.T) {
+func TestV1Client_BuildArchiveWebhookRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -267,7 +267,7 @@ func TestV1Client_BuildDeleteWebhookRequest(T *testing.T) {
 
 		expectedID := uint64(1)
 		c := buildTestClient(t, ts)
-		actual, err := c.BuildDeleteWebhookRequest(ctx, expectedID)
+		actual, err := c.BuildArchiveWebhookRequest(ctx, expectedID)
 
 		require.NotNil(t, actual)
 		require.NotNil(t, actual.URL)
@@ -282,7 +282,7 @@ func TestV1Client_BuildDeleteWebhookRequest(T *testing.T) {
 	})
 }
 
-func TestV1Client_DeleteWebhook(T *testing.T) {
+func TestV1Client_ArchiveWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -300,7 +300,7 @@ func TestV1Client_DeleteWebhook(T *testing.T) {
 			),
 		)
 
-		err := buildTestClient(t, ts).DeleteWebhook(ctx, expected)
+		err := buildTestClient(t, ts).ArchiveWebhook(ctx, expected)
 
 		assert.NoError(t, err, "no error should be returned")
 	})

@@ -54,16 +54,18 @@ func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reque
 	defer span.End()
 
 	scope = determineScope(req)
-
 	logger := s.logger.WithValue("scope", scope).WithRequest(req)
 
+	// check for client and return if valid
 	var client = s.fetchOAuth2ClientFromRequest(req)
 	if client != nil && client.HasScope(scope) {
 		res.WriteHeader(http.StatusOK)
 		return scope, nil
 	}
 
+	// check to see if the client ID is present instead
 	if clientID := s.fetchOAuth2ClientIDFromRequest(req); clientID != "" {
+		// fetch oauth2 client from database
 		client, err = s.database.GetOAuth2ClientByClientID(ctx, clientID)
 
 		if err == sql.ErrNoRows {
@@ -76,6 +78,7 @@ func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reque
 			return "", err
 		}
 
+		// authorization check
 		if !client.HasScope(scope) {
 			res.WriteHeader(http.StatusUnauthorized)
 			return "", errors.New("not authorized for scope")
@@ -84,6 +87,7 @@ func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reque
 		return scope, nil
 	}
 
+	// invalid credentials
 	res.WriteHeader(http.StatusBadRequest)
 	return "", errors.New("no scope information found")
 }
@@ -94,11 +98,13 @@ var _ oauth2server.UserAuthorizationHandler = (*Service)(nil).UserAuthorizationH
 func (s *Service) UserAuthorizationHandler(res http.ResponseWriter, req *http.Request) (userID string, err error) {
 	ctx, span := trace.StartSpan(req.Context(), "UserAuthorizationHandler")
 	defer span.End()
-
 	var uid uint64
+
+	// check context for client
 	if client, clientOk := ctx.Value(models.OAuth2ClientKey).(*models.OAuth2Client); !clientOk {
-		user, ok := ctx.Value(models.UserKey).(*models.User)
-		if !ok {
+		// check for user instead
+		user, userOk := ctx.Value(models.UserKey).(*models.User)
+		if !userOk {
 			s.logger.Debug("no user attached to this request")
 			return "", errors.New("user not found")
 		}
@@ -123,16 +129,19 @@ func (s *Service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantTyp
 		"client_id": clientID,
 	})
 
+	// reject invalid grant type
 	if grant == oauth2.PasswordCredentials {
 		return false, errors.New("invalid grant type: password")
 	}
 
+	// fetch client data
 	client, err := s.database.GetOAuth2ClientByClientID(ctx, clientID)
 	if err != nil {
 		logger.Error(err, "fetching oauth2 client from database")
 		return false, errors.Wrap(err, "fetching oauth2 client from database")
 	}
 
+	// disallow implicit grants unless authorized
 	if grant == oauth2.Implicit && !client.ImplicitAllowed {
 		return false, errors.New("client not authorized for implicit grants")
 	}
@@ -153,12 +162,14 @@ func (s *Service) ClientScopeHandler(clientID, scope string) (authed bool, err e
 		"scope":     scope,
 	})
 
+	// fetch client info
 	c, err := s.database.GetOAuth2ClientByClientID(ctx, clientID)
 	if err != nil {
 		logger.Error(err, "error fetching OAuth2 client for ClientScopeHandler")
 		return false, err
 	}
 
+	// check for scope
 	if c.HasScope(scope) {
 		return true, nil
 	}

@@ -57,6 +57,16 @@ func fetchRandomOAuth2Client(client *http2.V1Client) *models.OAuth2Client {
 	return selectedClient
 }
 
+func fetchRandomWebhook(client *http2.V1Client) *models.Webhook {
+	webhooks, err := client.GetWebhooks(context.Background(), nil)
+	if err != nil || webhooks == nil || len(webhooks.Webhooks) == 0 {
+		return nil
+	}
+
+	randIndex := rand.Intn(len(webhooks.Webhooks))
+	return &webhooks.Webhooks[randIndex]
+}
+
 // RandomAction takes a client and returns a closure which is an action
 func RandomAction(client *http2.V1Client) *Action {
 	ctx := context.Background()
@@ -73,7 +83,7 @@ func RandomAction(client *http2.V1Client) *Action {
 		"CreateItem": {
 			Name: "CreateItem",
 			Action: func() (*http.Request, error) {
-				return client.BuildCreateItemRequest(ctx, model.RandomItemInput())
+				return client.BuildCreateItemRequest(ctx, model.RandomItemCreationInput())
 			},
 			Weight: 100,
 		},
@@ -98,18 +108,18 @@ func RandomAction(client *http2.V1Client) *Action {
 			Name: "UpdateItem",
 			Action: func() (*http.Request, error) {
 				if randomItem := fetchRandomItem(client); randomItem != nil {
-					randomItem.Name = model.RandomItemInput().Name
+					randomItem.Name = model.RandomItemCreationInput().Name
 					return client.BuildUpdateItemRequest(ctx, randomItem)
 				}
 				return nil, ErrUnavailableYet
 			},
 			Weight: 100,
 		},
-		"DeleteItem": {
-			Name: "DeleteItem",
+		"ArchiveItem": {
+			Name: "ArchiveItem",
 			Action: func() (*http.Request, error) {
 				if randomItem := fetchRandomItem(client); randomItem != nil {
-					return client.BuildDeleteItemRequest(ctx, randomItem.ID)
+					return client.BuildArchiveItemRequest(ctx, randomItem.ID)
 				}
 				return nil, ErrUnavailableYet
 			},
@@ -187,45 +197,44 @@ func RandomAction(client *http2.V1Client) *Action {
 			},
 			Weight: 100,
 		},
-		// "CreateWebhook": {
-		// 	Name: "CreateWebhook",
-		// 	Action: func() (*http.Request, error) {
-		// 		return client.BuildCreateWebhookRequest(ctx, model.RandomWebhookInput())
-		// 	},
-		// 	Weight: 1,
-		// },
-		// "GetWebhook": {
-		// 	Name: "GetWebhook",
-		// 	Action: func() (*http.Request, error) {
-		// 		if randomWebhook := fetchRandomWebhook(client); randomWebhook != nil {
-		// 			return client.BuildGetWebhookRequest(ctx, randomWebhook.ID)
-		// 		}
-		// 		return nil, ErrUnavailableYet
-		// 	},
-		// 	Weight: 100,
-		// },
-		// "UpdateWebhook": {
-		// 	Name: "UpdateWebhook",
-		// 	Action: func() (*http.Request, error) {
-		// 		if randomWebhook := fetchRandomWebhook(client); randomWebhook != nil {
-		// 			randomWebhook.Name = model.RandomWebhookInput().Name
-		// 			return client.BuildUpdateWebhookRequest(ctx, randomWebhook)
-		// 		}
-		// 		return nil, ErrUnavailableYet
-		// 	},
-		// 	Weight: 100,
-		// },
-		// "DeleteWebhook": {
-		// 	Name: "DeleteWebhook",
-		// 	Action: func() (*http.Request, error) {
-		// 		if randomWebhook := fetchRandomWebhook(client); randomWebhook != nil {
-		// 			return client.BuildDeleteWebhookRequest(ctx, randomWebhook.ID)
-		// 		}
-		// 		return nil, ErrUnavailableYet
-		// 	},
-		// 	Weight: 100,
-		// },
-		//
+		"GetWebhook": {
+			Name: "GetWebhook",
+			Action: func() (*http.Request, error) {
+				if randomWebhook := fetchRandomWebhook(client); randomWebhook != nil {
+					return client.BuildGetWebhookRequest(ctx, randomWebhook.ID)
+				}
+				return nil, ErrUnavailableYet
+			},
+			Weight: 100,
+		},
+		"CreateWebhook": {
+			Name: "CreateWebhook",
+			Action: func() (*http.Request, error) {
+				return client.BuildCreateWebhookRequest(ctx, model.RandomWebhookInput())
+			},
+			Weight: 1,
+		},
+		"UpdateWebhook": {
+			Name: "UpdateWebhook",
+			Action: func() (*http.Request, error) {
+				if randomWebhook := fetchRandomWebhook(client); randomWebhook != nil {
+					randomWebhook.Name = model.RandomWebhookInput().Name
+					return client.BuildUpdateWebhookRequest(ctx, randomWebhook)
+				}
+				return nil, ErrUnavailableYet
+			},
+			Weight: 50,
+		},
+		"ArchiveWebhook": {
+			Name: "ArchiveWebhook",
+			Action: func() (*http.Request, error) {
+				if randomWebhook := fetchRandomWebhook(client); randomWebhook != nil {
+					return client.BuildArchiveWebhookRequest(ctx, randomWebhook.ID)
+				}
+				return nil, ErrUnavailableYet
+			},
+			Weight: 50,
+		},
 	}
 
 	totalWeight := 0

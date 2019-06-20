@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"strings"
+	"sync"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
@@ -38,6 +39,7 @@ var (
 	}
 )
 
+// scanWebhook is a consistent way to turn a *sql.Row into a webhook struct
 func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 	var (
 		x = &models.Webhook{}
@@ -77,6 +79,7 @@ func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 	return x, nil
 }
 
+// scanWebhooks provides a consistent way to turn sql rows into a slice of webhooks
 func scanWebhooks(logger logging.Logger, rows *sql.Rows) ([]models.Webhook, error) {
 	var list []models.Webhook
 
@@ -96,6 +99,7 @@ func scanWebhooks(logger logging.Logger, rows *sql.Rows) ([]models.Webhook, erro
 	return list, nil
 }
 
+// buildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook
 func (p *Postgres) buildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
 	query, args, err = p.sqlBuilder.
@@ -110,22 +114,21 @@ func (p *Postgres) buildGetWebhookQuery(webhookID, userID uint64) (query string,
 	return query, args
 }
 
-// GetWebhook fetches an webhook from the postgres db
+// GetWebhook fetches a webhook from the database
 func (p *Postgres) GetWebhook(ctx context.Context, webhookID, userID uint64) (*models.Webhook, error) {
 	query, args := p.buildGetWebhookQuery(webhookID, userID)
 	row := p.db.QueryRowContext(ctx, query, args...)
 
 	webhook, err := scanWebhook(row)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, err
-		}
-		return nil, errors.Wrap(err, "querying for webhook")
+		return nil, buildError(err, "querying for webhook")
 	}
 
 	return webhook, nil
 }
 
+// buildGetWebhookCountQuery returns a SQL query (and arguments) that returns a list of webhooks
+// meeting a given filter's criteria and belonging to a given user.
 func (p *Postgres) buildGetWebhookCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
 	builder := p.sqlBuilder.
@@ -146,48 +149,65 @@ func (p *Postgres) buildGetWebhookCountQuery(filter *models.QueryFilter, userID 
 	return query, args
 }
 
-// GetWebhookCount will fetch the count of webhooks from the postgres db that meet a particular filter and belong to a particular user.
+// GetWebhookCount will fetch the count of webhooks from the database that meet a particular filter,
+// and belong to a particular user.
 func (p *Postgres) GetWebhookCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
 	query, args := p.buildGetWebhookCountQuery(filter, userID)
-	return count, p.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	return count, err
 }
 
-func (p *Postgres) buildGetAllWebhooksCountQuery() (query string, args []interface{}) {
-	var err error
-	query, args, err = p.sqlBuilder.
-		Select(CountQuery).
-		From(webhooksTableName).
-		Where(squirrel.Eq{"archived_on": nil}).
-		ToSql()
+var (
+	getAllWebhooksCountQueryBuilder sync.Once
+	getAllWebhooksCountQuery        string
+)
 
-	logQueryBuildingError(p.logger, err)
+// buildGetAllWebhooksCountQuery returns a query which would return the count of webhooks regardless of ownership.
+func (p *Postgres) buildGetAllWebhooksCountQuery() string {
+	getAllWebhooksCountQueryBuilder.Do(func() {
+		var err error
+		getAllWebhooksCountQuery, _, err = p.sqlBuilder.
+			Select(CountQuery).
+			From(webhooksTableName).
+			Where(squirrel.Eq{"archived_on": nil}).
+			ToSql()
 
-	return query, args
+		logQueryBuildingError(p.logger, err)
+	})
+
+	return getAllWebhooksCountQuery
 }
 
-// GetAllWebhooksCount will fetch the count of webhooks from the postgres db that meet a particular filter
+// GetAllWebhooksCount will fetch the count of every active webhook in the database
 func (p *Postgres) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
-	query, args := p.buildGetAllWebhooksCountQuery()
-	return count, p.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	err = p.db.QueryRowContext(ctx, p.buildGetAllWebhooksCountQuery()).Scan(&count)
+	return count, err
 }
 
-func (p *Postgres) buildGetAllWebhooksQuery() (query string, args []interface{}) {
-	var err error
-	query, args, err = p.sqlBuilder.Select(webhooksTableColumns...).
-		From(webhooksTableName).
-		Where(squirrel.Eq{
-			"archived_on": nil,
-		}).ToSql()
+var (
+	getAllWebhooksQueryBuilder sync.Once
+	getAllWebhooksQuery        string
+)
 
-	logQueryBuildingError(p.logger, err)
+// buildGetAllWebhooksQuery returns a SQL query which will return all webhooks, regardless of ownership
+func (p *Postgres) buildGetAllWebhooksQuery() string {
+	getAllWebhooksQueryBuilder.Do(func() {
+		var err error
+		getAllWebhooksQuery, _, err = p.sqlBuilder.Select(webhooksTableColumns...).
+			From(webhooksTableName).
+			Where(squirrel.Eq{
+				"archived_on": nil,
+			}).ToSql()
 
-	return query, args
+		logQueryBuildingError(p.logger, err)
+	})
+
+	return getAllWebhooksQuery
 }
 
-// GetAllWebhooks fetches a list of all webhooks from the postgres db
+// GetAllWebhooks fetches a list of all webhooks from the database
 func (p *Postgres) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
-	query, args := p.buildGetAllWebhooksQuery()
-	rows, err := p.db.QueryContext(ctx, query, args...)
+	rows, err := p.db.QueryContext(ctx, p.buildGetAllWebhooksQuery())
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, err
@@ -216,7 +236,7 @@ func (p *Postgres) GetAllWebhooks(ctx context.Context) (*models.WebhookList, err
 	return x, err
 }
 
-// GetAllWebhooksForUser fetches a list of all webhooks from the postgres db
+// GetAllWebhooksForUser fetches a list of all webhooks from the database
 func (p *Postgres) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]models.Webhook, error) {
 	query, args := p.buildGetWebhooksQuery(nil, userID)
 
@@ -236,6 +256,7 @@ func (p *Postgres) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]
 	return list, nil
 }
 
+// buildGetWebhooksQuery returns a SQL query (and arguments) that would return a
 func (p *Postgres) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
 	builder := p.sqlBuilder.
@@ -257,7 +278,7 @@ func (p *Postgres) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint
 	return query, args
 }
 
-// GetWebhooks fetches a list of webhooks from the postgres db that meet a particular filter
+// GetWebhooks fetches a list of webhooks from the database that meet a particular filter
 func (p *Postgres) GetWebhooks(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.WebhookList, error) {
 	query, args := p.buildGetWebhooksQuery(filter, userID)
 
@@ -291,6 +312,7 @@ func (p *Postgres) GetWebhooks(ctx context.Context, filter *models.QueryFilter, 
 	return x, err
 }
 
+// buildWebhookCreationQuery returns a SQL query (and arguments) that would create a given webhook
 func (p *Postgres) buildWebhookCreationQuery(x *models.Webhook) (query string, args []interface{}) {
 	var err error
 	query, args, err = p.sqlBuilder.
@@ -323,8 +345,8 @@ func (p *Postgres) buildWebhookCreationQuery(x *models.Webhook) (query string, a
 	return query, args
 }
 
-// CreateWebhook creates an webhook in a postgres db
-func (p *Postgres) CreateWebhook(ctx context.Context, input *models.WebhookInput) (*models.Webhook, error) {
+// CreateWebhook creates a webhook in the database
+func (p *Postgres) CreateWebhook(ctx context.Context, input *models.WebhookCreationInput) (*models.Webhook, error) {
 	x := &models.Webhook{
 		Name:        input.Name,
 		ContentType: input.ContentType,
@@ -344,6 +366,7 @@ func (p *Postgres) CreateWebhook(ctx context.Context, input *models.WebhookInput
 	return x, nil
 }
 
+// buildUpdateWebhookQuery takes a given webhook and returns a SQL query to update
 func (p *Postgres) buildUpdateWebhookQuery(input *models.Webhook) (query string, args []interface{}) {
 	var err error
 	query, args, err = p.sqlBuilder.Update(webhooksTableName).
@@ -354,7 +377,7 @@ func (p *Postgres) buildUpdateWebhookQuery(input *models.Webhook) (query string,
 		Set("events", strings.Join(input.Events, topicsSeparator)).
 		Set("data_types", strings.Join(input.DataTypes, typesSeparator)).
 		Set("topics", strings.Join(input.Topics, topicsSeparator)).
-		Set("updated_on", squirrel.Expr("extract(epoch FROM NOW())")).
+		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			"id":         input.ID,
 			"belongs_to": input.BelongsTo,
@@ -372,11 +395,12 @@ func (p *Postgres) UpdateWebhook(ctx context.Context, input *models.Webhook) err
 	return p.db.QueryRowContext(ctx, query, args...).Scan(&input.UpdatedOn)
 }
 
+// buildArchiveWebhookQuery returns a SQL query (and arguments) that will mark a webhook as archived.
 func (p *Postgres) buildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
 	query, args, err = p.sqlBuilder.Update(webhooksTableName).
-		Set("updated_on", squirrel.Expr("extract(epoch FROM NOW())")).
-		Set("archived_on", squirrel.Expr("extract(epoch FROM NOW())")).
+		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
+		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			"id":          webhookID,
 			"belongs_to":  userID,
@@ -390,8 +414,8 @@ func (p *Postgres) buildArchiveWebhookQuery(webhookID, userID uint64) (query str
 	return query, args
 }
 
-// DeleteWebhook deletes an webhook from the db by its ID
-func (p *Postgres) DeleteWebhook(ctx context.Context, webhookID, userID uint64) error {
+// ArchiveWebhook archives a webhook from the database by its ID
+func (p *Postgres) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error {
 	query, args := p.buildArchiveWebhookQuery(webhookID, userID)
 	_, err := p.db.ExecContext(ctx, query, args...)
 	return err

@@ -147,7 +147,7 @@ func TestV1Client_BuildCreateItemRequest(T *testing.T) {
 
 		ts := httptest.NewTLSServer(nil)
 
-		exampleInput := &models.ItemInput{
+		exampleInput := &models.ItemCreationInput{
 			Name:    "expected name",
 			Details: "expected details",
 		}
@@ -175,7 +175,7 @@ func TestV1Client_CreateItem(T *testing.T) {
 			Details: "blah",
 		}
 
-		exampleInput := &models.ItemInput{
+		exampleInput := &models.ItemCreationInput{
 			Name:    expected.Name,
 			Details: expected.Details,
 		}
@@ -188,7 +188,7 @@ func TestV1Client_CreateItem(T *testing.T) {
 					assert.Equal(t, req.URL.Path, "/api/v1/items", "expected and actual path don't match")
 					assert.Equal(t, req.Method, http.MethodPost)
 
-					var x *models.ItemInput
+					var x *models.ItemCreationInput
 					require.NoError(t, json.NewDecoder(req.Body).Decode(&x))
 					assert.Equal(t, exampleInput, x)
 
@@ -263,7 +263,7 @@ func TestV1Client_UpdateItem(T *testing.T) {
 	})
 }
 
-func TestV1Client_BuildDeleteItemRequest(T *testing.T) {
+func TestV1Client_BuildArchiveItemRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -274,7 +274,7 @@ func TestV1Client_BuildDeleteItemRequest(T *testing.T) {
 
 		expectedID := uint64(1)
 		c := buildTestClient(t, ts)
-		actual, err := c.BuildDeleteItemRequest(ctx, expectedID)
+		actual, err := c.BuildArchiveItemRequest(ctx, expectedID)
 
 		require.NotNil(t, actual)
 		require.NotNil(t, actual.URL)
@@ -289,7 +289,7 @@ func TestV1Client_BuildDeleteItemRequest(T *testing.T) {
 	})
 }
 
-func TestV1Client_DeleteItem(T *testing.T) {
+func TestV1Client_ArchiveItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -307,7 +307,7 @@ func TestV1Client_DeleteItem(T *testing.T) {
 			),
 		)
 
-		err := buildTestClient(t, ts).DeleteItem(ctx, expected)
+		err := buildTestClient(t, ts).ArchiveItem(ctx, expected)
 
 		assert.NoError(t, err, "no error should be returned")
 	})

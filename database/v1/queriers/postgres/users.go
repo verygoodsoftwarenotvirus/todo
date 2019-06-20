@@ -32,6 +32,7 @@ var (
 	}
 )
 
+// scanUser provides a consistent way to scan something like a *sql.Row into a User struct
 func scanUser(scan database.Scanner) (*models.User, error) {
 	var x = &models.User{}
 
@@ -52,6 +53,7 @@ func scanUser(scan database.Scanner) (*models.User, error) {
 	return x, nil
 }
 
+// scanUsers takes database rows and loads them into a slice of User structs
 func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, error) {
 	var list []models.User
 
@@ -72,6 +74,7 @@ func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, error) {
 	return list, nil
 }
 
+// buildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID
 func (p *Postgres) buildGetUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 	query, args, err = p.sqlBuilder.
@@ -85,22 +88,20 @@ func (p *Postgres) buildGetUserQuery(userID uint64) (query string, args []interf
 	return query, args
 }
 
-// GetUser fetches a user by their username
+// GetUser fetches a user
 func (p *Postgres) GetUser(ctx context.Context, userID uint64) (*models.User, error) {
 	query, args := p.buildGetUserQuery(userID)
 	row := p.db.QueryRowContext(ctx, query, args...)
 	u, err := scanUser(row)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, err
-		}
-		return nil, errors.Wrap(err, "fetching user from database")
+		return nil, buildError(err, "fetching user from database")
 	}
 
 	return u, err
 }
 
+// buildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username
 func (p *Postgres) buildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
 	var err error
 	query, args, err = p.sqlBuilder.
@@ -130,6 +131,8 @@ func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*mod
 	return u, nil
 }
 
+// buildGetUserCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
+// to a given filter's criteria.
 func (p *Postgres) buildGetUserCountQuery(filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 	builder := p.sqlBuilder.
@@ -150,13 +153,15 @@ func (p *Postgres) buildGetUserCountQuery(filter *models.QueryFilter) (query str
 	return query, args
 }
 
-// GetUserCount fetches a count of users from the postgres db that meet a particular filter
+// GetUserCount fetches a count of users from the database that meet a particular filter
 func (p *Postgres) GetUserCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
 	query, args := p.buildGetUserCountQuery(filter)
 	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return
 }
 
+// buildGetUserCountQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
+// to a given filter's criteria.
 func (p *Postgres) buildGetUsersQuery(filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 	builder := p.sqlBuilder.
@@ -175,16 +180,13 @@ func (p *Postgres) buildGetUsersQuery(filter *models.QueryFilter) (query string,
 	return query, args
 }
 
-// GetUsers fetches a list of users from the postgres db that meet a particular filter
+// GetUsers fetches a list of users from the database that meet a particular filter
 func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
 	query, args := p.buildGetUsersQuery(filter)
 
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, err
-		}
-		return nil, errors.Wrap(err, "querying for user")
+		return nil, buildError(err, "querying for user")
 	}
 
 	userList, err := scanUsers(p.logger, rows)
@@ -209,6 +211,7 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 	return x, nil
 }
 
+// buildCreateUserQuery returns a SQL query (and arguments) that would create a given User
 func (p *Postgres) buildCreateUserQuery(input *models.UserInput) (query string, args []interface{}) {
 	var err error
 	query, args, err = p.sqlBuilder.Insert(usersTableName).
@@ -261,13 +264,14 @@ func (p *Postgres) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 	return x, nil
 }
 
+// buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row
 func (p *Postgres) buildUpdateUserQuery(input *models.User) (query string, args []interface{}) {
 	var err error
 	query, args, err = p.sqlBuilder.Update(usersTableName).
 		Set("username", input.Username).
 		Set("hashed_password", input.HashedPassword).
 		Set("two_factor_secret", input.TwoFactorSecret).
-		Set("updated_on", squirrel.Expr("extract(epoch FROM NOW())")).
+		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{"id": input.ID}).
 		Suffix("RETURNING updated_on").
 		ToSql()
@@ -288,8 +292,8 @@ func (p *Postgres) UpdateUser(ctx context.Context, input *models.User) error {
 func (p *Postgres) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 	query, args, err = p.sqlBuilder.Update(usersTableName).
-		Set("updated_on", squirrel.Expr("extract(epoch FROM NOW())")).
-		Set("archived_on", squirrel.Expr("extract(epoch FROM NOW())")).
+		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
+		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{"id": userID}).
 		Suffix("RETURNING archived_on").
 		ToSql()
@@ -299,8 +303,8 @@ func (p *Postgres) buildArchiveUserQuery(userID uint64) (query string, args []in
 	return query, args
 }
 
-// DeleteUser deletes a user by their username
-func (p *Postgres) DeleteUser(ctx context.Context, userID uint64) error {
+// ArchiveUser archives a user by their username
+func (p *Postgres) ArchiveUser(ctx context.Context, userID uint64) error {
 	query, args := p.buildArchiveUserQuery(userID)
 	_, err := p.db.ExecContext(ctx, query, args...)
 	return err

@@ -109,7 +109,7 @@ func TestClient_GetOAuth2ClientCount(T *testing.T) {
 		expected := uint64(123)
 		c, mockDB := buildTestClient()
 		mockDB.OAuth2ClientDataManager.
-			On("GetOAuth2ClientCount", mock.Anything, models.DefaultQueryFilter(), exampleUserID).
+			On("GetOAuth2ClientCount", mock.Anything, mock.AnythingOfType("*models.QueryFilter"), exampleUserID).
 			Return(expected, nil)
 
 		actual, err := c.GetOAuth2ClientCount(context.Background(), nil, exampleUserID)
@@ -192,7 +192,7 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 		exampleUserID := uint64(123)
 		expected := &models.OAuth2ClientList{}
 		mockDB.OAuth2ClientDataManager.
-			On("GetOAuth2Clients", mock.Anything, models.DefaultQueryFilter(), exampleUserID).
+			On("GetOAuth2Clients", mock.Anything, (*models.QueryFilter)(nil), exampleUserID).
 			Return(expected, nil)
 
 		actual, err := c.GetOAuth2Clients(context.Background(), nil, exampleUserID)
@@ -268,7 +268,7 @@ func TestClient_UpdateOAuth2Client(T *testing.T) {
 	})
 }
 
-func TestClient_DeleteOAuth2Client(T *testing.T) {
+func TestClient_ArchiveOAuth2Client(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -276,10 +276,10 @@ func TestClient_DeleteOAuth2Client(T *testing.T) {
 		exampleUserID := uint64(123)
 		var expected error
 		c, mockDB := buildTestClient()
-		mockDB.OAuth2ClientDataManager.On("DeleteOAuth2Client", mock.Anything, exampleClientID, exampleUserID).
+		mockDB.OAuth2ClientDataManager.On("ArchiveOAuth2Client", mock.Anything, exampleClientID, exampleUserID).
 			Return(expected)
 
-		actual := c.DeleteOAuth2Client(context.Background(), exampleClientID, exampleUserID)
+		actual := c.ArchiveOAuth2Client(context.Background(), exampleClientID, exampleUserID)
 		assert.NoError(t, actual)
 		assert.Equal(t, expected, actual)
 
@@ -291,10 +291,10 @@ func TestClient_DeleteOAuth2Client(T *testing.T) {
 		exampleUserID := uint64(123)
 		expected := fmt.Errorf("blah")
 		c, mockDB := buildTestClient()
-		mockDB.OAuth2ClientDataManager.On("DeleteOAuth2Client", mock.Anything, exampleClientID, exampleUserID).
+		mockDB.OAuth2ClientDataManager.On("ArchiveOAuth2Client", mock.Anything, exampleClientID, exampleUserID).
 			Return(expected)
 
-		actual := c.DeleteOAuth2Client(context.Background(), exampleClientID, exampleUserID)
+		actual := c.ArchiveOAuth2Client(context.Background(), exampleClientID, exampleUserID)
 		assert.Error(t, actual)
 		assert.Equal(t, expected, actual)
 

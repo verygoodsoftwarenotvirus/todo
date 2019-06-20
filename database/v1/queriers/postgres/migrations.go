@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
-
 	"github.com/GuiaBolso/darwin"
 	"github.com/pkg/errors"
 )
@@ -86,24 +84,26 @@ var (
 	}
 )
 
-func buildMigrationFunc(db *sql.DB, logger logging.Logger) func() {
+// buildMigrationFunc returns a sync.Once compatible function closure that will
+// migrate a postgres database
+func buildMigrationFunc(db *sql.DB) func() {
 	return func() {
 		driver := darwin.NewGenericDriver(db, darwin.PostgresDialect{})
 		if err := darwin.New(driver, migrations, nil).Migrate(); err != nil {
-			logger.Error(err, "migrating database")
 			panic(err)
 		}
 	}
 }
 
-// Migrate migrates a postgres db
+// Migrate migrates the database. It does so by invoking the migrateOnce function via sync.Once, so it should be
+// safe (as in idempotent, though not recommended) to call this function multiple times.
 func (p *Postgres) Migrate(ctx context.Context) error {
 	p.logger.Info("migrating db")
 	if !p.IsReady(ctx) {
 		return errors.New("db is not ready yet")
 	}
 
-	p.migration.Do(buildMigrationFunc(p.db, p.logger))
+	p.migrateOnce.Do(buildMigrationFunc(p.db))
 
 	return nil
 }

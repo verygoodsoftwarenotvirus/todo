@@ -47,7 +47,7 @@ func (m *WebhookDataServer) UpdateHandler(res http.ResponseWriter, req *http.Req
 	m.Called(res, req)
 }
 
-// DeleteHandler implements our interface requirements
-func (m *WebhookDataServer) DeleteHandler(res http.ResponseWriter, req *http.Request) {
+// ArchiveHandler implements our interface requirements
+func (m *WebhookDataServer) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }

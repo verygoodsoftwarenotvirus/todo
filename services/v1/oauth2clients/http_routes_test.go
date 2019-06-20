@@ -71,7 +71,7 @@ func Test_fetchUserID(T *testing.T) {
 	})
 }
 
-func TestService_List(T *testing.T) {
+func TestService_ListHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -199,7 +199,7 @@ func TestService_List(T *testing.T) {
 	})
 }
 
-func TestService_Create(T *testing.T) {
+func TestService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -256,7 +256,7 @@ func TestService_Create(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput),
+			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext( // for the service.fetchUserID() call
 			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
@@ -308,7 +308,7 @@ func TestService_Create(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput),
+			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext( // for the service.fetchUserID() call
 			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
@@ -366,7 +366,7 @@ func TestService_Create(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput),
+			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext( // for the service.fetchUserID() call
 			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
@@ -424,7 +424,7 @@ func TestService_Create(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput),
+			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext( // for the service.fetchUserID() call
 			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
@@ -482,7 +482,7 @@ func TestService_Create(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput),
+			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext( // for the service.fetchUserID() call
 			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
@@ -549,7 +549,7 @@ func TestService_Create(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), MiddlewareCtxKey, exampleInput),
+			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext( // for the service.fetchUserID() call
 			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
@@ -563,7 +563,7 @@ func TestService_Create(T *testing.T) {
 	})
 }
 
-func TestService_Read(T *testing.T) {
+func TestService_ReadHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -711,7 +711,7 @@ func TestService_Read(T *testing.T) {
 	})
 }
 
-func TestService_Delete(T *testing.T) {
+func TestService_ArchiveHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -726,7 +726,7 @@ func TestService_Delete(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.
 			On(
-				"DeleteOAuth2Client",
+				"ArchiveOAuth2Client",
 				mock.Anything,
 				exampleOAuth2ClientID,
 				userID,
@@ -749,7 +749,7 @@ func TestService_Delete(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.DeleteHandler(res, req)
+		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, http.StatusNoContent, res.Code)
 	})
@@ -766,7 +766,7 @@ func TestService_Delete(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.
 			On(
-				"DeleteOAuth2Client",
+				"ArchiveOAuth2Client",
 				mock.Anything,
 				exampleOAuth2ClientID,
 				userID,
@@ -780,7 +780,7 @@ func TestService_Delete(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.DeleteHandler(res, req)
+		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
 	})
@@ -797,7 +797,7 @@ func TestService_Delete(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.
 			On(
-				"DeleteOAuth2Client",
+				"ArchiveOAuth2Client",
 				mock.Anything,
 				exampleOAuth2ClientID,
 				userID,
@@ -811,7 +811,7 @@ func TestService_Delete(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		s.DeleteHandler(res, req)
+		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})

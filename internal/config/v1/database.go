@@ -12,13 +12,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// DatabaseSettings is a container struct for dealing with settings pertaining to
-type DatabaseSettings struct {
-	Type              string                     `mapstructure:"type"`
-	Debug             bool                       `mapstructure:"debug"`
-	ConnectionDetails database.ConnectionDetails `mapstructure:"connection_details"`
-}
-
 // ProvideDatabase provides a database implementation dependent on the configuration
 func (cfg *ServerConfig) ProvideDatabase(ctx context.Context, logger logging.Logger) (database.Database, error) {
 	var (
@@ -26,7 +19,7 @@ func (cfg *ServerConfig) ProvideDatabase(ctx context.Context, logger logging.Log
 		connectionDetails = cfg.Database.ConnectionDetails
 	)
 
-	switch cfg.Database.Type {
+	switch cfg.Database.Provider {
 	case "postgres":
 		rawDB, err := postgres.ProvidePostgresDB(logger, connectionDetails)
 		if err != nil {

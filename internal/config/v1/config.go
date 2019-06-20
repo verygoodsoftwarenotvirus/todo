@@ -5,6 +5,8 @@ import (
 	"encoding/base32"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
@@ -35,37 +37,52 @@ type (
 		StartupDeadline time.Duration `mapstructure:"startup_deadline"`
 	}
 
-	// ServerSettings describes the settings pertinent to the
+	// ServerSettings describes the settings pertinent to the HTTP serving portion of the service
 	ServerSettings struct {
+		// Debug determines if debug logging or other development conditions are active
+		Debug bool `mapstructure:"debug"`
 		// HTTPPort indicates which port to serve HTTP traffic on
 		HTTPPort uint16 `mapstructure:"http_port"`
-		// Whether or not to enable debug settings for the server
-		Debug bool `mapstructure:"debug"`
 	}
 
 	// FrontendSettings describes the settings pertinent to the frontend
 	FrontendSettings struct {
 		// StaticFilesDirectory indicates which directory contains our static files for the frontend (i.e. CSS/JS/HTML files)
 		StaticFilesDirectory string `mapstructure:"static_files_dir"`
+		// Debug determines if debug logging or other development conditions are active
+		Debug bool `mapstructure:"debug"`
 		// CacheStaticFiles indicates whether or not to load the static files directory into memory via afero's MemMapFs.
 		CacheStaticFiles bool `mapstructure:"cache_static_files"`
 	}
 
-	// AuthSettings is a container struct for dealing with settings pertaining to
+	// AuthSettings represents our authentication configuration.
 	AuthSettings struct {
-		// CookieDomain reflects what domain the cookies will have set for them
+		// CookieDomain indicates what domain the cookies will have set for them
 		CookieDomain string `mapstructure:"cookie_domain"`
 		// CookieSecret indicates the secret the cookie builder should use
 		CookieSecret string `mapstructure:"cookie_secret"`
 		// CookieLifetime indicates how long the cookies built should last
 		CookieLifetime time.Duration `mapstructure:"cookie_lifetime"`
+		// Debug determines if debug logging or other development conditions are active
+		Debug bool `mapstructure:"debug"`
 		// SecureCookiesOnly indicates if the cookies built should be marked as HTTPS only
 		SecureCookiesOnly bool `mapstructure:"secure_cookies_only"`
 		// EnableUserSignup enables user signups
 		EnableUserSignup bool `mapstructure:"enable_user_signup"`
 	}
 
-	// ServerConfig is our server configuration struct
+	// DatabaseSettings represents our database configuration
+	DatabaseSettings struct {
+		// Debug determines if debug logging or other development conditions are active
+		Debug bool `mapstructure:"debug"`
+		// Provider indicates what database we'll connect to (postgres, mysql, etc.)
+		Provider string `mapstructure:"provider"`
+		// ConnectionDetails indicates how our database driver should connect to the instance
+		ConnectionDetails database.ConnectionDetails `mapstructure:"connection_details"`
+	}
+
+	// ServerConfig is our server configuration struct. It is comprised of all the other setting structs.
+	// For information on this structs fields, refer to their definitions.
 	ServerConfig struct {
 		Meta     MetaSettings     `mapstructure:"meta"`
 		Frontend FrontendSettings `mapstructure:"frontend"`
@@ -76,6 +93,7 @@ type (
 	}
 )
 
+// buildConfig is a constructor function that initializes a viper config.
 func buildConfig() *viper.Viper {
 	cfg := viper.New()
 
@@ -103,7 +121,6 @@ func buildConfig() *viper.Viper {
 // ParseConfigFile parses a configuration file
 func ParseConfigFile(filename string) (*ServerConfig, error) {
 	cfg := buildConfig()
-
 	cfg.SetConfigFile(filename)
 
 	if err := cfg.ReadInConfig(); err != nil {

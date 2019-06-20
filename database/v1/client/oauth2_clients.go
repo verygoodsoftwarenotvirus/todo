@@ -11,19 +11,21 @@ import (
 
 var _ models.OAuth2ClientDataManager = (*Client)(nil)
 
-func attachOAuth2ClientDatabaseIDToSpan(span *trace.Span, itemID uint64) {
+// attachOAuth2ClientDatabaseIDToSpan is a consistent way to attach an oauth2 client's ID to a span
+func attachOAuth2ClientDatabaseIDToSpan(span *trace.Span, oauth2ClientID uint64) {
 	if span != nil {
-		span.AddAttributes(trace.StringAttribute("outh2client_id", strconv.FormatUint(itemID, 10)))
+		span.AddAttributes(trace.StringAttribute("oauth2client_id", strconv.FormatUint(oauth2ClientID, 10)))
 	}
 }
 
+// attachOAuth2ClientIDToSpan is a consistent way to attach an oauth2 client's Client ID to a span
 func attachOAuth2ClientIDToSpan(span *trace.Span, clientID string) {
 	if span != nil {
 		span.AddAttributes(trace.StringAttribute("client_id", clientID))
 	}
 }
 
-// GetOAuth2Client gets an OAuth2 client
+// GetOAuth2Client gets an OAuth2 client from the database
 func (c *Client) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*models.OAuth2Client, error) {
 	ctx, span := trace.StartSpan(ctx, "GetOAuth2Client")
 	defer span.End()
@@ -46,8 +48,8 @@ func (c *Client) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (
 	return client, nil
 }
 
-// GetOAuth2ClientByClientID fetches any OAuth2 client by client ID, regardless of ownershic. This is used by
-// authenticating middleware to fetch client information it needs to validate
+// GetOAuth2ClientByClientID fetches any OAuth2 client by client ID, regardless of ownership.
+// This is used by authenticating middleware to fetch client information it needs to validate.
 func (c *Client) GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*models.OAuth2Client, error) {
 	ctx, span := trace.StartSpan(ctx, "GetOAuth2ClientByClientID")
 	defer span.End()
@@ -65,14 +67,10 @@ func (c *Client) GetOAuth2ClientByClientID(ctx context.Context, clientID string)
 	return client, nil
 }
 
-// GetOAuth2ClientCount gets the count of OAuth2 clients that match the current filter
+// GetOAuth2ClientCount gets the count of OAuth2 clients in the database that match the current filter
 func (c *Client) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (uint64, error) {
 	ctx, span := trace.StartSpan(ctx, "GetOAuth2ClientCount")
 	defer span.End()
-
-	if filter == nil {
-		filter = models.DefaultQueryFilter()
-	}
 
 	attachUserIDToSpan(span, userID)
 	attachFilterToSpan(span, filter)
@@ -103,8 +101,7 @@ func (c *Client) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64) 
 	return c.querier.GetAllOAuth2ClientsForUser(ctx, userID)
 }
 
-// GetAllOAuth2Clients returns all OAuth2 clients, irrespective of ownershic. It is called on startup to populate
-// the OAuth2 Client handler
+// GetAllOAuth2Clients returns all OAuth2 clients, irrespective of ownership.
 func (c *Client) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Client, error) {
 	ctx, span := trace.StartSpan(ctx, "GetAllOAuth2Clients")
 	defer span.End()
@@ -118,10 +115,6 @@ func (c *Client) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Clien
 func (c *Client) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.OAuth2ClientList, error) {
 	ctx, span := trace.StartSpan(ctx, "GetOAuth2Clients")
 	defer span.End()
-
-	if filter == nil {
-		filter = models.DefaultQueryFilter()
-	}
 
 	attachUserIDToSpan(span, userID)
 	attachFilterToSpan(span, filter)
@@ -140,7 +133,6 @@ func (c *Client) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 		"client_id":  input.ClientID,
 		"belongs_to": input.BelongsTo,
 	})
-	logger.Debug("CreateOAuth2Client called")
 
 	client, err := c.querier.CreateOAuth2Client(ctx, input)
 	if err != nil {
@@ -159,18 +151,12 @@ func (c *Client) UpdateOAuth2Client(ctx context.Context, updated *models.OAuth2C
 	ctx, span := trace.StartSpan(ctx, "UpdateOAuth2Client")
 	defer span.End()
 
-	c.logger.WithValues(map[string]interface{}{
-		"redirect_uri": updated.RedirectURI,
-		"scopes":       updated.Scopes,
-		"belongs_to":   updated.BelongsTo,
-	}).Debug("UpdateOAuth2Client called.")
-
 	return c.querier.UpdateOAuth2Client(ctx, updated)
 }
 
-// DeleteOAuth2Client deletes an OAuth2 client
-func (c *Client) DeleteOAuth2Client(ctx context.Context, clientID, userID uint64) error {
-	ctx, span := trace.StartSpan(ctx, "DeleteOAuth2Client")
+// ArchiveOAuth2Client archives an OAuth2 client
+func (c *Client) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error {
+	ctx, span := trace.StartSpan(ctx, "ArchiveOAuth2Client")
 	defer span.End()
 
 	attachUserIDToSpan(span, userID)
@@ -180,9 +166,8 @@ func (c *Client) DeleteOAuth2Client(ctx context.Context, clientID, userID uint64
 		"client_id":  clientID,
 		"belongs_to": userID,
 	})
-	logger.Debug("DeleteOAuth2Client called")
 
-	err := c.querier.DeleteOAuth2Client(ctx, clientID, userID)
+	err := c.querier.ArchiveOAuth2Client(ctx, clientID, userID)
 	if err != nil {
 		logger.WithError(err).Debug("error deleting oauth2 client to the querier")
 		return err

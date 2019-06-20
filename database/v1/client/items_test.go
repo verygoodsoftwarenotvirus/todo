@@ -56,7 +56,7 @@ func TestClient_GetItemCount(T *testing.T) {
 
 		c, mockDB := buildTestClient()
 		mockDB.ItemDataManager.
-			On("GetItemCount", mock.Anything, models.DefaultQueryFilter(), exampleUserID).
+			On("GetItemCount", mock.Anything, (*models.QueryFilter)(nil), exampleUserID).
 			Return(expected, nil)
 
 		actual, err := c.GetItemCount(context.Background(), nil, exampleUserID)
@@ -110,7 +110,7 @@ func TestClient_GetItems(T *testing.T) {
 		expected := &models.ItemList{}
 
 		mockDB.ItemDataManager.
-			On("GetItems", mock.Anything, models.DefaultQueryFilter(), exampleUserID).
+			On("GetItems", mock.Anything, (*models.QueryFilter)(nil), exampleUserID).
 			Return(expected, nil)
 
 		actual, err := c.GetItems(context.Background(), nil, exampleUserID)
@@ -125,7 +125,7 @@ func TestClient_CreateItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		exampleInput := &models.ItemInput{}
+		exampleInput := &models.ItemCreationInput{}
 		c, mockDB := buildTestClient()
 		expected := &models.Item{}
 
@@ -158,7 +158,7 @@ func TestClient_UpdateItem(T *testing.T) {
 	})
 }
 
-func TestClient_DeleteItem(T *testing.T) {
+func TestClient_ArchiveItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -167,10 +167,10 @@ func TestClient_DeleteItem(T *testing.T) {
 		var expected error
 
 		c, mockDB := buildTestClient()
-		mockDB.ItemDataManager.On("DeleteItem", mock.Anything, exampleItemID, exampleUserID).
+		mockDB.ItemDataManager.On("ArchiveItem", mock.Anything, exampleItemID, exampleUserID).
 			Return(expected)
 
-		err := c.DeleteItem(context.Background(), exampleUserID, exampleItemID)
+		err := c.ArchiveItem(context.Background(), exampleUserID, exampleItemID)
 		assert.NoError(t, err)
 	})
 }

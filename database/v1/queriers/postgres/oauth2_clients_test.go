@@ -140,12 +140,10 @@ func TestPostgres_buildGetAllOAuth2ClientsQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		expectedArgCount := 0
 		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 
-		actualQuery, args := p.buildGetAllOAuth2ClientsQuery()
+		actualQuery := p.buildGetAllOAuth2ClientsQuery()
 		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Len(t, args, expectedArgCount)
 	})
 }
 
@@ -843,7 +841,7 @@ func TestPostgres_buildArchiveOAuth2ClientQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_DeleteOAuth2Client(T *testing.T) {
+func TestPostgres_ArchiveOAuth2Client(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -856,7 +854,7 @@ func TestPostgres_DeleteOAuth2Client(T *testing.T) {
 			WithArgs(exampleUserID, exampleClientID).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := p.DeleteOAuth2Client(context.Background(), exampleClientID, exampleUserID)
+		err := p.ArchiveOAuth2Client(context.Background(), exampleClientID, exampleUserID)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -872,7 +870,7 @@ func TestPostgres_DeleteOAuth2Client(T *testing.T) {
 			WithArgs(exampleUserID, exampleClientID).
 			WillReturnError(errors.New("blah"))
 
-		err := p.DeleteOAuth2Client(context.Background(), exampleClientID, exampleUserID)
+		err := p.ArchiveOAuth2Client(context.Background(), exampleClientID, exampleUserID)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")

@@ -46,7 +46,7 @@ func (m *ItemDataManager) GetAllItemsForUser(ctx context.Context, userID uint64)
 }
 
 // CreateItem is a mock function
-func (m *ItemDataManager) CreateItem(ctx context.Context, input *models.ItemInput) (*models.Item, error) {
+func (m *ItemDataManager) CreateItem(ctx context.Context, input *models.ItemCreationInput) (*models.Item, error) {
 	args := m.Called(ctx, input)
 	return args.Get(0).(*models.Item), args.Error(1)
 }
@@ -56,7 +56,7 @@ func (m *ItemDataManager) UpdateItem(ctx context.Context, updated *models.Item) 
 	return m.Called(ctx, updated).Error(0)
 }
 
-// DeleteItem is a mock function
-func (m *ItemDataManager) DeleteItem(ctx context.Context, id, userID uint64) error {
+// ArchiveItem is a mock function
+func (m *ItemDataManager) ArchiveItem(ctx context.Context, id, userID uint64) error {
 	return m.Called(ctx, id, userID).Error(0)
 }

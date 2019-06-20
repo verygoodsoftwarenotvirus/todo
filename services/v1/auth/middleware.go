@@ -27,6 +27,7 @@ func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 		ctx, span := trace.StartSpan(req.Context(), "CookieAuthenticationMiddleware")
 		defer span.End()
 
+		// fetch the user from the request
 		user, err := s.FetchUserFromRequest(ctx, req)
 		if err != nil {
 			s.logger.Error(err, "error encountered fetching user")
@@ -44,6 +45,8 @@ func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 			next.ServeHTTP(res, req)
 			return
 		}
+
+		// if no error was attached to the request, tell them to login first
 		http.Redirect(res, req, "/login", http.StatusUnauthorized)
 	})
 }
@@ -58,9 +61,10 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 			// let's figure out who the user is
 			var user *models.User
 
-			// check for a cookie first:
+			// check for a cookie first if we can
 			if allowValidCookieInLieuOfAValidToken {
 				cookieAuth, err := s.DecodeCookieFromRequest(ctx, req)
+
 				if err == nil && cookieAuth != nil {
 					user, err = s.userDB.GetUser(ctx, cookieAuth.UserID)
 					if err != nil {
@@ -68,7 +72,7 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 						http.Error(res, "fetching user", http.StatusInternalServerError)
 						return
 					}
-				}
+				} // if we get here, then we just don't have a valid cookie, and we need to move on
 			}
 
 			// if the cookie wasn't present, or didn't indicate who the user is
@@ -82,6 +86,7 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 					return
 				}
 
+				// attach the oauth2 client and user's info to the request
 				ctx = context.WithValue(ctx, models.OAuth2ClientKey, oauth2Client)
 				user, err = s.userDB.GetUser(ctx, oauth2Client.BelongsTo)
 				if err != nil {
@@ -91,20 +96,19 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 				}
 			}
 
+			// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere
 			if user == nil {
-				// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere
 				s.logger.Debug("no user attached to request request")
 				http.Redirect(res, req, "/login", http.StatusUnauthorized)
 				return
 			}
 
+			// elsewise, load the request with extra context
 			ctx = context.WithValue(ctx, models.UserKey, user)
 			ctx = context.WithValue(ctx, models.UserIDKey, user.ID)
 			ctx = context.WithValue(ctx, models.UserIsAdminKey, user.IsAdmin)
-			req = req.WithContext(ctx)
 
-			next.ServeHTTP(res, req)
-
+			next.ServeHTTP(res, req.WithContext(ctx))
 		})
 	}
 }
@@ -134,6 +138,7 @@ func (s *Service) AdminMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// parseLoginInputFromForm checks a request for a login form, and returns the parsed login data if relevant
 func parseLoginInputFromForm(req *http.Request) *models.UserLoginInput {
 	if err := req.ParseForm(); err == nil {
 		uli := &models.UserLoginInput{

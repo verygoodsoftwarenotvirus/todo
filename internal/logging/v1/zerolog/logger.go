@@ -9,6 +9,13 @@ import (
 	"github.com/rs/zerolog"
 )
 
+var levelMap = map[logging.Level]zerolog.Level{
+	logging.InfoLevel:  zerolog.InfoLevel,
+	logging.DebugLevel: zerolog.DebugLevel,
+	logging.WarnLevel:  zerolog.WarnLevel,
+	logging.ErrorLevel: zerolog.ErrorLevel,
+}
+
 func init() {
 	zerolog.CallerSkipFrameCount++
 }
@@ -43,16 +50,15 @@ func (l *Logger) WithName(name string) logging.Logger {
 // SetLevel sets the log level for our logger
 func (l *Logger) SetLevel(level logging.Level) {
 	var lvl zerolog.Level
+
 	switch level {
-	case logging.InfoLevel:
+	case logging.DebugLevel, logging.WarnLevel, logging.ErrorLevel:
+		l.logger = l.logger.With().Caller().Logger()
+		lvl = levelMap[level]
+	default:
 		lvl = zerolog.InfoLevel
-	case logging.DebugLevel:
-		l.logger = l.logger.With().Caller().Logger()
-		lvl = zerolog.DebugLevel
-	case logging.ErrorLevel:
-		l.logger = l.logger.With().Caller().Logger()
-		lvl = zerolog.ErrorLevel
 	}
+
 	l.logger = l.logger.Level(lvl)
 }
 

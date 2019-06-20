@@ -34,15 +34,19 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := trace.StartSpan(req.Context(), "ListHandler")
 	defer span.End()
 
+	// ensure query filter
 	qf := models.ExtractQueryFilter(req)
 
+	// determine user ID
 	userID := s.userIDFetcher(req)
 	logger := s.logger.WithValue("user_id", userID)
 
 	attachUserIDToSpan(span, userID)
 
+	// fetch items from database
 	items, err := s.itemDatabase.GetItems(ctx, qf, userID)
 	if err == sql.ErrNoRows {
+		// in the event no rows exist return an empty list
 		items = &models.ItemList{
 			Items: []models.Item{},
 		}
@@ -52,6 +56,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// encode our response and peace
 	if err = s.encoderDecoder.EncodeResponse(res, items); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
@@ -62,11 +67,13 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := trace.StartSpan(req.Context(), "CreateHandler")
 	defer span.End()
 
+	// determine user ID
 	userID := s.userIDFetcher(req)
 	attachUserIDToSpan(span, userID)
 	logger := s.logger.WithValue("user_id", userID)
 
-	input, ok := ctx.Value(MiddlewareCtxKey).(*models.ItemInput)
+	// check request context for parsed input struct
+	input, ok := ctx.Value(CreateMiddlewareCtxKey).(*models.ItemCreationInput)
 	logger = logger.WithValue("input", input)
 	if !ok {
 		logger.Info("valid input not attached to request")
@@ -75,6 +82,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 	input.BelongsTo = userID
 
+	// create item in database
 	x, err := s.itemDatabase.CreateItem(ctx, input)
 	if err != nil {
 		s.logger.Error(err, "error creating item")
@@ -82,15 +90,16 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// notify relevant parties of new item
 	s.itemCounter.Increment(ctx)
 	attachItemIDToSpan(span, x.ID)
-
 	s.reporter.Report(newsman.Event{
-		EventType: string(models.Create),
 		Data:      x,
 		Topics:    []string{topicName},
+		EventType: string(models.Create),
 	})
 
+	// encode response and peace
 	res.WriteHeader(http.StatusCreated)
 	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
@@ -102,9 +111,11 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := trace.StartSpan(req.Context(), "ReadHandler")
 	defer span.End()
 
+	// determine relevant info
 	userID := s.userIDFetcher(req)
 	itemID := s.itemIDFetcher(req)
 
+	// keep the aforementioned context in mind
 	logger := s.logger.WithValues(map[string]interface{}{
 		"user_id": userID,
 		"item_id": itemID,
@@ -112,7 +123,8 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	attachItemIDToSpan(span, itemID)
 	attachUserIDToSpan(span, userID)
 
-	i, err := s.itemDatabase.GetItem(ctx, itemID, userID)
+	// fetch item from database
+	x, err := s.itemDatabase.GetItem(ctx, itemID, userID)
 	if err == sql.ErrNoRows {
 		res.WriteHeader(http.StatusNotFound)
 		return
@@ -122,7 +134,8 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err = s.encoderDecoder.EncodeResponse(res, i); err != nil {
+	// encode response and peace
+	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
 }
@@ -132,16 +145,19 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := trace.StartSpan(req.Context(), "UpdateHandler")
 	defer span.End()
 
-	input, ok := ctx.Value(MiddlewareCtxKey).(*models.ItemInput)
+	// check for parsed input attached to request context
+	input, ok := ctx.Value(UpdateMiddlewareCtxKey).(*models.ItemUpdateInput)
 	if !ok {
 		s.logger.Info("no input attached to request")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
+	// determine relevant info
 	userID := s.userIDFetcher(req)
 	itemID := s.itemIDFetcher(req)
 
+	// keep aforementioned context in mind
 	logger := s.logger.WithValues(map[string]interface{}{
 		"user_id": userID,
 		"item_id": itemID,
@@ -149,6 +165,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	attachItemIDToSpan(span, itemID)
 	attachUserIDToSpan(span, userID)
 
+	// fetch item from database
 	x, err := s.itemDatabase.GetItem(ctx, itemID, userID)
 	if err == sql.ErrNoRows {
 		res.WriteHeader(http.StatusNotFound)
@@ -159,40 +176,48 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// update the data structure
 	x.Update(input)
+
+	// update item in database
 	if err = s.itemDatabase.UpdateItem(ctx, x); err != nil {
 		logger.Error(err, "error encountered updating item")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	// notify relevant parties
 	s.reporter.Report(newsman.Event{
-		EventType: string(models.Update),
 		Data:      x,
 		Topics:    []string{topicName},
+		EventType: string(models.Update),
 	})
 
+	// encode response and peace
 	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 		s.logger.Error(err, "encoding response")
 	}
 }
 
-// DeleteHandler returns a handler that deletes an item
-func (s *Service) DeleteHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "DeleteHandler")
+// ArchiveHandler returns a handler that archives an item
+func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := trace.StartSpan(req.Context(), "ArchiveHandler")
 	defer span.End()
 
+	// determine relevant information
 	userID := s.userIDFetcher(req)
 	itemID := s.itemIDFetcher(req)
+
+	// keep aforementioned context in mind
 	logger := s.logger.WithValues(map[string]interface{}{
 		"item_id": itemID,
 		"user_id": userID,
 	})
-
 	attachItemIDToSpan(span, itemID)
 	attachUserIDToSpan(span, userID)
 
-	err := s.itemDatabase.DeleteItem(ctx, itemID, userID)
+	// archive the item in the database
+	err := s.itemDatabase.ArchiveItem(ctx, itemID, userID)
 	if err == sql.ErrNoRows {
 		res.WriteHeader(http.StatusNotFound)
 		return
@@ -201,13 +226,15 @@ func (s *Service) DeleteHandler(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	s.itemCounter.Decrement(ctx)
 
+	// notify relevant parties
+	s.itemCounter.Decrement(ctx)
 	s.reporter.Report(newsman.Event{
-		EventType: string(models.Delete),
+		EventType: string(models.Archive),
 		Data:      &models.Item{ID: itemID},
 		Topics:    []string{topicName},
 	})
 
+	// peace
 	res.WriteHeader(http.StatusNoContent)
 }

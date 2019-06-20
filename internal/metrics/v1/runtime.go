@@ -1,6 +1,7 @@
 package metrics
 
-// inspired by https://github.com/opencensus-integrations/caddy/blob/c8498719b7c1c2a3c707355be2395a35f03e434e/caddy/caddymain/exporters.go#L54-L110
+// inspired by:
+// https://github.com/opencensus-integrations/caddy/blob/c8498719b7c1c2a3c707355be2395a35f03e434e/caddy/caddymain/exporters.go#L54-L110
 
 import (
 	"context"
@@ -15,7 +16,11 @@ import (
 
 var (
 	// RuntimeTotalAllocMeasurement captures the runtime memstats TotalAlloc field
-	RuntimeTotalAllocMeasurement = stats.Int64("total_alloc", "cumulative bytes allocated for heap objects", stats.UnitDimensionless)
+	RuntimeTotalAllocMeasurement = stats.Int64(
+		"total_alloc",
+		"cumulative bytes allocated for heap objects",
+		stats.UnitDimensionless,
+	)
 	// RuntimeTotalAllocView is the corresponding view for the above field
 	RuntimeTotalAllocView = &view.View{
 		Name:        "total_alloc",
@@ -25,7 +30,11 @@ var (
 	}
 
 	// RuntimeSysMeasurement captures the runtime memstats Sys field
-	RuntimeSysMeasurement = stats.Int64("sys", "total bytes of memory obtained from the OS", stats.UnitDimensionless)
+	RuntimeSysMeasurement = stats.Int64(
+		"sys",
+		"total bytes of memory obtained from the OS",
+		stats.UnitDimensionless,
+	)
 	// RuntimeSysView is the corresponding view for the above field
 	RuntimeSysView = &view.View{
 		Name:        "sys",
@@ -35,7 +44,11 @@ var (
 	}
 
 	// RuntimeLookupsMeasurement captures the runtime memstats Lookups field
-	RuntimeLookupsMeasurement = stats.Int64("lookups", "the number of pointer lookups performed by the runtime", stats.UnitDimensionless)
+	RuntimeLookupsMeasurement = stats.Int64(
+		"lookups",
+		"the number of pointer lookups performed by the runtime",
+		stats.UnitDimensionless,
+	)
 	// RuntimeLookupsView is the corresponding view for the above field
 	RuntimeLookupsView = &view.View{
 		Name:        "lookups",
@@ -45,7 +58,11 @@ var (
 	}
 
 	// RuntimeMallocsMeasurement captures the runtime memstats Mallocs field
-	RuntimeMallocsMeasurement = stats.Int64("mallocs", "the cumulative count of heap objects allocated (the number of live objects is mallocs - frees)", stats.UnitDimensionless)
+	RuntimeMallocsMeasurement = stats.Int64(
+		"mallocs",
+		"the cumulative count of heap objects allocated (the number of live objects is mallocs - frees)",
+		stats.UnitDimensionless,
+	)
 	// RuntimeNallocsView is the corresponding view for the above field
 	RuntimeNallocsView = &view.View{
 		Name:        "mallocs",
@@ -55,7 +72,11 @@ var (
 	}
 
 	// RuntimeFreesMeasurement captures the runtime memstats Frees field
-	RuntimeFreesMeasurement = stats.Int64("frees", "cumulative count of heap objects freed (the number of live objects is mallocs - frees)", stats.UnitDimensionless)
+	RuntimeFreesMeasurement = stats.Int64(
+		"frees",
+		"cumulative count of heap objects freed (the number of live objects is mallocs - frees)",
+		stats.UnitDimensionless,
+	)
 	// RuntimeFreesView is the corresponding view for the above field
 	RuntimeFreesView = &view.View{
 		Name:        "frees",
@@ -65,7 +86,11 @@ var (
 	}
 
 	// RuntimeHeapAllocMeasurement captures the runtime memstats HeapAlloc field
-	RuntimeHeapAllocMeasurement = stats.Int64("heap_alloc", "bytes of allocated heap objects", stats.UnitDimensionless)
+	RuntimeHeapAllocMeasurement = stats.Int64(
+		"heap_alloc",
+		"bytes of allocated heap objects",
+		stats.UnitDimensionless,
+	)
 	// RuntimeHeapAllocView is the corresponding view for the above field
 	RuntimeHeapAllocView = &view.View{
 		Name:        "heap_alloc",
@@ -75,7 +100,11 @@ var (
 	}
 
 	// RuntimeHeapSysMeasurement captures the runtime memstats HeapSys field
-	RuntimeHeapSysMeasurement = stats.Int64("heap_sys", "bytes of heap memory obtained from the OS", stats.UnitDimensionless)
+	RuntimeHeapSysMeasurement = stats.Int64(
+		"heap_sys",
+		"bytes of heap memory obtained from the OS",
+		stats.UnitDimensionless,
+	)
 	// RuntimeHeapSysView is the corresponding view for the above field
 	RuntimeHeapSysView = &view.View{
 		Name:        "heap_sys",
@@ -85,7 +114,11 @@ var (
 	}
 
 	// RuntimeHeapIdleMeasurement captures the runtime memstats HeapIdle field
-	RuntimeHeapIdleMeasurement = stats.Int64("heap_idle", "bytes in idle (unused) spans", stats.UnitDimensionless)
+	RuntimeHeapIdleMeasurement = stats.Int64(
+		"heap_idle",
+		"bytes in idle (unused) spans",
+		stats.UnitDimensionless,
+	)
 	// RuntimeHeapIdleView is the corresponding view for the above field
 	RuntimeHeapIdleView = &view.View{
 		Name:        "heap_idle",
@@ -95,7 +128,11 @@ var (
 	}
 
 	// RuntimeHeapInuseMeasurement captures the runtime memstats HeapInuse field
-	RuntimeHeapInuseMeasurement = stats.Int64("heap_inuse", "bytes in in-use spans", stats.UnitDimensionless)
+	RuntimeHeapInuseMeasurement = stats.Int64(
+		"heap_inuse",
+		"bytes in in-use spans",
+		stats.UnitDimensionless,
+	)
 	// RuntimeHeapInuseView is the corresponding view for the above field
 	RuntimeHeapInuseView = &view.View{
 		Name:        "heap_inuse",
@@ -105,7 +142,11 @@ var (
 	}
 
 	// RuntimeHeapReleasedMeasurement captures the runtime memstats HeapReleased field
-	RuntimeHeapReleasedMeasurement = stats.Int64("heap_released", "bytes of physical memory returned to the OS", stats.UnitDimensionless)
+	RuntimeHeapReleasedMeasurement = stats.Int64(
+		"heap_released",
+		"bytes of physical memory returned to the OS",
+		stats.UnitDimensionless,
+	)
 	// RuntimeHeapReleasedView is the corresponding view for the above field
 	RuntimeHeapReleasedView = &view.View{
 		Name:        "heap_released",
@@ -115,7 +156,11 @@ var (
 	}
 
 	// RuntimeHeapObjectsMeasurement captures the runtime memstats HeapObjects field
-	RuntimeHeapObjectsMeasurement = stats.Int64("heap_objects", "the number of allocated heap objects.", stats.UnitDimensionless)
+	RuntimeHeapObjectsMeasurement = stats.Int64(
+		"heap_objects",
+		"the number of allocated heap objects.",
+		stats.UnitDimensionless,
+	)
 	// RuntimeHeapObjectsView is the corresponding view for the above field
 	RuntimeHeapObjectsView = &view.View{
 		Name:        "heap_objects",
@@ -125,7 +170,11 @@ var (
 	}
 
 	// RuntimeStackInuseMeasurement captures the runtime memstats StackInuse field
-	RuntimeStackInuseMeasurement = stats.Int64("stack_inuse", "bytes in stack spans.", stats.UnitDimensionless)
+	RuntimeStackInuseMeasurement = stats.Int64(
+		"stack_inuse",
+		"bytes in stack spans.",
+		stats.UnitDimensionless,
+	)
 	// RuntimeStackInuseView is the corresponding view for the above field
 	RuntimeStackInuseView = &view.View{
 		Name:        "stack_inuse",
@@ -135,7 +184,11 @@ var (
 	}
 
 	// RuntimeStackSysMeasurement captures the runtime memstats StackSys field
-	RuntimeStackSysMeasurement = stats.Int64("stack_sys", "bytes of stack memory obtained from the OS.", stats.UnitDimensionless)
+	RuntimeStackSysMeasurement = stats.Int64(
+		"stack_sys",
+		"bytes of stack memory obtained from the OS.",
+		stats.UnitDimensionless,
+	)
 	// RuntimeStackSysView is the corresponding view for the above field
 	RuntimeStackSysView = &view.View{
 		Name:        "stack_sys",
@@ -145,7 +198,11 @@ var (
 	}
 
 	// RuntimeMSpanInuseMeasurement captures the runtime memstats mSpanInuse field
-	RuntimeMSpanInuseMeasurement = stats.Int64("mspan_inuse", "bytes of allocated mspan structures.", stats.UnitDimensionless)
+	RuntimeMSpanInuseMeasurement = stats.Int64(
+		"mspan_inuse",
+		"bytes of allocated mspan structures.",
+		stats.UnitDimensionless,
+	)
 	// RuntimemSpanInuseView is the corresponding view for the above field
 	RuntimemSpanInuseView = &view.View{
 		Name:        "mspan_inuse",
@@ -155,7 +212,11 @@ var (
 	}
 
 	// RuntimeMSpanSysMeasurement captures the runtime memstats mSpanSys field
-	RuntimeMSpanSysMeasurement = stats.Int64("mspan_sys", "bytes of memory obtained from the OS for mspan structures.", stats.UnitDimensionless)
+	RuntimeMSpanSysMeasurement = stats.Int64(
+		"mspan_sys",
+		"bytes of memory obtained from the OS for mspan structures.",
+		stats.UnitDimensionless,
+	)
 	// RuntimemSpanSysView is the corresponding view for the above field
 	RuntimemSpanSysView = &view.View{
 		Name:        "mspan_sys",
@@ -165,7 +226,11 @@ var (
 	}
 
 	// RuntimeMCacheInuseMeasurement captures the runtime memstats MCacheInuse field
-	RuntimeMCacheInuseMeasurement = stats.Int64("mcache_inuse", "bytes of allocated mcache structures.", stats.UnitDimensionless)
+	RuntimeMCacheInuseMeasurement = stats.Int64(
+		"mcache_inuse",
+		"bytes of allocated mcache structures.",
+		stats.UnitDimensionless,
+	)
 	// RuntimeMCacheInuseView is the corresponding view for the above field
 	RuntimeMCacheInuseView = &view.View{
 		Name:        "mcache_inuse",
@@ -175,7 +240,11 @@ var (
 	}
 
 	// RuntimeMCacheSysMeasurement captures the runtime memstats MCacheSys field
-	RuntimeMCacheSysMeasurement = stats.Int64("mcache_sys", "bytes of memory obtained from the OS for mcache structures.", stats.UnitDimensionless)
+	RuntimeMCacheSysMeasurement = stats.Int64(
+		"mcache_sys",
+		"bytes of memory obtained from the OS for mcache structures.",
+		stats.UnitDimensionless,
+	)
 	// RuntimeMCacheSysView is the corresponding view for the above field
 	RuntimeMCacheSysView = &view.View{
 		Name:        "mcache_sys",
@@ -185,7 +254,11 @@ var (
 	}
 
 	// RuntimeBuckHashSysMeasurement captures the runtime memstats BuckHashSys field
-	RuntimeBuckHashSysMeasurement = stats.Int64("buck_hash_sys", "bytes of memory in profiling bucket hash tables.", stats.UnitDimensionless)
+	RuntimeBuckHashSysMeasurement = stats.Int64(
+		"buck_hash_sys",
+		"bytes of memory in profiling bucket hash tables.",
+		stats.UnitDimensionless,
+	)
 	// RuntimeBuckHashSysView is the corresponding view for the above field
 	RuntimeBuckHashSysView = &view.View{
 		Name:        "buck_hash_sys",
@@ -195,7 +268,11 @@ var (
 	}
 
 	// RuntimeGCSysMeasurement captures the runtime memstats GCSys field
-	RuntimeGCSysMeasurement = stats.Int64("gc_sys", "bytes of memory in garbage collection metadata.", stats.UnitDimensionless)
+	RuntimeGCSysMeasurement = stats.Int64(
+		"gc_sys",
+		"bytes of memory in garbage collection metadata.",
+		stats.UnitDimensionless,
+	)
 	// RuntimeGCSysView is the corresponding view for the above field
 	RuntimeGCSysView = &view.View{
 		Name:        "gc_sys",
@@ -205,7 +282,11 @@ var (
 	}
 
 	// RuntimeOtherSysMeasurement captures the runtime memstats OtherSys field
-	RuntimeOtherSysMeasurement = stats.Int64("other_sys", "bytes of memory in miscellaneous off-heap runtime allocations.", stats.UnitDimensionless)
+	RuntimeOtherSysMeasurement = stats.Int64(
+		"other_sys",
+		"bytes of memory in miscellaneous off-heap runtime allocations.",
+		stats.UnitDimensionless,
+	)
 	// RuntimeOtherSysView is the corresponding view for the above field
 	RuntimeOtherSysView = &view.View{
 		Name:        "other_sys",
@@ -215,7 +296,11 @@ var (
 	}
 
 	// RuntimeNextGCMeasurement captures the runtime memstats NextGC field
-	RuntimeNextGCMeasurement = stats.Int64("next_gc", "the target heap size of the next GC cycle.", stats.UnitDimensionless)
+	RuntimeNextGCMeasurement = stats.Int64(
+		"next_gc",
+		"the target heap size of the next GC cycle.",
+		stats.UnitDimensionless,
+	)
 	// RuntimeNextGCView is the corresponding view for the above field
 	RuntimeNextGCView = &view.View{
 		Name:        "next_gc",
@@ -225,7 +310,11 @@ var (
 	}
 
 	// RuntimePauseTotalNsMeasurement captures the runtime memstats PauseTotalNs field
-	RuntimePauseTotalNsMeasurement = stats.Int64("pause_total_ns", "the cumulative nanoseconds in GC", stats.UnitDimensionless)
+	RuntimePauseTotalNsMeasurement = stats.Int64(
+		"pause_total_ns",
+		"the cumulative nanoseconds in GC",
+		stats.UnitDimensionless,
+	)
 	// RuntimePauseTotalNsView is the corresponding view for the above field
 	RuntimePauseTotalNsView = &view.View{
 		Name:        "pause_total_ns",
@@ -235,17 +324,26 @@ var (
 	}
 
 	// RuntimePauseNsMeasurement captures the runtime memstats PauseNs field
-	RuntimePauseNsMeasurement = stats.Int64("pause_ns", "a circular buffer of recent GC stop-the-world pause times in nanoseconds (the most recent pause is at PauseNs[(NumGC+255)%256])", stats.UnitDimensionless)
+	RuntimePauseNsMeasurement = stats.Int64(
+		"pause_ns",
+		// the most recent pause is at PauseNs[(NumGC+255)%256])
+		"a circular buffer of recent GC stop-the-world pause times in nanoseconds",
+		stats.UnitDimensionless,
+	)
 	// RuntimePauseNsView is the corresponding view for the above field
 	RuntimePauseNsView = &view.View{
 		Name:        "pause_ns",
 		Measure:     RuntimePauseNsMeasurement,
-		Description: "a circular buffer of recent GC stop-the-world pause times in nanoseconds (the most recent pause is at PauseNs[(NumGC+255)%256])",
+		Description: "a circular buffer of recent GC stop-the-world pause times in nanoseconds",
 		Aggregation: view.LastValue(),
 	}
 
 	// RuntimePauseEndMeasurement captures the runtime memstats PauseEnd field
-	RuntimePauseEndMeasurement = stats.Int64("pause_end", "a circular buffer of recent GC pause end times, as nanoseconds since 1970 (the UNIX epoch).", stats.UnitDimensionless)
+	RuntimePauseEndMeasurement = stats.Int64(
+		"pause_end",
+		"a circular buffer of recent GC pause end times, as nanoseconds since 1970 (the UNIX epoch).",
+		stats.UnitDimensionless,
+	)
 	// RuntimePauseEndView is the corresponding view for the above field
 	RuntimePauseEndView = &view.View{
 		Name:        "pause_end",
@@ -255,7 +353,11 @@ var (
 	}
 
 	// RuntimeNumGCMeasurement captures the runtime memstats NumGC field
-	RuntimeNumGCMeasurement = stats.Int64("num_gc", "the number of completed GC cycles.", stats.UnitDimensionless)
+	RuntimeNumGCMeasurement = stats.Int64(
+		"num_gc",
+		"the number of completed GC cycles.",
+		stats.UnitDimensionless,
+	)
 	// RuntimeNumGCView is the corresponding view for the above field
 	RuntimeNumGCView = &view.View{
 		Name:        "num_gc",
@@ -265,7 +367,11 @@ var (
 	}
 
 	// RuntimeNumForcedGCMeasurement captures the runtime memstats NumForcedGC field
-	RuntimeNumForcedGCMeasurement = stats.Int64("num_forced_gc", "the number of GC cycles that were forced by the application calling the GC function.", stats.UnitDimensionless)
+	RuntimeNumForcedGCMeasurement = stats.Int64(
+		"num_forced_gc",
+		"the number of GC cycles that were forced by the application calling the GC function.",
+		stats.UnitDimensionless,
+	)
 	// RuntimeNumForcedGCView is the corresponding view for the above field
 	RuntimeNumForcedGCView = &view.View{
 		Name:        "num_forced_gc",
@@ -275,7 +381,11 @@ var (
 	}
 
 	// RuntimeGCCPUFractionMeasurement captures the runtime memstats GCCPUFraction field
-	RuntimeGCCPUFractionMeasurement = stats.Float64("gc_cpu_fraction", "the fraction of this program's available CPU time used by the GC since the program started.", stats.UnitDimensionless)
+	RuntimeGCCPUFractionMeasurement = stats.Float64(
+		"gc_cpu_fraction",
+		"the fraction of this program's available CPU time used by the GC since the program started.",
+		stats.UnitDimensionless,
+	)
 	// RuntimeGCCPUFractionView is the corresponding view for the above field
 	RuntimeGCCPUFractionView = &view.View{
 		Name:        "gc_cpu_fraction",
@@ -285,7 +395,11 @@ var (
 	}
 
 	// CPUUsageMeasurement captures gopsutil/process's CPUPercent
-	CPUUsageMeasurement = stats.Float64("cpu_usage", "percent of CPU used", stats.UnitDimensionless)
+	CPUUsageMeasurement = stats.Float64(
+		"cpu_usage",
+		"percent of CPU used",
+		stats.UnitDimensionless,
+	)
 	// CPUUsageView is the corresponding view for the above field
 	CPUUsageView = &view.View{
 		Name:        "cpu_usage",

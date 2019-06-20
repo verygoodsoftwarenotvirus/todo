@@ -31,8 +31,8 @@ func (m *OAuth2ClientDataServer) ReadHandler(res http.ResponseWriter, req *http.
 	m.Called(res, req)
 }
 
-// DeleteHandler is the obligatory implementation for our interface
-func (m *OAuth2ClientDataServer) DeleteHandler(res http.ResponseWriter, req *http.Request) {
+// ArchiveHandler is the obligatory implementation for our interface
+func (m *OAuth2ClientDataServer) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 

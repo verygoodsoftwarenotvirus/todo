@@ -68,7 +68,7 @@ func (m *OAuth2ClientDataManager) UpdateOAuth2Client(ctx context.Context, update
 	return m.Called(ctx, updated).Error(0)
 }
 
-// DeleteOAuth2Client is a mock function
-func (m *OAuth2ClientDataManager) DeleteOAuth2Client(ctx context.Context, clientID, userID uint64) error {
+// ArchiveOAuth2Client is a mock function
+func (m *OAuth2ClientDataManager) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error {
 	return m.Called(ctx, clientID, userID).Error(0)
 }

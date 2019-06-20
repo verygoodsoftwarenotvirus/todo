@@ -107,8 +107,8 @@ func TestUnmarshalBody(T *testing.T) {
 		var out testingType
 
 		err := unmarshalBody(res, &out)
-		assert.Equal(t, out.Name, expected, "expected marshalling to work")
-		assert.NoError(t, err, "no error should be encountered unmarshalling into a valid struct")
+		assert.Equal(t, out.Name, expected, "expected marshaling to work")
+		assert.NoError(t, err, "no error should be encountered unmarshaling into a valid struct")
 	})
 
 	T.Run("with good status but unmarshallable response", func(t *testing.T) {
@@ -125,7 +125,7 @@ func TestUnmarshalBody(T *testing.T) {
 		var out testingType
 
 		err := unmarshalBody(res, &out)
-		assert.Error(t, err, "no error should be encountered unmarshalling into a valid struct")
+		assert.Error(t, err, "no error should be encountered unmarshaling into a valid struct")
 	})
 
 	T.Run("with an erroneous error code", func(t *testing.T) {
@@ -186,7 +186,7 @@ func TestUnmarshalBody(T *testing.T) {
 
 		err := unmarshalBody(res, &out)
 		assert.Equal(t, expected, err)
-		assert.Error(t, err, "no error should be encountered unmarshalling into a valid struct")
+		assert.Error(t, err, "no error should be encountered unmarshaling into a valid struct")
 	})
 }
 

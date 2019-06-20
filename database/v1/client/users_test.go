@@ -73,7 +73,7 @@ func TestClient_GetUserCount(T *testing.T) {
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.
-			On("GetUserCount", mock.Anything, models.DefaultQueryFilter()).
+			On("GetUserCount", mock.Anything, (*models.QueryFilter)(nil)).
 			Return(expected, nil)
 
 		actual, err := c.GetUserCount(context.Background(), nil)
@@ -107,7 +107,7 @@ func TestClient_GetUsers(T *testing.T) {
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.
-			On("GetUsers", mock.Anything, models.DefaultQueryFilter()).
+			On("GetUsers", mock.Anything, (*models.QueryFilter)(nil)).
 			Return(expected, nil)
 
 		actual, err := c.GetUsers(context.Background(), nil)
@@ -157,7 +157,7 @@ func TestClient_UpdateUser(T *testing.T) {
 	})
 }
 
-func TestClient_DeleteUser(T *testing.T) {
+func TestClient_ArchiveUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -166,10 +166,10 @@ func TestClient_DeleteUser(T *testing.T) {
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.
-			On("DeleteUser", mock.Anything, exampleInput).
+			On("ArchiveUser", mock.Anything, exampleInput).
 			Return(expected, nil)
 
-		err := c.DeleteUser(context.Background(), exampleInput)
+		err := c.ArchiveUser(context.Background(), exampleInput)
 		assert.NoError(t, err)
 
 		mockDB.AssertExpectations(t)

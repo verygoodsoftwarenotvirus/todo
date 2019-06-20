@@ -235,12 +235,10 @@ func TestPostgres_buildGetAllWebhooksCountQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
 
-		expectedArgCount := 0
 		expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
 
-		actualQuery, args := p.buildGetAllWebhooksCountQuery()
+		actualQuery := p.buildGetAllWebhooksCountQuery()
 		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Len(t, args, expectedArgCount)
 	})
 }
 
@@ -285,12 +283,10 @@ func TestPostgres_buildGetAllWebhooksQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
 
-		expectedArgCount := 0
-		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+		expected := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 
-		actualQuery, args := p.buildGetAllWebhooksQuery()
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Len(t, args, expectedArgCount)
+		actual := p.buildGetAllWebhooksQuery()
+		assert.Equal(t, expected, actual)
 	})
 }
 
@@ -680,7 +676,7 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
-		expectedInput := &models.WebhookInput{
+		expectedInput := &models.WebhookCreationInput{
 			Name:      expected.Name,
 			BelongsTo: expected.BelongsTo,
 		}
@@ -718,7 +714,7 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
-		expectedInput := &models.WebhookInput{
+		expectedInput := &models.WebhookCreationInput{
 			Name:      expected.Name,
 			BelongsTo: expected.BelongsTo,
 		}
@@ -864,7 +860,7 @@ func TestPostgres_buildArchiveWebhookQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_DeleteWebhook(T *testing.T) {
+func TestPostgres_ArchiveWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -885,7 +881,7 @@ func TestPostgres_DeleteWebhook(T *testing.T) {
 			).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := p.DeleteWebhook(context.Background(), expected.ID, expected.BelongsTo)
+		err := p.ArchiveWebhook(context.Background(), expected.ID, expected.BelongsTo)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")

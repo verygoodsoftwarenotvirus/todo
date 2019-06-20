@@ -112,6 +112,12 @@ linters-settings:
     include-go-root: false
     packages:
       - github.com/davecgh/go-spew/spew
+  lll:
+    # max line length, lines longer will be reported. Default is 120.
+    # '\t' is counted as 1 character by default, and can be changed with the tab-width option
+    line-length: 140
+    # tab width in spaces. Default to 1.
+    tab-width: 1
   misspell:
     # Correct spellings using locale preferences for US or UK.
     # Default is to use a neutral variety of English.
@@ -167,7 +173,6 @@ linters:
   disable:
     - gochecknoinits
     - gochecknoglobals
-    - lll
     - dupl
 
 issues:
@@ -188,16 +193,27 @@ issues:
         - errcheck
         - dupl
         - gosec
+        - lll
+        - bodyclose
 
     - path: tests/v1/testutil/
       linters:
+        - bodyclose
         - gocyclo
+
+    - path: mock_.*\.go
+      linters:
+        - lll
 
     - path: models/
       linters:
         - gocyclo # the update funcs can have very high cyclomatic complexities
 
     ## BEGIN SPECIAL SNOWFLAKES
+
+    - path: tests/v1/load/actions.go
+      linters:
+        - gocyclo
 
     - path: tests/v1/load/main.go
       linters:

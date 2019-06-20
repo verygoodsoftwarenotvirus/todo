@@ -1081,7 +1081,7 @@ func TestService_UpdatePassword(T *testing.T) {
 
 }
 
-func TestService_Delete(T *testing.T) {
+func TestService_Archive(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -1094,7 +1094,7 @@ func TestService_Delete(T *testing.T) {
 		res, req := httptest.NewRecorder(), buildRequest(t)
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On("DeleteUser", mock.Anything, expectedUserID).
+		mockDB.UserDataManager.On("ArchiveUser", mock.Anything, expectedUserID).
 			Return(nil)
 		s.database = mockDB
 
@@ -1110,7 +1110,7 @@ func TestService_Delete(T *testing.T) {
 			Return(nil)
 		s.encoderDecoder = ed
 
-		s.DeleteHandler(res, req)
+		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, http.StatusNoContent, res.Code)
 	})
@@ -1126,11 +1126,11 @@ func TestService_Delete(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.
-			On("DeleteUser", mock.Anything, expectedUserID).
+			On("ArchiveUser", mock.Anything, expectedUserID).
 			Return(errors.New("blah"))
 		s.database = mockDB
 
-		s.DeleteHandler(res, req)
+		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})

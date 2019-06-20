@@ -140,7 +140,6 @@ func TestNewSimpleClient(T *testing.T) {
 		c, err := NewSimpleClient(
 			context.Background(),
 			mustParseURL(exampleURI),
-			[]string{"*"},
 			true,
 		)
 		require.NotNil(t, c)
@@ -353,7 +352,7 @@ func TestV1Client_makeRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		err = c.makeRequest(ctx, req, &models.Item{})
+		err = c.executeRequest(ctx, req, &models.Item{})
 		assert.NoError(t, err)
 	})
 
@@ -374,7 +373,7 @@ func TestV1Client_makeRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		assert.Equal(t, ErrNotFound, c.makeRequest(ctx, req, &models.Item{}))
+		assert.Equal(t, ErrNotFound, c.executeRequest(ctx, req, &models.Item{}))
 	})
 }
 
@@ -406,7 +405,7 @@ func TestV1Client_makeUnauthedDataRequest(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		err = c.makeUnauthedDataRequest(ctx, req, out)
+		err = c.executeUnathenticatedDataRequest(ctx, req, out)
 		assert.NoError(t, err)
 	})
 
@@ -433,7 +432,7 @@ func TestV1Client_makeUnauthedDataRequest(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		err = c.makeUnauthedDataRequest(ctx, req, out)
+		err = c.executeUnathenticatedDataRequest(ctx, req, out)
 		assert.Error(t, err)
 		assert.Equal(t, ErrNotFound, err)
 	})
@@ -462,7 +461,7 @@ func TestV1Client_makeUnauthedDataRequest(T *testing.T) {
 		require.NotNil(t, req)
 
 		c.plainClient.Timeout = 500 * time.Millisecond
-		assert.Error(t, c.makeUnauthedDataRequest(ctx, req, out))
+		assert.Error(t, c.executeUnathenticatedDataRequest(ctx, req, out))
 	})
 
 	T.Run("with nil as output", func(t *testing.T) {
@@ -481,7 +480,7 @@ func TestV1Client_makeUnauthedDataRequest(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		err = c.makeUnauthedDataRequest(ctx, req, testingType{})
+		err = c.executeUnathenticatedDataRequest(ctx, req, testingType{})
 		assert.Error(t, err)
 	})
 }

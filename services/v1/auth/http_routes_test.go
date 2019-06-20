@@ -249,7 +249,7 @@ func TestService_Login(T *testing.T) {
 		res := httptest.NewRecorder()
 		req = req.WithContext(context.WithValue(req.Context(), UserLoginInputMiddlewareCtxKey, exampleLoginData))
 
-		s.Login(res, req)
+		s.LoginHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusNoContent)
 		assert.NotEmpty(t, res.Header().Get("Set-Cookie"))
@@ -279,7 +279,7 @@ func TestService_Login(T *testing.T) {
 		res := httptest.NewRecorder()
 		req = req.WithContext(context.WithValue(req.Context(), UserLoginInputMiddlewareCtxKey, exampleLoginData))
 
-		s.Login(res, req)
+		s.LoginHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusUnauthorized)
 		assert.Empty(t, res.Header().Get("Set-Cookie"))
@@ -313,7 +313,7 @@ func TestService_Login(T *testing.T) {
 		res := httptest.NewRecorder()
 		req = req.WithContext(context.WithValue(req.Context(), UserLoginInputMiddlewareCtxKey, exampleLoginData))
 
-		s.Login(res, req)
+		s.LoginHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusUnauthorized)
 		assert.Empty(t, res.Header().Get("Set-Cookie"))
@@ -354,7 +354,7 @@ func TestService_Login(T *testing.T) {
 		res := httptest.NewRecorder()
 		req = req.WithContext(context.WithValue(req.Context(), UserLoginInputMiddlewareCtxKey, exampleLoginData))
 
-		s.Login(res, req)
+		s.LoginHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusUnauthorized)
 		assert.Empty(t, res.Header().Get("Set-Cookie"))
@@ -395,7 +395,7 @@ func TestService_Login(T *testing.T) {
 		res := httptest.NewRecorder()
 		req = req.WithContext(context.WithValue(req.Context(), UserLoginInputMiddlewareCtxKey, exampleLoginData))
 
-		s.Login(res, req)
+		s.LoginHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusUnauthorized)
 		assert.Empty(t, res.Header().Get("Set-Cookie"))
@@ -441,7 +441,7 @@ func TestService_Login(T *testing.T) {
 		res := httptest.NewRecorder()
 		req = req.WithContext(context.WithValue(req.Context(), UserLoginInputMiddlewareCtxKey, exampleLoginData))
 
-		s.Login(res, req)
+		s.LoginHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusInternalServerError)
 		assert.Empty(t, res.Header().Get("Set-Cookie"))
@@ -492,7 +492,7 @@ func TestService_Login(T *testing.T) {
 		res := httptest.NewRecorder()
 		req = req.WithContext(context.WithValue(req.Context(), UserLoginInputMiddlewareCtxKey, exampleLoginData))
 
-		s.Login(res, req)
+		s.LoginHandler(res, req)
 
 		assert.Equal(t, res.Code, http.StatusInternalServerError)
 		assert.Empty(t, res.Header().Get("Set-Cookie"))
@@ -515,7 +515,7 @@ func TestService_Logout(T *testing.T) {
 		req.AddCookie(c)
 
 		res := httptest.NewRecorder()
-		s.Logout(res, req)
+		s.LogoutHandler(res, req)
 
 		actualCookie := res.Header().Get("Set-Cookie")
 		assert.Contains(t, actualCookie, "Max-Age=0")
@@ -529,7 +529,7 @@ func TestService_Logout(T *testing.T) {
 		require.NoError(t, err)
 
 		res := httptest.NewRecorder()
-		s.Logout(res, req)
+		s.LogoutHandler(res, req)
 	})
 }
 
@@ -801,7 +801,6 @@ func TestService_validateLogin(T *testing.T) {
 		actual, err := s.validateLogin(ctx, exampleInput)
 		assert.Equal(t, expected, actual)
 		assert.Error(t, err)
-		assert.Equal(t, err, expectedErr)
 	})
 
 	T.Run("with invalid login", func(t *testing.T) {
@@ -886,7 +885,7 @@ func TestService_CycleSecret(T *testing.T) {
 		require.NoError(t, err)
 		res := httptest.NewRecorder()
 
-		s.CycleSecret(res, req)
+		s.CycleSecretHandler(res, req)
 
 		decodeErr2 := s.cookieManager.Decode(CookieName, c.Value, &ca)
 		assert.Error(t, decodeErr2)

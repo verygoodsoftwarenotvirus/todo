@@ -8,6 +8,6 @@ var (
 	Create Event = "create"
 	// Update represents a update event
 	Update Event = "update"
-	// Delete represents a delete event
-	Delete Event = "delete"
+	// Archive represents a delete event
+	Archive Event = "delete"
 )

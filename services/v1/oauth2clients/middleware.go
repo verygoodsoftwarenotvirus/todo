@@ -14,6 +14,7 @@ import (
 
 const (
 	scopesSeparator = ","
+	apiPathPrefix   = "/api/v1/"
 )
 
 // CreationInputMiddleware is a middleware for attaching OAuth2 client info to a request
@@ -23,13 +24,14 @@ func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 		defer span.End()
 		x := new(models.OAuth2ClientCreationInput)
 
+		// decode value from request
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
-		ctx = context.WithValue(ctx, MiddlewareCtxKey, x)
+		ctx = context.WithValue(ctx, CreationMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }
@@ -41,21 +43,24 @@ func (s *Service) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.
 
 	logger := s.logger.WithValue("function_name", "ExtractOAuth2ClientFromRequest")
 
+	// validate bearer token
 	token, err := s.oauth2Handler.ValidationBearerToken(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "validating bearer token")
 	}
 
-	// ignoring this error because the User ID source should only ever provide uints
+	// fetch client ID
 	clientID := token.GetClientID()
 	logger = logger.WithValue("client_id", clientID)
 
+	// fetch client by client ID
 	c, err := s.database.GetOAuth2ClientByClientID(ctx, clientID)
 	if err != nil {
 		logger.Error(err, "error fetching OAuth2 Client")
 		return nil, err
 	}
 
+	// determine the scope
 	scope := determineScope(req)
 	hasScope := c.HasScope(scope)
 
@@ -70,8 +75,9 @@ func (s *Service) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.
 	return c, nil
 }
 
-const apiPathPrefix = "/api/v1/"
-
+// determineScope determines the scope of a request by its URL
+// this may be more ideally embedded as a struct field and placed
+// in the HTTP server's package instead
 func determineScope(req *http.Request) string {
 	if strings.HasPrefix(req.URL.Path, apiPathPrefix) {
 		x := strings.TrimPrefix(req.URL.Path, apiPathPrefix)
@@ -103,10 +109,10 @@ func (s *Service) OAuth2TokenAuthenticationMiddleware(next http.Handler) http.Ha
 
 		// attach both the user ID and the client object to the request. it might seem
 		// superfluous, but some things should only need to know to look for user IDs
-		ctx2 := context.WithValue(ctx, models.OAuth2ClientKey, c)
-		ctx3 := context.WithValue(ctx2, models.UserIDKey, c.BelongsTo)
+		ctx = context.WithValue(ctx, models.OAuth2ClientKey, c)
+		ctx = context.WithValue(ctx, models.UserIDKey, c.BelongsTo)
 
-		next.ServeHTTP(res, req.WithContext(ctx3))
+		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }
 
@@ -130,8 +136,10 @@ func (s *Service) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 			attachOAuth2ClientDatabaseIDToSpan(span, client.ID)
 			attachUserIDToSpan(span, client.BelongsTo)
 
-			req = req.WithContext(context.WithValue(ctx, models.OAuth2ClientKey, client))
-			req = req.WithContext(context.WithValue(ctx, models.UserIDKey, client.BelongsTo))
+			ctx = context.WithValue(ctx, models.OAuth2ClientKey, client)
+			ctx = context.WithValue(ctx, models.UserIDKey, client.BelongsTo)
+
+			req = req.WithContext(ctx)
 		}
 
 		next.ServeHTTP(res, req)

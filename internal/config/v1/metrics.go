@@ -33,14 +33,14 @@ type (
 var (
 	// ErrInvalidMetricsProvider is a sentinel error value
 	ErrInvalidMetricsProvider = errors.New("invalid metrics provider")
-	// Prometheus is one of our supported metrics providers
+	// Prometheus represents the popular time series database
 	Prometheus metricsProvider = "prometheus"
 	// DefaultMetricsProvider indicates what the preferred metrics provider is
 	DefaultMetricsProvider = Prometheus
 
 	// ErrInvalidTracingProvider is a sentinel error value
 	ErrInvalidTracingProvider = errors.New("invalid tracing provider")
-	// Jaeger is one of our supported tracing providers
+	// Jaeger represents the popular distributed tracing server
 	Jaeger tracingProvider = "jaeger"
 	// DefaultTracingProvider indicates what the preferred tracing provider is
 	DefaultTracingProvider = Jaeger
@@ -48,10 +48,14 @@ var (
 
 // MetricsSettings contains settings about how we report our metrics
 type MetricsSettings struct {
-	MetricsProvider                  metricsProvider `mapstructure:"metrics_provider"`
-	TracingProvider                  tracingProvider `mapstructure:"tracing_provider"`
-	DBMetricsCollectionInterval      time.Duration   `mapstructure:"database_metrics_collection_interval"`
-	RuntimeMetricsCollectionInterval time.Duration   `mapstructure:"runtime_metrics_collection_interval"`
+	// MetricsProvider indicates where our metrics should go
+	MetricsProvider metricsProvider `mapstructure:"metrics_provider"`
+	// TracingProvider indicates where our traces should go
+	TracingProvider tracingProvider `mapstructure:"tracing_provider"`
+	// DBMetricsCollectionInterval is the interval we collect database statistics at
+	DBMetricsCollectionInterval time.Duration `mapstructure:"database_metrics_collection_interval"`
+	// RuntimeMetricsCollectionInterval  is the interval we collect runtime statistics at
+	RuntimeMetricsCollectionInterval time.Duration `mapstructure:"runtime_metrics_collection_interval"`
 }
 
 // ProvideInstrumentationHandler provides an instrumentation handler

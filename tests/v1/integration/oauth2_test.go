@@ -94,7 +94,7 @@ func TestOAuth2Clients(test *testing.T) {
 			checkOAuth2ClientEquality(t, convertInputToClient(input), actual)
 
 			// Clean up
-			err = testClient.DeleteOAuth2Client(tctx, actual.ID)
+			err = testClient.ArchiveOAuth2Client(tctx, actual.ID)
 			assert.NoError(t, err)
 		})
 	})
@@ -124,7 +124,7 @@ func TestOAuth2Clients(test *testing.T) {
 			checkOAuth2ClientEquality(t, convertInputToClient(input), actual)
 
 			// Clean up
-			err = testClient.DeleteOAuth2Client(tctx, actual.ID)
+			err = testClient.ArchiveOAuth2Client(tctx, actual.ID)
 			assert.NoError(t, err)
 		})
 	})
@@ -139,7 +139,7 @@ func TestOAuth2Clients(test *testing.T) {
 			checkValueAndError(t, premade, err)
 
 			// Clean up
-			err = testClient.DeleteOAuth2Client(tctx, premade.ID)
+			err = testClient.ArchiveOAuth2Client(tctx, premade.ID)
 			assert.NoError(t, err)
 		})
 
@@ -154,8 +154,8 @@ func TestOAuth2Clients(test *testing.T) {
 			premade, err := todoClient.CreateOAuth2Client(context.Background(), cookie, input)
 			checkValueAndError(test, premade, err)
 
-			// DeleteHandler oauth2Client
-			err = testClient.DeleteOAuth2Client(tctx, premade.ID)
+			// ArchiveHandler oauth2Client
+			err = testClient.ArchiveOAuth2Client(tctx, premade.ID)
 			assert.NoError(t, err)
 
 			c2, err := client.NewClient(
@@ -212,7 +212,7 @@ func TestOAuth2Clients(test *testing.T) {
 
 			// Clean up
 			for _, oa2c := range expected {
-				err = testClient.DeleteOAuth2Client(tctx, oa2c.ID)
+				err = testClient.ArchiveOAuth2Client(tctx, oa2c.ID)
 				assert.NoError(t, err, "error deleting client %d: %v", oa2c.ID, err)
 			}
 		})

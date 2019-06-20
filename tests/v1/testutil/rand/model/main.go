@@ -9,9 +9,9 @@ import (
 	"github.com/pquerna/otp/totp"
 )
 
-// RandomItemInput creates a random ItemInput
-func RandomItemInput() *models.ItemInput {
-	x := &models.ItemInput{
+// RandomItemCreationInput creates a random ItemInput
+func RandomItemCreationInput() *models.ItemCreationInput {
+	x := &models.ItemCreationInput{
 		Name:    fake.Word(),
 		Details: fake.Sentence(),
 	}
@@ -19,9 +19,9 @@ func RandomItemInput() *models.ItemInput {
 	return x
 }
 
-// RandomWebhookInput creates a random WebhookInput
-func RandomWebhookInput() *models.WebhookInput {
-	x := &models.WebhookInput{
+// RandomWebhookInput creates a random WebhookCreationInput
+func RandomWebhookInput() *models.WebhookCreationInput {
+	x := &models.WebhookCreationInput{
 		Name:        fake.Word(),
 		URL:         fake.DomainName(),
 		ContentType: "application/json",

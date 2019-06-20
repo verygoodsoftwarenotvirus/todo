@@ -24,6 +24,12 @@ wire:
 rewire: wire-clean wire
 
 ## Go-specific prerequisite stuff
+.PHONY: dev-tools
+dev-tools:
+	GO111MODULE=off go get -u github.com/google/wire/cmd/wire
+	GO111MODULE=off go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+	GO111MODULE=off go get -u github.com/axw/gocov/gocov
+
 .PHONY: vendor-clean
 vendor-clean:
 	rm -rf vendor go.sum
@@ -48,6 +54,18 @@ $(COVERAGE_OUT): $(ARTIFACTS_DIR)
 	echo "mode: set" > $(COVERAGE_OUT);
 	for pkg in `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|mock)'`; do \
 		go test -coverprofile=profile.out -v -count 5 -race -failfast $$pkg; \
+		if [ $$? -ne 0 ]; then exit 1; fi; \
+		cat profile.out | grep -v "mode: atomic" >> $(COVERAGE_OUT); \
+	rm -f profile.out; \
+	done || exit 1
+	gocov convert $(COVERAGE_OUT) | gocov report
+
+.PHONY: quicktest # basically the same as coverage.out, only running once instead of with `-count` set
+quicktest: $(ARTIFACTS_DIR)
+	set -ex; \
+	echo "mode: set" > $(COVERAGE_OUT);
+	for pkg in `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|mock)'`; do \
+		go test -coverprofile=profile.out -v -race -failfast $$pkg; \
 		if [ $$? -ne 0 ]; then exit 1; fi; \
 		cat profile.out | grep -v "mode: atomic" >> $(COVERAGE_OUT); \
 	rm -f profile.out; \

@@ -8,61 +8,81 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 )
 
-// WebhookDataManager describes a structure capable of storing items permanently
-type WebhookDataManager interface {
-	GetWebhook(ctx context.Context, itemID, userID uint64) (*Webhook, error)
-	GetWebhookCount(ctx context.Context, filter *QueryFilter, userID uint64) (uint64, error)
-	GetAllWebhooksCount(ctx context.Context) (uint64, error)
-	GetWebhooks(ctx context.Context, filter *QueryFilter, userID uint64) (*WebhookList, error)
-	GetAllWebhooks(ctx context.Context) (*WebhookList, error)
-	GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]Webhook, error)
-	CreateWebhook(ctx context.Context, input *WebhookInput) (*Webhook, error)
-	UpdateWebhook(ctx context.Context, updated *Webhook) error
-	DeleteWebhook(ctx context.Context, id, userID uint64) error
-}
+type (
+	// WebhookDataManager describes a structure capable of storing items permanently
+	WebhookDataManager interface {
+		GetWebhook(ctx context.Context, itemID, userID uint64) (*Webhook, error)
+		GetWebhookCount(ctx context.Context, filter *QueryFilter, userID uint64) (uint64, error)
+		GetAllWebhooksCount(ctx context.Context) (uint64, error)
+		GetWebhooks(ctx context.Context, filter *QueryFilter, userID uint64) (*WebhookList, error)
+		GetAllWebhooks(ctx context.Context) (*WebhookList, error)
+		GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]Webhook, error)
+		CreateWebhook(ctx context.Context, input *WebhookCreationInput) (*Webhook, error)
+		UpdateWebhook(ctx context.Context, updated *Webhook) error
+		ArchiveWebhook(ctx context.Context, id, userID uint64) error
+	}
 
-// WebhookDataServer describes a structure capable of serving traffic related to items
-type WebhookDataServer interface {
-	CreationInputMiddleware(next http.Handler) http.Handler
-	UpdateInputMiddleware(next http.Handler) http.Handler
+	// WebhookDataServer describes a structure capable of serving traffic related to items
+	WebhookDataServer interface {
+		CreationInputMiddleware(next http.Handler) http.Handler
+		UpdateInputMiddleware(next http.Handler) http.Handler
 
-	ListHandler(res http.ResponseWriter, req *http.Request)
-	CreateHandler(res http.ResponseWriter, req *http.Request)
-	ReadHandler(res http.ResponseWriter, req *http.Request)
-	UpdateHandler(res http.ResponseWriter, req *http.Request)
-	DeleteHandler(res http.ResponseWriter, req *http.Request)
-}
+		ListHandler(res http.ResponseWriter, req *http.Request)
+		CreateHandler(res http.ResponseWriter, req *http.Request)
+		ReadHandler(res http.ResponseWriter, req *http.Request)
+		UpdateHandler(res http.ResponseWriter, req *http.Request)
+		ArchiveHandler(res http.ResponseWriter, req *http.Request)
+	}
 
-// Webhook represents an item
-type Webhook struct {
-	ID          uint64   `json:"id"`
-	Name        string   `json:"name"`
-	ContentType string   `json:"content_type"`
-	URL         string   `json:"url"`
-	Method      string   `json:"method"`
-	Events      []string `json:"events"`
-	DataTypes   []string `json:"data_types"`
-	Topics      []string `json:"topics"`
-	CreatedOn   uint64   `json:"created_on"`
-	UpdatedOn   *uint64  `json:"updated_on"`
-	ArchivedOn  *uint64  `json:"archived_on"`
-	BelongsTo   uint64   `json:"belongs_to"`
-}
+	// Webhook represents an item
+	Webhook struct {
+		ID          uint64   `json:"id"`
+		Name        string   `json:"name"`
+		ContentType string   `json:"content_type"`
+		URL         string   `json:"url"`
+		Method      string   `json:"method"`
+		Events      []string `json:"events"`
+		DataTypes   []string `json:"data_types"`
+		Topics      []string `json:"topics"`
+		CreatedOn   uint64   `json:"created_on"`
+		UpdatedOn   *uint64  `json:"updated_on"`
+		ArchivedOn  *uint64  `json:"archived_on"`
+		BelongsTo   uint64   `json:"belongs_to"`
+	}
 
-// WebhookInput represents what a user could set as input for items
-type WebhookInput struct {
-	Name        string   `json:"name"`
-	ContentType string   `json:"content_type"`
-	URL         string   `json:"url"`
-	Method      string   `json:"method"`
-	Events      []string `json:"events"`
-	DataTypes   []string `json:"data_types"`
-	Topics      []string `json:"topics"`
-	BelongsTo   uint64   `json:"-"`
-}
+	// WebhookCreationInput represents what a user could set as input for creating a webhook
+	WebhookCreationInput struct {
+		Name        string   `json:"name"`
+		ContentType string   `json:"content_type"`
+		URL         string   `json:"url"`
+		Method      string   `json:"method"`
+		Events      []string `json:"events"`
+		DataTypes   []string `json:"data_types"`
+		Topics      []string `json:"topics"`
+		BelongsTo   uint64   `json:"-"`
+	}
 
-// Update merges an WebhookInput with an Webhook
-func (w *Webhook) Update(input *WebhookInput) {
+	// WebhookUpdateInput  represents what a user could set as input for updating a webhook
+	WebhookUpdateInput struct {
+		Name        string   `json:"name"`
+		ContentType string   `json:"content_type"`
+		URL         string   `json:"url"`
+		Method      string   `json:"method"`
+		Events      []string `json:"events"`
+		DataTypes   []string `json:"data_types"`
+		Topics      []string `json:"topics"`
+		BelongsTo   uint64   `json:"-"`
+	}
+
+	// WebhookList represents a list of items
+	WebhookList struct {
+		Pagination
+		Webhooks []Webhook `json:"items"`
+	}
+)
+
+// Update merges an WebhookCreationInput with an Webhook
+func (w *Webhook) Update(input *WebhookUpdateInput) {
 	if input.Name != "" {
 		w.Name = input.Name
 	}
@@ -114,10 +134,4 @@ func (w *Webhook) ToListener(logger logging.Logger) newsman.Listener {
 			Topics:    w.Topics,
 		},
 	)
-}
-
-// WebhookList represents a list of items
-type WebhookList struct {
-	Pagination
-	Webhooks []Webhook `json:"items"`
 }

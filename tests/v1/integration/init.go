@@ -3,8 +3,10 @@ package integration
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
+	"testing"
 	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
@@ -13,6 +15,18 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 
 	"github.com/icrowley/fake"
+	"github.com/stretchr/testify/require"
+)
+
+const (
+	debug = true
+
+	nonexistentID = 999999999
+)
+
+var (
+	urlToUse   string
+	todoClient *client.V1Client
 )
 
 func init() {
@@ -38,6 +52,21 @@ func init() {
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)
+}
+
+func checkValueAndError(t *testing.T, i interface{}, err error) {
+	t.Helper()
+	require.NoError(t, err)
+	require.NotNil(t, i)
+}
+
+func buildHTTPClient() *http.Client {
+	httpc := &http.Client{
+		Transport: http.DefaultTransport,
+		Timeout:   5 * time.Second,
+	}
+
+	return httpc
 }
 
 func initializeClient(oa2Client *models.OAuth2Client) *client.V1Client {

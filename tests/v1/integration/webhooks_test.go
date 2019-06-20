@@ -22,8 +22,8 @@ func checkWebhookEquality(t *testing.T, expected, actual *models.Webhook) {
 	assert.NotZero(t, actual.CreatedOn)
 }
 
-func buildDummyWebhookInput() *models.WebhookInput {
-	x := &models.WebhookInput{
+func buildDummyWebhookInput() *models.WebhookCreationInput {
+	x := &models.WebhookCreationInput{
 		Name:        fake.Word(),
 		URL:         fake.DomainName(),
 		ContentType: "application/json",
@@ -65,7 +65,7 @@ func TestWebhooks(test *testing.T) {
 			}
 			premade, err := todoClient.CreateWebhook(
 				tctx,
-				&models.WebhookInput{
+				&models.WebhookCreationInput{
 					Name:        expected.Name,
 					ContentType: expected.ContentType,
 					URL:         expected.URL,
@@ -77,7 +77,7 @@ func TestWebhooks(test *testing.T) {
 			checkWebhookEquality(t, expected, premade)
 
 			// Clean up
-			err = todoClient.DeleteWebhook(tctx, premade.ID)
+			err = todoClient.ArchiveWebhook(tctx, premade.ID)
 			assert.NoError(t, err)
 
 			actual, err := todoClient.GetWebhook(tctx, premade.ID)
@@ -104,7 +104,7 @@ func TestWebhooks(test *testing.T) {
 
 			// Clean up
 			for _, webhook := range actual.Webhooks {
-				err = todoClient.DeleteWebhook(tctx, webhook.ID)
+				err = todoClient.ArchiveWebhook(tctx, webhook.ID)
 				assert.NoError(t, err)
 			}
 		})
@@ -130,7 +130,7 @@ func TestWebhooks(test *testing.T) {
 				ContentType: input.ContentType,
 				Method:      input.Method,
 			}
-			premade, err := todoClient.CreateWebhook(tctx, &models.WebhookInput{
+			premade, err := todoClient.CreateWebhook(tctx, &models.WebhookCreationInput{
 				Name:        expected.Name,
 				ContentType: expected.ContentType,
 				URL:         expected.URL,
@@ -146,7 +146,7 @@ func TestWebhooks(test *testing.T) {
 			checkWebhookEquality(t, expected, actual)
 
 			// Clean up
-			err = todoClient.DeleteWebhook(tctx, actual.ID)
+			err = todoClient.ArchiveWebhook(tctx, actual.ID)
 			assert.NoError(t, err)
 		})
 	})
@@ -173,7 +173,7 @@ func TestWebhooks(test *testing.T) {
 			}
 			premade, err := todoClient.CreateWebhook(
 				tctx,
-				&models.WebhookInput{
+				&models.WebhookCreationInput{
 					Name:        expected.Name,
 					ContentType: expected.ContentType,
 					URL:         expected.URL,
@@ -197,7 +197,7 @@ func TestWebhooks(test *testing.T) {
 			assert.NotNil(t, actual.UpdatedOn)
 
 			// Clean up
-			err = todoClient.DeleteWebhook(tctx, actual.ID)
+			err = todoClient.ArchiveWebhook(tctx, actual.ID)
 			assert.NoError(t, err)
 		})
 	})
@@ -214,7 +214,7 @@ func TestWebhooks(test *testing.T) {
 				ContentType: input.ContentType,
 				Method:      input.Method,
 			}
-			premade, err := todoClient.CreateWebhook(tctx, &models.WebhookInput{
+			premade, err := todoClient.CreateWebhook(tctx, &models.WebhookCreationInput{
 				Name:        expected.Name,
 				ContentType: expected.ContentType,
 				URL:         expected.URL,
@@ -223,7 +223,7 @@ func TestWebhooks(test *testing.T) {
 			checkValueAndError(t, premade, err)
 
 			// Clean up
-			err = todoClient.DeleteWebhook(tctx, premade.ID)
+			err = todoClient.ArchiveWebhook(tctx, premade.ID)
 			assert.NoError(t, err)
 		})
 	})

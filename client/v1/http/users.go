@@ -2,11 +2,8 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/http/httputil"
-	"net/url"
-	"path"
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -16,29 +13,14 @@ import (
 
 const usersBasePath = "users"
 
-func (c *V1Client) buildVersionlessURL(qp url.Values, parts ...string) string {
-	tu := *c.URL
-
-	u, err := url.Parse(path.Join(parts...))
-	if err != nil {
-		panic(fmt.Sprintf("user tried to build an invalid URL: %v", err))
-	}
-
-	if qp != nil {
-		u.RawQuery = qp.Encode()
-	}
-
-	return tu.ResolveReference(u).String()
-}
-
-// BuildGetUserRequest builds an http Request for fetching a user
+// BuildGetUserRequest builds an HTTP request for fetching a user
 func (c *V1Client) BuildGetUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
 	uri := c.buildVersionlessURL(nil, usersBasePath, strconv.FormatUint(userID, 10))
 
 	return http.NewRequest(http.MethodGet, uri, nil)
 }
 
-// GetUser gets a user
+// GetUser retrieves a user
 func (c *V1Client) GetUser(ctx context.Context, userID uint64) (user *models.User, err error) {
 	req, err := c.BuildGetUserRequest(ctx, userID)
 	if err != nil {
@@ -49,14 +31,14 @@ func (c *V1Client) GetUser(ctx context.Context, userID uint64) (user *models.Use
 	return user, err
 }
 
-// BuildGetUsersRequest builds an http Request for fetching a user
+// BuildGetUsersRequest builds an HTTP request for fetching a user
 func (c *V1Client) BuildGetUsersRequest(ctx context.Context, filter *models.QueryFilter) (*http.Request, error) {
 	uri := c.buildVersionlessURL(filter.ToValues(), usersBasePath)
 
 	return http.NewRequest(http.MethodGet, uri, nil)
 }
 
-// GetUsers gets a list of users
+// GetUsers retrieves a list of users
 func (c *V1Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
 	users := &models.UserList{}
 
@@ -69,7 +51,7 @@ func (c *V1Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 	return users, err
 }
 
-// BuildCreateUserRequest builds an http Request for creating a user
+// BuildCreateUserRequest builds an HTTP request for creating a user
 func (c *V1Client) BuildCreateUserRequest(ctx context.Context, body *models.UserInput) (*http.Request, error) {
 	uri := c.buildVersionlessURL(nil, usersBasePath)
 
@@ -85,25 +67,25 @@ func (c *V1Client) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 		return nil, errors.Wrap(err, "building request")
 	}
 
-	err = c.makeUnauthedDataRequest(ctx, req, &user)
+	err = c.executeUnathenticatedDataRequest(ctx, req, &user)
 	return user, err
 }
 
-// BuildDeleteUserRequest builds an http Request for updating a user
-func (c *V1Client) BuildDeleteUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
+// BuildArchiveUserRequest builds an HTTP request for updating a user
+func (c *V1Client) BuildArchiveUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
 	uri := c.buildVersionlessURL(nil, usersBasePath, strconv.FormatUint(userID, 10))
 
 	return http.NewRequest(http.MethodDelete, uri, nil)
 }
 
-// DeleteUser deletes a user
-func (c *V1Client) DeleteUser(ctx context.Context, userID uint64) error {
-	req, err := c.BuildDeleteUserRequest(ctx, userID)
+// ArchiveUser archives a user
+func (c *V1Client) ArchiveUser(ctx context.Context, userID uint64) error {
+	req, err := c.BuildArchiveUserRequest(ctx, userID)
 	if err != nil {
 		return errors.Wrap(err, "building request")
 	}
 
-	return c.makeRequest(ctx, req, nil)
+	return c.executeRequest(ctx, req, nil)
 }
 
 // BuildLoginRequest builds an authenticating HTTP request
@@ -121,7 +103,7 @@ func (c *V1Client) BuildLoginRequest(username, password, totpToken string) (*htt
 	return c.buildDataRequest(http.MethodPost, uri, body)
 }
 
-// Login logs a user in
+// Login will, when provided the correct credentials, fetch a login cookie
 func (c *V1Client) Login(ctx context.Context, username, password, totpToken string) (*http.Cookie, error) {
 	req, err := c.BuildLoginRequest(username, password, totpToken)
 	if err != nil {
@@ -140,6 +122,12 @@ func (c *V1Client) Login(ctx context.Context, username, password, totpToken stri
 		}
 		c.logger.WithValue("response", string(b)).Debug("login response received")
 	}
+
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			c.logger.Error(err, "closing response body")
+		}
+	}()
 
 	cookies := res.Cookies()
 	if len(cookies) > 0 {

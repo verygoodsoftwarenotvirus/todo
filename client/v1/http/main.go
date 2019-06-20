@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"path"
 	"strings"
 	"time"
 
@@ -20,7 +21,9 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 )
 
-const defaultTimeout = 5 * time.Second
+const (
+	defaultTimeout = 5 * time.Second
+)
 
 var (
 	// ErrNotFound is a handy error to return when we receive a 404 response
@@ -30,7 +33,7 @@ var (
 	ErrUnauthorized = errors.New("401: not authorized")
 )
 
-// V1Client is a client for interacting with v1 of our API
+// V1Client is a client for interacting with v1 of our REST API
 type V1Client struct {
 	plainClient  *http.Client
 	authedClient *http.Client
@@ -99,7 +102,13 @@ func NewClient(
 	return c, nil
 }
 
-func buildOAuthClient(ctx context.Context, uri *url.URL, clientID, clientSecret string, scopes []string) (*http.Client, oauth2.TokenSource) {
+func buildOAuthClient(
+	ctx context.Context,
+	uri *url.URL,
+	clientID,
+	clientSecret string,
+	scopes []string,
+) (*http.Client, oauth2.TokenSource) {
 	conf := clientcredentials.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
@@ -114,27 +123,29 @@ func buildOAuthClient(ctx context.Context, uri *url.URL, clientID, clientSecret 
 	ts := oauth2.ReuseTokenSource(nil, conf.TokenSource(ctx))
 	client := &http.Client{
 		Transport: &oauth2.Transport{
-			Base: &ochttp.Transport{
-				Base: &http.Transport{
-					Proxy: http.ProxyFromEnvironment,
-					DialContext: (&net.Dialer{
-						Timeout:   30 * time.Second,
-						KeepAlive: 30 * time.Second,
-						DualStack: true,
-					}).DialContext,
-					MaxIdleConns:          100,
-					MaxIdleConnsPerHost:   100,
-					IdleConnTimeout:       90 * time.Second,
-					TLSHandshakeTimeout:   10 * time.Second,
-					ExpectContinueTimeout: 1 * time.Second,
-				},
-			},
+			Base:   &ochttp.Transport{Base: buildDefaultTransport()},
 			Source: ts,
 		},
 		Timeout: 5 * time.Second,
 	}
 
 	return client, ts
+}
+
+func buildDefaultTransport() *http.Transport {
+	return &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+			DualStack: true,
+		}).DialContext,
+		MaxIdleConns:          100,
+		MaxIdleConnsPerHost:   100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
 }
 
 func tokenEndpoint(baseURL *url.URL) oauth2.Endpoint {
@@ -151,13 +162,14 @@ func tokenEndpoint(baseURL *url.URL) oauth2.Endpoint {
 // and has noops or empty values for most of its authentication and debug parts.
 // Its purpose at the time of this writing is merely so I can make users (which
 // is a route that doesn't require authentication)
-func NewSimpleClient(ctx context.Context, address *url.URL, scopes []string, debug bool) (*V1Client, error) {
+func NewSimpleClient(ctx context.Context, address *url.URL, debug bool) (*V1Client, error) {
 	l := noop.ProvideNoopLogger()
 	h := &http.Client{Timeout: 5 * time.Second}
-	c, err := NewClient(ctx, "", "", address, l, h, scopes, debug)
+	c, err := NewClient(ctx, "", "", address, l, h, []string{"*"}, debug)
 	return c, err
 }
 
+// executeRawRequest takes a given *http.Request and executes it with the provided client, alongside some debugging logging.
 func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
 	var logger = c.logger
 	if command, err := http2curl.GetCurlCommand(req); err == nil && c.Debug {
@@ -180,7 +192,7 @@ func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, r
 	return res, nil
 }
 
-// BuildURL builds URLs
+// BuildURL builds standard service URLs
 func (c *V1Client) BuildURL(qp url.Values, parts ...string) string {
 	if qp != nil {
 		return c.buildURL(qp, parts...).String()
@@ -188,6 +200,8 @@ func (c *V1Client) BuildURL(qp url.Values, parts ...string) string {
 	return c.buildURL(nil, parts...).String()
 }
 
+// buildURL takes a given set of query parameters and URL parts, and returns
+// a parsed URL object from them.
 func (c *V1Client) buildURL(queryParams url.Values, parts ...string) *url.URL {
 	tu := *c.URL
 
@@ -204,7 +218,24 @@ func (c *V1Client) buildURL(queryParams url.Values, parts ...string) *url.URL {
 	return tu.ResolveReference(u)
 }
 
-// BuildWebsocketURL builds websocket URLs
+// buildVersionlessURL builds a URL without the `/api/v1/` prefix. It should
+// otherwise be identical to buildURL
+func (c *V1Client) buildVersionlessURL(qp url.Values, parts ...string) string {
+	tu := *c.URL
+
+	u, err := url.Parse(path.Join(parts...))
+	if err != nil {
+		panic(fmt.Sprintf("user tried to build an invalid URL: %v", err))
+	}
+
+	if qp != nil {
+		u.RawQuery = qp.Encode()
+	}
+
+	return tu.ResolveReference(u).String()
+}
+
+// BuildWebsocketURL builds a standard URL and then converts its scheme to the websocket protocol
 func (c *V1Client) BuildWebsocketURL(parts ...string) string {
 	u := c.buildURL(nil, parts...)
 	u.Scheme = "ws"
@@ -220,7 +251,7 @@ func (c *V1Client) BuildHealthCheckRequest() (*http.Request, error) {
 	return http.NewRequest(http.MethodGet, uri, nil)
 }
 
-// IsUp returns whether or not the service is healthy
+// IsUp returns whether or not the service's health endpoint is returning 200s
 func (c *V1Client) IsUp() bool {
 	req, err := c.BuildHealthCheckRequest()
 	if err != nil {
@@ -234,9 +265,16 @@ func (c *V1Client) IsUp() bool {
 		return false
 	}
 
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			c.logger.Error(err, "closing response body")
+		}
+	}()
+
 	return res.StatusCode == http.StatusOK
 }
 
+// buildDataRequest builds an HTTP request for a given method, URL, and body data.
 func (c *V1Client) buildDataRequest(method, uri string, in interface{}) (*http.Request, error) {
 	body, err := createBodyFromStruct(in)
 	if err != nil {
@@ -252,6 +290,7 @@ func (c *V1Client) buildDataRequest(method, uri string, in interface{}) (*http.R
 	return req, nil
 }
 
+// retrieve executes an HTTP request and loads the response content into a struct
 func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interface{}) error {
 	if err := argIsNotPointerOrNil(obj); err != nil {
 		return errors.Wrap(err, "struct to load must be a pointer")
@@ -269,7 +308,9 @@ func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interfac
 	return unmarshalBody(res, &obj)
 }
 
-func (c *V1Client) makeRequest(ctx context.Context, req *http.Request, out interface{}) error {
+// executeRequest takes a given request and executes it with the auth client. It returns some errors
+// upon receiving certain status codes, but otherwise will return nil upon success.
+func (c *V1Client) executeRequest(ctx context.Context, req *http.Request, out interface{}) error {
 	res, err := c.executeRawRequest(ctx, c.authedClient, req)
 	if err != nil {
 		return errors.Wrap(err, "executing request")
@@ -292,7 +333,8 @@ func (c *V1Client) makeRequest(ctx context.Context, req *http.Request, out inter
 	return nil
 }
 
-func (c *V1Client) makeUnauthedDataRequest(ctx context.Context, req *http.Request, out interface{}) error {
+// executeUnathenticatedDataRequest takes a given request and loads the response into an interface value.
+func (c *V1Client) executeUnathenticatedDataRequest(ctx context.Context, req *http.Request, out interface{}) error {
 	// sometimes we want to make requests with data attached, but we don't really care about the response
 	// so we give this function a nil `out` value. That said, if you provide us a value, it needs to be a pointer.
 	if out != nil {

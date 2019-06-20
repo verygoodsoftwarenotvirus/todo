@@ -15,11 +15,14 @@ import (
 )
 
 const (
-	// MiddlewareCtxKey is a string alias we can use for referring to webhook input data in contexts
-	MiddlewareCtxKey models.ContextKey   = "webhook_input"
-	counterName      metrics.CounterName = "webhooks"
-	topicName        string              = "webhooks"
-	serviceName      string              = "webhooks_service"
+	// CreateMiddlewareCtxKey is a string alias we can use for referring to webhook input data in contexts
+	CreateMiddlewareCtxKey models.ContextKey = "webhook_create_input"
+	// UpdateMiddlewareCtxKey is a string alias we can use for referring to webhook input data in contexts
+	UpdateMiddlewareCtxKey models.ContextKey = "webhook_update_input"
+
+	counterName metrics.CounterName = "webhooks"
+	topicName   string              = "webhooks"
+	serviceName string              = "webhooks_service"
 )
 
 var (

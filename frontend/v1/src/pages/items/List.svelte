@@ -1,7 +1,7 @@
 <script>
   import { Link, navigate } from "svelte-routing";
 
-  import Table from "./components/Table.svelte";
+  import Table from "../../components/Table.svelte";
 
   const columns = [
     {

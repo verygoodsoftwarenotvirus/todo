@@ -12,7 +12,7 @@ var (
 	migrations = []darwin.Migration{
 		{
 			Version:     1,
-			Description: "CreateHandler users table",
+			Description: "create users table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS users (
 				"id" bigserial NOT NULL PRIMARY KEY,
@@ -48,22 +48,7 @@ var (
 		},
 		{
 			Version:     3,
-			Description: "CreateHandler items table",
-			Script: `
-			CREATE TABLE IF NOT EXISTS items (
-				"id" bigserial NOT NULL PRIMARY KEY,
-				"name" text NOT NULL,
-				"details" text NOT NULL DEFAULT '',
-				"created_on" bigint NOT NULL DEFAULT extract(epoch FROM NOW()),
-				"updated_on" bigint DEFAULT NULL,
-				"archived_on" bigint DEFAULT NULL,
-				"belongs_to" bigint NOT NULL,
-				FOREIGN KEY ("belongs_to") REFERENCES "users"("id")
-			);`,
-		},
-		{
-			Version:     4,
-			Description: "CreateHandler webhooks table",
+			Description: "create webhooks table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
 				"id" bigserial NOT NULL PRIMARY KEY,
@@ -74,6 +59,21 @@ var (
 				"events" text NOT NULL,
 				"data_types" text NOT NULL,
 				"topics" text NOT NULL,
+				"created_on" bigint NOT NULL DEFAULT extract(epoch FROM NOW()),
+				"updated_on" bigint DEFAULT NULL,
+				"archived_on" bigint DEFAULT NULL,
+				"belongs_to" bigint NOT NULL,
+				FOREIGN KEY ("belongs_to") REFERENCES "users"("id")
+			);`,
+		},
+		{
+			Version:     4,
+			Description: "create items table",
+			Script: `
+			CREATE TABLE IF NOT EXISTS items (
+				"id" bigserial NOT NULL PRIMARY KEY,
+				"name" text NOT NULL,
+				"details" text NOT NULL DEFAULT '',
 				"created_on" bigint NOT NULL DEFAULT extract(epoch FROM NOW()),
 				"updated_on" bigint DEFAULT NULL,
 				"archived_on" bigint DEFAULT NULL,

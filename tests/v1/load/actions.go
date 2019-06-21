@@ -8,7 +8,7 @@ import (
 	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/rand/model"
+	randmodel "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/rand/model"
 )
 
 var (
@@ -40,7 +40,7 @@ func RandomAction(c *client.V1Client) *Action {
 		"CreateUser": {
 			Name: "CreateUser",
 			Action: func() (*http.Request, error) {
-				ui := model.RandomUserInput()
+				ui := randmodel.RandomUserInput()
 				return c.BuildCreateUserRequest(ctx, ui)
 			},
 			Weight: 100,

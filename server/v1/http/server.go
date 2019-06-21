@@ -33,10 +33,10 @@ type (
 		// Services
 		authService          *auth.Service
 		frontendService      *frontend.Service
-		itemsService         models.ItemDataServer
 		usersService         models.UserDataServer
 		oauth2ClientsService models.OAuth2ClientDataServer
 		webhooksService      models.WebhookDataServer
+		itemsService         models.ItemDataServer
 
 		// infra things
 		db          database.Database

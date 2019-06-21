@@ -9,9 +9,9 @@ import (
 )
 
 type (
-	// WebhookDataManager describes a structure capable of storing items permanently
+	// WebhookDataManager describes a structure capable of storing webhooks
 	WebhookDataManager interface {
-		GetWebhook(ctx context.Context, itemID, userID uint64) (*Webhook, error)
+		GetWebhook(ctx context.Context, webhookID, userID uint64) (*Webhook, error)
 		GetWebhookCount(ctx context.Context, filter *QueryFilter, userID uint64) (uint64, error)
 		GetAllWebhooksCount(ctx context.Context) (uint64, error)
 		GetWebhooks(ctx context.Context, filter *QueryFilter, userID uint64) (*WebhookList, error)
@@ -19,10 +19,10 @@ type (
 		GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]Webhook, error)
 		CreateWebhook(ctx context.Context, input *WebhookCreationInput) (*Webhook, error)
 		UpdateWebhook(ctx context.Context, updated *Webhook) error
-		ArchiveWebhook(ctx context.Context, id, userID uint64) error
+		ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error
 	}
 
-	// WebhookDataServer describes a structure capable of serving traffic related to items
+	// WebhookDataServer describes a structure capable of serving traffic related to webhooks
 	WebhookDataServer interface {
 		CreationInputMiddleware(next http.Handler) http.Handler
 		UpdateInputMiddleware(next http.Handler) http.Handler
@@ -34,7 +34,7 @@ type (
 		ArchiveHandler(res http.ResponseWriter, req *http.Request)
 	}
 
-	// Webhook represents an item
+	// Webhook represents a webhook listener, an endpoint to send an HTTP request to upon an event
 	Webhook struct {
 		ID          uint64   `json:"id"`
 		Name        string   `json:"name"`
@@ -74,10 +74,10 @@ type (
 		BelongsTo   uint64   `json:"-"`
 	}
 
-	// WebhookList represents a list of items
+	// WebhookList represents a list of webhooks
 	WebhookList struct {
 		Pagination
-		Webhooks []Webhook `json:"items"`
+		Webhooks []Webhook `json:"webhooks"`
 	}
 )
 

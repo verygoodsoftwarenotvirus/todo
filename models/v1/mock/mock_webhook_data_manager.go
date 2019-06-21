@@ -16,8 +16,8 @@ type WebhookDataManager struct {
 }
 
 // GetWebhook satisfies our WebhookDataManager interface
-func (m *WebhookDataManager) GetWebhook(ctx context.Context, itemID, userID uint64) (*models.Webhook, error) {
-	args := m.Called(ctx, itemID, userID)
+func (m *WebhookDataManager) GetWebhook(ctx context.Context, webhookID, userID uint64) (*models.Webhook, error) {
+	args := m.Called(ctx, webhookID, userID)
 	return args.Get(0).(*models.Webhook), args.Error(1)
 }
 
@@ -63,6 +63,6 @@ func (m *WebhookDataManager) UpdateWebhook(ctx context.Context, updated *models.
 }
 
 // ArchiveWebhook satisfies our WebhookDataManager interface
-func (m *WebhookDataManager) ArchiveWebhook(ctx context.Context, id, userID uint64) error {
-	return m.Called(ctx, id, userID).Error(0)
+func (m *WebhookDataManager) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error {
+	return m.Called(ctx, webhookID, userID).Error(0)
 }

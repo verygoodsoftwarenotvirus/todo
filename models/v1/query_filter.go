@@ -13,6 +13,8 @@ import (
 const (
 	// MaxLimit is the maximum value for list queries
 	MaxLimit = 250
+	// DefaultLimit represents how many results we return in a response by default.
+	DefaultLimit = 20
 
 	pageKey          = "page"
 	limitKey         = "limit"

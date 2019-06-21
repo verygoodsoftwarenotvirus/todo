@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,6 +18,10 @@ import (
 const (
 	exampleURI = "https://todo.verygoodsoftwarenotvirus.ru"
 )
+
+type argleBargle struct {
+	Name string
+}
 
 // helper/meta funcs
 
@@ -340,7 +343,7 @@ func TestV1Client_makeRequest(T *testing.T) {
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
 					assert.Equal(t, req.Method, expectedMethod)
-					require.NoError(t, json.NewEncoder(res).Encode(&models.Item{
+					require.NoError(t, json.NewEncoder(res).Encode(&argleBargle{
 						Name: "name",
 					}))
 				},
@@ -352,7 +355,7 @@ func TestV1Client_makeRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		err = c.executeRequest(ctx, req, &models.Item{})
+		err = c.executeRequest(ctx, req, &argleBargle{})
 		assert.NoError(t, err)
 	})
 
@@ -373,7 +376,7 @@ func TestV1Client_makeRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		assert.Equal(t, ErrNotFound, c.executeRequest(ctx, req, &models.Item{}))
+		assert.Equal(t, ErrNotFound, c.executeRequest(ctx, req, &argleBargle{}))
 	})
 }
 
@@ -387,7 +390,7 @@ func TestV1Client_makeUnauthedDataRequest(T *testing.T) {
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
 					assert.Equal(t, req.Method, expectedMethod)
-					require.NoError(t, json.NewEncoder(res).Encode(&models.Item{
+					require.NoError(t, json.NewEncoder(res).Encode(&argleBargle{
 						Name: "name",
 					}))
 				},
@@ -395,7 +398,7 @@ func TestV1Client_makeUnauthedDataRequest(T *testing.T) {
 		)
 		c := buildTestClient(t, ts)
 
-		in, out := &models.Item{}, &models.Item{}
+		in, out := &argleBargle{}, &argleBargle{}
 
 		body, err := createBodyFromStruct(in)
 		require.NoError(t, err)
@@ -422,7 +425,7 @@ func TestV1Client_makeUnauthedDataRequest(T *testing.T) {
 		)
 		c := buildTestClient(t, ts)
 
-		in, out := &models.Item{}, &models.Item{}
+		in, out := &argleBargle{}, &argleBargle{}
 
 		body, err := createBodyFromStruct(in)
 		require.NoError(t, err)
@@ -450,7 +453,7 @@ func TestV1Client_makeUnauthedDataRequest(T *testing.T) {
 		)
 		c := buildTestClient(t, ts)
 
-		in, out := &models.Item{}, &models.Item{}
+		in, out := &argleBargle{}, &argleBargle{}
 
 		body, err := createBodyFromStruct(in)
 		require.NoError(t, err)
@@ -470,7 +473,7 @@ func TestV1Client_makeUnauthedDataRequest(T *testing.T) {
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
-		in := &models.Item{}
+		in := &argleBargle{}
 
 		body, err := createBodyFromStruct(in)
 		require.NoError(t, err)
@@ -495,7 +498,7 @@ func TestV1Client_retrieve(T *testing.T) {
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
 					assert.Equal(t, req.Method, expectedMethod)
-					require.NoError(t, json.NewEncoder(res).Encode(&models.Item{
+					require.NoError(t, json.NewEncoder(res).Encode(&argleBargle{
 						Name: "name",
 					}))
 				},
@@ -507,7 +510,7 @@ func TestV1Client_retrieve(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		err = c.retrieve(ctx, req, &models.Item{})
+		err = c.retrieve(ctx, req, &argleBargle{})
 		assert.NoError(t, err)
 	})
 
@@ -542,7 +545,7 @@ func TestV1Client_retrieve(T *testing.T) {
 		require.NoError(t, err)
 
 		c.authedClient.Timeout = 500 * time.Millisecond
-		err = c.retrieve(ctx, req, &models.Item{})
+		err = c.retrieve(ctx, req, &argleBargle{})
 		assert.Error(t, err)
 	})
 
@@ -563,6 +566,6 @@ func TestV1Client_retrieve(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		assert.Equal(t, ErrNotFound, c.retrieve(ctx, req, &models.Item{}))
+		assert.Equal(t, ErrNotFound, c.retrieve(ctx, req, &argleBargle{}))
 	})
 }

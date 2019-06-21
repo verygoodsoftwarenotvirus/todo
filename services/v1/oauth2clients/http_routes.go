@@ -27,10 +27,10 @@ func attachUserIDToSpan(span *trace.Span, userID uint64) {
 	}
 }
 
-// attachOAuth2ClientDatabaseIDToSpan provides a consistent way of attaching an item ID to a given span
-func attachOAuth2ClientDatabaseIDToSpan(span *trace.Span, itemID uint64) {
+// attachOAuth2ClientDatabaseIDToSpan provides a consistent way of attaching an oauth2 client ID to a given span
+func attachOAuth2ClientDatabaseIDToSpan(span *trace.Span, clientID uint64) {
 	if span != nil {
-		span.AddAttributes(trace.StringAttribute("outh2client_id", strconv.FormatUint(itemID, 10)))
+		span.AddAttributes(trace.StringAttribute("oauth2client_db_id", strconv.FormatUint(clientID, 10)))
 	}
 }
 

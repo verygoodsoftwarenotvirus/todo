@@ -32,7 +32,7 @@ func (c *V1Client) GetWebhook(ctx context.Context, id uint64) (webhook *models.W
 	return webhook, err
 }
 
-// BuildGetWebhooksRequest builds an HTTP request for fetching webhooksitems
+// BuildGetWebhooksRequest builds an HTTP request for fetching webhooks
 func (c *V1Client) BuildGetWebhooksRequest(ctx context.Context, filter *models.QueryFilter) (*http.Request, error) {
 	uri := c.BuildURL(filter.ToValues(), webhooksBasePath)
 

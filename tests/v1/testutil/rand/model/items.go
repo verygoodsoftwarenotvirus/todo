@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/icrowley/fake"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"github.com/icrowley/fake"
 )
 
 // RandomItemCreationInput creates a random ItemInput

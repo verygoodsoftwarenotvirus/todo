@@ -13,10 +13,10 @@ import (
 	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	randmodel "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/rand/model"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
+	randmodel "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/rand/model"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -253,7 +253,7 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should reject an unauthenticated request", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodGet, todoClient.BuildURL(nil, "items"), nil)
+		req, err := http.NewRequest(http.MethodGet, todoClient.BuildURL(nil, "webhooks"), nil)
 		assert.NoError(t, err)
 
 		res, err := todoClient.PlainClient().Do(req)
@@ -420,7 +420,7 @@ func TestAuth(test *testing.T) {
 		_, _, cookie := buildDummyUser(test)
 		assert.NotNil(test, cookie)
 
-		req, err := http.NewRequest(http.MethodGet, todoClient.BuildURL(nil, "items"), nil)
+		req, err := http.NewRequest(http.MethodGet, todoClient.BuildURL(nil, "webhooks"), nil)
 		assert.NoError(t, err)
 		req.AddCookie(cookie)
 
@@ -432,51 +432,59 @@ func TestAuth(test *testing.T) {
 	test.Run("should only allow users to see their own content", func(t *testing.T) {
 		tctx := context.Background()
 
-		// create user
-		x, y, cookie := buildDummyUser(test)
-		assert.NotNil(test, cookie)
+		// create user and oauth2 client A
+		userA, err := testutil.CreateObligatoryUser(urlToUse, debug)
+		require.NoError(t, err)
 
-		input := buildDummyOAuth2ClientInput(test, x.Username, y.Password, x.TwoFactorSecret)
-		premade, err := todoClient.CreateOAuth2Client(tctx, cookie, input)
-		checkValueAndError(test, premade, err)
+		ca, err := testutil.CreateObligatoryClient(urlToUse, userA)
+		require.NoError(t, err)
 
-		c, err := client.NewClient(
-			context.Background(),
-			premade.ClientID,
-			premade.ClientSecret,
+		clientA, err := client.NewClient(
+			tctx,
+			ca.ClientID,
+			ca.ClientSecret,
 			todoClient.URL,
 			noop.ProvideNoopLogger(),
 			buildHTTPClient(),
-			premade.Scopes,
+			ca.Scopes,
 			true,
 		)
-		checkValueAndError(test, c, err)
+		checkValueAndError(test, clientA, err)
 
-		// CreateHandler item for user A
-		a, err := todoClient.CreateItem(
+		// create user and oauth2 client B
+		userB, err := testutil.CreateObligatoryUser(urlToUse, debug)
+		require.NoError(t, err)
+
+		cb, err := testutil.CreateObligatoryClient(urlToUse, userB)
+		require.NoError(t, err)
+
+		clientB, err := client.NewClient(
 			tctx,
-			&models.ItemCreationInput{
-				Name:    "name A",
-				Details: "details A",
-			})
-		checkValueAndError(t, a, err)
+			cb.ClientID,
+			cb.ClientSecret,
+			todoClient.URL,
+			noop.ProvideNoopLogger(),
+			buildHTTPClient(),
+			cb.Scopes,
+			true,
+		)
+		checkValueAndError(test, clientA, err)
 
-		// CreateHandler item for user B
-		b, err := c.CreateItem(
-			tctx,
-			&models.ItemCreationInput{
-				Name:    "name B",
-				Details: "details B",
-			})
-		checkValueAndError(t, b, err)
+		// create webhook for user A
+		webhookA, err := clientA.CreateWebhook(tctx, &models.WebhookCreationInput{Name: "A"})
+		checkValueAndError(t, webhookA, err)
 
-		i, err := c.GetItem(tctx, a.ID)
+		// create webhook for user B
+		webhookB, err := clientB.CreateWebhook(tctx, &models.WebhookCreationInput{Name: "B"})
+		checkValueAndError(t, webhookB, err)
+
+		i, err := clientB.GetWebhook(tctx, webhookA.ID)
 		assert.Nil(t, i)
-		assert.Error(t, err, "should experience error trying to fetch item they're not authorized for")
+		assert.Error(t, err, "should experience error trying to fetch entry they're not authorized for")
 
 		// Clean up
-		assert.NoError(t, todoClient.ArchiveItem(tctx, a.ID))
-		assert.NoError(t, todoClient.ArchiveItem(tctx, b.ID))
+		assert.NoError(t, todoClient.ArchiveWebhook(tctx, webhookA.ID))
+		assert.NoError(t, todoClient.ArchiveWebhook(tctx, webhookB.ID))
 	})
 
 	test.Run("should only allow clients with a given scope to see that scope's content", func(t *testing.T) {
@@ -503,9 +511,9 @@ func TestAuth(test *testing.T) {
 		)
 		checkValueAndError(test, c, err)
 
-		i, err := c.GetItems(tctx, nil)
+		i, err := c.GetOAuth2Clients(tctx, nil)
 		assert.Nil(t, i)
-		assert.Error(t, err, "should experience error trying to fetch item they're not authorized for")
+		assert.Error(t, err, "should experience error trying to fetch entry they're not authorized for")
 	})
 
 }

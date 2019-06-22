@@ -1,7 +1,7 @@
 <script>
   import { Link, navigate } from "svelte-routing";
 
-  import Table from "./components/Table.svelte";
+  import Table from "../../components/Table.svelte";
 
   const columns = [
     {
@@ -58,6 +58,6 @@
 <Table
   {columns}
   tableStyle={'margin: 0px auto;'}
-  rows={items}
+  rows={ items }
   rowClickFunc={goToItem}
   rowDeleteFunc={deleteItem} />

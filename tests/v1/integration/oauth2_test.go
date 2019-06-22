@@ -170,7 +170,7 @@ func TestOAuth2Clients(test *testing.T) {
 			)
 			checkValueAndError(test, c2, err)
 
-			_, err = c2.GetItems(tctx, nil)
+			_, err = c2.GetOAuth2Clients(tctx, nil)
 			assert.Error(t, err, "expected error from what should be an unauthorized client")
 		})
 	})

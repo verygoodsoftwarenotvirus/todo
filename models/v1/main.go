@@ -4,11 +4,6 @@ import (
 	"fmt"
 )
 
-const (
-	// DefaultLimit represents how many items we return in a response by default.
-	DefaultLimit = 20
-)
-
 var (
 	// SortAscending is the pre-determined Ascending sortType for external use
 	SortAscending sortType = "asc"

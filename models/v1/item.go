@@ -63,12 +63,12 @@ type (
 )
 
 // Update merges an ItemInput with an Item
-func (i *Item) Update(input *ItemUpdateInput) {
-	if input.Name != "" || input.Name != i.Name {
-		i.Name = input.Name
+func (x *Item) Update(input *ItemUpdateInput) {
+	if input.Name != "" || input.Name != x.Name {
+		x.Name = input.Name
 	}
 
-	if input.Details != "" || input.Details != i.Details {
-		i.Details = input.Details
+	if input.Details != "" || input.Details != x.Details {
+		x.Details = input.Details
 	}
 }

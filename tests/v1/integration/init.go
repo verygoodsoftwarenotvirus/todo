@@ -38,12 +38,12 @@ func init() {
 
 	fake.Seed(time.Now().UnixNano())
 
-	u, err := testutil.CreateObligatoryUser(urlToUse, debug)
+	ogUser, err := testutil.CreateObligatoryUser(urlToUse, debug)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	oa2Client, err := testutil.CreateObligatoryClient(urlToUse, u)
+	oa2Client, err := testutil.CreateObligatoryClient(urlToUse, ogUser)
 	if err != nil {
 		logger.Fatal(err)
 	}

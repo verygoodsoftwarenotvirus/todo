@@ -25,7 +25,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
-		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/api/v1/items", nil)
+		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/api/v1/something", nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
@@ -41,7 +41,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 	T.Run("with invalid cookie", func(t *testing.T) {
 		s := buildTestService(t)
 
-		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/api/v1/items", nil)
+		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/api/v1/something", nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
@@ -65,7 +65,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 	T.Run("without cookie", func(t *testing.T) {
 		s := buildTestService(t)
 
-		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/api/v1/items", nil)
+		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/api/v1/something", nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 

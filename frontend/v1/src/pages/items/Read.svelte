@@ -5,7 +5,7 @@
 
   const itemID = window.location.pathname.replace("/items/", "");
 
-  fetch(`/api/v1/items/${itemID}`)
+  fetch(`/api/v1/items/${ itemID }`)
     .then(response => response.json())
     .then(data => {
       item = data;

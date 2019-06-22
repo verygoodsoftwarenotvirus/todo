@@ -25,6 +25,11 @@ import (
 	"github.com/google/wire"
 )
 
+// ProvideReporter is an obligatory function that hopefully wire will eliminate for me one day
+func ProvideReporter(n *newsman.Newsman) newsman.Reporter {
+	return n
+}
+
 // BuildServer builds a server
 func BuildServer(
 	ctx context.Context,
@@ -47,6 +52,7 @@ func BuildServer(
 
 		// external libs
 		newsman.NewNewsman,
+		ProvideReporter,
 
 		auth.Providers,
 		users.Providers,

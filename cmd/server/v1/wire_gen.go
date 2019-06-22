@@ -48,7 +48,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	websocketAuthFunc := auth2.ProvideWebsocketAuthFunc(authService)
 	typeNameManipulationFunc := httpserver.ProvideNewsmanTypeNameManipulationFunc(logger)
 	newsmanNewsman := newsman.NewNewsman(websocketAuthFunc, typeNameManipulationFunc)
-	reporter := items.ProvideReporter(newsmanNewsman)
+	reporter := ProvideReporter(newsmanNewsman)
 	itemsService, err := items.ProvideItemsService(ctx, logger, itemDataManager, itemsUserIDFetcher, itemIDFetcher, encoderDecoder, unitCounterProvider, reporter)
 	if err != nil {
 		return nil, err
@@ -79,4 +79,11 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 		return nil, err
 	}
 	return serverServer, nil
+}
+
+// wire.go:
+
+// ProvideReporter is an obligatory function that hopefully wire will eliminate for me one day
+func ProvideReporter(n *newsman.Newsman) newsman.Reporter {
+	return n
 }

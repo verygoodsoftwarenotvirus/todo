@@ -4,8 +4,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
-
 	"github.com/google/wire"
 )
 
@@ -14,7 +12,6 @@ var (
 	Providers = wire.NewSet(
 		ProvideItemsService,
 		ProvideItemDataManager,
-		ProvideReporter,
 		ProvideItemDataServer,
 	)
 )
@@ -27,9 +24,4 @@ func ProvideItemDataManager(db database.Database) models.ItemDataManager {
 // ProvideItemDataServer is an arbitrary function for dependency injection's sake
 func ProvideItemDataServer(s *Service) models.ItemDataServer {
 	return s
-}
-
-// ProvideReporter is an obligatory function that hopefully wire will eliminate for me one day
-func ProvideReporter(n *newsman.Newsman) newsman.Reporter {
-	return n
 }

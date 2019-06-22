@@ -43,7 +43,10 @@ func TestItems(test *testing.T) {
 			defer span.End()
 
 			// CreateHandler item
-			expected := &models.Item{Name: "name", Details: "details"}
+			expected := &models.Item{
+				Name:    "name",
+				Details: "details",
+			}
 			premade, err := todoClient.CreateItem(
 				ctx,
 				&models.ItemCreationInput{
@@ -114,11 +117,15 @@ func TestItems(test *testing.T) {
 			defer span.End()
 
 			// CreateHandler item
-			expected := &models.Item{Name: "name", Details: "details"}
+			expected := &models.Item{
+				Name:    "name",
+				Details: "details",
+			}
 			premade, err := todoClient.CreateItem(
 				ctx,
 				&models.ItemCreationInput{
-					Name: expected.Name, Details: expected.Details,
+					Name:    expected.Name,
+					Details: expected.Details,
 				})
 			checkValueAndError(t, premade, err)
 
@@ -152,7 +159,10 @@ func TestItems(test *testing.T) {
 			defer span.End()
 
 			// CreateHandler item
-			expected := &models.Item{Name: "new name", Details: "new details"}
+			expected := &models.Item{
+				Name:    "new name",
+				Details: "new details",
+			}
 			premade, err := todoClient.CreateItem(
 				tctx,
 				&models.ItemCreationInput{
@@ -188,10 +198,14 @@ func TestItems(test *testing.T) {
 			defer span.End()
 
 			// CreateHandler item
-			expected := &models.Item{Name: "name", Details: "details"}
+			expected := &models.Item{
+				Name:    "name",
+				Details: "details",
+			}
 			premade, err := todoClient.CreateItem(ctx,
 				&models.ItemCreationInput{
-					Name: expected.Name, Details: expected.Details,
+					Name:    expected.Name,
+					Details: expected.Details,
 				})
 			checkValueAndError(t, premade, err)
 

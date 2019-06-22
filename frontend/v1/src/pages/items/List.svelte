@@ -58,6 +58,6 @@
 <Table
   {columns}
   tableStyle={'margin: 0px auto;'}
-  rows={items}
+  rows={ items }
   rowClickFunc={goToItem}
   rowDeleteFunc={deleteItem} />

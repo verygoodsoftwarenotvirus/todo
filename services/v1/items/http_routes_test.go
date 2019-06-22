@@ -29,9 +29,8 @@ func TestItemsService_List(T *testing.T) {
 		expected := &models.ItemList{
 			Items: []models.Item{
 				{
-					ID:      123,
-					Name:    "name",
-					Details: "details",
+					ID:   123,
+					Name: "name",
 				},
 			},
 		}
@@ -188,9 +187,8 @@ func TestItemsService_Create(T *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID:      123,
-			Name:    "name",
-			Details: "details",
+			ID:   123,
+			Name: "name",
 		}
 
 		mc := &mmetrics.UnitCounter{}
@@ -228,8 +226,7 @@ func TestItemsService_Create(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleInput := &models.ItemCreationInput{
-			Name:    expected.Name,
-			Details: expected.Details,
+			Name: expected.Name,
 		}
 		req = req.WithContext(context.WithValue(req.Context(), CreateMiddlewareCtxKey, exampleInput))
 
@@ -269,9 +266,8 @@ func TestItemsService_Create(T *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID:      123,
-			Name:    "name",
-			Details: "details",
+			ID:   123,
+			Name: "name",
 		}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
@@ -301,8 +297,7 @@ func TestItemsService_Create(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleInput := &models.ItemCreationInput{
-			Name:    expected.Name,
-			Details: expected.Details,
+			Name: expected.Name,
 		}
 		req = req.WithContext(context.WithValue(req.Context(), CreateMiddlewareCtxKey, exampleInput))
 
@@ -315,9 +310,8 @@ func TestItemsService_Create(T *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID:      123,
-			Name:    "name",
-			Details: "details",
+			ID:   123,
+			Name: "name",
 		}
 
 		mc := &mmetrics.UnitCounter{}
@@ -355,8 +349,7 @@ func TestItemsService_Create(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleInput := &models.ItemCreationInput{
-			Name:    expected.Name,
-			Details: expected.Details,
+			Name: expected.Name,
 		}
 		req = req.WithContext(context.WithValue(req.Context(), CreateMiddlewareCtxKey, exampleInput))
 
@@ -373,9 +366,8 @@ func TestItemsService_Read(T *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID:      123,
-			Name:    "name",
-			Details: "details",
+			ID:   123,
+			Name: "name",
 		}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
@@ -418,9 +410,8 @@ func TestItemsService_Read(T *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID:      123,
-			Name:    "name",
-			Details: "details",
+			ID:   123,
+			Name: "name",
 		}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
@@ -458,9 +449,8 @@ func TestItemsService_Read(T *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID:      123,
-			Name:    "name",
-			Details: "details",
+			ID:   123,
+			Name: "name",
 		}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
@@ -498,9 +488,8 @@ func TestItemsService_Read(T *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID:      123,
-			Name:    "name",
-			Details: "details",
+			ID:   123,
+			Name: "name",
 		}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
@@ -547,7 +536,8 @@ func TestItemsService_Update(T *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123, Name: "name", Details: "details",
+			ID:   123,
+			Name: "name",
 		}
 
 		mc := &mmetrics.UnitCounter{}
@@ -598,8 +588,7 @@ func TestItemsService_Update(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleInput := &models.ItemUpdateInput{
-			Name:    expected.Name,
-			Details: expected.Details,
+			Name: expected.Name,
 		}
 		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
 
@@ -629,7 +618,8 @@ func TestItemsService_Update(T *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123, Name: "name", Details: "details",
+			ID:   123,
+			Name: "name",
 		}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
@@ -661,8 +651,7 @@ func TestItemsService_Update(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleInput := &models.ItemUpdateInput{
-			Name:    expected.Name,
-			Details: expected.Details,
+			Name: expected.Name,
 		}
 		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
 
@@ -675,7 +664,8 @@ func TestItemsService_Update(T *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123, Name: "name", Details: "details",
+			ID:   123,
+			Name: "name",
 		}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
@@ -707,8 +697,7 @@ func TestItemsService_Update(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleInput := &models.ItemUpdateInput{
-			Name:    expected.Name,
-			Details: expected.Details,
+			Name: expected.Name,
 		}
 		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
 
@@ -721,7 +710,8 @@ func TestItemsService_Update(T *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123, Name: "name", Details: "details",
+			ID:   123,
+			Name: "name",
 		}
 
 		mc := &mmetrics.UnitCounter{}
@@ -772,8 +762,7 @@ func TestItemsService_Update(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleInput := &models.ItemUpdateInput{
-			Name:    expected.Name,
-			Details: expected.Details,
+			Name: expected.Name,
 		}
 		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
 
@@ -786,7 +775,8 @@ func TestItemsService_Update(T *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123, Name: "name", Details: "details",
+			ID:   123,
+			Name: "name",
 		}
 
 		mc := &mmetrics.UnitCounter{}
@@ -837,8 +827,7 @@ func TestItemsService_Update(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleInput := &models.ItemUpdateInput{
-			Name:    expected.Name,
-			Details: expected.Details,
+			Name: expected.Name,
 		}
 		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
 
@@ -855,9 +844,8 @@ func TestItemsService_Archive(T *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID:      123,
-			Name:    "name",
-			Details: "details",
+			ID:   123,
+			Name: "name",
 		}
 
 		r := &mockman.Reporter{}
@@ -908,9 +896,8 @@ func TestItemsService_Archive(T *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID:      123,
-			Name:    "name",
-			Details: "details",
+			ID:   123,
+			Name: "name",
 		}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
@@ -948,9 +935,8 @@ func TestItemsService_Archive(T *testing.T) {
 		s := buildTestService()
 		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID:      123,
-			Name:    "name",
-			Details: "details",
+			ID:   123,
+			Name: "name",
 		}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {

@@ -10,10 +10,7 @@ func TestItem_Update(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		i := &Item{
-			Name:    "name",
-			Details: "deets",
-		}
+		i := &Item{}
 
 		expected := &ItemUpdateInput{
 			Name:    "expected name",

@@ -9,6 +9,7 @@ services:
       - '80:8888'
     environment:
       DOCKER: 'true'
+      CONFIGURATION_FILEPATH: 'config_files/production.toml'
     links:
       - database
     depends_on:

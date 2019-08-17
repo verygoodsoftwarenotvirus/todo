@@ -6,11 +6,10 @@ KUBERNETES_NAMESPACE     := todo
 SERVER_DOCKER_IMAGE_NAME := todo-server
 SERVER_DOCKER_REPO_NAME  := docker.io/verygoodsoftwarenotvirus/$(SERVER_DOCKER_IMAGE_NAME)
 
-## dependency injectdion
+$(ARTIFACTS_DIR):
+	mkdir -p $(ARTIFACTS_DIR)
 
-.PHONY: install-dev-tool-wire
-install-dev-tool-wire:
-	go get -u github.com/google/wire/cmd/wire
+## dependency injection
 
 .PHONY: wire-clean
 wire-clean:
@@ -24,6 +23,7 @@ wire:
 rewire: wire-clean wire
 
 ## Go-specific prerequisite stuff
+
 .PHONY: dev-tools
 dev-tools:
 	GO111MODULE=off go get -u github.com/google/wire/cmd/wire
@@ -45,9 +45,6 @@ revendor: vendor-clean vendor
 
 lint:
 	GO111MODULE=on golangci-lint run --config=.golangci.yml ./...
-
-$(ARTIFACTS_DIR):
-	mkdir -p $(ARTIFACTS_DIR)
 
 $(COVERAGE_OUT): $(ARTIFACTS_DIR)
 	set -ex; \
@@ -96,7 +93,7 @@ frontend-tests:
 
 .PHONY: integration-tests
 integration-tests:
-	docker-compose --file compose-files/integration-tests.yaml up \
+	docker-compose --file compose-files/integration-tests-postgres.yaml up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -118,16 +115,6 @@ load-tests:
 	--always-recreate-deps \
 	--abort-on-container-exit
 
-.PHONY: ci-load-tests
-ci-load-tests:
-	docker-compose --file compose-files/ci-load-tests.yaml up \
-	--build \
-	--force-recreate \
-	--remove-orphans \
-	--renew-anon-volumes \
-	--always-recreate-deps \
-	--abort-on-container-exit
-
 .PHONY: integration-coverage
 integration-coverage:
 	@# big thanks to https://blog.cloudflare.com/go-coverage-with-external-tests/
@@ -141,6 +128,31 @@ integration-coverage:
 	--always-recreate-deps \
 	--abort-on-container-exit
 	go tool cover -html=./artifacts/integration-coverage.out
+
+## CI-specific tasks
+
+.PHONY: ci-load-tests
+ci-load-tests:
+	docker-compose --file compose-files/ci-load-tests.yaml up \
+	--build \
+	--force-recreate \
+	--remove-orphans \
+	--renew-anon-volumes \
+	--always-recreate-deps \
+	--abort-on-container-exit
+
+.PHONY: integration-tests-postgres
+integration-tests-postgres: integration-tests
+
+.PHONY: integration-tests-sqlite
+integration-tests-sqlite:
+	docker-compose --file compose-files/integration-tests-sqlite.yaml up \
+	--build \
+	--force-recreate \
+	--remove-orphans \
+	--renew-anon-volumes \
+	--always-recreate-deps \
+	--abort-on-container-exit
 
 ## Docker things
 

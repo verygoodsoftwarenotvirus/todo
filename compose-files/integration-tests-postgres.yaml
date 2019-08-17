@@ -1,0 +1,39 @@
+version: '3.3'
+
+services:
+  todo-server:
+    build:
+      context: ../
+      dockerfile: dockerfiles/integration-server.Dockerfile
+    ports:
+      - '80:8888'
+    environment:
+      DOCKER: 'true'
+      CONFIGURATION_FILEPATH: 'config_files/integration-tests-postgres.toml'
+    links:
+      - database
+    # logging:
+    #   driver: none
+
+  test:
+    build:
+      context: ../
+      dockerfile: dockerfiles/integration-tests.Dockerfile
+    environment:
+      DOCKER: 'true'
+      TARGET_ADDRESS: 'http://todo-server:8888'
+    links:
+      - todo-server
+    # logging:
+    #   driver: none
+
+  database:
+    image: postgres:latest
+    ports:
+      - '2345:5432'
+    environment:
+      POSTGRES_DB: todo
+      POSTGRES_USER: dbuser
+      POSTGRES_PASSWORD: hunter2
+    logging:
+      driver: none

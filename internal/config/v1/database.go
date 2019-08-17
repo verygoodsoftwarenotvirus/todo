@@ -6,6 +6,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/postgres"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"contrib.go.opencensus.io/integrations/ocsql"
@@ -29,6 +30,17 @@ func (cfg *ServerConfig) ProvideDatabase(ctx context.Context, logger logging.Log
 		ocsql.RecordStats(rawDB, cfg.Metrics.DBMetricsCollectionInterval)
 
 		pg := postgres.ProvidePostgres(debug, rawDB, logger)
+
+		return dbclient.ProvideDatabaseClient(ctx, rawDB, pg, debug, logger)
+	case "sqlite":
+		rawDB, err := sqlite.ProvideSqliteDB(logger, connectionDetails)
+		if err != nil {
+			return nil, errors.Wrap(err, "establish postgres database connection")
+		}
+		ocsql.RegisterAllViews()
+		ocsql.RecordStats(rawDB, cfg.Metrics.DBMetricsCollectionInterval)
+
+		pg := sqlite.ProvideSqlite(debug, rawDB, logger)
 
 		return dbclient.ProvideDatabaseClient(ctx, rawDB, pg, debug, logger)
 	default:

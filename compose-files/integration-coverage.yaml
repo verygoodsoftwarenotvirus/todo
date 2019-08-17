@@ -10,6 +10,7 @@ services:
     environment:
       DOCKER: 'true'
       RUNTIME_DURATION: '30s'
+      CONFIGURATION_FILEPATH: 'config_files/coverage.toml'
     volumes:
       - ../artifacts/:/home/
     links:

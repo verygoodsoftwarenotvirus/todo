@@ -26,8 +26,6 @@ FROM debian:stable
 COPY config_files config_files
 COPY --from=build-stage /todo /todo
 
-ENV CONFIGURATION_FILEPATH=config_files/coverage.toml
-
 EXPOSE 80
 
 ENTRYPOINT ["/todo", "-test.coverprofile=/home/integration-coverage.out"]

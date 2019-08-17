@@ -1,6 +1,7 @@
 package zerolog
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 
@@ -40,13 +41,6 @@ func NewZeroLogger() logging.Logger {
 	return l
 }
 
-// WithName is our obligatory contract fulfillment function
-// Zerolog doesn't support named loggers :( so we have this workaround
-func (l *Logger) WithName(name string) logging.Logger {
-	l2 := l.logger.With().Str(logging.LoggerNameKey, name).Logger()
-	return &Logger{logger: l2}
-}
-
 // SetLevel sets the log level for our logger
 func (l *Logger) SetLevel(level logging.Level) {
 	var lvl zerolog.Level
@@ -74,12 +68,19 @@ func (l *Logger) Debug(input string) {
 
 // Error satisfies our contract for the logging.Logger Error method.
 func (l *Logger) Error(err error, input string) {
-	l.logger.Error().Caller().Err(err).Msg(input)
+	l.logger.Error().Caller().Err(err).Msg(fmt.Sprintf("%s (%s)", input, err.Error()))
 }
 
 // Fatal satisfies our contract for the logging.Logger Fatal method.
 func (l *Logger) Fatal(err error) {
 	l.logger.Fatal().Caller().Err(err).Msg("")
+}
+
+// WithName is our obligatory contract fulfillment function
+// Zerolog doesn't support named loggers :( so we have this workaround
+func (l *Logger) WithName(name string) logging.Logger {
+	l2 := l.logger.With().Str(logging.LoggerNameKey, name).Logger()
+	return &Logger{logger: l2}
 }
 
 // WithValues satisfies our contract for the logging.Logger WithValues method.

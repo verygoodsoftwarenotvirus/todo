@@ -246,21 +246,21 @@ func (p *Postgres) buildCreateItemQuery(input *models.Item) (query string, args 
 
 // CreateItem creates an item in the database
 func (p *Postgres) CreateItem(ctx context.Context, input *models.ItemCreationInput) (*models.Item, error) {
-	i := &models.Item{
+	x := &models.Item{
 		Name:      input.Name,
 		Details:   input.Details,
 		BelongsTo: input.BelongsTo,
 	}
 
-	query, args := p.buildCreateItemQuery(i)
+	query, args := p.buildCreateItemQuery(x)
 
 	// create the item
-	err := p.db.QueryRowContext(ctx, query, args...).Scan(&i.ID, &i.CreatedOn)
+	err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
 	if err != nil {
 		return nil, errors.Wrap(err, "error executing item creation query")
 	}
 
-	return i, nil
+	return x, nil
 }
 
 // buildUpdateItemQuery takes an item and returns an update SQL query, with the relevant query parameters

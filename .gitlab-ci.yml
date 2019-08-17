@@ -20,7 +20,7 @@ coverage:
     - GO111MODULES=off go get -u github.com/axw/gocov/gocov
     - make artifacts/coverage.out
 
-integration-tests:
+integration-tests-sqlite:
   stage: testing
   image: docker:latest
   services:
@@ -31,7 +31,20 @@ integration-tests:
     - apk add --update --no-cache py-pip openssl python-dev libffi-dev
       openssl-dev gcc libc-dev make
     - pip install docker-compose
-    - make integration-tests
+    - make integration-tests-sqlite
+
+integration-tests-postgres:
+  stage: testing
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    GOPATH: '/go'
+  script:
+    - apk add --update --no-cache py-pip openssl python-dev libffi-dev
+      openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - make integration-tests-postgres
 
 build-frontend:
   stage: quality
@@ -55,7 +68,6 @@ frontend-selenium-tests:
     - pip install docker-compose
     - make frontend-tests
 
-
 daily-load-tests:on-schedule:
   stage: testing
   image: docker:latest
@@ -72,7 +84,7 @@ daily-load-tests:on-schedule:
   only:
     - schedules
 
-load-tests:
+load-tests-postgres:
   stage: testing
   image: docker:latest
   services:

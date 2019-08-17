@@ -1,0 +1,22 @@
+[meta]
+# tracing_enabled = true
+# debug = true
+
+[metrics]
+metrics_provider = "prometheus"
+tracing_provider = "jaeger"
+
+[server]
+http_port = 8888
+debug = true
+
+[frontend]
+static_files_dir = "/frontend"
+
+[auth]
+cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"
+
+[database]
+provider = "sqlite"
+debug = false
+connection_details = "/tmp/db"

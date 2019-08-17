@@ -29,6 +29,4 @@ COPY config_files config_files
 COPY --from=build-stage /todo /todo
 COPY --from=frontend-build-stage /app/public /frontend
 
-ENV CONFIGURATION_FILEPATH=config_files/production.toml
-
 ENTRYPOINT ["/todo"]

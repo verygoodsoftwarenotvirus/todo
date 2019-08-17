@@ -359,7 +359,7 @@ func (p *Postgres) CreateWebhook(ctx context.Context, input *models.WebhookCreat
 	}
 
 	query, args := p.buildWebhookCreationQuery(x)
-	if err := p.db.QueryRow(query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {
+	if err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {
 		return nil, errors.Wrap(err, "error executing webhook creation query")
 	}
 

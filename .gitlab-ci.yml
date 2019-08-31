@@ -14,7 +14,7 @@ coverage:
   stage: quality
   image: golang:stretch
   variables:
-    GOPATH: '/go'
+    GOPATH: "/go"
   script:
     - apt-get update -y && apt-get install -y make git gcc musl-dev
     - GO111MODULES=off go get -u github.com/axw/gocov/gocov
@@ -26,7 +26,7 @@ integration-tests-sqlite:
   services:
     - docker:dind
   variables:
-    GOPATH: '/go'
+    GOPATH: "/go"
   script:
     - apk add --update --no-cache py-pip openssl python-dev libffi-dev
       openssl-dev gcc libc-dev make
@@ -39,7 +39,7 @@ integration-tests-postgres:
   services:
     - docker:dind
   variables:
-    GOPATH: '/go'
+    GOPATH: "/go"
   script:
     - apk add --update --no-cache py-pip openssl python-dev libffi-dev
       openssl-dev gcc libc-dev make
@@ -61,7 +61,7 @@ frontend-selenium-tests:
   services:
     - docker:dind
   variables:
-    GOPATH: '/go'
+    GOPATH: "/go"
   script:
     - apk add --update --no-cache py-pip openssl python-dev libffi-dev
       openssl-dev gcc libc-dev make
@@ -74,8 +74,8 @@ daily-load-tests:on-schedule:
   services:
     - docker:dind
   variables:
-    GOPATH: '/go'
-    LOADTEST_RUN_TIME: '2m30s'
+    GOPATH: "/go"
+    LOADTEST_RUN_TIME: "2m30s"
   script:
     - apk add --update --no-cache py-pip openssl python-dev libffi-dev
       openssl-dev gcc libc-dev make
@@ -90,8 +90,8 @@ load-tests-postgres:
   services:
     - docker:dind
   variables:
-    GOPATH: '/go'
-    LOADTEST_RUN_TIME: '2m30s'
+    GOPATH: "/go"
+    LOADTEST_RUN_TIME: "2m30s"
   script:
     - apk add --update --no-cache py-pip openssl python-dev libffi-dev
       openssl-dev gcc libc-dev make
@@ -106,7 +106,7 @@ linting:
   stage: quality
   image: golang:stretch
   variables:
-    GOPATH: '/go'
+    GOPATH: "/go"
   before_script:
     - apt-get install -y curl
     - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.16.0

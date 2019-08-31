@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -123,29 +122,15 @@ func buildOAuthClient(
 	ts := oauth2.ReuseTokenSource(nil, conf.TokenSource(ctx))
 	client := &http.Client{
 		Transport: &oauth2.Transport{
-			Base:   &ochttp.Transport{Base: buildDefaultTransport()},
+			Base: &ochttp.Transport{
+				Base: newDefaultRoundTripper(),
+			},
 			Source: ts,
 		},
 		Timeout: 5 * time.Second,
 	}
 
 	return client, ts
-}
-
-func buildDefaultTransport() *http.Transport {
-	return &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-			DualStack: true,
-		}).DialContext,
-		MaxIdleConns:          100,
-		MaxIdleConnsPerHost:   100,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-	}
 }
 
 func tokenEndpoint(baseURL *url.URL) oauth2.Endpoint {

@@ -94,7 +94,9 @@ func scanWebhooks(logger logging.Logger, rows *sql.Rows) ([]models.Webhook, erro
 		return nil, err
 	}
 
-	logQueryBuildingError(logger, rows.Close())
+	if err := rows.Close(); err != nil {
+		logger.Error(err, "closing rows")
+	}
 
 	return list, nil
 }
@@ -110,7 +112,7 @@ func (p *Postgres) buildGetWebhookQuery(webhookID, userID uint64) (query string,
 			"belongs_to": userID,
 		}).ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 	return query, args
 }
 
@@ -144,7 +146,7 @@ func (p *Postgres) buildGetWebhookCountQuery(filter *models.QueryFilter, userID 
 	}
 
 	query, args, err = builder.ToSql()
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -172,7 +174,7 @@ func (p *Postgres) buildGetAllWebhooksCountQuery() string {
 			Where(squirrel.Eq{"archived_on": nil}).
 			ToSql()
 
-		logQueryBuildingError(p.logger, err)
+		p.logQueryBuildingError(err)
 	})
 
 	return getAllWebhooksCountQuery
@@ -199,7 +201,7 @@ func (p *Postgres) buildGetAllWebhooksQuery() string {
 				"archived_on": nil,
 			}).ToSql()
 
-		logQueryBuildingError(p.logger, err)
+		p.logQueryBuildingError(err)
 	})
 
 	return getAllWebhooksQuery
@@ -273,7 +275,7 @@ func (p *Postgres) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint
 
 	query, args, err = builder.ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -340,7 +342,7 @@ func (p *Postgres) buildWebhookCreationQuery(x *models.Webhook) (query string, a
 		Suffix("RETURNING id, created_on").
 		ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -384,7 +386,7 @@ func (p *Postgres) buildUpdateWebhookQuery(input *models.Webhook) (query string,
 		}).Suffix("RETURNING updated_on").
 		ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -409,7 +411,7 @@ func (p *Postgres) buildArchiveWebhookQuery(webhookID, userID uint64) (query str
 		Suffix("RETURNING archived_on").
 		ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }

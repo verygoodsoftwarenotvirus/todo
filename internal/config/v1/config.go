@@ -32,7 +32,6 @@ type (
 		// Debug enables debug mode service-wide
 		// NOTE: this debug should override all other debugs, which is to say, if this is enabled, all of them are enabled.
 		Debug bool `mapstructure:"debug"`
-
 		// StartupDeadline indicates how long the service can take to spin up. This includes database migrations, configuring services, etc.
 		StartupDeadline time.Duration `mapstructure:"startup_deadline"`
 	}
@@ -69,6 +68,18 @@ type (
 		SecureCookiesOnly bool `mapstructure:"secure_cookies_only"`
 		// EnableUserSignup enables user signups
 		EnableUserSignup bool `mapstructure:"enable_user_signup"`
+	}
+
+	// MetricsSettings contains settings about how we report our metrics
+	MetricsSettings struct {
+		// MetricsProvider indicates where our metrics should go
+		MetricsProvider metricsProvider `mapstructure:"metrics_provider"`
+		// TracingProvider indicates where our traces should go
+		TracingProvider tracingProvider `mapstructure:"tracing_provider"`
+		// DBMetricsCollectionInterval is the interval we collect database statistics at
+		DBMetricsCollectionInterval time.Duration `mapstructure:"database_metrics_collection_interval"`
+		// RuntimeMetricsCollectionInterval  is the interval we collect runtime statistics at
+		RuntimeMetricsCollectionInterval time.Duration `mapstructure:"runtime_metrics_collection_interval"`
 	}
 
 	// DatabaseSettings represents our database configuration

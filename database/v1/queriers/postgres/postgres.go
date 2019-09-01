@@ -16,6 +16,7 @@ import (
 )
 
 const (
+	loggerName         = "postgres"
 	postgresDriverName = "wrapped-postgres-driver"
 
 	// CountQuery is a generic counter query used in a few query builders
@@ -38,7 +39,6 @@ func init() {
 
 	// Register our ocsql wrapper as a db driver.
 	sql.Register(postgresDriverName, driver)
-
 }
 
 type (
@@ -74,7 +74,7 @@ func ProvidePostgres(debug bool, db *sql.DB, logger logging.Logger) database.Dat
 	return &Postgres{
 		db:         db,
 		debug:      debug,
-		logger:     logger.WithName("postgres"),
+		logger:     logger.WithName(loggerName),
 		sqlBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
 	}
 }
@@ -111,9 +111,9 @@ func (p *Postgres) IsReady(ctx context.Context) (ready bool) {
 // type discrepancies or other misuses of SQL. An alert should be set up for
 // any log entries with the given name, and those alerts should be investigated
 // with the utmost priority.
-func logQueryBuildingError(logger logging.Logger, err error) {
+func (p *Postgres) logQueryBuildingError(err error) {
 	if err != nil {
-		logger.WithName("QUERY_ERROR").Error(err, "building query")
+		p.logger.WithName("QUERY_ERROR").Error(err, "building query")
 	}
 }
 

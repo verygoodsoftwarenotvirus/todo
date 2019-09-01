@@ -36,6 +36,8 @@ github.com/go-chi/chi
 github.com/go-chi/chi/middleware
 # github.com/go-chi/cors v1.0.0
 github.com/go-chi/cors
+# github.com/go-sql-driver/mysql v1.4.1
+github.com/go-sql-driver/mysql
 # github.com/golang/protobuf v1.3.1
 github.com/golang/protobuf/proto
 # github.com/google/wire v0.2.2
@@ -190,6 +192,7 @@ golang.org/x/text/unicode/norm
 # google.golang.org/api v0.3.2
 google.golang.org/api/support/bundler
 # google.golang.org/appengine v1.4.0
+google.golang.org/appengine/cloudsql
 google.golang.org/appengine/urlfetch
 google.golang.org/appengine/internal
 google.golang.org/appengine/internal/urlfetch

@@ -154,6 +154,16 @@ integration-tests-sqlite:
 	--always-recreate-deps \
 	--abort-on-container-exit
 
+.PHONY: integration-tests-mariadb
+integration-tests-mariadb:
+	docker-compose --file compose-files/integration-tests-mariadb.yaml up \
+	--build \
+	--force-recreate \
+	--remove-orphans \
+	--renew-anon-volumes \
+	--always-recreate-deps \
+	--abort-on-container-exit
+
 ## Docker things
 
 .PHONY: server-docker-image

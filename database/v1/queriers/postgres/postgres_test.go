@@ -61,6 +61,7 @@ func Test_logQueryBuildingError(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		logQueryBuildingError(noop.ProvideNoopLogger(), errors.New(""))
+		p, _ := buildTestService(t)
+		p.logQueryBuildingError(errors.New(""))
 	})
 }

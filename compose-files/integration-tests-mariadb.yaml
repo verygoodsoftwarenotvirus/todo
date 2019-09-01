@@ -1,0 +1,41 @@
+version: '3.3'
+
+services:
+  todo-server:
+    build:
+      context: ../
+      dockerfile: dockerfiles/integration-server.Dockerfile
+    ports:
+      - '80:8888'
+    environment:
+      DOCKER: 'true'
+      CONFIGURATION_FILEPATH: 'config_files/integration-tests-mariadb.toml'
+    links:
+      - database
+    # logging:
+    #   driver: none
+
+  test:
+    build:
+      context: ../
+      dockerfile: dockerfiles/integration-tests.Dockerfile
+    environment:
+      DOCKER: 'true'
+      TARGET_ADDRESS: 'http://todo-server:8888'
+    links:
+      - todo-server
+    # logging:
+    #   driver: none
+
+  database:
+    image: mariadb:latest
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'no'
+      MYSQL_DATABASE: 'todo'
+      MYSQL_USER: 'dbuser'
+      MYSQL_PASSWORD: 'hunter2'
+#    logging:
+#      driver: none

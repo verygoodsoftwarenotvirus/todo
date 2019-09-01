@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	loggerName       = "sqlite"
 	sqliteDriverName = "wrapped-sqlite-driver"
 
 	// CountQuery is a generic counter query used in a few query builders
@@ -72,7 +73,7 @@ func ProvideSqlite(debug bool, db *sql.DB, logger logging.Logger) database.Datab
 	return &Sqlite{
 		db:         db,
 		debug:      debug,
-		logger:     logger.WithName("sqlite"),
+		logger:     logger.WithName(loggerName),
 		sqlBuilder: squirrel.StatementBuilder,
 	}
 }
@@ -93,7 +94,7 @@ func (s *Sqlite) logQueryBuildingError(err error) {
 	}
 }
 
-// s.logQueryBuildingError logs errors that may occur during query construction.
+// logCreationTimeRetrievalError logs errors that may occur during creation time retrieval
 // Such errors should be few and far between, as the generally only occur with
 // type discrepancies or other misuses of SQL. An alert should be set up for
 // any log entries with the given name, and those alerts should be investigated

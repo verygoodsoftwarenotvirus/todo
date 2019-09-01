@@ -46,18 +46,6 @@ var (
 	DefaultTracingProvider = Jaeger
 )
 
-// MetricsSettings contains settings about how we report our metrics
-type MetricsSettings struct {
-	// MetricsProvider indicates where our metrics should go
-	MetricsProvider metricsProvider `mapstructure:"metrics_provider"`
-	// TracingProvider indicates where our traces should go
-	TracingProvider tracingProvider `mapstructure:"tracing_provider"`
-	// DBMetricsCollectionInterval is the interval we collect database statistics at
-	DBMetricsCollectionInterval time.Duration `mapstructure:"database_metrics_collection_interval"`
-	// RuntimeMetricsCollectionInterval  is the interval we collect runtime statistics at
-	RuntimeMetricsCollectionInterval time.Duration `mapstructure:"runtime_metrics_collection_interval"`
-}
-
 // ProvideInstrumentationHandler provides an instrumentation handler
 func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) (metrics.InstrumentationHandler, error) {
 	if err := metrics.RegisterDefaultViews(); err != nil {

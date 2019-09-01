@@ -47,7 +47,7 @@ func TestProvidePostgres(T *testing.T) {
 	})
 }
 
-func TestPostgres_IsReady(T *testing.T) {
+func TestMariaDB_IsReady(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {

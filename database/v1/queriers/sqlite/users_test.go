@@ -416,9 +416,9 @@ func TestSqlite_CreateUser(T *testing.T) {
 			Username: expected.Username,
 		}
 
-		expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret,is_admin) VALUES (?,?,?,?)"
-
 		s, mockDB := buildTestService(t)
+
+		expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret,is_admin) VALUES (?,?,?,?)"
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(
 				expected.Username,
@@ -449,9 +449,9 @@ func TestSqlite_CreateUser(T *testing.T) {
 			Username: expected.Username,
 		}
 
-		expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret,is_admin) VALUES (?,?,?,?)"
-
 		s, mockDB := buildTestService(t)
+
+		expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret,is_admin) VALUES (?,?,?,?)"
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(
 				expected.Username,

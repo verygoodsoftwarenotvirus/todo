@@ -27,11 +27,11 @@ type (
 		CreationInputMiddleware(next http.Handler) http.Handler
 		UpdateInputMiddleware(next http.Handler) http.Handler
 
-		ListHandler(res http.ResponseWriter, req *http.Request)
-		CreateHandler(res http.ResponseWriter, req *http.Request)
-		ReadHandler(res http.ResponseWriter, req *http.Request)
-		UpdateHandler(res http.ResponseWriter, req *http.Request)
-		ArchiveHandler(res http.ResponseWriter, req *http.Request)
+		ListHandler() http.HandlerFunc
+		CreateHandler() http.HandlerFunc
+		ReadHandler() http.HandlerFunc
+		UpdateHandler() http.HandlerFunc
+		ArchiveHandler() http.HandlerFunc
 	}
 
 	// Webhook represents a webhook listener, an endpoint to send an HTTP request to upon an event

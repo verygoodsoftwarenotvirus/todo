@@ -17,23 +17,27 @@ type OAuth2ClientDataServer struct {
 }
 
 // ListHandler is the obligatory implementation for our interface
-func (m *OAuth2ClientDataServer) ListHandler(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
+func (m *OAuth2ClientDataServer) ListHandler() http.HandlerFunc {
+	args := m.Called()
+	return args.Get(0).(http.HandlerFunc)
 }
 
 // CreateHandler is the obligatory implementation for our interface
-func (m *OAuth2ClientDataServer) CreateHandler(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
+func (m *OAuth2ClientDataServer) CreateHandler() http.HandlerFunc {
+	args := m.Called()
+	return args.Get(0).(http.HandlerFunc)
 }
 
 // ReadHandler is the obligatory implementation for our interface
-func (m *OAuth2ClientDataServer) ReadHandler(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
+func (m *OAuth2ClientDataServer) ReadHandler() http.HandlerFunc {
+	args := m.Called()
+	return args.Get(0).(http.HandlerFunc)
 }
 
 // ArchiveHandler is the obligatory implementation for our interface
-func (m *OAuth2ClientDataServer) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
+func (m *OAuth2ClientDataServer) ArchiveHandler() http.HandlerFunc {
+	args := m.Called()
+	return args.Get(0).(http.HandlerFunc)
 }
 
 // CreationInputMiddleware is the obligatory implementation for our interface

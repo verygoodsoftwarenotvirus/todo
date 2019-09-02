@@ -28,26 +28,31 @@ func (m *WebhookDataServer) UpdateInputMiddleware(next http.Handler) http.Handle
 }
 
 // ListHandler implements our interface requirements
-func (m *WebhookDataServer) ListHandler(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
+func (m *WebhookDataServer) ListHandler() http.HandlerFunc {
+	args := m.Called()
+	return args.Get(0).(http.HandlerFunc)
 }
 
 // CreateHandler implements our interface requirements
-func (m *WebhookDataServer) CreateHandler(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
+func (m *WebhookDataServer) CreateHandler() http.HandlerFunc {
+	args := m.Called()
+	return args.Get(0).(http.HandlerFunc)
 }
 
 // ReadHandler implements our interface requirements
-func (m *WebhookDataServer) ReadHandler(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
+func (m *WebhookDataServer) ReadHandler() http.HandlerFunc {
+	args := m.Called()
+	return args.Get(0).(http.HandlerFunc)
 }
 
 // UpdateHandler implements our interface requirements
-func (m *WebhookDataServer) UpdateHandler(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
+func (m *WebhookDataServer) UpdateHandler() http.HandlerFunc {
+	args := m.Called()
+	return args.Get(0).(http.HandlerFunc)
 }
 
 // ArchiveHandler implements our interface requirements
-func (m *WebhookDataServer) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
+func (m *WebhookDataServer) ArchiveHandler() http.HandlerFunc {
+	args := m.Called()
+	return args.Get(0).(http.HandlerFunc)
 }

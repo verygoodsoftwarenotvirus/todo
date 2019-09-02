@@ -98,91 +98,97 @@ func (s *Service) FetchUserFromRequest(ctx context.Context, req *http.Request) (
 }
 
 // LoginHandler is our login route
-func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "LoginHandler")
-	defer span.End()
+func (s *Service) LoginHandler() http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := trace.StartSpan(req.Context(), "LoginHandler")
+		defer span.End()
 
-	loginData, errRes := s.fetchLoginDataFromRequest(req)
-	if errRes != nil {
-		s.logger.Error(errRes, "error encountered fetching login data from request")
-		res.WriteHeader(http.StatusUnauthorized)
-		if err := s.encoderDecoder.EncodeResponse(res, errRes); err != nil {
-			s.logger.Error(err, "encoding response")
+		loginData, errRes := s.fetchLoginDataFromRequest(req)
+		if errRes != nil {
+			s.logger.Error(errRes, "error encountered fetching login data from request")
+			res.WriteHeader(http.StatusUnauthorized)
+			if err := s.encoderDecoder.EncodeResponse(res, errRes); err != nil {
+				s.logger.Error(err, "encoding response")
+			}
+			return
+		} else if loginData == nil {
+			res.WriteHeader(http.StatusUnauthorized)
+			return
 		}
-		return
-	} else if loginData == nil {
-		res.WriteHeader(http.StatusUnauthorized)
-		return
-	}
 
-	attachUserIDToSpan(span, loginData.user.ID)
-	attachUsernameToSpan(span, loginData.user.Username)
+		attachUserIDToSpan(span, loginData.user.ID)
+		attachUsernameToSpan(span, loginData.user.Username)
 
-	logger := s.logger.WithValue("user", loginData.user.ID)
+		logger := s.logger.WithValue("user", loginData.user.ID)
 
-	loginValid, err := s.validateLogin(ctx, *loginData)
-	if err != nil {
-		logger.Error(err, "error encountered validating login")
-		res.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-	logger = logger.WithValue("valid", loginValid)
-
-	if !loginValid {
-		logger.Debug("login was invalid")
-		res.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-
-	logger.Debug("login was valid")
-	cookie, err := s.buildAuthCookie(loginData.user)
-	if err != nil {
-		logger.Error(err, "error building cookie")
-
-		res.WriteHeader(http.StatusInternalServerError)
-		response := &models.ErrorResponse{
-			Code:    http.StatusInternalServerError,
-			Message: "error encountered building cookie",
+		loginValid, err := s.validateLogin(ctx, *loginData)
+		if err != nil {
+			logger.Error(err, "error encountered validating login")
+			res.WriteHeader(http.StatusUnauthorized)
+			return
 		}
-		if err := s.encoderDecoder.EncodeResponse(res, response); err != nil {
-			s.logger.Error(err, "encoding response")
-		}
-		return
-	}
+		logger = logger.WithValue("valid", loginValid)
 
-	http.SetCookie(res, cookie)
-	res.WriteHeader(http.StatusNoContent)
+		if !loginValid {
+			logger.Debug("login was invalid")
+			res.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		logger.Debug("login was valid")
+		cookie, err := s.buildAuthCookie(loginData.user)
+		if err != nil {
+			logger.Error(err, "error building cookie")
+
+			res.WriteHeader(http.StatusInternalServerError)
+			response := &models.ErrorResponse{
+				Code:    http.StatusInternalServerError,
+				Message: "error encountered building cookie",
+			}
+			if err := s.encoderDecoder.EncodeResponse(res, response); err != nil {
+				s.logger.Error(err, "encoding response")
+			}
+			return
+		}
+
+		http.SetCookie(res, cookie)
+		res.WriteHeader(http.StatusNoContent)
+	}
 }
 
 // LogoutHandler is our logout route
-func (s *Service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
-	_, span := trace.StartSpan(req.Context(), "LogoutHandler")
-	defer span.End()
+func (s *Service) LogoutHandler() http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		_, span := trace.StartSpan(req.Context(), "LogoutHandler")
+		defer span.End()
 
-	if cookie, err := req.Cookie(CookieName); err == nil && cookie != nil {
-		c := s.buildCookie("deleted")
-		c.Expires = time.Time{}
-		c.MaxAge = -1
-		http.SetCookie(res, c)
-	} else {
-		s.logger.WithError(err).Debug("logout was called, no cookie was found")
+		if cookie, err := req.Cookie(CookieName); err == nil && cookie != nil {
+			c := s.buildCookie("deleted")
+			c.Expires = time.Time{}
+			c.MaxAge = -1
+			http.SetCookie(res, c)
+		} else {
+			s.logger.WithError(err).Debug("logout was called, no cookie was found")
+		}
+
+		res.WriteHeader(http.StatusOK)
 	}
-
-	res.WriteHeader(http.StatusOK)
 }
 
 // CycleSecretHandler rotates the cookie building secret with a new random secret
-func (s *Service) CycleSecretHandler(res http.ResponseWriter, req *http.Request) {
-	s.logger.Info("cycling cookie secret!")
-	_, span := trace.StartSpan(req.Context(), "CycleSecretHandler")
-	defer span.End()
+func (s *Service) CycleSecretHandler() http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		s.logger.Info("cycling cookie secret!")
+		_, span := trace.StartSpan(req.Context(), "CycleSecretHandler")
+		defer span.End()
 
-	s.cookieManager = securecookie.New(
-		securecookie.GenerateRandomKey(64),
-		[]byte(s.config.CookieSecret),
-	)
+		s.cookieManager = securecookie.New(
+			securecookie.GenerateRandomKey(64),
+			[]byte(s.config.CookieSecret),
+		)
 
-	res.WriteHeader(http.StatusCreated)
+		res.WriteHeader(http.StatusCreated)
+	}
 }
 
 type loginData struct {

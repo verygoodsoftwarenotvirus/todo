@@ -105,111 +105,115 @@ func (s *Service) validateCredentialChangeRequest(
 }
 
 // ListHandler is a handler for responding with a list of users
-func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "ListHandler")
-	defer span.End()
+func (s *Service) ListHandler() http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := trace.StartSpan(req.Context(), "ListHandler")
+		defer span.End()
 
-	// determine desired filter
-	qf := models.ExtractQueryFilter(req)
+		// determine desired filter
+		qf := models.ExtractQueryFilter(req)
 
-	// fetch user data
-	users, err := s.database.GetUsers(ctx, qf)
-	if err != nil {
-		s.logger.Error(err, "error fetching users for ListHandler route")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+		// fetch user data
+		users, err := s.database.GetUsers(ctx, qf)
+		if err != nil {
+			s.logger.Error(err, "error fetching users for ListHandler route")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	// encode response
-	if err = s.encoderDecoder.EncodeResponse(res, users); err != nil {
-		s.logger.Error(err, "encoding response")
+		// encode response
+		if err = s.encoderDecoder.EncodeResponse(res, users); err != nil {
+			s.logger.Error(err, "encoding response")
+		}
 	}
 }
 
 // CreateHandler is our user creation route
-func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "CreateHandler")
-	defer span.End()
+func (s *Service) CreateHandler() http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := trace.StartSpan(req.Context(), "CreateHandler")
+		defer span.End()
 
-	// in the event that we don't want new users to be able to sign up (a config setting)
-	// just decline the request from the get-go
-	if !s.userCreationEnabled {
-		s.logger.Info("disallowing user creation")
-		res.WriteHeader(http.StatusForbidden)
-		return
-	}
+		// in the event that we don't want new users to be able to sign up (a config setting)
+		// just decline the request from the get-go
+		if !s.userCreationEnabled {
+			s.logger.Info("disallowing user creation")
+			res.WriteHeader(http.StatusForbidden)
+			return
+		}
 
-	// fetch parsed input from request context
-	input, ok := ctx.Value(UserCreationMiddlewareCtxKey).(*models.UserInput)
-	if !ok {
-		s.logger.Info("valid input not attached to UsersService CreateHandler request")
-		res.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	attachUsernameToSpan(span, input.Username)
+		// fetch parsed input from request context
+		input, ok := ctx.Value(UserCreationMiddlewareCtxKey).(*models.UserInput)
+		if !ok {
+			s.logger.Info("valid input not attached to UsersService CreateHandler request")
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		attachUsernameToSpan(span, input.Username)
 
-	// NOTE: I feel comfortable letting username be in the logger, since
-	// the logging statements below are only in the event of errors. If
-	// and when that changes, this can/should be removed.
-	logger := s.logger.WithValue("username", input.Username)
+		// NOTE: I feel comfortable letting username be in the logger, since
+		// the logging statements below are only in the event of errors. If
+		// and when that changes, this can/should be removed.
+		logger := s.logger.WithValue("username", input.Username)
 
-	// hash the password
-	hp, err := s.authenticator.HashPassword(ctx, input.Password)
-	if err != nil {
-		logger.Error(err, "valid input not attached to request")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	input.Password = hp
+		// hash the password
+		hp, err := s.authenticator.HashPassword(ctx, input.Password)
+		if err != nil {
+			logger.Error(err, "valid input not attached to request")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		input.Password = hp
 
-	// generate a two factor secret
-	input.TwoFactorSecret, err = randString()
-	if err != nil {
-		logger.Error(err, "error generating TOTP secret")
-		res.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	// create the user
-	user, err := s.database.CreateUser(ctx, input)
-	if err != nil {
-		if err == dbclient.ErrUserExists {
-			logger.Info("duplicate username attempted")
+		// generate a two factor secret
+		input.TwoFactorSecret, err = randString()
+		if err != nil {
+			logger.Error(err, "error generating TOTP secret")
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
-		logger.Error(err, "error creating user")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+		// create the user
+		user, err := s.database.CreateUser(ctx, input)
+		if err != nil {
+			if err == dbclient.ErrUserExists {
+				logger.Info("duplicate username attempted")
+				res.WriteHeader(http.StatusBadRequest)
+				return
+			}
 
-	// UserCreationResponse is a struct we can use to notify the user of
-	// their two factor secret, but ideally just this once and then never again.
-	ucr := &models.UserCreationResponse{
-		ID:                    user.ID,
-		Username:              user.Username,
-		TwoFactorSecret:       user.TwoFactorSecret,
-		PasswordLastChangedOn: user.PasswordLastChangedOn,
-		CreatedOn:             user.CreatedOn,
-		UpdatedOn:             user.UpdatedOn,
-		ArchivedOn:            user.ArchivedOn,
-		TwoFactorQRCode:       s.buildQRCode(ctx, user.Username, user.TwoFactorSecret),
-	}
+			logger.Error(err, "error creating user")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	// notify the relevant parties
-	attachUserIDToSpan(span, user.ID)
-	s.userCounter.Increment(ctx)
-	s.reporter.Report(newsman.Event{
-		EventType: string(models.Create),
-		Data:      ucr,
-		Topics:    []string{topicName},
-	})
+		// UserCreationResponse is a struct we can use to notify the user of
+		// their two factor secret, but ideally just this once and then never again.
+		ucr := &models.UserCreationResponse{
+			ID:                    user.ID,
+			Username:              user.Username,
+			TwoFactorSecret:       user.TwoFactorSecret,
+			PasswordLastChangedOn: user.PasswordLastChangedOn,
+			CreatedOn:             user.CreatedOn,
+			UpdatedOn:             user.UpdatedOn,
+			ArchivedOn:            user.ArchivedOn,
+			TwoFactorQRCode:       s.buildQRCode(ctx, user.Username, user.TwoFactorSecret),
+		}
 
-	// encode and peace
-	res.WriteHeader(http.StatusCreated)
-	if err = s.encoderDecoder.EncodeResponse(res, ucr); err != nil {
-		s.logger.Error(err, "encoding response")
+		// notify the relevant parties
+		attachUserIDToSpan(span, user.ID)
+		s.userCounter.Increment(ctx)
+		s.reporter.Report(newsman.Event{
+			EventType: string(models.Create),
+			Data:      ucr,
+			Topics:    []string{topicName},
+		})
+
+		// encode and peace
+		res.WriteHeader(http.StatusCreated)
+		if err = s.encoderDecoder.EncodeResponse(res, ucr); err != nil {
+			s.logger.Error(err, "encoding response")
+		}
 	}
 }
 
@@ -253,187 +257,195 @@ func (s *Service) buildQRCode(ctx context.Context, username, twoFactorSecret str
 }
 
 // ReadHandler is our read route
-func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "ReadHandler")
-	defer span.End()
+func (s *Service) ReadHandler() http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := trace.StartSpan(req.Context(), "ReadHandler")
+		defer span.End()
 
-	// figure out who this is all for
-	userID := s.userIDFetcher(req)
-	logger := s.logger.WithValue("user_id", userID)
+		// figure out who this is all for
+		userID := s.userIDFetcher(req)
+		logger := s.logger.WithValue("user_id", userID)
 
-	// document it for posterity
-	attachUserIDToSpan(span, userID)
+		// document it for posterity
+		attachUserIDToSpan(span, userID)
 
-	// fetch user data
-	x, err := s.database.GetUser(ctx, userID)
-	if err == sql.ErrNoRows {
-		logger.Debug("no such user")
-		res.WriteHeader(http.StatusNotFound)
-		return
-	} else if err != nil {
-		logger.Error(err, "error fetching user from database")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+		// fetch user data
+		x, err := s.database.GetUser(ctx, userID)
+		if err == sql.ErrNoRows {
+			logger.Debug("no such user")
+			res.WriteHeader(http.StatusNotFound)
+			return
+		} else if err != nil {
+			logger.Error(err, "error fetching user from database")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	// encode response and peace
-	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
-		s.logger.Error(err, "encoding response")
+		// encode response and peace
+		if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
+			s.logger.Error(err, "encoding response")
+		}
 	}
 }
 
 // NewTOTPSecretHandler fetches a user, and issues them a new TOTP secret, after validating
 // that information received from TOTPSecretRefreshInputContextMiddleware is valid
-func (s *Service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "NewTOTPSecretHandler")
-	defer span.End()
+func (s *Service) NewTOTPSecretHandler() http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := trace.StartSpan(req.Context(), "NewTOTPSecretHandler")
+		defer span.End()
 
-	// check request context for parsed input
-	input, ok := req.Context().Value(TOTPSecretRefreshMiddlewareCtxKey).(*models.TOTPSecretRefreshInput)
-	if !ok {
-		s.logger.Debug("no input found on TOTP secret refresh request")
-		res.WriteHeader(http.StatusBadRequest)
-		return
-	}
+		// check request context for parsed input
+		input, ok := req.Context().Value(TOTPSecretRefreshMiddlewareCtxKey).(*models.TOTPSecretRefreshInput)
+		if !ok {
+			s.logger.Debug("no input found on TOTP secret refresh request")
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
-	// also check for the user's ID
-	userID, ok := ctx.Value(models.UserIDKey).(uint64)
-	if !ok {
-		s.logger.Debug("no user ID attached to TOTP secret refresh request")
-		res.WriteHeader(http.StatusUnauthorized)
-		return
-	}
+		// also check for the user's ID
+		userID, ok := ctx.Value(models.UserIDKey).(uint64)
+		if !ok {
+			s.logger.Debug("no user ID attached to TOTP secret refresh request")
+			res.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 
-	// make sure this is all on the up-and-up
-	user, sc := s.validateCredentialChangeRequest(
-		ctx,
-		userID,
-		input.CurrentPassword,
-		input.TOTPToken,
-	)
+		// make sure this is all on the up-and-up
+		user, sc := s.validateCredentialChangeRequest(
+			ctx,
+			userID,
+			input.CurrentPassword,
+			input.TOTPToken,
+		)
 
-	// if the above function returns something other than 200, it means some error occurred
-	if sc != http.StatusOK {
-		res.WriteHeader(sc)
-		return
-	}
+		// if the above function returns something other than 200, it means some error occurred
+		if sc != http.StatusOK {
+			res.WriteHeader(sc)
+			return
+		}
 
-	// document who this is for
-	attachUserIDToSpan(span, userID)
-	attachUsernameToSpan(span, user.Username)
-	logger := s.logger.WithValue("user", user.ID)
+		// document who this is for
+		attachUserIDToSpan(span, userID)
+		attachUsernameToSpan(span, user.Username)
+		logger := s.logger.WithValue("user", user.ID)
 
-	// set the two factor secret
-	tfs, err := randString()
-	if err != nil {
-		logger.Error(err, "error encountered generating random TOTP string")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	user.TwoFactorSecret = tfs
+		// set the two factor secret
+		tfs, err := randString()
+		if err != nil {
+			logger.Error(err, "error encountered generating random TOTP string")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		user.TwoFactorSecret = tfs
 
-	// update the user in the database
-	if err := s.database.UpdateUser(ctx, user); err != nil {
-		logger.Error(err, "error encountered updating TOTP token")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+		// update the user in the database
+		if err := s.database.UpdateUser(ctx, user); err != nil {
+			logger.Error(err, "error encountered updating TOTP token")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	// let the requester know we're all good
-	res.WriteHeader(http.StatusAccepted)
-	if err := s.encoderDecoder.EncodeResponse(res,
-		&models.TOTPSecretRefreshResponse{TwoFactorSecret: user.TwoFactorSecret},
-	); err != nil {
-		s.logger.Error(err, "encoding response")
+		// let the requester know we're all good
+		res.WriteHeader(http.StatusAccepted)
+		if err := s.encoderDecoder.EncodeResponse(res,
+			&models.TOTPSecretRefreshResponse{TwoFactorSecret: user.TwoFactorSecret},
+		); err != nil {
+			s.logger.Error(err, "encoding response")
+		}
 	}
 }
 
 // UpdatePasswordHandler updates a user's password, after validating that information received
 // from PasswordUpdateInputContextMiddleware is valid
-func (s *Service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "UpdatePasswordHandler")
-	defer span.End()
+func (s *Service) UpdatePasswordHandler() http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := trace.StartSpan(req.Context(), "UpdatePasswordHandler")
+		defer span.End()
 
-	// check request context for parsed value
-	input, ok := ctx.Value(PasswordChangeMiddlewareCtxKey).(*models.PasswordUpdateInput)
-	if !ok {
-		s.logger.Debug("no input found on UpdatePasswordHandler request")
-		res.WriteHeader(http.StatusBadRequest)
-		return
+		// check request context for parsed value
+		input, ok := ctx.Value(PasswordChangeMiddlewareCtxKey).(*models.PasswordUpdateInput)
+		if !ok {
+			s.logger.Debug("no input found on UpdatePasswordHandler request")
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		// check request context for user ID
+		userID, ok := ctx.Value(models.UserIDKey).(uint64)
+		if !ok {
+			s.logger.Debug("no user ID attached to UpdatePasswordHandler request")
+			res.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		// make sure everything's on the up-and-up
+		user, sc := s.validateCredentialChangeRequest(
+			ctx,
+			userID,
+			input.CurrentPassword,
+			input.TOTPToken,
+		)
+
+		// if the above function returns something other than 200, it means some error occurred
+		if sc != http.StatusOK {
+			res.WriteHeader(sc)
+			return
+		}
+
+		// document who this is all for
+		attachUserIDToSpan(span, userID)
+		attachUsernameToSpan(span, user.Username)
+		logger := s.logger.WithValue("user", user.ID)
+
+		var err error
+		// hash the new password
+		user.HashedPassword, err = s.authenticator.HashPassword(ctx, input.NewPassword)
+		if err != nil {
+			logger.Error(err, "error hashing password")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// update the user
+		if err = s.database.UpdateUser(ctx, user); err != nil {
+			logger.Error(err, "error encountered updating user")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// we're all good
+		res.WriteHeader(http.StatusAccepted)
 	}
-
-	// check request context for user ID
-	userID, ok := ctx.Value(models.UserIDKey).(uint64)
-	if !ok {
-		s.logger.Debug("no user ID attached to UpdatePasswordHandler request")
-		res.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-
-	// make sure everything's on the up-and-up
-	user, sc := s.validateCredentialChangeRequest(
-		ctx,
-		userID,
-		input.CurrentPassword,
-		input.TOTPToken,
-	)
-
-	// if the above function returns something other than 200, it means some error occurred
-	if sc != http.StatusOK {
-		res.WriteHeader(sc)
-		return
-	}
-
-	// document who this is all for
-	attachUserIDToSpan(span, userID)
-	attachUsernameToSpan(span, user.Username)
-	logger := s.logger.WithValue("user", user.ID)
-
-	var err error
-	// hash the new password
-	user.HashedPassword, err = s.authenticator.HashPassword(ctx, input.NewPassword)
-	if err != nil {
-		logger.Error(err, "error hashing password")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// update the user
-	if err = s.database.UpdateUser(ctx, user); err != nil {
-		logger.Error(err, "error encountered updating user")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// we're all good
-	res.WriteHeader(http.StatusAccepted)
 }
 
 // ArchiveHandler is a handler for archiving a user
-func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "ArchiveHandler")
-	defer span.End()
+func (s *Service) ArchiveHandler() http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := trace.StartSpan(req.Context(), "ArchiveHandler")
+		defer span.End()
 
-	// figure out who this is for
-	userID := s.userIDFetcher(req)
-	logger := s.logger.WithValue("user_id", userID)
-	attachUserIDToSpan(span, userID)
+		// figure out who this is for
+		userID := s.userIDFetcher(req)
+		logger := s.logger.WithValue("user_id", userID)
+		attachUserIDToSpan(span, userID)
 
-	// do the deed
-	if err := s.database.ArchiveUser(ctx, userID); err != nil {
-		logger.Error(err, "deleting user from database")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
+		// do the deed
+		if err := s.database.ArchiveUser(ctx, userID); err != nil {
+			logger.Error(err, "deleting user from database")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// inform the relatives
+		s.userCounter.Decrement(ctx)
+		s.reporter.Report(newsman.Event{
+			EventType: string(models.Archive),
+			Data:      models.User{ID: userID},
+			Topics:    []string{topicName},
+		})
+
+		// we're all good
+		res.WriteHeader(http.StatusNoContent)
 	}
-
-	// inform the relatives
-	s.userCounter.Decrement(ctx)
-	s.reporter.Report(newsman.Event{
-		EventType: string(models.Archive),
-		Data:      models.User{ID: userID},
-		Topics:    []string{topicName},
-	})
-
-	// we're all good
-	res.WriteHeader(http.StatusNoContent)
 }

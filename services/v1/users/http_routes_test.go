@@ -242,7 +242,7 @@ func TestService_List(T *testing.T) {
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 
-		s.ListHandler(res, req)
+		s.ListHandler()(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 	})
@@ -263,7 +263,7 @@ func TestService_List(T *testing.T) {
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 
-		s.ListHandler(res, req)
+		s.ListHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
@@ -284,7 +284,7 @@ func TestService_List(T *testing.T) {
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 
-		s.ListHandler(res, req)
+		s.ListHandler()(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 	})
@@ -332,7 +332,7 @@ func TestService_Create(T *testing.T) {
 		req = req.WithContext(context.WithValue(req.Context(), UserCreationMiddlewareCtxKey, exampleInput))
 
 		s.userCreationEnabled = true
-		s.CreateHandler(res, req)
+		s.CreateHandler()(res, req)
 
 		assert.Equal(t, http.StatusCreated, res.Code)
 	})
@@ -343,7 +343,7 @@ func TestService_Create(T *testing.T) {
 		res, req := httptest.NewRecorder(), buildRequest(t)
 
 		s.userCreationEnabled = false
-		s.CreateHandler(res, req)
+		s.CreateHandler()(res, req)
 
 		assert.Equal(t, http.StatusForbidden, res.Code)
 	})
@@ -354,7 +354,7 @@ func TestService_Create(T *testing.T) {
 		res, req := httptest.NewRecorder(), buildRequest(t)
 
 		s.userCreationEnabled = true
-		s.CreateHandler(res, req)
+		s.CreateHandler()(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
@@ -379,7 +379,7 @@ func TestService_Create(T *testing.T) {
 		req = req.WithContext(context.WithValue(req.Context(), UserCreationMiddlewareCtxKey, exampleInput))
 
 		s.userCreationEnabled = true
-		s.CreateHandler(res, req)
+		s.CreateHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
@@ -410,7 +410,7 @@ func TestService_Create(T *testing.T) {
 		req = req.WithContext(context.WithValue(req.Context(), UserCreationMiddlewareCtxKey, exampleInput))
 
 		s.userCreationEnabled = true
-		s.CreateHandler(res, req)
+		s.CreateHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
@@ -441,7 +441,7 @@ func TestService_Create(T *testing.T) {
 		req = req.WithContext(context.WithValue(req.Context(), UserCreationMiddlewareCtxKey, exampleInput))
 
 		s.userCreationEnabled = true
-		s.CreateHandler(res, req)
+		s.CreateHandler()(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
@@ -485,7 +485,7 @@ func TestService_Create(T *testing.T) {
 		req = req.WithContext(context.WithValue(req.Context(), UserCreationMiddlewareCtxKey, exampleInput))
 
 		s.userCreationEnabled = true
-		s.CreateHandler(res, req)
+		s.CreateHandler()(res, req)
 
 		assert.Equal(t, http.StatusCreated, res.Code)
 	})
@@ -509,7 +509,7 @@ func TestService_Read(T *testing.T) {
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 
-		s.ReadHandler(res, req)
+		s.ReadHandler()(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 	})
@@ -524,7 +524,7 @@ func TestService_Read(T *testing.T) {
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 
-		s.ReadHandler(res, req)
+		s.ReadHandler()(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
 	})
@@ -539,7 +539,7 @@ func TestService_Read(T *testing.T) {
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 
-		s.ReadHandler(res, req)
+		s.ReadHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
@@ -559,7 +559,7 @@ func TestService_Read(T *testing.T) {
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 
-		s.ReadHandler(res, req)
+		s.ReadHandler()(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 	})
@@ -616,7 +616,7 @@ func TestService_NewTOTPSecret(T *testing.T) {
 			Return(nil)
 		s.encoderDecoder = ed
 
-		s.NewTOTPSecretHandler(res, req)
+		s.NewTOTPSecretHandler()(res, req)
 
 		assert.Equal(t, http.StatusAccepted, res.Code)
 	})
@@ -626,7 +626,7 @@ func TestService_NewTOTPSecret(T *testing.T) {
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 
-		s.NewTOTPSecretHandler(res, req)
+		s.NewTOTPSecretHandler()(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
@@ -642,7 +642,7 @@ func TestService_NewTOTPSecret(T *testing.T) {
 				req.Context(), TOTPSecretRefreshMiddlewareCtxKey, exampleInput,
 			))
 
-		s.NewTOTPSecretHandler(res, req)
+		s.NewTOTPSecretHandler()(res, req)
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 	})
@@ -694,7 +694,7 @@ func TestService_NewTOTPSecret(T *testing.T) {
 			Return(nil)
 		s.encoderDecoder = ed
 
-		s.NewTOTPSecretHandler(res, req)
+		s.NewTOTPSecretHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
@@ -746,7 +746,7 @@ func TestService_NewTOTPSecret(T *testing.T) {
 			Return(nil)
 		s.encoderDecoder = ed
 
-		s.NewTOTPSecretHandler(res, req)
+		s.NewTOTPSecretHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
@@ -798,7 +798,7 @@ func TestService_NewTOTPSecret(T *testing.T) {
 			Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
-		s.NewTOTPSecretHandler(res, req)
+		s.NewTOTPSecretHandler()(res, req)
 
 		assert.Equal(t, http.StatusAccepted, res.Code)
 	})
@@ -865,7 +865,7 @@ func TestService_UpdatePassword(T *testing.T) {
 			Return(nil)
 		s.encoderDecoder = ed
 
-		s.UpdatePasswordHandler(res, req)
+		s.UpdatePasswordHandler()(res, req)
 
 		assert.Equal(t, http.StatusAccepted, res.Code)
 	})
@@ -875,7 +875,7 @@ func TestService_UpdatePassword(T *testing.T) {
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 
-		s.UpdatePasswordHandler(res, req)
+		s.UpdatePasswordHandler()(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
@@ -895,7 +895,7 @@ func TestService_UpdatePassword(T *testing.T) {
 				req.Context(), PasswordChangeMiddlewareCtxKey, exampleInput,
 			))
 
-		s.UpdatePasswordHandler(res, req)
+		s.UpdatePasswordHandler()(res, req)
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 	})
@@ -949,7 +949,7 @@ func TestService_UpdatePassword(T *testing.T) {
 		).Return(false, errors.New("blah"))
 		s.authenticator = auth
 
-		s.UpdatePasswordHandler(res, req)
+		s.UpdatePasswordHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
@@ -1014,7 +1014,7 @@ func TestService_UpdatePassword(T *testing.T) {
 			Return(nil)
 		s.encoderDecoder = ed
 
-		s.UpdatePasswordHandler(res, req)
+		s.UpdatePasswordHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
@@ -1074,7 +1074,7 @@ func TestService_UpdatePassword(T *testing.T) {
 
 		s.authenticator = auth
 
-		s.UpdatePasswordHandler(res, req)
+		s.UpdatePasswordHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
@@ -1110,7 +1110,7 @@ func TestService_Archive(T *testing.T) {
 			Return(nil)
 		s.encoderDecoder = ed
 
-		s.ArchiveHandler(res, req)
+		s.ArchiveHandler()(res, req)
 
 		assert.Equal(t, http.StatusNoContent, res.Code)
 	})
@@ -1130,7 +1130,7 @@ func TestService_Archive(T *testing.T) {
 			Return(errors.New("blah"))
 		s.database = mockDB
 
-		s.ArchiveHandler(res, req)
+		s.ArchiveHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})

@@ -97,12 +97,12 @@ type (
 		PasswordUpdateInputMiddleware(next http.Handler) http.Handler
 		TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handler
 
-		ListHandler(res http.ResponseWriter, req *http.Request)
-		CreateHandler(res http.ResponseWriter, req *http.Request)
-		ReadHandler(res http.ResponseWriter, req *http.Request)
-		NewTOTPSecretHandler(res http.ResponseWriter, req *http.Request)
-		UpdatePasswordHandler(res http.ResponseWriter, req *http.Request)
-		ArchiveHandler(res http.ResponseWriter, req *http.Request)
+		ListHandler() http.HandlerFunc
+		CreateHandler() http.HandlerFunc
+		ReadHandler() http.HandlerFunc
+		NewTOTPSecretHandler() http.HandlerFunc
+		UpdatePasswordHandler() http.HandlerFunc
+		ArchiveHandler() http.HandlerFunc
 	}
 )
 

@@ -1,5 +1,4 @@
 [meta]
-# tracing_enabled = true
 # debug = true
 
 [metrics]
@@ -17,6 +16,6 @@ static_files_dir = "/frontend"
 cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"
 
 [database]
-provider = "postgres"
 debug = false
+provider = "postgres"
 connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"

@@ -79,7 +79,9 @@ func scanOAuth2Clients(logger logging.Logger, rows *sql.Rows) ([]*models.OAuth2C
 		return nil, err
 	}
 
-	logQueryBuildingError(logger, rows.Close())
+	if err := rows.Close(); err != nil {
+		logger.Error(err, "closing rows")
+	}
 
 	return list, nil
 }
@@ -97,7 +99,7 @@ func (p *Postgres) buildGetOAuth2ClientByClientIDQuery(clientID string) (query s
 			"archived_on": nil,
 		}).ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -124,7 +126,7 @@ func (p *Postgres) buildGetAllOAuth2ClientsQuery() (query string) {
 			Where(squirrel.Eq{"archived_on": nil}).
 			ToSql()
 
-		logQueryBuildingError(p.logger, err)
+		p.logQueryBuildingError(err)
 	})
 
 	return getAllOAuth2ClientsQuery
@@ -180,7 +182,7 @@ func (p *Postgres) buildGetOAuth2ClientQuery(clientID, userID uint64) (query str
 			"archived_on": nil,
 		}).ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -218,7 +220,7 @@ func (p *Postgres) buildGetOAuth2ClientCountQuery(filter *models.QueryFilter, us
 	}
 
 	query, args, err = builder.ToSql()
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -245,7 +247,7 @@ func (p *Postgres) buildGetAllOAuth2ClientCountQuery() string {
 			Where(squirrel.Eq{"archived_on": nil}).
 			ToSql()
 
-		logQueryBuildingError(p.logger, err)
+		p.logQueryBuildingError(err)
 	})
 
 	return getAllOAuth2ClientCountQuery
@@ -276,7 +278,7 @@ func (p *Postgres) buildGetOAuth2ClientsQuery(filter *models.QueryFilter, userID
 
 	query, args, err = builder.ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -346,7 +348,7 @@ func (p *Postgres) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (que
 		Suffix("RETURNING id, created_on").
 		ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -388,7 +390,7 @@ func (p *Postgres) buildUpdateOAuth2ClientQuery(input *models.OAuth2Client) (que
 		Suffix("RETURNING updated_on").
 		ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -414,7 +416,7 @@ func (p *Postgres) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query
 		Suffix("RETURNING archived_on").
 		ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }

@@ -706,9 +706,9 @@ func TestSqlite_CreateOAuth2Client(T *testing.T) {
 			BelongsTo: expected.BelongsTo,
 		}
 
-		expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to) VALUES (?,?,?,?,?,?)"
-
 		s, mockDB := buildTestService(t)
+
+		expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to) VALUES (?,?,?,?,?,?)"
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(
 				expected.Name,
@@ -745,9 +745,9 @@ func TestSqlite_CreateOAuth2Client(T *testing.T) {
 			BelongsTo: expected.BelongsTo,
 		}
 
-		expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to) VALUES (?,?,?,?,?,?)"
-
 		s, mockDB := buildTestService(t)
+
+		expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to) VALUES (?,?,?,?,?,?)"
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(
 				expected.Name,

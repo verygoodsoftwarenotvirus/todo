@@ -5,12 +5,19 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/mariadb"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"contrib.go.opencensus.io/integrations/ocsql"
 	"github.com/pkg/errors"
+)
+
+const (
+	postgresProviderKey = "postgres"
+	mariaDBProviderKey  = "mariadb"
+	sqliteProviderKey   = "sqlite"
 )
 
 // ProvideDatabase provides a database implementation dependent on the configuration
@@ -21,7 +28,7 @@ func (cfg *ServerConfig) ProvideDatabase(ctx context.Context, logger logging.Log
 	)
 
 	switch cfg.Database.Provider {
-	case "postgres":
+	case postgresProviderKey:
 		rawDB, err := postgres.ProvidePostgresDB(logger, connectionDetails)
 		if err != nil {
 			return nil, errors.Wrap(err, "establish postgres database connection")
@@ -32,7 +39,18 @@ func (cfg *ServerConfig) ProvideDatabase(ctx context.Context, logger logging.Log
 		pg := postgres.ProvidePostgres(debug, rawDB, logger)
 
 		return dbclient.ProvideDatabaseClient(ctx, rawDB, pg, debug, logger)
-	case "sqlite":
+	case mariaDBProviderKey:
+		rawDB, err := mariadb.ProvideMariaDBConnection(logger, connectionDetails)
+		if err != nil {
+			return nil, errors.Wrap(err, "establish postgres database connection")
+		}
+		ocsql.RegisterAllViews()
+		ocsql.RecordStats(rawDB, cfg.Metrics.DBMetricsCollectionInterval)
+
+		pg := mariadb.ProvideMariaDB(debug, rawDB, logger)
+
+		return dbclient.ProvideDatabaseClient(ctx, rawDB, pg, debug, logger)
+	case sqliteProviderKey:
 		rawDB, err := sqlite.ProvideSqliteDB(logger, connectionDetails)
 		if err != nil {
 			return nil, errors.Wrap(err, "establish postgres database connection")

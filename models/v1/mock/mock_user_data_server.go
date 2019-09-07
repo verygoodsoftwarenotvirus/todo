@@ -40,36 +40,37 @@ func (m *UserDataServer) TOTPSecretRefreshInputMiddleware(next http.Handler) htt
 }
 
 // ListHandler is a mock method to satisfy our interface requirements
-func (m *UserDataServer) ListHandler(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
+func (m *UserDataServer) ListHandler() http.HandlerFunc {
+	args := m.Called()
+	return args.Get(0).(http.HandlerFunc)
 }
 
 // CreateHandler is a mock method to satisfy our interface requirements
-func (m *UserDataServer) CreateHandler(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
+func (m *UserDataServer) CreateHandler() http.HandlerFunc {
+	args := m.Called()
+	return args.Get(0).(http.HandlerFunc)
 }
 
 // ReadHandler is a mock method to satisfy our interface requirements
-func (m *UserDataServer) ReadHandler(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
+func (m *UserDataServer) ReadHandler() http.HandlerFunc {
+	args := m.Called()
+	return args.Get(0).(http.HandlerFunc)
 }
 
 // NewTOTPSecretHandler is a mock method to satisfy our interface requirements
-func (m *UserDataServer) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
+func (m *UserDataServer) NewTOTPSecretHandler() http.HandlerFunc {
+	args := m.Called()
+	return args.Get(0).(http.HandlerFunc)
 }
 
 // UpdatePasswordHandler is a mock method to satisfy our interface requirements
-func (m *UserDataServer) UpdatePasswordHandler(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
+func (m *UserDataServer) UpdatePasswordHandler() http.HandlerFunc {
+	args := m.Called()
+	return args.Get(0).(http.HandlerFunc)
 }
 
 // ArchiveHandler is a mock method to satisfy our interface requirements
-func (m *UserDataServer) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
-}
-
-// ExportData is a mock method to satisfy our interface requirements
-func (m *UserDataServer) ExportData(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
+func (m *UserDataServer) ArchiveHandler() http.HandlerFunc {
+	args := m.Called()
+	return args.Get(0).(http.HandlerFunc)
 }

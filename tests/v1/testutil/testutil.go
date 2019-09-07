@@ -43,14 +43,15 @@ func DetermineServiceURL() string {
 func EnsureServerIsUp(address string) {
 	var (
 		isDown           = true
-		maxAttempts      = 25
+		interval         = time.Second // 2
+		maxAttempts      = 50
 		numberOfAttempts = 0
 	)
 
 	for isDown {
 		if !IsUp(address) {
 			log.Print("waiting before pinging again")
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(interval)
 			numberOfAttempts++
 			if numberOfAttempts >= maxAttempts {
 				log.Fatal("Maximum number of attempts made, something's gone awry")

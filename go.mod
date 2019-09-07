@@ -16,6 +16,7 @@ require (
 	github.com/emicklei/hazana v1.6.1
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-chi/cors v1.0.0
+	github.com/go-sql-driver/mysql v1.4.1
 	github.com/google/wire v0.2.2
 	github.com/gorilla/securecookie v1.1.1
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40

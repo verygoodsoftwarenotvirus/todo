@@ -1,22 +1,31 @@
 [meta]
-# tracing_enabled = true
-# debug = true
-
-[metrics]
-metrics_provider = "prometheus"
-tracing_provider = "jaeger"
+    debug = false
+    startup_deadline = "1m"
 
 [server]
-http_port = 8888
-debug = true
+    debug = false
+    http_port = 8888
 
 [frontend]
-static_files_dir = "/frontend"
+    debug = false
+    static_files_dir = "/frontend"
+	cache_static_files = true
 
 [auth]
-cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"
+    debug = false
+	cookie_domain = ""
+    cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"
+	cookie_lifetime = "24h"
+	secure_cookies_only = false
+	enable_user_signup = true
+
+[metrics]
+    metrics_provider = "prometheus"
+    tracing_provider = "jaeger"
+    database_metrics_collection_interval = "1s"
+    runtime_metrics_collection_interval = "1s"
 
 [database]
-provider = "postgres"
-debug = false
-connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
+    debug = false
+    provider = "postgres"
+    connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"

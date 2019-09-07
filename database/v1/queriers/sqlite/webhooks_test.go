@@ -681,9 +681,9 @@ func TestSqlite_CreateWebhook(T *testing.T) {
 			BelongsTo: expected.BelongsTo,
 		}
 
-		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to) VALUES (?,?,?,?,?,?,?,?)"
-
 		s, mockDB := buildTestService(t)
+
+		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to) VALUES (?,?,?,?,?,?,?,?)"
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(
 				expected.Name,
@@ -723,9 +723,9 @@ func TestSqlite_CreateWebhook(T *testing.T) {
 			BelongsTo: expected.BelongsTo,
 		}
 
-		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to) VALUES (?,?,?,?,?,?,?,?)"
-
 		s, mockDB := buildTestService(t)
+
+		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to) VALUES (?,?,?,?,?,?,?,?)"
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(
 				expected.Name,

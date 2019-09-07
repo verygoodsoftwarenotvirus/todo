@@ -33,6 +33,19 @@ integration-tests-sqlite:
     - pip install docker-compose
     - make integration-tests-sqlite
 
+integration-tests-mariadb:
+  stage: testing
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    GOPATH: "/go"
+  script:
+    - apk add --update --no-cache py-pip openssl python-dev libffi-dev
+      openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - make integration-tests-mariadb
+
 integration-tests-postgres:
   stage: testing
   image: docker:latest
@@ -75,7 +88,7 @@ daily-load-tests:on-schedule:
     - docker:dind
   variables:
     GOPATH: "/go"
-    LOADTEST_RUN_TIME: "2m30s"
+    LOADTEST_RUN_TIME: "5m"
   script:
     - apk add --update --no-cache py-pip openssl python-dev libffi-dev
       openssl-dev gcc libc-dev make

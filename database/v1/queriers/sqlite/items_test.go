@@ -445,8 +445,9 @@ func TestSqlite_CreateItem(T *testing.T) {
 			BelongsTo: expected.BelongsTo,
 		}
 
-		expectedCreationQuery := "INSERT INTO items (name,details,belongs_to) VALUES (?,?,?)"
 		s, mockDB := buildTestService(t)
+
+		expectedCreationQuery := "INSERT INTO items (name,details,belongs_to) VALUES (?,?,?)"
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedCreationQuery)).
 			WithArgs(
 				expected.Name,
@@ -480,9 +481,9 @@ func TestSqlite_CreateItem(T *testing.T) {
 			BelongsTo: example.BelongsTo,
 		}
 
-		expectedQuery := "INSERT INTO items (name,details,belongs_to) VALUES (?,?,?)"
-
 		s, mockDB := buildTestService(t)
+
+		expectedQuery := "INSERT INTO items (name,details,belongs_to) VALUES (?,?,?)"
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(
 				example.Name,

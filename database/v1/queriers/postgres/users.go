@@ -69,7 +69,9 @@ func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, error) {
 		return nil, err
 	}
 
-	logQueryBuildingError(logger, rows.Close())
+	if err := rows.Close(); err != nil {
+		logger.Error(err, "closing rows")
+	}
 
 	return list, nil
 }
@@ -83,7 +85,7 @@ func (p *Postgres) buildGetUserQuery(userID uint64) (query string, args []interf
 		Where(squirrel.Eq{"id": userID}).
 		ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -110,7 +112,7 @@ func (p *Postgres) buildGetUserByUsernameQuery(username string) (query string, a
 		Where(squirrel.Eq{"username": username}).
 		ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -148,7 +150,7 @@ func (p *Postgres) buildGetUserCountQuery(filter *models.QueryFilter) (query str
 
 	query, args, err = builder.ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -176,7 +178,7 @@ func (p *Postgres) buildGetUsersQuery(filter *models.QueryFilter) (query string,
 	}
 
 	query, args, err = builder.ToSql()
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 	return query, args
 }
 
@@ -234,7 +236,7 @@ func (p *Postgres) buildCreateUserQuery(input *models.UserInput) (query string, 
 		Suffix("RETURNING id, created_on").
 		ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -276,7 +278,7 @@ func (p *Postgres) buildUpdateUserQuery(input *models.User) (query string, args 
 		Suffix("RETURNING updated_on").
 		ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -298,7 +300,7 @@ func (p *Postgres) buildArchiveUserQuery(userID uint64) (query string, args []in
 		Suffix("RETURNING archived_on").
 		ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }

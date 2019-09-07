@@ -35,33 +35,35 @@ func attachUserIDToSpan(span *trace.Span, userID uint64) {
 }
 
 // ListHandler is our list route
-func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "ListHandler")
-	defer span.End()
+func (s *Service) ListHandler() http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := trace.StartSpan(req.Context(), "ListHandler")
+		defer span.End()
 
-	// figure out how specific we need to be
-	qf := models.ExtractQueryFilter(req)
+		// figure out how specific we need to be
+		qf := models.ExtractQueryFilter(req)
 
-	// figure out who this is all for
-	userID := s.userIDFetcher(req)
-	logger := s.logger.WithValue("user_id", userID)
-	attachUserIDToSpan(span, userID)
+		// figure out who this is all for
+		userID := s.userIDFetcher(req)
+		logger := s.logger.WithValue("user_id", userID)
+		attachUserIDToSpan(span, userID)
 
-	// find the webhooks
-	webhooks, err := s.webhookDatabase.GetWebhooks(ctx, qf, userID)
-	if err == sql.ErrNoRows {
-		webhooks = &models.WebhookList{
-			Webhooks: []models.Webhook{},
+		// find the webhooks
+		webhooks, err := s.webhookDatabase.GetWebhooks(ctx, qf, userID)
+		if err == sql.ErrNoRows {
+			webhooks = &models.WebhookList{
+				Webhooks: []models.Webhook{},
+			}
+		} else if err != nil {
+			logger.Error(err, "error encountered fetching webhooks")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
 		}
-	} else if err != nil {
-		logger.Error(err, "error encountered fetching webhooks")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
 
-	// encode the response
-	if err = s.encoderDecoder.EncodeResponse(res, webhooks); err != nil {
-		s.logger.Error(err, "encoding response")
+		// encode the response
+		if err = s.encoderDecoder.EncodeResponse(res, webhooks); err != nil {
+			s.logger.Error(err, "encoding response")
+		}
 	}
 }
 
@@ -88,190 +90,198 @@ func validateWebhook(input *models.WebhookCreationInput) error {
 }
 
 // CreateHandler is our webhook creation route
-func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "CreateHandler")
-	defer span.End()
+func (s *Service) CreateHandler() http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := trace.StartSpan(req.Context(), "CreateHandler")
+		defer span.End()
 
-	// figure out who this is all for
-	userID := s.userIDFetcher(req)
-	logger := s.logger.WithValue("user", userID)
-	attachUserIDToSpan(span, userID)
+		// figure out who this is all for
+		userID := s.userIDFetcher(req)
+		logger := s.logger.WithValue("user", userID)
+		attachUserIDToSpan(span, userID)
 
-	// try to pluck the parsed input from the request context
-	input, ok := ctx.Value(CreateMiddlewareCtxKey).(*models.WebhookCreationInput)
-	if !ok {
-		logger.Info("valid input not attached to request")
-		res.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	input.BelongsTo = userID
+		// try to pluck the parsed input from the request context
+		input, ok := ctx.Value(CreateMiddlewareCtxKey).(*models.WebhookCreationInput)
+		if !ok {
+			logger.Info("valid input not attached to request")
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		input.BelongsTo = userID
 
-	// ensure everythings on the up-and-up
-	if err := validateWebhook(input); err != nil {
-		logger.Info("invalid method provided")
-		res.WriteHeader(http.StatusBadRequest)
-		return
-	}
+		// ensure everythings on the up-and-up
+		if err := validateWebhook(input); err != nil {
+			logger.Info("invalid method provided")
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
-	// create the webhook
-	wh, err := s.webhookDatabase.CreateWebhook(ctx, input)
-	if err != nil {
-		logger.Error(err, "error creating webhook")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+		// create the webhook
+		wh, err := s.webhookDatabase.CreateWebhook(ctx, input)
+		if err != nil {
+			logger.Error(err, "error creating webhook")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	// notify the relevant parties
-	attachWebhookIDToSpan(span, wh.ID)
-	s.webhookCounter.Increment(ctx)
-	s.eventManager.Report(newsman.Event{
-		EventType: string(models.Create),
-		Data:      wh,
-		Topics:    []string{topicName},
-	})
+		// notify the relevant parties
+		attachWebhookIDToSpan(span, wh.ID)
+		s.webhookCounter.Increment(ctx)
+		s.eventManager.Report(newsman.Event{
+			EventType: string(models.Create),
+			Data:      wh,
+			Topics:    []string{topicName},
+		})
 
-	l := wh.ToListener(s.logger)
-	s.eventManager.TuneIn(l)
+		l := wh.ToListener(s.logger)
+		s.eventManager.TuneIn(l)
 
-	// let everybody know we're good
-	res.WriteHeader(http.StatusCreated)
-	if err = s.encoderDecoder.EncodeResponse(res, wh); err != nil {
-		logger.Error(err, "encoding response")
+		// let everybody know we're good
+		res.WriteHeader(http.StatusCreated)
+		if err = s.encoderDecoder.EncodeResponse(res, wh); err != nil {
+			logger.Error(err, "encoding response")
+		}
 	}
 }
 
 // ReadHandler returns a GET handler that returns an webhook
-func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "ReadHandler")
-	defer span.End()
+func (s *Service) ReadHandler() http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := trace.StartSpan(req.Context(), "ReadHandler")
+		defer span.End()
 
-	// figure out what this is for and who it belongs to
-	userID := s.userIDFetcher(req)
-	webhookID := s.webhookIDFetcher(req)
+		// figure out what this is for and who it belongs to
+		userID := s.userIDFetcher(req)
+		webhookID := s.webhookIDFetcher(req)
 
-	// document it for posterity
-	attachUserIDToSpan(span, userID)
-	attachWebhookIDToSpan(span, webhookID)
-	logger := s.logger.WithValues(map[string]interface{}{
-		"user":    userID,
-		"webhook": webhookID,
-	})
+		// document it for posterity
+		attachUserIDToSpan(span, userID)
+		attachWebhookIDToSpan(span, webhookID)
+		logger := s.logger.WithValues(map[string]interface{}{
+			"user":    userID,
+			"webhook": webhookID,
+		})
 
-	// fetch the webhook from the database
-	x, err := s.webhookDatabase.GetWebhook(ctx, webhookID, userID)
-	if err == sql.ErrNoRows {
-		logger.Debug("No rows found in webhookDatabase")
-		res.WriteHeader(http.StatusNotFound)
-		return
-	} else if err != nil {
-		logger.Error(err, "Error fetching webhook from webhookDatabase")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+		// fetch the webhook from the database
+		x, err := s.webhookDatabase.GetWebhook(ctx, webhookID, userID)
+		if err == sql.ErrNoRows {
+			logger.Debug("No rows found in webhookDatabase")
+			res.WriteHeader(http.StatusNotFound)
+			return
+		} else if err != nil {
+			logger.Error(err, "Error fetching webhook from webhookDatabase")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	// encode the response
-	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
-		logger.Error(err, "encoding response")
+		// encode the response
+		if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
+			logger.Error(err, "encoding response")
+		}
 	}
 }
 
 // UpdateHandler returns a handler that updates an webhook
-func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "UpdateHandler")
-	defer span.End()
+func (s *Service) UpdateHandler() http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := trace.StartSpan(req.Context(), "UpdateHandler")
+		defer span.End()
 
-	// figure out what this is for and who it belongs to
-	userID := s.userIDFetcher(req)
-	webhookID := s.webhookIDFetcher(req)
+		// figure out what this is for and who it belongs to
+		userID := s.userIDFetcher(req)
+		webhookID := s.webhookIDFetcher(req)
 
-	// document it for posterity
-	attachUserIDToSpan(span, userID)
-	attachWebhookIDToSpan(span, webhookID)
-	logger := s.logger.WithValues(map[string]interface{}{
-		"user_id":    userID,
-		"webhook_id": webhookID,
-	})
+		// document it for posterity
+		attachUserIDToSpan(span, userID)
+		attachWebhookIDToSpan(span, webhookID)
+		logger := s.logger.WithValues(map[string]interface{}{
+			"user_id":    userID,
+			"webhook_id": webhookID,
+		})
 
-	// fetch parsed creation input from request context
-	input, ok := ctx.Value(UpdateMiddlewareCtxKey).(*models.WebhookUpdateInput)
-	if !ok {
-		s.logger.Info("no input attached to request")
-		res.WriteHeader(http.StatusBadRequest)
-		return
-	}
+		// fetch parsed creation input from request context
+		input, ok := ctx.Value(UpdateMiddlewareCtxKey).(*models.WebhookUpdateInput)
+		if !ok {
+			s.logger.Info("no input attached to request")
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
-	// fetch the webhook in question
-	wh, err := s.webhookDatabase.GetWebhook(ctx, webhookID, userID)
-	if err == sql.ErrNoRows {
-		logger.Debug("no rows found for webhook")
-		res.WriteHeader(http.StatusNotFound)
-		return
-	} else if err != nil {
-		logger.Error(err, "error encountered getting webhook")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+		// fetch the webhook in question
+		wh, err := s.webhookDatabase.GetWebhook(ctx, webhookID, userID)
+		if err == sql.ErrNoRows {
+			logger.Debug("no rows found for webhook")
+			res.WriteHeader(http.StatusNotFound)
+			return
+		} else if err != nil {
+			logger.Error(err, "error encountered getting webhook")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	// update it
-	wh.Update(input)
+		// update it
+		wh.Update(input)
 
-	// save the update in the database
-	if err = s.webhookDatabase.UpdateWebhook(ctx, wh); err != nil {
-		logger.Error(err, "error encountered updating webhook")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+		// save the update in the database
+		if err = s.webhookDatabase.UpdateWebhook(ctx, wh); err != nil {
+			logger.Error(err, "error encountered updating webhook")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	// notify the relevant parties
-	s.eventManager.Report(newsman.Event{
-		EventType: string(models.Update),
-		Data:      wh,
-		Topics:    []string{topicName},
-	})
+		// notify the relevant parties
+		s.eventManager.Report(newsman.Event{
+			EventType: string(models.Update),
+			Data:      wh,
+			Topics:    []string{topicName},
+		})
 
-	// let everybody know we're good
-	if err = s.encoderDecoder.EncodeResponse(res, wh); err != nil {
-		logger.Error(err, "encoding response")
+		// let everybody know we're good
+		if err = s.encoderDecoder.EncodeResponse(res, wh); err != nil {
+			logger.Error(err, "encoding response")
+		}
 	}
 }
 
 // ArchiveHandler returns a handler that archives an webhook
-func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := trace.StartSpan(req.Context(), "delete_route")
-	defer span.End()
+func (s *Service) ArchiveHandler() http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := trace.StartSpan(req.Context(), "delete_route")
+		defer span.End()
 
-	// figure out what this is for and who it belongs to
-	userID := s.userIDFetcher(req)
-	webhookID := s.webhookIDFetcher(req)
+		// figure out what this is for and who it belongs to
+		userID := s.userIDFetcher(req)
+		webhookID := s.webhookIDFetcher(req)
 
-	// document it for posterity
-	attachUserIDToSpan(span, userID)
-	attachWebhookIDToSpan(span, webhookID)
-	logger := s.logger.WithValues(map[string]interface{}{
-		"webhook_id": webhookID,
-		"user_id":    userID,
-	})
+		// document it for posterity
+		attachUserIDToSpan(span, userID)
+		attachWebhookIDToSpan(span, webhookID)
+		logger := s.logger.WithValues(map[string]interface{}{
+			"webhook_id": webhookID,
+			"user_id":    userID,
+		})
 
-	// do the deed
-	err := s.webhookDatabase.ArchiveWebhook(ctx, webhookID, userID)
-	if err == sql.ErrNoRows {
-		logger.Debug("no rows found for webhook")
-		res.WriteHeader(http.StatusNotFound)
-		return
-	} else if err != nil {
-		logger.Error(err, "error encountered deleting webhook")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
+		// do the deed
+		err := s.webhookDatabase.ArchiveWebhook(ctx, webhookID, userID)
+		if err == sql.ErrNoRows {
+			logger.Debug("no rows found for webhook")
+			res.WriteHeader(http.StatusNotFound)
+			return
+		} else if err != nil {
+			logger.Error(err, "error encountered deleting webhook")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// let the interested parties know
+		s.webhookCounter.Decrement(ctx)
+		s.eventManager.Report(newsman.Event{
+			EventType: string(models.Archive),
+			Data:      models.Webhook{ID: webhookID},
+			Topics:    []string{topicName},
+		})
+
+		// let everybody go home
+		res.WriteHeader(http.StatusNoContent)
 	}
-
-	// let the interested parties know
-	s.webhookCounter.Decrement(ctx)
-	s.eventManager.Report(newsman.Event{
-		EventType: string(models.Archive),
-		Data:      models.Webhook{ID: webhookID},
-		Topics:    []string{topicName},
-	})
-
-	// let everybody go home
-	res.WriteHeader(http.StatusNoContent)
 }

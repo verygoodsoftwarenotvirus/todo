@@ -84,7 +84,7 @@ func (p *Postgres) buildGetItemQuery(itemID, userID uint64) (query string, args 
 		}).
 		ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -113,7 +113,7 @@ func (p *Postgres) buildGetItemCountQuery(filter *models.QueryFilter, userID uin
 	}
 
 	query, args, err = builder.ToSql()
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -139,7 +139,7 @@ func (p *Postgres) buildGetAllItemsCountQuery() string {
 			From(itemsTableName).
 			Where(squirrel.Eq{"archived_on": nil}).
 			ToSql()
-		logQueryBuildingError(p.logger, err)
+		p.logQueryBuildingError(err)
 	})
 
 	return allItemsCountQuery
@@ -168,7 +168,7 @@ func (p *Postgres) buildGetItemsQuery(filter *models.QueryFilter, userID uint64)
 	}
 
 	query, args, err = builder.ToSql()
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -239,7 +239,7 @@ func (p *Postgres) buildCreateItemQuery(input *models.Item) (query string, args 
 		Suffix("RETURNING id, created_on").
 		ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -277,7 +277,7 @@ func (p *Postgres) buildUpdateItemQuery(input *models.Item) (query string, args 
 		Suffix("RETURNING updated_on").
 		ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -303,7 +303,7 @@ func (p *Postgres) buildArchiveItemQuery(itemID, userID uint64) (query string, a
 		Suffix("RETURNING archived_on").
 		ToSql()
 
-	logQueryBuildingError(p.logger, err)
+	p.logQueryBuildingError(err)
 
 	return query, args
 }

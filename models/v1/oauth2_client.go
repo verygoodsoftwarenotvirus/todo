@@ -31,11 +31,11 @@ type (
 
 	// OAuth2ClientDataServer describes a structure capable of serving traffic related to oauth2 clients
 	OAuth2ClientDataServer interface {
-		ListHandler(res http.ResponseWriter, req *http.Request)
-		CreateHandler(res http.ResponseWriter, req *http.Request)
-		ReadHandler(res http.ResponseWriter, req *http.Request)
+		ListHandler() http.HandlerFunc
+		CreateHandler() http.HandlerFunc
+		ReadHandler() http.HandlerFunc
 		// There is deliberately no update function
-		ArchiveHandler(res http.ResponseWriter, req *http.Request)
+		ArchiveHandler() http.HandlerFunc
 
 		CreationInputMiddleware(next http.Handler) http.Handler
 		OAuth2ClientInfoMiddleware(next http.Handler) http.Handler

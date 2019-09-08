@@ -1,6 +1,6 @@
 module gitlab.com/verygoodsoftwarenotvirus/todo
 
-go 1.12
+go 1.13
 
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.1.0

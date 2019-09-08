@@ -1,12 +1,13 @@
 stages:
   - quality
-  - testing
+  - frontend-testing
+  - integration-testing
+  - load-testing
   - publish
 
 before_script:
   - mkdir -p /go/src/gitlab.com/verygoodsoftwarenotvirus/
-  - cp -rf /builds/verygoodsoftwarenotvirus/todo
-    /go/src/gitlab.com/verygoodsoftwarenotvirus/
+  - cp -rf /builds/verygoodsoftwarenotvirus/todo /go/src/gitlab.com/verygoodsoftwarenotvirus/
   - cd /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
   - apt-get update -y && apt-get install -y make git gcc musl-dev
 
@@ -20,15 +21,6 @@ coverage:
     - GO111MODULES=off go get -u github.com/axw/gocov/gocov
     - make artifacts/coverage.out
 
-build-frontend:
-  stage: quality
-  image: node:10
-  before_script:
-    - cd frontend/v1
-    - npm install
-  script:
-    - npm run build
-
 linting:
   stage: quality
   image: docker:latest
@@ -36,10 +28,10 @@ linting:
     - docker:dind
   script:
     - apk add --update --no-cache make
-    - make lint
+    - make ci-lint
 
 integration-tests-sqlite:
-  stage: testing
+  stage: integration-testing
   image: docker:latest
   services:
     - docker:dind
@@ -52,7 +44,7 @@ integration-tests-sqlite:
     - make integration-tests-sqlite
 
 integration-tests-mariadb:
-  stage: testing
+  stage: integration-testing
   image: docker:latest
   services:
     - docker:dind
@@ -65,7 +57,7 @@ integration-tests-mariadb:
     - make integration-tests-mariadb
 
 integration-tests-postgres:
-  stage: testing
+  stage: integration-testing
   image: docker:latest
   services:
     - docker:dind
@@ -77,8 +69,17 @@ integration-tests-postgres:
     - pip install docker-compose
     - make integration-tests-postgres
 
+build-frontend:
+  stage: frontend-testing
+  image: node:10
+  before_script:
+    - cd frontend/v1
+    - npm install
+  script:
+    - npm run build
+
 frontend-selenium-tests:
-  stage: testing
+  stage: frontend-testing
   image: docker:latest
   services:
     - docker:dind
@@ -91,7 +92,7 @@ frontend-selenium-tests:
     - make frontend-tests
 
 daily-load-tests:on-schedule:
-  stage: testing
+  stage: load-testing
   image: docker:latest
   services:
     - docker:dind
@@ -107,7 +108,7 @@ daily-load-tests:on-schedule:
     - schedules
 
 load-tests-postgres:
-  stage: testing
+  stage: load-testing
   image: docker:latest
   services:
     - docker:dind
@@ -118,7 +119,7 @@ load-tests-postgres:
     - apk add --update --no-cache py-pip openssl python-dev libffi-dev
       openssl-dev gcc libc-dev make
     - pip install docker-compose
-    - make ci-load-tests
+    - make load-tests-postgres
   except:
     - schedules
   only:

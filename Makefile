@@ -52,6 +52,15 @@ lint:
 		--env=GO111MODULE=on \
 		golangci/golangci-lint golangci-lint run --config=.golangci.yml ./...
 
+.PHONY: ci-lint
+ci-lint:
+	docker run \
+		--interactive \
+		--volume=`pwd`:/go/src/`pwd` \
+		--workdir=/go/src/`pwd` \
+		--env=GO111MODULE=on \
+		golangci/golangci-lint golangci-lint run --config=.golangci.yml ./...
+
 $(COVERAGE_OUT): $(ARTIFACTS_DIR)
 	set -ex; \
 	echo "mode: set" > $(COVERAGE_OUT);
@@ -97,8 +106,51 @@ frontend-tests:
 	--always-recreate-deps \
 	--abort-on-container-exit
 
+## Load tests
+
+.PHONY: load-tests
+load-tests: load-tests-postgres
+
+.PHONY: load-tests-postgres
+load-tests-postgres:
+	docker-compose --file compose-files/load-tests-postgres.yaml up \
+	--build \
+	--force-recreate \
+	--remove-orphans \
+	--renew-anon-volumes \
+	--always-recreate-deps \
+	--abort-on-container-exit
+
+.PHONY: load-tests-postgres
+load-tests-postgres:
+	docker-compose --file compose-files/load-tests-sqlite.yaml up \
+	--build \
+	--force-recreate \
+	--remove-orphans \
+	--renew-anon-volumes \
+	--always-recreate-deps \
+	--abort-on-container-exit
+
+.PHONY: load-tests-postgres
+load-tests-postgres:
+	docker-compose --file compose-files/load-tests-postgres.yaml up \
+	--build \
+	--force-recreate \
+	--remove-orphans \
+	--renew-anon-volumes \
+	--always-recreate-deps \
+	--abort-on-container-exit
+
+## Integration tests
+
+.PHONY: lintegration-tests # this is just a handy lil' helper I use sometimes
+lintegration-tests: integration-tests lint
+
 .PHONY: integration-tests
-integration-tests:
+integration-tests: integration-tests-postgres
+
+.PHONY: integration-tests-postgres
+integration-tests-postgres:
 	docker-compose --file compose-files/integration-tests-postgres.yaml up \
 	--build \
 	--force-recreate \
@@ -106,49 +158,6 @@ integration-tests:
 	--renew-anon-volumes \
 	--always-recreate-deps \
 	--abort-on-container-exit
-
-# this is just a handy lil' helper I use sometimes
-.PHONY: lintegration-tests
-lintegration-tests: integration-tests lint
-
-.PHONY: load-tests
-load-tests:
-	docker-compose --file compose-files/load-tests.yaml up \
-	--build \
-	--force-recreate \
-	--remove-orphans \
-	--renew-anon-volumes \
-	--always-recreate-deps \
-	--abort-on-container-exit
-
-.PHONY: integration-coverage
-integration-coverage:
-	@# big thanks to https://blog.cloudflare.com/go-coverage-with-external-tests/
-	rm -f ./artifacts/integration-coverage.out
-	mkdir -p ./artifacts
-	docker-compose --file compose-files/integration-coverage.yaml up \
-	--build \
-	--force-recreate \
-	--remove-orphans \
-	--renew-anon-volumes \
-	--always-recreate-deps \
-	--abort-on-container-exit
-	go tool cover -html=./artifacts/integration-coverage.out
-
-## CI-specific tasks
-
-.PHONY: ci-load-tests
-ci-load-tests:
-	docker-compose --file compose-files/ci-load-tests.yaml up \
-	--build \
-	--force-recreate \
-	--remove-orphans \
-	--renew-anon-volumes \
-	--always-recreate-deps \
-	--abort-on-container-exit
-
-.PHONY: integration-tests-postgres
-integration-tests-postgres: integration-tests
 
 .PHONY: integration-tests-sqlite
 integration-tests-sqlite:
@@ -169,6 +178,20 @@ integration-tests-mariadb:
 	--renew-anon-volumes \
 	--always-recreate-deps \
 	--abort-on-container-exit
+
+.PHONY: integration-coverage
+integration-coverage:
+	@# big thanks to https://blog.cloudflare.com/go-coverage-with-external-tests/
+	rm -f ./artifacts/integration-coverage.out
+	mkdir -p ./artifacts
+	docker-compose --file compose-files/integration-coverage.yaml up \
+	--build \
+	--force-recreate \
+	--remove-orphans \
+	--renew-anon-volumes \
+	--always-recreate-deps \
+	--abort-on-container-exit
+	go tool cover -html=./artifacts/integration-coverage.out
 
 ## Docker things
 
@@ -201,30 +224,3 @@ run:
 	--renew-anon-volumes \
 	--always-recreate-deps \
 	--abort-on-container-exit
-
-## Minikube
-
-.PHONY: wipe-minikube
-wipe-minikube:
-	minikube delete || true
-	minikube start --vm-driver=virtualbox \
-		--extra-config=apiserver.Authorization.Mode=RBAC
-	sleep 10
-	kubectl create clusterrolebinding ks-default --clusterrole cluster-admin --serviceaccount=kube-system:default
-
-.PHONY: install-helm
-install-helm:
-	kubectl create serviceaccount tiller --namespace kube-system
-	kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount kube-system:tiller
-	helm init --upgrade --service-account tiller
-
-.PHONY: init-local-cluster
-init-local-cluster: install-helm install-chart
-
-.PHONY: install-chart
-install-chart:
-	helm upgrade todo ./deploy/helm \
-		--install \
-		--force \
-		--debug \
-		--namespace=$(KUBERNETES_NAMESPACE)

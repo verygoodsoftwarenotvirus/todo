@@ -1,4 +1,4 @@
-version: '3.3'
+version: "3.3"
 
 services:
   todo-server:
@@ -6,10 +6,10 @@ services:
       context: ../
       dockerfile: dockerfiles/integration-server.Dockerfile
     ports:
-      - '80:8888'
+      - "80:8888"
     environment:
-      DOCKER: 'true'
-      CONFIGURATION_FILEPATH: 'config_files/production.toml'
+      DOCKER: "true"
+      CONFIGURATION_FILEPATH: "config_files/integration-tests-postgres.toml"
     links:
       - database
     depends_on:
@@ -24,14 +24,14 @@ services:
     links:
       - todo-server
     environment:
-      TARGET_ADDRESS: 'http://todo-server:8888'
+      TARGET_ADDRESS: "http://todo-server:8888"
     logging:
       driver: none
 
   database:
     image: postgres:latest
     ports:
-      - '2345:5432'
+      - "2345:5432"
     environment:
       POSTGRES_DB: todo
       POSTGRES_USER: dbuser

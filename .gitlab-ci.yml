@@ -20,6 +20,24 @@ coverage:
     - GO111MODULES=off go get -u github.com/axw/gocov/gocov
     - make artifacts/coverage.out
 
+build-frontend:
+  stage: quality
+  image: node:10
+  before_script:
+    - cd frontend/v1
+    - npm install
+  script:
+    - npm run build
+
+linting:
+  stage: quality
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - apk add --update --no-cache make
+    - make lint
+
 integration-tests-sqlite:
   stage: testing
   image: docker:latest
@@ -58,15 +76,6 @@ integration-tests-postgres:
       openssl-dev gcc libc-dev make
     - pip install docker-compose
     - make integration-tests-postgres
-
-build-frontend:
-  stage: quality
-  image: node:10
-  before_script:
-    - cd frontend/v1
-    - npm install
-  script:
-    - npm run build
 
 frontend-selenium-tests:
   stage: testing
@@ -114,17 +123,6 @@ load-tests-postgres:
     - schedules
   only:
     - master
-
-linting:
-  stage: quality
-  image: golang:stretch
-  variables:
-    GOPATH: "/go"
-  before_script:
-    - apt-get install -y curl
-    - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.16.0
-  script:
-    - make lint
 
 gitlabcr:
   stage: publish

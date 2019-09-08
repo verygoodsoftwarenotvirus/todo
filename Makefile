@@ -27,7 +27,6 @@ rewire: wire-clean wire
 .PHONY: dev-tools
 dev-tools:
 	GO111MODULE=off go get -u github.com/google/wire/cmd/wire
-	GO111MODULE=off go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
 	GO111MODULE=off go get -u github.com/axw/gocov/gocov
 
 .PHONY: vendor-clean
@@ -43,8 +42,15 @@ revendor: vendor-clean vendor
 
 ## Testing things
 
+.PHONY: lint
 lint:
-	GO111MODULE=on golangci-lint run --config=.golangci.yml ./...
+	docker run \
+		--interactive \
+		--tty \
+		--volume=`pwd`:/go/src/`pwd` \
+		--workdir=/go/src/`pwd` \
+		--env=GO111MODULE=on \
+		golangci/golangci-lint golangci-lint run --config=.golangci.yml ./...
 
 $(COVERAGE_OUT): $(ARTIFACTS_DIR)
 	set -ex; \

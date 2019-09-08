@@ -1,4 +1,4 @@
-version: '3.3'
+version: "3.3"
 
 services:
   todo-server:
@@ -6,14 +6,14 @@ services:
       context: ../
       dockerfile: dockerfiles/integration-server.Dockerfile
     ports:
-      - '80:8888'
+      - "80:8888"
     environment:
-      DOCKER: 'true'
-      CONFIGURATION_FILEPATH: 'config_files/production.toml'
-      JAEGER_SERVICE_NAME: 'todo-server'
-      JAEGER_AGENT_HOST: 'tracing-server'
-      JAEGER_AGENT_PORT: '6831'
-      JAEGER_SAMPLER_MANAGER_HOST_PORT: 'tracing-server:5778'
+      DOCKER: "true"
+      CONFIGURATION_FILEPATH: "config_files/integration-tests-sqlite.toml"
+      JAEGER_SERVICE_NAME: "todo-server"
+      JAEGER_AGENT_HOST: "tracing-server"
+      JAEGER_AGENT_PORT: "6831"
+      JAEGER_SAMPLER_MANAGER_HOST_PORT: "tracing-server:5778"
     links:
       - tracing-server
       - database
@@ -35,7 +35,7 @@ services:
   database:
     image: postgres:latest
     ports:
-      - '2345:5432'
+      - "2345:5432"
     environment:
       POSTGRES_DB: todo
       POSTGRES_USER: dbuser
@@ -48,13 +48,13 @@ services:
   tracing-server:
     image: jaegertracing/all-in-one:latest
     ports:
-      - '5775:5775/udp'
-      - '6831:6831/udp'
-      - '6832:6832/udp'
-      - '5778:5778'
-      - '16686:16686'
-      - '14268:14268'
-      - '9411:9411'
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "9411:9411"
     logging:
       driver: none
 
@@ -64,17 +64,16 @@ services:
       - type: bind
         source: ../deploy/prometheus/local/config.yaml
         target: /etc/prometheus/config.yaml
-    command:
-      '--config.file=/etc/prometheus/config.yaml --storage.tsdb.path=/prometheus'
+    command: "--config.file=/etc/prometheus/config.yaml --storage.tsdb.path=/prometheus"
     ports:
-      - '9090:9090'
+      - "9090:9090"
     logging:
       driver: none
 
   grafana:
     image: grafana/grafana
     ports:
-      - '3000:3000'
+      - "3000:3000"
     volumes:
       - type: bind
         source: ../deploy/grafana/local/provisioning
@@ -85,6 +84,6 @@ services:
     links:
       - prometheus
     environment:
-      GF_INSTALL_PLUGINS: 'grafana-piechart-panel'
+      GF_INSTALL_PLUGINS: "grafana-piechart-panel"
     logging:
       driver: none

@@ -59,7 +59,7 @@ ci-lint:
 		--volume=`pwd`:/go/src/`pwd` \
 		--workdir=/go/src/`pwd` \
 		--env=GO111MODULE=on \
-		golangci/golangci-lint golangci-lint run --config=.golangci.yml ./...
+		golangci/golangci-lint golangci-lint run --config=/go/src/`pwd`/.golangci.yml ./...
 
 $(COVERAGE_OUT): $(ARTIFACTS_DIR)
 	set -ex; \
@@ -99,41 +99,6 @@ test:
 .PHONY: frontend-tests
 frontend-tests:
 	docker-compose --file compose-files/frontend-tests.yaml up \
-	--build \
-	--force-recreate \
-	--remove-orphans \
-	--renew-anon-volumes \
-	--always-recreate-deps \
-	--abort-on-container-exit
-
-## Load tests
-
-.PHONY: load-tests
-load-tests: load-tests-postgres
-
-.PHONY: load-tests-postgres
-load-tests-postgres:
-	docker-compose --file compose-files/load-tests-postgres.yaml up \
-	--build \
-	--force-recreate \
-	--remove-orphans \
-	--renew-anon-volumes \
-	--always-recreate-deps \
-	--abort-on-container-exit
-
-.PHONY: load-tests-postgres
-load-tests-postgres:
-	docker-compose --file compose-files/load-tests-sqlite.yaml up \
-	--build \
-	--force-recreate \
-	--remove-orphans \
-	--renew-anon-volumes \
-	--always-recreate-deps \
-	--abort-on-container-exit
-
-.PHONY: load-tests-postgres
-load-tests-postgres:
-	docker-compose --file compose-files/load-tests-postgres.yaml up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -192,6 +157,41 @@ integration-coverage:
 	--always-recreate-deps \
 	--abort-on-container-exit
 	go tool cover -html=./artifacts/integration-coverage.out
+
+## Load tests
+
+.PHONY: load-tests
+load-tests: load-tests-postgres
+
+.PHONY: load-tests-postgres
+load-tests-postgres:
+	docker-compose --file compose-files/load-tests-postgres.yaml up \
+	--build \
+	--force-recreate \
+	--remove-orphans \
+	--renew-anon-volumes \
+	--always-recreate-deps \
+	--abort-on-container-exit
+
+.PHONY: load-tests-sqlite
+load-tests-sqlite:
+	docker-compose --file compose-files/load-tests-sqlite.yaml up \
+	--build \
+	--force-recreate \
+	--remove-orphans \
+	--renew-anon-volumes \
+	--always-recreate-deps \
+	--abort-on-container-exit
+
+.PHONY: load-tests-mariadb
+load-tests-mariadb:
+	docker-compose --file compose-files/load-tests-mariadb.yaml up \
+	--build \
+	--force-recreate \
+	--remove-orphans \
+	--renew-anon-volumes \
+	--always-recreate-deps \
+	--abort-on-container-exit
 
 ## Docker things
 

@@ -1,6 +1,7 @@
-GOPATH       := $(GOPATH)
+PWD           := $(shell pwd)
+GOPATH        := $(GOPATH)
 ARTIFACTS_DIR := artifacts
-COVERAGE_OUT := $(ARTIFACTS_DIR)/coverage.out
+COVERAGE_OUT  := $(ARTIFACTS_DIR)/coverage.out
 
 KUBERNETES_NAMESPACE     := todo
 SERVER_DOCKER_IMAGE_NAME := todo-server
@@ -45,21 +46,11 @@ revendor: vendor-clean vendor
 .PHONY: lint
 lint:
 	docker run \
-		--interactive \
-		--tty \
-		--volume=`pwd`:/go/src/`pwd` \
-		--workdir=/go/src/`pwd` \
+		--rm \
+		--volume `pwd`:`pwd` \
+		--workdir=`pwd` \
 		--env=GO111MODULE=on \
 		golangci/golangci-lint golangci-lint run --config=.golangci.yml ./...
-
-.PHONY: ci-lint
-ci-lint:
-	docker run \
-		--interactive \
-		--volume=`pwd`:/go/src/`pwd` \
-		--workdir=/go/src/`pwd` \
-		--env=GO111MODULE=on \
-		golangci/golangci-lint golangci-lint run --config=/go/src/`pwd`/.golangci.yml ./...
 
 $(COVERAGE_OUT): $(ARTIFACTS_DIR)
 	set -ex; \

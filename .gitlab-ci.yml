@@ -18,17 +18,16 @@ coverage:
     GOPATH: "/go"
   script:
     - apt-get update -y && apt-get install -y make git gcc musl-dev
-    - GO111MODULES=off go get -u github.com/axw/gocov/gocov
+    - GO111MODULES=off go get github.com/axw/gocov/gocov
     - make artifacts/coverage.out
 
 linting:
   stage: quality
-  image: docker:latest
-  services:
-    - docker:dind
+  image: golangci/golangci-lint:latest
+  variables:
+    GO111MODULE: "on"
   script:
-    - apk add --update --no-cache make
-    - make ci-lint
+    - golangci-lint run --config=.golangci.yml --deadline=15m
 
 integration-tests-sqlite:
   stage: integration-testing
@@ -173,8 +172,8 @@ gitlabcr:
   services:
     - docker:dind
   script:
-    - docker login -u=gitlab-ci-token -p=$CI_JOB_TOKEN registry.gitlab.com
-    - docker build -t registry.gitlab.com/verygoodsoftwarenotvirus/todo:latest --file dockerfiles/server.Dockerfile .
+    - docker login --username=gitlab-ci-token --password=$CI_JOB_TOKEN registry.gitlab.com
+    - docker build --tag registry.gitlab.com/verygoodsoftwarenotvirus/todo:latest --file dockerfiles/server.Dockerfile .
     - docker push registry.gitlab.com/verygoodsoftwarenotvirus/todo:latest
   only:
     - master

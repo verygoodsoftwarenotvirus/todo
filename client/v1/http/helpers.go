@@ -3,21 +3,15 @@ package client
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"reflect"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"github.com/pkg/errors"
 )
-
-// ////////////////////////////////////////////////// //
-//                                                    //
-//                 Helper Functions                   //
-//                                                    //
-// ////////////////////////////////////////////////// //
 
 // argIsNotPointer checks an argument and returns whether or not it is a pointer
 func argIsNotPointer(i interface{}) (notAPointer bool, err error) {
@@ -68,13 +62,13 @@ func unmarshalBody(res *http.Response, dest interface{}) error {
 	if res.StatusCode >= http.StatusBadRequest {
 		apiErr := &models.ErrorResponse{}
 		if err = json.Unmarshal(bodyBytes, &apiErr); err != nil {
-			return errors.Wrap(err, "unmarshaling error")
+			return fmt.Errorf("unmarshaling error: %w", err)
 		}
 		return apiErr
 	}
 
 	if err = json.Unmarshal(bodyBytes, &dest); err != nil {
-		return errors.Wrap(err, "unmarshaling body")
+		return fmt.Errorf("unmarshaling body: %w", err)
 	}
 
 	return nil

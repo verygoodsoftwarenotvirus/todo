@@ -1,4 +1,4 @@
-package model
+package randmodel
 
 import "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 

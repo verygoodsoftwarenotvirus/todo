@@ -31,6 +31,7 @@ func buildRequest(t *testing.T) *http.Request {
 
 	require.NotNil(t, req)
 	assert.NoError(t, err)
+
 	return req
 }
 
@@ -59,10 +60,8 @@ func TestServer_loggingMiddleware(T *testing.T) {
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
-
 		s.loggingMiddleware(mh).ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
-
 	})
 }

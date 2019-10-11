@@ -3,14 +3,14 @@ package mariadb
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"sync"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/pkg/errors"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
 const (
@@ -184,12 +184,12 @@ func (m *MariaDB) GetItems(ctx context.Context, filter *models.QueryFilter, user
 
 	list, err := scanItems(m.logger, rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "scanning response from database")
+		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
 	count, err := m.GetItemCount(ctx, filter, userID)
 	if err != nil {
-		return nil, errors.Wrap(err, "fetching item count")
+		return nil, fmt.Errorf("fetching item count: %w", err)
 	}
 
 	x := &models.ItemList{
@@ -215,7 +215,7 @@ func (m *MariaDB) GetAllItemsForUser(ctx context.Context, userID uint64) ([]mode
 
 	list, err := scanItems(m.logger, rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "parsing database results")
+		return nil, fmt.Errorf("parsing database results: %w", err)
 	}
 
 	return list, nil
@@ -272,7 +272,7 @@ func (m *MariaDB) CreateItem(ctx context.Context, input *models.ItemCreationInpu
 	// create the item
 	res, err := m.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return nil, errors.Wrap(err, "error executing item creation query")
+		return nil, fmt.Errorf("error executing item creation query: %w", err)
 	}
 
 	// fetch the last inserted ID

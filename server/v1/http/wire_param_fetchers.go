@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/google/wire"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
 var (

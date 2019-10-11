@@ -231,7 +231,6 @@ func TestSqlite_GetAllOAuth2Clients(T *testing.T) {
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
-
 }
 
 func TestSqlite_GetAllOAuth2ClientsForUser(T *testing.T) {
@@ -657,7 +656,6 @@ func TestSqlite_GetOAuth2Clients(T *testing.T) {
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
-
 }
 
 func TestSqlite_buildCreateOAuth2ClientQuery(T *testing.T) {

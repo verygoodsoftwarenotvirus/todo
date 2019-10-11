@@ -2,12 +2,12 @@ package client
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"github.com/pkg/errors"
 )
 
 const (
@@ -25,7 +25,7 @@ func (c *V1Client) BuildGetOAuth2ClientRequest(ctx context.Context, id uint64) (
 func (c *V1Client) GetOAuth2Client(ctx context.Context, id uint64) (oauth2Client *models.OAuth2Client, err error) {
 	req, err := c.BuildGetOAuth2ClientRequest(ctx, id)
 	if err != nil {
-		return nil, errors.Wrap(err, "building request")
+		return nil, fmt.Errorf("building request: %w", err)
 	}
 
 	err = c.retrieve(ctx, req, &oauth2Client)
@@ -43,7 +43,7 @@ func (c *V1Client) BuildGetOAuth2ClientsRequest(ctx context.Context, filter *mod
 func (c *V1Client) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
 	req, err := c.BuildGetOAuth2ClientsRequest(ctx, filter)
 	if err != nil {
-		return nil, errors.Wrap(err, "building request")
+		return nil, fmt.Errorf("building request: %w", err)
 	}
 
 	var oauth2Clients *models.OAuth2ClientList
@@ -87,7 +87,7 @@ func (c *V1Client) CreateOAuth2Client(
 
 	res, err := c.executeRawRequest(ctx, c.plainClient, req)
 	if err != nil {
-		return nil, errors.Wrap(err, "executing request")
+		return nil, fmt.Errorf("executing request: %w", err)
 	}
 
 	if res.StatusCode == http.StatusNotFound {
@@ -95,7 +95,7 @@ func (c *V1Client) CreateOAuth2Client(
 	}
 
 	if resErr := unmarshalBody(res, &oauth2Client); resErr != nil {
-		return nil, errors.Wrap(resErr, "loading response from server")
+		return nil, fmt.Errorf("loading response from server: %w", resErr)
 	}
 
 	return oauth2Client, nil
@@ -112,7 +112,7 @@ func (c *V1Client) BuildArchiveOAuth2ClientRequest(ctx context.Context, id uint6
 func (c *V1Client) ArchiveOAuth2Client(ctx context.Context, id uint64) error {
 	req, err := c.BuildArchiveOAuth2ClientRequest(ctx, id)
 	if err != nil {
-		return errors.Wrap(err, "building request")
+		return fmt.Errorf("building request: %w", err)
 	}
 
 	return c.executeRequest(ctx, req, nil)

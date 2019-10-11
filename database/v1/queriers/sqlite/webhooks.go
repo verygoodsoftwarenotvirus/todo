@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strings"
 	"sync"
 
@@ -10,7 +11,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -211,17 +211,17 @@ func (s *Sqlite) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error
 		if err == sql.ErrNoRows {
 			return nil, err
 		}
-		return nil, errors.Wrap(err, "querying for webhooks")
+		return nil, fmt.Errorf("querying for webhooks: %w", err)
 	}
 
 	list, err := s.scanWebhooks(rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "scanning response from database")
+		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
 	count, err := s.GetAllWebhooksCount(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "fetching webhook count")
+		return nil, fmt.Errorf("fetching webhook count: %w", err)
 	}
 
 	x := &models.WebhookList{
@@ -244,12 +244,12 @@ func (s *Sqlite) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]mo
 		if err == sql.ErrNoRows {
 			return nil, err
 		}
-		return nil, errors.Wrap(err, "querying database for webhooks")
+		return nil, fmt.Errorf("querying database for webhooks: %w", err)
 	}
 
 	list, err := s.scanWebhooks(rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "scanning response from database")
+		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
 	return list, nil
@@ -286,17 +286,17 @@ func (s *Sqlite) GetWebhooks(ctx context.Context, filter *models.QueryFilter, us
 		if err == sql.ErrNoRows {
 			return nil, err
 		}
-		return nil, errors.Wrap(err, "querying database")
+		return nil, fmt.Errorf("querying database: %w", err)
 	}
 
 	list, err := s.scanWebhooks(rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "scanning response from database")
+		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
 	count, err := s.GetWebhookCount(ctx, filter, userID)
 	if err != nil {
-		return nil, errors.Wrap(err, "fetching count")
+		return nil, fmt.Errorf("fetching count: %w", err)
 	}
 
 	x := &models.WebhookList{
@@ -372,7 +372,7 @@ func (s *Sqlite) CreateWebhook(ctx context.Context, input *models.WebhookCreatio
 	query, args := s.buildWebhookCreationQuery(x)
 	res, err := s.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return nil, errors.Wrap(err, "error executing webhook creation query")
+		return nil, fmt.Errorf("error executing webhook creation query: %w", err)
 	}
 
 	if id, idErr := res.LastInsertId(); idErr == nil {

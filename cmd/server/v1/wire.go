@@ -6,23 +6,22 @@ import (
 	"context"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	libauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
-	metricsProvider "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
+	auth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
-
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
+	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
+	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
+	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
+	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
+	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
 
 	"github.com/google/wire"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
 // ProvideReporter is an obligatory function that hopefully wire will eliminate for me one day
@@ -40,7 +39,7 @@ func BuildServer(
 
 	wire.Build(
 		config.Providers,
-		libauth.Providers,
+		auth.Providers,
 
 		// Server things
 		server.Providers,
@@ -48,18 +47,19 @@ func BuildServer(
 		httpserver.Providers,
 
 		// metrics
-		metricsProvider.Providers,
+		metrics.Providers,
 
 		// external libs
 		newsman.NewNewsman,
 		ProvideReporter,
 
-		auth.Providers,
-		users.Providers,
-		items.Providers,
-		frontend.Providers,
-		webhooks.Providers,
-		oauth2clients.Providers,
+		// services
+		authservice.Providers,
+		usersservice.Providers,
+		itemsservice.Providers,
+		frontendservice.Providers,
+		webhooksservice.Providers,
+		oauth2clientsservice.Providers,
 	)
 	return nil, nil
 }

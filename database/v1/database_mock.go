@@ -3,7 +3,7 @@ package database
 import (
 	"context"
 
-	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
+	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
 	"github.com/stretchr/testify/mock"
 )
@@ -13,10 +13,10 @@ var _ Database = (*MockDatabase)(nil)
 // BuildMockDatabase builds a mock database
 func BuildMockDatabase() *MockDatabase {
 	return &MockDatabase{
-		ItemDataManager:         &mmodels.ItemDataManager{},
-		UserDataManager:         &mmodels.UserDataManager{},
-		OAuth2ClientDataManager: &mmodels.OAuth2ClientDataManager{},
-		WebhookDataManager:      &mmodels.WebhookDataManager{},
+		ItemDataManager:         &mockmodels.ItemDataManager{},
+		UserDataManager:         &mockmodels.UserDataManager{},
+		OAuth2ClientDataManager: &mockmodels.OAuth2ClientDataManager{},
+		WebhookDataManager:      &mockmodels.WebhookDataManager{},
 	}
 }
 
@@ -24,10 +24,10 @@ func BuildMockDatabase() *MockDatabase {
 type MockDatabase struct {
 	mock.Mock
 
-	*mmodels.ItemDataManager
-	*mmodels.UserDataManager
-	*mmodels.OAuth2ClientDataManager
-	*mmodels.WebhookDataManager
+	*mockmodels.ItemDataManager
+	*mockmodels.UserDataManager
+	*mockmodels.OAuth2ClientDataManager
+	*mockmodels.WebhookDataManager
 }
 
 // Migrate satisfies the database.Database interface

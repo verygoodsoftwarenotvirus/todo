@@ -21,8 +21,8 @@ func TestV1Client_BuildGetOAuth2ClientRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		expectedMethod := http.MethodGet
 		ctx := context.Background()
+		expectedMethod := http.MethodGet
 
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
@@ -33,12 +33,7 @@ func TestV1Client_BuildGetOAuth2ClientRequest(T *testing.T) {
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
 		assert.True(t, strings.HasSuffix(actual.URL.String(), fmt.Sprintf("%d", expectedID)))
-		assert.Equal(t,
-			actual.Method,
-			expectedMethod,
-			"request should be a %s request",
-			expectedMethod,
-		)
+		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
 	})
 }
 
@@ -46,23 +41,17 @@ func TestV1Client_GetOAuth2Client(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expected := &models.OAuth2Client{
 			ID:           1,
 			ClientID:     "example",
 			ClientSecret: "blah",
 		}
 
-		ctx := context.Background()
-
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.True(t,
-						strings.HasSuffix(
-							req.URL.String(),
-							strconv.Itoa(int(expected.ID)),
-						),
-					)
+					assert.True(t, strings.HasSuffix(req.URL.String(), strconv.Itoa(int(expected.ID))))
 					assert.Equal(t, fmt.Sprintf("/api/v1/oauth2/clients/%d", expected.ID), req.URL.Path, "expected and actual path don't match")
 					assert.Equal(t, req.Method, http.MethodGet)
 					require.NoError(t, json.NewEncoder(res).Encode(expected))
@@ -71,7 +60,6 @@ func TestV1Client_GetOAuth2Client(T *testing.T) {
 		)
 
 		c := buildTestClient(t, ts)
-
 		actual, err := c.GetOAuth2Client(ctx, expected.ID)
 
 		require.NotNil(t, actual)
@@ -84,22 +72,16 @@ func TestV1Client_BuildGetOAuth2ClientsRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		expectedMethod := http.MethodGet
 		ctx := context.Background()
+		expectedMethod := http.MethodGet
 
 		ts := httptest.NewTLSServer(nil)
-
 		c := buildTestClient(t, ts)
 		actual, err := c.BuildGetOAuth2ClientsRequest(ctx, nil)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t,
-			actual.Method,
-			expectedMethod,
-			"request should be a %s request",
-			expectedMethod,
-		)
+		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
 	})
 }
 
@@ -107,6 +89,7 @@ func TestV1Client_GetOAuth2Clients(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expected := &models.OAuth2ClientList{
 			Clients: []models.OAuth2Client{
 				{
@@ -116,8 +99,6 @@ func TestV1Client_GetOAuth2Clients(T *testing.T) {
 				},
 			},
 		}
-
-		ctx := context.Background()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -130,7 +111,6 @@ func TestV1Client_GetOAuth2Clients(T *testing.T) {
 		)
 
 		c := buildTestClient(t, ts)
-
 		actual, err := c.GetOAuth2Clients(ctx, nil)
 
 		require.NotNil(t, actual)
@@ -144,7 +124,6 @@ func TestV1Client_BuildCreateOAuth2ClientRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
@@ -155,7 +134,6 @@ func TestV1Client_BuildCreateOAuth2ClientRequest(T *testing.T) {
 				TOTPToken: "123456",
 			},
 		}
-
 		req, err := c.BuildCreateOAuth2ClientRequest(ctx, &http.Cookie{}, exampleInput)
 
 		require.NotNil(t, req)
@@ -182,13 +160,15 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 			ClientSecret: "EXAMPLECLIENTSECRET",
 		}
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assert.Equal(t, "/oauth2/client", req.URL.Path, "expected and actual path don't match")
-				assert.Equal(t, req.Method, http.MethodPost)
-				require.NoError(t, json.NewEncoder(res).Encode(exampleOutput))
-			},
-		))
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, "/oauth2/client", req.URL.Path, "expected and actual path don't match")
+					assert.Equal(t, req.Method, http.MethodPost)
+					require.NoError(t, json.NewEncoder(res).Encode(exampleOutput))
+				},
+			),
+		)
 		c := buildTestClient(t, ts)
 
 		oac, err := c.CreateOAuth2Client(ctx, &http.Cookie{}, exampleInput)
@@ -206,19 +186,16 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 			},
 		}
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assert.Equal(t, req.URL.Path, "/oauth2/client", "expected and actual path don't match")
-				assert.Equal(t, req.Method, http.MethodPost)
-				_, err := res.Write([]byte(`
-
-
-					BLAH
-
-				`))
-				assert.NoError(t, err)
-			},
-		))
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, req.URL.Path, "/oauth2/client", "expected and actual path don't match")
+					assert.Equal(t, req.Method, http.MethodPost)
+					_, err := res.Write([]byte("BLAH"))
+					assert.NoError(t, err)
+				},
+			),
+		)
 		c := buildTestClient(t, ts)
 
 		oac, err := c.CreateOAuth2Client(ctx, &http.Cookie{}, exampleInput)
@@ -236,13 +213,15 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 			},
 		}
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assert.Equal(t, req.URL.Path, "/oauth2/client", "expected and actual path don't match")
-				assert.Equal(t, req.Method, http.MethodPost)
-				time.Sleep(10 * time.Hour)
-			},
-		))
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, req.URL.Path, "/oauth2/client", "expected and actual path don't match")
+					assert.Equal(t, req.Method, http.MethodPost)
+					time.Sleep(10 * time.Hour)
+				},
+			),
+		)
 		c := buildTestClient(t, ts)
 		c.plainClient.Timeout = 500 * time.Millisecond
 
@@ -261,13 +240,15 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 			},
 		}
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assert.Equal(t, req.URL.Path, "/oauth2/client", "expected and actual path don't match")
-				assert.Equal(t, req.Method, http.MethodPost)
-				res.WriteHeader(http.StatusNotFound)
-			},
-		))
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, req.URL.Path, "/oauth2/client", "expected and actual path don't match")
+					assert.Equal(t, req.Method, http.MethodPost)
+					res.WriteHeader(http.StatusNotFound)
+				},
+			),
+		)
 		c := buildTestClient(t, ts)
 
 		oac, err := c.CreateOAuth2Client(ctx, &http.Cookie{}, exampleInput)
@@ -291,9 +272,8 @@ func TestV1Client_BuildArchiveOAuth2ClientRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		expectedMethod := http.MethodDelete
 		ctx := context.Background()
-
+		expectedMethod := http.MethodDelete
 		ts := httptest.NewTLSServer(nil)
 
 		expectedID := uint64(1)
@@ -304,12 +284,7 @@ func TestV1Client_BuildArchiveOAuth2ClientRequest(T *testing.T) {
 		require.NotNil(t, actual.URL)
 		assert.True(t, strings.HasSuffix(actual.URL.String(), fmt.Sprintf("%d", expectedID)))
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t,
-			actual.Method,
-			expectedMethod,
-			"request should be a %s request",
-			expectedMethod,
-		)
+		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
 	})
 }
 
@@ -317,8 +292,8 @@ func TestV1Client_ArchiveOAuth2Client(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		expected := uint64(1)
 		ctx := context.Background()
+		expected := uint64(1)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -332,7 +307,6 @@ func TestV1Client_ArchiveOAuth2Client(T *testing.T) {
 		)
 
 		err := buildTestClient(t, ts).ArchiveOAuth2Client(ctx, expected)
-
 		assert.NoError(t, err, "no error should be returned")
 	})
 }

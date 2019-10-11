@@ -14,31 +14,29 @@ import (
 )
 
 func buildMockRowFromItem(item *models.Item) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(itemsTableColumns).
-		AddRow(
-			item.ID,
-			item.Name,
-			item.Details,
-			item.CreatedOn,
-			item.UpdatedOn,
-			item.ArchivedOn,
-			item.BelongsTo,
-		)
+	exampleRows := sqlmock.NewRows(itemsTableColumns).AddRow(
+		item.ID,
+		item.Name,
+		item.Details,
+		item.CreatedOn,
+		item.UpdatedOn,
+		item.ArchivedOn,
+		item.BelongsTo,
+	)
 
 	return exampleRows
 }
 
 func buildErroneousMockRowFromItem(item *models.Item) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(itemsTableColumns).
-		AddRow(
-			item.ArchivedOn,
-			item.Name,
-			item.Details,
-			item.CreatedOn,
-			item.UpdatedOn,
-			item.BelongsTo,
-			item.ID,
-		)
+	exampleRows := sqlmock.NewRows(itemsTableColumns).AddRow(
+		item.ArchivedOn,
+		item.Name,
+		item.Details,
+		item.CreatedOn,
+		item.UpdatedOn,
+		item.BelongsTo,
+		item.ID,
+	)
 
 	return exampleRows
 }
@@ -322,7 +320,6 @@ func TestSqlite_GetItems(T *testing.T) {
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
-
 }
 
 func TestSqlite_GetAllItemsForUser(T *testing.T) {

@@ -1,0 +1,60 @@
+{
+  "services": {
+    "coverage-server": {
+      "build": {
+        "context": "../",
+        "dockerfile": "dockerfiles/integration-coverage-server.Dockerfile"
+      },
+      "environment": {
+        "CONFIGURATION_FILEPATH": "config_files/coverage.toml",
+        "DOCKER": "true",
+        "RUNTIME_DURATION": "30s"
+      },
+      "links": [
+        "database"
+      ],
+      "ports": [
+        "80:8888"
+      ],
+      "volumes": [
+        "../artifacts/:/home/"
+      ]
+    },
+    "database": {
+      "environment": {
+        "POSTGRES_DB": "todo",
+        "POSTGRES_PASSWORD": "hunter2",
+        "POSTGRES_USER": "dbuser"
+      },
+      "image": "postgres:latest",
+      "logging": {
+        "driver": "none"
+      },
+      "ports": [
+        "2345:5432"
+      ],
+      "volumes": [
+        "../database/_postgres_init_.sql:/docker-entrypoint-initdb.d/10-init.sql"
+      ]
+    },
+    "test": {
+      "build": {
+        "context": "../",
+        "dockerfile": "dockerfiles/integration-tests.Dockerfile"
+      },
+      "environment": {
+        "DOCKER": "true",
+        "JAEGER_AGENT_HOST": "tracing-server",
+        "JAEGER_AGENT_PORT": "6831",
+        "JAEGER_SAMPLER_MANAGER_HOST_PORT": "tracing-server:5778",
+        "JAEGER_SERVICE_NAME": "coverage-server",
+        "TARGET_ADDRESS": "http://coverage-server",
+        "WAIT_FOR_COVERAGE": "yes"
+      },
+      "links": [
+        "coverage-server"
+      ]
+    }
+  },
+  "version": "3.3"
+}

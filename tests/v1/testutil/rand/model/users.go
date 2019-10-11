@@ -1,4 +1,4 @@
-package model
+package randmodel
 
 import (
 	"time"

@@ -1,24 +1,27 @@
-[meta]
-# tracing_enabled = true
-# debug = true
-
-[metrics]
-metrics_provider = "prometheus"
-tracing_provider = "jaeger"
-
-[server]
-http_port = 8888
-debug = true
-
-[frontend]
-static_files_dir = "/frontend"
 
 [auth]
-cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"
+  cookie_lifetime = "24h0m0s"
+  cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"
+  enable_user_signup = true
 
 [database]
-debug = false
-provider = "mariadb"
-connection_details = "dbuser:hunter2@tcp(database:3306)/todo"
+  connection_details = "dbuser:hunter2@tcp(database:3306)/todo"
+  debug = false
+  provider = "mariadb"
 
+[frontend]
+  static_files_directory = "/frontend"
 
+[meta]
+  debug = false
+  startup_deadline = "5m0s"
+
+[metrics]
+  database_metrics_collection_interval = "2s"
+  metrics_provider = "prometheus"
+  runtime_metrics_collection_interval = "2s"
+  tracing_provider = "jaeger"
+
+[server]
+  debug = true
+  http_port = 8888

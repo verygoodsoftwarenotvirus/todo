@@ -6,11 +6,11 @@ import (
 	"os"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
 
 func buildRequest(t *testing.T) *http.Request {
@@ -42,7 +42,6 @@ func TestService_StaticDir(T *testing.T) {
 
 		req, res := buildRequest(t), httptest.NewRecorder()
 		req.URL.Path = "/http_routes_test.go"
-
 		hf(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
@@ -58,7 +57,6 @@ func TestService_StaticDir(T *testing.T) {
 
 		req, res := buildRequest(t), httptest.NewRecorder()
 		req.URL.Path = "/login"
-
 		hf(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
@@ -74,12 +72,10 @@ func TestService_StaticDir(T *testing.T) {
 
 		req, res := buildRequest(t), httptest.NewRecorder()
 		req.URL.Path = "/items/9"
-
 		hf(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 	})
-
 }
 
 func TestService_Routes(T *testing.T) {
@@ -99,7 +95,6 @@ func TestService_buildStaticFileServer(T *testing.T) {
 				CacheStaticFiles: true,
 			},
 		}
-
 		cwd, err := os.Getwd()
 		require.NoError(t, err)
 

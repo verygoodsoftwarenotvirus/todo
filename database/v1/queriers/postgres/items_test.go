@@ -323,7 +323,6 @@ func TestPostgres_GetItems(T *testing.T) {
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
-
 }
 
 func TestPostgres_GetAllItemsForUser(T *testing.T) {

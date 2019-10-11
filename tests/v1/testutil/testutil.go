@@ -143,7 +143,7 @@ func getLoginCookie(serviceURL string, u *models.User) (*http.Cookie, error) {
 
 	code, err := totp.GenerateCode(strings.ToUpper(u.TwoFactorSecret), time.Now().UTC())
 	if err != nil {
-		return nil, errors.Wrap(err, "generating totp token")
+		return nil, fmt.Errorf("generating totp token: %w", err)
 	}
 
 	req, err := http.NewRequest(
@@ -164,12 +164,12 @@ func getLoginCookie(serviceURL string, u *models.User) (*http.Cookie, error) {
 		),
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "building request")
+		return nil, fmt.Errorf("building request: %w", err)
 	}
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, errors.Wrap(err, "executing request")
+		return nil, fmt.Errorf("executing request: %w", err)
 	}
 
 	if err = res.Body.Close(); err != nil {

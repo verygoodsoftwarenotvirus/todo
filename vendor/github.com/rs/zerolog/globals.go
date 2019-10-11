@@ -2,9 +2,9 @@ package zerolog
 
 import (
 	"strconv"
+	"sync/atomic"
 	"time"
 )
-import "sync/atomic"
 
 const (
 	// TimeFormatUnix defines a time format that makes time fields to be

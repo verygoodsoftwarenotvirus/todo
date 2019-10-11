@@ -3,12 +3,12 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -57,7 +57,7 @@ func (s *Sqlite) scanUsers(rows *sql.Rows) ([]models.User, error) {
 	for rows.Next() {
 		user, err := scanUser(rows)
 		if err != nil {
-			return nil, errors.Wrap(err, "scanning user result")
+			return nil, fmt.Errorf("scanning user result: %w", err)
 		}
 		list = append(list, *user)
 	}
@@ -122,7 +122,7 @@ func (s *Sqlite) GetUserByUsername(ctx context.Context, username string) (*model
 		if err == sql.ErrNoRows {
 			return nil, err
 		}
-		return nil, errors.Wrap(err, "fetching user from database")
+		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
 	return u, nil
@@ -188,12 +188,12 @@ func (s *Sqlite) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mod
 
 	userList, err := s.scanUsers(rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "loading response from database")
+		return nil, fmt.Errorf("loading response from database: %w", err)
 	}
 
 	count, err := s.GetUserCount(ctx, filter)
 	if err != nil {
-		return nil, errors.Wrap(err, "fetching user count")
+		return nil, fmt.Errorf("fetching user count: %w", err)
 	}
 
 	x := &models.UserList{
@@ -262,7 +262,7 @@ func (s *Sqlite) CreateUser(ctx context.Context, input *models.UserInput) (*mode
 	// create the user
 	res, err := s.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return nil, errors.Wrap(err, "error executing user creation query")
+		return nil, fmt.Errorf("error executing user creation query: %w", err)
 	}
 
 	// fetch the last inserted ID

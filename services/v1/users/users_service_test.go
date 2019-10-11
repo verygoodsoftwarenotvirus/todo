@@ -7,19 +7,18 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	mauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
-	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
-	mmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1/mock"
+	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
+	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
+	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
 func buildTestService(t *testing.T) *Service {
@@ -31,7 +30,7 @@ func buildTestService(t *testing.T) *Service {
 		On("GetUserCount", mock.Anything, (*models.QueryFilter)(nil)).
 		Return(expectedUserCount, nil)
 
-	uc := &mmetrics.UnitCounter{}
+	uc := &mockmetrics.UnitCounter{}
 	uc.On("IncrementBy", mock.Anything)
 	var ucp metrics.UnitCounterProvider = func(
 		counterName metrics.CounterName,
@@ -45,9 +44,9 @@ func buildTestService(t *testing.T) *Service {
 		config.AuthSettings{},
 		noop.ProvideNoopLogger(),
 		mockDB,
-		&mauth.Authenticator{},
+		&mockauth.Authenticator{},
 		func(req *http.Request) uint64 { return 0 },
-		&mencoding.EncoderDecoder{},
+		&mockencoding.EncoderDecoder{},
 		ucp,
 		newsman.NewNewsman(nil, nil),
 	)
@@ -65,7 +64,7 @@ func TestProvideUsersService(T *testing.T) {
 		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).
 			Return(mockUserCount, nil)
 
-		uc := &mmetrics.UnitCounter{}
+		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", mockUserCount).Return()
 
 		var ucp metrics.UnitCounterProvider = func(
@@ -80,9 +79,9 @@ func TestProvideUsersService(T *testing.T) {
 			config.AuthSettings{},
 			noop.ProvideNoopLogger(),
 			mockDB,
-			&mauth.Authenticator{},
+			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },
-			&mencoding.EncoderDecoder{},
+			&mockencoding.EncoderDecoder{},
 			ucp,
 			nil,
 		)
@@ -96,7 +95,7 @@ func TestProvideUsersService(T *testing.T) {
 		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).
 			Return(mockUserCount, nil)
 
-		uc := &mmetrics.UnitCounter{}
+		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", mockUserCount).Return()
 
 		var ucp metrics.UnitCounterProvider = func(
@@ -111,9 +110,9 @@ func TestProvideUsersService(T *testing.T) {
 			config.AuthSettings{},
 			noop.ProvideNoopLogger(),
 			mockDB,
-			&mauth.Authenticator{},
+			&mockauth.Authenticator{},
 			nil,
-			&mencoding.EncoderDecoder{},
+			&mockencoding.EncoderDecoder{},
 			ucp,
 			nil,
 		)
@@ -127,7 +126,7 @@ func TestProvideUsersService(T *testing.T) {
 		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).
 			Return(mockUserCount, nil)
 
-		uc := &mmetrics.UnitCounter{}
+		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", mockUserCount).Return()
 
 		var ucp metrics.UnitCounterProvider = func(
@@ -142,9 +141,9 @@ func TestProvideUsersService(T *testing.T) {
 			config.AuthSettings{},
 			noop.ProvideNoopLogger(),
 			mockDB,
-			&mauth.Authenticator{},
+			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },
-			&mencoding.EncoderDecoder{},
+			&mockencoding.EncoderDecoder{},
 			ucp,
 			nil,
 		)
@@ -158,7 +157,7 @@ func TestProvideUsersService(T *testing.T) {
 		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).
 			Return(mockUserCount, errors.New("blah"))
 
-		uc := &mmetrics.UnitCounter{}
+		uc := &mockmetrics.UnitCounter{}
 		var ucp metrics.UnitCounterProvider = func(
 			counterName metrics.CounterName,
 			description string,
@@ -171,9 +170,9 @@ func TestProvideUsersService(T *testing.T) {
 			config.AuthSettings{},
 			noop.ProvideNoopLogger(),
 			mockDB,
-			&mauth.Authenticator{},
+			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },
-			&mencoding.EncoderDecoder{},
+			&mockencoding.EncoderDecoder{},
 			ucp,
 			nil,
 		)

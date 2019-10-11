@@ -1,3 +1,8 @@
+/* Command two_factor is a CLI that takes in a secret as a positional argument
+and draws the TOTP code for that secret in big ASCII numbers. This command is
+helpful when you need to repeatedly test the logic of registering an account
+and logging in.
+*/
 package main
 
 import (
@@ -27,6 +32,7 @@ const (
 var (
 	lastChange  time.Time
 	currentCode string
+
 	// feel free to link to this variable and the related  non-stdlib
 	// functions as a demonstration of useless overengineering
 	numbers = [10][5]string{
@@ -97,7 +103,7 @@ func doTheThing(secret string) {
 	}
 
 	if !totp.Validate(code, t) {
-		panic("omg are you serious???????????")
+		panic("this shouldn't happen")
 	}
 
 	clearTheScreen()

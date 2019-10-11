@@ -13,7 +13,6 @@ import (
 	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 	randmodel "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/rand/model"
@@ -21,6 +20,7 @@ import (
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
 
 func loginUser(t *testing.T, username, password, totpSecret string) *http.Cookie {
@@ -471,11 +471,17 @@ func TestAuth(test *testing.T) {
 		checkValueAndError(test, clientA, err)
 
 		// create webhook for user A
-		webhookA, err := clientA.CreateWebhook(tctx, &models.WebhookCreationInput{Name: "A"})
+		webhookA, err := clientA.CreateWebhook(tctx, &models.WebhookCreationInput{
+			Method: http.MethodPatch,
+			Name:   "A",
+		})
 		checkValueAndError(t, webhookA, err)
 
 		// create webhook for user B
-		webhookB, err := clientB.CreateWebhook(tctx, &models.WebhookCreationInput{Name: "B"})
+		webhookB, err := clientB.CreateWebhook(tctx, &models.WebhookCreationInput{
+			Method: http.MethodPatch,
+			Name:   "B",
+		})
 		checkValueAndError(t, webhookB, err)
 
 		i, err := clientB.GetWebhook(tctx, webhookA.ID)
@@ -515,5 +521,4 @@ func TestAuth(test *testing.T) {
 		assert.Nil(t, i)
 		assert.Error(t, err, "should experience error trying to fetch entry they're not authorized for")
 	})
-
 }

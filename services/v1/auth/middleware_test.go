@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
+	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
@@ -351,7 +351,6 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 	})
-
 }
 
 func Test_parseLoginInputFromForm(T *testing.T) {
@@ -554,5 +553,4 @@ func TestService_AdminMiddleware(T *testing.T) {
 		ms.AssertExpectations(t)
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 	})
-
 }

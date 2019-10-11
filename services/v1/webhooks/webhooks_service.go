@@ -2,16 +2,15 @@ package webhooks
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
-
-	"github.com/pkg/errors"
 )
 
 const (
@@ -67,7 +66,7 @@ func ProvideWebhooksService(
 ) (*Service, error) {
 	webhookCounter, err := webhookCounterProvider(counterName, "the number of webhooks managed by the webhooks service")
 	if err != nil {
-		return nil, errors.Wrap(err, "error initializing counter")
+		return nil, fmt.Errorf("error initializing counter: %w", err)
 	}
 
 	svc := &Service{
@@ -82,10 +81,9 @@ func ProvideWebhooksService(
 
 	webhookCount, err := svc.webhookDatabase.GetAllWebhooksCount(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "setting current webhook count")
+		return nil, fmt.Errorf("setting current webhook count: %w", err)
 	}
 	svc.webhookCounter.IncrementBy(ctx, webhookCount)
 
 	return svc, nil
-
 }

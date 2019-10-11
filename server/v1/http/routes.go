@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -60,7 +60,8 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 	}
 
 	// Frontend routes
-	if frontendConfig.StaticFilesDirectory != "" {
+	if s.config.Frontend.StaticFilesDirectory != "" {
+		s.logger.Debug("setting static file server")
 		staticFileServer, err := s.frontendService.StaticDir(frontendConfig.StaticFilesDirectory)
 		if err != nil {
 			s.logger.Error(err, "establishing static file server")
@@ -125,45 +126,41 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		})
 	})
 
-	router.
-		With(s.authService.AuthenticationMiddleware(true)).
-		Route("/api/v1", func(v1Router chi.Router) {
-
-			// Items
-			v1Router.Route("/items", func(itemsRouter chi.Router) {
-				sr := fmt.Sprintf(numericIDPattern, items.URIParamKey)
-				itemsRouter.With(s.itemsService.CreationInputMiddleware).
-					Post("/", s.itemsService.CreateHandler()) // CreateHandler
-				itemsRouter.Get(sr, s.itemsService.ReadHandler()) // ReadHandler
-				itemsRouter.With(s.itemsService.UpdateInputMiddleware).
-					Put(sr, s.itemsService.UpdateHandler()) // UpdateHandler
-				itemsRouter.Delete(sr, s.itemsService.ArchiveHandler()) // ArchiveHandler
-				itemsRouter.Get("/", s.itemsService.ListHandler())      // ListHandler
-			})
-
-			// Webhooks
-			v1Router.Route("/webhooks", func(webhookRouter chi.Router) {
-				sr := fmt.Sprintf(numericIDPattern, webhooks.URIParamKey)
-				webhookRouter.With(s.webhooksService.CreationInputMiddleware).
-					Post("/", s.webhooksService.CreateHandler()) // CreateHandler
-				webhookRouter.Get(sr, s.webhooksService.ReadHandler()) // ReadHandler
-				webhookRouter.With(s.webhooksService.UpdateInputMiddleware).
-					Put(sr, s.webhooksService.UpdateHandler()) // UpdateHandler
-				webhookRouter.Delete(sr, s.webhooksService.ArchiveHandler()) // ArchiveHandler
-				webhookRouter.Get("/", s.webhooksService.ListHandler())      // ListHandler
-			})
-
-			// OAuth2 Clients
-			v1Router.Route("/oauth2/clients", func(clientRouter chi.Router) {
-				sr := fmt.Sprintf(numericIDPattern, oauth2clients.URIParamKey)
-				// CreateHandler is not bound to an OAuth2 authentication token
-				// UpdateHandler not supported for OAuth2 clients.
-				clientRouter.Get(sr, s.oauth2ClientsService.ReadHandler())       // ReadHandler
-				clientRouter.Delete(sr, s.oauth2ClientsService.ArchiveHandler()) // ArchiveHandler
-				clientRouter.Get("/", s.oauth2ClientsService.ListHandler())      // ListHandler
-			})
-
+	router.With(s.authService.AuthenticationMiddleware(true)).Route("/api/v1", func(v1Router chi.Router) {
+		// Items
+		v1Router.Route("/items", func(itemsRouter chi.Router) {
+			sr := fmt.Sprintf(numericIDPattern, items.URIParamKey)
+			itemsRouter.With(s.itemsService.CreationInputMiddleware).
+				Post("/", s.itemsService.CreateHandler()) // CreateHandler
+			itemsRouter.Get(sr, s.itemsService.ReadHandler()) // ReadHandler
+			itemsRouter.With(s.itemsService.UpdateInputMiddleware).
+				Put(sr, s.itemsService.UpdateHandler()) // UpdateHandler
+			itemsRouter.Delete(sr, s.itemsService.ArchiveHandler()) // ArchiveHandler
+			itemsRouter.Get("/", s.itemsService.ListHandler())      // ListHandler
 		})
+
+		// Webhooks
+		v1Router.Route("/webhooks", func(webhookRouter chi.Router) {
+			sr := fmt.Sprintf(numericIDPattern, webhooks.URIParamKey)
+			webhookRouter.With(s.webhooksService.CreationInputMiddleware).
+				Post("/", s.webhooksService.CreateHandler()) // CreateHandler
+			webhookRouter.Get(sr, s.webhooksService.ReadHandler()) // ReadHandler
+			webhookRouter.With(s.webhooksService.UpdateInputMiddleware).
+				Put(sr, s.webhooksService.UpdateHandler()) // UpdateHandler
+			webhookRouter.Delete(sr, s.webhooksService.ArchiveHandler()) // ArchiveHandler
+			webhookRouter.Get("/", s.webhooksService.ListHandler())      // ListHandler
+		})
+
+		// OAuth2 Clients
+		v1Router.Route("/oauth2/clients", func(clientRouter chi.Router) {
+			sr := fmt.Sprintf(numericIDPattern, oauth2clients.URIParamKey)
+			// CreateHandler is not bound to an OAuth2 authentication token
+			// UpdateHandler not supported for OAuth2 clients.
+			clientRouter.Get(sr, s.oauth2ClientsService.ReadHandler())       // ReadHandler
+			clientRouter.Delete(sr, s.oauth2ClientsService.ArchiveHandler()) // ArchiveHandler
+			clientRouter.Get("/", s.oauth2ClientsService.ListHandler())      // ListHandler
+		})
+	})
 
 	s.router = router
 }

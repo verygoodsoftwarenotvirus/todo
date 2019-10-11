@@ -5,9 +5,8 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
-	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
+	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
@@ -17,17 +16,17 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
 
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
 func buildTestServer() *Server {
 	s := &Server{
 		DebugMode:  true,
 		db:         database.BuildMockDatabase(),
-		config:     config.ServerSettings{},
+		config:     &config.ServerConfig{},
 		encoder:    &mencoding.EncoderDecoder{},
 		httpServer: provideHTTPServer(),
 		logger:     noop.ProvideNoopLogger(),
@@ -75,5 +74,4 @@ func TestProvideServer(T *testing.T) {
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 	})
-
 }

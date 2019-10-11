@@ -4,16 +4,17 @@ import (
 	"context"
 	"crypto/rand"
 	"database/sql"
+	"errors"
+	"fmt"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/pkg/errors"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/manage"
 	oauth2server "gopkg.in/oauth2.v3/server"
@@ -90,7 +91,7 @@ func (s *clientStore) GetByID(id string) (oauth2.ClientInfo, error) {
 	if err == sql.ErrNoRows {
 		return nil, errors.New("invalid client")
 	} else if err != nil {
-		return nil, errors.Wrap(err, "querying for client")
+		return nil, fmt.Errorf("querying for client: %w", err)
 	}
 
 	return client, nil
@@ -108,7 +109,7 @@ func ProvideOAuth2ClientsService(
 ) (*Service, error) {
 	counter, err := counterProvider(counterName, counterDescription)
 	if err != nil {
-		return nil, errors.Wrap(err, "error initializing counter")
+		return nil, fmt.Errorf("error initializing counter: %w", err)
 	}
 
 	manager := manage.NewDefaultManager()
@@ -135,7 +136,7 @@ func ProvideOAuth2ClientsService(
 	initializeOAuth2Handler(s.oauth2Handler, s)
 	count, err := s.database.GetAllOAuth2ClientCount(ctx)
 	if err != nil && err != sql.ErrNoRows {
-		return nil, errors.Wrap(err, "fetching oauth2 clients")
+		return nil, fmt.Errorf("fetching oauth2 clients: %w", err)
 	}
 	counter.IncrementBy(ctx, count)
 

@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"go.opencensus.io/trace"
 )
 

@@ -1,0 +1,47 @@
+{
+  "services": {
+    "database": {
+      "environment": {
+        "MYSQL_ALLOW_EMPTY_PASSWORD": "no",
+        "MYSQL_DATABASE": "todo",
+        "MYSQL_PASSWORD": "hunter2",
+        "MYSQL_RANDOM_ROOT_PASSWORD": "yes",
+        "MYSQL_USER": "dbuser"
+      },
+      "image": "mariadb:latest",
+      "ports": [
+        "3306:3306"
+      ]
+    },
+    "test": {
+      "build": {
+        "context": "../",
+        "dockerfile": "dockerfiles/integration-tests.Dockerfile"
+      },
+      "environment": {
+        "DOCKER": "true",
+        "TARGET_ADDRESS": "http://todo-server:8888"
+      },
+      "links": [
+        "todo-server"
+      ]
+    },
+    "todo-server": {
+      "build": {
+        "context": "../",
+        "dockerfile": "dockerfiles/integration-server.Dockerfile"
+      },
+      "environment": {
+        "CONFIGURATION_FILEPATH": "config_files/integration-tests-mariadb.toml",
+        "DOCKER": "true"
+      },
+      "links": [
+        "database"
+      ],
+      "ports": [
+        "80:8888"
+      ]
+    }
+  },
+  "version": "3.3"
+}

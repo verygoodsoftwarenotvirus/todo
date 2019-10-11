@@ -7,10 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -323,7 +322,6 @@ func TestMariaDB_GetItems(T *testing.T) {
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
-
 }
 
 func TestMariaDB_GetAllItemsForUser(T *testing.T) {

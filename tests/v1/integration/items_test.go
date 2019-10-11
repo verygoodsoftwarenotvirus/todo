@@ -150,7 +150,6 @@ func TestItems(test *testing.T) {
 
 			err := todoClient.UpdateItem(ctx, &models.Item{ID: nonexistentID})
 			assert.Error(t, err)
-
 		})
 
 		T.Run("it should be updatable", func(t *testing.T) {

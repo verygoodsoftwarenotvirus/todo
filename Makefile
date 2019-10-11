@@ -2,6 +2,8 @@ PWD           := $(shell pwd)
 GOPATH        := $(GOPATH)
 ARTIFACTS_DIR := artifacts
 COVERAGE_OUT  := $(ARTIFACTS_DIR)/coverage.out
+CONFIG_DIR    := config_files
+GO_FORMAT     := gofmt -s -w
 
 KUBERNETES_NAMESPACE     := todo
 SERVER_DOCKER_IMAGE_NAME := todo-server
@@ -41,16 +43,26 @@ vendor:
 .PHONY: revendor
 revendor: vendor-clean vendor
 
+## Config
+
+clean-configs:
+	rm -rf $(CONFIG_DIR)
+
+$(CONFIG_DIR):
+	mkdir -p $(CONFIG_DIR)
+	go run cmd/config_gen/v1/main.go
+
 ## Testing things
 
 .PHONY: lint
 lint:
+	@docker pull golangci/golangci-lint:latest
 	docker run \
 		--rm \
 		--volume `pwd`:`pwd` \
 		--workdir=`pwd` \
 		--env=GO111MODULE=on \
-		golangci/golangci-lint golangci-lint run --config=.golangci.yml ./...
+		golangci/golangci-lint:latest golangci-lint run --config=.golangci.yml ./...
 
 $(COVERAGE_OUT): $(ARTIFACTS_DIR)
 	set -ex; \
@@ -87,9 +99,13 @@ test:
 	docker build --tag coverage-$(SERVER_DOCKER_IMAGE_NAME):latest --file dockerfiles/coverage.Dockerfile .
 	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` coverage-$(SERVER_DOCKER_IMAGE_NAME):latest
 
+.PHONY: format
+format:
+	for file in `find $(PWD) -name '*.go'`; do $(GO_FORMAT) $$file; done
+
 .PHONY: frontend-tests
 frontend-tests:
-	docker-compose --file compose-files/frontend-tests.yaml up \
+	docker-compose --file compose-files/frontend-tests.json up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -107,7 +123,7 @@ integration-tests: integration-tests-postgres
 
 .PHONY: integration-tests-postgres
 integration-tests-postgres:
-	docker-compose --file compose-files/integration-tests-postgres.yaml up \
+	docker-compose --file compose-files/integration-tests-postgres.json up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -117,7 +133,7 @@ integration-tests-postgres:
 
 .PHONY: integration-tests-sqlite
 integration-tests-sqlite:
-	docker-compose --file compose-files/integration-tests-sqlite.yaml up \
+	docker-compose --file compose-files/integration-tests-sqlite.json up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -127,7 +143,7 @@ integration-tests-sqlite:
 
 .PHONY: integration-tests-mariadb
 integration-tests-mariadb:
-	docker-compose --file compose-files/integration-tests-mariadb.yaml up \
+	docker-compose --file compose-files/integration-tests-mariadb.json up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -140,7 +156,7 @@ integration-coverage:
 	@# big thanks to https://blog.cloudflare.com/go-coverage-with-external-tests/
 	rm -f ./artifacts/integration-coverage.out
 	mkdir -p ./artifacts
-	docker-compose --file compose-files/integration-coverage.yaml up \
+	docker-compose --file compose-files/integration-coverage.json up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -156,7 +172,7 @@ load-tests: load-tests-postgres
 
 .PHONY: load-tests-postgres
 load-tests-postgres:
-	docker-compose --file compose-files/load-tests-postgres.yaml up \
+	docker-compose --file compose-files/load-tests-postgres.json up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -166,7 +182,7 @@ load-tests-postgres:
 
 .PHONY: load-tests-sqlite
 load-tests-sqlite:
-	docker-compose --file compose-files/load-tests-sqlite.yaml up \
+	docker-compose --file compose-files/load-tests-sqlite.json up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -176,7 +192,7 @@ load-tests-sqlite:
 
 .PHONY: load-tests-mariadb
 load-tests-mariadb:
-	docker-compose --file compose-files/load-tests-mariadb.yaml up \
+	docker-compose --file compose-files/load-tests-mariadb.json up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -198,7 +214,7 @@ push-server-to-docker: prod-server-docker-image
 
 .PHONY: dev
 dev:
-	docker-compose --file compose-files/development.yaml up \
+	docker-compose --file compose-files/development.json up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -208,7 +224,7 @@ dev:
 
 .PHONY: run
 run:
-	docker-compose --file compose-files/production.yaml up \
+	docker-compose --file compose-files/production.json up \
 	--build \
 	--force-recreate \
 	--remove-orphans \

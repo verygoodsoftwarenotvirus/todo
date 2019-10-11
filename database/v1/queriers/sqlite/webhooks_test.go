@@ -408,7 +408,6 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
-
 }
 
 func TestSqlite_GetAllWebhooksForUser(T *testing.T) {
@@ -745,7 +744,6 @@ func TestSqlite_CreateWebhook(T *testing.T) {
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
-
 }
 
 func TestSqlite_buildUpdateWebhookQuery(T *testing.T) {

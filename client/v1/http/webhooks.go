@@ -2,12 +2,11 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"github.com/pkg/errors"
 )
 
 const (
@@ -25,7 +24,7 @@ func (c *V1Client) BuildGetWebhookRequest(ctx context.Context, id uint64) (*http
 func (c *V1Client) GetWebhook(ctx context.Context, id uint64) (webhook *models.Webhook, err error) {
 	req, err := c.BuildGetWebhookRequest(ctx, id)
 	if err != nil {
-		return nil, errors.Wrap(err, "building request")
+		return nil, fmt.Errorf("building request: %w", err)
 	}
 
 	err = c.retrieve(ctx, req, &webhook)
@@ -43,7 +42,7 @@ func (c *V1Client) BuildGetWebhooksRequest(ctx context.Context, filter *models.Q
 func (c *V1Client) GetWebhooks(ctx context.Context, filter *models.QueryFilter) (webhooks *models.WebhookList, err error) {
 	req, err := c.BuildGetWebhooksRequest(ctx, filter)
 	if err != nil {
-		return nil, errors.Wrap(err, "building request")
+		return nil, fmt.Errorf("building request: %w", err)
 	}
 
 	err = c.retrieve(ctx, req, &webhooks)
@@ -61,7 +60,7 @@ func (c *V1Client) BuildCreateWebhookRequest(ctx context.Context, body *models.W
 func (c *V1Client) CreateWebhook(ctx context.Context, input *models.WebhookCreationInput) (webhook *models.Webhook, err error) {
 	req, err := c.BuildCreateWebhookRequest(ctx, input)
 	if err != nil {
-		return nil, errors.Wrap(err, "building request")
+		return nil, fmt.Errorf("building request: %w", err)
 	}
 
 	err = c.executeRequest(ctx, req, &webhook)
@@ -79,7 +78,7 @@ func (c *V1Client) BuildUpdateWebhookRequest(ctx context.Context, updated *model
 func (c *V1Client) UpdateWebhook(ctx context.Context, updated *models.Webhook) error {
 	req, err := c.BuildUpdateWebhookRequest(ctx, updated)
 	if err != nil {
-		return errors.Wrap(err, "building request")
+		return fmt.Errorf("building request: %w", err)
 	}
 
 	return c.executeRequest(ctx, req, &updated)
@@ -96,7 +95,7 @@ func (c *V1Client) BuildArchiveWebhookRequest(ctx context.Context, id uint64) (*
 func (c *V1Client) ArchiveWebhook(ctx context.Context, id uint64) error {
 	req, err := c.BuildArchiveWebhookRequest(ctx, id)
 	if err != nil {
-		return errors.Wrap(err, "building request")
+		return fmt.Errorf("building request: %w", err)
 	}
 
 	return c.executeRequest(ctx, req, nil)

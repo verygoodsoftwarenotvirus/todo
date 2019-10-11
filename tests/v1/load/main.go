@@ -13,18 +13,18 @@ import (
 	"github.com/emicklei/hazana"
 )
 
-// TodoServiceAttacker implements hazana's Attacker interface
-type TodoServiceAttacker struct {
+// ServiceAttacker implements hazana's Attacker interface
+type ServiceAttacker struct {
 	todoClient *client.V1Client
 }
 
 // Setup implement's hazana's Attacker interface
-func (a *TodoServiceAttacker) Setup(c hazana.Config) error {
+func (a *ServiceAttacker) Setup(c hazana.Config) error {
 	return nil
 }
 
 // Do implement's hazana's Attacker interface
-func (a *TodoServiceAttacker) Do(ctx context.Context) hazana.DoResult {
+func (a *ServiceAttacker) Do(ctx context.Context) hazana.DoResult {
 	// Do performs one request and is executed in a separate goroutine.
 	// The context is used to cancel the request on timeout.
 	act := RandomAction(a.todoClient)
@@ -72,13 +72,13 @@ func (a *TodoServiceAttacker) Do(ctx context.Context) hazana.DoResult {
 }
 
 // Teardown implement's hazana's Attacker interface
-func (a *TodoServiceAttacker) Teardown() error {
+func (a *ServiceAttacker) Teardown() error {
 	// Teardown can be used to close the connection to the service.
 	return nil
 }
 
 // Clone implement's hazana's Attacker interface
-func (a *TodoServiceAttacker) Clone() hazana.Attack {
+func (a *ServiceAttacker) Clone() hazana.Attack {
 	// Clone should return a fresh new Attack
 	// Make sure the new Attack has values for shared struct fields initialized at Setup.
 	return a
@@ -96,7 +96,7 @@ func main() {
 		runTime = _rt
 	}
 
-	attacker := &TodoServiceAttacker{todoClient: todoClient}
+	attacker := &ServiceAttacker{todoClient: todoClient}
 	cfg := hazana.Config{
 		RPS:           50,
 		AttackTimeSec: int(runTime.Seconds()), // run basically forever

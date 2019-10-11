@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
 
 func buildTestClient() (*Client, *database.MockDatabase) {

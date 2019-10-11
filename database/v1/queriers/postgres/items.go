@@ -3,14 +3,14 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"sync"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/pkg/errors"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
 const (
@@ -184,12 +184,12 @@ func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter, use
 
 	list, err := scanItems(p.logger, rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "scanning response from database")
+		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
 	count, err := p.GetItemCount(ctx, filter, userID)
 	if err != nil {
-		return nil, errors.Wrap(err, "fetching item count")
+		return nil, fmt.Errorf("fetching item count: %w", err)
 	}
 
 	x := &models.ItemList{
@@ -215,7 +215,7 @@ func (p *Postgres) GetAllItemsForUser(ctx context.Context, userID uint64) ([]mod
 
 	list, err := scanItems(p.logger, rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "parsing database results")
+		return nil, fmt.Errorf("parsing database results: %w", err)
 	}
 
 	return list, nil
@@ -257,7 +257,7 @@ func (p *Postgres) CreateItem(ctx context.Context, input *models.ItemCreationInp
 	// create the item
 	err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
 	if err != nil {
-		return nil, errors.Wrap(err, "error executing item creation query")
+		return nil, fmt.Errorf("error executing item creation query: %w", err)
 	}
 
 	return x, nil

@@ -6,21 +6,18 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"testing"
 	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 
 	"github.com/icrowley/fake"
-	"github.com/stretchr/testify/require"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
 )
 
 const (
-	debug = true
-
+	debug         = true
 	nonexistentID = 999999999
 )
 
@@ -52,12 +49,6 @@ func init() {
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)
-}
-
-func checkValueAndError(t *testing.T, i interface{}, err error) {
-	t.Helper()
-	require.NoError(t, err)
-	require.NotNil(t, i)
 }
 
 func buildHTTPClient() *http.Client {

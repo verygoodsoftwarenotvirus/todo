@@ -2,19 +2,19 @@ package users
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
-
-	"github.com/pkg/errors"
 )
 
 const (
@@ -70,12 +70,12 @@ func ProvideUsersService(
 
 	counter, err := counterProvider(counterName, "number of users managed by the users service")
 	if err != nil {
-		return nil, errors.Wrap(err, "error initializing counter")
+		return nil, fmt.Errorf("error initializing counter: %w", err)
 	}
 
 	userCount, err := db.GetUserCount(ctx, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "fetching user count")
+		return nil, fmt.Errorf("fetching user count: %w", err)
 	}
 	counter.IncrementBy(ctx, userCount)
 

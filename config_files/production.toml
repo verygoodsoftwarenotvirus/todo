@@ -1,31 +1,32 @@
-[meta]
-    debug = false
-    startup_deadline = "1m"
-
-[server]
-    debug = false
-    http_port = 8888
-
-[frontend]
-    debug = false
-    static_files_dir = "/frontend"
-	cache_static_files = true
 
 [auth]
-    debug = false
-	cookie_domain = ""
-    cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"
-	cookie_lifetime = "24h"
-	secure_cookies_only = false
-	enable_user_signup = true
-
-[metrics]
-    metrics_provider = "prometheus"
-    tracing_provider = "jaeger"
-    database_metrics_collection_interval = "1s"
-    runtime_metrics_collection_interval = "1s"
+  cookie_domain = ""
+  cookie_lifetime = "24h0m0s"
+  cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"
+  debug = false
+  enable_user_signup = true
+  secure_cookies_only = false
 
 [database]
-    debug = false
-    provider = "postgres"
-    connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
+  connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
+  debug = false
+  provider = "postgres"
+
+[frontend]
+  cache_static_files = false
+  debug = false
+  static_files_directory = "/frontend"
+
+[meta]
+  debug = false
+  startup_deadline = "1m0s"
+
+[metrics]
+  database_metrics_collection_interval = "1s"
+  metrics_provider = "prometheus"
+  runtime_metrics_collection_interval = "1s"
+  tracing_provider = "jaeger"
+
+[server]
+  debug = false
+  http_port = 8888

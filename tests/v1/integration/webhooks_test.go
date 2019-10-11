@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -27,7 +28,7 @@ func buildDummyWebhookInput() *models.WebhookCreationInput {
 		Name:        fake.Word(),
 		URL:         fake.DomainName(),
 		ContentType: "application/json",
-		Method:      "POST",
+		Method:      http.MethodPost,
 	}
 	return x
 }
@@ -157,7 +158,6 @@ func TestWebhooks(test *testing.T) {
 
 			err := todoClient.UpdateWebhook(tctx, &models.Webhook{ID: nonexistentID})
 			assert.Error(t, err)
-
 		})
 
 		T.Run("it should be updatable", func(t *testing.T) {

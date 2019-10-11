@@ -6,12 +6,12 @@ import (
 	"sync"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 
 	"contrib.go.opencensus.io/integrations/ocsql"
 	"github.com/Masterminds/squirrel"
 	sqlite "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
 const (
@@ -39,6 +39,8 @@ func init() {
 	// Register our ocsql wrapper as a db driver.
 	sql.Register(sqliteDriverName, driver)
 }
+
+var _ database.Database = (*Sqlite)(nil)
 
 type (
 	// Sqlite is our main Sqlite interaction db

@@ -10,16 +10,15 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
-	mauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1/mock"
-	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
-	mmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1/mock"
+	mauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth/mock"
+	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
+	mmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	mockman "gitlab.com/verygoodsoftwarenotvirus/newsman/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	mockman "gitlab.com/verygoodsoftwarenotvirus/newsman/mock"
 )
 
 func buildRequest(t *testing.T) *http.Request {
@@ -288,7 +287,6 @@ func TestService_List(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, res.Code)
 	})
-
 }
 
 func TestService_Create(T *testing.T) {
@@ -563,7 +561,6 @@ func TestService_Read(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, res.Code)
 	})
-
 }
 
 func TestService_NewTOTPSecret(T *testing.T) {
@@ -1078,7 +1075,6 @@ func TestService_UpdatePassword(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
-
 }
 
 func TestService_Archive(T *testing.T) {

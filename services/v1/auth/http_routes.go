@@ -3,21 +3,22 @@ package auth
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/gorilla/securecookie"
-	"github.com/pkg/errors"
 	"go.opencensus.io/trace"
 )
 
 const (
 	// CookieName is the name of the cookie we attach to requests
-	CookieName = "todocookie"
+	CookieName         = "todocookie"
+	cookieErrorLogName = "_COOKIE_CONSTRUCTION_ERROR_"
 )
 
 // attachUserIDToSpan provides a consistent way to attach a userID to a given span
@@ -44,7 +45,7 @@ func (s *Service) DecodeCookieFromRequest(ctx context.Context, req *http.Request
 		decodeErr := s.cookieManager.Decode(CookieName, cookie.Value, &ca)
 		if decodeErr != nil {
 			s.logger.Error(err, "decoding request cookie")
-			return nil, errors.Wrap(decodeErr, "decoding request cookie")
+			return nil, fmt.Errorf("decoding request cookie: %w", decodeErr)
 		}
 
 		return ca, nil
@@ -84,12 +85,12 @@ func (s *Service) FetchUserFromRequest(ctx context.Context, req *http.Request) (
 
 	ca, decodeErr := s.DecodeCookieFromRequest(ctx, req)
 	if decodeErr != nil {
-		return nil, errors.Wrap(decodeErr, "fetching cookie data from request")
+		return nil, fmt.Errorf("fetching cookie data from request: %w", decodeErr)
 	}
 
 	user, userFetchErr := s.userDB.GetUser(req.Context(), ca.UserID)
 	if userFetchErr != nil {
-		return nil, errors.Wrap(userFetchErr, "fetching user from request")
+		return nil, fmt.Errorf("fetching user from request: %w", userFetchErr)
 	}
 	attachUserIDToSpan(span, ca.UserID)
 	attachUsernameToSpan(span, ca.Username)
@@ -267,17 +268,17 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 		// rehash the password
 		updated, hashErr := s.authenticator.HashPassword(ctx, loginInput.Password)
 		if hashErr != nil {
-			return false, errors.Wrap(hashErr, "updating password hash")
+			return false, fmt.Errorf("updating password hash: %w", hashErr)
 		}
 
 		// update stored hashed password in the database
 		user.HashedPassword = updated
 		if updateErr := s.userDB.UpdateUser(ctx, user); updateErr != nil {
-			return false, errors.Wrap(updateErr, "saving updated password hash")
+			return false, fmt.Errorf("saving updated password hash: %w", updateErr)
 		}
 	} else if err != nil && err != auth.ErrPasswordHashTooWeak {
 		logger.Error(err, "issue validating login")
-		return false, errors.Wrap(err, "validating login")
+		return false, fmt.Errorf("validating login: %w", err)
 	}
 
 	return loginValid, nil
@@ -298,7 +299,7 @@ func (s *Service) buildAuthCookie(user *models.User) (*http.Cookie, error) {
 
 	if err != nil {
 		// NOTE: these errors should be infrequent, and should cause alarm when they do occur
-		s.logger.WithName("_COOKIE_CONSTRUCTION_ERROR_").
+		s.logger.WithName(cookieErrorLogName).
 			WithValue("user_id", user.ID).
 			Error(err, "error encoding cookie")
 		return nil, err

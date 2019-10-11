@@ -408,7 +408,6 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
-
 }
 
 func TestMariaDB_GetAllWebhooksForUser(T *testing.T) {

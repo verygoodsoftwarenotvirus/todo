@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
+	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -29,7 +29,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 
-		ed := &mencoding.EncoderDecoder{}
+		ed := &mockencoding.EncoderDecoder{}
 		ed.On("DecodeRequest", mock.Anything, mock.Anything).
 			Return(nil)
 
@@ -53,7 +53,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 	T.Run("with error decoding request", func(t *testing.T) {
 		s := buildTestService()
 
-		ed := &mencoding.EncoderDecoder{}
+		ed := &mockencoding.EncoderDecoder{}
 		ed.On("DecodeRequest", mock.Anything, mock.Anything).
 			Return(errors.New("blah"))
 
@@ -81,7 +81,7 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 
-		ed := &mencoding.EncoderDecoder{}
+		ed := &mockencoding.EncoderDecoder{}
 		ed.On("DecodeRequest", mock.Anything, mock.Anything).
 			Return(nil)
 
@@ -105,7 +105,7 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 	T.Run("with error decoding request", func(t *testing.T) {
 		s := buildTestService()
 
-		ed := &mencoding.EncoderDecoder{}
+		ed := &mockencoding.EncoderDecoder{}
 		ed.On("DecodeRequest", mock.Anything, mock.Anything).
 			Return(errors.New("blah"))
 

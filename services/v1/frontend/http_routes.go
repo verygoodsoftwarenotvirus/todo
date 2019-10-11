@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 )
 
@@ -26,7 +25,7 @@ func (s *Service) buildStaticFileServer(fileDir string) (*afero.HttpFs, error) {
 		afs = afero.NewMemMapFs()
 		files, err := ioutil.ReadDir(fileDir)
 		if err != nil {
-			return nil, errors.Wrap(err, "reading directory for frontend files")
+			return nil, fmt.Errorf("reading directory for frontend files: %w", err)
 		}
 
 		for _, file := range files {
@@ -37,16 +36,16 @@ func (s *Service) buildStaticFileServer(fileDir string) (*afero.HttpFs, error) {
 			fp := filepath.Join(fileDir, file.Name())
 			f, err := afs.Create(fp)
 			if err != nil {
-				return nil, errors.Wrap(err, "creating static file in memory")
+				return nil, fmt.Errorf("creating static file in memory: %w", err)
 			}
 
 			bs, err := ioutil.ReadFile(fp)
 			if err != nil {
-				return nil, errors.Wrap(err, "reading static file from directory")
+				return nil, fmt.Errorf("reading static file from directory: %w", err)
 			}
 
 			if _, err = f.Write(bs); err != nil {
-				return nil, errors.Wrap(err, "loading static file into memory")
+				return nil, fmt.Errorf("loading static file into memory: %w", err)
 			}
 
 			if err = f.Close(); err != nil {
@@ -75,18 +74,20 @@ var (
 func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, error) {
 	fileDir, err := filepath.Abs(staticFilesDirectory)
 	if err != nil {
-		return nil, errors.Wrap(err, "determining absolute path of static files directory")
+		return nil, fmt.Errorf("determining absolute path of static files directory: %w", err)
 	}
 
 	httpFs, err := s.buildStaticFileServer(fileDir)
 	if err != nil {
-		return nil, errors.Wrap(err, "establishing static server filesystem")
+		return nil, fmt.Errorf("establishing static server filesystem: %w", err)
 	}
 
 	s.logger.WithValue("static_dir", fileDir).Debug("setting static file server")
 	fs := http.StripPrefix("/", http.FileServer(httpFs.Dir(fileDir)))
 
 	return func(res http.ResponseWriter, req *http.Request) {
+		rl := s.logger.WithRequest(req)
+		rl.Debug("static file requested")
 		switch req.URL.Path {
 		// list your frontend history routes here
 		case "/register",
@@ -94,10 +95,11 @@ func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, erro
 			"/items",
 			"/items/new",
 			"/password/new":
-			s.logger.Debug(fmt.Sprintf("rerouting %q", req.URL.Path))
+			rl.Debug("rerouting")
 			req.URL.Path = "/"
 		}
 		if itemsFrontendPathRegex.MatchString(req.URL.Path) {
+			rl.Debug("rerouting item req")
 			req.URL.Path = "/"
 		}
 

@@ -6,26 +6,25 @@ import (
 	"net/http"
 	"testing"
 
-	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
-	mmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1/mock"
-	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
-
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
+	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
+	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
+	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
 func buildTestService() *Service {
 	return &Service{
 		logger:           noop.ProvideNoopLogger(),
-		webhookCounter:   &mmetrics.UnitCounter{},
-		webhookDatabase:  &mmodels.WebhookDataManager{},
+		webhookCounter:   &mockmetrics.UnitCounter{},
+		webhookDatabase:  &mockmodels.WebhookDataManager{},
 		userIDFetcher:    func(req *http.Request) uint64 { return 0 },
 		webhookIDFetcher: func(req *http.Request) uint64 { return 0 },
-		encoderDecoder:   &mencoding.EncoderDecoder{},
+		encoderDecoder:   &mockencoding.EncoderDecoder{},
 		eventManager:     newsman.NewNewsman(nil, nil),
 	}
 }
@@ -35,7 +34,7 @@ func TestProvideWebhooksService(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		expectation := uint64(123)
-		uc := &mmetrics.UnitCounter{}
+		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", expectation).Return()
 
 		var ucp metrics.UnitCounterProvider = func(
@@ -45,7 +44,7 @@ func TestProvideWebhooksService(T *testing.T) {
 			return uc, nil
 		}
 
-		dm := &mmodels.WebhookDataManager{}
+		dm := &mockmodels.WebhookDataManager{}
 		dm.On("GetAllWebhooksCount", mock.Anything).
 			Return(expectation, nil)
 
@@ -55,7 +54,7 @@ func TestProvideWebhooksService(T *testing.T) {
 			dm,
 			func(req *http.Request) uint64 { return 0 },
 			func(req *http.Request) uint64 { return 0 },
-			&mencoding.EncoderDecoder{},
+			&mockencoding.EncoderDecoder{},
 			ucp,
 			newsman.NewNewsman(nil, nil),
 		)
@@ -74,10 +73,10 @@ func TestProvideWebhooksService(T *testing.T) {
 		actual, err := ProvideWebhooksService(
 			context.Background(),
 			noop.ProvideNoopLogger(),
-			&mmodels.WebhookDataManager{},
+			&mockmodels.WebhookDataManager{},
 			func(req *http.Request) uint64 { return 0 },
 			func(req *http.Request) uint64 { return 0 },
-			&mencoding.EncoderDecoder{},
+			&mockencoding.EncoderDecoder{},
 			ucp,
 			newsman.NewNewsman(nil, nil),
 		)
@@ -87,7 +86,7 @@ func TestProvideWebhooksService(T *testing.T) {
 
 	T.Run("with error setting count", func(t *testing.T) {
 		expectation := uint64(123)
-		uc := &mmetrics.UnitCounter{}
+		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", expectation).Return()
 
 		var ucp metrics.UnitCounterProvider = func(
@@ -97,7 +96,7 @@ func TestProvideWebhooksService(T *testing.T) {
 			return uc, nil
 		}
 
-		dm := &mmodels.WebhookDataManager{}
+		dm := &mockmodels.WebhookDataManager{}
 		dm.On("GetAllWebhooksCount", mock.Anything).
 			Return(expectation, errors.New("blah"))
 
@@ -107,12 +106,11 @@ func TestProvideWebhooksService(T *testing.T) {
 			dm,
 			func(req *http.Request) uint64 { return 0 },
 			func(req *http.Request) uint64 { return 0 },
-			&mencoding.EncoderDecoder{},
+			&mockencoding.EncoderDecoder{},
 			ucp,
 			newsman.NewNewsman(nil, nil),
 		)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
-
 }

@@ -467,7 +467,6 @@ func TestMariaDB_CreateUser(T *testing.T) {
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
-
 }
 
 func TestMariaDB_buildUpdateUserQuery(T *testing.T) {

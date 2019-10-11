@@ -31,7 +31,6 @@ func TestService_OAuth2InternalErrorHandler(T *testing.T) {
 		actual := s.OAuth2InternalErrorHandler(expected)
 
 		assert.Equal(t, expected, actual.Error)
-
 	})
 }
 
@@ -194,7 +193,6 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 		assert.Empty(t, actual)
 	})
-
 }
 
 func TestService_UserAuthorizationHandler(T *testing.T) {
@@ -246,7 +244,6 @@ func TestService_UserAuthorizationHandler(T *testing.T) {
 		assert.Error(t, err)
 		assert.Empty(t, actual)
 	})
-
 }
 
 func TestService_ClientAuthorizedHandler(T *testing.T) {
@@ -342,7 +339,6 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 		assert.Equal(t, expected, actual)
 		assert.Error(t, err)
 	})
-
 }
 
 func TestService_ClientScopeHandler(T *testing.T) {
@@ -425,5 +421,4 @@ func TestService_ClientScopeHandler(T *testing.T) {
 		assert.Equal(t, expected, actual)
 		assert.Error(t, err)
 	})
-
 }

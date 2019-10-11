@@ -3,15 +3,15 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/lib/pq"
-	"github.com/pkg/errors"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
 const (
@@ -60,7 +60,7 @@ func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, error) {
 	for rows.Next() {
 		user, err := scanUser(rows)
 		if err != nil {
-			return nil, errors.Wrap(err, "scanning user result")
+			return nil, fmt.Errorf("scanning user result: %w", err)
 		}
 		list = append(list, *user)
 	}
@@ -127,7 +127,7 @@ func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*mod
 		if err == sql.ErrNoRows {
 			return nil, err
 		}
-		return nil, errors.Wrap(err, "fetching user from database")
+		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
 	return u, nil
@@ -193,12 +193,12 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 
 	userList, err := scanUsers(p.logger, rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "loading response from database")
+		return nil, fmt.Errorf("loading response from database: %w", err)
 	}
 
 	count, err := p.GetUserCount(ctx, filter)
 	if err != nil {
-		return nil, errors.Wrap(err, "fetching user count")
+		return nil, fmt.Errorf("fetching user count: %w", err)
 	}
 
 	x := &models.UserList{
@@ -259,7 +259,7 @@ func (p *Postgres) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 				return nil, dbclient.ErrUserExists
 			}
 		default:
-			return nil, errors.Wrap(err, "error executing user creation query")
+			return nil, fmt.Errorf("error executing user creation query: %w", err)
 		}
 	}
 

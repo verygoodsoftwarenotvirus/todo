@@ -136,7 +136,6 @@ func TestQueryFilter_ToValues(T *testing.T) {
 
 		assert.Equal(t, expected, actual)
 	})
-
 }
 
 func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {

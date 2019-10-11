@@ -7,11 +7,11 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
+	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
 
 var _ http.Handler = (*MockHTTPHandler)(nil)

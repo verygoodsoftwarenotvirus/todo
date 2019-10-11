@@ -23,11 +23,20 @@ coverage:
 
 linting:
   stage: quality
-  image: golangci/golangci-lint:latest
+  image: golangci/golangci-lint:latest # v1.18
   variables:
     GO111MODULE: "on"
   script:
     - golangci-lint run --config=.golangci.yml --deadline=15m
+
+build-frontend:
+  stage: quality
+  image: node:10
+  before_script:
+    - cd frontend/v1
+    - npm install
+  script:
+    - npm run build
 
 integration-tests-sqlite:
   stage: integration-testing
@@ -68,17 +77,8 @@ integration-tests-postgres:
     - pip install docker-compose
     - make integration-tests-postgres
 
-build-frontend:
-  stage: frontend-testing
-  image: node:10
-  before_script:
-    - cd frontend/v1
-    - npm install
-  script:
-    - npm run build
-
 frontend-selenium-tests:
-  stage: frontend-testing
+  stage: integration-testing
   image: docker:latest
   services:
     - docker:dind
@@ -91,7 +91,6 @@ frontend-selenium-tests:
     - make frontend-tests
 
 # load tests
-
 load-tests-postgres:
   stage: load-testing
   image: docker:latest
@@ -104,11 +103,13 @@ load-tests-postgres:
     - apk add --update --no-cache py-pip openssl python-dev libffi-dev
       openssl-dev gcc libc-dev make
     - pip install docker-compose
+    - ls -Al ./deploy/prometheus/local
+    - pwd
     - make load-tests-postgres
   except:
     - schedules
-  only:
-    - master
+  # only:
+  #   - master
 
 load-tests-sqlite:
   stage: load-testing
@@ -125,8 +126,8 @@ load-tests-sqlite:
     - make load-tests-sqlite
   except:
     - schedules
-  only:
-    - master
+  # only:
+  # - master
 
 load-tests-mariadb:
   stage: load-testing
@@ -143,8 +144,8 @@ load-tests-mariadb:
     - make load-tests-mariadb
   except:
     - schedules
-  only:
-    - master
+  # only:
+  # - master
 
 # daily load tests
 

@@ -6,11 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
-
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
 
 func buildTestService(t *testing.T) (*Sqlite, sqlmock.Sqlmock) {
@@ -55,7 +54,6 @@ func TestSqlite_IsReady(T *testing.T) {
 		s, _ := buildTestService(t)
 		assert.True(t, s.IsReady(context.Background()))
 	})
-
 }
 
 func TestSqlite_logQueryBuildingError(T *testing.T) {

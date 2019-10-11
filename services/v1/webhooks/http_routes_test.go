@@ -8,8 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
-	mmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1/mock"
+	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
+	mmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
@@ -196,7 +196,7 @@ func TestValidateWebhook(T *testing.T) {
 			URL:    "https://todo.verygoodsoftwarenotvirus.ru",
 		}
 
-		assert.NoError(t, validateWebhook(exampleInput))
+		assert.Error(t, validateWebhook(exampleInput))
 	})
 
 	T.Run("with invalid url", func(t *testing.T) {
@@ -251,7 +251,8 @@ func TestWebhooksService_Create(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleInput := &models.WebhookCreationInput{
-			Name: expected.Name,
+			Name:   expected.Name,
+			Method: http.MethodPatch,
 		}
 		req = req.WithContext(context.WithValue(req.Context(), CreateMiddlewareCtxKey, exampleInput))
 
@@ -371,7 +372,8 @@ func TestWebhooksService_Create(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleInput := &models.WebhookCreationInput{
-			Name: expected.Name,
+			Method: http.MethodPatch,
+			Name:   expected.Name,
 		}
 		req = req.WithContext(context.WithValue(req.Context(), CreateMiddlewareCtxKey, exampleInput))
 
@@ -419,7 +421,8 @@ func TestWebhooksService_Create(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleInput := &models.WebhookCreationInput{
-			Name: expected.Name,
+			Method: http.MethodPatch,
+			Name:   expected.Name,
 		}
 		req = req.WithContext(context.WithValue(req.Context(), CreateMiddlewareCtxKey, exampleInput))
 

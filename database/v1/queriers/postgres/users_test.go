@@ -499,7 +499,6 @@ func TestPostgres_CreateUser(T *testing.T) {
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
-
 }
 
 func TestPostgres_buildUpdateUserQuery(T *testing.T) {

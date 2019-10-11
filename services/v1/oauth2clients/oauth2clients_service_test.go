@@ -9,16 +9,16 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	mauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1/mock"
-	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
-	mmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1/mock"
+	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth/mock"
+	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
+	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 	"gopkg.in/oauth2.v3/manage"
 	oauth2server "gopkg.in/oauth2.v3/server"
 	oauth2store "gopkg.in/oauth2.v3/store"
@@ -36,11 +36,11 @@ func buildTestService(t *testing.T) *Service {
 	service := &Service{
 		database:             database.BuildMockDatabase(),
 		logger:               noop.ProvideNoopLogger(),
-		encoderDecoder:       &mencoding.EncoderDecoder{},
-		authenticator:        &mauth.Authenticator{},
+		encoderDecoder:       &mockencoding.EncoderDecoder{},
+		authenticator:        &mockauth.Authenticator{},
 		urlClientIDExtractor: func(req *http.Request) uint64 { return 0 },
 
-		oauth2ClientCounter: &mmetrics.UnitCounter{},
+		oauth2ClientCounter: &mockmetrics.UnitCounter{},
 		tokenStore:          tokenStore,
 		oauth2Handler:       server,
 	}
@@ -59,7 +59,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2ClientCount", mock.Anything).
 			Return(expected, nil)
 
-		uc := &mmetrics.UnitCounter{}
+		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", expected).Return()
 
 		var ucp metrics.UnitCounterProvider = func(
@@ -73,9 +73,9 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 			context.Background(),
 			noop.ProvideNoopLogger(),
 			mockDB,
-			&mauth.Authenticator{},
+			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },
-			&mencoding.EncoderDecoder{},
+			&mockencoding.EncoderDecoder{},
 			ucp,
 		)
 		assert.NoError(t, err)
@@ -90,7 +90,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2ClientCount", mock.Anything).
 			Return(expected, nil)
 
-		uc := &mmetrics.UnitCounter{}
+		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", expected).Return()
 
 		var ucp metrics.UnitCounterProvider = func(
@@ -104,9 +104,9 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 			context.Background(),
 			noop.ProvideNoopLogger(),
 			mockDB,
-			&mauth.Authenticator{},
+			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },
-			&mencoding.EncoderDecoder{},
+			&mockencoding.EncoderDecoder{},
 			ucp,
 		)
 		assert.Error(t, err)
@@ -121,7 +121,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2ClientCount", mock.Anything).
 			Return(expected, errors.New("blah"))
 
-		uc := &mmetrics.UnitCounter{}
+		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", expected).Return()
 
 		var ucp metrics.UnitCounterProvider = func(
@@ -135,15 +135,14 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 			context.Background(),
 			noop.ProvideNoopLogger(),
 			mockDB,
-			&mauth.Authenticator{},
+			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },
-			&mencoding.EncoderDecoder{},
+			&mockencoding.EncoderDecoder{},
 			ucp,
 		)
 		assert.Error(t, err)
 		assert.Nil(t, service)
 	})
-
 }
 
 func Test_clientStore_GetByID(T *testing.T) {

@@ -3,12 +3,13 @@ package oauth2clients
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/pkg/errors"
 	"go.opencensus.io/trace"
 	"gopkg.in/oauth2.v3"
 	oauth2errors "gopkg.in/oauth2.v3/errors"
@@ -138,7 +139,7 @@ func (s *Service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantTyp
 	client, err := s.database.GetOAuth2ClientByClientID(ctx, clientID)
 	if err != nil {
 		logger.Error(err, "fetching oauth2 client from database")
-		return false, errors.Wrap(err, "fetching oauth2 client from database")
+		return false, fmt.Errorf("fetching oauth2 client from database: %w", err)
 	}
 
 	// disallow implicit grants unless authorized

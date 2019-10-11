@@ -2,12 +2,11 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"github.com/pkg/errors"
 )
 
 const (
@@ -25,7 +24,7 @@ func (c *V1Client) BuildGetItemRequest(ctx context.Context, id uint64) (*http.Re
 func (c *V1Client) GetItem(ctx context.Context, id uint64) (item *models.Item, err error) {
 	req, err := c.BuildGetItemRequest(ctx, id)
 	if err != nil {
-		return nil, errors.Wrap(err, "building request")
+		return nil, fmt.Errorf("building request: %w", err)
 	}
 
 	if retrieveErr := c.retrieve(ctx, req, &item); retrieveErr != nil {
@@ -46,7 +45,7 @@ func (c *V1Client) BuildGetItemsRequest(ctx context.Context, filter *models.Quer
 func (c *V1Client) GetItems(ctx context.Context, filter *models.QueryFilter) (items *models.ItemList, err error) {
 	req, err := c.BuildGetItemsRequest(ctx, filter)
 	if err != nil {
-		return nil, errors.Wrap(err, "building request")
+		return nil, fmt.Errorf("building request: %w", err)
 	}
 
 	if retrieveErr := c.retrieve(ctx, req, &items); retrieveErr != nil {
@@ -67,7 +66,7 @@ func (c *V1Client) BuildCreateItemRequest(ctx context.Context, body *models.Item
 func (c *V1Client) CreateItem(ctx context.Context, input *models.ItemCreationInput) (item *models.Item, err error) {
 	req, err := c.BuildCreateItemRequest(ctx, input)
 	if err != nil {
-		return nil, errors.Wrap(err, "building request")
+		return nil, fmt.Errorf("building request: %w", err)
 	}
 
 	err = c.executeRequest(ctx, req, &item)
@@ -85,7 +84,7 @@ func (c *V1Client) BuildUpdateItemRequest(ctx context.Context, updated *models.I
 func (c *V1Client) UpdateItem(ctx context.Context, updated *models.Item) error {
 	req, err := c.BuildUpdateItemRequest(ctx, updated)
 	if err != nil {
-		return errors.Wrap(err, "building request")
+		return fmt.Errorf("building request: %w", err)
 	}
 
 	return c.executeRequest(ctx, req, &updated)
@@ -102,7 +101,7 @@ func (c *V1Client) BuildArchiveItemRequest(ctx context.Context, id uint64) (*htt
 func (c *V1Client) ArchiveItem(ctx context.Context, id uint64) error {
 	req, err := c.BuildArchiveItemRequest(ctx, id)
 	if err != nil {
-		return errors.Wrap(err, "building request")
+		return fmt.Errorf("building request: %w", err)
 	}
 
 	return c.executeRequest(ctx, req, nil)

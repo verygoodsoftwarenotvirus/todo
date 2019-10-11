@@ -228,10 +228,8 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 		actual, err := p.GetAllOAuth2Clients(context.Background())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
-
 }
 
 func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
@@ -274,9 +272,8 @@ func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WillReturnError(sql.ErrNoRows)
 
 		actual, err := p.GetAllOAuth2ClientsForUser(context.Background(), exampleUser.ID)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
 		assert.Equal(t, sql.ErrNoRows, err)
+		assert.Nil(t, actual)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -311,9 +308,7 @@ func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WillReturnRows(
-				buildErroneousMockRowFromOAuth2Client(expected),
-			)
+			WillReturnRows(buildErroneousMockRowFromOAuth2Client(expected))
 
 		actual, err := p.GetAllOAuth2ClientsForUser(context.Background(), exampleUser.ID)
 		assert.Error(t, err)
@@ -359,9 +354,7 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(expected.BelongsTo, expected.ID).
-			WillReturnRows(
-				buildMockRowFromOAuth2Client(expected),
-			)
+			WillReturnRows(buildMockRowFromOAuth2Client(expected))
 
 		actual, err := p.GetOAuth2Client(context.Background(), expected.ID, expected.BelongsTo)
 		assert.NoError(t, err)
@@ -544,9 +537,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 			)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs(expectedUserID).
-			WillReturnRows(
-				sqlmock.NewRows([]string{"count"}).AddRow(expected.TotalCount),
-			)
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expected.TotalCount))
 
 		actual, err := p.GetOAuth2Clients(ctx, filter, expectedUserID)
 		assert.NoError(t, err)
@@ -608,9 +599,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
-			WillReturnRows(
-				buildErroneousMockRowFromOAuth2Client(&expected.Clients[0]),
-			)
+			WillReturnRows(buildErroneousMockRowFromOAuth2Client(&expected.Clients[0]))
 
 		actual, err := p.GetOAuth2Clients(context.Background(), models.DefaultQueryFilter(), expectedUserID)
 		assert.Error(t, err)
@@ -657,7 +646,6 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
-
 }
 
 func TestPostgres_buildCreateOAuth2ClientQuery(T *testing.T) {

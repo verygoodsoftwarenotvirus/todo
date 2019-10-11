@@ -50,13 +50,13 @@ github.com/gorilla/websocket
 github.com/hashicorp/golang-lru/simplelru
 # github.com/hashicorp/hcl v1.0.0
 github.com/hashicorp/hcl
-github.com/hashicorp/hcl/hcl/printer
 github.com/hashicorp/hcl/hcl/ast
 github.com/hashicorp/hcl/hcl/parser
-github.com/hashicorp/hcl/hcl/token
-github.com/hashicorp/hcl/json/parser
+github.com/hashicorp/hcl/hcl/printer
 github.com/hashicorp/hcl/hcl/scanner
 github.com/hashicorp/hcl/hcl/strconv
+github.com/hashicorp/hcl/hcl/token
+github.com/hashicorp/hcl/json/parser
 github.com/hashicorp/hcl/json/scanner
 github.com/hashicorp/hcl/json/token
 # github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
@@ -88,19 +88,19 @@ github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
 # github.com/pquerna/otp v1.2.0
-github.com/pquerna/otp/totp
 github.com/pquerna/otp
 github.com/pquerna/otp/hotp
+github.com/pquerna/otp/totp
 # github.com/prometheus/client_golang v0.9.3
 github.com/prometheus/client_golang/prometheus
-github.com/prometheus/client_golang/prometheus/promhttp
 github.com/prometheus/client_golang/prometheus/internal
+github.com/prometheus/client_golang/prometheus/promhttp
 # github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90
 github.com/prometheus/client_model/go
 # github.com/prometheus/common v0.4.0
 github.com/prometheus/common/expfmt
-github.com/prometheus/common/model
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
+github.com/prometheus/common/model
 # github.com/prometheus/procfs v0.0.0-20190507164030-5867b95ac084
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
@@ -124,15 +124,15 @@ github.com/streadway/quantile
 # github.com/stretchr/objx v0.1.1
 github.com/stretchr/objx
 # github.com/stretchr/testify v1.3.0
+github.com/stretchr/testify/assert
 github.com/stretchr/testify/mock
 github.com/stretchr/testify/require
-github.com/stretchr/testify/assert
 # github.com/tebeka/selenium v0.9.4-0.20181011202039-edf31bb7fd71
 github.com/tebeka/selenium
 github.com/tebeka/selenium/chrome
 github.com/tebeka/selenium/firefox
-github.com/tebeka/selenium/log
 github.com/tebeka/selenium/internal/zip
+github.com/tebeka/selenium/log
 # github.com/tidwall/btree v0.0.0-20170113224114-9876f1454cf0
 github.com/tidwall/btree
 # github.com/tidwall/buntdb v1.0.0
@@ -148,27 +148,31 @@ github.com/tidwall/rtree
 github.com/tidwall/rtree/base
 # github.com/tidwall/tinyqueue v0.0.0-20180302190814-1e39f5511563
 github.com/tidwall/tinyqueue
+# gitlab.com/verygoodsoftwarenotvirus/logging v1.0.2
+gitlab.com/verygoodsoftwarenotvirus/logging/v1
+gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop
+gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog
 # gitlab.com/verygoodsoftwarenotvirus/newsman v0.0.0-20190528023929-c49dc073f989
 gitlab.com/verygoodsoftwarenotvirus/newsman
 gitlab.com/verygoodsoftwarenotvirus/newsman/mock
 # go.opencensus.io v0.22.0
-go.opencensus.io/plugin/ochttp
-go.opencensus.io/trace
-go.opencensus.io/stats/view
-go.opencensus.io/stats
-go.opencensus.io/plugin/ochttp/propagation/b3
-go.opencensus.io/tag
-go.opencensus.io/trace/propagation
+go.opencensus.io
 go.opencensus.io/internal
-go.opencensus.io/trace/internal
-go.opencensus.io/trace/tracestate
+go.opencensus.io/internal/tagencoding
 go.opencensus.io/metric/metricdata
 go.opencensus.io/metric/metricexport
-go.opencensus.io/internal/tagencoding
 go.opencensus.io/metric/metricproducer
-go.opencensus.io/stats/internal
-go.opencensus.io
+go.opencensus.io/plugin/ochttp
+go.opencensus.io/plugin/ochttp/propagation/b3
 go.opencensus.io/resource
+go.opencensus.io/stats
+go.opencensus.io/stats/internal
+go.opencensus.io/stats/view
+go.opencensus.io/tag
+go.opencensus.io/trace
+go.opencensus.io/trace/internal
+go.opencensus.io/trace/propagation
+go.opencensus.io/trace/tracestate
 # go.uber.org/ratelimit v0.0.0-20180316092928-c15da0234277
 go.uber.org/ratelimit
 go.uber.org/ratelimit/internal/clock
@@ -176,8 +180,8 @@ go.uber.org/ratelimit/internal/clock
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 # golang.org/x/net v0.0.0-20190522155817-f3200d17e092
-golang.org/x/net/context/ctxhttp
 golang.org/x/net/context
+golang.org/x/net/context/ctxhttp
 # golang.org/x/oauth2 v0.0.0-20190523182746-aaccbc9213b0
 golang.org/x/oauth2
 golang.org/x/oauth2/clientcredentials
@@ -193,21 +197,21 @@ golang.org/x/text/unicode/norm
 google.golang.org/api/support/bundler
 # google.golang.org/appengine v1.4.0
 google.golang.org/appengine/cloudsql
-google.golang.org/appengine/urlfetch
 google.golang.org/appengine/internal
-google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/internal/base
 google.golang.org/appengine/internal/datastore
 google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/remote_api
+google.golang.org/appengine/internal/urlfetch
+google.golang.org/appengine/urlfetch
 # gopkg.in/oauth2.v3 v3.10.0
 gopkg.in/oauth2.v3
 gopkg.in/oauth2.v3/errors
+gopkg.in/oauth2.v3/generates
 gopkg.in/oauth2.v3/manage
+gopkg.in/oauth2.v3/models
 gopkg.in/oauth2.v3/server
 gopkg.in/oauth2.v3/store
-gopkg.in/oauth2.v3/generates
-gopkg.in/oauth2.v3/models
 gopkg.in/oauth2.v3/utils/uuid
 # gopkg.in/yaml.v2 v2.2.2
 gopkg.in/yaml.v2

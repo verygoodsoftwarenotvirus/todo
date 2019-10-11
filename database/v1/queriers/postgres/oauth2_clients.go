@@ -3,15 +3,15 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strings"
 	"sync"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/pkg/errors"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
 const (
@@ -139,12 +139,12 @@ func (p *Postgres) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Cli
 		if err == sql.ErrNoRows {
 			return nil, err
 		}
-		return nil, errors.Wrap(err, "querying database for oauth2 clients")
+		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
 	}
 
 	list, err := scanOAuth2Clients(p.logger, rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "fetching list of OAuth2Clients")
+		return nil, fmt.Errorf("fetching list of OAuth2Clients: %w", err)
 	}
 
 	return list, nil
@@ -159,12 +159,12 @@ func (p *Postgres) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64
 		if err == sql.ErrNoRows {
 			return nil, err
 		}
-		return nil, errors.Wrap(err, "querying database for oauth2 clients")
+		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
 	}
 
 	list, err := scanOAuth2Clients(p.logger, rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "fetching list of OAuth2Clients")
+		return nil, fmt.Errorf("fetching list of OAuth2Clients: %w", err)
 	}
 
 	return list, nil
@@ -197,7 +197,7 @@ func (p *Postgres) GetOAuth2Client(ctx context.Context, clientID, userID uint64)
 		if err == sql.ErrNoRows {
 			return nil, err
 		}
-		return nil, errors.Wrap(err, "querying for oauth2 client")
+		return nil, fmt.Errorf("querying for oauth2 client: %w", err)
 	}
 
 	return client, nil
@@ -292,12 +292,12 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 		if err == sql.ErrNoRows {
 			return nil, err
 		}
-		return nil, errors.Wrap(err, "querying for oauth2 clients")
+		return nil, fmt.Errorf("querying for oauth2 clients: %w", err)
 	}
 
 	list, err := scanOAuth2Clients(p.logger, rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "scanning response from database")
+		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
 	// de-pointer-ize clients
@@ -309,7 +309,7 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 
 	totalCount, err := p.GetOAuth2ClientCount(ctx, filter, userID)
 	if err != nil {
-		return nil, errors.Wrap(err, "fetching oauth2 client count")
+		return nil, fmt.Errorf("fetching oauth2 client count: %w", err)
 	}
 
 	ocl := &models.OAuth2ClientList{
@@ -367,7 +367,7 @@ func (p *Postgres) CreateOAuth2Client(ctx context.Context, input *models.OAuth2C
 
 	err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
 	if err != nil {
-		return nil, errors.Wrap(err, "error executing client creation query")
+		return nil, fmt.Errorf("error executing client creation query: %w", err)
 	}
 
 	return x, nil

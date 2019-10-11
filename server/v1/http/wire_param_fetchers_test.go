@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
 
 func TestProvideUserIDFetcher(T *testing.T) {

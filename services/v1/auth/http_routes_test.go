@@ -8,11 +8,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
-	mauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1/mock"
-	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
+	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth/mock"
+	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
+	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -128,7 +128,6 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 		actual := s.WebsocketAuthFunction(req)
 		assert.False(t, actual)
 	})
-
 }
 
 func TestService_FetchUserFromRequest(T *testing.T) {
@@ -151,7 +150,7 @@ func TestService_FetchUserFromRequest(T *testing.T) {
 		require.NoError(t, err)
 		req.AddCookie(c)
 
-		s.userDB.(*mmodels.UserDataManager).
+		s.userDB.(*mockmodels.UserDataManager).
 			On("GetUser", mock.Anything, userID).
 			Return(expectedUser, nil)
 
@@ -173,7 +172,7 @@ func TestService_FetchUserFromRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.userDB.(*mmodels.UserDataManager).
+		s.userDB.(*mockmodels.UserDataManager).
 			On("GetUser", mock.Anything, userID).
 			Return(expectedUser, nil)
 
@@ -201,7 +200,7 @@ func TestService_FetchUserFromRequest(T *testing.T) {
 
 		expectedError := errors.New("blah")
 
-		s.userDB.(*mmodels.UserDataManager).
+		s.userDB.(*mockmodels.UserDataManager).
 			On("GetUser", mock.Anything, userID).
 			Return((*models.User)(nil), expectedError)
 
@@ -221,11 +220,11 @@ func TestService_Login(T *testing.T) {
 			Username: "username",
 		}
 
-		s.userDB.(*mmodels.UserDataManager).
+		s.userDB.(*mockmodels.UserDataManager).
 			On("GetUserByUsername", mock.Anything, expectedUser.Username).
 			Return(expectedUser, nil)
 
-		s.authenticator.(*mauth.Authenticator).
+		s.authenticator.(*mockauth.Authenticator).
 			On(
 				"ValidateLogin",
 				mock.Anything,
@@ -262,7 +261,7 @@ func TestService_Login(T *testing.T) {
 			Username: "username",
 		}
 
-		s.userDB.(*mmodels.UserDataManager).
+		s.userDB.(*mockmodels.UserDataManager).
 			On("GetUserByUsername", mock.Anything, expectedUser.Username).
 			Return(expectedUser, errors.New("arbitrary"))
 
@@ -287,7 +286,7 @@ func TestService_Login(T *testing.T) {
 
 	T.Run("with error encoding error fetching login dataa", func(t *testing.T) {
 		s := buildTestService(t)
-		ed := &mencoding.EncoderDecoder{}
+		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.Anything).
 			Return(errors.New("blah"))
 		s.encoderDecoder = ed
@@ -296,7 +295,7 @@ func TestService_Login(T *testing.T) {
 			Username: "username",
 		}
 
-		s.userDB.(*mmodels.UserDataManager).
+		s.userDB.(*mockmodels.UserDataManager).
 			On("GetUserByUsername", mock.Anything, expectedUser.Username).
 			Return(expectedUser, errors.New("arbitrary"))
 
@@ -326,11 +325,11 @@ func TestService_Login(T *testing.T) {
 			Username: "username",
 		}
 
-		s.userDB.(*mmodels.UserDataManager).
+		s.userDB.(*mockmodels.UserDataManager).
 			On("GetUserByUsername", mock.Anything, expectedUser.Username).
 			Return(expectedUser, nil)
 
-		s.authenticator.(*mauth.Authenticator).
+		s.authenticator.(*mockauth.Authenticator).
 			On(
 				"ValidateLogin",
 				mock.Anything,
@@ -367,11 +366,11 @@ func TestService_Login(T *testing.T) {
 			Username: "username",
 		}
 
-		s.userDB.(*mmodels.UserDataManager).
+		s.userDB.(*mockmodels.UserDataManager).
 			On("GetUserByUsername", mock.Anything, expectedUser.Username).
 			Return(expectedUser, nil)
 
-		s.authenticator.(*mauth.Authenticator).
+		s.authenticator.(*mockauth.Authenticator).
 			On(
 				"ValidateLogin",
 				mock.Anything,
@@ -413,11 +412,11 @@ func TestService_Login(T *testing.T) {
 			Username: "username",
 		}
 
-		s.userDB.(*mmodels.UserDataManager).
+		s.userDB.(*mockmodels.UserDataManager).
 			On("GetUserByUsername", mock.Anything, expectedUser.Username).
 			Return(expectedUser, nil)
 
-		s.authenticator.(*mauth.Authenticator).
+		s.authenticator.(*mockauth.Authenticator).
 			On(
 				"ValidateLogin",
 				mock.Anything,
@@ -455,7 +454,7 @@ func TestService_Login(T *testing.T) {
 			Return("", errors.New("blah"))
 		s.cookieManager = cb
 
-		ed := &mencoding.EncoderDecoder{}
+		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.Anything).
 			Return(errors.New("blah"))
 		s.encoderDecoder = ed
@@ -464,11 +463,11 @@ func TestService_Login(T *testing.T) {
 			Username: "username",
 		}
 
-		s.userDB.(*mmodels.UserDataManager).
+		s.userDB.(*mockmodels.UserDataManager).
 			On("GetUserByUsername", mock.Anything, expectedUser.Username).
 			Return(expectedUser, nil)
 
-		s.authenticator.(*mauth.Authenticator).
+		s.authenticator.(*mockauth.Authenticator).
 			On(
 				"ValidateLogin",
 				mock.Anything,
@@ -497,7 +496,6 @@ func TestService_Login(T *testing.T) {
 		assert.Equal(t, res.Code, http.StatusInternalServerError)
 		assert.Empty(t, res.Header().Get("Set-Cookie"))
 	})
-
 }
 
 func TestService_Logout(T *testing.T) {
@@ -543,7 +541,7 @@ func TestService_fetchLoginDataFromRequest(T *testing.T) {
 			Username: "username",
 		}
 
-		s.userDB.(*mmodels.UserDataManager).
+		s.userDB.(*mockmodels.UserDataManager).
 			On("GetUserByUsername", mock.Anything, expectedUser.Username).
 			Return(expectedUser, nil)
 
@@ -583,7 +581,7 @@ func TestService_fetchLoginDataFromRequest(T *testing.T) {
 			Username: "username",
 		}
 
-		s.userDB.(*mmodels.UserDataManager).
+		s.userDB.(*mockmodels.UserDataManager).
 			On("GetUserByUsername", mock.Anything, expectedUser.Username).
 			Return((*models.User)(nil), sql.ErrNoRows)
 
@@ -610,7 +608,7 @@ func TestService_fetchLoginDataFromRequest(T *testing.T) {
 			Username: "username",
 		}
 
-		s.userDB.(*mmodels.UserDataManager).
+		s.userDB.(*mockmodels.UserDataManager).
 			On("GetUserByUsername", mock.Anything, expectedUser.Username).
 			Return((*models.User)(nil), errors.New("blah"))
 
@@ -629,7 +627,6 @@ func TestService_fetchLoginDataFromRequest(T *testing.T) {
 		_, err = s.fetchLoginDataFromRequest(req)
 		assert.Error(t, err)
 	})
-
 }
 
 func TestService_validateLogin(T *testing.T) {
@@ -648,7 +645,7 @@ func TestService_validateLogin(T *testing.T) {
 			user: &models.User{},
 		}
 
-		s.authenticator.(*mauth.Authenticator).
+		s.authenticator.(*mockauth.Authenticator).
 			On(
 				"ValidateLogin",
 				mock.Anything,
@@ -677,7 +674,7 @@ func TestService_validateLogin(T *testing.T) {
 			user: &models.User{},
 		}
 
-		s.authenticator.(*mauth.Authenticator).
+		s.authenticator.(*mockauth.Authenticator).
 			On(
 				"ValidateLogin",
 				mock.Anything,
@@ -688,11 +685,11 @@ func TestService_validateLogin(T *testing.T) {
 				mock.Anything,
 			).Return(expected, auth.ErrPasswordHashTooWeak)
 
-		s.authenticator.(*mauth.Authenticator).
+		s.authenticator.(*mockauth.Authenticator).
 			On("HashPassword", mock.Anything, mock.Anything).
 			Return("blah", nil)
 
-		s.userDB.(*mmodels.UserDataManager).
+		s.userDB.(*mockmodels.UserDataManager).
 			On("UpdateUser", mock.Anything, mock.Anything).
 			Return(nil)
 
@@ -715,7 +712,7 @@ func TestService_validateLogin(T *testing.T) {
 			user: &models.User{},
 		}
 
-		s.authenticator.(*mauth.Authenticator).
+		s.authenticator.(*mockauth.Authenticator).
 			On(
 				"ValidateLogin",
 				mock.Anything,
@@ -726,7 +723,7 @@ func TestService_validateLogin(T *testing.T) {
 				mock.Anything,
 			).Return(true, auth.ErrPasswordHashTooWeak)
 
-		s.authenticator.(*mauth.Authenticator).
+		s.authenticator.(*mockauth.Authenticator).
 			On("HashPassword", mock.Anything, mock.Anything).
 			Return("", expectedErr)
 
@@ -749,7 +746,7 @@ func TestService_validateLogin(T *testing.T) {
 			user: &models.User{},
 		}
 
-		s.authenticator.(*mauth.Authenticator).
+		s.authenticator.(*mockauth.Authenticator).
 			On(
 				"ValidateLogin",
 				mock.Anything,
@@ -760,11 +757,11 @@ func TestService_validateLogin(T *testing.T) {
 				mock.Anything,
 			).Return(true, auth.ErrPasswordHashTooWeak)
 
-		s.authenticator.(*mauth.Authenticator).
+		s.authenticator.(*mockauth.Authenticator).
 			On("HashPassword", mock.Anything, mock.Anything).
 			Return("blah", nil)
 
-		s.userDB.(*mmodels.UserDataManager).
+		s.userDB.(*mockmodels.UserDataManager).
 			On("UpdateUser", mock.Anything, mock.Anything).
 			Return(expectedErr)
 
@@ -787,7 +784,7 @@ func TestService_validateLogin(T *testing.T) {
 			user: &models.User{},
 		}
 
-		s.authenticator.(*mauth.Authenticator).
+		s.authenticator.(*mockauth.Authenticator).
 			On(
 				"ValidateLogin",
 				mock.Anything,
@@ -806,7 +803,7 @@ func TestService_validateLogin(T *testing.T) {
 	T.Run("with invalid login", func(t *testing.T) {
 		s := buildTestService(t)
 		expected := false
-		s.authenticator.(*mauth.Authenticator).
+		s.authenticator.(*mockauth.Authenticator).
 			On(
 				"ValidateLogin",
 				mock.Anything,

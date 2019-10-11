@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strings"
 	"sync"
 
@@ -10,7 +11,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -136,12 +136,12 @@ func (s *Sqlite) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Clien
 		if err == sql.ErrNoRows {
 			return nil, err
 		}
-		return nil, errors.Wrap(err, "querying database for oauth2 clients")
+		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
 	}
 
 	list, err := s.scanOAuth2Clients(rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "fetching list of OAuth2Clients")
+		return nil, fmt.Errorf("fetching list of OAuth2Clients: %w", err)
 	}
 
 	return list, nil
@@ -156,12 +156,12 @@ func (s *Sqlite) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64) 
 		if err == sql.ErrNoRows {
 			return nil, err
 		}
-		return nil, errors.Wrap(err, "querying database for oauth2 clients")
+		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
 	}
 
 	list, err := s.scanOAuth2Clients(rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "fetching list of OAuth2Clients")
+		return nil, fmt.Errorf("fetching list of OAuth2Clients: %w", err)
 	}
 
 	return list, nil
@@ -194,7 +194,7 @@ func (s *Sqlite) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (
 		if err == sql.ErrNoRows {
 			return nil, err
 		}
-		return nil, errors.Wrap(err, "querying for oauth2 client")
+		return nil, fmt.Errorf("querying for oauth2 client: %w", err)
 	}
 
 	return client, nil
@@ -289,12 +289,12 @@ func (s *Sqlite) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilte
 		if err == sql.ErrNoRows {
 			return nil, err
 		}
-		return nil, errors.Wrap(err, "querying for oauth2 clients")
+		return nil, fmt.Errorf("querying for oauth2 clients: %w", err)
 	}
 
 	list, err := s.scanOAuth2Clients(rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "scanning response from database")
+		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
 	// de-pointer-ize clients
@@ -306,7 +306,7 @@ func (s *Sqlite) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilte
 
 	totalCount, err := s.GetOAuth2ClientCount(ctx, filter, userID)
 	if err != nil {
-		return nil, errors.Wrap(err, "fetching oauth2 client count")
+		return nil, fmt.Errorf("fetching oauth2 client count: %w", err)
 	}
 
 	ocl := &models.OAuth2ClientList{
@@ -377,7 +377,7 @@ func (s *Sqlite) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 
 	res, err := s.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return nil, errors.Wrap(err, "error executing client creation query")
+		return nil, fmt.Errorf("error executing client creation query: %w", err)
 	}
 
 	// fetch the last inserted ID

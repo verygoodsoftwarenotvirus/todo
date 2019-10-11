@@ -1,0 +1,48 @@
+{
+  "services": {
+    "database": {
+      "environment": {
+        "POSTGRES_DB": "todo",
+        "POSTGRES_PASSWORD": "hunter2",
+        "POSTGRES_USER": "dbuser"
+      },
+      "image": "postgres:latest",
+      "logging": {
+        "driver": "none"
+      },
+      "ports": [
+        "2345:5432"
+      ]
+    },
+    "test": {
+      "build": {
+        "context": "../",
+        "dockerfile": "dockerfiles/integration-tests.Dockerfile"
+      },
+      "environment": {
+        "DOCKER": "true",
+        "TARGET_ADDRESS": "http://todo-server:8888"
+      },
+      "links": [
+        "todo-server"
+      ]
+    },
+    "todo-server": {
+      "build": {
+        "context": "../",
+        "dockerfile": "dockerfiles/integration-server.Dockerfile"
+      },
+      "environment": {
+        "CONFIGURATION_FILEPATH": "config_files/integration-tests-sqlite.toml",
+        "DOCKER": "true"
+      },
+      "links": [
+        "database"
+      ],
+      "ports": [
+        "80:8888"
+      ]
+    }
+  },
+  "version": "3.3"
+}

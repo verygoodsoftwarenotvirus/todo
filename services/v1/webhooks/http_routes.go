@@ -2,6 +2,7 @@ package webhooks
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -11,7 +12,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 
-	"github.com/pkg/errors"
 	"go.opencensus.io/trace"
 )
 
@@ -71,7 +71,7 @@ func (s *Service) ListHandler() http.HandlerFunc {
 func validateWebhook(input *models.WebhookCreationInput) error {
 	_, err := url.Parse(input.URL)
 	if err != nil {
-		return errors.Wrap(err, "invalid URL provided")
+		return fmt.Errorf("invalid URL provided: %w", err)
 	}
 
 	input.Method = strings.ToUpper(input.Method)
@@ -79,11 +79,12 @@ func validateWebhook(input *models.WebhookCreationInput) error {
 	case http.MethodGet, // allowed methods
 		http.MethodPost,
 		http.MethodPut,
+		http.MethodPatch,
 		http.MethodDelete,
 		http.MethodHead:
 		break
 	default:
-		return errors.Wrap(nil, "invalid method provided")
+		return fmt.Errorf("invalid method provided: %q", input.Method)
 	}
 
 	return nil

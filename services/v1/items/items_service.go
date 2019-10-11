@@ -2,16 +2,15 @@ package items
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
-
-	"github.com/pkg/errors"
 )
 
 const (
@@ -62,7 +61,7 @@ func ProvideItemsService(
 ) (*Service, error) {
 	itemCounter, err := itemCounterProvider(counterName, counterDescription)
 	if err != nil {
-		return nil, errors.Wrap(err, "error initializing counter")
+		return nil, fmt.Errorf("error initializing counter: %w", err)
 	}
 
 	svc := &Service{
@@ -77,7 +76,7 @@ func ProvideItemsService(
 
 	itemCount, err := svc.itemDatabase.GetAllItemsCount(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "setting current item count")
+		return nil, fmt.Errorf("setting current item count: %w", err)
 	}
 	svc.itemCounter.IncrementBy(ctx, itemCount)
 

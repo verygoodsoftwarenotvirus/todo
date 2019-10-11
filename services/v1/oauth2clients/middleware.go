@@ -2,14 +2,14 @@ package oauth2clients
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
-	"go.opencensus.io/trace"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/pkg/errors"
+	"go.opencensus.io/trace"
 )
 
 const (
@@ -46,7 +46,7 @@ func (s *Service) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.
 	// validate bearer token
 	token, err := s.oauth2Handler.ValidationBearerToken(req)
 	if err != nil {
-		return nil, errors.Wrap(err, "validating bearer token")
+		return nil, fmt.Errorf("validating bearer token: %w", err)
 	}
 
 	// fetch client ID

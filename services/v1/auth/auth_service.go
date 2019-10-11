@@ -4,13 +4,13 @@ import (
 	"context"
 	"net/http"
 
-	libauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/gorilla/securecookie"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
 const (
@@ -37,7 +37,7 @@ type (
 	Service struct {
 		config               config.AuthSettings
 		logger               logging.Logger
-		authenticator        libauth.Authenticator
+		authenticator        auth.Authenticator
 		userIDFetcher        UserIDFetcher
 		userDB               models.UserDataManager
 		oauth2ClientsService OAuth2ClientValidator
@@ -50,7 +50,7 @@ type (
 func ProvideAuthService(
 	logger logging.Logger,
 	cfg *config.ServerConfig,
-	authenticator libauth.Authenticator,
+	authenticator auth.Authenticator,
 	database models.UserDataManager,
 	oauth2ClientsService OAuth2ClientValidator,
 	userIDFetcher UserIDFetcher,

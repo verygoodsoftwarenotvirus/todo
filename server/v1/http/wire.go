@@ -5,12 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/v1"
-
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 
 	"github.com/google/wire"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
 var (

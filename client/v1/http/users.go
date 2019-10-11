@@ -2,13 +2,13 @@ package client
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"github.com/pkg/errors"
 )
 
 const usersBasePath = "users"
@@ -24,7 +24,7 @@ func (c *V1Client) BuildGetUserRequest(ctx context.Context, userID uint64) (*htt
 func (c *V1Client) GetUser(ctx context.Context, userID uint64) (user *models.User, err error) {
 	req, err := c.BuildGetUserRequest(ctx, userID)
 	if err != nil {
-		return nil, errors.Wrap(err, "building request")
+		return nil, fmt.Errorf("building request: %w", err)
 	}
 
 	err = c.retrieve(ctx, req, &user)
@@ -44,7 +44,7 @@ func (c *V1Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 
 	req, err := c.BuildGetUsersRequest(ctx, filter)
 	if err != nil {
-		return nil, errors.Wrap(err, "building request")
+		return nil, fmt.Errorf("building request: %w", err)
 	}
 
 	err = c.retrieve(ctx, req, &users)
@@ -64,7 +64,7 @@ func (c *V1Client) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 
 	req, err := c.BuildCreateUserRequest(ctx, input)
 	if err != nil {
-		return nil, errors.Wrap(err, "building request")
+		return nil, fmt.Errorf("building request: %w", err)
 	}
 
 	err = c.executeUnathenticatedDataRequest(ctx, req, &user)
@@ -82,7 +82,7 @@ func (c *V1Client) BuildArchiveUserRequest(ctx context.Context, userID uint64) (
 func (c *V1Client) ArchiveUser(ctx context.Context, userID uint64) error {
 	req, err := c.BuildArchiveUserRequest(ctx, userID)
 	if err != nil {
-		return errors.Wrap(err, "building request")
+		return fmt.Errorf("building request: %w", err)
 	}
 
 	return c.executeRequest(ctx, req, nil)
@@ -95,8 +95,9 @@ func (c *V1Client) BuildLoginRequest(username, password, totpToken string) (*htt
 		Password:  password,
 		TOTPToken: totpToken,
 	})
+
 	if err != nil {
-		return nil, errors.Wrap(err, "creating body from struct")
+		return nil, fmt.Errorf("creating body from struct: %w", err)
 	}
 
 	uri := c.buildVersionlessURL(nil, usersBasePath, "login")
@@ -112,7 +113,7 @@ func (c *V1Client) Login(ctx context.Context, username, password, totpToken stri
 
 	res, err := c.plainClient.Do(req)
 	if err != nil {
-		return nil, errors.Wrap(err, "encountered error executing login request")
+		return nil, fmt.Errorf("encountered error executing login request: %w", err)
 	}
 
 	if c.Debug {

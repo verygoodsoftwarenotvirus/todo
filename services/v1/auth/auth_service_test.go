@@ -4,11 +4,12 @@ import (
 	"net/http"
 	"testing"
 
-	mauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/v1/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/logging/v1/noop"
-	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
+	mauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
+	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
+
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
 
 func buildTestService(t *testing.T) *Service {
@@ -21,7 +22,7 @@ func buildTestService(t *testing.T) *Service {
 		},
 	}
 	auth := &mauth.Authenticator{}
-	userDB := &mmodels.UserDataManager{}
+	userDB := &mockmodels.UserDataManager{}
 	oauth := &mockOAuth2ClientValidator{}
 	userIDFetcher := func(*http.Request) uint64 {
 		return 1

@@ -467,7 +467,6 @@ func TestSqlite_CreateUser(T *testing.T) {
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
-
 }
 
 func TestSqlite_buildUpdateUserQuery(T *testing.T) {

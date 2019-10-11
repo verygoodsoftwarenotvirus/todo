@@ -1,0 +1,94 @@
+{
+  "services": {
+    "chrome": {
+      "environment": [
+        "HUB_HOST=selenium-hub",
+        "HUB_PORT=4444"
+      ],
+      "image": "selenium/node-chrome:3.141.59-oxygen",
+      "links": [
+        "selenium-hub"
+      ],
+      "logging": {
+        "driver": "none"
+      },
+      "volumes": [
+        "/dev/shm:/dev/shm"
+      ]
+    },
+    "database": {
+      "environment": {
+        "POSTGRES_DB": "todo",
+        "POSTGRES_PASSWORD": "hunter2",
+        "POSTGRES_USER": "dbuser"
+      },
+      "image": "postgres:latest",
+      "logging": {
+        "driver": "none"
+      },
+      "ports": [
+        "2345:5432"
+      ]
+    },
+    "firefox": {
+      "environment": [
+        "HUB_HOST=selenium-hub",
+        "HUB_PORT=4444"
+      ],
+      "image": "selenium/node-firefox:3.141.59-oxygen",
+      "links": [
+        "selenium-hub"
+      ],
+      "logging": {
+        "driver": "none"
+      },
+      "volumes": [
+        "/dev/shm:/dev/shm"
+      ]
+    },
+    "selenium-hub": {
+      "container_name": "selenium-hub",
+      "image": "selenium/hub:3.141.59-oxygen",
+      "logging": {
+        "driver": "none"
+      },
+      "ports": [
+        "4444:4444"
+      ]
+    },
+    "test": {
+      "build": {
+        "context": "../",
+        "dockerfile": "dockerfiles/frontend-tests.Dockerfile"
+      },
+      "depends_on": [
+        "firefox"
+      ],
+      "environment": {
+        "DOCKER": "true",
+        "TARGET_ADDRESS": "http://todo-server:8888"
+      },
+      "links": [
+        "todo-server",
+        "selenium-hub"
+      ]
+    },
+    "todo-server": {
+      "build": {
+        "context": "../",
+        "dockerfile": "dockerfiles/server.Dockerfile"
+      },
+      "environment": {
+        "CONFIGURATION_FILEPATH": "config_files/production.toml",
+        "DOCKER": "true"
+      },
+      "links": [
+        "database"
+      ],
+      "ports": [
+        "80:8888"
+      ]
+    }
+  },
+  "version": "3.3"
+}

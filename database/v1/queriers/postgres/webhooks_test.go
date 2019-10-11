@@ -408,7 +408,6 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
-
 }
 
 func TestPostgres_GetAllWebhooksForUser(T *testing.T) {
@@ -741,7 +740,6 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
-
 }
 
 func TestPostgres_buildUpdateWebhookQuery(T *testing.T) {

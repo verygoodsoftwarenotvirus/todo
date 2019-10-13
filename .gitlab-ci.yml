@@ -108,8 +108,6 @@ load-tests-postgres:
     - make load-tests-postgres
   except:
     - schedules
-  # only:
-  #   - master
 
 load-tests-sqlite:
   stage: load-testing
@@ -126,8 +124,6 @@ load-tests-sqlite:
     - make load-tests-sqlite
   except:
     - schedules
-  # only:
-  # - master
 
 load-tests-mariadb:
   stage: load-testing
@@ -136,7 +132,7 @@ load-tests-mariadb:
     - docker:dind
   variables:
     GOPATH: "/go"
-    LOADTEST_RUN_TIME: "2m30s"
+    LOADTEST_RUN_TIME: "5m00s"
   script:
     - apk add --update --no-cache py-pip openssl python-dev libffi-dev
       openssl-dev gcc libc-dev make
@@ -144,24 +140,54 @@ load-tests-mariadb:
     - make load-tests-mariadb
   except:
     - schedules
-  # only:
-  # - master
 
 # daily load tests
 
-daily-load-tests:on-schedule:
+daily-load-tests-postgres:on-schedule:
   stage: load-testing
   image: docker:latest
   services:
     - docker:dind
   variables:
     GOPATH: "/go"
-    LOADTEST_RUN_TIME: "5m"
+    LOADTEST_RUN_TIME: "10m"
   script:
     - apk add --update --no-cache py-pip openssl python-dev libffi-dev
       openssl-dev gcc libc-dev make
     - pip install docker-compose
     - make load-tests-postgres
+  only:
+    - schedules
+
+daily-load-tests-mariadb:on-schedule:
+  stage: load-testing
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    GOPATH: "/go"
+    LOADTEST_RUN_TIME: "10m"
+  script:
+    - apk add --update --no-cache py-pip openssl python-dev libffi-dev
+      openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - make load-tests-mariadb
+  only:
+    - schedules
+
+daily-load-tests-sqlite:on-schedule:
+  stage: load-testing
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    GOPATH: "/go"
+    LOADTEST_RUN_TIME: "10m"
+  script:
+    - apk add --update --no-cache py-pip openssl python-dev libffi-dev
+      openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - make load-tests-sqlite
   only:
     - schedules
 

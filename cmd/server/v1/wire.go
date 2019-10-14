@@ -5,12 +5,12 @@ package main
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	auth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
+	config "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
+	encoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
+	metrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
+	server "gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
@@ -36,23 +36,18 @@ func BuildServer(
 	logger logging.Logger,
 	database database.Database,
 ) (*server.Server, error) {
-
 	wire.Build(
 		config.Providers,
 		auth.Providers,
-
 		// Server things
 		server.Providers,
 		encoding.Providers,
 		httpserver.Providers,
-
 		// metrics
 		metrics.Providers,
-
 		// external libs
 		newsman.NewNewsman,
 		ProvideReporter,
-
 		// services
 		authservice.Providers,
 		usersservice.Providers,

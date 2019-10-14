@@ -8,13 +8,11 @@ import (
 )
 
 const (
-	defaultPort = 8888
-	oneDay      = 24 * time.Hour
-
-	debugCookieSecret       = "HEREISA32CHARSECRETWHICHISMADEUP"
-	defaultFrontendFilepath = "/frontend"
-	postgresDBConnDetails   = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
-
+	defaultPort                      = 8888
+	oneDay                           = 24 * time.Hour
+	debugCookieSecret                = "HEREISA32CHARSECRETWHICHISMADEUP"
+	defaultFrontendFilepath          = "/frontend"
+	postgresDBConnDetails            = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
 	metaDebug                        = "meta.debug"
 	metaStartupDeadline              = "meta.startup_deadline"
 	serverHTTPPort                   = "server.http_port"

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"sync"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
@@ -29,8 +29,7 @@ var (
 	}
 )
 
-// scanItem takes a database Scanner (i.e. *sql.Row) and scans
-// the result into an Item struct
+// scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct
 func scanItem(scan database.Scanner) (*models.Item, error) {
 	x := &models.Item{}
 
@@ -81,15 +80,14 @@ func (m *MariaDB) buildGetItemQuery(itemID, userID uint64) (query string, args [
 		Where(squirrel.Eq{
 			"id":         itemID,
 			"belongs_to": userID,
-		}).
-		ToSql()
+		}).ToSql()
 
 	m.logQueryBuildingError(err)
 
 	return query, args
 }
 
-// GetItem fetches an item from the database
+// GetItem fetches an item from the mariadb database
 func (m *MariaDB) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
 	query, args := m.buildGetItemQuery(itemID, userID)
 	row := m.db.QueryRowContext(ctx, query, args...)
@@ -135,7 +133,8 @@ var (
 func (m *MariaDB) buildGetAllItemsCountQuery() string {
 	allItemsCountQueryBuilder.Do(func() {
 		var err error
-		allItemsCountQuery, _, err = m.sqlBuilder.Select(CountQuery).
+		allItemsCountQuery, _, err = m.sqlBuilder.
+			Select(CountQuery).
 			From(itemsTableName).
 			Where(squirrel.Eq{"archived_on": nil}).
 			ToSql()
@@ -245,7 +244,7 @@ func (m *MariaDB) buildCreateItemQuery(input *models.Item) (query string, args [
 	return query, args
 }
 
-// buildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments.
+// buildItemCreationTimeQuery takes an item and returns a creation query for that item and the relevant arguments
 func (m *MariaDB) buildItemCreationTimeQuery(itemID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -254,6 +253,7 @@ func (m *MariaDB) buildItemCreationTimeQuery(itemID uint64) (query string, args 
 		From(itemsTableName).
 		Where(squirrel.Eq{"id": itemID}).
 		ToSql()
+
 	m.logQueryBuildingError(err)
 
 	return query, args
@@ -290,7 +290,8 @@ func (m *MariaDB) CreateItem(ctx context.Context, input *models.ItemCreationInpu
 // buildUpdateItemQuery takes an item and returns an update SQL query, with the relevant query parameters
 func (m *MariaDB) buildUpdateItemQuery(input *models.Item) (query string, args []interface{}) {
 	var err error
-	query, args, err = m.sqlBuilder.Update(itemsTableName).
+	query, args, err = m.sqlBuilder.
+		Update(itemsTableName).
 		Set("name", input.Name).
 		Set("details", input.Details).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
 const (

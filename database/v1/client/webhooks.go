@@ -4,7 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"go.opencensus.io/trace"
 )
@@ -34,6 +34,40 @@ func (c *Client) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mod
 	return c.querier.GetWebhook(ctx, webhookID, userID)
 }
 
+// GetWebhooks fetches a list of webhooks from the database that meet a particular filter
+func (c *Client) GetWebhooks(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.WebhookList, error) {
+	ctx, span := trace.StartSpan(ctx, "GetWebhooks")
+	defer span.End()
+
+	attachUserIDToSpan(span, userID)
+	attachFilterToSpan(span, filter)
+
+	c.logger.WithValue("user_id", userID).Debug("GetWebhookCount called")
+
+	return c.querier.GetWebhooks(ctx, filter, userID)
+}
+
+// GetAllWebhooks fetches a list of webhooks from the database that meet a particular filter
+func (c *Client) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
+	ctx, span := trace.StartSpan(ctx, "GetAllWebhooks")
+	defer span.End()
+
+	c.logger.Debug("GetWebhookCount called")
+
+	return c.querier.GetAllWebhooks(ctx)
+}
+
+// GetAllWebhooksForUser fetches a list of webhooks from the database that meet a particular filter
+func (c *Client) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]models.Webhook, error) {
+	ctx, span := trace.StartSpan(ctx, "GetAllWebhooksForUser")
+	defer span.End()
+
+	attachUserIDToSpan(span, userID)
+	c.logger.WithValue("user_id", userID).Debug("GetAllWebhooksForUser called")
+
+	return c.querier.GetAllWebhooksForUser(ctx, userID)
+}
+
 // GetWebhookCount fetches the count of webhooks from the database that meet a particular filter
 func (c *Client) GetWebhookCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
 	ctx, span := trace.StartSpan(ctx, "GetWebhookCount")
@@ -58,40 +92,6 @@ func (c *Client) GetAllWebhooksCount(ctx context.Context) (count uint64, err err
 	c.logger.Debug("GetAllWebhooksCount called")
 
 	return c.querier.GetAllWebhooksCount(ctx)
-}
-
-// GetAllWebhooks fetches a list of webhooks from the database that meet a particular filter
-func (c *Client) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
-	ctx, span := trace.StartSpan(ctx, "GetAllWebhooks")
-	defer span.End()
-
-	c.logger.Debug("GetWebhookCount called")
-
-	return c.querier.GetAllWebhooks(ctx)
-}
-
-// GetAllWebhooksForUser fetches a list of webhooks from the database that meet a particular filter
-func (c *Client) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]models.Webhook, error) {
-	ctx, span := trace.StartSpan(ctx, "GetAllWebhooksForUser")
-	defer span.End()
-
-	attachUserIDToSpan(span, userID)
-	c.logger.WithValue("user_id", userID).Debug("GetAllWebhooksForUser called")
-
-	return c.querier.GetAllWebhooksForUser(ctx, userID)
-}
-
-// GetWebhooks fetches a list of webhooks from the database that meet a particular filter
-func (c *Client) GetWebhooks(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.WebhookList, error) {
-	ctx, span := trace.StartSpan(ctx, "GetWebhooks")
-	defer span.End()
-
-	attachUserIDToSpan(span, userID)
-	attachFilterToSpan(span, filter)
-
-	c.logger.WithValue("user_id", userID).Debug("GetWebhookCount called")
-
-	return c.querier.GetWebhooks(ctx, filter, userID)
 }
 
 // CreateWebhook creates a webhook in a database

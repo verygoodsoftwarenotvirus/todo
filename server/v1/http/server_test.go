@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
-	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
+	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
@@ -27,19 +27,18 @@ func buildTestServer() *Server {
 		DebugMode:  true,
 		db:         database.BuildMockDatabase(),
 		config:     &config.ServerConfig{},
-		encoder:    &mencoding.EncoderDecoder{},
+		encoder:    &mockencoding.EncoderDecoder{},
 		httpServer: provideHTTPServer(),
 		logger:     noop.ProvideNoopLogger(),
-
 		frontendService: frontend.ProvideFrontendService(
 			noop.ProvideNoopLogger(),
 			config.FrontendSettings{},
 		),
-		webhooksService:      &mmodels.WebhookDataServer{},
-		usersService:         &mmodels.UserDataServer{},
+		webhooksService:      &mockmodels.WebhookDataServer{},
+		usersService:         &mockmodels.UserDataServer{},
 		authService:          &auth.Service{},
-		itemsService:         &mmodels.ItemDataServer{},
-		oauth2ClientsService: &mmodels.OAuth2ClientDataServer{},
+		itemsService:         &mockmodels.ItemDataServer{},
+		oauth2ClientsService: &mockmodels.OAuth2ClientDataServer{},
 	}
 	return s
 }
@@ -49,8 +48,7 @@ func TestProvideServer(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		mockDB := database.BuildMockDatabase()
-		mockDB.WebhookDataManager.On("GetAllWebhooks", mock.Anything).
-			Return(&models.WebhookList{}, nil)
+		mockDB.WebhookDataManager.On("GetAllWebhooks", mock.Anything).Return(&models.WebhookList{}, nil)
 
 		actual, err := ProvideServer(
 			context.Background(),
@@ -67,7 +65,7 @@ func TestProvideServer(T *testing.T) {
 			&webhooks.Service{},
 			mockDB,
 			noop.ProvideNoopLogger(),
-			&mencoding.EncoderDecoder{},
+			&mockencoding.EncoderDecoder{},
 			newsman.NewNewsman(nil, nil),
 		)
 

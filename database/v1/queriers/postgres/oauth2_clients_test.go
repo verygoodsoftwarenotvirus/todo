@@ -8,44 +8,42 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 )
 
 func buildMockRowFromOAuth2Client(c *models.OAuth2Client) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(oauth2ClientsTableColumns).
-		AddRow(
-			c.ID,
-			c.Name,
-			c.ClientID,
-			strings.Join(c.Scopes, scopesSeparator),
-			c.RedirectURI,
-			c.ClientSecret,
-			c.CreatedOn,
-			c.UpdatedOn,
-			c.ArchivedOn,
-			c.BelongsTo,
-		)
+	exampleRows := sqlmock.NewRows(oauth2ClientsTableColumns).AddRow(
+		c.ID,
+		c.Name,
+		c.ClientID,
+		strings.Join(c.Scopes, scopesSeparator),
+		c.RedirectURI,
+		c.ClientSecret,
+		c.CreatedOn,
+		c.UpdatedOn,
+		c.ArchivedOn,
+		c.BelongsTo,
+	)
 
 	return exampleRows
 }
 
 func buildErroneousMockRowFromOAuth2Client(c *models.OAuth2Client) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(oauth2ClientsTableColumns).
-		AddRow(
-			c.ArchivedOn,
-			c.Name,
-			c.ClientID,
-			strings.Join(c.Scopes, scopesSeparator),
-			c.RedirectURI,
-			c.ClientSecret,
-			c.CreatedOn,
-			c.UpdatedOn,
-			c.BelongsTo,
-			c.ID,
-		)
+	exampleRows := sqlmock.NewRows(oauth2ClientsTableColumns).AddRow(
+		c.ArchivedOn,
+		c.Name,
+		c.ClientID,
+		strings.Join(c.Scopes, scopesSeparator),
+		c.RedirectURI,
+		c.ClientSecret,
+		c.CreatedOn,
+		c.UpdatedOn,
+		c.BelongsTo,
+		c.ID,
+	)
 
 	return exampleRows
 }
@@ -160,16 +158,14 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 				CreatedOn: uint64(time.Now().Unix()),
 			},
 		}
-
 		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WillReturnRows(
-				buildMockRowFromOAuth2Client(expected[0]),
-				buildMockRowFromOAuth2Client(expected[0]),
-				buildMockRowFromOAuth2Client(expected[0]),
-			)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WillReturnRows(
+			buildMockRowFromOAuth2Client(expected[0]),
+			buildMockRowFromOAuth2Client(expected[0]),
+			buildMockRowFromOAuth2Client(expected[0]),
+		)
 
 		actual, err := p.GetAllOAuth2Clients(context.Background())
 		assert.NoError(t, err)
@@ -221,13 +217,12 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WillReturnRows(
-				buildErroneousMockRowFromOAuth2Client(expected[0]),
-			)
+			WillReturnRows(buildErroneousMockRowFromOAuth2Client(expected[0]))
 
 		actual, err := p.GetAllOAuth2Clients(context.Background())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
+
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
@@ -246,16 +241,14 @@ func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 				CreatedOn: uint64(time.Now().Unix()),
 			},
 		}
-
 		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WillReturnRows(
-				buildMockRowFromOAuth2Client(expected[0]),
-				buildMockRowFromOAuth2Client(expected[0]),
-				buildMockRowFromOAuth2Client(expected[0]),
-			)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WillReturnRows(
+			buildMockRowFromOAuth2Client(expected[0]),
+			buildMockRowFromOAuth2Client(expected[0]),
+			buildMockRowFromOAuth2Client(expected[0]),
+		)
 
 		actual, err := p.GetAllOAuth2ClientsForUser(context.Background(), exampleUser.ID)
 		assert.NoError(t, err)
@@ -269,7 +262,8 @@ func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WillReturnError(sql.ErrNoRows)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WillReturnError(sql.ErrNoRows)
 
 		actual, err := p.GetAllOAuth2ClientsForUser(context.Background(), exampleUser.ID)
 		assert.Equal(t, sql.ErrNoRows, err)
@@ -280,7 +274,6 @@ func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		exampleUser := &models.User{ID: 123}
-
 		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 
 		p, mockDB := buildTestService(t)
@@ -303,7 +296,6 @@ func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
-
 		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 
 		p, mockDB := buildTestService(t)
@@ -348,7 +340,6 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 			CreatedOn: uint64(time.Now().Unix()),
 			Scopes:    []string{"things"},
 		}
-
 		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to = $1 AND id = $2"
 
 		p, mockDB := buildTestService(t)
@@ -372,7 +363,6 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 			CreatedOn: uint64(time.Now().Unix()),
 			Scopes:    []string{"things"},
 		}
-
 		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to = $1 AND id = $2"
 
 		p, mockDB := buildTestService(t)
@@ -396,15 +386,12 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
-
 		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to = $1 AND id = $2"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(expected.BelongsTo, expected.ID).
-			WillReturnRows(
-				buildErroneousMockRowFromOAuth2Client(expected),
-			)
+			WillReturnRows(buildErroneousMockRowFromOAuth2Client(expected))
 
 		actual, err := p.GetOAuth2Client(context.Background(), expected.ID, expected.BelongsTo)
 		assert.Error(t, err)
@@ -441,9 +428,7 @@ func TestPostgres_GetOAuth2ClientCount(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(expectedUserID).
-			WillReturnRows(
-				sqlmock.NewRows([]string{"count"}).AddRow(expectedCount),
-			)
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
 		actualCount, err := p.GetOAuth2ClientCount(context.Background(), models.DefaultQueryFilter(), expectedUserID)
 		assert.NoError(t, err)
@@ -458,10 +443,10 @@ func TestPostgres_buildGetAllOAuth2ClientCountQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		expectedQuery := "SELECT COUNT(id) FROM oauth2_clients WHERE archived_on IS NULL"
+		expected := "SELECT COUNT(id) FROM oauth2_clients WHERE archived_on IS NULL"
 
-		actualQuery := p.buildGetAllOAuth2ClientCountQuery()
-		assert.Equal(t, expectedQuery, actualQuery)
+		actual := p.buildGetAllOAuth2ClientCountQuery()
+		assert.Equal(t, expected, actual)
 	})
 }
 
@@ -474,9 +459,7 @@ func TestPostgres_GetAllOAuth2ClientCount(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WillReturnRows(
-				sqlmock.NewRows([]string{"count"}).AddRow(expectedCount),
-			)
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
 		actualCount, err := p.GetAllOAuth2ClientCount(context.Background())
 		assert.NoError(t, err)
@@ -529,12 +512,11 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 		expectedCountQuery := "SELECT COUNT(id) FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
-			WillReturnRows(
-				buildMockRowFromOAuth2Client(&expected.Clients[0]),
-				buildMockRowFromOAuth2Client(&expected.Clients[0]),
-				buildMockRowFromOAuth2Client(&expected.Clients[0]),
-			)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).WillReturnRows(
+			buildMockRowFromOAuth2Client(&expected.Clients[0]),
+			buildMockRowFromOAuth2Client(&expected.Clients[0]),
+			buildMockRowFromOAuth2Client(&expected.Clients[0]),
+		)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs(expectedUserID).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expected.TotalCount))
@@ -563,7 +545,6 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 
 	T.Run("with error reading from database", func(t *testing.T) {
 		expectedUserID := uint64(321)
-
 		expectedListQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 
 		p, mockDB := buildTestService(t)
@@ -594,7 +575,6 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 				},
 			},
 		}
-
 		expectedListQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 
 		p, mockDB := buildTestService(t)
@@ -625,17 +605,15 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 				},
 			},
 		}
-
 		expectedListQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 		expectedCountQuery := "SELECT COUNT(id) FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
-			WillReturnRows(
-				buildMockRowFromOAuth2Client(&expected.Clients[0]),
-				buildMockRowFromOAuth2Client(&expected.Clients[0]),
-				buildMockRowFromOAuth2Client(&expected.Clients[0]),
-			)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).WillReturnRows(
+			buildMockRowFromOAuth2Client(&expected.Clients[0]),
+			buildMockRowFromOAuth2Client(&expected.Clients[0]),
+			buildMockRowFromOAuth2Client(&expected.Clients[0]),
+		)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs(expectedUserID).
 			WillReturnError(errors.New("blah"))
@@ -660,7 +638,6 @@ func TestPostgres_buildCreateOAuth2ClientQuery(T *testing.T) {
 			RedirectURI:  "RedirectURI",
 			BelongsTo:    123,
 		}
-
 		expectedArgCount := 6
 		expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_on"
 
@@ -691,22 +668,18 @@ func TestPostgres_CreateOAuth2Client(T *testing.T) {
 			Name:      expected.Name,
 			BelongsTo: expected.BelongsTo,
 		}
-		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).
-			AddRow(expected.ID, uint64(time.Now().Unix()))
-
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(expected.ID, uint64(time.Now().Unix()))
 		expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_on"
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				expected.Name,
-				expected.ClientID,
-				expected.ClientSecret,
-				strings.Join(expected.Scopes, scopesSeparator),
-				expected.RedirectURI,
-				expected.BelongsTo,
-			).
-			WillReturnRows(exampleRows)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
+			expected.Name,
+			expected.ClientID,
+			expected.ClientSecret,
+			strings.Join(expected.Scopes, scopesSeparator),
+			expected.RedirectURI,
+			expected.BelongsTo,
+		).WillReturnRows(exampleRows)
 
 		actual, err := p.CreateOAuth2Client(context.Background(), expectedInput)
 		assert.NoError(t, err)
@@ -727,20 +700,17 @@ func TestPostgres_CreateOAuth2Client(T *testing.T) {
 			Name:      expected.Name,
 			BelongsTo: expected.BelongsTo,
 		}
-
 		expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_on"
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				expected.Name,
-				expected.ClientID,
-				expected.ClientSecret,
-				strings.Join(expected.Scopes, scopesSeparator),
-				expected.RedirectURI,
-				expected.BelongsTo,
-			).
-			WillReturnError(errors.New("blah"))
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
+			expected.Name,
+			expected.ClientID,
+			expected.ClientSecret,
+			strings.Join(expected.Scopes, scopesSeparator),
+			expected.RedirectURI,
+			expected.BelongsTo,
+		).WillReturnError(errors.New("blah"))
 
 		actual, err := p.CreateOAuth2Client(context.Background(), expectedInput)
 		assert.Error(t, err)
@@ -785,10 +755,9 @@ func TestPostgres_UpdateOAuth2Client(T *testing.T) {
 		exampleInput := &models.OAuth2Client{}
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WillReturnRows(
-				sqlmock.NewRows([]string{"updated_on"}).AddRow(time.Now().Unix()),
-			)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WillReturnRows(
+			sqlmock.NewRows([]string{"updated_on"}).AddRow(time.Now().Unix()),
+		)
 
 		err := p.UpdateOAuth2Client(context.Background(), exampleInput)
 		assert.NoError(t, err)

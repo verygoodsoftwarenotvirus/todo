@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/icrowley/fake"
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -56,7 +56,7 @@ func TestWebhooks(test *testing.T) {
 		T.Run("should be createable", func(t *testing.T) {
 			tctx := context.Background()
 
-			// CreateHandler webhook
+			// Create webhook
 			input := buildDummyWebhookInput()
 			expected := &models.Webhook{
 				Name:        input.Name,
@@ -64,14 +64,12 @@ func TestWebhooks(test *testing.T) {
 				ContentType: input.ContentType,
 				Method:      input.Method,
 			}
-			premade, err := todoClient.CreateWebhook(
-				tctx,
-				&models.WebhookCreationInput{
-					Name:        expected.Name,
-					ContentType: expected.ContentType,
-					URL:         expected.URL,
-					Method:      expected.Method,
-				})
+			premade, err := todoClient.CreateWebhook(tctx, &models.WebhookCreationInput{
+				Name:        expected.Name,
+				ContentType: expected.ContentType,
+				URL:         expected.URL,
+				Method:      expected.Method,
+			})
 			checkValueAndError(t, premade, err)
 
 			// Assert webhook equality
@@ -92,7 +90,7 @@ func TestWebhooks(test *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
 			tctx := context.Background()
 
-			// CreateHandler webhooks
+			// Create webhooks
 			var expected []*models.Webhook
 			for i := 0; i < 5; i++ {
 				expected = append(expected, buildDummyWebhook(t))
@@ -123,7 +121,7 @@ func TestWebhooks(test *testing.T) {
 		T.Run("it should be readable", func(t *testing.T) {
 			tctx := context.Background()
 
-			// CreateHandler webhook
+			// Create webhook
 			input := buildDummyWebhookInput()
 			expected := &models.Webhook{
 				Name:        input.Name,
@@ -163,7 +161,7 @@ func TestWebhooks(test *testing.T) {
 		T.Run("it should be updatable", func(t *testing.T) {
 			tctx := context.Background()
 
-			// CreateHandler webhook
+			// Create webhook
 			input := buildDummyWebhookInput()
 			expected := &models.Webhook{
 				Name:        input.Name,
@@ -171,15 +169,12 @@ func TestWebhooks(test *testing.T) {
 				ContentType: input.ContentType,
 				Method:      input.Method,
 			}
-			premade, err := todoClient.CreateWebhook(
-				tctx,
-				&models.WebhookCreationInput{
-					Name:        expected.Name,
-					ContentType: expected.ContentType,
-					URL:         expected.URL,
-					Method:      expected.Method,
-				},
-			)
+			premade, err := todoClient.CreateWebhook(tctx, &models.WebhookCreationInput{
+				Name:        expected.Name,
+				ContentType: expected.ContentType,
+				URL:         expected.URL,
+				Method:      expected.Method,
+			})
 			checkValueAndError(t, premade, err)
 
 			// Change webhook
@@ -206,7 +201,7 @@ func TestWebhooks(test *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
 			tctx := context.Background()
 
-			// CreateHandler webhook
+			// Create webhook
 			input := buildDummyWebhookInput()
 			expected := &models.Webhook{
 				Name:        input.Name,

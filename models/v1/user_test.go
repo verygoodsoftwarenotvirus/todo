@@ -15,7 +15,6 @@ func TestUser_Update(T *testing.T) {
 			HashedPassword:  "hashed_pass",
 			TwoFactorSecret: "two factor secret",
 		}
-
 		exampleInput := User{
 			Username:        "newUsername",
 			HashedPassword:  "updated_hashed_pass",
@@ -23,7 +22,6 @@ func TestUser_Update(T *testing.T) {
 		}
 
 		actual.Update(&exampleInput)
-
 		assert.Equal(t, exampleInput, actual)
 	})
 }

@@ -8,10 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
-
 	"go.opencensus.io/trace"
 )
 
@@ -76,7 +75,8 @@ func validateWebhook(input *models.WebhookCreationInput) error {
 
 	input.Method = strings.ToUpper(input.Method)
 	switch input.Method {
-	case http.MethodGet, // allowed methods
+	// allowed methods
+	case http.MethodGet,
 		http.MethodPost,
 		http.MethodPut,
 		http.MethodPatch,

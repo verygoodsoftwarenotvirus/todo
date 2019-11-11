@@ -71,16 +71,13 @@ func (a *ServiceAttacker) Do(ctx context.Context) hazana.DoResult {
 	return dr
 }
 
-// Teardown implement's hazana's Attacker interface
+// Teardown implements hazana's Attacker interface
 func (a *ServiceAttacker) Teardown() error {
-	// Teardown can be used to close the connection to the service.
 	return nil
 }
 
-// Clone implement's hazana's Attacker interface
+// Clone implements hazana's Attacker interface
 func (a *ServiceAttacker) Clone() hazana.Attack {
-	// Clone should return a fresh new Attack
-	// Make sure the new Attack has values for shared struct fields initialized at Setup.
 	return a
 }
 
@@ -99,14 +96,11 @@ func main() {
 	attacker := &ServiceAttacker{todoClient: todoClient}
 	cfg := hazana.Config{
 		RPS:           50,
-		AttackTimeSec: int(runTime.Seconds()), // run basically forever
+		AttackTimeSec: int(runTime.Seconds()),
 		RampupTimeSec: 5,
-		// RampupStrategy: "", string            `json:"rampupStrategy"`
-		MaxAttackers: 50,
-		// OutputFilename: "", string            `json:"outputFilename,omitempty"`
-		Verbose: true,
-		// Metadata: "",       map[string]string `json:"metadata,omitempty"`
-		DoTimeoutSec: 10,
+		MaxAttackers:  50,
+		Verbose:       true,
+		DoTimeoutSec:  10,
 	}
 
 	r := hazana.Run(attacker, cfg)

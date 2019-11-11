@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"

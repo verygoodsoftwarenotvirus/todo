@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -19,7 +19,9 @@ import (
 	oauth2errors "gopkg.in/oauth2.v3/errors"
 )
 
-const apiURLPrefix = "/api/v1"
+const (
+	apiURLPrefix = "/api/v1"
+)
 
 func TestService_OAuth2InternalErrorHandler(T *testing.T) {
 	T.Parallel()
@@ -29,7 +31,6 @@ func TestService_OAuth2InternalErrorHandler(T *testing.T) {
 		expected := errors.New("blah")
 
 		actual := s.OAuth2InternalErrorHandler(expected)
-
 		assert.Equal(t, expected, actual.Error)
 	})
 }
@@ -60,7 +61,6 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 			context.WithValue(req.Context(), models.OAuth2ClientKey, exampleClient),
 		)
 		req.URL.Path = fmt.Sprintf("%s/blah", apiURLPrefix)
-
 		actual, err := s.AuthorizeScopeHandler(res, req)
 
 		assert.NoError(t, err)
@@ -77,9 +77,11 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		}
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.
-			On("GetOAuth2ClientByClientID", mock.Anything, exampleClient.ClientID).
-			Return(exampleClient, nil)
+		mockDB.OAuth2ClientDataManager.On(
+			"GetOAuth2ClientByClientID",
+			mock.Anything,
+			exampleClient.ClientID,
+		).Return(exampleClient, nil)
 		s.database = mockDB
 
 		req := buildRequest(t)
@@ -89,7 +91,6 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 			context.WithValue(req.Context(), clientIDKey, exampleClient.ClientID),
 		)
 		req.URL.Path = fmt.Sprintf("%s/blah", apiURLPrefix)
-
 		actual, err := s.AuthorizeScopeHandler(res, req)
 
 		assert.NoError(t, err)
@@ -106,18 +107,18 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		}
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.
-			On("GetOAuth2ClientByClientID", mock.Anything, exampleClient.ClientID).
-			Return((*models.OAuth2Client)(nil), sql.ErrNoRows)
+		mockDB.OAuth2ClientDataManager.On(
+			"GetOAuth2ClientByClientID",
+			mock.Anything,
+			exampleClient.ClientID,
+		).Return((*models.OAuth2Client)(nil), sql.ErrNoRows)
 		s.database = mockDB
 
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
-
 		req = req.WithContext(
 			context.WithValue(req.Context(), clientIDKey, exampleClient.ClientID),
 		)
-
 		actual, err := s.AuthorizeScopeHandler(res, req)
 
 		assert.Error(t, err)
@@ -134,18 +135,18 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		}
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.
-			On("GetOAuth2ClientByClientID", mock.Anything, exampleClient.ClientID).
-			Return((*models.OAuth2Client)(nil), errors.New("blah"))
+		mockDB.OAuth2ClientDataManager.On(
+			"GetOAuth2ClientByClientID",
+			mock.Anything,
+			exampleClient.ClientID,
+		).Return((*models.OAuth2Client)(nil), errors.New("blah"))
 		s.database = mockDB
 
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
-
 		req = req.WithContext(
 			context.WithValue(req.Context(), clientIDKey, exampleClient.ClientID),
 		)
-
 		actual, err := s.AuthorizeScopeHandler(res, req)
 
 		assert.Error(t, err)
@@ -155,10 +156,8 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 
 	T.Run("without client attached to request", func(t *testing.T) {
 		s := buildTestService(t)
-
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
-
 		actual, err := s.AuthorizeScopeHandler(res, req)
 
 		assert.Error(t, err)
@@ -174,19 +173,19 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		}
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.
-			On("GetOAuth2ClientByClientID", mock.Anything, exampleClient.ClientID).
-			Return(exampleClient, nil)
+		mockDB.OAuth2ClientDataManager.On(
+			"GetOAuth2ClientByClientID",
+			mock.Anything,
+			exampleClient.ClientID,
+		).Return(exampleClient, nil)
 		s.database = mockDB
 
 		req := buildRequest(t)
+		req.URL.Path = fmt.Sprintf("%s/blah", apiURLPrefix)
 		res := httptest.NewRecorder()
-
 		req = req.WithContext(
 			context.WithValue(req.Context(), clientIDKey, exampleClient.ClientID),
 		)
-		req.URL.Path = fmt.Sprintf("%s/blah", apiURLPrefix)
-
 		actual, err := s.AuthorizeScopeHandler(res, req)
 
 		assert.Error(t, err)
@@ -200,13 +199,11 @@ func TestService_UserAuthorizationHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
-
 		exampleClient := &models.OAuth2Client{BelongsTo: 1}
 		expected := fmt.Sprintf("%d", exampleClient.BelongsTo)
 
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
-
 		req = req.WithContext(
 			context.WithValue(req.Context(), models.OAuth2ClientKey, exampleClient),
 		)
@@ -218,13 +215,11 @@ func TestService_UserAuthorizationHandler(T *testing.T) {
 
 	T.Run("without client attached to request", func(t *testing.T) {
 		s := buildTestService(t)
-
 		exampleUser := &models.User{ID: 1}
 		expected := fmt.Sprintf("%d", exampleUser.ID)
 
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
-
 		req = req.WithContext(
 			context.WithValue(req.Context(), models.UserKey, exampleUser),
 		)
@@ -236,7 +231,6 @@ func TestService_UserAuthorizationHandler(T *testing.T) {
 
 	T.Run("with no user info attached", func(t *testing.T) {
 		s := buildTestService(t)
-
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
 
@@ -262,15 +256,14 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 		stringID := fmt.Sprintf("%d", exampleClient.ID)
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.
-			On("GetOAuth2ClientByClientID", mock.Anything, stringID).
-			Return(exampleClient, nil)
+		mockDB.OAuth2ClientDataManager.On(
+			"GetOAuth2ClientByClientID",
+			mock.Anything,
+			stringID,
+		).Return(exampleClient, nil)
 		s.database = mockDB
 
-		actual, err := s.ClientAuthorizedHandler(
-			stringID,
-			exampleGrant,
-		)
+		actual, err := s.ClientAuthorizedHandler(stringID, exampleGrant)
 		assert.Equal(t, expected, actual)
 		assert.NoError(t, err)
 	})
@@ -278,12 +271,9 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 	T.Run("with password credentials grant", func(t *testing.T) {
 		s := buildTestService(t)
 		expected := false
-
 		exampleGrant := oauth2.PasswordCredentials
-		actual, err := s.ClientAuthorizedHandler(
-			"ID",
-			exampleGrant,
-		)
+
+		actual, err := s.ClientAuthorizedHandler("ID", exampleGrant)
 		assert.Equal(t, expected, actual)
 		assert.Error(t, err)
 	})
@@ -291,7 +281,6 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 	T.Run("with error reading from database", func(t *testing.T) {
 		s := buildTestService(t)
 		expected := false
-
 		exampleGrant := oauth2.AuthorizationCode
 		exampleClient := &models.OAuth2Client{
 			ID:       1,
@@ -301,15 +290,14 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 		stringID := fmt.Sprintf("%d", exampleClient.ID)
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.
-			On("GetOAuth2ClientByClientID", mock.Anything, stringID).
-			Return((*models.OAuth2Client)(nil), errors.New("blah"))
+		mockDB.OAuth2ClientDataManager.On(
+			"GetOAuth2ClientByClientID",
+			mock.Anything,
+			stringID,
+		).Return((*models.OAuth2Client)(nil), errors.New("blah"))
 		s.database = mockDB
 
-		actual, err := s.ClientAuthorizedHandler(
-			stringID,
-			exampleGrant,
-		)
+		actual, err := s.ClientAuthorizedHandler(stringID, exampleGrant)
 		assert.Equal(t, expected, actual)
 		assert.Error(t, err)
 	})
@@ -327,15 +315,14 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 		stringID := fmt.Sprintf("%d", exampleClient.ID)
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.
-			On("GetOAuth2ClientByClientID", mock.Anything, stringID).
-			Return(exampleClient, nil)
+		mockDB.OAuth2ClientDataManager.On(
+			"GetOAuth2ClientByClientID",
+			mock.Anything,
+			stringID,
+		).Return(exampleClient, nil)
 		s.database = mockDB
 
-		actual, err := s.ClientAuthorizedHandler(
-			stringID,
-			exampleGrant,
-		)
+		actual, err := s.ClientAuthorizedHandler(stringID, exampleGrant)
 		assert.Equal(t, expected, actual)
 		assert.Error(t, err)
 	})
@@ -357,15 +344,14 @@ func TestService_ClientScopeHandler(T *testing.T) {
 		stringID := fmt.Sprintf("%d", exampleClient.ID)
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.
-			On("GetOAuth2ClientByClientID", mock.Anything, stringID).
-			Return(exampleClient, nil)
+		mockDB.OAuth2ClientDataManager.On(
+			"GetOAuth2ClientByClientID",
+			mock.Anything,
+			stringID,
+		).Return(exampleClient, nil)
 		s.database = mockDB
 
-		actual, err := s.ClientScopeHandler(
-			stringID,
-			exampleScope,
-		)
+		actual, err := s.ClientScopeHandler(stringID, exampleScope)
 		assert.Equal(t, expected, actual)
 		assert.NoError(t, err)
 	})
@@ -383,23 +369,22 @@ func TestService_ClientScopeHandler(T *testing.T) {
 		stringID := fmt.Sprintf("%d", exampleClient.ID)
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.
-			On("GetOAuth2ClientByClientID", mock.Anything, stringID).
-			Return((*models.OAuth2Client)(nil), errors.New("blah"))
+		mockDB.OAuth2ClientDataManager.On(
+			"GetOAuth2ClientByClientID",
+			mock.Anything,
+			stringID,
+		).Return((*models.OAuth2Client)(nil), errors.New("blah"))
 		s.database = mockDB
 
-		actual, err := s.ClientScopeHandler(
-			stringID,
-			exampleScope,
-		)
+		actual, err := s.ClientScopeHandler(stringID, exampleScope)
 		assert.Equal(t, expected, actual)
 		assert.Error(t, err)
 	})
 
 	T.Run("without valid scope", func(t *testing.T) {
 		s := buildTestService(t)
-
 		expected := false
+
 		exampleScope := "halb"
 		exampleClient := &models.OAuth2Client{
 			ID:       1,
@@ -409,15 +394,14 @@ func TestService_ClientScopeHandler(T *testing.T) {
 		stringID := fmt.Sprintf("%d", exampleClient.ID)
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.
-			On("GetOAuth2ClientByClientID", mock.Anything, stringID).
-			Return(exampleClient, nil)
+		mockDB.OAuth2ClientDataManager.On(
+			"GetOAuth2ClientByClientID",
+			mock.Anything,
+			stringID,
+		).Return(exampleClient, nil)
 		s.database = mockDB
 
-		actual, err := s.ClientScopeHandler(
-			stringID,
-			exampleScope,
-		)
+		actual, err := s.ClientScopeHandler(stringID, exampleScope)
 		assert.Equal(t, expected, actual)
 		assert.Error(t, err)
 	})

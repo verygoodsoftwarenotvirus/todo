@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/lib/pq"
@@ -140,14 +140,11 @@ func (p *Postgres) buildGetUserCountQuery(filter *models.QueryFilter) (query str
 	builder := p.sqlBuilder.
 		Select(CountQuery).
 		From(usersTableName).
-		Where(squirrel.Eq{
-			"archived_on": nil,
-		})
+		Where(squirrel.Eq{"archived_on": nil})
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder)
 	}
-
 	query, args, err = builder.ToSql()
 
 	p.logQueryBuildingError(err)
@@ -169,9 +166,7 @@ func (p *Postgres) buildGetUsersQuery(filter *models.QueryFilter) (query string,
 	builder := p.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
-		Where(squirrel.Eq{
-			"archived_on": nil,
-		})
+		Where(squirrel.Eq{"archived_on": nil})
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder)
@@ -216,7 +211,8 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 // buildCreateUserQuery returns a SQL query (and arguments) that would create a given User
 func (p *Postgres) buildCreateUserQuery(input *models.UserInput) (query string, args []interface{}) {
 	var err error
-	query, args, err = p.sqlBuilder.Insert(usersTableName).
+	query, args, err = p.sqlBuilder.
+		Insert(usersTableName).
 		Columns(
 			"username",
 			"hashed_password",
@@ -227,14 +223,15 @@ func (p *Postgres) buildCreateUserQuery(input *models.UserInput) (query string, 
 			input.Username,
 			input.Password,
 			input.TwoFactorSecret,
-			// NOTE: we always default is_admin to false, on the assumption that
-			// admins have DB access and will change that value via SQL query.
-			// There should also be no way to update a user via this structure
-			// such that they would have admin privileges
 			false,
 		).
 		Suffix("RETURNING id, created_on").
 		ToSql()
+
+	// NOTE: we always default is_admin to false, on the assumption that
+	// admins have DB access and will change that value via SQL query.
+	// There should also be no way to update a user via this structure
+	// such that they would have admin privileges
 
 	p.logQueryBuildingError(err)
 
@@ -247,12 +244,10 @@ func (p *Postgres) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 		Username:        input.Username,
 		TwoFactorSecret: input.TwoFactorSecret,
 	}
-
 	query, args := p.buildCreateUserQuery(input)
 
 	// create the user
-	err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
-	if err != nil {
+	if err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {
 		switch e := err.(type) {
 		case *pq.Error:
 			if e.Code == pq.ErrorCode("23505") {
@@ -269,7 +264,8 @@ func (p *Postgres) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 // buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row
 func (p *Postgres) buildUpdateUserQuery(input *models.User) (query string, args []interface{}) {
 	var err error
-	query, args, err = p.sqlBuilder.Update(usersTableName).
+	query, args, err = p.sqlBuilder.
+		Update(usersTableName).
 		Set("username", input.Username).
 		Set("hashed_password", input.HashedPassword).
 		Set("two_factor_secret", input.TwoFactorSecret).
@@ -293,7 +289,8 @@ func (p *Postgres) UpdateUser(ctx context.Context, input *models.User) error {
 
 func (p *Postgres) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
-	query, args, err = p.sqlBuilder.Update(usersTableName).
+	query, args, err = p.sqlBuilder.
+		Update(usersTableName).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{"id": userID}).

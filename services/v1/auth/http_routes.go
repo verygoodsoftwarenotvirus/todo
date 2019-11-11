@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/gorilla/securecookie"
 	"go.opencensus.io/trace"
@@ -121,7 +121,6 @@ func (s *Service) LoginHandler() http.HandlerFunc {
 		attachUsernameToSpan(span, loginData.user.Username)
 
 		logger := s.logger.WithValue("user", loginData.user.ID)
-
 		loginValid, err := s.validateLogin(ctx, *loginData)
 		if err != nil {
 			logger.Error(err, "error encountered validating login")
@@ -220,14 +219,10 @@ func (s *Service) fetchLoginDataFromRequest(req *http.Request) (*loginData, *mod
 	user, err := s.userDB.GetUserByUsername(ctx, username)
 	if err == sql.ErrNoRows {
 		s.logger.Error(err, "no matching user")
-		return nil, &models.ErrorResponse{
-			Code: http.StatusBadRequest,
-		}
+		return nil, &models.ErrorResponse{Code: http.StatusBadRequest}
 	} else if err != nil {
 		s.logger.Error(err, "error fetching user")
-		return nil, &models.ErrorResponse{
-			Code: http.StatusInternalServerError,
-		}
+		return nil, &models.ErrorResponse{Code: http.StatusInternalServerError}
 	}
 	attachUserIDToSpan(span, user.ID)
 
@@ -248,7 +243,6 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 	// alias the relevant data
 	user := loginInfo.user
 	loginInput := loginInfo.loginInput
-
 	logger := s.logger.WithValue("username", user.Username)
 
 	// check for login validity
@@ -265,7 +259,7 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 	if err == auth.ErrPasswordHashTooWeak && loginValid {
 		logger.Debug("hashed password was deemed to weak, updating its hash")
 
-		// rehash the password
+		// re-hash the password
 		updated, hashErr := s.authenticator.HashPassword(ctx, loginInput.Password)
 		if hashErr != nil {
 			return false, fmt.Errorf("updating password hash: %w", hashErr)
@@ -290,7 +284,8 @@ func (s *Service) buildAuthCookie(user *models.User) (*http.Cookie, error) {
 	// DecodeCookieFromRequest any changes made here might need
 	// to be reflected there
 	encoded, err := s.cookieManager.Encode(
-		CookieName, models.CookieAuth{
+		CookieName,
+		models.CookieAuth{
 			UserID:   user.ID,
 			Admin:    user.IsAdmin,
 			Username: user.Username,
@@ -299,9 +294,7 @@ func (s *Service) buildAuthCookie(user *models.User) (*http.Cookie, error) {
 
 	if err != nil {
 		// NOTE: these errors should be infrequent, and should cause alarm when they do occur
-		s.logger.WithName(cookieErrorLogName).
-			WithValue("user_id", user.ID).
-			Error(err, "error encoding cookie")
+		s.logger.WithName(cookieErrorLogName).WithValue("user_id", user.ID).Error(err, "error encoding cookie")
 		return nil, err
 	}
 

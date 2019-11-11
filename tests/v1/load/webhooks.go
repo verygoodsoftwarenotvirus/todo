@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	randmodel "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/rand/model"
 )
 

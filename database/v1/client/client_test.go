@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -14,10 +14,11 @@ import (
 
 func buildTestClient() (*Client, *database.MockDatabase) {
 	db := database.BuildMockDatabase()
-	return &Client{
+	c := &Client{
 		logger:  noop.ProvideNoopLogger(),
 		querier: db,
-	}, db
+	}
+	return c, db
 }
 
 func TestMigrate(T *testing.T) {
@@ -25,29 +26,19 @@ func TestMigrate(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		mockDB := database.BuildMockDatabase()
-		mockDB.On("Migrate", mock.Anything).
-			Return(nil)
+		mockDB.On("Migrate", mock.Anything).Return(nil)
 
-		c := &Client{
-			querier: mockDB,
-		}
-
+		c := &Client{querier: mockDB}
 		actual := c.Migrate(context.Background())
-
 		assert.NoError(t, actual)
 	})
 
 	T.Run("bubbles up errors", func(t *testing.T) {
 		mockDB := database.BuildMockDatabase()
-		mockDB.On("Migrate", mock.Anything).
-			Return(errors.New("blah"))
+		mockDB.On("Migrate", mock.Anything).Return(errors.New("blah"))
 
-		c := &Client{
-			querier: mockDB,
-		}
-
+		c := &Client{querier: mockDB}
 		actual := c.Migrate(context.Background())
-
 		assert.Error(t, actual)
 	})
 }
@@ -57,15 +48,10 @@ func TestIsReady(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		mockDB := database.BuildMockDatabase()
-		mockDB.On("IsReady", mock.Anything).
-			Return(true)
+		mockDB.On("IsReady", mock.Anything).Return(true)
 
-		c := &Client{
-			querier: mockDB,
-		}
-
+		c := &Client{querier: mockDB}
 		c.IsReady(context.Background())
-
 		mockDB.AssertExpectations(t)
 	})
 }
@@ -75,8 +61,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		mockDB := database.BuildMockDatabase()
-		mockDB.On("Migrate", mock.Anything).
-			Return(nil)
+		mockDB.On("Migrate", mock.Anything).Return(nil)
 
 		actual, err := ProvideDatabaseClient(context.Background(), nil, mockDB, false, noop.ProvideNoopLogger())
 		assert.NotNil(t, actual)
@@ -86,8 +71,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 	T.Run("with error migrating querier", func(t *testing.T) {
 		expected := errors.New("blah")
 		mockDB := database.BuildMockDatabase()
-		mockDB.On("Migrate", mock.Anything).
-			Return(expected)
+		mockDB.On("Migrate", mock.Anything).Return(expected)
 
 		x, actual := ProvideDatabaseClient(context.Background(), nil, mockDB, false, noop.ProvideNoopLogger())
 		assert.Nil(t, x)

@@ -7,10 +7,11 @@ import (
 	"strings"
 	"sync"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
 const (
@@ -42,7 +43,6 @@ var (
 func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 	var (
 		x = &models.Webhook{}
-
 		eventsStr,
 		dataTypesStr,
 		topicsStr string
@@ -79,7 +79,7 @@ func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 }
 
 // scanWebhooks provides a consistent way to turn sql rows into a slice of webhooks
-func (s *Sqlite) scanWebhooks(rows *sql.Rows) ([]models.Webhook, error) {
+func scanWebhooks(logger logging.Logger, rows *sql.Rows) ([]models.Webhook, error) {
 	var list []models.Webhook
 
 	for rows.Next() {
@@ -93,7 +93,9 @@ func (s *Sqlite) scanWebhooks(rows *sql.Rows) ([]models.Webhook, error) {
 		return nil, err
 	}
 
-	s.logQueryBuildingError(rows.Close())
+	if err := rows.Close(); err != nil {
+		logger.Error(err, "closing rows")
+	}
 
 	return list, nil
 }
@@ -192,11 +194,11 @@ var (
 func (s *Sqlite) buildGetAllWebhooksQuery() string {
 	getAllWebhooksQueryBuilder.Do(func() {
 		var err error
-		getAllWebhooksQuery, _, err = s.sqlBuilder.Select(webhooksTableColumns...).
+		getAllWebhooksQuery, _, err = s.sqlBuilder.
+			Select(webhooksTableColumns...).
 			From(webhooksTableName).
-			Where(squirrel.Eq{
-				"archived_on": nil,
-			}).ToSql()
+			Where(squirrel.Eq{"archived_on": nil}).
+			ToSql()
 
 		s.logQueryBuildingError(err)
 	})
@@ -214,7 +216,7 @@ func (s *Sqlite) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error
 		return nil, fmt.Errorf("querying for webhooks: %w", err)
 	}
 
-	list, err := s.scanWebhooks(rows)
+	list, err := scanWebhooks(s.logger, rows)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
@@ -247,7 +249,7 @@ func (s *Sqlite) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]mo
 		return nil, fmt.Errorf("querying database for webhooks: %w", err)
 	}
 
-	list, err := s.scanWebhooks(rows)
+	list, err := scanWebhooks(s.logger, rows)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
@@ -271,7 +273,6 @@ func (s *Sqlite) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint64
 	}
 
 	query, args, err = builder.ToSql()
-
 	s.logQueryBuildingError(err)
 
 	return query, args
@@ -289,7 +290,7 @@ func (s *Sqlite) GetWebhooks(ctx context.Context, filter *models.QueryFilter, us
 		return nil, fmt.Errorf("querying database: %w", err)
 	}
 
-	list, err := s.scanWebhooks(rows)
+	list, err := scanWebhooks(s.logger, rows)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
@@ -343,6 +344,7 @@ func (s *Sqlite) buildWebhookCreationQuery(x *models.Webhook) (query string, arg
 	return query, args
 }
 
+// buildWebhookCreationTimeQuery returns a SQL query (and arguments) that fetches the DB creation time for a given row
 func (s *Sqlite) buildWebhookCreationTimeQuery(webhookID uint64) (query string, args []interface{}) {
 	var err error
 	query, args, err = s.sqlBuilder.
@@ -388,7 +390,8 @@ func (s *Sqlite) CreateWebhook(ctx context.Context, input *models.WebhookCreatio
 // buildUpdateWebhookQuery takes a given webhook and returns a SQL query to update
 func (s *Sqlite) buildUpdateWebhookQuery(input *models.Webhook) (query string, args []interface{}) {
 	var err error
-	query, args, err = s.sqlBuilder.Update(webhooksTableName).
+	query, args, err = s.sqlBuilder.
+		Update(webhooksTableName).
 		Set("name", input.Name).
 		Set("content_type", input.ContentType).
 		Set("url", input.URL).
@@ -400,7 +403,8 @@ func (s *Sqlite) buildUpdateWebhookQuery(input *models.Webhook) (query string, a
 		Where(squirrel.Eq{
 			"id":         input.ID,
 			"belongs_to": input.BelongsTo,
-		}).ToSql()
+		}).
+		ToSql()
 
 	s.logQueryBuildingError(err)
 
@@ -417,7 +421,8 @@ func (s *Sqlite) UpdateWebhook(ctx context.Context, input *models.Webhook) error
 // buildArchiveWebhookQuery returns a SQL query (and arguments) that will mark a webhook as archived.
 func (s *Sqlite) buildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
-	query, args, err = s.sqlBuilder.Update(webhooksTableName).
+	query, args, err = s.sqlBuilder.
+		Update(webhooksTableName).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{

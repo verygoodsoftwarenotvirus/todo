@@ -10,7 +10,7 @@ const (
 	UserKey ContextKey = "user"
 	// UserIDKey is the non-string type we use for referencing a user ID in a context
 	UserIDKey ContextKey = "user_id"
-	// UserIsAdminKey is the non-string type we use for referencing a user ID in a context
+	// UserIsAdminKey is the non-string type we use for referencing a user's admin status in a context
 	UserIsAdminKey ContextKey = "is_admin"
 )
 

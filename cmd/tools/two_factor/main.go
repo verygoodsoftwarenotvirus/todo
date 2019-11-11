@@ -65,8 +65,8 @@ func mustnt(err error) {
 }
 
 func clearTheScreen() {
-	fmt.Println("\033[2J")
-	fmt.Printf("\033[0;0H")
+	fmt.Println("\x1b[2J")
+	fmt.Printf("\x1b[0;0H")
 }
 
 func buildTheThing(token string) string {

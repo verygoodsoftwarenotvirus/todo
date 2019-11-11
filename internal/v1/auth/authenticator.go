@@ -14,7 +14,7 @@ var (
 	// ErrPasswordHashTooWeak indicates that a provided password hash is too weak
 	ErrPasswordHashTooWeak = errors.New("password's hash is too weak")
 
-	// Providers represents what this package offers to external libraries in the way of consntructors
+	// Providers represents what this package offers to external libraries in the way of constructors
 	Providers = wire.NewSet(
 		ProvideBcryptAuthenticator,
 		ProvideBcryptHashCost,

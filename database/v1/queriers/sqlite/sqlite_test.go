@@ -16,7 +16,6 @@ func buildTestService(t *testing.T) (*Sqlite, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	s := ProvideSqlite(true, db, noop.ProvideNoopLogger())
-
 	return s.(*Sqlite), mock
 }
 

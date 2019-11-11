@@ -3,14 +3,14 @@ package mock
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/stretchr/testify/mock"
 )
 
 var _ models.ItemDataManager = (*ItemDataManager)(nil)
 
-// ItemDataManager is a mock item handler
+// ItemDataManager is a mocked models.ItemDataManager for testing
 type ItemDataManager struct {
 	mock.Mock
 }

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mockutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -26,7 +26,7 @@ func TestArgIsNotPointerOrNil(T *testing.T) {
 
 	T.Run("expected use", func(t *testing.T) {
 		err := argIsNotPointerOrNil(&testingType{})
-		assert.NoError(t, err, "error should  not be returned when a pointer is provided")
+		assert.NoError(t, err, "error should not be returned when a pointer is provided")
 	})
 
 	T.Run("with non-pointer", func(t *testing.T) {
@@ -182,7 +182,6 @@ func TestCreateBodyFromStruct(T *testing.T) {
 		assert.NoError(t, err, "expected no error creating JSON from valid struct")
 
 		bs, err := ioutil.ReadAll(actual)
-
 		assert.NoError(t, err, "expected no error reading JSON from valid struct")
 		assert.Equal(t, expected, string(bs), "expected and actual JSON bodies don't match")
 	})

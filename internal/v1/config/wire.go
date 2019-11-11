@@ -1,8 +1,6 @@
 package config
 
-import (
-	"github.com/google/wire"
-)
+import "github.com/google/wire"
 
 // BEGIN it'd be neat if wire could do this for me one day.
 
@@ -19,13 +17,13 @@ func ProvideConfigAuthSettings(c *ServerConfig) AuthSettings {
 }
 
 // ProvideConfigDatabaseSettings is an obligatory function that
-//  we're required to have because wire doesn't do it for us.
+// we're required to have because wire doesn't do it for us.
 func ProvideConfigDatabaseSettings(c *ServerConfig) DatabaseSettings {
 	return c.Database
 }
 
 // ProvideConfigFrontendSettings is an obligatory function that
-//  we're required to have because wire doesn't do it for us.
+// we're required to have because wire doesn't do it for us.
 func ProvideConfigFrontendSettings(c *ServerConfig) FrontendSettings {
 	return c.Frontend
 }

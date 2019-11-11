@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,9 +41,7 @@ func TestV1Client_GetItem(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.Item{
-			ID:      1,
-			Name:    "example",
-			Details: "blah",
+			ID: 1,
 		}
 
 		ts := httptest.NewTLSServer(
@@ -91,9 +89,7 @@ func TestV1Client_GetItems(T *testing.T) {
 		expected := &models.ItemList{
 			Items: []models.Item{
 				{
-					ID:      1,
-					Name:    "example",
-					Details: "blah",
+					ID: 1,
 				},
 			},
 		}
@@ -126,8 +122,8 @@ func TestV1Client_BuildCreateItemRequest(T *testing.T) {
 		ts := httptest.NewTLSServer(nil)
 
 		exampleInput := &models.ItemCreationInput{
-			Name:    "expected name",
-			Details: "expected details",
+			Name:    "example name",
+			Details: "example details",
 		}
 		c := buildTestClient(t, ts)
 		actual, err := c.BuildCreateItemRequest(ctx, exampleInput)
@@ -184,6 +180,7 @@ func TestV1Client_BuildUpdateItemRequest(T *testing.T) {
 		ctx := context.Background()
 		expectedMethod := http.MethodPut
 		exampleInput := &models.Item{
+			ID:      1,
 			Name:    "changed name",
 			Details: "changed details",
 		}
@@ -204,9 +201,7 @@ func TestV1Client_UpdateItem(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.Item{
-			ID:      1,
-			Name:    "example",
-			Details: "blah",
+			ID: 1,
 		}
 
 		ts := httptest.NewTLSServer(
@@ -219,8 +214,7 @@ func TestV1Client_UpdateItem(T *testing.T) {
 			),
 		)
 
-		tc := buildTestClient(t, ts)
-		err := tc.UpdateItem(ctx, expected)
+		err := buildTestClient(t, ts).UpdateItem(ctx, expected)
 		assert.NoError(t, err, "no error should be returned")
 	})
 }

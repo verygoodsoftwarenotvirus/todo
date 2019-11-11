@@ -1,47 +1,45 @@
 {
+  "version": "3.3",
   "services": {
     "coverage-server": {
-      "build": {
-        "context": "../",
-        "dockerfile": "dockerfiles/integration-coverage-server.Dockerfile"
-      },
       "environment": {
         "CONFIGURATION_FILEPATH": "config_files/coverage.toml",
         "DOCKER": "true",
         "RUNTIME_DURATION": "30s"
       },
-      "links": [
-        "database"
-      ],
       "ports": [
         "80:8888"
       ],
+      "links": [
+        "database"
+      ],
       "volumes": [
-        "../artifacts/:/home/"
-      ]
+        {
+          "source": "../artifacts/",
+          "target": "/home/",
+          "type": "bind"
+        }
+      ],
+      "build": {
+        "context": "../",
+        "dockerfile": "dockerfiles/integration-coverage-server.Dockerfile"
+      }
     },
     "database": {
+      "image": "postgres:latest",
       "environment": {
         "POSTGRES_DB": "todo",
         "POSTGRES_PASSWORD": "hunter2",
         "POSTGRES_USER": "dbuser"
       },
-      "image": "postgres:latest",
       "logging": {
         "driver": "none"
       },
       "ports": [
         "2345:5432"
-      ],
-      "volumes": [
-        "../database/_postgres_init_.sql:/docker-entrypoint-initdb.d/10-init.sql"
       ]
     },
     "test": {
-      "build": {
-        "context": "../",
-        "dockerfile": "dockerfiles/integration-tests.Dockerfile"
-      },
       "environment": {
         "DOCKER": "true",
         "JAEGER_AGENT_HOST": "tracing-server",
@@ -53,8 +51,11 @@
       },
       "links": [
         "coverage-server"
-      ]
+      ],
+      "build": {
+        "context": "../",
+        "dockerfile": "dockerfiles/integration-tests.Dockerfile"
+      }
     }
-  },
-  "version": "3.3"
+  }
 }

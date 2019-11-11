@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"sync"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
@@ -29,8 +29,7 @@ var (
 	}
 )
 
-// scanItem takes a database Scanner (i.e. *sql.Row) and scans
-// the result into an Item struct
+// scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct
 func scanItem(scan database.Scanner) (*models.Item, error) {
 	x := &models.Item{}
 
@@ -81,8 +80,7 @@ func (p *Postgres) buildGetItemQuery(itemID, userID uint64) (query string, args 
 		Where(squirrel.Eq{
 			"id":         itemID,
 			"belongs_to": userID,
-		}).
-		ToSql()
+		}).ToSql()
 
 	p.logQueryBuildingError(err)
 
@@ -135,7 +133,8 @@ var (
 func (p *Postgres) buildGetAllItemsCountQuery() string {
 	allItemsCountQueryBuilder.Do(func() {
 		var err error
-		allItemsCountQuery, _, err = p.sqlBuilder.Select(CountQuery).
+		allItemsCountQuery, _, err = p.sqlBuilder.
+			Select(CountQuery).
 			From(itemsTableName).
 			Where(squirrel.Eq{"archived_on": nil}).
 			ToSql()
@@ -266,7 +265,8 @@ func (p *Postgres) CreateItem(ctx context.Context, input *models.ItemCreationInp
 // buildUpdateItemQuery takes an item and returns an update SQL query, with the relevant query parameters
 func (p *Postgres) buildUpdateItemQuery(input *models.Item) (query string, args []interface{}) {
 	var err error
-	query, args, err = p.sqlBuilder.Update(itemsTableName).
+	query, args, err = p.sqlBuilder.
+		Update(itemsTableName).
 		Set("name", input.Name).
 		Set("details", input.Details).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).

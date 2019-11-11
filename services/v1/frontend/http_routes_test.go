@@ -99,7 +99,6 @@ func TestService_buildStaticFileServer(T *testing.T) {
 		require.NoError(t, err)
 
 		actual, err := s.buildStaticFileServer(cwd)
-
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 	})

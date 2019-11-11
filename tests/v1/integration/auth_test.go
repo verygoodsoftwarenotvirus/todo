@@ -13,7 +13,7 @@ import (
 	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 	randmodel "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/rand/model"
 
@@ -38,7 +38,6 @@ func loginUser(t *testing.T, username, password, totpSecret string) *http.Cookie
 `, username, password, code)
 
 	body := strings.NewReader(bodyStr)
-
 	req, _ := http.NewRequest(http.MethodPost, loginURL, body)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -107,7 +106,6 @@ func TestAuth(test *testing.T) {
 		tctx := context.Background()
 
 		ui := randmodel.RandomUserInput()
-
 		req, err := todoClient.BuildCreateUserRequest(tctx, ui)
 		checkValueAndError(t, req, err)
 

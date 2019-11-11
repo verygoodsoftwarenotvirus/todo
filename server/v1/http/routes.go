@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	numericIDPattern = `/{%s:[0-9]+}`
-	oauth2IDPattern  = `/{%s:[0-9_\-]+}`
+	numericIDPattern = "/{%s:[0-9]+}"
+	oauth2IDPattern  = "/{%s:[0-9_\\-]+}"
 )
 
 func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHandler metrics.Handler) {
@@ -27,14 +27,26 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 
 	// Basic CORS, for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
 	ch := cors.New(cors.Options{
-		// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts
+		// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts,
 		AllowedOrigins: []string{"*"},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Provider", "X-CSRF-Token"},
+		AllowedMethods: []string{
+			http.MethodGet,
+			http.MethodPost,
+			http.MethodPut,
+			http.MethodDelete,
+			http.MethodOptions,
+		},
+		AllowedHeaders: []string{
+			"Accept",
+			"Authorization",
+			"Content-Provider",
+			"X-CSRF-Token",
+		},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
-		MaxAge:           300, // Maximum value not ignored by any of major browsers
+		// Maximum value not ignored by any of major browsers,
+		MaxAge: 300,
 	})
 
 	router.Use(
@@ -81,18 +93,15 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 	})
 
 	router.Route("/users", func(userRouter chi.Router) {
-		userRouter.With(s.authService.UserLoginInputMiddleware).
-			Post("/login", s.authService.LoginHandler())
-		userRouter.With(s.authService.CookieAuthenticationMiddleware).
-			Post("/logout", s.authService.LogoutHandler())
+		userRouter.With(s.authService.UserLoginInputMiddleware).Post("/login", s.authService.LoginHandler())
+		userRouter.With(s.authService.CookieAuthenticationMiddleware).Post("/logout", s.authService.LogoutHandler())
 
 		userIDPattern := fmt.Sprintf(oauth2IDPattern, users.URIParamKey)
 
-		userRouter.Get("/", s.usersService.ListHandler()) // ListHandler
-		userRouter.With(s.usersService.UserInputMiddleware).
-			Post("/", s.usersService.CreateHandler()) // CreateHandler
-		userRouter.Get(userIDPattern, s.usersService.ReadHandler())       // ReadHandler
-		userRouter.Delete(userIDPattern, s.usersService.ArchiveHandler()) // ArchiveHandler
+		userRouter.Get("/", s.usersService.ListHandler())
+		userRouter.With(s.usersService.UserInputMiddleware).Post("/", s.usersService.CreateHandler())
+		userRouter.Get(userIDPattern, s.usersService.ReadHandler())
+		userRouter.Delete(userIDPattern, s.usersService.ArchiveHandler())
 
 		userRouter.With(
 			s.authService.CookieAuthenticationMiddleware,
@@ -109,7 +118,7 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		oauth2Router.With(
 			s.authService.CookieAuthenticationMiddleware,
 			s.oauth2ClientsService.CreationInputMiddleware,
-		).Post("/client", s.oauth2ClientsService.CreateHandler()) // CreateHandler
+		).Post("/client", s.oauth2ClientsService.CreateHandler())
 
 		oauth2Router.With(s.oauth2ClientsService.OAuth2ClientInfoMiddleware).
 			Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
@@ -130,25 +139,21 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		// Items
 		v1Router.Route("/items", func(itemsRouter chi.Router) {
 			sr := fmt.Sprintf(numericIDPattern, items.URIParamKey)
-			itemsRouter.With(s.itemsService.CreationInputMiddleware).
-				Post("/", s.itemsService.CreateHandler()) // CreateHandler
-			itemsRouter.Get(sr, s.itemsService.ReadHandler()) // ReadHandler
-			itemsRouter.With(s.itemsService.UpdateInputMiddleware).
-				Put(sr, s.itemsService.UpdateHandler()) // UpdateHandler
-			itemsRouter.Delete(sr, s.itemsService.ArchiveHandler()) // ArchiveHandler
-			itemsRouter.Get("/", s.itemsService.ListHandler())      // ListHandler
+			itemsRouter.With(s.itemsService.CreationInputMiddleware).Post("/", s.itemsService.CreateHandler())
+			itemsRouter.Get(sr, s.itemsService.ReadHandler())
+			itemsRouter.With(s.itemsService.UpdateInputMiddleware).Put(sr, s.itemsService.UpdateHandler())
+			itemsRouter.Delete(sr, s.itemsService.ArchiveHandler())
+			itemsRouter.Get("/", s.itemsService.ListHandler())
 		})
 
 		// Webhooks
 		v1Router.Route("/webhooks", func(webhookRouter chi.Router) {
 			sr := fmt.Sprintf(numericIDPattern, webhooks.URIParamKey)
-			webhookRouter.With(s.webhooksService.CreationInputMiddleware).
-				Post("/", s.webhooksService.CreateHandler()) // CreateHandler
-			webhookRouter.Get(sr, s.webhooksService.ReadHandler()) // ReadHandler
-			webhookRouter.With(s.webhooksService.UpdateInputMiddleware).
-				Put(sr, s.webhooksService.UpdateHandler()) // UpdateHandler
-			webhookRouter.Delete(sr, s.webhooksService.ArchiveHandler()) // ArchiveHandler
-			webhookRouter.Get("/", s.webhooksService.ListHandler())      // ListHandler
+			webhookRouter.With(s.webhooksService.CreationInputMiddleware).Post("/", s.webhooksService.CreateHandler())
+			webhookRouter.Get(sr, s.webhooksService.ReadHandler())
+			webhookRouter.With(s.webhooksService.UpdateInputMiddleware).Put(sr, s.webhooksService.UpdateHandler())
+			webhookRouter.Delete(sr, s.webhooksService.ArchiveHandler())
+			webhookRouter.Get("/", s.webhooksService.ListHandler())
 		})
 
 		// OAuth2 Clients
@@ -156,9 +161,9 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 			sr := fmt.Sprintf(numericIDPattern, oauth2clients.URIParamKey)
 			// CreateHandler is not bound to an OAuth2 authentication token
 			// UpdateHandler not supported for OAuth2 clients.
-			clientRouter.Get(sr, s.oauth2ClientsService.ReadHandler())       // ReadHandler
-			clientRouter.Delete(sr, s.oauth2ClientsService.ArchiveHandler()) // ArchiveHandler
-			clientRouter.Get("/", s.oauth2ClientsService.ListHandler())      // ListHandler
+			clientRouter.Get(sr, s.oauth2ClientsService.ReadHandler())
+			clientRouter.Delete(sr, s.oauth2ClientsService.ArchiveHandler())
+			clientRouter.Get("/", s.oauth2ClientsService.ListHandler())
 		})
 	})
 

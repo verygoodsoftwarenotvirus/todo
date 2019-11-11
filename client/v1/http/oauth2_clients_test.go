@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

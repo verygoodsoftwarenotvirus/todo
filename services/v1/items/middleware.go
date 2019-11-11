@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"go.opencensus.io/trace"
 )

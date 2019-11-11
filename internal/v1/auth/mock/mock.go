@@ -24,7 +24,8 @@ func (m *Authenticator) ValidateLogin(
 	twoFactorCode string,
 	salt []byte,
 ) (valid bool, err error) {
-	args := m.Called(ctx,
+	args := m.Called(
+		ctx,
 		hashedPassword,
 		providedPassword,
 		twoFactorSecret,
@@ -52,7 +53,8 @@ func (m *Authenticator) PasswordMatches(
 	providedPassword string,
 	salt []byte,
 ) bool {
-	args := m.Called(ctx,
+	args := m.Called(
+		ctx,
 		hashedPassword,
 		providedPassword,
 		salt,

@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	randmodel "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/rand/model"
 )
 
@@ -52,6 +52,7 @@ func buildItemActions(c *client.V1Client) map[string]*Action {
 			Action: func() (*http.Request, error) {
 				if randomItem := fetchRandomItem(c); randomItem != nil {
 					randomItem.Name = randmodel.RandomItemCreationInput().Name
+					randomItem.Details = randmodel.RandomItemCreationInput().Details
 					return c.BuildUpdateItemRequest(context.Background(), randomItem)
 				}
 				return nil, ErrUnavailableYet

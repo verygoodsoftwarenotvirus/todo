@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

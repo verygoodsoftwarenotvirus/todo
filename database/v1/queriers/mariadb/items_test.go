@@ -7,38 +7,36 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 )
 
-func buildMockRowFromItem(item *models.Item) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(itemsTableColumns).
-		AddRow(
-			item.ID,
-			item.Name,
-			item.Details,
-			item.CreatedOn,
-			item.UpdatedOn,
-			item.ArchivedOn,
-			item.BelongsTo,
-		)
+func buildMockRowFromItem(x *models.Item) *sqlmock.Rows {
+	exampleRows := sqlmock.NewRows(itemsTableColumns).AddRow(
+		x.ID,
+		x.Name,
+		x.Details,
+		x.CreatedOn,
+		x.UpdatedOn,
+		x.ArchivedOn,
+		x.BelongsTo,
+	)
 
 	return exampleRows
 }
 
-func buildErroneousMockRowFromItem(item *models.Item) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(itemsTableColumns).
-		AddRow(
-			item.ArchivedOn,
-			item.Name,
-			item.Details,
-			item.CreatedOn,
-			item.UpdatedOn,
-			item.BelongsTo,
-			item.ID,
-		)
+func buildErroneousMockRowFromItem(x *models.Item) *sqlmock.Rows {
+	exampleRows := sqlmock.NewRows(itemsTableColumns).AddRow(
+		x.ArchivedOn,
+		x.Name,
+		x.Details,
+		x.CreatedOn,
+		x.UpdatedOn,
+		x.BelongsTo,
+		x.ID,
+	)
 
 	return exampleRows
 }
@@ -53,8 +51,8 @@ func TestMariaDB_buildGetItemQuery(T *testing.T) {
 
 		expectedArgCount := 2
 		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE belongs_to = ? AND id = ?"
-
 		actualQuery, args := m.buildGetItemQuery(exampleItemID, exampleUserID)
+
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 		assert.Equal(t, exampleUserID, args[0].(uint64))
@@ -68,18 +66,14 @@ func TestMariaDB_GetItem(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE belongs_to = ? AND id = ?"
 		expected := &models.Item{
-			ID:      123,
-			Name:    "name",
-			Details: "details",
+			ID: 123,
 		}
 		expectedUserID := uint64(321)
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(expectedUserID, expected.ID).
-			WillReturnRows(
-				buildMockRowFromItem(expected),
-			)
+			WillReturnRows(buildMockRowFromItem(expected))
 
 		actual, err := m.GetItem(context.Background(), expected.ID, expectedUserID)
 		assert.NoError(t, err)
@@ -91,9 +85,7 @@ func TestMariaDB_GetItem(T *testing.T) {
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE belongs_to = ? AND id = ?"
 		expected := &models.Item{
-			ID:      123,
-			Name:    "name",
-			Details: "details",
+			ID: 123,
 		}
 		expectedUserID := uint64(321)
 
@@ -139,9 +131,7 @@ func TestMariaDB_GetItemCount(T *testing.T) {
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(expectedUserID).
-			WillReturnRows(
-				sqlmock.NewRows([]string{"count"}).AddRow(expectedCount),
-			)
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
 		actualCount, err := m.GetItemCount(context.Background(), models.DefaultQueryFilter(), expectedUserID)
 		assert.NoError(t, err)
@@ -172,9 +162,7 @@ func TestMariaDB_GetAllItemsCount(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WillReturnRows(
-				sqlmock.NewRows([]string{"count"}).AddRow(expectedCount),
-			)
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
 		actualCount, err := m.GetAllItemsCount(context.Background())
 		assert.NoError(t, err)
@@ -193,8 +181,8 @@ func TestMariaDB_buildGetItemsQuery(T *testing.T) {
 
 		expectedArgCount := 1
 		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
-
 		actualQuery, args := m.buildGetItemsQuery(models.DefaultQueryFilter(), exampleUserID)
+
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 		assert.Equal(t, exampleUserID, args[0].(uint64))
@@ -206,25 +194,12 @@ func TestMariaDB_GetItems(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(123)
-		expectedItem1 := &models.Item{
-			Name: "name",
-		}
-
 		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
 		expectedCountQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
+		expectedItem := &models.Item{
+			ID: 321,
+		}
 		expectedCount := uint64(666)
-
-		m, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
-			WithArgs(expectedUserID).
-			WillReturnRows(
-				buildMockRowFromItem(expectedItem1),
-			)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
-			WillReturnRows(
-				sqlmock.NewRows([]string{"count"}).AddRow(expectedCount),
-			)
-
 		expected := &models.ItemList{
 			Pagination: models.Pagination{
 				Page:       1,
@@ -232,11 +207,19 @@ func TestMariaDB_GetItems(T *testing.T) {
 				TotalCount: expectedCount,
 			},
 			Items: []models.Item{
-				*expectedItem1,
+				*expectedItem,
 			},
 		}
 
+		m, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+			WithArgs(expectedUserID).
+			WillReturnRows(buildMockRowFromItem(expectedItem))
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
+
 		actual, err := m.GetItems(context.Background(), models.DefaultQueryFilter(), expectedUserID)
+
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -262,8 +245,8 @@ func TestMariaDB_GetItems(T *testing.T) {
 
 	T.Run("with error executing read query", func(t *testing.T) {
 		expectedUserID := uint64(123)
-
 		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
+
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WithArgs(expectedUserID).
@@ -278,18 +261,15 @@ func TestMariaDB_GetItems(T *testing.T) {
 
 	T.Run("with error scanning item", func(t *testing.T) {
 		expectedUserID := uint64(123)
-		expectedItem1 := &models.Item{
-			Name: "name",
+		expected := &models.Item{
+			ID: 321,
 		}
-
 		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WithArgs(expectedUserID).
-			WillReturnRows(
-				buildErroneousMockRowFromItem(expectedItem1),
-			)
+			WillReturnRows(buildErroneousMockRowFromItem(expected))
 
 		actual, err := m.GetItems(context.Background(), models.DefaultQueryFilter(), expectedUserID)
 		assert.Error(t, err)
@@ -300,19 +280,16 @@ func TestMariaDB_GetItems(T *testing.T) {
 
 	T.Run("with error querying for count", func(t *testing.T) {
 		expectedUserID := uint64(123)
-		expectedItem1 := &models.Item{
-			Name: "name",
+		expected := &models.Item{
+			ID: 321,
 		}
-
 		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
 		expectedCountQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WithArgs(expectedUserID).
-			WillReturnRows(
-				buildMockRowFromItem(expectedItem1),
-			)
+			WillReturnRows(buildMockRowFromItem(expected))
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnError(errors.New("blah"))
 
@@ -330,20 +307,18 @@ func TestMariaDB_GetAllItemsForUser(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(123)
 		expectedItem := &models.Item{
-			Name: "name",
+			ID: 321,
 		}
 		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WithArgs(expectedUserID).
-			WillReturnRows(
-				buildMockRowFromItem(expectedItem),
-			)
+			WillReturnRows(buildMockRowFromItem(expectedItem))
 
 		expected := []models.Item{*expectedItem}
-
 		actual, err := m.GetAllItemsForUser(context.Background(), expectedUserID)
+
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -385,17 +360,15 @@ func TestMariaDB_GetAllItemsForUser(T *testing.T) {
 
 	T.Run("with unscannable response", func(t *testing.T) {
 		expectedUserID := uint64(123)
-		expectedItem := &models.Item{
-			Name: "name",
+		exampleItem := &models.Item{
+			ID: 321,
 		}
 		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WithArgs(expectedUserID).
-			WillReturnRows(
-				buildErroneousMockRowFromItem(expectedItem),
-			)
+			WillReturnRows(buildErroneousMockRowFromItem(exampleItem))
 
 		actual, err := m.GetAllItemsForUser(context.Background(), expectedUserID)
 		assert.Error(t, err)
@@ -411,15 +384,13 @@ func TestMariaDB_buildCreateItemQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
 		expected := &models.Item{
-			Name:      "name",
-			Details:   "details",
+			ID:        321,
 			BelongsTo: 123,
 		}
-
 		expectedArgCount := 3
 		expectedQuery := "INSERT INTO items (name,details,belongs_to,created_on) VALUES (?,?,?,UNIX_TIMESTAMP())"
-
 		actualQuery, args := m.buildCreateItemQuery(expected)
+
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 		assert.Equal(t, expected.Name, args[0].(string))
@@ -435,12 +406,12 @@ func TestMariaDB_CreateItem(T *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Item{
 			ID:        123,
-			Name:      "name",
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
 		expectedInput := &models.ItemCreationInput{
 			Name:      expected.Name,
+			Details:   expected.Details,
 			BelongsTo: expected.BelongsTo,
 		}
 
@@ -452,8 +423,7 @@ func TestMariaDB_CreateItem(T *testing.T) {
 				expected.Name,
 				expected.Details,
 				expected.BelongsTo,
-			).
-			WillReturnResult(sqlmock.NewResult(int64(expected.ID), 1))
+			).WillReturnResult(sqlmock.NewResult(int64(expected.ID), 1))
 
 		expectedTimeQuery := "SELECT created_on FROM items WHERE id = ?"
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedTimeQuery)).
@@ -469,27 +439,25 @@ func TestMariaDB_CreateItem(T *testing.T) {
 
 	T.Run("with error writing to database", func(t *testing.T) {
 		expectedUserID := uint64(321)
-		example := &models.Item{
+		expected := &models.Item{
 			ID:        123,
-			Name:      "name",
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
 		expectedInput := &models.ItemCreationInput{
-			Name:      example.Name,
-			BelongsTo: example.BelongsTo,
+			Name:      expected.Name,
+			Details:   expected.Details,
+			BelongsTo: expected.BelongsTo,
 		}
-
 		expectedQuery := "INSERT INTO items (name,details,belongs_to,created_on) VALUES (?,?,?,UNIX_TIMESTAMP())"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(
-				example.Name,
-				example.Details,
-				example.BelongsTo,
-			).
-			WillReturnError(errors.New("blah"))
+				expected.Name,
+				expected.Details,
+				expected.BelongsTo,
+			).WillReturnError(errors.New("blah"))
 
 		actual, err := m.CreateItem(context.Background(), expectedInput)
 		assert.Error(t, err)
@@ -506,15 +474,12 @@ func TestMariaDB_buildUpdateItemQuery(T *testing.T) {
 		m, _ := buildTestService(t)
 		expected := &models.Item{
 			ID:        321,
-			Name:      "name",
-			Details:   "details",
 			BelongsTo: 123,
 		}
-
 		expectedArgCount := 4
 		expectedQuery := "UPDATE items SET name = ?, details = ?, updated_on = UNIX_TIMESTAMP() WHERE belongs_to = ? AND id = ?"
-
 		actualQuery, args := m.buildUpdateItemQuery(expected)
+
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 		assert.Equal(t, expected.Name, args[0].(string))
@@ -531,21 +496,20 @@ func TestMariaDB_UpdateItem(T *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Item{
 			ID:        123,
-			Name:      "name",
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
+		exampleRows := sqlmock.NewResult(int64(expected.ID), 1)
+		expectedQuery := "UPDATE items SET name = ?, details = ?, updated_on = UNIX_TIMESTAMP() WHERE belongs_to = ? AND id = ?"
 
 		m, mockDB := buildTestService(t)
-
-		expectedQuery := "UPDATE items SET name = ?, details = ?, updated_on = UNIX_TIMESTAMP() WHERE belongs_to = ? AND id = ?"
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(
 				expected.Name,
 				expected.Details,
 				expected.BelongsTo,
 				expected.ID,
-			).WillReturnResult(sqlmock.NewResult(1, 1))
+			).WillReturnResult(exampleRows)
 
 		err := m.UpdateItem(context.Background(), expected)
 		assert.NoError(t, err)
@@ -555,26 +519,23 @@ func TestMariaDB_UpdateItem(T *testing.T) {
 
 	T.Run("with error writing to database", func(t *testing.T) {
 		expectedUserID := uint64(321)
-		example := &models.Item{
+		expected := &models.Item{
 			ID:        123,
-			Name:      "name",
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
+		expectedQuery := "UPDATE items SET name = ?, details = ?, updated_on = UNIX_TIMESTAMP() WHERE belongs_to = ? AND id = ?"
 
 		m, mockDB := buildTestService(t)
-
-		expectedQuery := "UPDATE items SET name = ?, details = ?, updated_on = UNIX_TIMESTAMP() WHERE belongs_to = ? AND id = ?"
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(
-				example.Name,
-				example.Details,
-				example.BelongsTo,
-				example.ID,
-			).
-			WillReturnError(errors.New("blah"))
+				expected.Name,
+				expected.Details,
+				expected.BelongsTo,
+				expected.ID,
+			).WillReturnError(errors.New("blah"))
 
-		err := m.UpdateItem(context.Background(), example)
+		err := m.UpdateItem(context.Background(), expected)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -588,15 +549,12 @@ func TestMariaDB_buildArchiveItemQuery(T *testing.T) {
 		m, _ := buildTestService(t)
 		expected := &models.Item{
 			ID:        321,
-			Name:      "name",
-			Details:   "details",
 			BelongsTo: 123,
 		}
-
 		expectedArgCount := 2
 		expectedQuery := "UPDATE items SET updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to = ? AND id = ?"
-
 		actualQuery, args := m.buildArchiveItemQuery(expected.ID, expected.BelongsTo)
+
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 		assert.Equal(t, expected.BelongsTo, args[0].(uint64))
@@ -611,11 +569,9 @@ func TestMariaDB_ArchiveItem(T *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Item{
 			ID:        123,
-			Name:      "name",
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
-
 		expectedQuery := "UPDATE items SET updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to = ? AND id = ?"
 
 		m, mockDB := buildTestService(t)
@@ -623,8 +579,7 @@ func TestMariaDB_ArchiveItem(T *testing.T) {
 			WithArgs(
 				expected.BelongsTo,
 				expected.ID,
-			).
-			WillReturnResult(sqlmock.NewResult(1, 1))
+			).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		err := m.ArchiveItem(context.Background(), expected.ID, expectedUserID)
 		assert.NoError(t, err)
@@ -636,11 +591,9 @@ func TestMariaDB_ArchiveItem(T *testing.T) {
 		expectedUserID := uint64(321)
 		example := &models.Item{
 			ID:        123,
-			Name:      "name",
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
-
 		expectedQuery := "UPDATE items SET updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to = ? AND id = ?"
 
 		m, mockDB := buildTestService(t)
@@ -648,8 +601,7 @@ func TestMariaDB_ArchiveItem(T *testing.T) {
 			WithArgs(
 				example.BelongsTo,
 				example.ID,
-			).
-			WillReturnError(errors.New("blah"))
+			).WillReturnError(errors.New("blah"))
 
 		err := m.ArchiveItem(context.Background(), example.ID, expectedUserID)
 		assert.Error(t, err)

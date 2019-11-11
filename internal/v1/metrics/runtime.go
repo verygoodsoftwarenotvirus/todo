@@ -1,8 +1,5 @@
 package metrics
 
-// inspired by:
-// https://github.com/opencensus-integrations/caddy/blob/c8498719b7c1c2a3c707355be2395a35f03e434e/caddy/caddymain/exporters.go#L54-L110
-
 import (
 	"context"
 	"runtime"
@@ -13,6 +10,9 @@ import (
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 )
+
+// inspired by:
+// https://github.com/opencensus-integrations/caddy/blob/c8498719b7c1c2a3c707355be2395a35f03e434e/caddy/caddymain/exporters.go#L54-L110
 
 var (
 	// RuntimeTotalAllocMeasurement captures the runtime memstats TotalAlloc field
@@ -63,8 +63,8 @@ var (
 		"the cumulative count of heap objects allocated (the number of live objects is mallocs - frees)",
 		stats.UnitDimensionless,
 	)
-	// RuntimeNallocsView is the corresponding view for the above field
-	RuntimeNallocsView = &view.View{
+	// RuntimeMallocsView is the corresponding view for the above field
+	RuntimeMallocsView = &view.View{
 		Name:        "mallocs",
 		Measure:     RuntimeMallocsMeasurement,
 		Description: "the cumulative count of heap objects allocated (the number of live objects is mallocs - frees)",
@@ -197,28 +197,28 @@ var (
 		Aggregation: view.LastValue(),
 	}
 
-	// RuntimeMSpanInuseMeasurement captures the runtime memstats mSpanInuse field
+	// RuntimeMSpanInuseMeasurement captures the runtime memstats MSpanInuse field
 	RuntimeMSpanInuseMeasurement = stats.Int64(
 		"mspan_inuse",
 		"bytes of allocated mspan structures.",
 		stats.UnitDimensionless,
 	)
-	// RuntimemSpanInuseView is the corresponding view for the above field
-	RuntimemSpanInuseView = &view.View{
+	// RuntimeMSpanInuseView is the corresponding view for the above field
+	RuntimeMSpanInuseView = &view.View{
 		Name:        "mspan_inuse",
 		Measure:     RuntimeMSpanInuseMeasurement,
 		Description: "bytes of allocated mspan structures.",
 		Aggregation: view.LastValue(),
 	}
 
-	// RuntimeMSpanSysMeasurement captures the runtime memstats mSpanSys field
+	// RuntimeMSpanSysMeasurement captures the runtime memstats MSpanSys field
 	RuntimeMSpanSysMeasurement = stats.Int64(
 		"mspan_sys",
 		"bytes of memory obtained from the OS for mspan structures.",
 		stats.UnitDimensionless,
 	)
-	// RuntimemSpanSysView is the corresponding view for the above field
-	RuntimemSpanSysView = &view.View{
+	// RuntimeMSpanSysView is the corresponding view for the above field
+	RuntimeMSpanSysView = &view.View{
 		Name:        "mspan_sys",
 		Measure:     RuntimeMSpanSysMeasurement,
 		Description: "bytes of memory obtained from the OS for mspan structures.",
@@ -326,7 +326,6 @@ var (
 	// RuntimePauseNsMeasurement captures the runtime memstats PauseNs field
 	RuntimePauseNsMeasurement = stats.Int64(
 		"pause_ns",
-		// the most recent pause is at PauseNs[(NumGC+255)%256])
 		"a circular buffer of recent GC stop-the-world pause times in nanoseconds",
 		stats.UnitDimensionless,
 	)
@@ -394,26 +393,12 @@ var (
 		Aggregation: view.LastValue(),
 	}
 
-	// CPUUsageMeasurement captures gopsutil/process's CPUPercent
-	CPUUsageMeasurement = stats.Float64(
-		"cpu_usage",
-		"percent of CPU used",
-		stats.UnitDimensionless,
-	)
-	// CPUUsageView is the corresponding view for the above field
-	CPUUsageView = &view.View{
-		Name:        "cpu_usage",
-		Measure:     CPUUsageMeasurement,
-		Description: "percent of CPU used.",
-		Aggregation: view.LastValue(),
-	}
-
 	// DefaultRuntimeViews represents the pre-configured views
 	DefaultRuntimeViews = []*view.View{
 		RuntimeTotalAllocView,
 		RuntimeSysView,
 		RuntimeLookupsView,
-		RuntimeNallocsView,
+		RuntimeMallocsView,
 		RuntimeFreesView,
 		RuntimeHeapAllocView,
 		RuntimeHeapSysView,
@@ -423,8 +408,8 @@ var (
 		RuntimeHeapObjectsView,
 		RuntimeStackInuseView,
 		RuntimeStackSysView,
-		RuntimemSpanInuseView,
-		RuntimemSpanSysView,
+		RuntimeMSpanInuseView,
+		RuntimeMSpanSysView,
 		RuntimeMCacheInuseView,
 		RuntimeMCacheSysView,
 		RuntimeBuckHashSysView,
@@ -437,9 +422,8 @@ var (
 		RuntimeNumGCView,
 		RuntimeNumForcedGCView,
 		RuntimeGCCPUFractionView,
-		CPUUsageView,
 		MetricAggregationMeasurementView,
-		// provided by ochttp
+		// provided by ochttp,
 		ochttp.ServerRequestCountView,
 		ochttp.ServerRequestBytesView,
 		ochttp.ServerResponseBytesView,

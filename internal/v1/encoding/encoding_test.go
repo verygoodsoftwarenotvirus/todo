@@ -26,11 +26,10 @@ func TestServerEncoderDecoder_EncodeResponse(T *testing.T) {
 		ed := ProvideResponseEncoder()
 
 		res := httptest.NewRecorder()
-
 		err := ed.EncodeResponse(res, ex)
-		assert.NoError(t, err)
 
-		assert.Equal(t, fmt.Sprintf("{\"name\":%q}\n", ex.Name), res.Body.String())
+		assert.NoError(t, err)
+		assert.Equal(t, res.Body.String(), fmt.Sprintf("{%q:%q}\n", "name", ex.Name))
 	})
 
 	T.Run("as XML", func(t *testing.T) {
@@ -43,8 +42,7 @@ func TestServerEncoderDecoder_EncodeResponse(T *testing.T) {
 
 		err := ed.EncodeResponse(res, ex)
 		assert.NoError(t, err)
-
-		assert.Equal(t, fmt.Sprintf(`<example><name>%s</name></example>`, expectation), res.Body.String())
+		assert.Equal(t, fmt.Sprintf("<example><name>%s</name></example>", expectation), res.Body.String())
 	})
 }
 
@@ -64,7 +62,6 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 
 		var x example
 		assert.NoError(t, ed.DecodeRequest(req, &x))
-
 		assert.Equal(t, x.Name, e.Name)
 	})
 
@@ -78,12 +75,10 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(bs))
 		require.NoError(t, err)
-
 		req.Header.Set(ContentTypeHeader, XMLContentType)
 
 		var x example
 		assert.NoError(t, ed.DecodeRequest(req, &x))
-
 		assert.Equal(t, x.Name, e.Name)
 	})
 }

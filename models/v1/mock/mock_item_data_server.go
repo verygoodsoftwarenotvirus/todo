@@ -3,14 +3,14 @@ package mock
 import (
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/stretchr/testify/mock"
 )
 
 var _ models.ItemDataServer = (*ItemDataServer)(nil)
 
-// ItemDataServer describes a structure capable of serving traffic related to users
+// ItemDataServer is a mocked models.ItemDataServer for testing
 type ItemDataServer struct {
 	mock.Mock
 }

@@ -7,7 +7,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/gorilla/securecookie"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"

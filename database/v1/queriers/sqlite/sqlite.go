@@ -3,14 +3,15 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 	"sync"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 
 	"contrib.go.opencensus.io/integrations/ocsql"
 	"github.com/Masterminds/squirrel"
 	sqlite "github.com/mattn/go-sqlite3"
-	"github.com/pkg/errors"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
@@ -26,7 +27,7 @@ const (
 )
 
 func init() {
-	// Explicitly wrap the SQLite3 driver with ocsql.
+	// Explicitly wrap the Sqlite driver with ocsql
 	driver := ocsql.Wrap(
 		&sqlite.SQLiteDriver{},
 		ocsql.WithQuery(true),
@@ -36,7 +37,7 @@ func init() {
 		ocsql.WithQueryParams(true),
 	)
 
-	// Register our ocsql wrapper as a db driver.
+	// Register our ocsql wrapper as a db driver
 	sql.Register(sqliteDriverName, driver)
 }
 
@@ -66,7 +67,6 @@ type (
 // ProvideSqliteDB provides an instrumented sqlite db
 func ProvideSqliteDB(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
 	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to sqlite")
-
 	return sql.Open(sqliteDriverName, string(connectionDetails))
 }
 
@@ -85,7 +85,7 @@ func (s *Sqlite) IsReady(ctx context.Context) (ready bool) {
 	return true
 }
 
-// s.logQueryBuildingError logs errors that may occur during query construction.
+// logQueryBuildingError logs errors that may occur during query construction.
 // Such errors should be few and far between, as the generally only occur with
 // type discrepancies or other misuses of SQL. An alert should be set up for
 // any log entries with the given name, and those alerts should be investigated
@@ -96,14 +96,14 @@ func (s *Sqlite) logQueryBuildingError(err error) {
 	}
 }
 
-// logCreationTimeRetrievalError logs errors that may occur during creation time retrieval
+// logCreationTimeRetrievalError logs errors that may occur during creation time retrieval.
 // Such errors should be few and far between, as the generally only occur with
 // type discrepancies or other misuses of SQL. An alert should be set up for
 // any log entries with the given name, and those alerts should be investigated
 // with the utmost priority.
 func (s *Sqlite) logCreationTimeRetrievalError(err error) {
 	if err != nil {
-		s.logger.WithName("CREATION_TIME_RETRIEVAL").Error(err, "building query")
+		s.logger.WithName("CREATION_TIME_RETRIEVAL").Error(err, "retrieving creation time")
 	}
 }
 
@@ -113,5 +113,10 @@ func buildError(err error, msg string) error {
 	if err == sql.ErrNoRows {
 		return err
 	}
-	return errors.Wrap(err, msg)
+
+	if !strings.Contains(msg, `%w`) {
+		msg += ": %w"
+	}
+
+	return fmt.Errorf(msg, err)
 }

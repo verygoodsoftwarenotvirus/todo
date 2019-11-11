@@ -3,15 +3,16 @@ package mariadb
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 	"sync"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 
 	"contrib.go.opencensus.io/integrations/ocsql"
 	"github.com/Masterminds/squirrel"
-	mysql "github.com/go-sql-driver/mysql"
-	"github.com/pkg/errors"
+	"github.com/go-sql-driver/mysql"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
@@ -22,12 +23,12 @@ const (
 	// CountQuery is a generic counter query used in a few query builders
 	CountQuery = "COUNT(id)"
 
-	// CurrentUnixTimeQuery is the query mariadb uses to determine the current unix time
+	// CurrentUnixTimeQuery is the query maria DB uses to determine the current unix time
 	CurrentUnixTimeQuery = "UNIX_TIMESTAMP()"
 )
 
 func init() {
-	// Explicitly wrap the SQLite3 driver with ocsql.
+	// Explicitly wrap the MariaDB driver with ocsql
 	driver := ocsql.Wrap(
 		&mysql.MySQLDriver{},
 		ocsql.WithQuery(true),
@@ -37,9 +38,11 @@ func init() {
 		ocsql.WithQueryParams(true),
 	)
 
-	// Register our ocsql wrapper as a db driver.
+	// Register our ocsql wrapper as a db driver
 	sql.Register(mariaDBDriverName, driver)
 }
+
+var _ database.Database = (*MariaDB)(nil)
 
 type (
 	// MariaDB is our main MariaDB interaction db
@@ -62,14 +65,13 @@ type (
 	}
 )
 
-// ProvideMariaDBConnection provides an instrumented mariadb connection
+// ProvideMariaDBConnection provides an instrumented maria DB db
 func ProvideMariaDBConnection(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
-	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to mariadb")
-
+	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to maria DB")
 	return sql.Open(mariaDBDriverName, string(connectionDetails))
 }
 
-// ProvideMariaDB provides a mariadb controller
+// ProvideMariaDB provides a maria DB controller
 func ProvideMariaDB(debug bool, db *sql.DB, logger logging.Logger) database.Database {
 	return &MariaDB{
 		db:         db,
@@ -82,22 +84,20 @@ func ProvideMariaDB(debug bool, db *sql.DB, logger logging.Logger) database.Data
 // IsReady reports whether or not the db is ready
 func (m *MariaDB) IsReady(ctx context.Context) (ready bool) {
 	numberOfUnsuccessfulAttempts := 0
-	waitInterval := time.Second
-	maxAttempts := 100
 
 	m.logger.WithValues(map[string]interface{}{
-		"wait_interval": waitInterval,
-		"max_attempts":  maxAttempts,
+		"interval":     time.Second,
+		"max_attempts": 50,
 	}).Debug("IsReady called")
 
 	for !ready {
 		err := m.db.Ping()
 		if err != nil {
 			m.logger.Debug("ping failed, waiting for db")
-			time.Sleep(waitInterval)
+			time.Sleep(time.Second)
 
 			numberOfUnsuccessfulAttempts++
-			if numberOfUnsuccessfulAttempts >= maxAttempts {
+			if numberOfUnsuccessfulAttempts >= 50 {
 				return false
 			}
 		} else {
@@ -126,7 +126,7 @@ func (m *MariaDB) logQueryBuildingError(err error) {
 // with the utmost priority.
 func (m *MariaDB) logCreationTimeRetrievalError(err error) {
 	if err != nil {
-		m.logger.WithName("CREATION_TIME_RETRIEVAL").Error(err, "building query")
+		m.logger.WithName("CREATION_TIME_RETRIEVAL").Error(err, "retrieving creation time")
 	}
 }
 
@@ -136,5 +136,10 @@ func buildError(err error, msg string) error {
 	if err == sql.ErrNoRows {
 		return err
 	}
-	return errors.Wrap(err, msg)
+
+	if !strings.Contains(msg, `%w`) {
+		msg += ": %w"
+	}
+
+	return fmt.Errorf(msg, err)
 }

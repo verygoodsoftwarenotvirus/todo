@@ -3,10 +3,10 @@ package mariadb
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"strings"
 
 	"github.com/GuiaBolso/darwin"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -45,7 +45,7 @@ var (
 		},
 		{
 			Version:     3,
-			Description: "Add oauth2_clients table",
+			Description: "create oauth2_clients table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS oauth2_clients (",
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
@@ -118,11 +118,11 @@ var (
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS items (",
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
-				"    `name` VARCHAR(256) NOT NULL,",
-				"    `details` VARCHAR(4096) NOT NULL DEFAULT '',",
+				"    `name` LONGTEXT NOT NULL,",
+				"    `details` LONGTEXT NOT NULL DEFAULT '',",
 				"    `created_on` BIGINT UNSIGNED,",
 				"    `updated_on` BIGINT UNSIGNED DEFAULT NULL,",
-				"  	 `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    `belongs_to` BIGINT UNSIGNED NOT NULL,",
 				"    PRIMARY KEY (`id`),",
 				"    FOREIGN KEY (`belongs_to`) REFERENCES users(`id`)",
@@ -133,7 +133,7 @@ var (
 			Version:     8,
 			Description: "create items table creation trigger",
 			Script: strings.Join([]string{
-				"CREATE TRIGGER IF NOT EXISTS webhooks_creation_trigger BEFORE INSERT ON webhooks FOR EACH ROW",
+				"CREATE TRIGGER IF NOT EXISTS items_creation_trigger BEFORE INSERT ON items FOR EACH ROW",
 				"BEGIN",
 				"  IF (new.created_on is null)",
 				"  THEN",
@@ -146,7 +146,7 @@ var (
 )
 
 // buildMigrationFunc returns a sync.Once compatible function closure that will
-// migrate a MariaDB database
+// migrate a maria DB database
 func buildMigrationFunc(db *sql.DB) func() {
 	return func() {
 		driver := darwin.NewGenericDriver(db, darwin.MySQLDialect{})
@@ -157,7 +157,7 @@ func buildMigrationFunc(db *sql.DB) func() {
 }
 
 // Migrate migrates the database. It does so by invoking the migrateOnce function via sync.Once, so it should be
-// safe (as in idempotent, though not recommended) to call this function multiple times.
+// safe (as in idempotent, though not necessarily recommended) to call this function multiple times.
 func (m *MariaDB) Migrate(ctx context.Context) error {
 	m.logger.Info("migrating db")
 	if !m.IsReady(ctx) {

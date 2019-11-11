@@ -29,16 +29,14 @@
         username,
         password
       })
-    })
-      .then(response => {
+    }).then(response => {
         if (response.status == 201) {
           return response.json();
         } else {
           console.error("something has gone awry: ");
           console.log(response);
         }
-      })
-      .then(data => {
+      }).then(data => {
         twoFactorQRCode = data["qr_code"];
         showingSecret = true;
       });

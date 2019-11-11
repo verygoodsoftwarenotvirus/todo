@@ -13,7 +13,7 @@ import (
 const (
 	// MaxLimit is the maximum value for list queries
 	MaxLimit = 250
-	// DefaultLimit represents how many results we return in a response by default.
+	// DefaultLimit represents how many results we return in a response by default
 	DefaultLimit = 20
 
 	pageKey          = "page"
@@ -126,8 +126,8 @@ func (qf *QueryFilter) ApplyToQueryBuilder(queryBuilder squirrel.SelectBuilder) 
 	if qf == nil {
 		return queryBuilder
 	}
-	qf.SetPage(qf.Page)
 
+	qf.SetPage(qf.Page)
 	if qp := qf.QueryPage(); qp > 0 {
 		queryBuilder = queryBuilder.Offset(qp)
 	}

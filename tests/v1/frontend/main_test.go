@@ -27,10 +27,10 @@ type testProvider func(driver selenium.WebDriver) func(t *testing.T)
 func TestLoginPage(T *testing.T) {
 	runTestOnAllSupportedBrowsers(T, func(driver selenium.WebDriver) func(t *testing.T) {
 		return func(t *testing.T) {
-			// Navigate to the login page.
+			// Navigate to the login page
 			require.NoError(t, driver.Get(urlToUse+"/login"))
 
-			// fetch the button.
+			// fetch the button
 			elem, err := driver.FindElement(selenium.ByID, "loginButton")
 			if err != nil {
 				panic(err)

@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
 var (

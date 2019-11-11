@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -32,14 +32,12 @@ func TestService_UserInputMiddleware(T *testing.T) {
 			logger: noop.ProvideNoopLogger(),
 		}
 
-		ed := &mencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).
-			Return(nil)
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(nil)
 		s.encoderDecoder = ed
 
 		mh := &MockHTTPHandler{}
-		mh.On("ServeHTTP", mock.Anything, mock.Anything).
-			Return()
+		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
@@ -55,14 +53,12 @@ func TestService_UserInputMiddleware(T *testing.T) {
 			logger: noop.ProvideNoopLogger(),
 		}
 
-		ed := &mencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).
-			Return(errors.New("blah"))
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		mh := &MockHTTPHandler{}
-		mh.On("ServeHTTP", mock.Anything, mock.Anything).
-			Return()
+		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
@@ -82,14 +78,12 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 			logger: noop.ProvideNoopLogger(),
 		}
 
-		ed := &mencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).
-			Return(nil)
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(nil)
 		s.encoderDecoder = ed
 
 		mh := &MockHTTPHandler{}
-		mh.On("ServeHTTP", mock.Anything, mock.Anything).
-			Return()
+		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
@@ -101,21 +95,20 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 	})
 
 	T.Run("with error decoding request", func(t *testing.T) {
-		s := &Service{logger: noop.ProvideNoopLogger()}
+		s := &Service{
+			logger: noop.ProvideNoopLogger(),
+		}
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).
-			Return(uint64(123), nil)
+		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).Return(uint64(123), nil)
 		s.database = mockDB
 
-		ed := &mencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).
-			Return(errors.New("blah"))
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		mh := &MockHTTPHandler{}
-		mh.On("ServeHTTP", mock.Anything, mock.Anything).
-			Return()
+		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
@@ -135,14 +128,12 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 			logger: noop.ProvideNoopLogger(),
 		}
 
-		ed := &mencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).
-			Return(nil)
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(nil)
 		s.encoderDecoder = ed
 
 		mh := &MockHTTPHandler{}
-		mh.On("ServeHTTP", mock.Anything, mock.Anything).
-			Return()
+		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
@@ -158,14 +149,12 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 			logger: noop.ProvideNoopLogger(),
 		}
 
-		ed := &mencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).
-			Return(errors.New("blah"))
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		mh := &MockHTTPHandler{}
-		mh.On("ServeHTTP", mock.Anything, mock.Anything).
-			Return()
+		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		req := buildRequest(t)
 		res := httptest.NewRecorder()

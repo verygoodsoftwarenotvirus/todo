@@ -10,14 +10,14 @@ import (
 )
 
 var (
-	idReplacementRegex = regexp.MustCompile(`[^(v|oauth)]\d+`)
+	idReplacementRegex = regexp.MustCompile(`[^(v|oauth)]\\d+`)
 )
 
 func formatSpanNameForRequest(req *http.Request) string {
 	return fmt.Sprintf(
 		"%s %s",
 		req.Method,
-		idReplacementRegex.ReplaceAllString(req.URL.Path, `/{id}`),
+		idReplacementRegex.ReplaceAllString(req.URL.Path, "/{id}"),
 	)
 }
 
@@ -32,6 +32,6 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 			"status":        ww.Status(),
 			"bytes_written": ww.BytesWritten(),
 			"elapsed":       time.Since(start),
-		}).Debug("request received")
+		}).Debug("responded to request")
 	})
 }

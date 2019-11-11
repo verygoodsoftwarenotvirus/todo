@@ -2,20 +2,20 @@ package httpserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
 
 	"github.com/go-chi/chi"
-	"github.com/pkg/errors"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 	"go.opencensus.io/plugin/ochttp"
@@ -53,16 +53,12 @@ type (
 func ProvideServer(
 	ctx context.Context,
 	cfg *config.ServerConfig,
-
-	// services
 	authService *auth.Service,
 	frontendService *frontend.Service,
 	itemsService models.ItemDataServer,
 	usersService models.UserDataServer,
 	oauth2Service models.OAuth2ClientDataServer,
 	webhooksService models.WebhookDataServer,
-
-	// infra things
 	db database.Database,
 	logger logging.Logger,
 	encoder encoding.EncoderDecoder,
@@ -76,16 +72,14 @@ func ProvideServer(
 
 	srv := &Server{
 		DebugMode: cfg.Server.Debug,
-
-		// infra things
+		// infra things,
 		db:          db,
 		config:      cfg,
 		encoder:     encoder,
 		httpServer:  provideHTTPServer(),
 		logger:      logger.WithName("api_server"),
 		newsManager: newsManager,
-
-		// services
+		// services,
 		webhooksService:      webhooksService,
 		frontendService:      frontendService,
 		usersService:         usersService,

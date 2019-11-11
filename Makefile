@@ -5,7 +5,6 @@ COVERAGE_OUT  := $(ARTIFACTS_DIR)/coverage.out
 CONFIG_DIR    := config_files
 GO_FORMAT     := gofmt -s -w
 
-KUBERNETES_NAMESPACE     := todo
 SERVER_DOCKER_IMAGE_NAME := todo-server
 SERVER_DOCKER_REPO_NAME  := docker.io/verygoodsoftwarenotvirus/$(SERVER_DOCKER_IMAGE_NAME)
 
@@ -77,10 +76,10 @@ $(COVERAGE_OUT): $(ARTIFACTS_DIR)
 
 .PHONY: quicktest # basically the same as coverage.out, only running once instead of with `-count` set
 quicktest: $(ARTIFACTS_DIR)
-	set -ex; \
+	@set -ex; \
 	echo "mode: set" > $(COVERAGE_OUT);
 	for pkg in `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|mock)'`; do \
-		go test -coverprofile=profile.out -v -race -failfast $$pkg; \
+		go test -coverprofile=profile.out -race -failfast $$pkg; \
 		if [ $$? -ne 0 ]; then exit 1; fi; \
 		cat profile.out | grep -v "mode: atomic" >> $(COVERAGE_OUT); \
 	rm -f profile.out; \
@@ -119,7 +118,7 @@ frontend-tests:
 lintegration-tests: integration-tests lint
 
 .PHONY: integration-tests
-integration-tests: integration-tests-postgres
+integration-tests: integration-tests-postgres integration-tests-sqlite integration-tests-mariadb
 
 .PHONY: integration-tests-postgres
 integration-tests-postgres:
@@ -168,7 +167,7 @@ integration-coverage:
 ## Load tests
 
 .PHONY: load-tests
-load-tests: load-tests-postgres
+load-tests: load-tests-postgres load-tests-sqlite load-tests-mariadb
 
 .PHONY: load-tests-postgres
 load-tests-postgres:

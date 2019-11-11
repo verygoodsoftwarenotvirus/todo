@@ -7,16 +7,14 @@ import (
 	"strings"
 	"sync"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
 const (
-	scopesSeparator = `,`
-
+	scopesSeparator        = ","
 	oauth2ClientsTableName = "oauth2_clients"
 )
 
@@ -35,7 +33,7 @@ var (
 	}
 )
 
-// scanOAuth2Client takes a Scanner (i.e. *sql.Row) and scans its ressults into an OAuth2Client struct
+// scanOAuth2Client takes a Scanner (i.e. *sql.Row) and scans its results into an OAuth2Client struct
 func scanOAuth2Client(scan database.Scanner) (*models.OAuth2Client, error) {
 	var (
 		x      = &models.OAuth2Client{}
@@ -65,7 +63,7 @@ func scanOAuth2Client(scan database.Scanner) (*models.OAuth2Client, error) {
 }
 
 // scanOAuth2Clients takes sql rows and turns them into a slice of OAuth2Clients
-func scanOAuth2Clients(logger logging.Logger, rows *sql.Rows) ([]*models.OAuth2Client, error) {
+func (m *MariaDB) scanOAuth2Clients(rows *sql.Rows) ([]*models.OAuth2Client, error) {
 	var list []*models.OAuth2Client
 
 	for rows.Next() {
@@ -80,7 +78,7 @@ func scanOAuth2Clients(logger logging.Logger, rows *sql.Rows) ([]*models.OAuth2C
 	}
 
 	if err := rows.Close(); err != nil {
-		logger.Error(err, "closing rows")
+		m.logger.Error(err, "closing rows")
 	}
 
 	return list, nil
@@ -142,7 +140,7 @@ func (m *MariaDB) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Clie
 		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
 	}
 
-	list, err := scanOAuth2Clients(m.logger, rows)
+	list, err := m.scanOAuth2Clients(rows)
 	if err != nil {
 		return nil, fmt.Errorf("fetching list of OAuth2Clients: %w", err)
 	}
@@ -162,7 +160,7 @@ func (m *MariaDB) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64)
 		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
 	}
 
-	list, err := scanOAuth2Clients(m.logger, rows)
+	list, err := m.scanOAuth2Clients(rows)
 	if err != nil {
 		return nil, fmt.Errorf("fetching list of OAuth2Clients: %w", err)
 	}
@@ -191,8 +189,8 @@ func (m *MariaDB) buildGetOAuth2ClientQuery(clientID, userID uint64) (query stri
 func (m *MariaDB) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*models.OAuth2Client, error) {
 	query, args := m.buildGetOAuth2ClientQuery(clientID, userID)
 	row := m.db.QueryRowContext(ctx, query, args...)
-	client, err := scanOAuth2Client(row)
 
+	client, err := scanOAuth2Client(row)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, err
@@ -242,7 +240,8 @@ var (
 func (m *MariaDB) buildGetAllOAuth2ClientCountQuery() string {
 	getAllOAuth2ClientCountQueryBuilder.Do(func() {
 		var err error
-		getAllOAuth2ClientCountQuery, _, err = m.sqlBuilder.Select(CountQuery).
+		getAllOAuth2ClientCountQuery, _, err = m.sqlBuilder.
+			Select(CountQuery).
 			From(oauth2ClientsTableName).
 			Where(squirrel.Eq{"archived_on": nil}).
 			ToSql()
@@ -277,7 +276,6 @@ func (m *MariaDB) buildGetOAuth2ClientsQuery(filter *models.QueryFilter, userID 
 	}
 
 	query, args, err = builder.ToSql()
-
 	m.logQueryBuildingError(err)
 
 	return query, args
@@ -295,7 +293,7 @@ func (m *MariaDB) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilt
 		return nil, fmt.Errorf("querying for oauth2 clients: %w", err)
 	}
 
-	list, err := scanOAuth2Clients(m.logger, rows)
+	list, err := m.scanOAuth2Clients(rows)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
@@ -354,7 +352,7 @@ func (m *MariaDB) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (quer
 	return query, args
 }
 
-// buildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments.
+// buildOAuth2ClientCreationTimeQuery takes an item and returns a creation query for that item and the relevant arguments.
 func (m *MariaDB) buildOAuth2ClientCreationTimeQuery(clientID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -363,6 +361,7 @@ func (m *MariaDB) buildOAuth2ClientCreationTimeQuery(clientID uint64) (query str
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{"id": clientID}).
 		ToSql()
+
 	m.logQueryBuildingError(err)
 
 	return query, args

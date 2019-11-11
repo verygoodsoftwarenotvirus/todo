@@ -12,6 +12,7 @@ var (
 		"cumulative time in nanoseconds spent aggregating metrics",
 		stats.UnitDimensionless,
 	)
+
 	// MetricAggregationMeasurementView is the corresponding view for the above metric
 	MetricAggregationMeasurementView = &view.View{
 		Name:        "metrics_aggregation_time",

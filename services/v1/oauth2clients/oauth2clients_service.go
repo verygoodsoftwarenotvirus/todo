@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gopkg.in/oauth2.v3"
@@ -30,10 +30,11 @@ func init() {
 
 const (
 	// CreationMiddlewareCtxKey is a string alias for referring to OAuth2 client creation data
-	CreationMiddlewareCtxKey models.ContextKey   = "create_oauth2_client"
-	counterName              metrics.CounterName = "oauth2_clients"
-	counterDescription       string              = "number of oauth2 clients managed by the oauth2 client service"
-	serviceName              string              = "oauth2_clients_service"
+	CreationMiddlewareCtxKey models.ContextKey = "create_oauth2_client"
+
+	counterName        metrics.CounterName = "oauth2_clients"
+	counterDescription string              = "number of oauth2 clients managed by the oauth2 client service"
+	serviceName        string              = "oauth2_clients_service"
 )
 
 var (
@@ -161,7 +162,7 @@ func initializeOAuth2Handler(handler oauth2Handler, s *Service) {
 			oauth2.ClientCredentials,
 			// oauth2.AuthorizationCode,
 			// oauth2.Refreshing,
-			// oauth2.Implicit
+			// oauth2.Implicit,
 		}
 	}
 }

@@ -7,42 +7,40 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 )
 
 func buildMockRowFromUser(user *models.User) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(usersTableColumns).
-		AddRow(
-			user.ID,
-			user.Username,
-			user.HashedPassword,
-			user.PasswordLastChangedOn,
-			user.TwoFactorSecret,
-			user.IsAdmin,
-			user.CreatedOn,
-			user.UpdatedOn,
-			user.ArchivedOn,
-		)
+	exampleRows := sqlmock.NewRows(usersTableColumns).AddRow(
+		user.ID,
+		user.Username,
+		user.HashedPassword,
+		user.PasswordLastChangedOn,
+		user.TwoFactorSecret,
+		user.IsAdmin,
+		user.CreatedOn,
+		user.UpdatedOn,
+		user.ArchivedOn,
+	)
 
 	return exampleRows
 }
 
 func buildErroneousMockRowFromUser(user *models.User) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(usersTableColumns).
-		AddRow(
-			user.ArchivedOn,
-			user.ID,
-			user.Username,
-			user.HashedPassword,
-			user.PasswordLastChangedOn,
-			user.TwoFactorSecret,
-			user.IsAdmin,
-			user.CreatedOn,
-			user.UpdatedOn,
-		)
+	exampleRows := sqlmock.NewRows(usersTableColumns).AddRow(
+		user.ArchivedOn,
+		user.ID,
+		user.Username,
+		user.HashedPassword,
+		user.PasswordLastChangedOn,
+		user.TwoFactorSecret,
+		user.IsAdmin,
+		user.CreatedOn,
+		user.UpdatedOn,
+	)
 
 	return exampleRows
 }
@@ -76,9 +74,7 @@ func TestMariaDB_GetUser(T *testing.T) {
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(expected.ID).
-			WillReturnRows(
-				buildMockRowFromUser(expected),
-			)
+			WillReturnRows(buildMockRowFromUser(expected))
 
 		actual, err := m.GetUser(context.Background(), expected.ID)
 		assert.NoError(t, err)
@@ -145,16 +141,13 @@ func TestMariaDB_GetUsers(T *testing.T) {
 		}
 
 		m, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).
-			WillReturnRows(
-				buildMockRowFromUser(&expected.Users[0]),
-				buildMockRowFromUser(&expected.Users[0]),
-				buildMockRowFromUser(&expected.Users[0]),
-			)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).WillReturnRows(
+			buildMockRowFromUser(&expected.Users[0]),
+			buildMockRowFromUser(&expected.Users[0]),
+			buildMockRowFromUser(&expected.Users[0]),
+		)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
-			WillReturnRows(
-				sqlmock.NewRows([]string{"count"}).AddRow(expectedCount),
-			)
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
 		actual, err := m.GetUsers(context.Background(), models.DefaultQueryFilter())
 		assert.NoError(t, err)
@@ -205,9 +198,7 @@ func TestMariaDB_GetUsers(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).
-			WillReturnRows(
-				buildErroneousMockRowFromUser(&expected.Users[0]),
-			)
+			WillReturnRows(buildErroneousMockRowFromUser(&expected.Users[0]))
 
 		actual, err := m.GetUsers(context.Background(), models.DefaultQueryFilter())
 		assert.Error(t, err)
@@ -235,12 +226,11 @@ func TestMariaDB_GetUsers(T *testing.T) {
 		}
 
 		m, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).
-			WillReturnRows(
-				buildMockRowFromUser(&expected.Users[0]),
-				buildMockRowFromUser(&expected.Users[0]),
-				buildMockRowFromUser(&expected.Users[0]),
-			)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).WillReturnRows(
+			buildMockRowFromUser(&expected.Users[0]),
+			buildMockRowFromUser(&expected.Users[0]),
+			buildMockRowFromUser(&expected.Users[0]),
+		)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnError(errors.New("blah"))
 
@@ -282,9 +272,7 @@ func TestMariaDB_GetUserByUsername(T *testing.T) {
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(expected.Username).
-			WillReturnRows(
-				buildMockRowFromUser(expected),
-			)
+			WillReturnRows(buildMockRowFromUser(expected))
 
 		actual, err := m.GetUserByUsername(context.Background(), expected.Username)
 		assert.NoError(t, err)
@@ -357,9 +345,7 @@ func TestMariaDB_GetUserCount(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WillReturnRows(
-				sqlmock.NewRows([]string{"count"}).AddRow(expected),
-			)
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expected))
 
 		actual, err := m.GetUserCount(context.Background(), models.DefaultQueryFilter())
 		assert.NoError(t, err)
@@ -393,7 +379,6 @@ func TestMariaDB_buildCreateUserQuery(T *testing.T) {
 			Password:        "hashed password",
 			TwoFactorSecret: "two factor secret",
 		}
-
 		expectedArgCount := 4
 		expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret,is_admin,created_on) VALUES (?,?,?,?,UNIX_TIMESTAMP())"
 
@@ -415,20 +400,18 @@ func TestMariaDB_CreateUser(T *testing.T) {
 		expectedInput := &models.UserInput{
 			Username: expected.Username,
 		}
+		exampleRows := sqlmock.NewResult(int64(expected.ID), 1)
+		expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret,is_admin,created_on) VALUES (?,?,?,?,UNIX_TIMESTAMP())"
 
 		m, mockDB := buildTestService(t)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
+			expected.Username,
+			expected.HashedPassword,
+			expected.TwoFactorSecret,
+			expected.IsAdmin,
+		).WillReturnResult(exampleRows)
 
-		expectedCreationQuery := "INSERT INTO users (username,hashed_password,two_factor_secret,is_admin,created_on) VALUES (?,?,?,?,UNIX_TIMESTAMP())"
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedCreationQuery)).
-			WithArgs(
-				expected.Username,
-				expected.HashedPassword,
-				expected.TwoFactorSecret,
-				expected.IsAdmin,
-			).
-			WillReturnResult(sqlmock.NewResult(int64(expected.ID), 1))
-
-		expectedTimeQuery := `SELECT created_on FROM users WHERE id = ?`
+		expectedTimeQuery := "SELECT created_on FROM users WHERE id = ?"
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedTimeQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"created_on"}).AddRow(expected.CreatedOn))
 
@@ -448,18 +431,15 @@ func TestMariaDB_CreateUser(T *testing.T) {
 		expectedInput := &models.UserInput{
 			Username: expected.Username,
 		}
-
 		expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret,is_admin,created_on) VALUES (?,?,?,?,UNIX_TIMESTAMP())"
 
 		m, mockDB := buildTestService(t)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				expected.Username,
-				expected.HashedPassword,
-				expected.TwoFactorSecret,
-				expected.IsAdmin,
-			).
-			WillReturnError(errors.New("blah"))
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
+			expected.Username,
+			expected.HashedPassword,
+			expected.TwoFactorSecret,
+			expected.IsAdmin,
+		).WillReturnError(errors.New("blah"))
 
 		actual, err := m.CreateUser(context.Background(), expectedInput)
 		assert.Error(t, err)
@@ -480,7 +460,6 @@ func TestMariaDB_buildUpdateUserQuery(T *testing.T) {
 			HashedPassword:  "hashed password",
 			TwoFactorSecret: "two factor secret",
 		}
-
 		expectedArgCount := 4
 		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, two_factor_secret = ?, updated_on = UNIX_TIMESTAMP() WHERE id = ?"
 
@@ -499,18 +478,16 @@ func TestMariaDB_UpdateUser(T *testing.T) {
 			Username:  "username",
 			CreatedOn: uint64(time.Now().Unix()),
 		}
+		exampleRows := sqlmock.NewResult(int64(expected.ID), 1)
+		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, two_factor_secret = ?, updated_on = UNIX_TIMESTAMP() WHERE id = ?"
 
 		m, mockDB := buildTestService(t)
-
-		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, two_factor_secret = ?, updated_on = UNIX_TIMESTAMP() WHERE id = ?"
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				expected.Username,
-				expected.HashedPassword,
-				expected.TwoFactorSecret,
-				expected.ID,
-			).
-			WillReturnResult(sqlmock.NewResult(1, 1))
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
+			expected.Username,
+			expected.HashedPassword,
+			expected.TwoFactorSecret,
+			expected.ID,
+		).WillReturnResult(exampleRows)
 
 		err := m.UpdateUser(context.Background(), expected)
 		assert.NoError(t, err)
@@ -525,7 +502,6 @@ func TestMariaDB_buildArchiveUserQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
 		exampleUserID := uint64(321)
-
 		expectedArgCount := 1
 		expectedQuery := "UPDATE users SET updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE id = ?"
 
@@ -545,14 +521,11 @@ func TestMariaDB_ArchiveUser(T *testing.T) {
 			Username:  "username",
 			CreatedOn: uint64(time.Now().Unix()),
 		}
-
 		expectedQuery := "UPDATE users SET updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE id = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				expected.ID,
-			).
+			WithArgs(expected.ID).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		err := m.ArchiveUser(context.Background(), expected.ID)

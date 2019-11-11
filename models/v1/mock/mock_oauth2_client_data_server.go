@@ -4,14 +4,14 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/stretchr/testify/mock"
 )
 
 var _ models.OAuth2ClientDataServer = (*OAuth2ClientDataServer)(nil)
 
-// OAuth2ClientDataServer describes a structure capable of serving traffic related to oauth2 clients
+// OAuth2ClientDataServer is a mocked models.OAuth2ClientDataServer for testing
 type OAuth2ClientDataServer struct {
 	mock.Mock
 }
@@ -55,7 +55,6 @@ func (m *OAuth2ClientDataServer) OAuth2ClientInfoMiddleware(next http.Handler) h
 // ExtractOAuth2ClientFromRequest is the obligatory implementation for our interface
 func (m *OAuth2ClientDataServer) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.Request) (*models.OAuth2Client, error) {
 	args := m.Called(ctx, req)
-
 	return args.Get(0).(*models.OAuth2Client), args.Error(1)
 }
 

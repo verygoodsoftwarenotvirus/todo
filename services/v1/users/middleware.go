@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"go.opencensus.io/trace"
 )
@@ -34,7 +34,7 @@ func (s *Service) UserInputMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// attach parsed value to context
+		// attach parsed value to request context
 		ctx = context.WithValue(ctx, UserCreationMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
@@ -54,7 +54,7 @@ func (s *Service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler 
 			return
 		}
 
-		// attach parsed value to context
+		// attach parsed value to request context
 		ctx = context.WithValue(ctx, PasswordChangeMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
@@ -74,7 +74,7 @@ func (s *Service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handl
 			return
 		}
 
-		// attach parsed value to context
+		// attach parsed value to request context
 		ctx = context.WithValue(ctx, TOTPSecretRefreshMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})

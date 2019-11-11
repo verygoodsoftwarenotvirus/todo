@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
@@ -43,7 +43,6 @@ var (
 func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 	var (
 		x = &models.Webhook{}
-
 		eventsStr,
 		dataTypesStr,
 		topicsStr string
@@ -195,11 +194,11 @@ var (
 func (p *Postgres) buildGetAllWebhooksQuery() string {
 	getAllWebhooksQueryBuilder.Do(func() {
 		var err error
-		getAllWebhooksQuery, _, err = p.sqlBuilder.Select(webhooksTableColumns...).
+		getAllWebhooksQuery, _, err = p.sqlBuilder.
+			Select(webhooksTableColumns...).
 			From(webhooksTableName).
-			Where(squirrel.Eq{
-				"archived_on": nil,
-			}).ToSql()
+			Where(squirrel.Eq{"archived_on": nil}).
+			ToSql()
 
 		p.logQueryBuildingError(err)
 	})
@@ -274,7 +273,6 @@ func (p *Postgres) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint
 	}
 
 	query, args, err = builder.ToSql()
-
 	p.logQueryBuildingError(err)
 
 	return query, args
@@ -371,7 +369,8 @@ func (p *Postgres) CreateWebhook(ctx context.Context, input *models.WebhookCreat
 // buildUpdateWebhookQuery takes a given webhook and returns a SQL query to update
 func (p *Postgres) buildUpdateWebhookQuery(input *models.Webhook) (query string, args []interface{}) {
 	var err error
-	query, args, err = p.sqlBuilder.Update(webhooksTableName).
+	query, args, err = p.sqlBuilder.
+		Update(webhooksTableName).
 		Set("name", input.Name).
 		Set("content_type", input.ContentType).
 		Set("url", input.URL).
@@ -400,15 +399,15 @@ func (p *Postgres) UpdateWebhook(ctx context.Context, input *models.Webhook) err
 // buildArchiveWebhookQuery returns a SQL query (and arguments) that will mark a webhook as archived.
 func (p *Postgres) buildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
-	query, args, err = p.sqlBuilder.Update(webhooksTableName).
+	query, args, err = p.sqlBuilder.
+		Update(webhooksTableName).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			"id":          webhookID,
 			"belongs_to":  userID,
 			"archived_on": nil,
-		}).
-		Suffix("RETURNING archived_on").
+		}).Suffix("RETURNING archived_on").
 		ToSql()
 
 	p.logQueryBuildingError(err)

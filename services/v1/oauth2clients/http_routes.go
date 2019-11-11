@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"go.opencensus.io/trace"
 )
@@ -239,7 +239,6 @@ func (s *Service) ArchiveHandler() http.HandlerFunc {
 
 		// notify relevant parties
 		s.oauth2ClientCounter.Decrement(ctx)
-
 		res.WriteHeader(http.StatusNoContent)
 	}
 }

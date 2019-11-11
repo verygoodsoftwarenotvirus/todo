@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/mariadb"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/postgres"
@@ -37,9 +37,9 @@ func (cfg *ServerConfig) ProvideDatabase(ctx context.Context, logger logging.Log
 		ocsql.RegisterAllViews()
 		ocsql.RecordStats(rawDB, cfg.Metrics.DBMetricsCollectionInterval)
 
-		pg := postgres.ProvidePostgres(debug, rawDB, logger)
+		pgdb := postgres.ProvidePostgres(debug, rawDB, logger)
 
-		return dbclient.ProvideDatabaseClient(ctx, rawDB, pg, debug, logger)
+		return dbclient.ProvideDatabaseClient(ctx, rawDB, pgdb, debug, logger)
 	case mariaDBProviderKey:
 		rawDB, err := mariadb.ProvideMariaDBConnection(logger, connectionDetails)
 		if err != nil {
@@ -48,9 +48,9 @@ func (cfg *ServerConfig) ProvideDatabase(ctx context.Context, logger logging.Log
 		ocsql.RegisterAllViews()
 		ocsql.RecordStats(rawDB, cfg.Metrics.DBMetricsCollectionInterval)
 
-		pg := mariadb.ProvideMariaDB(debug, rawDB, logger)
+		mdb := mariadb.ProvideMariaDB(debug, rawDB, logger)
 
-		return dbclient.ProvideDatabaseClient(ctx, rawDB, pg, debug, logger)
+		return dbclient.ProvideDatabaseClient(ctx, rawDB, mdb, debug, logger)
 	case sqliteProviderKey:
 		rawDB, err := sqlite.ProvideSqliteDB(logger, connectionDetails)
 		if err != nil {
@@ -59,9 +59,9 @@ func (cfg *ServerConfig) ProvideDatabase(ctx context.Context, logger logging.Log
 		ocsql.RegisterAllViews()
 		ocsql.RecordStats(rawDB, cfg.Metrics.DBMetricsCollectionInterval)
 
-		pg := sqlite.ProvideSqlite(debug, rawDB, logger)
+		sdb := sqlite.ProvideSqlite(debug, rawDB, logger)
 
-		return dbclient.ProvideDatabaseClient(ctx, rawDB, pg, debug, logger)
+		return dbclient.ProvideDatabaseClient(ctx, rawDB, sdb, debug, logger)
 	default:
 		return nil, errors.New("invalid database type selected")
 	}

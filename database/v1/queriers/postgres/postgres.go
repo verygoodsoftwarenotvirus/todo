@@ -3,15 +3,16 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 	"sync"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 
 	"contrib.go.opencensus.io/integrations/ocsql"
 	"github.com/Masterminds/squirrel"
 	postgres "github.com/lib/pq"
-	"github.com/pkg/errors"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
@@ -27,7 +28,7 @@ const (
 )
 
 func init() {
-	// Explicitly wrap the SQLite3 driver with ocsql.
+	// Explicitly wrap the Postgres driver with ocsql
 	driver := ocsql.Wrap(
 		&postgres.Driver{},
 		ocsql.WithQuery(true),
@@ -37,9 +38,11 @@ func init() {
 		ocsql.WithQueryParams(true),
 	)
 
-	// Register our ocsql wrapper as a db driver.
+	// Register our ocsql wrapper as a db driver
 	sql.Register(postgresDriverName, driver)
 }
+
+var _ database.Database = (*Postgres)(nil)
 
 type (
 	// Postgres is our main Postgres interaction db
@@ -65,7 +68,6 @@ type (
 // ProvidePostgresDB provides an instrumented postgres db
 func ProvidePostgresDB(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
 	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to postgres")
-
 	return sql.Open(postgresDriverName, string(connectionDetails))
 }
 
@@ -123,5 +125,10 @@ func buildError(err error, msg string) error {
 	if err == sql.ErrNoRows {
 		return err
 	}
-	return errors.Wrap(err, msg)
+
+	if !strings.Contains(msg, `%w`) {
+		msg += ": %w"
+	}
+
+	return fmt.Errorf(msg, err)
 }

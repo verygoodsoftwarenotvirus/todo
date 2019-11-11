@@ -63,8 +63,8 @@
         <th
           on:click={() => handleSort(col)}
           class={col.sortable ? 'isSortable' : ''}>
-           {col.title}
-          {#if sortKey === col.key}{sortOrder === 1 ? '▲' : '▼'}{/if}
+        {col.title}
+        {#if sortKey === col.key}{sortOrder === 1 ? '▲' : '▼'}{/if}
         </th>
       {/each}
       <th>

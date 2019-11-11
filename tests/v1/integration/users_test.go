@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/icrowley/fake"
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,7 +26,7 @@ func init() {
 // https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
 func randString() (string, error) {
 	b := make([]byte, 64)
-	// Note that err == nil only if we read len(b) bytes.
+	// Note that err == nil only if we read len(b) bytes
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
@@ -38,10 +38,9 @@ func buildDummyUserInput(t *testing.T) *models.UserInput {
 	t.Helper()
 
 	fake.Seed(time.Now().UnixNano())
-
 	userInput := &models.UserInput{
-		Username: fake.UserName(),
-		Password: fake.Password(8, 64, true, true, true),
+		Username: fake.Username(),
+		Password: fake.Password(true, true, true, true, true, 64),
 	}
 
 	return userInput
@@ -60,7 +59,6 @@ func buildDummyUser(t *testing.T) (*models.UserCreationResponse, *models.UserInp
 	if user == nil || err != nil {
 		t.FailNow()
 	}
-
 	cookie := loginUser(t, userInput.Username, userInput.Password, user.TwoFactorSecret)
 
 	require.NoError(t, err)
@@ -97,15 +95,12 @@ func TestUsers(test *testing.T) {
 		T.Run("should be creatable", func(t *testing.T) {
 			tctx := context.Background()
 
-			// CreateHandler user
+			// Create user
 			expected := buildDummyUserInput(t)
-			actual, err := todoClient.CreateUser(
-				tctx,
-				&models.UserInput{
-					Username: expected.Username,
-					Password: expected.Password,
-				},
-			)
+			actual, err := todoClient.CreateUser(tctx, &models.UserInput{
+				Username: expected.Username,
+				Password: expected.Password,
+			})
 			checkValueAndError(t, actual, err)
 
 			// Assert user equality
@@ -129,15 +124,12 @@ func TestUsers(test *testing.T) {
 		T.Run("it should be readable", func(t *testing.T) {
 			tctx := context.Background()
 
-			// CreateHandler user
+			// Create user
 			expected := buildDummyUserInput(t)
-			premade, err := todoClient.CreateUser(
-				tctx,
-				&models.UserInput{
-					Username: expected.Username,
-					Password: expected.Password,
-				},
-			)
+			premade, err := todoClient.CreateUser(tctx, &models.UserInput{
+				Username: expected.Username,
+				Password: expected.Password,
+			})
 			checkValueAndError(t, premade, err)
 			assert.NotEmpty(t, premade.TwoFactorSecret)
 
@@ -160,7 +152,7 @@ func TestUsers(test *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
 			tctx := context.Background()
 
-			// CreateHandler user
+			// Create user
 			y := buildDummyUserInput(t)
 			u, err := todoClient.CreateUser(tctx, y)
 			assert.NoError(t, err)
@@ -181,7 +173,7 @@ func TestUsers(test *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
 			tctx := context.Background()
 
-			// CreateHandler users
+			// Create users
 			var expected []*models.UserCreationResponse
 			for i := 0; i < 5; i++ {
 				user, _, c := buildDummyUser(t)

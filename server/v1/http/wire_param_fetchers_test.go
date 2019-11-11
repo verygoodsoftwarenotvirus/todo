@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -76,11 +76,18 @@ func TestUserIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		req := buildRequest(t)
 		expected := uint64(123)
-		req = req.WithContext(context.WithValue(req.Context(), models.UserIDKey, expected))
-		actual := UserIDFetcher(req)
 
+		req := buildRequest(t)
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(),
+				models.UserIDKey,
+				expected,
+			),
+		)
+
+		actual := UserIDFetcher(req)
 		assert.Equal(t, expected, actual)
 	})
 }
@@ -93,13 +100,18 @@ func Test_buildChiUserIDFetcher(T *testing.T) {
 		expected := uint64(123)
 
 		req := buildRequest(t)
-
-		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, &chi.Context{
-			URLParams: chi.RouteParams{
-				Keys:   []string{users.URIParamKey},
-				Values: []string{fmt.Sprintf("%d", expected)},
-			},
-		}))
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(),
+				chi.RouteCtxKey,
+				&chi.Context{
+					URLParams: chi.RouteParams{
+						Keys:   []string{users.URIParamKey},
+						Values: []string{fmt.Sprintf("%d", expected)},
+					},
+				},
+			),
+		)
 
 		actual := fn(req)
 		assert.Equal(t, expected, actual)
@@ -111,13 +123,18 @@ func Test_buildChiUserIDFetcher(T *testing.T) {
 		expected := uint64(0)
 
 		req := buildRequest(t)
-
-		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, &chi.Context{
-			URLParams: chi.RouteParams{
-				Keys:   []string{users.URIParamKey},
-				Values: []string{"expected"},
-			},
-		}))
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(),
+				chi.RouteCtxKey,
+				&chi.Context{
+					URLParams: chi.RouteParams{
+						Keys:   []string{users.URIParamKey},
+						Values: []string{"expected"},
+					},
+				},
+			),
+		)
 
 		actual := fn(req)
 		assert.Equal(t, expected, actual)
@@ -132,13 +149,18 @@ func Test_buildChiItemIDFetcher(T *testing.T) {
 		expected := uint64(123)
 
 		req := buildRequest(t)
-
-		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, &chi.Context{
-			URLParams: chi.RouteParams{
-				Keys:   []string{items.URIParamKey},
-				Values: []string{fmt.Sprintf("%d", expected)},
-			},
-		}))
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(),
+				chi.RouteCtxKey,
+				&chi.Context{
+					URLParams: chi.RouteParams{
+						Keys:   []string{items.URIParamKey},
+						Values: []string{fmt.Sprintf("%d", expected)},
+					},
+				},
+			),
+		)
 
 		actual := fn(req)
 		assert.Equal(t, expected, actual)
@@ -150,13 +172,18 @@ func Test_buildChiItemIDFetcher(T *testing.T) {
 		expected := uint64(0)
 
 		req := buildRequest(t)
-
-		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, &chi.Context{
-			URLParams: chi.RouteParams{
-				Keys:   []string{items.URIParamKey},
-				Values: []string{"expected"},
-			},
-		}))
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(),
+				chi.RouteCtxKey,
+				&chi.Context{
+					URLParams: chi.RouteParams{
+						Keys:   []string{items.URIParamKey},
+						Values: []string{"expected"},
+					},
+				},
+			),
+		)
 
 		actual := fn(req)
 		assert.Equal(t, expected, actual)
@@ -171,13 +198,18 @@ func Test_buildChiWebhookIDFetcher(T *testing.T) {
 		expected := uint64(123)
 
 		req := buildRequest(t)
-
-		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, &chi.Context{
-			URLParams: chi.RouteParams{
-				Keys:   []string{webhooks.URIParamKey},
-				Values: []string{fmt.Sprintf("%d", expected)},
-			},
-		}))
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(),
+				chi.RouteCtxKey,
+				&chi.Context{
+					URLParams: chi.RouteParams{
+						Keys:   []string{webhooks.URIParamKey},
+						Values: []string{fmt.Sprintf("%d", expected)},
+					},
+				},
+			),
+		)
 
 		actual := fn(req)
 		assert.Equal(t, expected, actual)
@@ -189,13 +221,18 @@ func Test_buildChiWebhookIDFetcher(T *testing.T) {
 		expected := uint64(0)
 
 		req := buildRequest(t)
-
-		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, &chi.Context{
-			URLParams: chi.RouteParams{
-				Keys:   []string{webhooks.URIParamKey},
-				Values: []string{"expected"},
-			},
-		}))
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(),
+				chi.RouteCtxKey,
+				&chi.Context{
+					URLParams: chi.RouteParams{
+						Keys:   []string{webhooks.URIParamKey},
+						Values: []string{"expected"},
+					},
+				},
+			),
+		)
 
 		actual := fn(req)
 		assert.Equal(t, expected, actual)
@@ -210,13 +247,18 @@ func Test_buildChiOAuth2ClientIDFetcher(T *testing.T) {
 		expected := uint64(123)
 
 		req := buildRequest(t)
-
-		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, &chi.Context{
-			URLParams: chi.RouteParams{
-				Keys:   []string{oauth2clients.URIParamKey},
-				Values: []string{fmt.Sprintf("%d", expected)},
-			},
-		}))
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(),
+				chi.RouteCtxKey,
+				&chi.Context{
+					URLParams: chi.RouteParams{
+						Keys:   []string{oauth2clients.URIParamKey},
+						Values: []string{fmt.Sprintf("%d", expected)},
+					},
+				},
+			),
+		)
 
 		actual := fn(req)
 		assert.Equal(t, expected, actual)
@@ -228,13 +270,18 @@ func Test_buildChiOAuth2ClientIDFetcher(T *testing.T) {
 		expected := uint64(0)
 
 		req := buildRequest(t)
-
-		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, &chi.Context{
-			URLParams: chi.RouteParams{
-				Keys:   []string{oauth2clients.URIParamKey},
-				Values: []string{"expected"},
-			},
-		}))
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(),
+				chi.RouteCtxKey,
+				&chi.Context{
+					URLParams: chi.RouteParams{
+						Keys:   []string{oauth2clients.URIParamKey},
+						Values: []string{"expected"},
+					},
+				},
+			),
+		)
 
 		actual := fn(req)
 		assert.Equal(t, expected, actual)

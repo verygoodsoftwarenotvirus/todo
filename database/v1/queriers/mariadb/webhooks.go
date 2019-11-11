@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
@@ -43,7 +43,6 @@ var (
 func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 	var (
 		x = &models.Webhook{}
-
 		eventsStr,
 		dataTypesStr,
 		topicsStr string
@@ -195,11 +194,11 @@ var (
 func (m *MariaDB) buildGetAllWebhooksQuery() string {
 	getAllWebhooksQueryBuilder.Do(func() {
 		var err error
-		getAllWebhooksQuery, _, err = m.sqlBuilder.Select(webhooksTableColumns...).
+		getAllWebhooksQuery, _, err = m.sqlBuilder.
+			Select(webhooksTableColumns...).
 			From(webhooksTableName).
-			Where(squirrel.Eq{
-				"archived_on": nil,
-			}).ToSql()
+			Where(squirrel.Eq{"archived_on": nil}).
+			ToSql()
 
 		m.logQueryBuildingError(err)
 	})
@@ -274,7 +273,6 @@ func (m *MariaDB) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint6
 	}
 
 	query, args, err = builder.ToSql()
-
 	m.logQueryBuildingError(err)
 
 	return query, args
@@ -348,6 +346,7 @@ func (m *MariaDB) buildWebhookCreationQuery(x *models.Webhook) (query string, ar
 	return query, args
 }
 
+// buildWebhookCreationTimeQuery returns a SQL query (and arguments) that fetches the DB creation time for a given row
 func (m *MariaDB) buildWebhookCreationTimeQuery(webhookID uint64) (query string, args []interface{}) {
 	var err error
 	query, args, err = m.sqlBuilder.
@@ -393,7 +392,8 @@ func (m *MariaDB) CreateWebhook(ctx context.Context, input *models.WebhookCreati
 // buildUpdateWebhookQuery takes a given webhook and returns a SQL query to update
 func (m *MariaDB) buildUpdateWebhookQuery(input *models.Webhook) (query string, args []interface{}) {
 	var err error
-	query, args, err = m.sqlBuilder.Update(webhooksTableName).
+	query, args, err = m.sqlBuilder.
+		Update(webhooksTableName).
 		Set("name", input.Name).
 		Set("content_type", input.ContentType).
 		Set("url", input.URL).
@@ -423,7 +423,8 @@ func (m *MariaDB) UpdateWebhook(ctx context.Context, input *models.Webhook) erro
 // buildArchiveWebhookQuery returns a SQL query (and arguments) that will mark a webhook as archived.
 func (m *MariaDB) buildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
-	query, args, err = m.sqlBuilder.Update(webhooksTableName).
+	query, args, err = m.sqlBuilder.
+		Update(webhooksTableName).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{

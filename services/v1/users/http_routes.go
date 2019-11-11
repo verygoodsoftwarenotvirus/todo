@@ -13,12 +13,11 @@ import (
 	"strconv"
 
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/boombuler/barcode"
 	"github.com/boombuler/barcode/qr"
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 	"go.opencensus.io/trace"
 )
 
@@ -224,14 +223,16 @@ func (s *Service) buildQRCode(ctx context.Context, username, twoFactorSecret str
 
 	// encode two factor secret as authenticator-friendly QR code
 	qrcode, err := qr.Encode(
-		// "otpauth://totp/{{ .Issuer }}:{{ .Username }}?secret={{ .Secret }}&issuer={{ .Issuer }}"
+		// "otpauth://totp/{{ .Issuer }}:{{ .Username }}?secret={{ .Secret }}&issuer={{ .Issuer }}",
 		fmt.Sprintf(
 			"otpauth://totp/%s:%s?secret=%s&issuer=%s",
 			"todoservice",
 			username,
 			twoFactorSecret,
 			"todoService",
-		), qr.L, qr.Auto,
+		),
+		qr.L,
+		qr.Auto,
 	)
 	if err != nil {
 		s.logger.Error(err, "trying to encode secret to qr code")
@@ -348,9 +349,7 @@ func (s *Service) NewTOTPSecretHandler() http.HandlerFunc {
 
 		// let the requester know we're all good
 		res.WriteHeader(http.StatusAccepted)
-		if err := s.encoderDecoder.EncodeResponse(res,
-			&models.TOTPSecretRefreshResponse{TwoFactorSecret: user.TwoFactorSecret},
-		); err != nil {
+		if err := s.encoderDecoder.EncodeResponse(res, &models.TOTPSecretRefreshResponse{TwoFactorSecret: user.TwoFactorSecret}); err != nil {
 			s.logger.Error(err, "encoding response")
 		}
 	}
@@ -398,8 +397,8 @@ func (s *Service) UpdatePasswordHandler() http.HandlerFunc {
 		attachUsernameToSpan(span, user.Username)
 		logger := s.logger.WithValue("user", user.ID)
 
-		var err error
 		// hash the new password
+		var err error
 		user.HashedPassword, err = s.authenticator.HashPassword(ctx, input.NewPassword)
 		if err != nil {
 			logger.Error(err, "error hashing password")

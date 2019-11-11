@@ -30,14 +30,11 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		s := buildTestService()
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).
-			Return(nil)
-
+		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(nil)
 		s.encoderDecoder = ed
 
 		mh := &MockHTTPHandler{}
-		mh.On("ServeHTTP", mock.Anything, mock.Anything).
-			Return()
+		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
@@ -54,14 +51,11 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		s := buildTestService()
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).
-			Return(errors.New("blah"))
-
+		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		mh := &MockHTTPHandler{}
-		mh.On("ServeHTTP", mock.Anything, mock.Anything).
-			Return()
+		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
@@ -82,14 +76,11 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		s := buildTestService()
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).
-			Return(nil)
-
+		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(nil)
 		s.encoderDecoder = ed
 
 		mh := &MockHTTPHandler{}
-		mh.On("ServeHTTP", mock.Anything, mock.Anything).
-			Return()
+		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
@@ -106,14 +97,11 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		s := buildTestService()
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).
-			Return(errors.New("blah"))
-
+		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		mh := &MockHTTPHandler{}
-		mh.On("ServeHTTP", mock.Anything, mock.Anything).
-			Return()
+		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)

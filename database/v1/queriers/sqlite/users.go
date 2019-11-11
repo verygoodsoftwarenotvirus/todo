@@ -5,10 +5,11 @@ import (
 	"database/sql"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
 const (
@@ -51,7 +52,7 @@ func scanUser(scan database.Scanner) (*models.User, error) {
 }
 
 // scanUsers takes database rows and loads them into a slice of User structs
-func (s *Sqlite) scanUsers(rows *sql.Rows) ([]models.User, error) {
+func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, error) {
 	var list []models.User
 
 	for rows.Next() {
@@ -66,7 +67,9 @@ func (s *Sqlite) scanUsers(rows *sql.Rows) ([]models.User, error) {
 		return nil, err
 	}
 
-	s.logQueryBuildingError(rows.Close())
+	if err := rows.Close(); err != nil {
+		logger.Error(err, "closing rows")
+	}
 
 	return list, nil
 }
@@ -135,14 +138,11 @@ func (s *Sqlite) buildGetUserCountQuery(filter *models.QueryFilter) (query strin
 	builder := s.sqlBuilder.
 		Select(CountQuery).
 		From(usersTableName).
-		Where(squirrel.Eq{
-			"archived_on": nil,
-		})
+		Where(squirrel.Eq{"archived_on": nil})
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder)
 	}
-
 	query, args, err = builder.ToSql()
 
 	s.logQueryBuildingError(err)
@@ -164,9 +164,7 @@ func (s *Sqlite) buildGetUsersQuery(filter *models.QueryFilter) (query string, a
 	builder := s.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
-		Where(squirrel.Eq{
-			"archived_on": nil,
-		})
+		Where(squirrel.Eq{"archived_on": nil})
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder)
@@ -186,7 +184,7 @@ func (s *Sqlite) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mod
 		return nil, buildError(err, "querying for user")
 	}
 
-	userList, err := s.scanUsers(rows)
+	userList, err := scanUsers(s.logger, rows)
 	if err != nil {
 		return nil, fmt.Errorf("loading response from database: %w", err)
 	}
@@ -211,7 +209,8 @@ func (s *Sqlite) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mod
 // buildCreateUserQuery returns a SQL query (and arguments) that would create a given User
 func (s *Sqlite) buildCreateUserQuery(input *models.UserInput) (query string, args []interface{}) {
 	var err error
-	query, args, err = s.sqlBuilder.Insert(usersTableName).
+	query, args, err = s.sqlBuilder.
+		Insert(usersTableName).
 		Columns(
 			"username",
 			"hashed_password",
@@ -222,27 +221,26 @@ func (s *Sqlite) buildCreateUserQuery(input *models.UserInput) (query string, ar
 			input.Username,
 			input.Password,
 			input.TwoFactorSecret,
-			// NOTE: we always default is_admin to false, on the assumption that
-			// admins have DB access and will change that value via SQL query.
-			// There should also be no way to update a user via this structure
-			// such that they would have admin privileges
 			false,
 		).
 		ToSql()
+
+	// NOTE: we always default is_admin to false, on the assumption that
+	// admins have DB access and will change that value via SQL query.
+	// There should also be no way to update a user via this structure
+	// such that they would have admin privileges
 
 	s.logQueryBuildingError(err)
 
 	return query, args
 }
 
-// buildCreateUserQuery returns a SQL query (and arguments) that would create a given User
+// buildUserCreationTimeQuery returns a SQL query (and arguments) that would create a given User
 func (s *Sqlite) buildUserCreationTimeQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 	query, args, err = s.sqlBuilder.Select("created_on").
 		From(usersTableName).
-		Where(squirrel.Eq{
-			"id": userID,
-		}).
+		Where(squirrel.Eq{"id": userID}).
 		ToSql()
 
 	s.logQueryBuildingError(err)
@@ -256,7 +254,6 @@ func (s *Sqlite) CreateUser(ctx context.Context, input *models.UserInput) (*mode
 		Username:        input.Username,
 		TwoFactorSecret: input.TwoFactorSecret,
 	}
-
 	query, args := s.buildCreateUserQuery(input)
 
 	// create the user
@@ -279,7 +276,8 @@ func (s *Sqlite) CreateUser(ctx context.Context, input *models.UserInput) (*mode
 // buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row
 func (s *Sqlite) buildUpdateUserQuery(input *models.User) (query string, args []interface{}) {
 	var err error
-	query, args, err = s.sqlBuilder.Update(usersTableName).
+	query, args, err = s.sqlBuilder.
+		Update(usersTableName).
 		Set("username", input.Username).
 		Set("hashed_password", input.HashedPassword).
 		Set("two_factor_secret", input.TwoFactorSecret).
@@ -303,7 +301,8 @@ func (s *Sqlite) UpdateUser(ctx context.Context, input *models.User) error {
 
 func (s *Sqlite) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
-	query, args, err = s.sqlBuilder.Update(usersTableName).
+	query, args, err = s.sqlBuilder.
+		Update(usersTableName).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{"id": userID}).

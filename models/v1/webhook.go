@@ -62,7 +62,7 @@ type (
 		BelongsTo   uint64   `json:"-"`
 	}
 
-	// WebhookUpdateInput  represents what a user could set as input for updating a webhook
+	// WebhookUpdateInput represents what a user could set as input for updating a webhook
 	WebhookUpdateInput struct {
 		Name        string   `json:"name"`
 		ContentType string   `json:"content_type"`
@@ -99,11 +99,9 @@ func (w *Webhook) Update(input *WebhookUpdateInput) {
 	if input.Events != nil && len(input.Events) > 0 {
 		w.Events = input.Events
 	}
-
 	if input.DataTypes != nil && len(input.DataTypes) > 0 {
 		w.DataTypes = input.DataTypes
 	}
-
 	if input.Topics != nil && len(input.Topics) > 0 {
 		w.Topics = input.Topics
 	}

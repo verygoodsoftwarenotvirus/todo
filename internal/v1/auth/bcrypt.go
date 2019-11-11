@@ -2,9 +2,9 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"math"
 
-	"github.com/pkg/errors"
 	"github.com/pquerna/otp/totp"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"go.opencensus.io/trace"

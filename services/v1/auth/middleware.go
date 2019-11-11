@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"go.opencensus.io/trace"
 )
@@ -36,12 +36,13 @@ func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 		}
 
 		if user != nil {
-			req = req.WithContext(context.WithValue(
-				context.WithValue(ctx, models.UserKey, user),
-				models.UserIDKey,
-				user.ID,
-			))
-
+			req = req.WithContext(
+				context.WithValue(
+					context.WithValue(ctx, models.UserKey, user),
+					models.UserIDKey,
+					user.ID,
+				),
+			)
 			next.ServeHTTP(res, req)
 			return
 		}
@@ -70,9 +71,10 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 					if err != nil {
 						s.logger.Error(err, "error authenticating request")
 						http.Error(res, "fetching user", http.StatusInternalServerError)
+						// if we get here, then we just don't have a valid cookie, and we need to move on
 						return
 					}
-				} // if we get here, then we just don't have a valid cookie, and we need to move on
+				}
 			}
 
 			// if the cookie wasn't present, or didn't indicate who the user is
@@ -161,7 +163,6 @@ func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 		defer span.End()
 
 		x := new(models.UserLoginInput)
-
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
 			if x = parseLoginInputFromForm(req); x == nil {
 				s.logger.Error(err, "error encountered decoding request body")

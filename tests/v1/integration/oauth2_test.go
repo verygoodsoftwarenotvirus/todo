@@ -6,7 +6,7 @@ import (
 	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -86,7 +86,7 @@ func TestOAuth2Clients(test *testing.T) {
 		T.Run("should be creatable", func(t *testing.T) {
 			tctx := context.Background()
 
-			// CreateHandler oauth2Client
+			// Create oauth2Client
 			actual, err := testClient.CreateOAuth2Client(tctx, cookie, input)
 			checkValueAndError(t, actual, err)
 
@@ -111,7 +111,7 @@ func TestOAuth2Clients(test *testing.T) {
 		T.Run("it should be readable", func(t *testing.T) {
 			tctx := context.Background()
 
-			// CreateHandler oauth2Client
+			// Create oauth2Client
 			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
 			c, err := testClient.CreateOAuth2Client(tctx, cookie, input)
 			checkValueAndError(t, c, err)
@@ -133,7 +133,7 @@ func TestOAuth2Clients(test *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
 			tctx := context.Background()
 
-			// CreateHandler oauth2Client
+			// Create oauth2Client
 			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
 			premade, err := testClient.CreateOAuth2Client(tctx, cookie, input)
 			checkValueAndError(t, premade, err)
@@ -179,7 +179,7 @@ func TestOAuth2Clients(test *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
 			tctx := context.Background()
 
-			// CreateHandler oauth2Clients
+			// Create oauth2Clients
 			var expected []*models.OAuth2Client
 			for i := 0; i < 5; i++ {
 				input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)

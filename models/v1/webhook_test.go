@@ -22,8 +22,7 @@ func TestWebhook_Update(T *testing.T) {
 			DataTypes:   []string{"stuff"},
 			Topics:      []string{"blah"},
 		}
-
-		exampleInput := &WebhookUpdateInput{
+		expected := &Webhook{
 			Name:        "new name",
 			ContentType: "application/xml",
 			URL:         "https://blah.verygoodsoftwarenotvirus.ru",
@@ -33,7 +32,7 @@ func TestWebhook_Update(T *testing.T) {
 			Topics:      []string{"blah-blah"},
 		}
 
-		expected := &Webhook{
+		exampleInput := &WebhookUpdateInput{
 			Name:        "new name",
 			ContentType: "application/xml",
 			URL:         "https://blah.verygoodsoftwarenotvirus.ru",
@@ -62,7 +61,6 @@ func Test_buildErrorLogFunc(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		w := &Webhook{}
-
 		actual := buildErrorLogFunc(w, noop.ProvideNoopLogger())
 		actual(errors.New("blah"))
 	})

@@ -1,4 +1,4 @@
-//+build wireinject
+// +build wireinject
 
 package main
 
@@ -7,8 +7,8 @@ import (
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	auth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
-	config "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
-	encoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
 	metrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 	server "gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
@@ -39,16 +39,16 @@ func BuildServer(
 	wire.Build(
 		config.Providers,
 		auth.Providers,
-		// Server things
+		// server things,
 		server.Providers,
 		encoding.Providers,
 		httpserver.Providers,
-		// metrics
+		// metrics,
 		metrics.Providers,
-		// external libs
+		// external libs,
 		newsman.NewNewsman,
 		ProvideReporter,
-		// services
+		// services,
 		authservice.Providers,
 		usersservice.Providers,
 		itemsservice.Providers,

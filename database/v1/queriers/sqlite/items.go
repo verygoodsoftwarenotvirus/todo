@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"sync"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
@@ -29,8 +29,7 @@ var (
 	}
 )
 
-// scanItem takes a database Scanner (i.e. *sql.Row) and scans
-// the result into an Item struct
+// scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct
 func scanItem(scan database.Scanner) (*models.Item, error) {
 	x := &models.Item{}
 
@@ -81,8 +80,7 @@ func (s *Sqlite) buildGetItemQuery(itemID, userID uint64) (query string, args []
 		Where(squirrel.Eq{
 			"id":         itemID,
 			"belongs_to": userID,
-		}).
-		ToSql()
+		}).ToSql()
 
 	s.logQueryBuildingError(err)
 
@@ -135,7 +133,8 @@ var (
 func (s *Sqlite) buildGetAllItemsCountQuery() string {
 	allItemsCountQueryBuilder.Do(func() {
 		var err error
-		allItemsCountQuery, _, err = s.sqlBuilder.Select(CountQuery).
+		allItemsCountQuery, _, err = s.sqlBuilder.
+			Select(CountQuery).
 			From(itemsTableName).
 			Where(squirrel.Eq{"archived_on": nil}).
 			ToSql()
@@ -243,7 +242,7 @@ func (s *Sqlite) buildCreateItemQuery(input *models.Item) (query string, args []
 	return query, args
 }
 
-// buildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments.
+// buildItemCreationTimeQuery takes an item and returns a creation query for that item and the relevant arguments
 func (s *Sqlite) buildItemCreationTimeQuery(itemID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -252,6 +251,7 @@ func (s *Sqlite) buildItemCreationTimeQuery(itemID uint64) (query string, args [
 		From(itemsTableName).
 		Where(squirrel.Eq{"id": itemID}).
 		ToSql()
+
 	s.logQueryBuildingError(err)
 
 	return query, args
@@ -288,7 +288,8 @@ func (s *Sqlite) CreateItem(ctx context.Context, input *models.ItemCreationInput
 // buildUpdateItemQuery takes an item and returns an update SQL query, with the relevant query parameters
 func (s *Sqlite) buildUpdateItemQuery(input *models.Item) (query string, args []interface{}) {
 	var err error
-	query, args, err = s.sqlBuilder.Update(itemsTableName).
+	query, args, err = s.sqlBuilder.
+		Update(itemsTableName).
 		Set("name", input.Name).
 		Set("details", input.Details).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
@@ -333,6 +334,5 @@ func (s *Sqlite) buildArchiveItemQuery(itemID, userID uint64) (query string, arg
 func (s *Sqlite) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
 	query, args := s.buildArchiveItemQuery(itemID, userID)
 	_, err := s.db.ExecContext(ctx, query, args...)
-
 	return err
 }

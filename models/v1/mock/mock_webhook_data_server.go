@@ -3,14 +3,14 @@ package mock
 import (
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/stretchr/testify/mock"
 )
 
 var _ models.WebhookDataServer = (*WebhookDataServer)(nil)
 
-// WebhookDataServer describes a structure capable of serving traffic related to users
+// WebhookDataServer is a mocked models.WebhookDataServer for testing
 type WebhookDataServer struct {
 	mock.Mock
 }

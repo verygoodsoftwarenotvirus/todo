@@ -1,5 +1,4 @@
 /*
-Package postgres provides a Database implementation that is compatible with
-PostgreSQL instances
+Package postgres provides a Database implementation that is compatible with Postgres instances
 */
 package postgres

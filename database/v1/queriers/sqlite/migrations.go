@@ -3,9 +3,9 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/GuiaBolso/darwin"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -29,7 +29,7 @@ var (
 		},
 		{
 			Version:     2,
-			Description: "Add OAuth2 Clients table",
+			Description: "create oauth2_clients table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS oauth2_clients (
 				"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -48,12 +48,17 @@ var (
 		},
 		{
 			Version:     3,
-			Description: "Create items table",
+			Description: "create webhooks table",
 			Script: `
-			CREATE TABLE IF NOT EXISTS items (
+			CREATE TABLE IF NOT EXISTS webhooks (
 				"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 				"name" TEXT NOT NULL,
-				"details" TEXT,
+				"content_type" TEXT NOT NULL,
+				"url" TEXT NOT NULL,
+				"method" TEXT NOT NULL,
+				"events" TEXT NOT NULL,
+				"data_types" TEXT NOT NULL,
+				"topics" TEXT NOT NULL,
 				"created_on" INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				"updated_on" INTEGER,
 				"archived_on" INTEGER DEFAULT NULL,
@@ -63,19 +68,14 @@ var (
 		},
 		{
 			Version:     4,
-			Description: "Create webhooks table",
+			Description: "create items table",
 			Script: `
-			CREATE TABLE IF NOT EXISTS webhooks (
+			CREATE TABLE IF NOT EXISTS items (
 				"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-				"name" text NOT NULL,
-				"content_type" text NOT NULL,
-				"url" text NOT NULL,
-				"method" text NOT NULL,
-				"events" text NOT NULL,
-				"data_types" text NOT NULL,
-				"topics" text NOT NULL,
+				"name" CHARACTER VARYING NOT NULL,
+				"details" CHARACTER VARYING NOT NULL DEFAULT '',
 				"created_on" INTEGER NOT NULL DEFAULT (strftime('%s','now')),
-				"updated_on" INTEGER,
+				"updated_on" INTEGER DEFAULT NULL,
 				"archived_on" INTEGER DEFAULT NULL,
 				"belongs_to" INTEGER NOT NULL,
 				FOREIGN KEY(belongs_to) REFERENCES users(id)
@@ -96,7 +96,7 @@ func buildMigrationFunc(db *sql.DB) func() {
 }
 
 // Migrate migrates the database. It does so by invoking the migrateOnce function via sync.Once, so it should be
-// safe (as in idempotent, though not recommended) to call this function multiple times.
+// safe (as in idempotent, though not necessarily recommended) to call this function multiple times.
 func (s *Sqlite) Migrate(ctx context.Context) error {
 	s.logger.Info("migrating db")
 	if !s.IsReady(ctx) {
@@ -104,7 +104,6 @@ func (s *Sqlite) Migrate(ctx context.Context) error {
 	}
 
 	s.migrateOnce.Do(buildMigrationFunc(s.db))
-	s.logger.Debug("database migrated without error!")
 
 	return nil
 }

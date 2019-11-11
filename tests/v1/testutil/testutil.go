@@ -3,6 +3,7 @@ package testutil
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,11 +14,10 @@ import (
 	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/icrowley/fake"
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/moul/http2curl"
-	"github.com/pkg/errors"
 	"github.com/pquerna/otp/totp"
 )
 
@@ -31,6 +31,7 @@ func DetermineServiceURL() string {
 	if ta == "" {
 		panic("must provide target address!")
 	}
+
 	u, err := url.Parse(ta)
 	if err != nil {
 		panic(err)
@@ -43,7 +44,7 @@ func DetermineServiceURL() string {
 func EnsureServerIsUp(address string) {
 	var (
 		isDown           = true
-		interval         = time.Second // 2
+		interval         = time.Second
 		maxAttempts      = 50
 		numberOfAttempts = 0
 	)
@@ -65,7 +66,6 @@ func EnsureServerIsUp(address string) {
 // IsUp can check if an instance of our server is alive
 func IsUp(address string) bool {
 	uri := fmt.Sprintf("%s/_meta_/ready", address)
-
 	req, err := http.NewRequest(http.MethodGet, uri, nil)
 	if err != nil {
 		panic(err)
@@ -96,11 +96,11 @@ func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
 	}
 
 	// I had difficulty ensuring these values were unique, even when fake.Seed was called. Could've been fake's fault,
-	// could've been docker's fault. In either case, it wasn't worth the time to investigate and determine the culprit.
-	username := fake.UserName() + fake.HexColor() + fake.Country()
+	// could've been docker's fault. In either case, it wasn't worth the time to investigate and determine the culprit
+	username := fake.Username() + fake.HexColor() + fake.Country()
 	in := &models.UserInput{
 		Username: username,
-		Password: fake.Password(64, 128, true, true, true),
+		Password: fake.Password(true, true, true, true, true, 64),
 	}
 
 	ucr, err := c.CreateUser(context.Background(), in)
@@ -111,9 +111,10 @@ func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
 	}
 
 	u := &models.User{
-		ID:                    ucr.ID,
-		Username:              ucr.Username,
-		HashedPassword:        in.Password, // this is a dirty trick to reuse most of this model
+		ID:       ucr.ID,
+		Username: ucr.Username,
+		// this is a dirty trick to reuse most of this model,
+		HashedPassword:        in.Password,
 		TwoFactorSecret:       ucr.TwoFactorSecret,
 		PasswordLastChangedOn: ucr.PasswordLastChangedOn,
 		CreatedOn:             ucr.CreatedOn,
@@ -140,7 +141,6 @@ func buildURL(address string, parts ...string) string {
 
 func getLoginCookie(serviceURL string, u *models.User) (*http.Cookie, error) {
 	uri := buildURL(serviceURL, "users", "login")
-
 	code, err := totp.GenerateCode(strings.ToUpper(u.TwoFactorSecret), time.Now().UTC())
 	if err != nil {
 		return nil, fmt.Errorf("generating totp token: %w", err)
@@ -150,13 +150,14 @@ func getLoginCookie(serviceURL string, u *models.User) (*http.Cookie, error) {
 		http.MethodPost,
 		uri,
 		strings.NewReader(
-			fmt.Sprintf(`
-	{
-		"username": %q,
-		"password": %q,
-		"totp_token": %q
-	}
-			`,
+			fmt.Sprintf(
+				`
+					{
+						"username": %q,
+						"password": %q,
+						"totp_token": %q
+					}
+				`,
 				u.Username,
 				u.HashedPassword,
 				code,
@@ -208,8 +209,7 @@ func CreateObligatoryClient(serviceURL string, u *models.User) (*models.OAuth2Cl
 		"belongs_to": %d,
 		"scopes": ["*"]
 	}
-		`, u.Username, u.HashedPassword, code, u.ID),
-		),
+		`, u.Username, u.HashedPassword, code, u.ID)),
 	)
 	if err != nil {
 		return nil, err
@@ -217,11 +217,7 @@ func CreateObligatoryClient(serviceURL string, u *models.User) (*models.OAuth2Cl
 
 	cookie, err := getLoginCookie(serviceURL, u)
 	if err != nil || cookie == nil {
-		log.Fatalf(`
-cookie problems!
-	cookie == nil: %v
-			  err: %v
-	`, cookie == nil, err)
+		log.Fatalf("\ncookie problems!\n\tcookie == nil: %v\n\t\t\t  err: %v\n\t", cookie == nil, err)
 	}
 	req.AddCookie(cookie)
 	var o models.OAuth2Client
@@ -249,7 +245,5 @@ cookie problems!
 		log.Println(string(bdump))
 	}
 
-	err = json.NewDecoder(res.Body).Decode(&o)
-
-	return &o, nil
+	return &o, json.NewDecoder(res.Body).Decode(&o)
 }

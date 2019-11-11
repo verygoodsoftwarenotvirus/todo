@@ -5,10 +5,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
-
 	"go.opencensus.io/trace"
 )
 
@@ -41,7 +40,6 @@ func (s *Service) ListHandler() http.HandlerFunc {
 		// determine user ID
 		userID := s.userIDFetcher(req)
 		logger := s.logger.WithValue("user_id", userID)
-
 		attachUserIDToSpan(span, userID)
 
 		// fetch items from database
@@ -77,23 +75,23 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 
 		// check request context for parsed input struct
 		input, ok := ctx.Value(CreateMiddlewareCtxKey).(*models.ItemCreationInput)
-		logger = logger.WithValue("input", input)
 		if !ok {
 			logger.Info("valid input not attached to request")
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
+		logger = logger.WithValue("input", input)
 		input.BelongsTo = userID
 
 		// create item in database
 		x, err := s.itemDatabase.CreateItem(ctx, input)
 		if err != nil {
-			s.logger.Error(err, "error creating item")
+			logger.Error(err, "error creating item")
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		// notify relevant parties of new item
+		// notify relevant parties
 		s.itemCounter.Increment(ctx)
 		attachItemIDToSpan(span, x.ID)
 		s.reporter.Report(newsman.Event{
@@ -102,7 +100,7 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 			EventType: string(models.Create),
 		})
 
-		// encode response and peace
+		// encode our response and peace
 		res.WriteHeader(http.StatusCreated)
 		if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 			s.logger.Error(err, "encoding response")
@@ -116,11 +114,9 @@ func (s *Service) ReadHandler() http.HandlerFunc {
 		ctx, span := trace.StartSpan(req.Context(), "ReadHandler")
 		defer span.End()
 
-		// determine relevant info
+		// determine relevant information
 		userID := s.userIDFetcher(req)
 		itemID := s.itemIDFetcher(req)
-
-		// keep the aforementioned context in mind
 		logger := s.logger.WithValues(map[string]interface{}{
 			"user_id": userID,
 			"item_id": itemID,
@@ -139,7 +135,7 @@ func (s *Service) ReadHandler() http.HandlerFunc {
 			return
 		}
 
-		// encode response and peace
+		// encode our response and peace
 		if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 			s.logger.Error(err, "encoding response")
 		}
@@ -160,11 +156,9 @@ func (s *Service) UpdateHandler() http.HandlerFunc {
 			return
 		}
 
-		// determine relevant info
+		// determine relevant information
 		userID := s.userIDFetcher(req)
 		itemID := s.itemIDFetcher(req)
-
-		// keep aforementioned context in mind
 		logger := s.logger.WithValues(map[string]interface{}{
 			"user_id": userID,
 			"item_id": itemID,
@@ -200,7 +194,7 @@ func (s *Service) UpdateHandler() http.HandlerFunc {
 			EventType: string(models.Update),
 		})
 
-		// encode response and peace
+		// encode our response and peace
 		if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 			s.logger.Error(err, "encoding response")
 		}
@@ -216,8 +210,6 @@ func (s *Service) ArchiveHandler() http.HandlerFunc {
 		// determine relevant information
 		userID := s.userIDFetcher(req)
 		itemID := s.itemIDFetcher(req)
-
-		// keep aforementioned context in mind
 		logger := s.logger.WithValues(map[string]interface{}{
 			"item_id": itemID,
 			"user_id": userID,
@@ -244,7 +236,7 @@ func (s *Service) ArchiveHandler() http.HandlerFunc {
 			Topics:    []string{topicName},
 		})
 
-		// peace
+		// encode our response and peace
 		res.WriteHeader(http.StatusNoContent)
 	}
 }

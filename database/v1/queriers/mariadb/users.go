@@ -5,12 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/lib/pq"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
@@ -140,14 +138,11 @@ func (m *MariaDB) buildGetUserCountQuery(filter *models.QueryFilter) (query stri
 	builder := m.sqlBuilder.
 		Select(CountQuery).
 		From(usersTableName).
-		Where(squirrel.Eq{
-			"archived_on": nil,
-		})
+		Where(squirrel.Eq{"archived_on": nil})
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder)
 	}
-
 	query, args, err = builder.ToSql()
 
 	m.logQueryBuildingError(err)
@@ -169,9 +164,7 @@ func (m *MariaDB) buildGetUsersQuery(filter *models.QueryFilter) (query string, 
 	builder := m.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
-		Where(squirrel.Eq{
-			"archived_on": nil,
-		})
+		Where(squirrel.Eq{"archived_on": nil})
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder)
@@ -216,7 +209,8 @@ func (m *MariaDB) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mo
 // buildCreateUserQuery returns a SQL query (and arguments) that would create a given User
 func (m *MariaDB) buildCreateUserQuery(input *models.UserInput) (query string, args []interface{}) {
 	var err error
-	query, args, err = m.sqlBuilder.Insert(usersTableName).
+	query, args, err = m.sqlBuilder.
+		Insert(usersTableName).
 		Columns(
 			"username",
 			"hashed_password",
@@ -228,28 +222,27 @@ func (m *MariaDB) buildCreateUserQuery(input *models.UserInput) (query string, a
 			input.Username,
 			input.Password,
 			input.TwoFactorSecret,
-			// NOTE: we always default is_admin to false, on the assumption that
-			// admins have DB access and will change that value via SQL query.
-			// There should also be no way to update a user via this structure
-			// such that they would have admin privileges
 			false,
 			squirrel.Expr(CurrentUnixTimeQuery),
 		).
 		ToSql()
+
+	// NOTE: we always default is_admin to false, on the assumption that
+	// admins have DB access and will change that value via SQL query.
+	// There should also be no way to update a user via this structure
+	// such that they would have admin privileges
 
 	m.logQueryBuildingError(err)
 
 	return query, args
 }
 
-// buildCreateUserQuery returns a SQL query (and arguments) that would create a given User
+// buildUserCreationTimeQuery returns a SQL query (and arguments) that would create a given User
 func (m *MariaDB) buildUserCreationTimeQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 	query, args, err = m.sqlBuilder.Select("created_on").
 		From(usersTableName).
-		Where(squirrel.Eq{
-			"id": userID,
-		}).
+		Where(squirrel.Eq{"id": userID}).
 		ToSql()
 
 	m.logQueryBuildingError(err)
@@ -263,20 +256,12 @@ func (m *MariaDB) CreateUser(ctx context.Context, input *models.UserInput) (*mod
 		Username:        input.Username,
 		TwoFactorSecret: input.TwoFactorSecret,
 	}
-
 	query, args := m.buildCreateUserQuery(input)
 
 	// create the user
 	res, err := m.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		switch e := err.(type) {
-		case *pq.Error:
-			if e.Code == pq.ErrorCode("23505") {
-				return nil, dbclient.ErrUserExists
-			}
-		default:
-			return nil, fmt.Errorf("error executing user creation query: %w", err)
-		}
+		return nil, fmt.Errorf("error executing user creation query: %w", err)
 	}
 
 	// fetch the last inserted ID
@@ -293,7 +278,8 @@ func (m *MariaDB) CreateUser(ctx context.Context, input *models.UserInput) (*mod
 // buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row
 func (m *MariaDB) buildUpdateUserQuery(input *models.User) (query string, args []interface{}) {
 	var err error
-	query, args, err = m.sqlBuilder.Update(usersTableName).
+	query, args, err = m.sqlBuilder.
+		Update(usersTableName).
 		Set("username", input.Username).
 		Set("hashed_password", input.HashedPassword).
 		Set("two_factor_secret", input.TwoFactorSecret).
@@ -317,7 +303,8 @@ func (m *MariaDB) UpdateUser(ctx context.Context, input *models.User) error {
 
 func (m *MariaDB) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
-	query, args, err = m.sqlBuilder.Update(usersTableName).
+	query, args, err = m.sqlBuilder.
+		Update(usersTableName).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{"id": userID}).

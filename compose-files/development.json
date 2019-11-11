@@ -1,12 +1,13 @@
 {
+  "version": "3.3",
   "services": {
     "database": {
+      "image": "postgres:latest",
       "environment": {
         "POSTGRES_DB": "todo",
         "POSTGRES_PASSWORD": "hunter2",
         "POSTGRES_USER": "dbuser"
       },
-      "image": "postgres:latest",
       "logging": {
         "driver": "none"
       },
@@ -16,14 +17,14 @@
     },
     "grafana": {
       "image": "grafana/grafana",
-      "links": [
-        "prometheus"
-      ],
       "logging": {
         "driver": "none"
       },
       "ports": [
         "3000:3000"
+      ],
+      "links": [
+        "prometheus"
       ],
       "volumes": [
         {
@@ -39,7 +40,6 @@
       ]
     },
     "prometheus": {
-      "command": "--config.file=/etc/prometheus/config.yaml --storage.tsdb.path=/prometheus",
       "image": "quay.io/prometheus/prometheus:v2.0.0",
       "logging": {
         "driver": "none"
@@ -53,17 +53,10 @@
           "target": "/etc/prometheus/config.yaml",
           "type": "bind"
         }
-      ]
+      ],
+      "command": "--config.file=/etc/prometheus/config.yaml --storage.tsdb.path=/prometheus"
     },
     "todo-server": {
-      "build": {
-        "context": "../",
-        "dockerfile": "dockerfiles/development.Dockerfile"
-      },
-      "depends_on": [
-        "prometheus",
-        "grafana"
-      ],
       "environment": {
         "CONFIGURATION_FILEPATH": "config_files/development.toml",
         "DOCKER": "true",
@@ -72,12 +65,12 @@
         "JAEGER_SAMPLER_MANAGER_HOST_PORT": "tracing-server:5778",
         "JAEGER_SERVICE_NAME": "todo-server"
       },
+      "ports": [
+        "80:8888"
+      ],
       "links": [
         "tracing-server",
         "database"
-      ],
-      "ports": [
-        "80:8888"
       ],
       "volumes": [
         {
@@ -85,6 +78,14 @@
           "target": "/frontend",
           "type": "bind"
         }
+      ],
+      "build": {
+        "context": "../",
+        "dockerfile": "dockerfiles/development.Dockerfile"
+      },
+      "depends_on": [
+        "prometheus",
+        "grafana"
       ]
     },
     "tracing-server": {
@@ -98,6 +99,5 @@
         "16686:16686"
       ]
     }
-  },
-  "version": "3.3"
+  }
 }

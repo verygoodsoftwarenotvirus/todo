@@ -55,7 +55,7 @@ func TestPostgres_IsReady(T *testing.T) {
 	})
 }
 
-func Test_logQueryBuildingError(T *testing.T) {
+func TestPostgres_logQueryBuildingError(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {

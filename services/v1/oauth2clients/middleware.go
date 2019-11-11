@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"go.opencensus.io/trace"
 )
@@ -63,9 +63,7 @@ func (s *Service) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.
 	// determine the scope
 	scope := determineScope(req)
 	hasScope := c.HasScope(scope)
-
-	logger = logger.WithValue("scope", scope).
-		WithValue("scopes", strings.Join(c.Scopes, scopesSeparator))
+	logger = logger.WithValue("scope", scope).WithValue("scopes", strings.Join(c.Scopes, scopesSeparator))
 
 	if !hasScope {
 		logger.Info("rejecting client for invalid scope")

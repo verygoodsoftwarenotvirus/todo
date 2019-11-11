@@ -11,9 +11,9 @@ require (
 	github.com/Masterminds/squirrel v1.1.0
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc
+	github.com/brianvoe/gofakeit v3.18.0+incompatible
 	github.com/corpix/uarand v0.1.0 // indirect
 	github.com/cznic/ql v1.2.0 // indirect
-	github.com/dave/jennifer v1.3.0 // indirect
 	github.com/emicklei/hazana v1.6.1
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-chi/cors v1.0.0
@@ -25,7 +25,6 @@ require (
 	github.com/lib/pq v1.1.1
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/moul/http2curl v1.0.0
-	github.com/pkg/errors v0.8.1
 	github.com/pquerna/otp v1.2.0
 	github.com/rs/zerolog v1.14.3 // indirect
 	github.com/spf13/afero v1.1.2

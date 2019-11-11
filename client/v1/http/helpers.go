@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"reflect"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
 // argIsNotPointer checks an argument and returns whether or not it is a pointer

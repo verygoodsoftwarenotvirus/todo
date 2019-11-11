@@ -8,12 +8,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth/mock"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -39,10 +39,9 @@ func buildTestService(t *testing.T) *Service {
 		encoderDecoder:       &mockencoding.EncoderDecoder{},
 		authenticator:        &mockauth.Authenticator{},
 		urlClientIDExtractor: func(req *http.Request) uint64 { return 0 },
-
-		oauth2ClientCounter: &mockmetrics.UnitCounter{},
-		tokenStore:          tokenStore,
-		oauth2Handler:       server,
+		oauth2ClientCounter:  &mockmetrics.UnitCounter{},
+		tokenStore:           tokenStore,
+		oauth2Handler:        server,
 	}
 
 	return service
@@ -54,10 +53,14 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		expected := uint64(0)
 		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2Clients", mock.Anything).
-			Return([]*models.OAuth2Client{}, nil)
-		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2ClientCount", mock.Anything).
-			Return(expected, nil)
+		mockDB.OAuth2ClientDataManager.On(
+			"GetAllOAuth2Clients",
+			mock.Anything,
+		).Return([]*models.OAuth2Client{}, nil)
+		mockDB.OAuth2ClientDataManager.On(
+			"GetAllOAuth2ClientCount",
+			mock.Anything,
+		).Return(expected, nil)
 
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", expected).Return()
@@ -85,10 +88,14 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 	T.Run("with error providing counter", func(t *testing.T) {
 		expected := uint64(0)
 		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2Clients", mock.Anything).
-			Return([]*models.OAuth2Client{}, nil)
-		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2ClientCount", mock.Anything).
-			Return(expected, nil)
+		mockDB.OAuth2ClientDataManager.On(
+			"GetAllOAuth2Clients",
+			mock.Anything,
+		).Return([]*models.OAuth2Client{}, nil)
+		mockDB.OAuth2ClientDataManager.On(
+			"GetAllOAuth2ClientCount",
+			mock.Anything,
+		).Return(expected, nil)
 
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", expected).Return()
@@ -116,10 +123,14 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 	T.Run("with error fetching oauth2 clients", func(t *testing.T) {
 		expected := uint64(0)
 		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2Clients", mock.Anything).
-			Return([]*models.OAuth2Client{}, errors.New("blah"))
-		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2ClientCount", mock.Anything).
-			Return(expected, errors.New("blah"))
+		mockDB.OAuth2ClientDataManager.On(
+			"GetAllOAuth2Clients",
+			mock.Anything,
+		).Return([]*models.OAuth2Client{}, errors.New("blah"))
+		mockDB.OAuth2ClientDataManager.On(
+			"GetAllOAuth2ClientCount",
+			mock.Anything,
+		).Return(expected, errors.New("blah"))
 
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", expected).Return()
@@ -140,6 +151,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 			&mockencoding.EncoderDecoder{},
 			ucp,
 		)
+
 		assert.Error(t, err)
 		assert.Nil(t, service)
 	})
@@ -152,13 +164,15 @@ func Test_clientStore_GetByID(T *testing.T) {
 		exampleID := "blah"
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.
-			On("GetOAuth2ClientByClientID", mock.Anything, exampleID).
-			Return(&models.OAuth2Client{ClientID: exampleID}, nil)
+		mockDB.OAuth2ClientDataManager.On(
+			"GetOAuth2ClientByClientID",
+			mock.Anything,
+			exampleID,
+		).Return(&models.OAuth2Client{ClientID: exampleID}, nil)
 
 		c := &clientStore{database: mockDB}
-
 		actual, err := c.GetByID(exampleID)
+
 		assert.NoError(t, err)
 		assert.Equal(t, exampleID, actual.GetID())
 	})
@@ -167,13 +181,15 @@ func Test_clientStore_GetByID(T *testing.T) {
 		exampleID := "blah"
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.
-			On("GetOAuth2ClientByClientID", mock.Anything, exampleID).
-			Return((*models.OAuth2Client)(nil), sql.ErrNoRows)
+		mockDB.OAuth2ClientDataManager.On(
+			"GetOAuth2ClientByClientID",
+			mock.Anything,
+			exampleID,
+		).Return((*models.OAuth2Client)(nil), sql.ErrNoRows)
 
 		c := &clientStore{database: mockDB}
-
 		_, err := c.GetByID(exampleID)
+
 		assert.Error(t, err)
 	})
 
@@ -181,13 +197,15 @@ func Test_clientStore_GetByID(T *testing.T) {
 		exampleID := "blah"
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.
-			On("GetOAuth2ClientByClientID", mock.Anything, exampleID).
-			Return((*models.OAuth2Client)(nil), errors.New(exampleID))
+		mockDB.OAuth2ClientDataManager.On(
+			"GetOAuth2ClientByClientID",
+			mock.Anything,
+			exampleID,
+		).Return((*models.OAuth2Client)(nil), errors.New(exampleID))
 
 		c := &clientStore{database: mockDB}
-
 		_, err := c.GetByID(exampleID)
+
 		assert.Error(t, err)
 	})
 }
@@ -197,11 +215,14 @@ func TestService_HandleAuthorizeRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
-		moah := &mockOauth2Handler{}
-		moah.On("HandleAuthorizeRequest", mock.Anything, mock.Anything).
-			Return(nil)
-		s.oauth2Handler = moah
 
+		moah := &mockOauth2Handler{}
+		moah.On(
+			"HandleAuthorizeRequest",
+			mock.Anything,
+			mock.Anything,
+		).Return(nil)
+		s.oauth2Handler = moah
 		req, res := buildRequest(t), httptest.NewRecorder()
 
 		assert.NoError(t, s.HandleAuthorizeRequest(res, req))
@@ -213,11 +234,14 @@ func TestService_HandleTokenRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
-		moah := &mockOauth2Handler{}
-		moah.On("HandleTokenRequest", mock.Anything, mock.Anything).
-			Return(nil)
-		s.oauth2Handler = moah
 
+		moah := &mockOauth2Handler{}
+		moah.On(
+			"HandleTokenRequest",
+			mock.Anything,
+			mock.Anything,
+		).Return(nil)
+		s.oauth2Handler = moah
 		req, res := buildRequest(t), httptest.NewRecorder()
 
 		assert.NoError(t, s.HandleTokenRequest(res, req))

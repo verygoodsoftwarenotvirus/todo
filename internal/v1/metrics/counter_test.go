@@ -59,6 +59,6 @@ func Test_opencensusCounter_Decrement(T *testing.T) {
 func TestProvideUnitCounterProvider(T *testing.T) {
 	T.Parallel()
 
-	// "obligatory"
+	// obligatory
 	assert.NotNil(T, ProvideUnitCounterProvider())
 }

@@ -11,10 +11,10 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	mencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	mmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -26,11 +26,9 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
-		exampleUser := &models.User{
-			Username: "username",
-		}
+		exampleUser := &models.User{Username: "username"}
 
-		md := &mmodels.UserDataManager{}
+		md := &mockmodels.UserDataManager{}
 		md.On("GetUser", mock.Anything, mock.Anything).Return(exampleUser, nil)
 		s.userDB = md
 
@@ -53,13 +51,10 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 
 	T.Run("with nil user", func(t *testing.T) {
 		s := buildTestService(t)
-		exampleUser := &models.User{
-			Username: "username",
-		}
 
-		md := &mmodels.UserDataManager{}
-		md.On("GetUser", mock.Anything, mock.Anything).
-			Return((*models.User)(nil), nil)
+		exampleUser := &models.User{Username: "username"}
+		md := &mockmodels.UserDataManager{}
+		md.On("GetUser", mock.Anything, mock.Anything).Return((*models.User)(nil), nil)
 		s.userDB = md
 
 		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
@@ -111,13 +106,11 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		}
 
 		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).
-			Return(exampleClient, nil)
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).Return(exampleClient, nil)
 		s.oauth2ClientsService = ocv
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).
-			Return(exampleUser, nil)
+		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).Return(exampleUser, nil)
 		s.userDB = mockDB
 
 		h := &MockHTTPHandler{}
@@ -144,13 +137,11 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		}
 
 		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).
-			Return(exampleClient, nil)
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).Return(exampleClient, nil)
 		s.oauth2ClientsService = ocv
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).
-			Return(exampleUser, nil)
+		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).Return(exampleUser, nil)
 		s.userDB = mockDB
 
 		h := &MockHTTPHandler{}
@@ -168,14 +159,10 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 
 	T.Run("with error fetching client but able to use cookie", func(t *testing.T) {
 		s := buildTestService(t)
-		exampleUser := &models.User{
-			ID:       1,
-			Username: "username",
-		}
 
+		exampleUser := &models.User{ID: 1, Username: "username"}
 		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).
-			Return((*models.OAuth2Client)(nil), errors.New("blah"))
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).Return((*models.OAuth2Client)(nil), errors.New("blah"))
 		s.oauth2ClientsService = ocv
 
 		h := &MockHTTPHandler{}
@@ -191,8 +178,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		req.AddCookie(c)
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleUser.ID).
-			Return(exampleUser, nil)
+		mockDB.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
 		s.userDB = mockDB
 
 		s.AuthenticationMiddleware(true)(h).ServeHTTP(res, req)
@@ -200,11 +186,8 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 
 	T.Run("able to use cookies but error fetching user info", func(t *testing.T) {
 		s := buildTestService(t)
-		exampleUser := &models.User{
-			ID:       1,
-			Username: "username",
-		}
 
+		exampleUser := &models.User{ID: 1, Username: "username"}
 		exampleClient := &models.OAuth2Client{
 			ClientID:     "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
 			ClientSecret: "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
@@ -212,13 +195,11 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		}
 
 		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).
-			Return(exampleClient, nil)
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).Return(exampleClient, nil)
 		s.oauth2ClientsService = ocv
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).
-			Return((*models.User)(nil), errors.New("blah"))
+		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).Return((*models.User)(nil), errors.New("blah"))
 		s.userDB = mockDB
 
 		h := &MockHTTPHandler{}
@@ -249,13 +230,11 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		}
 
 		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).
-			Return(exampleClient, nil)
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).Return(exampleClient, nil)
 		s.oauth2ClientsService = ocv
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).
-			Return((*models.User)(nil), errors.New("blah"))
+		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).Return((*models.User)(nil), errors.New("blah"))
 		s.userDB = mockDB
 
 		h := &MockHTTPHandler{}
@@ -275,8 +254,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		s := buildTestService(t)
 
 		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).
-			Return((*models.OAuth2Client)(nil), errors.New("blah"))
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).Return((*models.OAuth2Client)(nil), errors.New("blah"))
 		s.oauth2ClientsService = ocv
 
 		h := &MockHTTPHandler{}
@@ -292,8 +270,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		req.AddCookie(c)
 
 		cb := &mockCookieEncoderDecoder{}
-		cb.On("Decode", CookieName, mock.Anything, mock.Anything).
-			Return(errors.New("blah"))
+		cb.On("Decode", CookieName, mock.Anything, mock.Anything).Return(errors.New("blah"))
 		s.cookieManager = cb
 
 		s.AuthenticationMiddleware(true)(h).ServeHTTP(res, req)
@@ -303,8 +280,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		s := buildTestService(t)
 
 		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).
-			Return((*models.OAuth2Client)(nil), nil)
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).Return((*models.OAuth2Client)(nil), nil)
 		s.oauth2ClientsService = ocv
 
 		h := &MockHTTPHandler{}
@@ -313,9 +289,10 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
-		res := httptest.NewRecorder()
 
+		res := httptest.NewRecorder()
 		s.AuthenticationMiddleware(false)(h).ServeHTTP(res, req)
+
 		assert.Equal(t, res.Code, http.StatusUnauthorized)
 	})
 
@@ -330,13 +307,11 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		}
 
 		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).
-			Return(exampleClient, nil)
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).Return(exampleClient, nil)
 		s.oauth2ClientsService = ocv
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).
-			Return((*models.User)(nil), nil) // lolwut
+		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).Return((*models.User)(nil), nil)
 		s.userDB = mockDB
 
 		h := &MockHTTPHandler{}
@@ -345,8 +320,8 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
-		res := httptest.NewRecorder()
 
+		res := httptest.NewRecorder()
 		s.AuthenticationMiddleware(false)(h).ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
@@ -435,13 +410,11 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 		res := httptest.NewRecorder()
 
 		s := buildTestService(t)
-		ed := &mencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).
-			Return(errors.New("blah"))
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		ms := &MockHTTPHandler{}
-
 		h := s.UserLoginInputMiddleware(ms)
 		h.ServeHTTP(res, req)
 
@@ -467,13 +440,13 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 		)
 		require.NoError(t, err)
 		require.NotNil(t, req)
+
 		res := httptest.NewRecorder()
 		req.Header.Set("Content-type", "application/x-www-form-urlencoded")
 
 		s := buildTestService(t)
-		ed := &mencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).
-			Return(errors.New("blah"))
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		ms := &MockHTTPHandler{}
@@ -493,8 +466,8 @@ func TestService_AdminMiddleware(T *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
-		res := httptest.NewRecorder()
 
+		res := httptest.NewRecorder()
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),

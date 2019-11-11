@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -26,9 +26,7 @@ func buildTestService(t *testing.T) *Service {
 
 	expectedUserCount := uint64(123)
 	mockDB := database.BuildMockDatabase()
-	mockDB.UserDataManager.
-		On("GetUserCount", mock.Anything, (*models.QueryFilter)(nil)).
-		Return(expectedUserCount, nil)
+	mockDB.UserDataManager.On("GetUserCount", mock.Anything, (*models.QueryFilter)(nil)).Return(expectedUserCount, nil)
 
 	uc := &mockmetrics.UnitCounter{}
 	uc.On("IncrementBy", mock.Anything)
@@ -61,8 +59,7 @@ func TestProvideUsersService(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		mockUserCount := uint64(0)
 		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).
-			Return(mockUserCount, nil)
+		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).Return(mockUserCount, nil)
 
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", mockUserCount).Return()
@@ -92,8 +89,7 @@ func TestProvideUsersService(T *testing.T) {
 	T.Run("with nil userIDFetcher", func(t *testing.T) {
 		mockUserCount := uint64(0)
 		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).
-			Return(mockUserCount, nil)
+		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).Return(mockUserCount, nil)
 
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", mockUserCount).Return()
@@ -123,8 +119,7 @@ func TestProvideUsersService(T *testing.T) {
 	T.Run("with error initializing counter", func(t *testing.T) {
 		mockUserCount := uint64(0)
 		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).
-			Return(mockUserCount, nil)
+		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).Return(mockUserCount, nil)
 
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", mockUserCount).Return()
@@ -154,8 +149,7 @@ func TestProvideUsersService(T *testing.T) {
 	T.Run("with error getting user count", func(t *testing.T) {
 		mockUserCount := uint64(0)
 		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).
-			Return(mockUserCount, errors.New("blah"))
+		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).Return(mockUserCount, errors.New("blah"))
 
 		uc := &mockmetrics.UnitCounter{}
 		var ucp metrics.UnitCounterProvider = func(
@@ -176,6 +170,7 @@ func TestProvideUsersService(T *testing.T) {
 			ucp,
 			nil,
 		)
+
 		assert.Error(t, err)
 		assert.Nil(t, service)
 	})

@@ -45,8 +45,7 @@ func TestProvideWebhooksService(T *testing.T) {
 		}
 
 		dm := &mockmodels.WebhookDataManager{}
-		dm.On("GetAllWebhooksCount", mock.Anything).
-			Return(expectation, nil)
+		dm.On("GetAllWebhooksCount", mock.Anything).Return(expectation, nil)
 
 		actual, err := ProvideWebhooksService(
 			context.Background(),
@@ -97,8 +96,7 @@ func TestProvideWebhooksService(T *testing.T) {
 		}
 
 		dm := &mockmodels.WebhookDataManager{}
-		dm.On("GetAllWebhooksCount", mock.Anything).
-			Return(expectation, errors.New("blah"))
+		dm.On("GetAllWebhooksCount", mock.Anything).Return(expectation, errors.New("blah"))
 
 		actual, err := ProvideWebhooksService(
 			context.Background(),

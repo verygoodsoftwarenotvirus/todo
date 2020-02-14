@@ -75,8 +75,9 @@ func TestPostgres_buildGetWebhookQuery(T *testing.T) {
 func TestPostgres_GetWebhook(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE belongs_to = $1 AND id = $2"
+
 	T.Run("happy path", func(t *testing.T) {
-		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE belongs_to = $1 AND id = $2"
 		expected := &models.Webhook{
 			ID:        123,
 			Name:      "name",
@@ -99,7 +100,6 @@ func TestPostgres_GetWebhook(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
-		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE belongs_to = $1 AND id = $2"
 		expected := &models.Webhook{
 			ID:        123,
 			Name:      "name",
@@ -123,7 +123,6 @@ func TestPostgres_GetWebhook(T *testing.T) {
 	})
 
 	T.Run("with error from database", func(t *testing.T) {
-		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE belongs_to = $1 AND id = $2"
 		expected := &models.Webhook{
 			ID:   123,
 			Name: "name",
@@ -144,7 +143,6 @@ func TestPostgres_GetWebhook(T *testing.T) {
 
 	T.Run("with invalid response from database", func(t *testing.T) {
 		ctx := context.Background()
-		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE belongs_to = $1 AND id = $2"
 		expected := &models.Webhook{
 			ID:        123,
 			Name:      "name",
@@ -186,8 +184,9 @@ func TestPostgres_buildGetWebhookCountQuery(T *testing.T) {
 func TestPostgres_GetWebhookCount(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
+
 	T.Run("happy path", func(t *testing.T) {
-		expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
 		expected := uint64(321)
 		expectedUserID := uint64(321)
 
@@ -204,7 +203,6 @@ func TestPostgres_GetWebhookCount(T *testing.T) {
 	})
 
 	T.Run("with error from database", func(t *testing.T) {
-		expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
 		expectedUserID := uint64(321)
 
 		p, mockDB := buildTestService(t)
@@ -235,8 +233,9 @@ func TestPostgres_buildGetAllWebhooksCountQuery(T *testing.T) {
 func TestPostgres_GetAllWebhooksCount(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
+
 	T.Run("happy path", func(t *testing.T) {
-		expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
 		expected := uint64(321)
 
 		p, mockDB := buildTestService(t)
@@ -251,8 +250,6 @@ func TestPostgres_GetAllWebhooksCount(T *testing.T) {
 	})
 
 	T.Run("with error from database", func(t *testing.T) {
-		expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
-
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(errors.New("blah"))
@@ -280,9 +277,10 @@ func TestPostgres_buildGetAllWebhooksQuery(T *testing.T) {
 func TestPostgres_GetAllWebhooks(T *testing.T) {
 	T.Parallel()
 
+	expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+
 	T.Run("happy path", func(t *testing.T) {
 		expectedCount := uint64(321)
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 		expectedCountQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
@@ -314,7 +312,6 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -329,7 +326,6 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -362,7 +358,6 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 
 	T.Run("with error fetching count", func(t *testing.T) {
 		expectedCount := uint64(321)
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 		expectedCountQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
@@ -396,9 +391,10 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 func TestPostgres_GetAllWebhooksForUser(T *testing.T) {
 	T.Parallel()
 
+	expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+
 	T.Run("happy path", func(t *testing.T) {
 		exampleUser := &models.User{ID: 123}
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 		expected := []models.Webhook{
 			{
 				ID:   123,
@@ -422,7 +418,6 @@ func TestPostgres_GetAllWebhooksForUser(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		exampleUser := &models.User{ID: 123}
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -438,7 +433,6 @@ func TestPostgres_GetAllWebhooksForUser(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		exampleUser := &models.User{ID: 123}
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -453,7 +447,6 @@ func TestPostgres_GetAllWebhooksForUser(T *testing.T) {
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		exampleUser := &models.User{ID: 123}
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 		expected := []models.Webhook{
 			{
 				ID:   123,
@@ -493,10 +486,11 @@ func TestPostgres_buildGetWebhooksQuery(T *testing.T) {
 func TestPostgres_GetWebhooks(T *testing.T) {
 	T.Parallel()
 
+	expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+
 	T.Run("happy path", func(t *testing.T) {
 		exampleUserID := uint64(123)
 		expectedCount := uint64(321)
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 		expectedCountQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
@@ -530,7 +524,6 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		exampleUserID := uint64(123)
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -546,7 +539,6 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		exampleUserID := uint64(123)
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -561,7 +553,6 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		exampleUserID := uint64(123)
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.Webhook{
 			ID:   123,
 			Name: "name",
@@ -581,7 +572,6 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 	T.Run("with error fetching count", func(t *testing.T) {
 		exampleUserID := uint64(123)
 		expectedCount := uint64(321)
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 		expectedCountQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{

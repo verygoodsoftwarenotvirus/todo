@@ -63,8 +63,9 @@ func TestPostgres_buildGetItemQuery(T *testing.T) {
 func TestPostgres_GetItem(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE belongs_to = $1 AND id = $2"
+
 	T.Run("happy path", func(t *testing.T) {
-		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE belongs_to = $1 AND id = $2"
 		expected := &models.Item{
 			ID: 123,
 		}
@@ -83,7 +84,6 @@ func TestPostgres_GetItem(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
-		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE belongs_to = $1 AND id = $2"
 		expected := &models.Item{
 			ID: 123,
 		}
@@ -192,9 +192,10 @@ func TestPostgres_buildGetItemsQuery(T *testing.T) {
 func TestPostgres_GetItems(T *testing.T) {
 	T.Parallel()
 
+	expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
+
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(123)
-		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
 		expectedCountQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
 		expectedItem := &models.Item{
 			ID: 321,
@@ -228,7 +229,6 @@ func TestPostgres_GetItems(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		expectedUserID := uint64(123)
-		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -245,7 +245,6 @@ func TestPostgres_GetItems(T *testing.T) {
 
 	T.Run("with error executing read query", func(t *testing.T) {
 		expectedUserID := uint64(123)
-		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -264,7 +263,6 @@ func TestPostgres_GetItems(T *testing.T) {
 		expected := &models.Item{
 			ID: 321,
 		}
-		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -283,7 +281,6 @@ func TestPostgres_GetItems(T *testing.T) {
 		expected := &models.Item{
 			ID: 321,
 		}
-		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
 		expectedCountQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
 
 		p, mockDB := buildTestService(t)
@@ -304,12 +301,13 @@ func TestPostgres_GetItems(T *testing.T) {
 func TestPostgres_GetAllItemsForUser(T *testing.T) {
 	T.Parallel()
 
+	expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1"
+
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(123)
 		expectedItem := &models.Item{
 			ID: 321,
 		}
-		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -327,7 +325,6 @@ func TestPostgres_GetAllItemsForUser(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		expectedUserID := uint64(123)
-		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -344,7 +341,6 @@ func TestPostgres_GetAllItemsForUser(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		expectedUserID := uint64(123)
-		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -363,7 +359,6 @@ func TestPostgres_GetAllItemsForUser(T *testing.T) {
 		exampleItem := &models.Item{
 			ID: 321,
 		}
-		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = $1"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).

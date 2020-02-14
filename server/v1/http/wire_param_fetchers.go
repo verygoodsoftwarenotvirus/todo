@@ -65,7 +65,11 @@ func ProvideOAuth2ServiceClientIDFetcher(logger logging.Logger) oauth2clients.Cl
 
 // UserIDFetcher fetches a user ID from a request routed by chi.
 func UserIDFetcher(req *http.Request) uint64 {
-	return req.Context().Value(models.UserIDKey).(uint64)
+	if userID, ok := req.Context().Value(models.UserIDKey).(uint64); ok {
+		return userID
+	} else {
+		return 0
+	}
 }
 
 // buildChiUserIDFetcher builds a function that fetches a Username from a request routed by chi.

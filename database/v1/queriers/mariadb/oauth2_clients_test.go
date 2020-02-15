@@ -67,6 +67,8 @@ func TestMariaDB_buildGetOAuth2ClientByClientIDQuery(T *testing.T) {
 func TestMariaDB_GetOAuth2ClientByClientID(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL AND client_id = ?"
+
 	T.Run("happy path", func(t *testing.T) {
 		exampleClientID := "EXAMPLE"
 		expectedUserID := uint64(321)
@@ -76,8 +78,6 @@ func TestMariaDB_GetOAuth2ClientByClientID(T *testing.T) {
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
-
-		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL AND client_id = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -93,7 +93,6 @@ func TestMariaDB_GetOAuth2ClientByClientID(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		exampleClientID := "EXAMPLE"
-		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL AND client_id = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -117,8 +116,6 @@ func TestMariaDB_GetOAuth2ClientByClientID(T *testing.T) {
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
-
-		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL AND client_id = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -148,6 +145,8 @@ func TestMariaDB_buildGetAllOAuth2ClientsQuery(T *testing.T) {
 func TestMariaDB_GetAllOAuth2Clients(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
+
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := []*models.OAuth2Client{
@@ -158,7 +157,6 @@ func TestMariaDB_GetAllOAuth2Clients(T *testing.T) {
 				CreatedOn: uint64(time.Now().Unix()),
 			},
 		}
-		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WillReturnRows(
@@ -175,8 +173,6 @@ func TestMariaDB_GetAllOAuth2Clients(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
-		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
-
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WillReturnError(sql.ErrNoRows)
 
@@ -189,8 +185,6 @@ func TestMariaDB_GetAllOAuth2Clients(T *testing.T) {
 	})
 
 	T.Run("with error executing query", func(t *testing.T) {
-		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
-
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(errors.New("blah"))
@@ -213,8 +207,6 @@ func TestMariaDB_GetAllOAuth2Clients(T *testing.T) {
 			},
 		}
 
-		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
-
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnRows(buildErroneousMockRowFromOAuth2Client(expected[0]))
@@ -230,6 +222,8 @@ func TestMariaDB_GetAllOAuth2Clients(T *testing.T) {
 func TestMariaDB_GetAllOAuth2ClientsForUser(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
+
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		exampleUser := &models.User{ID: 123}
@@ -241,7 +235,6 @@ func TestMariaDB_GetAllOAuth2ClientsForUser(T *testing.T) {
 				CreatedOn: uint64(time.Now().Unix()),
 			},
 		}
-		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WillReturnRows(
@@ -259,7 +252,6 @@ func TestMariaDB_GetAllOAuth2ClientsForUser(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		exampleUser := &models.User{ID: 123}
-		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -274,7 +266,6 @@ func TestMariaDB_GetAllOAuth2ClientsForUser(T *testing.T) {
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		exampleUser := &models.User{ID: 123}
-		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -296,7 +287,6 @@ func TestMariaDB_GetAllOAuth2ClientsForUser(T *testing.T) {
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
-		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -331,6 +321,8 @@ func TestMariaDB_buildGetOAuth2ClientQuery(T *testing.T) {
 func TestMariaDB_GetOAuth2Client(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to = ? AND id = ?"
+
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.OAuth2Client{
@@ -340,7 +332,6 @@ func TestMariaDB_GetOAuth2Client(T *testing.T) {
 			CreatedOn: uint64(time.Now().Unix()),
 			Scopes:    []string{"things"},
 		}
-		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to = ? AND id = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -363,7 +354,6 @@ func TestMariaDB_GetOAuth2Client(T *testing.T) {
 			CreatedOn: uint64(time.Now().Unix()),
 			Scopes:    []string{"things"},
 		}
-		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to = ? AND id = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -386,7 +376,6 @@ func TestMariaDB_GetOAuth2Client(T *testing.T) {
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
-		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to = ? AND id = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -488,6 +477,8 @@ func TestMariaDB_buildGetOAuth2ClientsQuery(T *testing.T) {
 func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 	T.Parallel()
 
+	expectedListQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
+
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expectedUserID := uint64(321)
@@ -508,7 +499,6 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 		}
 
 		filter := models.DefaultQueryFilter()
-		expectedListQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 		expectedCountQuery := "SELECT COUNT(id) FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
 
 		m, mockDB := buildTestService(t)
@@ -530,7 +520,6 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 
 	T.Run("with no rows returned from database", func(t *testing.T) {
 		expectedUserID := uint64(321)
-		expectedListQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -545,7 +534,6 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 
 	T.Run("with error reading from database", func(t *testing.T) {
 		expectedUserID := uint64(321)
-		expectedListQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -575,7 +563,6 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 				},
 			},
 		}
-		expectedListQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -605,7 +592,6 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 				},
 			},
 		}
-		expectedListQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to FROM oauth2_clients WHERE archived_on IS NULL"
 		expectedCountQuery := "SELECT COUNT(id) FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
 
 		m, mockDB := buildTestService(t)
@@ -656,6 +642,8 @@ func TestMariaDB_buildCreateOAuth2ClientQuery(T *testing.T) {
 func TestMariaDB_CreateOAuth2Client(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to,created_on) VALUES (?,?,?,?,?,?,UNIX_TIMESTAMP())"
+
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.OAuth2Client{
@@ -669,7 +657,6 @@ func TestMariaDB_CreateOAuth2Client(T *testing.T) {
 			BelongsTo: expected.BelongsTo,
 		}
 		exampleRows := sqlmock.NewResult(int64(expected.ID), 1)
-		expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to,created_on) VALUES (?,?,?,?,?,?,UNIX_TIMESTAMP())"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
@@ -705,7 +692,6 @@ func TestMariaDB_CreateOAuth2Client(T *testing.T) {
 			Name:      expected.Name,
 			BelongsTo: expected.BelongsTo,
 		}
-		expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to,created_on) VALUES (?,?,?,?,?,?,UNIX_TIMESTAMP())"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
@@ -755,8 +741,9 @@ func TestMariaDB_buildUpdateOAuth2ClientQuery(T *testing.T) {
 func TestMariaDB_UpdateOAuth2Client(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "UPDATE oauth2_clients SET client_id = ?, client_secret = ?, scopes = ?, redirect_uri = ?, updated_on = UNIX_TIMESTAMP() WHERE belongs_to = ? AND id = ?"
+
 	T.Run("happy path", func(t *testing.T) {
-		expectedQuery := "UPDATE oauth2_clients SET client_id = ?, client_secret = ?, scopes = ?, redirect_uri = ?, updated_on = UNIX_TIMESTAMP() WHERE belongs_to = ? AND id = ?"
 		exampleInput := &models.OAuth2Client{}
 
 		m, mockDB := buildTestService(t)
@@ -770,7 +757,6 @@ func TestMariaDB_UpdateOAuth2Client(T *testing.T) {
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
-		expectedQuery := "UPDATE oauth2_clients SET client_id = ?, client_secret = ?, scopes = ?, redirect_uri = ?, updated_on = UNIX_TIMESTAMP() WHERE belongs_to = ? AND id = ?"
 		exampleInput := &models.OAuth2Client{}
 
 		m, mockDB := buildTestService(t)
@@ -805,8 +791,9 @@ func TestMariaDB_buildArchiveOAuth2ClientQuery(T *testing.T) {
 func TestMariaDB_ArchiveOAuth2Client(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "UPDATE oauth2_clients SET updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE belongs_to = ? AND id = ?"
+
 	T.Run("happy path", func(t *testing.T) {
-		expectedQuery := "UPDATE oauth2_clients SET updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE belongs_to = ? AND id = ?"
 		exampleClientID := uint64(321)
 		exampleUserID := uint64(123)
 
@@ -822,7 +809,6 @@ func TestMariaDB_ArchiveOAuth2Client(T *testing.T) {
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
-		expectedQuery := "UPDATE oauth2_clients SET updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE belongs_to = ? AND id = ?"
 		exampleClientID := uint64(321)
 		exampleUserID := uint64(123)
 

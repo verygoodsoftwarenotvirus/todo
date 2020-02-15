@@ -75,8 +75,9 @@ func TestSqlite_buildGetWebhookQuery(T *testing.T) {
 func TestSqlite_GetWebhook(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE belongs_to = ? AND id = ?"
+
 	T.Run("happy path", func(t *testing.T) {
-		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE belongs_to = ? AND id = ?"
 		expected := &models.Webhook{
 			ID:        123,
 			Name:      "name",
@@ -99,7 +100,6 @@ func TestSqlite_GetWebhook(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
-		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE belongs_to = ? AND id = ?"
 		expected := &models.Webhook{
 			ID:        123,
 			Name:      "name",
@@ -123,7 +123,6 @@ func TestSqlite_GetWebhook(T *testing.T) {
 	})
 
 	T.Run("with error from database", func(t *testing.T) {
-		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE belongs_to = ? AND id = ?"
 		expected := &models.Webhook{
 			ID:   123,
 			Name: "name",
@@ -144,7 +143,6 @@ func TestSqlite_GetWebhook(T *testing.T) {
 
 	T.Run("with invalid response from database", func(t *testing.T) {
 		ctx := context.Background()
-		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE belongs_to = ? AND id = ?"
 		expected := &models.Webhook{
 			ID:        123,
 			Name:      "name",
@@ -186,8 +184,9 @@ func TestSqlite_buildGetWebhookCountQuery(T *testing.T) {
 func TestSqlite_GetWebhookCount(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
+
 	T.Run("happy path", func(t *testing.T) {
-		expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
 		expected := uint64(321)
 		expectedUserID := uint64(321)
 
@@ -204,7 +203,6 @@ func TestSqlite_GetWebhookCount(T *testing.T) {
 	})
 
 	T.Run("with error from database", func(t *testing.T) {
-		expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
 		expectedUserID := uint64(321)
 
 		s, mockDB := buildTestService(t)
@@ -235,8 +233,9 @@ func TestSqlite_buildGetAllWebhooksCountQuery(T *testing.T) {
 func TestSqlite_GetAllWebhooksCount(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
+
 	T.Run("happy path", func(t *testing.T) {
-		expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
 		expected := uint64(321)
 
 		s, mockDB := buildTestService(t)
@@ -251,8 +250,6 @@ func TestSqlite_GetAllWebhooksCount(T *testing.T) {
 	})
 
 	T.Run("with error from database", func(t *testing.T) {
-		expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
-
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(errors.New("blah"))
@@ -280,9 +277,10 @@ func TestSqlite_buildGetAllWebhooksQuery(T *testing.T) {
 func TestSqlite_GetAllWebhooks(T *testing.T) {
 	T.Parallel()
 
+	expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+
 	T.Run("happy path", func(t *testing.T) {
 		expectedCount := uint64(321)
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 		expectedCountQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
@@ -314,8 +312,6 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
-
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WillReturnError(sql.ErrNoRows)
@@ -329,8 +325,6 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
-
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WillReturnError(errors.New("blah"))
@@ -362,7 +356,6 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 
 	T.Run("with error fetching count", func(t *testing.T) {
 		expectedCount := uint64(321)
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 		expectedCountQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
@@ -396,9 +389,10 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 func TestSqlite_GetAllWebhooksForUser(T *testing.T) {
 	T.Parallel()
 
+	expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+
 	T.Run("happy path", func(t *testing.T) {
 		exampleUser := &models.User{ID: 123}
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 		expected := []models.Webhook{
 			{
 				ID:   123,
@@ -422,7 +416,6 @@ func TestSqlite_GetAllWebhooksForUser(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		exampleUser := &models.User{ID: 123}
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -438,7 +431,6 @@ func TestSqlite_GetAllWebhooksForUser(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		exampleUser := &models.User{ID: 123}
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -453,7 +445,6 @@ func TestSqlite_GetAllWebhooksForUser(T *testing.T) {
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		exampleUser := &models.User{ID: 123}
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 		expected := []models.Webhook{
 			{
 				ID:   123,
@@ -493,10 +484,11 @@ func TestSqlite_buildGetWebhooksQuery(T *testing.T) {
 func TestSqlite_GetWebhooks(T *testing.T) {
 	T.Parallel()
 
+	expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+
 	T.Run("happy path", func(t *testing.T) {
 		exampleUserID := uint64(123)
 		expectedCount := uint64(321)
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 		expectedCountQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
@@ -530,7 +522,6 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		exampleUserID := uint64(123)
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -546,7 +537,6 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		exampleUserID := uint64(123)
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -561,7 +551,6 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		exampleUserID := uint64(123)
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.Webhook{
 			ID:   123,
 			Name: "name",
@@ -581,7 +570,6 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 	T.Run("with error fetching count", func(t *testing.T) {
 		exampleUserID := uint64(123)
 		expectedCount := uint64(321)
-		expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
 		expectedCountQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
@@ -641,6 +629,8 @@ func TestSqlite_buildWebhookCreationQuery(T *testing.T) {
 func TestSqlite_CreateWebhook(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to) VALUES (?,?,?,?,?,?,?,?)"
+
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Webhook{
@@ -654,7 +644,6 @@ func TestSqlite_CreateWebhook(T *testing.T) {
 			BelongsTo: expected.BelongsTo,
 		}
 		exampleRows := sqlmock.NewResult(int64(expected.ID), 1)
-		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to) VALUES (?,?,?,?,?,?,?,?)"
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
@@ -691,7 +680,6 @@ func TestSqlite_CreateWebhook(T *testing.T) {
 			Name:      expected.Name,
 			BelongsTo: expected.BelongsTo,
 		}
-		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to) VALUES (?,?,?,?,?,?,?,?)"
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
@@ -740,6 +728,8 @@ func TestSqlite_buildUpdateWebhookQuery(T *testing.T) {
 func TestSqlite_UpdateWebhook(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "UPDATE webhooks SET name = ?, content_type = ?, url = ?, method = ?, events = ?, data_types = ?, topics = ?, updated_on = (strftime('%s','now')) WHERE belongs_to = ? AND id = ?"
+
 	T.Run("happy path", func(t *testing.T) {
 		s, mockDB := buildTestService(t)
 		expected := &models.Webhook{
@@ -753,7 +743,6 @@ func TestSqlite_UpdateWebhook(T *testing.T) {
 			BelongsTo:   1,
 		}
 		exampleRows := sqlmock.NewResult(int64(expected.ID), 1)
-		expectedQuery := "UPDATE webhooks SET name = ?, content_type = ?, url = ?, method = ?, events = ?, data_types = ?, topics = ?, updated_on = (strftime('%s','now')) WHERE belongs_to = ? AND id = ?"
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
 			expected.Name,
@@ -785,7 +774,6 @@ func TestSqlite_UpdateWebhook(T *testing.T) {
 			Topics:      []string{},
 			BelongsTo:   1,
 		}
-		expectedQuery := "UPDATE webhooks SET name = ?, content_type = ?, url = ?, method = ?, events = ?, data_types = ?, topics = ?, updated_on = (strftime('%s','now')) WHERE belongs_to = ? AND id = ?"
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
 			expected.Name,

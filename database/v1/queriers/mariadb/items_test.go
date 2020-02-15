@@ -63,8 +63,9 @@ func TestMariaDB_buildGetItemQuery(T *testing.T) {
 func TestMariaDB_GetItem(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE belongs_to = ? AND id = ?"
+
 	T.Run("happy path", func(t *testing.T) {
-		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE belongs_to = ? AND id = ?"
 		expected := &models.Item{
 			ID: 123,
 		}
@@ -83,7 +84,6 @@ func TestMariaDB_GetItem(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
-		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE belongs_to = ? AND id = ?"
 		expected := &models.Item{
 			ID: 123,
 		}
@@ -192,9 +192,10 @@ func TestMariaDB_buildGetItemsQuery(T *testing.T) {
 func TestMariaDB_GetItems(T *testing.T) {
 	T.Parallel()
 
+	expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
+
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(123)
-		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
 		expectedCountQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
 		expectedItem := &models.Item{
 			ID: 321,
@@ -228,7 +229,6 @@ func TestMariaDB_GetItems(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		expectedUserID := uint64(123)
-		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -245,7 +245,6 @@ func TestMariaDB_GetItems(T *testing.T) {
 
 	T.Run("with error executing read query", func(t *testing.T) {
 		expectedUserID := uint64(123)
-		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -264,7 +263,6 @@ func TestMariaDB_GetItems(T *testing.T) {
 		expected := &models.Item{
 			ID: 321,
 		}
-		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -283,7 +281,6 @@ func TestMariaDB_GetItems(T *testing.T) {
 		expected := &models.Item{
 			ID: 321,
 		}
-		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
 		expectedCountQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
 
 		m, mockDB := buildTestService(t)
@@ -304,12 +301,13 @@ func TestMariaDB_GetItems(T *testing.T) {
 func TestMariaDB_GetAllItemsForUser(T *testing.T) {
 	T.Parallel()
 
+	expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ?"
+
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(123)
 		expectedItem := &models.Item{
 			ID: 321,
 		}
-		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -327,7 +325,6 @@ func TestMariaDB_GetAllItemsForUser(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		expectedUserID := uint64(123)
-		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -344,7 +341,6 @@ func TestMariaDB_GetAllItemsForUser(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		expectedUserID := uint64(123)
-		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -363,7 +359,6 @@ func TestMariaDB_GetAllItemsForUser(T *testing.T) {
 		exampleItem := &models.Item{
 			ID: 321,
 		}
-		expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -492,6 +487,8 @@ func TestMariaDB_buildUpdateItemQuery(T *testing.T) {
 func TestMariaDB_UpdateItem(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "UPDATE items SET name = ?, details = ?, updated_on = UNIX_TIMESTAMP() WHERE belongs_to = ? AND id = ?"
+
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Item{
@@ -500,7 +497,6 @@ func TestMariaDB_UpdateItem(T *testing.T) {
 			CreatedOn: uint64(time.Now().Unix()),
 		}
 		exampleRows := sqlmock.NewResult(int64(expected.ID), 1)
-		expectedQuery := "UPDATE items SET name = ?, details = ?, updated_on = UNIX_TIMESTAMP() WHERE belongs_to = ? AND id = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -524,7 +520,6 @@ func TestMariaDB_UpdateItem(T *testing.T) {
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
-		expectedQuery := "UPDATE items SET name = ?, details = ?, updated_on = UNIX_TIMESTAMP() WHERE belongs_to = ? AND id = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -565,6 +560,8 @@ func TestMariaDB_buildArchiveItemQuery(T *testing.T) {
 func TestMariaDB_ArchiveItem(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "UPDATE items SET updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to = ? AND id = ?"
+
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Item{
@@ -572,7 +569,6 @@ func TestMariaDB_ArchiveItem(T *testing.T) {
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
-		expectedQuery := "UPDATE items SET updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to = ? AND id = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -594,7 +590,6 @@ func TestMariaDB_ArchiveItem(T *testing.T) {
 			BelongsTo: expectedUserID,
 			CreatedOn: uint64(time.Now().Unix()),
 		}
-		expectedQuery := "UPDATE items SET updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to = ? AND id = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).

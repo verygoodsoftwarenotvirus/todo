@@ -90,7 +90,7 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 
 				// attach the oauth2 client and user's info to the request
 				ctx = context.WithValue(ctx, models.OAuth2ClientKey, oauth2Client)
-				user, err = s.userDB.GetUser(ctx, oauth2Client.BelongsTo)
+				user, err = s.userDB.GetUser(ctx, oauth2Client.BelongsToUser)
 				if err != nil {
 					s.logger.Error(err, "error authenticating request")
 					http.Error(res, "fetching user", http.StatusInternalServerError)

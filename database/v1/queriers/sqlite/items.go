@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	itemsTableName = "items"
+	itemsTableName            = "items"
+	itemsTableOwnershipColumn = "belongs_to_user"
 )
 
 var (
@@ -25,7 +26,7 @@ var (
 		"created_on",
 		"updated_on",
 		"archived_on",
-		"belongs_to",
+		itemsTableOwnershipColumn,
 	}
 )
 
@@ -40,7 +41,7 @@ func scanItem(scan database.Scanner) (*models.Item, error) {
 		&x.CreatedOn,
 		&x.UpdatedOn,
 		&x.ArchivedOn,
-		&x.BelongsTo,
+		&x.BelongsToUser,
 	); err != nil {
 		return nil, err
 	}
@@ -78,8 +79,8 @@ func (s *Sqlite) buildGetItemQuery(itemID, userID uint64) (query string, args []
 		Select(itemsTableColumns...).
 		From(itemsTableName).
 		Where(squirrel.Eq{
-			"id":         itemID,
-			"belongs_to": userID,
+			"id":                      itemID,
+			itemsTableOwnershipColumn: userID,
 		}).ToSql()
 
 	s.logQueryBuildingError(err)
@@ -102,8 +103,8 @@ func (s *Sqlite) buildGetItemCountQuery(filter *models.QueryFilter, userID uint6
 		Select(CountQuery).
 		From(itemsTableName).
 		Where(squirrel.Eq{
-			"archived_on": nil,
-			"belongs_to":  userID,
+			"archived_on":             nil,
+			itemsTableOwnershipColumn: userID,
 		})
 
 	if filter != nil {
@@ -158,8 +159,8 @@ func (s *Sqlite) buildGetItemsQuery(filter *models.QueryFilter, userID uint64) (
 		Select(itemsTableColumns...).
 		From(itemsTableName).
 		Where(squirrel.Eq{
-			"archived_on": nil,
-			"belongs_to":  userID,
+			"archived_on":             nil,
+			itemsTableOwnershipColumn: userID,
 		})
 
 	if filter != nil {
@@ -228,12 +229,12 @@ func (s *Sqlite) buildCreateItemQuery(input *models.Item) (query string, args []
 		Columns(
 			"name",
 			"details",
-			"belongs_to",
+			itemsTableOwnershipColumn,
 		).
 		Values(
 			input.Name,
 			input.Details,
-			input.BelongsTo,
+			input.BelongsToUser,
 		).
 		ToSql()
 
@@ -260,9 +261,9 @@ func (s *Sqlite) buildItemCreationTimeQuery(itemID uint64) (query string, args [
 // CreateItem creates an item in the database
 func (s *Sqlite) CreateItem(ctx context.Context, input *models.ItemCreationInput) (*models.Item, error) {
 	x := &models.Item{
-		Name:      input.Name,
-		Details:   input.Details,
-		BelongsTo: input.BelongsTo,
+		Name:          input.Name,
+		Details:       input.Details,
+		BelongsToUser: input.BelongsToUser,
 	}
 
 	query, args := s.buildCreateItemQuery(x)
@@ -294,8 +295,8 @@ func (s *Sqlite) buildUpdateItemQuery(input *models.Item) (query string, args []
 		Set("details", input.Details).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id":         input.ID,
-			"belongs_to": input.BelongsTo,
+			"id":                      input.ID,
+			itemsTableOwnershipColumn: input.BelongsToUser,
 		}).
 		ToSql()
 
@@ -319,9 +320,9 @@ func (s *Sqlite) buildArchiveItemQuery(itemID, userID uint64) (query string, arg
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id":          itemID,
-			"archived_on": nil,
-			"belongs_to":  userID,
+			"id":                      itemID,
+			"archived_on":             nil,
+			itemsTableOwnershipColumn: userID,
 		}).
 		ToSql()
 

@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	scopesSeparator        = ","
-	oauth2ClientsTableName = "oauth2_clients"
+	scopesSeparator                   = ","
+	oauth2ClientsTableName            = "oauth2_clients"
+	oauth2ClientsTableOwnershipColumn = "belongs_to_user"
 )
 
 var (
@@ -29,7 +30,7 @@ var (
 		"created_on",
 		"updated_on",
 		"archived_on",
-		"belongs_to",
+		oauth2ClientsTableOwnershipColumn,
 	}
 )
 
@@ -50,7 +51,7 @@ func scanOAuth2Client(scan database.Scanner) (*models.OAuth2Client, error) {
 		&x.CreatedOn,
 		&x.UpdatedOn,
 		&x.ArchivedOn,
-		&x.BelongsTo,
+		&x.BelongsToUser,
 	); err != nil {
 		return nil, err
 	}
@@ -175,9 +176,9 @@ func (m *MariaDB) buildGetOAuth2ClientQuery(clientID, userID uint64) (query stri
 		Select(oauth2ClientsTableColumns...).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{
-			"id":          clientID,
-			"belongs_to":  userID,
-			"archived_on": nil,
+			"id":                              clientID,
+			oauth2ClientsTableOwnershipColumn: userID,
+			"archived_on":                     nil,
 		}).ToSql()
 
 	m.logQueryBuildingError(err)
@@ -209,8 +210,8 @@ func (m *MariaDB) buildGetOAuth2ClientCountQuery(filter *models.QueryFilter, use
 		Select(CountQuery).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{
-			"belongs_to":  userID,
-			"archived_on": nil,
+			oauth2ClientsTableOwnershipColumn: userID,
+			"archived_on":                     nil,
 		})
 
 	if filter != nil {
@@ -267,8 +268,8 @@ func (m *MariaDB) buildGetOAuth2ClientsQuery(filter *models.QueryFilter, userID 
 		Select(oauth2ClientsTableColumns...).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{
-			"belongs_to":  userID,
-			"archived_on": nil,
+			oauth2ClientsTableOwnershipColumn: userID,
+			"archived_on":                     nil,
 		})
 
 	if filter != nil {
@@ -333,7 +334,7 @@ func (m *MariaDB) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (quer
 			"client_secret",
 			"scopes",
 			"redirect_uri",
-			"belongs_to",
+			oauth2ClientsTableOwnershipColumn,
 			"created_on",
 		).
 		Values(
@@ -342,7 +343,7 @@ func (m *MariaDB) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (quer
 			input.ClientSecret,
 			strings.Join(input.Scopes, scopesSeparator),
 			input.RedirectURI,
-			input.BelongsTo,
+			input.BelongsToUser,
 			squirrel.Expr(CurrentUnixTimeQuery),
 		).
 		ToSql()
@@ -370,12 +371,12 @@ func (m *MariaDB) buildOAuth2ClientCreationTimeQuery(clientID uint64) (query str
 // CreateOAuth2Client creates an OAuth2 client
 func (m *MariaDB) CreateOAuth2Client(ctx context.Context, input *models.OAuth2ClientCreationInput) (*models.OAuth2Client, error) {
 	x := &models.OAuth2Client{
-		Name:         input.Name,
-		ClientID:     input.ClientID,
-		ClientSecret: input.ClientSecret,
-		RedirectURI:  input.RedirectURI,
-		Scopes:       input.Scopes,
-		BelongsTo:    input.BelongsTo,
+		Name:          input.Name,
+		ClientID:      input.ClientID,
+		ClientSecret:  input.ClientSecret,
+		RedirectURI:   input.RedirectURI,
+		Scopes:        input.Scopes,
+		BelongsToUser: input.BelongsToUser,
 	}
 	query, args := m.buildCreateOAuth2ClientQuery(x)
 
@@ -406,8 +407,8 @@ func (m *MariaDB) buildUpdateOAuth2ClientQuery(input *models.OAuth2Client) (quer
 		Set("redirect_uri", input.RedirectURI).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id":         input.ID,
-			"belongs_to": input.BelongsTo,
+			"id":                              input.ID,
+			oauth2ClientsTableOwnershipColumn: input.BelongsToUser,
 		}).
 		ToSql()
 
@@ -432,8 +433,8 @@ func (m *MariaDB) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query 
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id":         clientID,
-			"belongs_to": userID,
+			"id":                              clientID,
+			oauth2ClientsTableOwnershipColumn: userID,
 		}).
 		ToSql()
 

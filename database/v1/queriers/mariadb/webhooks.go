@@ -19,7 +19,8 @@ const (
 	typesSeparator  = `,`
 	topicsSeparator = `,`
 
-	webhooksTableName = "webhooks"
+	webhooksTableName            = "webhooks"
+	webhooksTableOwnershipColumn = "belongs_to_user"
 )
 
 var (
@@ -35,7 +36,7 @@ var (
 		"created_on",
 		"updated_on",
 		"archived_on",
-		"belongs_to",
+		webhooksTableOwnershipColumn,
 	}
 )
 
@@ -60,7 +61,7 @@ func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 		&x.CreatedOn,
 		&x.UpdatedOn,
 		&x.ArchivedOn,
-		&x.BelongsTo,
+		&x.BelongsToUser,
 	); err != nil {
 		return nil, err
 	}
@@ -107,8 +108,8 @@ func (m *MariaDB) buildGetWebhookQuery(webhookID, userID uint64) (query string, 
 		Select(webhooksTableColumns...).
 		From(webhooksTableName).
 		Where(squirrel.Eq{
-			"id":         webhookID,
-			"belongs_to": userID,
+			"id":                         webhookID,
+			webhooksTableOwnershipColumn: userID,
 		}).ToSql()
 
 	m.logQueryBuildingError(err)
@@ -136,8 +137,8 @@ func (m *MariaDB) buildGetWebhookCountQuery(filter *models.QueryFilter, userID u
 		Select(CountQuery).
 		From(webhooksTableName).
 		Where(squirrel.Eq{
-			"belongs_to":  userID,
-			"archived_on": nil,
+			webhooksTableOwnershipColumn: userID,
+			"archived_on":                nil,
 		})
 
 	if filter != nil {
@@ -264,8 +265,8 @@ func (m *MariaDB) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint6
 		Select(webhooksTableColumns...).
 		From(webhooksTableName).
 		Where(squirrel.Eq{
-			"belongs_to":  userID,
-			"archived_on": nil,
+			webhooksTableOwnershipColumn: userID,
+			"archived_on":                nil,
 		})
 
 	if filter != nil {
@@ -325,7 +326,7 @@ func (m *MariaDB) buildWebhookCreationQuery(x *models.Webhook) (query string, ar
 			"events",
 			"data_types",
 			"topics",
-			"belongs_to",
+			webhooksTableOwnershipColumn,
 			"created_on",
 		).
 		Values(
@@ -336,7 +337,7 @@ func (m *MariaDB) buildWebhookCreationQuery(x *models.Webhook) (query string, ar
 			strings.Join(x.Events, eventsSeparator),
 			strings.Join(x.DataTypes, typesSeparator),
 			strings.Join(x.Topics, topicsSeparator),
-			x.BelongsTo,
+			x.BelongsToUser,
 			squirrel.Expr(CurrentUnixTimeQuery),
 		).
 		ToSql()
@@ -363,14 +364,14 @@ func (m *MariaDB) buildWebhookCreationTimeQuery(webhookID uint64) (query string,
 // CreateWebhook creates a webhook in the database
 func (m *MariaDB) CreateWebhook(ctx context.Context, input *models.WebhookCreationInput) (*models.Webhook, error) {
 	x := &models.Webhook{
-		Name:        input.Name,
-		ContentType: input.ContentType,
-		URL:         input.URL,
-		Method:      input.Method,
-		Events:      input.Events,
-		DataTypes:   input.DataTypes,
-		Topics:      input.Topics,
-		BelongsTo:   input.BelongsTo,
+		Name:          input.Name,
+		ContentType:   input.ContentType,
+		URL:           input.URL,
+		Method:        input.Method,
+		Events:        input.Events,
+		DataTypes:     input.DataTypes,
+		Topics:        input.Topics,
+		BelongsToUser: input.BelongsToUser,
 	}
 
 	query, args := m.buildWebhookCreationQuery(x)
@@ -403,8 +404,8 @@ func (m *MariaDB) buildUpdateWebhookQuery(input *models.Webhook) (query string, 
 		Set("topics", strings.Join(input.Topics, topicsSeparator)).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id":         input.ID,
-			"belongs_to": input.BelongsTo,
+			"id":                         input.ID,
+			webhooksTableOwnershipColumn: input.BelongsToUser,
 		}).
 		ToSql()
 
@@ -428,9 +429,9 @@ func (m *MariaDB) buildArchiveWebhookQuery(webhookID, userID uint64) (query stri
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id":          webhookID,
-			"belongs_to":  userID,
-			"archived_on": nil,
+			"id":                         webhookID,
+			webhooksTableOwnershipColumn: userID,
+			"archived_on":                nil,
 		}).
 		ToSql()
 

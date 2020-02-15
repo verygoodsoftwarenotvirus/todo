@@ -100,9 +100,9 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 
 		exampleUser := &models.User{ID: 123}
 		exampleClient := &models.OAuth2Client{
-			ClientID:     "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
-			ClientSecret: "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
-			BelongsTo:    exampleUser.ID,
+			ClientID:      "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
+			ClientSecret:  "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
+			BelongsToUser: exampleUser.ID,
 		}
 
 		ocv := &mockOAuth2ClientValidator{}
@@ -110,7 +110,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		s.oauth2ClientsService = ocv
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).Return(exampleUser, nil)
+		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsToUser).Return(exampleUser, nil)
 		s.userDB = mockDB
 
 		h := &MockHTTPHandler{}
@@ -131,9 +131,9 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 
 		exampleUser := &models.User{ID: 123}
 		exampleClient := &models.OAuth2Client{
-			ClientID:     "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
-			ClientSecret: "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
-			BelongsTo:    exampleUser.ID,
+			ClientID:      "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
+			ClientSecret:  "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
+			BelongsToUser: exampleUser.ID,
 		}
 
 		ocv := &mockOAuth2ClientValidator{}
@@ -141,7 +141,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		s.oauth2ClientsService = ocv
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).Return(exampleUser, nil)
+		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsToUser).Return(exampleUser, nil)
 		s.userDB = mockDB
 
 		h := &MockHTTPHandler{}
@@ -189,9 +189,9 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 
 		exampleUser := &models.User{ID: 1, Username: "username"}
 		exampleClient := &models.OAuth2Client{
-			ClientID:     "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
-			ClientSecret: "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
-			BelongsTo:    exampleUser.ID,
+			ClientID:      "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
+			ClientSecret:  "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
+			BelongsToUser: exampleUser.ID,
 		}
 
 		ocv := &mockOAuth2ClientValidator{}
@@ -199,7 +199,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		s.oauth2ClientsService = ocv
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).Return((*models.User)(nil), errors.New("blah"))
+		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsToUser).Return((*models.User)(nil), errors.New("blah"))
 		s.userDB = mockDB
 
 		h := &MockHTTPHandler{}
@@ -224,9 +224,9 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 
 		exampleUser := &models.User{ID: 123}
 		exampleClient := &models.OAuth2Client{
-			ClientID:     "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
-			ClientSecret: "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
-			BelongsTo:    exampleUser.ID,
+			ClientID:      "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
+			ClientSecret:  "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
+			BelongsToUser: exampleUser.ID,
 		}
 
 		ocv := &mockOAuth2ClientValidator{}
@@ -234,7 +234,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		s.oauth2ClientsService = ocv
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).Return((*models.User)(nil), errors.New("blah"))
+		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsToUser).Return((*models.User)(nil), errors.New("blah"))
 		s.userDB = mockDB
 
 		h := &MockHTTPHandler{}
@@ -301,9 +301,9 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 
 		exampleUser := &models.User{ID: 123}
 		exampleClient := &models.OAuth2Client{
-			ClientID:     "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
-			ClientSecret: "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
-			BelongsTo:    exampleUser.ID,
+			ClientID:      "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
+			ClientSecret:  "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
+			BelongsToUser: exampleUser.ID,
 		}
 
 		ocv := &mockOAuth2ClientValidator{}
@@ -311,7 +311,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		s.oauth2ClientsService = ocv
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsTo).Return((*models.User)(nil), nil)
+		mockDB.On("GetUser", mock.Anything, exampleClient.BelongsToUser).Return((*models.User)(nil), nil)
 		s.userDB = mockDB
 
 		h := &MockHTTPHandler{}

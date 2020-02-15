@@ -81,7 +81,7 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 			return
 		}
 		logger = logger.WithValue("input", input)
-		input.BelongsTo = userID
+		input.BelongsToUser = userID
 
 		// create item in database
 		x, err := s.itemDatabase.CreateItem(ctx, input)

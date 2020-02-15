@@ -21,7 +21,7 @@ func buildMockRowFromItem(x *models.Item) *sqlmock.Rows {
 		x.CreatedOn,
 		x.UpdatedOn,
 		x.ArchivedOn,
-		x.BelongsTo,
+		x.BelongsToUser,
 	)
 
 	return exampleRows
@@ -34,7 +34,7 @@ func buildErroneousMockRowFromItem(x *models.Item) *sqlmock.Rows {
 		x.Details,
 		x.CreatedOn,
 		x.UpdatedOn,
-		x.BelongsTo,
+		x.BelongsToUser,
 		x.ID,
 	)
 
@@ -50,7 +50,7 @@ func TestSqlite_buildGetItemQuery(T *testing.T) {
 		exampleUserID := uint64(321)
 
 		expectedArgCount := 2
-		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE belongs_to = ? AND id = ?"
+		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to_user FROM items WHERE belongs_to_user = ? AND id = ?"
 		actualQuery, args := s.buildGetItemQuery(exampleItemID, exampleUserID)
 
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -63,7 +63,7 @@ func TestSqlite_buildGetItemQuery(T *testing.T) {
 func TestSqlite_GetItem(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE belongs_to = ? AND id = ?"
+	expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to_user FROM items WHERE belongs_to_user = ? AND id = ?"
 
 	T.Run("happy path", func(t *testing.T) {
 		expected := &models.Item{
@@ -111,7 +111,7 @@ func TestSqlite_buildGetItemCountQuery(T *testing.T) {
 		exampleUserID := uint64(321)
 
 		expectedArgCount := 1
-		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
+		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL AND belongs_to_user = ? LIMIT 20"
 
 		actualQuery, args := s.buildGetItemCountQuery(models.DefaultQueryFilter(), exampleUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -125,7 +125,7 @@ func TestSqlite_GetItemCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
-		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
+		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL AND belongs_to_user = ? LIMIT 20"
 		expectedCount := uint64(666)
 
 		s, mockDB := buildTestService(t)
@@ -180,7 +180,7 @@ func TestSqlite_buildGetItemsQuery(T *testing.T) {
 		exampleUserID := uint64(321)
 
 		expectedArgCount := 1
-		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
+		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to_user FROM items WHERE archived_on IS NULL AND belongs_to_user = ? LIMIT 20"
 		actualQuery, args := s.buildGetItemsQuery(models.DefaultQueryFilter(), exampleUserID)
 
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -192,7 +192,7 @@ func TestSqlite_buildGetItemsQuery(T *testing.T) {
 func TestSqlite_GetItems(T *testing.T) {
 	T.Parallel()
 
-	expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
+	expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to_user FROM items WHERE archived_on IS NULL AND belongs_to_user = ? LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(123)
@@ -301,7 +301,7 @@ func TestSqlite_GetItems(T *testing.T) {
 func TestSqlite_GetAllItemsForUser(T *testing.T) {
 	T.Parallel()
 
-	expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to FROM items WHERE archived_on IS NULL AND belongs_to = ?"
+	expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to_user FROM items WHERE archived_on IS NULL AND belongs_to_user = ?"
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(123)
@@ -379,18 +379,18 @@ func TestSqlite_buildCreateItemQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
 		expected := &models.Item{
-			ID:        321,
-			BelongsTo: 123,
+			ID:            321,
+			BelongsToUser: 123,
 		}
 		expectedArgCount := 3
-		expectedQuery := "INSERT INTO items (name,details,belongs_to) VALUES (?,?,?)"
+		expectedQuery := "INSERT INTO items (name,details,belongs_to_user) VALUES (?,?,?)"
 		actualQuery, args := s.buildCreateItemQuery(expected)
 
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 		assert.Equal(t, expected.Name, args[0].(string))
 		assert.Equal(t, expected.Details, args[1].(string))
-		assert.Equal(t, expected.BelongsTo, args[2].(uint64))
+		assert.Equal(t, expected.BelongsToUser, args[2].(uint64))
 	})
 }
 
@@ -400,24 +400,24 @@ func TestSqlite_CreateItem(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Item{
-			ID:        123,
-			BelongsTo: expectedUserID,
-			CreatedOn: uint64(time.Now().Unix()),
+			ID:            123,
+			BelongsToUser: expectedUserID,
+			CreatedOn:     uint64(time.Now().Unix()),
 		}
 		expectedInput := &models.ItemCreationInput{
-			Name:      expected.Name,
-			Details:   expected.Details,
-			BelongsTo: expected.BelongsTo,
+			Name:          expected.Name,
+			Details:       expected.Details,
+			BelongsToUser: expected.BelongsToUser,
 		}
 
 		s, mockDB := buildTestService(t)
 
-		expectedCreationQuery := "INSERT INTO items (name,details,belongs_to) VALUES (?,?,?)"
+		expectedCreationQuery := "INSERT INTO items (name,details,belongs_to_user) VALUES (?,?,?)"
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedCreationQuery)).
 			WithArgs(
 				expected.Name,
 				expected.Details,
-				expected.BelongsTo,
+				expected.BelongsToUser,
 			).WillReturnResult(sqlmock.NewResult(int64(expected.ID), 1))
 
 		expectedTimeQuery := "SELECT created_on FROM items WHERE id = ?"
@@ -435,23 +435,23 @@ func TestSqlite_CreateItem(T *testing.T) {
 	T.Run("with error writing to database", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Item{
-			ID:        123,
-			BelongsTo: expectedUserID,
-			CreatedOn: uint64(time.Now().Unix()),
+			ID:            123,
+			BelongsToUser: expectedUserID,
+			CreatedOn:     uint64(time.Now().Unix()),
 		}
 		expectedInput := &models.ItemCreationInput{
-			Name:      expected.Name,
-			Details:   expected.Details,
-			BelongsTo: expected.BelongsTo,
+			Name:          expected.Name,
+			Details:       expected.Details,
+			BelongsToUser: expected.BelongsToUser,
 		}
-		expectedQuery := "INSERT INTO items (name,details,belongs_to) VALUES (?,?,?)"
+		expectedQuery := "INSERT INTO items (name,details,belongs_to_user) VALUES (?,?,?)"
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(
 				expected.Name,
 				expected.Details,
-				expected.BelongsTo,
+				expected.BelongsToUser,
 			).WillReturnError(errors.New("blah"))
 
 		actual, err := s.CreateItem(context.Background(), expectedInput)
@@ -468,18 +468,18 @@ func TestSqlite_buildUpdateItemQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
 		expected := &models.Item{
-			ID:        321,
-			BelongsTo: 123,
+			ID:            321,
+			BelongsToUser: 123,
 		}
 		expectedArgCount := 4
-		expectedQuery := "UPDATE items SET name = ?, details = ?, updated_on = (strftime('%s','now')) WHERE belongs_to = ? AND id = ?"
+		expectedQuery := "UPDATE items SET name = ?, details = ?, updated_on = (strftime('%s','now')) WHERE belongs_to_user = ? AND id = ?"
 		actualQuery, args := s.buildUpdateItemQuery(expected)
 
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 		assert.Equal(t, expected.Name, args[0].(string))
 		assert.Equal(t, expected.Details, args[1].(string))
-		assert.Equal(t, expected.BelongsTo, args[2].(uint64))
+		assert.Equal(t, expected.BelongsToUser, args[2].(uint64))
 		assert.Equal(t, expected.ID, args[3].(uint64))
 	})
 }
@@ -487,14 +487,14 @@ func TestSqlite_buildUpdateItemQuery(T *testing.T) {
 func TestSqlite_UpdateItem(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "UPDATE items SET name = ?, details = ?, updated_on = (strftime('%s','now')) WHERE belongs_to = ? AND id = ?"
+	expectedQuery := "UPDATE items SET name = ?, details = ?, updated_on = (strftime('%s','now')) WHERE belongs_to_user = ? AND id = ?"
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Item{
-			ID:        123,
-			BelongsTo: expectedUserID,
-			CreatedOn: uint64(time.Now().Unix()),
+			ID:            123,
+			BelongsToUser: expectedUserID,
+			CreatedOn:     uint64(time.Now().Unix()),
 		}
 		exampleRows := sqlmock.NewResult(int64(expected.ID), 1)
 
@@ -503,7 +503,7 @@ func TestSqlite_UpdateItem(T *testing.T) {
 			WithArgs(
 				expected.Name,
 				expected.Details,
-				expected.BelongsTo,
+				expected.BelongsToUser,
 				expected.ID,
 			).WillReturnResult(exampleRows)
 
@@ -516,9 +516,9 @@ func TestSqlite_UpdateItem(T *testing.T) {
 	T.Run("with error writing to database", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Item{
-			ID:        123,
-			BelongsTo: expectedUserID,
-			CreatedOn: uint64(time.Now().Unix()),
+			ID:            123,
+			BelongsToUser: expectedUserID,
+			CreatedOn:     uint64(time.Now().Unix()),
 		}
 
 		s, mockDB := buildTestService(t)
@@ -526,7 +526,7 @@ func TestSqlite_UpdateItem(T *testing.T) {
 			WithArgs(
 				expected.Name,
 				expected.Details,
-				expected.BelongsTo,
+				expected.BelongsToUser,
 				expected.ID,
 			).WillReturnError(errors.New("blah"))
 
@@ -543,16 +543,16 @@ func TestSqlite_buildArchiveItemQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
 		expected := &models.Item{
-			ID:        321,
-			BelongsTo: 123,
+			ID:            321,
+			BelongsToUser: 123,
 		}
 		expectedArgCount := 2
-		expectedQuery := "UPDATE items SET updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to = ? AND id = ?"
-		actualQuery, args := s.buildArchiveItemQuery(expected.ID, expected.BelongsTo)
+		expectedQuery := "UPDATE items SET updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
+		actualQuery, args := s.buildArchiveItemQuery(expected.ID, expected.BelongsToUser)
 
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
-		assert.Equal(t, expected.BelongsTo, args[0].(uint64))
+		assert.Equal(t, expected.BelongsToUser, args[0].(uint64))
 		assert.Equal(t, expected.ID, args[1].(uint64))
 	})
 }
@@ -560,20 +560,20 @@ func TestSqlite_buildArchiveItemQuery(T *testing.T) {
 func TestSqlite_ArchiveItem(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "UPDATE items SET updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to = ? AND id = ?"
+	expectedQuery := "UPDATE items SET updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Item{
-			ID:        123,
-			BelongsTo: expectedUserID,
-			CreatedOn: uint64(time.Now().Unix()),
+			ID:            123,
+			BelongsToUser: expectedUserID,
+			CreatedOn:     uint64(time.Now().Unix()),
 		}
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(
-				expected.BelongsTo,
+				expected.BelongsToUser,
 				expected.ID,
 			).WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -586,15 +586,15 @@ func TestSqlite_ArchiveItem(T *testing.T) {
 	T.Run("with error writing to database", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		example := &models.Item{
-			ID:        123,
-			BelongsTo: expectedUserID,
-			CreatedOn: uint64(time.Now().Unix()),
+			ID:            123,
+			BelongsToUser: expectedUserID,
+			CreatedOn:     uint64(time.Now().Unix()),
 		}
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(
-				example.BelongsTo,
+				example.BelongsToUser,
 				example.ID,
 			).WillReturnError(errors.New("blah"))
 

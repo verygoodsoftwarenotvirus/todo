@@ -28,7 +28,7 @@ func buildMockRowFromWebhook(w *models.Webhook) *sqlmock.Rows {
 		w.CreatedOn,
 		w.UpdatedOn,
 		w.ArchivedOn,
-		w.BelongsTo,
+		w.BelongsToUser,
 	)
 
 	return exampleRows
@@ -37,7 +37,7 @@ func buildMockRowFromWebhook(w *models.Webhook) *sqlmock.Rows {
 func buildErroneousMockRowFromWebhook(w *models.Webhook) *sqlmock.Rows {
 	exampleRows := sqlmock.NewRows(webhooksTableColumns).AddRow(
 		w.ArchivedOn,
-		w.BelongsTo,
+		w.BelongsToUser,
 		w.Name,
 		w.ContentType,
 		w.URL,
@@ -62,7 +62,7 @@ func TestSqlite_buildGetWebhookQuery(T *testing.T) {
 		exampleUserID := uint64(321)
 
 		expectedArgCount := 2
-		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE belongs_to = ? AND id = ?"
+		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to_user FROM webhooks WHERE belongs_to_user = ? AND id = ?"
 
 		actualQuery, args := s.buildGetWebhookQuery(exampleWebhookID, exampleUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -75,7 +75,7 @@ func TestSqlite_buildGetWebhookQuery(T *testing.T) {
 func TestSqlite_GetWebhook(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE belongs_to = ? AND id = ?"
+	expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to_user FROM webhooks WHERE belongs_to_user = ? AND id = ?"
 
 	T.Run("happy path", func(t *testing.T) {
 		expected := &models.Webhook{
@@ -172,7 +172,7 @@ func TestSqlite_buildGetWebhookCountQuery(T *testing.T) {
 		s, _ := buildTestService(t)
 		expectedUserID := uint64(123)
 		expectedArgCount := 1
-		expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
+		expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL AND belongs_to_user = ? LIMIT 20"
 
 		actualQuery, args := s.buildGetWebhookCountQuery(models.DefaultQueryFilter(), expectedUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -184,7 +184,7 @@ func TestSqlite_buildGetWebhookCountQuery(T *testing.T) {
 func TestSqlite_GetWebhookCount(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
+	expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL AND belongs_to_user = ? LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
 		expected := uint64(321)
@@ -267,7 +267,7 @@ func TestSqlite_buildGetAllWebhooksQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
-		expected := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+		expected := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to_user FROM webhooks WHERE archived_on IS NULL"
 
 		actual := s.buildGetAllWebhooksQuery()
 		assert.Equal(t, expected, actual)
@@ -277,7 +277,7 @@ func TestSqlite_buildGetAllWebhooksQuery(T *testing.T) {
 func TestSqlite_GetAllWebhooks(T *testing.T) {
 	T.Parallel()
 
-	expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+	expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to_user FROM webhooks WHERE archived_on IS NULL"
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedCount := uint64(321)
@@ -337,7 +337,7 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 	})
 
 	T.Run("with error from database", func(t *testing.T) {
-		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to_user FROM webhooks WHERE archived_on IS NULL"
 		example := &models.Webhook{
 			ID:   123,
 			Name: "name",
@@ -389,7 +389,7 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 func TestSqlite_GetAllWebhooksForUser(T *testing.T) {
 	T.Parallel()
 
-	expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+	expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to_user FROM webhooks WHERE archived_on IS NULL"
 
 	T.Run("happy path", func(t *testing.T) {
 		exampleUser := &models.User{ID: 123}
@@ -472,7 +472,7 @@ func TestSqlite_buildGetWebhooksQuery(T *testing.T) {
 		s, _ := buildTestService(t)
 
 		expectedArgCount := 1
-		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL AND belongs_to = ? LIMIT 20"
+		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to_user FROM webhooks WHERE archived_on IS NULL AND belongs_to_user = ? LIMIT 20"
 
 		actualQuery, args := s.buildGetWebhooksQuery(models.DefaultQueryFilter(), exampleUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -484,7 +484,7 @@ func TestSqlite_buildGetWebhooksQuery(T *testing.T) {
 func TestSqlite_GetWebhooks(T *testing.T) {
 	T.Parallel()
 
-	expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+	expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to_user FROM webhooks WHERE archived_on IS NULL"
 
 	T.Run("happy path", func(t *testing.T) {
 		exampleUserID := uint64(123)
@@ -608,17 +608,17 @@ func TestSqlite_buildWebhookCreationQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
 		exampleInput := &models.Webhook{
-			Name:        "name",
-			ContentType: "application/json",
-			URL:         "https://verygoodsoftwarenotvirus.ru",
-			Method:      http.MethodPatch,
-			Events:      []string{},
-			DataTypes:   []string{},
-			Topics:      []string{},
-			BelongsTo:   1,
+			Name:          "name",
+			ContentType:   "application/json",
+			URL:           "https://verygoodsoftwarenotvirus.ru",
+			Method:        http.MethodPatch,
+			Events:        []string{},
+			DataTypes:     []string{},
+			Topics:        []string{},
+			BelongsToUser: 1,
 		}
 		expectedArgCount := 8
-		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to) VALUES (?,?,?,?,?,?,?,?)"
+		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to_user) VALUES (?,?,?,?,?,?,?,?)"
 
 		actualQuery, args := s.buildWebhookCreationQuery(exampleInput)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -629,19 +629,19 @@ func TestSqlite_buildWebhookCreationQuery(T *testing.T) {
 func TestSqlite_CreateWebhook(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to) VALUES (?,?,?,?,?,?,?,?)"
+	expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to_user) VALUES (?,?,?,?,?,?,?,?)"
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Webhook{
-			ID:        123,
-			Name:      "name",
-			BelongsTo: expectedUserID,
-			CreatedOn: uint64(time.Now().Unix()),
+			ID:            123,
+			Name:          "name",
+			BelongsToUser: expectedUserID,
+			CreatedOn:     uint64(time.Now().Unix()),
 		}
 		expectedInput := &models.WebhookCreationInput{
-			Name:      expected.Name,
-			BelongsTo: expected.BelongsTo,
+			Name:          expected.Name,
+			BelongsToUser: expected.BelongsToUser,
 		}
 		exampleRows := sqlmock.NewResult(int64(expected.ID), 1)
 
@@ -654,7 +654,7 @@ func TestSqlite_CreateWebhook(T *testing.T) {
 			strings.Join(expected.Events, eventsSeparator),
 			strings.Join(expected.DataTypes, typesSeparator),
 			strings.Join(expected.Topics, topicsSeparator),
-			expected.BelongsTo,
+			expected.BelongsToUser,
 		).WillReturnResult(exampleRows)
 
 		expectedTimeQuery := "SELECT created_on FROM webhooks WHERE id = ?"
@@ -671,14 +671,14 @@ func TestSqlite_CreateWebhook(T *testing.T) {
 	T.Run("with error interacting with database", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Webhook{
-			ID:        123,
-			Name:      "name",
-			BelongsTo: expectedUserID,
-			CreatedOn: uint64(time.Now().Unix()),
+			ID:            123,
+			Name:          "name",
+			BelongsToUser: expectedUserID,
+			CreatedOn:     uint64(time.Now().Unix()),
 		}
 		expectedInput := &models.WebhookCreationInput{
-			Name:      expected.Name,
-			BelongsTo: expected.BelongsTo,
+			Name:          expected.Name,
+			BelongsToUser: expected.BelongsToUser,
 		}
 
 		s, mockDB := buildTestService(t)
@@ -690,7 +690,7 @@ func TestSqlite_CreateWebhook(T *testing.T) {
 			strings.Join(expected.Events, eventsSeparator),
 			strings.Join(expected.DataTypes, typesSeparator),
 			strings.Join(expected.Topics, topicsSeparator),
-			expected.BelongsTo,
+			expected.BelongsToUser,
 		).WillReturnError(errors.New("blah"))
 
 		actual, err := s.CreateWebhook(context.Background(), expectedInput)
@@ -707,17 +707,17 @@ func TestSqlite_buildUpdateWebhookQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
 		exampleInput := &models.Webhook{
-			Name:        "name",
-			ContentType: "application/json",
-			URL:         "https://verygoodsoftwarenotvirus.ru",
-			Method:      http.MethodPatch,
-			Events:      []string{},
-			DataTypes:   []string{},
-			Topics:      []string{},
-			BelongsTo:   1,
+			Name:          "name",
+			ContentType:   "application/json",
+			URL:           "https://verygoodsoftwarenotvirus.ru",
+			Method:        http.MethodPatch,
+			Events:        []string{},
+			DataTypes:     []string{},
+			Topics:        []string{},
+			BelongsToUser: 1,
 		}
 		expectedArgCount := 9
-		expectedQuery := "UPDATE webhooks SET name = ?, content_type = ?, url = ?, method = ?, events = ?, data_types = ?, topics = ?, updated_on = (strftime('%s','now')) WHERE belongs_to = ? AND id = ?"
+		expectedQuery := "UPDATE webhooks SET name = ?, content_type = ?, url = ?, method = ?, events = ?, data_types = ?, topics = ?, updated_on = (strftime('%s','now')) WHERE belongs_to_user = ? AND id = ?"
 
 		actualQuery, args := s.buildUpdateWebhookQuery(exampleInput)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -728,19 +728,19 @@ func TestSqlite_buildUpdateWebhookQuery(T *testing.T) {
 func TestSqlite_UpdateWebhook(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "UPDATE webhooks SET name = ?, content_type = ?, url = ?, method = ?, events = ?, data_types = ?, topics = ?, updated_on = (strftime('%s','now')) WHERE belongs_to = ? AND id = ?"
+	expectedQuery := "UPDATE webhooks SET name = ?, content_type = ?, url = ?, method = ?, events = ?, data_types = ?, topics = ?, updated_on = (strftime('%s','now')) WHERE belongs_to_user = ? AND id = ?"
 
 	T.Run("happy path", func(t *testing.T) {
 		s, mockDB := buildTestService(t)
 		expected := &models.Webhook{
-			Name:        "name",
-			ContentType: "application/json",
-			URL:         "https://verygoodsoftwarenotvirus.ru",
-			Method:      http.MethodPatch,
-			Events:      []string{},
-			DataTypes:   []string{},
-			Topics:      []string{},
-			BelongsTo:   1,
+			Name:          "name",
+			ContentType:   "application/json",
+			URL:           "https://verygoodsoftwarenotvirus.ru",
+			Method:        http.MethodPatch,
+			Events:        []string{},
+			DataTypes:     []string{},
+			Topics:        []string{},
+			BelongsToUser: 1,
 		}
 		exampleRows := sqlmock.NewResult(int64(expected.ID), 1)
 
@@ -752,7 +752,7 @@ func TestSqlite_UpdateWebhook(T *testing.T) {
 			strings.Join(expected.Events, eventsSeparator),
 			strings.Join(expected.DataTypes, typesSeparator),
 			strings.Join(expected.Topics, topicsSeparator),
-			expected.BelongsTo,
+			expected.BelongsToUser,
 			expected.ID,
 		).WillReturnResult(exampleRows)
 
@@ -765,14 +765,14 @@ func TestSqlite_UpdateWebhook(T *testing.T) {
 	T.Run("with error from database", func(t *testing.T) {
 		s, mockDB := buildTestService(t)
 		expected := &models.Webhook{
-			Name:        "name",
-			ContentType: "application/json",
-			URL:         "https://verygoodsoftwarenotvirus.ru",
-			Method:      http.MethodPatch,
-			Events:      []string{},
-			DataTypes:   []string{},
-			Topics:      []string{},
-			BelongsTo:   1,
+			Name:          "name",
+			ContentType:   "application/json",
+			URL:           "https://verygoodsoftwarenotvirus.ru",
+			Method:        http.MethodPatch,
+			Events:        []string{},
+			DataTypes:     []string{},
+			Topics:        []string{},
+			BelongsToUser: 1,
 		}
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
@@ -783,7 +783,7 @@ func TestSqlite_UpdateWebhook(T *testing.T) {
 			strings.Join(expected.Events, eventsSeparator),
 			strings.Join(expected.DataTypes, typesSeparator),
 			strings.Join(expected.Topics, topicsSeparator),
-			expected.BelongsTo,
+			expected.BelongsToUser,
 			expected.ID,
 		).WillReturnError(errors.New("blah"))
 
@@ -802,7 +802,7 @@ func TestSqlite_buildArchiveWebhookQuery(T *testing.T) {
 		exampleWebhookID := uint64(123)
 		exampleUserID := uint64(321)
 		expectedArgCount := 2
-		expectedQuery := "UPDATE webhooks SET updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to = ? AND id = ?"
+		expectedQuery := "UPDATE webhooks SET updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
 
 		actualQuery, args := s.buildArchiveWebhookQuery(exampleWebhookID, exampleUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -817,20 +817,20 @@ func TestSqlite_ArchiveWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		expected := &models.Webhook{
-			ID:        123,
-			Name:      "name",
-			BelongsTo: 321,
-			CreatedOn: uint64(time.Now().Unix()),
+			ID:            123,
+			Name:          "name",
+			BelongsToUser: 321,
+			CreatedOn:     uint64(time.Now().Unix()),
 		}
-		expectedQuery := "UPDATE webhooks SET updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to = ? AND id = ?"
+		expectedQuery := "UPDATE webhooks SET updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
-			expected.BelongsTo,
+			expected.BelongsToUser,
 			expected.ID,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := s.ArchiveWebhook(context.Background(), expected.ID, expected.BelongsTo)
+		err := s.ArchiveWebhook(context.Background(), expected.ID, expected.BelongsToUser)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")

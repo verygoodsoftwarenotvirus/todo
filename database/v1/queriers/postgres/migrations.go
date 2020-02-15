@@ -42,8 +42,8 @@ var (
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				"updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
-				"belongs_to" BIGINT NOT NULL,
-				FOREIGN KEY(belongs_to) REFERENCES users(id)
+				"belongs_to_user" BIGINT NOT NULL,
+				FOREIGN KEY("belongs_to_user") REFERENCES users(id)
 			);`,
 		},
 		{
@@ -62,8 +62,8 @@ var (
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				"updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
-				"belongs_to" BIGINT NOT NULL,
-				FOREIGN KEY ("belongs_to") REFERENCES "users"("id")
+				"belongs_to_user" BIGINT NOT NULL,
+				FOREIGN KEY ("belongs_to_user") REFERENCES "users"("id")
 			);`,
 		},
 		{
@@ -77,8 +77,8 @@ var (
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				"updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
-				"belongs_to" BIGINT NOT NULL,
-				FOREIGN KEY ("belongs_to") REFERENCES "users"("id")
+				"belongs_to_user" BIGINT NOT NULL,
+				FOREIGN KEY ("belongs_to_user") REFERENCES "users"("id")
 			);`,
 		},
 	}

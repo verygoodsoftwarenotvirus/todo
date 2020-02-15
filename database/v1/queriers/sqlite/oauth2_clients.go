@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	scopesSeparator        = ","
-	oauth2ClientsTableName = "oauth2_clients"
+	scopesSeparator                   = ","
+	oauth2ClientsTableName            = "oauth2_clients"
+	oauth2ClientsTableOwnershipColumn = "belongs_to_user"
 )
 
 var (
@@ -29,7 +30,7 @@ var (
 		"created_on",
 		"updated_on",
 		"archived_on",
-		"belongs_to",
+		oauth2ClientsTableOwnershipColumn,
 	}
 )
 
@@ -50,7 +51,7 @@ func scanOAuth2Client(scan database.Scanner) (*models.OAuth2Client, error) {
 		&x.CreatedOn,
 		&x.UpdatedOn,
 		&x.ArchivedOn,
-		&x.BelongsTo,
+		&x.BelongsToUser,
 	); err != nil {
 		return nil, err
 	}
@@ -175,9 +176,9 @@ func (s *Sqlite) buildGetOAuth2ClientQuery(clientID, userID uint64) (query strin
 		Select(oauth2ClientsTableColumns...).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{
-			"id":          clientID,
-			"belongs_to":  userID,
-			"archived_on": nil,
+			"id":                              clientID,
+			oauth2ClientsTableOwnershipColumn: userID,
+			"archived_on":                     nil,
 		}).ToSql()
 
 	s.logQueryBuildingError(err)
@@ -209,8 +210,8 @@ func (s *Sqlite) buildGetOAuth2ClientCountQuery(filter *models.QueryFilter, user
 		Select(CountQuery).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{
-			"belongs_to":  userID,
-			"archived_on": nil,
+			oauth2ClientsTableOwnershipColumn: userID,
+			"archived_on":                     nil,
 		})
 
 	if filter != nil {
@@ -267,8 +268,8 @@ func (s *Sqlite) buildGetOAuth2ClientsQuery(filter *models.QueryFilter, userID u
 		Select(oauth2ClientsTableColumns...).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{
-			"belongs_to":  userID,
-			"archived_on": nil,
+			oauth2ClientsTableOwnershipColumn: userID,
+			"archived_on":                     nil,
 		})
 
 	if filter != nil {
@@ -333,7 +334,7 @@ func (s *Sqlite) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (query
 			"client_secret",
 			"scopes",
 			"redirect_uri",
-			"belongs_to",
+			oauth2ClientsTableOwnershipColumn,
 		).
 		Values(
 			input.Name,
@@ -341,7 +342,7 @@ func (s *Sqlite) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (query
 			input.ClientSecret,
 			strings.Join(input.Scopes, scopesSeparator),
 			input.RedirectURI,
-			input.BelongsTo,
+			input.BelongsToUser,
 		).
 		ToSql()
 
@@ -369,12 +370,12 @@ func (s *Sqlite) buildOAuth2ClientCreationTimeQuery(clientID uint64) (query stri
 // CreateOAuth2Client creates an OAuth2 client
 func (s *Sqlite) CreateOAuth2Client(ctx context.Context, input *models.OAuth2ClientCreationInput) (*models.OAuth2Client, error) {
 	x := &models.OAuth2Client{
-		Name:         input.Name,
-		ClientID:     input.ClientID,
-		ClientSecret: input.ClientSecret,
-		RedirectURI:  input.RedirectURI,
-		Scopes:       input.Scopes,
-		BelongsTo:    input.BelongsTo,
+		Name:          input.Name,
+		ClientID:      input.ClientID,
+		ClientSecret:  input.ClientSecret,
+		RedirectURI:   input.RedirectURI,
+		Scopes:        input.Scopes,
+		BelongsToUser: input.BelongsToUser,
 	}
 	query, args := s.buildCreateOAuth2ClientQuery(x)
 
@@ -405,8 +406,8 @@ func (s *Sqlite) buildUpdateOAuth2ClientQuery(input *models.OAuth2Client) (query
 		Set("redirect_uri", input.RedirectURI).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id":         input.ID,
-			"belongs_to": input.BelongsTo,
+			"id":                              input.ID,
+			oauth2ClientsTableOwnershipColumn: input.BelongsToUser,
 		}).
 		ToSql()
 
@@ -431,8 +432,8 @@ func (s *Sqlite) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query s
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id":         clientID,
-			"belongs_to": userID,
+			"id":                              clientID,
+			oauth2ClientsTableOwnershipColumn: userID,
 		}).
 		ToSql()
 

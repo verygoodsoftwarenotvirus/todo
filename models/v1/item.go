@@ -8,13 +8,13 @@ import (
 type (
 	// Item represents an item
 	Item struct {
-		ID         uint64  `json:"id"`
-		Name       string  `json:"name"`
-		Details    string  `json:"details"`
-		CreatedOn  uint64  `json:"created_on"`
-		UpdatedOn  *uint64 `json:"updated_on"`
-		ArchivedOn *uint64 `json:"archived_on"`
-		BelongsTo  uint64  `json:"belongs_to"`
+		ID            uint64  `json:"id"`
+		Name          string  `json:"name"`
+		Details       string  `json:"details"`
+		CreatedOn     uint64  `json:"created_on"`
+		UpdatedOn     *uint64 `json:"updated_on"`
+		ArchivedOn    *uint64 `json:"archived_on"`
+		BelongsToUser uint64  `json:"belongs_to_user"`
 	}
 
 	// ItemList represents a list of items
@@ -25,16 +25,16 @@ type (
 
 	// ItemCreationInput represents what a user could set as input for creating items
 	ItemCreationInput struct {
-		Name      string `json:"name"`
-		Details   string `json:"details"`
-		BelongsTo uint64 `json:"-"`
+		Name          string `json:"name"`
+		Details       string `json:"details"`
+		BelongsToUser uint64 `json:"-"`
 	}
 
 	// ItemUpdateInput represents what a user could set as input for updating items
 	ItemUpdateInput struct {
-		Name      string `json:"name"`
-		Details   string `json:"details"`
-		BelongsTo uint64 `json:"-"`
+		Name          string `json:"name"`
+		Details       string `json:"details"`
+		BelongsToUser uint64 `json:"-"`
 	}
 
 	// ItemDataManager describes a structure capable of storing items permanently

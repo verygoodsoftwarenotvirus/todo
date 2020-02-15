@@ -108,7 +108,7 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		input.BelongsTo = userID
+		input.BelongsToUser = userID
 
 		// ensure everythings on the up-and-up
 		if err := validateWebhook(input); err != nil {

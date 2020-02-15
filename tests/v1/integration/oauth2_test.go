@@ -39,11 +39,11 @@ func buildDummyOAuth2ClientInput(t *testing.T, username, password, totpToken str
 
 func convertInputToClient(input *models.OAuth2ClientCreationInput) *models.OAuth2Client {
 	return &models.OAuth2Client{
-		ClientID:     input.ClientID,
-		ClientSecret: input.ClientSecret,
-		RedirectURI:  input.RedirectURI,
-		Scopes:       input.Scopes,
-		BelongsTo:    input.BelongsTo,
+		ClientID:      input.ClientID,
+		ClientSecret:  input.ClientSecret,
+		RedirectURI:   input.RedirectURI,
+		Scopes:        input.Scopes,
+		BelongsToUser: input.BelongsToUser,
 	}
 }
 

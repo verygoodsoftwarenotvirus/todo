@@ -131,7 +131,7 @@ func (c *Client) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 
 	logger := c.logger.WithValues(map[string]interface{}{
 		"client_id":  input.ClientID,
-		"belongs_to": input.BelongsTo,
+		"belongs_to": input.BelongsToUser,
 	})
 
 	client, err := c.querier.CreateOAuth2Client(ctx, input)

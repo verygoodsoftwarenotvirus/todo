@@ -28,7 +28,7 @@ func buildMockRowFromWebhook(w *models.Webhook) *sqlmock.Rows {
 		w.CreatedOn,
 		w.UpdatedOn,
 		w.ArchivedOn,
-		w.BelongsTo,
+		w.BelongsToUser,
 	)
 
 	return exampleRows
@@ -37,7 +37,7 @@ func buildMockRowFromWebhook(w *models.Webhook) *sqlmock.Rows {
 func buildErroneousMockRowFromWebhook(w *models.Webhook) *sqlmock.Rows {
 	exampleRows := sqlmock.NewRows(webhooksTableColumns).AddRow(
 		w.ArchivedOn,
-		w.BelongsTo,
+		w.BelongsToUser,
 		w.Name,
 		w.ContentType,
 		w.URL,
@@ -62,7 +62,7 @@ func TestPostgres_buildGetWebhookQuery(T *testing.T) {
 		exampleUserID := uint64(321)
 
 		expectedArgCount := 2
-		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE belongs_to = $1 AND id = $2"
+		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to_user FROM webhooks WHERE belongs_to_user = $1 AND id = $2"
 
 		actualQuery, args := p.buildGetWebhookQuery(exampleWebhookID, exampleUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -75,7 +75,7 @@ func TestPostgres_buildGetWebhookQuery(T *testing.T) {
 func TestPostgres_GetWebhook(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE belongs_to = $1 AND id = $2"
+	expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to_user FROM webhooks WHERE belongs_to_user = $1 AND id = $2"
 
 	T.Run("happy path", func(t *testing.T) {
 		expected := &models.Webhook{
@@ -172,7 +172,7 @@ func TestPostgres_buildGetWebhookCountQuery(T *testing.T) {
 		p, _ := buildTestService(t)
 		expectedUserID := uint64(123)
 		expectedArgCount := 1
-		expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
+		expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
 
 		actualQuery, args := p.buildGetWebhookCountQuery(models.DefaultQueryFilter(), expectedUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -184,7 +184,7 @@ func TestPostgres_buildGetWebhookCountQuery(T *testing.T) {
 func TestPostgres_GetWebhookCount(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
+	expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
 		expected := uint64(321)
@@ -267,7 +267,7 @@ func TestPostgres_buildGetAllWebhooksQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		expected := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+		expected := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to_user FROM webhooks WHERE archived_on IS NULL"
 
 		actual := p.buildGetAllWebhooksQuery()
 		assert.Equal(t, expected, actual)
@@ -277,7 +277,7 @@ func TestPostgres_buildGetAllWebhooksQuery(T *testing.T) {
 func TestPostgres_GetAllWebhooks(T *testing.T) {
 	T.Parallel()
 
-	expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+	expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to_user FROM webhooks WHERE archived_on IS NULL"
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedCount := uint64(321)
@@ -337,7 +337,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 	})
 
 	T.Run("with error from database", func(t *testing.T) {
-		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to_user FROM webhooks WHERE archived_on IS NULL"
 		example := &models.Webhook{
 			ID:   123,
 			Name: "name",
@@ -389,7 +389,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 func TestPostgres_GetAllWebhooksForUser(T *testing.T) {
 	T.Parallel()
 
-	expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+	expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to_user FROM webhooks WHERE archived_on IS NULL"
 
 	T.Run("happy path", func(t *testing.T) {
 		exampleUser := &models.User{ID: 123}
@@ -472,7 +472,7 @@ func TestPostgres_buildGetWebhooksQuery(T *testing.T) {
 		p, _ := buildTestService(t)
 
 		expectedArgCount := 1
-		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL AND belongs_to = $1 LIMIT 20"
+		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to_user FROM webhooks WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
 
 		actualQuery, args := p.buildGetWebhooksQuery(models.DefaultQueryFilter(), exampleUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -484,7 +484,7 @@ func TestPostgres_buildGetWebhooksQuery(T *testing.T) {
 func TestPostgres_GetWebhooks(T *testing.T) {
 	T.Parallel()
 
-	expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to FROM webhooks WHERE archived_on IS NULL"
+	expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to_user FROM webhooks WHERE archived_on IS NULL"
 
 	T.Run("happy path", func(t *testing.T) {
 		exampleUserID := uint64(123)
@@ -608,17 +608,17 @@ func TestPostgres_buildWebhookCreationQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
 		exampleInput := &models.Webhook{
-			Name:        "name",
-			ContentType: "application/json",
-			URL:         "https://verygoodsoftwarenotvirus.ru",
-			Method:      http.MethodPatch,
-			Events:      []string{},
-			DataTypes:   []string{},
-			Topics:      []string{},
-			BelongsTo:   1,
+			Name:          "name",
+			ContentType:   "application/json",
+			URL:           "https://verygoodsoftwarenotvirus.ru",
+			Method:        http.MethodPatch,
+			Events:        []string{},
+			DataTypes:     []string{},
+			Topics:        []string{},
+			BelongsToUser: 1,
 		}
 		expectedArgCount := 8
-		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id, created_on"
+		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to_user) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id, created_on"
 
 		actualQuery, args := p.buildWebhookCreationQuery(exampleInput)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -632,17 +632,17 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Webhook{
-			ID:        123,
-			Name:      "name",
-			BelongsTo: expectedUserID,
-			CreatedOn: uint64(time.Now().Unix()),
+			ID:            123,
+			Name:          "name",
+			BelongsToUser: expectedUserID,
+			CreatedOn:     uint64(time.Now().Unix()),
 		}
 		expectedInput := &models.WebhookCreationInput{
-			Name:      expected.Name,
-			BelongsTo: expected.BelongsTo,
+			Name:          expected.Name,
+			BelongsToUser: expected.BelongsToUser,
 		}
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(expected.ID, uint64(time.Now().Unix()))
-		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id, created_on"
+		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to_user) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id, created_on"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
@@ -653,7 +653,7 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 			strings.Join(expected.Events, eventsSeparator),
 			strings.Join(expected.DataTypes, typesSeparator),
 			strings.Join(expected.Topics, topicsSeparator),
-			expected.BelongsTo,
+			expected.BelongsToUser,
 		).WillReturnRows(exampleRows)
 
 		actual, err := p.CreateWebhook(context.Background(), expectedInput)
@@ -666,16 +666,16 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 	T.Run("with error interacting with database", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Webhook{
-			ID:        123,
-			Name:      "name",
-			BelongsTo: expectedUserID,
-			CreatedOn: uint64(time.Now().Unix()),
+			ID:            123,
+			Name:          "name",
+			BelongsToUser: expectedUserID,
+			CreatedOn:     uint64(time.Now().Unix()),
 		}
 		expectedInput := &models.WebhookCreationInput{
-			Name:      expected.Name,
-			BelongsTo: expected.BelongsTo,
+			Name:          expected.Name,
+			BelongsToUser: expected.BelongsToUser,
 		}
-		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id, created_on"
+		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to_user) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id, created_on"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
@@ -686,7 +686,7 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 			strings.Join(expected.Events, eventsSeparator),
 			strings.Join(expected.DataTypes, typesSeparator),
 			strings.Join(expected.Topics, topicsSeparator),
-			expected.BelongsTo,
+			expected.BelongsToUser,
 		).WillReturnError(errors.New("blah"))
 
 		actual, err := p.CreateWebhook(context.Background(), expectedInput)
@@ -703,17 +703,17 @@ func TestPostgres_buildUpdateWebhookQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
 		exampleInput := &models.Webhook{
-			Name:        "name",
-			ContentType: "application/json",
-			URL:         "https://verygoodsoftwarenotvirus.ru",
-			Method:      http.MethodPatch,
-			Events:      []string{},
-			DataTypes:   []string{},
-			Topics:      []string{},
-			BelongsTo:   1,
+			Name:          "name",
+			ContentType:   "application/json",
+			URL:           "https://verygoodsoftwarenotvirus.ru",
+			Method:        http.MethodPatch,
+			Events:        []string{},
+			DataTypes:     []string{},
+			Topics:        []string{},
+			BelongsToUser: 1,
 		}
 		expectedArgCount := 9
-		expectedQuery := "UPDATE webhooks SET name = $1, content_type = $2, url = $3, method = $4, events = $5, data_types = $6, topics = $7, updated_on = extract(epoch FROM NOW()) WHERE belongs_to = $8 AND id = $9 RETURNING updated_on"
+		expectedQuery := "UPDATE webhooks SET name = $1, content_type = $2, url = $3, method = $4, events = $5, data_types = $6, topics = $7, updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $8 AND id = $9 RETURNING updated_on"
 
 		actualQuery, args := p.buildUpdateWebhookQuery(exampleInput)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -727,17 +727,17 @@ func TestPostgres_UpdateWebhook(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		p, mockDB := buildTestService(t)
 		expected := &models.Webhook{
-			Name:        "name",
-			ContentType: "application/json",
-			URL:         "https://verygoodsoftwarenotvirus.ru",
-			Method:      http.MethodPatch,
-			Events:      []string{},
-			DataTypes:   []string{},
-			Topics:      []string{},
-			BelongsTo:   1,
+			Name:          "name",
+			ContentType:   "application/json",
+			URL:           "https://verygoodsoftwarenotvirus.ru",
+			Method:        http.MethodPatch,
+			Events:        []string{},
+			DataTypes:     []string{},
+			Topics:        []string{},
+			BelongsToUser: 1,
 		}
 		exampleRows := sqlmock.NewRows([]string{"updated_on"}).AddRow(uint64(time.Now().Unix()))
-		expectedQuery := "UPDATE webhooks SET name = $1, content_type = $2, url = $3, method = $4, events = $5, data_types = $6, topics = $7, updated_on = extract(epoch FROM NOW()) WHERE belongs_to = $8 AND id = $9 RETURNING updated_on"
+		expectedQuery := "UPDATE webhooks SET name = $1, content_type = $2, url = $3, method = $4, events = $5, data_types = $6, topics = $7, updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $8 AND id = $9 RETURNING updated_on"
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
 			expected.Name,
@@ -747,7 +747,7 @@ func TestPostgres_UpdateWebhook(T *testing.T) {
 			strings.Join(expected.Events, eventsSeparator),
 			strings.Join(expected.DataTypes, typesSeparator),
 			strings.Join(expected.Topics, topicsSeparator),
-			expected.BelongsTo,
+			expected.BelongsToUser,
 			expected.ID,
 		).WillReturnRows(exampleRows)
 
@@ -760,16 +760,16 @@ func TestPostgres_UpdateWebhook(T *testing.T) {
 	T.Run("with error from database", func(t *testing.T) {
 		p, mockDB := buildTestService(t)
 		expected := &models.Webhook{
-			Name:        "name",
-			ContentType: "application/json",
-			URL:         "https://verygoodsoftwarenotvirus.ru",
-			Method:      http.MethodPatch,
-			Events:      []string{},
-			DataTypes:   []string{},
-			Topics:      []string{},
-			BelongsTo:   1,
+			Name:          "name",
+			ContentType:   "application/json",
+			URL:           "https://verygoodsoftwarenotvirus.ru",
+			Method:        http.MethodPatch,
+			Events:        []string{},
+			DataTypes:     []string{},
+			Topics:        []string{},
+			BelongsToUser: 1,
 		}
-		expectedQuery := "UPDATE webhooks SET name = $1, content_type = $2, url = $3, method = $4, events = $5, data_types = $6, topics = $7, updated_on = extract(epoch FROM NOW()) WHERE belongs_to = $8 AND id = $9 RETURNING updated_on"
+		expectedQuery := "UPDATE webhooks SET name = $1, content_type = $2, url = $3, method = $4, events = $5, data_types = $6, topics = $7, updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $8 AND id = $9 RETURNING updated_on"
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
 			expected.Name,
@@ -779,7 +779,7 @@ func TestPostgres_UpdateWebhook(T *testing.T) {
 			strings.Join(expected.Events, eventsSeparator),
 			strings.Join(expected.DataTypes, typesSeparator),
 			strings.Join(expected.Topics, topicsSeparator),
-			expected.BelongsTo,
+			expected.BelongsToUser,
 			expected.ID,
 		).WillReturnError(errors.New("blah"))
 
@@ -798,7 +798,7 @@ func TestPostgres_buildArchiveWebhookQuery(T *testing.T) {
 		exampleWebhookID := uint64(123)
 		exampleUserID := uint64(321)
 		expectedArgCount := 2
-		expectedQuery := "UPDATE webhooks SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to = $1 AND id = $2 RETURNING archived_on"
+		expectedQuery := "UPDATE webhooks SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1 AND id = $2 RETURNING archived_on"
 
 		actualQuery, args := p.buildArchiveWebhookQuery(exampleWebhookID, exampleUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -813,20 +813,20 @@ func TestPostgres_ArchiveWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		expected := &models.Webhook{
-			ID:        123,
-			Name:      "name",
-			BelongsTo: 321,
-			CreatedOn: uint64(time.Now().Unix()),
+			ID:            123,
+			Name:          "name",
+			BelongsToUser: 321,
+			CreatedOn:     uint64(time.Now().Unix()),
 		}
-		expectedQuery := "UPDATE webhooks SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to = $1 AND id = $2 RETURNING archived_on"
+		expectedQuery := "UPDATE webhooks SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1 AND id = $2 RETURNING archived_on"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
-			expected.BelongsTo,
+			expected.BelongsToUser,
 			expected.ID,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := p.ArchiveWebhook(context.Background(), expected.ID, expected.BelongsTo)
+		err := p.ArchiveWebhook(context.Background(), expected.ID, expected.BelongsToUser)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")

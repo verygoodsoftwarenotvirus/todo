@@ -49,7 +49,7 @@ func TestOAuth2Client_GetUserID(T *testing.T) {
 		expectation := uint64(123)
 		expected := "123"
 		oac := &OAuth2Client{
-			BelongsTo: expectation,
+			BelongsToUser: expectation,
 		}
 		assert.Equal(t, expected, oac.GetUserID())
 	})

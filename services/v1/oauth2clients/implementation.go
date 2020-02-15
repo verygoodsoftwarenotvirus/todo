@@ -111,7 +111,7 @@ func (s *Service) UserAuthorizationHandler(res http.ResponseWriter, req *http.Re
 		}
 		uid = user.ID
 	} else {
-		uid = client.BelongsTo
+		uid = client.BelongsToUser
 	}
 
 	return strconv.FormatUint(uid, 10), nil

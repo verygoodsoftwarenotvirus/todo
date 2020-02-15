@@ -101,14 +101,14 @@ func (s *Service) OAuth2TokenAuthenticationMiddleware(next http.Handler) http.Ha
 			return
 		}
 
-		attachUserIDToSpan(span, c.BelongsTo)
+		attachUserIDToSpan(span, c.BelongsToUser)
 		attachOAuth2ClientDatabaseIDToSpan(span, c.ID)
 		attachOAuth2ClientIDToSpan(span, c.ClientID)
 
 		// attach both the user ID and the client object to the request. it might seem
 		// superfluous, but some things should only need to know to look for user IDs
 		ctx = context.WithValue(ctx, models.OAuth2ClientKey, c)
-		ctx = context.WithValue(ctx, models.UserIDKey, c.BelongsTo)
+		ctx = context.WithValue(ctx, models.UserIDKey, c.BelongsToUser)
 
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
@@ -132,10 +132,10 @@ func (s *Service) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 
 			attachOAuth2ClientIDToSpan(span, client.ClientID)
 			attachOAuth2ClientDatabaseIDToSpan(span, client.ID)
-			attachUserIDToSpan(span, client.BelongsTo)
+			attachUserIDToSpan(span, client.BelongsToUser)
 
 			ctx = context.WithValue(ctx, models.OAuth2ClientKey, client)
-			ctx = context.WithValue(ctx, models.UserIDKey, client.BelongsTo)
+			ctx = context.WithValue(ctx, models.UserIDKey, client.BelongsToUser)
 
 			req = req.WithContext(ctx)
 		}

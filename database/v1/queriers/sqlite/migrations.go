@@ -42,8 +42,8 @@ var (
 				"created_on" INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				"updated_on" INTEGER,
 				"archived_on" INTEGER DEFAULT NULL,
-				"belongs_to" INTEGER NOT NULL,
-				FOREIGN KEY(belongs_to) REFERENCES users(id)
+				"belongs_to_user" INTEGER NOT NULL,
+				FOREIGN KEY(belongs_to_user) REFERENCES users(id)
 			);`,
 		},
 		{
@@ -62,8 +62,8 @@ var (
 				"created_on" INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				"updated_on" INTEGER,
 				"archived_on" INTEGER DEFAULT NULL,
-				"belongs_to" INTEGER NOT NULL,
-				FOREIGN KEY(belongs_to) REFERENCES users(id)
+				"belongs_to_user" INTEGER NOT NULL,
+				FOREIGN KEY(belongs_to_user) REFERENCES users(id)
 			);`,
 		},
 		{
@@ -77,8 +77,8 @@ var (
 				"created_on" INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				"updated_on" INTEGER DEFAULT NULL,
 				"archived_on" INTEGER DEFAULT NULL,
-				"belongs_to" INTEGER NOT NULL,
-				FOREIGN KEY(belongs_to) REFERENCES users(id)
+				"belongs_to_user" INTEGER NOT NULL,
+				FOREIGN KEY(belongs_to_user) REFERENCES users(id)
 			);`,
 		},
 	}

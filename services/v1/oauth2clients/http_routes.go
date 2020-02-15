@@ -123,7 +123,7 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		input.BelongsTo = user.ID
+		input.BelongsToUser = user.ID
 
 		// tag span since we have the info
 		attachUserIDToSpan(span, user.ID)
@@ -151,7 +151,7 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 		// set some data
 		input.ClientID = randString()
 		input.ClientSecret = randString()
-		input.BelongsTo = s.fetchUserID(req)
+		input.BelongsToUser = s.fetchUserID(req)
 
 		// create the client
 		client, err := s.database.CreateOAuth2Client(ctx, input)

@@ -58,7 +58,7 @@ type (
 		CreatedOn       uint64   `json:"created_on"`
 		UpdatedOn       *uint64  `json:"updated_on"`
 		ArchivedOn      *uint64  `json:"archived_on"`
-		BelongsTo       uint64   `json:"belongs_to"`
+		BelongsToUser   uint64   `json:"belongs_to_user"`
 	}
 
 	// OAuth2ClientList is a response struct containing a list of OAuth2Clients
@@ -70,12 +70,12 @@ type (
 	// OAuth2ClientCreationInput is a struct for use when creating OAuth2 clients.
 	OAuth2ClientCreationInput struct {
 		UserLoginInput
-		Name         string   `json:"name"`
-		ClientID     string   `json:"-"`
-		ClientSecret string   `json:"-"`
-		RedirectURI  string   `json:"redirect_uri"`
-		BelongsTo    uint64   `json:"belongs_to"`
-		Scopes       []string `json:"scopes"`
+		Name          string   `json:"name"`
+		ClientID      string   `json:"-"`
+		ClientSecret  string   `json:"-"`
+		RedirectURI   string   `json:"redirect_uri"`
+		BelongsToUser uint64   `json:"-"`
+		Scopes        []string `json:"scopes"`
 	}
 
 	// OAuth2ClientUpdateInput is a struct for use when updating OAuth2 clients
@@ -104,7 +104,7 @@ func (c *OAuth2Client) GetDomain() string {
 
 // GetUserID returns the client's UserID
 func (c *OAuth2Client) GetUserID() string {
-	return strconv.FormatUint(c.BelongsTo, 10)
+	return strconv.FormatUint(c.BelongsToUser, 10)
 }
 
 // HasScope returns whether or not the provided scope is included in the scope list

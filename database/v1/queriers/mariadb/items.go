@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	itemsTableName = "items"
+	itemsTableName            = "items"
+	itemsTableOwnershipColumn = "belongs_to_user"
 )
 
 var (
@@ -25,7 +26,7 @@ var (
 		"created_on",
 		"updated_on",
 		"archived_on",
-		"belongs_to",
+		itemsTableOwnershipColumn,
 	}
 )
 
@@ -40,7 +41,7 @@ func scanItem(scan database.Scanner) (*models.Item, error) {
 		&x.CreatedOn,
 		&x.UpdatedOn,
 		&x.ArchivedOn,
-		&x.BelongsTo,
+		&x.BelongsToUser,
 	); err != nil {
 		return nil, err
 	}
@@ -78,8 +79,8 @@ func (m *MariaDB) buildGetItemQuery(itemID, userID uint64) (query string, args [
 		Select(itemsTableColumns...).
 		From(itemsTableName).
 		Where(squirrel.Eq{
-			"id":         itemID,
-			"belongs_to": userID,
+			"id":                      itemID,
+			itemsTableOwnershipColumn: userID,
 		}).ToSql()
 
 	m.logQueryBuildingError(err)
@@ -102,8 +103,8 @@ func (m *MariaDB) buildGetItemCountQuery(filter *models.QueryFilter, userID uint
 		Select(CountQuery).
 		From(itemsTableName).
 		Where(squirrel.Eq{
-			"archived_on": nil,
-			"belongs_to":  userID,
+			"archived_on":             nil,
+			itemsTableOwnershipColumn: userID,
 		})
 
 	if filter != nil {
@@ -158,8 +159,8 @@ func (m *MariaDB) buildGetItemsQuery(filter *models.QueryFilter, userID uint64) 
 		Select(itemsTableColumns...).
 		From(itemsTableName).
 		Where(squirrel.Eq{
-			"archived_on": nil,
-			"belongs_to":  userID,
+			"archived_on":             nil,
+			itemsTableOwnershipColumn: userID,
 		})
 
 	if filter != nil {
@@ -228,13 +229,13 @@ func (m *MariaDB) buildCreateItemQuery(input *models.Item) (query string, args [
 		Columns(
 			"name",
 			"details",
-			"belongs_to",
+			itemsTableOwnershipColumn,
 			"created_on",
 		).
 		Values(
 			input.Name,
 			input.Details,
-			input.BelongsTo,
+			input.BelongsToUser,
 			squirrel.Expr(CurrentUnixTimeQuery),
 		).
 		ToSql()
@@ -262,9 +263,9 @@ func (m *MariaDB) buildItemCreationTimeQuery(itemID uint64) (query string, args 
 // CreateItem creates an item in the database
 func (m *MariaDB) CreateItem(ctx context.Context, input *models.ItemCreationInput) (*models.Item, error) {
 	x := &models.Item{
-		Name:      input.Name,
-		Details:   input.Details,
-		BelongsTo: input.BelongsTo,
+		Name:          input.Name,
+		Details:       input.Details,
+		BelongsToUser: input.BelongsToUser,
 	}
 
 	query, args := m.buildCreateItemQuery(x)
@@ -296,8 +297,8 @@ func (m *MariaDB) buildUpdateItemQuery(input *models.Item) (query string, args [
 		Set("details", input.Details).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id":         input.ID,
-			"belongs_to": input.BelongsTo,
+			"id":                      input.ID,
+			itemsTableOwnershipColumn: input.BelongsToUser,
 		}).
 		ToSql()
 
@@ -321,9 +322,9 @@ func (m *MariaDB) buildArchiveItemQuery(itemID, userID uint64) (query string, ar
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id":          itemID,
-			"archived_on": nil,
-			"belongs_to":  userID,
+			"id":                      itemID,
+			"archived_on":             nil,
+			itemsTableOwnershipColumn: userID,
 		}).
 		ToSql()
 

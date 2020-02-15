@@ -99,8 +99,8 @@ func (c *Client) CreateWebhook(ctx context.Context, input *models.WebhookCreatio
 	ctx, span := trace.StartSpan(ctx, "CreateWebhook")
 	defer span.End()
 
-	attachUserIDToSpan(span, input.BelongsTo)
-	c.logger.WithValue("user_id", input.BelongsTo).Debug("CreateWebhook called")
+	attachUserIDToSpan(span, input.BelongsToUser)
+	c.logger.WithValue("user_id", input.BelongsToUser).Debug("CreateWebhook called")
 
 	return c.querier.CreateWebhook(ctx, input)
 }
@@ -112,7 +112,7 @@ func (c *Client) UpdateWebhook(ctx context.Context, input *models.Webhook) error
 	defer span.End()
 
 	attachWebhookIDToSpan(span, input.ID)
-	attachUserIDToSpan(span, input.BelongsTo)
+	attachUserIDToSpan(span, input.BelongsToUser)
 
 	c.logger.WithValue("webhook_id", input.ID).Debug("UpdateWebhook called")
 

@@ -199,8 +199,8 @@ func TestService_UserAuthorizationHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
-		exampleClient := &models.OAuth2Client{BelongsTo: 1}
-		expected := fmt.Sprintf("%d", exampleClient.BelongsTo)
+		exampleClient := &models.OAuth2Client{BelongsToUser: 1}
+		expected := fmt.Sprintf("%d", exampleClient.BelongsToUser)
 
 		req := buildRequest(t)
 		res := httptest.NewRecorder()

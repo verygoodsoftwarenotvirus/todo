@@ -353,7 +353,8 @@ func (m *MariaDB) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (quer
 	return query, args
 }
 
-// buildOAuth2ClientCreationTimeQuery takes an item and returns a creation query for that item and the relevant arguments.
+// buildOAuth2ClientCreationTimeQuery takes an oauth2 client ID and returns a creation query
+// for that oauth2 client and the relevant arguments.
 func (m *MariaDB) buildOAuth2ClientCreationTimeQuery(clientID uint64) (query string, args []interface{}) {
 	var err error
 

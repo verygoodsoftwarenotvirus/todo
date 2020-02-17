@@ -233,8 +233,9 @@ func TestMariaDB_buildGetAllWebhooksCountQuery(T *testing.T) {
 func TestMariaDB_GetAllWebhooksCount(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
+
 	T.Run("happy path", func(t *testing.T) {
-		expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
 		expected := uint64(321)
 
 		m, mockDB := buildTestService(t)
@@ -249,8 +250,6 @@ func TestMariaDB_GetAllWebhooksCount(T *testing.T) {
 	})
 
 	T.Run("with error from database", func(t *testing.T) {
-		expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
-
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(errors.New("blah"))

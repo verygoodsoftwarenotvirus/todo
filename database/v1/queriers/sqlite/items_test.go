@@ -397,6 +397,8 @@ func TestSqlite_buildCreateItemQuery(T *testing.T) {
 func TestSqlite_CreateItem(T *testing.T) {
 	T.Parallel()
 
+	expectedCreationQuery := "INSERT INTO items (name,details,belongs_to_user) VALUES (?,?,?)"
+
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Item{
@@ -412,7 +414,6 @@ func TestSqlite_CreateItem(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		expectedCreationQuery := "INSERT INTO items (name,details,belongs_to_user) VALUES (?,?,?)"
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedCreationQuery)).
 			WithArgs(
 				expected.Name,
@@ -444,10 +445,9 @@ func TestSqlite_CreateItem(T *testing.T) {
 			Details:       expected.Details,
 			BelongsToUser: expected.BelongsToUser,
 		}
-		expectedQuery := "INSERT INTO items (name,details,belongs_to_user) VALUES (?,?,?)"
 
 		s, mockDB := buildTestService(t)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedCreationQuery)).
 			WithArgs(
 				expected.Name,
 				expected.Details,

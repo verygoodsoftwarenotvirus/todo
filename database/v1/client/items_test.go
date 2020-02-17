@@ -109,6 +109,24 @@ func TestClient_GetItems(T *testing.T) {
 	})
 }
 
+func TestClient_GetAllItemsForUser(T *testing.T) {
+	T.Parallel()
+
+	T.Run("obligatory", func(t *testing.T) {
+		exampleUserID := uint64(123)
+		c, mockDB := buildTestClient()
+		expected := []models.Item{}
+
+		mockDB.ItemDataManager.On("GetAllItemsForUser", mock.Anything, exampleUserID).Return(expected, nil)
+
+		actual, err := c.GetAllItemsForUser(context.Background(), exampleUserID)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+
+		mockDB.AssertExpectations(t)
+	})
+}
+
 func TestClient_CreateItem(T *testing.T) {
 	T.Parallel()
 

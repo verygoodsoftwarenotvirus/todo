@@ -397,6 +397,8 @@ func TestPostgres_buildCreateItemQuery(T *testing.T) {
 func TestPostgres_CreateItem(T *testing.T) {
 	T.Parallel()
 
+	expectedCreationQuery := "INSERT INTO items (name,details,belongs_to_user) VALUES ($1,$2,$3) RETURNING id, created_on"
+
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Item{
@@ -410,10 +412,9 @@ func TestPostgres_CreateItem(T *testing.T) {
 			BelongsToUser: expected.BelongsToUser,
 		}
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(expected.ID, uint64(time.Now().Unix()))
-		expectedQuery := "INSERT INTO items (name,details,belongs_to_user) VALUES ($1,$2,$3) RETURNING id, created_on"
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCreationQuery)).
 			WithArgs(
 				expected.Name,
 				expected.Details,
@@ -439,10 +440,9 @@ func TestPostgres_CreateItem(T *testing.T) {
 			Details:       expected.Details,
 			BelongsToUser: expected.BelongsToUser,
 		}
-		expectedQuery := "INSERT INTO items (name,details,belongs_to_user) VALUES ($1,$2,$3) RETURNING id, created_on"
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCreationQuery)).
 			WithArgs(
 				expected.Name,
 				expected.Details,
@@ -482,6 +482,8 @@ func TestPostgres_buildUpdateItemQuery(T *testing.T) {
 func TestPostgres_UpdateItem(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "UPDATE items SET name = $1, details = $2, updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $3 AND id = $4 RETURNING updated_on"
+
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Item{
@@ -490,7 +492,6 @@ func TestPostgres_UpdateItem(T *testing.T) {
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
 		exampleRows := sqlmock.NewRows([]string{"updated_on"}).AddRow(uint64(time.Now().Unix()))
-		expectedQuery := "UPDATE items SET name = $1, details = $2, updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $3 AND id = $4 RETURNING updated_on"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -514,7 +515,6 @@ func TestPostgres_UpdateItem(T *testing.T) {
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
-		expectedQuery := "UPDATE items SET name = $1, details = $2, updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $3 AND id = $4 RETURNING updated_on"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -555,6 +555,8 @@ func TestPostgres_buildArchiveItemQuery(T *testing.T) {
 func TestPostgres_ArchiveItem(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "UPDATE items SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1 AND id = $2 RETURNING archived_on"
+
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Item{
@@ -562,7 +564,6 @@ func TestPostgres_ArchiveItem(T *testing.T) {
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
-		expectedQuery := "UPDATE items SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1 AND id = $2 RETURNING archived_on"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -584,7 +585,6 @@ func TestPostgres_ArchiveItem(T *testing.T) {
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
-		expectedQuery := "UPDATE items SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1 AND id = $2 RETURNING archived_on"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).

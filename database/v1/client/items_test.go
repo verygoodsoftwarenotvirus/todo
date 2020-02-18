@@ -53,7 +53,7 @@ func TestClient_GetItemCount(T *testing.T) {
 		c, mockDB := buildTestClient()
 		mockDB.ItemDataManager.On("GetItemCount", mock.Anything, (*models.QueryFilter)(nil), exampleUserID).Return(expected, nil)
 
-		actual, err := c.GetItemCount(context.Background(), nil, exampleUserID)
+		actual, err := c.GetItemCount(context.Background(), (*models.QueryFilter)(nil), exampleUserID)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -101,7 +101,7 @@ func TestClient_GetItems(T *testing.T) {
 
 		mockDB.ItemDataManager.On("GetItems", mock.Anything, (*models.QueryFilter)(nil), exampleUserID).Return(expected, nil)
 
-		actual, err := c.GetItems(context.Background(), nil, exampleUserID)
+		actual, err := c.GetItems(context.Background(), (*models.QueryFilter)(nil), exampleUserID)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 

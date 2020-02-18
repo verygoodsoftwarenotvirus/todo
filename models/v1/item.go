@@ -46,7 +46,7 @@ type (
 		GetAllItemsForUser(ctx context.Context, userID uint64) ([]Item, error)
 		CreateItem(ctx context.Context, input *ItemCreationInput) (*Item, error)
 		UpdateItem(ctx context.Context, updated *Item) error
-		ArchiveItem(ctx context.Context, id, userID uint64) error
+		ArchiveItem(ctx context.Context, itemID, userID uint64) error
 	}
 
 	// ItemDataServer describes a structure capable of serving traffic related to items

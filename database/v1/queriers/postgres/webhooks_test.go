@@ -337,14 +337,13 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 	})
 
 	T.Run("with error from database", func(t *testing.T) {
-		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to_user FROM webhooks WHERE archived_on IS NULL"
 		example := &models.Webhook{
 			ID:   123,
 			Name: "name",
 		}
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WillReturnRows(buildErroneousMockRowFromWebhook(example))
 
 		actual, err := p.GetAllWebhooks(context.Background())
@@ -629,6 +628,8 @@ func TestPostgres_buildWebhookCreationQuery(T *testing.T) {
 func TestPostgres_CreateWebhook(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to_user) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id, created_on"
+
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
 		expected := &models.Webhook{
@@ -642,7 +643,6 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 			BelongsToUser: expected.BelongsToUser,
 		}
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(expected.ID, uint64(time.Now().Unix()))
-		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to_user) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id, created_on"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
@@ -675,7 +675,6 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 			Name:          expected.Name,
 			BelongsToUser: expected.BelongsToUser,
 		}
-		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to_user) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id, created_on"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
@@ -724,6 +723,8 @@ func TestPostgres_buildUpdateWebhookQuery(T *testing.T) {
 func TestPostgres_UpdateWebhook(T *testing.T) {
 	T.Parallel()
 
+	expectedQuery := "UPDATE webhooks SET name = $1, content_type = $2, url = $3, method = $4, events = $5, data_types = $6, topics = $7, updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $8 AND id = $9 RETURNING updated_on"
+
 	T.Run("happy path", func(t *testing.T) {
 		p, mockDB := buildTestService(t)
 		expected := &models.Webhook{
@@ -737,7 +738,6 @@ func TestPostgres_UpdateWebhook(T *testing.T) {
 			BelongsToUser: 1,
 		}
 		exampleRows := sqlmock.NewRows([]string{"updated_on"}).AddRow(uint64(time.Now().Unix()))
-		expectedQuery := "UPDATE webhooks SET name = $1, content_type = $2, url = $3, method = $4, events = $5, data_types = $6, topics = $7, updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $8 AND id = $9 RETURNING updated_on"
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
 			expected.Name,
@@ -769,7 +769,6 @@ func TestPostgres_UpdateWebhook(T *testing.T) {
 			Topics:        []string{},
 			BelongsToUser: 1,
 		}
-		expectedQuery := "UPDATE webhooks SET name = $1, content_type = $2, url = $3, method = $4, events = $5, data_types = $6, topics = $7, updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $8 AND id = $9 RETURNING updated_on"
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
 			expected.Name,

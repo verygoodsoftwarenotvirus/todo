@@ -10,7 +10,7 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/lib/pq"
+	postgres "github.com/lib/pq"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
@@ -249,8 +249,8 @@ func (p *Postgres) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 	// create the user
 	if err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {
 		switch e := err.(type) {
-		case *pq.Error:
-			if e.Code == pq.ErrorCode("23505") {
+		case *postgres.Error:
+			if e.Code == postgres.ErrorCode("23505") {
 				return nil, dbclient.ErrUserExists
 			}
 		default:

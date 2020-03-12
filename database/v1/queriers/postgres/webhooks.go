@@ -134,7 +134,7 @@ func (p *Postgres) GetWebhook(ctx context.Context, webhookID, userID uint64) (*m
 func (p *Postgres) buildGetWebhookCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
 	builder := p.sqlBuilder.
-		Select(CountQuery).
+		Select(fmt.Sprintf(CountQuery, webhooksTableName)).
 		From(webhooksTableName).
 		Where(squirrel.Eq{
 			webhooksTableOwnershipColumn: userID,
@@ -169,7 +169,7 @@ func (p *Postgres) buildGetAllWebhooksCountQuery() string {
 	getAllWebhooksCountQueryBuilder.Do(func() {
 		var err error
 		getAllWebhooksCountQuery, _, err = p.sqlBuilder.
-			Select(CountQuery).
+			Select(fmt.Sprintf(CountQuery, webhooksTableName)).
 			From(webhooksTableName).
 			Where(squirrel.Eq{"archived_on": nil}).
 			ToSql()

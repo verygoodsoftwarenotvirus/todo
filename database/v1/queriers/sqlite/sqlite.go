@@ -20,7 +20,7 @@ const (
 	sqliteDriverName = "wrapped-sqlite-driver"
 
 	// CountQuery is a generic counter query used in a few query builders
-	CountQuery = "COUNT(id)"
+	CountQuery = "COUNT(%s.id)"
 
 	// CurrentUnixTimeQuery is the query sqlite uses to determine the current unix time
 	CurrentUnixTimeQuery = "(strftime('%s','now'))"

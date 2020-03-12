@@ -136,7 +136,7 @@ func (m *MariaDB) GetUserByUsername(ctx context.Context, username string) (*mode
 func (m *MariaDB) buildGetUserCountQuery(filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 	builder := m.sqlBuilder.
-		Select(CountQuery).
+		Select(fmt.Sprintf(CountQuery, usersTableName)).
 		From(usersTableName).
 		Where(squirrel.Eq{"archived_on": nil})
 

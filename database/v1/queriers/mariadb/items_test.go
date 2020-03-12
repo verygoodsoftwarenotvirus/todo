@@ -50,7 +50,7 @@ func TestMariaDB_buildGetItemQuery(T *testing.T) {
 		exampleUserID := uint64(321)
 
 		expectedArgCount := 2
-		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to_user FROM items WHERE belongs_to_user = ? AND id = ?"
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.belongs_to_user = ? AND items.id = ?"
 		actualQuery, args := m.buildGetItemQuery(exampleItemID, exampleUserID)
 
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -63,7 +63,7 @@ func TestMariaDB_buildGetItemQuery(T *testing.T) {
 func TestMariaDB_GetItem(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to_user FROM items WHERE belongs_to_user = ? AND id = ?"
+	expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.belongs_to_user = ? AND items.id = ?"
 
 	T.Run("happy path", func(t *testing.T) {
 		expected := &models.Item{
@@ -111,7 +111,7 @@ func TestMariaDB_buildGetItemCountQuery(T *testing.T) {
 		exampleUserID := uint64(321)
 
 		expectedArgCount := 1
-		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL AND belongs_to_user = ? LIMIT 20"
+		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? LIMIT 20"
 
 		actualQuery, args := m.buildGetItemCountQuery(models.DefaultQueryFilter(), exampleUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -125,7 +125,7 @@ func TestMariaDB_GetItemCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
-		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL AND belongs_to_user = ? LIMIT 20"
+		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? LIMIT 20"
 		expectedCount := uint64(666)
 
 		m, mockDB := buildTestService(t)
@@ -146,7 +146,7 @@ func TestMariaDB_buildGetAllItemsCountQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
-		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
+		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
 
 		actualQuery := m.buildGetAllItemsCountQuery()
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -157,7 +157,7 @@ func TestMariaDB_GetAllItemsCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
+		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
 		expectedCount := uint64(666)
 
 		m, mockDB := buildTestService(t)
@@ -180,7 +180,7 @@ func TestMariaDB_buildGetItemsQuery(T *testing.T) {
 		exampleUserID := uint64(321)
 
 		expectedArgCount := 1
-		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to_user FROM items WHERE archived_on IS NULL AND belongs_to_user = ? LIMIT 20"
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? LIMIT 20"
 		actualQuery, args := m.buildGetItemsQuery(models.DefaultQueryFilter(), exampleUserID)
 
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -192,11 +192,11 @@ func TestMariaDB_buildGetItemsQuery(T *testing.T) {
 func TestMariaDB_GetItems(T *testing.T) {
 	T.Parallel()
 
-	expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to_user FROM items WHERE archived_on IS NULL AND belongs_to_user = ? LIMIT 20"
+	expectedListQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(123)
-		expectedCountQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
+		expectedCountQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
 		expectedItem := &models.Item{
 			ID: 321,
 		}
@@ -281,7 +281,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 		expected := &models.Item{
 			ID: 321,
 		}
-		expectedCountQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
+		expectedCountQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -301,7 +301,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 func TestMariaDB_GetAllItemsForUser(T *testing.T) {
 	T.Parallel()
 
-	expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to_user FROM items WHERE archived_on IS NULL AND belongs_to_user = ?"
+	expectedListQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ?"
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(123)
@@ -421,7 +421,7 @@ func TestMariaDB_CreateItem(T *testing.T) {
 				expected.BelongsToUser,
 			).WillReturnResult(sqlmock.NewResult(int64(expected.ID), 1))
 
-		expectedTimeQuery := "SELECT created_on FROM items WHERE id = ?"
+		expectedTimeQuery := "SELECT items.created_on FROM items WHERE items.id = ?"
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedTimeQuery)).
 			WithArgs(expected.ID).
 			WillReturnRows(sqlmock.NewRows([]string{"created_on"}).AddRow(expected.CreatedOn))

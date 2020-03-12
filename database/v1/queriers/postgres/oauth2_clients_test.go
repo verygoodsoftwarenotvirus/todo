@@ -397,7 +397,7 @@ func TestPostgres_buildGetOAuth2ClientCountQuery(T *testing.T) {
 		p, _ := buildTestService(t)
 		expectedUserID := uint64(321)
 		expectedArgCount := 1
-		expectedQuery := "SELECT COUNT(id) FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
+		expectedQuery := "SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
 
 		actualQuery, args := p.buildGetOAuth2ClientCountQuery(models.DefaultQueryFilter(), expectedUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -411,7 +411,7 @@ func TestPostgres_GetOAuth2ClientCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
-		expectedQuery := "SELECT COUNT(id) FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
+		expectedQuery := "SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
 		expectedCount := uint64(666)
 
 		p, mockDB := buildTestService(t)
@@ -432,7 +432,7 @@ func TestPostgres_buildGetAllOAuth2ClientCountQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		expected := "SELECT COUNT(id) FROM oauth2_clients WHERE archived_on IS NULL"
+		expected := "SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE archived_on IS NULL"
 
 		actual := p.buildGetAllOAuth2ClientCountQuery()
 		assert.Equal(t, expected, actual)
@@ -443,7 +443,7 @@ func TestPostgres_GetAllOAuth2ClientCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		expectedQuery := "SELECT COUNT(id) FROM oauth2_clients WHERE archived_on IS NULL"
+		expectedQuery := "SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE archived_on IS NULL"
 		expectedCount := uint64(666)
 
 		p, mockDB := buildTestService(t)
@@ -499,7 +499,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 		}
 
 		filter := models.DefaultQueryFilter()
-		expectedCountQuery := "SELECT COUNT(id) FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
+		expectedCountQuery := "SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).WillReturnRows(
@@ -592,7 +592,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 				},
 			},
 		}
-		expectedCountQuery := "SELECT COUNT(id) FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
+		expectedCountQuery := "SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).WillReturnRows(

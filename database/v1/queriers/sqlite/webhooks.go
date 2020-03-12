@@ -134,7 +134,7 @@ func (s *Sqlite) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mod
 func (s *Sqlite) buildGetWebhookCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
 	builder := s.sqlBuilder.
-		Select(CountQuery).
+		Select(fmt.Sprintf(CountQuery, webhooksTableName)).
 		From(webhooksTableName).
 		Where(squirrel.Eq{
 			webhooksTableOwnershipColumn: userID,
@@ -169,7 +169,7 @@ func (s *Sqlite) buildGetAllWebhooksCountQuery() string {
 	getAllWebhooksCountQueryBuilder.Do(func() {
 		var err error
 		getAllWebhooksCountQuery, _, err = s.sqlBuilder.
-			Select(CountQuery).
+			Select(fmt.Sprintf(CountQuery, webhooksTableName)).
 			From(webhooksTableName).
 			Where(squirrel.Eq{"archived_on": nil}).
 			ToSql()

@@ -136,7 +136,7 @@ func (s *Sqlite) GetUserByUsername(ctx context.Context, username string) (*model
 func (s *Sqlite) buildGetUserCountQuery(filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 	builder := s.sqlBuilder.
-		Select(CountQuery).
+		Select(fmt.Sprintf(CountQuery, usersTableName)).
 		From(usersTableName).
 		Where(squirrel.Eq{"archived_on": nil})
 

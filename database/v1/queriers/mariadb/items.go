@@ -20,13 +20,13 @@ const (
 
 var (
 	itemsTableColumns = []string{
-		"id",
-		"name",
-		"details",
-		"created_on",
-		"updated_on",
-		"archived_on",
-		itemsTableOwnershipColumn,
+		fmt.Sprintf("%s.%s", itemsTableName, "id"),
+		fmt.Sprintf("%s.%s", itemsTableName, "name"),
+		fmt.Sprintf("%s.%s", itemsTableName, "details"),
+		fmt.Sprintf("%s.%s", itemsTableName, "created_on"),
+		fmt.Sprintf("%s.%s", itemsTableName, "updated_on"),
+		fmt.Sprintf("%s.%s", itemsTableName, "archived_on"),
+		fmt.Sprintf("%s.%s", itemsTableName, itemsTableOwnershipColumn),
 	}
 )
 
@@ -79,8 +79,8 @@ func (m *MariaDB) buildGetItemQuery(itemID, userID uint64) (query string, args [
 		Select(itemsTableColumns...).
 		From(itemsTableName).
 		Where(squirrel.Eq{
-			"id":                      itemID,
-			itemsTableOwnershipColumn: userID,
+			fmt.Sprintf("%s.id", itemsTableName):                            itemID,
+			fmt.Sprintf("%s.%s", itemsTableName, itemsTableOwnershipColumn): userID,
 		}).ToSql()
 
 	m.logQueryBuildingError(err)
@@ -100,11 +100,11 @@ func (m *MariaDB) GetItem(ctx context.Context, itemID, userID uint64) (*models.I
 func (m *MariaDB) buildGetItemCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
 	builder := m.sqlBuilder.
-		Select(CountQuery).
+		Select(fmt.Sprintf(CountQuery, itemsTableName)).
 		From(itemsTableName).
 		Where(squirrel.Eq{
-			"archived_on":             nil,
-			itemsTableOwnershipColumn: userID,
+			fmt.Sprintf("%s.archived_on", itemsTableName):                   nil,
+			fmt.Sprintf("%s.%s", itemsTableName, itemsTableOwnershipColumn): userID,
 		})
 
 	if filter != nil {
@@ -135,9 +135,9 @@ func (m *MariaDB) buildGetAllItemsCountQuery() string {
 	allItemsCountQueryBuilder.Do(func() {
 		var err error
 		allItemsCountQuery, _, err = m.sqlBuilder.
-			Select(CountQuery).
+			Select(fmt.Sprintf(CountQuery, itemsTableName)).
 			From(itemsTableName).
-			Where(squirrel.Eq{"archived_on": nil}).
+			Where(squirrel.Eq{fmt.Sprintf("%s.archived_on", itemsTableName): nil}).
 			ToSql()
 		m.logQueryBuildingError(err)
 	})
@@ -159,8 +159,8 @@ func (m *MariaDB) buildGetItemsQuery(filter *models.QueryFilter, userID uint64) 
 		Select(itemsTableColumns...).
 		From(itemsTableName).
 		Where(squirrel.Eq{
-			"archived_on":             nil,
-			itemsTableOwnershipColumn: userID,
+			fmt.Sprintf("%s.archived_on", itemsTableName):                   nil,
+			fmt.Sprintf("%s.%s", itemsTableName, itemsTableOwnershipColumn): userID,
 		})
 
 	if filter != nil {
@@ -250,9 +250,9 @@ func (m *MariaDB) buildItemCreationTimeQuery(itemID uint64) (query string, args 
 	var err error
 
 	query, args, err = m.sqlBuilder.
-		Select("created_on").
+		Select(fmt.Sprintf("%s.created_on", itemsTableName)).
 		From(itemsTableName).
-		Where(squirrel.Eq{"id": itemID}).
+		Where(squirrel.Eq{fmt.Sprintf("%s.id", itemsTableName): itemID}).
 		ToSql()
 
 	m.logQueryBuildingError(err)

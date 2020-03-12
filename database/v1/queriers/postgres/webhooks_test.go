@@ -172,7 +172,7 @@ func TestPostgres_buildGetWebhookCountQuery(T *testing.T) {
 		p, _ := buildTestService(t)
 		expectedUserID := uint64(123)
 		expectedArgCount := 1
-		expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
+		expectedQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
 
 		actualQuery, args := p.buildGetWebhookCountQuery(models.DefaultQueryFilter(), expectedUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -184,7 +184,7 @@ func TestPostgres_buildGetWebhookCountQuery(T *testing.T) {
 func TestPostgres_GetWebhookCount(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
+	expectedQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
 		expected := uint64(321)
@@ -223,7 +223,7 @@ func TestPostgres_buildGetAllWebhooksCountQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		expected := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
+		expected := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL"
 
 		actual := p.buildGetAllWebhooksCountQuery()
 		assert.Equal(t, expected, actual)
@@ -233,7 +233,7 @@ func TestPostgres_buildGetAllWebhooksCountQuery(T *testing.T) {
 func TestPostgres_GetAllWebhooksCount(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
+	expectedQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL"
 
 	T.Run("happy path", func(t *testing.T) {
 		expected := uint64(321)
@@ -281,7 +281,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedCount := uint64(321)
-		expectedCountQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
+		expectedCountQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
 				Page:       1,
@@ -355,7 +355,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 
 	T.Run("with error fetching count", func(t *testing.T) {
 		expectedCount := uint64(321)
-		expectedCountQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
+		expectedCountQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
 				TotalCount: expectedCount,
@@ -488,7 +488,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		exampleUserID := uint64(123)
 		expectedCount := uint64(321)
-		expectedCountQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
+		expectedCountQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
 				Page:       1,
@@ -569,7 +569,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 	T.Run("with error fetching count", func(t *testing.T) {
 		exampleUserID := uint64(123)
 		expectedCount := uint64(321)
-		expectedCountQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
+		expectedCountQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
 				Page:       1,

@@ -172,7 +172,7 @@ func TestSqlite_buildGetWebhookCountQuery(T *testing.T) {
 		s, _ := buildTestService(t)
 		expectedUserID := uint64(123)
 		expectedArgCount := 1
-		expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL AND belongs_to_user = ? LIMIT 20"
+		expectedQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL AND belongs_to_user = ? LIMIT 20"
 
 		actualQuery, args := s.buildGetWebhookCountQuery(models.DefaultQueryFilter(), expectedUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -184,7 +184,7 @@ func TestSqlite_buildGetWebhookCountQuery(T *testing.T) {
 func TestSqlite_GetWebhookCount(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL AND belongs_to_user = ? LIMIT 20"
+	expectedQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL AND belongs_to_user = ? LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
 		expected := uint64(321)
@@ -223,7 +223,7 @@ func TestSqlite_buildGetAllWebhooksCountQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
-		expected := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
+		expected := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL"
 
 		actual := s.buildGetAllWebhooksCountQuery()
 		assert.Equal(t, expected, actual)
@@ -233,7 +233,7 @@ func TestSqlite_buildGetAllWebhooksCountQuery(T *testing.T) {
 func TestSqlite_GetAllWebhooksCount(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
+	expectedQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL"
 
 	T.Run("happy path", func(t *testing.T) {
 		expected := uint64(321)
@@ -281,7 +281,7 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedCount := uint64(321)
-		expectedCountQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
+		expectedCountQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
 				Page:       1,
@@ -355,7 +355,7 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 
 	T.Run("with error fetching count", func(t *testing.T) {
 		expectedCount := uint64(321)
-		expectedCountQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
+		expectedCountQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
 				TotalCount: expectedCount,
@@ -488,7 +488,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		exampleUserID := uint64(123)
 		expectedCount := uint64(321)
-		expectedCountQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
+		expectedCountQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
 				Page:       1,
@@ -569,7 +569,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 	T.Run("with error fetching count", func(t *testing.T) {
 		exampleUserID := uint64(123)
 		expectedCount := uint64(321)
-		expectedCountQuery := "SELECT COUNT(id) FROM webhooks WHERE archived_on IS NULL"
+		expectedCountQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
 				Page:       1,

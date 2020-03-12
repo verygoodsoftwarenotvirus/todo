@@ -50,7 +50,7 @@ func TestPostgres_buildGetItemQuery(T *testing.T) {
 		exampleUserID := uint64(321)
 
 		expectedArgCount := 2
-		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to_user FROM items WHERE belongs_to_user = $1 AND id = $2"
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.belongs_to_user = $1 AND items.id = $2"
 		actualQuery, args := p.buildGetItemQuery(exampleItemID, exampleUserID)
 
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -63,7 +63,7 @@ func TestPostgres_buildGetItemQuery(T *testing.T) {
 func TestPostgres_GetItem(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to_user FROM items WHERE belongs_to_user = $1 AND id = $2"
+	expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.belongs_to_user = $1 AND items.id = $2"
 
 	T.Run("happy path", func(t *testing.T) {
 		expected := &models.Item{
@@ -111,7 +111,7 @@ func TestPostgres_buildGetItemCountQuery(T *testing.T) {
 		exampleUserID := uint64(321)
 
 		expectedArgCount := 1
-		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
+		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 LIMIT 20"
 
 		actualQuery, args := p.buildGetItemCountQuery(models.DefaultQueryFilter(), exampleUserID)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -125,7 +125,7 @@ func TestPostgres_GetItemCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(321)
-		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
+		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 LIMIT 20"
 		expectedCount := uint64(666)
 
 		p, mockDB := buildTestService(t)
@@ -146,7 +146,7 @@ func TestPostgres_buildGetAllItemsCountQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
+		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
 
 		actualQuery := p.buildGetAllItemsCountQuery()
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -157,7 +157,7 @@ func TestPostgres_GetAllItemsCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		expectedQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
+		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
 		expectedCount := uint64(666)
 
 		p, mockDB := buildTestService(t)
@@ -180,7 +180,7 @@ func TestPostgres_buildGetItemsQuery(T *testing.T) {
 		exampleUserID := uint64(321)
 
 		expectedArgCount := 1
-		expectedQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to_user FROM items WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 LIMIT 20"
 		actualQuery, args := p.buildGetItemsQuery(models.DefaultQueryFilter(), exampleUserID)
 
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -192,11 +192,11 @@ func TestPostgres_buildGetItemsQuery(T *testing.T) {
 func TestPostgres_GetItems(T *testing.T) {
 	T.Parallel()
 
-	expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to_user FROM items WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
+	expectedListQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(123)
-		expectedCountQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
+		expectedCountQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
 		expectedItem := &models.Item{
 			ID: 321,
 		}
@@ -281,7 +281,7 @@ func TestPostgres_GetItems(T *testing.T) {
 		expected := &models.Item{
 			ID: 321,
 		}
-		expectedCountQuery := "SELECT COUNT(id) FROM items WHERE archived_on IS NULL"
+		expectedCountQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -301,7 +301,7 @@ func TestPostgres_GetItems(T *testing.T) {
 func TestPostgres_GetAllItemsForUser(T *testing.T) {
 	T.Parallel()
 
-	expectedListQuery := "SELECT id, name, details, created_on, updated_on, archived_on, belongs_to_user FROM items WHERE archived_on IS NULL AND belongs_to_user = $1"
+	expectedListQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1"
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedUserID := uint64(123)

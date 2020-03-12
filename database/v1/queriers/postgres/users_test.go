@@ -127,7 +127,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 	expectedUsersQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, is_admin, created_on, updated_on, archived_on FROM users WHERE archived_on IS NULL LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
-		expectedCountQuery := "SELECT COUNT(id) FROM users WHERE archived_on IS NULL LIMIT 20"
+		expectedCountQuery := "SELECT COUNT(users.id) FROM users WHERE archived_on IS NULL LIMIT 20"
 		expectedCount := uint64(321)
 		expected := &models.UserList{
 			Pagination: models.Pagination{
@@ -206,7 +206,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 	})
 
 	T.Run("with error fetching count", func(t *testing.T) {
-		expectedCountQuery := "SELECT COUNT(id) FROM users WHERE archived_on IS NULL LIMIT 20"
+		expectedCountQuery := "SELECT COUNT(users.id) FROM users WHERE archived_on IS NULL LIMIT 20"
 		expectedCount := uint64(321)
 		expected := &models.UserList{
 			Pagination: models.Pagination{
@@ -324,7 +324,7 @@ func TestPostgres_buildGetUserCountQuery(T *testing.T) {
 		p, _ := buildTestService(t)
 
 		expectedArgCount := 0
-		expectedQuery := "SELECT COUNT(id) FROM users WHERE archived_on IS NULL LIMIT 20"
+		expectedQuery := "SELECT COUNT(users.id) FROM users WHERE archived_on IS NULL LIMIT 20"
 
 		actualQuery, args := p.buildGetUserCountQuery(models.DefaultQueryFilter())
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -335,7 +335,7 @@ func TestPostgres_buildGetUserCountQuery(T *testing.T) {
 func TestPostgres_GetUserCount(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT COUNT(id) FROM users WHERE archived_on IS NULL LIMIT 20"
+	expectedQuery := "SELECT COUNT(users.id) FROM users WHERE archived_on IS NULL LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
 		expected := uint64(123)

@@ -207,7 +207,7 @@ func (s *Sqlite) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (
 func (s *Sqlite) buildGetOAuth2ClientCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
 	builder := s.sqlBuilder.
-		Select(CountQuery).
+		Select(fmt.Sprintf(CountQuery, oauth2ClientsTableName)).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{
 			oauth2ClientsTableOwnershipColumn: userID,
@@ -242,7 +242,7 @@ func (s *Sqlite) buildGetAllOAuth2ClientCountQuery() string {
 	getAllOAuth2ClientCountQueryBuilder.Do(func() {
 		var err error
 		getAllOAuth2ClientCountQuery, _, err = s.sqlBuilder.
-			Select(CountQuery).
+			Select(fmt.Sprintf(CountQuery, oauth2ClientsTableName)).
 			From(oauth2ClientsTableName).
 			Where(squirrel.Eq{"archived_on": nil}).
 			ToSql()

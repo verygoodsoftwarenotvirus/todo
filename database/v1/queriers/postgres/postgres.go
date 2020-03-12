@@ -21,7 +21,7 @@ const (
 	postgresDriverName = "wrapped-postgres-driver"
 
 	// CountQuery is a generic counter query used in a few query builders
-	CountQuery = "COUNT(id)"
+	CountQuery = "COUNT(%s.id)"
 
 	// CurrentUnixTimeQuery is the query postgres uses to determine the current unix time
 	CurrentUnixTimeQuery = "extract(epoch FROM NOW())"

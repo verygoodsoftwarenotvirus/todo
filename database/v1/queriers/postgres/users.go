@@ -138,7 +138,7 @@ func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*mod
 func (p *Postgres) buildGetUserCountQuery(filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 	builder := p.sqlBuilder.
-		Select(CountQuery).
+		Select(fmt.Sprintf(CountQuery, usersTableName)).
 		From(usersTableName).
 		Where(squirrel.Eq{"archived_on": nil})
 

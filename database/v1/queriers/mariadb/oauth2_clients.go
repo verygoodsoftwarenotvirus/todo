@@ -207,7 +207,7 @@ func (m *MariaDB) GetOAuth2Client(ctx context.Context, clientID, userID uint64) 
 func (m *MariaDB) buildGetOAuth2ClientCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
 	builder := m.sqlBuilder.
-		Select(CountQuery).
+		Select(fmt.Sprintf(CountQuery, oauth2ClientsTableName)).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{
 			oauth2ClientsTableOwnershipColumn: userID,
@@ -242,7 +242,7 @@ func (m *MariaDB) buildGetAllOAuth2ClientCountQuery() string {
 	getAllOAuth2ClientCountQueryBuilder.Do(func() {
 		var err error
 		getAllOAuth2ClientCountQuery, _, err = m.sqlBuilder.
-			Select(CountQuery).
+			Select(fmt.Sprintf(CountQuery, oauth2ClientsTableName)).
 			From(oauth2ClientsTableName).
 			Where(squirrel.Eq{"archived_on": nil}).
 			ToSql()

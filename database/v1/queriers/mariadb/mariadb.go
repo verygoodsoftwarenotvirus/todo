@@ -21,7 +21,7 @@ const (
 	mariaDBDriverName = "wrapped-mariadb-driver"
 
 	// CountQuery is a generic counter query used in a few query builders
-	CountQuery = "COUNT(id)"
+	CountQuery = "COUNT(%s.id)"
 
 	// CurrentUnixTimeQuery is the query maria DB uses to determine the current unix time
 	CurrentUnixTimeQuery = "UNIX_TIMESTAMP()"

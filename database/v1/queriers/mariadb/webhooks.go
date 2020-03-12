@@ -134,7 +134,7 @@ func (m *MariaDB) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mo
 func (m *MariaDB) buildGetWebhookCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
 	builder := m.sqlBuilder.
-		Select(CountQuery).
+		Select(fmt.Sprintf(CountQuery, webhooksTableName)).
 		From(webhooksTableName).
 		Where(squirrel.Eq{
 			webhooksTableOwnershipColumn: userID,
@@ -169,7 +169,7 @@ func (m *MariaDB) buildGetAllWebhooksCountQuery() string {
 	getAllWebhooksCountQueryBuilder.Do(func() {
 		var err error
 		getAllWebhooksCountQuery, _, err = m.sqlBuilder.
-			Select(CountQuery).
+			Select(fmt.Sprintf(CountQuery, webhooksTableName)).
 			From(webhooksTableName).
 			Where(squirrel.Eq{"archived_on": nil}).
 			ToSql()

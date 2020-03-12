@@ -20,13 +20,13 @@ const (
 
 var (
 	itemsTableColumns = []string{
-		"id",
-		"name",
-		"details",
-		"created_on",
-		"updated_on",
-		"archived_on",
-		itemsTableOwnershipColumn,
+		fmt.Sprintf("%s.%s", itemsTableName, "id"),
+		fmt.Sprintf("%s.%s", itemsTableName, "name"),
+		fmt.Sprintf("%s.%s", itemsTableName, "details"),
+		fmt.Sprintf("%s.%s", itemsTableName, "created_on"),
+		fmt.Sprintf("%s.%s", itemsTableName, "updated_on"),
+		fmt.Sprintf("%s.%s", itemsTableName, "archived_on"),
+		fmt.Sprintf("%s.%s", itemsTableName, itemsTableOwnershipColumn),
 	}
 )
 
@@ -79,8 +79,8 @@ func (p *Postgres) buildGetItemQuery(itemID, userID uint64) (query string, args 
 		Select(itemsTableColumns...).
 		From(itemsTableName).
 		Where(squirrel.Eq{
-			"id":                      itemID,
-			itemsTableOwnershipColumn: userID,
+			fmt.Sprintf("%s.id", itemsTableName):                            itemID,
+			fmt.Sprintf("%s.%s", itemsTableName, itemsTableOwnershipColumn): userID,
 		}).ToSql()
 
 	p.logQueryBuildingError(err)
@@ -100,11 +100,11 @@ func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*models.
 func (p *Postgres) buildGetItemCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
 	builder := p.sqlBuilder.
-		Select(CountQuery).
+		Select(fmt.Sprintf(CountQuery, itemsTableName)).
 		From(itemsTableName).
 		Where(squirrel.Eq{
-			"archived_on":             nil,
-			itemsTableOwnershipColumn: userID,
+			fmt.Sprintf("%s.archived_on", itemsTableName):                   nil,
+			fmt.Sprintf("%s.%s", itemsTableName, itemsTableOwnershipColumn): userID,
 		})
 
 	if filter != nil {
@@ -135,9 +135,9 @@ func (p *Postgres) buildGetAllItemsCountQuery() string {
 	allItemsCountQueryBuilder.Do(func() {
 		var err error
 		allItemsCountQuery, _, err = p.sqlBuilder.
-			Select(CountQuery).
+			Select(fmt.Sprintf(CountQuery, itemsTableName)).
 			From(itemsTableName).
-			Where(squirrel.Eq{"archived_on": nil}).
+			Where(squirrel.Eq{fmt.Sprintf("%s.archived_on", itemsTableName): nil}).
 			ToSql()
 		p.logQueryBuildingError(err)
 	})
@@ -159,8 +159,8 @@ func (p *Postgres) buildGetItemsQuery(filter *models.QueryFilter, userID uint64)
 		Select(itemsTableColumns...).
 		From(itemsTableName).
 		Where(squirrel.Eq{
-			"archived_on":             nil,
-			itemsTableOwnershipColumn: userID,
+			fmt.Sprintf("%s.archived_on", itemsTableName):                   nil,
+			fmt.Sprintf("%s.%s", itemsTableName, itemsTableOwnershipColumn): userID,
 		})
 
 	if filter != nil {
@@ -253,6 +253,7 @@ func (p *Postgres) CreateItem(ctx context.Context, input *models.ItemCreationInp
 	}
 
 	query, args := p.buildCreateItemQuery(x)
+	p.logger.WithValue("query", query).Debug("creating item")
 
 	// create the item
 	err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
@@ -312,6 +313,7 @@ func (p *Postgres) buildArchiveItemQuery(itemID, userID uint64) (query string, a
 // ArchiveItem marks an item as archived in the database
 func (p *Postgres) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
 	query, args := p.buildArchiveItemQuery(itemID, userID)
+	p.logger.WithValue("query", query).Debug("archiving item")
 	_, err := p.db.ExecContext(ctx, query, args...)
 	return err
 }

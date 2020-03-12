@@ -207,7 +207,7 @@ func (p *Postgres) GetOAuth2Client(ctx context.Context, clientID, userID uint64)
 func (p *Postgres) buildGetOAuth2ClientCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
 	builder := p.sqlBuilder.
-		Select(CountQuery).
+		Select(fmt.Sprintf(CountQuery, oauth2ClientsTableName)).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{
 			oauth2ClientsTableOwnershipColumn: userID,
@@ -242,7 +242,7 @@ func (p *Postgres) buildGetAllOAuth2ClientCountQuery() string {
 	getAllOAuth2ClientCountQueryBuilder.Do(func() {
 		var err error
 		getAllOAuth2ClientCountQuery, _, err = p.sqlBuilder.
-			Select(CountQuery).
+			Select(fmt.Sprintf(CountQuery, oauth2ClientsTableName)).
 			From(oauth2ClientsTableName).
 			Where(squirrel.Eq{"archived_on": nil}).
 			ToSql()

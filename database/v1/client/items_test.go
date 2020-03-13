@@ -70,11 +70,12 @@ func TestClient_GetAllItemsCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		ctx := context.Background()
 		expected := uint64(321)
 		c, mockDB := buildTestClient()
 		mockDB.ItemDataManager.On("GetAllItemsCount", mock.Anything).Return(expected, nil)
 
-		actual, err := c.GetAllItemsCount(context.Background())
+		actual, err := c.GetAllItemsCount(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -92,7 +93,7 @@ func TestClient_GetItems(T *testing.T) {
 		expected := &models.ItemList{}
 		filter := models.DefaultQueryFilter()
 
-		mockDB.ItemDataManager.On("GetItems", mock.Anything, filter, exampleUserID).Return(expected, nil)
+		mockDB.ItemDataManager.On("GetItems", mock.Anything, exampleUserID, filter).Return(expected, nil)
 
 		actual, err := c.GetItems(ctx, exampleUserID, filter)
 		assert.NoError(t, err)
@@ -108,7 +109,7 @@ func TestClient_GetItems(T *testing.T) {
 		expected := &models.ItemList{}
 		filter := (*models.QueryFilter)(nil)
 
-		mockDB.ItemDataManager.On("GetItems", mock.Anything, filter, exampleUserID).Return(expected, nil)
+		mockDB.ItemDataManager.On("GetItems", mock.Anything, exampleUserID, filter).Return(expected, nil)
 
 		actual, err := c.GetItems(ctx, exampleUserID, filter)
 		assert.NoError(t, err)

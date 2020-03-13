@@ -39,7 +39,7 @@ func TestItemsService_List(T *testing.T) {
 		}
 
 		id := &mockmodels.ItemDataManager{}
-		id.On("GetItems", mock.Anything, mock.Anything, requestingUser.ID).Return(expected, nil)
+		id.On("GetItems", mock.Anything, requestingUser.ID, mock.Anything).Return(expected, nil)
 		s.itemDatabase = id
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -69,7 +69,7 @@ func TestItemsService_List(T *testing.T) {
 		}
 
 		id := &mockmodels.ItemDataManager{}
-		id.On("GetItems", mock.Anything, mock.Anything, requestingUser.ID).Return((*models.ItemList)(nil), sql.ErrNoRows)
+		id.On("GetItems", mock.Anything, requestingUser.ID, mock.Anything).Return((*models.ItemList)(nil), sql.ErrNoRows)
 		s.itemDatabase = id
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -99,7 +99,7 @@ func TestItemsService_List(T *testing.T) {
 		}
 
 		id := &mockmodels.ItemDataManager{}
-		id.On("GetItems", mock.Anything, mock.Anything, requestingUser.ID).Return((*models.ItemList)(nil), errors.New("blah"))
+		id.On("GetItems", mock.Anything, requestingUser.ID, mock.Anything).Return((*models.ItemList)(nil), errors.New("blah"))
 		s.itemDatabase = id
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -133,7 +133,7 @@ func TestItemsService_List(T *testing.T) {
 		}
 
 		id := &mockmodels.ItemDataManager{}
-		id.On("GetItems", mock.Anything, mock.Anything, requestingUser.ID).Return(expected, nil)
+		id.On("GetItems", mock.Anything, requestingUser.ID, mock.Anything).Return(expected, nil)
 		s.itemDatabase = id
 
 		ed := &mockencoding.EncoderDecoder{}

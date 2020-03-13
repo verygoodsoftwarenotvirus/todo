@@ -230,7 +230,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		}
 
 		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).Return(exampleClient, nil)
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleClient, nil)
 		s.oauth2ClientsService = ocv
 
 		mockDB := database.BuildMockDatabase().UserDataManager

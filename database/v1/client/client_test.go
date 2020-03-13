@@ -25,20 +25,22 @@ func TestMigrate(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		mockDB := database.BuildMockDatabase()
 		mockDB.On("Migrate", mock.Anything).Return(nil)
 
 		c := &Client{querier: mockDB}
-		actual := c.Migrate(context.Background())
+		actual := c.Migrate(ctx)
 		assert.NoError(t, actual)
 	})
 
 	T.Run("bubbles up errors", func(t *testing.T) {
+		ctx := context.Background()
 		mockDB := database.BuildMockDatabase()
 		mockDB.On("Migrate", mock.Anything).Return(errors.New("blah"))
 
 		c := &Client{querier: mockDB}
-		actual := c.Migrate(context.Background())
+		actual := c.Migrate(ctx)
 		assert.Error(t, actual)
 	})
 }
@@ -47,11 +49,12 @@ func TestIsReady(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		ctx := context.Background()
 		mockDB := database.BuildMockDatabase()
 		mockDB.On("IsReady", mock.Anything).Return(true)
 
 		c := &Client{querier: mockDB}
-		c.IsReady(context.Background())
+		c.IsReady(ctx)
 		mockDB.AssertExpectations(t)
 	})
 }

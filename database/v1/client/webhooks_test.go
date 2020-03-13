@@ -70,12 +70,13 @@ func TestClient_GetAllWebhooksCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expected := uint64(123)
 
 		c, mockDB := buildTestClient()
 		mockDB.WebhookDataManager.On("GetAllWebhooksCount", mock.Anything).Return(expected, nil)
 
-		actual, err := c.GetAllWebhooksCount(context.Background())
+		actual, err := c.GetAllWebhooksCount(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -87,12 +88,13 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expected := &models.WebhookList{}
 
 		c, mockDB := buildTestClient()
 		mockDB.WebhookDataManager.On("GetAllWebhooks", mock.Anything).Return(expected, nil)
 
-		actual, err := c.GetAllWebhooks(context.Background())
+		actual, err := c.GetAllWebhooks(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 

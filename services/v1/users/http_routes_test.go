@@ -49,6 +49,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		s := buildTestService(t)
 
 		expected := &models.User{
@@ -60,7 +61,6 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		exampleTOTPToken := "123456"
 		examplePassword := "password"
-		req := buildRequest(t)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, expected.ID).Return(expected, nil)
@@ -79,7 +79,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 		s.authenticator = auth
 
 		actual, sc := s.validateCredentialChangeRequest(
-			req.Context(),
+			ctx,
 			expected.ID,
 			examplePassword,
 			exampleTOTPToken,

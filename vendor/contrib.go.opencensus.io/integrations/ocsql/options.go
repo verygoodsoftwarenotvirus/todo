@@ -50,6 +50,12 @@ type TraceOptions struct {
 
 	// DefaultAttributes will be set to each span as default.
 	DefaultAttributes []trace.Attribute
+
+	// DisableErrSkip, if set to true, will suppress driver.ErrSkip errors in spans.
+	DisableErrSkip bool
+
+	// Sampler to use when creating spans.
+	Sampler trace.Sampler
 }
 
 // WithAllTraceOptions enables all available trace options.
@@ -154,5 +160,19 @@ func WithQueryParams(b bool) TraceOption {
 func WithDefaultAttributes(attrs ...trace.Attribute) TraceOption {
 	return func(o *TraceOptions) {
 		o.DefaultAttributes = attrs
+	}
+}
+
+// WithDisableErrSkip, if set to true, will suppress driver.ErrSkip errors in spans.
+func WithDisableErrSkip(b bool) TraceOption {
+	return func(o *TraceOptions) {
+		o.DisableErrSkip = b
+	}
+}
+
+// WithSampler will be used on span creation.
+func WithSampler(sampler trace.Sampler) TraceOption {
+	return func(o *TraceOptions) {
+		o.Sampler = sampler
 	}
 }

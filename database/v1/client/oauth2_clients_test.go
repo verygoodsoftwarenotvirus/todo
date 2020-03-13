@@ -138,11 +138,12 @@ func TestClient_GetAllOAuth2ClientCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		c, mockDB := buildTestClient()
 		expected := uint64(123)
 		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2ClientCount", mock.Anything).Return(expected, nil)
 
-		actual, err := c.GetAllOAuth2ClientCount(context.Background())
+		actual, err := c.GetAllOAuth2ClientCount(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -154,11 +155,12 @@ func TestClient_GetAllOAuth2Clients(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		c, mockDB := buildTestClient()
 		var expected []*models.OAuth2Client
 		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2Clients", mock.Anything).Return(expected, nil)
 
-		actual, err := c.GetAllOAuth2Clients(context.Background())
+		actual, err := c.GetAllOAuth2Clients(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 

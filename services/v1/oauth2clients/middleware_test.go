@@ -40,7 +40,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On(
 			"DecodeRequest",
-			mock.AnythingOfType("*http.Request"),
+			mock.Anything,
 			mock.Anything,
 		).Return(nil)
 		s.encoderDecoder = ed
@@ -73,7 +73,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On(
 			"DecodeRequest",
-			mock.AnythingOfType("*http.Request"),
+			mock.Anything,
 			mock.Anything,
 		).Return(errors.New("blah"))
 		s.encoderDecoder = ed
@@ -107,7 +107,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 		mh := &mockOauth2Handler{}
 		mh.On(
 			"ValidationBearerToken",
-			mock.AnythingOfType("*http.Request"),
+			mock.Anything,
 		).Return(&oauth2models.Token{ClientID: expected.ClientID}, nil)
 		s.oauth2Handler = mh
 
@@ -133,7 +133,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 		mh := &mockOauth2Handler{}
 		mh.On(
 			"ValidationBearerToken",
-			mock.AnythingOfType("*http.Request"),
+			mock.Anything,
 		).Return((*oauth2models.Token)(nil), errors.New("blah"))
 		s.oauth2Handler = mh
 
@@ -153,7 +153,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 		mh := &mockOauth2Handler{}
 		mh.On(
 			"ValidationBearerToken",
-			mock.AnythingOfType("*http.Request"),
+			mock.Anything,
 		).Return(&oauth2models.Token{ClientID: expected.ClientID}, nil)
 		s.oauth2Handler = mh
 
@@ -182,7 +182,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 		mh := &mockOauth2Handler{}
 		mh.On(
 			"ValidationBearerToken",
-			mock.AnythingOfType("*http.Request"),
+			mock.Anything,
 		).Return(&oauth2models.Token{ClientID: expected.ClientID}, nil)
 		s.oauth2Handler = mh
 
@@ -218,7 +218,7 @@ func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 		mh := &mockOauth2Handler{}
 		mh.On(
 			"ValidationBearerToken",
-			mock.AnythingOfType("*http.Request"),
+			mock.Anything,
 		).Return(&oauth2models.Token{ClientID: expected.ClientID}, nil)
 		s.oauth2Handler = mh
 
@@ -238,7 +238,7 @@ func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 		mhh.On(
 			"ServeHTTP",
 			mock.Anything,
-			mock.AnythingOfType("*http.Request"),
+			mock.Anything,
 		).Return()
 
 		s.OAuth2TokenAuthenticationMiddleware(mhh).ServeHTTP(res, req)
@@ -251,7 +251,7 @@ func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 		mh := &mockOauth2Handler{}
 		mh.On(
 			"ValidationBearerToken",
-			mock.AnythingOfType("*http.Request"),
+			mock.Anything,
 		).Return((*oauth2models.Token)(nil), errors.New("blah"))
 		s.oauth2Handler = mh
 
@@ -262,7 +262,7 @@ func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 		mhh.On(
 			"ServeHTTP",
 			mock.Anything,
-			mock.AnythingOfType("*http.Request"),
+			mock.Anything,
 		).Return()
 
 		s.OAuth2TokenAuthenticationMiddleware(mhh).ServeHTTP(res, req)
@@ -281,7 +281,7 @@ func TestService_OAuth2ClientInfoMiddleware(T *testing.T) {
 		mhh.On(
 			"ServeHTTP",
 			mock.Anything,
-			mock.AnythingOfType("*http.Request"),
+			mock.Anything,
 		).Return()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -309,7 +309,7 @@ func TestService_OAuth2ClientInfoMiddleware(T *testing.T) {
 		mhh.On(
 			"ServeHTTP",
 			mock.Anything,
-			mock.AnythingOfType("*http.Request"),
+			mock.Anything,
 		).Return()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)

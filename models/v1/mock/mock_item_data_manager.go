@@ -35,7 +35,7 @@ func (m *ItemDataManager) GetAllItemsCount(ctx context.Context) (uint64, error) 
 
 // GetItems is a mock function
 func (m *ItemDataManager) GetItems(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.ItemList, error) {
-	args := m.Called(ctx, filter, userID)
+	args := m.Called(ctx, userID, filter)
 	return args.Get(0).(*models.ItemList), args.Error(1)
 }
 

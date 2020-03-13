@@ -153,7 +153,7 @@ func TestUnmarshalBody(T *testing.T) {
 		expected := errors.New("blah")
 
 		rc := mockutil.NewMockReadCloser()
-		rc.On("Read", mock.Anything).Return(0, expected)
+		rc.On("Read", mock.AnythingOfType("[]uint8")).Return(0, expected)
 
 		res := &http.Response{
 			Body:       rc,

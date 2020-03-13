@@ -88,9 +88,11 @@ func TestV1Client_TokenSource(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		ctx := context.Background()
 		ts := httptest.NewTLSServer(nil)
+
 		c, err := NewClient(
-			context.Background(),
+			ctx,
 			"",
 			"",
 			mustParseURL(exampleURI),
@@ -111,9 +113,11 @@ func TestNewClient(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		ts := httptest.NewTLSServer(nil)
+
 		c, err := NewClient(
-			context.Background(),
+			ctx,
 			"",
 			"",
 			mustParseURL(exampleURI),
@@ -128,8 +132,10 @@ func TestNewClient(T *testing.T) {
 	})
 
 	T.Run("with client but invalid timeout", func(t *testing.T) {
+		ctx := context.Background()
+
 		c, err := NewClient(
-			context.Background(),
+			ctx,
 			"",
 			"",
 			mustParseURL(exampleURI),
@@ -151,8 +157,10 @@ func TestNewSimpleClient(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		ctx := context.Background()
+
 		c, err := NewSimpleClient(
-			context.Background(),
+			ctx,
 			mustParseURL(exampleURI),
 			true,
 		)
@@ -195,9 +203,11 @@ func TestBuildURL(T *testing.T) {
 	T.Run("various urls", func(t *testing.T) {
 		t.Parallel()
 
+		ctx := context.Background()
 		u, _ := url.Parse(exampleURI)
+
 		c, err := NewClient(
-			context.Background(),
+			ctx,
 			"",
 			"",
 			u,
@@ -243,9 +253,11 @@ func TestV1Client_BuildWebsocketURL(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		u, _ := url.Parse(exampleURI)
+
 		c, err := NewClient(
-			context.Background(),
+			ctx,
 			"",
 			"",
 			u,

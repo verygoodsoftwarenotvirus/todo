@@ -334,6 +334,7 @@ func TestService_fetchOAuth2ClientFromRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		s := buildTestService(t)
 		expected := &models.OAuth2Client{
 			ClientID: "THIS IS A FAKE CLIENT ID",
@@ -341,7 +342,7 @@ func TestService_fetchOAuth2ClientFromRequest(T *testing.T) {
 
 		req := buildRequest(t).WithContext(
 			context.WithValue(
-				context.Background(),
+				ctx,
 				models.OAuth2ClientKey,
 				expected,
 			),
@@ -361,6 +362,7 @@ func TestService_fetchOAuth2ClientIDFromRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		s := buildTestService(t)
 		expected := &models.OAuth2Client{
 			ClientID: "THIS IS A FAKE CLIENT ID",
@@ -368,7 +370,7 @@ func TestService_fetchOAuth2ClientIDFromRequest(T *testing.T) {
 
 		req := buildRequest(t).WithContext(
 			context.WithValue(
-				context.Background(),
+				ctx,
 				clientIDKey,
 				expected.ClientID,
 			),

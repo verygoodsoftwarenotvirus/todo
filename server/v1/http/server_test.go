@@ -47,11 +47,12 @@ func TestProvideServer(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		mockDB := database.BuildMockDatabase()
 		mockDB.WebhookDataManager.On("GetAllWebhooks", mock.Anything).Return(&models.WebhookList{}, nil)
 
 		actual, err := ProvideServer(
-			context.Background(),
+			ctx,
 			&config.ServerConfig{
 				Auth: config.AuthSettings{
 					CookieSecret: "THISISAVERYLONGSTRINGFORTESTPURPOSES",

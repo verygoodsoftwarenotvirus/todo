@@ -90,6 +90,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 	})
 
 	T.Run("with no rows found in database", func(t *testing.T) {
+		ctx := context.Background()
 		s := buildTestService(t)
 
 		expected := &models.User{
@@ -106,7 +107,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 		s.database = mockDB
 
 		actual, sc := s.validateCredentialChangeRequest(
-			context.Background(),
+			ctx,
 			expected.ID,
 			examplePassword,
 			exampleTOTPToken,
@@ -117,6 +118,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 	})
 
 	T.Run("with error fetching from database", func(t *testing.T) {
+		ctx := context.Background()
 		s := buildTestService(t)
 
 		expected := &models.User{
@@ -133,7 +135,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 		s.database = mockDB
 
 		actual, sc := s.validateCredentialChangeRequest(
-			context.Background(),
+			ctx,
 			expected.ID,
 			examplePassword,
 			exampleTOTPToken,
@@ -144,6 +146,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 	})
 
 	T.Run("with error validating login", func(t *testing.T) {
+		ctx := context.Background()
 		s := buildTestService(t)
 
 		expected := &models.User{
@@ -172,7 +175,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 		s.authenticator = auth
 
 		actual, sc := s.validateCredentialChangeRequest(
-			context.Background(),
+			ctx,
 			expected.ID,
 			examplePassword,
 			exampleTOTPToken,
@@ -183,6 +186,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 	})
 
 	T.Run("with invalid login", func(t *testing.T) {
+		ctx := context.Background()
 		s := buildTestService(t)
 
 		expected := &models.User{
@@ -211,7 +215,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 		s.authenticator = auth
 
 		actual, sc := s.validateCredentialChangeRequest(
-			context.Background(),
+			ctx,
 			expected.ID,
 			examplePassword,
 			exampleTOTPToken,

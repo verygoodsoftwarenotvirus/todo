@@ -32,6 +32,7 @@ func TestProvideItemsService(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expectation := uint64(123)
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", expectation).Return()
@@ -47,7 +48,7 @@ func TestProvideItemsService(T *testing.T) {
 		idm.On("GetAllItemsCount", mock.Anything).Return(expectation, nil)
 
 		s, err := ProvideItemsService(
-			context.Background(),
+			ctx,
 			noop.ProvideNoopLogger(),
 			idm,
 			func(req *http.Request) uint64 { return 0 },
@@ -62,6 +63,7 @@ func TestProvideItemsService(T *testing.T) {
 	})
 
 	T.Run("with error providing unit counter", func(t *testing.T) {
+		ctx := context.Background()
 		expectation := uint64(123)
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", expectation).Return()
@@ -77,7 +79,7 @@ func TestProvideItemsService(T *testing.T) {
 		idm.On("GetAllItemsCount", mock.Anything).Return(expectation, nil)
 
 		s, err := ProvideItemsService(
-			context.Background(),
+			ctx,
 			noop.ProvideNoopLogger(),
 			idm,
 			func(req *http.Request) uint64 { return 0 },
@@ -92,6 +94,7 @@ func TestProvideItemsService(T *testing.T) {
 	})
 
 	T.Run("with error fetching item count", func(t *testing.T) {
+		ctx := context.Background()
 		expectation := uint64(123)
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", expectation).Return()
@@ -107,7 +110,7 @@ func TestProvideItemsService(T *testing.T) {
 		idm.On("GetAllItemsCount", mock.Anything).Return(expectation, errors.New("blah"))
 
 		s, err := ProvideItemsService(
-			context.Background(),
+			ctx,
 			noop.ProvideNoopLogger(),
 			idm,
 			func(req *http.Request) uint64 { return 0 },

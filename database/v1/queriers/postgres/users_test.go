@@ -69,6 +69,7 @@ func TestPostgres_GetUser(T *testing.T) {
 	expectedQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, is_admin, created_on, updated_on, archived_on FROM users WHERE id = $1"
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expected := &models.User{
 			ID:       123,
 			Username: "username",
@@ -79,7 +80,7 @@ func TestPostgres_GetUser(T *testing.T) {
 			WithArgs(expected.ID).
 			WillReturnRows(buildMockRowFromUser(expected))
 
-		actual, err := p.GetUser(context.Background(), expected.ID)
+		actual, err := p.GetUser(ctx, expected.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -87,6 +88,7 @@ func TestPostgres_GetUser(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		ctx := context.Background()
 		expected := &models.User{
 			ID:       123,
 			Username: "username",
@@ -97,7 +99,7 @@ func TestPostgres_GetUser(T *testing.T) {
 			WithArgs(expected.ID).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := p.GetUser(context.Background(), expected.ID)
+		actual, err := p.GetUser(ctx, expected.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.Equal(t, sql.ErrNoRows, err)
@@ -127,6 +129,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 	expectedUsersQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, is_admin, created_on, updated_on, archived_on FROM users WHERE archived_on IS NULL LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expectedCountQuery := "SELECT COUNT(users.id) FROM users WHERE archived_on IS NULL LIMIT 20"
 		expectedCount := uint64(321)
 		expected := &models.UserList{
@@ -152,7 +155,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
-		actual, err := p.GetUsers(context.Background(), models.DefaultQueryFilter())
+		actual, err := p.GetUsers(ctx, models.DefaultQueryFilter())
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -160,11 +163,12 @@ func TestPostgres_GetUsers(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		ctx := context.Background()
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := p.GetUsers(context.Background(), models.DefaultQueryFilter())
+		actual, err := p.GetUsers(ctx, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.Equal(t, sql.ErrNoRows, err)
@@ -173,11 +177,12 @@ func TestPostgres_GetUsers(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
+		ctx := context.Background()
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := p.GetUsers(context.Background(), models.DefaultQueryFilter())
+		actual, err := p.GetUsers(ctx, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -185,6 +190,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 	})
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
+		ctx := context.Background()
 		expected := &models.UserList{
 			Users: []models.User{
 				{
@@ -198,7 +204,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).
 			WillReturnRows(buildErroneousMockRowFromUser(&expected.Users[0]))
 
-		actual, err := p.GetUsers(context.Background(), models.DefaultQueryFilter())
+		actual, err := p.GetUsers(ctx, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -206,6 +212,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 	})
 
 	T.Run("with error fetching count", func(t *testing.T) {
+		ctx := context.Background()
 		expectedCountQuery := "SELECT COUNT(users.id) FROM users WHERE archived_on IS NULL LIMIT 20"
 		expectedCount := uint64(321)
 		expected := &models.UserList{
@@ -231,7 +238,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := p.GetUsers(context.Background(), models.DefaultQueryFilter())
+		actual, err := p.GetUsers(ctx, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -262,6 +269,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 	expectedQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, is_admin, created_on, updated_on, archived_on FROM users WHERE username = $1"
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expected := &models.User{
 			ID:       123,
 			Username: "username",
@@ -272,7 +280,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 			WithArgs(expected.Username).
 			WillReturnRows(buildMockRowFromUser(expected))
 
-		actual, err := p.GetUserByUsername(context.Background(), expected.Username)
+		actual, err := p.GetUserByUsername(ctx, expected.Username)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -280,6 +288,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		ctx := context.Background()
 		expected := &models.User{
 			ID:       123,
 			Username: "username",
@@ -290,7 +299,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 			WithArgs(expected.Username).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := p.GetUserByUsername(context.Background(), expected.Username)
+		actual, err := p.GetUserByUsername(ctx, expected.Username)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.Equal(t, sql.ErrNoRows, err)
@@ -299,6 +308,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
+		ctx := context.Background()
 		expected := &models.User{
 			ID:       123,
 			Username: "username",
@@ -309,7 +319,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 			WithArgs(expected.Username).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := p.GetUserByUsername(context.Background(), expected.Username)
+		actual, err := p.GetUserByUsername(ctx, expected.Username)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -338,13 +348,14 @@ func TestPostgres_GetUserCount(T *testing.T) {
 	expectedQuery := "SELECT COUNT(users.id) FROM users WHERE archived_on IS NULL LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expected := uint64(123)
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expected))
 
-		actual, err := p.GetUserCount(context.Background(), models.DefaultQueryFilter())
+		actual, err := p.GetUserCount(ctx, models.DefaultQueryFilter())
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -352,11 +363,12 @@ func TestPostgres_GetUserCount(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
+		ctx := context.Background()
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := p.GetUserCount(context.Background(), models.DefaultQueryFilter())
+		actual, err := p.GetUserCount(ctx, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Zero(t, actual)
 
@@ -389,6 +401,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 	expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret,is_admin) VALUES ($1,$2,$3,$4) RETURNING id, created_on"
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expected := &models.User{
 			ID:        123,
 			Username:  "username",
@@ -397,7 +410,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 		expectedInput := &models.UserInput{
 			Username: expected.Username,
 		}
-		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(expected.ID, uint64(time.Now().Unix()))
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(expected.ID, expected.CreatedOn)
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
@@ -407,7 +420,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 			expected.IsAdmin,
 		).WillReturnRows(exampleRows)
 
-		actual, err := p.CreateUser(context.Background(), expectedInput)
+		actual, err := p.CreateUser(ctx, expectedInput)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -415,6 +428,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 	})
 
 	T.Run("with postgres row exists error", func(t *testing.T) {
+		ctx := context.Background()
 		expected := &models.User{
 			ID:        123,
 			Username:  "username",
@@ -434,7 +448,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 			Code: postgres.ErrorCode("23505"),
 		})
 
-		actual, err := p.CreateUser(context.Background(), expectedInput)
+		actual, err := p.CreateUser(ctx, expectedInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.Equal(t, err, dbclient.ErrUserExists)
@@ -443,6 +457,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
+		ctx := context.Background()
 		expected := &models.User{
 			ID:        123,
 			Username:  "username",
@@ -460,7 +475,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 			expected.IsAdmin,
 		).WillReturnError(errors.New("blah"))
 
-		actual, err := p.CreateUser(context.Background(), expectedInput)
+		actual, err := p.CreateUser(ctx, expectedInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -492,6 +507,7 @@ func TestPostgres_UpdateUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expected := &models.User{
 			ID:        123,
 			Username:  "username",
@@ -508,7 +524,7 @@ func TestPostgres_UpdateUser(T *testing.T) {
 			expected.ID,
 		).WillReturnRows(exampleRows)
 
-		err := p.UpdateUser(context.Background(), expected)
+		err := p.UpdateUser(ctx, expected)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -535,6 +551,7 @@ func TestPostgres_ArchiveUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expected := &models.User{
 			ID:        123,
 			Username:  "username",
@@ -547,7 +564,7 @@ func TestPostgres_ArchiveUser(T *testing.T) {
 			WithArgs(expected.ID).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := p.ArchiveUser(context.Background(), expected.ID)
+		err := p.ArchiveUser(ctx, expected.ID)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")

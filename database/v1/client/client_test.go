@@ -60,20 +60,22 @@ func TestProvideDatabaseClient(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		mockDB := database.BuildMockDatabase()
 		mockDB.On("Migrate", mock.Anything).Return(nil)
 
-		actual, err := ProvideDatabaseClient(context.Background(), nil, mockDB, false, noop.ProvideNoopLogger())
+		actual, err := ProvideDatabaseClient(ctx, nil, mockDB, false, noop.ProvideNoopLogger())
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 	})
 
 	T.Run("with error migrating querier", func(t *testing.T) {
+		ctx := context.Background()
 		expected := errors.New("blah")
 		mockDB := database.BuildMockDatabase()
 		mockDB.On("Migrate", mock.Anything).Return(expected)
 
-		x, actual := ProvideDatabaseClient(context.Background(), nil, mockDB, false, noop.ProvideNoopLogger())
+		x, actual := ProvideDatabaseClient(ctx, nil, mockDB, false, noop.ProvideNoopLogger())
 		assert.Nil(t, x)
 		assert.Error(t, actual)
 		assert.Equal(t, expected, actual)

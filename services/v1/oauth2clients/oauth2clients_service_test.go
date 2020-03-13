@@ -51,6 +51,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expected := uint64(0)
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
@@ -73,7 +74,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		}
 
 		service, err := ProvideOAuth2ClientsService(
-			context.Background(),
+			ctx,
 			noop.ProvideNoopLogger(),
 			mockDB,
 			&mockauth.Authenticator{},
@@ -86,6 +87,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 	})
 
 	T.Run("with error providing counter", func(t *testing.T) {
+		ctx := context.Background()
 		expected := uint64(0)
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
@@ -108,7 +110,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		}
 
 		service, err := ProvideOAuth2ClientsService(
-			context.Background(),
+			ctx,
 			noop.ProvideNoopLogger(),
 			mockDB,
 			&mockauth.Authenticator{},
@@ -121,6 +123,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 	})
 
 	T.Run("with error fetching oauth2 clients", func(t *testing.T) {
+		ctx := context.Background()
 		expected := uint64(0)
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
@@ -143,7 +146,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		}
 
 		service, err := ProvideOAuth2ClientsService(
-			context.Background(),
+			ctx,
 			noop.ProvideNoopLogger(),
 			mockDB,
 			&mockauth.Authenticator{},

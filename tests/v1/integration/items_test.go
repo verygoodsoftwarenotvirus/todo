@@ -24,12 +24,14 @@ func checkItemEquality(t *testing.T, expected, actual *models.Item) {
 func buildDummyItem(t *testing.T) *models.Item {
 	t.Helper()
 
+	ctx := context.Background()
 	x := &models.ItemCreationInput{
 		Name:    fake.Word(),
 		Details: fake.Word(),
 	}
-	y, err := todoClient.CreateItem(context.Background(), x)
+	y, err := todoClient.CreateItem(ctx, x)
 	require.NoError(t, err)
+
 	return y
 }
 

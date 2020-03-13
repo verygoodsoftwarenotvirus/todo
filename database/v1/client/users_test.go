@@ -14,13 +14,14 @@ func TestClient_GetUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		exampleID := uint64(123)
 		expected := &models.User{}
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleID).Return(expected, nil)
 
-		actual, err := c.GetUser(context.Background(), exampleID)
+		actual, err := c.GetUser(ctx, exampleID)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -32,13 +33,14 @@ func TestClient_GetUserByUsername(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		exampleUsername := "username"
 		expected := &models.User{}
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.On("GetUserByUsername", mock.Anything, exampleUsername).Return(expected, nil)
 
-		actual, err := c.GetUserByUsername(context.Background(), exampleUsername)
+		actual, err := c.GetUserByUsername(ctx, exampleUsername)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -50,13 +52,14 @@ func TestClient_GetUserCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expected := uint64(123)
 		filter := models.DefaultQueryFilter()
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.On("GetUserCount", mock.Anything, filter).Return(expected, nil)
 
-		actual, err := c.GetUserCount(context.Background(), filter)
+		actual, err := c.GetUserCount(ctx, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -64,13 +67,14 @@ func TestClient_GetUserCount(T *testing.T) {
 	})
 
 	T.Run("with nil filter", func(t *testing.T) {
+		ctx := context.Background()
 		expected := uint64(123)
 		filter := (*models.QueryFilter)(nil)
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.On("GetUserCount", mock.Anything, filter).Return(expected, nil)
 
-		actual, err := c.GetUserCount(context.Background(), filter)
+		actual, err := c.GetUserCount(ctx, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -82,13 +86,14 @@ func TestClient_GetUsers(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expected := &models.UserList{}
 		filter := models.DefaultQueryFilter()
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.On("GetUsers", mock.Anything, filter).Return(expected, nil)
 
-		actual, err := c.GetUsers(context.Background(), filter)
+		actual, err := c.GetUsers(ctx, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -96,13 +101,14 @@ func TestClient_GetUsers(T *testing.T) {
 	})
 
 	T.Run("with nil filter", func(t *testing.T) {
+		ctx := context.Background()
 		expected := &models.UserList{}
 		filter := (*models.QueryFilter)(nil)
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.On("GetUsers", mock.Anything, filter).Return(expected, nil)
 
-		actual, err := c.GetUsers(context.Background(), filter)
+		actual, err := c.GetUsers(ctx, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -114,13 +120,14 @@ func TestClient_CreateUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		exampleInput := &models.UserInput{}
 		expected := &models.User{}
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.On("CreateUser", mock.Anything, exampleInput).Return(expected, nil)
 
-		actual, err := c.CreateUser(context.Background(), exampleInput)
+		actual, err := c.CreateUser(ctx, exampleInput)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -132,13 +139,14 @@ func TestClient_UpdateUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		exampleInput := &models.User{}
 		var expected error
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.On("UpdateUser", mock.Anything, exampleInput).Return(expected, nil)
 
-		err := c.UpdateUser(context.Background(), exampleInput)
+		err := c.UpdateUser(ctx, exampleInput)
 		assert.NoError(t, err)
 
 		mockDB.AssertExpectations(t)
@@ -149,13 +157,14 @@ func TestClient_ArchiveUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		exampleInput := uint64(123)
 		var expected error
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.On("ArchiveUser", mock.Anything, exampleInput).Return(expected, nil)
 
-		err := c.ArchiveUser(context.Background(), exampleInput)
+		err := c.ArchiveUser(ctx, exampleInput)
 		assert.NoError(t, err)
 
 		mockDB.AssertExpectations(t)

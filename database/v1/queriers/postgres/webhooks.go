@@ -153,7 +153,7 @@ func (p *Postgres) buildGetWebhookCountQuery(filter *models.QueryFilter, userID 
 
 // GetWebhookCount will fetch the count of webhooks from the database that meet a particular filter,
 // and belong to a particular user.
-func (p *Postgres) GetWebhookCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
+func (p *Postgres) GetWebhookCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (count uint64, err error) {
 	query, args := p.buildGetWebhookCountQuery(filter, userID)
 	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return count, err
@@ -280,7 +280,7 @@ func (p *Postgres) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint
 }
 
 // GetWebhooks fetches a list of webhooks from the database that meet a particular filter
-func (p *Postgres) GetWebhooks(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.WebhookList, error) {
+func (p *Postgres) GetWebhooks(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.WebhookList, error) {
 	query, args := p.buildGetWebhooksQuery(filter, userID)
 
 	rows, err := p.db.QueryContext(ctx, query, args...)
@@ -296,7 +296,7 @@ func (p *Postgres) GetWebhooks(ctx context.Context, filter *models.QueryFilter, 
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
-	count, err := p.GetWebhookCount(ctx, filter, userID)
+	count, err := p.GetWebhookCount(ctx, userID, filter)
 	if err != nil {
 		return nil, fmt.Errorf("fetching count: %w", err)
 	}

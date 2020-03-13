@@ -35,7 +35,7 @@ func (c *Client) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mod
 }
 
 // GetWebhooks fetches a list of webhooks from the database that meet a particular filter
-func (c *Client) GetWebhooks(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.WebhookList, error) {
+func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.WebhookList, error) {
 	ctx, span := trace.StartSpan(ctx, "GetWebhooks")
 	defer span.End()
 
@@ -44,7 +44,7 @@ func (c *Client) GetWebhooks(ctx context.Context, filter *models.QueryFilter, us
 
 	c.logger.WithValue("user_id", userID).Debug("GetWebhookCount called")
 
-	return c.querier.GetWebhooks(ctx, filter, userID)
+	return c.querier.GetWebhooks(ctx, userID, filter)
 }
 
 // GetAllWebhooks fetches a list of webhooks from the database that meet a particular filter
@@ -69,7 +69,7 @@ func (c *Client) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]mo
 }
 
 // GetWebhookCount fetches the count of webhooks from the database that meet a particular filter
-func (c *Client) GetWebhookCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
+func (c *Client) GetWebhookCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (count uint64, err error) {
 	ctx, span := trace.StartSpan(ctx, "GetWebhookCount")
 	defer span.End()
 
@@ -81,7 +81,7 @@ func (c *Client) GetWebhookCount(ctx context.Context, filter *models.QueryFilter
 		"user_id": userID,
 	}).Debug("GetWebhookCount called")
 
-	return c.querier.GetWebhookCount(ctx, filter, userID)
+	return c.querier.GetWebhookCount(ctx, userID, filter)
 }
 
 // GetAllWebhooksCount fetches the count of webhooks from the database that meet a particular filter

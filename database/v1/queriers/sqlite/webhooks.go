@@ -153,7 +153,7 @@ func (s *Sqlite) buildGetWebhookCountQuery(filter *models.QueryFilter, userID ui
 
 // GetWebhookCount will fetch the count of webhooks from the database that meet a particular filter,
 // and belong to a particular user.
-func (s *Sqlite) GetWebhookCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
+func (s *Sqlite) GetWebhookCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (count uint64, err error) {
 	query, args := s.buildGetWebhookCountQuery(filter, userID)
 	err = s.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return count, err
@@ -280,7 +280,7 @@ func (s *Sqlite) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint64
 }
 
 // GetWebhooks fetches a list of webhooks from the database that meet a particular filter
-func (s *Sqlite) GetWebhooks(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.WebhookList, error) {
+func (s *Sqlite) GetWebhooks(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.WebhookList, error) {
 	query, args := s.buildGetWebhooksQuery(filter, userID)
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
@@ -296,7 +296,7 @@ func (s *Sqlite) GetWebhooks(ctx context.Context, filter *models.QueryFilter, us
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
-	count, err := s.GetWebhookCount(ctx, filter, userID)
+	count, err := s.GetWebhookCount(ctx, userID, filter)
 	if err != nil {
 		return nil, fmt.Errorf("fetching count: %w", err)
 	}

@@ -76,7 +76,7 @@ func (s *Service) ListHandler() http.HandlerFunc {
 		logger := s.logger.WithValue("user_id", userID)
 
 		// fetch oauth2 clients
-		oauth2Clients, err := s.database.GetOAuth2Clients(ctx, qf, userID)
+		oauth2Clients, err := s.database.GetOAuth2Clients(ctx, userID, qf)
 		if err == sql.ErrNoRows {
 			// just return an empty list if there are no results
 			oauth2Clients = &models.OAuth2ClientList{

@@ -97,7 +97,7 @@ func (s *Sqlite) GetItem(ctx context.Context, itemID, userID uint64) (*models.It
 
 // buildGetItemCountQuery takes a QueryFilter and a user ID and returns a SQL query (and the relevant arguments) for
 // fetching the number of items belonging to a given user that meet a given query
-func (s *Sqlite) buildGetItemCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
+func (s *Sqlite) buildGetItemCountQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 	builder := s.sqlBuilder.
 		Select(fmt.Sprintf(CountQuery, itemsTableName)).
@@ -118,8 +118,8 @@ func (s *Sqlite) buildGetItemCountQuery(filter *models.QueryFilter, userID uint6
 }
 
 // GetItemCount will fetch the count of items from the database that meet a particular filter and belong to a particular user.
-func (s *Sqlite) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
-	query, args := s.buildGetItemCountQuery(filter, userID)
+func (s *Sqlite) GetItemCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (count uint64, err error) {
+	query, args := s.buildGetItemCountQuery(userID, filter)
 	err = s.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return count, err
 }
@@ -174,7 +174,7 @@ func (s *Sqlite) buildGetItemsQuery(filter *models.QueryFilter, userID uint64) (
 }
 
 // GetItems fetches a list of items from the database that meet a particular filter
-func (s *Sqlite) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
+func (s *Sqlite) GetItems(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.ItemList, error) {
 	query, args := s.buildGetItemsQuery(filter, userID)
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
@@ -187,7 +187,7 @@ func (s *Sqlite) GetItems(ctx context.Context, filter *models.QueryFilter, userI
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
-	count, err := s.GetItemCount(ctx, filter, userID)
+	count, err := s.GetItemCount(ctx, userID, filter)
 	if err != nil {
 		return nil, fmt.Errorf("fetching item count: %w", err)
 	}

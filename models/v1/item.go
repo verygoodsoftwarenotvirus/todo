@@ -40,9 +40,9 @@ type (
 	// ItemDataManager describes a structure capable of storing items permanently
 	ItemDataManager interface {
 		GetItem(ctx context.Context, itemID, userID uint64) (*Item, error)
-		GetItemCount(ctx context.Context, filter *QueryFilter, userID uint64) (uint64, error)
+		GetItemCount(ctx context.Context, userID uint64, filter *QueryFilter) (uint64, error)
 		GetAllItemsCount(ctx context.Context) (uint64, error)
-		GetItems(ctx context.Context, filter *QueryFilter, userID uint64) (*ItemList, error)
+		GetItems(ctx context.Context, userID uint64, filter *QueryFilter) (*ItemList, error)
 		GetAllItemsForUser(ctx context.Context, userID uint64) ([]Item, error)
 		CreateItem(ctx context.Context, input *ItemCreationInput) (*Item, error)
 		UpdateItem(ctx context.Context, updated *Item) error

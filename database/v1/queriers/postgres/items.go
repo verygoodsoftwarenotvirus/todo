@@ -97,7 +97,7 @@ func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*models.
 
 // buildGetItemCountQuery takes a QueryFilter and a user ID and returns a SQL query (and the relevant arguments) for
 // fetching the number of items belonging to a given user that meet a given query
-func (p *Postgres) buildGetItemCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
+func (p *Postgres) buildGetItemCountQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 	builder := p.sqlBuilder.
 		Select(fmt.Sprintf(CountQuery, itemsTableName)).
@@ -118,8 +118,8 @@ func (p *Postgres) buildGetItemCountQuery(filter *models.QueryFilter, userID uin
 }
 
 // GetItemCount will fetch the count of items from the database that meet a particular filter and belong to a particular user.
-func (p *Postgres) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
-	query, args := p.buildGetItemCountQuery(filter, userID)
+func (p *Postgres) GetItemCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (count uint64, err error) {
+	query, args := p.buildGetItemCountQuery(userID, filter)
 	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return count, err
 }
@@ -153,7 +153,7 @@ func (p *Postgres) GetAllItemsCount(ctx context.Context) (count uint64, err erro
 
 // buildGetItemsQuery builds a SQL query selecting items that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
-func (p *Postgres) buildGetItemsQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
+func (p *Postgres) buildGetItemsQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 	builder := p.sqlBuilder.
 		Select(itemsTableColumns...).
@@ -174,8 +174,8 @@ func (p *Postgres) buildGetItemsQuery(filter *models.QueryFilter, userID uint64)
 }
 
 // GetItems fetches a list of items from the database that meet a particular filter
-func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
-	query, args := p.buildGetItemsQuery(filter, userID)
+func (p *Postgres) GetItems(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.ItemList, error) {
+	query, args := p.buildGetItemsQuery(userID, filter)
 
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -187,7 +187,7 @@ func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter, use
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
-	count, err := p.GetItemCount(ctx, filter, userID)
+	count, err := p.GetItemCount(ctx, userID, filter)
 	if err != nil {
 		return nil, fmt.Errorf("fetching item count: %w", err)
 	}
@@ -206,7 +206,7 @@ func (p *Postgres) GetItems(ctx context.Context, filter *models.QueryFilter, use
 
 // GetAllItemsForUser fetches every item belonging to a user
 func (p *Postgres) GetAllItemsForUser(ctx context.Context, userID uint64) ([]models.Item, error) {
-	query, args := p.buildGetItemsQuery(nil, userID)
+	query, args := p.buildGetItemsQuery(userID, nil)
 
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {

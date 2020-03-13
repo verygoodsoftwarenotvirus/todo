@@ -195,7 +195,7 @@ func TestPostgres_GetWebhookCount(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expected))
 
-		actual, err := p.GetWebhookCount(context.Background(), models.DefaultQueryFilter(), expectedUserID)
+		actual, err := p.GetWebhookCount(context.Background(), expectedUserID, models.DefaultQueryFilter())
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -210,7 +210,7 @@ func TestPostgres_GetWebhookCount(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := p.GetWebhookCount(context.Background(), models.DefaultQueryFilter(), expectedUserID)
+		actual, err := p.GetWebhookCount(context.Background(), expectedUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Zero(t, actual)
 
@@ -512,7 +512,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
-		actual, err := p.GetWebhooks(context.Background(), models.DefaultQueryFilter(), exampleUserID)
+		actual, err := p.GetWebhooks(context.Background(), exampleUserID, models.DefaultQueryFilter())
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -526,7 +526,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := p.GetWebhooks(context.Background(), models.DefaultQueryFilter(), exampleUserID)
+		actual, err := p.GetWebhooks(context.Background(), exampleUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.Equal(t, sql.ErrNoRows, err)
@@ -541,7 +541,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := p.GetWebhooks(context.Background(), models.DefaultQueryFilter(), exampleUserID)
+		actual, err := p.GetWebhooks(context.Background(), exampleUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -559,7 +559,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WillReturnRows(buildErroneousMockRowFromWebhook(expected))
 
-		actual, err := p.GetWebhooks(context.Background(), models.DefaultQueryFilter(), exampleUserID)
+		actual, err := p.GetWebhooks(context.Background(), exampleUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -593,7 +593,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := p.GetWebhooks(context.Background(), models.DefaultQueryFilter(), exampleUserID)
+		actual, err := p.GetWebhooks(context.Background(), exampleUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 

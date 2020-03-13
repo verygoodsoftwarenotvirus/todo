@@ -60,6 +60,7 @@ run-example:
 .PHONY: add-version
 add-version:
 ifdef branch
+	git fetch
 	git tag v$(branch) $(branch)
 	git push origin :refs/tags/$(branch)
 	git push --tags;

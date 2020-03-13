@@ -51,11 +51,12 @@ func TestClient_GetUserCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		expected := uint64(123)
+		filter := models.DefaultQueryFilter()
 
 		c, mockDB := buildTestClient()
-		mockDB.UserDataManager.On("GetUserCount", mock.Anything, models.DefaultQueryFilter()).Return(expected, nil)
+		mockDB.UserDataManager.On("GetUserCount", mock.Anything, filter).Return(expected, nil)
 
-		actual, err := c.GetUserCount(context.Background(), models.DefaultQueryFilter())
+		actual, err := c.GetUserCount(context.Background(), filter)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -64,11 +65,12 @@ func TestClient_GetUserCount(T *testing.T) {
 
 	T.Run("with nil filter", func(t *testing.T) {
 		expected := uint64(123)
+		filter := (*models.QueryFilter)(nil)
 
 		c, mockDB := buildTestClient()
-		mockDB.UserDataManager.On("GetUserCount", mock.Anything, (*models.QueryFilter)(nil)).Return(expected, nil)
+		mockDB.UserDataManager.On("GetUserCount", mock.Anything, filter).Return(expected, nil)
 
-		actual, err := c.GetUserCount(context.Background(), nil)
+		actual, err := c.GetUserCount(context.Background(), filter)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -81,11 +83,12 @@ func TestClient_GetUsers(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		expected := &models.UserList{}
+		filter := models.DefaultQueryFilter()
 
 		c, mockDB := buildTestClient()
-		mockDB.UserDataManager.On("GetUsers", mock.Anything, models.DefaultQueryFilter()).Return(expected, nil)
+		mockDB.UserDataManager.On("GetUsers", mock.Anything, filter).Return(expected, nil)
 
-		actual, err := c.GetUsers(context.Background(), models.DefaultQueryFilter())
+		actual, err := c.GetUsers(context.Background(), filter)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -94,11 +97,12 @@ func TestClient_GetUsers(T *testing.T) {
 
 	T.Run("with nil filter", func(t *testing.T) {
 		expected := &models.UserList{}
+		filter := (*models.QueryFilter)(nil)
 
 		c, mockDB := buildTestClient()
-		mockDB.UserDataManager.On("GetUsers", mock.Anything, (*models.QueryFilter)(nil)).Return(expected, nil)
+		mockDB.UserDataManager.On("GetUsers", mock.Anything, filter).Return(expected, nil)
 
-		actual, err := c.GetUsers(context.Background(), nil)
+		actual, err := c.GetUsers(context.Background(), filter)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 

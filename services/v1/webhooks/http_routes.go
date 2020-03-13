@@ -48,7 +48,7 @@ func (s *Service) ListHandler() http.HandlerFunc {
 		attachUserIDToSpan(span, userID)
 
 		// find the webhooks
-		webhooks, err := s.webhookDatabase.GetWebhooks(ctx, qf, userID)
+		webhooks, err := s.webhookDatabase.GetWebhooks(ctx, userID, qf)
 		if err == sql.ErrNoRows {
 			webhooks = &models.WebhookList{
 				Webhooks: []models.Webhook{},

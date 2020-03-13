@@ -43,7 +43,7 @@ func (s *Service) ListHandler() http.HandlerFunc {
 		attachUserIDToSpan(span, userID)
 
 		// fetch items from database
-		items, err := s.itemDatabase.GetItems(ctx, qf, userID)
+		items, err := s.itemDatabase.GetItems(ctx, userID, qf)
 		if err == sql.ErrNoRows {
 			// in the event no rows exist return an empty list
 			items = &models.ItemList{

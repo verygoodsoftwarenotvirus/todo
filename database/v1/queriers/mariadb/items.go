@@ -118,7 +118,7 @@ func (m *MariaDB) buildGetItemCountQuery(filter *models.QueryFilter, userID uint
 }
 
 // GetItemCount will fetch the count of items from the database that meet a particular filter and belong to a particular user.
-func (m *MariaDB) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
+func (m *MariaDB) GetItemCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (count uint64, err error) {
 	query, args := m.buildGetItemCountQuery(filter, userID)
 	err = m.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return count, err
@@ -153,7 +153,7 @@ func (m *MariaDB) GetAllItemsCount(ctx context.Context) (count uint64, err error
 
 // buildGetItemsQuery builds a SQL query selecting items that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
-func (m *MariaDB) buildGetItemsQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
+func (m *MariaDB) buildGetItemsQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 	builder := m.sqlBuilder.
 		Select(itemsTableColumns...).
@@ -174,8 +174,8 @@ func (m *MariaDB) buildGetItemsQuery(filter *models.QueryFilter, userID uint64) 
 }
 
 // GetItems fetches a list of items from the database that meet a particular filter
-func (m *MariaDB) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
-	query, args := m.buildGetItemsQuery(filter, userID)
+func (m *MariaDB) GetItems(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.ItemList, error) {
+	query, args := m.buildGetItemsQuery(userID, filter)
 
 	rows, err := m.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -187,7 +187,7 @@ func (m *MariaDB) GetItems(ctx context.Context, filter *models.QueryFilter, user
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
-	count, err := m.GetItemCount(ctx, filter, userID)
+	count, err := m.GetItemCount(ctx, userID, filter)
 	if err != nil {
 		return nil, fmt.Errorf("fetching item count: %w", err)
 	}
@@ -206,7 +206,7 @@ func (m *MariaDB) GetItems(ctx context.Context, filter *models.QueryFilter, user
 
 // GetAllItemsForUser fetches every item belonging to a user
 func (m *MariaDB) GetAllItemsForUser(ctx context.Context, userID uint64) ([]models.Item, error) {
-	query, args := m.buildGetItemsQuery(nil, userID)
+	query, args := m.buildGetItemsQuery(userID, nil)
 
 	rows, err := m.db.QueryContext(ctx, query, args...)
 	if err != nil {

@@ -133,7 +133,7 @@ func TestMariaDB_GetItemCount(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
-		actualCount, err := m.GetItemCount(context.Background(), models.DefaultQueryFilter(), expectedUserID)
+		actualCount, err := m.GetItemCount(context.Background(), expectedUserID, models.DefaultQueryFilter())
 		assert.NoError(t, err)
 		assert.Equal(t, expectedCount, actualCount)
 
@@ -178,10 +178,11 @@ func TestMariaDB_buildGetItemsQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
 		exampleUserID := uint64(321)
+		filter := models.DefaultQueryFilter()
 
 		expectedArgCount := 1
 		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? LIMIT 20"
-		actualQuery, args := m.buildGetItemsQuery(models.DefaultQueryFilter(), exampleUserID)
+		actualQuery, args := m.buildGetItemsQuery(exampleUserID, filter)
 
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
@@ -219,7 +220,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
-		actual, err := m.GetItems(context.Background(), models.DefaultQueryFilter(), expectedUserID)
+		actual, err := m.GetItems(context.Background(), expectedUserID, models.DefaultQueryFilter())
 
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
@@ -235,7 +236,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := m.GetItems(context.Background(), models.DefaultQueryFilter(), expectedUserID)
+		actual, err := m.GetItems(context.Background(), expectedUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.Equal(t, sql.ErrNoRows, err)
@@ -251,7 +252,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := m.GetItems(context.Background(), models.DefaultQueryFilter(), expectedUserID)
+		actual, err := m.GetItems(context.Background(), expectedUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -269,7 +270,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnRows(buildErroneousMockRowFromItem(expected))
 
-		actual, err := m.GetItems(context.Background(), models.DefaultQueryFilter(), expectedUserID)
+		actual, err := m.GetItems(context.Background(), expectedUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -290,7 +291,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := m.GetItems(context.Background(), models.DefaultQueryFilter(), expectedUserID)
+		actual, err := m.GetItems(context.Background(), expectedUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 

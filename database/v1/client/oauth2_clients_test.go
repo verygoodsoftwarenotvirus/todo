@@ -85,9 +85,11 @@ func TestClient_GetOAuth2ClientCount(T *testing.T) {
 		exampleUserID := uint64(123)
 		expected := uint64(123)
 		c, mockDB := buildTestClient()
-		mockDB.OAuth2ClientDataManager.On("GetOAuth2ClientCount", mock.Anything, models.DefaultQueryFilter(), exampleUserID).Return(expected, nil)
+		filter := models.DefaultQueryFilter()
 
-		actual, err := c.GetOAuth2ClientCount(context.Background(), models.DefaultQueryFilter(), exampleUserID)
+		mockDB.OAuth2ClientDataManager.On("GetOAuth2ClientCount", mock.Anything, filter, exampleUserID).Return(expected, nil)
+
+		actual, err := c.GetOAuth2ClientCount(context.Background(), exampleUserID, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -98,9 +100,11 @@ func TestClient_GetOAuth2ClientCount(T *testing.T) {
 		exampleUserID := uint64(123)
 		expected := uint64(123)
 		c, mockDB := buildTestClient()
-		mockDB.OAuth2ClientDataManager.On("GetOAuth2ClientCount", mock.Anything, mock.AnythingOfType("*models.QueryFilter"), exampleUserID).Return(expected, nil)
+		filter := (*models.QueryFilter)(nil)
 
-		actual, err := c.GetOAuth2ClientCount(context.Background(), nil, exampleUserID)
+		mockDB.OAuth2ClientDataManager.On("GetOAuth2ClientCount", mock.Anything, filter, exampleUserID).Return(expected, nil)
+
+		actual, err := c.GetOAuth2ClientCount(context.Background(), exampleUserID, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -111,9 +115,11 @@ func TestClient_GetOAuth2ClientCount(T *testing.T) {
 		exampleUserID := uint64(123)
 		expected := uint64(0)
 		c, mockDB := buildTestClient()
-		mockDB.OAuth2ClientDataManager.On("GetOAuth2ClientCount", mock.Anything, models.DefaultQueryFilter(), exampleUserID).Return(expected, errors.New("blah"))
+		filter := models.DefaultQueryFilter()
 
-		actual, err := c.GetOAuth2ClientCount(context.Background(), models.DefaultQueryFilter(), exampleUserID)
+		mockDB.OAuth2ClientDataManager.On("GetOAuth2ClientCount", mock.Anything, filter, exampleUserID).Return(expected, errors.New("blah"))
+
+		actual, err := c.GetOAuth2ClientCount(context.Background(), exampleUserID, filter)
 		assert.Error(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -160,9 +166,11 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 		c, mockDB := buildTestClient()
 		exampleUserID := uint64(123)
 		expected := &models.OAuth2ClientList{}
-		mockDB.OAuth2ClientDataManager.On("GetOAuth2Clients", mock.Anything, models.DefaultQueryFilter(), exampleUserID).Return(expected, nil)
+		filter := models.DefaultQueryFilter()
 
-		actual, err := c.GetOAuth2Clients(context.Background(), models.DefaultQueryFilter(), exampleUserID)
+		mockDB.OAuth2ClientDataManager.On("GetOAuth2Clients", mock.Anything, filter, exampleUserID).Return(expected, nil)
+
+		actual, err := c.GetOAuth2Clients(context.Background(), exampleUserID, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -173,9 +181,11 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 		c, mockDB := buildTestClient()
 		exampleUserID := uint64(123)
 		expected := &models.OAuth2ClientList{}
-		mockDB.OAuth2ClientDataManager.On("GetOAuth2Clients", mock.Anything, (*models.QueryFilter)(nil), exampleUserID).Return(expected, nil)
+		filter := (*models.QueryFilter)(nil)
 
-		actual, err := c.GetOAuth2Clients(context.Background(), nil, exampleUserID)
+		mockDB.OAuth2ClientDataManager.On("GetOAuth2Clients", mock.Anything, filter, exampleUserID).Return(expected, nil)
+
+		actual, err := c.GetOAuth2Clients(context.Background(), exampleUserID, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -186,9 +196,11 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 		c, mockDB := buildTestClient()
 		exampleUserID := uint64(123)
 		expected := (*models.OAuth2ClientList)(nil)
-		mockDB.OAuth2ClientDataManager.On("GetOAuth2Clients", mock.Anything, models.DefaultQueryFilter(), exampleUserID).Return(expected, errors.New("blah"))
+		filter := models.DefaultQueryFilter()
 
-		actual, err := c.GetOAuth2Clients(context.Background(), models.DefaultQueryFilter(), exampleUserID)
+		mockDB.OAuth2ClientDataManager.On("GetOAuth2Clients", mock.Anything, filter, exampleUserID).Return(expected, errors.New("blah"))
+
+		actual, err := c.GetOAuth2Clients(context.Background(), exampleUserID, filter)
 		assert.Error(t, err)
 		assert.Equal(t, expected, actual)
 

@@ -68,7 +68,7 @@ func (c *Client) GetOAuth2ClientByClientID(ctx context.Context, clientID string)
 }
 
 // GetOAuth2ClientCount gets the count of OAuth2 clients in the database that match the current filter
-func (c *Client) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (uint64, error) {
+func (c *Client) GetOAuth2ClientCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (uint64, error) {
 	ctx, span := trace.StartSpan(ctx, "GetOAuth2ClientCount")
 	defer span.End()
 
@@ -77,7 +77,7 @@ func (c *Client) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryF
 
 	c.logger.WithValue("user_id", userID).Debug("GetOAuth2ClientCount called")
 
-	return c.querier.GetOAuth2ClientCount(ctx, filter, userID)
+	return c.querier.GetOAuth2ClientCount(ctx, userID, filter)
 }
 
 // GetAllOAuth2ClientCount gets the count of OAuth2 clients that match the current filter
@@ -112,7 +112,7 @@ func (c *Client) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Clien
 }
 
 // GetOAuth2Clients gets a list of OAuth2 clients
-func (c *Client) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.OAuth2ClientList, error) {
+func (c *Client) GetOAuth2Clients(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
 	ctx, span := trace.StartSpan(ctx, "GetOAuth2Clients")
 	defer span.End()
 
@@ -121,7 +121,7 @@ func (c *Client) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilte
 
 	c.logger.WithValue("user_id", userID).Debug("GetOAuth2Clients called")
 
-	return c.querier.GetOAuth2Clients(ctx, filter, userID)
+	return c.querier.GetOAuth2Clients(ctx, userID, filter)
 }
 
 // CreateOAuth2Client creates an OAuth2 client

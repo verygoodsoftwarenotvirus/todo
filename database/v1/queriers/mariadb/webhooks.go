@@ -153,7 +153,7 @@ func (m *MariaDB) buildGetWebhookCountQuery(filter *models.QueryFilter, userID u
 
 // GetWebhookCount will fetch the count of webhooks from the database that meet a particular filter,
 // and belong to a particular user.
-func (m *MariaDB) GetWebhookCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
+func (m *MariaDB) GetWebhookCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (count uint64, err error) {
 	query, args := m.buildGetWebhookCountQuery(filter, userID)
 	err = m.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return count, err
@@ -280,7 +280,7 @@ func (m *MariaDB) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint6
 }
 
 // GetWebhooks fetches a list of webhooks from the database that meet a particular filter
-func (m *MariaDB) GetWebhooks(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.WebhookList, error) {
+func (m *MariaDB) GetWebhooks(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.WebhookList, error) {
 	query, args := m.buildGetWebhooksQuery(filter, userID)
 
 	rows, err := m.db.QueryContext(ctx, query, args...)
@@ -296,7 +296,7 @@ func (m *MariaDB) GetWebhooks(ctx context.Context, filter *models.QueryFilter, u
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
-	count, err := m.GetWebhookCount(ctx, filter, userID)
+	count, err := m.GetWebhookCount(ctx, userID, filter)
 	if err != nil {
 		return nil, fmt.Errorf("fetching count: %w", err)
 	}

@@ -35,7 +35,7 @@ func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*models.It
 }
 
 // GetItemCount fetches the count of items from the database that meet a particular filter
-func (c *Client) GetItemCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
+func (c *Client) GetItemCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (count uint64, err error) {
 	ctx, span := trace.StartSpan(ctx, "GetItemCount")
 	defer span.End()
 
@@ -44,7 +44,7 @@ func (c *Client) GetItemCount(ctx context.Context, filter *models.QueryFilter, u
 
 	c.logger.WithValue("user_id", userID).Debug("GetItemCount called")
 
-	return c.querier.GetItemCount(ctx, filter, userID)
+	return c.querier.GetItemCount(ctx, userID, filter)
 }
 
 // GetAllItemsCount fetches the count of items from the database that meet a particular filter
@@ -58,7 +58,7 @@ func (c *Client) GetAllItemsCount(ctx context.Context) (count uint64, err error)
 }
 
 // GetItems fetches a list of items from the database that meet a particular filter
-func (c *Client) GetItems(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.ItemList, error) {
+func (c *Client) GetItems(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.ItemList, error) {
 	ctx, span := trace.StartSpan(ctx, "GetItems")
 	defer span.End()
 
@@ -67,7 +67,7 @@ func (c *Client) GetItems(ctx context.Context, filter *models.QueryFilter, userI
 
 	c.logger.WithValue("user_id", userID).Debug("GetItems called")
 
-	itemList, err := c.querier.GetItems(ctx, filter, userID)
+	itemList, err := c.querier.GetItems(ctx, userID, filter)
 
 	return itemList, err
 }

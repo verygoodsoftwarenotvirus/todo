@@ -109,11 +109,12 @@ func TestPostgres_buildGetItemCountQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
 		exampleUserID := uint64(321)
+		filter := models.DefaultQueryFilter()
 
 		expectedArgCount := 1
 		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 LIMIT 20"
 
-		actualQuery, args := p.buildGetItemCountQuery(models.DefaultQueryFilter(), exampleUserID)
+		actualQuery, args := p.buildGetItemCountQuery(exampleUserID, filter)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
 		assert.Equal(t, exampleUserID, args[0].(uint64))
@@ -133,7 +134,7 @@ func TestPostgres_GetItemCount(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
-		actualCount, err := p.GetItemCount(context.Background(), models.DefaultQueryFilter(), expectedUserID)
+		actualCount, err := p.GetItemCount(context.Background(), expectedUserID, models.DefaultQueryFilter())
 		assert.NoError(t, err)
 		assert.Equal(t, expectedCount, actualCount)
 
@@ -178,10 +179,11 @@ func TestPostgres_buildGetItemsQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
 		exampleUserID := uint64(321)
+		filter := models.DefaultQueryFilter()
 
 		expectedArgCount := 1
 		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 LIMIT 20"
-		actualQuery, args := p.buildGetItemsQuery(models.DefaultQueryFilter(), exampleUserID)
+		actualQuery, args := p.buildGetItemsQuery(exampleUserID, filter)
 
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
@@ -219,7 +221,7 @@ func TestPostgres_GetItems(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
-		actual, err := p.GetItems(context.Background(), models.DefaultQueryFilter(), expectedUserID)
+		actual, err := p.GetItems(context.Background(), expectedUserID, models.DefaultQueryFilter())
 
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
@@ -235,7 +237,7 @@ func TestPostgres_GetItems(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := p.GetItems(context.Background(), models.DefaultQueryFilter(), expectedUserID)
+		actual, err := p.GetItems(context.Background(), expectedUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.Equal(t, sql.ErrNoRows, err)
@@ -251,7 +253,7 @@ func TestPostgres_GetItems(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := p.GetItems(context.Background(), models.DefaultQueryFilter(), expectedUserID)
+		actual, err := p.GetItems(context.Background(), expectedUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -269,7 +271,7 @@ func TestPostgres_GetItems(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnRows(buildErroneousMockRowFromItem(expected))
 
-		actual, err := p.GetItems(context.Background(), models.DefaultQueryFilter(), expectedUserID)
+		actual, err := p.GetItems(context.Background(), expectedUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -290,7 +292,7 @@ func TestPostgres_GetItems(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := p.GetItems(context.Background(), models.DefaultQueryFilter(), expectedUserID)
+		actual, err := p.GetItems(context.Background(), expectedUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 

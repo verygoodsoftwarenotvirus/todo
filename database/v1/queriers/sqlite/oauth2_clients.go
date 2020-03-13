@@ -225,7 +225,7 @@ func (s *Sqlite) buildGetOAuth2ClientCountQuery(filter *models.QueryFilter, user
 }
 
 // GetOAuth2ClientCount will get the count of OAuth2 clients that match the given filter and belong to the user
-func (s *Sqlite) GetOAuth2ClientCount(ctx context.Context, filter *models.QueryFilter, userID uint64) (count uint64, err error) {
+func (s *Sqlite) GetOAuth2ClientCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (count uint64, err error) {
 	query, args := s.buildGetOAuth2ClientCountQuery(filter, userID)
 	err = s.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return
@@ -283,7 +283,7 @@ func (s *Sqlite) buildGetOAuth2ClientsQuery(filter *models.QueryFilter, userID u
 }
 
 // GetOAuth2Clients gets a list of OAuth2 clients
-func (s *Sqlite) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter, userID uint64) (*models.OAuth2ClientList, error) {
+func (s *Sqlite) GetOAuth2Clients(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
 	query, args := s.buildGetOAuth2ClientsQuery(filter, userID)
 	rows, err := s.db.QueryContext(ctx, query, args...)
 
@@ -306,7 +306,7 @@ func (s *Sqlite) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilte
 		clients[i] = *t
 	}
 
-	totalCount, err := s.GetOAuth2ClientCount(ctx, filter, userID)
+	totalCount, err := s.GetOAuth2ClientCount(ctx, userID, filter)
 	if err != nil {
 		return nil, fmt.Errorf("fetching oauth2 client count: %w", err)
 	}

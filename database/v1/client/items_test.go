@@ -35,11 +35,12 @@ func TestClient_GetItemCount(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		expected := uint64(321)
 		exampleUserID := uint64(123)
+		filter := models.DefaultQueryFilter()
 
 		c, mockDB := buildTestClient()
-		mockDB.ItemDataManager.On("GetItemCount", mock.Anything, models.DefaultQueryFilter(), exampleUserID).Return(expected, nil)
+		mockDB.ItemDataManager.On("GetItemCount", mock.Anything, filter, exampleUserID).Return(expected, nil)
 
-		actual, err := c.GetItemCount(context.Background(), models.DefaultQueryFilter(), exampleUserID)
+		actual, err := c.GetItemCount(context.Background(), exampleUserID, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -49,11 +50,12 @@ func TestClient_GetItemCount(T *testing.T) {
 	T.Run("with nil filter", func(t *testing.T) {
 		expected := uint64(321)
 		exampleUserID := uint64(123)
+		filter := (*models.QueryFilter)(nil)
 
 		c, mockDB := buildTestClient()
-		mockDB.ItemDataManager.On("GetItemCount", mock.Anything, (*models.QueryFilter)(nil), exampleUserID).Return(expected, nil)
+		mockDB.ItemDataManager.On("GetItemCount", mock.Anything, filter, exampleUserID).Return(expected, nil)
 
-		actual, err := c.GetItemCount(context.Background(), (*models.QueryFilter)(nil), exampleUserID)
+		actual, err := c.GetItemCount(context.Background(), exampleUserID, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -84,10 +86,11 @@ func TestClient_GetItems(T *testing.T) {
 		exampleUserID := uint64(123)
 		c, mockDB := buildTestClient()
 		expected := &models.ItemList{}
+		filter := models.DefaultQueryFilter()
 
-		mockDB.ItemDataManager.On("GetItems", mock.Anything, models.DefaultQueryFilter(), exampleUserID).Return(expected, nil)
+		mockDB.ItemDataManager.On("GetItems", mock.Anything, filter, exampleUserID).Return(expected, nil)
 
-		actual, err := c.GetItems(context.Background(), models.DefaultQueryFilter(), exampleUserID)
+		actual, err := c.GetItems(context.Background(), exampleUserID, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -98,10 +101,11 @@ func TestClient_GetItems(T *testing.T) {
 		exampleUserID := uint64(123)
 		c, mockDB := buildTestClient()
 		expected := &models.ItemList{}
+		filter := (*models.QueryFilter)(nil)
 
-		mockDB.ItemDataManager.On("GetItems", mock.Anything, (*models.QueryFilter)(nil), exampleUserID).Return(expected, nil)
+		mockDB.ItemDataManager.On("GetItems", mock.Anything, filter, exampleUserID).Return(expected, nil)
 
-		actual, err := c.GetItems(context.Background(), (*models.QueryFilter)(nil), exampleUserID)
+		actual, err := c.GetItems(context.Background(), exampleUserID, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 

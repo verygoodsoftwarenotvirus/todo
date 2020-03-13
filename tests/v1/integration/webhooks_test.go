@@ -36,7 +36,9 @@ func buildDummyWebhookInput() *models.WebhookCreationInput {
 func buildDummyWebhook(t *testing.T) *models.Webhook {
 	t.Helper()
 
-	y, err := todoClient.CreateWebhook(context.Background(), buildDummyWebhookInput())
+	ctx := context.Background()
+
+	y, err := todoClient.CreateWebhook(ctx, buildDummyWebhookInput())
 	require.NoError(t, err)
 	return y
 }

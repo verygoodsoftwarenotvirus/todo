@@ -504,7 +504,7 @@ func TestAuth(test *testing.T) {
 		checkValueAndError(test, premade, err)
 
 		c, err := client.NewClient(
-			context.Background(),
+			tctx,
 			premade.ClientID,
 			premade.ClientSecret,
 			todoClient.URL,

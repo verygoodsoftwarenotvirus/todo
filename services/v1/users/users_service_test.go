@@ -24,6 +24,7 @@ import (
 func buildTestService(t *testing.T) *Service {
 	t.Helper()
 
+	ctx := context.Background()
 	expectedUserCount := uint64(123)
 	mockDB := database.BuildMockDatabase()
 	mockDB.UserDataManager.On("GetUserCount", mock.Anything, (*models.QueryFilter)(nil)).Return(expectedUserCount, nil)
@@ -38,7 +39,7 @@ func buildTestService(t *testing.T) *Service {
 	}
 
 	service, err := ProvideUsersService(
-		context.Background(),
+		ctx,
 		config.AuthSettings{},
 		noop.ProvideNoopLogger(),
 		mockDB,
@@ -57,6 +58,7 @@ func TestProvideUsersService(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		mockUserCount := uint64(0)
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).Return(mockUserCount, nil)
@@ -72,7 +74,7 @@ func TestProvideUsersService(T *testing.T) {
 		}
 
 		service, err := ProvideUsersService(
-			context.Background(),
+			ctx,
 			config.AuthSettings{},
 			noop.ProvideNoopLogger(),
 			mockDB,
@@ -87,6 +89,7 @@ func TestProvideUsersService(T *testing.T) {
 	})
 
 	T.Run("with nil userIDFetcher", func(t *testing.T) {
+		ctx := context.Background()
 		mockUserCount := uint64(0)
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).Return(mockUserCount, nil)
@@ -102,7 +105,7 @@ func TestProvideUsersService(T *testing.T) {
 		}
 
 		service, err := ProvideUsersService(
-			context.Background(),
+			ctx,
 			config.AuthSettings{},
 			noop.ProvideNoopLogger(),
 			mockDB,
@@ -117,6 +120,7 @@ func TestProvideUsersService(T *testing.T) {
 	})
 
 	T.Run("with error initializing counter", func(t *testing.T) {
+		ctx := context.Background()
 		mockUserCount := uint64(0)
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).Return(mockUserCount, nil)
@@ -132,7 +136,7 @@ func TestProvideUsersService(T *testing.T) {
 		}
 
 		service, err := ProvideUsersService(
-			context.Background(),
+			ctx,
 			config.AuthSettings{},
 			noop.ProvideNoopLogger(),
 			mockDB,
@@ -147,6 +151,7 @@ func TestProvideUsersService(T *testing.T) {
 	})
 
 	T.Run("with error getting user count", func(t *testing.T) {
+		ctx := context.Background()
 		mockUserCount := uint64(0)
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).Return(mockUserCount, errors.New("blah"))
@@ -160,7 +165,7 @@ func TestProvideUsersService(T *testing.T) {
 		}
 
 		service, err := ProvideUsersService(
-			context.Background(),
+			ctx,
 			config.AuthSettings{},
 			noop.ProvideNoopLogger(),
 			mockDB,

@@ -27,13 +27,14 @@ func Test_opencensusCounter_IncrementBy(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		ct, err := ProvideUnitCounter("counter", "description")
 		c := ct.(*opencensusCounter)
 
 		require.NoError(t, err)
 		assert.Equal(t, c.actualCount, uint64(0))
 
-		c.IncrementBy(context.Background(), 666)
+		c.IncrementBy(ctx, 666)
 		assert.Equal(t, c.actualCount, uint64(666))
 	})
 }

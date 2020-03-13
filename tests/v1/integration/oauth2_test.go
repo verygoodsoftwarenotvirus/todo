@@ -61,17 +61,18 @@ func checkOAuth2ClientEquality(t *testing.T, expected, actual *models.OAuth2Clie
 
 func TestOAuth2Clients(test *testing.T) {
 	test.Parallel()
+	_ctx := context.Background()
 
 	// create user
 	x, y, cookie := buildDummyUser(test)
 	assert.NotNil(test, cookie)
 
 	input := buildDummyOAuth2ClientInput(test, x.Username, y.Password, x.TwoFactorSecret)
-	premade, err := todoClient.CreateOAuth2Client(context.Background(), cookie, input)
+	premade, err := todoClient.CreateOAuth2Client(_ctx, cookie, input)
 	checkValueAndError(test, premade, err)
 
 	testClient, err := client.NewClient(
-		context.Background(),
+		_ctx,
 		premade.ClientID,
 		premade.ClientSecret,
 		todoClient.URL,
@@ -151,7 +152,7 @@ func TestOAuth2Clients(test *testing.T) {
 			assert.NotNil(test, cookie)
 
 			input := buildDummyOAuth2ClientInput(test, createdUserInput.Username, createdUserInput.Password, createdUser.TwoFactorSecret)
-			premade, err := todoClient.CreateOAuth2Client(context.Background(), cookie, input)
+			premade, err := todoClient.CreateOAuth2Client(tctx, cookie, input)
 			checkValueAndError(test, premade, err)
 
 			// ArchiveHandler oauth2Client
@@ -159,7 +160,7 @@ func TestOAuth2Clients(test *testing.T) {
 			assert.NoError(t, err)
 
 			c2, err := client.NewClient(
-				context.Background(),
+				tctx,
 				premade.ClientID,
 				premade.ClientSecret,
 				todoClient.URL,

@@ -66,6 +66,7 @@ func TestSqlite_GetItem(T *testing.T) {
 	expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.belongs_to_user = ? AND items.id = ?"
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expected := &models.Item{
 			ID: 123,
 		}
@@ -76,7 +77,7 @@ func TestSqlite_GetItem(T *testing.T) {
 			WithArgs(expectedUserID, expected.ID).
 			WillReturnRows(buildMockRowFromItem(expected))
 
-		actual, err := s.GetItem(context.Background(), expected.ID, expectedUserID)
+		actual, err := s.GetItem(ctx, expected.ID, expectedUserID)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -84,6 +85,7 @@ func TestSqlite_GetItem(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		ctx := context.Background()
 		expected := &models.Item{
 			ID: 123,
 		}
@@ -94,7 +96,7 @@ func TestSqlite_GetItem(T *testing.T) {
 			WithArgs(expectedUserID, expected.ID).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := s.GetItem(context.Background(), expected.ID, expectedUserID)
+		actual, err := s.GetItem(ctx, expected.ID, expectedUserID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.Equal(t, sql.ErrNoRows, err)
@@ -125,6 +127,7 @@ func TestSqlite_GetItemCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? LIMIT 20"
 		expectedCount := uint64(666)
@@ -134,7 +137,7 @@ func TestSqlite_GetItemCount(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
-		actualCount, err := s.GetItemCount(context.Background(), expectedUserID, models.DefaultQueryFilter())
+		actualCount, err := s.GetItemCount(ctx, expectedUserID, models.DefaultQueryFilter())
 		assert.NoError(t, err)
 		assert.Equal(t, expectedCount, actualCount)
 
@@ -196,6 +199,7 @@ func TestSqlite_GetItems(T *testing.T) {
 	expectedListQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(123)
 		expectedCountQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
 		expectedItem := &models.Item{
@@ -220,7 +224,7 @@ func TestSqlite_GetItems(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
-		actual, err := s.GetItems(context.Background(), expectedUserID, models.DefaultQueryFilter())
+		actual, err := s.GetItems(ctx, expectedUserID, models.DefaultQueryFilter())
 
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
@@ -229,6 +233,7 @@ func TestSqlite_GetItems(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(123)
 
 		s, mockDB := buildTestService(t)
@@ -236,7 +241,7 @@ func TestSqlite_GetItems(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := s.GetItems(context.Background(), expectedUserID, models.DefaultQueryFilter())
+		actual, err := s.GetItems(ctx, expectedUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.Equal(t, sql.ErrNoRows, err)
@@ -245,6 +250,7 @@ func TestSqlite_GetItems(T *testing.T) {
 	})
 
 	T.Run("with error executing read query", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(123)
 
 		s, mockDB := buildTestService(t)
@@ -252,7 +258,7 @@ func TestSqlite_GetItems(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := s.GetItems(context.Background(), expectedUserID, models.DefaultQueryFilter())
+		actual, err := s.GetItems(ctx, expectedUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -260,6 +266,7 @@ func TestSqlite_GetItems(T *testing.T) {
 	})
 
 	T.Run("with error scanning item", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(123)
 		expected := &models.Item{
 			ID: 321,
@@ -270,7 +277,7 @@ func TestSqlite_GetItems(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnRows(buildErroneousMockRowFromItem(expected))
 
-		actual, err := s.GetItems(context.Background(), expectedUserID, models.DefaultQueryFilter())
+		actual, err := s.GetItems(ctx, expectedUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -278,6 +285,7 @@ func TestSqlite_GetItems(T *testing.T) {
 	})
 
 	T.Run("with error querying for count", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(123)
 		expected := &models.Item{
 			ID: 321,
@@ -291,7 +299,7 @@ func TestSqlite_GetItems(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := s.GetItems(context.Background(), expectedUserID, models.DefaultQueryFilter())
+		actual, err := s.GetItems(ctx, expectedUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -305,6 +313,7 @@ func TestSqlite_GetAllItemsForUser(T *testing.T) {
 	expectedListQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ?"
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(123)
 		expectedItem := &models.Item{
 			ID: 321,
@@ -316,7 +325,7 @@ func TestSqlite_GetAllItemsForUser(T *testing.T) {
 			WillReturnRows(buildMockRowFromItem(expectedItem))
 
 		expected := []models.Item{*expectedItem}
-		actual, err := s.GetAllItemsForUser(context.Background(), expectedUserID)
+		actual, err := s.GetAllItemsForUser(ctx, expectedUserID)
 
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
@@ -325,6 +334,7 @@ func TestSqlite_GetAllItemsForUser(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(123)
 
 		s, mockDB := buildTestService(t)
@@ -332,7 +342,7 @@ func TestSqlite_GetAllItemsForUser(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := s.GetAllItemsForUser(context.Background(), expectedUserID)
+		actual, err := s.GetAllItemsForUser(ctx, expectedUserID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.Equal(t, sql.ErrNoRows, err)
@@ -341,6 +351,7 @@ func TestSqlite_GetAllItemsForUser(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(123)
 
 		s, mockDB := buildTestService(t)
@@ -348,7 +359,7 @@ func TestSqlite_GetAllItemsForUser(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := s.GetAllItemsForUser(context.Background(), expectedUserID)
+		actual, err := s.GetAllItemsForUser(ctx, expectedUserID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -356,6 +367,7 @@ func TestSqlite_GetAllItemsForUser(T *testing.T) {
 	})
 
 	T.Run("with unscannable response", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(123)
 		exampleItem := &models.Item{
 			ID: 321,
@@ -366,7 +378,7 @@ func TestSqlite_GetAllItemsForUser(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnRows(buildErroneousMockRowFromItem(exampleItem))
 
-		actual, err := s.GetAllItemsForUser(context.Background(), expectedUserID)
+		actual, err := s.GetAllItemsForUser(ctx, expectedUserID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -401,6 +413,7 @@ func TestSqlite_CreateItem(T *testing.T) {
 	expectedCreationQuery := "INSERT INTO items (name,details,belongs_to_user) VALUES (?,?,?)"
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 		expected := &models.Item{
 			ID:            123,
@@ -427,7 +440,7 @@ func TestSqlite_CreateItem(T *testing.T) {
 			WithArgs(expected.ID).
 			WillReturnRows(sqlmock.NewRows([]string{"created_on"}).AddRow(expected.CreatedOn))
 
-		actual, err := s.CreateItem(context.Background(), expectedInput)
+		actual, err := s.CreateItem(ctx, expectedInput)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -435,6 +448,7 @@ func TestSqlite_CreateItem(T *testing.T) {
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 		expected := &models.Item{
 			ID:            123,
@@ -455,7 +469,7 @@ func TestSqlite_CreateItem(T *testing.T) {
 				expected.BelongsToUser,
 			).WillReturnError(errors.New("blah"))
 
-		actual, err := s.CreateItem(context.Background(), expectedInput)
+		actual, err := s.CreateItem(ctx, expectedInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -491,6 +505,7 @@ func TestSqlite_UpdateItem(T *testing.T) {
 	expectedQuery := "UPDATE items SET name = ?, details = ?, updated_on = (strftime('%s','now')) WHERE belongs_to_user = ? AND id = ?"
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 		expected := &models.Item{
 			ID:            123,
@@ -508,13 +523,14 @@ func TestSqlite_UpdateItem(T *testing.T) {
 				expected.ID,
 			).WillReturnResult(exampleRows)
 
-		err := s.UpdateItem(context.Background(), expected)
+		err := s.UpdateItem(ctx, expected)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 		expected := &models.Item{
 			ID:            123,
@@ -531,7 +547,7 @@ func TestSqlite_UpdateItem(T *testing.T) {
 				expected.ID,
 			).WillReturnError(errors.New("blah"))
 
-		err := s.UpdateItem(context.Background(), expected)
+		err := s.UpdateItem(ctx, expected)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -564,6 +580,7 @@ func TestSqlite_ArchiveItem(T *testing.T) {
 	expectedQuery := "UPDATE items SET updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 		expected := &models.Item{
 			ID:            123,
@@ -578,13 +595,14 @@ func TestSqlite_ArchiveItem(T *testing.T) {
 				expected.ID,
 			).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := s.ArchiveItem(context.Background(), expected.ID, expectedUserID)
+		err := s.ArchiveItem(ctx, expected.ID, expectedUserID)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 		example := &models.Item{
 			ID:            123,
@@ -599,7 +617,7 @@ func TestSqlite_ArchiveItem(T *testing.T) {
 				example.ID,
 			).WillReturnError(errors.New("blah"))
 
-		err := s.ArchiveItem(context.Background(), example.ID, expectedUserID)
+		err := s.ArchiveItem(ctx, example.ID, expectedUserID)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")

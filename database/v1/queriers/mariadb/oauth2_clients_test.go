@@ -70,6 +70,7 @@ func TestMariaDB_GetOAuth2ClientByClientID(T *testing.T) {
 	expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to_user FROM oauth2_clients WHERE archived_on IS NULL AND client_id = ?"
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		exampleClientID := "EXAMPLE"
 		expectedUserID := uint64(321)
 		expected := &models.OAuth2Client{
@@ -84,7 +85,7 @@ func TestMariaDB_GetOAuth2ClientByClientID(T *testing.T) {
 			WithArgs(exampleClientID).
 			WillReturnRows(buildMockRowFromOAuth2Client(expected))
 
-		actual, err := m.GetOAuth2ClientByClientID(context.Background(), exampleClientID)
+		actual, err := m.GetOAuth2ClientByClientID(ctx, exampleClientID)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -92,6 +93,7 @@ func TestMariaDB_GetOAuth2ClientByClientID(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		ctx := context.Background()
 		exampleClientID := "EXAMPLE"
 
 		m, mockDB := buildTestService(t)
@@ -99,7 +101,7 @@ func TestMariaDB_GetOAuth2ClientByClientID(T *testing.T) {
 			WithArgs(exampleClientID).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := m.GetOAuth2ClientByClientID(context.Background(), exampleClientID)
+		actual, err := m.GetOAuth2ClientByClientID(ctx, exampleClientID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.Equal(t, sql.ErrNoRows, err)
@@ -108,6 +110,7 @@ func TestMariaDB_GetOAuth2ClientByClientID(T *testing.T) {
 	})
 
 	T.Run("with erroneous row", func(t *testing.T) {
+		ctx := context.Background()
 		exampleClientID := "EXAMPLE"
 		expectedUserID := uint64(321)
 		expected := &models.OAuth2Client{
@@ -122,7 +125,7 @@ func TestMariaDB_GetOAuth2ClientByClientID(T *testing.T) {
 			WithArgs(exampleClientID).
 			WillReturnRows(buildErroneousMockRowFromOAuth2Client(expected))
 
-		actual, err := m.GetOAuth2ClientByClientID(context.Background(), exampleClientID)
+		actual, err := m.GetOAuth2ClientByClientID(ctx, exampleClientID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -225,6 +228,7 @@ func TestMariaDB_GetAllOAuth2ClientsForUser(T *testing.T) {
 	expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to_user FROM oauth2_clients WHERE archived_on IS NULL"
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 		exampleUser := &models.User{ID: 123}
 		expected := []*models.OAuth2Client{
@@ -243,7 +247,7 @@ func TestMariaDB_GetAllOAuth2ClientsForUser(T *testing.T) {
 			buildMockRowFromOAuth2Client(expected[0]),
 		)
 
-		actual, err := m.GetAllOAuth2ClientsForUser(context.Background(), exampleUser.ID)
+		actual, err := m.GetAllOAuth2ClientsForUser(ctx, exampleUser.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -251,13 +255,14 @@ func TestMariaDB_GetAllOAuth2ClientsForUser(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		ctx := context.Background()
 		exampleUser := &models.User{ID: 123}
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := m.GetAllOAuth2ClientsForUser(context.Background(), exampleUser.ID)
+		actual, err := m.GetAllOAuth2ClientsForUser(ctx, exampleUser.ID)
 		assert.Equal(t, sql.ErrNoRows, err)
 		assert.Nil(t, actual)
 
@@ -265,13 +270,14 @@ func TestMariaDB_GetAllOAuth2ClientsForUser(T *testing.T) {
 	})
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
+		ctx := context.Background()
 		exampleUser := &models.User{ID: 123}
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := m.GetAllOAuth2ClientsForUser(context.Background(), exampleUser.ID)
+		actual, err := m.GetAllOAuth2ClientsForUser(ctx, exampleUser.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -279,6 +285,7 @@ func TestMariaDB_GetAllOAuth2ClientsForUser(T *testing.T) {
 	})
 
 	T.Run("with unscannable response", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 		exampleUser := &models.User{ID: 123}
 		expected := &models.OAuth2Client{
@@ -292,7 +299,7 @@ func TestMariaDB_GetAllOAuth2ClientsForUser(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnRows(buildErroneousMockRowFromOAuth2Client(expected))
 
-		actual, err := m.GetAllOAuth2ClientsForUser(context.Background(), exampleUser.ID)
+		actual, err := m.GetAllOAuth2ClientsForUser(ctx, exampleUser.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -324,6 +331,7 @@ func TestMariaDB_GetOAuth2Client(T *testing.T) {
 	expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to_user FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 		expected := &models.OAuth2Client{
 			ID:            123,
@@ -338,7 +346,7 @@ func TestMariaDB_GetOAuth2Client(T *testing.T) {
 			WithArgs(expected.BelongsToUser, expected.ID).
 			WillReturnRows(buildMockRowFromOAuth2Client(expected))
 
-		actual, err := m.GetOAuth2Client(context.Background(), expected.ID, expected.BelongsToUser)
+		actual, err := m.GetOAuth2Client(ctx, expected.ID, expected.BelongsToUser)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -346,6 +354,7 @@ func TestMariaDB_GetOAuth2Client(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 		expected := &models.OAuth2Client{
 			ID:            123,
@@ -360,7 +369,7 @@ func TestMariaDB_GetOAuth2Client(T *testing.T) {
 			WithArgs(expected.BelongsToUser, expected.ID).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := m.GetOAuth2Client(context.Background(), expected.ID, expected.BelongsToUser)
+		actual, err := m.GetOAuth2Client(ctx, expected.ID, expected.BelongsToUser)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.Equal(t, sql.ErrNoRows, err)
@@ -369,6 +378,7 @@ func TestMariaDB_GetOAuth2Client(T *testing.T) {
 	})
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 		expected := &models.OAuth2Client{
 			ID:            123,
@@ -382,7 +392,7 @@ func TestMariaDB_GetOAuth2Client(T *testing.T) {
 			WithArgs(expected.BelongsToUser, expected.ID).
 			WillReturnRows(buildErroneousMockRowFromOAuth2Client(expected))
 
-		actual, err := m.GetOAuth2Client(context.Background(), expected.ID, expected.BelongsToUser)
+		actual, err := m.GetOAuth2Client(ctx, expected.ID, expected.BelongsToUser)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -410,6 +420,7 @@ func TestMariaDB_GetOAuth2ClientCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 		expectedQuery := "SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to_user = ? LIMIT 20"
 		expectedCount := uint64(666)
@@ -419,7 +430,7 @@ func TestMariaDB_GetOAuth2ClientCount(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
-		actualCount, err := m.GetOAuth2ClientCount(context.Background(), expectedUserID, models.DefaultQueryFilter())
+		actualCount, err := m.GetOAuth2ClientCount(ctx, expectedUserID, models.DefaultQueryFilter())
 		assert.NoError(t, err)
 		assert.Equal(t, expectedCount, actualCount)
 
@@ -519,13 +530,14 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 	})
 
 	T.Run("with no rows returned from database", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := m.GetOAuth2Clients(context.Background(), expectedUserID, models.DefaultQueryFilter())
+		actual, err := m.GetOAuth2Clients(ctx, expectedUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -533,13 +545,14 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 	})
 
 	T.Run("with error reading from database", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := m.GetOAuth2Clients(context.Background(), expectedUserID, models.DefaultQueryFilter())
+		actual, err := m.GetOAuth2Clients(ctx, expectedUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -547,6 +560,7 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 	})
 
 	T.Run("with erroneous response", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 		expected := &models.OAuth2ClientList{
 			Pagination: models.Pagination{
@@ -568,7 +582,7 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WillReturnRows(buildErroneousMockRowFromOAuth2Client(&expected.Clients[0]))
 
-		actual, err := m.GetOAuth2Clients(context.Background(), expectedUserID, models.DefaultQueryFilter())
+		actual, err := m.GetOAuth2Clients(ctx, expectedUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -576,6 +590,7 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 	})
 
 	T.Run("with error fetching count", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 		expected := &models.OAuth2ClientList{
 			Pagination: models.Pagination{
@@ -604,7 +619,7 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 			WithArgs(expectedUserID).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := m.GetOAuth2Clients(context.Background(), expectedUserID, models.DefaultQueryFilter())
+		actual, err := m.GetOAuth2Clients(ctx, expectedUserID, models.DefaultQueryFilter())
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -645,6 +660,7 @@ func TestMariaDB_CreateOAuth2Client(T *testing.T) {
 	expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to_user,created_on) VALUES (?,?,?,?,?,?,UNIX_TIMESTAMP())"
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 		expected := &models.OAuth2Client{
 			ID:            123,
@@ -673,7 +689,7 @@ func TestMariaDB_CreateOAuth2Client(T *testing.T) {
 			WithArgs(expected.ID).
 			WillReturnRows(sqlmock.NewRows([]string{"created_on"}).AddRow(expected.CreatedOn))
 
-		actual, err := m.CreateOAuth2Client(context.Background(), expectedInput)
+		actual, err := m.CreateOAuth2Client(ctx, expectedInput)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
@@ -681,6 +697,7 @@ func TestMariaDB_CreateOAuth2Client(T *testing.T) {
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
+		ctx := context.Background()
 		expectedUserID := uint64(321)
 		expected := &models.OAuth2Client{
 			ID:            123,
@@ -703,7 +720,7 @@ func TestMariaDB_CreateOAuth2Client(T *testing.T) {
 			expected.BelongsToUser,
 		).WillReturnError(errors.New("blah"))
 
-		actual, err := m.CreateOAuth2Client(context.Background(), expectedInput)
+		actual, err := m.CreateOAuth2Client(ctx, expectedInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -744,26 +761,28 @@ func TestMariaDB_UpdateOAuth2Client(T *testing.T) {
 	expectedQuery := "UPDATE oauth2_clients SET client_id = ?, client_secret = ?, scopes = ?, redirect_uri = ?, updated_on = UNIX_TIMESTAMP() WHERE belongs_to_user = ? AND id = ?"
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		exampleInput := &models.OAuth2Client{}
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := m.UpdateOAuth2Client(context.Background(), exampleInput)
+		err := m.UpdateOAuth2Client(ctx, exampleInput)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
+		ctx := context.Background()
 		exampleInput := &models.OAuth2Client{}
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(errors.New("blah"))
 
-		err := m.UpdateOAuth2Client(context.Background(), exampleInput)
+		err := m.UpdateOAuth2Client(ctx, exampleInput)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -794,6 +813,7 @@ func TestMariaDB_ArchiveOAuth2Client(T *testing.T) {
 	expectedQuery := "UPDATE oauth2_clients SET updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE belongs_to_user = ? AND id = ?"
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		exampleClientID := uint64(321)
 		exampleUserID := uint64(123)
 
@@ -802,13 +822,14 @@ func TestMariaDB_ArchiveOAuth2Client(T *testing.T) {
 			WithArgs(exampleUserID, exampleClientID).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := m.ArchiveOAuth2Client(context.Background(), exampleClientID, exampleUserID)
+		err := m.ArchiveOAuth2Client(ctx, exampleClientID, exampleUserID)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
+		ctx := context.Background()
 		exampleClientID := uint64(321)
 		exampleUserID := uint64(123)
 
@@ -817,7 +838,7 @@ func TestMariaDB_ArchiveOAuth2Client(T *testing.T) {
 			WithArgs(exampleUserID, exampleClientID).
 			WillReturnError(errors.New("blah"))
 
-		err := m.ArchiveOAuth2Client(context.Background(), exampleClientID, exampleUserID)
+		err := m.ArchiveOAuth2Client(ctx, exampleClientID, exampleUserID)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")

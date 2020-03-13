@@ -33,6 +33,7 @@ func TestProvideWebhooksService(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		expectation := uint64(123)
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", expectation).Return()
@@ -48,7 +49,7 @@ func TestProvideWebhooksService(T *testing.T) {
 		dm.On("GetAllWebhooksCount", mock.Anything).Return(expectation, nil)
 
 		actual, err := ProvideWebhooksService(
-			context.Background(),
+			ctx,
 			noop.ProvideNoopLogger(),
 			dm,
 			func(req *http.Request) uint64 { return 0 },
@@ -62,6 +63,7 @@ func TestProvideWebhooksService(T *testing.T) {
 	})
 
 	T.Run("with error providing counter", func(t *testing.T) {
+		ctx := context.Background()
 		var ucp metrics.UnitCounterProvider = func(
 			counterName metrics.CounterName,
 			description string,
@@ -70,7 +72,7 @@ func TestProvideWebhooksService(T *testing.T) {
 		}
 
 		actual, err := ProvideWebhooksService(
-			context.Background(),
+			ctx,
 			noop.ProvideNoopLogger(),
 			&mockmodels.WebhookDataManager{},
 			func(req *http.Request) uint64 { return 0 },
@@ -84,6 +86,7 @@ func TestProvideWebhooksService(T *testing.T) {
 	})
 
 	T.Run("with error setting count", func(t *testing.T) {
+		ctx := context.Background()
 		expectation := uint64(123)
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", expectation).Return()
@@ -99,7 +102,7 @@ func TestProvideWebhooksService(T *testing.T) {
 		dm.On("GetAllWebhooksCount", mock.Anything).Return(expectation, errors.New("blah"))
 
 		actual, err := ProvideWebhooksService(
-			context.Background(),
+			ctx,
 			noop.ProvideNoopLogger(),
 			dm,
 			func(req *http.Request) uint64 { return 0 },

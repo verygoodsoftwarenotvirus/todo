@@ -13,6 +13,7 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -23,11 +24,11 @@ func TestWebhooksService_List(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.WebhookList{
 			Webhooks: []models.Webhook{
 				{
-					ID:   123,
+					ID:   fake.Uint64(),
 					Name: "name",
 				},
 			},
@@ -65,7 +66,7 @@ func TestWebhooksService_List(T *testing.T) {
 
 	T.Run("with no rows returned", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
 			return requestingUser.ID
@@ -99,7 +100,7 @@ func TestWebhooksService_List(T *testing.T) {
 
 	T.Run("with error fetching webhooks from database", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
 			return requestingUser.ID
@@ -133,7 +134,7 @@ func TestWebhooksService_List(T *testing.T) {
 
 	T.Run("with error encoding response", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.WebhookList{
 			Webhooks: []models.Webhook{},
 		}
@@ -205,9 +206,9 @@ func TestWebhooksService_Create(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
-			ID:   123,
+			ID:   fake.Uint64(),
 			Name: "name",
 		}
 
@@ -252,9 +253,9 @@ func TestWebhooksService_Create(T *testing.T) {
 
 	T.Run("with invalid webhook request", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
-			ID:   123,
+			ID:   fake.Uint64(),
 			Name: "name",
 		}
 
@@ -299,7 +300,7 @@ func TestWebhooksService_Create(T *testing.T) {
 
 	T.Run("without input attached", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
 			return requestingUser.ID
@@ -324,9 +325,9 @@ func TestWebhooksService_Create(T *testing.T) {
 
 	T.Run("with error creating webhook", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
-			ID:   123,
+			ID:   fake.Uint64(),
 			Name: "name",
 		}
 
@@ -367,9 +368,9 @@ func TestWebhooksService_Create(T *testing.T) {
 
 	T.Run("with error encoding response", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
-			ID:   123,
+			ID:   fake.Uint64(),
 			Name: "name",
 		}
 
@@ -418,9 +419,9 @@ func TestWebhooksService_Read(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
-			ID:   123,
+			ID:   fake.Uint64(),
 			Name: "name",
 		}
 
@@ -460,9 +461,9 @@ func TestWebhooksService_Read(T *testing.T) {
 
 	T.Run("with no such webhook in database", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
-			ID:   123,
+			ID:   fake.Uint64(),
 			Name: "name",
 		}
 
@@ -498,9 +499,9 @@ func TestWebhooksService_Read(T *testing.T) {
 
 	T.Run("with error fetching webhook from database", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
-			ID:   123,
+			ID:   fake.Uint64(),
 			Name: "name",
 		}
 
@@ -536,9 +537,9 @@ func TestWebhooksService_Read(T *testing.T) {
 
 	T.Run("with error encoding response", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
-			ID:   123,
+			ID:   fake.Uint64(),
 			Name: "name",
 		}
 
@@ -582,9 +583,9 @@ func TestWebhooksService_Update(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
-			ID:   123,
+			ID:   fake.Uint64(),
 			Name: "name",
 		}
 
@@ -655,9 +656,9 @@ func TestWebhooksService_Update(T *testing.T) {
 
 	T.Run("with no rows fetching webhook", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
-			ID:   123,
+			ID:   fake.Uint64(),
 			Name: "name",
 		}
 
@@ -698,9 +699,9 @@ func TestWebhooksService_Update(T *testing.T) {
 
 	T.Run("with error fetching webhook", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
-			ID:   123,
+			ID:   fake.Uint64(),
 			Name: "name",
 		}
 
@@ -741,9 +742,9 @@ func TestWebhooksService_Update(T *testing.T) {
 
 	T.Run("with error updating webhook", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
-			ID:   123,
+			ID:   fake.Uint64(),
 			Name: "name",
 		}
 
@@ -798,9 +799,9 @@ func TestWebhooksService_Update(T *testing.T) {
 
 	T.Run("with error encoding response", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
-			ID:   123,
+			ID:   fake.Uint64(),
 			Name: "name",
 		}
 
@@ -859,9 +860,9 @@ func TestWebhooksService_Archive(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
-			ID:   123,
+			ID:   fake.Uint64(),
 			Name: "name",
 		}
 
@@ -905,9 +906,9 @@ func TestWebhooksService_Archive(T *testing.T) {
 
 	T.Run("with no webhook in database", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
-			ID:   123,
+			ID:   fake.Uint64(),
 			Name: "name",
 		}
 
@@ -943,9 +944,9 @@ func TestWebhooksService_Archive(T *testing.T) {
 
 	T.Run("with error reading from database", func(t *testing.T) {
 		s := buildTestService()
-		requestingUser := &models.User{ID: 1}
+		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
-			ID:   123,
+			ID:   fake.Uint64(),
 			Name: "name",
 		}
 

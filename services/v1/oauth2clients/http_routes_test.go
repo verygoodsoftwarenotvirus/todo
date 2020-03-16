@@ -14,6 +14,7 @@ import (
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -47,7 +48,7 @@ func Test_fetchUserID(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		req := buildRequest(t)
-		expected := uint64(123)
+		expected := fake.Uint64()
 
 		// for the service.fetchUserID() call
 		req = req.WithContext(
@@ -188,7 +189,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		exampleUser := &models.User{
-			ID:              123,
+			ID:              fake.Uint64(),
 			HashedPassword:  "hashed_pass",
 			Salt:            []byte("blah"),
 			TwoFactorSecret: "SUPER SECRET",
@@ -261,7 +262,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 	T.Run("with error getting user", func(t *testing.T) {
 		exampleUser := &models.User{
-			ID:              123,
+			ID:              fake.Uint64(),
 			HashedPassword:  "hashed_pass",
 			Salt:            []byte("blah"),
 			TwoFactorSecret: "SUPER SECRET",
@@ -299,7 +300,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 	T.Run("with invalid credentials", func(t *testing.T) {
 		exampleUser := &models.User{
-			ID:              123,
+			ID:              fake.Uint64(),
 			HashedPassword:  "hashed_pass",
 			Salt:            []byte("blah"),
 			TwoFactorSecret: "SUPER SECRET",
@@ -354,7 +355,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 	T.Run("with error validating password", func(t *testing.T) {
 		exampleUser := &models.User{
-			ID:              123,
+			ID:              fake.Uint64(),
 			HashedPassword:  "hashed_pass",
 			Salt:            []byte("blah"),
 			TwoFactorSecret: "SUPER SECRET",
@@ -409,7 +410,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 	T.Run("with error creating oauth2 client", func(t *testing.T) {
 		exampleUser := &models.User{
-			ID:              123,
+			ID:              fake.Uint64(),
 			HashedPassword:  "hashed_pass",
 			Salt:            []byte("blah"),
 			TwoFactorSecret: "SUPER SECRET",
@@ -464,7 +465,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 	T.Run("with error encoding response", func(t *testing.T) {
 		exampleUser := &models.User{
-			ID:              123,
+			ID:              fake.Uint64(),
 			HashedPassword:  "hashed_pass",
 			Salt:            []byte("blah"),
 			TwoFactorSecret: "SUPER SECRET",

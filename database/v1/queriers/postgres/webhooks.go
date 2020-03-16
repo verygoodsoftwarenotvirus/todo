@@ -104,6 +104,7 @@ func scanWebhooks(logger logging.Logger, rows *sql.Rows) ([]models.Webhook, erro
 // buildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook
 func (p *Postgres) buildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = p.sqlBuilder.
 		Select(webhooksTableColumns...).
 		From(webhooksTableName).
@@ -133,6 +134,7 @@ func (p *Postgres) GetWebhook(ctx context.Context, webhookID, userID uint64) (*m
 // meeting a given filter's criteria and belonging to a given user.
 func (p *Postgres) buildGetWebhookCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	builder := p.sqlBuilder.
 		Select(fmt.Sprintf(CountQuery, webhooksTableName)).
 		From(webhooksTableName).
@@ -168,6 +170,7 @@ var (
 func (p *Postgres) buildGetAllWebhooksCountQuery() string {
 	getAllWebhooksCountQueryBuilder.Do(func() {
 		var err error
+
 		getAllWebhooksCountQuery, _, err = p.sqlBuilder.
 			Select(fmt.Sprintf(CountQuery, webhooksTableName)).
 			From(webhooksTableName).
@@ -195,6 +198,7 @@ var (
 func (p *Postgres) buildGetAllWebhooksQuery() string {
 	getAllWebhooksQueryBuilder.Do(func() {
 		var err error
+
 		getAllWebhooksQuery, _, err = p.sqlBuilder.
 			Select(webhooksTableColumns...).
 			From(webhooksTableName).
@@ -261,6 +265,7 @@ func (p *Postgres) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]
 // buildGetWebhooksQuery returns a SQL query (and arguments) that would return a
 func (p *Postgres) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	builder := p.sqlBuilder.
 		Select(webhooksTableColumns...).
 		From(webhooksTableName).
@@ -316,6 +321,7 @@ func (p *Postgres) GetWebhooks(ctx context.Context, userID uint64, filter *model
 // buildWebhookCreationQuery returns a SQL query (and arguments) that would create a given webhook
 func (p *Postgres) buildWebhookCreationQuery(x *models.Webhook) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = p.sqlBuilder.
 		Insert(webhooksTableName).
 		Columns(
@@ -370,6 +376,7 @@ func (p *Postgres) CreateWebhook(ctx context.Context, input *models.WebhookCreat
 // buildUpdateWebhookQuery takes a given webhook and returns a SQL query to update
 func (p *Postgres) buildUpdateWebhookQuery(input *models.Webhook) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = p.sqlBuilder.
 		Update(webhooksTableName).
 		Set("name", input.Name).
@@ -400,6 +407,7 @@ func (p *Postgres) UpdateWebhook(ctx context.Context, input *models.Webhook) err
 // buildArchiveWebhookQuery returns a SQL query (and arguments) that will mark a webhook as archived.
 func (p *Postgres) buildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = p.sqlBuilder.
 		Update(webhooksTableName).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).

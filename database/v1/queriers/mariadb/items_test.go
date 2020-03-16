@@ -10,6 +10,7 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,13 +42,56 @@ func buildErroneousMockRowFromItem(x *models.Item) *sqlmock.Rows {
 	return exampleRows
 }
 
+func TestMariaDB_buildItemExistsQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		m, _ := buildTestService(t)
+		exampleItemID := fake.Uint64()
+		exampleUserID := fake.Uint64()
+
+		expectedArgCount := 2
+		expectedQuery := "SELECT EXISTS ( SELECT items.id FROM items WHERE items.belongs_to_user = ? AND items.id = ? )"
+		actualQuery, args := m.buildItemExistsQuery(exampleItemID, exampleUserID)
+
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Len(t, args, expectedArgCount)
+		assert.Equal(t, exampleUserID, args[0].(uint64))
+		assert.Equal(t, exampleItemID, args[1].(uint64))
+	})
+}
+
+func TestMariaDB_ItemExists(T *testing.T) {
+	T.Parallel()
+
+	expectedQuery := "SELECT EXISTS ( SELECT items.id FROM items WHERE items.belongs_to_user = ? AND items.id = ? )"
+
+	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
+		expected := true
+		expectedItemID := fake.Uint64()
+		expectedUserID := fake.Uint64()
+
+		m, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(expectedUserID, expectedItemID).
+			WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(expected))
+
+		actual, err := m.ItemExists(ctx, expectedItemID, expectedUserID)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
 func TestMariaDB_buildGetItemQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
-		exampleItemID := uint64(123)
-		exampleUserID := uint64(321)
+		exampleItemID := fake.Uint64()
+		exampleUserID := fake.Uint64()
 
 		expectedArgCount := 2
 		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.belongs_to_user = ? AND items.id = ?"
@@ -68,9 +112,9 @@ func TestMariaDB_GetItem(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.Item{
-			ID: 123,
+			ID: fake.Uint64(),
 		}
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -87,9 +131,9 @@ func TestMariaDB_GetItem(T *testing.T) {
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.Item{
-			ID: 123,
+			ID: fake.Uint64(),
 		}
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -110,7 +154,7 @@ func TestMariaDB_buildGetItemCountQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
-		exampleUserID := uint64(321)
+		exampleUserID := fake.Uint64()
 
 		expectedArgCount := 1
 		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? LIMIT 20"
@@ -127,7 +171,7 @@ func TestMariaDB_GetItemCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? LIMIT 20"
 		expectedCount := uint64(666)
 
@@ -180,7 +224,7 @@ func TestMariaDB_buildGetItemsQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
-		exampleUserID := uint64(321)
+		exampleUserID := fake.Uint64()
 		filter := models.DefaultQueryFilter()
 
 		expectedArgCount := 1
@@ -200,10 +244,10 @@ func TestMariaDB_GetItems(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(123)
+		expectedUserID := fake.Uint64()
 		expectedCountQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
 		expectedItem := &models.Item{
-			ID: 321,
+			ID: fake.Uint64(),
 		}
 		expectedCount := uint64(666)
 		expected := &models.ItemList{
@@ -234,7 +278,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(123)
+		expectedUserID := fake.Uint64()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -251,7 +295,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 
 	T.Run("with error executing read query", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(123)
+		expectedUserID := fake.Uint64()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -267,9 +311,9 @@ func TestMariaDB_GetItems(T *testing.T) {
 
 	T.Run("with error scanning item", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(123)
+		expectedUserID := fake.Uint64()
 		expected := &models.Item{
-			ID: 321,
+			ID: fake.Uint64(),
 		}
 
 		m, mockDB := buildTestService(t)
@@ -286,9 +330,9 @@ func TestMariaDB_GetItems(T *testing.T) {
 
 	T.Run("with error querying for count", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(123)
+		expectedUserID := fake.Uint64()
 		expected := &models.Item{
-			ID: 321,
+			ID: fake.Uint64(),
 		}
 		expectedCountQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
 
@@ -314,9 +358,9 @@ func TestMariaDB_GetAllItemsForUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(123)
+		expectedUserID := fake.Uint64()
 		expectedItem := &models.Item{
-			ID: 321,
+			ID: fake.Uint64(),
 		}
 
 		m, mockDB := buildTestService(t)
@@ -335,7 +379,7 @@ func TestMariaDB_GetAllItemsForUser(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(123)
+		expectedUserID := fake.Uint64()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -352,7 +396,7 @@ func TestMariaDB_GetAllItemsForUser(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(123)
+		expectedUserID := fake.Uint64()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -368,9 +412,9 @@ func TestMariaDB_GetAllItemsForUser(T *testing.T) {
 
 	T.Run("with unscannable response", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(123)
+		expectedUserID := fake.Uint64()
 		exampleItem := &models.Item{
-			ID: 321,
+			ID: fake.Uint64(),
 		}
 
 		m, mockDB := buildTestService(t)
@@ -392,7 +436,7 @@ func TestMariaDB_buildCreateItemQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
 		expected := &models.Item{
-			ID:            321,
+			ID:            fake.Uint64(),
 			BelongsToUser: 123,
 		}
 		expectedArgCount := 3
@@ -414,9 +458,9 @@ func TestMariaDB_CreateItem(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expected := &models.Item{
-			ID:            123,
+			ID:            fake.Uint64(),
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
@@ -449,9 +493,9 @@ func TestMariaDB_CreateItem(T *testing.T) {
 
 	T.Run("with error writing to database", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expected := &models.Item{
-			ID:            123,
+			ID:            fake.Uint64(),
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
@@ -483,7 +527,7 @@ func TestMariaDB_buildUpdateItemQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
 		expected := &models.Item{
-			ID:            321,
+			ID:            fake.Uint64(),
 			BelongsToUser: 123,
 		}
 		expectedArgCount := 4
@@ -506,9 +550,9 @@ func TestMariaDB_UpdateItem(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expected := &models.Item{
-			ID:            123,
+			ID:            fake.Uint64(),
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
@@ -531,9 +575,9 @@ func TestMariaDB_UpdateItem(T *testing.T) {
 
 	T.Run("with error writing to database", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expected := &models.Item{
-			ID:            123,
+			ID:            fake.Uint64(),
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
@@ -560,7 +604,7 @@ func TestMariaDB_buildArchiveItemQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
 		expected := &models.Item{
-			ID:            321,
+			ID:            fake.Uint64(),
 			BelongsToUser: 123,
 		}
 		expectedArgCount := 2
@@ -581,9 +625,9 @@ func TestMariaDB_ArchiveItem(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expected := &models.Item{
-			ID:            123,
+			ID:            fake.Uint64(),
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
@@ -603,9 +647,9 @@ func TestMariaDB_ArchiveItem(T *testing.T) {
 
 	T.Run("with error writing to database", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		example := &models.Item{
-			ID:            123,
+			ID:            fake.Uint64(),
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}

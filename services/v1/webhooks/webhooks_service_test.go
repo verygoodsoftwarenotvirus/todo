@@ -11,6 +11,7 @@ import (
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
@@ -34,7 +35,7 @@ func TestProvideWebhooksService(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expectation := uint64(123)
+		expectation := fake.Uint64()
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", expectation).Return()
 
@@ -87,7 +88,7 @@ func TestProvideWebhooksService(T *testing.T) {
 
 	T.Run("with error setting count", func(t *testing.T) {
 		ctx := context.Background()
-		expectation := uint64(123)
+		expectation := fake.Uint64()
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", expectation).Return()
 

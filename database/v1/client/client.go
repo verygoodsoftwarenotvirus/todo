@@ -3,10 +3,8 @@ package dbclient
 import (
 	"context"
 	"database/sql"
-	"strconv"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"go.opencensus.io/trace"
@@ -31,11 +29,17 @@ type Client struct {
 
 // Migrate is a simple wrapper around the core querier Migrate call
 func (c *Client) Migrate(ctx context.Context) error {
+	ctx, span := trace.StartSpan(ctx, "Migrate")
+	defer span.End()
+
 	return c.querier.Migrate(ctx)
 }
 
 // IsReady is a simple wrapper around the core querier IsReady call
 func (c *Client) IsReady(ctx context.Context) (ready bool) {
+	ctx, span := trace.StartSpan(ctx, "IsReady")
+	defer span.End()
+
 	return c.querier.IsReady(ctx)
 }
 
@@ -65,23 +69,4 @@ func ProvideDatabaseClient(
 	c.logger.Debug("querier migrated!")
 
 	return c, nil
-}
-
-// attachUserIDToSpan provides a consistent way to attach a user's ID to a span
-func attachUserIDToSpan(span *trace.Span, userID uint64) {
-	if span != nil {
-		span.AddAttributes(
-			trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)),
-		)
-	}
-}
-
-// attachFilterToSpan provides a consistent way to attach a filter's info to a span
-func attachFilterToSpan(span *trace.Span, filter *models.QueryFilter) {
-	if filter != nil && span != nil {
-		span.AddAttributes(
-			trace.StringAttribute("filter_page", strconv.FormatUint(filter.QueryPage(), 10)),
-			trace.StringAttribute("filter_limit", strconv.FormatUint(filter.Limit, 10)),
-		)
-	}
 }

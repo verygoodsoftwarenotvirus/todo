@@ -16,6 +16,7 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -98,7 +99,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
-		exampleUser := &models.User{ID: 123}
+		exampleUser := &models.User{ID: fake.Uint64()}
 		exampleClient := &models.OAuth2Client{
 			ClientID:      "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
 			ClientSecret:  "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
@@ -129,7 +130,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 	T.Run("happy path without allowing cookies", func(t *testing.T) {
 		s := buildTestService(t)
 
-		exampleUser := &models.User{ID: 123}
+		exampleUser := &models.User{ID: fake.Uint64()}
 		exampleClient := &models.OAuth2Client{
 			ClientID:      "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
 			ClientSecret:  "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
@@ -160,7 +161,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 	T.Run("with error fetching client but able to use cookie", func(t *testing.T) {
 		s := buildTestService(t)
 
-		exampleUser := &models.User{ID: 1, Username: "username"}
+		exampleUser := &models.User{ID: fake.Uint64(), Username: "username"}
 		ocv := &mockOAuth2ClientValidator{}
 		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).Return((*models.OAuth2Client)(nil), errors.New("blah"))
 		s.oauth2ClientsService = ocv
@@ -187,7 +188,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 	T.Run("able to use cookies but error fetching user info", func(t *testing.T) {
 		s := buildTestService(t)
 
-		exampleUser := &models.User{ID: 1, Username: "username"}
+		exampleUser := &models.User{ID: fake.Uint64(), Username: "username"}
 		exampleClient := &models.OAuth2Client{
 			ClientID:      "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
 			ClientSecret:  "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
@@ -222,7 +223,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 	T.Run("no cookies allowed, with error fetching user info", func(t *testing.T) {
 		s := buildTestService(t)
 
-		exampleUser := &models.User{ID: 123}
+		exampleUser := &models.User{ID: fake.Uint64()}
 		exampleClient := &models.OAuth2Client{
 			ClientID:      "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
 			ClientSecret:  "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
@@ -265,7 +266,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		require.NotNil(t, req)
 		res := httptest.NewRecorder()
 
-		c, err := s.buildAuthCookie(&models.User{ID: 1, Username: "username"})
+		c, err := s.buildAuthCookie(&models.User{ID: fake.Uint64(), Username: "username"})
 		require.NoError(t, err)
 		req.AddCookie(c)
 
@@ -299,7 +300,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 	T.Run("nightmare path", func(t *testing.T) {
 		s := buildTestService(t)
 
-		exampleUser := &models.User{ID: 123}
+		exampleUser := &models.User{ID: fake.Uint64()}
 		exampleClient := &models.OAuth2Client{
 			ClientID:      "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
 			ClientSecret:  "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",

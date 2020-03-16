@@ -104,6 +104,7 @@ func scanWebhooks(logger logging.Logger, rows *sql.Rows) ([]models.Webhook, erro
 // buildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook
 func (s *Sqlite) buildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = s.sqlBuilder.
 		Select(webhooksTableColumns...).
 		From(webhooksTableName).
@@ -133,6 +134,7 @@ func (s *Sqlite) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mod
 // meeting a given filter's criteria and belonging to a given user.
 func (s *Sqlite) buildGetWebhookCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	builder := s.sqlBuilder.
 		Select(fmt.Sprintf(CountQuery, webhooksTableName)).
 		From(webhooksTableName).
@@ -168,6 +170,7 @@ var (
 func (s *Sqlite) buildGetAllWebhooksCountQuery() string {
 	getAllWebhooksCountQueryBuilder.Do(func() {
 		var err error
+
 		getAllWebhooksCountQuery, _, err = s.sqlBuilder.
 			Select(fmt.Sprintf(CountQuery, webhooksTableName)).
 			From(webhooksTableName).
@@ -195,6 +198,7 @@ var (
 func (s *Sqlite) buildGetAllWebhooksQuery() string {
 	getAllWebhooksQueryBuilder.Do(func() {
 		var err error
+
 		getAllWebhooksQuery, _, err = s.sqlBuilder.
 			Select(webhooksTableColumns...).
 			From(webhooksTableName).
@@ -261,6 +265,7 @@ func (s *Sqlite) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]mo
 // buildGetWebhooksQuery returns a SQL query (and arguments) that would return a
 func (s *Sqlite) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	builder := s.sqlBuilder.
 		Select(webhooksTableColumns...).
 		From(webhooksTableName).
@@ -316,6 +321,7 @@ func (s *Sqlite) GetWebhooks(ctx context.Context, userID uint64, filter *models.
 // buildWebhookCreationQuery returns a SQL query (and arguments) that would create a given webhook
 func (s *Sqlite) buildWebhookCreationQuery(x *models.Webhook) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = s.sqlBuilder.
 		Insert(webhooksTableName).
 		Columns(
@@ -348,6 +354,7 @@ func (s *Sqlite) buildWebhookCreationQuery(x *models.Webhook) (query string, arg
 // buildWebhookCreationTimeQuery returns a SQL query (and arguments) that fetches the DB creation time for a given row
 func (s *Sqlite) buildWebhookCreationTimeQuery(webhookID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = s.sqlBuilder.
 		Select("created_on").
 		From(webhooksTableName).
@@ -391,6 +398,7 @@ func (s *Sqlite) CreateWebhook(ctx context.Context, input *models.WebhookCreatio
 // buildUpdateWebhookQuery takes a given webhook and returns a SQL query to update
 func (s *Sqlite) buildUpdateWebhookQuery(input *models.Webhook) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = s.sqlBuilder.
 		Update(webhooksTableName).
 		Set("name", input.Name).
@@ -422,6 +430,7 @@ func (s *Sqlite) UpdateWebhook(ctx context.Context, input *models.Webhook) error
 // buildArchiveWebhookQuery returns a SQL query (and arguments) that will mark a webhook as archived.
 func (s *Sqlite) buildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = s.sqlBuilder.
 		Update(webhooksTableName).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).

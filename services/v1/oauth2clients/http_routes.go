@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"encoding/base32"
 	"net/http"
-	"strconv"
 
+	tracing "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"go.opencensus.io/trace"
@@ -19,27 +19,6 @@ const (
 	oauth2ClientIDURIParamKey                   = "client_id"
 	clientIDKey               models.ContextKey = "client_id"
 )
-
-// attachUserIDToSpan provides a consistent way of attaching an user ID to a given span
-func attachUserIDToSpan(span *trace.Span, userID uint64) {
-	if span != nil {
-		span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
-	}
-}
-
-// attachOAuth2ClientDatabaseIDToSpan provides a consistent way of attaching an oauth2 client ID to a given span
-func attachOAuth2ClientDatabaseIDToSpan(span *trace.Span, clientID uint64) {
-	if span != nil {
-		span.AddAttributes(trace.StringAttribute("oauth2client_db_id", strconv.FormatUint(clientID, 10)))
-	}
-}
-
-// attachOAuth2ClientIDToSpan provides a consistent way of attaching a client ID to a given span
-func attachOAuth2ClientIDToSpan(span *trace.Span, clientID string) {
-	if span != nil {
-		span.AddAttributes(trace.StringAttribute("client_id", clientID))
-	}
-}
 
 // randString produces a random string
 // https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
@@ -72,7 +51,7 @@ func (s *Service) ListHandler() http.HandlerFunc {
 
 		// determine user
 		userID := s.fetchUserID(req)
-		attachUserIDToSpan(span, userID)
+		tracing.AttachUserIDToSpan(span, userID)
 		logger := s.logger.WithValue("user_id", userID)
 
 		// fetch oauth2 clients
@@ -126,7 +105,7 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 		input.BelongsToUser = user.ID
 
 		// tag span since we have the info
-		attachUserIDToSpan(span, user.ID)
+		tracing.AttachUserIDToSpan(span, user.ID)
 
 		// check credentials
 		valid, err := s.authenticator.ValidateLogin(
@@ -162,7 +141,7 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 		}
 
 		// notify interested parties
-		attachOAuth2ClientDatabaseIDToSpan(span, client.ID)
+		tracing.AttachOAuth2ClientDatabaseIDToSpan(span, client.ID)
 		s.oauth2ClientCounter.Increment(ctx)
 
 		res.WriteHeader(http.StatusCreated)
@@ -187,8 +166,8 @@ func (s *Service) ReadHandler() http.HandlerFunc {
 			"oauth2_client_id": oauth2ClientID,
 			"user_id":          userID,
 		})
-		attachUserIDToSpan(span, userID)
-		attachOAuth2ClientDatabaseIDToSpan(span, oauth2ClientID)
+		tracing.AttachUserIDToSpan(span, userID)
+		tracing.AttachOAuth2ClientDatabaseIDToSpan(span, oauth2ClientID)
 
 		// fetch oauth2 client
 		x, err := s.database.GetOAuth2Client(ctx, oauth2ClientID, userID)
@@ -223,8 +202,8 @@ func (s *Service) ArchiveHandler() http.HandlerFunc {
 			"oauth2_client_id": oauth2ClientID,
 			"user_id":          userID,
 		})
-		attachUserIDToSpan(span, userID)
-		attachOAuth2ClientDatabaseIDToSpan(span, oauth2ClientID)
+		tracing.AttachUserIDToSpan(span, userID)
+		tracing.AttachOAuth2ClientDatabaseIDToSpan(span, oauth2ClientID)
 
 		// mark client as archived
 		err := s.database.ArchiveOAuth2Client(ctx, oauth2ClientID, userID)

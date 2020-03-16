@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 
+	tracing "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
@@ -18,20 +18,6 @@ const (
 	// URIParamKey is a standard string that we'll use to refer to webhook IDs with
 	URIParamKey = "webhookID"
 )
-
-// attachWebhookIDToSpan provides a consistent way to attach a webhook ID to a given span
-func attachWebhookIDToSpan(span *trace.Span, webhookID uint64) {
-	if span != nil {
-		span.AddAttributes(trace.StringAttribute("webhook_id", strconv.FormatUint(webhookID, 10)))
-	}
-}
-
-// attachUserIDToSpan provides a consistent way to attach a user ID to a given span
-func attachUserIDToSpan(span *trace.Span, userID uint64) {
-	if span != nil {
-		span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
-	}
-}
 
 // ListHandler is our list route
 func (s *Service) ListHandler() http.HandlerFunc {
@@ -45,7 +31,7 @@ func (s *Service) ListHandler() http.HandlerFunc {
 		// figure out who this is all for
 		userID := s.userIDFetcher(req)
 		logger := s.logger.WithValue("user_id", userID)
-		attachUserIDToSpan(span, userID)
+		tracing.AttachUserIDToSpan(span, userID)
 
 		// find the webhooks
 		webhooks, err := s.webhookDatabase.GetWebhooks(ctx, userID, qf)
@@ -99,7 +85,7 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 		// figure out who this is all for
 		userID := s.userIDFetcher(req)
 		logger := s.logger.WithValue("user", userID)
-		attachUserIDToSpan(span, userID)
+		tracing.AttachUserIDToSpan(span, userID)
 
 		// try to pluck the parsed input from the request context
 		input, ok := ctx.Value(CreateMiddlewareCtxKey).(*models.WebhookCreationInput)
@@ -126,7 +112,7 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 		}
 
 		// notify the relevant parties
-		attachWebhookIDToSpan(span, wh.ID)
+		tracing.AttachWebhookIDToSpan(span, wh.ID)
 		s.webhookCounter.Increment(ctx)
 		s.eventManager.Report(newsman.Event{
 			EventType: string(models.Create),
@@ -156,8 +142,8 @@ func (s *Service) ReadHandler() http.HandlerFunc {
 		webhookID := s.webhookIDFetcher(req)
 
 		// document it for posterity
-		attachUserIDToSpan(span, userID)
-		attachWebhookIDToSpan(span, webhookID)
+		tracing.AttachUserIDToSpan(span, userID)
+		tracing.AttachWebhookIDToSpan(span, webhookID)
 		logger := s.logger.WithValues(map[string]interface{}{
 			"user":    userID,
 			"webhook": webhookID,
@@ -193,8 +179,8 @@ func (s *Service) UpdateHandler() http.HandlerFunc {
 		webhookID := s.webhookIDFetcher(req)
 
 		// document it for posterity
-		attachUserIDToSpan(span, userID)
-		attachWebhookIDToSpan(span, webhookID)
+		tracing.AttachUserIDToSpan(span, userID)
+		tracing.AttachWebhookIDToSpan(span, webhookID)
 		logger := s.logger.WithValues(map[string]interface{}{
 			"user_id":    userID,
 			"webhook_id": webhookID,
@@ -255,8 +241,8 @@ func (s *Service) ArchiveHandler() http.HandlerFunc {
 		webhookID := s.webhookIDFetcher(req)
 
 		// document it for posterity
-		attachUserIDToSpan(span, userID)
-		attachWebhookIDToSpan(span, webhookID)
+		tracing.AttachUserIDToSpan(span, userID)
+		tracing.AttachWebhookIDToSpan(span, webhookID)
 		logger := s.logger.WithValues(map[string]interface{}{
 			"webhook_id": webhookID,
 			"user_id":    userID,

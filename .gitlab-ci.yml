@@ -38,7 +38,7 @@ build-frontend:
   script:
     - npm run build
 
-integration-tests-sqlite:
+integration-tests-postgres:
   stage: integration-testing
   image: docker:latest
   services:
@@ -49,7 +49,7 @@ integration-tests-sqlite:
     - apk add --update --no-cache py-pip openssl python-dev libffi-dev
       openssl-dev gcc libc-dev make
     - pip install docker-compose
-    - make integration-tests-sqlite
+    - make integration-tests-postgres
 
 integration-tests-mariadb:
   stage: integration-testing
@@ -64,7 +64,7 @@ integration-tests-mariadb:
     - pip install docker-compose
     - make integration-tests-mariadb
 
-integration-tests-postgres:
+integration-tests-sqlite:
   stage: integration-testing
   image: docker:latest
   services:
@@ -75,7 +75,7 @@ integration-tests-postgres:
     - apk add --update --no-cache py-pip openssl python-dev libffi-dev
       openssl-dev gcc libc-dev make
     - pip install docker-compose
-    - make integration-tests-postgres
+    - make integration-tests-sqlite
 
 frontend-selenium-tests:
   stage: integration-testing
@@ -103,8 +103,6 @@ load-tests-postgres:
     - apk add --update --no-cache py-pip openssl python-dev libffi-dev
       openssl-dev gcc libc-dev make
     - pip install docker-compose
-    - ls -Al ./deploy/prometheus/local
-    - pwd
     - make load-tests-postgres
   except:
     - schedules

@@ -13,6 +13,7 @@ import (
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"gopkg.in/oauth2.v3"
@@ -215,7 +216,7 @@ func TestService_UserAuthorizationHandler(T *testing.T) {
 
 	T.Run("without client attached to request", func(t *testing.T) {
 		s := buildTestService(t)
-		exampleUser := &models.User{ID: 1}
+		exampleUser := &models.User{ID: fake.Uint64()}
 		expected := fmt.Sprintf("%d", exampleUser.ID)
 
 		req := buildRequest(t)
@@ -249,7 +250,7 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 
 		exampleGrant := oauth2.AuthorizationCode
 		exampleClient := &models.OAuth2Client{
-			ID:       1,
+			ID:       fake.Uint64(),
 			ClientID: "blah",
 			Scopes:   []string{},
 		}
@@ -283,7 +284,7 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 		expected := false
 		exampleGrant := oauth2.AuthorizationCode
 		exampleClient := &models.OAuth2Client{
-			ID:       1,
+			ID:       fake.Uint64(),
 			ClientID: "blah",
 			Scopes:   []string{},
 		}
@@ -308,7 +309,7 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 
 		exampleGrant := oauth2.Implicit
 		exampleClient := &models.OAuth2Client{
-			ID:       1,
+			ID:       fake.Uint64(),
 			ClientID: "blah",
 			Scopes:   []string{},
 		}
@@ -337,7 +338,7 @@ func TestService_ClientScopeHandler(T *testing.T) {
 
 		exampleScope := "halb"
 		exampleClient := &models.OAuth2Client{
-			ID:       1,
+			ID:       fake.Uint64(),
 			ClientID: "blah",
 			Scopes:   []string{exampleScope},
 		}
@@ -362,7 +363,7 @@ func TestService_ClientScopeHandler(T *testing.T) {
 
 		exampleScope := "halb"
 		exampleClient := &models.OAuth2Client{
-			ID:       1,
+			ID:       fake.Uint64(),
 			ClientID: "blah",
 			Scopes:   []string{exampleScope},
 		}
@@ -387,7 +388,7 @@ func TestService_ClientScopeHandler(T *testing.T) {
 
 		exampleScope := "halb"
 		exampleClient := &models.OAuth2Client{
-			ID:       1,
+			ID:       fake.Uint64(),
 			ClientID: "blah",
 			Scopes:   []string{},
 		}

@@ -11,6 +11,7 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	fake "github.com/brianvoe/gofakeit"
 	postgres "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 )
@@ -52,7 +53,7 @@ func TestPostgres_buildGetUserQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		expectedUserID := uint64(123)
+		expectedUserID := fake.Uint64()
 		expectedArgCount := 1
 		expectedQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, is_admin, created_on, updated_on, archived_on FROM users WHERE id = $1"
 
@@ -71,7 +72,7 @@ func TestPostgres_GetUser(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID:       123,
+			ID:       fake.Uint64(),
 			Username: "username",
 		}
 
@@ -90,7 +91,7 @@ func TestPostgres_GetUser(T *testing.T) {
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID:       123,
+			ID:       fake.Uint64(),
 			Username: "username",
 		}
 
@@ -131,7 +132,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expectedCountQuery := "SELECT COUNT(users.id) FROM users WHERE archived_on IS NULL LIMIT 20"
-		expectedCount := uint64(321)
+		expectedCount := fake.Uint64()
 		expected := &models.UserList{
 			Pagination: models.Pagination{
 				Page:       1,
@@ -140,7 +141,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 			},
 			Users: []models.User{
 				{
-					ID:       123,
+					ID:       fake.Uint64(),
 					Username: "username",
 				},
 			},
@@ -194,7 +195,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 		expected := &models.UserList{
 			Users: []models.User{
 				{
-					ID:       123,
+					ID:       fake.Uint64(),
 					Username: "username",
 				},
 			},
@@ -214,7 +215,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 	T.Run("with error fetching count", func(t *testing.T) {
 		ctx := context.Background()
 		expectedCountQuery := "SELECT COUNT(users.id) FROM users WHERE archived_on IS NULL LIMIT 20"
-		expectedCount := uint64(321)
+		expectedCount := fake.Uint64()
 		expected := &models.UserList{
 			Pagination: models.Pagination{
 				Page:       1,
@@ -223,7 +224,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 			},
 			Users: []models.User{
 				{
-					ID:       123,
+					ID:       fake.Uint64(),
 					Username: "username",
 				},
 			},
@@ -271,7 +272,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID:       123,
+			ID:       fake.Uint64(),
 			Username: "username",
 		}
 
@@ -290,7 +291,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID:       123,
+			ID:       fake.Uint64(),
 			Username: "username",
 		}
 
@@ -310,7 +311,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID:       123,
+			ID:       fake.Uint64(),
 			Username: "username",
 		}
 
@@ -349,7 +350,7 @@ func TestPostgres_GetUserCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expected := uint64(123)
+		expected := fake.Uint64()
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -403,7 +404,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID:        123,
+			ID:        fake.Uint64(),
 			Username:  "username",
 			CreatedOn: uint64(time.Now().Unix()),
 		}
@@ -430,7 +431,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 	T.Run("with postgres row exists error", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID:        123,
+			ID:        fake.Uint64(),
 			Username:  "username",
 			CreatedOn: uint64(time.Now().Unix()),
 		}
@@ -459,7 +460,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID:        123,
+			ID:        fake.Uint64(),
 			Username:  "username",
 			CreatedOn: uint64(time.Now().Unix()),
 		}
@@ -489,7 +490,7 @@ func TestPostgres_buildUpdateUserQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
 		exampleUser := &models.User{
-			ID:              321,
+			ID:              fake.Uint64(),
 			Username:        "username",
 			HashedPassword:  "hashed password",
 			TwoFactorSecret: "two factor secret",
@@ -509,7 +510,7 @@ func TestPostgres_UpdateUser(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID:        123,
+			ID:        fake.Uint64(),
 			Username:  "username",
 			CreatedOn: uint64(time.Now().Unix()),
 		}
@@ -536,7 +537,7 @@ func TestPostgres_buildArchiveUserQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		exampleUserID := uint64(321)
+		exampleUserID := fake.Uint64()
 		expectedArgCount := 1
 		expectedQuery := "UPDATE users SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE id = $1 RETURNING archived_on"
 
@@ -553,7 +554,7 @@ func TestPostgres_ArchiveUser(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID:        123,
+			ID:        fake.Uint64(),
 			Username:  "username",
 			CreatedOn: uint64(time.Now().Unix()),
 		}

@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/gorilla/securecookie"
@@ -20,20 +20,6 @@ const (
 	CookieName         = "todocookie"
 	cookieErrorLogName = "_COOKIE_CONSTRUCTION_ERROR_"
 )
-
-// attachUserIDToSpan provides a consistent way to attach a userID to a given span
-func attachUserIDToSpan(span *trace.Span, userID uint64) {
-	if span != nil {
-		span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
-	}
-}
-
-// attachUsernameToSpan provides a consistent way to attach a username to a given span
-func attachUsernameToSpan(span *trace.Span, username string) {
-	if span != nil {
-		span.AddAttributes(trace.StringAttribute("username", username))
-	}
-}
 
 // DecodeCookieFromRequest takes a request object and fetches the cookie data if it is present
 func (s *Service) DecodeCookieFromRequest(ctx context.Context, req *http.Request) (ca *models.CookieAuth, err error) {
@@ -92,8 +78,8 @@ func (s *Service) FetchUserFromRequest(ctx context.Context, req *http.Request) (
 	if userFetchErr != nil {
 		return nil, fmt.Errorf("fetching user from request: %w", userFetchErr)
 	}
-	attachUserIDToSpan(span, ca.UserID)
-	attachUsernameToSpan(span, ca.Username)
+	tracing.AttachUserIDToSpan(span, ca.UserID)
+	tracing.AttachUsernameToSpan(span, ca.Username)
 
 	return user, nil
 }
@@ -117,8 +103,8 @@ func (s *Service) LoginHandler() http.HandlerFunc {
 			return
 		}
 
-		attachUserIDToSpan(span, loginData.user.ID)
-		attachUsernameToSpan(span, loginData.user.Username)
+		tracing.AttachUserIDToSpan(span, loginData.user.ID)
+		tracing.AttachUsernameToSpan(span, loginData.user.Username)
 
 		logger := s.logger.WithValue("user", loginData.user.ID)
 		loginValid, err := s.validateLogin(ctx, *loginData)
@@ -211,7 +197,7 @@ func (s *Service) fetchLoginDataFromRequest(req *http.Request) (*loginData, *mod
 	}
 
 	username := loginInput.Username
-	attachUsernameToSpan(span, username)
+	tracing.AttachUsernameToSpan(span, username)
 
 	// you could ensure there isn't an unsatisfied password reset token
 	// requested before allowing login here
@@ -224,7 +210,7 @@ func (s *Service) fetchLoginDataFromRequest(req *http.Request) (*loginData, *mod
 		s.logger.Error(err, "error fetching user")
 		return nil, &models.ErrorResponse{Code: http.StatusInternalServerError}
 	}
-	attachUserIDToSpan(span, user.ID)
+	tracing.AttachUserIDToSpan(span, user.ID)
 
 	ld := &loginData{
 		loginInput: loginInput,

@@ -2,20 +2,29 @@ package dbclient
 
 import (
 	"context"
-	"strconv"
 
-	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"go.opencensus.io/trace"
 )
 
 var _ models.ItemDataManager = (*Client)(nil)
 
-// attachItemIDToSpan provides a consistent way to attach an item's ID to a span
-func attachItemIDToSpan(span *trace.Span, itemID uint64) {
-	if span != nil {
-		span.AddAttributes(trace.StringAttribute("item_id", strconv.FormatUint(itemID, 10)))
-	}
+// ItemExists fetches whether or not an item exists from the database
+func (c *Client) ItemExists(ctx context.Context, itemID, userID uint64) (bool, error) {
+	ctx, span := trace.StartSpan(ctx, "ItemExists")
+	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachItemIDToSpan(span, itemID)
+
+	c.logger.WithValues(map[string]interface{}{
+		"item_id": itemID,
+		"user_id": userID,
+	}).Debug("GetItem called")
+
+	return c.querier.ItemExists(ctx, itemID, userID)
 }
 
 // GetItem fetches an item from the database
@@ -23,8 +32,8 @@ func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*models.It
 	ctx, span := trace.StartSpan(ctx, "GetItem")
 	defer span.End()
 
-	attachUserIDToSpan(span, userID)
-	attachItemIDToSpan(span, itemID)
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachItemIDToSpan(span, itemID)
 
 	c.logger.WithValues(map[string]interface{}{
 		"item_id": itemID,
@@ -39,8 +48,8 @@ func (c *Client) GetItemCount(ctx context.Context, userID uint64, filter *models
 	ctx, span := trace.StartSpan(ctx, "GetItemCount")
 	defer span.End()
 
-	attachUserIDToSpan(span, userID)
-	attachFilterToSpan(span, filter)
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachFilterToSpan(span, filter)
 
 	c.logger.WithValue("user_id", userID).Debug("GetItemCount called")
 
@@ -62,8 +71,8 @@ func (c *Client) GetItems(ctx context.Context, userID uint64, filter *models.Que
 	ctx, span := trace.StartSpan(ctx, "GetItems")
 	defer span.End()
 
-	attachUserIDToSpan(span, userID)
-	attachFilterToSpan(span, filter)
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachFilterToSpan(span, filter)
 
 	c.logger.WithValue("user_id", userID).Debug("GetItems called")
 
@@ -77,7 +86,7 @@ func (c *Client) GetAllItemsForUser(ctx context.Context, userID uint64) ([]model
 	ctx, span := trace.StartSpan(ctx, "GetAllItemsForUser")
 	defer span.End()
 
-	attachUserIDToSpan(span, userID)
+	tracing.AttachUserIDToSpan(span, userID)
 	c.logger.WithValue("user_id", userID).Debug("GetAllItemsForUser called")
 
 	itemList, err := c.querier.GetAllItemsForUser(ctx, userID)
@@ -101,7 +110,7 @@ func (c *Client) UpdateItem(ctx context.Context, input *models.Item) error {
 	ctx, span := trace.StartSpan(ctx, "UpdateItem")
 	defer span.End()
 
-	attachItemIDToSpan(span, input.ID)
+	tracing.AttachItemIDToSpan(span, input.ID)
 	c.logger.WithValue("item_id", input.ID).Debug("UpdateItem called")
 
 	return c.querier.UpdateItem(ctx, input)
@@ -112,8 +121,8 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
 	ctx, span := trace.StartSpan(ctx, "ArchiveItem")
 	defer span.End()
 
-	attachUserIDToSpan(span, userID)
-	attachItemIDToSpan(span, itemID)
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachItemIDToSpan(span, itemID)
 
 	c.logger.WithValues(map[string]interface{}{
 		"item_id": itemID,

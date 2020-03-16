@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	tracing "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"go.opencensus.io/trace"
@@ -101,9 +102,9 @@ func (s *Service) OAuth2TokenAuthenticationMiddleware(next http.Handler) http.Ha
 			return
 		}
 
-		attachUserIDToSpan(span, c.BelongsToUser)
-		attachOAuth2ClientDatabaseIDToSpan(span, c.ID)
-		attachOAuth2ClientIDToSpan(span, c.ClientID)
+		tracing.AttachUserIDToSpan(span, c.BelongsToUser)
+		tracing.AttachOAuth2ClientDatabaseIDToSpan(span, c.ID)
+		tracing.AttachOAuth2ClientIDToSpan(span, c.ClientID)
 
 		// attach both the user ID and the client object to the request. it might seem
 		// superfluous, but some things should only need to know to look for user IDs
@@ -130,9 +131,9 @@ func (s *Service) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-			attachOAuth2ClientIDToSpan(span, client.ClientID)
-			attachOAuth2ClientDatabaseIDToSpan(span, client.ID)
-			attachUserIDToSpan(span, client.BelongsToUser)
+			tracing.AttachUserIDToSpan(span, client.BelongsToUser)
+			tracing.AttachOAuth2ClientIDToSpan(span, client.ClientID)
+			tracing.AttachOAuth2ClientDatabaseIDToSpan(span, client.ID)
 
 			ctx = context.WithValue(ctx, models.OAuth2ClientKey, client)
 			ctx = context.WithValue(ctx, models.UserIDKey, client.BelongsToUser)

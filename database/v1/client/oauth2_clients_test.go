@@ -8,6 +8,7 @@ import (
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -17,8 +18,8 @@ func TestClient_GetOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		exampleClientID := uint64(321)
-		exampleUserID := uint64(123)
+		exampleClientID := fake.Uint64()
+		exampleUserID := fake.Uint64()
 		expected := &models.OAuth2Client{}
 
 		c, mockDB := buildTestClient()
@@ -33,8 +34,8 @@ func TestClient_GetOAuth2Client(T *testing.T) {
 
 	T.Run("with error returned from querier", func(t *testing.T) {
 		ctx := context.Background()
-		exampleClientID := uint64(321)
-		exampleUserID := uint64(123)
+		exampleClientID := fake.Uint64()
+		exampleUserID := fake.Uint64()
 		expected := (*models.OAuth2Client)(nil)
 
 		c, mockDB := buildTestClient()
@@ -87,8 +88,8 @@ func TestClient_GetOAuth2ClientCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUserID := uint64(123)
-		expected := uint64(123)
+		exampleUserID := fake.Uint64()
+		expected := fake.Uint64()
 		c, mockDB := buildTestClient()
 		filter := models.DefaultQueryFilter()
 
@@ -103,8 +104,8 @@ func TestClient_GetOAuth2ClientCount(T *testing.T) {
 
 	T.Run("with nil filter", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUserID := uint64(123)
-		expected := uint64(123)
+		exampleUserID := fake.Uint64()
+		expected := fake.Uint64()
 		c, mockDB := buildTestClient()
 		filter := (*models.QueryFilter)(nil)
 
@@ -119,7 +120,7 @@ func TestClient_GetOAuth2ClientCount(T *testing.T) {
 
 	T.Run("with error returned from querier", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUserID := uint64(123)
+		exampleUserID := fake.Uint64()
 		expected := uint64(0)
 		c, mockDB := buildTestClient()
 		filter := models.DefaultQueryFilter()
@@ -140,7 +141,7 @@ func TestClient_GetAllOAuth2ClientCount(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		c, mockDB := buildTestClient()
-		expected := uint64(123)
+		expected := fake.Uint64()
 		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2ClientCount", mock.Anything).Return(expected, nil)
 
 		actual, err := c.GetAllOAuth2ClientCount(ctx)
@@ -174,7 +175,7 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		c, mockDB := buildTestClient()
-		exampleUserID := uint64(123)
+		exampleUserID := fake.Uint64()
 		expected := &models.OAuth2ClientList{}
 		filter := models.DefaultQueryFilter()
 
@@ -190,7 +191,7 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 	T.Run("with nil filter", func(t *testing.T) {
 		ctx := context.Background()
 		c, mockDB := buildTestClient()
-		exampleUserID := uint64(123)
+		exampleUserID := fake.Uint64()
 		expected := &models.OAuth2ClientList{}
 		filter := (*models.QueryFilter)(nil)
 
@@ -206,7 +207,7 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 	T.Run("with error returned from querier", func(t *testing.T) {
 		ctx := context.Background()
 		c, mockDB := buildTestClient()
-		exampleUserID := uint64(123)
+		exampleUserID := fake.Uint64()
 		expected := (*models.OAuth2ClientList)(nil)
 		filter := models.DefaultQueryFilter()
 
@@ -275,8 +276,8 @@ func TestClient_ArchiveOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		exampleClientID := uint64(321)
-		exampleUserID := uint64(123)
+		exampleClientID := fake.Uint64()
+		exampleUserID := fake.Uint64()
 		var expected error
 		c, mockDB := buildTestClient()
 		mockDB.OAuth2ClientDataManager.On("ArchiveOAuth2Client", mock.Anything, exampleClientID, exampleUserID).Return(expected)
@@ -290,8 +291,8 @@ func TestClient_ArchiveOAuth2Client(T *testing.T) {
 
 	T.Run("with error returned from querier", func(t *testing.T) {
 		ctx := context.Background()
-		exampleClientID := uint64(321)
-		exampleUserID := uint64(123)
+		exampleClientID := fake.Uint64()
+		exampleUserID := fake.Uint64()
 		expected := fmt.Errorf("blah")
 		c, mockDB := buildTestClient()
 		mockDB.OAuth2ClientDataManager.On("ArchiveOAuth2Client", mock.Anything, exampleClientID, exampleUserID).Return(expected)

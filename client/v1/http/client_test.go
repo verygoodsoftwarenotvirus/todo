@@ -346,10 +346,11 @@ func TestV1Client_buildDataRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ts := httptest.NewTLSServer(nil)
+		ctx := context.Background()
 		c := buildTestClient(t, ts)
 
 		expectedMethod := http.MethodPost
-		req, err := c.buildDataRequest(expectedMethod, ts.URL, &testingType{Name: "name"})
+		req, err := c.buildDataRequest(ctx, expectedMethod, ts.URL, &testingType{Name: "name"})
 
 		require.NotNil(t, req)
 		assert.NoError(t, err)

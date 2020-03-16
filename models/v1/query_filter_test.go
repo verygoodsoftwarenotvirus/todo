@@ -52,7 +52,7 @@ func TestQueryFilter_SetPage(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		qf := &QueryFilter{}
-		expected := uint64(123)
+		expected := uint64(100)
 		qf.SetPage(expected)
 		assert.Equal(t, expected, qf.Page)
 	})

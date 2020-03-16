@@ -141,6 +141,7 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 			sr := fmt.Sprintf(numericIDPattern, items.URIParamKey)
 			itemsRouter.With(s.itemsService.CreationInputMiddleware).Post("/", s.itemsService.CreateHandler())
 			itemsRouter.Get(sr, s.itemsService.ReadHandler())
+			itemsRouter.Head(sr, s.itemsService.ExistenceHandler())
 			itemsRouter.With(s.itemsService.UpdateInputMiddleware).Put(sr, s.itemsService.UpdateHandler())
 			itemsRouter.Delete(sr, s.itemsService.ArchiveHandler())
 			itemsRouter.Get("/", s.itemsService.ListHandler())

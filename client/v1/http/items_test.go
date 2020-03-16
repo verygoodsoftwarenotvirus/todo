@@ -12,9 +12,81 @@ import (
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestV1Client_BuildItemExistsRequest(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
+		expectedMethod := http.MethodHead
+		ts := httptest.NewTLSServer(nil)
+
+		c := buildTestClient(t, ts)
+		expectedID := uint64(1)
+		actual, err := c.BuildItemExistsRequest(ctx, expectedID)
+
+		require.NotNil(t, actual)
+		assert.NoError(t, err, "no error should be returned")
+		assert.True(t, strings.HasSuffix(actual.URL.String(), fmt.Sprintf("%d", expectedID)))
+		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
+	})
+}
+
+func TestV1Client_ItemExists(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
+		exampleItemID := fake.Uint64()
+		expected := true
+
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assert.True(t, strings.HasSuffix(req.URL.String(), strconv.Itoa(int(exampleItemID))))
+					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/items/%d", exampleItemID), "expected and actual path don't match")
+					assert.Equal(t, req.Method, http.MethodHead)
+
+					res.WriteHeader(http.StatusOK)
+				},
+			),
+		)
+
+		c := buildTestClient(t, ts)
+		actual, err := c.ItemExists(ctx, exampleItemID)
+
+		assert.NoError(t, err, "no error should be returned")
+		assert.Equal(t, expected, actual)
+	})
+
+	T.Run("nonexistent", func(t *testing.T) {
+		ctx := context.Background()
+		exampleItemID := fake.Uint64()
+		expected := false
+
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assert.True(t, strings.HasSuffix(req.URL.String(), strconv.Itoa(int(exampleItemID))))
+					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/items/%d", exampleItemID), "expected and actual path don't match")
+					assert.Equal(t, req.Method, http.MethodHead)
+
+					res.WriteHeader(http.StatusNotFound)
+				},
+			),
+		)
+
+		c := buildTestClient(t, ts)
+		actual, err := c.ItemExists(ctx, exampleItemID)
+
+		assert.NoError(t, err, "no error should be returned")
+		assert.Equal(t, expected, actual)
+	})
+}
 
 func TestV1Client_BuildGetItemRequest(T *testing.T) {
 	T.Parallel()
@@ -41,7 +113,7 @@ func TestV1Client_GetItem(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.Item{
-			ID: 1,
+			ID: fake.Uint64(),
 		}
 
 		ts := httptest.NewTLSServer(
@@ -89,7 +161,7 @@ func TestV1Client_GetItems(T *testing.T) {
 		expected := &models.ItemList{
 			Items: []models.Item{
 				{
-					ID: 1,
+					ID: fake.Uint64(),
 				},
 			},
 		}
@@ -140,7 +212,7 @@ func TestV1Client_CreateItem(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.Item{
-			ID:      1,
+			ID:      fake.Uint64(),
 			Name:    "example",
 			Details: "blah",
 		}
@@ -180,7 +252,7 @@ func TestV1Client_BuildUpdateItemRequest(T *testing.T) {
 		ctx := context.Background()
 		expectedMethod := http.MethodPut
 		exampleInput := &models.Item{
-			ID:      1,
+			ID:      fake.Uint64(),
 			Name:    "changed name",
 			Details: "changed details",
 		}
@@ -201,7 +273,7 @@ func TestV1Client_UpdateItem(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.Item{
-			ID: 1,
+			ID: fake.Uint64(),
 		}
 
 		ts := httptest.NewTLSServer(

@@ -13,6 +13,7 @@ import (
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -43,7 +44,7 @@ func TestV1Client_GetOAuth2Client(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.OAuth2Client{
-			ID:           1,
+			ID:           fake.Uint64(),
 			ClientID:     "example",
 			ClientSecret: "blah",
 		}
@@ -93,7 +94,7 @@ func TestV1Client_GetOAuth2Clients(T *testing.T) {
 		expected := &models.OAuth2ClientList{
 			Clients: []models.OAuth2Client{
 				{
-					ID:           1,
+					ID:           fake.Uint64(),
 					ClientID:     "example",
 					ClientSecret: "blah",
 				},

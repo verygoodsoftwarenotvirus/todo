@@ -14,6 +14,7 @@ import (
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -25,7 +26,7 @@ func buildTestService(t *testing.T) *Service {
 	t.Helper()
 
 	ctx := context.Background()
-	expectedUserCount := uint64(123)
+	expectedUserCount := fake.Uint64()
 	mockDB := database.BuildMockDatabase()
 	mockDB.UserDataManager.On("GetUserCount", mock.Anything, (*models.QueryFilter)(nil)).Return(expectedUserCount, nil)
 

@@ -121,6 +121,21 @@ func ProvideServer(
 	return srv, nil
 }
 
+/*
+func (s *Server) logRoutes() {
+	if err := chi.Walk(s.router, func(method string, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
+		s.logger.WithValues(map[string]interface{}{
+			"method": method,
+			"route":  route,
+		}).Debug("route found")
+
+		return nil
+	}); err != nil {
+		s.logger.Error(err, "logging routes")
+	}
+}
+*/
+
 // Serve serves HTTP traffic
 func (s *Server) Serve() {
 	s.httpServer.Addr = fmt.Sprintf(":%d", s.config.Server.HTTPPort)

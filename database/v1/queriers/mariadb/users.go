@@ -77,6 +77,7 @@ func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, error) {
 // buildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID
 func (m *MariaDB) buildGetUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = m.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
@@ -104,6 +105,7 @@ func (m *MariaDB) GetUser(ctx context.Context, userID uint64) (*models.User, err
 // buildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username
 func (m *MariaDB) buildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = m.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
@@ -135,6 +137,7 @@ func (m *MariaDB) GetUserByUsername(ctx context.Context, username string) (*mode
 // to a given filter's criteria.
 func (m *MariaDB) buildGetUserCountQuery(filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
+
 	builder := m.sqlBuilder.
 		Select(fmt.Sprintf(CountQuery, usersTableName)).
 		From(usersTableName).
@@ -161,6 +164,7 @@ func (m *MariaDB) GetUserCount(ctx context.Context, filter *models.QueryFilter) 
 // to a given filter's criteria.
 func (m *MariaDB) buildGetUsersQuery(filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
+
 	builder := m.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
@@ -209,6 +213,7 @@ func (m *MariaDB) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mo
 // buildCreateUserQuery returns a SQL query (and arguments) that would create a given User
 func (m *MariaDB) buildCreateUserQuery(input *models.UserInput) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = m.sqlBuilder.
 		Insert(usersTableName).
 		Columns(
@@ -240,6 +245,7 @@ func (m *MariaDB) buildCreateUserQuery(input *models.UserInput) (query string, a
 // buildUserCreationTimeQuery returns a SQL query (and arguments) that would create a given User
 func (m *MariaDB) buildUserCreationTimeQuery(userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = m.sqlBuilder.Select("created_on").
 		From(usersTableName).
 		Where(squirrel.Eq{"id": userID}).
@@ -278,6 +284,7 @@ func (m *MariaDB) CreateUser(ctx context.Context, input *models.UserInput) (*mod
 // buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row
 func (m *MariaDB) buildUpdateUserQuery(input *models.User) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = m.sqlBuilder.
 		Update(usersTableName).
 		Set("username", input.Username).
@@ -303,6 +310,7 @@ func (m *MariaDB) UpdateUser(ctx context.Context, input *models.User) error {
 
 func (m *MariaDB) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = m.sqlBuilder.
 		Update(usersTableName).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).

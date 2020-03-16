@@ -104,6 +104,7 @@ func scanWebhooks(logger logging.Logger, rows *sql.Rows) ([]models.Webhook, erro
 // buildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook
 func (m *MariaDB) buildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = m.sqlBuilder.
 		Select(webhooksTableColumns...).
 		From(webhooksTableName).
@@ -133,6 +134,7 @@ func (m *MariaDB) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mo
 // meeting a given filter's criteria and belonging to a given user.
 func (m *MariaDB) buildGetWebhookCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	builder := m.sqlBuilder.
 		Select(fmt.Sprintf(CountQuery, webhooksTableName)).
 		From(webhooksTableName).
@@ -168,6 +170,7 @@ var (
 func (m *MariaDB) buildGetAllWebhooksCountQuery() string {
 	getAllWebhooksCountQueryBuilder.Do(func() {
 		var err error
+
 		getAllWebhooksCountQuery, _, err = m.sqlBuilder.
 			Select(fmt.Sprintf(CountQuery, webhooksTableName)).
 			From(webhooksTableName).
@@ -195,6 +198,7 @@ var (
 func (m *MariaDB) buildGetAllWebhooksQuery() string {
 	getAllWebhooksQueryBuilder.Do(func() {
 		var err error
+
 		getAllWebhooksQuery, _, err = m.sqlBuilder.
 			Select(webhooksTableColumns...).
 			From(webhooksTableName).
@@ -261,6 +265,7 @@ func (m *MariaDB) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]m
 // buildGetWebhooksQuery returns a SQL query (and arguments) that would return a
 func (m *MariaDB) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	builder := m.sqlBuilder.
 		Select(webhooksTableColumns...).
 		From(webhooksTableName).
@@ -316,6 +321,7 @@ func (m *MariaDB) GetWebhooks(ctx context.Context, userID uint64, filter *models
 // buildWebhookCreationQuery returns a SQL query (and arguments) that would create a given webhook
 func (m *MariaDB) buildWebhookCreationQuery(x *models.Webhook) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = m.sqlBuilder.
 		Insert(webhooksTableName).
 		Columns(
@@ -350,6 +356,7 @@ func (m *MariaDB) buildWebhookCreationQuery(x *models.Webhook) (query string, ar
 // buildWebhookCreationTimeQuery returns a SQL query (and arguments) that fetches the DB creation time for a given row
 func (m *MariaDB) buildWebhookCreationTimeQuery(webhookID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = m.sqlBuilder.
 		Select("created_on").
 		From(webhooksTableName).
@@ -393,6 +400,7 @@ func (m *MariaDB) CreateWebhook(ctx context.Context, input *models.WebhookCreati
 // buildUpdateWebhookQuery takes a given webhook and returns a SQL query to update
 func (m *MariaDB) buildUpdateWebhookQuery(input *models.Webhook) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = m.sqlBuilder.
 		Update(webhooksTableName).
 		Set("name", input.Name).
@@ -424,6 +432,7 @@ func (m *MariaDB) UpdateWebhook(ctx context.Context, input *models.Webhook) erro
 // buildArchiveWebhookQuery returns a SQL query (and arguments) that will mark a webhook as archived.
 func (m *MariaDB) buildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = m.sqlBuilder.
 		Update(webhooksTableName).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).

@@ -10,6 +10,7 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -50,7 +51,7 @@ func TestSqlite_buildGetUserQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
-		expectedUserID := uint64(123)
+		expectedUserID := fake.Uint64()
 		expectedArgCount := 1
 		expectedQuery := "SELECT id, username, hashed_password, password_last_changed_on, two_factor_secret, is_admin, created_on, updated_on, archived_on FROM users WHERE id = ?"
 
@@ -69,7 +70,7 @@ func TestSqlite_GetUser(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID:       123,
+			ID:       fake.Uint64(),
 			Username: "username",
 		}
 
@@ -88,7 +89,7 @@ func TestSqlite_GetUser(T *testing.T) {
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID:       123,
+			ID:       fake.Uint64(),
 			Username: "username",
 		}
 
@@ -129,7 +130,7 @@ func TestSqlite_GetUsers(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expectedCountQuery := "SELECT COUNT(users.id) FROM users WHERE archived_on IS NULL LIMIT 20"
-		expectedCount := uint64(321)
+		expectedCount := fake.Uint64()
 		expected := &models.UserList{
 			Pagination: models.Pagination{
 				Page:       1,
@@ -138,7 +139,7 @@ func TestSqlite_GetUsers(T *testing.T) {
 			},
 			Users: []models.User{
 				{
-					ID:       123,
+					ID:       fake.Uint64(),
 					Username: "username",
 				},
 			},
@@ -192,7 +193,7 @@ func TestSqlite_GetUsers(T *testing.T) {
 		expected := &models.UserList{
 			Users: []models.User{
 				{
-					ID:       123,
+					ID:       fake.Uint64(),
 					Username: "username",
 				},
 			},
@@ -212,7 +213,7 @@ func TestSqlite_GetUsers(T *testing.T) {
 	T.Run("with error fetching count", func(t *testing.T) {
 		ctx := context.Background()
 		expectedCountQuery := "SELECT COUNT(users.id) FROM users WHERE archived_on IS NULL LIMIT 20"
-		expectedCount := uint64(321)
+		expectedCount := fake.Uint64()
 		expected := &models.UserList{
 			Pagination: models.Pagination{
 				Page:       1,
@@ -221,7 +222,7 @@ func TestSqlite_GetUsers(T *testing.T) {
 			},
 			Users: []models.User{
 				{
-					ID:       123,
+					ID:       fake.Uint64(),
 					Username: "username",
 				},
 			},
@@ -269,7 +270,7 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID:       123,
+			ID:       fake.Uint64(),
 			Username: "username",
 		}
 
@@ -288,7 +289,7 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID:       123,
+			ID:       fake.Uint64(),
 			Username: "username",
 		}
 
@@ -308,7 +309,7 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID:       123,
+			ID:       fake.Uint64(),
 			Username: "username",
 		}
 
@@ -347,7 +348,7 @@ func TestSqlite_GetUserCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expected := uint64(123)
+		expected := fake.Uint64()
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -401,7 +402,7 @@ func TestSqlite_CreateUser(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID:        123,
+			ID:        fake.Uint64(),
 			Username:  "username",
 			CreatedOn: uint64(time.Now().Unix()),
 		}
@@ -432,7 +433,7 @@ func TestSqlite_CreateUser(T *testing.T) {
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID:        123,
+			ID:        fake.Uint64(),
 			Username:  "username",
 			CreatedOn: uint64(time.Now().Unix()),
 		}
@@ -462,7 +463,7 @@ func TestSqlite_buildUpdateUserQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
 		exampleUser := &models.User{
-			ID:              321,
+			ID:              fake.Uint64(),
 			Username:        "username",
 			HashedPassword:  "hashed password",
 			TwoFactorSecret: "two factor secret",
@@ -482,7 +483,7 @@ func TestSqlite_UpdateUser(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID:        123,
+			ID:        fake.Uint64(),
 			Username:  "username",
 			CreatedOn: uint64(time.Now().Unix()),
 		}
@@ -509,7 +510,7 @@ func TestSqlite_buildArchiveUserQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
-		exampleUserID := uint64(321)
+		exampleUserID := fake.Uint64()
 		expectedArgCount := 1
 		expectedQuery := "UPDATE users SET updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE id = ?"
 
@@ -526,7 +527,7 @@ func TestSqlite_ArchiveUser(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID:        123,
+			ID:        fake.Uint64(),
 			Username:  "username",
 			CreatedOn: uint64(time.Now().Unix()),
 		}

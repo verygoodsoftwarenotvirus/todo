@@ -72,9 +72,34 @@ func scanItems(logger logging.Logger, rows *sql.Rows) ([]models.Item, error) {
 	return list, nil
 }
 
+// buildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists.
+func (s *Sqlite) buildItemExistsQuery(itemID, userID uint64) (query string, args []interface{}) {
+	var err error
+
+	query, args, err = s.sqlBuilder.
+		Select(fmt.Sprintf("%s.id", itemsTableName)).Prefix("SELECT EXISTS (").From(itemsTableName).Suffix(")").
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.id", itemsTableName):                            itemID,
+			fmt.Sprintf("%s.%s", itemsTableName, itemsTableOwnershipColumn): userID,
+		}).ToSql()
+
+	s.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// ItemExists queries the database to see if a given item belonging to a given user exists
+func (s *Sqlite) ItemExists(ctx context.Context, itemID, userID uint64) (bool, error) {
+	var exists bool
+	query, args := s.buildItemExistsQuery(itemID, userID)
+	err := s.db.QueryRowContext(ctx, query, args...).Scan(&exists)
+	return exists, err
+}
+
 // buildGetItemQuery constructs a SQL query for fetching an item with a given ID belong to a user with a given ID.
 func (s *Sqlite) buildGetItemQuery(itemID, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = s.sqlBuilder.
 		Select(itemsTableColumns...).
 		From(itemsTableName).
@@ -99,6 +124,7 @@ func (s *Sqlite) GetItem(ctx context.Context, itemID, userID uint64) (*models.It
 // fetching the number of items belonging to a given user that meet a given query
 func (s *Sqlite) buildGetItemCountQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
+
 	builder := s.sqlBuilder.
 		Select(fmt.Sprintf(CountQuery, itemsTableName)).
 		From(itemsTableName).
@@ -134,6 +160,7 @@ var (
 func (s *Sqlite) buildGetAllItemsCountQuery() string {
 	allItemsCountQueryBuilder.Do(func() {
 		var err error
+
 		allItemsCountQuery, _, err = s.sqlBuilder.
 			Select(fmt.Sprintf(CountQuery, itemsTableName)).
 			From(itemsTableName).
@@ -155,6 +182,7 @@ func (s *Sqlite) GetAllItemsCount(ctx context.Context) (count uint64, err error)
 // and returns both the query and the relevant args to pass to the query executor.
 func (s *Sqlite) buildGetItemsQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	builder := s.sqlBuilder.
 		Select(itemsTableColumns...).
 		From(itemsTableName).
@@ -224,6 +252,7 @@ func (s *Sqlite) GetAllItemsForUser(ctx context.Context, userID uint64) ([]model
 // buildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments.
 func (s *Sqlite) buildCreateItemQuery(input *models.Item) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = s.sqlBuilder.
 		Insert(itemsTableName).
 		Columns(
@@ -289,6 +318,7 @@ func (s *Sqlite) CreateItem(ctx context.Context, input *models.ItemCreationInput
 // buildUpdateItemQuery takes an item and returns an update SQL query, with the relevant query parameters
 func (s *Sqlite) buildUpdateItemQuery(input *models.Item) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = s.sqlBuilder.
 		Update(itemsTableName).
 		Set("name", input.Name).
@@ -315,6 +345,7 @@ func (s *Sqlite) UpdateItem(ctx context.Context, input *models.Item) error {
 // buildArchiveItemQuery returns a SQL query which marks a given item belonging to a given user as archived.
 func (s *Sqlite) buildArchiveItemQuery(itemID, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = s.sqlBuilder.
 		Update(itemsTableName).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).

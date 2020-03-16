@@ -6,6 +6,7 @@ import (
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -15,8 +16,8 @@ func TestClient_GetWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		exampleID := uint64(123)
-		exampleUserID := uint64(321)
+		exampleID := fake.Uint64()
+		exampleUserID := fake.Uint64()
 		expected := &models.Webhook{}
 
 		c, mockDB := buildTestClient()
@@ -35,8 +36,8 @@ func TestClient_GetWebhookCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUserID := uint64(321)
-		expected := uint64(123)
+		exampleUserID := fake.Uint64()
+		expected := fake.Uint64()
 		filter := models.DefaultQueryFilter()
 
 		c, mockDB := buildTestClient()
@@ -51,8 +52,8 @@ func TestClient_GetWebhookCount(T *testing.T) {
 
 	T.Run("with nil filter", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUserID := uint64(321)
-		expected := uint64(123)
+		exampleUserID := fake.Uint64()
+		expected := fake.Uint64()
 		filter := (*models.QueryFilter)(nil)
 
 		c, mockDB := buildTestClient()
@@ -71,7 +72,7 @@ func TestClient_GetAllWebhooksCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expected := uint64(123)
+		expected := fake.Uint64()
 
 		c, mockDB := buildTestClient()
 		mockDB.WebhookDataManager.On("GetAllWebhooksCount", mock.Anything).Return(expected, nil)
@@ -107,7 +108,7 @@ func TestClient_GetWebhooks(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUserID := uint64(321)
+		exampleUserID := fake.Uint64()
 		expected := &models.WebhookList{}
 		filter := models.DefaultQueryFilter()
 
@@ -123,7 +124,7 @@ func TestClient_GetWebhooks(T *testing.T) {
 
 	T.Run("with nil filter", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUserID := uint64(321)
+		exampleUserID := fake.Uint64()
 		expected := &models.WebhookList{}
 		filter := (*models.QueryFilter)(nil)
 
@@ -181,8 +182,8 @@ func TestClient_ArchiveWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		exampleID := uint64(123)
-		exampleUserID := uint64(321)
+		exampleID := fake.Uint64()
+		exampleUserID := fake.Uint64()
 		var expected error
 
 		c, mockDB := buildTestClient()

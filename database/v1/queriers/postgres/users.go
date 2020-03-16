@@ -79,6 +79,7 @@ func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, error) {
 // buildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID
 func (p *Postgres) buildGetUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = p.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
@@ -106,6 +107,7 @@ func (p *Postgres) GetUser(ctx context.Context, userID uint64) (*models.User, er
 // buildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username
 func (p *Postgres) buildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = p.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
@@ -137,6 +139,7 @@ func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*mod
 // to a given filter's criteria.
 func (p *Postgres) buildGetUserCountQuery(filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
+
 	builder := p.sqlBuilder.
 		Select(fmt.Sprintf(CountQuery, usersTableName)).
 		From(usersTableName).
@@ -163,6 +166,7 @@ func (p *Postgres) GetUserCount(ctx context.Context, filter *models.QueryFilter)
 // to a given filter's criteria.
 func (p *Postgres) buildGetUsersQuery(filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
+
 	builder := p.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
@@ -211,6 +215,7 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 // buildCreateUserQuery returns a SQL query (and arguments) that would create a given User
 func (p *Postgres) buildCreateUserQuery(input *models.UserInput) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = p.sqlBuilder.
 		Insert(usersTableName).
 		Columns(
@@ -264,6 +269,7 @@ func (p *Postgres) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 // buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row
 func (p *Postgres) buildUpdateUserQuery(input *models.User) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = p.sqlBuilder.
 		Update(usersTableName).
 		Set("username", input.Username).
@@ -289,6 +295,7 @@ func (p *Postgres) UpdateUser(ctx context.Context, input *models.User) error {
 
 func (p *Postgres) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = p.sqlBuilder.
 		Update(usersTableName).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).

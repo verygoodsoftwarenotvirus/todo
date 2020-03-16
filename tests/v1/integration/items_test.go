@@ -100,8 +100,47 @@ func TestItems(test *testing.T) {
 		})
 	})
 
+	test.Run("ExistenceChecking", func(T *testing.T) {
+		T.Run("it should return an error when trying to read something that does not exist", func(t *testing.T) {
+			tctx := context.Background()
+			ctx, span := trace.StartSpan(tctx, t.Name())
+			defer span.End()
+
+			// Fetch item
+			actual, err := todoClient.ItemExists(ctx, nonexistentID)
+			assert.NoError(t, err)
+			assert.False(t, actual)
+		})
+
+		T.Run("it should return 200 when the relevant item exists", func(t *testing.T) {
+			tctx := context.Background()
+			ctx, span := trace.StartSpan(tctx, t.Name())
+			defer span.End()
+
+			// Create item
+			expected := &models.Item{
+				Name:    fake.Word(),
+				Details: fake.Word(),
+			}
+			premade, err := todoClient.CreateItem(ctx, &models.ItemCreationInput{
+				Name:    expected.Name,
+				Details: expected.Details,
+			})
+			checkValueAndError(t, premade, err)
+
+			// Fetch item
+			actual, err := todoClient.ItemExists(ctx, premade.ID)
+			assert.NoError(t, err)
+			assert.True(t, actual)
+
+			// Clean up
+			err = todoClient.ArchiveItem(ctx, premade.ID)
+			assert.NoError(t, err)
+		})
+	})
+
 	test.Run("Reading", func(T *testing.T) {
-		T.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
+		T.Run("it should return an error when trying to read something that does not exist", func(t *testing.T) {
 			tctx := context.Background()
 			ctx, span := trace.StartSpan(tctx, t.Name())
 			defer span.End()
@@ -141,7 +180,7 @@ func TestItems(test *testing.T) {
 	})
 
 	test.Run("Updating", func(T *testing.T) {
-		T.Run("it should return an error when trying to update something that doesn't exist", func(t *testing.T) {
+		T.Run("it should return an error when trying to update something that does not exist", func(t *testing.T) {
 			tctx := context.Background()
 			ctx, span := trace.StartSpan(tctx, t.Name())
 			defer span.End()

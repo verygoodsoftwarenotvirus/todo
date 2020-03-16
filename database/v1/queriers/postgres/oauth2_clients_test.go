@@ -11,6 +11,7 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -72,9 +73,9 @@ func TestPostgres_GetOAuth2ClientByClientID(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		exampleClientID := "EXAMPLE"
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expected := &models.OAuth2Client{
-			ID:            123,
+			ID:            fake.Uint64(),
 			Name:          "name",
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
@@ -112,9 +113,9 @@ func TestPostgres_GetOAuth2ClientByClientID(T *testing.T) {
 	T.Run("with erroneous row", func(t *testing.T) {
 		ctx := context.Background()
 		exampleClientID := "EXAMPLE"
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expected := &models.OAuth2Client{
-			ID:            123,
+			ID:            fake.Uint64(),
 			Name:          "name",
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
@@ -151,10 +152,10 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 	expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to_user FROM oauth2_clients WHERE archived_on IS NULL"
 
 	T.Run("happy path", func(t *testing.T) {
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expected := []*models.OAuth2Client{
 			{
-				ID:            123,
+				ID:            fake.Uint64(),
 				Name:          "name",
 				BelongsToUser: expectedUserID,
 				CreatedOn:     uint64(time.Now().Unix()),
@@ -200,10 +201,10 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 	})
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expected := []*models.OAuth2Client{
 			{
-				ID:            123,
+				ID:            fake.Uint64(),
 				Name:          "name",
 				BelongsToUser: expectedUserID,
 				CreatedOn:     uint64(time.Now().Unix()),
@@ -229,11 +230,11 @@ func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
-		exampleUser := &models.User{ID: 123}
+		expectedUserID := fake.Uint64()
+		exampleUser := &models.User{ID: fake.Uint64()}
 		expected := []*models.OAuth2Client{
 			{
-				ID:            123,
+				ID:            fake.Uint64(),
 				Name:          "name",
 				BelongsToUser: expectedUserID,
 				CreatedOn:     uint64(time.Now().Unix()),
@@ -256,7 +257,7 @@ func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUser := &models.User{ID: 123}
+		exampleUser := &models.User{ID: fake.Uint64()}
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -271,7 +272,7 @@ func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUser := &models.User{ID: 123}
+		exampleUser := &models.User{ID: fake.Uint64()}
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -286,10 +287,10 @@ func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 
 	T.Run("with unscannable response", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
-		exampleUser := &models.User{ID: 123}
+		expectedUserID := fake.Uint64()
+		exampleUser := &models.User{ID: fake.Uint64()}
 		expected := &models.OAuth2Client{
-			ID:            123,
+			ID:            fake.Uint64(),
 			Name:          "name",
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
@@ -312,8 +313,8 @@ func TestPostgres_buildGetOAuth2ClientQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		expectedClientID := uint64(123)
-		expectedUserID := uint64(321)
+		expectedClientID := fake.Uint64()
+		expectedUserID := fake.Uint64()
 		expectedArgCount := 2
 		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to_user FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to_user = $1 AND id = $2"
 
@@ -332,9 +333,9 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expected := &models.OAuth2Client{
-			ID:            123,
+			ID:            fake.Uint64(),
 			Name:          "name",
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
@@ -355,9 +356,9 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expected := &models.OAuth2Client{
-			ID:            123,
+			ID:            fake.Uint64(),
 			Name:          "name",
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
@@ -379,9 +380,9 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expected := &models.OAuth2Client{
-			ID:            123,
+			ID:            fake.Uint64(),
 			Name:          "name",
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
@@ -405,7 +406,7 @@ func TestPostgres_buildGetOAuth2ClientCountQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expectedArgCount := 1
 		expectedQuery := "SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
 
@@ -421,7 +422,7 @@ func TestPostgres_GetOAuth2ClientCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expectedQuery := "SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
 		expectedCount := uint64(666)
 
@@ -474,7 +475,7 @@ func TestPostgres_buildGetOAuth2ClientsQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expectedArgCount := 1
 		expectedQuery := "SELECT id, name, client_id, scopes, redirect_uri, client_secret, created_on, updated_on, archived_on, belongs_to_user FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to_user = $1 LIMIT 20"
 
@@ -492,7 +493,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expected := &models.OAuth2ClientList{
 			Pagination: models.Pagination{
 				Page:       1,
@@ -501,7 +502,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 			},
 			Clients: []models.OAuth2Client{
 				{
-					ID:            123,
+					ID:            fake.Uint64(),
 					Name:          "name",
 					BelongsToUser: expectedUserID,
 					CreatedOn:     uint64(time.Now().Unix()),
@@ -531,7 +532,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 
 	T.Run("with no rows returned from database", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -546,7 +547,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 
 	T.Run("with error reading from database", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -561,7 +562,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 
 	T.Run("with erroneous response", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expected := &models.OAuth2ClientList{
 			Pagination: models.Pagination{
 				Page:       1,
@@ -570,7 +571,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 			},
 			Clients: []models.OAuth2Client{
 				{
-					ID:            123,
+					ID:            fake.Uint64(),
 					Name:          "name",
 					BelongsToUser: expectedUserID,
 					CreatedOn:     uint64(time.Now().Unix()),
@@ -591,7 +592,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 
 	T.Run("with error fetching count", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expected := &models.OAuth2ClientList{
 			Pagination: models.Pagination{
 				Page:       1,
@@ -600,7 +601,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 			},
 			Clients: []models.OAuth2Client{
 				{
-					ID:            123,
+					ID:            fake.Uint64(),
 					Name:          "name",
 					BelongsToUser: expectedUserID,
 					CreatedOn:     uint64(time.Now().Unix()),
@@ -661,9 +662,9 @@ func TestPostgres_CreateOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expected := &models.OAuth2Client{
-			ID:            123,
+			ID:            fake.Uint64(),
 			Name:          "name",
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
@@ -693,9 +694,9 @@ func TestPostgres_CreateOAuth2Client(T *testing.T) {
 
 	T.Run("with error writing to database", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expected := &models.OAuth2Client{
-			ID:            123,
+			ID:            fake.Uint64(),
 			Name:          "name",
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
@@ -790,8 +791,8 @@ func TestPostgres_buildArchiveOAuth2ClientQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		expectedClientID := uint64(123)
-		expectedUserID := uint64(321)
+		expectedClientID := fake.Uint64()
+		expectedUserID := fake.Uint64()
 		expectedArgCount := 2
 		expectedQuery := "UPDATE oauth2_clients SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $1 AND id = $2 RETURNING archived_on"
 
@@ -810,8 +811,8 @@ func TestPostgres_ArchiveOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		exampleClientID := uint64(321)
-		exampleUserID := uint64(123)
+		exampleClientID := fake.Uint64()
+		exampleUserID := fake.Uint64()
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -826,8 +827,8 @@ func TestPostgres_ArchiveOAuth2Client(T *testing.T) {
 
 	T.Run("with error writing to database", func(t *testing.T) {
 		ctx := context.Background()
-		exampleClientID := uint64(321)
-		exampleUserID := uint64(123)
+		exampleClientID := fake.Uint64()
+		exampleUserID := fake.Uint64()
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).

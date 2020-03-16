@@ -12,6 +12,7 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -58,8 +59,8 @@ func TestMariaDB_buildGetWebhookQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
-		exampleWebhookID := uint64(123)
-		exampleUserID := uint64(321)
+		exampleWebhookID := fake.Uint64()
+		exampleUserID := fake.Uint64()
 
 		expectedArgCount := 2
 		expectedQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to_user FROM webhooks WHERE belongs_to_user = ? AND id = ?"
@@ -80,13 +81,13 @@ func TestMariaDB_GetWebhook(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.Webhook{
-			ID:        123,
+			ID:        fake.Uint64(),
 			Name:      "name",
 			Events:    []string{"things"},
 			DataTypes: []string{"things"},
 			Topics:    []string{"things"},
 		}
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -103,13 +104,13 @@ func TestMariaDB_GetWebhook(T *testing.T) {
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.Webhook{
-			ID:        123,
+			ID:        fake.Uint64(),
 			Name:      "name",
 			Events:    []string{"things"},
 			DataTypes: []string{"things"},
 			Topics:    []string{"things"},
 		}
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -127,10 +128,10 @@ func TestMariaDB_GetWebhook(T *testing.T) {
 	T.Run("with error from database", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.Webhook{
-			ID:   123,
+			ID:   fake.Uint64(),
 			Name: "name",
 		}
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -147,13 +148,13 @@ func TestMariaDB_GetWebhook(T *testing.T) {
 	T.Run("with invalid response from database", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.Webhook{
-			ID:        123,
+			ID:        fake.Uint64(),
 			Name:      "name",
 			Events:    []string{"things"},
 			DataTypes: []string{"things"},
 			Topics:    []string{"things"},
 		}
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -173,7 +174,7 @@ func TestMariaDB_buildGetWebhookCountQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
-		expectedUserID := uint64(123)
+		expectedUserID := fake.Uint64()
 		expectedArgCount := 1
 		expectedQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL AND belongs_to_user = ? LIMIT 20"
 
@@ -191,8 +192,8 @@ func TestMariaDB_GetWebhookCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expected := uint64(321)
-		expectedUserID := uint64(321)
+		expected := fake.Uint64()
+		expectedUserID := fake.Uint64()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -208,7 +209,7 @@ func TestMariaDB_GetWebhookCount(T *testing.T) {
 
 	T.Run("with error from database", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -241,7 +242,7 @@ func TestMariaDB_GetAllWebhooksCount(T *testing.T) {
 	expectedQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL"
 
 	T.Run("happy path", func(t *testing.T) {
-		expected := uint64(321)
+		expected := fake.Uint64()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -285,7 +286,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 	expectedListQuery := "SELECT id, name, content_type, url, method, events, data_types, topics, created_on, updated_on, archived_on, belongs_to_user FROM webhooks WHERE archived_on IS NULL"
 
 	T.Run("happy path", func(t *testing.T) {
-		expectedCount := uint64(321)
+		expectedCount := fake.Uint64()
 		expectedCountQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
@@ -294,7 +295,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 			},
 			Webhooks: []models.Webhook{
 				{
-					ID:   123,
+					ID:   fake.Uint64(),
 					Name: "name",
 				},
 			},
@@ -343,7 +344,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 
 	T.Run("with error from database", func(t *testing.T) {
 		example := &models.Webhook{
-			ID:   123,
+			ID:   fake.Uint64(),
 			Name: "name",
 		}
 
@@ -359,7 +360,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 	})
 
 	T.Run("with error fetching count", func(t *testing.T) {
-		expectedCount := uint64(321)
+		expectedCount := fake.Uint64()
 		expectedCountQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
@@ -367,7 +368,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 			},
 			Webhooks: []models.Webhook{
 				{
-					ID:   123,
+					ID:   fake.Uint64(),
 					Name: "name",
 				},
 			},
@@ -397,10 +398,10 @@ func TestMariaDB_GetAllWebhooksForUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUser := &models.User{ID: 123}
+		exampleUser := &models.User{ID: fake.Uint64()}
 		expected := []models.Webhook{
 			{
-				ID:   123,
+				ID:   fake.Uint64(),
 				Name: "name",
 			},
 		}
@@ -421,7 +422,7 @@ func TestMariaDB_GetAllWebhooksForUser(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUser := &models.User{ID: 123}
+		exampleUser := &models.User{ID: fake.Uint64()}
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -437,7 +438,7 @@ func TestMariaDB_GetAllWebhooksForUser(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUser := &models.User{ID: 123}
+		exampleUser := &models.User{ID: fake.Uint64()}
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -452,10 +453,10 @@ func TestMariaDB_GetAllWebhooksForUser(T *testing.T) {
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUser := &models.User{ID: 123}
+		exampleUser := &models.User{ID: fake.Uint64()}
 		expected := []models.Webhook{
 			{
-				ID:   123,
+				ID:   fake.Uint64(),
 				Name: "name",
 			},
 		}
@@ -476,7 +477,7 @@ func TestMariaDB_buildGetWebhooksQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		exampleUserID := uint64(123)
+		exampleUserID := fake.Uint64()
 		m, _ := buildTestService(t)
 
 		expectedArgCount := 1
@@ -496,8 +497,8 @@ func TestMariaDB_GetWebhooks(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUserID := uint64(123)
-		expectedCount := uint64(321)
+		exampleUserID := fake.Uint64()
+		expectedCount := fake.Uint64()
 		expectedCountQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
@@ -507,7 +508,7 @@ func TestMariaDB_GetWebhooks(T *testing.T) {
 			},
 			Webhooks: []models.Webhook{
 				{
-					ID:   123,
+					ID:   fake.Uint64(),
 					Name: "name",
 				},
 			},
@@ -531,7 +532,7 @@ func TestMariaDB_GetWebhooks(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUserID := uint64(123)
+		exampleUserID := fake.Uint64()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -547,7 +548,7 @@ func TestMariaDB_GetWebhooks(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUserID := uint64(123)
+		exampleUserID := fake.Uint64()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -562,9 +563,9 @@ func TestMariaDB_GetWebhooks(T *testing.T) {
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUserID := uint64(123)
+		exampleUserID := fake.Uint64()
 		expected := &models.Webhook{
-			ID:   123,
+			ID:   fake.Uint64(),
 			Name: "name",
 		}
 
@@ -581,8 +582,8 @@ func TestMariaDB_GetWebhooks(T *testing.T) {
 
 	T.Run("with error fetching count", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUserID := uint64(123)
-		expectedCount := uint64(321)
+		exampleUserID := fake.Uint64()
+		expectedCount := fake.Uint64()
 		expectedCountQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE archived_on IS NULL"
 		expected := &models.WebhookList{
 			Pagination: models.Pagination{
@@ -592,7 +593,7 @@ func TestMariaDB_GetWebhooks(T *testing.T) {
 			},
 			Webhooks: []models.Webhook{
 				{
-					ID:   123,
+					ID:   fake.Uint64(),
 					Name: "name",
 				},
 			},
@@ -646,9 +647,9 @@ func TestMariaDB_CreateWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expected := &models.Webhook{
-			ID:            123,
+			ID:            fake.Uint64(),
 			Name:          "name",
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
@@ -684,9 +685,9 @@ func TestMariaDB_CreateWebhook(T *testing.T) {
 
 	T.Run("with error interacting with database", func(t *testing.T) {
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		expected := &models.Webhook{
-			ID:            123,
+			ID:            fake.Uint64(),
 			Name:          "name",
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
@@ -816,8 +817,8 @@ func TestMariaDB_buildArchiveWebhookQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
-		exampleWebhookID := uint64(123)
-		exampleUserID := uint64(321)
+		exampleWebhookID := fake.Uint64()
+		exampleUserID := fake.Uint64()
 		expectedArgCount := 2
 		expectedQuery := "UPDATE webhooks SET updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
 
@@ -835,7 +836,7 @@ func TestMariaDB_ArchiveWebhook(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.Webhook{
-			ID:            123,
+			ID:            fake.Uint64(),
 			Name:          "name",
 			BelongsToUser: 321,
 			CreatedOn:     uint64(time.Now().Unix()),

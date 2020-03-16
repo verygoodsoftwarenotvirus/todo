@@ -11,6 +11,7 @@ import (
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
@@ -33,7 +34,7 @@ func TestProvideItemsService(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expectation := uint64(123)
+		expectation := fake.Uint64()
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", expectation).Return()
 
@@ -64,7 +65,7 @@ func TestProvideItemsService(T *testing.T) {
 
 	T.Run("with error providing unit counter", func(t *testing.T) {
 		ctx := context.Background()
-		expectation := uint64(123)
+		expectation := fake.Uint64()
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", expectation).Return()
 
@@ -95,7 +96,7 @@ func TestProvideItemsService(T *testing.T) {
 
 	T.Run("with error fetching item count", func(t *testing.T) {
 		ctx := context.Background()
-		expectation := uint64(123)
+		expectation := fake.Uint64()
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("IncrementBy", expectation).Return()
 

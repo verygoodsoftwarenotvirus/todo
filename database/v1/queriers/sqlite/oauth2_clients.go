@@ -88,6 +88,7 @@ func (s *Sqlite) scanOAuth2Clients(rows *sql.Rows) ([]*models.OAuth2Client, erro
 // buildGetOAuth2ClientByClientIDQuery builds a SQL query for fetching an OAuth2 client by its ClientID
 func (s *Sqlite) buildGetOAuth2ClientByClientIDQuery(clientID string) (query string, args []interface{}) {
 	var err error
+
 	// This query is more or less the same as the normal OAuth2 client retrieval query, only that it doesn't
 	// care about ownership. It does still care about archived status
 	query, args, err = s.sqlBuilder.
@@ -119,6 +120,7 @@ var (
 func (s *Sqlite) buildGetAllOAuth2ClientsQuery() (query string) {
 	getAllOAuth2ClientsQueryBuilder.Do(func() {
 		var err error
+
 		getAllOAuth2ClientsQuery, _, err = s.sqlBuilder.
 			Select(oauth2ClientsTableColumns...).
 			From(oauth2ClientsTableName).
@@ -172,6 +174,7 @@ func (s *Sqlite) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64) 
 // buildGetOAuth2ClientQuery returns a SQL query which requests a given OAuth2 client by its database ID
 func (s *Sqlite) buildGetOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = s.sqlBuilder.
 		Select(oauth2ClientsTableColumns...).
 		From(oauth2ClientsTableName).
@@ -206,6 +209,7 @@ func (s *Sqlite) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (
 // restrictions (if relevant) and belong to a given user
 func (s *Sqlite) buildGetOAuth2ClientCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	builder := s.sqlBuilder.
 		Select(fmt.Sprintf(CountQuery, oauth2ClientsTableName)).
 		From(oauth2ClientsTableName).
@@ -241,6 +245,7 @@ var (
 func (s *Sqlite) buildGetAllOAuth2ClientCountQuery() string {
 	getAllOAuth2ClientCountQueryBuilder.Do(func() {
 		var err error
+
 		getAllOAuth2ClientCountQuery, _, err = s.sqlBuilder.
 			Select(fmt.Sprintf(CountQuery, oauth2ClientsTableName)).
 			From(oauth2ClientsTableName).
@@ -264,6 +269,7 @@ func (s *Sqlite) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 // meet the given filter's criteria (if relevant) and belong to a given user.
 func (s *Sqlite) buildGetOAuth2ClientsQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	builder := s.sqlBuilder.
 		Select(oauth2ClientsTableColumns...).
 		From(oauth2ClientsTableName).
@@ -326,6 +332,7 @@ func (s *Sqlite) GetOAuth2Clients(ctx context.Context, userID uint64, filter *mo
 // buildCreateOAuth2ClientQuery returns a SQL query (and args) that will create the given OAuth2Client in the database
 func (s *Sqlite) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = s.sqlBuilder.
 		Insert(oauth2ClientsTableName).
 		Columns(
@@ -398,6 +405,7 @@ func (s *Sqlite) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 // buildUpdateOAuth2ClientQuery returns a SQL query (and args) that will update a given OAuth2 client in the database
 func (s *Sqlite) buildUpdateOAuth2ClientQuery(input *models.OAuth2Client) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = s.sqlBuilder.
 		Update(oauth2ClientsTableName).
 		Set("client_id", input.ClientID).
@@ -427,6 +435,7 @@ func (s *Sqlite) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 // buildArchiveOAuth2ClientQuery returns a SQL query (and arguments) that will mark an OAuth2 client as archived.
 func (s *Sqlite) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = s.sqlBuilder.
 		Update(oauth2ClientsTableName).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).

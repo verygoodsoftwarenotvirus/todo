@@ -11,10 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/moul/http2curl"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+
+	"github.com/moul/http2curl"
 	"go.opencensus.io/plugin/ochttp"
+	"go.opencensus.io/trace"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )
@@ -157,6 +159,9 @@ func NewSimpleClient(ctx context.Context, address *url.URL, debug bool) (*V1Clie
 // executeRawRequest takes a given *http.Request and executes it with the provided
 // client, alongside some debugging logging.
 func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
+	ctx, span := trace.StartSpan(ctx, "executeRawRequest")
+	defer span.End()
+
 	var logger = c.logger
 	if command, err := http2curl.GetCurlCommand(req); err == nil && c.Debug {
 		logger = c.logger.WithValue("curl", command.String())
@@ -261,7 +266,10 @@ func (c *V1Client) IsUp() bool {
 }
 
 // buildDataRequest builds an HTTP request for a given method, URL, and body data.
-func (c *V1Client) buildDataRequest(method, uri string, in interface{}) (*http.Request, error) {
+func (c *V1Client) buildDataRequest(ctx context.Context, method, uri string, in interface{}) (*http.Request, error) {
+	_, span := trace.StartSpan(ctx, "buildDataRequest")
+	defer span.End()
+
 	body, err := createBodyFromStruct(in)
 	if err != nil {
 		return nil, err
@@ -277,7 +285,29 @@ func (c *V1Client) buildDataRequest(method, uri string, in interface{}) (*http.R
 }
 
 // retrieve executes an HTTP request and loads the response content into a struct
+func (c *V1Client) checkExistence(ctx context.Context, req *http.Request) (bool, error) {
+	ctx, span := trace.StartSpan(ctx, "checkExistence")
+	defer span.End()
+
+	res, err := c.executeRawRequest(ctx, c.authedClient, req)
+	if err != nil {
+		return false, err
+	}
+
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			c.logger.Error(err, "closing response body")
+		}
+	}()
+
+	return res.StatusCode == http.StatusOK, nil
+}
+
+// retrieve executes an HTTP request and loads the response content into a struct
 func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interface{}) error {
+	ctx, span := trace.StartSpan(ctx, "retrieve")
+	defer span.End()
+
 	if err := argIsNotPointerOrNil(obj); err != nil {
 		return fmt.Errorf("struct to load must be a pointer: %w", err)
 	}
@@ -297,6 +327,9 @@ func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interfac
 // executeRequest takes a given request and executes it with the auth client. It returns some errors
 // upon receiving certain status codes, but otherwise will return nil upon success.
 func (c *V1Client) executeRequest(ctx context.Context, req *http.Request, out interface{}) error {
+	ctx, span := trace.StartSpan(ctx, "executeRequest")
+	defer span.End()
+
 	res, err := c.executeRawRequest(ctx, c.authedClient, req)
 	if err != nil {
 		return fmt.Errorf("executing request: %w", err)
@@ -321,6 +354,9 @@ func (c *V1Client) executeRequest(ctx context.Context, req *http.Request, out in
 
 // executeUnathenticatedDataRequest takes a given request and loads the response into an interface value.
 func (c *V1Client) executeUnathenticatedDataRequest(ctx context.Context, req *http.Request, out interface{}) error {
+	ctx, span := trace.StartSpan(ctx, "executeUnathenticatedDataRequest")
+	defer span.End()
+
 	// sometimes we want to make requests with data attached, but we don't really care about the response
 	// so we give this function a nil `out` value. That said, if you provide us a value, it needs to be a pointer.
 	if out != nil {

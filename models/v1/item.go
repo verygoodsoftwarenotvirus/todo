@@ -39,6 +39,7 @@ type (
 
 	// ItemDataManager describes a structure capable of storing items permanently
 	ItemDataManager interface {
+		ItemExists(ctx context.Context, itemID, userID uint64) (bool, error)
 		GetItem(ctx context.Context, itemID, userID uint64) (*Item, error)
 		GetItemCount(ctx context.Context, userID uint64, filter *QueryFilter) (uint64, error)
 		GetAllItemsCount(ctx context.Context) (uint64, error)
@@ -56,6 +57,7 @@ type (
 
 		ListHandler() http.HandlerFunc
 		CreateHandler() http.HandlerFunc
+		ExistenceHandler() http.HandlerFunc
 		ReadHandler() http.HandlerFunc
 		UpdateHandler() http.HandlerFunc
 		ArchiveHandler() http.HandlerFunc

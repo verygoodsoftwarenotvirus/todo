@@ -12,6 +12,7 @@ import (
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -41,7 +42,7 @@ func TestV1Client_GetWebhook(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.Webhook{
-			ID:   1,
+			ID:   fake.Uint64(),
 			Name: "example",
 		}
 
@@ -90,7 +91,7 @@ func TestV1Client_GetWebhooks(T *testing.T) {
 		expected := &models.WebhookList{
 			Webhooks: []models.Webhook{
 				{
-					ID:   1,
+					ID:   fake.Uint64(),
 					Name: "example",
 				},
 			},
@@ -141,7 +142,7 @@ func TestV1Client_CreateWebhook(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.Webhook{
-			ID:   1,
+			ID:   fake.Uint64(),
 			Name: "example",
 		}
 		exampleInput := &models.WebhookCreationInput{
@@ -198,7 +199,7 @@ func TestV1Client_UpdateWebhook(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.Webhook{
-			ID:   1,
+			ID:   fake.Uint64(),
 			Name: "example",
 		}
 

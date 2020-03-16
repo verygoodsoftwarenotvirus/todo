@@ -2,8 +2,8 @@ package dbclient
 
 import (
 	"context"
-	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"go.opencensus.io/trace"
@@ -11,20 +11,13 @@ import (
 
 var _ models.WebhookDataManager = (*Client)(nil)
 
-// attachWebhookIDToSpan provides a consistent way to attach a webhook's ID to a span
-func attachWebhookIDToSpan(span *trace.Span, webhookID uint64) {
-	if span != nil {
-		span.AddAttributes(trace.StringAttribute("webhook_id", strconv.FormatUint(webhookID, 10)))
-	}
-}
-
 // GetWebhook fetches a webhook from the database
 func (c *Client) GetWebhook(ctx context.Context, webhookID, userID uint64) (*models.Webhook, error) {
 	ctx, span := trace.StartSpan(ctx, "GetWebhook")
 	defer span.End()
 
-	attachUserIDToSpan(span, userID)
-	attachWebhookIDToSpan(span, webhookID)
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachWebhookIDToSpan(span, webhookID)
 
 	c.logger.WithValues(map[string]interface{}{
 		"webhook_id": webhookID,
@@ -39,8 +32,8 @@ func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *models.
 	ctx, span := trace.StartSpan(ctx, "GetWebhooks")
 	defer span.End()
 
-	attachUserIDToSpan(span, userID)
-	attachFilterToSpan(span, filter)
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachFilterToSpan(span, filter)
 
 	c.logger.WithValue("user_id", userID).Debug("GetWebhookCount called")
 
@@ -62,7 +55,7 @@ func (c *Client) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]mo
 	ctx, span := trace.StartSpan(ctx, "GetAllWebhooksForUser")
 	defer span.End()
 
-	attachUserIDToSpan(span, userID)
+	tracing.AttachUserIDToSpan(span, userID)
 	c.logger.WithValue("user_id", userID).Debug("GetAllWebhooksForUser called")
 
 	return c.querier.GetAllWebhooksForUser(ctx, userID)
@@ -73,8 +66,8 @@ func (c *Client) GetWebhookCount(ctx context.Context, userID uint64, filter *mod
 	ctx, span := trace.StartSpan(ctx, "GetWebhookCount")
 	defer span.End()
 
-	attachFilterToSpan(span, filter)
-	attachUserIDToSpan(span, userID)
+	tracing.AttachFilterToSpan(span, filter)
+	tracing.AttachUserIDToSpan(span, userID)
 
 	c.logger.WithValues(map[string]interface{}{
 		"filter":  filter,
@@ -99,7 +92,7 @@ func (c *Client) CreateWebhook(ctx context.Context, input *models.WebhookCreatio
 	ctx, span := trace.StartSpan(ctx, "CreateWebhook")
 	defer span.End()
 
-	attachUserIDToSpan(span, input.BelongsToUser)
+	tracing.AttachUserIDToSpan(span, input.BelongsToUser)
 	c.logger.WithValue("user_id", input.BelongsToUser).Debug("CreateWebhook called")
 
 	return c.querier.CreateWebhook(ctx, input)
@@ -111,8 +104,8 @@ func (c *Client) UpdateWebhook(ctx context.Context, input *models.Webhook) error
 	ctx, span := trace.StartSpan(ctx, "UpdateWebhook")
 	defer span.End()
 
-	attachWebhookIDToSpan(span, input.ID)
-	attachUserIDToSpan(span, input.BelongsToUser)
+	tracing.AttachWebhookIDToSpan(span, input.ID)
+	tracing.AttachUserIDToSpan(span, input.BelongsToUser)
 
 	c.logger.WithValue("webhook_id", input.ID).Debug("UpdateWebhook called")
 
@@ -124,8 +117,8 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) e
 	ctx, span := trace.StartSpan(ctx, "ArchiveWebhook")
 	defer span.End()
 
-	attachUserIDToSpan(span, userID)
-	attachWebhookIDToSpan(span, webhookID)
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachWebhookIDToSpan(span, webhookID)
 
 	c.logger.WithValues(map[string]interface{}{
 		"webhook_id": webhookID,

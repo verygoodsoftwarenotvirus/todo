@@ -2,8 +2,8 @@ package dbclient
 
 import (
 	"context"
-	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"go.opencensus.io/trace"
@@ -11,27 +11,13 @@ import (
 
 var _ models.OAuth2ClientDataManager = (*Client)(nil)
 
-// attachOAuth2ClientDatabaseIDToSpan is a consistent way to attach an oauth2 client's ID to a span
-func attachOAuth2ClientDatabaseIDToSpan(span *trace.Span, oauth2ClientID uint64) {
-	if span != nil {
-		span.AddAttributes(trace.StringAttribute("oauth2client_id", strconv.FormatUint(oauth2ClientID, 10)))
-	}
-}
-
-// attachOAuth2ClientIDToSpan is a consistent way to attach an oauth2 client's Client ID to a span
-func attachOAuth2ClientIDToSpan(span *trace.Span, clientID string) {
-	if span != nil {
-		span.AddAttributes(trace.StringAttribute("client_id", clientID))
-	}
-}
-
 // GetOAuth2Client gets an OAuth2 client from the database
 func (c *Client) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*models.OAuth2Client, error) {
 	ctx, span := trace.StartSpan(ctx, "GetOAuth2Client")
 	defer span.End()
 
-	attachUserIDToSpan(span, userID)
-	attachOAuth2ClientDatabaseIDToSpan(span, clientID)
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachOAuth2ClientDatabaseIDToSpan(span, clientID)
 
 	logger := c.logger.WithValues(map[string]interface{}{
 		"client_id": clientID,
@@ -54,7 +40,7 @@ func (c *Client) GetOAuth2ClientByClientID(ctx context.Context, clientID string)
 	ctx, span := trace.StartSpan(ctx, "GetOAuth2ClientByClientID")
 	defer span.End()
 
-	attachOAuth2ClientIDToSpan(span, clientID)
+	tracing.AttachOAuth2ClientIDToSpan(span, clientID)
 	logger := c.logger.WithValue("oauth2client_client_id", clientID)
 	logger.Debug("GetOAuth2ClientByClientID called")
 
@@ -72,8 +58,8 @@ func (c *Client) GetOAuth2ClientCount(ctx context.Context, userID uint64, filter
 	ctx, span := trace.StartSpan(ctx, "GetOAuth2ClientCount")
 	defer span.End()
 
-	attachUserIDToSpan(span, userID)
-	attachFilterToSpan(span, filter)
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachFilterToSpan(span, filter)
 
 	c.logger.WithValue("user_id", userID).Debug("GetOAuth2ClientCount called")
 
@@ -95,7 +81,7 @@ func (c *Client) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64) 
 	ctx, span := trace.StartSpan(ctx, "GetAllOAuth2ClientsForUser")
 	defer span.End()
 
-	attachUserIDToSpan(span, userID)
+	tracing.AttachUserIDToSpan(span, userID)
 	c.logger.WithValue("user_id", userID).Debug("GetAllOAuth2ClientsForUser called")
 
 	return c.querier.GetAllOAuth2ClientsForUser(ctx, userID)
@@ -116,8 +102,8 @@ func (c *Client) GetOAuth2Clients(ctx context.Context, userID uint64, filter *mo
 	ctx, span := trace.StartSpan(ctx, "GetOAuth2Clients")
 	defer span.End()
 
-	attachUserIDToSpan(span, userID)
-	attachFilterToSpan(span, filter)
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachFilterToSpan(span, filter)
 
 	c.logger.WithValue("user_id", userID).Debug("GetOAuth2Clients called")
 
@@ -159,8 +145,8 @@ func (c *Client) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint6
 	ctx, span := trace.StartSpan(ctx, "ArchiveOAuth2Client")
 	defer span.End()
 
-	attachUserIDToSpan(span, userID)
-	attachOAuth2ClientDatabaseIDToSpan(span, clientID)
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachOAuth2ClientDatabaseIDToSpan(span, clientID)
 
 	logger := c.logger.WithValues(map[string]interface{}{
 		"client_id":  clientID,

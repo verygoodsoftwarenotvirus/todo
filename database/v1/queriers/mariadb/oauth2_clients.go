@@ -88,6 +88,7 @@ func (m *MariaDB) scanOAuth2Clients(rows *sql.Rows) ([]*models.OAuth2Client, err
 // buildGetOAuth2ClientByClientIDQuery builds a SQL query for fetching an OAuth2 client by its ClientID
 func (m *MariaDB) buildGetOAuth2ClientByClientIDQuery(clientID string) (query string, args []interface{}) {
 	var err error
+
 	// This query is more or less the same as the normal OAuth2 client retrieval query, only that it doesn't
 	// care about ownership. It does still care about archived status
 	query, args, err = m.sqlBuilder.
@@ -119,6 +120,7 @@ var (
 func (m *MariaDB) buildGetAllOAuth2ClientsQuery() (query string) {
 	getAllOAuth2ClientsQueryBuilder.Do(func() {
 		var err error
+
 		getAllOAuth2ClientsQuery, _, err = m.sqlBuilder.
 			Select(oauth2ClientsTableColumns...).
 			From(oauth2ClientsTableName).
@@ -172,6 +174,7 @@ func (m *MariaDB) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64)
 // buildGetOAuth2ClientQuery returns a SQL query which requests a given OAuth2 client by its database ID
 func (m *MariaDB) buildGetOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = m.sqlBuilder.
 		Select(oauth2ClientsTableColumns...).
 		From(oauth2ClientsTableName).
@@ -206,6 +209,7 @@ func (m *MariaDB) GetOAuth2Client(ctx context.Context, clientID, userID uint64) 
 // restrictions (if relevant) and belong to a given user
 func (m *MariaDB) buildGetOAuth2ClientCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	builder := m.sqlBuilder.
 		Select(fmt.Sprintf(CountQuery, oauth2ClientsTableName)).
 		From(oauth2ClientsTableName).
@@ -241,6 +245,7 @@ var (
 func (m *MariaDB) buildGetAllOAuth2ClientCountQuery() string {
 	getAllOAuth2ClientCountQueryBuilder.Do(func() {
 		var err error
+
 		getAllOAuth2ClientCountQuery, _, err = m.sqlBuilder.
 			Select(fmt.Sprintf(CountQuery, oauth2ClientsTableName)).
 			From(oauth2ClientsTableName).
@@ -264,6 +269,7 @@ func (m *MariaDB) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 // meet the given filter's criteria (if relevant) and belong to a given user.
 func (m *MariaDB) buildGetOAuth2ClientsQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	builder := m.sqlBuilder.
 		Select(oauth2ClientsTableColumns...).
 		From(oauth2ClientsTableName).
@@ -326,6 +332,7 @@ func (m *MariaDB) GetOAuth2Clients(ctx context.Context, userID uint64, filter *m
 // buildCreateOAuth2ClientQuery returns a SQL query (and args) that will create the given OAuth2Client in the database
 func (m *MariaDB) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = m.sqlBuilder.
 		Insert(oauth2ClientsTableName).
 		Columns(
@@ -400,6 +407,7 @@ func (m *MariaDB) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cl
 // buildUpdateOAuth2ClientQuery returns a SQL query (and args) that will update a given OAuth2 client in the database
 func (m *MariaDB) buildUpdateOAuth2ClientQuery(input *models.OAuth2Client) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = m.sqlBuilder.
 		Update(oauth2ClientsTableName).
 		Set("client_id", input.ClientID).
@@ -429,6 +437,7 @@ func (m *MariaDB) UpdateOAuth2Client(ctx context.Context, input *models.OAuth2Cl
 // buildArchiveOAuth2ClientQuery returns a SQL query (and arguments) that will mark an OAuth2 client as archived.
 func (m *MariaDB) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = m.sqlBuilder.
 		Update(oauth2ClientsTableName).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).

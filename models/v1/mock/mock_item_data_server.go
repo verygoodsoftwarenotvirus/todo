@@ -39,6 +39,12 @@ func (m *ItemDataServer) CreateHandler() http.HandlerFunc {
 	return args.Get(0).(http.HandlerFunc)
 }
 
+// ExistenceHandler implements our interface requirements
+func (m *ItemDataServer) ExistenceHandler() http.HandlerFunc {
+	args := m.Called()
+	return args.Get(0).(http.HandlerFunc)
+}
+
 // ReadHandler implements our interface requirements
 func (m *ItemDataServer) ReadHandler() http.HandlerFunc {
 	args := m.Called()

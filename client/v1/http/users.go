@@ -9,12 +9,17 @@ import (
 	"strconv"
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"go.opencensus.io/trace"
 )
 
 const usersBasePath = "users"
 
 // BuildGetUserRequest builds an HTTP request for fetching a user
 func (c *V1Client) BuildGetUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
+	_, span := trace.StartSpan(ctx, "BuildGetUserRequest")
+	defer span.End()
+
 	uri := c.buildVersionlessURL(nil, usersBasePath, strconv.FormatUint(userID, 10))
 
 	return http.NewRequest(http.MethodGet, uri, nil)
@@ -22,6 +27,9 @@ func (c *V1Client) BuildGetUserRequest(ctx context.Context, userID uint64) (*htt
 
 // GetUser retrieves a user
 func (c *V1Client) GetUser(ctx context.Context, userID uint64) (user *models.User, err error) {
+	ctx, span := trace.StartSpan(ctx, "GetUser")
+	defer span.End()
+
 	req, err := c.BuildGetUserRequest(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
@@ -33,6 +41,9 @@ func (c *V1Client) GetUser(ctx context.Context, userID uint64) (user *models.Use
 
 // BuildGetUsersRequest builds an HTTP request for fetching a user
 func (c *V1Client) BuildGetUsersRequest(ctx context.Context, filter *models.QueryFilter) (*http.Request, error) {
+	_, span := trace.StartSpan(ctx, "BuildGetUsersRequest")
+	defer span.End()
+
 	uri := c.buildVersionlessURL(filter.ToValues(), usersBasePath)
 
 	return http.NewRequest(http.MethodGet, uri, nil)
@@ -40,6 +51,9 @@ func (c *V1Client) BuildGetUsersRequest(ctx context.Context, filter *models.Quer
 
 // GetUsers retrieves a list of users
 func (c *V1Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
+	ctx, span := trace.StartSpan(ctx, "GetUsers")
+	defer span.End()
+
 	users := &models.UserList{}
 
 	req, err := c.BuildGetUsersRequest(ctx, filter)
@@ -53,13 +67,19 @@ func (c *V1Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 
 // BuildCreateUserRequest builds an HTTP request for creating a user
 func (c *V1Client) BuildCreateUserRequest(ctx context.Context, body *models.UserInput) (*http.Request, error) {
+	_, span := trace.StartSpan(ctx, "BuildCreateUserRequest")
+	defer span.End()
+
 	uri := c.buildVersionlessURL(nil, usersBasePath)
 
-	return c.buildDataRequest(http.MethodPost, uri, body)
+	return c.buildDataRequest(ctx, http.MethodPost, uri, body)
 }
 
 // CreateUser creates a new user
 func (c *V1Client) CreateUser(ctx context.Context, input *models.UserInput) (*models.UserCreationResponse, error) {
+	ctx, span := trace.StartSpan(ctx, "CreateUser")
+	defer span.End()
+
 	user := &models.UserCreationResponse{}
 
 	req, err := c.BuildCreateUserRequest(ctx, input)
@@ -73,6 +93,9 @@ func (c *V1Client) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 
 // BuildArchiveUserRequest builds an HTTP request for updating a user
 func (c *V1Client) BuildArchiveUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
+	_, span := trace.StartSpan(ctx, "BuildArchiveUserRequest")
+	defer span.End()
+
 	uri := c.buildVersionlessURL(nil, usersBasePath, strconv.FormatUint(userID, 10))
 
 	return http.NewRequest(http.MethodDelete, uri, nil)
@@ -80,6 +103,9 @@ func (c *V1Client) BuildArchiveUserRequest(ctx context.Context, userID uint64) (
 
 // ArchiveUser archives a user
 func (c *V1Client) ArchiveUser(ctx context.Context, userID uint64) error {
+	ctx, span := trace.StartSpan(ctx, "ArchiveUser")
+	defer span.End()
+
 	req, err := c.BuildArchiveUserRequest(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
@@ -89,7 +115,10 @@ func (c *V1Client) ArchiveUser(ctx context.Context, userID uint64) error {
 }
 
 // BuildLoginRequest builds an authenticating HTTP request
-func (c *V1Client) BuildLoginRequest(username, password, totpToken string) (*http.Request, error) {
+func (c *V1Client) BuildLoginRequest(ctx context.Context, username, password, totpToken string) (*http.Request, error) {
+	_, span := trace.StartSpan(ctx, "BuildLoginRequest")
+	defer span.End()
+
 	body, err := createBodyFromStruct(&models.UserLoginInput{
 		Username:  username,
 		Password:  password,
@@ -101,12 +130,15 @@ func (c *V1Client) BuildLoginRequest(username, password, totpToken string) (*htt
 	}
 
 	uri := c.buildVersionlessURL(nil, usersBasePath, "login")
-	return c.buildDataRequest(http.MethodPost, uri, body)
+	return c.buildDataRequest(ctx, http.MethodPost, uri, body)
 }
 
 // Login will, when provided the correct credentials, fetch a login cookie
 func (c *V1Client) Login(ctx context.Context, username, password, totpToken string) (*http.Cookie, error) {
-	req, err := c.BuildLoginRequest(username, password, totpToken)
+	ctx, span := trace.StartSpan(ctx, "Login")
+	defer span.End()
+
+	req, err := c.BuildLoginRequest(ctx, username, password, totpToken)
 	if err != nil {
 		return nil, err
 	}

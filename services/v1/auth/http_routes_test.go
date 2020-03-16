@@ -14,6 +14,7 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -29,7 +30,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		c, err := s.buildAuthCookie(&models.User{ID: 1, Username: "username"})
+		c, err := s.buildAuthCookie(&models.User{ID: fake.Uint64(), Username: "username"})
 		require.NoError(t, err)
 		req.AddCookie(c)
 
@@ -109,7 +110,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		c, err := s.buildAuthCookie(&models.User{ID: 1, Username: "username"})
+		c, err := s.buildAuthCookie(&models.User{ID: fake.Uint64(), Username: "username"})
 		require.NoError(t, err)
 		req.AddCookie(c)
 
@@ -510,7 +511,7 @@ func TestService_Logout(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		c, err := s.buildAuthCookie(&models.User{ID: 1, Username: "username"})
+		c, err := s.buildAuthCookie(&models.User{ID: fake.Uint64(), Username: "username"})
 		require.NoError(t, err)
 
 		req.AddCookie(c)
@@ -874,7 +875,7 @@ func TestService_CycleSecret(T *testing.T) {
 	T.Run("normal operation", func(t *testing.T) {
 		s := buildTestService(t)
 
-		exampleUser := &models.User{ID: 123, Username: "username"}
+		exampleUser := &models.User{ID: fake.Uint64(), Username: "username"}
 		c, err := s.buildAuthCookie(exampleUser)
 		assert.NotNil(t, c)
 		assert.NoError(t, err)

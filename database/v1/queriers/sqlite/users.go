@@ -77,6 +77,7 @@ func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, error) {
 // buildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID
 func (s *Sqlite) buildGetUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = s.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
@@ -104,6 +105,7 @@ func (s *Sqlite) GetUser(ctx context.Context, userID uint64) (*models.User, erro
 // buildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username
 func (s *Sqlite) buildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = s.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
@@ -135,6 +137,7 @@ func (s *Sqlite) GetUserByUsername(ctx context.Context, username string) (*model
 // to a given filter's criteria.
 func (s *Sqlite) buildGetUserCountQuery(filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
+
 	builder := s.sqlBuilder.
 		Select(fmt.Sprintf(CountQuery, usersTableName)).
 		From(usersTableName).
@@ -161,6 +164,7 @@ func (s *Sqlite) GetUserCount(ctx context.Context, filter *models.QueryFilter) (
 // to a given filter's criteria.
 func (s *Sqlite) buildGetUsersQuery(filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
+
 	builder := s.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
@@ -209,6 +213,7 @@ func (s *Sqlite) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mod
 // buildCreateUserQuery returns a SQL query (and arguments) that would create a given User
 func (s *Sqlite) buildCreateUserQuery(input *models.UserInput) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = s.sqlBuilder.
 		Insert(usersTableName).
 		Columns(
@@ -238,6 +243,7 @@ func (s *Sqlite) buildCreateUserQuery(input *models.UserInput) (query string, ar
 // buildUserCreationTimeQuery returns a SQL query (and arguments) that would create a given User
 func (s *Sqlite) buildUserCreationTimeQuery(userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = s.sqlBuilder.Select("created_on").
 		From(usersTableName).
 		Where(squirrel.Eq{"id": userID}).
@@ -276,6 +282,7 @@ func (s *Sqlite) CreateUser(ctx context.Context, input *models.UserInput) (*mode
 // buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row
 func (s *Sqlite) buildUpdateUserQuery(input *models.User) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = s.sqlBuilder.
 		Update(usersTableName).
 		Set("username", input.Username).
@@ -301,6 +308,7 @@ func (s *Sqlite) UpdateUser(ctx context.Context, input *models.User) error {
 
 func (s *Sqlite) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
+
 	query, args, err = s.sqlBuilder.
 		Update(usersTableName).
 		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).

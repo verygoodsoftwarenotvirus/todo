@@ -6,6 +6,7 @@ import (
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -15,7 +16,7 @@ func TestClient_GetUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		exampleID := uint64(123)
+		exampleID := fake.Uint64()
 		expected := &models.User{}
 
 		c, mockDB := buildTestClient()
@@ -53,7 +54,7 @@ func TestClient_GetUserCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expected := uint64(123)
+		expected := fake.Uint64()
 		filter := models.DefaultQueryFilter()
 
 		c, mockDB := buildTestClient()
@@ -68,7 +69,7 @@ func TestClient_GetUserCount(T *testing.T) {
 
 	T.Run("with nil filter", func(t *testing.T) {
 		ctx := context.Background()
-		expected := uint64(123)
+		expected := fake.Uint64()
 		filter := (*models.QueryFilter)(nil)
 
 		c, mockDB := buildTestClient()
@@ -158,7 +159,7 @@ func TestClient_ArchiveUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		exampleInput := uint64(123)
+		exampleInput := fake.Uint64()
 		var expected error
 
 		c, mockDB := buildTestClient()

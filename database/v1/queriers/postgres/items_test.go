@@ -10,6 +10,7 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,21 +42,64 @@ func buildErroneousMockRowFromItem(x *models.Item) *sqlmock.Rows {
 	return exampleRows
 }
 
+func TestPostgres_buildItemExistsQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		p, _ := buildTestService(t)
+		exampleItemID := fake.Uint64()
+		expectedUserID := fake.Uint64()
+
+		expectedArgCount := 2
+		expectedQuery := "SELECT EXISTS ( SELECT items.id FROM items WHERE items.belongs_to_user = $1 AND items.id = $2 )"
+		actualQuery, args := p.buildItemExistsQuery(exampleItemID, expectedUserID)
+
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Len(t, args, expectedArgCount)
+		assert.Equal(t, expectedUserID, args[0].(uint64))
+		assert.Equal(t, exampleItemID, args[1].(uint64))
+	})
+}
+
+func TestPostgres_ItemExists(T *testing.T) {
+	T.Parallel()
+
+	expectedQuery := "SELECT EXISTS ( SELECT items.id FROM items WHERE items.belongs_to_user = $1 AND items.id = $2 )"
+
+	T.Run("happy path", func(t *testing.T) {
+		p, mockDB := buildTestService(t)
+		ctx := context.Background()
+		expectedItemID := fake.Uint64()
+		expectedUserID := fake.Uint64()
+
+		expected := true
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(expectedUserID, expectedItemID).
+			WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(expected))
+
+		actual, err := p.ItemExists(ctx, expectedItemID, expectedUserID)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
 func TestPostgres_buildGetItemQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		exampleItemID := uint64(123)
-		exampleUserID := uint64(321)
+		exampleItemID := fake.Uint64()
+		expectedUserID := fake.Uint64()
 
 		expectedArgCount := 2
 		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.belongs_to_user = $1 AND items.id = $2"
-		actualQuery, args := p.buildGetItemQuery(exampleItemID, exampleUserID)
+		actualQuery, args := p.buildGetItemQuery(exampleItemID, expectedUserID)
 
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
-		assert.Equal(t, exampleUserID, args[0].(uint64))
+		assert.Equal(t, expectedUserID, args[0].(uint64))
 		assert.Equal(t, exampleItemID, args[1].(uint64))
 	})
 }
@@ -68,9 +112,9 @@ func TestPostgres_GetItem(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.Item{
-			ID: 123,
+			ID: fake.Uint64(),
 		}
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -87,9 +131,9 @@ func TestPostgres_GetItem(T *testing.T) {
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.Item{
-			ID: 123,
+			ID: fake.Uint64(),
 		}
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -110,16 +154,16 @@ func TestPostgres_buildGetItemCountQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		exampleUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		filter := models.DefaultQueryFilter()
 
 		expectedArgCount := 1
 		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 LIMIT 20"
 
-		actualQuery, args := p.buildGetItemCountQuery(exampleUserID, filter)
+		actualQuery, args := p.buildGetItemCountQuery(expectedUserID, filter)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
-		assert.Equal(t, exampleUserID, args[0].(uint64))
+		assert.Equal(t, expectedUserID, args[0].(uint64))
 	})
 }
 
@@ -127,12 +171,13 @@ func TestPostgres_GetItemCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		p, mockDB := buildTestService(t)
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedUserID := fake.Uint64()
+
 		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 LIMIT 20"
 		expectedCount := uint64(666)
 
-		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(expectedUserID).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
@@ -161,14 +206,16 @@ func TestPostgres_GetAllItemsCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		p, mockDB := buildTestService(t)
+		ctx := context.Background()
+
 		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
 		expectedCount := uint64(666)
 
-		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
-		actualCount, err := p.GetAllItemsCount(context.Background())
+		actualCount, err := p.GetAllItemsCount(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedCount, actualCount)
 
@@ -181,16 +228,16 @@ func TestPostgres_buildGetItemsQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		exampleUserID := uint64(321)
+		expectedUserID := fake.Uint64()
 		filter := models.DefaultQueryFilter()
 
 		expectedArgCount := 1
 		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 LIMIT 20"
-		actualQuery, args := p.buildGetItemsQuery(exampleUserID, filter)
+		actualQuery, args := p.buildGetItemsQuery(expectedUserID, filter)
 
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Len(t, args, expectedArgCount)
-		assert.Equal(t, exampleUserID, args[0].(uint64))
+		assert.Equal(t, expectedUserID, args[0].(uint64))
 	})
 }
 
@@ -200,11 +247,15 @@ func TestPostgres_GetItems(T *testing.T) {
 	expectedListQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
+		p, mockDB := buildTestService(t)
 		ctx := context.Background()
-		expectedUserID := uint64(123)
+		expectedItemID := fake.Uint64()
+		expectedUserID := fake.Uint64()
+
 		expectedCountQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
 		expectedItem := &models.Item{
-			ID: 321,
+			ID:            expectedItemID,
+			BelongsToUser: expectedUserID,
 		}
 		expectedCount := uint64(666)
 		expected := &models.ItemList{
@@ -218,7 +269,6 @@ func TestPostgres_GetItems(T *testing.T) {
 			},
 		}
 
-		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WithArgs(expectedUserID).
 			WillReturnRows(buildMockRowFromItem(expectedItem))
@@ -234,10 +284,10 @@ func TestPostgres_GetItems(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
-		ctx := context.Background()
-		expectedUserID := uint64(123)
-
 		p, mockDB := buildTestService(t)
+		ctx := context.Background()
+		expectedUserID := fake.Uint64()
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WithArgs(expectedUserID).
 			WillReturnError(sql.ErrNoRows)
@@ -251,10 +301,10 @@ func TestPostgres_GetItems(T *testing.T) {
 	})
 
 	T.Run("with error executing read query", func(t *testing.T) {
-		ctx := context.Background()
-		expectedUserID := uint64(123)
-
 		p, mockDB := buildTestService(t)
+		ctx := context.Background()
+		expectedUserID := fake.Uint64()
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WithArgs(expectedUserID).
 			WillReturnError(errors.New("blah"))
@@ -267,13 +317,16 @@ func TestPostgres_GetItems(T *testing.T) {
 	})
 
 	T.Run("with error scanning item", func(t *testing.T) {
+		p, mockDB := buildTestService(t)
 		ctx := context.Background()
-		expectedUserID := uint64(123)
+		expectedItemID := fake.Uint64()
+		expectedUserID := fake.Uint64()
+
 		expected := &models.Item{
-			ID: 321,
+			ID:            expectedItemID,
+			BelongsToUser: expectedUserID,
 		}
 
-		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WithArgs(expectedUserID).
 			WillReturnRows(buildErroneousMockRowFromItem(expected))
@@ -286,14 +339,17 @@ func TestPostgres_GetItems(T *testing.T) {
 	})
 
 	T.Run("with error querying for count", func(t *testing.T) {
+		p, mockDB := buildTestService(t)
 		ctx := context.Background()
-		expectedUserID := uint64(123)
+		expectedItemID := fake.Uint64()
+		expectedUserID := fake.Uint64()
+
 		expected := &models.Item{
-			ID: 321,
+			ID:            expectedItemID,
+			BelongsToUser: expectedUserID,
 		}
 		expectedCountQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
 
-		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WithArgs(expectedUserID).
 			WillReturnRows(buildMockRowFromItem(expected))
@@ -314,13 +370,16 @@ func TestPostgres_GetAllItemsForUser(T *testing.T) {
 	expectedListQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1"
 
 	T.Run("happy path", func(t *testing.T) {
+		p, mockDB := buildTestService(t)
 		ctx := context.Background()
-		expectedUserID := uint64(123)
+		expectedItemID := fake.Uint64()
+		expectedUserID := fake.Uint64()
+
 		expectedItem := &models.Item{
-			ID: 321,
+			ID:            expectedItemID,
+			BelongsToUser: expectedUserID,
 		}
 
-		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WithArgs(expectedUserID).
 			WillReturnRows(buildMockRowFromItem(expectedItem))
@@ -335,10 +394,10 @@ func TestPostgres_GetAllItemsForUser(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
-		ctx := context.Background()
-		expectedUserID := uint64(123)
-
 		p, mockDB := buildTestService(t)
+		ctx := context.Background()
+		expectedUserID := fake.Uint64()
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WithArgs(expectedUserID).
 			WillReturnError(sql.ErrNoRows)
@@ -352,10 +411,10 @@ func TestPostgres_GetAllItemsForUser(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
-		ctx := context.Background()
-		expectedUserID := uint64(123)
-
 		p, mockDB := buildTestService(t)
+		ctx := context.Background()
+		expectedUserID := fake.Uint64()
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WithArgs(expectedUserID).
 			WillReturnError(errors.New("blah"))
@@ -368,13 +427,14 @@ func TestPostgres_GetAllItemsForUser(T *testing.T) {
 	})
 
 	T.Run("with unscannable response", func(t *testing.T) {
+		p, mockDB := buildTestService(t)
 		ctx := context.Background()
-		expectedUserID := uint64(123)
+		expectedUserID := fake.Uint64()
+
 		exampleItem := &models.Item{
-			ID: 321,
+			ID: fake.Uint64(),
 		}
 
-		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WithArgs(expectedUserID).
 			WillReturnRows(buildErroneousMockRowFromItem(exampleItem))
@@ -392,10 +452,14 @@ func TestPostgres_buildCreateItemQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+		expectedItemID := fake.Uint64()
+		expectedUserID := fake.Uint64()
+
 		expected := &models.Item{
-			ID:            321,
-			BelongsToUser: 123,
+			ID:            expectedItemID,
+			BelongsToUser: expectedUserID,
 		}
+
 		expectedArgCount := 3
 		expectedQuery := "INSERT INTO items (name,details,belongs_to_user) VALUES ($1,$2,$3) RETURNING id, created_on"
 		actualQuery, args := p.buildCreateItemQuery(expected)
@@ -414,11 +478,13 @@ func TestPostgres_CreateItem(T *testing.T) {
 	expectedCreationQuery := "INSERT INTO items (name,details,belongs_to_user) VALUES ($1,$2,$3) RETURNING id, created_on"
 
 	T.Run("happy path", func(t *testing.T) {
+		p, mockDB := buildTestService(t)
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedItemID := fake.Uint64()
+		expectedUserID := fake.Uint64()
 
 		expected := &models.Item{
-			ID:            123,
+			ID:            expectedItemID,
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
@@ -429,7 +495,6 @@ func TestPostgres_CreateItem(T *testing.T) {
 		}
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(expected.ID, expected.CreatedOn)
 
-		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCreationQuery)).
 			WithArgs(
 				expected.Name,
@@ -445,10 +510,13 @@ func TestPostgres_CreateItem(T *testing.T) {
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
+		p, mockDB := buildTestService(t)
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedItemID := fake.Uint64()
+		expectedUserID := fake.Uint64()
+
 		expected := &models.Item{
-			ID:            123,
+			ID:            expectedItemID,
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
@@ -458,7 +526,6 @@ func TestPostgres_CreateItem(T *testing.T) {
 			BelongsToUser: expected.BelongsToUser,
 		}
 
-		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCreationQuery)).
 			WithArgs(
 				expected.Name,
@@ -479,10 +546,14 @@ func TestPostgres_buildUpdateItemQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+		expectedItemID := fake.Uint64()
+		expectedUserID := fake.Uint64()
+
 		expected := &models.Item{
-			ID:            321,
-			BelongsToUser: 123,
+			ID:            expectedItemID,
+			BelongsToUser: expectedUserID,
 		}
+
 		expectedArgCount := 4
 		expectedQuery := "UPDATE items SET name = $1, details = $2, updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $3 AND id = $4 RETURNING updated_on"
 		actualQuery, args := p.buildUpdateItemQuery(expected)
@@ -502,16 +573,18 @@ func TestPostgres_UpdateItem(T *testing.T) {
 	expectedQuery := "UPDATE items SET name = $1, details = $2, updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $3 AND id = $4 RETURNING updated_on"
 
 	T.Run("happy path", func(t *testing.T) {
+		p, mockDB := buildTestService(t)
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedItemID := fake.Uint64()
+		expectedUserID := fake.Uint64()
+
 		expected := &models.Item{
-			ID:            123,
+			ID:            expectedItemID,
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
 		exampleRows := sqlmock.NewRows([]string{"updated_on"}).AddRow(uint64(time.Now().Unix()))
 
-		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(
 				expected.Name,
@@ -527,15 +600,17 @@ func TestPostgres_UpdateItem(T *testing.T) {
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
+		p, mockDB := buildTestService(t)
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedItemID := fake.Uint64()
+		expectedUserID := fake.Uint64()
+
 		expected := &models.Item{
-			ID:            123,
+			ID:            expectedItemID,
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
 
-		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(
 				expected.Name,
@@ -556,10 +631,14 @@ func TestPostgres_buildArchiveItemQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+		expectedItemID := fake.Uint64()
+		expectedUserID := fake.Uint64()
+
 		expected := &models.Item{
-			ID:            321,
-			BelongsToUser: 123,
+			ID:            expectedItemID,
+			BelongsToUser: expectedUserID,
 		}
+
 		expectedArgCount := 2
 		expectedQuery := "UPDATE items SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1 AND id = $2 RETURNING archived_on"
 		actualQuery, args := p.buildArchiveItemQuery(expected.ID, expected.BelongsToUser)
@@ -577,15 +656,17 @@ func TestPostgres_ArchiveItem(T *testing.T) {
 	expectedQuery := "UPDATE items SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1 AND id = $2 RETURNING archived_on"
 
 	T.Run("happy path", func(t *testing.T) {
+		p, mockDB := buildTestService(t)
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedItemID := fake.Uint64()
+		expectedUserID := fake.Uint64()
+
 		expected := &models.Item{
-			ID:            123,
+			ID:            expectedItemID,
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
 
-		p, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(
 				expected.BelongsToUser,
@@ -599,15 +680,17 @@ func TestPostgres_ArchiveItem(T *testing.T) {
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
+		p, mockDB := buildTestService(t)
 		ctx := context.Background()
-		expectedUserID := uint64(321)
+		expectedItemID := fake.Uint64()
+		expectedUserID := fake.Uint64()
+
 		example := &models.Item{
-			ID:            123,
+			ID:            expectedItemID,
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
 
-		p, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(
 				example.BelongsToUser,

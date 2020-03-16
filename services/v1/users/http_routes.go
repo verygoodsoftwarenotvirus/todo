@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"image/png"
 	"net/http"
-	"strconv"
 
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/boombuler/barcode"
@@ -31,20 +31,6 @@ func init() {
 	b := make([]byte, 64)
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
-	}
-}
-
-// attachUsernameToSpan provides a consistent way to attach a username to a span
-func attachUsernameToSpan(span *trace.Span, username string) {
-	if span != nil {
-		span.AddAttributes(trace.StringAttribute("username", username))
-	}
-}
-
-// attachUserIDToSpan provides a consistent way to attach a user ID to a span
-func attachUserIDToSpan(span *trace.Span, userID uint64) {
-	if span != nil {
-		span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
 	}
 }
 
@@ -148,7 +134,7 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		attachUsernameToSpan(span, input.Username)
+		tracing.AttachUsernameToSpan(span, input.Username)
 
 		// NOTE: I feel comfortable letting username be in the logger, since
 		// the logging statements below are only in the event of errors. If
@@ -200,7 +186,7 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 		}
 
 		// notify the relevant parties
-		attachUserIDToSpan(span, user.ID)
+		tracing.AttachUserIDToSpan(span, user.ID)
 		s.userCounter.Increment(ctx)
 		s.reporter.Report(newsman.Event{
 			EventType: string(models.Create),
@@ -268,7 +254,7 @@ func (s *Service) ReadHandler() http.HandlerFunc {
 		logger := s.logger.WithValue("user_id", userID)
 
 		// document it for posterity
-		attachUserIDToSpan(span, userID)
+		tracing.AttachUserIDToSpan(span, userID)
 
 		// fetch user data
 		x, err := s.database.GetUser(ctx, userID)
@@ -327,8 +313,8 @@ func (s *Service) NewTOTPSecretHandler() http.HandlerFunc {
 		}
 
 		// document who this is for
-		attachUserIDToSpan(span, userID)
-		attachUsernameToSpan(span, user.Username)
+		tracing.AttachUserIDToSpan(span, userID)
+		tracing.AttachUsernameToSpan(span, user.Username)
 		logger := s.logger.WithValue("user", user.ID)
 
 		// set the two factor secret
@@ -393,8 +379,8 @@ func (s *Service) UpdatePasswordHandler() http.HandlerFunc {
 		}
 
 		// document who this is all for
-		attachUserIDToSpan(span, userID)
-		attachUsernameToSpan(span, user.Username)
+		tracing.AttachUserIDToSpan(span, userID)
+		tracing.AttachUsernameToSpan(span, user.Username)
 		logger := s.logger.WithValue("user", user.ID)
 
 		// hash the new password
@@ -427,7 +413,7 @@ func (s *Service) ArchiveHandler() http.HandlerFunc {
 		// figure out who this is for
 		userID := s.userIDFetcher(req)
 		logger := s.logger.WithValue("user_id", userID)
-		attachUserIDToSpan(span, userID)
+		tracing.AttachUserIDToSpan(span, userID)
 
 		// do the deed
 		if err := s.database.ArchiveUser(ctx, userID); err != nil {

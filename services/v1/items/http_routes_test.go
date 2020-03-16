@@ -13,6 +13,7 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -22,25 +23,26 @@ import (
 func TestItemsService_List(T *testing.T) {
 	T.Parallel()
 
+	requestingUser := &models.User{ID: fake.Uint64()}
+	userIDFetcher := func(_ *http.Request) uint64 {
+		return requestingUser.ID
+	}
+
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
+		s.userIDFetcher = userIDFetcher
 
-		requestingUser := &models.User{ID: 1}
 		expected := &models.ItemList{
 			Items: []models.Item{
 				{
-					ID: 123,
+					ID: fake.Uint64(),
 				},
 			},
 		}
 
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
-		}
-
-		id := &mockmodels.ItemDataManager{}
-		id.On("GetItems", mock.Anything, requestingUser.ID, mock.Anything).Return(expected, nil)
-		s.itemDatabase = id
+		idm := &mockmodels.ItemDataManager{}
+		idm.On("GetItems", mock.Anything, requestingUser.ID, mock.Anything).Return(expected, nil)
+		s.itemDatabase = idm
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
@@ -62,15 +64,11 @@ func TestItemsService_List(T *testing.T) {
 
 	T.Run("with no rows returned", func(t *testing.T) {
 		s := buildTestService()
+		s.userIDFetcher = userIDFetcher
 
-		requestingUser := &models.User{ID: 1}
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
-		}
-
-		id := &mockmodels.ItemDataManager{}
-		id.On("GetItems", mock.Anything, requestingUser.ID, mock.Anything).Return((*models.ItemList)(nil), sql.ErrNoRows)
-		s.itemDatabase = id
+		idm := &mockmodels.ItemDataManager{}
+		idm.On("GetItems", mock.Anything, requestingUser.ID, mock.Anything).Return((*models.ItemList)(nil), sql.ErrNoRows)
+		s.itemDatabase = idm
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
@@ -92,15 +90,11 @@ func TestItemsService_List(T *testing.T) {
 
 	T.Run("with error fetching items from database", func(t *testing.T) {
 		s := buildTestService()
+		s.userIDFetcher = userIDFetcher
 
-		requestingUser := &models.User{ID: 1}
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
-		}
-
-		id := &mockmodels.ItemDataManager{}
-		id.On("GetItems", mock.Anything, requestingUser.ID, mock.Anything).Return((*models.ItemList)(nil), errors.New("blah"))
-		s.itemDatabase = id
+		idm := &mockmodels.ItemDataManager{}
+		idm.On("GetItems", mock.Anything, requestingUser.ID, mock.Anything).Return((*models.ItemList)(nil), errors.New("blah"))
+		s.itemDatabase = idm
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
@@ -122,19 +116,15 @@ func TestItemsService_List(T *testing.T) {
 
 	T.Run("with error encoding response", func(t *testing.T) {
 		s := buildTestService()
+		s.userIDFetcher = userIDFetcher
 
-		requestingUser := &models.User{ID: 1}
 		expected := &models.ItemList{
 			Items: []models.Item{},
 		}
 
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
-		}
-
-		id := &mockmodels.ItemDataManager{}
-		id.On("GetItems", mock.Anything, requestingUser.ID, mock.Anything).Return(expected, nil)
-		s.itemDatabase = id
+		idm := &mockmodels.ItemDataManager{}
+		idm.On("GetItems", mock.Anything, requestingUser.ID, mock.Anything).Return(expected, nil)
+		s.itemDatabase = idm
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(errors.New("blah"))
@@ -158,12 +148,17 @@ func TestItemsService_List(T *testing.T) {
 func TestItemsService_Create(T *testing.T) {
 	T.Parallel()
 
+	requestingUser := &models.User{ID: fake.Uint64()}
+	userIDFetcher := func(_ *http.Request) uint64 {
+		return requestingUser.ID
+	}
+
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
+		s.userIDFetcher = userIDFetcher
 
-		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123,
+			ID: fake.Uint64(),
 		}
 
 		mc := &mockmetrics.UnitCounter{}
@@ -174,13 +169,9 @@ func TestItemsService_Create(T *testing.T) {
 		r.On("Report", mock.Anything).Return()
 		s.reporter = r
 
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
-		}
-
-		id := &mockmodels.ItemDataManager{}
-		id.On("CreateItem", mock.Anything, mock.Anything).Return(expected, nil)
-		s.itemDatabase = id
+		idm := &mockmodels.ItemDataManager{}
+		idm.On("CreateItem", mock.Anything, mock.Anything).Return(expected, nil)
+		s.itemDatabase = idm
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
@@ -208,11 +199,7 @@ func TestItemsService_Create(T *testing.T) {
 
 	T.Run("without input attached", func(t *testing.T) {
 		s := buildTestService()
-
-		requestingUser := &models.User{ID: 1}
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
-		}
+		s.userIDFetcher = userIDFetcher
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
@@ -234,19 +221,15 @@ func TestItemsService_Create(T *testing.T) {
 
 	T.Run("with error creating item", func(t *testing.T) {
 		s := buildTestService()
+		s.userIDFetcher = userIDFetcher
 
-		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123,
+			ID: fake.Uint64(),
 		}
 
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
-		}
-
-		id := &mockmodels.ItemDataManager{}
-		id.On("CreateItem", mock.Anything, mock.Anything).Return((*models.Item)(nil), errors.New("blah"))
-		s.itemDatabase = id
+		idm := &mockmodels.ItemDataManager{}
+		idm.On("CreateItem", mock.Anything, mock.Anything).Return((*models.Item)(nil), errors.New("blah"))
+		s.itemDatabase = idm
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
@@ -274,10 +257,10 @@ func TestItemsService_Create(T *testing.T) {
 
 	T.Run("with error encoding response", func(t *testing.T) {
 		s := buildTestService()
+		s.userIDFetcher = userIDFetcher
 
-		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123,
+			ID: fake.Uint64(),
 		}
 
 		mc := &mockmetrics.UnitCounter{}
@@ -288,13 +271,9 @@ func TestItemsService_Create(T *testing.T) {
 		r.On("Report", mock.Anything).Return()
 		s.reporter = r
 
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
-		}
-
-		id := &mockmodels.ItemDataManager{}
-		id.On("CreateItem", mock.Anything, mock.Anything).Return(expected, nil)
-		s.itemDatabase = id
+		idm := &mockmodels.ItemDataManager{}
+		idm.On("CreateItem", mock.Anything, mock.Anything).Return(expected, nil)
+		s.itemDatabase = idm
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(errors.New("blah"))
@@ -324,25 +303,26 @@ func TestItemsService_Create(T *testing.T) {
 func TestItemsService_Read(T *testing.T) {
 	T.Parallel()
 
+	requestingUser := &models.User{ID: fake.Uint64()}
+	userIDFetcher := func(_ *http.Request) uint64 {
+		return requestingUser.ID
+	}
+
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
+		s.userIDFetcher = userIDFetcher
 
-		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123,
-		}
-
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			ID: fake.Uint64(),
 		}
 
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return expected.ID
 		}
 
-		id := &mockmodels.ItemDataManager{}
-		id.On("GetItem", mock.Anything, expected.ID, requestingUser.ID).Return(expected, nil)
-		s.itemDatabase = id
+		idm := &mockmodels.ItemDataManager{}
+		idm.On("GetItem", mock.Anything, expected.ID, requestingUser.ID).Return(expected, nil)
+		s.itemDatabase = idm
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
@@ -364,23 +344,19 @@ func TestItemsService_Read(T *testing.T) {
 
 	T.Run("with no such item in database", func(t *testing.T) {
 		s := buildTestService()
+		s.userIDFetcher = userIDFetcher
 
-		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123,
-		}
-
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			ID: fake.Uint64(),
 		}
 
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return expected.ID
 		}
 
-		id := &mockmodels.ItemDataManager{}
-		id.On("GetItem", mock.Anything, expected.ID, requestingUser.ID).Return((*models.Item)(nil), sql.ErrNoRows)
-		s.itemDatabase = id
+		idm := &mockmodels.ItemDataManager{}
+		idm.On("GetItem", mock.Anything, expected.ID, requestingUser.ID).Return((*models.Item)(nil), sql.ErrNoRows)
+		s.itemDatabase = idm
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -398,23 +374,19 @@ func TestItemsService_Read(T *testing.T) {
 
 	T.Run("with error fetching item from database", func(t *testing.T) {
 		s := buildTestService()
+		s.userIDFetcher = userIDFetcher
 
-		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123,
-		}
-
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			ID: fake.Uint64(),
 		}
 
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return expected.ID
 		}
 
-		id := &mockmodels.ItemDataManager{}
-		id.On("GetItem", mock.Anything, expected.ID, requestingUser.ID).Return((*models.Item)(nil), errors.New("blah"))
-		s.itemDatabase = id
+		idm := &mockmodels.ItemDataManager{}
+		idm.On("GetItem", mock.Anything, expected.ID, requestingUser.ID).Return((*models.Item)(nil), errors.New("blah"))
+		s.itemDatabase = idm
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -432,23 +404,19 @@ func TestItemsService_Read(T *testing.T) {
 
 	T.Run("with error encoding response", func(t *testing.T) {
 		s := buildTestService()
+		s.userIDFetcher = userIDFetcher
 
-		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123,
-		}
-
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			ID: fake.Uint64(),
 		}
 
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return expected.ID
 		}
 
-		id := &mockmodels.ItemDataManager{}
-		id.On("GetItem", mock.Anything, expected.ID, requestingUser.ID).Return(expected, nil)
-		s.itemDatabase = id
+		idm := &mockmodels.ItemDataManager{}
+		idm.On("GetItem", mock.Anything, expected.ID, requestingUser.ID).Return(expected, nil)
+		s.itemDatabase = idm
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(errors.New("blah"))
@@ -472,12 +440,21 @@ func TestItemsService_Read(T *testing.T) {
 func TestItemsService_Update(T *testing.T) {
 	T.Parallel()
 
+	requestingUser := &models.User{ID: fake.Uint64()}
+	userIDFetcher := func(_ *http.Request) uint64 {
+		return requestingUser.ID
+	}
+
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
+		s.userIDFetcher = userIDFetcher
 
-		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123,
+			ID: fake.Uint64(),
+		}
+
+		s.itemIDFetcher = func(req *http.Request) uint64 {
+			return expected.ID
 		}
 
 		mc := &mockmetrics.UnitCounter{}
@@ -488,18 +465,10 @@ func TestItemsService_Update(T *testing.T) {
 		r.On("Report", mock.Anything).Return()
 		s.reporter = r
 
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
-		}
-
-		s.itemIDFetcher = func(req *http.Request) uint64 {
-			return expected.ID
-		}
-
-		id := &mockmodels.ItemDataManager{}
-		id.On("GetItem", mock.Anything, expected.ID, requestingUser.ID).Return(expected, nil)
-		id.On("UpdateItem", mock.Anything, mock.Anything).Return(nil)
-		s.itemDatabase = id
+		idm := &mockmodels.ItemDataManager{}
+		idm.On("GetItem", mock.Anything, expected.ID, requestingUser.ID).Return(expected, nil)
+		idm.On("UpdateItem", mock.Anything, mock.Anything).Return(nil)
+		s.itemDatabase = idm
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
@@ -544,23 +513,19 @@ func TestItemsService_Update(T *testing.T) {
 
 	T.Run("with no rows fetching item", func(t *testing.T) {
 		s := buildTestService()
+		s.userIDFetcher = userIDFetcher
 
-		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123,
-		}
-
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			ID: fake.Uint64(),
 		}
 
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return expected.ID
 		}
 
-		id := &mockmodels.ItemDataManager{}
-		id.On("GetItem", mock.Anything, expected.ID, requestingUser.ID).Return((*models.Item)(nil), sql.ErrNoRows)
-		s.itemDatabase = id
+		idm := &mockmodels.ItemDataManager{}
+		idm.On("GetItem", mock.Anything, expected.ID, requestingUser.ID).Return((*models.Item)(nil), sql.ErrNoRows)
+		s.itemDatabase = idm
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -584,23 +549,19 @@ func TestItemsService_Update(T *testing.T) {
 
 	T.Run("with error fetching item", func(t *testing.T) {
 		s := buildTestService()
+		s.userIDFetcher = userIDFetcher
 
-		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123,
-		}
-
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			ID: fake.Uint64(),
 		}
 
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return expected.ID
 		}
 
-		id := &mockmodels.ItemDataManager{}
-		id.On("GetItem", mock.Anything, expected.ID, requestingUser.ID).Return((*models.Item)(nil), errors.New("blah"))
-		s.itemDatabase = id
+		idm := &mockmodels.ItemDataManager{}
+		idm.On("GetItem", mock.Anything, expected.ID, requestingUser.ID).Return((*models.Item)(nil), errors.New("blah"))
+		s.itemDatabase = idm
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -624,10 +585,14 @@ func TestItemsService_Update(T *testing.T) {
 
 	T.Run("with error updating item", func(t *testing.T) {
 		s := buildTestService()
+		s.userIDFetcher = userIDFetcher
 
-		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123,
+			ID: fake.Uint64(),
+		}
+
+		s.itemIDFetcher = func(req *http.Request) uint64 {
+			return expected.ID
 		}
 
 		mc := &mockmetrics.UnitCounter{}
@@ -638,18 +603,10 @@ func TestItemsService_Update(T *testing.T) {
 		r.On("Report", mock.Anything).Return()
 		s.reporter = r
 
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
-		}
-
-		s.itemIDFetcher = func(req *http.Request) uint64 {
-			return expected.ID
-		}
-
-		id := &mockmodels.ItemDataManager{}
-		id.On("GetItem", mock.Anything, expected.ID, requestingUser.ID).Return(expected, nil)
-		id.On("UpdateItem", mock.Anything, mock.Anything).Return(errors.New("blah"))
-		s.itemDatabase = id
+		idm := &mockmodels.ItemDataManager{}
+		idm.On("GetItem", mock.Anything, expected.ID, requestingUser.ID).Return(expected, nil)
+		idm.On("UpdateItem", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		s.itemDatabase = idm
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
@@ -677,10 +634,14 @@ func TestItemsService_Update(T *testing.T) {
 
 	T.Run("with error encoding response", func(t *testing.T) {
 		s := buildTestService()
+		s.userIDFetcher = userIDFetcher
 
-		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123,
+			ID: fake.Uint64(),
+		}
+
+		s.itemIDFetcher = func(req *http.Request) uint64 {
+			return expected.ID
 		}
 
 		mc := &mockmetrics.UnitCounter{}
@@ -691,18 +652,10 @@ func TestItemsService_Update(T *testing.T) {
 		r.On("Report", mock.Anything).Return()
 		s.reporter = r
 
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
-		}
-
-		s.itemIDFetcher = func(req *http.Request) uint64 {
-			return expected.ID
-		}
-
-		id := &mockmodels.ItemDataManager{}
-		id.On("GetItem", mock.Anything, expected.ID, requestingUser.ID).Return(expected, nil)
-		id.On("UpdateItem", mock.Anything, mock.Anything).Return(nil)
-		s.itemDatabase = id
+		idm := &mockmodels.ItemDataManager{}
+		idm.On("GetItem", mock.Anything, expected.ID, requestingUser.ID).Return(expected, nil)
+		idm.On("UpdateItem", mock.Anything, mock.Anything).Return(nil)
+		s.itemDatabase = idm
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(errors.New("blah"))
@@ -732,12 +685,21 @@ func TestItemsService_Update(T *testing.T) {
 func TestItemsService_Archive(T *testing.T) {
 	T.Parallel()
 
+	requestingUser := &models.User{ID: fake.Uint64()}
+	userIDFetcher := func(_ *http.Request) uint64 {
+		return requestingUser.ID
+	}
+
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
+		s.userIDFetcher = userIDFetcher
 
-		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123,
+			ID: fake.Uint64(),
+		}
+
+		s.itemIDFetcher = func(req *http.Request) uint64 {
+			return expected.ID
 		}
 
 		r := &mocknewsman.Reporter{}
@@ -748,17 +710,13 @@ func TestItemsService_Archive(T *testing.T) {
 		mc.On("Decrement").Return()
 		s.itemCounter = mc
 
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
-		}
-
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return expected.ID
 		}
 
-		id := &mockmodels.ItemDataManager{}
-		id.On("ArchiveItem", mock.Anything, expected.ID, requestingUser.ID).Return(nil)
-		s.itemDatabase = id
+		idm := &mockmodels.ItemDataManager{}
+		idm.On("ArchiveItem", mock.Anything, expected.ID, requestingUser.ID).Return(nil)
+		s.itemDatabase = idm
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
@@ -780,23 +738,19 @@ func TestItemsService_Archive(T *testing.T) {
 
 	T.Run("with no item in database", func(t *testing.T) {
 		s := buildTestService()
+		s.userIDFetcher = userIDFetcher
 
-		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123,
-		}
-
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			ID: fake.Uint64(),
 		}
 
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return expected.ID
 		}
 
-		id := &mockmodels.ItemDataManager{}
-		id.On("ArchiveItem", mock.Anything, expected.ID, requestingUser.ID).Return(sql.ErrNoRows)
-		s.itemDatabase = id
+		idm := &mockmodels.ItemDataManager{}
+		idm.On("ArchiveItem", mock.Anything, expected.ID, requestingUser.ID).Return(sql.ErrNoRows)
+		s.itemDatabase = idm
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -814,23 +768,19 @@ func TestItemsService_Archive(T *testing.T) {
 
 	T.Run("with error reading from database", func(t *testing.T) {
 		s := buildTestService()
+		s.userIDFetcher = userIDFetcher
 
-		requestingUser := &models.User{ID: 1}
 		expected := &models.Item{
-			ID: 123,
-		}
-
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			ID: fake.Uint64(),
 		}
 
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return expected.ID
 		}
 
-		id := &mockmodels.ItemDataManager{}
-		id.On("ArchiveItem", mock.Anything, expected.ID, requestingUser.ID).Return(errors.New("blah"))
-		s.itemDatabase = id
+		idm := &mockmodels.ItemDataManager{}
+		idm.On("ArchiveItem", mock.Anything, expected.ID, requestingUser.ID).Return(errors.New("blah"))
+		s.itemDatabase = idm
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(

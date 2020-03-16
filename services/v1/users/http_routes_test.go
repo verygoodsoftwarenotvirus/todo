@@ -15,6 +15,7 @@ import (
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -53,7 +54,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 		s := buildTestService(t)
 
 		expected := &models.User{
-			ID:              uint64(123),
+			ID:              fake.Uint64(),
 			HashedPassword:  "not really lol",
 			Salt:            []byte("nah"),
 			TwoFactorSecret: "still no",
@@ -94,7 +95,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 		s := buildTestService(t)
 
 		expected := &models.User{
-			ID:              uint64(123),
+			ID:              fake.Uint64(),
 			HashedPassword:  "not really lol",
 			Salt:            []byte("nah"),
 			TwoFactorSecret: "still no",
@@ -122,7 +123,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 		s := buildTestService(t)
 
 		expected := &models.User{
-			ID:              uint64(123),
+			ID:              fake.Uint64(),
 			HashedPassword:  "not really lol",
 			Salt:            []byte("nah"),
 			TwoFactorSecret: "still no",
@@ -150,7 +151,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 		s := buildTestService(t)
 
 		expected := &models.User{
-			ID:              uint64(123),
+			ID:              fake.Uint64(),
 			HashedPassword:  "not really lol",
 			Salt:            []byte("nah"),
 			TwoFactorSecret: "still no",
@@ -190,7 +191,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 		s := buildTestService(t)
 
 		expected := &models.User{
-			ID:              uint64(123),
+			ID:              fake.Uint64(),
 			HashedPassword:  "not really lol",
 			Salt:            []byte("nah"),
 			TwoFactorSecret: "still no",
@@ -572,7 +573,7 @@ func TestService_NewTOTPSecret(T *testing.T) {
 
 		exampleInput := &models.TOTPSecretRefreshInput{}
 		exampleUser := &models.User{
-			ID:              uint64(123),
+			ID:              fake.Uint64(),
 			HashedPassword:  "not really lol",
 			Salt:            []byte("nah"),
 			TwoFactorSecret: "still no",
@@ -652,7 +653,7 @@ func TestService_NewTOTPSecret(T *testing.T) {
 
 		exampleInput := &models.TOTPSecretRefreshInput{}
 		exampleUser := &models.User{
-			ID:              uint64(123),
+			ID:              fake.Uint64(),
 			HashedPassword:  "not really lol",
 			Salt:            []byte("nah"),
 			TwoFactorSecret: "still no",
@@ -705,7 +706,7 @@ func TestService_NewTOTPSecret(T *testing.T) {
 
 		exampleInput := &models.TOTPSecretRefreshInput{}
 		exampleUser := &models.User{
-			ID:              uint64(123),
+			ID:              fake.Uint64(),
 			HashedPassword:  "not really lol",
 			Salt:            []byte("nah"),
 			TwoFactorSecret: "still no",
@@ -758,7 +759,7 @@ func TestService_NewTOTPSecret(T *testing.T) {
 
 		exampleInput := &models.TOTPSecretRefreshInput{}
 		exampleUser := &models.User{
-			ID:              uint64(123),
+			ID:              fake.Uint64(),
 			HashedPassword:  "not really lol",
 			Salt:            []byte("nah"),
 			TwoFactorSecret: "still no",
@@ -815,7 +816,7 @@ func TestService_UpdatePassword(T *testing.T) {
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		exampleUser := &models.User{
-			ID:              uint64(123),
+			ID:              fake.Uint64(),
 			HashedPassword:  "not really lol",
 			Salt:            []byte("nah"),
 			TwoFactorSecret: "still no",
@@ -904,7 +905,7 @@ func TestService_UpdatePassword(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := &models.User{
-			ID:              uint64(123),
+			ID:              fake.Uint64(),
 			HashedPassword:  "not really lol",
 			Salt:            []byte("nah"),
 			TwoFactorSecret: "still no",
@@ -958,7 +959,7 @@ func TestService_UpdatePassword(T *testing.T) {
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		exampleUser := &models.User{
-			ID:              uint64(123),
+			ID:              fake.Uint64(),
 			HashedPassword:  "not really lol",
 			Salt:            []byte("nah"),
 			TwoFactorSecret: "still no",
@@ -1016,7 +1017,7 @@ func TestService_UpdatePassword(T *testing.T) {
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		exampleUser := &models.User{
-			ID:              uint64(123),
+			ID:              fake.Uint64(),
 			HashedPassword:  "not really lol",
 			Salt:            []byte("nah"),
 			TwoFactorSecret: "still no",
@@ -1072,7 +1073,7 @@ func TestService_Archive(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
-		expectedUserID := uint64(123)
+		expectedUserID := fake.Uint64()
 		s.userIDFetcher = func(req *http.Request) uint64 {
 			return expectedUserID
 		}
@@ -1101,7 +1102,7 @@ func TestService_Archive(T *testing.T) {
 	T.Run("with error updating database", func(t *testing.T) {
 		s := buildTestService(t)
 
-		expectedUserID := uint64(123)
+		expectedUserID := fake.Uint64()
 		s.userIDFetcher = func(req *http.Request) uint64 {
 			return expectedUserID
 		}

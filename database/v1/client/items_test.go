@@ -6,17 +6,38 @@ import (
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+func TestClient_ItemExists(T *testing.T) {
+	T.Parallel()
+
+	T.Run("obligatory", func(t *testing.T) {
+		ctx := context.Background()
+		exampleItemID := fake.Uint64()
+		exampleUserID := fake.Uint64()
+		expected := true
+
+		c, mockDB := buildTestClient()
+		mockDB.ItemDataManager.On("ItemExists", mock.Anything, exampleItemID, exampleUserID).Return(expected, nil)
+
+		actual, err := c.ItemExists(ctx, exampleItemID, exampleUserID)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+
+		mockDB.AssertExpectations(t)
+	})
+}
 
 func TestClient_GetItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
 		ctx := context.Background()
-		exampleItemID := uint64(123)
-		exampleUserID := uint64(123)
+		exampleItemID := fake.Uint64()
+		exampleUserID := fake.Uint64()
 		expected := &models.Item{}
 
 		c, mockDB := buildTestClient()
@@ -35,8 +56,8 @@ func TestClient_GetItemCount(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		ctx := context.Background()
-		expected := uint64(321)
-		exampleUserID := uint64(123)
+		expected := fake.Uint64()
+		exampleUserID := fake.Uint64()
 		filter := models.DefaultQueryFilter()
 
 		c, mockDB := buildTestClient()
@@ -51,8 +72,8 @@ func TestClient_GetItemCount(T *testing.T) {
 
 	T.Run("with nil filter", func(t *testing.T) {
 		ctx := context.Background()
-		expected := uint64(321)
-		exampleUserID := uint64(123)
+		expected := fake.Uint64()
+		exampleUserID := fake.Uint64()
 		filter := (*models.QueryFilter)(nil)
 
 		c, mockDB := buildTestClient()
@@ -71,7 +92,7 @@ func TestClient_GetAllItemsCount(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		ctx := context.Background()
-		expected := uint64(321)
+		expected := fake.Uint64()
 		c, mockDB := buildTestClient()
 		mockDB.ItemDataManager.On("GetAllItemsCount", mock.Anything).Return(expected, nil)
 
@@ -88,7 +109,7 @@ func TestClient_GetItems(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUserID := uint64(123)
+		exampleUserID := fake.Uint64()
 		c, mockDB := buildTestClient()
 		expected := &models.ItemList{}
 		filter := models.DefaultQueryFilter()
@@ -104,7 +125,7 @@ func TestClient_GetItems(T *testing.T) {
 
 	T.Run("with nil filter", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUserID := uint64(123)
+		exampleUserID := fake.Uint64()
 		c, mockDB := buildTestClient()
 		expected := &models.ItemList{}
 		filter := (*models.QueryFilter)(nil)
@@ -124,7 +145,7 @@ func TestClient_GetAllItemsForUser(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUserID := uint64(123)
+		exampleUserID := fake.Uint64()
 		c, mockDB := buildTestClient()
 		expected := []models.Item{}
 
@@ -178,14 +199,14 @@ func TestClient_ArchiveItem(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUserID := uint64(123)
-		exampleItemID := uint64(123)
+		exampleUserID := fake.Uint64()
+		exampleItemID := fake.Uint64()
 		var expected error
 
 		c, mockDB := buildTestClient()
 		mockDB.ItemDataManager.On("ArchiveItem", mock.Anything, exampleItemID, exampleUserID).Return(expected)
 
-		err := c.ArchiveItem(ctx, exampleUserID, exampleItemID)
+		err := c.ArchiveItem(ctx, exampleItemID, exampleUserID)
 		assert.NoError(t, err)
 	})
 }

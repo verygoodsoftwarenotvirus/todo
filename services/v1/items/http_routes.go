@@ -3,8 +3,8 @@ package items
 import (
 	"database/sql"
 	"net/http"
-	"strconv"
 
+	tracing "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
@@ -15,18 +15,6 @@ const (
 	// URIParamKey is a standard string that we'll use to refer to item IDs with
 	URIParamKey = "itemID"
 )
-
-func attachItemIDToSpan(span *trace.Span, itemID uint64) {
-	if span != nil {
-		span.AddAttributes(trace.StringAttribute("item_id", strconv.FormatUint(itemID, 10)))
-	}
-}
-
-func attachUserIDToSpan(span *trace.Span, userID uint64) {
-	if span != nil {
-		span.AddAttributes(trace.StringAttribute("user_id", strconv.FormatUint(userID, 10)))
-	}
-}
 
 // ListHandler is our list route
 func (s *Service) ListHandler() http.HandlerFunc {
@@ -40,7 +28,7 @@ func (s *Service) ListHandler() http.HandlerFunc {
 		// determine user ID
 		userID := s.userIDFetcher(req)
 		logger := s.logger.WithValue("user_id", userID)
-		attachUserIDToSpan(span, userID)
+		tracing.AttachUserIDToSpan(span, userID)
 
 		// fetch items from database
 		items, err := s.itemDatabase.GetItems(ctx, userID, qf)
@@ -70,7 +58,7 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 
 		// determine user ID
 		userID := s.userIDFetcher(req)
-		attachUserIDToSpan(span, userID)
+		tracing.AttachUserIDToSpan(span, userID)
 		logger := s.logger.WithValue("user_id", userID)
 
 		// check request context for parsed input struct
@@ -93,7 +81,7 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 
 		// notify relevant parties
 		s.itemCounter.Increment(ctx)
-		attachItemIDToSpan(span, x.ID)
+		tracing.AttachItemIDToSpan(span, x.ID)
 		s.reporter.Report(newsman.Event{
 			Data:      x,
 			Topics:    []string{topicName},
@@ -104,6 +92,38 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 		res.WriteHeader(http.StatusCreated)
 		if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
 			s.logger.Error(err, "encoding response")
+		}
+	}
+}
+
+// ExistenceHandler returns a HEAD handler that returns 200 if an item exists, 404 otherwise
+func (s *Service) ExistenceHandler() http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := trace.StartSpan(req.Context(), "ExistenceHandler")
+		defer span.End()
+
+		// determine relevant information
+		userID := s.userIDFetcher(req)
+		itemID := s.itemIDFetcher(req)
+		logger := s.logger.WithValues(map[string]interface{}{
+			"user_id": userID,
+			"item_id": itemID,
+		})
+		tracing.AttachItemIDToSpan(span, itemID)
+		tracing.AttachUserIDToSpan(span, userID)
+
+		// fetch item from database
+		exists, err := s.itemDatabase.ItemExists(ctx, itemID, userID)
+		if err != nil {
+			logger.Error(err, "error fetching item from database")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if exists {
+			res.WriteHeader(http.StatusOK)
+		} else {
+			res.WriteHeader(http.StatusNotFound)
 		}
 	}
 }
@@ -121,8 +141,8 @@ func (s *Service) ReadHandler() http.HandlerFunc {
 			"user_id": userID,
 			"item_id": itemID,
 		})
-		attachItemIDToSpan(span, itemID)
-		attachUserIDToSpan(span, userID)
+		tracing.AttachItemIDToSpan(span, itemID)
+		tracing.AttachUserIDToSpan(span, userID)
 
 		// fetch item from database
 		x, err := s.itemDatabase.GetItem(ctx, itemID, userID)
@@ -163,8 +183,8 @@ func (s *Service) UpdateHandler() http.HandlerFunc {
 			"user_id": userID,
 			"item_id": itemID,
 		})
-		attachItemIDToSpan(span, itemID)
-		attachUserIDToSpan(span, userID)
+		tracing.AttachItemIDToSpan(span, itemID)
+		tracing.AttachUserIDToSpan(span, userID)
 
 		// fetch item from database
 		x, err := s.itemDatabase.GetItem(ctx, itemID, userID)
@@ -214,8 +234,8 @@ func (s *Service) ArchiveHandler() http.HandlerFunc {
 			"item_id": itemID,
 			"user_id": userID,
 		})
-		attachItemIDToSpan(span, itemID)
-		attachUserIDToSpan(span, userID)
+		tracing.AttachItemIDToSpan(span, itemID)
+		tracing.AttachUserIDToSpan(span, userID)
 
 		// archive the item in the database
 		err := s.itemDatabase.ArchiveItem(ctx, itemID, userID)

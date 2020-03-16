@@ -15,6 +15,12 @@ type ItemDataManager struct {
 	mock.Mock
 }
 
+// ItemExists is a mock function
+func (m *ItemDataManager) ItemExists(ctx context.Context, itemID, userID uint64) (bool, error) {
+	args := m.Called(ctx, itemID, userID)
+	return args.Get(0).(bool), args.Error(1)
+}
+
 // GetItem is a mock function
 func (m *ItemDataManager) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
 	args := m.Called(ctx, itemID, userID)

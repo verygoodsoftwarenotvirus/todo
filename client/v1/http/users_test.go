@@ -13,6 +13,7 @@ import (
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -43,7 +44,7 @@ func TestV1Client_GetUser(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
-			ID: 1,
+			ID: fake.Uint64(),
 		}
 
 		ts := httptest.NewTLSServer(
@@ -88,7 +89,7 @@ func TestV1Client_GetUsers(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expected := &models.UserList{Users: []models.User{{ID: 1}}}
+		expected := &models.UserList{Users: []models.User{{ID: fake.Uint64()}}}
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -132,7 +133,7 @@ func TestV1Client_CreateUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expected := &models.UserCreationResponse{ID: 1}
+		expected := &models.UserCreationResponse{ID: fake.Uint64()}
 		exampleInput := &models.UserInput{}
 
 		ts := httptest.NewTLSServer(
@@ -205,9 +206,10 @@ func TestV1Client_BuildLoginRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ts := httptest.NewTLSServer(nil)
+		ctx := context.Background()
 		c := buildTestClient(t, ts)
 
-		req, err := c.BuildLoginRequest("username", "password", "123456")
+		req, err := c.BuildLoginRequest(ctx, "username", "password", "123456")
 		require.NotNil(t, req)
 		assert.Equal(t, req.Method, http.MethodPost)
 		assert.NoError(t, err)

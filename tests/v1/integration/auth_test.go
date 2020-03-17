@@ -17,6 +17,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 	randmodel "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/rand/model"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -471,14 +472,14 @@ func TestAuth(test *testing.T) {
 		// create webhook for user A
 		webhookA, err := clientA.CreateWebhook(tctx, &models.WebhookCreationInput{
 			Method: http.MethodPatch,
-			Name:   "A",
+			Name:   fake.Word(),
 		})
 		checkValueAndError(t, webhookA, err)
 
 		// create webhook for user B
 		webhookB, err := clientB.CreateWebhook(tctx, &models.WebhookCreationInput{
 			Method: http.MethodPatch,
-			Name:   "B",
+			Name:   fake.Word(),
 		})
 		checkValueAndError(t, webhookB, err)
 

@@ -289,7 +289,7 @@ func TestService_Create(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleInput := &models.UserInput{
-			Username: "username",
+			Username: fake.Username(),
 			Password: "password",
 		}
 		expectedUser := &models.User{
@@ -356,7 +356,7 @@ func TestService_Create(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleInput := &models.UserInput{
-			Username: "username",
+			Username: fake.Username(),
 			Password: "password",
 		}
 		expectedUser := &models.User{
@@ -387,7 +387,7 @@ func TestService_Create(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleInput := &models.UserInput{
-			Username: "username",
+			Username: fake.Username(),
 			Password: "password",
 		}
 		expectedUser := &models.User{
@@ -422,7 +422,7 @@ func TestService_Create(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleInput := &models.UserInput{
-			Username: "username",
+			Username: fake.Username(),
 			Password: "password",
 		}
 		expectedUser := &models.User{
@@ -457,7 +457,7 @@ func TestService_Create(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleInput := &models.UserInput{
-			Username: "username",
+			Username: fake.Username(),
 			Password: "password",
 		}
 		expectedUser := &models.User{

@@ -18,6 +18,8 @@ const (
 )
 
 func init() {
+	fake.Seed(time.Now().UnixNano())
+
 	urlToUse = testutil.DetermineServiceURL()
 
 	logger := zerolog.NewZeroLogger()

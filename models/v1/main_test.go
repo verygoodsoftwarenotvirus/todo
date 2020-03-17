@@ -2,7 +2,14 @@ package models
 
 import (
 	"testing"
+	"time"
+
+	fake "github.com/brianvoe/gofakeit"
 )
+
+func init() {
+	fake.Seed(time.Now().UnixNano())
+}
 
 func TestErrorResponse_Error(T *testing.T) {
 	T.Parallel()

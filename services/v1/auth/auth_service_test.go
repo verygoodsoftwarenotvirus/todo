@@ -3,14 +3,20 @@ package auth
 import (
 	"net/http"
 	"testing"
+	"time"
 
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
+	fake "github.com/brianvoe/gofakeit"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
+
+func init() {
+	fake.Seed(time.Now().UnixNano())
+}
 
 func buildTestService(t *testing.T) *Service {
 	t.Helper()

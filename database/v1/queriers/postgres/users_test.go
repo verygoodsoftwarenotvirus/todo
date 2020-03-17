@@ -73,7 +73,7 @@ func TestPostgres_GetUser(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
 			ID:       fake.Uint64(),
-			Username: "username",
+			Username: fake.Username(),
 		}
 
 		p, mockDB := buildTestService(t)
@@ -92,7 +92,7 @@ func TestPostgres_GetUser(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
 			ID:       fake.Uint64(),
-			Username: "username",
+			Username: fake.Username(),
 		}
 
 		p, mockDB := buildTestService(t)
@@ -142,7 +142,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 			Users: []models.User{
 				{
 					ID:       fake.Uint64(),
-					Username: "username",
+					Username: fake.Username(),
 				},
 			},
 		}
@@ -196,7 +196,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 			Users: []models.User{
 				{
 					ID:       fake.Uint64(),
-					Username: "username",
+					Username: fake.Username(),
 				},
 			},
 		}
@@ -225,7 +225,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 			Users: []models.User{
 				{
 					ID:       fake.Uint64(),
-					Username: "username",
+					Username: fake.Username(),
 				},
 			},
 		}
@@ -273,7 +273,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
 			ID:       fake.Uint64(),
-			Username: "username",
+			Username: fake.Username(),
 		}
 
 		p, mockDB := buildTestService(t)
@@ -292,7 +292,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
 			ID:       fake.Uint64(),
-			Username: "username",
+			Username: fake.Username(),
 		}
 
 		p, mockDB := buildTestService(t)
@@ -312,7 +312,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
 			ID:       fake.Uint64(),
-			Username: "username",
+			Username: fake.Username(),
 		}
 
 		p, mockDB := buildTestService(t)
@@ -383,7 +383,7 @@ func TestPostgres_buildCreateUserQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
 		exampleUser := &models.UserInput{
-			Username:        "username",
+			Username:        fake.Username(),
 			Password:        "hashed password",
 			TwoFactorSecret: "two factor secret",
 		}
@@ -405,7 +405,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
 			ID:        fake.Uint64(),
-			Username:  "username",
+			Username:  fake.Username(),
 			CreatedOn: uint64(time.Now().Unix()),
 		}
 		expectedInput := &models.UserInput{
@@ -432,7 +432,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
 			ID:        fake.Uint64(),
-			Username:  "username",
+			Username:  fake.Username(),
 			CreatedOn: uint64(time.Now().Unix()),
 		}
 		expectedInput := &models.UserInput{
@@ -461,7 +461,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
 			ID:        fake.Uint64(),
-			Username:  "username",
+			Username:  fake.Username(),
 			CreatedOn: uint64(time.Now().Unix()),
 		}
 		expectedInput := &models.UserInput{
@@ -491,7 +491,7 @@ func TestPostgres_buildUpdateUserQuery(T *testing.T) {
 		p, _ := buildTestService(t)
 		exampleUser := &models.User{
 			ID:              fake.Uint64(),
-			Username:        "username",
+			Username:        fake.Username(),
 			HashedPassword:  "hashed password",
 			TwoFactorSecret: "two factor secret",
 		}
@@ -511,7 +511,7 @@ func TestPostgres_UpdateUser(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
 			ID:        fake.Uint64(),
-			Username:  "username",
+			Username:  fake.Username(),
 			CreatedOn: uint64(time.Now().Unix()),
 		}
 		exampleRows := sqlmock.NewRows([]string{"updated_on"}).AddRow(uint64(time.Now().Unix()))
@@ -555,7 +555,7 @@ func TestPostgres_ArchiveUser(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
 			ID:        fake.Uint64(),
-			Username:  "username",
+			Username:  fake.Username(),
 			CreatedOn: uint64(time.Now().Unix()),
 		}
 		expectedQuery := "UPDATE users SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE id = $1 RETURNING archived_on"

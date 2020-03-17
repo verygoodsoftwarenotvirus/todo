@@ -9,10 +9,15 @@ import (
 	"testing"
 	"time"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
+
+func init() {
+	fake.Seed(time.Now().UnixNano())
+}
 
 const (
 	exampleURI = "https://todo.verygoodsoftwarenotvirus.ru"
@@ -350,7 +355,7 @@ func TestV1Client_buildDataRequest(T *testing.T) {
 		c := buildTestClient(t, ts)
 
 		expectedMethod := http.MethodPost
-		req, err := c.buildDataRequest(ctx, expectedMethod, ts.URL, &testingType{Name: "name"})
+		req, err := c.buildDataRequest(ctx, expectedMethod, ts.URL, &testingType{Name: fake.Word()})
 
 		require.NotNil(t, req)
 		assert.NoError(t, err)
@@ -368,7 +373,7 @@ func TestV1Client_makeRequest(T *testing.T) {
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
 					assert.Equal(t, req.Method, expectedMethod)
-					require.NoError(t, json.NewEncoder(res).Encode(&argleBargle{Name: "name"}))
+					require.NoError(t, json.NewEncoder(res).Encode(&argleBargle{Name: fake.Word()}))
 				},
 			),
 		)
@@ -413,7 +418,7 @@ func TestV1Client_makeUnauthedDataRequest(T *testing.T) {
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
 					assert.Equal(t, req.Method, expectedMethod)
-					require.NoError(t, json.NewEncoder(res).Encode(&argleBargle{Name: "name"}))
+					require.NoError(t, json.NewEncoder(res).Encode(&argleBargle{Name: fake.Word()}))
 				},
 			),
 		)
@@ -519,7 +524,7 @@ func TestV1Client_retrieve(T *testing.T) {
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
 					assert.Equal(t, req.Method, expectedMethod)
-					require.NoError(t, json.NewEncoder(res).Encode(&argleBargle{Name: "name"}))
+					require.NoError(t, json.NewEncoder(res).Encode(&argleBargle{Name: fake.Word()}))
 				},
 			),
 		)

@@ -5,12 +5,18 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
+
+func init() {
+	fake.Seed(time.Now().UnixNano())
+}
 
 func buildTestService(t *testing.T) (*MariaDB, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()

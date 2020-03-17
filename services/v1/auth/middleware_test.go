@@ -27,7 +27,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
-		exampleUser := &models.User{Username: "username"}
+		exampleUser := &models.User{Username: fake.Username()}
 
 		md := &mockmodels.UserDataManager{}
 		md.On("GetUser", mock.Anything, mock.Anything).Return(exampleUser, nil)
@@ -53,7 +53,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 	T.Run("with nil user", func(t *testing.T) {
 		s := buildTestService(t)
 
-		exampleUser := &models.User{Username: "username"}
+		exampleUser := &models.User{Username: fake.Username()}
 		md := &mockmodels.UserDataManager{}
 		md.On("GetUser", mock.Anything, mock.Anything).Return((*models.User)(nil), nil)
 		s.userDB = md
@@ -161,7 +161,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 	T.Run("with error fetching client but able to use cookie", func(t *testing.T) {
 		s := buildTestService(t)
 
-		exampleUser := &models.User{ID: fake.Uint64(), Username: "username"}
+		exampleUser := &models.User{ID: fake.Uint64(), Username: fake.Username()}
 		ocv := &mockOAuth2ClientValidator{}
 		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything).Return((*models.OAuth2Client)(nil), errors.New("blah"))
 		s.oauth2ClientsService = ocv
@@ -188,7 +188,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 	T.Run("able to use cookies but error fetching user info", func(t *testing.T) {
 		s := buildTestService(t)
 
-		exampleUser := &models.User{ID: fake.Uint64(), Username: "username"}
+		exampleUser := &models.User{ID: fake.Uint64(), Username: fake.Username()}
 		exampleClient := &models.OAuth2Client{
 			ClientID:      "PRETEND_THIS_IS_A_REAL_CLIENT_ID",
 			ClientSecret:  "PRETEND_THIS_IS_A_REAL_CLIENT_SECRET",
@@ -266,7 +266,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		require.NotNil(t, req)
 		res := httptest.NewRecorder()
 
-		c, err := s.buildAuthCookie(&models.User{ID: fake.Uint64(), Username: "username"})
+		c, err := s.buildAuthCookie(&models.User{ID: fake.Uint64(), Username: fake.Username()})
 		require.NoError(t, err)
 		req.AddCookie(c)
 
@@ -338,7 +338,7 @@ func Test_parseLoginInputFromForm(T *testing.T) {
 		require.NotNil(t, req)
 
 		expected := &models.UserLoginInput{
-			Username:  "username",
+			Username:  fake.Username(),
 			Password:  "password",
 			TOTPToken: "123456",
 		}
@@ -372,7 +372,7 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		exampleInput := &models.UserLoginInput{
-			Username:  "username",
+			Username:  fake.Username(),
 			Password:  "password",
 			TOTPToken: "1233456",
 		}
@@ -397,7 +397,7 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 
 	T.Run("with error decoding request", func(t *testing.T) {
 		exampleInput := &models.UserLoginInput{
-			Username:  "username",
+			Username:  fake.Username(),
 			Password:  "password",
 			TOTPToken: "1233456",
 		}
@@ -424,7 +424,7 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 
 	T.Run("with error decoding request but valid value attached to form", func(t *testing.T) {
 		exampleInput := &models.UserLoginInput{
-			Username:  "username",
+			Username:  fake.Username(),
 			Password:  "password",
 			TOTPToken: "1233456",
 		}

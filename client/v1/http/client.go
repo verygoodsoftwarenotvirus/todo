@@ -11,10 +11,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/moul/http2curl"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
-
-	"github.com/moul/http2curl"
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/trace"
 	"golang.org/x/oauth2"

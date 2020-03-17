@@ -27,7 +27,7 @@ func TestV1Client_BuildGetOAuth2ClientRequest(T *testing.T) {
 
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
-		expectedID := uint64(1)
+		expectedID := fake.Uint64()
 
 		actual, err := c.BuildGetOAuth2ClientRequest(ctx, expectedID)
 
@@ -45,7 +45,7 @@ func TestV1Client_GetOAuth2Client(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.OAuth2Client{
 			ID:           fake.Uint64(),
-			ClientID:     "example",
+			ClientID:     fake.Word(),
 			ClientSecret: "blah",
 		}
 
@@ -95,7 +95,7 @@ func TestV1Client_GetOAuth2Clients(T *testing.T) {
 			Clients: []models.OAuth2Client{
 				{
 					ID:           fake.Uint64(),
-					ClientID:     "example",
+					ClientID:     fake.Word(),
 					ClientSecret: "blah",
 				},
 			},
@@ -130,7 +130,7 @@ func TestV1Client_BuildCreateOAuth2ClientRequest(T *testing.T) {
 
 		exampleInput := &models.OAuth2ClientCreationInput{
 			UserLoginInput: models.UserLoginInput{
-				Username:  "username",
+				Username:  fake.Username(),
 				Password:  "password",
 				TOTPToken: "123456",
 			},
@@ -150,7 +150,7 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 		ctx := context.Background()
 		exampleInput := &models.OAuth2ClientCreationInput{
 			UserLoginInput: models.UserLoginInput{
-				Username:  "username",
+				Username:  fake.Username(),
 				Password:  "password",
 				TOTPToken: "123456",
 			},
@@ -181,7 +181,7 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 		ctx := context.Background()
 		exampleInput := &models.OAuth2ClientCreationInput{
 			UserLoginInput: models.UserLoginInput{
-				Username:  "username",
+				Username:  fake.Username(),
 				Password:  "password",
 				TOTPToken: "123456",
 			},
@@ -208,7 +208,7 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 		ctx := context.Background()
 		exampleInput := &models.OAuth2ClientCreationInput{
 			UserLoginInput: models.UserLoginInput{
-				Username:  "username",
+				Username:  fake.Username(),
 				Password:  "password",
 				TOTPToken: "123456",
 			},
@@ -235,7 +235,7 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 		ctx := context.Background()
 		exampleInput := &models.OAuth2ClientCreationInput{
 			UserLoginInput: models.UserLoginInput{
-				Username:  "username",
+				Username:  fake.Username(),
 				Password:  "password",
 				TOTPToken: "123456",
 			},
@@ -277,7 +277,7 @@ func TestV1Client_BuildArchiveOAuth2ClientRequest(T *testing.T) {
 		expectedMethod := http.MethodDelete
 		ts := httptest.NewTLSServer(nil)
 
-		expectedID := uint64(1)
+		expectedID := fake.Uint64()
 		c := buildTestClient(t, ts)
 		actual, err := c.BuildArchiveOAuth2ClientRequest(ctx, expectedID)
 
@@ -294,7 +294,7 @@ func TestV1Client_ArchiveOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expected := uint64(1)
+		expected := fake.Uint64()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(

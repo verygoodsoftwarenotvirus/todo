@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth/mock"
@@ -15,6 +16,7 @@ import (
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -23,6 +25,10 @@ import (
 	oauth2server "gopkg.in/oauth2.v3/server"
 	oauth2store "gopkg.in/oauth2.v3/store"
 )
+
+func init() {
+	fake.Seed(time.Now().UnixNano())
+}
 
 func buildTestService(t *testing.T) *Service {
 	t.Helper()
@@ -52,7 +58,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expected := uint64(0)
+		expected := fake.Uint64()
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
 			"GetAllOAuth2Clients",
@@ -88,7 +94,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 
 	T.Run("with error providing counter", func(t *testing.T) {
 		ctx := context.Background()
-		expected := uint64(0)
+		expected := fake.Uint64()
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
 			"GetAllOAuth2Clients",
@@ -124,7 +130,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 
 	T.Run("with error fetching oauth2 clients", func(t *testing.T) {
 		ctx := context.Background()
-		expected := uint64(0)
+		expected := fake.Uint64()
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
 			"GetAllOAuth2Clients",

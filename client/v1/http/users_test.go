@@ -27,7 +27,7 @@ func TestV1Client_BuildGetUserRequest(T *testing.T) {
 
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
-		expectedID := uint64(1)
+		expectedID := fake.Uint64()
 
 		actual, err := c.BuildGetUserRequest(ctx, expectedID)
 
@@ -166,7 +166,7 @@ func TestV1Client_BuildArchiveUserRequest(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		expectedMethod := http.MethodDelete
-		expectedID := uint64(1)
+		expectedID := fake.Uint64()
 
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
@@ -185,7 +185,7 @@ func TestV1Client_ArchiveUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expected := uint64(1)
+		expected := fake.Uint64()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -227,7 +227,7 @@ func TestV1Client_Login(T *testing.T) {
 					assert.Equal(t, req.URL.Path, "/users/login", "expected and actual path don't match")
 					assert.Equal(t, req.Method, http.MethodPost)
 
-					http.SetCookie(res, &http.Cookie{Name: "hi"})
+					http.SetCookie(res, &http.Cookie{Name: fake.Word()})
 				},
 			),
 		)

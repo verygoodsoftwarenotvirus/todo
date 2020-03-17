@@ -3,6 +3,7 @@ package models
 import (
 	"testing"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,8 +14,8 @@ func TestItem_Update(T *testing.T) {
 		i := &Item{}
 
 		expected := &ItemUpdateInput{
-			Name:    "example",
-			Details: "example",
+			Name:    fake.Word(),
+			Details: fake.Word(),
 		}
 
 		i.Update(expected)

@@ -72,11 +72,11 @@ func TestSqlite_GetOAuth2ClientByClientID(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		exampleClientID := "EXAMPLE"
+		exampleClientID := fake.Word()
 		expectedUserID := fake.Uint64()
 		expected := &models.OAuth2Client{
 			ID:            fake.Uint64(),
-			Name:          "name",
+			Name:          fake.Word(),
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
@@ -95,7 +95,7 @@ func TestSqlite_GetOAuth2ClientByClientID(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
-		exampleClientID := "EXAMPLE"
+		exampleClientID := fake.Word()
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -112,11 +112,11 @@ func TestSqlite_GetOAuth2ClientByClientID(T *testing.T) {
 
 	T.Run("with erroneous row", func(t *testing.T) {
 		ctx := context.Background()
-		exampleClientID := "EXAMPLE"
+		exampleClientID := fake.Word()
 		expectedUserID := fake.Uint64()
 		expected := &models.OAuth2Client{
 			ID:            fake.Uint64(),
-			Name:          "name",
+			Name:          fake.Word(),
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
@@ -156,7 +156,7 @@ func TestSqlite_GetAllOAuth2Clients(T *testing.T) {
 		expected := []*models.OAuth2Client{
 			{
 				ID:            fake.Uint64(),
-				Name:          "name",
+				Name:          fake.Word(),
 				BelongsToUser: expectedUserID,
 				CreatedOn:     uint64(time.Now().Unix()),
 			},
@@ -205,7 +205,7 @@ func TestSqlite_GetAllOAuth2Clients(T *testing.T) {
 		expected := []*models.OAuth2Client{
 			{
 				ID:            fake.Uint64(),
-				Name:          "name",
+				Name:          fake.Word(),
 				BelongsToUser: expectedUserID,
 				CreatedOn:     uint64(time.Now().Unix()),
 			},
@@ -235,7 +235,7 @@ func TestSqlite_GetAllOAuth2ClientsForUser(T *testing.T) {
 		expected := []*models.OAuth2Client{
 			{
 				ID:            fake.Uint64(),
-				Name:          "name",
+				Name:          fake.Word(),
 				BelongsToUser: expectedUserID,
 				CreatedOn:     uint64(time.Now().Unix()),
 			},
@@ -291,7 +291,7 @@ func TestSqlite_GetAllOAuth2ClientsForUser(T *testing.T) {
 		exampleUser := &models.User{ID: fake.Uint64()}
 		expected := &models.OAuth2Client{
 			ID:            fake.Uint64(),
-			Name:          "name",
+			Name:          fake.Word(),
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
@@ -336,7 +336,7 @@ func TestSqlite_GetOAuth2Client(T *testing.T) {
 		expectedUserID := fake.Uint64()
 		expected := &models.OAuth2Client{
 			ID:            fake.Uint64(),
-			Name:          "name",
+			Name:          fake.Word(),
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 			Scopes:        []string{"things"},
@@ -359,7 +359,7 @@ func TestSqlite_GetOAuth2Client(T *testing.T) {
 		expectedUserID := fake.Uint64()
 		expected := &models.OAuth2Client{
 			ID:            fake.Uint64(),
-			Name:          "name",
+			Name:          fake.Word(),
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 			Scopes:        []string{"things"},
@@ -383,7 +383,7 @@ func TestSqlite_GetOAuth2Client(T *testing.T) {
 		expectedUserID := fake.Uint64()
 		expected := &models.OAuth2Client{
 			ID:            fake.Uint64(),
-			Name:          "name",
+			Name:          fake.Word(),
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
@@ -424,7 +424,7 @@ func TestSqlite_GetOAuth2ClientCount(T *testing.T) {
 		ctx := context.Background()
 		expectedUserID := fake.Uint64()
 		expectedQuery := "SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE archived_on IS NULL AND belongs_to_user = ? LIMIT 20"
-		expectedCount := uint64(666)
+		expectedCount := fake.Uint64()
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -456,7 +456,7 @@ func TestSqlite_GetAllOAuth2ClientCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedQuery := "SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE archived_on IS NULL"
-		expectedCount := uint64(666)
+		expectedCount := fake.Uint64()
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -503,7 +503,7 @@ func TestSqlite_GetOAuth2Clients(T *testing.T) {
 			Clients: []models.OAuth2Client{
 				{
 					ID:            fake.Uint64(),
-					Name:          "name",
+					Name:          fake.Word(),
 					BelongsToUser: expectedUserID,
 					CreatedOn:     uint64(time.Now().Unix()),
 				},
@@ -572,7 +572,7 @@ func TestSqlite_GetOAuth2Clients(T *testing.T) {
 			Clients: []models.OAuth2Client{
 				{
 					ID:            fake.Uint64(),
-					Name:          "name",
+					Name:          fake.Word(),
 					BelongsToUser: expectedUserID,
 					CreatedOn:     uint64(time.Now().Unix()),
 				},
@@ -602,7 +602,7 @@ func TestSqlite_GetOAuth2Clients(T *testing.T) {
 			Clients: []models.OAuth2Client{
 				{
 					ID:            fake.Uint64(),
-					Name:          "name",
+					Name:          fake.Word(),
 					BelongsToUser: expectedUserID,
 					CreatedOn:     uint64(time.Now().Unix()),
 				},
@@ -665,7 +665,7 @@ func TestSqlite_CreateOAuth2Client(T *testing.T) {
 		expectedUserID := fake.Uint64()
 		expected := &models.OAuth2Client{
 			ID:            fake.Uint64(),
-			Name:          "name",
+			Name:          fake.Word(),
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
@@ -702,7 +702,7 @@ func TestSqlite_CreateOAuth2Client(T *testing.T) {
 		expectedUserID := fake.Uint64()
 		expected := &models.OAuth2Client{
 			ID:            fake.Uint64(),
-			Name:          "name",
+			Name:          fake.Word(),
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}

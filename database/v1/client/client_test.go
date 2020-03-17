@@ -4,13 +4,19 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
+
+func init() {
+	fake.Seed(time.Now().UnixNano())
+}
 
 func buildTestClient() (*Client, *database.MockDatabase) {
 	db := database.BuildMockDatabase()

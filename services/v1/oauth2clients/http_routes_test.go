@@ -63,6 +63,7 @@ func Test_fetchUserID(T *testing.T) {
 	T.Run("without context value present", func(t *testing.T) {
 		req := buildRequest(t)
 
+		// it is tempting to replace this with a random/fake value, but this needs to be uint64(0)
 		expected := uint64(0)
 		s := buildTestService(t)
 
@@ -76,7 +77,7 @@ func TestService_ListHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
-		userID := uint64(1)
+		userID := fake.Uint64()
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
@@ -104,7 +105,7 @@ func TestService_ListHandler(T *testing.T) {
 
 	T.Run("with no rows returned", func(t *testing.T) {
 		s := buildTestService(t)
-		userID := uint64(1)
+		userID := fake.Uint64()
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
@@ -131,7 +132,7 @@ func TestService_ListHandler(T *testing.T) {
 
 	T.Run("with error fetching from database", func(t *testing.T) {
 		s := buildTestService(t)
-		userID := uint64(1)
+		userID := fake.Uint64()
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
@@ -158,7 +159,7 @@ func TestService_ListHandler(T *testing.T) {
 
 	T.Run("with error encoding response", func(t *testing.T) {
 		s := buildTestService(t)
-		userID := uint64(1)
+		userID := fake.Uint64()
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
@@ -197,7 +198,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		exampleInput := &models.OAuth2ClientCreationInput{
 			UserLoginInput: models.UserLoginInput{
-				Username:  "username",
+				Username:  fake.Username(),
 				Password:  "password",
 				TOTPToken: "123456",
 			},
@@ -270,7 +271,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		exampleInput := &models.OAuth2ClientCreationInput{
 			UserLoginInput: models.UserLoginInput{
-				Username:  "username",
+				Username:  fake.Username(),
 				Password:  "password",
 				TOTPToken: "123456",
 			},
@@ -308,7 +309,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		exampleInput := &models.OAuth2ClientCreationInput{
 			UserLoginInput: models.UserLoginInput{
-				Username:  "username",
+				Username:  fake.Username(),
 				Password:  "password",
 				TOTPToken: "123456",
 			},
@@ -363,7 +364,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		exampleInput := &models.OAuth2ClientCreationInput{
 			UserLoginInput: models.UserLoginInput{
-				Username:  "username",
+				Username:  fake.Username(),
 				Password:  "password",
 				TOTPToken: "123456",
 			},
@@ -418,7 +419,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		exampleInput := &models.OAuth2ClientCreationInput{
 			UserLoginInput: models.UserLoginInput{
-				Username:  "username",
+				Username:  fake.Username(),
 				Password:  "password",
 				TOTPToken: "123456",
 			},
@@ -473,7 +474,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		exampleInput := &models.OAuth2ClientCreationInput{
 			UserLoginInput: models.UserLoginInput{
-				Username:  "username",
+				Username:  fake.Username(),
 				Password:  "password",
 				TOTPToken: "123456",
 			},
@@ -532,8 +533,8 @@ func TestService_ReadHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
-		userID := uint64(1)
-		exampleOAuth2ClientID := uint64(2)
+		userID := fake.Uint64()
+		exampleOAuth2ClientID := fake.Uint64()
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
 			return exampleOAuth2ClientID
@@ -564,8 +565,8 @@ func TestService_ReadHandler(T *testing.T) {
 
 	T.Run("with no rows found", func(t *testing.T) {
 		s := buildTestService(t)
-		userID := uint64(1)
-		exampleOAuth2ClientID := uint64(2)
+		userID := fake.Uint64()
+		exampleOAuth2ClientID := fake.Uint64()
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
 			return exampleOAuth2ClientID
@@ -596,8 +597,8 @@ func TestService_ReadHandler(T *testing.T) {
 
 	T.Run("with error fetching client from database", func(t *testing.T) {
 		s := buildTestService(t)
-		userID := uint64(1)
-		exampleOAuth2ClientID := uint64(2)
+		userID := fake.Uint64()
+		exampleOAuth2ClientID := fake.Uint64()
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
 			return exampleOAuth2ClientID
@@ -628,8 +629,8 @@ func TestService_ReadHandler(T *testing.T) {
 
 	T.Run("with error encoding response", func(t *testing.T) {
 		s := buildTestService(t)
-		userID := uint64(1)
-		exampleOAuth2ClientID := uint64(2)
+		userID := fake.Uint64()
+		exampleOAuth2ClientID := fake.Uint64()
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
 			return exampleOAuth2ClientID
@@ -664,8 +665,8 @@ func TestService_ArchiveHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
-		userID := uint64(1)
-		exampleOAuth2ClientID := uint64(2)
+		userID := fake.Uint64()
+		exampleOAuth2ClientID := fake.Uint64()
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
 			return exampleOAuth2ClientID
@@ -700,8 +701,8 @@ func TestService_ArchiveHandler(T *testing.T) {
 
 	T.Run("with no rows found", func(t *testing.T) {
 		s := buildTestService(t)
-		userID := uint64(1)
-		exampleOAuth2ClientID := uint64(2)
+		userID := fake.Uint64()
+		exampleOAuth2ClientID := fake.Uint64()
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
 			return exampleOAuth2ClientID
@@ -728,8 +729,8 @@ func TestService_ArchiveHandler(T *testing.T) {
 
 	T.Run("with error deleting record", func(t *testing.T) {
 		s := buildTestService(t)
-		userID := uint64(1)
-		exampleOAuth2ClientID := uint64(2)
+		userID := fake.Uint64()
+		exampleOAuth2ClientID := fake.Uint64()
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
 			return exampleOAuth2ClientID

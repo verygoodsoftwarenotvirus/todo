@@ -12,6 +12,7 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mockutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/mock"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -88,7 +89,7 @@ func TestUnmarshalBody(T *testing.T) {
 	T.Parallel()
 
 	T.Run("expected use", func(t *testing.T) {
-		expected := "example"
+		expected := fake.Word()
 		res := &http.Response{
 			Body:       ioutil.NopCloser(strings.NewReader(fmt.Sprintf(`{"name": %q}`, expected))),
 			StatusCode: http.StatusOK,
@@ -175,8 +176,9 @@ func TestCreateBodyFromStruct(T *testing.T) {
 	T.Parallel()
 
 	T.Run("expected use", func(t *testing.T) {
-		expected := `{"name":"expected"}`
-		x := &testingType{Name: "expected"}
+		name := fake.Name()
+		expected := fmt.Sprintf(`{"name":%q}`, name)
+		x := &testingType{Name: name}
 
 		actual, err := createBodyFromStruct(x)
 		assert.NoError(t, err, "expected no error creating JSON from valid struct")

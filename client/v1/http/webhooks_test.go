@@ -26,7 +26,7 @@ func TestV1Client_BuildGetWebhookRequest(T *testing.T) {
 
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
-		expectedID := uint64(1)
+		expectedID := fake.Uint64()
 		actual, err := c.BuildGetWebhookRequest(ctx, expectedID)
 
 		require.NotNil(t, actual)
@@ -43,7 +43,7 @@ func TestV1Client_GetWebhook(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "example",
+			Name: fake.Word(),
 		}
 
 		ts := httptest.NewTLSServer(
@@ -92,7 +92,7 @@ func TestV1Client_GetWebhooks(T *testing.T) {
 			Webhooks: []models.Webhook{
 				{
 					ID:   fake.Uint64(),
-					Name: "example",
+					Name: fake.Word(),
 				},
 			},
 		}
@@ -125,7 +125,7 @@ func TestV1Client_BuildCreateWebhookRequest(T *testing.T) {
 		ts := httptest.NewTLSServer(nil)
 
 		exampleInput := &models.WebhookCreationInput{
-			Name: "expected name",
+			Name: fake.Word(),
 		}
 		c := buildTestClient(t, ts)
 		actual, err := c.BuildCreateWebhookRequest(ctx, exampleInput)
@@ -143,7 +143,7 @@ func TestV1Client_CreateWebhook(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "example",
+			Name: fake.Word(),
 		}
 		exampleInput := &models.WebhookCreationInput{
 			Name: expected.Name,
@@ -180,7 +180,7 @@ func TestV1Client_BuildUpdateWebhookRequest(T *testing.T) {
 		ctx := context.Background()
 		expectedMethod := http.MethodPut
 		exampleInput := &models.Webhook{
-			Name: "changed name",
+			Name: fake.Word(),
 		}
 
 		ts := httptest.NewTLSServer(nil)
@@ -200,7 +200,7 @@ func TestV1Client_UpdateWebhook(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "example",
+			Name: fake.Word(),
 		}
 
 		ts := httptest.NewTLSServer(
@@ -226,7 +226,7 @@ func TestV1Client_BuildArchiveWebhookRequest(T *testing.T) {
 		expectedMethod := http.MethodDelete
 		ts := httptest.NewTLSServer(nil)
 
-		expectedID := uint64(1)
+		expectedID := fake.Uint64()
 		c := buildTestClient(t, ts)
 		actual, err := c.BuildArchiveWebhookRequest(ctx, expectedID)
 
@@ -243,7 +243,7 @@ func TestV1Client_ArchiveWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expected := uint64(1)
+		expected := fake.Uint64()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(

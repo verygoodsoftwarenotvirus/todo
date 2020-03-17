@@ -121,7 +121,7 @@ func TestClient_GetOAuth2ClientCount(T *testing.T) {
 	T.Run("with error returned from querier", func(t *testing.T) {
 		ctx := context.Background()
 		exampleUserID := fake.Uint64()
-		expected := uint64(0)
+		expected := fake.Uint64()
 		c, mockDB := buildTestClient()
 		filter := models.DefaultQueryFilter()
 

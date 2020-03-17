@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/squirrel"
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -52,7 +53,7 @@ func TestQueryFilter_SetPage(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		qf := &QueryFilter{}
-		expected := uint64(100)
+		expected := uint64(fake.Uint32())
 		qf.SetPage(expected)
 		assert.Equal(t, expected, qf.Page)
 	})
@@ -63,7 +64,10 @@ func TestQueryFilter_QueryPage(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		qf := &QueryFilter{Limit: 10, Page: 11}
+
+		// ordinarily we'd make up a value here, but we want this to be static
 		expected := uint64(100)
+
 		actual := qf.QueryPage()
 		assert.Equal(t, expected, actual)
 	})

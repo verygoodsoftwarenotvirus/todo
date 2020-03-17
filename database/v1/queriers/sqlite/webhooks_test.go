@@ -82,7 +82,7 @@ func TestSqlite_GetWebhook(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.Webhook{
 			ID:        fake.Uint64(),
-			Name:      "name",
+			Name:      fake.Word(),
 			Events:    []string{"things"},
 			DataTypes: []string{"things"},
 			Topics:    []string{"things"},
@@ -105,7 +105,7 @@ func TestSqlite_GetWebhook(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.Webhook{
 			ID:        fake.Uint64(),
-			Name:      "name",
+			Name:      fake.Word(),
 			Events:    []string{"things"},
 			DataTypes: []string{"things"},
 			Topics:    []string{"things"},
@@ -129,7 +129,7 @@ func TestSqlite_GetWebhook(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "name",
+			Name: fake.Word(),
 		}
 		expectedUserID := fake.Uint64()
 
@@ -149,7 +149,7 @@ func TestSqlite_GetWebhook(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.Webhook{
 			ID:        fake.Uint64(),
-			Name:      "name",
+			Name:      fake.Word(),
 			Events:    []string{"things"},
 			DataTypes: []string{"things"},
 			Topics:    []string{"things"},
@@ -296,7 +296,7 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 			Webhooks: []models.Webhook{
 				{
 					ID:   fake.Uint64(),
-					Name: "name",
+					Name: fake.Word(),
 				},
 			},
 		}
@@ -345,7 +345,7 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 	T.Run("with error from database", func(t *testing.T) {
 		example := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "name",
+			Name: fake.Word(),
 		}
 
 		s, mockDB := buildTestService(t)
@@ -369,7 +369,7 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 			Webhooks: []models.Webhook{
 				{
 					ID:   fake.Uint64(),
-					Name: "name",
+					Name: fake.Word(),
 				},
 			},
 		}
@@ -402,7 +402,7 @@ func TestSqlite_GetAllWebhooksForUser(T *testing.T) {
 		expected := []models.Webhook{
 			{
 				ID:   fake.Uint64(),
-				Name: "name",
+				Name: fake.Word(),
 			},
 		}
 
@@ -457,7 +457,7 @@ func TestSqlite_GetAllWebhooksForUser(T *testing.T) {
 		expected := []models.Webhook{
 			{
 				ID:   fake.Uint64(),
-				Name: "name",
+				Name: fake.Word(),
 			},
 		}
 
@@ -509,7 +509,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 			Webhooks: []models.Webhook{
 				{
 					ID:   fake.Uint64(),
-					Name: "name",
+					Name: fake.Word(),
 				},
 			},
 		}
@@ -566,7 +566,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 		exampleUserID := fake.Uint64()
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "name",
+			Name: fake.Word(),
 		}
 
 		s, mockDB := buildTestService(t)
@@ -594,7 +594,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 			Webhooks: []models.Webhook{
 				{
 					ID:   fake.Uint64(),
-					Name: "name",
+					Name: fake.Word(),
 				},
 			},
 		}
@@ -622,7 +622,7 @@ func TestSqlite_buildWebhookCreationQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
 		exampleInput := &models.Webhook{
-			Name:          "name",
+			Name:          fake.Word(),
 			ContentType:   "application/json",
 			URL:           "https://verygoodsoftwarenotvirus.ru",
 			Method:        http.MethodPatch,
@@ -650,7 +650,7 @@ func TestSqlite_CreateWebhook(T *testing.T) {
 		expectedUserID := fake.Uint64()
 		expected := &models.Webhook{
 			ID:            fake.Uint64(),
-			Name:          "name",
+			Name:          fake.Word(),
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
@@ -688,7 +688,7 @@ func TestSqlite_CreateWebhook(T *testing.T) {
 		expectedUserID := fake.Uint64()
 		expected := &models.Webhook{
 			ID:            fake.Uint64(),
-			Name:          "name",
+			Name:          fake.Word(),
 			BelongsToUser: expectedUserID,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}
@@ -723,7 +723,7 @@ func TestSqlite_buildUpdateWebhookQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
 		exampleInput := &models.Webhook{
-			Name:          "name",
+			Name:          fake.Word(),
 			ContentType:   "application/json",
 			URL:           "https://verygoodsoftwarenotvirus.ru",
 			Method:        http.MethodPatch,
@@ -750,7 +750,7 @@ func TestSqlite_UpdateWebhook(T *testing.T) {
 		ctx := context.Background()
 		s, mockDB := buildTestService(t)
 		expected := &models.Webhook{
-			Name:          "name",
+			Name:          fake.Word(),
 			ContentType:   "application/json",
 			URL:           "https://verygoodsoftwarenotvirus.ru",
 			Method:        http.MethodPatch,
@@ -783,7 +783,7 @@ func TestSqlite_UpdateWebhook(T *testing.T) {
 		ctx := context.Background()
 		s, mockDB := buildTestService(t)
 		expected := &models.Webhook{
-			Name:          "name",
+			Name:          fake.Word(),
 			ContentType:   "application/json",
 			URL:           "https://verygoodsoftwarenotvirus.ru",
 			Method:        http.MethodPatch,
@@ -837,7 +837,7 @@ func TestSqlite_ArchiveWebhook(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.Webhook{
 			ID:            fake.Uint64(),
-			Name:          "name",
+			Name:          fake.Word(),
 			BelongsToUser: 321,
 			CreatedOn:     uint64(time.Now().Unix()),
 		}

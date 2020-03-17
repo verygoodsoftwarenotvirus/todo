@@ -3,6 +3,7 @@ package models
 import (
 	"testing"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -11,12 +12,12 @@ func TestUser_Update(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		actual := User{
-			Username:        "username",
+			Username:        fake.Username(),
 			HashedPassword:  "hashed_pass",
 			TwoFactorSecret: "two factor secret",
 		}
 		exampleInput := User{
-			Username:        "newUsername",
+			Username:        fake.Username(),
 			HashedPassword:  "updated_hashed_pass",
 			TwoFactorSecret: "new fancy secret",
 		}

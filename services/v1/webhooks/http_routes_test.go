@@ -29,7 +29,7 @@ func TestWebhooksService_List(T *testing.T) {
 			Webhooks: []models.Webhook{
 				{
 					ID:   fake.Uint64(),
-					Name: "name",
+					Name: fake.Word(),
 				},
 			},
 		}
@@ -209,7 +209,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "name",
+			Name: fake.Word(),
 		}
 
 		mc := &mockmetrics.UnitCounter{}
@@ -256,7 +256,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "name",
+			Name: fake.Word(),
 		}
 
 		mc := &mockmetrics.UnitCounter{}
@@ -328,7 +328,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "name",
+			Name: fake.Word(),
 		}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
@@ -371,7 +371,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "name",
+			Name: fake.Word(),
 		}
 
 		mc := &mockmetrics.UnitCounter{}
@@ -422,7 +422,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "name",
+			Name: fake.Word(),
 		}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
@@ -464,7 +464,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "name",
+			Name: fake.Word(),
 		}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
@@ -502,7 +502,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "name",
+			Name: fake.Word(),
 		}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
@@ -540,7 +540,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "name",
+			Name: fake.Word(),
 		}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
@@ -586,7 +586,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "name",
+			Name: fake.Word(),
 		}
 
 		mc := &mockmetrics.UnitCounter{}
@@ -659,7 +659,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "name",
+			Name: fake.Word(),
 		}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
@@ -702,7 +702,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "name",
+			Name: fake.Word(),
 		}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
@@ -745,7 +745,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "name",
+			Name: fake.Word(),
 		}
 
 		mc := &mockmetrics.UnitCounter{}
@@ -802,7 +802,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "name",
+			Name: fake.Word(),
 		}
 
 		mc := &mockmetrics.UnitCounter{}
@@ -863,7 +863,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "name",
+			Name: fake.Word(),
 		}
 
 		mc := &mockmetrics.UnitCounter{}
@@ -909,7 +909,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "name",
+			Name: fake.Word(),
 		}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
@@ -947,7 +947,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		requestingUser := &models.User{ID: fake.Uint64()}
 		expected := &models.Webhook{
 			ID:   fake.Uint64(),
-			Name: "name",
+			Name: fake.Word(),
 		}
 
 		s.userIDFetcher = func(req *http.Request) uint64 {

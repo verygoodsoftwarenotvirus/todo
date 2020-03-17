@@ -3,6 +3,7 @@ package httpserver
 import (
 	"context"
 	"testing"
+	"time"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
@@ -16,11 +17,16 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
+
+func init() {
+	fake.Seed(time.Now().UnixNano())
+}
 
 func buildTestServer() *Server {
 	s := &Server{

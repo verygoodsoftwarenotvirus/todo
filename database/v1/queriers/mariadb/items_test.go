@@ -173,7 +173,7 @@ func TestMariaDB_GetItemCount(T *testing.T) {
 		ctx := context.Background()
 		expectedUserID := fake.Uint64()
 		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? LIMIT 20"
-		expectedCount := uint64(666)
+		expectedCount := fake.Uint64()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -205,7 +205,7 @@ func TestMariaDB_GetAllItemsCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
-		expectedCount := uint64(666)
+		expectedCount := fake.Uint64()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -249,7 +249,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 		expectedItem := &models.Item{
 			ID: fake.Uint64(),
 		}
-		expectedCount := uint64(666)
+		expectedCount := fake.Uint64()
 		expected := &models.ItemList{
 			Pagination: models.Pagination{
 				Page:       1,

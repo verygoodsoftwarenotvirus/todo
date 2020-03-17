@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"testing"
+	"time"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth/mock"
@@ -21,6 +22,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
+
+func init() {
+	fake.Seed(time.Now().UnixNano())
+}
 
 func buildTestService(t *testing.T) *Service {
 	t.Helper()
@@ -60,7 +65,7 @@ func TestProvideUsersService(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		mockUserCount := uint64(0)
+		mockUserCount := fake.Uint64()
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).Return(mockUserCount, nil)
 
@@ -91,7 +96,7 @@ func TestProvideUsersService(T *testing.T) {
 
 	T.Run("with nil userIDFetcher", func(t *testing.T) {
 		ctx := context.Background()
-		mockUserCount := uint64(0)
+		mockUserCount := fake.Uint64()
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).Return(mockUserCount, nil)
 
@@ -122,7 +127,7 @@ func TestProvideUsersService(T *testing.T) {
 
 	T.Run("with error initializing counter", func(t *testing.T) {
 		ctx := context.Background()
-		mockUserCount := uint64(0)
+		mockUserCount := fake.Uint64()
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).Return(mockUserCount, nil)
 
@@ -153,7 +158,7 @@ func TestProvideUsersService(T *testing.T) {
 
 	T.Run("with error getting user count", func(t *testing.T) {
 		ctx := context.Background()
-		mockUserCount := uint64(0)
+		mockUserCount := fake.Uint64()
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).Return(mockUserCount, errors.New("blah"))
 

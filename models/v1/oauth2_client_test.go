@@ -1,8 +1,10 @@
 package models
 
 import (
+	"fmt"
 	"testing"
 
+	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,8 +48,8 @@ func TestOAuth2Client_GetUserID(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		expectation := uint64(123)
-		expected := "123"
+		expectation := fake.Uint64()
+		expected := fmt.Sprintf("%d", expectation)
 		oac := &OAuth2Client{
 			BelongsToUser: expectation,
 		}

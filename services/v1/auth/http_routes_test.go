@@ -30,7 +30,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		c, err := s.buildAuthCookie(&models.User{ID: fake.Uint64(), Username: "username"})
+		c, err := s.buildAuthCookie(&models.User{ID: fake.Uint64(), Username: fake.Username()})
 		require.NoError(t, err)
 		req.AddCookie(c)
 
@@ -110,7 +110,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		c, err := s.buildAuthCookie(&models.User{ID: fake.Uint64(), Username: "username"})
+		c, err := s.buildAuthCookie(&models.User{ID: fake.Uint64(), Username: fake.Username()})
 		require.NoError(t, err)
 		req.AddCookie(c)
 
@@ -142,8 +142,8 @@ func TestService_FetchUserFromRequest(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
-		userID := uint64(1)
-		expectedUser := &models.User{ID: userID, Username: "username"}
+		userID := fake.Uint64()
+		expectedUser := &models.User{ID: userID, Username: fake.Username()}
 
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
 		require.NotNil(t, req)
@@ -167,8 +167,8 @@ func TestService_FetchUserFromRequest(T *testing.T) {
 	T.Run("without cookie", func(t *testing.T) {
 		s := buildTestService(t)
 
-		userID := uint64(1)
-		expectedUser := &models.User{ID: userID, Username: "username"}
+		userID := fake.Uint64()
+		expectedUser := &models.User{ID: userID, Username: fake.Username()}
 
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
 		require.NotNil(t, req)
@@ -188,8 +188,8 @@ func TestService_FetchUserFromRequest(T *testing.T) {
 	T.Run("with error fetching user", func(t *testing.T) {
 		s := buildTestService(t)
 
-		userID := uint64(1)
-		expectedUser := &models.User{ID: userID, Username: "username"}
+		userID := fake.Uint64()
+		expectedUser := &models.User{ID: userID, Username: fake.Username()}
 
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
 		require.NotNil(t, req)
@@ -218,7 +218,7 @@ func TestService_Login(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
-		expectedUser := &models.User{Username: "username"}
+		expectedUser := &models.User{Username: fake.Username()}
 		s.userDB.(*mockmodels.UserDataManager).On(
 			"GetUserByUsername",
 			mock.Anything,
@@ -257,7 +257,7 @@ func TestService_Login(T *testing.T) {
 	T.Run("with error fetching login data from request", func(t *testing.T) {
 		s := buildTestService(t)
 
-		expectedUser := &models.User{Username: "username"}
+		expectedUser := &models.User{Username: fake.Username()}
 		s.userDB.(*mockmodels.UserDataManager).On(
 			"GetUserByUsername",
 			mock.Anything,
@@ -294,7 +294,7 @@ func TestService_Login(T *testing.T) {
 		).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
-		expectedUser := &models.User{Username: "username"}
+		expectedUser := &models.User{Username: fake.Username()}
 		s.userDB.(*mockmodels.UserDataManager).On(
 			"GetUserByUsername",
 			mock.Anything,
@@ -323,7 +323,7 @@ func TestService_Login(T *testing.T) {
 	T.Run("with invalid login", func(t *testing.T) {
 		s := buildTestService(t)
 
-		expectedUser := &models.User{Username: "username"}
+		expectedUser := &models.User{Username: fake.Username()}
 		s.userDB.(*mockmodels.UserDataManager).On(
 			"GetUserByUsername",
 			mock.Anything,
@@ -362,7 +362,7 @@ func TestService_Login(T *testing.T) {
 	T.Run("with error validating login", func(t *testing.T) {
 		s := buildTestService(t)
 
-		expectedUser := &models.User{Username: "username"}
+		expectedUser := &models.User{Username: fake.Username()}
 		s.userDB.(*mockmodels.UserDataManager).On(
 			"GetUserByUsername",
 			mock.Anything,
@@ -409,7 +409,7 @@ func TestService_Login(T *testing.T) {
 		).Return("", errors.New("blah"))
 		s.cookieManager = cb
 
-		expectedUser := &models.User{Username: "username"}
+		expectedUser := &models.User{Username: fake.Username()}
 		s.userDB.(*mockmodels.UserDataManager).On(
 			"GetUserByUsername",
 			mock.Anything,
@@ -464,7 +464,7 @@ func TestService_Login(T *testing.T) {
 		).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
-		expectedUser := &models.User{Username: "username"}
+		expectedUser := &models.User{Username: fake.Username()}
 		s.userDB.(*mockmodels.UserDataManager).On(
 			"GetUserByUsername",
 			mock.Anything,
@@ -511,7 +511,7 @@ func TestService_Logout(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		c, err := s.buildAuthCookie(&models.User{ID: fake.Uint64(), Username: "username"})
+		c, err := s.buildAuthCookie(&models.User{ID: fake.Uint64(), Username: fake.Username()})
 		require.NoError(t, err)
 
 		req.AddCookie(c)
@@ -541,7 +541,7 @@ func TestService_fetchLoginDataFromRequest(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
-		expectedUser := &models.User{Username: "username"}
+		expectedUser := &models.User{Username: fake.Username()}
 		s.userDB.(*mockmodels.UserDataManager).On(
 			"GetUserByUsername",
 			mock.Anything,
@@ -580,7 +580,7 @@ func TestService_fetchLoginDataFromRequest(T *testing.T) {
 	T.Run("with DB error fetching user", func(t *testing.T) {
 		s := buildTestService(t)
 
-		expectedUser := &models.User{Username: "username"}
+		expectedUser := &models.User{Username: fake.Username()}
 		s.userDB.(*mockmodels.UserDataManager).On(
 			"GetUserByUsername",
 			mock.Anything,
@@ -605,7 +605,7 @@ func TestService_fetchLoginDataFromRequest(T *testing.T) {
 	T.Run("with error fetching user", func(t *testing.T) {
 		s := buildTestService(t)
 
-		expectedUser := &models.User{Username: "username"}
+		expectedUser := &models.User{Username: fake.Username()}
 		s.userDB.(*mockmodels.UserDataManager).On(
 			"GetUserByUsername",
 			mock.Anything,
@@ -638,7 +638,7 @@ func TestService_validateLogin(T *testing.T) {
 		ctx := context.Background()
 		exampleInput := loginData{
 			loginInput: &models.UserLoginInput{
-				Username:  "username",
+				Username:  fake.Username(),
 				Password:  "password",
 				TOTPToken: "012345",
 			},
@@ -667,7 +667,7 @@ func TestService_validateLogin(T *testing.T) {
 		ctx := context.Background()
 		exampleInput := loginData{
 			loginInput: &models.UserLoginInput{
-				Username:  "username",
+				Username:  fake.Username(),
 				Password:  "password",
 				TOTPToken: "012345",
 			},
@@ -709,7 +709,7 @@ func TestService_validateLogin(T *testing.T) {
 		ctx := context.Background()
 		exampleInput := loginData{
 			loginInput: &models.UserLoginInput{
-				Username:  "username",
+				Username:  fake.Username(),
 				Password:  "password",
 				TOTPToken: "012345",
 			},
@@ -745,7 +745,7 @@ func TestService_validateLogin(T *testing.T) {
 		ctx := context.Background()
 		exampleInput := loginData{
 			loginInput: &models.UserLoginInput{
-				Username:  "username",
+				Username:  fake.Username(),
 				Password:  "password",
 				TOTPToken: "012345",
 			},
@@ -787,7 +787,7 @@ func TestService_validateLogin(T *testing.T) {
 		expectedErr := errors.New("arbitrary")
 		exampleInput := loginData{
 			loginInput: &models.UserLoginInput{
-				Username:  "username",
+				Username:  fake.Username(),
 				Password:  "password",
 				TOTPToken: "012345",
 			},
@@ -826,7 +826,7 @@ func TestService_validateLogin(T *testing.T) {
 		ctx := context.Background()
 		exampleInput := loginData{
 			loginInput: &models.UserLoginInput{
-				Username:  "username",
+				Username:  fake.Username(),
 				Password:  "password",
 				TOTPToken: "012345",
 			},
@@ -845,7 +845,7 @@ func TestService_buildCookie(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
-		exampleInput := &models.User{Username: "username"}
+		exampleInput := &models.User{Username: fake.Username()}
 		cookie, err := s.buildAuthCookie(exampleInput)
 		assert.NotNil(t, cookie)
 		assert.NoError(t, err)
@@ -862,7 +862,7 @@ func TestService_buildCookie(T *testing.T) {
 		).Return("", errors.New("blah"))
 		s.cookieManager = cb
 
-		exampleInput := &models.User{Username: "username"}
+		exampleInput := &models.User{Username: fake.Username()}
 		cookie, err := s.buildAuthCookie(exampleInput)
 		assert.Nil(t, cookie)
 		assert.Error(t, err)
@@ -875,7 +875,7 @@ func TestService_CycleSecret(T *testing.T) {
 	T.Run("normal operation", func(t *testing.T) {
 		s := buildTestService(t)
 
-		exampleUser := &models.User{ID: fake.Uint64(), Username: "username"}
+		exampleUser := &models.User{ID: fake.Uint64(), Username: fake.Username()}
 		c, err := s.buildAuthCookie(exampleUser)
 		assert.NotNil(t, c)
 		assert.NoError(t, err)

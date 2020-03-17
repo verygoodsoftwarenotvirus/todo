@@ -71,7 +71,7 @@ func TestSqlite_GetUser(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
 			ID:       fake.Uint64(),
-			Username: "username",
+			Username: fake.Username(),
 		}
 
 		s, mockDB := buildTestService(t)
@@ -90,7 +90,7 @@ func TestSqlite_GetUser(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
 			ID:       fake.Uint64(),
-			Username: "username",
+			Username: fake.Username(),
 		}
 
 		s, mockDB := buildTestService(t)
@@ -140,7 +140,7 @@ func TestSqlite_GetUsers(T *testing.T) {
 			Users: []models.User{
 				{
 					ID:       fake.Uint64(),
-					Username: "username",
+					Username: fake.Username(),
 				},
 			},
 		}
@@ -194,7 +194,7 @@ func TestSqlite_GetUsers(T *testing.T) {
 			Users: []models.User{
 				{
 					ID:       fake.Uint64(),
-					Username: "username",
+					Username: fake.Username(),
 				},
 			},
 		}
@@ -223,7 +223,7 @@ func TestSqlite_GetUsers(T *testing.T) {
 			Users: []models.User{
 				{
 					ID:       fake.Uint64(),
-					Username: "username",
+					Username: fake.Username(),
 				},
 			},
 		}
@@ -271,7 +271,7 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
 			ID:       fake.Uint64(),
-			Username: "username",
+			Username: fake.Username(),
 		}
 
 		s, mockDB := buildTestService(t)
@@ -290,7 +290,7 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
 			ID:       fake.Uint64(),
-			Username: "username",
+			Username: fake.Username(),
 		}
 
 		s, mockDB := buildTestService(t)
@@ -310,7 +310,7 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
 			ID:       fake.Uint64(),
-			Username: "username",
+			Username: fake.Username(),
 		}
 
 		s, mockDB := buildTestService(t)
@@ -381,7 +381,7 @@ func TestSqlite_buildCreateUserQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
 		exampleUser := &models.UserInput{
-			Username:        "username",
+			Username:        fake.Username(),
 			Password:        "hashed password",
 			TwoFactorSecret: "two factor secret",
 		}
@@ -403,7 +403,7 @@ func TestSqlite_CreateUser(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
 			ID:        fake.Uint64(),
-			Username:  "username",
+			Username:  fake.Username(),
 			CreatedOn: uint64(time.Now().Unix()),
 		}
 		expectedInput := &models.UserInput{
@@ -434,7 +434,7 @@ func TestSqlite_CreateUser(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
 			ID:        fake.Uint64(),
-			Username:  "username",
+			Username:  fake.Username(),
 			CreatedOn: uint64(time.Now().Unix()),
 		}
 		expectedInput := &models.UserInput{
@@ -464,7 +464,7 @@ func TestSqlite_buildUpdateUserQuery(T *testing.T) {
 		s, _ := buildTestService(t)
 		exampleUser := &models.User{
 			ID:              fake.Uint64(),
-			Username:        "username",
+			Username:        fake.Username(),
 			HashedPassword:  "hashed password",
 			TwoFactorSecret: "two factor secret",
 		}
@@ -484,7 +484,7 @@ func TestSqlite_UpdateUser(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
 			ID:        fake.Uint64(),
-			Username:  "username",
+			Username:  fake.Username(),
 			CreatedOn: uint64(time.Now().Unix()),
 		}
 		exampleRows := sqlmock.NewResult(int64(expected.ID), 1)
@@ -528,7 +528,7 @@ func TestSqlite_ArchiveUser(T *testing.T) {
 		ctx := context.Background()
 		expected := &models.User{
 			ID:        fake.Uint64(),
-			Username:  "username",
+			Username:  fake.Username(),
 			CreatedOn: uint64(time.Now().Unix()),
 		}
 		expectedQuery := "UPDATE users SET updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE id = ?"

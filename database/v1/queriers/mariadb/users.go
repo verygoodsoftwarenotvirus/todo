@@ -18,15 +18,15 @@ const (
 
 var (
 	usersTableColumns = []string{
-		"id",
-		"username",
-		"hashed_password",
-		"password_last_changed_on",
-		"two_factor_secret",
-		"is_admin",
-		"created_on",
-		"updated_on",
-		"archived_on",
+		fmt.Sprintf("%s.id", usersTableName),
+		fmt.Sprintf("%s.username", usersTableName),
+		fmt.Sprintf("%s.hashed_password", usersTableName),
+		fmt.Sprintf("%s.password_last_changed_on", usersTableName),
+		fmt.Sprintf("%s.two_factor_secret", usersTableName),
+		fmt.Sprintf("%s.is_admin", usersTableName),
+		fmt.Sprintf("%s.created_on", usersTableName),
+		fmt.Sprintf("%s.updated_on", usersTableName),
+		fmt.Sprintf("%s.archived_on", usersTableName),
 	}
 )
 
@@ -81,7 +81,9 @@ func (m *MariaDB) buildGetUserQuery(userID uint64) (query string, args []interfa
 	query, args, err = m.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
-		Where(squirrel.Eq{"id": userID}).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.id", usersTableName): userID,
+		}).
 		ToSql()
 
 	m.logQueryBuildingError(err)
@@ -109,7 +111,9 @@ func (m *MariaDB) buildGetUserByUsernameQuery(username string) (query string, ar
 	query, args, err = m.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
-		Where(squirrel.Eq{"username": username}).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.username", usersTableName): username,
+		}).
 		ToSql()
 
 	m.logQueryBuildingError(err)
@@ -139,9 +143,11 @@ func (m *MariaDB) buildGetUserCountQuery(filter *models.QueryFilter) (query stri
 	var err error
 
 	builder := m.sqlBuilder.
-		Select(fmt.Sprintf(CountQuery, usersTableName)).
+		Select(fmt.Sprintf(countQuery, usersTableName)).
 		From(usersTableName).
-		Where(squirrel.Eq{"archived_on": nil})
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.archived_on", usersTableName): nil,
+		})
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder)
@@ -151,6 +157,13 @@ func (m *MariaDB) buildGetUserCountQuery(filter *models.QueryFilter) (query stri
 	m.logQueryBuildingError(err)
 
 	return query, args
+}
+
+// GetAllUserCount fetches a count of users from the database that meet a particular filter
+func (m *MariaDB) GetAllUserCount(ctx context.Context) (count uint64, err error) {
+	query, args := m.buildGetUserCountQuery(nil)
+	err = m.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	return
 }
 
 // GetUserCount fetches a count of users from the database that meet a particular filter
@@ -168,7 +181,9 @@ func (m *MariaDB) buildGetUsersQuery(filter *models.QueryFilter) (query string, 
 	builder := m.sqlBuilder.
 		Select(usersTableColumns...).
 		From(usersTableName).
-		Where(squirrel.Eq{"archived_on": nil})
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.archived_on", usersTableName): nil,
+		})
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder)
@@ -211,7 +226,7 @@ func (m *MariaDB) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mo
 }
 
 // buildCreateUserQuery returns a SQL query (and arguments) that would create a given User
-func (m *MariaDB) buildCreateUserQuery(input *models.UserInput) (query string, args []interface{}) {
+func (m *MariaDB) buildCreateUserQuery(input models.UserDatabaseCreationInput) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = m.sqlBuilder.
@@ -225,10 +240,10 @@ func (m *MariaDB) buildCreateUserQuery(input *models.UserInput) (query string, a
 		).
 		Values(
 			input.Username,
-			input.Password,
+			input.HashedPassword,
 			input.TwoFactorSecret,
 			false,
-			squirrel.Expr(CurrentUnixTimeQuery),
+			squirrel.Expr(currentUnixTimeQuery),
 		).
 		ToSql()
 
@@ -246,9 +261,11 @@ func (m *MariaDB) buildCreateUserQuery(input *models.UserInput) (query string, a
 func (m *MariaDB) buildUserCreationTimeQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = m.sqlBuilder.Select("created_on").
+	query, args, err = m.sqlBuilder.Select(fmt.Sprintf("%s.created_on", usersTableName)).
 		From(usersTableName).
-		Where(squirrel.Eq{"id": userID}).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.id", usersTableName): userID,
+		}).
 		ToSql()
 
 	m.logQueryBuildingError(err)
@@ -257,9 +274,10 @@ func (m *MariaDB) buildUserCreationTimeQuery(userID uint64) (query string, args 
 }
 
 // CreateUser creates a user
-func (m *MariaDB) CreateUser(ctx context.Context, input *models.UserInput) (*models.User, error) {
+func (m *MariaDB) CreateUser(ctx context.Context, input models.UserDatabaseCreationInput) (*models.User, error) {
 	x := &models.User{
 		Username:        input.Username,
+		HashedPassword:  input.HashedPassword,
 		TwoFactorSecret: input.TwoFactorSecret,
 	}
 	query, args := m.buildCreateUserQuery(input)
@@ -290,7 +308,7 @@ func (m *MariaDB) buildUpdateUserQuery(input *models.User) (query string, args [
 		Set("username", input.Username).
 		Set("hashed_password", input.HashedPassword).
 		Set("two_factor_secret", input.TwoFactorSecret).
-		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
+		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{"id": input.ID}).
 		ToSql()
 
@@ -313,8 +331,8 @@ func (m *MariaDB) buildArchiveUserQuery(userID uint64) (query string, args []int
 
 	query, args, err = m.sqlBuilder.
 		Update(usersTableName).
-		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
-		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
+		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
+		Set("archived_on", squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{"id": userID}).
 		ToSql()
 

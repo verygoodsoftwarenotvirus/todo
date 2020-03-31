@@ -23,7 +23,7 @@ const (
 // UserInputMiddleware fetches user input from requests
 func (s *Service) UserInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		x := new(models.UserInput)
+		x := new(models.UserCreationInput)
 		ctx, span := trace.StartSpan(req.Context(), "UserInputMiddleware")
 		defer span.End()
 

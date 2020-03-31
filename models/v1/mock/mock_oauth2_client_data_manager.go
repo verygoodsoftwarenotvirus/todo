@@ -27,12 +27,6 @@ func (m *OAuth2ClientDataManager) GetOAuth2ClientByClientID(ctx context.Context,
 	return args.Get(0).(*models.OAuth2Client), args.Error(1)
 }
 
-// GetOAuth2ClientCount is a mock function
-func (m *OAuth2ClientDataManager) GetOAuth2ClientCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (uint64, error) {
-	args := m.Called(ctx, filter, userID)
-	return args.Get(0).(uint64), args.Error(1)
-}
-
 // GetAllOAuth2ClientCount is a mock function
 func (m *OAuth2ClientDataManager) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	args := m.Called(ctx)
@@ -45,15 +39,9 @@ func (m *OAuth2ClientDataManager) GetAllOAuth2Clients(ctx context.Context) ([]*m
 	return args.Get(0).([]*models.OAuth2Client), args.Error(1)
 }
 
-// GetAllOAuth2ClientsForUser is a mock function
-func (m *OAuth2ClientDataManager) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64) ([]*models.OAuth2Client, error) {
-	args := m.Called(ctx, userID)
-	return args.Get(0).([]*models.OAuth2Client), args.Error(1)
-}
-
 // GetOAuth2Clients is a mock function
 func (m *OAuth2ClientDataManager) GetOAuth2Clients(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
-	args := m.Called(ctx, filter, userID)
+	args := m.Called(ctx, userID, filter)
 	return args.Get(0).(*models.OAuth2ClientList), args.Error(1)
 }
 

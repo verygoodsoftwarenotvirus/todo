@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"testing"
 
-	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
@@ -15,7 +14,7 @@ func TestWebhook_Update(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		exampleInput := &WebhookUpdateInput{
-			Name:        fake.Word(),
+			Name:        "whatever",
 			ContentType: "application/xml",
 			URL:         "https://blah.verygoodsoftwarenotvirus.ru",
 			Method:      http.MethodPatch,
@@ -25,7 +24,7 @@ func TestWebhook_Update(T *testing.T) {
 		}
 
 		actual := &Webhook{
-			Name:        fake.Word(),
+			Name:        "something_else",
 			ContentType: "application/json",
 			URL:         "https://verygoodsoftwarenotvirus.ru",
 			Method:      http.MethodPost,

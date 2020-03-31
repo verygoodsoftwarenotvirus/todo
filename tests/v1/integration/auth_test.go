@@ -14,10 +14,9 @@ import (
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
-	randmodel "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/rand/model"
 
-	fake "github.com/brianvoe/gofakeit"
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -61,11 +60,12 @@ func TestAuth(test *testing.T) {
 	test.Parallel()
 
 	test.Run("should be able to login", func(t *testing.T) {
-		tctx := context.Background()
+		ctx := context.Background()
 
 		// create a user
-		ui := randmodel.RandomUserInput()
-		req, err := todoClient.BuildCreateUserRequest(tctx, ui)
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleUserCreationInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+		req, err := todoClient.BuildCreateUserRequest(ctx, exampleUserCreationInput)
 		checkValueAndError(t, req, err)
 
 		res, err := todoClient.PlainClient().Do(req)
@@ -79,8 +79,8 @@ func TestAuth(test *testing.T) {
 		token, err := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, token, err)
 		r := &models.UserLoginInput{
-			Username:  ucr.Username,
-			Password:  ui.Password,
+			Username:  exampleUserCreationInput.Username,
+			Password:  exampleUserCreationInput.Password,
 			TOTPToken: token,
 		}
 		out, err := json.Marshal(r)
@@ -104,10 +104,11 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should be able to logout", func(t *testing.T) {
-		tctx := context.Background()
+		ctx := context.Background()
 
-		ui := randmodel.RandomUserInput()
-		req, err := todoClient.BuildCreateUserRequest(tctx, ui)
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleUserCreationInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+		req, err := todoClient.BuildCreateUserRequest(ctx, exampleUserCreationInput)
 		checkValueAndError(t, req, err)
 
 		res, err := todoClient.PlainClient().Do(req)
@@ -119,8 +120,8 @@ func TestAuth(test *testing.T) {
 		token, err := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, token, err)
 		r := &models.UserLoginInput{
-			Username:  ucr.Username,
-			Password:  ui.Password,
+			Username:  exampleUserCreationInput.Username,
+			Password:  exampleUserCreationInput.Password,
 			TOTPToken: token,
 		}
 		out, err := json.Marshal(r)
@@ -174,11 +175,12 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should not be able to log in with the wrong password", func(t *testing.T) {
-		tctx := context.Background()
+		ctx := context.Background()
 
 		// create a user
-		ui := randmodel.RandomUserInput()
-		req, err := todoClient.BuildCreateUserRequest(tctx, ui)
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleUserCreationInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+		req, err := todoClient.BuildCreateUserRequest(ctx, exampleUserCreationInput)
 		checkValueAndError(t, req, err)
 
 		res, err := todoClient.PlainClient().Do(req)
@@ -190,7 +192,7 @@ func TestAuth(test *testing.T) {
 
 		// create login request
 		var badPassword string
-		for _, v := range ui.Password {
+		for _, v := range exampleUserCreationInput.Password {
 			badPassword = string(v) + badPassword
 		}
 
@@ -198,7 +200,7 @@ func TestAuth(test *testing.T) {
 		token, err := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, token, err)
 		r := &models.UserLoginInput{
-			Username:  ucr.Username,
+			Username:  exampleUserCreationInput.Username,
 			Password:  badPassword,
 			TOTPToken: token,
 		}
@@ -220,7 +222,8 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should not be able to login as someone that doesn't exist", func(t *testing.T) {
-		ui := randmodel.RandomUserInput()
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleUserCreationInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
 
 		s, err := randString()
 		require.NoError(t, err)
@@ -228,8 +231,8 @@ func TestAuth(test *testing.T) {
 		token, err := totp.GenerateCode(s, time.Now().UTC())
 		checkValueAndError(t, token, err)
 		r := &models.UserLoginInput{
-			Username:  ui.Username,
-			Password:  ui.Password,
+			Username:  exampleUserCreationInput.Username,
+			Password:  exampleUserCreationInput.Password,
 			TOTPToken: token,
 		}
 		out, err := json.Marshal(r)
@@ -429,7 +432,7 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should only allow users to see their own content", func(t *testing.T) {
-		tctx := context.Background()
+		ctx := context.Background()
 
 		// create user and oauth2 client A
 		userA, err := testutil.CreateObligatoryUser(urlToUse, debug)
@@ -439,7 +442,7 @@ func TestAuth(test *testing.T) {
 		require.NoError(t, err)
 
 		clientA, err := client.NewClient(
-			tctx,
+			ctx,
 			ca.ClientID,
 			ca.ClientSecret,
 			todoClient.URL,
@@ -458,7 +461,7 @@ func TestAuth(test *testing.T) {
 		require.NoError(t, err)
 
 		clientB, err := client.NewClient(
-			tctx,
+			ctx,
 			cb.ClientID,
 			cb.ClientSecret,
 			todoClient.URL,
@@ -470,30 +473,26 @@ func TestAuth(test *testing.T) {
 		checkValueAndError(test, clientA, err)
 
 		// create webhook for user A
-		webhookA, err := clientA.CreateWebhook(tctx, &models.WebhookCreationInput{
-			Method: http.MethodPatch,
-			Name:   fake.Word(),
-		})
+		wciA := fakemodels.BuildFakeWebhookCreationInput()
+		webhookA, err := clientA.CreateWebhook(ctx, wciA)
 		checkValueAndError(t, webhookA, err)
 
 		// create webhook for user B
-		webhookB, err := clientB.CreateWebhook(tctx, &models.WebhookCreationInput{
-			Method: http.MethodPatch,
-			Name:   fake.Word(),
-		})
+		wciB := fakemodels.BuildFakeWebhookCreationInput()
+		webhookB, err := clientB.CreateWebhook(ctx, wciB)
 		checkValueAndError(t, webhookB, err)
 
-		i, err := clientB.GetWebhook(tctx, webhookA.ID)
+		i, err := clientB.GetWebhook(ctx, webhookA.ID)
 		assert.Nil(t, i)
 		assert.Error(t, err, "should experience error trying to fetch entry they're not authorized for")
 
 		// Clean up
-		assert.NoError(t, todoClient.ArchiveWebhook(tctx, webhookA.ID))
-		assert.NoError(t, todoClient.ArchiveWebhook(tctx, webhookB.ID))
+		assert.NoError(t, todoClient.ArchiveWebhook(ctx, webhookA.ID))
+		assert.NoError(t, todoClient.ArchiveWebhook(ctx, webhookB.ID))
 	})
 
 	test.Run("should only allow clients with a given scope to see that scope's content", func(t *testing.T) {
-		tctx := context.Background()
+		ctx := context.Background()
 
 		// create user
 		x, y, cookie := buildDummyUser(test)
@@ -501,11 +500,11 @@ func TestAuth(test *testing.T) {
 
 		input := buildDummyOAuth2ClientInput(test, x.Username, y.Password, x.TwoFactorSecret)
 		input.Scopes = []string{"absolutelynevergonnaexistascopelikethis"}
-		premade, err := todoClient.CreateOAuth2Client(tctx, cookie, input)
+		premade, err := todoClient.CreateOAuth2Client(ctx, cookie, input)
 		checkValueAndError(test, premade, err)
 
 		c, err := client.NewClient(
-			tctx,
+			ctx,
 			premade.ClientID,
 			premade.ClientSecret,
 			todoClient.URL,
@@ -516,7 +515,7 @@ func TestAuth(test *testing.T) {
 		)
 		checkValueAndError(test, c, err)
 
-		i, err := c.GetOAuth2Clients(tctx, nil)
+		i, err := c.GetOAuth2Clients(ctx, nil)
 		assert.Nil(t, i)
 		assert.Error(t, err, "should experience error trying to fetch entry they're not authorized for")
 	})

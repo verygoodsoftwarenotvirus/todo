@@ -19,11 +19,14 @@ const (
 	loggerName       = "sqlite"
 	sqliteDriverName = "wrapped-sqlite-driver"
 
-	// CountQuery is a generic counter query used in a few query builders
-	CountQuery = "COUNT(%s.id)"
+	existencePrefix = "SELECT EXISTS ("
+	existenceSuffix = ")"
 
-	// CurrentUnixTimeQuery is the query sqlite uses to determine the current unix time
-	CurrentUnixTimeQuery = "(strftime('%s','now'))"
+	// countQuery is a generic counter query used in a few query builders
+	countQuery = "COUNT(%s.id)"
+
+	// currentUnixTimeQuery is the query sqlite uses to determine the current unix time
+	currentUnixTimeQuery = "(strftime('%s','now'))"
 )
 
 func init() {
@@ -81,7 +84,7 @@ func ProvideSqlite(debug bool, db *sql.DB, logger logging.Logger) database.Datab
 }
 
 // IsReady reports whether or not the db is ready
-func (s *Sqlite) IsReady(ctx context.Context) (ready bool) {
+func (s *Sqlite) IsReady(_ context.Context) (ready bool) {
 	return true
 }
 

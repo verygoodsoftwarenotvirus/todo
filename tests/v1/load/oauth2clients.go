@@ -4,10 +4,13 @@ import (
 	"context"
 	"math/rand"
 	"net/http"
+	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	randmodel "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/rand/model"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
+
+	"github.com/pquerna/otp/totp"
 )
 
 // fetchRandomOAuth2Client retrieves a random client from the list of available clients
@@ -29,30 +32,43 @@ func fetchRandomOAuth2Client(c *client.V1Client) *models.OAuth2Client {
 	return selectedClient
 }
 
+func mustBuildCode(totpSecret string) string {
+	code, err := totp.GenerateCode(totpSecret, time.Now().UTC())
+	if err != nil {
+		panic(err)
+	}
+	return code
+}
+
 func buildOAuth2ClientActions(c *client.V1Client) map[string]*Action {
 	return map[string]*Action{
 		"CreateOAuth2Client": {
 			Name: "CreateOAuth2Client",
 			Action: func() (*http.Request, error) {
-				ui := randmodel.RandomUserInput()
-				u, err := c.CreateUser(context.Background(), ui)
+				ctx := context.Background()
+				ui := fakemodels.BuildFakeUserCreationInput()
+				u, err := c.CreateUser(ctx, ui)
 				if err != nil {
-					return c.BuildHealthCheckRequest()
+					return c.BuildHealthCheckRequest(ctx)
 				}
 
-				cookie, err := c.Login(context.Background(), u.Username, ui.Password, u.TwoFactorSecret)
+				uli := models.UserLoginInput{
+					Username:  ui.Username,
+					Password:  ui.Password,
+					TOTPToken: mustBuildCode(u.TwoFactorSecret),
+				}
+
+				cookie, err := c.Login(ctx, uli)
 				if err != nil {
-					return c.BuildHealthCheckRequest()
+					return c.BuildHealthCheckRequest(ctx)
 				}
 
 				req, err := c.BuildCreateOAuth2ClientRequest(
-					context.Background(),
+					ctx,
 					cookie,
-					randmodel.RandomOAuth2ClientInput(
-						u.Username,
-						ui.Password,
-						u.TwoFactorSecret,
-					),
+					&models.OAuth2ClientCreationInput{
+						UserLoginInput: uli,
+					},
 				)
 				return req, err
 			},

@@ -71,7 +71,7 @@ func TestService_StaticDir(T *testing.T) {
 		assert.NotNil(t, hf)
 
 		req, res := buildRequest(t), httptest.NewRecorder()
-		req.URL.Path = "/items/9"
+		req.URL.Path = "/items/123"
 		hf(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)

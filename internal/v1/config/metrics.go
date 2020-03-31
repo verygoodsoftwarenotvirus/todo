@@ -62,12 +62,12 @@ func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) (m
 	log.Debug("setting metrics provider")
 
 	switch cfg.Metrics.MetricsProvider {
-	case Prometheus, DefaultMetricsProvider:
+	case Prometheus:
 		p, err := prometheus.NewExporter(prometheus.Options{
 			OnError: func(err error) {
 				logger.Error(err, "setting up prometheus export")
 			},
-			Namespace: string(MetricsNamespace),
+			Namespace: MetricsNamespace,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create Prometheus exporter: %w", err)
@@ -88,7 +88,7 @@ func (cfg *ServerConfig) ProvideTracing(logger logging.Logger) error {
 	log.Info("setting tracing provider")
 
 	switch cfg.Metrics.TracingProvider {
-	case Jaeger, DefaultTracingProvider:
+	case Jaeger:
 		ah := os.Getenv("JAEGER_AGENT_HOST")
 		ap := os.Getenv("JAEGER_AGENT_PORT")
 		sn := os.Getenv("JAEGER_SERVICE_NAME")

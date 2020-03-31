@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
-	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opencensus.io/trace"
@@ -25,11 +25,9 @@ func buildDummyItem(t *testing.T) *models.Item {
 	t.Helper()
 
 	ctx := context.Background()
-	x := &models.ItemCreationInput{
-		Name:    fake.Word(),
-		Details: fake.Word(),
-	}
-	y, err := todoClient.CreateItem(ctx, x)
+	exampleItem := fakemodels.BuildFakeItem()
+	exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+	y, err := todoClient.CreateItem(ctx, exampleInput)
 	require.NoError(t, err)
 
 	return y
@@ -40,39 +38,34 @@ func TestItems(test *testing.T) {
 
 	test.Run("Creating", func(T *testing.T) {
 		T.Run("should be createable", func(t *testing.T) {
-			tctx := context.Background()
-			ctx, span := trace.StartSpan(tctx, t.Name())
+			ctx := context.Background()
+			ctx, span := trace.StartSpan(ctx, t.Name())
 			defer span.End()
 
 			// Create item
-			expected := &models.Item{
-				Name:    fake.Word(),
-				Details: fake.Word(),
-			}
-			premade, err := todoClient.CreateItem(ctx, &models.ItemCreationInput{
-				Name:    expected.Name,
-				Details: expected.Details,
-			})
-			checkValueAndError(t, premade, err)
+			exampleItem := fakemodels.BuildFakeItem()
+			exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+			createdItem, err := todoClient.CreateItem(ctx, exampleInput)
+			checkValueAndError(t, createdItem, err)
 
 			// Assert item equality
-			checkItemEquality(t, expected, premade)
+			checkItemEquality(t, exampleItem, createdItem)
 
 			// Clean up
-			err = todoClient.ArchiveItem(ctx, premade.ID)
+			err = todoClient.ArchiveItem(ctx, createdItem.ID)
 			assert.NoError(t, err)
 
-			actual, err := todoClient.GetItem(ctx, premade.ID)
+			actual, err := todoClient.GetItem(ctx, createdItem.ID)
 			checkValueAndError(t, actual, err)
-			checkItemEquality(t, expected, actual)
+			checkItemEquality(t, exampleItem, actual)
 			assert.NotZero(t, actual.ArchivedOn)
 		})
 	})
 
 	test.Run("Listing", func(T *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
-			tctx := context.Background()
-			ctx, span := trace.StartSpan(tctx, t.Name())
+			ctx := context.Background()
+			ctx, span := trace.StartSpan(ctx, t.Name())
 			defer span.End()
 
 			// Create items
@@ -93,157 +86,135 @@ func TestItems(test *testing.T) {
 			)
 
 			// Clean up
-			for _, x := range actual.Items {
-				err = todoClient.ArchiveItem(ctx, x.ID)
+			for _, createdItem := range actual.Items {
+				err = todoClient.ArchiveItem(ctx, createdItem.ID)
 				assert.NoError(t, err)
 			}
 		})
 	})
 
 	test.Run("ExistenceChecking", func(T *testing.T) {
-		T.Run("it should return an error when trying to read something that does not exist", func(t *testing.T) {
-			tctx := context.Background()
-			ctx, span := trace.StartSpan(tctx, t.Name())
+		T.Run("it should return an error when trying to check something that does not exist", func(t *testing.T) {
+			ctx := context.Background()
+			ctx, span := trace.StartSpan(ctx, t.Name())
 			defer span.End()
 
-			// Fetch item
+			// Attempt to fetch nonexistent item
 			actual, err := todoClient.ItemExists(ctx, nonexistentID)
 			assert.NoError(t, err)
 			assert.False(t, actual)
 		})
 
 		T.Run("it should return 200 when the relevant item exists", func(t *testing.T) {
-			tctx := context.Background()
-			ctx, span := trace.StartSpan(tctx, t.Name())
+			ctx := context.Background()
+			ctx, span := trace.StartSpan(ctx, t.Name())
 			defer span.End()
 
 			// Create item
-			expected := &models.Item{
-				Name:    fake.Word(),
-				Details: fake.Word(),
-			}
-			premade, err := todoClient.CreateItem(ctx, &models.ItemCreationInput{
-				Name:    expected.Name,
-				Details: expected.Details,
-			})
-			checkValueAndError(t, premade, err)
+			exampleItem := fakemodels.BuildFakeItem()
+			exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+			createdItem, err := todoClient.CreateItem(ctx, exampleInput)
+			checkValueAndError(t, createdItem, err)
 
 			// Fetch item
-			actual, err := todoClient.ItemExists(ctx, premade.ID)
+			actual, err := todoClient.ItemExists(ctx, createdItem.ID)
 			assert.NoError(t, err)
 			assert.True(t, actual)
 
-			// Clean up
-			err = todoClient.ArchiveItem(ctx, premade.ID)
-			assert.NoError(t, err)
+			// Clean up item
+			assert.NoError(t, todoClient.ArchiveItem(ctx, createdItem.ID))
 		})
 	})
 
 	test.Run("Reading", func(T *testing.T) {
 		T.Run("it should return an error when trying to read something that does not exist", func(t *testing.T) {
-			tctx := context.Background()
-			ctx, span := trace.StartSpan(tctx, t.Name())
+			ctx := context.Background()
+			ctx, span := trace.StartSpan(ctx, t.Name())
 			defer span.End()
 
-			// Fetch item
+			// Attempt to fetch nonexistent item
 			_, err := todoClient.GetItem(ctx, nonexistentID)
 			assert.Error(t, err)
 		})
 
 		T.Run("it should be readable", func(t *testing.T) {
-			tctx := context.Background()
-			ctx, span := trace.StartSpan(tctx, t.Name())
+			ctx := context.Background()
+			ctx, span := trace.StartSpan(ctx, t.Name())
 			defer span.End()
 
 			// Create item
-			expected := &models.Item{
-				Name:    fake.Word(),
-				Details: fake.Word(),
-			}
-			premade, err := todoClient.CreateItem(ctx, &models.ItemCreationInput{
-				Name:    expected.Name,
-				Details: expected.Details,
-			})
-			checkValueAndError(t, premade, err)
+			exampleItem := fakemodels.BuildFakeItem()
+			exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+			createdItem, err := todoClient.CreateItem(ctx, exampleInput)
+			checkValueAndError(t, createdItem, err)
 
 			// Fetch item
-			actual, err := todoClient.GetItem(ctx, premade.ID)
+			actual, err := todoClient.GetItem(ctx, createdItem.ID)
 			checkValueAndError(t, actual, err)
 
 			// Assert item equality
-			checkItemEquality(t, expected, actual)
+			checkItemEquality(t, exampleItem, actual)
 
-			// Clean up
-			err = todoClient.ArchiveItem(ctx, actual.ID)
-			assert.NoError(t, err)
+			// Clean up item
+			assert.NoError(t, todoClient.ArchiveItem(ctx, createdItem.ID))
 		})
 	})
 
 	test.Run("Updating", func(T *testing.T) {
 		T.Run("it should return an error when trying to update something that does not exist", func(t *testing.T) {
-			tctx := context.Background()
-			ctx, span := trace.StartSpan(tctx, t.Name())
+			ctx := context.Background()
+			ctx, span := trace.StartSpan(ctx, t.Name())
 			defer span.End()
 
-			err := todoClient.UpdateItem(ctx, &models.Item{ID: nonexistentID})
-			assert.Error(t, err)
+			exampleItem := fakemodels.BuildFakeItem()
+			exampleItem.ID = nonexistentID
+
+			assert.Error(t, todoClient.UpdateItem(ctx, exampleItem))
 		})
 
 		T.Run("it should be updatable", func(t *testing.T) {
-			tctx := context.Background()
-			ctx, span := trace.StartSpan(tctx, t.Name())
+			ctx := context.Background()
+			ctx, span := trace.StartSpan(ctx, t.Name())
 			defer span.End()
 
 			// Create item
-			expected := &models.Item{
-				Name:    fake.Word(),
-				Details: fake.Word(),
-			}
-			premade, err := todoClient.CreateItem(tctx, &models.ItemCreationInput{
-				Name:    fake.Word(),
-				Details: fake.Word(),
-			})
-			checkValueAndError(t, premade, err)
+			exampleItem := fakemodels.BuildFakeItem()
+			exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+			createdItem, err := todoClient.CreateItem(ctx, exampleInput)
+			checkValueAndError(t, createdItem, err)
 
 			// Change item
-			premade.Update(expected.ToInput())
-			err = todoClient.UpdateItem(ctx, premade)
+			createdItem.Update(exampleItem.ToUpdateInput())
+			err = todoClient.UpdateItem(ctx, createdItem)
 			assert.NoError(t, err)
 
 			// Fetch item
-			actual, err := todoClient.GetItem(ctx, premade.ID)
+			actual, err := todoClient.GetItem(ctx, createdItem.ID)
 			checkValueAndError(t, actual, err)
 
 			// Assert item equality
-			checkItemEquality(t, expected, actual)
+			checkItemEquality(t, exampleItem, actual)
 			assert.NotNil(t, actual.UpdatedOn)
 
-			// Clean up
-			err = todoClient.ArchiveItem(ctx, actual.ID)
-			assert.NoError(t, err)
+			// Clean up item
+			assert.NoError(t, todoClient.ArchiveItem(ctx, createdItem.ID))
 		})
 	})
 
 	test.Run("Deleting", func(T *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
-			tctx := context.Background()
-			ctx, span := trace.StartSpan(tctx, t.Name())
+			ctx := context.Background()
+			ctx, span := trace.StartSpan(ctx, t.Name())
 			defer span.End()
 
 			// Create item
-			expected := &models.Item{
-				Name:    fake.Word(),
-				Details: fake.Word(),
-			}
-			premade, err := todoClient.CreateItem(ctx, &models.ItemCreationInput{
-				Name:    expected.Name,
-				Details: expected.Details,
-			})
-			checkValueAndError(t, premade, err)
+			exampleItem := fakemodels.BuildFakeItem()
+			exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+			createdItem, err := todoClient.CreateItem(ctx, exampleInput)
+			checkValueAndError(t, createdItem, err)
 
-			// Clean up
-			err = todoClient.ArchiveItem(ctx, premade.ID)
-			assert.NoError(t, err)
+			// Clean up item
+			assert.NoError(t, todoClient.ArchiveItem(ctx, createdItem.ID))
 		})
 	})
 }

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +15,7 @@ import (
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -40,7 +42,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On(
 			"DecodeRequest",
-			mock.Anything,
+			mock.AnythingOfType("*http.Request"),
 			mock.Anything,
 		).Return(nil)
 		s.encoderDecoder = ed
@@ -73,7 +75,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On(
 			"DecodeRequest",
-			mock.Anything,
+			mock.AnythingOfType("*http.Request"),
 			mock.Anything,
 		).Return(errors.New("blah"))
 		s.encoderDecoder = ed
@@ -99,41 +101,39 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
-		expected := &models.OAuth2Client{
-			ClientID: "THIS IS A FAKE CLIENT ID",
-			Scopes:   []string{"things"},
-		}
 
-		mh := &mockOauth2Handler{}
+		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+
+		mh := &mockOAuth2Handler{}
 		mh.On(
 			"ValidationBearerToken",
-			mock.Anything,
-		).Return(&oauth2models.Token{ClientID: expected.ClientID}, nil)
+			mock.AnythingOfType("*http.Request"),
+		).Return(&oauth2models.Token{ClientID: exampleOAuth2Client.ClientID}, nil)
 		s.oauth2Handler = mh
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
 			"GetOAuth2ClientByClientID",
 			mock.Anything,
-			expected.ClientID,
-		).Return(expected, nil)
+			exampleOAuth2Client.ClientID,
+		).Return(exampleOAuth2Client, nil)
 		s.database = mockDB
 
 		req := buildRequest(t)
-		req.URL.Path = "/api/v1/things"
+		req.URL.Path = fmt.Sprintf("/api/v1/%s", exampleOAuth2Client.Scopes[0])
 		actual, err := s.ExtractOAuth2ClientFromRequest(req.Context(), req)
 
 		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
+		assert.Equal(t, exampleOAuth2Client, actual)
 	})
 
 	T.Run("with error validating token", func(t *testing.T) {
 		s := buildTestService(t)
 
-		mh := &mockOauth2Handler{}
+		mh := &mockOAuth2Handler{}
 		mh.On(
 			"ValidationBearerToken",
-			mock.Anything,
+			mock.AnythingOfType("*http.Request"),
 		).Return((*oauth2models.Token)(nil), errors.New("blah"))
 		s.oauth2Handler = mh
 
@@ -146,22 +146,21 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 
 	T.Run("with error fetching from database", func(t *testing.T) {
 		s := buildTestService(t)
-		expected := &models.OAuth2Client{
-			ClientID: "THIS IS A FAKE CLIENT ID",
-		}
 
-		mh := &mockOauth2Handler{}
+		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+
+		mh := &mockOAuth2Handler{}
 		mh.On(
 			"ValidationBearerToken",
-			mock.Anything,
-		).Return(&oauth2models.Token{ClientID: expected.ClientID}, nil)
+			mock.AnythingOfType("*http.Request"),
+		).Return(&oauth2models.Token{ClientID: exampleOAuth2Client.ClientID}, nil)
 		s.oauth2Handler = mh
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
 			"GetOAuth2ClientByClientID",
 			mock.Anything,
-			expected.ClientID,
+			exampleOAuth2Client.ClientID,
 		).Return((*models.OAuth2Client)(nil), errors.New("blah"))
 		s.database = mockDB
 
@@ -174,24 +173,22 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 
 	T.Run("with invalid scope", func(t *testing.T) {
 		s := buildTestService(t)
-		expected := &models.OAuth2Client{
-			ClientID: "THIS IS A FAKE CLIENT ID",
-			Scopes:   []string{"things"},
-		}
 
-		mh := &mockOauth2Handler{}
+		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+
+		mh := &mockOAuth2Handler{}
 		mh.On(
 			"ValidationBearerToken",
-			mock.Anything,
-		).Return(&oauth2models.Token{ClientID: expected.ClientID}, nil)
+			mock.AnythingOfType("*http.Request"),
+		).Return(&oauth2models.Token{ClientID: exampleOAuth2Client.ClientID}, nil)
 		s.oauth2Handler = mh
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
 			"GetOAuth2ClientByClientID",
 			mock.Anything,
-			expected.ClientID,
-		).Return(expected, nil)
+			exampleOAuth2Client.ClientID,
+		).Return(exampleOAuth2Client, nil)
 		s.database = mockDB
 
 		req := buildRequest(t)
@@ -210,35 +207,33 @@ func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
-		expected := &models.OAuth2Client{
-			ClientID: "THIS IS A FAKE CLIENT ID",
-			Scopes:   []string{"things"},
-		}
 
-		mh := &mockOauth2Handler{}
+		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+
+		mh := &mockOAuth2Handler{}
 		mh.On(
 			"ValidationBearerToken",
-			mock.Anything,
-		).Return(&oauth2models.Token{ClientID: expected.ClientID}, nil)
+			mock.AnythingOfType("*http.Request"),
+		).Return(&oauth2models.Token{ClientID: exampleOAuth2Client.ClientID}, nil)
 		s.oauth2Handler = mh
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
 			"GetOAuth2ClientByClientID",
 			mock.Anything,
-			expected.ClientID,
-		).Return(expected, nil)
+			exampleOAuth2Client.ClientID,
+		).Return(exampleOAuth2Client, nil)
 		s.database = mockDB
 
 		req := buildRequest(t)
-		req.URL.Path = "/api/v1/things"
+		req.URL.Path = fmt.Sprintf("/api/v1/%s", exampleOAuth2Client.Scopes[0])
 		res := httptest.NewRecorder()
 
 		mhh := &mockHTTPHandler{}
 		mhh.On(
 			"ServeHTTP",
 			mock.Anything,
-			mock.Anything,
+			mock.AnythingOfType("*http.Request"),
 		).Return()
 
 		s.OAuth2TokenAuthenticationMiddleware(mhh).ServeHTTP(res, req)
@@ -248,10 +243,10 @@ func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 	T.Run("with error authenticating request", func(t *testing.T) {
 		s := buildTestService(t)
 
-		mh := &mockOauth2Handler{}
+		mh := &mockOAuth2Handler{}
 		mh.On(
 			"ValidationBearerToken",
-			mock.Anything,
+			mock.AnythingOfType("*http.Request"),
 		).Return((*oauth2models.Token)(nil), errors.New("blah"))
 		s.oauth2Handler = mh
 
@@ -262,7 +257,7 @@ func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 		mhh.On(
 			"ServeHTTP",
 			mock.Anything,
-			mock.Anything,
+			mock.AnythingOfType("*http.Request"),
 		).Return()
 
 		s.OAuth2TokenAuthenticationMiddleware(mhh).ServeHTTP(res, req)
@@ -277,11 +272,13 @@ func TestService_OAuth2ClientInfoMiddleware(T *testing.T) {
 		s := buildTestService(t)
 		expected := "blah"
 
+		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+
 		mhh := &mockHTTPHandler{}
 		mhh.On(
 			"ServeHTTP",
 			mock.Anything,
-			mock.Anything,
+			mock.AnythingOfType("*http.Request"),
 		).Return()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -294,7 +291,7 @@ func TestService_OAuth2ClientInfoMiddleware(T *testing.T) {
 			"GetOAuth2ClientByClientID",
 			mock.Anything,
 			expected,
-		).Return(&models.OAuth2Client{}, nil)
+		).Return(exampleOAuth2Client, nil)
 		s.database = mockDB
 
 		s.OAuth2ClientInfoMiddleware(mhh).ServeHTTP(res, req)
@@ -309,7 +306,7 @@ func TestService_OAuth2ClientInfoMiddleware(T *testing.T) {
 		mhh.On(
 			"ServeHTTP",
 			mock.Anything,
-			mock.Anything,
+			mock.AnythingOfType("*http.Request"),
 		).Return()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -336,20 +333,19 @@ func TestService_fetchOAuth2ClientFromRequest(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
-		expected := &models.OAuth2Client{
-			ClientID: "THIS IS A FAKE CLIENT ID",
-		}
+
+		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		req := buildRequest(t).WithContext(
 			context.WithValue(
 				ctx,
 				models.OAuth2ClientKey,
-				expected,
+				exampleOAuth2Client,
 			),
 		)
 
 		actual := s.fetchOAuth2ClientFromRequest(req)
-		assert.Equal(t, expected, actual)
+		assert.Equal(t, exampleOAuth2Client, actual)
 	})
 
 	T.Run("without value present", func(t *testing.T) {
@@ -364,20 +360,19 @@ func TestService_fetchOAuth2ClientIDFromRequest(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
-		expected := &models.OAuth2Client{
-			ClientID: "THIS IS A FAKE CLIENT ID",
-		}
+
+		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		req := buildRequest(t).WithContext(
 			context.WithValue(
 				ctx,
 				clientIDKey,
-				expected.ClientID,
+				exampleOAuth2Client.ClientID,
 			),
 		)
 
 		actual := s.fetchOAuth2ClientIDFromRequest(req)
-		assert.Equal(t, expected.ClientID, actual)
+		assert.Equal(t, exampleOAuth2Client.ClientID, actual)
 	})
 
 	T.Run("without value present", func(t *testing.T) {

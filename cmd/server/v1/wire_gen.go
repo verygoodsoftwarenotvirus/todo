@@ -43,7 +43,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	frontendSettings := config.ProvideConfigFrontendSettings(cfg)
 	frontendService := frontend.ProvideFrontendService(logger, frontendSettings)
 	itemDataManager := items.ProvideItemDataManager(database2)
-	itemsUserIDFetcher := httpserver.ProvideUserIDFetcher()
+	itemsUserIDFetcher := httpserver.ProvideItemServiceUserIDFetcher()
 	itemIDFetcher := httpserver.ProvideItemIDFetcher(logger)
 	websocketAuthFunc := auth2.ProvideWebsocketAuthFunc(authService)
 	typeNameManipulationFunc := httpserver.ProvideNewsmanTypeNameManipulationFunc(logger)

@@ -77,7 +77,10 @@ func (m *MariaDB) buildItemExistsQuery(itemID, userID uint64) (query string, arg
 	var err error
 
 	query, args, err = m.sqlBuilder.
-		Select(fmt.Sprintf("%s.id", itemsTableName)).Prefix("SELECT EXISTS (").From(itemsTableName).Suffix(")").
+		Select(fmt.Sprintf("%s.id", itemsTableName)).
+		Prefix(existencePrefix).
+		From(itemsTableName).
+		Suffix(existenceSuffix).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.id", itemsTableName):                            itemID,
 			fmt.Sprintf("%s.%s", itemsTableName, itemsTableOwnershipColumn): userID,
@@ -120,13 +123,13 @@ func (m *MariaDB) GetItem(ctx context.Context, itemID, userID uint64) (*models.I
 	return scanItem(row)
 }
 
-// buildGetItemCountQuery takes a QueryFilter and a user ID and returns a SQL query (and the relevant arguments) for
-// fetching the number of items belonging to a given user that meet a given query
-func (m *MariaDB) buildGetItemCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
+// buildGetItemCountQuery takes a QueryFilter and a user ID, and returns a SQL query
+// (and the relevant arguments) for fetching the number of items belonging to a given user
+func (m *MariaDB) buildGetItemCountQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 
 	builder := m.sqlBuilder.
-		Select(fmt.Sprintf(CountQuery, itemsTableName)).
+		Select(fmt.Sprintf(countQuery, itemsTableName)).
 		From(itemsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.archived_on", itemsTableName):                   nil,
@@ -145,7 +148,7 @@ func (m *MariaDB) buildGetItemCountQuery(filter *models.QueryFilter, userID uint
 
 // GetItemCount will fetch the count of items from the database that meet a particular filter and belong to a particular user.
 func (m *MariaDB) GetItemCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (count uint64, err error) {
-	query, args := m.buildGetItemCountQuery(filter, userID)
+	query, args := m.buildGetItemCountQuery(userID, filter)
 	err = m.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return count, err
 }
@@ -162,9 +165,11 @@ func (m *MariaDB) buildGetAllItemsCountQuery() string {
 		var err error
 
 		allItemsCountQuery, _, err = m.sqlBuilder.
-			Select(fmt.Sprintf(CountQuery, itemsTableName)).
+			Select(fmt.Sprintf(countQuery, itemsTableName)).
 			From(itemsTableName).
-			Where(squirrel.Eq{fmt.Sprintf("%s.archived_on", itemsTableName): nil}).
+			Where(squirrel.Eq{
+				fmt.Sprintf("%s.archived_on", itemsTableName): nil,
+			}).
 			ToSql()
 		m.logQueryBuildingError(err)
 	})
@@ -265,7 +270,7 @@ func (m *MariaDB) buildCreateItemQuery(input *models.Item) (query string, args [
 			input.Name,
 			input.Details,
 			input.BelongsToUser,
-			squirrel.Expr(CurrentUnixTimeQuery),
+			squirrel.Expr(currentUnixTimeQuery),
 		).
 		ToSql()
 
@@ -318,17 +323,17 @@ func (m *MariaDB) CreateItem(ctx context.Context, input *models.ItemCreationInpu
 }
 
 // buildUpdateItemQuery takes an item and returns an update SQL query, with the relevant query parameters
-func (m *MariaDB) buildUpdateItemQuery(input *models.Item) (query string, args []interface{}) {
+func (m *MariaDB) buildUpdateItemQuery(updated *models.Item) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = m.sqlBuilder.
 		Update(itemsTableName).
-		Set("name", input.Name).
-		Set("details", input.Details).
-		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
+		Set("name", updated.Name).
+		Set("details", updated.Details).
+		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id":                      input.ID,
-			itemsTableOwnershipColumn: input.BelongsToUser,
+			"id":                      updated.ID,
+			itemsTableOwnershipColumn: updated.BelongsToUser,
 		}).
 		ToSql()
 
@@ -338,8 +343,8 @@ func (m *MariaDB) buildUpdateItemQuery(input *models.Item) (query string, args [
 }
 
 // UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
-func (m *MariaDB) UpdateItem(ctx context.Context, input *models.Item) error {
-	query, args := m.buildUpdateItemQuery(input)
+func (m *MariaDB) UpdateItem(ctx context.Context, updated *models.Item) error {
+	query, args := m.buildUpdateItemQuery(updated)
 	_, err := m.db.ExecContext(ctx, query, args...)
 	return err
 }
@@ -350,8 +355,8 @@ func (m *MariaDB) buildArchiveItemQuery(itemID, userID uint64) (query string, ar
 
 	query, args, err = m.sqlBuilder.
 		Update(itemsTableName).
-		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
-		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
+		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
+		Set("archived_on", squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			"id":                      itemID,
 			"archived_on":             nil,

@@ -99,7 +99,7 @@ func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, erro
 			req.URL.Path = "/"
 		}
 		if itemsFrontendPathRegex.MatchString(req.URL.Path) {
-			rl.Debug("rerouting item req")
+			rl.Debug("rerouting item request")
 			req.URL.Path = "/"
 		}
 

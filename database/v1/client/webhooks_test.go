@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
-	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -16,52 +16,14 @@ func TestClient_GetWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		exampleID := fake.Uint64()
-		exampleUserID := fake.Uint64()
-		expected := &models.Webhook{}
+		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		c, mockDB := buildTestClient()
-		mockDB.WebhookDataManager.On("GetWebhook", mock.Anything, exampleID, exampleUserID).Return(expected, nil)
+		mockDB.WebhookDataManager.On("GetWebhook", mock.Anything, exampleWebhook.ID, exampleWebhook.BelongsToUser).Return(exampleWebhook, nil)
 
-		actual, err := c.GetWebhook(ctx, exampleID, exampleUserID)
+		actual, err := c.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
 		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
-
-		mockDB.AssertExpectations(t)
-	})
-}
-
-func TestClient_GetWebhookCount(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		ctx := context.Background()
-		exampleUserID := fake.Uint64()
-		expected := fake.Uint64()
-		filter := models.DefaultQueryFilter()
-
-		c, mockDB := buildTestClient()
-		mockDB.WebhookDataManager.On("GetWebhookCount", mock.Anything, filter, exampleUserID).Return(expected, nil)
-
-		actual, err := c.GetWebhookCount(ctx, exampleUserID, filter)
-		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
-
-		mockDB.AssertExpectations(t)
-	})
-
-	T.Run("with nil filter", func(t *testing.T) {
-		ctx := context.Background()
-		exampleUserID := fake.Uint64()
-		expected := fake.Uint64()
-		filter := (*models.QueryFilter)(nil)
-
-		c, mockDB := buildTestClient()
-		mockDB.WebhookDataManager.On("GetWebhookCount", mock.Anything, filter, exampleUserID).Return(expected, nil)
-
-		actual, err := c.GetWebhookCount(ctx, exampleUserID, filter)
-		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
+		assert.Equal(t, exampleWebhook, actual)
 
 		mockDB.AssertExpectations(t)
 	})
@@ -72,7 +34,7 @@ func TestClient_GetAllWebhooksCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expected := fake.Uint64()
+		expected := uint64(123)
 
 		c, mockDB := buildTestClient()
 		mockDB.WebhookDataManager.On("GetAllWebhooksCount", mock.Anything).Return(expected, nil)
@@ -90,14 +52,14 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expected := &models.WebhookList{}
+		exampleWebhookList := fakemodels.BuildFakeWebhookList()
 
 		c, mockDB := buildTestClient()
-		mockDB.WebhookDataManager.On("GetAllWebhooks", mock.Anything).Return(expected, nil)
+		mockDB.WebhookDataManager.On("GetAllWebhooks", mock.Anything).Return(exampleWebhookList, nil)
 
 		actual, err := c.GetAllWebhooks(ctx)
 		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
+		assert.Equal(t, exampleWebhookList, actual)
 
 		mockDB.AssertExpectations(t)
 	})
@@ -106,34 +68,34 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 func TestClient_GetWebhooks(T *testing.T) {
 	T.Parallel()
 
+	exampleUser := fakemodels.BuildFakeUser()
+
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUserID := fake.Uint64()
-		expected := &models.WebhookList{}
+		exampleWebhookList := fakemodels.BuildFakeWebhookList()
 		filter := models.DefaultQueryFilter()
 
 		c, mockDB := buildTestClient()
-		mockDB.WebhookDataManager.On("GetWebhooks", mock.Anything, filter, exampleUserID).Return(expected, nil)
+		mockDB.WebhookDataManager.On("GetWebhooks", mock.Anything, exampleUser.ID, filter).Return(exampleWebhookList, nil)
 
-		actual, err := c.GetWebhooks(ctx, exampleUserID, filter)
+		actual, err := c.GetWebhooks(ctx, exampleUser.ID, filter)
 		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
+		assert.Equal(t, exampleWebhookList, actual)
 
 		mockDB.AssertExpectations(t)
 	})
 
 	T.Run("with nil filter", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUserID := fake.Uint64()
-		expected := &models.WebhookList{}
+		exampleWebhookList := fakemodels.BuildFakeWebhookList()
 		filter := (*models.QueryFilter)(nil)
 
 		c, mockDB := buildTestClient()
-		mockDB.WebhookDataManager.On("GetWebhooks", mock.Anything, filter, exampleUserID).Return(expected, nil)
+		mockDB.WebhookDataManager.On("GetWebhooks", mock.Anything, exampleUser.ID, filter).Return(exampleWebhookList, nil)
 
-		actual, err := c.GetWebhooks(ctx, exampleUserID, filter)
+		actual, err := c.GetWebhooks(ctx, exampleUser.ID, filter)
 		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
+		assert.Equal(t, exampleWebhookList, actual)
 
 		mockDB.AssertExpectations(t)
 	})
@@ -144,15 +106,15 @@ func TestClient_CreateWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		exampleInput := &models.WebhookCreationInput{}
-		expected := &models.Webhook{}
+		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		c, mockDB := buildTestClient()
-		mockDB.WebhookDataManager.On("CreateWebhook", mock.Anything, exampleInput).Return(expected, nil)
+		mockDB.WebhookDataManager.On("CreateWebhook", mock.Anything, exampleInput).Return(exampleWebhook, nil)
 
 		actual, err := c.CreateWebhook(ctx, exampleInput)
 		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
+		assert.Equal(t, exampleWebhook, actual)
 
 		mockDB.AssertExpectations(t)
 	})
@@ -163,13 +125,13 @@ func TestClient_UpdateWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		exampleInput := &models.Webhook{}
+		exampleWebhook := fakemodels.BuildFakeWebhook()
 		var expected error
 
 		c, mockDB := buildTestClient()
-		mockDB.WebhookDataManager.On("UpdateWebhook", mock.Anything, exampleInput).Return(expected)
+		mockDB.WebhookDataManager.On("UpdateWebhook", mock.Anything, exampleWebhook).Return(expected)
 
-		actual := c.UpdateWebhook(ctx, exampleInput)
+		actual := c.UpdateWebhook(ctx, exampleWebhook)
 		assert.NoError(t, actual)
 		assert.Equal(t, expected, actual)
 
@@ -182,14 +144,13 @@ func TestClient_ArchiveWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		exampleID := fake.Uint64()
-		exampleUserID := fake.Uint64()
+		exampleWebhook := fakemodels.BuildFakeWebhook()
 		var expected error
 
 		c, mockDB := buildTestClient()
-		mockDB.WebhookDataManager.On("ArchiveWebhook", mock.Anything, exampleID, exampleUserID).Return(expected)
+		mockDB.WebhookDataManager.On("ArchiveWebhook", mock.Anything, exampleWebhook.ID, exampleWebhook.BelongsToUser).Return(expected)
 
-		actual := c.ArchiveWebhook(ctx, exampleID, exampleUserID)
+		actual := c.ArchiveWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
 		assert.NoError(t, actual)
 		assert.Equal(t, expected, actual)
 

@@ -12,7 +12,6 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mockutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/mock"
 
-	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -89,7 +88,7 @@ func TestUnmarshalBody(T *testing.T) {
 	T.Parallel()
 
 	T.Run("expected use", func(t *testing.T) {
-		expected := fake.Word()
+		expected := "whatever"
 		res := &http.Response{
 			Body:       ioutil.NopCloser(strings.NewReader(fmt.Sprintf(`{"name": %q}`, expected))),
 			StatusCode: http.StatusOK,
@@ -109,7 +108,7 @@ func TestUnmarshalBody(T *testing.T) {
 		var out testingType
 
 		err := unmarshalBody(res, &out)
-		assert.Error(t, err, "no error should be encountered unmarshaling into a valid struct")
+		assert.Error(t, err, "error should be encountered unmarshaling invalid response into a valid struct")
 	})
 
 	T.Run("with an erroneous error code", func(t *testing.T) {
@@ -117,8 +116,7 @@ func TestUnmarshalBody(T *testing.T) {
 			Body: ioutil.NopCloser(
 				strings.NewReader(
 					func() string {
-						er := &models.ErrorResponse{}
-						bs, err := json.Marshal(er)
+						bs, err := json.Marshal(&models.ErrorResponse{})
 						require.NoError(t, err)
 						return string(bs)
 					}(),
@@ -176,7 +174,7 @@ func TestCreateBodyFromStruct(T *testing.T) {
 	T.Parallel()
 
 	T.Run("expected use", func(t *testing.T) {
-		name := fake.Name()
+		name := "whatever"
 		expected := fmt.Sprintf(`{"name":%q}`, name)
 		x := &testingType{Name: name}
 

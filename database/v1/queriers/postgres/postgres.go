@@ -20,11 +20,14 @@ const (
 	loggerName         = "postgres"
 	postgresDriverName = "wrapped-postgres-driver"
 
-	// CountQuery is a generic counter query used in a few query builders
-	CountQuery = "COUNT(%s.id)"
+	existencePrefix = "SELECT EXISTS ("
+	existenceSuffix = ")"
 
-	// CurrentUnixTimeQuery is the query postgres uses to determine the current unix time
-	CurrentUnixTimeQuery = "extract(epoch FROM NOW())"
+	// countQuery is a generic counter query used in a few query builders
+	countQuery = "COUNT(%s.id)"
+
+	// currentUnixTimeQuery is the query postgres uses to determine the current unix time
+	currentUnixTimeQuery = "extract(epoch FROM NOW())"
 )
 
 func init() {
@@ -91,7 +94,7 @@ func (p *Postgres) IsReady(ctx context.Context) (ready bool) {
 	}).Debug("IsReady called")
 
 	for !ready {
-		err := p.db.Ping()
+		err := p.db.PingContext(ctx)
 		if err != nil {
 			p.logger.Debug("ping failed, waiting for db")
 			time.Sleep(time.Second)

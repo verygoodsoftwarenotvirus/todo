@@ -7,7 +7,7 @@ import (
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	randmodel "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/rand/model"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 )
 
 // fetchRandomWebhook retrieves a random webhook from the list of available webhooks
@@ -26,15 +26,17 @@ func buildWebhookActions(c *client.V1Client) map[string]*Action {
 		"GetWebhooks": {
 			Name: "GetWebhooks",
 			Action: func() (*http.Request, error) {
-				return c.BuildGetWebhooksRequest(context.Background(), nil)
+				ctx := context.Background()
+				return c.BuildGetWebhooksRequest(ctx, nil)
 			},
 			Weight: 100,
 		},
 		"GetWebhook": {
 			Name: "GetWebhook",
 			Action: func() (*http.Request, error) {
+				ctx := context.Background()
 				if randomWebhook := fetchRandomWebhook(c); randomWebhook != nil {
-					return c.BuildGetWebhookRequest(context.Background(), randomWebhook.ID)
+					return c.BuildGetWebhookRequest(ctx, randomWebhook.ID)
 				}
 				return nil, ErrUnavailableYet
 			},
@@ -43,16 +45,19 @@ func buildWebhookActions(c *client.V1Client) map[string]*Action {
 		"CreateWebhook": {
 			Name: "CreateWebhook",
 			Action: func() (*http.Request, error) {
-				return c.BuildCreateWebhookRequest(context.Background(), randmodel.RandomWebhookInput())
+				ctx := context.Background()
+				exampleInput := fakemodels.BuildFakeWebhookCreationInput()
+				return c.BuildCreateWebhookRequest(ctx, exampleInput)
 			},
 			Weight: 1,
 		},
 		"UpdateWebhook": {
 			Name: "UpdateWebhook",
 			Action: func() (*http.Request, error) {
+				ctx := context.Background()
 				if randomWebhook := fetchRandomWebhook(c); randomWebhook != nil {
-					randomWebhook.Name = randmodel.RandomWebhookInput().Name
-					return c.BuildUpdateWebhookRequest(context.Background(), randomWebhook)
+					randomWebhook.Name = fakemodels.BuildFakeWebhook().Name
+					return c.BuildUpdateWebhookRequest(ctx, randomWebhook)
 				}
 				return nil, ErrUnavailableYet
 			},
@@ -61,8 +66,9 @@ func buildWebhookActions(c *client.V1Client) map[string]*Action {
 		"ArchiveWebhook": {
 			Name: "ArchiveWebhook",
 			Action: func() (*http.Request, error) {
+				ctx := context.Background()
 				if randomWebhook := fetchRandomWebhook(c); randomWebhook != nil {
-					return c.BuildArchiveWebhookRequest(context.Background(), randomWebhook.ID)
+					return c.BuildArchiveWebhookRequest(ctx, randomWebhook.ID)
 				}
 				return nil, ErrUnavailableYet
 			},

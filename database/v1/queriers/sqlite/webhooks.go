@@ -25,17 +25,17 @@ const (
 
 var (
 	webhooksTableColumns = []string{
-		"id",
-		"name",
-		"content_type",
-		"url",
-		"method",
-		"events",
-		"data_types",
-		"topics",
-		"created_on",
-		"updated_on",
-		"archived_on",
+		fmt.Sprintf("%s.id", webhooksTableName),
+		fmt.Sprintf("%s.name", webhooksTableName),
+		fmt.Sprintf("%s.content_type", webhooksTableName),
+		fmt.Sprintf("%s.url", webhooksTableName),
+		fmt.Sprintf("%s.method", webhooksTableName),
+		fmt.Sprintf("%s.events", webhooksTableName),
+		fmt.Sprintf("%s.data_types", webhooksTableName),
+		fmt.Sprintf("%s.topics", webhooksTableName),
+		fmt.Sprintf("%s.created_on", webhooksTableName),
+		fmt.Sprintf("%s.updated_on", webhooksTableName),
+		fmt.Sprintf("%s.archived_on", webhooksTableName),
 		webhooksTableOwnershipColumn,
 	}
 )
@@ -109,8 +109,8 @@ func (s *Sqlite) buildGetWebhookQuery(webhookID, userID uint64) (query string, a
 		Select(webhooksTableColumns...).
 		From(webhooksTableName).
 		Where(squirrel.Eq{
-			"id":                         webhookID,
-			webhooksTableOwnershipColumn: userID,
+			fmt.Sprintf("%s.id", webhooksTableName):                               webhookID,
+			fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableOwnershipColumn): userID,
 		}).ToSql()
 
 	s.logQueryBuildingError(err)
@@ -132,15 +132,15 @@ func (s *Sqlite) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mod
 
 // buildGetWebhookCountQuery returns a SQL query (and arguments) that returns a list of webhooks
 // meeting a given filter's criteria and belonging to a given user.
-func (s *Sqlite) buildGetWebhookCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
+func (s *Sqlite) buildGetWebhookCountQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 
 	builder := s.sqlBuilder.
-		Select(fmt.Sprintf(CountQuery, webhooksTableName)).
+		Select(fmt.Sprintf(countQuery, webhooksTableName)).
 		From(webhooksTableName).
 		Where(squirrel.Eq{
-			webhooksTableOwnershipColumn: userID,
-			"archived_on":                nil,
+			fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableOwnershipColumn): userID,
+			fmt.Sprintf("%s.archived_on", webhooksTableName):                      nil,
 		})
 
 	if filter != nil {
@@ -156,7 +156,7 @@ func (s *Sqlite) buildGetWebhookCountQuery(filter *models.QueryFilter, userID ui
 // GetWebhookCount will fetch the count of webhooks from the database that meet a particular filter,
 // and belong to a particular user.
 func (s *Sqlite) GetWebhookCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (count uint64, err error) {
-	query, args := s.buildGetWebhookCountQuery(filter, userID)
+	query, args := s.buildGetWebhookCountQuery(userID, filter)
 	err = s.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return count, err
 }
@@ -172,9 +172,11 @@ func (s *Sqlite) buildGetAllWebhooksCountQuery() string {
 		var err error
 
 		getAllWebhooksCountQuery, _, err = s.sqlBuilder.
-			Select(fmt.Sprintf(CountQuery, webhooksTableName)).
+			Select(fmt.Sprintf(countQuery, webhooksTableName)).
 			From(webhooksTableName).
-			Where(squirrel.Eq{"archived_on": nil}).
+			Where(squirrel.Eq{
+				fmt.Sprintf("%s.archived_on", webhooksTableName): nil,
+			}).
 			ToSql()
 
 		s.logQueryBuildingError(err)
@@ -202,7 +204,9 @@ func (s *Sqlite) buildGetAllWebhooksQuery() string {
 		getAllWebhooksQuery, _, err = s.sqlBuilder.
 			Select(webhooksTableColumns...).
 			From(webhooksTableName).
-			Where(squirrel.Eq{"archived_on": nil}).
+			Where(squirrel.Eq{
+				fmt.Sprintf("%s.archived_on", webhooksTableName): nil,
+			}).
 			ToSql()
 
 		s.logQueryBuildingError(err)
@@ -244,7 +248,7 @@ func (s *Sqlite) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error
 
 // GetAllWebhooksForUser fetches a list of all webhooks from the database
 func (s *Sqlite) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]models.Webhook, error) {
-	query, args := s.buildGetWebhooksQuery(nil, userID)
+	query, args := s.buildGetWebhooksQuery(userID, nil)
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -263,15 +267,15 @@ func (s *Sqlite) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]mo
 }
 
 // buildGetWebhooksQuery returns a SQL query (and arguments) that would return a
-func (s *Sqlite) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
+func (s *Sqlite) buildGetWebhooksQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 
 	builder := s.sqlBuilder.
 		Select(webhooksTableColumns...).
 		From(webhooksTableName).
 		Where(squirrel.Eq{
-			webhooksTableOwnershipColumn: userID,
-			"archived_on":                nil,
+			fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableOwnershipColumn): userID,
+			fmt.Sprintf("%s.archived_on", webhooksTableName):                      nil,
 		})
 
 	if filter != nil {
@@ -286,7 +290,7 @@ func (s *Sqlite) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint64
 
 // GetWebhooks fetches a list of webhooks from the database that meet a particular filter
 func (s *Sqlite) GetWebhooks(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.WebhookList, error) {
-	query, args := s.buildGetWebhooksQuery(filter, userID)
+	query, args := s.buildGetWebhooksQuery(userID, filter)
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -408,7 +412,7 @@ func (s *Sqlite) buildUpdateWebhookQuery(input *models.Webhook) (query string, a
 		Set("events", strings.Join(input.Events, topicsSeparator)).
 		Set("data_types", strings.Join(input.DataTypes, typesSeparator)).
 		Set("topics", strings.Join(input.Topics, topicsSeparator)).
-		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
+		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			"id":                         input.ID,
 			webhooksTableOwnershipColumn: input.BelongsToUser,
@@ -433,8 +437,8 @@ func (s *Sqlite) buildArchiveWebhookQuery(webhookID, userID uint64) (query strin
 
 	query, args, err = s.sqlBuilder.
 		Update(webhooksTableName).
-		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
-		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
+		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
+		Set("archived_on", squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			"id":                         webhookID,
 			webhooksTableOwnershipColumn: userID,

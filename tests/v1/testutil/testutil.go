@@ -98,7 +98,7 @@ func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
 	// I had difficulty ensuring these values were unique, even when fake.Seed was called. Could've been fake's fault,
 	// could've been docker's fault. In either case, it wasn't worth the time to investigate and determine the culprit
 	username := fake.Username() + fake.HexColor() + fake.Country()
-	in := &models.UserInput{
+	in := &models.UserCreationInput{
 		Username: username,
 		Password: fake.Password(true, true, true, true, true, 64),
 	}
@@ -206,7 +206,7 @@ func CreateObligatoryClient(serviceURL string, u *models.User) (*models.OAuth2Cl
 		"password": %q,
 		"totp_token": %q,
 
-		"belongs_to": %d,
+		"belongs_to_user": %d,
 		"scopes": ["*"]
 	}
 		`, u.Username, u.HashedPassword, code, u.ID)),

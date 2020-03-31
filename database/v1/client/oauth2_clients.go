@@ -53,19 +53,6 @@ func (c *Client) GetOAuth2ClientByClientID(ctx context.Context, clientID string)
 	return client, nil
 }
 
-// GetOAuth2ClientCount gets the count of OAuth2 clients in the database that match the current filter
-func (c *Client) GetOAuth2ClientCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (uint64, error) {
-	ctx, span := trace.StartSpan(ctx, "GetOAuth2ClientCount")
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, userID)
-	tracing.AttachFilterToSpan(span, filter)
-
-	c.logger.WithValue("user_id", userID).Debug("GetOAuth2ClientCount called")
-
-	return c.querier.GetOAuth2ClientCount(ctx, userID, filter)
-}
-
 // GetAllOAuth2ClientCount gets the count of OAuth2 clients that match the current filter
 func (c *Client) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	ctx, span := trace.StartSpan(ctx, "GetAllOAuth2ClientCount")
@@ -74,27 +61,6 @@ func (c *Client) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	c.logger.Debug("GetAllOAuth2ClientCount called")
 
 	return c.querier.GetAllOAuth2ClientCount(ctx)
-}
-
-// GetAllOAuth2ClientsForUser returns all OAuth2 clients belonging to a given user
-func (c *Client) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64) ([]*models.OAuth2Client, error) {
-	ctx, span := trace.StartSpan(ctx, "GetAllOAuth2ClientsForUser")
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue("user_id", userID).Debug("GetAllOAuth2ClientsForUser called")
-
-	return c.querier.GetAllOAuth2ClientsForUser(ctx, userID)
-}
-
-// GetAllOAuth2Clients returns all OAuth2 clients, irrespective of ownership.
-func (c *Client) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Client, error) {
-	ctx, span := trace.StartSpan(ctx, "GetAllOAuth2Clients")
-	defer span.End()
-
-	c.logger.Debug("GetAllOAuth2Clients called")
-
-	return c.querier.GetAllOAuth2Clients(ctx)
 }
 
 // GetOAuth2Clients gets a list of OAuth2 clients
@@ -116,8 +82,8 @@ func (c *Client) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 	defer span.End()
 
 	logger := c.logger.WithValues(map[string]interface{}{
-		"client_id":  input.ClientID,
-		"belongs_to": input.BelongsToUser,
+		"client_id":       input.ClientID,
+		"belongs_to_user": input.BelongsToUser,
 	})
 
 	client, err := c.querier.CreateOAuth2Client(ctx, input)
@@ -149,8 +115,8 @@ func (c *Client) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint6
 	tracing.AttachOAuth2ClientDatabaseIDToSpan(span, clientID)
 
 	logger := c.logger.WithValues(map[string]interface{}{
-		"client_id":  clientID,
-		"belongs_to": userID,
+		"client_id":       clientID,
+		"belongs_to_user": userID,
 	})
 
 	err := c.querier.ArchiveOAuth2Client(ctx, clientID, userID)

@@ -138,12 +138,12 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 	router.With(s.authService.AuthenticationMiddleware(true)).Route("/api/v1", func(v1Router chi.Router) {
 		// Items
 		v1Router.Route("/items", func(itemsRouter chi.Router) {
-			sr := fmt.Sprintf(numericIDPattern, items.URIParamKey)
+			singleItemRoute := fmt.Sprintf(numericIDPattern, items.URIParamKey)
 			itemsRouter.With(s.itemsService.CreationInputMiddleware).Post("/", s.itemsService.CreateHandler())
-			itemsRouter.Get(sr, s.itemsService.ReadHandler())
-			itemsRouter.Head(sr, s.itemsService.ExistenceHandler())
-			itemsRouter.With(s.itemsService.UpdateInputMiddleware).Put(sr, s.itemsService.UpdateHandler())
-			itemsRouter.Delete(sr, s.itemsService.ArchiveHandler())
+			itemsRouter.Get(singleItemRoute, s.itemsService.ReadHandler())
+			itemsRouter.Head(singleItemRoute, s.itemsService.ExistenceHandler())
+			itemsRouter.With(s.itemsService.UpdateInputMiddleware).Put(singleItemRoute, s.itemsService.UpdateHandler())
+			itemsRouter.Delete(singleItemRoute, s.itemsService.ArchiveHandler())
 			itemsRouter.Get("/", s.itemsService.ListHandler())
 		})
 

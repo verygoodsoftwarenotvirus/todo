@@ -18,11 +18,9 @@ import (
 )
 
 const (
-	// MiddlewareCtxKey is the context key we search for when interacting with user-related requests
-	MiddlewareCtxKey models.ContextKey   = "user_input"
-	counterName      metrics.CounterName = "users"
-	topicName                            = "users"
-	serviceName                          = "users_service"
+	serviceName string              = "users_service"
+	topicName   string              = "users"
+	counterName metrics.CounterName = "users"
 )
 
 var (
@@ -73,7 +71,7 @@ func ProvideUsersService(
 		return nil, fmt.Errorf("error initializing counter: %w", err)
 	}
 
-	userCount, err := db.GetUserCount(ctx, nil)
+	userCount, err := db.GetAllUserCount(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("fetching user count: %w", err)
 	}

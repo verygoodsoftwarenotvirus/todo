@@ -21,16 +21,16 @@ const (
 
 var (
 	oauth2ClientsTableColumns = []string{
-		"id",
-		"name",
-		"client_id",
-		"scopes",
-		"redirect_uri",
-		"client_secret",
-		"created_on",
-		"updated_on",
-		"archived_on",
-		oauth2ClientsTableOwnershipColumn,
+		fmt.Sprintf("%s.id", oauth2ClientsTableName),
+		fmt.Sprintf("%s.name", oauth2ClientsTableName),
+		fmt.Sprintf("%s.client_id", oauth2ClientsTableName),
+		fmt.Sprintf("%s.scopes", oauth2ClientsTableName),
+		fmt.Sprintf("%s.redirect_uri", oauth2ClientsTableName),
+		fmt.Sprintf("%s.client_secret", oauth2ClientsTableName),
+		fmt.Sprintf("%s.created_on", oauth2ClientsTableName),
+		fmt.Sprintf("%s.updated_on", oauth2ClientsTableName),
+		fmt.Sprintf("%s.archived_on", oauth2ClientsTableName),
+		fmt.Sprintf("%s.%s", oauth2ClientsTableName, oauth2ClientsTableOwnershipColumn),
 	}
 )
 
@@ -95,8 +95,8 @@ func (s *Sqlite) buildGetOAuth2ClientByClientIDQuery(clientID string) (query str
 		Select(oauth2ClientsTableColumns...).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{
-			"client_id":   clientID,
-			"archived_on": nil,
+			fmt.Sprintf("%s.client_id", oauth2ClientsTableName):   clientID,
+			fmt.Sprintf("%s.archived_on", oauth2ClientsTableName): nil,
 		}).ToSql()
 
 	s.logQueryBuildingError(err)
@@ -124,7 +124,9 @@ func (s *Sqlite) buildGetAllOAuth2ClientsQuery() (query string) {
 		getAllOAuth2ClientsQuery, _, err = s.sqlBuilder.
 			Select(oauth2ClientsTableColumns...).
 			From(oauth2ClientsTableName).
-			Where(squirrel.Eq{"archived_on": nil}).
+			Where(squirrel.Eq{
+				fmt.Sprintf("%s.archived_on", oauth2ClientsTableName): nil,
+			}).
 			ToSql()
 
 		s.logQueryBuildingError(err)
@@ -153,7 +155,7 @@ func (s *Sqlite) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Clien
 
 // GetAllOAuth2ClientsForUser gets a list of OAuth2 clients belonging to a given user
 func (s *Sqlite) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64) ([]*models.OAuth2Client, error) {
-	query, args := s.buildGetOAuth2ClientsQuery(nil, userID)
+	query, args := s.buildGetOAuth2ClientsQuery(userID, nil)
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -179,9 +181,9 @@ func (s *Sqlite) buildGetOAuth2ClientQuery(clientID, userID uint64) (query strin
 		Select(oauth2ClientsTableColumns...).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{
-			"id":                              clientID,
-			oauth2ClientsTableOwnershipColumn: userID,
-			"archived_on":                     nil,
+			fmt.Sprintf("%s.id", oauth2ClientsTableName):                                    clientID,
+			fmt.Sprintf("%s.%s", oauth2ClientsTableName, oauth2ClientsTableOwnershipColumn): userID,
+			fmt.Sprintf("%s.archived_on", oauth2ClientsTableName):                           nil,
 		}).ToSql()
 
 	s.logQueryBuildingError(err)
@@ -207,15 +209,15 @@ func (s *Sqlite) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (
 
 // buildGetOAuth2ClientCountQuery returns a SQL query (and arguments) that fetches a list of OAuth2 clients that meet certain filter
 // restrictions (if relevant) and belong to a given user
-func (s *Sqlite) buildGetOAuth2ClientCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
+func (s *Sqlite) buildGetOAuth2ClientCountQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 
 	builder := s.sqlBuilder.
-		Select(fmt.Sprintf(CountQuery, oauth2ClientsTableName)).
+		Select(fmt.Sprintf(countQuery, oauth2ClientsTableName)).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{
-			oauth2ClientsTableOwnershipColumn: userID,
-			"archived_on":                     nil,
+			fmt.Sprintf("%s.%s", oauth2ClientsTableName, oauth2ClientsTableOwnershipColumn): userID,
+			fmt.Sprintf("%s.archived_on", oauth2ClientsTableName):                           nil,
 		})
 
 	if filter != nil {
@@ -230,7 +232,7 @@ func (s *Sqlite) buildGetOAuth2ClientCountQuery(filter *models.QueryFilter, user
 
 // GetOAuth2ClientCount will get the count of OAuth2 clients that match the given filter and belong to the user
 func (s *Sqlite) GetOAuth2ClientCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (count uint64, err error) {
-	query, args := s.buildGetOAuth2ClientCountQuery(filter, userID)
+	query, args := s.buildGetOAuth2ClientCountQuery(userID, filter)
 	err = s.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return
 }
@@ -247,9 +249,11 @@ func (s *Sqlite) buildGetAllOAuth2ClientCountQuery() string {
 		var err error
 
 		getAllOAuth2ClientCountQuery, _, err = s.sqlBuilder.
-			Select(fmt.Sprintf(CountQuery, oauth2ClientsTableName)).
+			Select(fmt.Sprintf(countQuery, oauth2ClientsTableName)).
 			From(oauth2ClientsTableName).
-			Where(squirrel.Eq{"archived_on": nil}).
+			Where(squirrel.Eq{
+				fmt.Sprintf("%s.archived_on", oauth2ClientsTableName): nil,
+			}).
 			ToSql()
 
 		s.logQueryBuildingError(err)
@@ -267,15 +271,15 @@ func (s *Sqlite) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 
 // buildGetOAuth2ClientsQuery returns a SQL query (and arguments) that will retrieve a list of OAuth2 clients that
 // meet the given filter's criteria (if relevant) and belong to a given user.
-func (s *Sqlite) buildGetOAuth2ClientsQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
+func (s *Sqlite) buildGetOAuth2ClientsQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 
 	builder := s.sqlBuilder.
 		Select(oauth2ClientsTableColumns...).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{
-			oauth2ClientsTableOwnershipColumn: userID,
-			"archived_on":                     nil,
+			fmt.Sprintf("%s.%s", oauth2ClientsTableName, oauth2ClientsTableOwnershipColumn): userID,
+			fmt.Sprintf("%s.archived_on", oauth2ClientsTableName):                           nil,
 		})
 
 	if filter != nil {
@@ -290,7 +294,7 @@ func (s *Sqlite) buildGetOAuth2ClientsQuery(filter *models.QueryFilter, userID u
 
 // GetOAuth2Clients gets a list of OAuth2 clients
 func (s *Sqlite) GetOAuth2Clients(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
-	query, args := s.buildGetOAuth2ClientsQuery(filter, userID)
+	query, args := s.buildGetOAuth2ClientsQuery(userID, filter)
 	rows, err := s.db.QueryContext(ctx, query, args...)
 
 	if err != nil {
@@ -412,7 +416,7 @@ func (s *Sqlite) buildUpdateOAuth2ClientQuery(input *models.OAuth2Client) (query
 		Set("client_secret", input.ClientSecret).
 		Set("scopes", strings.Join(input.Scopes, scopesSeparator)).
 		Set("redirect_uri", input.RedirectURI).
-		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
+		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			"id":                              input.ID,
 			oauth2ClientsTableOwnershipColumn: input.BelongsToUser,
@@ -438,8 +442,8 @@ func (s *Sqlite) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query s
 
 	query, args, err = s.sqlBuilder.
 		Update(oauth2ClientsTableName).
-		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
-		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
+		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
+		Set("archived_on", squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			"id":                              clientID,
 			oauth2ClientsTableOwnershipColumn: userID,

@@ -11,6 +11,18 @@ before_script:
   - cd /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
   - apt-get update -y && apt-get install -y make git gcc musl-dev
 
+formatting:
+  stage: quality
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    GOPATH: "/go"
+  script:
+    - apk add --update --no-cache py-pip openssl python-dev libffi-dev
+      openssl-dev gcc libc-dev make
+    - make check_formatting
+
 coverage:
   stage: quality
   image: golang:stretch
@@ -107,22 +119,6 @@ load-tests-postgres:
   except:
     - schedules
 
-load-tests-sqlite:
-  stage: load-testing
-  image: docker:latest
-  services:
-    - docker:dind
-  variables:
-    GOPATH: "/go"
-    LOADTEST_RUN_TIME: "2m30s"
-  script:
-    - apk add --update --no-cache py-pip openssl python-dev libffi-dev
-      openssl-dev gcc libc-dev make
-    - pip install docker-compose
-    - make load-tests-sqlite
-  except:
-    - schedules
-
 load-tests-mariadb:
   stage: load-testing
   image: docker:latest
@@ -136,6 +132,22 @@ load-tests-mariadb:
       openssl-dev gcc libc-dev make
     - pip install docker-compose
     - make load-tests-mariadb
+  except:
+    - schedules
+
+load-tests-sqlite:
+  stage: load-testing
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    GOPATH: "/go"
+    LOADTEST_RUN_TIME: "2m30s"
+  script:
+    - apk add --update --no-cache py-pip openssl python-dev libffi-dev
+      openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - make load-tests-sqlite
   except:
     - schedules
 

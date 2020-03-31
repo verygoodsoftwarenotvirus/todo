@@ -67,7 +67,7 @@ func (b *BcryptAuthenticator) ValidateLogin(
 	providedPassword,
 	twoFactorSecret,
 	twoFactorCode string,
-	salt []byte,
+	_ []byte,
 ) (passwordMatches bool, err error) {
 	ctx, span := trace.StartSpan(ctx, "ValidateLogin")
 	defer span.End()
@@ -97,6 +97,9 @@ func (b *BcryptAuthenticator) ValidateLogin(
 
 // PasswordMatches validates whether or not a bcrypt-hashed password matches a provided password
 func (b *BcryptAuthenticator) PasswordMatches(ctx context.Context, hashedPassword, providedPassword string, _ []byte) bool {
+	_, span := trace.StartSpan(ctx, "PasswordMatches")
+	defer span.End()
+
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(providedPassword)) == nil
 }
 

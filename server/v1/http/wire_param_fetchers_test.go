@@ -11,17 +11,16 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
 
-	fake "github.com/brianvoe/gofakeit"
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
 
-func TestProvideUserIDFetcher(T *testing.T) {
+func TestProvideItemServiceUserIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		_ = ProvideUserIDFetcher()
+		_ = ProvideItemServiceUserIDFetcher()
 	})
 }
 
@@ -77,7 +76,7 @@ func TestUserIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		expected := fake.Uint64()
+		expected := uint64(123)
 
 		req := buildRequest(t)
 		req = req.WithContext(
@@ -91,6 +90,13 @@ func TestUserIDFetcher(T *testing.T) {
 		actual := UserIDFetcher(req)
 		assert.Equal(t, expected, actual)
 	})
+
+	T.Run("without attached value", func(t *testing.T) {
+		req := buildRequest(t)
+		actual := UserIDFetcher(req)
+
+		assert.Zero(t, actual)
+	})
 }
 
 func Test_buildChiUserIDFetcher(T *testing.T) {
@@ -98,7 +104,7 @@ func Test_buildChiUserIDFetcher(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		fn := buildChiUserIDFetcher(noop.ProvideNoopLogger())
-		expected := fake.Uint64()
+		expected := uint64(123)
 
 		req := buildRequest(t)
 		req = req.WithContext(
@@ -121,7 +127,6 @@ func Test_buildChiUserIDFetcher(T *testing.T) {
 	T.Run("with invalid value somehow", func(t *testing.T) {
 		// NOTE: This will probably never happen in dev or production
 		fn := buildChiUserIDFetcher(noop.ProvideNoopLogger())
-		// We want this value to be static, not faked
 		expected := uint64(0)
 
 		req := buildRequest(t)
@@ -148,7 +153,7 @@ func Test_buildChiItemIDFetcher(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		fn := buildChiItemIDFetcher(noop.ProvideNoopLogger())
-		expected := fake.Uint64()
+		expected := uint64(123)
 
 		req := buildRequest(t)
 		req = req.WithContext(
@@ -171,7 +176,6 @@ func Test_buildChiItemIDFetcher(T *testing.T) {
 	T.Run("with invalid value somehow", func(t *testing.T) {
 		// NOTE: This will probably never happen in dev or production
 		fn := buildChiItemIDFetcher(noop.ProvideNoopLogger())
-		// We want this value to be static, not faked
 		expected := uint64(0)
 
 		req := buildRequest(t)
@@ -198,7 +202,7 @@ func Test_buildChiWebhookIDFetcher(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		fn := buildChiWebhookIDFetcher(noop.ProvideNoopLogger())
-		expected := fake.Uint64()
+		expected := uint64(123)
 
 		req := buildRequest(t)
 		req = req.WithContext(
@@ -221,7 +225,6 @@ func Test_buildChiWebhookIDFetcher(T *testing.T) {
 	T.Run("with invalid value somehow", func(t *testing.T) {
 		// NOTE: This will probably never happen in dev or production
 		fn := buildChiWebhookIDFetcher(noop.ProvideNoopLogger())
-		// We want this value to be static, not faked
 		expected := uint64(0)
 
 		req := buildRequest(t)
@@ -248,7 +251,7 @@ func Test_buildChiOAuth2ClientIDFetcher(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		fn := buildChiOAuth2ClientIDFetcher(noop.ProvideNoopLogger())
-		expected := fake.Uint64()
+		expected := uint64(123)
 
 		req := buildRequest(t)
 		req = req.WithContext(
@@ -271,7 +274,6 @@ func Test_buildChiOAuth2ClientIDFetcher(T *testing.T) {
 	T.Run("with invalid value somehow", func(t *testing.T) {
 		// NOTE: This will probably never happen in dev or production
 		fn := buildChiOAuth2ClientIDFetcher(noop.ProvideNoopLogger())
-		// We want this value to be static, not faked
 		expected := uint64(0)
 
 		req := buildRequest(t)

@@ -91,15 +91,12 @@ func (s *Service) LoginHandler() http.HandlerFunc {
 		defer span.End()
 
 		loginData, errRes := s.fetchLoginDataFromRequest(req)
-		if errRes != nil {
+		if errRes != nil || loginData == nil {
 			s.logger.Error(errRes, "error encountered fetching login data from request")
 			res.WriteHeader(http.StatusUnauthorized)
 			if err := s.encoderDecoder.EncodeResponse(res, errRes); err != nil {
 				s.logger.Error(err, "encoding response")
 			}
-			return
-		} else if loginData == nil {
-			res.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
@@ -227,8 +224,7 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 	defer span.End()
 
 	// alias the relevant data
-	user := loginInfo.user
-	loginInput := loginInfo.loginInput
+	user, loginInput := loginInfo.user, loginInfo.loginInput
 	logger := s.logger.WithValue("username", user.Username)
 
 	// check for login validity
@@ -256,12 +252,14 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 		if updateErr := s.userDB.UpdateUser(ctx, user); updateErr != nil {
 			return false, fmt.Errorf("saving updated password hash: %w", updateErr)
 		}
+
+		return loginValid, nil
 	} else if err != nil && err != auth.ErrPasswordHashTooWeak {
 		logger.Error(err, "issue validating login")
 		return false, fmt.Errorf("validating login: %w", err)
 	}
 
-	return loginValid, nil
+	return loginValid, err
 }
 
 // buildAuthCookie returns an authentication cookie for a given user

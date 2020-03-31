@@ -32,16 +32,6 @@ func attachStringToSpan(span *trace.Span, key, str string) {
 	}
 }
 
-// AttachItemIDToSpan attaches an Item ID to a given span
-func AttachItemIDToSpan(span *trace.Span, itemID uint64) {
-	attachUint64ToSpan(span, itemIDSpanAttachmentKey, itemID)
-}
-
-// AttachUserIDToSpan provides a consistent way to attach a user's ID to a span
-func AttachUserIDToSpan(span *trace.Span, userID uint64) {
-	attachUint64ToSpan(span, userIDSpanAttachmentKey, userID)
-}
-
 // AttachFilterToSpan provides a consistent way to attach a filter's info to a span
 func AttachFilterToSpan(span *trace.Span, filter *models.QueryFilter) {
 	if filter != nil && span != nil {
@@ -50,6 +40,16 @@ func AttachFilterToSpan(span *trace.Span, filter *models.QueryFilter) {
 			trace.StringAttribute(filterLimitSpanAttachmentKey, strconv.FormatUint(filter.Limit, 10)),
 		)
 	}
+}
+
+// AttachItemIDToSpan attaches an item ID to a given span
+func AttachItemIDToSpan(span *trace.Span, itemID uint64) {
+	attachUint64ToSpan(span, itemIDSpanAttachmentKey, itemID)
+}
+
+// AttachUserIDToSpan provides a consistent way to attach a user's ID to a span
+func AttachUserIDToSpan(span *trace.Span, userID uint64) {
+	attachUint64ToSpan(span, userIDSpanAttachmentKey, userID)
 }
 
 // AttachOAuth2ClientDatabaseIDToSpan is a consistent way to attach an oauth2 client's ID to a span

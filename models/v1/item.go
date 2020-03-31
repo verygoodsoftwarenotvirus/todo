@@ -41,10 +41,8 @@ type (
 	ItemDataManager interface {
 		ItemExists(ctx context.Context, itemID, userID uint64) (bool, error)
 		GetItem(ctx context.Context, itemID, userID uint64) (*Item, error)
-		GetItemCount(ctx context.Context, userID uint64, filter *QueryFilter) (uint64, error)
 		GetAllItemsCount(ctx context.Context) (uint64, error)
 		GetItems(ctx context.Context, userID uint64, filter *QueryFilter) (*ItemList, error)
-		GetAllItemsForUser(ctx context.Context, userID uint64) ([]Item, error)
 		CreateItem(ctx context.Context, input *ItemCreationInput) (*Item, error)
 		UpdateItem(ctx context.Context, updated *Item) error
 		ArchiveItem(ctx context.Context, itemID, userID uint64) error
@@ -75,8 +73,8 @@ func (x *Item) Update(input *ItemUpdateInput) {
 	}
 }
 
-// ToInput creates a ItemUpdateInput struct for an item
-func (x *Item) ToInput() *ItemUpdateInput {
+// ToUpdateInput creates a ItemUpdateInput struct for an item
+func (x *Item) ToUpdateInput() *ItemUpdateInput {
 	return &ItemUpdateInput{
 		Name:    x.Name,
 		Details: x.Details,

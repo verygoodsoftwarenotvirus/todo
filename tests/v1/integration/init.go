@@ -12,7 +12,6 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 
-	fake "github.com/brianvoe/gofakeit"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
 )
 
@@ -27,15 +26,11 @@ var (
 )
 
 func init() {
-	fake.Seed(time.Now().UnixNano())
-
 	urlToUse = testutil.DetermineServiceURL()
 	logger := zerolog.NewZeroLogger()
 
 	logger.WithValue("url", urlToUse).Info("checking server")
 	testutil.EnsureServerIsUp(urlToUse)
-
-	fake.Seed(time.Now().UnixNano())
 
 	ogUser, err := testutil.CreateObligatoryUser(urlToUse, debug)
 	if err != nil {

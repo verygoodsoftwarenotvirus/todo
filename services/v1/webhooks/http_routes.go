@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strings"
 
-	tracing "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
@@ -26,7 +26,7 @@ func (s *Service) ListHandler() http.HandlerFunc {
 		defer span.End()
 
 		// figure out how specific we need to be
-		qf := models.ExtractQueryFilter(req)
+		filter := models.ExtractQueryFilter(req)
 
 		// figure out who this is all for
 		userID := s.userIDFetcher(req)
@@ -34,7 +34,7 @@ func (s *Service) ListHandler() http.HandlerFunc {
 		tracing.AttachUserIDToSpan(span, userID)
 
 		// find the webhooks
-		webhooks, err := s.webhookDatabase.GetWebhooks(ctx, userID, qf)
+		webhooks, err := s.webhookDatabase.GetWebhooks(ctx, userID, filter)
 		if err == sql.ErrNoRows {
 			webhooks = &models.WebhookList{
 				Webhooks: []models.Webhook{},

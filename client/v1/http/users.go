@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/http/httputil"
 	"strconv"
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -17,12 +16,12 @@ const usersBasePath = "users"
 
 // BuildGetUserRequest builds an HTTP request for fetching a user
 func (c *V1Client) BuildGetUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
-	_, span := trace.StartSpan(ctx, "BuildGetUserRequest")
+	ctx, span := trace.StartSpan(ctx, "BuildGetUserRequest")
 	defer span.End()
 
 	uri := c.buildVersionlessURL(nil, usersBasePath, strconv.FormatUint(userID, 10))
 
-	return http.NewRequest(http.MethodGet, uri, nil)
+	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
 // GetUser retrieves a user
@@ -41,12 +40,12 @@ func (c *V1Client) GetUser(ctx context.Context, userID uint64) (user *models.Use
 
 // BuildGetUsersRequest builds an HTTP request for fetching a user
 func (c *V1Client) BuildGetUsersRequest(ctx context.Context, filter *models.QueryFilter) (*http.Request, error) {
-	_, span := trace.StartSpan(ctx, "BuildGetUsersRequest")
+	ctx, span := trace.StartSpan(ctx, "BuildGetUsersRequest")
 	defer span.End()
 
 	uri := c.buildVersionlessURL(filter.ToValues(), usersBasePath)
 
-	return http.NewRequest(http.MethodGet, uri, nil)
+	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
 // GetUsers retrieves a list of users
@@ -66,8 +65,8 @@ func (c *V1Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 }
 
 // BuildCreateUserRequest builds an HTTP request for creating a user
-func (c *V1Client) BuildCreateUserRequest(ctx context.Context, body *models.UserInput) (*http.Request, error) {
-	_, span := trace.StartSpan(ctx, "BuildCreateUserRequest")
+func (c *V1Client) BuildCreateUserRequest(ctx context.Context, body *models.UserCreationInput) (*http.Request, error) {
+	ctx, span := trace.StartSpan(ctx, "BuildCreateUserRequest")
 	defer span.End()
 
 	uri := c.buildVersionlessURL(nil, usersBasePath)
@@ -76,7 +75,7 @@ func (c *V1Client) BuildCreateUserRequest(ctx context.Context, body *models.User
 }
 
 // CreateUser creates a new user
-func (c *V1Client) CreateUser(ctx context.Context, input *models.UserInput) (*models.UserCreationResponse, error) {
+func (c *V1Client) CreateUser(ctx context.Context, input *models.UserCreationInput) (*models.UserCreationResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "CreateUser")
 	defer span.End()
 
@@ -87,18 +86,18 @@ func (c *V1Client) CreateUser(ctx context.Context, input *models.UserInput) (*mo
 		return nil, fmt.Errorf("building request: %w", err)
 	}
 
-	err = c.executeUnathenticatedDataRequest(ctx, req, &user)
+	err = c.executeUnauthenticatedDataRequest(ctx, req, &user)
 	return user, err
 }
 
 // BuildArchiveUserRequest builds an HTTP request for updating a user
 func (c *V1Client) BuildArchiveUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
-	_, span := trace.StartSpan(ctx, "BuildArchiveUserRequest")
+	ctx, span := trace.StartSpan(ctx, "BuildArchiveUserRequest")
 	defer span.End()
 
 	uri := c.buildVersionlessURL(nil, usersBasePath, strconv.FormatUint(userID, 10))
 
-	return http.NewRequest(http.MethodDelete, uri, nil)
+	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
 }
 
 // ArchiveUser archives a user
@@ -115,18 +114,13 @@ func (c *V1Client) ArchiveUser(ctx context.Context, userID uint64) error {
 }
 
 // BuildLoginRequest builds an authenticating HTTP request
-func (c *V1Client) BuildLoginRequest(ctx context.Context, username, password, totpToken string) (*http.Request, error) {
-	_, span := trace.StartSpan(ctx, "BuildLoginRequest")
+func (c *V1Client) BuildLoginRequest(ctx context.Context, input models.UserLoginInput) (*http.Request, error) {
+	ctx, span := trace.StartSpan(ctx, "BuildLoginRequest")
 	defer span.End()
 
-	body, err := createBodyFromStruct(&models.UserLoginInput{
-		Username:  username,
-		Password:  password,
-		TOTPToken: totpToken,
-	})
-
+	body, err := createBodyFromStruct(&input)
 	if err != nil {
-		return nil, fmt.Errorf("creating body from struct: %w", err)
+		return nil, fmt.Errorf("building request body: %w", err)
 	}
 
 	uri := c.buildVersionlessURL(nil, usersBasePath, "login")
@@ -134,11 +128,11 @@ func (c *V1Client) BuildLoginRequest(ctx context.Context, username, password, to
 }
 
 // Login will, when provided the correct credentials, fetch a login cookie
-func (c *V1Client) Login(ctx context.Context, username, password, totpToken string) (*http.Cookie, error) {
+func (c *V1Client) Login(ctx context.Context, input models.UserLoginInput) (*http.Cookie, error) {
 	ctx, span := trace.StartSpan(ctx, "Login")
 	defer span.End()
 
-	req, err := c.BuildLoginRequest(ctx, username, password, totpToken)
+	req, err := c.BuildLoginRequest(ctx, input)
 	if err != nil {
 		return nil, err
 	}
@@ -148,19 +142,7 @@ func (c *V1Client) Login(ctx context.Context, username, password, totpToken stri
 		return nil, fmt.Errorf("encountered error executing login request: %w", err)
 	}
 
-	if c.Debug {
-		b, err := httputil.DumpResponse(res, true)
-		if err != nil {
-			c.logger.Error(err, "dumping response")
-		}
-		c.logger.WithValue("response", string(b)).Debug("login response received")
-	}
-
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			c.logger.Error(err, "closing response body")
-		}
-	}()
+	c.closeRequestBody(res)
 
 	cookies := res.Cookies()
 	if len(cookies) > 0 {

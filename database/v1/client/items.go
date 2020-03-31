@@ -22,7 +22,7 @@ func (c *Client) ItemExists(ctx context.Context, itemID, userID uint64) (bool, e
 	c.logger.WithValues(map[string]interface{}{
 		"item_id": itemID,
 		"user_id": userID,
-	}).Debug("GetItem called")
+	}).Debug("ItemExists called")
 
 	return c.querier.ItemExists(ctx, itemID, userID)
 }
@@ -41,19 +41,6 @@ func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*models.It
 	}).Debug("GetItem called")
 
 	return c.querier.GetItem(ctx, itemID, userID)
-}
-
-// GetItemCount fetches the count of items from the database that meet a particular filter
-func (c *Client) GetItemCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (count uint64, err error) {
-	ctx, span := trace.StartSpan(ctx, "GetItemCount")
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, userID)
-	tracing.AttachFilterToSpan(span, filter)
-
-	c.logger.WithValue("user_id", userID).Debug("GetItemCount called")
-
-	return c.querier.GetItemCount(ctx, userID, filter)
 }
 
 // GetAllItemsCount fetches the count of items from the database that meet a particular filter
@@ -81,19 +68,6 @@ func (c *Client) GetItems(ctx context.Context, userID uint64, filter *models.Que
 	return itemList, err
 }
 
-// GetAllItemsForUser fetches a list of items from the database that meet a particular filter
-func (c *Client) GetAllItemsForUser(ctx context.Context, userID uint64) ([]models.Item, error) {
-	ctx, span := trace.StartSpan(ctx, "GetAllItemsForUser")
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue("user_id", userID).Debug("GetAllItemsForUser called")
-
-	itemList, err := c.querier.GetAllItemsForUser(ctx, userID)
-
-	return itemList, err
-}
-
 // CreateItem creates an item in the database
 func (c *Client) CreateItem(ctx context.Context, input *models.ItemCreationInput) (*models.Item, error) {
 	ctx, span := trace.StartSpan(ctx, "CreateItem")
@@ -106,14 +80,14 @@ func (c *Client) CreateItem(ctx context.Context, input *models.ItemCreationInput
 
 // UpdateItem updates a particular item. Note that UpdateItem expects the
 // provided input to have a valid ID.
-func (c *Client) UpdateItem(ctx context.Context, input *models.Item) error {
+func (c *Client) UpdateItem(ctx context.Context, updated *models.Item) error {
 	ctx, span := trace.StartSpan(ctx, "UpdateItem")
 	defer span.End()
 
-	tracing.AttachItemIDToSpan(span, input.ID)
-	c.logger.WithValue("item_id", input.ID).Debug("UpdateItem called")
+	tracing.AttachItemIDToSpan(span, updated.ID)
+	c.logger.WithValue("item_id", updated.ID).Debug("UpdateItem called")
 
-	return c.querier.UpdateItem(ctx, input)
+	return c.querier.UpdateItem(ctx, updated)
 }
 
 // ArchiveItem archives an item from the database by its ID

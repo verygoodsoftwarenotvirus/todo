@@ -1,4 +1,4 @@
-package randmodel
+package fake
 
 import (
 	"time"

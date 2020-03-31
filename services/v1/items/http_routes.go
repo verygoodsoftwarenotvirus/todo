@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 
-	tracing "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
@@ -23,7 +23,7 @@ func (s *Service) ListHandler() http.HandlerFunc {
 		defer span.End()
 
 		// ensure query filter
-		qf := models.ExtractQueryFilter(req)
+		filter := models.ExtractQueryFilter(req)
 
 		// determine user ID
 		userID := s.userIDFetcher(req)
@@ -31,7 +31,7 @@ func (s *Service) ListHandler() http.HandlerFunc {
 		tracing.AttachUserIDToSpan(span, userID)
 
 		// fetch items from database
-		items, err := s.itemDatabase.GetItems(ctx, userID, qf)
+		items, err := s.itemDatabase.GetItems(ctx, userID, filter)
 		if err == sql.ErrNoRows {
 			// in the event no rows exist return an empty list
 			items = &models.ItemList{
@@ -58,8 +58,8 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 
 		// determine user ID
 		userID := s.userIDFetcher(req)
-		tracing.AttachUserIDToSpan(span, userID)
 		logger := s.logger.WithValue("user_id", userID)
+		tracing.AttachUserIDToSpan(span, userID)
 
 		// check request context for parsed input struct
 		input, ok := ctx.Value(CreateMiddlewareCtxKey).(*models.ItemCreationInput)
@@ -68,8 +68,8 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		logger = logger.WithValue("input", input)
 		input.BelongsToUser = userID
+		logger = logger.WithValue("input", input)
 
 		// create item in database
 		x, err := s.itemDatabase.CreateItem(ctx, input)
@@ -114,9 +114,9 @@ func (s *Service) ExistenceHandler() http.HandlerFunc {
 
 		// fetch item from database
 		exists, err := s.itemDatabase.ItemExists(ctx, itemID, userID)
-		if err != nil {
-			logger.Error(err, "error fetching item from database")
-			res.WriteHeader(http.StatusInternalServerError)
+		if err != nil && err != sql.ErrNoRows {
+			logger.Error(err, "error checking item existence in database")
+			res.WriteHeader(http.StatusNotFound)
 			return
 		}
 

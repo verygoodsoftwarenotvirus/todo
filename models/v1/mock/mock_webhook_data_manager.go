@@ -21,12 +21,6 @@ func (m *WebhookDataManager) GetWebhook(ctx context.Context, webhookID, userID u
 	return args.Get(0).(*models.Webhook), args.Error(1)
 }
 
-// GetWebhookCount satisfies our WebhookDataManager interface
-func (m *WebhookDataManager) GetWebhookCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (uint64, error) {
-	args := m.Called(ctx, filter, userID)
-	return args.Get(0).(uint64), args.Error(1)
-}
-
 // GetAllWebhooksCount satisfies our WebhookDataManager interface
 func (m *WebhookDataManager) GetAllWebhooksCount(ctx context.Context) (uint64, error) {
 	args := m.Called(ctx)
@@ -35,7 +29,7 @@ func (m *WebhookDataManager) GetAllWebhooksCount(ctx context.Context) (uint64, e
 
 // GetWebhooks satisfies our WebhookDataManager interface
 func (m *WebhookDataManager) GetWebhooks(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.WebhookList, error) {
-	args := m.Called(ctx, filter, userID)
+	args := m.Called(ctx, userID, filter)
 	return args.Get(0).(*models.WebhookList), args.Error(1)
 }
 
@@ -43,12 +37,6 @@ func (m *WebhookDataManager) GetWebhooks(ctx context.Context, userID uint64, fil
 func (m *WebhookDataManager) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
 	args := m.Called(ctx)
 	return args.Get(0).(*models.WebhookList), args.Error(1)
-}
-
-// GetAllWebhooksForUser satisfies our WebhookDataManager interface
-func (m *WebhookDataManager) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]models.Webhook, error) {
-	args := m.Called(ctx, userID)
-	return args.Get(0).([]models.Webhook), args.Error(1)
 }
 
 // CreateWebhook satisfies our WebhookDataManager interface

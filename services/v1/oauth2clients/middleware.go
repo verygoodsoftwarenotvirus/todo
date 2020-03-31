@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	tracing "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"go.opencensus.io/trace"
@@ -131,9 +131,9 @@ func (s *Service) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-			tracing.AttachUserIDToSpan(span, client.BelongsToUser)
 			tracing.AttachOAuth2ClientIDToSpan(span, client.ClientID)
 			tracing.AttachOAuth2ClientDatabaseIDToSpan(span, client.ID)
+			tracing.AttachUserIDToSpan(span, client.BelongsToUser)
 
 			ctx = context.WithValue(ctx, models.OAuth2ClientKey, client)
 			ctx = context.WithValue(ctx, models.UserIDKey, client.BelongsToUser)

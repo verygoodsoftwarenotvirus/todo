@@ -77,7 +77,10 @@ func (s *Sqlite) buildItemExistsQuery(itemID, userID uint64) (query string, args
 	var err error
 
 	query, args, err = s.sqlBuilder.
-		Select(fmt.Sprintf("%s.id", itemsTableName)).Prefix("SELECT EXISTS (").From(itemsTableName).Suffix(")").
+		Select(fmt.Sprintf("%s.id", itemsTableName)).
+		Prefix(existencePrefix).
+		From(itemsTableName).
+		Suffix(existenceSuffix).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.id", itemsTableName):                            itemID,
 			fmt.Sprintf("%s.%s", itemsTableName, itemsTableOwnershipColumn): userID,
@@ -126,7 +129,7 @@ func (s *Sqlite) buildGetItemCountQuery(userID uint64, filter *models.QueryFilte
 	var err error
 
 	builder := s.sqlBuilder.
-		Select(fmt.Sprintf(CountQuery, itemsTableName)).
+		Select(fmt.Sprintf(countQuery, itemsTableName)).
 		From(itemsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.archived_on", itemsTableName):                   nil,
@@ -162,7 +165,7 @@ func (s *Sqlite) buildGetAllItemsCountQuery() string {
 		var err error
 
 		allItemsCountQuery, _, err = s.sqlBuilder.
-			Select(fmt.Sprintf(CountQuery, itemsTableName)).
+			Select(fmt.Sprintf(countQuery, itemsTableName)).
 			From(itemsTableName).
 			Where(squirrel.Eq{fmt.Sprintf("%s.archived_on", itemsTableName): nil}).
 			ToSql()
@@ -180,7 +183,7 @@ func (s *Sqlite) GetAllItemsCount(ctx context.Context) (count uint64, err error)
 
 // buildGetItemsQuery builds a SQL query selecting items that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
-func (s *Sqlite) buildGetItemsQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
+func (s *Sqlite) buildGetItemsQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 
 	builder := s.sqlBuilder.
@@ -203,7 +206,7 @@ func (s *Sqlite) buildGetItemsQuery(filter *models.QueryFilter, userID uint64) (
 
 // GetItems fetches a list of items from the database that meet a particular filter
 func (s *Sqlite) GetItems(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.ItemList, error) {
-	query, args := s.buildGetItemsQuery(filter, userID)
+	query, args := s.buildGetItemsQuery(userID, filter)
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -234,7 +237,7 @@ func (s *Sqlite) GetItems(ctx context.Context, userID uint64, filter *models.Que
 
 // GetAllItemsForUser fetches every item belonging to a user
 func (s *Sqlite) GetAllItemsForUser(ctx context.Context, userID uint64) ([]models.Item, error) {
-	query, args := s.buildGetItemsQuery(nil, userID)
+	query, args := s.buildGetItemsQuery(userID, nil)
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -323,7 +326,7 @@ func (s *Sqlite) buildUpdateItemQuery(input *models.Item) (query string, args []
 		Update(itemsTableName).
 		Set("name", input.Name).
 		Set("details", input.Details).
-		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
+		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			"id":                      input.ID,
 			itemsTableOwnershipColumn: input.BelongsToUser,
@@ -348,8 +351,8 @@ func (s *Sqlite) buildArchiveItemQuery(itemID, userID uint64) (query string, arg
 
 	query, args, err = s.sqlBuilder.
 		Update(itemsTableName).
-		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
-		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
+		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
+		Set("archived_on", squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			"id":                      itemID,
 			"archived_on":             nil,

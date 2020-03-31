@@ -27,9 +27,9 @@ func (m *UserDataManager) GetUserByUsername(ctx context.Context, username string
 	return args.Get(0).(*models.User), args.Error(1)
 }
 
-// GetUserCount is a mock function
-func (m *UserDataManager) GetUserCount(ctx context.Context, filter *models.QueryFilter) (uint64, error) {
-	args := m.Called(ctx, filter)
+// GetAllUserCount is a mock function
+func (m *UserDataManager) GetAllUserCount(ctx context.Context) (uint64, error) {
+	args := m.Called(ctx)
 	return args.Get(0).(uint64), args.Error(1)
 }
 
@@ -40,7 +40,7 @@ func (m *UserDataManager) GetUsers(ctx context.Context, filter *models.QueryFilt
 }
 
 // CreateUser is a mock function
-func (m *UserDataManager) CreateUser(ctx context.Context, input *models.UserInput) (*models.User, error) {
+func (m *UserDataManager) CreateUser(ctx context.Context, input models.UserDatabaseCreationInput) (*models.User, error) {
 	args := m.Called(ctx, input)
 	return args.Get(0).(*models.User), args.Error(1)
 }

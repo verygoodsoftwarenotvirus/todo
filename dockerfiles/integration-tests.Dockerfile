@@ -9,4 +9,4 @@ ADD . .
 ENTRYPOINT [ "go", "test", "-v", "-failfast", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/integration" ]
 
 # for a more specific test:
-# ENTRYPOINT [ "go", "test", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/integration", "-run", "TestItems/Updating/it_should_be_updatable" ]
+# ENTRYPOINT [ "go", "test", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/integration", "-run", "TestWebhooks/Listing/should_be_able_to_be_read_in_a_list" ]

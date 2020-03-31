@@ -6,7 +6,7 @@ import (
 	"encoding/base32"
 	"net/http"
 
-	tracing "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"go.opencensus.io/trace"
@@ -47,7 +47,7 @@ func (s *Service) ListHandler() http.HandlerFunc {
 		defer span.End()
 
 		// extract filter
-		qf := models.ExtractQueryFilter(req)
+		filter := models.ExtractQueryFilter(req)
 
 		// determine user
 		userID := s.fetchUserID(req)
@@ -55,7 +55,7 @@ func (s *Service) ListHandler() http.HandlerFunc {
 		logger := s.logger.WithValue("user_id", userID)
 
 		// fetch oauth2 clients
-		oauth2Clients, err := s.database.GetOAuth2Clients(ctx, userID, qf)
+		oauth2Clients, err := s.database.GetOAuth2Clients(ctx, userID, filter)
 		if err == sql.ErrNoRows {
 			// just return an empty list if there are no results
 			oauth2Clients = &models.OAuth2ClientList{

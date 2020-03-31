@@ -3,20 +3,15 @@ package postgres
 import (
 	"context"
 	"errors"
+	"regexp"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
-
-func init() {
-	fake.Seed(time.Now().UnixNano())
-}
 
 func buildTestService(t *testing.T) (*Postgres, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
@@ -38,10 +33,18 @@ var (
 		",", `\,`,
 		"-", `\-`,
 	)
+	queryArgRegexp = regexp.MustCompile(`\$\d+`)
 )
 
 func formatQueryForSQLMock(query string) string {
 	return sqlMockReplacer.Replace(query)
+}
+
+func ensureArgCountMatchesQuery(t *testing.T, query string, args []interface{}) {
+	t.Helper()
+
+	queryArgCount := len(queryArgRegexp.FindAllString(query, -1))
+	assert.Equal(t, queryArgCount, len(args))
 }
 
 func TestProvidePostgres(T *testing.T) {

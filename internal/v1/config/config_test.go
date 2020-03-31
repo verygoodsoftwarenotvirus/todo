@@ -70,7 +70,7 @@ connection_details = "%s"
 		assert.Equal(t, expectedConfig.Database.Debug, cfg.Database.Debug)
 		assert.Equal(t, expectedConfig.Database.ConnectionDetails, cfg.Database.ConnectionDetails)
 
-		os.Remove(tf.Name())
+		assert.NoError(t, os.Remove(tf.Name()))
 	})
 
 	T.Run("with nonexistent file", func(t *testing.T) {

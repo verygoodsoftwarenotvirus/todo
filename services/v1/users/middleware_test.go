@@ -45,7 +45,7 @@ func TestService_UserInputMiddleware(T *testing.T) {
 		actual := s.UserInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
-		assert.Equal(t, res.Code, http.StatusOK)
+		assert.Equal(t, http.StatusOK, res.Code)
 	})
 
 	T.Run("with error decoding request", func(t *testing.T) {
@@ -66,7 +66,7 @@ func TestService_UserInputMiddleware(T *testing.T) {
 		actual := s.UserInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
-		assert.Equal(t, res.Code, http.StatusBadRequest)
+		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
 }
 
@@ -91,7 +91,7 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 		actual := s.PasswordUpdateInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
-		assert.Equal(t, res.Code, http.StatusOK)
+		assert.Equal(t, http.StatusOK, res.Code)
 	})
 
 	T.Run("with error decoding request", func(t *testing.T) {
@@ -116,7 +116,7 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 		actual := s.PasswordUpdateInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
-		assert.Equal(t, res.Code, http.StatusBadRequest)
+		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
 }
 
@@ -141,7 +141,7 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 		actual := s.TOTPSecretRefreshInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
-		assert.Equal(t, res.Code, http.StatusOK)
+		assert.Equal(t, http.StatusOK, res.Code)
 	})
 
 	T.Run("with error decoding request", func(t *testing.T) {
@@ -162,6 +162,6 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 		actual := s.TOTPSecretRefreshInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
-		assert.Equal(t, res.Code, http.StatusBadRequest)
+		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
 }

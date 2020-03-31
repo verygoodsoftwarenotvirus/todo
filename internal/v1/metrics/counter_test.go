@@ -12,13 +12,14 @@ func Test_opencensusCounter_Increment(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		ct, err := ProvideUnitCounter("counter", "description")
 		c := ct.(*opencensusCounter)
 
 		require.NoError(t, err)
 		assert.Equal(t, c.actualCount, uint64(0))
 
-		c.Increment(context.Background())
+		c.Increment(ctx)
 		assert.Equal(t, c.actualCount, uint64(1))
 	})
 }
@@ -43,16 +44,17 @@ func Test_opencensusCounter_Decrement(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
 		ct, err := ProvideUnitCounter("counter", "description")
 		c := ct.(*opencensusCounter)
 
 		require.NoError(t, err)
 		assert.Equal(t, c.actualCount, uint64(0))
 
-		c.Increment(context.Background())
+		c.Increment(ctx)
 		assert.Equal(t, c.actualCount, uint64(1))
 
-		c.Decrement(context.Background())
+		c.Decrement(ctx)
 		assert.Equal(t, c.actualCount, uint64(0))
 	})
 }

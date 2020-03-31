@@ -44,7 +44,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		actual := s.CreationInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
-		assert.Equal(t, res.Code, http.StatusOK)
+		assert.Equal(t, http.StatusOK, res.Code)
 	})
 
 	T.Run("with error decoding request", func(t *testing.T) {
@@ -65,7 +65,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		actual := s.CreationInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
-		assert.Equal(t, res.Code, http.StatusBadRequest)
+		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
 }
 
@@ -90,7 +90,7 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		actual := s.UpdateInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
-		assert.Equal(t, res.Code, http.StatusOK)
+		assert.Equal(t, http.StatusOK, res.Code)
 	})
 
 	T.Run("with error decoding request", func(t *testing.T) {
@@ -111,6 +111,6 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		actual := s.UpdateInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
-		assert.Equal(t, res.Code, http.StatusBadRequest)
+		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
 }

@@ -7,7 +7,7 @@ import (
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	randmodel "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/rand/model"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 )
 
 // fetchRandomItem retrieves a random item from the list of available items
@@ -26,15 +26,18 @@ func buildItemActions(c *client.V1Client) map[string]*Action {
 		"CreateItem": {
 			Name: "CreateItem",
 			Action: func() (*http.Request, error) {
-				return c.BuildCreateItemRequest(context.Background(), randmodel.RandomItemCreationInput())
+				ctx := context.Background()
+				itemInput := fakemodels.BuildFakeItemCreationInput()
+				return c.BuildCreateItemRequest(ctx, itemInput)
 			},
 			Weight: 100,
 		},
 		"GetItem": {
 			Name: "GetItem",
 			Action: func() (*http.Request, error) {
+				ctx := context.Background()
 				if randomItem := fetchRandomItem(c); randomItem != nil {
-					return c.BuildGetItemRequest(context.Background(), randomItem.ID)
+					return c.BuildGetItemRequest(ctx, randomItem.ID)
 				}
 				return nil, ErrUnavailableYet
 			},
@@ -43,17 +46,20 @@ func buildItemActions(c *client.V1Client) map[string]*Action {
 		"GetItems": {
 			Name: "GetItems",
 			Action: func() (*http.Request, error) {
-				return c.BuildGetItemsRequest(context.Background(), nil)
+				ctx := context.Background()
+				return c.BuildGetItemsRequest(ctx, nil)
 			},
 			Weight: 100,
 		},
 		"UpdateItem": {
 			Name: "UpdateItem",
 			Action: func() (*http.Request, error) {
+				ctx := context.Background()
 				if randomItem := fetchRandomItem(c); randomItem != nil {
-					randomItem.Name = randmodel.RandomItemCreationInput().Name
-					randomItem.Details = randmodel.RandomItemCreationInput().Details
-					return c.BuildUpdateItemRequest(context.Background(), randomItem)
+					newItem := fakemodels.BuildFakeItemCreationInput()
+					randomItem.Name = newItem.Name
+					randomItem.Details = newItem.Details
+					return c.BuildUpdateItemRequest(ctx, randomItem)
 				}
 				return nil, ErrUnavailableYet
 			},
@@ -62,8 +68,9 @@ func buildItemActions(c *client.V1Client) map[string]*Action {
 		"ArchiveItem": {
 			Name: "ArchiveItem",
 			Action: func() (*http.Request, error) {
+				ctx := context.Background()
 				if randomItem := fetchRandomItem(c); randomItem != nil {
-					return c.BuildArchiveItemRequest(context.Background(), randomItem.ID)
+					return c.BuildArchiveItemRequest(ctx, randomItem.ID)
 				}
 				return nil, ErrUnavailableYet
 			},

@@ -8,7 +8,7 @@ import (
 	"github.com/tebeka/selenium"
 )
 
-func runTestOnAllSupportedBrowsers(T *testing.T, tp testProvider) {
+func runTestOnAllSupportedBrowsers(t *testing.T, tp testProvider) {
 	for _, bn := range []string{"firefox", "chrome"} {
 		browserName := bn
 		caps := selenium.Capabilities{"browserName": browserName}
@@ -16,9 +16,9 @@ func runTestOnAllSupportedBrowsers(T *testing.T, tp testProvider) {
 		if err != nil {
 			panic(err)
 		}
-		defer wd.Quit()
 
-		T.Run(bn, tp(wd))
+		t.Run(bn, tp(wd))
+		assert.NoError(t, wd.Quit())
 	}
 }
 

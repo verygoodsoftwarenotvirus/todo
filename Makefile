@@ -11,25 +11,20 @@ SERVER_DOCKER_REPO_NAME  := docker.io/verygoodsoftwarenotvirus/$(SERVER_DOCKER_I
 $(ARTIFACTS_DIR):
 	mkdir -p $(ARTIFACTS_DIR)
 
-## dependency injection
-
-.PHONY: wire-clean
-wire-clean:
-	rm -f cmd/server/v1/wire_gen.go
-
-.PHONY: wire
-wire:
-	wire gen gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
-
-.PHONY: rewire
-rewire: wire-clean wire
-
 ## Go-specific prerequisite stuff
 
+ensure-wire:
+ifndef $(shell command -v wire 2> /dev/null)
+	$(shell GO111MODULE=off go get -u github.com/google/wire/cmd/wire)
+endif
+
+ensure-gocov:
+ifndef $(shell command -v gocov 2> /dev/null)
+	$(shell GO111MODULE=off go get -u github.com/axw/gocov/gocov)
+endif
+
 .PHONY: dev-tools
-dev-tools:
-	GO111MODULE=off go get -u github.com/google/wire/cmd/wire
-	GO111MODULE=off go get -u github.com/axw/gocov/gocov
+dev-tools: ensure-wire ensure-gocov
 
 .PHONY: vendor-clean
 vendor-clean:
@@ -37,10 +32,24 @@ vendor-clean:
 
 .PHONY: vendor
 vendor:
-	GO111MODULE=on go mod vendor
+	if [ ! -f go.mod ]; then go mod init; fi
+	go mod vendor
 
 .PHONY: revendor
 revendor: vendor-clean vendor
+
+## dependency injection
+
+.PHONY: wire-clean
+wire-clean:
+	rm -f cmd/server/v1/wire_gen.go
+
+.PHONY: wire
+wire: ensure-wire
+	wire gen gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
+
+.PHONY: rewire
+rewire: ensure-wire wire-clean wire
 
 ## Config
 
@@ -63,10 +72,10 @@ lint:
 		--env=GO111MODULE=on \
 		golangci/golangci-lint:latest golangci-lint run --config=.golangci.yml ./...
 
-$(COVERAGE_OUT): $(ARTIFACTS_DIR)
+$(COVERAGE_OUT): $(ARTIFACTS_DIR) ensure-gocov
 	set -ex; \
 	echo "mode: set" > $(COVERAGE_OUT);
-	for pkg in `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|mock)'`; do \
+	for pkg in `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|mock|fake)'`; do \
 		go test -coverprofile=profile.out -v -count 5 -race -failfast $$pkg; \
 		if [ $$? -ne 0 ]; then exit 1; fi; \
 		cat profile.out | grep -v "mode: atomic" >> $(COVERAGE_OUT); \
@@ -75,10 +84,10 @@ $(COVERAGE_OUT): $(ARTIFACTS_DIR)
 	gocov convert $(COVERAGE_OUT) | gocov report
 
 .PHONY: quicktest # basically the same as coverage.out, only running once instead of with `-count` set
-quicktest: $(ARTIFACTS_DIR)
+quicktest: $(ARTIFACTS_DIR) ensure-gocov
 	@set -ex; \
 	echo "mode: set" > $(COVERAGE_OUT);
-	for pkg in `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|mock)'`; do \
+	for pkg in `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|mock|fake)'`; do \
 		go test -coverprofile=profile.out -race -failfast $$pkg; \
 		if [ $$? -ne 0 ]; then exit 1; fi; \
 		cat profile.out | grep -v "mode: atomic" >> $(COVERAGE_OUT); \
@@ -93,14 +102,14 @@ coverage-clean:
 .PHONY: coverage
 coverage: coverage-clean $(COVERAGE_OUT)
 
-.PHONY: test
-test:
-	docker build --tag coverage-$(SERVER_DOCKER_IMAGE_NAME):latest --file dockerfiles/coverage.Dockerfile .
-	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` coverage-$(SERVER_DOCKER_IMAGE_NAME):latest
-
 .PHONY: format
 format:
 	for file in `find $(PWD) -name '*.go'`; do $(GO_FORMAT) $$file; done
+
+.PHONY: check_formatting
+check_formatting:
+	docker build --tag check_formatting:latest --file dockerfiles/formatting.Dockerfile .
+	docker run check_formatting:latest
 
 .PHONY: frontend-tests
 frontend-tests:

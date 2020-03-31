@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,7 +11,7 @@ func TestOAuth2Client_GetID(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		expected := "uint64(123)"
+		expected := "123"
 		oac := &OAuth2Client{
 			ClientID: expected,
 		}
@@ -24,7 +23,7 @@ func TestOAuth2Client_GetSecret(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		expected := "uint64(123)"
+		expected := "123"
 		oac := &OAuth2Client{
 			ClientSecret: expected,
 		}
@@ -36,7 +35,7 @@ func TestOAuth2Client_GetDomain(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		expected := "uint64(123)"
+		expected := "123"
 		oac := &OAuth2Client{
 			RedirectURI: expected,
 		}
@@ -48,7 +47,7 @@ func TestOAuth2Client_GetUserID(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		expectation := fake.Uint64()
+		expectation := uint64(123)
 		expected := fmt.Sprintf("%d", expectation)
 		oac := &OAuth2Client{
 			BelongsToUser: expectation,

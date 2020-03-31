@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth/mock"
@@ -15,8 +14,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
-	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -25,10 +24,6 @@ import (
 	oauth2server "gopkg.in/oauth2.v3/server"
 	oauth2store "gopkg.in/oauth2.v3/store"
 )
-
-func init() {
-	fake.Seed(time.Now().UnixNano())
-}
 
 func buildTestService(t *testing.T) *Service {
 	t.Helper()
@@ -58,7 +53,8 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expected := fake.Uint64()
+		exampleCount := uint64(123)
+
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
 			"GetAllOAuth2Clients",
@@ -67,10 +63,10 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		mockDB.OAuth2ClientDataManager.On(
 			"GetAllOAuth2ClientCount",
 			mock.Anything,
-		).Return(expected, nil)
+		).Return(exampleCount, nil)
 
 		uc := &mockmetrics.UnitCounter{}
-		uc.On("IncrementBy", expected).Return()
+		uc.On("IncrementBy", mock.Anything, exampleCount).Return()
 
 		var ucp metrics.UnitCounterProvider = func(
 			counterName metrics.CounterName,
@@ -94,7 +90,8 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 
 	T.Run("with error providing counter", func(t *testing.T) {
 		ctx := context.Background()
-		expected := fake.Uint64()
+		exampleCount := uint64(123)
+
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
 			"GetAllOAuth2Clients",
@@ -103,10 +100,10 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		mockDB.OAuth2ClientDataManager.On(
 			"GetAllOAuth2ClientCount",
 			mock.Anything,
-		).Return(expected, nil)
+		).Return(exampleCount, nil)
 
 		uc := &mockmetrics.UnitCounter{}
-		uc.On("IncrementBy", expected).Return()
+		uc.On("IncrementBy", mock.Anything, exampleCount).Return()
 
 		var ucp metrics.UnitCounterProvider = func(
 			counterName metrics.CounterName,
@@ -130,7 +127,8 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 
 	T.Run("with error fetching oauth2 clients", func(t *testing.T) {
 		ctx := context.Background()
-		expected := fake.Uint64()
+		exampleCount := uint64(123)
+
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
 			"GetAllOAuth2Clients",
@@ -139,10 +137,10 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		mockDB.OAuth2ClientDataManager.On(
 			"GetAllOAuth2ClientCount",
 			mock.Anything,
-		).Return(expected, errors.New("blah"))
+		).Return(exampleCount, errors.New("blah"))
 
 		uc := &mockmetrics.UnitCounter{}
-		uc.On("IncrementBy", expected).Return()
+		uc.On("IncrementBy", mock.Anything, exampleCount).Return()
 
 		var ucp metrics.UnitCounterProvider = func(
 			counterName metrics.CounterName,
@@ -170,20 +168,20 @@ func Test_clientStore_GetByID(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		exampleID := "blah"
+		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
 			"GetOAuth2ClientByClientID",
 			mock.Anything,
-			exampleID,
-		).Return(&models.OAuth2Client{ClientID: exampleID}, nil)
+			exampleOAuth2Client.ClientID,
+		).Return(exampleOAuth2Client, nil)
 
 		c := &clientStore{database: mockDB}
-		actual, err := c.GetByID(exampleID)
+		actual, err := c.GetByID(exampleOAuth2Client.ClientID)
 
 		assert.NoError(t, err)
-		assert.Equal(t, exampleID, actual.GetID())
+		assert.Equal(t, exampleOAuth2Client.ClientID, actual.GetID())
 	})
 
 	T.Run("with no rows", func(t *testing.T) {
@@ -225,7 +223,7 @@ func TestService_HandleAuthorizeRequest(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
-		moah := &mockOauth2Handler{}
+		moah := &mockOAuth2Handler{}
 		moah.On(
 			"HandleAuthorizeRequest",
 			mock.Anything,
@@ -244,7 +242,7 @@ func TestService_HandleTokenRequest(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
-		moah := &mockOauth2Handler{}
+		moah := &mockOAuth2Handler{}
 		moah.On(
 			"HandleTokenRequest",
 			mock.Anything,

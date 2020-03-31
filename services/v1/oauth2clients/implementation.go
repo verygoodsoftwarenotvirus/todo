@@ -96,7 +96,7 @@ func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reque
 var _ oauth2server.UserAuthorizationHandler = (*Service)(nil).UserAuthorizationHandler
 
 // UserAuthorizationHandler satisfies the oauth2server UserAuthorizationHandler interface
-func (s *Service) UserAuthorizationHandler(res http.ResponseWriter, req *http.Request) (userID string, err error) {
+func (s *Service) UserAuthorizationHandler(_ http.ResponseWriter, req *http.Request) (userID string, err error) {
 	ctx, span := trace.StartSpan(req.Context(), "UserAuthorizationHandler")
 	defer span.End()
 	var uid uint64

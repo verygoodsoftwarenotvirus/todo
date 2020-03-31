@@ -5,23 +5,17 @@ import (
 	"errors"
 	"net/http"
 	"testing"
-	"time"
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
-	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
-
-func init() {
-	fake.Seed(time.Now().UnixNano())
-}
 
 func buildTestService() *Service {
 	return &Service{
@@ -40,9 +34,10 @@ func TestProvideWebhooksService(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expectation := fake.Uint64()
+		expectation := uint64(123)
+
 		uc := &mockmetrics.UnitCounter{}
-		uc.On("IncrementBy", expectation).Return()
+		uc.On("IncrementBy", mock.Anything, expectation).Return()
 
 		var ucp metrics.UnitCounterProvider = func(
 			counterName metrics.CounterName,
@@ -91,11 +86,12 @@ func TestProvideWebhooksService(T *testing.T) {
 		assert.Error(t, err)
 	})
 
-	T.Run("with error setting count", func(t *testing.T) {
+	T.Run("with error getting count", func(t *testing.T) {
 		ctx := context.Background()
-		expectation := fake.Uint64()
+		expectation := uint64(123)
+
 		uc := &mockmetrics.UnitCounter{}
-		uc.On("IncrementBy", expectation).Return()
+		uc.On("IncrementBy", mock.Anything, expectation).Return()
 
 		var ucp metrics.UnitCounterProvider = func(
 			counterName metrics.CounterName,

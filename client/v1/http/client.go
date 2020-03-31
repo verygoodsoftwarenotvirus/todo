@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	defaultTimeout = 5 * time.Second
+	defaultTimeout = 30 * time.Second
 	clientName     = "v1_client"
 )
 
@@ -149,10 +149,24 @@ func tokenEndpoint(baseURL *url.URL) oauth2.Endpoint {
 // Its purpose at the time of this writing is merely so I can make users (which
 // is a route that doesn't require authentication)
 func NewSimpleClient(ctx context.Context, address *url.URL, debug bool) (*V1Client, error) {
-	l := noop.ProvideNoopLogger()
-	h := &http.Client{Timeout: 5 * time.Second}
-	c, err := NewClient(ctx, "", "", address, l, h, []string{"*"}, debug)
-	return c, err
+	return NewClient(
+		ctx,
+		"",
+		"",
+		address,
+		noop.ProvideNoopLogger(),
+		&http.Client{Timeout: 5 * time.Second},
+		[]string{"*"},
+		debug,
+	)
+}
+
+func (c *V1Client) closeRequestBody(res *http.Response) {
+	if res != nil {
+		if err := res.Body.Close(); err != nil {
+			c.logger.Error(err, "closing request body")
+		}
+	}
 }
 
 // executeRawRequest takes a given *http.Request and executes it with the provided
@@ -184,10 +198,17 @@ func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, r
 
 // BuildURL builds standard service URLs
 func (c *V1Client) BuildURL(qp url.Values, parts ...string) string {
+	var u *url.URL
 	if qp != nil {
-		return c.buildURL(qp, parts...).String()
+		u = c.buildURL(qp, parts...)
+	} else {
+		u = c.buildURL(nil, parts...)
 	}
-	return c.buildURL(nil, parts...).String()
+
+	if u != nil {
+		return u.String()
+	}
+	return ""
 }
 
 // buildURL takes a given set of query parameters and URL parts, and returns
@@ -198,7 +219,8 @@ func (c *V1Client) buildURL(queryParams url.Values, parts ...string) *url.URL {
 	parts = append([]string{"api", "v1"}, parts...)
 	u, err := url.Parse(strings.Join(parts, "/"))
 	if err != nil {
-		panic(fmt.Sprintf("was asked to build an invalid URL: %v", err))
+		c.logger.Error(err, "building URL")
+		return nil
 	}
 
 	if queryParams != nil {
@@ -215,7 +237,8 @@ func (c *V1Client) buildVersionlessURL(qp url.Values, parts ...string) string {
 
 	u, err := url.Parse(path.Join(parts...))
 	if err != nil {
-		panic(fmt.Sprintf("user tried to build an invalid URL: %v", err))
+		c.logger.Error(err, "building URL")
+		return ""
 	}
 
 	if qp != nil {
@@ -234,16 +257,16 @@ func (c *V1Client) BuildWebsocketURL(parts ...string) string {
 }
 
 // BuildHealthCheckRequest builds a health check HTTP Request
-func (c *V1Client) BuildHealthCheckRequest() (*http.Request, error) {
+func (c *V1Client) BuildHealthCheckRequest(ctx context.Context) (*http.Request, error) {
 	u := *c.URL
 	uri := fmt.Sprintf("%s://%s/_meta_/ready", u.Scheme, u.Host)
 
-	return http.NewRequest(http.MethodGet, uri, nil)
+	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
 // IsUp returns whether or not the service's health endpoint is returning 200s
-func (c *V1Client) IsUp() bool {
-	req, err := c.BuildHealthCheckRequest()
+func (c *V1Client) IsUp(ctx context.Context) bool {
+	req, err := c.BuildHealthCheckRequest(ctx)
 	if err != nil {
 		c.logger.Error(err, "building request")
 		return false
@@ -254,19 +277,14 @@ func (c *V1Client) IsUp() bool {
 		c.logger.Error(err, "health check")
 		return false
 	}
-
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			c.logger.Error(err, "closing response body")
-		}
-	}()
+	c.closeRequestBody(res)
 
 	return res.StatusCode == http.StatusOK
 }
 
 // buildDataRequest builds an HTTP request for a given method, URL, and body data.
 func (c *V1Client) buildDataRequest(ctx context.Context, method, uri string, in interface{}) (*http.Request, error) {
-	_, span := trace.StartSpan(ctx, "buildDataRequest")
+	ctx, span := trace.StartSpan(ctx, "buildDataRequest")
 	defer span.End()
 
 	body, err := createBodyFromStruct(in)
@@ -274,7 +292,7 @@ func (c *V1Client) buildDataRequest(ctx context.Context, method, uri string, in 
 		return nil, err
 	}
 
-	req, err := http.NewRequest(method, uri, body)
+	req, err := http.NewRequestWithContext(ctx, method, uri, body)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +301,7 @@ func (c *V1Client) buildDataRequest(ctx context.Context, method, uri string, in 
 	return req, nil
 }
 
-// retrieve executes an HTTP request and loads the response content into a struct
+// checkExistence executes an HTTP request and loads the response content into a bool
 func (c *V1Client) checkExistence(ctx context.Context, req *http.Request) (bool, error) {
 	ctx, span := trace.StartSpan(ctx, "checkExistence")
 	defer span.End()
@@ -292,12 +310,7 @@ func (c *V1Client) checkExistence(ctx context.Context, req *http.Request) (bool,
 	if err != nil {
 		return false, err
 	}
-
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			c.logger.Error(err, "closing response body")
-		}
-	}()
+	c.closeRequestBody(res)
 
 	return res.StatusCode == http.StatusOK, nil
 }
@@ -342,8 +355,7 @@ func (c *V1Client) executeRequest(ctx context.Context, req *http.Request, out in
 	}
 
 	if out != nil {
-		resErr := unmarshalBody(res, &out)
-		if resErr != nil {
+		if resErr := unmarshalBody(res, out); resErr != nil {
 			return fmt.Errorf("loading response from server: %w", err)
 		}
 	}
@@ -351,31 +363,25 @@ func (c *V1Client) executeRequest(ctx context.Context, req *http.Request, out in
 	return nil
 }
 
-// executeUnathenticatedDataRequest takes a given request and loads the response into an interface value.
-func (c *V1Client) executeUnathenticatedDataRequest(ctx context.Context, req *http.Request, out interface{}) error {
-	ctx, span := trace.StartSpan(ctx, "executeUnathenticatedDataRequest")
+// executeUnauthenticatedDataRequest takes a given request and loads the response into an interface value.
+func (c *V1Client) executeUnauthenticatedDataRequest(ctx context.Context, req *http.Request, out interface{}) error {
+	ctx, span := trace.StartSpan(ctx, "executeUnauthenticatedDataRequest")
 	defer span.End()
-
-	// sometimes we want to make requests with data attached, but we don't really care about the response
-	// so we give this function a nil `out` value. That said, if you provide us a value, it needs to be a pointer.
-	if out != nil {
-		if np, err := argIsNotPointer(out); np || err != nil {
-			return fmt.Errorf("struct to load must be a pointer: %w", err)
-		}
-	}
 
 	res, err := c.executeRawRequest(ctx, c.plainClient, req)
 	if err != nil {
 		return fmt.Errorf("executing request: %w", err)
 	}
 
-	if res.StatusCode == http.StatusNotFound {
+	switch res.StatusCode {
+	case http.StatusNotFound:
 		return ErrNotFound
+	case http.StatusUnauthorized:
+		return ErrUnauthorized
 	}
 
 	if out != nil {
-		resErr := unmarshalBody(res, &out)
-		if resErr != nil {
+		if resErr := unmarshalBody(res, out); resErr != nil {
 			return fmt.Errorf("loading response from server: %w", err)
 		}
 	}

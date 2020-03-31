@@ -26,5 +26,5 @@ func (m *ReadCloser) Read(b []byte) (i int, err error) {
 
 // Close implements the Closer part of our ReadCloser
 func (m *ReadCloser) Close() (err error) {
-	return m.Called().Error(1)
+	return m.Called().Error(0)
 }

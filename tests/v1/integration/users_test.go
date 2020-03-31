@@ -6,18 +6,15 @@ import (
 	"encoding/base32"
 	"net/http"
 	"testing"
-	"time"
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
-	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func init() {
-	fake.Seed(time.Now().UnixNano())
-
 	b := make([]byte, 64)
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
@@ -36,24 +33,12 @@ func randString() (string, error) {
 	return base32.StdEncoding.EncodeToString(b), nil
 }
 
-func buildDummyUserInput(t *testing.T) *models.UserInput {
-	t.Helper()
-
-	fake.Seed(time.Now().UnixNano())
-	userInput := &models.UserInput{
-		Username: fake.Username(),
-		Password: fake.Password(true, true, true, true, true, 64),
-	}
-
-	return userInput
-}
-
-func buildDummyUser(t *testing.T) (*models.UserCreationResponse, *models.UserInput, *http.Cookie) {
+func buildDummyUser(t *testing.T) (*models.UserCreationResponse, *models.UserCreationInput, *http.Cookie) {
 	t.Helper()
 	ctx := context.Background()
 
 	// build user creation route input
-	userInput := buildDummyUserInput(t)
+	userInput := fakemodels.BuildFakeUserCreationInput()
 	user, err := todoClient.CreateUser(ctx, userInput)
 	assert.NotNil(t, user)
 	require.NoError(t, err)
@@ -69,7 +54,7 @@ func buildDummyUser(t *testing.T) (*models.UserCreationResponse, *models.UserInp
 	return user, userInput, cookie
 }
 
-func checkUserCreationEquality(t *testing.T, expected *models.UserInput, actual *models.UserCreationResponse) {
+func checkUserCreationEquality(t *testing.T, expected *models.UserCreationInput, actual *models.UserCreationResponse) {
 	t.Helper()
 
 	assert.NotZero(t, actual.ID)
@@ -80,7 +65,7 @@ func checkUserCreationEquality(t *testing.T, expected *models.UserInput, actual 
 	assert.Nil(t, actual.ArchivedOn)
 }
 
-func checkUserEquality(t *testing.T, expected *models.UserInput, actual *models.User) {
+func checkUserEquality(t *testing.T, expected *models.UserCreationInput, actual *models.User) {
 	t.Helper()
 
 	assert.NotZero(t, actual.ID)
@@ -95,68 +80,62 @@ func TestUsers(test *testing.T) {
 
 	test.Run("Creating", func(T *testing.T) {
 		T.Run("should be creatable", func(t *testing.T) {
-			tctx := context.Background()
+			ctx := context.Background()
 
 			// Create user
-			expected := buildDummyUserInput(t)
-			actual, err := todoClient.CreateUser(tctx, &models.UserInput{
-				Username: expected.Username,
-				Password: expected.Password,
-			})
+			exampleUserInput := fakemodels.BuildFakeUserCreationInput()
+			actual, err := todoClient.CreateUser(ctx, exampleUserInput)
 			checkValueAndError(t, actual, err)
 
 			// Assert user equality
-			checkUserCreationEquality(t, expected, actual)
+			checkUserCreationEquality(t, exampleUserInput, actual)
 
 			// Clean up
-			assert.NoError(t, todoClient.ArchiveUser(tctx, actual.ID))
+			assert.NoError(t, todoClient.ArchiveUser(ctx, actual.ID))
 		})
 	})
 
 	test.Run("Reading", func(T *testing.T) {
 		T.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
-			tctx := context.Background()
+			ctx := context.Background()
 
 			// Fetch user
-			actual, err := todoClient.GetUser(tctx, nonexistentID)
+			actual, err := todoClient.GetUser(ctx, nonexistentID)
 			assert.Nil(t, actual)
 			assert.Error(t, err)
 		})
 
 		T.Run("it should be readable", func(t *testing.T) {
-			tctx := context.Background()
+			ctx := context.Background()
 
 			// Create user
-			expected := buildDummyUserInput(t)
-			premade, err := todoClient.CreateUser(tctx, &models.UserInput{
-				Username: expected.Username,
-				Password: expected.Password,
-			})
+			exampleUserInput := fakemodels.BuildFakeUserCreationInput()
+			premade, err := todoClient.CreateUser(ctx, exampleUserInput)
 			checkValueAndError(t, premade, err)
 			assert.NotEmpty(t, premade.TwoFactorSecret)
 
 			// Fetch user
-			actual, err := todoClient.GetUser(tctx, premade.ID)
+			actual, err := todoClient.GetUser(ctx, premade.ID)
 			if err != nil {
 				t.Logf("error encountered trying to fetch user %q: %v\n", premade.Username, err)
 			}
 			checkValueAndError(t, actual, err)
 
 			// Assert user equality
-			checkUserEquality(t, expected, actual)
+			checkUserEquality(t, exampleUserInput, actual)
 
 			// Clean up
-			assert.NoError(t, todoClient.ArchiveUser(tctx, actual.ID))
+			assert.NoError(t, todoClient.ArchiveUser(ctx, actual.ID))
 		})
 	})
 
 	test.Run("Deleting", func(T *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
-			tctx := context.Background()
+			ctx := context.Background()
 
 			// Create user
-			y := buildDummyUserInput(t)
-			u, err := todoClient.CreateUser(tctx, y)
+			exampleUserInput := fakemodels.BuildFakeUserCreationInput()
+			u, err := todoClient.CreateUser(ctx, exampleUserInput)
 			assert.NoError(t, err)
 			assert.NotNil(t, u)
 
@@ -166,14 +145,14 @@ func TestUsers(test *testing.T) {
 			}
 
 			// Execute
-			err = todoClient.ArchiveUser(tctx, u.ID)
+			err = todoClient.ArchiveUser(ctx, u.ID)
 			assert.NoError(t, err)
 		})
 	})
 
 	test.Run("Listing", func(T *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
-			tctx := context.Background()
+			ctx := context.Background()
 
 			// Create users
 			var expected []*models.UserCreationResponse
@@ -184,13 +163,13 @@ func TestUsers(test *testing.T) {
 			}
 
 			// Assert user list equality
-			actual, err := todoClient.GetUsers(tctx, nil)
+			actual, err := todoClient.GetUsers(ctx, nil)
 			checkValueAndError(t, actual, err)
 			assert.True(t, len(expected) <= len(actual.Users))
 
 			// Clean up
 			for _, user := range actual.Users {
-				err = todoClient.ArchiveUser(tctx, user.ID)
+				err = todoClient.ArchiveUser(ctx, user.ID)
 				assert.NoError(t, err)
 			}
 		})

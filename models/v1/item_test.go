@@ -23,3 +23,22 @@ func TestItem_Update(T *testing.T) {
 		assert.Equal(t, expected.Details, i.Details)
 	})
 }
+
+func TestItem_ToUpdateInput(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		i := &Item{
+			Name:    fake.Word(),
+			Details: fake.Word(),
+		}
+
+		expected := &ItemUpdateInput{
+			Name:    i.Name,
+			Details: i.Details,
+		}
+		actual := i.ToUpdateInput()
+
+		assert.Equal(t, expected, actual)
+	})
+}

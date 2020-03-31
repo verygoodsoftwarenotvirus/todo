@@ -39,15 +39,14 @@ func (c *Client) GetUserByUsername(ctx context.Context, username string) (*model
 	return c.querier.GetUserByUsername(ctx, username)
 }
 
-// GetUserCount fetches a count of users from the database that meet a particular filter
-func (c *Client) GetUserCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
-	ctx, span := trace.StartSpan(ctx, "GetUserCount")
+// GetAllUserCount fetches a count of users from the database that meet a particular filter
+func (c *Client) GetAllUserCount(ctx context.Context) (count uint64, err error) {
+	ctx, span := trace.StartSpan(ctx, "GetAllUserCount")
 	defer span.End()
 
-	tracing.AttachFilterToSpan(span, filter)
-	c.logger.Debug("GetUserCount called")
+	c.logger.Debug("GetAllUserCount called")
 
-	return c.querier.GetUserCount(ctx, filter)
+	return c.querier.GetAllUserCount(ctx)
 }
 
 // GetUsers fetches a list of users from the database that meet a particular filter
@@ -62,7 +61,7 @@ func (c *Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mod
 }
 
 // CreateUser creates a user
-func (c *Client) CreateUser(ctx context.Context, input *models.UserInput) (*models.User, error) {
+func (c *Client) CreateUser(ctx context.Context, input models.UserDatabaseCreationInput) (*models.User, error) {
 	ctx, span := trace.StartSpan(ctx, "CreateUser")
 	defer span.End()
 

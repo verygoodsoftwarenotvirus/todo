@@ -42,11 +42,17 @@ type (
 		TOTPToken string `json:"totp_token"`
 	}
 
-	// UserInput represents the input required to modify/create users
-	UserInput struct {
-		Username        string `json:"username"`
-		Password        string `json:"password"`
-		TwoFactorSecret string `json:"-"`
+	// UserCreationInput represents the input required from users to register an account
+	UserCreationInput struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	// UserDatabaseCreationInput is used by the user creation route to communicate with the database
+	UserDatabaseCreationInput struct {
+		Username        string
+		HashedPassword  string
+		TwoFactorSecret string
 	}
 
 	// UserCreationResponse is a response structure for Users that doesn't contain password fields, but does contain the two factor secret
@@ -84,9 +90,9 @@ type (
 	UserDataManager interface {
 		GetUser(ctx context.Context, userID uint64) (*User, error)
 		GetUserByUsername(ctx context.Context, username string) (*User, error)
-		GetUserCount(ctx context.Context, filter *QueryFilter) (uint64, error)
+		GetAllUserCount(ctx context.Context) (uint64, error)
 		GetUsers(ctx context.Context, filter *QueryFilter) (*UserList, error)
-		CreateUser(ctx context.Context, input *UserInput) (*User, error)
+		CreateUser(ctx context.Context, input UserDatabaseCreationInput) (*User, error)
 		UpdateUser(ctx context.Context, updated *User) error
 		ArchiveUser(ctx context.Context, userID uint64) error
 	}

@@ -16,7 +16,7 @@ type mockOAuth2ClientValidator struct {
 }
 
 func (m *mockOAuth2ClientValidator) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.Request) (*models.OAuth2Client, error) {
-	args := m.Called(req)
+	args := m.Called(ctx, req)
 	return args.Get(0).(*models.OAuth2Client), args.Error(1)
 }
 

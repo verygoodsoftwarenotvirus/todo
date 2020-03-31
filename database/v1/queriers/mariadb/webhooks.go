@@ -25,18 +25,18 @@ const (
 
 var (
 	webhooksTableColumns = []string{
-		"id",
-		"name",
-		"content_type",
-		"url",
-		"method",
-		"events",
-		"data_types",
-		"topics",
-		"created_on",
-		"updated_on",
-		"archived_on",
-		webhooksTableOwnershipColumn,
+		fmt.Sprintf("%s.id", webhooksTableName),
+		fmt.Sprintf("%s.name", webhooksTableName),
+		fmt.Sprintf("%s.content_type", webhooksTableName),
+		fmt.Sprintf("%s.url", webhooksTableName),
+		fmt.Sprintf("%s.method", webhooksTableName),
+		fmt.Sprintf("%s.events", webhooksTableName),
+		fmt.Sprintf("%s.data_types", webhooksTableName),
+		fmt.Sprintf("%s.topics", webhooksTableName),
+		fmt.Sprintf("%s.created_on", webhooksTableName),
+		fmt.Sprintf("%s.updated_on", webhooksTableName),
+		fmt.Sprintf("%s.archived_on", webhooksTableName),
+		fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableOwnershipColumn),
 	}
 )
 
@@ -109,8 +109,8 @@ func (m *MariaDB) buildGetWebhookQuery(webhookID, userID uint64) (query string, 
 		Select(webhooksTableColumns...).
 		From(webhooksTableName).
 		Where(squirrel.Eq{
-			"id":                         webhookID,
-			webhooksTableOwnershipColumn: userID,
+			fmt.Sprintf("%s.id", webhooksTableName):                               webhookID,
+			fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableOwnershipColumn): userID,
 		}).ToSql()
 
 	m.logQueryBuildingError(err)
@@ -132,15 +132,15 @@ func (m *MariaDB) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mo
 
 // buildGetWebhookCountQuery returns a SQL query (and arguments) that returns a list of webhooks
 // meeting a given filter's criteria and belonging to a given user.
-func (m *MariaDB) buildGetWebhookCountQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
+func (m *MariaDB) buildGetWebhookCountQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 
 	builder := m.sqlBuilder.
-		Select(fmt.Sprintf(CountQuery, webhooksTableName)).
+		Select(fmt.Sprintf(countQuery, webhooksTableName)).
 		From(webhooksTableName).
 		Where(squirrel.Eq{
-			webhooksTableOwnershipColumn: userID,
-			"archived_on":                nil,
+			fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableOwnershipColumn): userID,
+			fmt.Sprintf("%s.archived_on", webhooksTableName):                      nil,
 		})
 
 	if filter != nil {
@@ -156,7 +156,7 @@ func (m *MariaDB) buildGetWebhookCountQuery(filter *models.QueryFilter, userID u
 // GetWebhookCount will fetch the count of webhooks from the database that meet a particular filter,
 // and belong to a particular user.
 func (m *MariaDB) GetWebhookCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (count uint64, err error) {
-	query, args := m.buildGetWebhookCountQuery(filter, userID)
+	query, args := m.buildGetWebhookCountQuery(userID, filter)
 	err = m.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	return count, err
 }
@@ -172,9 +172,11 @@ func (m *MariaDB) buildGetAllWebhooksCountQuery() string {
 		var err error
 
 		getAllWebhooksCountQuery, _, err = m.sqlBuilder.
-			Select(fmt.Sprintf(CountQuery, webhooksTableName)).
+			Select(fmt.Sprintf(countQuery, webhooksTableName)).
 			From(webhooksTableName).
-			Where(squirrel.Eq{"archived_on": nil}).
+			Where(squirrel.Eq{
+				fmt.Sprintf("%s.archived_on", webhooksTableName): nil,
+			}).
 			ToSql()
 
 		m.logQueryBuildingError(err)
@@ -202,7 +204,9 @@ func (m *MariaDB) buildGetAllWebhooksQuery() string {
 		getAllWebhooksQuery, _, err = m.sqlBuilder.
 			Select(webhooksTableColumns...).
 			From(webhooksTableName).
-			Where(squirrel.Eq{"archived_on": nil}).
+			Where(squirrel.Eq{
+				fmt.Sprintf("%s.archived_on", webhooksTableName): nil,
+			}).
 			ToSql()
 
 		m.logQueryBuildingError(err)
@@ -244,7 +248,7 @@ func (m *MariaDB) GetAllWebhooks(ctx context.Context) (*models.WebhookList, erro
 
 // GetAllWebhooksForUser fetches a list of all webhooks from the database
 func (m *MariaDB) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]models.Webhook, error) {
-	query, args := m.buildGetWebhooksQuery(nil, userID)
+	query, args := m.buildGetWebhooksQuery(userID, nil)
 
 	rows, err := m.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -263,15 +267,15 @@ func (m *MariaDB) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]m
 }
 
 // buildGetWebhooksQuery returns a SQL query (and arguments) that would return a
-func (m *MariaDB) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint64) (query string, args []interface{}) {
+func (m *MariaDB) buildGetWebhooksQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 
 	builder := m.sqlBuilder.
 		Select(webhooksTableColumns...).
 		From(webhooksTableName).
 		Where(squirrel.Eq{
-			webhooksTableOwnershipColumn: userID,
-			"archived_on":                nil,
+			fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableOwnershipColumn): userID,
+			fmt.Sprintf("%s.archived_on", webhooksTableName):                      nil,
 		})
 
 	if filter != nil {
@@ -286,7 +290,7 @@ func (m *MariaDB) buildGetWebhooksQuery(filter *models.QueryFilter, userID uint6
 
 // GetWebhooks fetches a list of webhooks from the database that meet a particular filter
 func (m *MariaDB) GetWebhooks(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.WebhookList, error) {
-	query, args := m.buildGetWebhooksQuery(filter, userID)
+	query, args := m.buildGetWebhooksQuery(userID, filter)
 
 	rows, err := m.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -344,7 +348,7 @@ func (m *MariaDB) buildWebhookCreationQuery(x *models.Webhook) (query string, ar
 			strings.Join(x.DataTypes, typesSeparator),
 			strings.Join(x.Topics, topicsSeparator),
 			x.BelongsToUser,
-			squirrel.Expr(CurrentUnixTimeQuery),
+			squirrel.Expr(currentUnixTimeQuery),
 		).
 		ToSql()
 
@@ -407,10 +411,10 @@ func (m *MariaDB) buildUpdateWebhookQuery(input *models.Webhook) (query string, 
 		Set("content_type", input.ContentType).
 		Set("url", input.URL).
 		Set("method", input.Method).
-		Set("events", strings.Join(input.Events, topicsSeparator)).
+		Set("events", strings.Join(input.Events, eventsSeparator)).
 		Set("data_types", strings.Join(input.DataTypes, typesSeparator)).
 		Set("topics", strings.Join(input.Topics, topicsSeparator)).
-		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
+		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			"id":                         input.ID,
 			webhooksTableOwnershipColumn: input.BelongsToUser,
@@ -435,8 +439,8 @@ func (m *MariaDB) buildArchiveWebhookQuery(webhookID, userID uint64) (query stri
 
 	query, args, err = m.sqlBuilder.
 		Update(webhooksTableName).
-		Set("updated_on", squirrel.Expr(CurrentUnixTimeQuery)).
-		Set("archived_on", squirrel.Expr(CurrentUnixTimeQuery)).
+		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
+		Set("archived_on", squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			"id":                         webhookID,
 			webhooksTableOwnershipColumn: userID,

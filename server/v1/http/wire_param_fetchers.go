@@ -18,18 +18,18 @@ import (
 
 var (
 	paramFetcherProviders = wire.NewSet(
-		ProvideUserIDFetcher,
+		ProvideItemServiceUserIDFetcher,
 		ProvideUsernameFetcher,
 		ProvideOAuth2ServiceClientIDFetcher,
 		ProvideAuthUserIDFetcher,
-		ProvideItemIDFetcher,
 		ProvideWebhooksUserIDFetcher,
+		ProvideItemIDFetcher,
 		ProvideWebhookIDFetcher,
 	)
 )
 
-// ProvideUserIDFetcher provides a UserIDFetcher
-func ProvideUserIDFetcher() items.UserIDFetcher {
+// ProvideItemServiceUserIDFetcher provides a UserIDFetcher
+func ProvideItemServiceUserIDFetcher() items.UserIDFetcher {
 	return UserIDFetcher
 }
 
@@ -82,7 +82,7 @@ func buildChiUserIDFetcher(logger logging.Logger) users.UserIDFetcher {
 	}
 }
 
-// chiItemIDFetcher fetches a ItemID from a request routed by chi.
+// buildChiItemIDFetcher builds a function that fetches a ItemID from a request routed by chi.
 func buildChiItemIDFetcher(logger logging.Logger) func(req *http.Request) uint64 {
 	return func(req *http.Request) uint64 {
 		// we can generally disregard this error only because we should be able to validate

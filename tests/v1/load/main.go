@@ -19,15 +19,16 @@ type ServiceAttacker struct {
 }
 
 // Setup implement's hazana's Attacker interface
-func (a *ServiceAttacker) Setup(c hazana.Config) error {
+func (a *ServiceAttacker) Setup(_ hazana.Config) error {
 	return nil
 }
 
 // Do implement's hazana's Attacker interface
-func (a *ServiceAttacker) Do(ctx context.Context) hazana.DoResult {
+func (a *ServiceAttacker) Do(_ context.Context) hazana.DoResult {
 	// Do performs one request and is executed in a separate goroutine.
 	// The context is used to cancel the request on timeout.
 	act := RandomAction(a.todoClient)
+
 	req, err := act.Action()
 	if err != nil || req == nil {
 		if err == ErrUnavailableYet {

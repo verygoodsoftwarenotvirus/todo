@@ -128,27 +128,32 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 		}
 
 		// fetch parsed input from request context
-		input, ok := ctx.Value(UserCreationMiddlewareCtxKey).(*models.UserInput)
+		userInput, ok := ctx.Value(UserCreationMiddlewareCtxKey).(*models.UserCreationInput)
 		if !ok {
 			s.logger.Info("valid input not attached to UsersService CreateHandler request")
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		tracing.AttachUsernameToSpan(span, input.Username)
+		tracing.AttachUsernameToSpan(span, userInput.Username)
 
 		// NOTE: I feel comfortable letting username be in the logger, since
 		// the logging statements below are only in the event of errors. If
 		// and when that changes, this can/should be removed.
-		logger := s.logger.WithValue("username", input.Username)
+		logger := s.logger.WithValue("username", userInput.Username)
 
 		// hash the password
-		hp, err := s.authenticator.HashPassword(ctx, input.Password)
+		hp, err := s.authenticator.HashPassword(ctx, userInput.Password)
 		if err != nil {
 			logger.Error(err, "valid input not attached to request")
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		input.Password = hp
+
+		input := models.UserDatabaseCreationInput{
+			Username:        userInput.Username,
+			HashedPassword:  hp,
+			TwoFactorSecret: "",
+		}
 
 		// generate a two factor secret
 		input.TwoFactorSecret, err = randString()

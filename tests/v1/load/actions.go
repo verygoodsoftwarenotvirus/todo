@@ -8,7 +8,7 @@ import (
 	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
-	randmodel "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/rand/model"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 )
 
 var (
@@ -30,17 +30,20 @@ type (
 
 // RandomAction takes a client and returns a closure which is an action
 func RandomAction(c *client.V1Client) *Action {
-	ctx := context.Background()
 	allActions := map[string]*Action{
 		"GetHealthCheck": {
-			Name:   "GetHealthCheck",
-			Action: c.BuildHealthCheckRequest,
+			Name: "GetHealthCheck",
+			Action: func() (*http.Request, error) {
+				ctx := context.Background()
+				return c.BuildHealthCheckRequest(ctx)
+			},
 			Weight: 100,
 		},
 		"CreateUser": {
 			Name: "CreateUser",
 			Action: func() (*http.Request, error) {
-				ui := randmodel.RandomUserInput()
+				ctx := context.Background()
+				ui := fakemodels.BuildFakeUserCreationInput()
 				return c.BuildCreateUserRequest(ctx, ui)
 			},
 			Weight: 100,

@@ -18,19 +18,13 @@ type ItemDataManager struct {
 // ItemExists is a mock function
 func (m *ItemDataManager) ItemExists(ctx context.Context, itemID, userID uint64) (bool, error) {
 	args := m.Called(ctx, itemID, userID)
-	return args.Get(0).(bool), args.Error(1)
+	return args.Bool(0), args.Error(1)
 }
 
 // GetItem is a mock function
 func (m *ItemDataManager) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
 	args := m.Called(ctx, itemID, userID)
 	return args.Get(0).(*models.Item), args.Error(1)
-}
-
-// GetItemCount is a mock function
-func (m *ItemDataManager) GetItemCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (uint64, error) {
-	args := m.Called(ctx, filter, userID)
-	return args.Get(0).(uint64), args.Error(1)
 }
 
 // GetAllItemsCount is a mock function
@@ -45,12 +39,6 @@ func (m *ItemDataManager) GetItems(ctx context.Context, userID uint64, filter *m
 	return args.Get(0).(*models.ItemList), args.Error(1)
 }
 
-// GetAllItemsForUser is a mock function
-func (m *ItemDataManager) GetAllItemsForUser(ctx context.Context, userID uint64) ([]models.Item, error) {
-	args := m.Called(ctx, userID)
-	return args.Get(0).([]models.Item), args.Error(1)
-}
-
 // CreateItem is a mock function
 func (m *ItemDataManager) CreateItem(ctx context.Context, input *models.ItemCreationInput) (*models.Item, error) {
 	args := m.Called(ctx, input)
@@ -63,6 +51,6 @@ func (m *ItemDataManager) UpdateItem(ctx context.Context, updated *models.Item) 
 }
 
 // ArchiveItem is a mock function
-func (m *ItemDataManager) ArchiveItem(ctx context.Context, id, userID uint64) error {
-	return m.Called(ctx, id, userID).Error(0)
+func (m *ItemDataManager) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
+	return m.Called(ctx, itemID, userID).Error(0)
 }

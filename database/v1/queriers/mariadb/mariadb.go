@@ -20,11 +20,14 @@ const (
 	loggerName        = "mariadb"
 	mariaDBDriverName = "wrapped-mariadb-driver"
 
-	// CountQuery is a generic counter query used in a few query builders
-	CountQuery = "COUNT(%s.id)"
+	existencePrefix = "SELECT EXISTS ("
+	existenceSuffix = ")"
 
-	// CurrentUnixTimeQuery is the query maria DB uses to determine the current unix time
-	CurrentUnixTimeQuery = "UNIX_TIMESTAMP()"
+	// countQuery is a generic counter query used in a few query builders
+	countQuery = "COUNT(%s.id)"
+
+	// currentUnixTimeQuery is the query maria DB uses to determine the current unix time
+	currentUnixTimeQuery = "UNIX_TIMESTAMP()"
 )
 
 func init() {
@@ -91,7 +94,7 @@ func (m *MariaDB) IsReady(ctx context.Context) (ready bool) {
 	}).Debug("IsReady called")
 
 	for !ready {
-		err := m.db.Ping()
+		err := m.db.PingContext(ctx)
 		if err != nil {
 			m.logger.Debug("ping failed, waiting for db")
 			time.Sleep(time.Second)

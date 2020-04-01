@@ -5,15 +5,13 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"go.opencensus.io/trace"
 )
 
 var _ models.ItemDataManager = (*Client)(nil)
 
 // ItemExists fetches whether or not an item exists from the database
 func (c *Client) ItemExists(ctx context.Context, itemID, userID uint64) (bool, error) {
-	ctx, span := trace.StartSpan(ctx, "ItemExists")
+	ctx, span := tracing.StartSpan(ctx, "ItemExists")
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -29,7 +27,7 @@ func (c *Client) ItemExists(ctx context.Context, itemID, userID uint64) (bool, e
 
 // GetItem fetches an item from the database
 func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
-	ctx, span := trace.StartSpan(ctx, "GetItem")
+	ctx, span := tracing.StartSpan(ctx, "GetItem")
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -45,7 +43,7 @@ func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*models.It
 
 // GetAllItemsCount fetches the count of items from the database that meet a particular filter
 func (c *Client) GetAllItemsCount(ctx context.Context) (count uint64, err error) {
-	ctx, span := trace.StartSpan(ctx, "GetAllItemsCount")
+	ctx, span := tracing.StartSpan(ctx, "GetAllItemsCount")
 	defer span.End()
 
 	c.logger.Debug("GetAllItemsCount called")
@@ -55,7 +53,7 @@ func (c *Client) GetAllItemsCount(ctx context.Context) (count uint64, err error)
 
 // GetItems fetches a list of items from the database that meet a particular filter
 func (c *Client) GetItems(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.ItemList, error) {
-	ctx, span := trace.StartSpan(ctx, "GetItems")
+	ctx, span := tracing.StartSpan(ctx, "GetItems")
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -70,7 +68,7 @@ func (c *Client) GetItems(ctx context.Context, userID uint64, filter *models.Que
 
 // CreateItem creates an item in the database
 func (c *Client) CreateItem(ctx context.Context, input *models.ItemCreationInput) (*models.Item, error) {
-	ctx, span := trace.StartSpan(ctx, "CreateItem")
+	ctx, span := tracing.StartSpan(ctx, "CreateItem")
 	defer span.End()
 
 	c.logger.WithValue("input", input).Debug("CreateItem called")
@@ -81,7 +79,7 @@ func (c *Client) CreateItem(ctx context.Context, input *models.ItemCreationInput
 // UpdateItem updates a particular item. Note that UpdateItem expects the
 // provided input to have a valid ID.
 func (c *Client) UpdateItem(ctx context.Context, updated *models.Item) error {
-	ctx, span := trace.StartSpan(ctx, "UpdateItem")
+	ctx, span := tracing.StartSpan(ctx, "UpdateItem")
 	defer span.End()
 
 	tracing.AttachItemIDToSpan(span, updated.ID)
@@ -92,7 +90,7 @@ func (c *Client) UpdateItem(ctx context.Context, updated *models.Item) error {
 
 // ArchiveItem archives an item from the database by its ID
 func (c *Client) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
-	ctx, span := trace.StartSpan(ctx, "ArchiveItem")
+	ctx, span := tracing.StartSpan(ctx, "ArchiveItem")
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)

@@ -5,15 +5,13 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"go.opencensus.io/trace"
 )
 
 var _ models.OAuth2ClientDataManager = (*Client)(nil)
 
 // GetOAuth2Client gets an OAuth2 client from the database
 func (c *Client) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*models.OAuth2Client, error) {
-	ctx, span := trace.StartSpan(ctx, "GetOAuth2Client")
+	ctx, span := tracing.StartSpan(ctx, "GetOAuth2Client")
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -37,7 +35,7 @@ func (c *Client) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (
 // GetOAuth2ClientByClientID fetches any OAuth2 client by client ID, regardless of ownership.
 // This is used by authenticating middleware to fetch client information it needs to validate.
 func (c *Client) GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*models.OAuth2Client, error) {
-	ctx, span := trace.StartSpan(ctx, "GetOAuth2ClientByClientID")
+	ctx, span := tracing.StartSpan(ctx, "GetOAuth2ClientByClientID")
 	defer span.End()
 
 	tracing.AttachOAuth2ClientIDToSpan(span, clientID)
@@ -55,7 +53,7 @@ func (c *Client) GetOAuth2ClientByClientID(ctx context.Context, clientID string)
 
 // GetAllOAuth2ClientCount gets the count of OAuth2 clients that match the current filter
 func (c *Client) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
-	ctx, span := trace.StartSpan(ctx, "GetAllOAuth2ClientCount")
+	ctx, span := tracing.StartSpan(ctx, "GetAllOAuth2ClientCount")
 	defer span.End()
 
 	c.logger.Debug("GetAllOAuth2ClientCount called")
@@ -65,7 +63,7 @@ func (c *Client) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 
 // GetOAuth2Clients gets a list of OAuth2 clients
 func (c *Client) GetOAuth2Clients(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
-	ctx, span := trace.StartSpan(ctx, "GetOAuth2Clients")
+	ctx, span := tracing.StartSpan(ctx, "GetOAuth2Clients")
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -78,7 +76,7 @@ func (c *Client) GetOAuth2Clients(ctx context.Context, userID uint64, filter *mo
 
 // CreateOAuth2Client creates an OAuth2 client
 func (c *Client) CreateOAuth2Client(ctx context.Context, input *models.OAuth2ClientCreationInput) (*models.OAuth2Client, error) {
-	ctx, span := trace.StartSpan(ctx, "CreateOAuth2Client")
+	ctx, span := tracing.StartSpan(ctx, "CreateOAuth2Client")
 	defer span.End()
 
 	logger := c.logger.WithValues(map[string]interface{}{
@@ -100,7 +98,7 @@ func (c *Client) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 // UpdateOAuth2Client updates a OAuth2 client. Note that this function expects the input's
 // ID field to be valid.
 func (c *Client) UpdateOAuth2Client(ctx context.Context, updated *models.OAuth2Client) error {
-	ctx, span := trace.StartSpan(ctx, "UpdateOAuth2Client")
+	ctx, span := tracing.StartSpan(ctx, "UpdateOAuth2Client")
 	defer span.End()
 
 	return c.querier.UpdateOAuth2Client(ctx, updated)
@@ -108,7 +106,7 @@ func (c *Client) UpdateOAuth2Client(ctx context.Context, updated *models.OAuth2C
 
 // ArchiveOAuth2Client archives an OAuth2 client
 func (c *Client) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error {
-	ctx, span := trace.StartSpan(ctx, "ArchiveOAuth2Client")
+	ctx, span := tracing.StartSpan(ctx, "ArchiveOAuth2Client")
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)

@@ -12,7 +12,6 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/gorilla/securecookie"
-	"go.opencensus.io/trace"
 )
 
 const (
@@ -23,7 +22,7 @@ const (
 
 // DecodeCookieFromRequest takes a request object and fetches the cookie data if it is present
 func (s *Service) DecodeCookieFromRequest(ctx context.Context, req *http.Request) (ca *models.CookieAuth, err error) {
-	_, span := trace.StartSpan(ctx, "DecodeCookieFromRequest")
+	_, span := tracing.StartSpan(ctx, "DecodeCookieFromRequest")
 	defer span.End()
 
 	cookie, err := req.Cookie(CookieName)
@@ -42,7 +41,7 @@ func (s *Service) DecodeCookieFromRequest(ctx context.Context, req *http.Request
 
 // WebsocketAuthFunction is provided to Newsman to determine if a user has access to websockets
 func (s *Service) WebsocketAuthFunction(req *http.Request) bool {
-	ctx, span := trace.StartSpan(req.Context(), "WebsocketAuthFunction")
+	ctx, span := tracing.StartSpan(req.Context(), "WebsocketAuthFunction")
 	defer span.End()
 
 	// First we check to see if there is an OAuth2 token for a valid client attached to the request.
@@ -66,7 +65,7 @@ func (s *Service) WebsocketAuthFunction(req *http.Request) bool {
 
 // FetchUserFromRequest takes a request object and fetches the cookie, and then the user for that cookie
 func (s *Service) FetchUserFromRequest(ctx context.Context, req *http.Request) (*models.User, error) {
-	ctx, span := trace.StartSpan(ctx, "FetchUserFromRequest")
+	ctx, span := tracing.StartSpan(ctx, "FetchUserFromRequest")
 	defer span.End()
 
 	ca, decodeErr := s.DecodeCookieFromRequest(ctx, req)
@@ -87,7 +86,7 @@ func (s *Service) FetchUserFromRequest(ctx context.Context, req *http.Request) (
 // LoginHandler is our login route
 func (s *Service) LoginHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "LoginHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "LoginHandler")
 		defer span.End()
 
 		loginData, errRes := s.fetchLoginDataFromRequest(req)
@@ -142,7 +141,7 @@ func (s *Service) LoginHandler() http.HandlerFunc {
 // LogoutHandler is our logout route
 func (s *Service) LogoutHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		_, span := trace.StartSpan(req.Context(), "LogoutHandler")
+		_, span := tracing.StartSpan(req.Context(), "LogoutHandler")
 		defer span.End()
 
 		if cookie, err := req.Cookie(CookieName); err == nil && cookie != nil {
@@ -162,7 +161,7 @@ func (s *Service) LogoutHandler() http.HandlerFunc {
 func (s *Service) CycleSecretHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		s.logger.Info("cycling cookie secret!")
-		_, span := trace.StartSpan(req.Context(), "CycleSecretHandler")
+		_, span := tracing.StartSpan(req.Context(), "CycleSecretHandler")
 		defer span.End()
 
 		s.cookieManager = securecookie.New(
@@ -182,7 +181,7 @@ type loginData struct {
 // fetchLoginDataFromRequest searches a given HTTP request for parsed login input data, and
 // returns a helper struct with the relevant login information
 func (s *Service) fetchLoginDataFromRequest(req *http.Request) (*loginData, *models.ErrorResponse) {
-	ctx, span := trace.StartSpan(req.Context(), "fetchLoginDataFromRequest")
+	ctx, span := tracing.StartSpan(req.Context(), "fetchLoginDataFromRequest")
 	defer span.End()
 
 	loginInput, ok := ctx.Value(UserLoginInputMiddlewareCtxKey).(*models.UserLoginInput)
@@ -220,7 +219,7 @@ func (s *Service) fetchLoginDataFromRequest(req *http.Request) (*loginData, *mod
 // validateLogin takes login information and returns whether or not the login is valid.
 // In the event that there's an error, this function will return false and the error.
 func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool, error) {
-	ctx, span := trace.StartSpan(ctx, "validateLogin")
+	ctx, span := tracing.StartSpan(ctx, "validateLogin")
 	defer span.End()
 
 	// alias the relevant data

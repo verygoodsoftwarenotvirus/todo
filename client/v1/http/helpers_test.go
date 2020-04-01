@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -87,6 +88,7 @@ func TestUnmarshalBody(T *testing.T) {
 	T.Parallel()
 
 	T.Run("expected use", func(t *testing.T) {
+		ctx := context.Background()
 		expected := "whatever"
 		res := &http.Response{
 			Body:       ioutil.NopCloser(strings.NewReader(fmt.Sprintf(`{"name": %q}`, expected))),
@@ -94,23 +96,25 @@ func TestUnmarshalBody(T *testing.T) {
 		}
 		var out testingType
 
-		err := unmarshalBody(res, &out)
+		err := unmarshalBody(ctx, res, &out)
 		assert.Equal(t, out.Name, expected, "expected marshaling to work")
 		assert.NoError(t, err, "no error should be encountered unmarshaling into a valid struct")
 	})
 
 	T.Run("with good status but unmarshallable response", func(t *testing.T) {
+		ctx := context.Background()
 		res := &http.Response{
 			Body:       ioutil.NopCloser(strings.NewReader("BLAH")),
 			StatusCode: http.StatusOK,
 		}
 		var out testingType
 
-		err := unmarshalBody(res, &out)
+		err := unmarshalBody(ctx, res, &out)
 		assert.Error(t, err, "error should be encountered unmarshaling invalid response into a valid struct")
 	})
 
 	T.Run("with an erroneous error code", func(t *testing.T) {
+		ctx := context.Background()
 		res := &http.Response{
 			Body: ioutil.NopCloser(
 				strings.NewReader(
@@ -125,29 +129,32 @@ func TestUnmarshalBody(T *testing.T) {
 		}
 		var out *testingType
 
-		err := unmarshalBody(res, &out)
+		err := unmarshalBody(ctx, res, &out)
 		assert.Nil(t, out, "expected nil to be returned")
 		assert.Error(t, err, "error should be returned from the API")
 	})
 
 	T.Run("with an erroneous error code and unmarshallable body", func(t *testing.T) {
+		ctx := context.Background()
 		res := &http.Response{
 			Body:       ioutil.NopCloser(strings.NewReader("BLAH")),
 			StatusCode: http.StatusBadRequest,
 		}
 		var out *testingType
 
-		err := unmarshalBody(res, &out)
+		err := unmarshalBody(ctx, res, &out)
 		assert.Nil(t, out, "expected nil to be returned")
 		assert.Error(t, err, "error should be returned from the unmarshaller")
 	})
 
 	T.Run("with nil target variable", func(t *testing.T) {
-		err := unmarshalBody(nil, nil)
+		ctx := context.Background()
+		err := unmarshalBody(ctx, nil, nil)
 		assert.Error(t, err, "error should be encountered when passed nil")
 	})
 
 	T.Run("with erroneous reader", func(t *testing.T) {
+		ctx := context.Background()
 		expected := errors.New("blah")
 
 		rc := newMockReadCloser()
@@ -159,7 +166,7 @@ func TestUnmarshalBody(T *testing.T) {
 		}
 		var out testingType
 
-		err := unmarshalBody(res, &out)
+		err := unmarshalBody(ctx, res, &out)
 		assert.Equal(t, expected, err)
 		assert.Error(t, err, "no error should be encountered unmarshaling into a valid struct")
 	})

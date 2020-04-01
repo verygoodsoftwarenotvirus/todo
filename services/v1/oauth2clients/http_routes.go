@@ -8,8 +8,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"go.opencensus.io/trace"
 )
 
 const (
@@ -43,7 +41,7 @@ func (s *Service) fetchUserID(req *http.Request) uint64 {
 // ListHandler is a handler that returns a list of OAuth2 clients
 func (s *Service) ListHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "ListHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "ListHandler")
 		defer span.End()
 
 		// extract filter
@@ -77,7 +75,7 @@ func (s *Service) ListHandler() http.HandlerFunc {
 // CreateHandler is our OAuth2 client creation route
 func (s *Service) CreateHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "CreateHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "CreateHandler")
 		defer span.End()
 
 		// fetch creation input from request context
@@ -154,7 +152,7 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 // ReadHandler is a route handler for retrieving an OAuth2 client
 func (s *Service) ReadHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "ReadHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "ReadHandler")
 		defer span.End()
 
 		// determine subject of request
@@ -191,7 +189,7 @@ func (s *Service) ReadHandler() http.HandlerFunc {
 // ArchiveHandler is a route handler for archiving an OAuth2 client
 func (s *Service) ArchiveHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "ArchiveHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "ArchiveHandler")
 		defer span.End()
 
 		// determine subject matter

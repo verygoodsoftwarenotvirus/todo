@@ -7,9 +7,9 @@ import (
 	"os"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
-	"go.opencensus.io/trace"
 )
 
 func main() {
@@ -30,7 +30,7 @@ func main() {
 
 	// only allow initialization to take so long
 	tctx, cancel := context.WithTimeout(context.Background(), cfg.Meta.StartupDeadline)
-	ctx, span := trace.StartSpan(tctx, "initialization")
+	ctx, span := tracing.StartSpan(tctx, "initialization")
 
 	// connect to our database
 	db, err := cfg.ProvideDatabase(ctx, logger)

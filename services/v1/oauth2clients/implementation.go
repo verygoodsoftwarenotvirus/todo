@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"go.opencensus.io/trace"
 	"gopkg.in/oauth2.v3"
 	oauth2errors "gopkg.in/oauth2.v3/errors"
 	oauth2server "gopkg.in/oauth2.v3/server"
@@ -51,7 +51,7 @@ var _ oauth2server.AuthorizeScopeHandler = (*Service)(nil).AuthorizeScopeHandler
 
 // AuthorizeScopeHandler satisfies the oauth2server AuthorizeScopeHandler interface
 func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Request) (scope string, err error) {
-	ctx, span := trace.StartSpan(req.Context(), "AuthorizeScopeHandler")
+	ctx, span := tracing.StartSpan(req.Context(), "AuthorizeScopeHandler")
 	defer span.End()
 
 	scope = determineScope(req)
@@ -97,7 +97,7 @@ var _ oauth2server.UserAuthorizationHandler = (*Service)(nil).UserAuthorizationH
 
 // UserAuthorizationHandler satisfies the oauth2server UserAuthorizationHandler interface
 func (s *Service) UserAuthorizationHandler(_ http.ResponseWriter, req *http.Request) (userID string, err error) {
-	ctx, span := trace.StartSpan(req.Context(), "UserAuthorizationHandler")
+	ctx, span := tracing.StartSpan(req.Context(), "UserAuthorizationHandler")
 	defer span.End()
 	var uid uint64
 
@@ -122,7 +122,7 @@ var _ oauth2server.ClientAuthorizedHandler = (*Service)(nil).ClientAuthorizedHan
 // ClientAuthorizedHandler satisfies the oauth2server ClientAuthorizedHandler interface
 func (s *Service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantType) (allowed bool, err error) {
 	// NOTE: it's a shame the interface we're implementing doesn't have this as its first argument
-	ctx, span := trace.StartSpan(context.Background(), "ClientAuthorizedHandler")
+	ctx, span := tracing.StartSpan(context.Background(), "ClientAuthorizedHandler")
 	defer span.End()
 
 	logger := s.logger.WithValues(map[string]interface{}{
@@ -155,7 +155,7 @@ var _ oauth2server.ClientScopeHandler = (*Service)(nil).ClientScopeHandler
 // ClientScopeHandler satisfies the oauth2server ClientScopeHandler interface
 func (s *Service) ClientScopeHandler(clientID, scope string) (authed bool, err error) {
 	// NOTE: it's a shame the interface we're implementing doesn't have this as its first argument
-	ctx, span := trace.StartSpan(context.Background(), "UserAuthorizationHandler")
+	ctx, span := tracing.StartSpan(context.Background(), "UserAuthorizationHandler")
 	defer span.End()
 
 	logger := s.logger.WithValues(map[string]interface{}{

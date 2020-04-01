@@ -4,9 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"go.opencensus.io/trace"
 )
 
 const (
@@ -24,7 +23,7 @@ const (
 func (s *Service) UserInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(models.UserCreationInput)
-		ctx, span := trace.StartSpan(req.Context(), "UserInputMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "UserInputMiddleware")
 		defer span.End()
 
 		// decode the request
@@ -44,7 +43,7 @@ func (s *Service) UserInputMiddleware(next http.Handler) http.Handler {
 func (s *Service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(models.PasswordUpdateInput)
-		ctx, span := trace.StartSpan(req.Context(), "PasswordUpdateInputMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "PasswordUpdateInputMiddleware")
 		defer span.End()
 
 		// decode the request
@@ -64,7 +63,7 @@ func (s *Service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler 
 func (s *Service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(models.TOTPSecretRefreshInput)
-		ctx, span := trace.StartSpan(req.Context(), "TOTPSecretRefreshInputMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "TOTPSecretRefreshInputMiddleware")
 		defer span.End()
 
 		// decode the request

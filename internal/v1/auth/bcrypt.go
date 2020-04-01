@@ -5,9 +5,10 @@ import (
 	"errors"
 	"math"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
+
 	"github.com/pquerna/otp/totp"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
-	"go.opencensus.io/trace"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -49,8 +50,8 @@ func ProvideBcryptAuthenticator(hashCost BcryptHashCost, logger logging.Logger) 
 }
 
 // HashPassword takes a password and hashes it using bcrypt
-func (b *BcryptAuthenticator) HashPassword(c context.Context, password string) (string, error) {
-	_, span := trace.StartSpan(c, "HashPassword")
+func (b *BcryptAuthenticator) HashPassword(ctx context.Context, password string) (string, error) {
+	_, span := tracing.StartSpan(ctx, "HashPassword")
 	defer span.End()
 
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), int(b.hashCost))
@@ -69,11 +70,11 @@ func (b *BcryptAuthenticator) ValidateLogin(
 	twoFactorCode string,
 	_ []byte,
 ) (passwordMatches bool, err error) {
-	ctx, span := trace.StartSpan(ctx, "ValidateLogin")
+	ctx, span := tracing.StartSpan(ctx, "ValidateLogin")
 	defer span.End()
 
 	passwordMatches = b.PasswordMatches(ctx, hashedPassword, providedPassword, nil)
-	tooWeak := b.hashedPasswordIsTooWeak(hashedPassword)
+	tooWeak := b.hashedPasswordIsTooWeak(ctx, hashedPassword)
 
 	if !totp.Validate(twoFactorCode, twoFactorSecret) {
 		b.logger.WithValues(map[string]interface{}{
@@ -97,14 +98,17 @@ func (b *BcryptAuthenticator) ValidateLogin(
 
 // PasswordMatches validates whether or not a bcrypt-hashed password matches a provided password
 func (b *BcryptAuthenticator) PasswordMatches(ctx context.Context, hashedPassword, providedPassword string, _ []byte) bool {
-	_, span := trace.StartSpan(ctx, "PasswordMatches")
+	_, span := tracing.StartSpan(ctx, "PasswordMatches")
 	defer span.End()
 
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(providedPassword)) == nil
 }
 
 // hashedPasswordIsTooWeak determines if a given hashed password was hashed with too weak a bcrypt cost
-func (b *BcryptAuthenticator) hashedPasswordIsTooWeak(hashedPassword string) bool {
+func (b *BcryptAuthenticator) hashedPasswordIsTooWeak(ctx context.Context, hashedPassword string) bool {
+	_, span := tracing.StartSpan(ctx, "hashedPasswordIsTooWeak")
+	defer span.End()
+
 	cost, err := bcrypt.Cost([]byte(hashedPassword))
 
 	return err != nil || uint(cost) < b.hashCost

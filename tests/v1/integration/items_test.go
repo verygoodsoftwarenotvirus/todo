@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opencensus.io/trace"
 )
 
 func checkItemEquality(t *testing.T, expected, actual *models.Item) {
@@ -38,8 +38,7 @@ func TestItems(test *testing.T) {
 
 	test.Run("Creating", func(T *testing.T) {
 		T.Run("should be createable", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := trace.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
 			// Create item
@@ -64,8 +63,7 @@ func TestItems(test *testing.T) {
 
 	test.Run("Listing", func(T *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := trace.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
 			// Create items
@@ -95,8 +93,7 @@ func TestItems(test *testing.T) {
 
 	test.Run("ExistenceChecking", func(T *testing.T) {
 		T.Run("it should return an error when trying to check something that does not exist", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := trace.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
 			// Attempt to fetch nonexistent item
@@ -106,8 +103,7 @@ func TestItems(test *testing.T) {
 		})
 
 		T.Run("it should return 200 when the relevant item exists", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := trace.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
 			// Create item
@@ -128,8 +124,7 @@ func TestItems(test *testing.T) {
 
 	test.Run("Reading", func(T *testing.T) {
 		T.Run("it should return an error when trying to read something that does not exist", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := trace.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
 			// Attempt to fetch nonexistent item
@@ -138,8 +133,7 @@ func TestItems(test *testing.T) {
 		})
 
 		T.Run("it should be readable", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := trace.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
 			// Create item
@@ -162,8 +156,7 @@ func TestItems(test *testing.T) {
 
 	test.Run("Updating", func(T *testing.T) {
 		T.Run("it should return an error when trying to update something that does not exist", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := trace.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
 			exampleItem := fakemodels.BuildFakeItem()
@@ -173,8 +166,7 @@ func TestItems(test *testing.T) {
 		})
 
 		T.Run("it should be updatable", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := trace.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
 			// Create item
@@ -203,8 +195,7 @@ func TestItems(test *testing.T) {
 
 	test.Run("Deleting", func(T *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := trace.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
 			// Create item

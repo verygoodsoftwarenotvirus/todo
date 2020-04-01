@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
@@ -80,7 +81,8 @@ func TestUsers(test *testing.T) {
 
 	test.Run("Creating", func(T *testing.T) {
 		T.Run("should be creatable", func(t *testing.T) {
-			ctx := context.Background()
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
 
 			// Create user
 			exampleUserInput := fakemodels.BuildFakeUserCreationInput()
@@ -97,7 +99,8 @@ func TestUsers(test *testing.T) {
 
 	test.Run("Reading", func(T *testing.T) {
 		T.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
-			ctx := context.Background()
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
 
 			// Fetch user
 			actual, err := todoClient.GetUser(ctx, nonexistentID)
@@ -106,7 +109,8 @@ func TestUsers(test *testing.T) {
 		})
 
 		T.Run("it should be readable", func(t *testing.T) {
-			ctx := context.Background()
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
 
 			// Create user
 			exampleUserInput := fakemodels.BuildFakeUserCreationInput()
@@ -131,7 +135,8 @@ func TestUsers(test *testing.T) {
 
 	test.Run("Deleting", func(T *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
-			ctx := context.Background()
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
 
 			// Create user
 			exampleUserInput := fakemodels.BuildFakeUserCreationInput()
@@ -152,7 +157,8 @@ func TestUsers(test *testing.T) {
 
 	test.Run("Listing", func(T *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
-			ctx := context.Background()
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
 
 			// Create users
 			var expected []*models.UserCreationResponse

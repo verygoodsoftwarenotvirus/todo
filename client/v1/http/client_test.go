@@ -11,8 +11,6 @@ import (
 	"testing"
 	"time"
 
-	mockutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/mock"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
@@ -196,7 +194,7 @@ func TestCloseRequestBody(T *testing.T) {
 	T.Run("with error", func(t *testing.T) {
 		ctx := context.Background()
 
-		rc := mockutil.NewMockReadCloser()
+		rc := newMockReadCloser()
 		rc.On("Close").Return(errors.New("blah"))
 
 		res := &http.Response{

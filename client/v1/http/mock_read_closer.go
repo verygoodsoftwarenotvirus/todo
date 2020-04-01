@@ -1,4 +1,4 @@
-package mock
+package client
 
 import (
 	"io"
@@ -13,8 +13,8 @@ type ReadCloser struct {
 	mock.Mock
 }
 
-// NewMockReadCloser returns a new mock io.ReadCloser
-func NewMockReadCloser() *ReadCloser {
+// newMockReadCloser returns a new mock io.ReadCloser
+func newMockReadCloser() *ReadCloser {
 	return &ReadCloser{}
 }
 

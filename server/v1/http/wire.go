@@ -4,7 +4,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 
 	"github.com/google/wire"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
@@ -24,9 +23,8 @@ func ProvideNamespace() metrics.Namespace {
 }
 
 // ProvideNewsmanTypeNameManipulationFunc provides an WebhookIDFetcher
-func ProvideNewsmanTypeNameManipulationFunc(logger logging.Logger) newsman.TypeNameManipulationFunc {
+func ProvideNewsmanTypeNameManipulationFunc() newsman.TypeNameManipulationFunc {
 	return func(s string) string {
-		logger.WithName("events").WithValue("type_name", s).Info("event occurred")
 		return s
 	}
 }

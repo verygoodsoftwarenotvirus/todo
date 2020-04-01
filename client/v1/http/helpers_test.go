@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	mockutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -151,7 +150,7 @@ func TestUnmarshalBody(T *testing.T) {
 	T.Run("with erroneous reader", func(t *testing.T) {
 		expected := errors.New("blah")
 
-		rc := mockutil.NewMockReadCloser()
+		rc := newMockReadCloser()
 		rc.On("Read", mock.AnythingOfType("[]uint8")).Return(0, expected)
 
 		res := &http.Response{

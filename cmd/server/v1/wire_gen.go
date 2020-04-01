@@ -46,7 +46,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	itemsUserIDFetcher := httpserver.ProvideItemServiceUserIDFetcher()
 	itemIDFetcher := httpserver.ProvideItemIDFetcher(logger)
 	websocketAuthFunc := auth2.ProvideWebsocketAuthFunc(authService)
-	typeNameManipulationFunc := httpserver.ProvideNewsmanTypeNameManipulationFunc(logger)
+	typeNameManipulationFunc := httpserver.ProvideNewsmanTypeNameManipulationFunc()
 	newsmanNewsman := newsman.NewNewsman(websocketAuthFunc, typeNameManipulationFunc)
 	reporter := ProvideReporter(newsmanNewsman)
 	itemsService, err := items.ProvideItemsService(ctx, logger, itemDataManager, itemsUserIDFetcher, itemIDFetcher, encoderDecoder, unitCounterProvider, reporter)

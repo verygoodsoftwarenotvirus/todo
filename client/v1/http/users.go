@@ -113,9 +113,13 @@ func (c *V1Client) ArchiveUser(ctx context.Context, userID uint64) error {
 }
 
 // BuildLoginRequest builds an authenticating HTTP request
-func (c *V1Client) BuildLoginRequest(ctx context.Context, input models.UserLoginInput) (*http.Request, error) {
+func (c *V1Client) BuildLoginRequest(ctx context.Context, input *models.UserLoginInput) (*http.Request, error) {
 	ctx, span := tracing.StartSpan(ctx, "BuildLoginRequest")
 	defer span.End()
+
+	if input == nil {
+		return nil, errors.New("nil input provided")
+	}
 
 	body, err := createBodyFromStruct(&input)
 	if err != nil {
@@ -127,9 +131,13 @@ func (c *V1Client) BuildLoginRequest(ctx context.Context, input models.UserLogin
 }
 
 // Login will, when provided the correct credentials, fetch a login cookie
-func (c *V1Client) Login(ctx context.Context, input models.UserLoginInput) (*http.Cookie, error) {
+func (c *V1Client) Login(ctx context.Context, input *models.UserLoginInput) (*http.Cookie, error) {
 	ctx, span := tracing.StartSpan(ctx, "Login")
 	defer span.End()
+
+	if input == nil {
+		return nil, errors.New("nil input provided")
+	}
 
 	req, err := c.BuildLoginRequest(ctx, input)
 	if err != nil {
@@ -140,7 +148,6 @@ func (c *V1Client) Login(ctx context.Context, input models.UserLoginInput) (*htt
 	if err != nil {
 		return nil, fmt.Errorf("encountered error executing login request: %w", err)
 	}
-
 	c.closeResponseBody(res)
 
 	cookies := res.Cookies()

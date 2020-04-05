@@ -169,6 +169,8 @@ func TestUnmarshalBody(T *testing.T) {
 		err := unmarshalBody(ctx, res, &out)
 		assert.Equal(t, expected, err)
 		assert.Error(t, err, "no error should be encountered unmarshaling into a valid struct")
+
+		mock.AssertExpectationsForObjects(t, rc)
 	})
 }
 

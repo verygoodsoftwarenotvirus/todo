@@ -82,6 +82,8 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		assert.Equal(t, exampleUser, actual)
 		assert.Equal(t, http.StatusOK, sc)
+
+		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
 
 	T.Run("with no rows found in database", func(t *testing.T) {
@@ -105,6 +107,8 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		assert.Nil(t, actual)
 		assert.Equal(t, http.StatusNotFound, sc)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error fetching from database", func(t *testing.T) {
@@ -128,6 +132,8 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		assert.Nil(t, actual)
 		assert.Equal(t, http.StatusInternalServerError, sc)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error validating login", func(t *testing.T) {
@@ -163,6 +169,8 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		assert.Nil(t, actual)
 		assert.Equal(t, http.StatusInternalServerError, sc)
+
+		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
 
 	T.Run("with invalid login", func(t *testing.T) {
@@ -198,6 +206,8 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		assert.Nil(t, actual)
 		assert.Equal(t, http.StatusUnauthorized, sc)
+
+		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
 }
 
@@ -221,6 +231,8 @@ func TestService_List(T *testing.T) {
 		s.ListHandler()(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 
 	T.Run("with error reading from database", func(t *testing.T) {
@@ -230,14 +242,12 @@ func TestService_List(T *testing.T) {
 		mockDB.UserDataManager.On("GetUsers", mock.Anything, mock.Anything).Return((*models.UserList)(nil), errors.New("blah"))
 		s.database = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
-		s.encoderDecoder = ed
-
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		s.ListHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error encoding response", func(t *testing.T) {
@@ -257,6 +267,8 @@ func TestService_List(T *testing.T) {
 		s.ListHandler()(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 }
 
@@ -302,6 +314,8 @@ func TestService_Create(T *testing.T) {
 		s.CreateHandler()(res, req)
 
 		assert.Equal(t, http.StatusCreated, res.Code)
+
+		mock.AssertExpectationsForObjects(t, auth, db, mc, r, ed)
 	})
 
 	T.Run("with user creation disabled", func(t *testing.T) {
@@ -347,6 +361,8 @@ func TestService_Create(T *testing.T) {
 		s.CreateHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, auth)
 	})
 
 	T.Run("with error creating entry in database", func(t *testing.T) {
@@ -376,6 +392,8 @@ func TestService_Create(T *testing.T) {
 		s.CreateHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, auth, db)
 	})
 
 	T.Run("with pre-existing entry in database", func(t *testing.T) {
@@ -405,6 +423,8 @@ func TestService_Create(T *testing.T) {
 		s.CreateHandler()(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
+
+		mock.AssertExpectationsForObjects(t, auth, db)
 	})
 
 	T.Run("with error encoding response", func(t *testing.T) {
@@ -446,6 +466,8 @@ func TestService_Create(T *testing.T) {
 		s.CreateHandler()(res, req)
 
 		assert.Equal(t, http.StatusCreated, res.Code)
+
+		mock.AssertExpectationsForObjects(t, auth, db, mc, r, ed)
 	})
 }
 
@@ -469,6 +491,8 @@ func TestService_Read(T *testing.T) {
 		s.ReadHandler()(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 
 	T.Run("with no rows found", func(t *testing.T) {
@@ -484,6 +508,8 @@ func TestService_Read(T *testing.T) {
 		s.ReadHandler()(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error reading from database", func(t *testing.T) {
@@ -499,6 +525,8 @@ func TestService_Read(T *testing.T) {
 		s.ReadHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error encoding response", func(t *testing.T) {
@@ -518,6 +546,8 @@ func TestService_Read(T *testing.T) {
 		s.ReadHandler()(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 }
 
@@ -570,6 +600,8 @@ func TestService_NewTOTPSecret(T *testing.T) {
 		s.NewTOTPSecretHandler()(res, req)
 
 		assert.Equal(t, http.StatusAccepted, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, auth, ed)
 	})
 
 	T.Run("without input attached to request", func(t *testing.T) {
@@ -639,13 +671,11 @@ func TestService_NewTOTPSecret(T *testing.T) {
 		).Return(false, errors.New("blah"))
 		s.authenticator = auth
 
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
-		s.encoderDecoder = ed
-
 		s.NewTOTPSecretHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
 
 	T.Run("with error updating in database", func(t *testing.T) {
@@ -687,13 +717,11 @@ func TestService_NewTOTPSecret(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = auth
 
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
-		s.encoderDecoder = ed
-
 		s.NewTOTPSecretHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
 
 	T.Run("with error encoding response", func(t *testing.T) {
@@ -742,6 +770,8 @@ func TestService_NewTOTPSecret(T *testing.T) {
 		s.NewTOTPSecretHandler()(res, req)
 
 		assert.Equal(t, http.StatusAccepted, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, auth, ed)
 	})
 }
 
@@ -788,13 +818,11 @@ func TestService_UpdatePassword(T *testing.T) {
 		auth.On("HashPassword", mock.Anything, exampleInput.NewPassword).Return("blah", nil)
 		s.authenticator = auth
 
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
-		s.encoderDecoder = ed
-
 		s.UpdatePasswordHandler()(res, req)
 
 		assert.Equal(t, http.StatusAccepted, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
 
 	T.Run("without input attached to request", func(t *testing.T) {
@@ -867,6 +895,8 @@ func TestService_UpdatePassword(T *testing.T) {
 		s.UpdatePasswordHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
 
 	T.Run("with error hashing password", func(t *testing.T) {
@@ -909,13 +939,11 @@ func TestService_UpdatePassword(T *testing.T) {
 		auth.On("HashPassword", mock.Anything, exampleInput.NewPassword).Return("blah", errors.New("blah"))
 		s.authenticator = auth
 
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
-		s.encoderDecoder = ed
-
 		s.UpdatePasswordHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
 
 	T.Run("with error updating user", func(t *testing.T) {
@@ -961,6 +989,8 @@ func TestService_UpdatePassword(T *testing.T) {
 		s.UpdatePasswordHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
 }
 
@@ -982,18 +1012,17 @@ func TestService_Archive(T *testing.T) {
 
 		r := &mocknewsman.Reporter{}
 		r.On("Report", mock.Anything).Return()
+		s.reporter = r
 
 		mc := &mockmetrics.UnitCounter{}
 		mc.On("Decrement", mock.Anything)
 		s.userCounter = mc
 
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
-		s.encoderDecoder = ed
-
 		s.ArchiveHandler()(res, req)
 
 		assert.Equal(t, http.StatusNoContent, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, r, mc)
 	})
 
 	T.Run("with error updating database", func(t *testing.T) {
@@ -1012,5 +1041,7 @@ func TestService_Archive(T *testing.T) {
 		s.ArchiveHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }

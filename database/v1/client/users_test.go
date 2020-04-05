@@ -25,7 +25,7 @@ func TestClient_GetUser(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleUser, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -34,17 +34,16 @@ func TestClient_GetUserByUsername(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		exampleUsername := "username"
 		exampleUser := fakemodels.BuildFakeUser()
 
 		c, mockDB := buildTestClient()
-		mockDB.UserDataManager.On("GetUserByUsername", mock.Anything, exampleUsername).Return(exampleUser, nil)
+		mockDB.UserDataManager.On("GetUserByUsername", mock.Anything, exampleUser.Username).Return(exampleUser, nil)
 
-		actual, err := c.GetUserByUsername(ctx, exampleUsername)
+		actual, err := c.GetUserByUsername(ctx, exampleUser.Username)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleUser, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -63,7 +62,7 @@ func TestClient_GetUsers(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleUserList, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with nil filter", func(t *testing.T) {
@@ -78,7 +77,7 @@ func TestClient_GetUsers(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleUserList, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -97,7 +96,7 @@ func TestClient_CreateUser(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleUser, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -110,12 +109,12 @@ func TestClient_UpdateUser(T *testing.T) {
 		var expected error
 
 		c, mockDB := buildTestClient()
-		mockDB.UserDataManager.On("UpdateUser", mock.Anything, exampleUser).Return(expected, nil)
+		mockDB.UserDataManager.On("UpdateUser", mock.Anything, exampleUser).Return(expected)
 
 		err := c.UpdateUser(ctx, exampleUser)
 		assert.NoError(t, err)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -125,14 +124,13 @@ func TestClient_ArchiveUser(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		exampleUser := fakemodels.BuildFakeUser()
-		var expected error
 
 		c, mockDB := buildTestClient()
-		mockDB.UserDataManager.On("ArchiveUser", mock.Anything, exampleUser.ID).Return(expected, nil)
+		mockDB.UserDataManager.On("ArchiveUser", mock.Anything, exampleUser.ID).Return(nil)
 
 		err := c.ArchiveUser(ctx, exampleUser.ID)
 		assert.NoError(t, err)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }

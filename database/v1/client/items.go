@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
 var _ models.ItemDataManager = (*Client)(nil)

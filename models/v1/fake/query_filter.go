@@ -1,4 +1,4 @@
-package fake
+package fakemodels
 
 import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"

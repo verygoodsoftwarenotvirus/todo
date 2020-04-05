@@ -48,32 +48,35 @@ var (
 
 // ProvideInstrumentationHandler provides an instrumentation handler
 func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) (metrics.InstrumentationHandler, error) {
-	if err := metrics.RegisterDefaultViews(); err != nil {
-		return nil, fmt.Errorf("registering default metric views: %w", err)
-	}
-	_ = metrics.RecordRuntimeStats(time.Duration(
-		math.Max(
-			float64(MinimumRuntimeCollectionInterval),
-			float64(cfg.Metrics.RuntimeMetricsCollectionInterval),
-		),
-	))
-
-	log := logger.WithValue("metrics_provider", cfg.Metrics.MetricsProvider)
-	log.Debug("setting metrics provider")
+	logger = logger.WithValue("metrics_provider", cfg.Metrics.MetricsProvider)
+	logger.Debug("setting metrics provider")
 
 	switch cfg.Metrics.MetricsProvider {
 	case Prometheus:
-		p, err := prometheus.NewExporter(prometheus.Options{
-			OnError: func(err error) {
-				logger.Error(err, "setting up prometheus export")
+		p, err := prometheus.NewExporter(
+			prometheus.Options{
+				OnError: func(err error) {
+					logger.Error(err, "setting up prometheus export")
+				},
+				Namespace: MetricsNamespace,
 			},
-			Namespace: MetricsNamespace,
-		})
+		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create Prometheus exporter: %w", err)
 		}
 		view.RegisterExporter(p)
-		log.Debug("metrics provider registered")
+		logger.Debug("metrics provider registered")
+
+		if err := metrics.RegisterDefaultViews(); err != nil {
+			return nil, fmt.Errorf("registering default metric views: %w", err)
+		}
+		metrics.RecordRuntimeStats(time.Duration(
+			math.Max(
+				float64(MinimumRuntimeCollectionInterval),
+				float64(cfg.Metrics.RuntimeMetricsCollectionInterval),
+			),
+		))
+
 		return p, nil
 	default:
 		return nil, ErrInvalidMetricsProvider

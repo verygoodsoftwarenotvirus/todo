@@ -1,7 +1,6 @@
 package users
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -18,9 +17,10 @@ import (
 )
 
 const (
-	serviceName string              = "users_service"
-	topicName   string              = "users"
-	counterName metrics.CounterName = "users"
+	serviceName        = "users_service"
+	topicName          = "users"
+	counterDescription = "number of users managed by the users service"
+	counterName        = metrics.CounterName(serviceName)
 )
 
 var (
@@ -52,7 +52,6 @@ type (
 
 // ProvideUsersService builds a new UsersService
 func ProvideUsersService(
-	ctx context.Context,
 	authSettings config.AuthSettings,
 	logger logging.Logger,
 	db database.Database,
@@ -66,18 +65,12 @@ func ProvideUsersService(
 		return nil, errors.New("userIDFetcher must be provided")
 	}
 
-	counter, err := counterProvider(counterName, "number of users managed by the users service")
+	counter, err := counterProvider(counterName, counterDescription)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing counter: %w", err)
 	}
 
-	userCount, err := db.GetAllUserCount(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("fetching user count: %w", err)
-	}
-	counter.IncrementBy(ctx, userCount)
-
-	us := &Service{
+	svc := &Service{
 		cookieSecret:        []byte(authSettings.CookieSecret),
 		logger:              logger.WithName(serviceName),
 		database:            db,
@@ -88,5 +81,6 @@ func ProvideUsersService(
 		reporter:            reporter,
 		userCreationEnabled: authSettings.EnableUserSignup,
 	}
-	return us, nil
+
+	return svc, nil
 }

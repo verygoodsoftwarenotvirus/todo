@@ -9,49 +9,59 @@ import (
 	"go.opencensus.io/stats/view"
 )
 
-// Counter counts things
-type Counter interface {
-	Increment()
-	IncrementBy(val uint64)
-	Decrement()
-}
-
 // opencensusCounter is a Counter that interfaces with opencensus
 type opencensusCounter struct {
 	name        string
 	actualCount uint64
-	count       *stats.Int64Measure
-	counter     *view.View
+	measure     *stats.Int64Measure
+	v           *view.View
 }
 
-// Increment satisfies our Counter interface
-func (c *opencensusCounter) Increment(ctx context.Context) {
-	atomic.AddUint64(&c.actualCount, 1)
-	stats.Record(ctx, c.count.M(1))
+func (c *opencensusCounter) subtractFromCount(ctx context.Context, value uint64) {
+	atomic.AddUint64(&c.actualCount, ^value+1)
+	stats.Record(ctx, c.measure.M(int64(-c.actualCount)))
 }
 
-// IncrementBy satisfies our Counter interface
-func (c *opencensusCounter) IncrementBy(ctx context.Context, val uint64) {
-	atomic.AddUint64(&c.actualCount, val)
-	stats.Record(ctx, c.count.M(int64(val)))
+func (c *opencensusCounter) addToCount(ctx context.Context, value uint64) {
+	atomic.AddUint64(&c.actualCount, value)
+	stats.Record(ctx, c.measure.M(int64(value)))
+}
+
+// zeroCounter zeroes out the v value. Unexported for the obvious reasons
+func (c *opencensusCounter) zeroCounter(ctx context.Context) {
+	// set existing counts to zero
+	if c.actualCount != 0 {
+		c.subtractFromCount(ctx, c.actualCount)
+		c.actualCount = 0
+	}
+}
+
+// SetCountTo satisfies our Counter interface
+func (c *opencensusCounter) setCountTo(ctx context.Context, value uint64) {
+	c.zeroCounter(ctx)
+	c.IncrementBy(ctx, value)
 }
 
 // Decrement satisfies our Counter interface
 func (c *opencensusCounter) Decrement(ctx context.Context) {
-	atomic.AddUint64(&c.actualCount, ^uint64(0))
-	stats.Record(ctx, c.count.M(-1))
+	c.subtractFromCount(ctx, 1)
 }
 
-// ProvideUnitCounterProvider provides UnitCounter providers
-func ProvideUnitCounterProvider() UnitCounterProvider {
-	return ProvideUnitCounter
+// Increment satisfies our Counter interface
+func (c *opencensusCounter) Increment(ctx context.Context) {
+	c.addToCount(ctx, 1)
+}
+
+// IncrementBy satisfies our Counter interface
+func (c *opencensusCounter) IncrementBy(ctx context.Context, value uint64) {
+	c.addToCount(ctx, value)
 }
 
 // ProvideUnitCounter provides a new counter
 func ProvideUnitCounter(counterName CounterName, description string) (UnitCounter, error) {
 	name := fmt.Sprintf("%s_count", string(counterName))
 	// Counts/groups the lengths of lines read in.
-	count := stats.Int64(name, "", "By")
+	count := stats.Int64(name, description, "By")
 
 	countView := &view.View{
 		Name:        name,
@@ -64,9 +74,11 @@ func ProvideUnitCounter(counterName CounterName, description string) (UnitCounte
 		return nil, fmt.Errorf("failed to register views: %w", err)
 	}
 
-	return &opencensusCounter{
+	c := &opencensusCounter{
 		name:    name,
-		count:   count,
-		counter: countView,
-	}, nil
+		measure: count,
+		v:       countView,
+	}
+
+	return c, nil
 }

@@ -51,7 +51,7 @@ func TestV1Client_GetUser(T *testing.T) {
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
 					assert.True(t, strings.HasSuffix(req.URL.String(), strconv.Itoa(int(exampleUser.ID))))
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/users/%d", exampleUser.ID), "expected and actual path don't match")
+					assert.Equal(t, req.URL.Path, fmt.Sprintf("/users/%d", exampleUser.ID), "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodGet)
 					require.NoError(t, json.NewEncoder(res).Encode(exampleUser))
 				},
@@ -75,7 +75,7 @@ func TestV1Client_GetUser(T *testing.T) {
 		c := buildTestClientWithInvalidURL(t)
 		actual, err := c.GetUser(ctx, exampleUser.ID)
 
-		require.Nil(t, actual)
+		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
@@ -102,7 +102,6 @@ func TestV1Client_GetUsers(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-
 		exampleUserList := fakemodels.BuildFakeUserList()
 		// the hashed password is never transmitted over the wire
 		exampleUserList.Users[0].HashedPassword = ""
@@ -112,7 +111,7 @@ func TestV1Client_GetUsers(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/users", "expected and actual path don't match")
+					assert.Equal(t, req.URL.Path, "/users", "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodGet)
 					require.NoError(t, json.NewEncoder(res).Encode(exampleUserList))
 				},
@@ -129,11 +128,10 @@ func TestV1Client_GetUsers(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
-
 		c := buildTestClientWithInvalidURL(t)
 		actual, err := c.GetUsers(ctx, nil)
 
-		require.Nil(t, actual)
+		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
@@ -148,7 +146,6 @@ func TestV1Client_BuildCreateUserRequest(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
-
 		c := buildTestClient(t, ts)
 		actual, err := c.BuildCreateUserRequest(ctx, exampleInput)
 
@@ -163,7 +160,6 @@ func TestV1Client_CreateUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
 		expected := fakemodels.BuildDatabaseCreationResponse(exampleUser)
@@ -171,7 +167,7 @@ func TestV1Client_CreateUser(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/users", "expected and actual path don't match")
+					assert.Equal(t, req.URL.Path, "/users", "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodPost)
 
 					var x *models.UserCreationInput
@@ -199,7 +195,7 @@ func TestV1Client_CreateUser(T *testing.T) {
 		c := buildTestClientWithInvalidURL(t)
 		actual, err := c.CreateUser(ctx, exampleInput)
 
-		require.Nil(t, actual)
+		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
@@ -234,7 +230,7 @@ func TestV1Client_ArchiveUser(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/users/%d", exampleUser.ID), "expected and actual path don't match")
+					assert.Equal(t, req.URL.Path, fmt.Sprintf("/users/%d", exampleUser.ID), "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodDelete)
 				},
 			),
@@ -248,9 +244,7 @@ func TestV1Client_ArchiveUser(T *testing.T) {
 		ctx := context.Background()
 		exampleUser := fakemodels.BuildFakeUser()
 
-		c := buildTestClientWithInvalidURL(t)
-		err := c.ArchiveUser(ctx, exampleUser.ID)
-
+		err := buildTestClientWithInvalidURL(t).ArchiveUser(ctx, exampleUser.ID)
 		assert.Error(t, err, "error should be returned")
 	})
 }
@@ -259,17 +253,27 @@ func TestV1Client_BuildLoginRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		ts := httptest.NewTLSServer(nil)
 		ctx := context.Background()
+		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
 
-		req, err := c.BuildLoginRequest(ctx, *exampleInput)
+		req, err := c.BuildLoginRequest(ctx, exampleInput)
 		require.NotNil(t, req)
 		assert.Equal(t, req.Method, http.MethodPost)
 		assert.NoError(t, err)
+	})
+
+	T.Run("with nil input", func(t *testing.T) {
+		ctx := context.Background()
+		ts := httptest.NewTLSServer(nil)
+		c := buildTestClient(t, ts)
+
+		req, err := c.BuildLoginRequest(ctx, nil)
+		assert.Nil(t, req)
+		assert.Error(t, err)
 	})
 }
 
@@ -278,14 +282,13 @@ func TestV1Client_Login(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/users/login", "expected and actual path don't match")
+					assert.Equal(t, req.URL.Path, "/users/login", "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodPost)
 
 					http.SetCookie(res, &http.Cookie{Name: exampleUser.Username})
@@ -294,34 +297,42 @@ func TestV1Client_Login(T *testing.T) {
 		)
 		c := buildTestClient(t, ts)
 
-		cookie, err := c.Login(ctx, *exampleInput)
+		cookie, err := c.Login(ctx, exampleInput)
 		require.NotNil(t, cookie)
 		assert.NoError(t, err)
 	})
 
+	T.Run("with nil input", func(t *testing.T) {
+		ctx := context.Background()
+		ts := httptest.NewTLSServer(nil)
+		c := buildTestClient(t, ts)
+
+		cookie, err := c.Login(ctx, nil)
+		assert.Nil(t, cookie)
+		assert.Error(t, err)
+	})
+
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
-
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		c := buildTestClientWithInvalidURL(t)
-		cookie, err := c.Login(ctx, *exampleInput)
 
-		require.Nil(t, cookie)
+		cookie, err := c.Login(ctx, exampleInput)
+		assert.Nil(t, cookie)
 		assert.Error(t, err)
 	})
 
 	T.Run("with timeout", func(t *testing.T) {
 		ctx := context.Background()
-
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/users/login", "expected and actual path don't match")
+					assert.Equal(t, req.URL.Path, "/users/login", "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodPost)
 					time.Sleep(10 * time.Hour)
 				},
@@ -330,28 +341,27 @@ func TestV1Client_Login(T *testing.T) {
 		c := buildTestClient(t, ts)
 		c.plainClient.Timeout = 500 * time.Microsecond
 
-		cookie, err := c.Login(ctx, *exampleInput)
+		cookie, err := c.Login(ctx, exampleInput)
 		require.Nil(t, cookie)
 		assert.Error(t, err)
 	})
 
 	T.Run("with missing cookie", func(t *testing.T) {
 		ctx := context.Background()
-
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/users/login", "expected and actual path don't match")
+					assert.Equal(t, req.URL.Path, "/users/login", "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodPost)
 				},
 			),
 		)
 		c := buildTestClient(t, ts)
 
-		cookie, err := c.Login(ctx, *exampleInput)
+		cookie, err := c.Login(ctx, exampleInput)
 		require.Nil(t, cookie)
 		assert.Error(t, err)
 	})

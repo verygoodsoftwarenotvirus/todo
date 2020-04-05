@@ -11,3 +11,8 @@ var (
 		ProvideUnitCounterProvider,
 	)
 )
+
+// ProvideUnitCounterProvider provides UnitCounter providers
+func ProvideUnitCounterProvider() UnitCounterProvider {
+	return ProvideUnitCounter
+}

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
@@ -211,6 +212,8 @@ func TestV1Client_CloseRequestBody(T *testing.T) {
 		assert.NoError(t, err)
 
 		c.closeResponseBody(res)
+
+		mock.AssertExpectationsForObjects(t, rc)
 	})
 }
 
@@ -869,6 +872,7 @@ func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 	T.Run("with nil as output", func(t *testing.T) {
 		ctx := context.Background()
 		expectedMethod := http.MethodPost
+
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 

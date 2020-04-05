@@ -1,7 +1,7 @@
-package fake
+package fakemodels
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	fake "github.com/brianvoe/gofakeit"
 )
@@ -35,12 +35,6 @@ func BuildFakeItemList() *models.ItemList {
 			*exampleItem3,
 		},
 	}
-}
-
-// BuildFakeItemUpdateInput builds a faked ItemUpdateInput from an item
-func BuildFakeItemUpdateInput() *models.ItemUpdateInput {
-	item := BuildFakeItem()
-	return BuildFakeItemUpdateInputFromItem(item)
 }
 
 // BuildFakeItemUpdateInputFromItem builds a faked ItemUpdateInput from an item

@@ -1,7 +1,6 @@
 package webhooks
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"testing"
@@ -12,7 +11,6 @@ import (
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
@@ -33,26 +31,13 @@ func TestProvideWebhooksService(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		ctx := context.Background()
-		expectation := uint64(123)
-
-		uc := &mockmetrics.UnitCounter{}
-		uc.On("IncrementBy", mock.Anything, expectation).Return()
-
-		var ucp metrics.UnitCounterProvider = func(
-			counterName metrics.CounterName,
-			description string,
-		) (metrics.UnitCounter, error) {
-			return uc, nil
+		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
+			return &mockmetrics.UnitCounter{}, nil
 		}
 
-		dm := &mockmodels.WebhookDataManager{}
-		dm.On("GetAllWebhooksCount", mock.Anything).Return(expectation, nil)
-
 		actual, err := ProvideWebhooksService(
-			ctx,
 			noop.ProvideNoopLogger(),
-			dm,
+			&mockmodels.WebhookDataManager{},
 			func(req *http.Request) uint64 { return 0 },
 			func(req *http.Request) uint64 { return 0 },
 			&mockencoding.EncoderDecoder{},
@@ -64,49 +49,13 @@ func TestProvideWebhooksService(T *testing.T) {
 	})
 
 	T.Run("with error providing counter", func(t *testing.T) {
-		ctx := context.Background()
-		var ucp metrics.UnitCounterProvider = func(
-			counterName metrics.CounterName,
-			description string,
-		) (metrics.UnitCounter, error) {
+		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 			return nil, errors.New("blah")
 		}
 
 		actual, err := ProvideWebhooksService(
-			ctx,
 			noop.ProvideNoopLogger(),
 			&mockmodels.WebhookDataManager{},
-			func(req *http.Request) uint64 { return 0 },
-			func(req *http.Request) uint64 { return 0 },
-			&mockencoding.EncoderDecoder{},
-			ucp,
-			newsman.NewNewsman(nil, nil),
-		)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-	})
-
-	T.Run("with error getting count", func(t *testing.T) {
-		ctx := context.Background()
-		expectation := uint64(123)
-
-		uc := &mockmetrics.UnitCounter{}
-		uc.On("IncrementBy", mock.Anything, expectation).Return()
-
-		var ucp metrics.UnitCounterProvider = func(
-			counterName metrics.CounterName,
-			description string,
-		) (metrics.UnitCounter, error) {
-			return uc, nil
-		}
-
-		dm := &mockmodels.WebhookDataManager{}
-		dm.On("GetAllWebhooksCount", mock.Anything).Return(expectation, errors.New("blah"))
-
-		actual, err := ProvideWebhooksService(
-			ctx,
-			noop.ProvideNoopLogger(),
-			dm,
 			func(req *http.Request) uint64 { return 0 },
 			func(req *http.Request) uint64 { return 0 },
 			&mockencoding.EncoderDecoder{},

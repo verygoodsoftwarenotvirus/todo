@@ -25,7 +25,7 @@ func TestClient_GetWebhook(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleWebhook, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -43,7 +43,7 @@ func TestClient_GetAllWebhooksCount(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -61,7 +61,7 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleWebhookList, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -82,7 +82,7 @@ func TestClient_GetWebhooks(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleWebhookList, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with nil filter", func(t *testing.T) {
@@ -97,7 +97,7 @@ func TestClient_GetWebhooks(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleWebhookList, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -116,7 +116,7 @@ func TestClient_CreateWebhook(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleWebhook, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -135,7 +135,7 @@ func TestClient_UpdateWebhook(T *testing.T) {
 		assert.NoError(t, actual)
 		assert.Equal(t, expected, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -154,6 +154,6 @@ func TestClient_ArchiveWebhook(T *testing.T) {
 		assert.NoError(t, actual)
 		assert.Equal(t, expected, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }

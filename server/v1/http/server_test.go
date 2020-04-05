@@ -8,15 +8,15 @@ import (
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
+	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
+	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
+	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
+	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
+	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -32,13 +32,13 @@ func buildTestServer() *Server {
 		encoder:    &mockencoding.EncoderDecoder{},
 		httpServer: provideHTTPServer(),
 		logger:     noop.ProvideNoopLogger(),
-		frontendService: frontend.ProvideFrontendService(
+		frontendService: frontendservice.ProvideFrontendService(
 			noop.ProvideNoopLogger(),
 			config.FrontendSettings{},
 		),
 		webhooksService:      &mockmodels.WebhookDataServer{},
 		usersService:         &mockmodels.UserDataServer{},
-		authService:          &auth.Service{},
+		authService:          &authservice.Service{},
 		itemsService:         &mockmodels.ItemDataServer{},
 		oauth2ClientsService: &mockmodels.OAuth2ClientDataServer{},
 	}
@@ -52,10 +52,10 @@ func TestProvideServer(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
-		exampleFakeWebhookList := fakemodels.BuildFakeWebhookList()
+		exampleWebhookList := fakemodels.BuildFakeWebhookList()
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.WebhookDataManager.On("GetAllWebhooks", mock.Anything).Return(exampleFakeWebhookList, nil)
+		mockDB.WebhookDataManager.On("GetAllWebhooks", mock.Anything).Return(exampleWebhookList, nil)
 
 		actual, err := ProvideServer(
 			ctx,
@@ -64,12 +64,12 @@ func TestProvideServer(T *testing.T) {
 					CookieSecret: "THISISAVERYLONGSTRINGFORTESTPURPOSES",
 				},
 			},
-			&auth.Service{},
-			&frontend.Service{},
-			&items.Service{},
-			&users.Service{},
-			&oauth2clients.Service{},
-			&webhooks.Service{},
+			&authservice.Service{},
+			&frontendservice.Service{},
+			&itemsservice.Service{},
+			&usersservice.Service{},
+			&oauth2clientsservice.Service{},
+			&webhooksservice.Service{},
 			mockDB,
 			noop.ProvideNoopLogger(),
 			&mockencoding.EncoderDecoder{},
@@ -78,15 +78,17 @@ func TestProvideServer(T *testing.T) {
 
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with invalid cookie secret", func(t *testing.T) {
 		ctx := context.Background()
 
-		exampleFakeWebhookList := fakemodels.BuildFakeWebhookList()
+		exampleWebhookList := fakemodels.BuildFakeWebhookList()
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.WebhookDataManager.On("GetAllWebhooks", mock.Anything).Return(exampleFakeWebhookList, nil)
+		mockDB.WebhookDataManager.On("GetAllWebhooks", mock.Anything).Return(exampleWebhookList, nil)
 
 		actual, err := ProvideServer(
 			ctx,
@@ -95,12 +97,12 @@ func TestProvideServer(T *testing.T) {
 					CookieSecret: "THISSTRINGISNTLONGENOUGH:(",
 				},
 			},
-			&auth.Service{},
-			&frontend.Service{},
-			&items.Service{},
-			&users.Service{},
-			&oauth2clients.Service{},
-			&webhooks.Service{},
+			&authservice.Service{},
+			&frontendservice.Service{},
+			&itemsservice.Service{},
+			&usersservice.Service{},
+			&oauth2clientsservice.Service{},
+			&webhooksservice.Service{},
 			mockDB,
 			noop.ProvideNoopLogger(),
 			&mockencoding.EncoderDecoder{},
@@ -109,6 +111,8 @@ func TestProvideServer(T *testing.T) {
 
 		assert.Nil(t, actual)
 		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error fetching webhooks", func(t *testing.T) {
@@ -124,12 +128,12 @@ func TestProvideServer(T *testing.T) {
 					CookieSecret: "THISISAVERYLONGSTRINGFORTESTPURPOSES",
 				},
 			},
-			&auth.Service{},
-			&frontend.Service{},
-			&items.Service{},
-			&users.Service{},
-			&oauth2clients.Service{},
-			&webhooks.Service{},
+			&authservice.Service{},
+			&frontendservice.Service{},
+			&itemsservice.Service{},
+			&usersservice.Service{},
+			&oauth2clientsservice.Service{},
+			&webhooksservice.Service{},
 			mockDB,
 			noop.ProvideNoopLogger(),
 			&mockencoding.EncoderDecoder{},
@@ -138,5 +142,7 @@ func TestProvideServer(T *testing.T) {
 
 		assert.Nil(t, actual)
 		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }

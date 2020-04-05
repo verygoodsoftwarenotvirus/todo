@@ -6,10 +6,10 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
+	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
+	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
+	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
+	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -96,7 +96,7 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		userRouter.With(s.authService.UserLoginInputMiddleware).Post("/login", s.authService.LoginHandler())
 		userRouter.With(s.authService.CookieAuthenticationMiddleware).Post("/logout", s.authService.LogoutHandler())
 
-		userIDPattern := fmt.Sprintf(oauth2IDPattern, users.URIParamKey)
+		userIDPattern := fmt.Sprintf(oauth2IDPattern, usersservice.URIParamKey)
 
 		userRouter.Get("/", s.usersService.ListHandler())
 		userRouter.With(s.usersService.UserInputMiddleware).Post("/", s.usersService.CreateHandler())
@@ -138,7 +138,7 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 	router.With(s.authService.AuthenticationMiddleware(true)).Route("/api/v1", func(v1Router chi.Router) {
 		// Items
 		v1Router.Route("/items", func(itemsRouter chi.Router) {
-			singleItemRoute := fmt.Sprintf(numericIDPattern, items.URIParamKey)
+			singleItemRoute := fmt.Sprintf(numericIDPattern, itemsservice.URIParamKey)
 			itemsRouter.With(s.itemsService.CreationInputMiddleware).Post("/", s.itemsService.CreateHandler())
 			itemsRouter.Get(singleItemRoute, s.itemsService.ReadHandler())
 			itemsRouter.Head(singleItemRoute, s.itemsService.ExistenceHandler())
@@ -149,7 +149,7 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 
 		// Webhooks
 		v1Router.Route("/webhooks", func(webhookRouter chi.Router) {
-			sr := fmt.Sprintf(numericIDPattern, webhooks.URIParamKey)
+			sr := fmt.Sprintf(numericIDPattern, webhooksservice.URIParamKey)
 			webhookRouter.With(s.webhooksService.CreationInputMiddleware).Post("/", s.webhooksService.CreateHandler())
 			webhookRouter.Get(sr, s.webhooksService.ReadHandler())
 			webhookRouter.With(s.webhooksService.UpdateInputMiddleware).Put(sr, s.webhooksService.UpdateHandler())
@@ -159,7 +159,7 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 
 		// OAuth2 Clients
 		v1Router.Route("/oauth2/clients", func(clientRouter chi.Router) {
-			sr := fmt.Sprintf(numericIDPattern, oauth2clients.URIParamKey)
+			sr := fmt.Sprintf(numericIDPattern, oauth2clientsservice.URIParamKey)
 			// CreateHandler is not bound to an OAuth2 authentication token
 			// UpdateHandler not supported for OAuth2 clients.
 			clientRouter.Get(sr, s.oauth2ClientsService.ReadHandler())

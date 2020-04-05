@@ -1,7 +1,6 @@
 package oauth2clients
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"net/http"
@@ -41,7 +40,6 @@ func buildTestService(t *testing.T) *Service {
 		authenticator:        &mockauth.Authenticator{},
 		urlClientIDExtractor: func(req *http.Request) uint64 { return 0 },
 		oauth2ClientCounter:  &mockmetrics.UnitCounter{},
-		tokenStore:           tokenStore,
 		oauth2Handler:        server,
 	}
 
@@ -52,31 +50,14 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		ctx := context.Background()
-		exampleCount := uint64(123)
-
 		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.On(
-			"GetAllOAuth2Clients",
-			mock.Anything,
-		).Return([]*models.OAuth2Client{}, nil)
-		mockDB.OAuth2ClientDataManager.On(
-			"GetAllOAuth2ClientCount",
-			mock.Anything,
-		).Return(exampleCount, nil)
+		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2Clients", mock.Anything).Return([]*models.OAuth2Client{}, nil)
 
-		uc := &mockmetrics.UnitCounter{}
-		uc.On("IncrementBy", mock.Anything, exampleCount).Return()
-
-		var ucp metrics.UnitCounterProvider = func(
-			counterName metrics.CounterName,
-			description string,
-		) (metrics.UnitCounter, error) {
-			return uc, nil
+		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
+			return nil, nil
 		}
 
 		service, err := ProvideOAuth2ClientsService(
-			ctx,
 			noop.ProvideNoopLogger(),
 			mockDB,
 			&mockauth.Authenticator{},
@@ -86,34 +67,19 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		)
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error providing counter", func(t *testing.T) {
-		ctx := context.Background()
-		exampleCount := uint64(123)
-
 		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.On(
-			"GetAllOAuth2Clients",
-			mock.Anything,
-		).Return([]*models.OAuth2Client{}, nil)
-		mockDB.OAuth2ClientDataManager.On(
-			"GetAllOAuth2ClientCount",
-			mock.Anything,
-		).Return(exampleCount, nil)
+		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2Clients", mock.Anything).Return([]*models.OAuth2Client{}, nil)
 
-		uc := &mockmetrics.UnitCounter{}
-		uc.On("IncrementBy", mock.Anything, exampleCount).Return()
-
-		var ucp metrics.UnitCounterProvider = func(
-			counterName metrics.CounterName,
-			description string,
-		) (metrics.UnitCounter, error) {
+		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 			return nil, errors.New("blah")
 		}
 
 		service, err := ProvideOAuth2ClientsService(
-			ctx,
 			noop.ProvideNoopLogger(),
 			mockDB,
 			&mockauth.Authenticator{},
@@ -123,44 +89,8 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		)
 		assert.Error(t, err)
 		assert.Nil(t, service)
-	})
 
-	T.Run("with error fetching oauth2 clients", func(t *testing.T) {
-		ctx := context.Background()
-		exampleCount := uint64(123)
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.On(
-			"GetAllOAuth2Clients",
-			mock.Anything,
-		).Return([]*models.OAuth2Client{}, errors.New("blah"))
-		mockDB.OAuth2ClientDataManager.On(
-			"GetAllOAuth2ClientCount",
-			mock.Anything,
-		).Return(exampleCount, errors.New("blah"))
-
-		uc := &mockmetrics.UnitCounter{}
-		uc.On("IncrementBy", mock.Anything, exampleCount).Return()
-
-		var ucp metrics.UnitCounterProvider = func(
-			counterName metrics.CounterName,
-			description string,
-		) (metrics.UnitCounter, error) {
-			return uc, nil
-		}
-
-		service, err := ProvideOAuth2ClientsService(
-			ctx,
-			noop.ProvideNoopLogger(),
-			mockDB,
-			&mockauth.Authenticator{},
-			func(req *http.Request) uint64 { return 0 },
-			&mockencoding.EncoderDecoder{},
-			ucp,
-		)
-
-		assert.Error(t, err)
-		assert.Nil(t, service)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -182,6 +112,8 @@ func Test_clientStore_GetByID(T *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, exampleOAuth2Client.ClientID, actual.GetID())
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with no rows", func(t *testing.T) {
@@ -198,6 +130,8 @@ func Test_clientStore_GetByID(T *testing.T) {
 		_, err := c.GetByID(exampleID)
 
 		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error reading from database", func(t *testing.T) {
@@ -214,6 +148,8 @@ func Test_clientStore_GetByID(T *testing.T) {
 		_, err := c.GetByID(exampleID)
 
 		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -233,6 +169,8 @@ func TestService_HandleAuthorizeRequest(T *testing.T) {
 		req, res := buildRequest(t), httptest.NewRecorder()
 
 		assert.NoError(t, s.HandleAuthorizeRequest(res, req))
+
+		mock.AssertExpectationsForObjects(t, moah)
 	})
 }
 
@@ -252,5 +190,7 @@ func TestService_HandleTokenRequest(T *testing.T) {
 		req, res := buildRequest(t), httptest.NewRecorder()
 
 		assert.NoError(t, s.HandleTokenRequest(res, req))
+
+		mock.AssertExpectationsForObjects(t, moah)
 	})
 }

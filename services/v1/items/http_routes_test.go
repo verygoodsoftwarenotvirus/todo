@@ -54,6 +54,8 @@ func TestItemsService_ListHandler(T *testing.T) {
 		s.ListHandler()(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, idm, ed)
 	})
 
 	T.Run("with no rows returned", func(t *testing.T) {
@@ -80,6 +82,8 @@ func TestItemsService_ListHandler(T *testing.T) {
 		s.ListHandler()(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, idm, ed)
 	})
 
 	T.Run("with error fetching items from database", func(t *testing.T) {
@@ -89,10 +93,6 @@ func TestItemsService_ListHandler(T *testing.T) {
 		idm := &mockmodels.ItemDataManager{}
 		idm.On("GetItems", mock.Anything, requestingUser.ID, mock.Anything).Return((*models.ItemList)(nil), errors.New("blah"))
 		s.itemDatabase = idm
-
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
-		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -106,6 +106,8 @@ func TestItemsService_ListHandler(T *testing.T) {
 		s.ListHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, idm)
 	})
 
 	T.Run("with error encoding response", func(t *testing.T) {
@@ -134,6 +136,8 @@ func TestItemsService_ListHandler(T *testing.T) {
 		s.ListHandler()(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, idm, ed)
 	})
 }
 
@@ -182,15 +186,13 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		s.CreateHandler()(res, req)
 
 		assert.Equal(t, http.StatusCreated, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mc, r, idm, ed)
 	})
 
 	T.Run("without input attached", func(t *testing.T) {
 		s := buildTestService()
 		s.userIDFetcher = userIDFetcher
-
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
-		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -217,10 +219,6 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		idm.On("CreateItem", mock.Anything, mock.Anything).Return((*models.Item)(nil), errors.New("blah"))
 		s.itemDatabase = idm
 
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
-		s.encoderDecoder = ed
-
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -235,6 +233,8 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		s.CreateHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, idm)
 	})
 
 	T.Run("with error encoding response", func(t *testing.T) {
@@ -274,6 +274,8 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		s.CreateHandler()(res, req)
 
 		assert.Equal(t, http.StatusCreated, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mc, r, idm, ed)
 	})
 }
 
@@ -298,10 +300,6 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		idm.On("ItemExists", mock.Anything, exampleItem.ID, requestingUser.ID).Return(true, nil)
 		s.itemDatabase = idm
 
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
-		s.encoderDecoder = ed
-
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -314,6 +312,8 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		s.ExistenceHandler()(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, idm)
 	})
 
 	T.Run("with no such item in database", func(t *testing.T) {
@@ -341,6 +341,8 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		s.ExistenceHandler()(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
+
+		mock.AssertExpectationsForObjects(t, idm)
 	})
 
 	T.Run("with error fetching item from database", func(t *testing.T) {
@@ -368,37 +370,8 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		s.ExistenceHandler()(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
-	})
 
-	T.Run("with error encoding response", func(t *testing.T) {
-		s := buildTestService()
-		s.userIDFetcher = userIDFetcher
-
-		exampleItem := fakemodels.BuildFakeItem()
-		s.itemIDFetcher = func(req *http.Request) uint64 {
-			return exampleItem.ID
-		}
-
-		idm := &mockmodels.ItemDataManager{}
-		idm.On("ItemExists", mock.Anything, exampleItem.ID, requestingUser.ID).Return(true, nil)
-		s.itemDatabase = idm
-
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(errors.New("blah"))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ExistenceHandler()(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code)
+		mock.AssertExpectationsForObjects(t, idm)
 	})
 }
 
@@ -439,6 +412,8 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		s.ReadHandler()(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, idm, ed)
 	})
 
 	T.Run("with no such item in database", func(t *testing.T) {
@@ -466,6 +441,8 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		s.ReadHandler()(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
+
+		mock.AssertExpectationsForObjects(t, idm)
 	})
 
 	T.Run("with error fetching item from database", func(t *testing.T) {
@@ -493,6 +470,8 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		s.ReadHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, idm)
 	})
 
 	T.Run("with error encoding response", func(t *testing.T) {
@@ -524,6 +503,8 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		s.ReadHandler()(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, idm, ed)
 	})
 }
 
@@ -545,10 +526,6 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
 		}
-
-		mc := &mockmetrics.UnitCounter{}
-		mc.On("Increment", mock.Anything)
-		s.itemCounter = mc
 
 		r := &mocknewsman.Reporter{}
 		r.On("Report", mock.Anything).Return()
@@ -573,10 +550,11 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
-
 		s.UpdateHandler()(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, r, idm, ed)
 	})
 
 	T.Run("without update input", func(t *testing.T) {
@@ -621,10 +599,11 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
-
 		s.UpdateHandler()(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
+
+		mock.AssertExpectationsForObjects(t, idm)
 	})
 
 	T.Run("with error fetching item", func(t *testing.T) {
@@ -652,10 +631,11 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
-
 		s.UpdateHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, idm)
 	})
 
 	T.Run("with error updating item", func(t *testing.T) {
@@ -669,22 +649,10 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		mc := &mockmetrics.UnitCounter{}
-		mc.On("Increment", mock.Anything)
-		s.itemCounter = mc
-
-		r := &mocknewsman.Reporter{}
-		r.On("Report", mock.Anything).Return()
-		s.reporter = r
-
 		idm := &mockmodels.ItemDataManager{}
 		idm.On("GetItem", mock.Anything, exampleItem.ID, requestingUser.ID).Return(exampleItem, nil)
 		idm.On("UpdateItem", mock.Anything, mock.Anything).Return(errors.New("blah"))
 		s.itemDatabase = idm
-
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
-		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -694,11 +662,13 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		)
 		require.NotNil(t, req)
 		require.NoError(t, err)
-		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
 
+		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
 		s.UpdateHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, idm)
 	})
 
 	T.Run("with error encoding response", func(t *testing.T) {
@@ -711,10 +681,6 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
 		}
-
-		mc := &mockmetrics.UnitCounter{}
-		mc.On("Increment", mock.Anything)
-		s.itemCounter = mc
 
 		r := &mocknewsman.Reporter{}
 		r.On("Report", mock.Anything).Return()
@@ -737,15 +703,17 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		)
 		require.NotNil(t, req)
 		require.NoError(t, err)
-		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
 
+		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
 		s.UpdateHandler()(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, r, idm, ed)
 	})
 }
 
-func TestItemsService_Archive(T *testing.T) {
+func TestItemsService_ArchiveHandler(T *testing.T) {
 	T.Parallel()
 
 	requestingUser := fakemodels.BuildFakeUser()
@@ -774,10 +742,6 @@ func TestItemsService_Archive(T *testing.T) {
 		idm.On("ArchiveItem", mock.Anything, exampleItem.ID, requestingUser.ID).Return(nil)
 		s.itemDatabase = idm
 
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
-		s.encoderDecoder = ed
-
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -790,6 +754,8 @@ func TestItemsService_Archive(T *testing.T) {
 		s.ArchiveHandler()(res, req)
 
 		assert.Equal(t, http.StatusNoContent, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mc, r, idm)
 	})
 
 	T.Run("with no item in database", func(t *testing.T) {
@@ -817,6 +783,8 @@ func TestItemsService_Archive(T *testing.T) {
 		s.ArchiveHandler()(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
+
+		mock.AssertExpectationsForObjects(t, idm)
 	})
 
 	T.Run("with error reading from database", func(t *testing.T) {
@@ -844,5 +812,7 @@ func TestItemsService_Archive(T *testing.T) {
 		s.ArchiveHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, idm)
 	})
 }

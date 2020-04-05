@@ -47,9 +47,8 @@ func TestV1Client_ItemExists(T *testing.T) {
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
 					assert.True(t, strings.HasSuffix(req.URL.String(), strconv.Itoa(int(exampleItem.ID))))
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/items/%d", exampleItem.ID), "expected and actual paths don't match")
+					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/items/%d", exampleItem.ID), "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodHead)
-
 					res.WriteHeader(http.StatusOK)
 				},
 			),
@@ -104,7 +103,7 @@ func TestV1Client_GetItem(T *testing.T) {
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
 					assert.True(t, strings.HasSuffix(req.URL.String(), strconv.Itoa(int(exampleItem.ID))))
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/items/%d", exampleItem.ID), "expected and actual paths don't match")
+					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/items/%d", exampleItem.ID), "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodGet)
 					require.NoError(t, json.NewEncoder(res).Encode(exampleItem))
 				},
@@ -138,7 +137,7 @@ func TestV1Client_GetItem(T *testing.T) {
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
 					assert.True(t, strings.HasSuffix(req.URL.String(), strconv.Itoa(int(exampleItem.ID))))
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/items/%d", exampleItem.ID), "expected and actual paths don't match")
+					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/items/%d", exampleItem.ID), "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodGet)
 					require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
 				},
@@ -183,7 +182,7 @@ func TestV1Client_GetItems(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/api/v1/items", "expected and actual paths don't match")
+					assert.Equal(t, req.URL.Path, "/api/v1/items", "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodGet)
 					require.NoError(t, json.NewEncoder(res).Encode(exampleItemList))
 				},
@@ -216,7 +215,7 @@ func TestV1Client_GetItems(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/api/v1/items", "expected and actual paths don't match")
+					assert.Equal(t, req.URL.Path, "/api/v1/items", "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodGet)
 					require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
 				},
@@ -236,11 +235,11 @@ func TestV1Client_BuildCreateItemRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expectedMethod := http.MethodPost
-		ts := httptest.NewTLSServer(nil)
-
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+
+		expectedMethod := http.MethodPost
+		ts := httptest.NewTLSServer(nil)
 
 		c := buildTestClient(t, ts)
 		actual, err := c.BuildCreateItemRequest(ctx, exampleInput)
@@ -263,7 +262,7 @@ func TestV1Client_CreateItem(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/api/v1/items", "expected and actual paths don't match")
+					assert.Equal(t, req.URL.Path, "/api/v1/items", "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodPost)
 
 					var x *models.ItemCreationInput
@@ -324,7 +323,7 @@ func TestV1Client_UpdateItem(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/items/%d", exampleItem.ID), "expected and actual paths don't match")
+					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/items/%d", exampleItem.ID), "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodPut)
 					assert.NoError(t, json.NewEncoder(res).Encode(exampleItem))
 				},
@@ -339,9 +338,7 @@ func TestV1Client_UpdateItem(T *testing.T) {
 		ctx := context.Background()
 		exampleItem := fakemodels.BuildFakeItem()
 
-		c := buildTestClientWithInvalidURL(t)
-		err := c.UpdateItem(ctx, exampleItem)
-
+		err := buildTestClientWithInvalidURL(t).UpdateItem(ctx, exampleItem)
 		assert.Error(t, err, "error should be returned")
 	})
 }
@@ -377,7 +374,7 @@ func TestV1Client_ArchiveItem(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/items/%d", exampleItem.ID), "expected and actual paths don't match")
+					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/items/%d", exampleItem.ID), "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodDelete)
 					res.WriteHeader(http.StatusOK)
 				},
@@ -392,9 +389,7 @@ func TestV1Client_ArchiveItem(T *testing.T) {
 		ctx := context.Background()
 		exampleItem := fakemodels.BuildFakeItem()
 
-		c := buildTestClientWithInvalidURL(t)
-		err := c.ArchiveItem(ctx, exampleItem.ID)
-
+		err := buildTestClientWithInvalidURL(t).ArchiveItem(ctx, exampleItem.ID)
 		assert.Error(t, err, "error should be returned")
 	})
 }

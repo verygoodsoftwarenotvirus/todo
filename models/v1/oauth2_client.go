@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gopkg.in/oauth2.v3"
+	oauth2 "gopkg.in/oauth2.v3"
 )
 
 const (

@@ -63,5 +63,6 @@ func TestServer_loggingMiddleware(T *testing.T) {
 		s.loggingMiddleware(mh).ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
+		mock.AssertExpectationsForObjects(t, mh)
 	})
 }

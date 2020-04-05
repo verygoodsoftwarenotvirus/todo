@@ -29,8 +29,8 @@ func main() {
 	}
 
 	// only allow initialization to take so long
-	tctx, cancel := context.WithTimeout(context.Background(), cfg.Meta.StartupDeadline)
-	ctx, span := tracing.StartSpan(tctx, "initialization")
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.Meta.StartupDeadline)
+	ctx, span := tracing.StartSpan(ctx, "initialization")
 
 	// connect to our database
 	db, err := cfg.ProvideDatabase(ctx, logger)

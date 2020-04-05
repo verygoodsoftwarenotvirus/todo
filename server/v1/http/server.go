@@ -13,8 +13,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
+	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
 
 	"github.com/go-chi/chi"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
@@ -33,8 +33,8 @@ type (
 		DebugMode bool
 
 		// Services
-		authService          *auth.Service
-		frontendService      *frontend.Service
+		authService          *authservice.Service
+		frontendService      *frontendservice.Service
 		usersService         models.UserDataServer
 		oauth2ClientsService models.OAuth2ClientDataServer
 		webhooksService      models.WebhookDataServer
@@ -55,8 +55,8 @@ type (
 func ProvideServer(
 	ctx context.Context,
 	cfg *config.ServerConfig,
-	authService *auth.Service,
-	frontendService *frontend.Service,
+	authService *authservice.Service,
+	frontendService *frontendservice.Service,
 	itemsService models.ItemDataServer,
 	usersService models.UserDataServer,
 	oauth2Service models.OAuth2ClientDataServer,
@@ -99,6 +99,7 @@ func ProvideServer(
 		return nil, err
 	}
 	if ih != nil {
+		srv.logger.Debug("initializing instrumentation handler")
 		srv.setupRouter(cfg.Frontend, ih)
 	}
 

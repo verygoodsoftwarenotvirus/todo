@@ -27,7 +27,6 @@ func TestV1Client_BuildGetWebhookRequest(T *testing.T) {
 
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
-
 		actual, err := c.BuildGetWebhookRequest(ctx, exampleWebhook.ID)
 
 		require.NotNil(t, actual)
@@ -48,7 +47,7 @@ func TestV1Client_GetWebhook(T *testing.T) {
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
 					assert.True(t, strings.HasSuffix(req.URL.String(), strconv.Itoa(int(exampleWebhook.ID))))
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/webhooks/%d", exampleWebhook.ID), "expected and actual path don't match")
+					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/webhooks/%d", exampleWebhook.ID), "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodGet)
 					require.NoError(t, json.NewEncoder(res).Encode(exampleWebhook))
 				},
@@ -68,6 +67,7 @@ func TestV1Client_GetWebhook(T *testing.T) {
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		actual, err := buildTestClientWithInvalidURL(t).GetWebhook(ctx, exampleWebhook.ID)
+
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
@@ -95,7 +95,6 @@ func TestV1Client_GetWebhooks(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-
 		exampleWebhookList := fakemodels.BuildFakeWebhookList()
 
 		ts := httptest.NewTLSServer(
@@ -150,7 +149,6 @@ func TestV1Client_CreateWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 		exampleInput.BelongsToUser = 0
@@ -158,7 +156,7 @@ func TestV1Client_CreateWebhook(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/api/v1/webhooks", "expected and actual path don't match")
+					assert.Equal(t, req.URL.Path, "/api/v1/webhooks", "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodPost)
 
 					var x *models.WebhookCreationInput
@@ -217,7 +215,7 @@ func TestV1Client_UpdateWebhook(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/webhooks/%d", exampleWebhook.ID), "expected and actual path don't match")
+					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/webhooks/%d", exampleWebhook.ID), "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodPut)
 					assert.NoError(t, json.NewEncoder(res).Encode(exampleWebhook))
 				},
@@ -267,7 +265,7 @@ func TestV1Client_ArchiveWebhook(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/webhooks/%d", exampleWebhook.ID), "expected and actual path don't match")
+					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/webhooks/%d", exampleWebhook.ID), "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodDelete)
 				},
 			),

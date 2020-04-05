@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
+	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 
 	"github.com/google/wire"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
@@ -22,6 +22,6 @@ func ProvideWebsocketAuthFunc(svc *Service) newsman.WebsocketAuthFunc {
 }
 
 // ProvideOAuth2ClientValidator converts an oauth2clients.Service to an OAuth2ClientValidator
-func ProvideOAuth2ClientValidator(s *oauth2clients.Service) OAuth2ClientValidator {
+func ProvideOAuth2ClientValidator(s *oauth2clientsservice.Service) OAuth2ClientValidator {
 	return s
 }

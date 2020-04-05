@@ -60,28 +60,28 @@ var (
 	// RuntimeMallocsMeasurement captures the runtime memstats Mallocs field
 	RuntimeMallocsMeasurement = stats.Int64(
 		"mallocs",
-		"the cumulative count of heap objects allocated (the number of live objects is mallocs - frees)",
+		"the cumulative measure of heap objects allocated (the number of live objects is mallocs - frees)",
 		stats.UnitDimensionless,
 	)
 	// RuntimeMallocsView is the corresponding view for the above field
 	RuntimeMallocsView = &view.View{
 		Name:        "mallocs",
 		Measure:     RuntimeMallocsMeasurement,
-		Description: "the cumulative count of heap objects allocated (the number of live objects is mallocs - frees)",
+		Description: "the cumulative measure of heap objects allocated (the number of live objects is mallocs - frees)",
 		Aggregation: view.Count(),
 	}
 
 	// RuntimeFreesMeasurement captures the runtime memstats Frees field
 	RuntimeFreesMeasurement = stats.Int64(
 		"frees",
-		"cumulative count of heap objects freed (the number of live objects is mallocs - frees)",
+		"cumulative measure of heap objects freed (the number of live objects is mallocs - frees)",
 		stats.UnitDimensionless,
 	)
 	// RuntimeFreesView is the corresponding view for the above field
 	RuntimeFreesView = &view.View{
 		Name:        "frees",
 		Measure:     RuntimeFreesMeasurement,
-		Description: "cumulative count of heap objects freed (the number of live objects is mallocs - frees)",
+		Description: "cumulative measure of heap objects freed (the number of live objects is mallocs - frees)",
 		Aggregation: view.Count(),
 	}
 
@@ -393,6 +393,20 @@ var (
 		Aggregation: view.LastValue(),
 	}
 
+	// MetricAggregationMeasurement keeps track of how much time we spend collecting metrics
+	MetricAggregationMeasurement = stats.Int64(
+		"metrics_aggregation_time",
+		"cumulative time in nanoseconds spent aggregating metrics",
+		stats.UnitDimensionless,
+	)
+	// MetricAggregationMeasurementView is the corresponding view for the above metric
+	MetricAggregationMeasurementView = &view.View{
+		Name:        "metrics_aggregation_time",
+		Measure:     MetricAggregationMeasurement,
+		Description: "cumulative time in nanoseconds spent aggregating metrics",
+		Aggregation: view.LastValue(),
+	}
+
 	// DefaultRuntimeViews represents the pre-configured views
 	DefaultRuntimeViews = []*view.View{
 		RuntimeTotalAllocView,
@@ -433,6 +447,11 @@ var (
 	}
 )
 
+// RegisterDefaultViews registers default runtime views
+func RegisterDefaultViews() error {
+	return view.Register(DefaultRuntimeViews...)
+}
+
 // RecordRuntimeStats records runtime statistics at the provided interval.
 // Returns a stop function and an error
 func RecordRuntimeStats(interval time.Duration) (stopFn func()) {
@@ -442,13 +461,13 @@ func RecordRuntimeStats(interval time.Duration) (stopFn func()) {
 		done      = make(chan struct{})
 	)
 
-	ms := &runtime.MemStats{}
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
 				startTime := time.Now()
 				ctx := context.Background()
+				ms := &runtime.MemStats{}
 
 				runtime.ReadMemStats(ms)
 				stats.Record(
@@ -480,8 +499,8 @@ func RecordRuntimeStats(interval time.Duration) (stopFn func()) {
 					RuntimeNumGCMeasurement.M(int64(ms.NumGC)),
 					RuntimeNumForcedGCMeasurement.M(int64(ms.NumForcedGC)),
 					RuntimeGCCPUFractionMeasurement.M(ms.GCCPUFraction),
+					MetricAggregationMeasurement.M(time.Since(startTime).Nanoseconds()),
 				)
-				stats.Record(ctx, MetricAggregationMeasurement.M(time.Since(startTime).Nanoseconds()))
 			case <-done:
 				ticker.Stop()
 				return

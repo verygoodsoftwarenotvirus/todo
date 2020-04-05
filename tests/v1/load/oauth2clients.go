@@ -52,7 +52,7 @@ func buildOAuth2ClientActions(c *client.V1Client) map[string]*Action {
 					return c.BuildHealthCheckRequest(ctx)
 				}
 
-				uli := models.UserLoginInput{
+				uli := &models.UserLoginInput{
 					Username:  ui.Username,
 					Password:  ui.Password,
 					TOTPToken: mustBuildCode(u.TwoFactorSecret),
@@ -67,7 +67,7 @@ func buildOAuth2ClientActions(c *client.V1Client) map[string]*Action {
 					ctx,
 					cookie,
 					&models.OAuth2ClientCreationInput{
-						UserLoginInput: uli,
+						UserLoginInput: *uli,
 					},
 				)
 				return req, err

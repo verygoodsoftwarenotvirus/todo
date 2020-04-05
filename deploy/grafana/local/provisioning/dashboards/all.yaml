@@ -1,6 +1,24 @@
-- name: 'default' # name of this dashboard configuration (not dashboard itself)
-  org_id: 1 # id of the org to hold the dashboard
-  folder: '' # name of the folder to put the dashboard (http://docs.grafana.org/v5.0/reference/dashboard_folders/)
-  type: 'file' # type of dashboard description (json files)
-  options:
-    folder: '/etc/grafana/dashboards' # where dashboards are
+apiVersion: 1
+
+providers:
+  # <string> an unique provider name
+  - name: 'default'
+    # <int> org id. will default to orgId 1 if not specified
+    orgId: 1
+    # <string, required> name of the dashboard folder. Required
+    folder: '/etc/grafana/dashboards'
+    # <string> folder UID. will be automatically generated if not specified
+    folderUid: ''
+    # <string, required> provider type. Required
+    type: file
+    # <bool> disable dashboard deletion
+    disableDeletion: false
+    # <bool> enable dashboard editing
+    editable: true
+    # <int> how often Grafana will scan for changed dashboards
+    updateIntervalSeconds: 10
+    # <bool> allow updating provisioned dashboards from the UI
+    allowUiUpdates: false
+    options:
+      # <string, required> path to dashboard files on disk. Required
+      path: '/etc/grafana/dashboards'

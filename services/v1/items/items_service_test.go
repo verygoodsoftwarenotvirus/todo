@@ -10,7 +10,7 @@ import (
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
 
@@ -44,8 +44,8 @@ func TestProvideItemsService(T *testing.T) {
 			nil,
 		)
 
-		require.NotNil(t, s)
-		require.NoError(t, err)
+		assert.NotNil(t, s)
+		assert.NoError(t, err)
 	})
 
 	T.Run("with error providing unit counter", func(t *testing.T) {
@@ -63,7 +63,7 @@ func TestProvideItemsService(T *testing.T) {
 			nil,
 		)
 
-		require.Nil(t, s)
-		require.Error(t, err)
+		assert.Nil(t, s)
+		assert.Error(t, err)
 	})
 }

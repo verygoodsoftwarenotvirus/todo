@@ -44,6 +44,7 @@ func TestProvideWebhooksService(T *testing.T) {
 			ucp,
 			newsman.NewNewsman(nil, nil),
 		)
+
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 	})
@@ -62,6 +63,7 @@ func TestProvideWebhooksService(T *testing.T) {
 			ucp,
 			newsman.NewNewsman(nil, nil),
 		)
+
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})

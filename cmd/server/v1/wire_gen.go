@@ -39,7 +39,10 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	}
 	oAuth2ClientValidator := auth2.ProvideOAuth2ClientValidator(service)
 	userIDFetcher := httpserver.ProvideAuthUserIDFetcher()
-	authService := auth2.ProvideAuthService(logger, cfg, authenticator, userDataManager, oAuth2ClientValidator, userIDFetcher, encoderDecoder)
+	authService, err := auth2.ProvideAuthService(logger, cfg, authenticator, userDataManager, oAuth2ClientValidator, userIDFetcher, encoderDecoder)
+	if err != nil {
+		return nil, err
+	}
 	frontendSettings := config.ProvideConfigFrontendSettings(cfg)
 	frontendService := frontend.ProvideFrontendService(logger, frontendSettings)
 	itemDataManager := items.ProvideItemDataManager(database2)

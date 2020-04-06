@@ -25,11 +25,6 @@ func (m *UnitCounter) IncrementBy(ctx context.Context, val uint64) {
 	m.Called(ctx, val)
 }
 
-// SetCountTo implements our UnitCounter interface
-func (m *UnitCounter) SetCountTo(ctx context.Context, val uint64) {
-	m.Called(ctx, val)
-}
-
 // Decrement implements our UnitCounter interface
 func (m *UnitCounter) Decrement(ctx context.Context) {
 	m.Called(ctx)

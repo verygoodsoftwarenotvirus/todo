@@ -99,7 +99,6 @@ func ProvideServer(
 		return nil, err
 	}
 	if ih != nil {
-		srv.logger.Debug("initializing instrumentation handler")
 		srv.setupRouter(cfg.Frontend, ih)
 	}
 

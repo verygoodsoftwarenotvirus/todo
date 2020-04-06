@@ -59,8 +59,9 @@ func TestPostgres_IsReady(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		ctx := context.Background()
 		p, _ := buildTestService(t)
-		assert.True(t, p.IsReady(context.Background()))
+		assert.True(t, p.IsReady(ctx))
 	})
 }
 

@@ -76,7 +76,7 @@ func TestProvideAuthService(T *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("with nil config", func(t *testing.T) {
 		auth := &mockauth.Authenticator{}
 		userDB := &mockmodels.UserDataManager{}
 		oauth := &mockOAuth2ClientValidator{}

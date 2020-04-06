@@ -9,8 +9,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"go.opencensus.io/trace"
 )
 
 const (
@@ -21,7 +19,7 @@ const (
 // CreationInputMiddleware is a middleware for attaching OAuth2 client info to a request
 func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "CreationInputMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "CreationInputMiddleware")
 		defer span.End()
 		x := new(models.OAuth2ClientCreationInput)
 
@@ -39,7 +37,7 @@ func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 
 // ExtractOAuth2ClientFromRequest extracts OAuth2 client data from a request
 func (s *Service) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.Request) (*models.OAuth2Client, error) {
-	ctx, span := trace.StartSpan(ctx, "ExtractOAuth2ClientFromRequest")
+	ctx, span := tracing.StartSpan(ctx, "ExtractOAuth2ClientFromRequest")
 	defer span.End()
 
 	logger := s.logger.WithValue("function_name", "ExtractOAuth2ClientFromRequest")
@@ -92,7 +90,7 @@ func determineScope(req *http.Request) string {
 // OAuth2TokenAuthenticationMiddleware authenticates Oauth tokens
 func (s *Service) OAuth2TokenAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "OAuth2TokenAuthenticationMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "OAuth2TokenAuthenticationMiddleware")
 		defer span.End()
 
 		c, err := s.ExtractOAuth2ClientFromRequest(ctx, req)
@@ -118,7 +116,7 @@ func (s *Service) OAuth2TokenAuthenticationMiddleware(next http.Handler) http.Ha
 // OAuth2ClientInfoMiddleware fetches clientOAuth2Client info from requests and attaches it explicitly to a request
 func (s *Service) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "OAuth2ClientInfoMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "OAuth2ClientInfoMiddleware")
 		defer span.End()
 
 		if v := req.URL.Query().Get(oauth2ClientIDURIParamKey); v != "" {

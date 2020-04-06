@@ -33,30 +33,33 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	clientIDFetcher := httpserver.ProvideOAuth2ServiceClientIDFetcher(logger)
 	encoderDecoder := encoding.ProvideResponseEncoder()
 	unitCounterProvider := metrics.ProvideUnitCounterProvider()
-	service, err := oauth2clients.ProvideOAuth2ClientsService(ctx, logger, database2, authenticator, clientIDFetcher, encoderDecoder, unitCounterProvider)
+	service, err := oauth2clients.ProvideOAuth2ClientsService(logger, database2, authenticator, clientIDFetcher, encoderDecoder, unitCounterProvider)
 	if err != nil {
 		return nil, err
 	}
 	oAuth2ClientValidator := auth2.ProvideOAuth2ClientValidator(service)
 	userIDFetcher := httpserver.ProvideAuthUserIDFetcher()
-	authService := auth2.ProvideAuthService(logger, cfg, authenticator, userDataManager, oAuth2ClientValidator, userIDFetcher, encoderDecoder)
+	authService, err := auth2.ProvideAuthService(logger, cfg, authenticator, userDataManager, oAuth2ClientValidator, userIDFetcher, encoderDecoder)
+	if err != nil {
+		return nil, err
+	}
 	frontendSettings := config.ProvideConfigFrontendSettings(cfg)
 	frontendService := frontend.ProvideFrontendService(logger, frontendSettings)
 	itemDataManager := items.ProvideItemDataManager(database2)
 	itemsUserIDFetcher := httpserver.ProvideItemServiceUserIDFetcher()
 	itemIDFetcher := httpserver.ProvideItemIDFetcher(logger)
 	websocketAuthFunc := auth2.ProvideWebsocketAuthFunc(authService)
-	typeNameManipulationFunc := httpserver.ProvideNewsmanTypeNameManipulationFunc(logger)
+	typeNameManipulationFunc := httpserver.ProvideNewsmanTypeNameManipulationFunc()
 	newsmanNewsman := newsman.NewNewsman(websocketAuthFunc, typeNameManipulationFunc)
 	reporter := ProvideReporter(newsmanNewsman)
-	itemsService, err := items.ProvideItemsService(ctx, logger, itemDataManager, itemsUserIDFetcher, itemIDFetcher, encoderDecoder, unitCounterProvider, reporter)
+	itemsService, err := items.ProvideItemsService(logger, itemDataManager, itemsUserIDFetcher, itemIDFetcher, encoderDecoder, unitCounterProvider, reporter)
 	if err != nil {
 		return nil, err
 	}
 	itemDataServer := items.ProvideItemDataServer(itemsService)
 	authSettings := config.ProvideConfigAuthSettings(cfg)
 	usersUserIDFetcher := httpserver.ProvideUsernameFetcher(logger)
-	usersService, err := users.ProvideUsersService(ctx, authSettings, logger, database2, authenticator, usersUserIDFetcher, encoderDecoder, unitCounterProvider, reporter)
+	usersService, err := users.ProvideUsersService(authSettings, logger, database2, authenticator, usersUserIDFetcher, encoderDecoder, unitCounterProvider, reporter)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +68,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	webhookDataManager := webhooks.ProvideWebhookDataManager(database2)
 	webhooksUserIDFetcher := httpserver.ProvideWebhooksUserIDFetcher()
 	webhookIDFetcher := httpserver.ProvideWebhookIDFetcher(logger)
-	webhooksService, err := webhooks.ProvideWebhooksService(ctx, logger, webhookDataManager, webhooksUserIDFetcher, webhookIDFetcher, encoderDecoder, unitCounterProvider, newsmanNewsman)
+	webhooksService, err := webhooks.ProvideWebhooksService(logger, webhookDataManager, webhooksUserIDFetcher, webhookIDFetcher, encoderDecoder, unitCounterProvider, newsmanNewsman)
 	if err != nil {
 		return nil, err
 	}

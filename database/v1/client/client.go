@@ -5,9 +5,9 @@ import (
 	"database/sql"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
-	"go.opencensus.io/trace"
 )
 
 var _ database.Database = (*Client)(nil)
@@ -29,7 +29,7 @@ type Client struct {
 
 // Migrate is a simple wrapper around the core querier Migrate call
 func (c *Client) Migrate(ctx context.Context) error {
-	ctx, span := trace.StartSpan(ctx, "Migrate")
+	ctx, span := tracing.StartSpan(ctx, "Migrate")
 	defer span.End()
 
 	return c.querier.Migrate(ctx)
@@ -37,7 +37,7 @@ func (c *Client) Migrate(ctx context.Context) error {
 
 // IsReady is a simple wrapper around the core querier IsReady call
 func (c *Client) IsReady(ctx context.Context) (ready bool) {
-	ctx, span := trace.StartSpan(ctx, "IsReady")
+	ctx, span := tracing.StartSpan(ctx, "IsReady")
 	defer span.End()
 
 	return c.querier.IsReady(ctx)

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
@@ -60,7 +61,8 @@ func TestAuth(test *testing.T) {
 	test.Parallel()
 
 	test.Run("should be able to login", func(t *testing.T) {
-		ctx := context.Background()
+		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		defer span.End()
 
 		// create a user
 		exampleUser := fakemodels.BuildFakeUser()
@@ -104,7 +106,8 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should be able to logout", func(t *testing.T) {
-		ctx := context.Background()
+		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		defer span.End()
 
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleUserCreationInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
@@ -175,7 +178,8 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should not be able to log in with the wrong password", func(t *testing.T) {
-		ctx := context.Background()
+		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		defer span.End()
 
 		// create a user
 		exampleUser := fakemodels.BuildFakeUser()
@@ -432,7 +436,8 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should only allow users to see their own content", func(t *testing.T) {
-		ctx := context.Background()
+		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		defer span.End()
 
 		// create user and oauth2 client A
 		userA, err := testutil.CreateObligatoryUser(urlToUse, debug)
@@ -492,7 +497,8 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should only allow clients with a given scope to see that scope's content", func(t *testing.T) {
-		ctx := context.Background()
+		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		defer span.End()
 
 		// create user
 		x, y, cookie := buildDummyUser(test)

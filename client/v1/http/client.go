@@ -11,11 +11,12 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
+
 	"github.com/moul/http2curl"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 	"go.opencensus.io/plugin/ochttp"
-	"go.opencensus.io/trace"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )
@@ -59,6 +60,17 @@ func (c *V1Client) TokenSource() oauth2.TokenSource {
 	return c.tokenSource
 }
 
+// tokenEndpoint provides the oauth2 Endpoint for a given host
+func tokenEndpoint(baseURL *url.URL) oauth2.Endpoint {
+	tu, au := *baseURL, *baseURL
+	tu.Path, au.Path = "oauth2/token", "oauth2/authorize"
+
+	return oauth2.Endpoint{
+		TokenURL: tu.String(),
+		AuthURL:  au.String(),
+	}
+}
+
 // NewClient builds a new API client for us
 func NewClient(
 	ctx context.Context,
@@ -100,6 +112,23 @@ func NewClient(
 	return c, nil
 }
 
+// NewSimpleClient is a client that is capable of much less than the normal client
+// and has noops or empty values for most of its authentication and debug parts.
+// Its purpose at the time of this writing is merely so I can make users (which
+// is a route that doesn't require authentication)
+func NewSimpleClient(ctx context.Context, address *url.URL, debug bool) (*V1Client, error) {
+	return NewClient(
+		ctx,
+		"",
+		"",
+		address,
+		noop.ProvideNoopLogger(),
+		&http.Client{Timeout: 5 * time.Second},
+		[]string{"*"},
+		debug,
+	)
+}
+
 // buildOAuthClient does too much
 func buildOAuthClient(
 	ctx context.Context,
@@ -133,67 +162,13 @@ func buildOAuthClient(
 	return client, ts
 }
 
-// tokenEndpoint provides the oauth2 Endpoint for a given host
-func tokenEndpoint(baseURL *url.URL) oauth2.Endpoint {
-	tu, au := *baseURL, *baseURL
-	tu.Path, au.Path = "oauth2/token", "oauth2/authorize"
-
-	return oauth2.Endpoint{
-		TokenURL: tu.String(),
-		AuthURL:  au.String(),
-	}
-}
-
-// NewSimpleClient is a client that is capable of much less than the normal client
-// and has noops or empty values for most of its authentication and debug parts.
-// Its purpose at the time of this writing is merely so I can make users (which
-// is a route that doesn't require authentication)
-func NewSimpleClient(ctx context.Context, address *url.URL, debug bool) (*V1Client, error) {
-	return NewClient(
-		ctx,
-		"",
-		"",
-		address,
-		noop.ProvideNoopLogger(),
-		&http.Client{Timeout: 5 * time.Second},
-		[]string{"*"},
-		debug,
-	)
-}
-
-func (c *V1Client) closeRequestBody(res *http.Response) {
+// closeResponseBody takes a given HTTP response and closes its body, logging if an error occurs
+func (c *V1Client) closeResponseBody(res *http.Response) {
 	if res != nil {
 		if err := res.Body.Close(); err != nil {
-			c.logger.Error(err, "closing request body")
+			c.logger.Error(err, "closing response body")
 		}
 	}
-}
-
-// executeRawRequest takes a given *http.Request and executes it with the provided
-// client, alongside some debugging logging.
-func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
-	ctx, span := trace.StartSpan(ctx, "executeRawRequest")
-	defer span.End()
-
-	var logger = c.logger
-	if command, err := http2curl.GetCurlCommand(req); err == nil && c.Debug {
-		logger = c.logger.WithValue("curl", command.String())
-	}
-
-	res, err := client.Do(req.WithContext(ctx))
-	if err != nil {
-		return nil, fmt.Errorf("executing request: %w", err)
-	}
-
-	if c.Debug {
-		bdump, err := httputil.DumpResponse(res, true)
-		if err == nil && req.Method != http.MethodGet {
-			logger = logger.WithValue("response_body", string(bdump))
-		}
-		logger.Debug("request executed")
-	}
-
-	return res, nil
 }
 
 // BuildURL builds standard service URLs
@@ -277,14 +252,14 @@ func (c *V1Client) IsUp(ctx context.Context) bool {
 		c.logger.Error(err, "health check")
 		return false
 	}
-	c.closeRequestBody(res)
+	c.closeResponseBody(res)
 
 	return res.StatusCode == http.StatusOK
 }
 
 // buildDataRequest builds an HTTP request for a given method, URL, and body data.
 func (c *V1Client) buildDataRequest(ctx context.Context, method, uri string, in interface{}) (*http.Request, error) {
-	ctx, span := trace.StartSpan(ctx, "buildDataRequest")
+	ctx, span := tracing.StartSpan(ctx, "buildDataRequest")
 	defer span.End()
 
 	body, err := createBodyFromStruct(in)
@@ -301,23 +276,77 @@ func (c *V1Client) buildDataRequest(ctx context.Context, method, uri string, in 
 	return req, nil
 }
 
+// executeRequest takes a given request and executes it with the auth client. It returns some errors
+// upon receiving certain status codes, but otherwise will return nil upon success.
+func (c *V1Client) executeRequest(ctx context.Context, req *http.Request, out interface{}) error {
+	ctx, span := tracing.StartSpan(ctx, "executeRequest")
+	defer span.End()
+
+	res, err := c.executeRawRequest(ctx, c.authedClient, req)
+	if err != nil {
+		return fmt.Errorf("executing request: %w", err)
+	}
+
+	switch res.StatusCode {
+	case http.StatusNotFound:
+		return ErrNotFound
+	case http.StatusUnauthorized:
+		return ErrUnauthorized
+	}
+
+	if out != nil {
+		if resErr := unmarshalBody(ctx, res, out); resErr != nil {
+			return fmt.Errorf("loading response from server: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// executeRawRequest takes a given *http.Request and executes it with the provided
+// client, alongside some debugging logging.
+func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
+	ctx, span := tracing.StartSpan(ctx, "executeRawRequest")
+	defer span.End()
+
+	var logger = c.logger
+	if command, err := http2curl.GetCurlCommand(req); err == nil && c.Debug {
+		logger = c.logger.WithValue("curl", command.String())
+	}
+
+	res, err := client.Do(req.WithContext(ctx))
+	if err != nil {
+		return nil, fmt.Errorf("executing request: %w", err)
+	}
+
+	if c.Debug {
+		bdump, err := httputil.DumpResponse(res, true)
+		if err == nil && req.Method != http.MethodGet {
+			logger = logger.WithValue("response_body", string(bdump))
+		}
+		logger.Debug("request executed")
+	}
+
+	return res, nil
+}
+
 // checkExistence executes an HTTP request and loads the response content into a bool
 func (c *V1Client) checkExistence(ctx context.Context, req *http.Request) (bool, error) {
-	ctx, span := trace.StartSpan(ctx, "checkExistence")
+	ctx, span := tracing.StartSpan(ctx, "checkExistence")
 	defer span.End()
 
 	res, err := c.executeRawRequest(ctx, c.authedClient, req)
 	if err != nil {
 		return false, err
 	}
-	c.closeRequestBody(res)
+	c.closeResponseBody(res)
 
 	return res.StatusCode == http.StatusOK, nil
 }
 
 // retrieve executes an HTTP request and loads the response content into a struct
 func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interface{}) error {
-	ctx, span := trace.StartSpan(ctx, "retrieve")
+	ctx, span := tracing.StartSpan(ctx, "retrieve")
 	defer span.End()
 
 	if err := argIsNotPointerOrNil(obj); err != nil {
@@ -333,39 +362,12 @@ func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interfac
 		return ErrNotFound
 	}
 
-	return unmarshalBody(res, &obj)
-}
-
-// executeRequest takes a given request and executes it with the auth client. It returns some errors
-// upon receiving certain status codes, but otherwise will return nil upon success.
-func (c *V1Client) executeRequest(ctx context.Context, req *http.Request, out interface{}) error {
-	ctx, span := trace.StartSpan(ctx, "executeRequest")
-	defer span.End()
-
-	res, err := c.executeRawRequest(ctx, c.authedClient, req)
-	if err != nil {
-		return fmt.Errorf("executing request: %w", err)
-	}
-
-	switch res.StatusCode {
-	case http.StatusNotFound:
-		return ErrNotFound
-	case http.StatusUnauthorized:
-		return ErrUnauthorized
-	}
-
-	if out != nil {
-		if resErr := unmarshalBody(res, out); resErr != nil {
-			return fmt.Errorf("loading response from server: %w", err)
-		}
-	}
-
-	return nil
+	return unmarshalBody(ctx, res, &obj)
 }
 
 // executeUnauthenticatedDataRequest takes a given request and loads the response into an interface value.
 func (c *V1Client) executeUnauthenticatedDataRequest(ctx context.Context, req *http.Request, out interface{}) error {
-	ctx, span := trace.StartSpan(ctx, "executeUnauthenticatedDataRequest")
+	ctx, span := tracing.StartSpan(ctx, "executeUnauthenticatedDataRequest")
 	defer span.End()
 
 	res, err := c.executeRawRequest(ctx, c.plainClient, req)
@@ -381,7 +383,7 @@ func (c *V1Client) executeUnauthenticatedDataRequest(ctx context.Context, req *h
 	}
 
 	if out != nil {
-		if resErr := unmarshalBody(res, out); resErr != nil {
+		if resErr := unmarshalBody(ctx, res, out); resErr != nil {
 			return fmt.Errorf("loading response from server: %w", err)
 		}
 	}

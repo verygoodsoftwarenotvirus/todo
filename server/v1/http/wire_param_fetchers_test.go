@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
+	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
+	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
+	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
+	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
@@ -113,7 +113,7 @@ func Test_buildChiUserIDFetcher(T *testing.T) {
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
-						Keys:   []string{users.URIParamKey},
+						Keys:   []string{usersservice.URIParamKey},
 						Values: []string{fmt.Sprintf("%d", expected)},
 					},
 				},
@@ -136,7 +136,7 @@ func Test_buildChiUserIDFetcher(T *testing.T) {
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
-						Keys:   []string{users.URIParamKey},
+						Keys:   []string{usersservice.URIParamKey},
 						Values: []string{"expected"},
 					},
 				},
@@ -162,7 +162,7 @@ func Test_buildChiItemIDFetcher(T *testing.T) {
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
-						Keys:   []string{items.URIParamKey},
+						Keys:   []string{itemsservice.URIParamKey},
 						Values: []string{fmt.Sprintf("%d", expected)},
 					},
 				},
@@ -185,7 +185,7 @@ func Test_buildChiItemIDFetcher(T *testing.T) {
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
-						Keys:   []string{items.URIParamKey},
+						Keys:   []string{itemsservice.URIParamKey},
 						Values: []string{"expected"},
 					},
 				},
@@ -211,7 +211,7 @@ func Test_buildChiWebhookIDFetcher(T *testing.T) {
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
-						Keys:   []string{webhooks.URIParamKey},
+						Keys:   []string{webhooksservice.URIParamKey},
 						Values: []string{fmt.Sprintf("%d", expected)},
 					},
 				},
@@ -234,7 +234,7 @@ func Test_buildChiWebhookIDFetcher(T *testing.T) {
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
-						Keys:   []string{webhooks.URIParamKey},
+						Keys:   []string{webhooksservice.URIParamKey},
 						Values: []string{"expected"},
 					},
 				},
@@ -260,7 +260,7 @@ func Test_buildChiOAuth2ClientIDFetcher(T *testing.T) {
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
-						Keys:   []string{oauth2clients.URIParamKey},
+						Keys:   []string{oauth2clientsservice.URIParamKey},
 						Values: []string{fmt.Sprintf("%d", expected)},
 					},
 				},
@@ -283,7 +283,7 @@ func Test_buildChiOAuth2ClientIDFetcher(T *testing.T) {
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
-						Keys:   []string{oauth2clients.URIParamKey},
+						Keys:   []string{oauth2clientsservice.URIParamKey},
 						Values: []string{"expected"},
 					},
 				},

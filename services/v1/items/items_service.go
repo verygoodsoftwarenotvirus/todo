@@ -1,7 +1,6 @@
 package items
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -20,7 +19,7 @@ const (
 	UpdateMiddlewareCtxKey models.ContextKey = "item_update_input"
 
 	counterName        metrics.CounterName = "items"
-	counterDescription                     = "the number of items managed by the items service"
+	counterDescription string              = "the number of items managed by the items service"
 	topicName          string              = "items"
 	serviceName        string              = "items_service"
 )
@@ -50,7 +49,6 @@ type (
 
 // ProvideItemsService builds a new ItemsService
 func ProvideItemsService(
-	ctx context.Context,
 	logger logging.Logger,
 	db models.ItemDataManager,
 	userIDFetcher UserIDFetcher,
@@ -73,12 +71,6 @@ func ProvideItemsService(
 		itemIDFetcher:  itemIDFetcher,
 		reporter:       reporter,
 	}
-
-	itemCount, err := svc.itemDatabase.GetAllItemsCount(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("setting current item count: %w", err)
-	}
-	svc.itemCounter.IncrementBy(ctx, itemCount)
 
 	return svc, nil
 }

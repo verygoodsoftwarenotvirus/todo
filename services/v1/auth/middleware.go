@@ -4,9 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"go.opencensus.io/trace"
 )
 
 const (
@@ -24,7 +23,7 @@ const (
 // CookieAuthenticationMiddleware checks every request for a user cookie
 func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "CookieAuthenticationMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "CookieAuthenticationMiddleware")
 		defer span.End()
 
 		// fetch the user from the request
@@ -56,7 +55,7 @@ func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken bool) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			ctx, span := trace.StartSpan(req.Context(), "AuthenticationMiddleware")
+			ctx, span := tracing.StartSpan(req.Context(), "AuthenticationMiddleware")
 			defer span.End()
 
 			// let's figure out who the user is
@@ -118,7 +117,7 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 // AdminMiddleware restricts requests to admin users only
 func (s *Service) AdminMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "AdminMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "AdminMiddleware")
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
@@ -159,7 +158,7 @@ func parseLoginInputFromForm(req *http.Request) *models.UserLoginInput {
 // UserLoginInputMiddleware fetches user login input from requests
 func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "UserLoginInputMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "UserLoginInputMiddleware")
 		defer span.End()
 
 		x := new(models.UserLoginInput)

@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"reflect"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
@@ -49,7 +51,10 @@ func argIsNotPointerOrNil(i interface{}) error {
 // pointer to an object. Ideally, response is also not nil.
 // The error returned here should only ever be received in
 // testing, and should never be encountered by an end-user.
-func unmarshalBody(res *http.Response, dest interface{}) error {
+func unmarshalBody(ctx context.Context, res *http.Response, dest interface{}) error {
+	_, span := tracing.StartSpan(ctx, "unmarshalBody")
+	defer span.End()
+
 	if err := argIsNotPointerOrNil(dest); err != nil {
 		return err
 	}

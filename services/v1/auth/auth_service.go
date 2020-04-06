@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
@@ -55,7 +56,11 @@ func ProvideAuthService(
 	oauth2ClientsService OAuth2ClientValidator,
 	userIDFetcher UserIDFetcher,
 	encoder encoding.EncoderDecoder,
-) *Service {
+) (*Service, error) {
+	if cfg == nil {
+		return nil, errors.New("nil config provided")
+	}
+
 	svc := &Service{
 		logger:               logger.WithName(serviceName),
 		encoderDecoder:       encoder,
@@ -70,5 +75,5 @@ func ProvideAuthService(
 		),
 	}
 
-	return svc
+	return svc, nil
 }

@@ -5,15 +5,13 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"go.opencensus.io/trace"
 )
 
 var _ models.WebhookDataManager = (*Client)(nil)
 
 // GetWebhook fetches a webhook from the database
 func (c *Client) GetWebhook(ctx context.Context, webhookID, userID uint64) (*models.Webhook, error) {
-	ctx, span := trace.StartSpan(ctx, "GetWebhook")
+	ctx, span := tracing.StartSpan(ctx, "GetWebhook")
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -29,7 +27,7 @@ func (c *Client) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mod
 
 // GetWebhooks fetches a list of webhooks from the database that meet a particular filter
 func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.WebhookList, error) {
-	ctx, span := trace.StartSpan(ctx, "GetWebhooks")
+	ctx, span := tracing.StartSpan(ctx, "GetWebhooks")
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -42,7 +40,7 @@ func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *models.
 
 // GetAllWebhooks fetches a list of webhooks from the database that meet a particular filter
 func (c *Client) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
-	ctx, span := trace.StartSpan(ctx, "GetAllWebhooks")
+	ctx, span := tracing.StartSpan(ctx, "GetAllWebhooks")
 	defer span.End()
 
 	c.logger.Debug("GetWebhookCount called")
@@ -52,7 +50,7 @@ func (c *Client) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error
 
 // GetAllWebhooksCount fetches the count of webhooks from the database that meet a particular filter
 func (c *Client) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
-	ctx, span := trace.StartSpan(ctx, "GetAllWebhooksCount")
+	ctx, span := tracing.StartSpan(ctx, "GetAllWebhooksCount")
 	defer span.End()
 
 	c.logger.Debug("GetAllWebhooksCount called")
@@ -62,7 +60,7 @@ func (c *Client) GetAllWebhooksCount(ctx context.Context) (count uint64, err err
 
 // CreateWebhook creates a webhook in a database
 func (c *Client) CreateWebhook(ctx context.Context, input *models.WebhookCreationInput) (*models.Webhook, error) {
-	ctx, span := trace.StartSpan(ctx, "CreateWebhook")
+	ctx, span := tracing.StartSpan(ctx, "CreateWebhook")
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, input.BelongsToUser)
@@ -74,7 +72,7 @@ func (c *Client) CreateWebhook(ctx context.Context, input *models.WebhookCreatio
 // UpdateWebhook updates a particular webhook.
 // NOTE: this function expects the provided input to have a non-zero ID.
 func (c *Client) UpdateWebhook(ctx context.Context, input *models.Webhook) error {
-	ctx, span := trace.StartSpan(ctx, "UpdateWebhook")
+	ctx, span := tracing.StartSpan(ctx, "UpdateWebhook")
 	defer span.End()
 
 	tracing.AttachWebhookIDToSpan(span, input.ID)
@@ -87,7 +85,7 @@ func (c *Client) UpdateWebhook(ctx context.Context, input *models.Webhook) error
 
 // ArchiveWebhook archives a webhook from the database
 func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error {
-	ctx, span := trace.StartSpan(ctx, "ArchiveWebhook")
+	ctx, span := tracing.StartSpan(ctx, "ArchiveWebhook")
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)

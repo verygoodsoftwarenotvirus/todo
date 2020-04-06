@@ -91,6 +91,8 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.Code)
 		assert.Equal(t, exampleOAuth2Client.Scopes[0], actual)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("without client attached to request and now rows found fetching client info", func(t *testing.T) {
@@ -116,6 +118,8 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, http.StatusNotFound, res.Code)
 		assert.Empty(t, actual)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("without client attached to request and error fetching client info", func(t *testing.T) {
@@ -141,6 +145,8 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 		assert.Empty(t, actual)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("without client attached to request", func(t *testing.T) {
@@ -178,6 +184,8 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 		assert.Empty(t, actual)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -250,6 +258,8 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 		actual, err := s.ClientAuthorizedHandler(stringID, exampleGrant)
 		assert.True(t, actual)
 		assert.NoError(t, err)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with password credentials grant", func(t *testing.T) {
@@ -278,6 +288,8 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 		actual, err := s.ClientAuthorizedHandler(stringID, exampleGrant)
 		assert.False(t, actual)
 		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with disallowed implicit", func(t *testing.T) {
@@ -298,6 +310,8 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 		actual, err := s.ClientAuthorizedHandler(stringID, exampleGrant)
 		assert.False(t, actual)
 		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -321,6 +335,8 @@ func TestService_ClientScopeHandler(T *testing.T) {
 		actual, err := s.ClientScopeHandler(stringID, exampleOAuth2Client.Scopes[0])
 		assert.True(t, actual)
 		assert.NoError(t, err)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error reading from database", func(t *testing.T) {
@@ -340,6 +356,8 @@ func TestService_ClientScopeHandler(T *testing.T) {
 		actual, err := s.ClientScopeHandler(stringID, exampleOAuth2Client.Scopes[0])
 		assert.False(t, actual)
 		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("without valid scope", func(t *testing.T) {
@@ -360,5 +378,7 @@ func TestService_ClientScopeHandler(T *testing.T) {
 		actual, err := s.ClientScopeHandler(stringID, exampleScope)
 		assert.False(t, actual)
 		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }

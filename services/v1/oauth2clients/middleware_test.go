@@ -67,6 +67,8 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 		h.ServeHTTP(res, req)
 		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, ed, mh)
 	})
 
 	T.Run("with error decoding request", func(t *testing.T) {
@@ -81,18 +83,14 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		s.encoderDecoder = ed
 
 		mh := &mockHTTPHandler{}
-		mh.On(
-			"ServeHTTP",
-			mock.Anything,
-			mock.Anything,
-		)
-
 		h := s.CreationInputMiddleware(mh)
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
 
 		h.ServeHTTP(res, req)
 		assert.Equal(t, http.StatusBadRequest, res.Code)
+
+		mock.AssertExpectationsForObjects(t, ed, mh)
 	})
 }
 
@@ -125,6 +123,8 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, exampleOAuth2Client, actual)
+
+		mock.AssertExpectationsForObjects(t, mh, mockDB)
 	})
 
 	T.Run("with error validating token", func(t *testing.T) {
@@ -142,6 +142,8 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, actual)
+
+		mock.AssertExpectationsForObjects(t, mh)
 	})
 
 	T.Run("with error fetching from database", func(t *testing.T) {
@@ -169,6 +171,8 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, actual)
+
+		mock.AssertExpectationsForObjects(t, mh, mockDB)
 	})
 
 	T.Run("with invalid scope", func(t *testing.T) {
@@ -197,6 +201,8 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, actual)
+
+		mock.AssertExpectationsForObjects(t, mh, mockDB)
 	})
 }
 
@@ -238,6 +244,8 @@ func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 
 		s.OAuth2TokenAuthenticationMiddleware(mhh).ServeHTTP(res, req)
 		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mh, mhh, mockDB)
 	})
 
 	T.Run("with error authenticating request", func(t *testing.T) {
@@ -254,14 +262,10 @@ func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 		req := buildRequest(t)
 
 		mhh := &mockHTTPHandler{}
-		mhh.On(
-			"ServeHTTP",
-			mock.Anything,
-			mock.AnythingOfType("*http.Request"),
-		).Return()
-
 		s.OAuth2TokenAuthenticationMiddleware(mhh).ServeHTTP(res, req)
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mh, mhh)
 	})
 }
 
@@ -296,18 +300,13 @@ func TestService_OAuth2ClientInfoMiddleware(T *testing.T) {
 
 		s.OAuth2ClientInfoMiddleware(mhh).ServeHTTP(res, req)
 		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mhh, mockDB)
 	})
 
 	T.Run("with error reading from database", func(t *testing.T) {
 		s := buildTestService(t)
 		expected := "blah"
-
-		mhh := &mockHTTPHandler{}
-		mhh.On(
-			"ServeHTTP",
-			mock.Anything,
-			mock.AnythingOfType("*http.Request"),
-		).Return()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		q := url.Values{}
@@ -322,8 +321,11 @@ func TestService_OAuth2ClientInfoMiddleware(T *testing.T) {
 		).Return((*models.OAuth2Client)(nil), errors.New("blah"))
 		s.database = mockDB
 
+		mhh := &mockHTTPHandler{}
 		s.OAuth2ClientInfoMiddleware(mhh).ServeHTTP(res, req)
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mhh, mockDB)
 	})
 }
 

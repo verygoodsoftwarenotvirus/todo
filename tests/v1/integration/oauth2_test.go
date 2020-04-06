@@ -6,6 +6,7 @@ import (
 	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/pquerna/otp/totp"
@@ -85,7 +86,8 @@ func TestOAuth2Clients(test *testing.T) {
 
 	test.Run("Creating", func(T *testing.T) {
 		T.Run("should be creatable", func(t *testing.T) {
-			ctx := context.Background()
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
 
 			// Create oauth2Client
 			actual, err := testClient.CreateOAuth2Client(ctx, cookie, input)
@@ -102,7 +104,8 @@ func TestOAuth2Clients(test *testing.T) {
 
 	test.Run("Reading", func(T *testing.T) {
 		T.Run("it should return an error when trying to read one that doesn't exist", func(t *testing.T) {
-			ctx := context.Background()
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
 
 			// Fetch oauth2Client
 			_, err := testClient.GetOAuth2Client(ctx, nonexistentID)
@@ -110,7 +113,8 @@ func TestOAuth2Clients(test *testing.T) {
 		})
 
 		T.Run("it should be readable", func(t *testing.T) {
-			ctx := context.Background()
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
 
 			// Create oauth2Client
 			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
@@ -132,7 +136,8 @@ func TestOAuth2Clients(test *testing.T) {
 
 	test.Run("Deleting", func(T *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
-			ctx := context.Background()
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
 
 			// Create oauth2Client
 			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
@@ -145,7 +150,8 @@ func TestOAuth2Clients(test *testing.T) {
 		})
 
 		T.Run("should be unable to authorize after being deleted", func(t *testing.T) {
-			ctx := context.Background()
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
 
 			// create user
 			createdUser, createdUserInput, _ := buildDummyUser(test)
@@ -178,7 +184,8 @@ func TestOAuth2Clients(test *testing.T) {
 
 	test.Run("Listing", func(T *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
-			ctx := context.Background()
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
 
 			// Create oauth2Clients
 			var expected []*models.OAuth2Client

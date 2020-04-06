@@ -18,7 +18,6 @@ import (
 	"github.com/boombuler/barcode"
 	"github.com/boombuler/barcode/qr"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
-	"go.opencensus.io/trace"
 )
 
 const (
@@ -54,7 +53,7 @@ func (s *Service) validateCredentialChangeRequest(
 	password,
 	totpToken string,
 ) (user *models.User, httpStatus int) {
-	ctx, span := trace.StartSpan(ctx, "validateCredentialChangeRequest")
+	ctx, span := tracing.StartSpan(ctx, "validateCredentialChangeRequest")
 	defer span.End()
 
 	logger := s.logger.WithValue("user_id", userID)
@@ -92,7 +91,7 @@ func (s *Service) validateCredentialChangeRequest(
 // ListHandler is a handler for responding with a list of users
 func (s *Service) ListHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "ListHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "ListHandler")
 		defer span.End()
 
 		// determine desired filter
@@ -116,7 +115,7 @@ func (s *Service) ListHandler() http.HandlerFunc {
 // CreateHandler is our user creation route
 func (s *Service) CreateHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "CreateHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "CreateHandler")
 		defer span.End()
 
 		// in the event that we don't want new users to be able to sign up (a config setting)
@@ -209,7 +208,7 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 
 // buildQRCode builds a QR code for a given username and secret
 func (s *Service) buildQRCode(ctx context.Context, username, twoFactorSecret string) string {
-	_, span := trace.StartSpan(ctx, "buildQRCode")
+	_, span := tracing.StartSpan(ctx, "buildQRCode")
 	defer span.End()
 
 	// encode two factor secret as authenticator-friendly QR code
@@ -251,7 +250,7 @@ func (s *Service) buildQRCode(ctx context.Context, username, twoFactorSecret str
 // ReadHandler is our read route
 func (s *Service) ReadHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "ReadHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "ReadHandler")
 		defer span.End()
 
 		// figure out who this is all for
@@ -284,7 +283,7 @@ func (s *Service) ReadHandler() http.HandlerFunc {
 // that information received from TOTPSecretRefreshInputContextMiddleware is valid
 func (s *Service) NewTOTPSecretHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "NewTOTPSecretHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "NewTOTPSecretHandler")
 		defer span.End()
 
 		// check request context for parsed input
@@ -350,7 +349,7 @@ func (s *Service) NewTOTPSecretHandler() http.HandlerFunc {
 // from PasswordUpdateInputContextMiddleware is valid
 func (s *Service) UpdatePasswordHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "UpdatePasswordHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "UpdatePasswordHandler")
 		defer span.End()
 
 		// check request context for parsed value
@@ -412,7 +411,7 @@ func (s *Service) UpdatePasswordHandler() http.HandlerFunc {
 // ArchiveHandler is a handler for archiving a user
 func (s *Service) ArchiveHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "ArchiveHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "ArchiveHandler")
 		defer span.End()
 
 		// figure out who this is for

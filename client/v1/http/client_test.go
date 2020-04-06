@@ -11,16 +11,15 @@ import (
 	"testing"
 	"time"
 
-	mockutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil/mock"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
 
 const (
 	exampleURI       = "https://todo.verygoodsoftwarenotvirus.ru"
-	asciiControlChar = string(byte(0x7f))
+	asciiControlChar = string(byte(127))
 )
 
 type (
@@ -190,13 +189,13 @@ func TestNewSimpleClient(T *testing.T) {
 	})
 }
 
-func TestCloseRequestBody(T *testing.T) {
+func TestV1Client_CloseRequestBody(T *testing.T) {
 	T.Parallel()
 
 	T.Run("with error", func(t *testing.T) {
 		ctx := context.Background()
 
-		rc := mockutil.NewMockReadCloser()
+		rc := newMockReadCloser()
 		rc.On("Close").Return(errors.New("blah"))
 
 		res := &http.Response{
@@ -212,7 +211,9 @@ func TestCloseRequestBody(T *testing.T) {
 		assert.NotNil(t, c)
 		assert.NoError(t, err)
 
-		c.closeRequestBody(res)
+		c.closeResponseBody(res)
+
+		mock.AssertExpectationsForObjects(t, rc)
 	})
 }
 
@@ -220,9 +221,9 @@ func TestBuildURL(T *testing.T) {
 	T.Parallel()
 
 	T.Run("various urls", func(t *testing.T) {
+		ctx := context.Background()
 		t.Parallel()
 
-		ctx := context.Background()
 		u, _ := url.Parse(exampleURI)
 
 		c, err := NewClient(
@@ -279,9 +280,9 @@ func TestBuildVersionlessURL(T *testing.T) {
 	T.Parallel()
 
 	T.Run("various urls", func(t *testing.T) {
+		ctx := context.Background()
 		t.Parallel()
 
-		ctx := context.Background()
 		u, _ := url.Parse(exampleURI)
 
 		c, err := NewClient(
@@ -444,8 +445,8 @@ func TestV1Client_buildDataRequest(T *testing.T) {
 	exampleData := &testingType{Name: "whatever"}
 
 	T.Run("happy path", func(t *testing.T) {
-		ts := httptest.NewTLSServer(nil)
 		ctx := context.Background()
+		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
 		expectedMethod := http.MethodPost
@@ -457,8 +458,8 @@ func TestV1Client_buildDataRequest(T *testing.T) {
 	})
 
 	T.Run("with invalid structure", func(t *testing.T) {
-		ts := httptest.NewTLSServer(nil)
 		ctx := context.Background()
+		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
 		x := &testBreakableStruct{Thing: "stuff"}
@@ -475,6 +476,145 @@ func TestV1Client_buildDataRequest(T *testing.T) {
 		req, err := c.buildDataRequest(ctx, http.MethodPost, c.URL.String(), exampleData)
 
 		require.Nil(t, req)
+		assert.Error(t, err)
+	})
+}
+
+func TestV1Client_executeRequest(T *testing.T) {
+	T.Parallel()
+
+	exampleResponse := &argleBargle{Name: "whatever"}
+
+	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
+		expectedMethod := http.MethodPost
+
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, req.Method, expectedMethod)
+					require.NoError(t, json.NewEncoder(res).Encode(exampleResponse))
+				},
+			),
+		)
+		c := buildTestClient(t, ts)
+
+		req, err := http.NewRequestWithContext(ctx, expectedMethod, ts.URL, nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		err = c.executeRequest(ctx, req, &argleBargle{})
+		assert.NoError(t, err)
+	})
+
+	T.Run("with timeout", func(t *testing.T) {
+		ctx := context.Background()
+		expectedMethod := http.MethodPost
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, req.Method, expectedMethod)
+					time.Sleep(10 * time.Hour)
+				},
+			),
+		)
+		c := buildTestClient(t, ts)
+
+		req, err := http.NewRequestWithContext(ctx, expectedMethod, ts.URL, nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		c.authedClient.Timeout = 500 * time.Millisecond
+		err = c.executeRequest(ctx, req, &argleBargle{})
+		assert.Error(t, err)
+	})
+
+	T.Run("with 401", func(t *testing.T) {
+		ctx := context.Background()
+		expectedMethod := http.MethodPost
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, req.Method, expectedMethod)
+					res.WriteHeader(http.StatusUnauthorized)
+				},
+			),
+		)
+		c := buildTestClient(t, ts)
+
+		req, err := http.NewRequestWithContext(ctx, expectedMethod, ts.URL, nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		assert.Equal(t, ErrUnauthorized, c.executeRequest(ctx, req, &argleBargle{}))
+	})
+
+	T.Run("with 404", func(t *testing.T) {
+		ctx := context.Background()
+		expectedMethod := http.MethodPost
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, req.Method, expectedMethod)
+					res.WriteHeader(http.StatusNotFound)
+				},
+			),
+		)
+		c := buildTestClient(t, ts)
+
+		req, err := http.NewRequestWithContext(ctx, expectedMethod, ts.URL, nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		assert.Equal(t, ErrNotFound, c.executeRequest(ctx, req, &argleBargle{}))
+	})
+
+	T.Run("with unreadable response", func(t *testing.T) {
+		ctx := context.Background()
+		expectedMethod := http.MethodPost
+
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, req.Method, expectedMethod)
+					require.NoError(t, json.NewEncoder(res).Encode(exampleResponse))
+				},
+			),
+		)
+		c := buildTestClient(t, ts)
+
+		req, err := http.NewRequestWithContext(ctx, expectedMethod, ts.URL, nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		assert.Error(t, c.executeRequest(ctx, req, argleBargle{}))
+	})
+}
+
+func TestV1Client_executeRawRequest(T *testing.T) {
+	T.Parallel()
+
+	T.Run("with error", func(t *testing.T) {
+		ctx := context.Background()
+		expectedMethod := http.MethodPost
+
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, req.Method, expectedMethod)
+					time.Sleep(10 * time.Hour)
+				},
+			),
+		)
+
+		c := buildTestClient(t, ts)
+
+		req, err := http.NewRequestWithContext(ctx, expectedMethod, ts.URL, nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		res, err := c.executeRawRequest(ctx, &http.Client{Timeout: time.Second}, req)
+		assert.Nil(t, res)
 		assert.Error(t, err)
 	})
 }
@@ -610,142 +750,7 @@ func TestV1Client_retrieve(T *testing.T) {
 	})
 }
 
-func TestV1Client_executeRequest(T *testing.T) {
-	T.Parallel()
-
-	exampleResponse := &argleBargle{Name: "whatever"}
-
-	T.Run("happy path", func(t *testing.T) {
-		ctx := context.Background()
-		expectedMethod := http.MethodPost
-
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.Method, expectedMethod)
-					require.NoError(t, json.NewEncoder(res).Encode(exampleResponse))
-				},
-			),
-		)
-		c := buildTestClient(t, ts)
-
-		req, err := http.NewRequestWithContext(ctx, expectedMethod, ts.URL, nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		err = c.executeRequest(ctx, req, &argleBargle{})
-		assert.NoError(t, err)
-	})
-
-	T.Run("with timeout", func(t *testing.T) {
-		ctx := context.Background()
-		expectedMethod := http.MethodPost
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.Method, expectedMethod)
-					time.Sleep(10 * time.Hour)
-				},
-			),
-		)
-		c := buildTestClient(t, ts)
-
-		req, err := http.NewRequestWithContext(ctx, expectedMethod, ts.URL, nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		c.authedClient.Timeout = 500 * time.Millisecond
-		err = c.executeRequest(ctx, req, &argleBargle{})
-		assert.Error(t, err)
-	})
-
-	T.Run("with error", func(t *testing.T) {
-		ctx := context.Background()
-		expectedMethod := http.MethodPost
-
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.Method, expectedMethod)
-					time.Sleep(10 * time.Hour)
-				},
-			),
-		)
-
-		c := buildTestClient(t, ts)
-
-		req, err := http.NewRequestWithContext(ctx, expectedMethod, ts.URL, nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		res, err := c.executeRawRequest(ctx, &http.Client{Timeout: time.Second}, req)
-		assert.Nil(t, res)
-		assert.Error(t, err)
-	})
-
-	T.Run("with 401", func(t *testing.T) {
-		ctx := context.Background()
-		expectedMethod := http.MethodPost
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.Method, expectedMethod)
-					res.WriteHeader(http.StatusUnauthorized)
-				},
-			),
-		)
-		c := buildTestClient(t, ts)
-
-		req, err := http.NewRequestWithContext(ctx, expectedMethod, ts.URL, nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		assert.Equal(t, ErrUnauthorized, c.executeRequest(ctx, req, &argleBargle{}))
-	})
-
-	T.Run("with 404", func(t *testing.T) {
-		ctx := context.Background()
-		expectedMethod := http.MethodPost
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.Method, expectedMethod)
-					res.WriteHeader(http.StatusNotFound)
-				},
-			),
-		)
-		c := buildTestClient(t, ts)
-
-		req, err := http.NewRequestWithContext(ctx, expectedMethod, ts.URL, nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		assert.Equal(t, ErrNotFound, c.executeRequest(ctx, req, &argleBargle{}))
-	})
-
-	T.Run("with unreadable response", func(t *testing.T) {
-		ctx := context.Background()
-		expectedMethod := http.MethodPost
-
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.Method, expectedMethod)
-					require.NoError(t, json.NewEncoder(res).Encode(exampleResponse))
-				},
-			),
-		)
-		c := buildTestClient(t, ts)
-
-		req, err := http.NewRequestWithContext(ctx, expectedMethod, ts.URL, nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		assert.Error(t, c.executeRequest(ctx, req, argleBargle{}))
-	})
-}
-
-func TestV1Client_executeUnathenticatedDataRequest(T *testing.T) {
+func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 	T.Parallel()
 
 	exampleResponse := &argleBargle{Name: "whatever"}
@@ -867,6 +872,7 @@ func TestV1Client_executeUnathenticatedDataRequest(T *testing.T) {
 	T.Run("with nil as output", func(t *testing.T) {
 		ctx := context.Background()
 		expectedMethod := http.MethodPost
+
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 

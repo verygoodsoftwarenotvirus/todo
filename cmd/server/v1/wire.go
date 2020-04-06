@@ -6,10 +6,10 @@ import (
 	"context"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	auth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
-	metrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 	server "gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"

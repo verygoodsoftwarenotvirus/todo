@@ -27,7 +27,7 @@ func TestClient_GetOAuth2Client(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleOAuth2Client, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error returned from querier", func(t *testing.T) {
@@ -42,7 +42,7 @@ func TestClient_GetOAuth2Client(T *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, expected, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -60,7 +60,7 @@ func TestClient_GetOAuth2ClientByClientID(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleOAuth2Client, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error returned from querier", func(t *testing.T) {
@@ -74,7 +74,7 @@ func TestClient_GetOAuth2ClientByClientID(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -92,7 +92,7 @@ func TestClient_GetAllOAuth2ClientCount(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleCount, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -113,7 +113,7 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleOAuth2ClientList, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with nil filter", func(t *testing.T) {
@@ -128,7 +128,7 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleOAuth2ClientList, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error returned from querier", func(t *testing.T) {
@@ -143,7 +143,7 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, exampleOAuth2ClientList, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -163,7 +163,7 @@ func TestClient_CreateOAuth2Client(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleOAuth2Client, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error returned from querier", func(t *testing.T) {
@@ -180,7 +180,7 @@ func TestClient_CreateOAuth2Client(T *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, expected, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -199,7 +199,7 @@ func TestClient_UpdateOAuth2Client(T *testing.T) {
 		assert.NoError(t, actual)
 		assert.Equal(t, expected, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -218,7 +218,7 @@ func TestClient_ArchiveOAuth2Client(T *testing.T) {
 		assert.NoError(t, actual)
 		assert.Equal(t, expected, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error returned from querier", func(t *testing.T) {
@@ -233,6 +233,6 @@ func TestClient_ArchiveOAuth2Client(T *testing.T) {
 		assert.Error(t, actual)
 		assert.Equal(t, expected, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }

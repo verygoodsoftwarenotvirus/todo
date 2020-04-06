@@ -25,7 +25,7 @@ func TestClient_ItemExists(T *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -43,7 +43,7 @@ func TestClient_GetItem(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItem, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -61,7 +61,7 @@ func TestClient_GetAllItemsCount(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleCount, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -82,7 +82,7 @@ func TestClient_GetItems(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItemList, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with nil filter", func(t *testing.T) {
@@ -97,7 +97,7 @@ func TestClient_GetItems(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItemList, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -116,7 +116,7 @@ func TestClient_CreateItem(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItem, actual)
 
-		mockDB.AssertExpectations(t)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -126,13 +126,15 @@ func TestClient_UpdateItem(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		ctx := context.Background()
 		exampleItem := fakemodels.BuildFakeItem()
+		c, mockDB := buildTestClient()
 		var expected error
 
-		c, mockDB := buildTestClient()
 		mockDB.ItemDataManager.On("UpdateItem", mock.Anything, exampleItem).Return(expected)
 
 		err := c.UpdateItem(ctx, exampleItem)
 		assert.NoError(t, err)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -149,5 +151,7 @@ func TestClient_ArchiveItem(T *testing.T) {
 
 		err := c.ArchiveItem(ctx, exampleItem.ID, exampleItem.BelongsToUser)
 		assert.NoError(t, err)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }

@@ -1,7 +1,6 @@
 package webhooks
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -19,9 +18,10 @@ const (
 	// UpdateMiddlewareCtxKey is a string alias we can use for referring to webhook input data in contexts
 	UpdateMiddlewareCtxKey models.ContextKey = "webhook_update_input"
 
-	counterName metrics.CounterName = "webhooks"
-	topicName   string              = "webhooks"
-	serviceName string              = "webhooks_service"
+	counterName        metrics.CounterName = "webhooks"
+	counterDescription string              = "the number of webhooks managed by the webhooks service"
+	topicName          string              = "webhooks"
+	serviceName        string              = "webhooks_service"
 )
 
 var (
@@ -55,7 +55,6 @@ type (
 
 // ProvideWebhooksService builds a new WebhooksService
 func ProvideWebhooksService(
-	ctx context.Context,
 	logger logging.Logger,
 	webhookDatabase models.WebhookDataManager,
 	userIDFetcher UserIDFetcher,
@@ -64,7 +63,7 @@ func ProvideWebhooksService(
 	webhookCounterProvider metrics.UnitCounterProvider,
 	em *newsman.Newsman,
 ) (*Service, error) {
-	webhookCounter, err := webhookCounterProvider(counterName, "the number of webhooks managed by the webhooks service")
+	webhookCounter, err := webhookCounterProvider(counterName, counterDescription)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing counter: %w", err)
 	}
@@ -78,12 +77,6 @@ func ProvideWebhooksService(
 		webhookIDFetcher: webhookIDFetcher,
 		eventManager:     em,
 	}
-
-	webhookCount, err := svc.webhookDatabase.GetAllWebhooksCount(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("setting current webhook count: %w", err)
-	}
-	svc.webhookCounter.IncrementBy(ctx, webhookCount)
 
 	return svc, nil
 }

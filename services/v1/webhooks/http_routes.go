@@ -11,7 +11,6 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
-	"go.opencensus.io/trace"
 )
 
 const (
@@ -22,7 +21,7 @@ const (
 // ListHandler is our list route
 func (s *Service) ListHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "ListHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "ListHandler")
 		defer span.End()
 
 		// figure out how specific we need to be
@@ -79,7 +78,7 @@ func validateWebhook(input *models.WebhookCreationInput) error {
 // CreateHandler is our webhook creation route
 func (s *Service) CreateHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "CreateHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "CreateHandler")
 		defer span.End()
 
 		// figure out who this is all for
@@ -134,7 +133,7 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 // ReadHandler returns a GET handler that returns an webhook
 func (s *Service) ReadHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "ReadHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "ReadHandler")
 		defer span.End()
 
 		// figure out what this is for and who it belongs to
@@ -171,7 +170,7 @@ func (s *Service) ReadHandler() http.HandlerFunc {
 // UpdateHandler returns a handler that updates an webhook
 func (s *Service) UpdateHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "UpdateHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "UpdateHandler")
 		defer span.End()
 
 		// figure out what this is for and who it belongs to
@@ -233,7 +232,7 @@ func (s *Service) UpdateHandler() http.HandlerFunc {
 // ArchiveHandler returns a handler that archives an webhook
 func (s *Service) ArchiveHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "delete_route")
+		ctx, span := tracing.StartSpan(req.Context(), "delete_route")
 		defer span.End()
 
 		// figure out what this is for and who it belongs to

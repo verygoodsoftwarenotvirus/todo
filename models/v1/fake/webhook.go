@@ -1,4 +1,4 @@
-package fake
+package fakemodels
 
 import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -14,9 +14,9 @@ func BuildFakeWebhook() *models.Webhook {
 		ContentType:   fake.MimeType(),
 		URL:           fake.URL(),
 		Method:        fake.HTTPMethod(),
-		Events:        []string{"things"},
-		DataTypes:     []string{"things"},
-		Topics:        []string{"things"},
+		Events:        []string{fake.Word()},
+		DataTypes:     []string{fake.Word()},
+		Topics:        []string{fake.Word()},
 		CreatedOn:     uint64(uint32(fake.Date().Unix())),
 		ArchivedOn:    nil,
 		BelongsToUser: fake.Uint64(),

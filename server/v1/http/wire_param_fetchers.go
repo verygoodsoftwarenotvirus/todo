@@ -5,11 +5,11 @@ import (
 	"strconv"
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
+	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
+	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
+	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
+	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
 
 	"github.com/go-chi/chi"
 	"github.com/google/wire"
@@ -29,37 +29,37 @@ var (
 )
 
 // ProvideItemServiceUserIDFetcher provides a UserIDFetcher
-func ProvideItemServiceUserIDFetcher() items.UserIDFetcher {
+func ProvideItemServiceUserIDFetcher() itemsservice.UserIDFetcher {
 	return UserIDFetcher
 }
 
 // ProvideItemIDFetcher provides an ItemIDFetcher
-func ProvideItemIDFetcher(logger logging.Logger) items.ItemIDFetcher {
+func ProvideItemIDFetcher(logger logging.Logger) itemsservice.ItemIDFetcher {
 	return buildChiItemIDFetcher(logger)
 }
 
 // ProvideUsernameFetcher provides a UsernameFetcher
-func ProvideUsernameFetcher(logger logging.Logger) users.UserIDFetcher {
+func ProvideUsernameFetcher(logger logging.Logger) usersservice.UserIDFetcher {
 	return buildChiUserIDFetcher(logger)
 }
 
 // ProvideAuthUserIDFetcher provides a UsernameFetcher
-func ProvideAuthUserIDFetcher() auth.UserIDFetcher {
+func ProvideAuthUserIDFetcher() authservice.UserIDFetcher {
 	return UserIDFetcher
 }
 
 // ProvideWebhooksUserIDFetcher provides a UserIDFetcher
-func ProvideWebhooksUserIDFetcher() webhooks.UserIDFetcher {
+func ProvideWebhooksUserIDFetcher() webhooksservice.UserIDFetcher {
 	return UserIDFetcher
 }
 
 // ProvideWebhookIDFetcher provides an WebhookIDFetcher
-func ProvideWebhookIDFetcher(logger logging.Logger) webhooks.WebhookIDFetcher {
+func ProvideWebhookIDFetcher(logger logging.Logger) webhooksservice.WebhookIDFetcher {
 	return buildChiWebhookIDFetcher(logger)
 }
 
 // ProvideOAuth2ServiceClientIDFetcher provides a ClientIDFetcher
-func ProvideOAuth2ServiceClientIDFetcher(logger logging.Logger) oauth2clients.ClientIDFetcher {
+func ProvideOAuth2ServiceClientIDFetcher(logger logging.Logger) oauth2clientsservice.ClientIDFetcher {
 	return buildChiOAuth2ClientIDFetcher(logger)
 }
 
@@ -72,9 +72,9 @@ func UserIDFetcher(req *http.Request) uint64 {
 }
 
 // buildChiUserIDFetcher builds a function that fetches a Username from a request routed by chi.
-func buildChiUserIDFetcher(logger logging.Logger) users.UserIDFetcher {
+func buildChiUserIDFetcher(logger logging.Logger) usersservice.UserIDFetcher {
 	return func(req *http.Request) uint64 {
-		u, err := strconv.ParseUint(chi.URLParam(req, users.URIParamKey), 10, 64)
+		u, err := strconv.ParseUint(chi.URLParam(req, usersservice.URIParamKey), 10, 64)
 		if err != nil {
 			logger.Error(err, "fetching user ID from request")
 		}
@@ -87,7 +87,7 @@ func buildChiItemIDFetcher(logger logging.Logger) func(req *http.Request) uint64
 	return func(req *http.Request) uint64 {
 		// we can generally disregard this error only because we should be able to validate
 		// that the string only contains numbers via chi's regex url param feature.
-		u, err := strconv.ParseUint(chi.URLParam(req, items.URIParamKey), 10, 64)
+		u, err := strconv.ParseUint(chi.URLParam(req, itemsservice.URIParamKey), 10, 64)
 		if err != nil {
 			logger.Error(err, "fetching ItemID from request")
 		}
@@ -100,7 +100,7 @@ func buildChiWebhookIDFetcher(logger logging.Logger) func(req *http.Request) uin
 	return func(req *http.Request) uint64 {
 		// we can generally disregard this error only because we should be able to validate
 		// that the string only contains numbers via chi's regex url param feature.
-		u, err := strconv.ParseUint(chi.URLParam(req, webhooks.URIParamKey), 10, 64)
+		u, err := strconv.ParseUint(chi.URLParam(req, webhooksservice.URIParamKey), 10, 64)
 		if err != nil {
 			logger.Error(err, "fetching WebhookID from request")
 		}
@@ -113,7 +113,7 @@ func buildChiOAuth2ClientIDFetcher(logger logging.Logger) func(req *http.Request
 	return func(req *http.Request) uint64 {
 		// we can generally disregard this error only because we should be able to validate
 		// that the string only contains numbers via chi's regex url param feature.
-		u, err := strconv.ParseUint(chi.URLParam(req, oauth2clients.URIParamKey), 10, 64)
+		u, err := strconv.ParseUint(chi.URLParam(req, oauth2clientsservice.URIParamKey), 10, 64)
 		if err != nil {
 			logger.Error(err, "fetching OAuth2ClientID from request")
 		}

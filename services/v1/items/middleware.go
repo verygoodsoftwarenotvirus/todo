@@ -4,16 +4,15 @@ import (
 	"context"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"go.opencensus.io/trace"
 )
 
 // CreationInputMiddleware is a middleware for fetching, parsing, and attaching an ItemInput struct from a request
 func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(models.ItemCreationInput)
-		ctx, span := trace.StartSpan(req.Context(), "CreationInputMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "CreationInputMiddleware")
 		defer span.End()
 
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
@@ -32,7 +31,7 @@ func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 func (s *Service) UpdateInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(models.ItemUpdateInput)
-		ctx, span := trace.StartSpan(req.Context(), "UpdateInputMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "UpdateInputMiddleware")
 		defer span.End()
 
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {

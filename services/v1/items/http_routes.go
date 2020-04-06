@@ -8,7 +8,6 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
-	"go.opencensus.io/trace"
 )
 
 const (
@@ -19,7 +18,7 @@ const (
 // ListHandler is our list route
 func (s *Service) ListHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "ListHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "ListHandler")
 		defer span.End()
 
 		// ensure query filter
@@ -53,7 +52,7 @@ func (s *Service) ListHandler() http.HandlerFunc {
 // CreateHandler is our item creation route
 func (s *Service) CreateHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "CreateHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "CreateHandler")
 		defer span.End()
 
 		// determine user ID
@@ -99,7 +98,7 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 // ExistenceHandler returns a HEAD handler that returns 200 if an item exists, 404 otherwise
 func (s *Service) ExistenceHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "ExistenceHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "ExistenceHandler")
 		defer span.End()
 
 		// determine relevant information
@@ -131,7 +130,7 @@ func (s *Service) ExistenceHandler() http.HandlerFunc {
 // ReadHandler returns a GET handler that returns an item
 func (s *Service) ReadHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "ReadHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "ReadHandler")
 		defer span.End()
 
 		// determine relevant information
@@ -165,7 +164,7 @@ func (s *Service) ReadHandler() http.HandlerFunc {
 // UpdateHandler returns a handler that updates an item
 func (s *Service) UpdateHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "UpdateHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "UpdateHandler")
 		defer span.End()
 
 		// check for parsed input attached to request context
@@ -224,7 +223,7 @@ func (s *Service) UpdateHandler() http.HandlerFunc {
 // ArchiveHandler returns a handler that archives an item
 func (s *Service) ArchiveHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := trace.StartSpan(req.Context(), "ArchiveHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "ArchiveHandler")
 		defer span.End()
 
 		// determine relevant information

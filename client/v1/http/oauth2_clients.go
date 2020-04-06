@@ -7,9 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"go.opencensus.io/trace"
 )
 
 const (
@@ -18,7 +17,7 @@ const (
 
 // BuildGetOAuth2ClientRequest builds an HTTP request for fetching an OAuth2 client
 func (c *V1Client) BuildGetOAuth2ClientRequest(ctx context.Context, id uint64) (*http.Request, error) {
-	ctx, span := trace.StartSpan(ctx, "BuildGetOAuth2ClientRequest")
+	ctx, span := tracing.StartSpan(ctx, "BuildGetOAuth2ClientRequest")
 	defer span.End()
 
 	uri := c.BuildURL(nil, oauth2ClientsBasePath, strconv.FormatUint(id, 10))
@@ -28,7 +27,7 @@ func (c *V1Client) BuildGetOAuth2ClientRequest(ctx context.Context, id uint64) (
 
 // GetOAuth2Client gets an OAuth2 client
 func (c *V1Client) GetOAuth2Client(ctx context.Context, id uint64) (oauth2Client *models.OAuth2Client, err error) {
-	ctx, span := trace.StartSpan(ctx, "GetOAuth2Client")
+	ctx, span := tracing.StartSpan(ctx, "GetOAuth2Client")
 	defer span.End()
 
 	req, err := c.BuildGetOAuth2ClientRequest(ctx, id)
@@ -42,7 +41,7 @@ func (c *V1Client) GetOAuth2Client(ctx context.Context, id uint64) (oauth2Client
 
 // BuildGetOAuth2ClientsRequest builds an HTTP request for fetching a list of OAuth2 clients
 func (c *V1Client) BuildGetOAuth2ClientsRequest(ctx context.Context, filter *models.QueryFilter) (*http.Request, error) {
-	ctx, span := trace.StartSpan(ctx, "BuildGetOAuth2ClientsRequest")
+	ctx, span := tracing.StartSpan(ctx, "BuildGetOAuth2ClientsRequest")
 	defer span.End()
 
 	uri := c.BuildURL(filter.ToValues(), oauth2ClientsBasePath)
@@ -52,7 +51,7 @@ func (c *V1Client) BuildGetOAuth2ClientsRequest(ctx context.Context, filter *mod
 
 // GetOAuth2Clients gets a list of OAuth2 clients
 func (c *V1Client) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
-	ctx, span := trace.StartSpan(ctx, "GetOAuth2Clients")
+	ctx, span := tracing.StartSpan(ctx, "GetOAuth2Clients")
 	defer span.End()
 
 	req, err := c.BuildGetOAuth2ClientsRequest(ctx, filter)
@@ -71,7 +70,7 @@ func (c *V1Client) BuildCreateOAuth2ClientRequest(
 	cookie *http.Cookie,
 	body *models.OAuth2ClientCreationInput,
 ) (*http.Request, error) {
-	ctx, span := trace.StartSpan(ctx, "BuildCreateOAuth2ClientRequest")
+	ctx, span := tracing.StartSpan(ctx, "BuildCreateOAuth2ClientRequest")
 	defer span.End()
 
 	uri := c.buildVersionlessURL(nil, "oauth2", "client")
@@ -92,7 +91,7 @@ func (c *V1Client) CreateOAuth2Client(
 	cookie *http.Cookie,
 	input *models.OAuth2ClientCreationInput,
 ) (*models.OAuth2Client, error) {
-	ctx, span := trace.StartSpan(ctx, "CreateOAuth2Client")
+	ctx, span := tracing.StartSpan(ctx, "CreateOAuth2Client")
 	defer span.End()
 
 	var oauth2Client *models.OAuth2Client
@@ -114,7 +113,7 @@ func (c *V1Client) CreateOAuth2Client(
 
 // BuildArchiveOAuth2ClientRequest builds an HTTP request for archiving an oauth2 client
 func (c *V1Client) BuildArchiveOAuth2ClientRequest(ctx context.Context, id uint64) (*http.Request, error) {
-	ctx, span := trace.StartSpan(ctx, "BuildArchiveOAuth2ClientRequest")
+	ctx, span := tracing.StartSpan(ctx, "BuildArchiveOAuth2ClientRequest")
 	defer span.End()
 
 	uri := c.BuildURL(nil, oauth2ClientsBasePath, strconv.FormatUint(id, 10))
@@ -124,7 +123,7 @@ func (c *V1Client) BuildArchiveOAuth2ClientRequest(ctx context.Context, id uint6
 
 // ArchiveOAuth2Client archives an OAuth2 client
 func (c *V1Client) ArchiveOAuth2Client(ctx context.Context, id uint64) error {
-	ctx, span := trace.StartSpan(ctx, "ArchiveOAuth2Client")
+	ctx, span := tracing.StartSpan(ctx, "ArchiveOAuth2Client")
 	defer span.End()
 
 	req, err := c.BuildArchiveOAuth2ClientRequest(ctx, id)

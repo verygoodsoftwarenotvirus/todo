@@ -6,9 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"go.opencensus.io/trace"
 )
 
 const (
@@ -17,7 +16,7 @@ const (
 
 // BuildGetWebhookRequest builds an HTTP request for fetching a webhook
 func (c *V1Client) BuildGetWebhookRequest(ctx context.Context, id uint64) (*http.Request, error) {
-	ctx, span := trace.StartSpan(ctx, "BuildGetWebhookRequest")
+	ctx, span := tracing.StartSpan(ctx, "BuildGetWebhookRequest")
 	defer span.End()
 
 	uri := c.BuildURL(nil, webhooksBasePath, strconv.FormatUint(id, 10))
@@ -27,7 +26,7 @@ func (c *V1Client) BuildGetWebhookRequest(ctx context.Context, id uint64) (*http
 
 // GetWebhook retrieves a webhook
 func (c *V1Client) GetWebhook(ctx context.Context, id uint64) (webhook *models.Webhook, err error) {
-	ctx, span := trace.StartSpan(ctx, "GetWebhook")
+	ctx, span := tracing.StartSpan(ctx, "GetWebhook")
 	defer span.End()
 
 	req, err := c.BuildGetWebhookRequest(ctx, id)
@@ -41,7 +40,7 @@ func (c *V1Client) GetWebhook(ctx context.Context, id uint64) (webhook *models.W
 
 // BuildGetWebhooksRequest builds an HTTP request for fetching webhooks
 func (c *V1Client) BuildGetWebhooksRequest(ctx context.Context, filter *models.QueryFilter) (*http.Request, error) {
-	ctx, span := trace.StartSpan(ctx, "BuildGetWebhooksRequest")
+	ctx, span := tracing.StartSpan(ctx, "BuildGetWebhooksRequest")
 	defer span.End()
 
 	uri := c.BuildURL(filter.ToValues(), webhooksBasePath)
@@ -51,7 +50,7 @@ func (c *V1Client) BuildGetWebhooksRequest(ctx context.Context, filter *models.Q
 
 // GetWebhooks gets a list of webhooks
 func (c *V1Client) GetWebhooks(ctx context.Context, filter *models.QueryFilter) (webhooks *models.WebhookList, err error) {
-	ctx, span := trace.StartSpan(ctx, "GetWebhooks")
+	ctx, span := tracing.StartSpan(ctx, "GetWebhooks")
 	defer span.End()
 
 	req, err := c.BuildGetWebhooksRequest(ctx, filter)
@@ -65,7 +64,7 @@ func (c *V1Client) GetWebhooks(ctx context.Context, filter *models.QueryFilter) 
 
 // BuildCreateWebhookRequest builds an HTTP request for creating a webhook
 func (c *V1Client) BuildCreateWebhookRequest(ctx context.Context, body *models.WebhookCreationInput) (*http.Request, error) {
-	ctx, span := trace.StartSpan(ctx, "BuildCreateWebhookRequest")
+	ctx, span := tracing.StartSpan(ctx, "BuildCreateWebhookRequest")
 	defer span.End()
 
 	uri := c.BuildURL(nil, webhooksBasePath)
@@ -75,7 +74,7 @@ func (c *V1Client) BuildCreateWebhookRequest(ctx context.Context, body *models.W
 
 // CreateWebhook creates a webhook
 func (c *V1Client) CreateWebhook(ctx context.Context, input *models.WebhookCreationInput) (webhook *models.Webhook, err error) {
-	ctx, span := trace.StartSpan(ctx, "CreateWebhook")
+	ctx, span := tracing.StartSpan(ctx, "CreateWebhook")
 	defer span.End()
 
 	req, err := c.BuildCreateWebhookRequest(ctx, input)
@@ -89,7 +88,7 @@ func (c *V1Client) CreateWebhook(ctx context.Context, input *models.WebhookCreat
 
 // BuildUpdateWebhookRequest builds an HTTP request for updating a webhook
 func (c *V1Client) BuildUpdateWebhookRequest(ctx context.Context, updated *models.Webhook) (*http.Request, error) {
-	ctx, span := trace.StartSpan(ctx, "BuildUpdateWebhookRequest")
+	ctx, span := tracing.StartSpan(ctx, "BuildUpdateWebhookRequest")
 	defer span.End()
 
 	uri := c.BuildURL(nil, webhooksBasePath, strconv.FormatUint(updated.ID, 10))
@@ -99,7 +98,7 @@ func (c *V1Client) BuildUpdateWebhookRequest(ctx context.Context, updated *model
 
 // UpdateWebhook updates a webhook
 func (c *V1Client) UpdateWebhook(ctx context.Context, updated *models.Webhook) error {
-	ctx, span := trace.StartSpan(ctx, "UpdateWebhook")
+	ctx, span := tracing.StartSpan(ctx, "UpdateWebhook")
 	defer span.End()
 
 	req, err := c.BuildUpdateWebhookRequest(ctx, updated)
@@ -112,7 +111,7 @@ func (c *V1Client) UpdateWebhook(ctx context.Context, updated *models.Webhook) e
 
 // BuildArchiveWebhookRequest builds an HTTP request for updating a webhook
 func (c *V1Client) BuildArchiveWebhookRequest(ctx context.Context, id uint64) (*http.Request, error) {
-	ctx, span := trace.StartSpan(ctx, "BuildArchiveWebhookRequest")
+	ctx, span := tracing.StartSpan(ctx, "BuildArchiveWebhookRequest")
 	defer span.End()
 
 	uri := c.BuildURL(nil, webhooksBasePath, strconv.FormatUint(id, 10))
@@ -122,7 +121,7 @@ func (c *V1Client) BuildArchiveWebhookRequest(ctx context.Context, id uint64) (*
 
 // ArchiveWebhook archives a webhook
 func (c *V1Client) ArchiveWebhook(ctx context.Context, id uint64) error {
-	ctx, span := trace.StartSpan(ctx, "ArchiveWebhook")
+	ctx, span := tracing.StartSpan(ctx, "ArchiveWebhook")
 	defer span.End()
 
 	req, err := c.BuildArchiveWebhookRequest(ctx, id)

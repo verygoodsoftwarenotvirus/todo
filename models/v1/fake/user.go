@@ -1,4 +1,4 @@
-package fake
+package fakemodels
 
 import (
 	"fmt"
@@ -13,9 +13,9 @@ func BuildFakeUser() *models.User {
 	return &models.User{
 		ID:       uint64(fake.Uint32()),
 		Username: fake.Username(),
-		//HashedPassword: "",
-		//Salt:            []byte(fake.Word()),
-		//TwoFactorSecret: "",
+		// HashedPassword: "",
+		// Salt:           []byte(fake.Word()),
+		// TwoFactorSecret: "",
 		IsAdmin:   false,
 		CreatedOn: uint64(uint32(fake.Date().Unix())),
 	}

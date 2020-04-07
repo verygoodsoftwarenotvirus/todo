@@ -44,7 +44,12 @@ func ensureArgCountMatchesQuery(t *testing.T, query string, args []interface{}) 
 	t.Helper()
 
 	queryArgCount := len(queryArgRegexp.FindAllString(query, -1))
-	assert.Equal(t, queryArgCount, len(args))
+
+	if len(args) > 0 {
+		assert.Equal(t, queryArgCount, len(args))
+	} else {
+		assert.Zero(t, queryArgCount)
+	}
 }
 
 func TestProvidePostgres(T *testing.T) {

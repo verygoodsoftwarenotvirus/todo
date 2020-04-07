@@ -271,7 +271,7 @@ func (p *Postgres) buildGetOAuth2ClientsQuery(userID uint64, filter *models.Quer
 		GroupBy(fmt.Sprintf("%s.id", oauth2ClientsTableName))
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, oauth2ClientsTableName)
 	}
 
 	query, args, err = builder.ToSql()

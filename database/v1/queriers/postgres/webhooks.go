@@ -239,7 +239,7 @@ func (p *Postgres) buildGetWebhooksQuery(userID uint64, filter *models.QueryFilt
 		GroupBy(fmt.Sprintf("%s.id", webhooksTableName))
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, webhooksTableName)
 	}
 
 	query, args, err = builder.ToSql()

@@ -137,7 +137,7 @@ func (m *MariaDB) buildGetItemCountQuery(userID uint64, filter *models.QueryFilt
 		})
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, itemsTableName)
 	}
 
 	query, args, err = builder.ToSql()
@@ -197,7 +197,7 @@ func (m *MariaDB) buildGetItemsQuery(userID uint64, filter *models.QueryFilter) 
 		})
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, itemsTableName)
 	}
 
 	query, args, err = builder.ToSql()

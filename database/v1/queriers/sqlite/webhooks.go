@@ -144,7 +144,7 @@ func (s *Sqlite) buildGetWebhookCountQuery(userID uint64, filter *models.QueryFi
 		})
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, "")
 	}
 
 	query, args, err = builder.ToSql()
@@ -279,7 +279,7 @@ func (s *Sqlite) buildGetWebhooksQuery(userID uint64, filter *models.QueryFilter
 		})
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, "")
 	}
 
 	query, args, err = builder.ToSql()

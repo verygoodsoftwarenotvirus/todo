@@ -184,7 +184,7 @@ func (p *Postgres) buildGetItemsQuery(userID uint64, filter *models.QueryFilter)
 		GroupBy(fmt.Sprintf("%s.id", itemsTableName))
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, itemsTableName)
 	}
 
 	query, args, err = builder.ToSql()

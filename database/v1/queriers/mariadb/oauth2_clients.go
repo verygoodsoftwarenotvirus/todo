@@ -221,7 +221,7 @@ func (m *MariaDB) buildGetOAuth2ClientCountQuery(userID uint64, filter *models.Q
 		})
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, oauth2ClientsTableName)
 	}
 
 	query, args, err = builder.ToSql()
@@ -283,7 +283,7 @@ func (m *MariaDB) buildGetOAuth2ClientsQuery(userID uint64, filter *models.Query
 		})
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, oauth2ClientsTableName)
 	}
 
 	query, args, err = builder.ToSql()

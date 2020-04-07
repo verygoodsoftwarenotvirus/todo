@@ -144,7 +144,7 @@ func (m *MariaDB) buildGetWebhookCountQuery(userID uint64, filter *models.QueryF
 		})
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, webhooksTableName)
 	}
 
 	query, args, err = builder.ToSql()
@@ -279,7 +279,7 @@ func (m *MariaDB) buildGetWebhooksQuery(userID uint64, filter *models.QueryFilte
 		})
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, webhooksTableName)
 	}
 
 	query, args, err = builder.ToSql()

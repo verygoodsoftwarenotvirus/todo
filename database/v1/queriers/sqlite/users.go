@@ -150,7 +150,7 @@ func (s *Sqlite) buildGetUserCountQuery(filter *models.QueryFilter) (query strin
 		})
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, "")
 	}
 	query, args, err = builder.ToSql()
 
@@ -186,7 +186,7 @@ func (s *Sqlite) buildGetUsersQuery(filter *models.QueryFilter) (query string, a
 		})
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, "")
 	}
 
 	query, args, err = builder.ToSql()

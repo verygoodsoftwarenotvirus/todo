@@ -83,10 +83,10 @@ func TestPostgres_ItemExists(T *testing.T) {
 	expectedQuery := "SELECT EXISTS ( SELECT items.id FROM items WHERE items.belongs_to_user = $1 AND items.id = $2 )"
 
 	T.Run("happy path", func(t *testing.T) {
-		p, mockDB := buildTestService(t)
 		ctx := context.Background()
 		exampleItem := fakemodels.BuildFakeItem()
 
+		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(exampleItem.BelongsToUser, exampleItem.ID).
 			WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
@@ -145,6 +145,7 @@ func TestPostgres_GetItem(T *testing.T) {
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
 		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem.BelongsToUser = exampleUser.ID
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -165,9 +166,10 @@ func TestPostgres_buildGetAllItemsCountQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
 
+		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
 		actualQuery := p.buildGetAllItemsCountQuery()
+
 		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
 	})
@@ -177,12 +179,12 @@ func TestPostgres_GetAllItemsCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		p, mockDB := buildTestService(t)
 		ctx := context.Background()
 
-		expectedCount := uint64(123)
 		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
+		expectedCount := uint64(123)
 
+		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
@@ -202,7 +204,7 @@ func TestPostgres_buildGetItemsQuery(T *testing.T) {
 		exampleUser := fakemodels.BuildFakeUser()
 		filter := fakemodels.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user, COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 AND created_on > $2 AND created_on < $3 AND updated_on > $4 AND updated_on < $5 GROUP BY items.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user, COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 AND items.created_on > $2 AND items.created_on < $3 AND items.updated_on > $4 AND items.updated_on < $5 GROUP BY items.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,
@@ -225,8 +227,8 @@ func TestPostgres_GetItems(T *testing.T) {
 	expectedListQuery := "SELECT items.id, items.name, items.details, items.created_on, items.updated_on, items.archived_on, items.belongs_to_user, COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 GROUP BY items.id LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
-		p, mockDB := buildTestService(t)
 		ctx := context.Background()
+		p, mockDB := buildTestService(t)
 		filter := models.DefaultQueryFilter()
 
 		exampleItemList := fakemodels.BuildFakeItemList()
@@ -249,8 +251,8 @@ func TestPostgres_GetItems(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
-		p, mockDB := buildTestService(t)
 		ctx := context.Background()
+		p, mockDB := buildTestService(t)
 		filter := models.DefaultQueryFilter()
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -266,8 +268,8 @@ func TestPostgres_GetItems(T *testing.T) {
 	})
 
 	T.Run("with error executing read query", func(t *testing.T) {
-		p, mockDB := buildTestService(t)
 		ctx := context.Background()
+		p, mockDB := buildTestService(t)
 		filter := models.DefaultQueryFilter()
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
@@ -282,8 +284,8 @@ func TestPostgres_GetItems(T *testing.T) {
 	})
 
 	T.Run("with error scanning item", func(t *testing.T) {
-		p, mockDB := buildTestService(t)
 		ctx := context.Background()
+		p, mockDB := buildTestService(t)
 		filter := models.DefaultQueryFilter()
 		exampleItem := fakemodels.BuildFakeItem()
 

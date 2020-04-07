@@ -129,7 +129,7 @@ func TestPostgres_buildGetUsersQuery(T *testing.T) {
 		p, _ := buildTestService(t)
 		filter := fakemodels.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.created_on, users.updated_on, users.archived_on, COUNT(users.id) FROM users WHERE users.archived_on IS NULL AND created_on > $1 AND created_on < $2 AND updated_on > $3 AND updated_on < $4 GROUP BY users.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.created_on, users.updated_on, users.archived_on, COUNT(users.id) FROM users WHERE users.archived_on IS NULL AND users.created_on > $1 AND users.created_on < $2 AND users.updated_on > $3 AND users.updated_on < $4 GROUP BY users.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -297,29 +297,21 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetUserCountQuery(T *testing.T) {
+func TestPostgres_buildGetAllUserCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		filter := fakemodels.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL AND created_on > $1 AND created_on < $2 AND updated_on > $3 AND updated_on < $4 LIMIT 20 OFFSET 180"
-		expectedArgs := []interface{}{
-			filter.CreatedAfter,
-			filter.CreatedBefore,
-			filter.UpdatedAfter,
-			filter.UpdatedBefore,
-		}
+		expectedQuery := "SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL"
 
-		actualQuery, actualArgs := p.buildGetUserCountQuery(filter)
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		actualQuery := p.buildGetAllUserCountQuery()
+		ensureArgCountMatchesQuery(t, actualQuery, nil)
 		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
 
-func TestPostgres_GetUserCount(T *testing.T) {
+func TestPostgres_GetAllUserCount(T *testing.T) {
 	T.Parallel()
 
 	expectedQuery := "SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL"

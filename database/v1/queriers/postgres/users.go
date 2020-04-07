@@ -156,9 +156,9 @@ func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*mod
 	return u, nil
 }
 
-// buildGetUserCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
+// buildGetAllUserCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
 // to a given filter's criteria.
-func (p *Postgres) buildGetUserCountQuery(filter *models.QueryFilter) (query string, args []interface{}) {
+func (p *Postgres) buildGetAllUserCountQuery() (query string) {
 	var err error
 
 	builder := p.sqlBuilder.
@@ -168,24 +168,21 @@ func (p *Postgres) buildGetUserCountQuery(filter *models.QueryFilter) (query str
 			fmt.Sprintf("%s.archived_on", usersTableName): nil,
 		})
 
-	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
-	}
-	query, args, err = builder.ToSql()
+	query, _, err = builder.ToSql()
 
 	p.logQueryBuildingError(err)
 
-	return query, args
+	return query
 }
 
 // GetAllUserCount fetches a count of users from the database
 func (p *Postgres) GetAllUserCount(ctx context.Context) (count uint64, err error) {
-	query, args := p.buildGetUserCountQuery(nil)
-	err = p.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	query := p.buildGetAllUserCountQuery()
+	err = p.db.QueryRowContext(ctx, query).Scan(&count)
 	return
 }
 
-// buildGetUserCountQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
+// buildGetAllUserCountQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
 // to a given filter's criteria.
 func (p *Postgres) buildGetUsersQuery(filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
@@ -199,7 +196,7 @@ func (p *Postgres) buildGetUsersQuery(filter *models.QueryFilter) (query string,
 		GroupBy(fmt.Sprintf("%s.id", usersTableName))
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, usersTableName)
 	}
 
 	query, args, err = builder.ToSql()

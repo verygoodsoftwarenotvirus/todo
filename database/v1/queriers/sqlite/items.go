@@ -137,7 +137,7 @@ func (s *Sqlite) buildGetItemCountQuery(userID uint64, filter *models.QueryFilte
 		})
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, "")
 	}
 
 	query, args, err = builder.ToSql()
@@ -195,7 +195,7 @@ func (s *Sqlite) buildGetItemsQuery(userID uint64, filter *models.QueryFilter) (
 		})
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, "")
 	}
 
 	query, args, err = builder.ToSql()

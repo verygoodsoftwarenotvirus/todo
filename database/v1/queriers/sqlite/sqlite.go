@@ -79,7 +79,7 @@ func ProvideSqlite(debug bool, db *sql.DB, logger logging.Logger) database.Datab
 		db:         db,
 		debug:      debug,
 		logger:     logger.WithName(loggerName),
-		sqlBuilder: squirrel.StatementBuilder,
+		sqlBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Question),
 	}
 }
 

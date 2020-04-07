@@ -150,7 +150,7 @@ func (m *MariaDB) buildGetUserCountQuery(filter *models.QueryFilter) (query stri
 		})
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, usersTableName)
 	}
 	query, args, err = builder.ToSql()
 
@@ -186,7 +186,7 @@ func (m *MariaDB) buildGetUsersQuery(filter *models.QueryFilter) (query string, 
 		})
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, usersTableName)
 	}
 
 	query, args, err = builder.ToSql()

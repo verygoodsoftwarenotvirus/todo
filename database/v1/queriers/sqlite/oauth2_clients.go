@@ -221,7 +221,7 @@ func (s *Sqlite) buildGetOAuth2ClientCountQuery(userID uint64, filter *models.Qu
 		})
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, "")
 	}
 
 	query, args, err = builder.ToSql()
@@ -283,7 +283,7 @@ func (s *Sqlite) buildGetOAuth2ClientsQuery(userID uint64, filter *models.QueryF
 		})
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, "")
 	}
 
 	query, args, err = builder.ToSql()

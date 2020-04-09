@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"errors"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -21,8 +22,11 @@ func init() {
 func buildTestService(t *testing.T) (*Sqlite, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	s := ProvideSqlite(true, db, noop.ProvideNoopLogger())
-	return s.(*Sqlite), mock
+
+	s := ProvideSqlite(true, db, noop.ProvideNoopLogger()).(*Sqlite)
+	s.timeTeller = &mockTimeTeller{}
+
+	return s, mock
 }
 
 var (
@@ -38,10 +42,23 @@ var (
 		",", `\,`,
 		"-", `\-`,
 	)
+	queryArgRegexp = regexp.MustCompile(`\?+`)
 )
 
 func formatQueryForSQLMock(query string) string {
 	return sqlMockReplacer.Replace(query)
+}
+
+func ensureArgCountMatchesQuery(t *testing.T, query string, args []interface{}) {
+	t.Helper()
+
+	queryArgCount := len(queryArgRegexp.FindAllString(query, -1))
+
+	if len(args) > 0 {
+		assert.Equal(t, queryArgCount, len(args))
+	} else {
+		assert.Zero(t, queryArgCount)
+	}
 }
 
 func TestProvideSqlite(T *testing.T) {

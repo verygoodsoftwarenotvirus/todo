@@ -6,7 +6,7 @@ import (
 	"errors"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	fake "github.com/brianvoe/gofakeit"

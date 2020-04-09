@@ -135,8 +135,8 @@ func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*models.
 	query, args := p.buildGetItemQuery(itemID, userID)
 	row := p.db.QueryRowContext(ctx, query, args...)
 
-	x, _, err := scanItem(row, false)
-	return x, err
+	item, _, err := scanItem(row, false)
+	return item, err
 }
 
 var (

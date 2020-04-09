@@ -19,6 +19,7 @@ func TestHoldOnForever(T *testing.T) {
 
 func checkValueAndError(t *testing.T, i interface{}, err error) {
 	t.Helper()
+
 	require.NoError(t, err)
 	require.NotNil(t, i)
 }

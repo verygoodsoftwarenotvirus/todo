@@ -49,8 +49,9 @@ var _ database.Database = (*Sqlite)(nil)
 type (
 	// Sqlite is our main Sqlite interaction db
 	Sqlite struct {
-		logger      logging.Logger
 		db          *sql.DB
+		logger      logging.Logger
+		timeTeller  timeTeller
 		sqlBuilder  squirrel.StatementBuilderType
 		migrateOnce sync.Once
 		debug       bool
@@ -58,6 +59,10 @@ type (
 
 	// ConnectionDetails is a string alias for a Sqlite url
 	ConnectionDetails string
+
+	timeTeller interface {
+		Now() uint64
+	}
 
 	// Querier is a subset interface for sql.{DB|Tx|Stmt} objects
 	Querier interface {
@@ -78,6 +83,7 @@ func ProvideSqlite(debug bool, db *sql.DB, logger logging.Logger) database.Datab
 	return &Sqlite{
 		db:         db,
 		debug:      debug,
+		timeTeller: &stdLibTimeTeller{},
 		logger:     logger.WithName(loggerName),
 		sqlBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Question),
 	}
@@ -99,14 +105,14 @@ func (s *Sqlite) logQueryBuildingError(err error) {
 	}
 }
 
-// logCreationTimeRetrievalError logs errors that may occur during creation time retrieval.
+// logIDRetrievalError logs errors that may occur during created db row ID retrieval.
 // Such errors should be few and far between, as the generally only occur with
 // type discrepancies or other misuses of SQL. An alert should be set up for
 // any log entries with the given name, and those alerts should be investigated
 // with the utmost priority.
-func (s *Sqlite) logCreationTimeRetrievalError(err error) {
+func (s *Sqlite) logIDRetrievalError(err error) {
 	if err != nil {
-		s.logger.WithName("CREATION_TIME_RETRIEVAL").Error(err, "retrieving creation time")
+		s.logger.WithName("ROW_ID_ERROR").Error(err, "fetching row ID")
 	}
 }
 

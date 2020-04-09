@@ -9,7 +9,7 @@ import (
 	"time"
 
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -17,8 +17,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func buildMockRowsFromUser(includeCount bool, users ...*models.User) *sqlmock.Rows {
+func buildMockRowsFromUser(users ...*models.User) *sqlmock.Rows {
+	includeCount := len(users) > 1
 	columns := usersTableColumns
+
 	if includeCount {
 		columns = append(columns, "count")
 	}
@@ -95,7 +97,7 @@ func TestPostgres_GetUser(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(exampleUser.ID).
-			WillReturnRows(buildMockRowsFromUser(false, exampleUser))
+			WillReturnRows(buildMockRowsFromUser(exampleUser))
 
 		actual, err := p.GetUser(ctx, exampleUser.ID)
 		assert.NoError(t, err)
@@ -161,7 +163,6 @@ func TestPostgres_GetUsers(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).WillReturnRows(
 			buildMockRowsFromUser(
-				true,
 				&exampleUserList.Users[0],
 				&exampleUserList.Users[1],
 				&exampleUserList.Users[2],
@@ -254,7 +255,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(exampleUser.Username).
-			WillReturnRows(buildMockRowsFromUser(false, exampleUser))
+			WillReturnRows(buildMockRowsFromUser(exampleUser))
 
 		actual, err := p.GetUserByUsername(ctx, exampleUser.Username)
 		assert.NoError(t, err)
@@ -376,11 +377,12 @@ func TestPostgres_CreateUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+		p, mockDB := buildTestService(t)
+
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleUser.Salt = nil
 		expectedInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
-		p, mockDB := buildTestService(t)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleUser.ID, exampleUser.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
 			exampleUser.Username,
@@ -398,18 +400,17 @@ func TestPostgres_CreateUser(T *testing.T) {
 
 	T.Run("with postgres row exists error", func(t *testing.T) {
 		ctx := context.Background()
+		p, mockDB := buildTestService(t)
+
 		exampleUser := fakemodels.BuildFakeUser()
 		expectedInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
-		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
 			exampleUser.Username,
 			exampleUser.HashedPassword,
 			exampleUser.TwoFactorSecret,
 			false,
-		).WillReturnError(&postgres.Error{
-			Code: "23505",
-		})
+		).WillReturnError(&postgres.Error{Code: "23505"})
 
 		actual, err := p.CreateUser(ctx, expectedInput)
 		assert.Error(t, err)
@@ -421,10 +422,11 @@ func TestPostgres_CreateUser(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
+		p, mockDB := buildTestService(t)
+
 		exampleUser := fakemodels.BuildFakeUser()
 		expectedInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
-		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
 			exampleUser.Username,
 			exampleUser.HashedPassword,

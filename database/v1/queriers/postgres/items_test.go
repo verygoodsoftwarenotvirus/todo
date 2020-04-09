@@ -15,8 +15,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func buildMockRowsFromItem(includeCount bool, items ...*models.Item) *sqlmock.Rows {
+func buildMockRowsFromItem(items ...*models.Item) *sqlmock.Rows {
+	includeCount := len(items) > 1
 	columns := itemsTableColumns
+
 	if includeCount {
 		columns = append(columns, "count")
 	}
@@ -133,7 +135,7 @@ func TestPostgres_GetItem(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(exampleItem.BelongsToUser, exampleItem.ID).
-			WillReturnRows(buildMockRowsFromItem(false, exampleItem))
+			WillReturnRows(buildMockRowsFromItem(exampleItem))
 
 		actual, err := p.GetItem(ctx, exampleItem.ID, exampleItem.BelongsToUser)
 		assert.NoError(t, err)
@@ -149,10 +151,10 @@ func TestPostgres_GetItem(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.ID, exampleItem.ID).
+			WithArgs(exampleItem.BelongsToUser, exampleItem.ID).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := p.GetItem(ctx, exampleItem.ID, exampleUser.ID)
+		actual, err := p.GetItem(ctx, exampleItem.ID, exampleItem.BelongsToUser)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.Equal(t, sql.ErrNoRows, err)
@@ -235,12 +237,13 @@ func TestPostgres_GetItems(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WithArgs(exampleUser.ID).
-			WillReturnRows(buildMockRowsFromItem(
-				true,
-				&exampleItemList.Items[0],
-				&exampleItemList.Items[1],
-				&exampleItemList.Items[2],
-			))
+			WillReturnRows(
+				buildMockRowsFromItem(
+					&exampleItemList.Items[0],
+					&exampleItemList.Items[1],
+					&exampleItemList.Items[2],
+				),
+			)
 
 		actual, err := p.GetItems(ctx, exampleUser.ID, filter)
 
@@ -328,10 +331,11 @@ func TestPostgres_CreateItem(T *testing.T) {
 	expectedCreationQuery := "INSERT INTO items (name,details,belongs_to_user) VALUES ($1,$2,$3) RETURNING id, created_on"
 
 	T.Run("happy path", func(t *testing.T) {
-		p, mockDB := buildTestService(t)
 		ctx := context.Background()
+		p, mockDB := buildTestService(t)
+
 		exampleItem := fakemodels.BuildFakeItem()
-		expectedInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleItem.ID, exampleItem.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCreationQuery)).
@@ -341,7 +345,7 @@ func TestPostgres_CreateItem(T *testing.T) {
 				exampleItem.BelongsToUser,
 			).WillReturnRows(exampleRows)
 
-		actual, err := p.CreateItem(ctx, expectedInput)
+		actual, err := p.CreateItem(ctx, exampleInput)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItem, actual)
 
@@ -349,10 +353,11 @@ func TestPostgres_CreateItem(T *testing.T) {
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
-		p, mockDB := buildTestService(t)
 		ctx := context.Background()
+		p, mockDB := buildTestService(t)
+
 		exampleItem := fakemodels.BuildFakeItem()
-		expectedInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCreationQuery)).
 			WithArgs(
@@ -361,7 +366,7 @@ func TestPostgres_CreateItem(T *testing.T) {
 				exampleItem.BelongsToUser,
 			).WillReturnError(errors.New("blah"))
 
-		actual, err := p.CreateItem(ctx, expectedInput)
+		actual, err := p.CreateItem(ctx, exampleInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -397,8 +402,8 @@ func TestPostgres_UpdateItem(T *testing.T) {
 	expectedQuery := "UPDATE items SET name = $1, details = $2, updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $3 AND id = $4 RETURNING updated_on"
 
 	T.Run("happy path", func(t *testing.T) {
-		p, mockDB := buildTestService(t)
 		ctx := context.Background()
+		p, mockDB := buildTestService(t)
 		exampleItem := fakemodels.BuildFakeItem()
 
 		exampleRows := sqlmock.NewRows([]string{"updated_on"}).AddRow(uint64(time.Now().Unix()))
@@ -417,8 +422,8 @@ func TestPostgres_UpdateItem(T *testing.T) {
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
-		p, mockDB := buildTestService(t)
 		ctx := context.Background()
+		p, mockDB := buildTestService(t)
 		exampleItem := fakemodels.BuildFakeItem()
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -462,8 +467,8 @@ func TestPostgres_ArchiveItem(T *testing.T) {
 	expectedQuery := "UPDATE items SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1 AND id = $2 RETURNING archived_on"
 
 	T.Run("happy path", func(t *testing.T) {
-		p, mockDB := buildTestService(t)
 		ctx := context.Background()
+		p, mockDB := buildTestService(t)
 		exampleItem := fakemodels.BuildFakeItem()
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -479,8 +484,8 @@ func TestPostgres_ArchiveItem(T *testing.T) {
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
-		p, mockDB := buildTestService(t)
 		ctx := context.Background()
+		p, mockDB := buildTestService(t)
 		exampleItem := fakemodels.BuildFakeItem()
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).

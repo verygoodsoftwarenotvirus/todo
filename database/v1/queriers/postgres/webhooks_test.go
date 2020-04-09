@@ -16,8 +16,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func buildMockRowsFromWebhook(includeCount bool, webhooks ...*models.Webhook) *sqlmock.Rows {
+func buildMockRowsFromWebhook(webhooks ...*models.Webhook) *sqlmock.Rows {
+	includeCount := len(webhooks) > 1
 	columns := webhooksTableColumns
+
 	if includeCount {
 		columns = append(columns, "count")
 	}
@@ -100,7 +102,7 @@ func TestPostgres_GetWebhook(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(exampleWebhook.BelongsToUser, exampleWebhook.ID).
-			WillReturnRows(buildMockRowsFromWebhook(false, exampleWebhook))
+			WillReturnRows(buildMockRowsFromWebhook(exampleWebhook))
 
 		actual, err := p.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
 		assert.NoError(t, err)
@@ -231,7 +233,6 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).WillReturnRows(
 			buildMockRowsFromWebhook(
-				true,
 				&exampleWebhookList.Webhooks[0],
 				&exampleWebhookList.Webhooks[1],
 				&exampleWebhookList.Webhooks[2],
@@ -274,9 +275,11 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 
 	T.Run("with error from database", func(t *testing.T) {
 		ctx := context.Background()
+		exampleWebhook := fakemodels.BuildFakeWebhook()
+
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
-			WillReturnRows(buildErroneousMockRowFromWebhook(fakemodels.BuildFakeWebhook()))
+			WillReturnRows(buildErroneousMockRowFromWebhook(exampleWebhook))
 
 		actual, err := p.GetAllWebhooks(ctx)
 		assert.Error(t, err)
@@ -319,7 +322,6 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		filter := models.DefaultQueryFilter()
-
 		exampleWebhookList := fakemodels.BuildFakeWebhookList()
 
 		p, mockDB := buildTestService(t)
@@ -327,7 +329,6 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 			WithArgs(exampleUser.ID).
 			WillReturnRows(
 				buildMockRowsFromWebhook(
-					true,
 					&exampleWebhookList.Webhooks[0],
 					&exampleWebhookList.Webhooks[1],
 					&exampleWebhookList.Webhooks[2],
@@ -423,10 +424,10 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		exampleWebhook := fakemodels.BuildFakeWebhook()
-		expectedInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleWebhook.ID, exampleWebhook.CreatedOn)
 
 		p, mockDB := buildTestService(t)
-		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleWebhook.ID, exampleWebhook.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
 			exampleWebhook.Name,
 			exampleWebhook.ContentType,
@@ -438,7 +439,7 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 			exampleWebhook.BelongsToUser,
 		).WillReturnRows(exampleRows)
 
-		actual, err := p.CreateWebhook(ctx, expectedInput)
+		actual, err := p.CreateWebhook(ctx, exampleInput)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleWebhook, actual)
 
@@ -448,7 +449,7 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 	T.Run("with error interacting with database", func(t *testing.T) {
 		ctx := context.Background()
 		exampleWebhook := fakemodels.BuildFakeWebhook()
-		expectedInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
@@ -462,7 +463,7 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 			exampleWebhook.BelongsToUser,
 		).WillReturnError(errors.New("blah"))
 
-		actual, err := p.CreateWebhook(ctx, expectedInput)
+		actual, err := p.CreateWebhook(ctx, exampleInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 

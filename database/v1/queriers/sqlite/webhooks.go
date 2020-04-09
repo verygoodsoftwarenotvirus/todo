@@ -36,20 +36,21 @@ var (
 		fmt.Sprintf("%s.created_on", webhooksTableName),
 		fmt.Sprintf("%s.updated_on", webhooksTableName),
 		fmt.Sprintf("%s.archived_on", webhooksTableName),
-		webhooksTableOwnershipColumn,
+		fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableOwnershipColumn),
 	}
 )
 
 // scanWebhook is a consistent way to turn a *sql.Row into a webhook struct
-func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
+func scanWebhook(scan database.Scanner, includeCount bool) (*models.Webhook, uint64, error) {
 	var (
-		x = &models.Webhook{}
+		x     = &models.Webhook{}
+		count uint64
 		eventsStr,
 		dataTypesStr,
 		topicsStr string
 	)
 
-	if err := scan.Scan(
+	targetVars := []interface{}{
 		&x.ID,
 		&x.Name,
 		&x.ContentType,
@@ -62,8 +63,14 @@ func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 		&x.UpdatedOn,
 		&x.ArchivedOn,
 		&x.BelongsToUser,
-	); err != nil {
-		return nil, err
+	}
+
+	if includeCount {
+		targetVars = append(targetVars, &count)
+	}
+
+	if err := scan.Scan(targetVars...); err != nil {
+		return nil, 0, err
 	}
 
 	if events := strings.Split(eventsStr, eventsSeparator); len(events) >= 1 && events[0] != "" {
@@ -76,29 +83,37 @@ func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 		x.Topics = topics
 	}
 
-	return x, nil
+	return x, count, nil
 }
 
 // scanWebhooks provides a consistent way to turn sql rows into a slice of webhooks
-func scanWebhooks(logger logging.Logger, rows *sql.Rows) ([]models.Webhook, error) {
-	var list []models.Webhook
+func scanWebhooks(logger logging.Logger, rows *sql.Rows) ([]models.Webhook, uint64, error) {
+	var (
+		list  []models.Webhook
+		count uint64
+	)
 
 	for rows.Next() {
-		webhook, err := scanWebhook(rows)
+		webhook, c, err := scanWebhook(rows, true)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
+
+		if count == 0 {
+			count = c
+		}
+
 		list = append(list, *webhook)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	if err := rows.Close(); err != nil {
 		logger.Error(err, "closing rows")
 	}
 
-	return list, nil
+	return list, count, nil
 }
 
 // buildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook
@@ -122,43 +137,12 @@ func (s *Sqlite) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mod
 	query, args := s.buildGetWebhookQuery(webhookID, userID)
 	row := s.db.QueryRowContext(ctx, query, args...)
 
-	webhook, err := scanWebhook(row)
+	webhook, _, err := scanWebhook(row, false)
 	if err != nil {
 		return nil, buildError(err, "querying for webhook")
 	}
 
 	return webhook, nil
-}
-
-// buildGetWebhookCountQuery returns a SQL query (and arguments) that returns a list of webhooks
-// meeting a given filter's criteria and belonging to a given user.
-func (s *Sqlite) buildGetWebhookCountQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
-	var err error
-
-	builder := s.sqlBuilder.
-		Select(fmt.Sprintf(countQuery, webhooksTableName)).
-		From(webhooksTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableOwnershipColumn): userID,
-			fmt.Sprintf("%s.archived_on", webhooksTableName):                      nil,
-		})
-
-	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder, "")
-	}
-
-	query, args, err = builder.ToSql()
-	s.logQueryBuildingError(err)
-
-	return query, args
-}
-
-// GetWebhookCount will fetch the count of webhooks from the database that meet a particular filter,
-// and belong to a particular user.
-func (s *Sqlite) GetWebhookCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (count uint64, err error) {
-	query, args := s.buildGetWebhookCountQuery(userID, filter)
-	err = s.db.QueryRowContext(ctx, query, args...).Scan(&count)
-	return count, err
 }
 
 var (
@@ -225,14 +209,9 @@ func (s *Sqlite) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error
 		return nil, fmt.Errorf("querying for webhooks: %w", err)
 	}
 
-	list, err := scanWebhooks(s.logger, rows)
+	list, count, err := scanWebhooks(s.logger, rows)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
-	}
-
-	count, err := s.GetAllWebhooksCount(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("fetching webhook count: %w", err)
 	}
 
 	x := &models.WebhookList{
@@ -246,40 +225,21 @@ func (s *Sqlite) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error
 	return x, err
 }
 
-// GetAllWebhooksForUser fetches a list of all webhooks from the database
-func (s *Sqlite) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]models.Webhook, error) {
-	query, args := s.buildGetWebhooksQuery(userID, nil)
-
-	rows, err := s.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, err
-		}
-		return nil, fmt.Errorf("querying database for webhooks: %w", err)
-	}
-
-	list, err := scanWebhooks(s.logger, rows)
-	if err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
-	}
-
-	return list, nil
-}
-
 // buildGetWebhooksQuery returns a SQL query (and arguments) that would return a
 func (s *Sqlite) buildGetWebhooksQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 
 	builder := s.sqlBuilder.
-		Select(webhooksTableColumns...).
+		Select(append(webhooksTableColumns, fmt.Sprintf(countQuery, webhooksTableName))...).
 		From(webhooksTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableOwnershipColumn): userID,
 			fmt.Sprintf("%s.archived_on", webhooksTableName):                      nil,
-		})
+		}).
+		GroupBy(fmt.Sprintf("%s.id", webhooksTableName))
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder, "")
+		builder = filter.ApplyToQueryBuilder(builder, webhooksTableName)
 	}
 
 	query, args, err = builder.ToSql()
@@ -300,14 +260,9 @@ func (s *Sqlite) GetWebhooks(ctx context.Context, userID uint64, filter *models.
 		return nil, fmt.Errorf("querying database: %w", err)
 	}
 
-	list, err := scanWebhooks(s.logger, rows)
+	list, count, err := scanWebhooks(s.logger, rows)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
-	}
-
-	count, err := s.GetWebhookCount(ctx, userID, filter)
-	if err != nil {
-		return nil, fmt.Errorf("fetching count: %w", err)
 	}
 
 	x := &models.WebhookList{
@@ -355,21 +310,6 @@ func (s *Sqlite) buildWebhookCreationQuery(x *models.Webhook) (query string, arg
 	return query, args
 }
 
-// buildWebhookCreationTimeQuery returns a SQL query (and arguments) that fetches the DB creation time for a given row
-func (s *Sqlite) buildWebhookCreationTimeQuery(webhookID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = s.sqlBuilder.
-		Select("created_on").
-		From(webhooksTableName).
-		Where(squirrel.Eq{"id": webhookID}).
-		ToSql()
-
-	s.logQueryBuildingError(err)
-
-	return query, args
-}
-
 // CreateWebhook creates a webhook in the database
 func (s *Sqlite) CreateWebhook(ctx context.Context, input *models.WebhookCreationInput) (*models.Webhook, error) {
 	x := &models.Webhook{
@@ -389,12 +329,13 @@ func (s *Sqlite) CreateWebhook(ctx context.Context, input *models.WebhookCreatio
 		return nil, fmt.Errorf("error executing webhook creation query: %w", err)
 	}
 
-	if id, idErr := res.LastInsertId(); idErr == nil {
-		x.ID = uint64(id)
+	// fetch the last inserted ID
+	id, err := res.LastInsertId()
+	s.logIDRetrievalError(err)
+	x.ID = uint64(id)
 
-		query, args = s.buildWebhookCreationTimeQuery(x.ID)
-		s.logCreationTimeRetrievalError(s.db.QueryRowContext(ctx, query, args...).Scan(&x.CreatedOn))
-	}
+	// this won't be completely accurate, but it will suffice
+	x.CreatedOn = s.timeTeller.Now()
 
 	return x, nil
 }

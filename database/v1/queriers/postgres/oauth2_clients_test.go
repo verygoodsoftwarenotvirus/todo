@@ -16,8 +16,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func buildMockRowsFromOAuth2Client(includeCount bool, clients ...*models.OAuth2Client) *sqlmock.Rows {
+func buildMockRowsFromOAuth2Client(clients ...*models.OAuth2Client) *sqlmock.Rows {
+	includeCount := len(clients) > 1
 	columns := oauth2ClientsTableColumns
+
 	if includeCount {
 		columns = append(columns, "count")
 	}
@@ -95,7 +97,7 @@ func TestPostgres_GetOAuth2ClientByClientID(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(exampleOAuth2Client.ClientID).
-			WillReturnRows(buildMockRowsFromOAuth2Client(false, exampleOAuth2Client))
+			WillReturnRows(buildMockRowsFromOAuth2Client(exampleOAuth2Client))
 
 		actual, err := p.GetOAuth2ClientByClientID(ctx, exampleOAuth2Client.ClientID)
 		assert.NoError(t, err)
@@ -167,7 +169,6 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WillReturnRows(
 			buildMockRowsFromOAuth2Client(
-				true,
 				exampleOAuth2Client,
 				exampleOAuth2Client,
 				exampleOAuth2Client,
@@ -230,23 +231,17 @@ func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		exampleUser := fakemodels.BuildFakeUser()
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2ClientList := fakemodels.BuildFakeOAuth2ClientList()
 
 		expected := []*models.OAuth2Client{
-			exampleOAuth2Client,
-			exampleOAuth2Client,
-			exampleOAuth2Client,
+			&exampleOAuth2ClientList.Clients[0],
+			&exampleOAuth2ClientList.Clients[1],
+			&exampleOAuth2ClientList.Clients[2],
 		}
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WillReturnRows(
-			buildMockRowsFromOAuth2Client(
-				true,
-				exampleOAuth2Client,
-				exampleOAuth2Client,
-				exampleOAuth2Client,
-			),
-		)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WillReturnRows(buildMockRowsFromOAuth2Client(expected...))
 
 		actual, err := p.GetAllOAuth2ClientsForUser(ctx, exampleUser.ID)
 		assert.NoError(t, err)
@@ -309,7 +304,7 @@ func TestPostgres_buildGetOAuth2ClientQuery(T *testing.T) {
 		p, _ := buildTestService(t)
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
-		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE belongs_to_user = $1 AND oauth2_clients.archived_on IS NULL AND oauth2_clients.id = $2"
+		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $1 AND oauth2_clients.id = $2"
 		expectedArgs := []interface{}{
 			exampleOAuth2Client.BelongsToUser,
 			exampleOAuth2Client.ID,
@@ -325,7 +320,7 @@ func TestPostgres_buildGetOAuth2ClientQuery(T *testing.T) {
 func TestPostgres_GetOAuth2Client(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE belongs_to_user = $1 AND oauth2_clients.archived_on IS NULL AND oauth2_clients.id = $2"
+	expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $1 AND oauth2_clients.id = $2"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -334,7 +329,7 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(exampleOAuth2Client.BelongsToUser, exampleOAuth2Client.ID).
-			WillReturnRows(buildMockRowsFromOAuth2Client(false, exampleOAuth2Client))
+			WillReturnRows(buildMockRowsFromOAuth2Client(exampleOAuth2Client))
 
 		actual, err := p.GetOAuth2Client(ctx, exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 		assert.NoError(t, err)
@@ -447,7 +442,6 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).WillReturnRows(
 			buildMockRowsFromOAuth2Client(
-				true,
 				&exampleOAuth2ClientList.Clients[0],
 				&exampleOAuth2ClientList.Clients[1],
 				&exampleOAuth2ClientList.Clients[2],
@@ -616,9 +610,8 @@ func TestPostgres_UpdateOAuth2Client(T *testing.T) {
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WillReturnRows(
-			sqlmock.NewRows([]string{"updated_on"}).AddRow(time.Now().Unix()),
-		)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WillReturnRows(sqlmock.NewRows([]string{"updated_on"}).AddRow(time.Now().Unix()))
 
 		err := p.UpdateOAuth2Client(ctx, exampleOAuth2Client)
 		assert.NoError(t, err)

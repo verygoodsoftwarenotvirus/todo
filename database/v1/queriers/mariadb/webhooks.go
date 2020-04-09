@@ -41,15 +41,16 @@ var (
 )
 
 // scanWebhook is a consistent way to turn a *sql.Row into a webhook struct
-func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
+func scanWebhook(scan database.Scanner, includeCount bool) (*models.Webhook, uint64, error) {
 	var (
-		x = &models.Webhook{}
+		x     = &models.Webhook{}
+		count uint64
 		eventsStr,
 		dataTypesStr,
 		topicsStr string
 	)
 
-	if err := scan.Scan(
+	targetVars := []interface{}{
 		&x.ID,
 		&x.Name,
 		&x.ContentType,
@@ -62,8 +63,14 @@ func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 		&x.UpdatedOn,
 		&x.ArchivedOn,
 		&x.BelongsToUser,
-	); err != nil {
-		return nil, err
+	}
+
+	if includeCount {
+		targetVars = append(targetVars, &count)
+	}
+
+	if err := scan.Scan(targetVars...); err != nil {
+		return nil, 0, err
 	}
 
 	if events := strings.Split(eventsStr, eventsSeparator); len(events) >= 1 && events[0] != "" {
@@ -76,29 +83,37 @@ func scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 		x.Topics = topics
 	}
 
-	return x, nil
+	return x, count, nil
 }
 
 // scanWebhooks provides a consistent way to turn sql rows into a slice of webhooks
-func scanWebhooks(logger logging.Logger, rows *sql.Rows) ([]models.Webhook, error) {
-	var list []models.Webhook
+func scanWebhooks(logger logging.Logger, rows *sql.Rows) ([]models.Webhook, uint64, error) {
+	var (
+		list  []models.Webhook
+		count uint64
+	)
 
 	for rows.Next() {
-		webhook, err := scanWebhook(rows)
+		webhook, c, err := scanWebhook(rows, true)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
+
+		if count == 0 {
+			count = c
+		}
+
 		list = append(list, *webhook)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	if err := rows.Close(); err != nil {
 		logger.Error(err, "closing rows")
 	}
 
-	return list, nil
+	return list, count, nil
 }
 
 // buildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook
@@ -122,43 +137,12 @@ func (m *MariaDB) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mo
 	query, args := m.buildGetWebhookQuery(webhookID, userID)
 	row := m.db.QueryRowContext(ctx, query, args...)
 
-	webhook, err := scanWebhook(row)
+	webhook, _, err := scanWebhook(row, false)
 	if err != nil {
 		return nil, buildError(err, "querying for webhook")
 	}
 
 	return webhook, nil
-}
-
-// buildGetWebhookCountQuery returns a SQL query (and arguments) that returns a list of webhooks
-// meeting a given filter's criteria and belonging to a given user.
-func (m *MariaDB) buildGetWebhookCountQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
-	var err error
-
-	builder := m.sqlBuilder.
-		Select(fmt.Sprintf(countQuery, webhooksTableName)).
-		From(webhooksTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableOwnershipColumn): userID,
-			fmt.Sprintf("%s.archived_on", webhooksTableName):                      nil,
-		})
-
-	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder, webhooksTableName)
-	}
-
-	query, args, err = builder.ToSql()
-	m.logQueryBuildingError(err)
-
-	return query, args
-}
-
-// GetWebhookCount will fetch the count of webhooks from the database that meet a particular filter,
-// and belong to a particular user.
-func (m *MariaDB) GetWebhookCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (count uint64, err error) {
-	query, args := m.buildGetWebhookCountQuery(userID, filter)
-	err = m.db.QueryRowContext(ctx, query, args...).Scan(&count)
-	return count, err
 }
 
 var (
@@ -225,14 +209,9 @@ func (m *MariaDB) GetAllWebhooks(ctx context.Context) (*models.WebhookList, erro
 		return nil, fmt.Errorf("querying for webhooks: %w", err)
 	}
 
-	list, err := scanWebhooks(m.logger, rows)
+	list, count, err := scanWebhooks(m.logger, rows)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
-	}
-
-	count, err := m.GetAllWebhooksCount(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("fetching webhook count: %w", err)
 	}
 
 	x := &models.WebhookList{
@@ -246,37 +225,18 @@ func (m *MariaDB) GetAllWebhooks(ctx context.Context) (*models.WebhookList, erro
 	return x, err
 }
 
-// GetAllWebhooksForUser fetches a list of all webhooks from the database
-func (m *MariaDB) GetAllWebhooksForUser(ctx context.Context, userID uint64) ([]models.Webhook, error) {
-	query, args := m.buildGetWebhooksQuery(userID, nil)
-
-	rows, err := m.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, err
-		}
-		return nil, fmt.Errorf("querying database for webhooks: %w", err)
-	}
-
-	list, err := scanWebhooks(m.logger, rows)
-	if err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
-	}
-
-	return list, nil
-}
-
 // buildGetWebhooksQuery returns a SQL query (and arguments) that would return a
 func (m *MariaDB) buildGetWebhooksQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 
 	builder := m.sqlBuilder.
-		Select(webhooksTableColumns...).
+		Select(append(webhooksTableColumns, fmt.Sprintf(countQuery, webhooksTableName))...).
 		From(webhooksTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableOwnershipColumn): userID,
 			fmt.Sprintf("%s.archived_on", webhooksTableName):                      nil,
-		})
+		}).
+		GroupBy(fmt.Sprintf("%s.id", webhooksTableName))
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder, webhooksTableName)
@@ -300,14 +260,9 @@ func (m *MariaDB) GetWebhooks(ctx context.Context, userID uint64, filter *models
 		return nil, fmt.Errorf("querying database: %w", err)
 	}
 
-	list, err := scanWebhooks(m.logger, rows)
+	list, count, err := scanWebhooks(m.logger, rows)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
-	}
-
-	count, err := m.GetWebhookCount(ctx, userID, filter)
-	if err != nil {
-		return nil, fmt.Errorf("fetching count: %w", err)
 	}
 
 	x := &models.WebhookList{
@@ -337,7 +292,6 @@ func (m *MariaDB) buildWebhookCreationQuery(x *models.Webhook) (query string, ar
 			"data_types",
 			"topics",
 			webhooksTableOwnershipColumn,
-			"created_on",
 		).
 		Values(
 			x.Name,
@@ -348,23 +302,7 @@ func (m *MariaDB) buildWebhookCreationQuery(x *models.Webhook) (query string, ar
 			strings.Join(x.DataTypes, typesSeparator),
 			strings.Join(x.Topics, topicsSeparator),
 			x.BelongsToUser,
-			squirrel.Expr(currentUnixTimeQuery),
 		).
-		ToSql()
-
-	m.logQueryBuildingError(err)
-
-	return query, args
-}
-
-// buildWebhookCreationTimeQuery returns a SQL query (and arguments) that fetches the DB creation time for a given row
-func (m *MariaDB) buildWebhookCreationTimeQuery(webhookID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = m.sqlBuilder.
-		Select("created_on").
-		From(webhooksTableName).
-		Where(squirrel.Eq{"id": webhookID}).
 		ToSql()
 
 	m.logQueryBuildingError(err)
@@ -391,12 +329,13 @@ func (m *MariaDB) CreateWebhook(ctx context.Context, input *models.WebhookCreati
 		return nil, fmt.Errorf("error executing webhook creation query: %w", err)
 	}
 
-	if id, idErr := res.LastInsertId(); idErr == nil {
-		x.ID = uint64(id)
+	// fetch the last inserted ID
+	id, err := res.LastInsertId()
+	m.logIDRetrievalError(err)
+	x.ID = uint64(id)
 
-		query, args = m.buildWebhookCreationTimeQuery(x.ID)
-		m.logCreationTimeRetrievalError(m.db.QueryRowContext(ctx, query, args...).Scan(&x.CreatedOn))
-	}
+	// this won't be completely accurate, but it will suffice
+	x.CreatedOn = m.timeTeller.Now()
 
 	return x, nil
 }
@@ -411,7 +350,7 @@ func (m *MariaDB) buildUpdateWebhookQuery(input *models.Webhook) (query string, 
 		Set("content_type", input.ContentType).
 		Set("url", input.URL).
 		Set("method", input.Method).
-		Set("events", strings.Join(input.Events, eventsSeparator)).
+		Set("events", strings.Join(input.Events, topicsSeparator)).
 		Set("data_types", strings.Join(input.DataTypes, typesSeparator)).
 		Set("topics", strings.Join(input.Topics, topicsSeparator)).
 		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).

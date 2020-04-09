@@ -60,10 +60,6 @@ type (
 	// ConnectionDetails is a string alias for a Sqlite url
 	ConnectionDetails string
 
-	timeTeller interface {
-		Now() uint64
-	}
-
 	// Querier is a subset interface for sql.{DB|Tx|Stmt} objects
 	Querier interface {
 		ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error)

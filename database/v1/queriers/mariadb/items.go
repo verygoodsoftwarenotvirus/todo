@@ -31,10 +31,11 @@ var (
 )
 
 // scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct
-func scanItem(scan database.Scanner) (*models.Item, error) {
+func scanItem(scan database.Scanner, includeCount bool) (*models.Item, uint64, error) {
 	x := &models.Item{}
+	var count uint64
 
-	if err := scan.Scan(
+	targetVars := []interface{}{
 		&x.ID,
 		&x.Name,
 		&x.Details,
@@ -42,37 +43,51 @@ func scanItem(scan database.Scanner) (*models.Item, error) {
 		&x.UpdatedOn,
 		&x.ArchivedOn,
 		&x.BelongsToUser,
-	); err != nil {
-		return nil, err
 	}
 
-	return x, nil
+	if includeCount {
+		targetVars = append(targetVars, &count)
+	}
+
+	if err := scan.Scan(targetVars...); err != nil {
+		return nil, 0, err
+	}
+
+	return x, count, nil
 }
 
 // scanItems takes a logger and some database rows and turns them into a slice of items
-func scanItems(logger logging.Logger, rows *sql.Rows) ([]models.Item, error) {
-	var list []models.Item
+func scanItems(logger logging.Logger, rows *sql.Rows) ([]models.Item, uint64, error) {
+	var (
+		list  []models.Item
+		count uint64
+	)
 
 	for rows.Next() {
-		x, err := scanItem(rows)
+		x, c, err := scanItem(rows, true)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
+
+		if count == 0 {
+			count = c
+		}
+
 		list = append(list, *x)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	if closeErr := rows.Close(); closeErr != nil {
 		logger.Error(closeErr, "closing database rows")
 	}
 
-	return list, nil
+	return list, count, nil
 }
 
-// buildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists.
+// buildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID existm.
 func (m *MariaDB) buildItemExistsQuery(itemID, userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -92,10 +107,9 @@ func (m *MariaDB) buildItemExistsQuery(itemID, userID uint64) (query string, arg
 }
 
 // ItemExists queries the database to see if a given item belonging to a given user exists
-func (m *MariaDB) ItemExists(ctx context.Context, itemID, userID uint64) (bool, error) {
-	var exists bool
+func (m *MariaDB) ItemExists(ctx context.Context, itemID, userID uint64) (exists bool, err error) {
 	query, args := m.buildItemExistsQuery(itemID, userID)
-	err := m.db.QueryRowContext(ctx, query, args...).Scan(&exists)
+	err = m.db.QueryRowContext(ctx, query, args...).Scan(&exists)
 	return exists, err
 }
 
@@ -116,41 +130,13 @@ func (m *MariaDB) buildGetItemQuery(itemID, userID uint64) (query string, args [
 	return query, args
 }
 
-// GetItem fetches an item from the mariadb database
+// GetItem fetches an item from the database
 func (m *MariaDB) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
 	query, args := m.buildGetItemQuery(itemID, userID)
 	row := m.db.QueryRowContext(ctx, query, args...)
-	return scanItem(row)
-}
 
-// buildGetItemCountQuery takes a QueryFilter and a user ID, and returns a SQL query
-// (and the relevant arguments) for fetching the number of items belonging to a given user
-func (m *MariaDB) buildGetItemCountQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
-	var err error
-
-	builder := m.sqlBuilder.
-		Select(fmt.Sprintf(countQuery, itemsTableName)).
-		From(itemsTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.archived_on", itemsTableName):                   nil,
-			fmt.Sprintf("%s.%s", itemsTableName, itemsTableOwnershipColumn): userID,
-		})
-
-	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder, itemsTableName)
-	}
-
-	query, args, err = builder.ToSql()
-	m.logQueryBuildingError(err)
-
-	return query, args
-}
-
-// GetItemCount will fetch the count of items from the database that meet a particular filter and belong to a particular user.
-func (m *MariaDB) GetItemCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (count uint64, err error) {
-	query, args := m.buildGetItemCountQuery(userID, filter)
-	err = m.db.QueryRowContext(ctx, query, args...).Scan(&count)
-	return count, err
+	item, _, err := scanItem(row, false)
+	return item, err
 }
 
 var (
@@ -189,12 +175,13 @@ func (m *MariaDB) buildGetItemsQuery(userID uint64, filter *models.QueryFilter) 
 	var err error
 
 	builder := m.sqlBuilder.
-		Select(itemsTableColumns...).
+		Select(append(itemsTableColumns, fmt.Sprintf(countQuery, itemsTableName))...).
 		From(itemsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.archived_on", itemsTableName):                   nil,
 			fmt.Sprintf("%s.%s", itemsTableName, itemsTableOwnershipColumn): userID,
-		})
+		}).
+		GroupBy(fmt.Sprintf("%s.id", itemsTableName))
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder, itemsTableName)
@@ -215,46 +202,24 @@ func (m *MariaDB) GetItems(ctx context.Context, userID uint64, filter *models.Qu
 		return nil, buildError(err, "querying database for items")
 	}
 
-	list, err := scanItems(m.logger, rows)
+	items, count, err := scanItems(m.logger, rows)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
-	count, err := m.GetItemCount(ctx, userID, filter)
-	if err != nil {
-		return nil, fmt.Errorf("fetching item count: %w", err)
-	}
-
-	x := &models.ItemList{
+	list := &models.ItemList{
 		Pagination: models.Pagination{
 			Page:       filter.Page,
 			Limit:      filter.Limit,
 			TotalCount: count,
 		},
-		Items: list,
-	}
-
-	return x, nil
-}
-
-// GetAllItemsForUser fetches every item belonging to a user
-func (m *MariaDB) GetAllItemsForUser(ctx context.Context, userID uint64) ([]models.Item, error) {
-	query, args := m.buildGetItemsQuery(userID, nil)
-
-	rows, err := m.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, buildError(err, "fetching items for user")
-	}
-
-	list, err := scanItems(m.logger, rows)
-	if err != nil {
-		return nil, fmt.Errorf("parsing database results: %w", err)
+		Items: items,
 	}
 
 	return list, nil
 }
 
-// buildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments.
+// buildCreateItemQuery takes an item and returns a creation query for that item and the relevant argumentm.
 func (m *MariaDB) buildCreateItemQuery(input *models.Item) (query string, args []interface{}) {
 	var err error
 
@@ -264,29 +229,12 @@ func (m *MariaDB) buildCreateItemQuery(input *models.Item) (query string, args [
 			"name",
 			"details",
 			itemsTableOwnershipColumn,
-			"created_on",
 		).
 		Values(
 			input.Name,
 			input.Details,
 			input.BelongsToUser,
-			squirrel.Expr(currentUnixTimeQuery),
 		).
-		ToSql()
-
-	m.logQueryBuildingError(err)
-
-	return query, args
-}
-
-// buildItemCreationTimeQuery takes an item and returns a creation query for that item and the relevant arguments
-func (m *MariaDB) buildItemCreationTimeQuery(itemID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = m.sqlBuilder.
-		Select(fmt.Sprintf("%s.created_on", itemsTableName)).
-		From(itemsTableName).
-		Where(squirrel.Eq{fmt.Sprintf("%s.id", itemsTableName): itemID}).
 		ToSql()
 
 	m.logQueryBuildingError(err)
@@ -311,29 +259,28 @@ func (m *MariaDB) CreateItem(ctx context.Context, input *models.ItemCreationInpu
 	}
 
 	// fetch the last inserted ID
-	id, idErr := res.LastInsertId()
-	if idErr == nil {
-		x.ID = uint64(id)
+	id, err := res.LastInsertId()
+	m.logIDRetrievalError(err)
+	x.ID = uint64(id)
 
-		query, args := m.buildItemCreationTimeQuery(x.ID)
-		m.logCreationTimeRetrievalError(m.db.QueryRowContext(ctx, query, args...).Scan(&x.CreatedOn))
-	}
+	// this won't be completely accurate, but it will suffice
+	x.CreatedOn = m.timeTeller.Now()
 
 	return x, nil
 }
 
 // buildUpdateItemQuery takes an item and returns an update SQL query, with the relevant query parameters
-func (m *MariaDB) buildUpdateItemQuery(updated *models.Item) (query string, args []interface{}) {
+func (m *MariaDB) buildUpdateItemQuery(input *models.Item) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = m.sqlBuilder.
 		Update(itemsTableName).
-		Set("name", updated.Name).
-		Set("details", updated.Details).
+		Set("name", input.Name).
+		Set("details", input.Details).
 		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id":                      updated.ID,
-			itemsTableOwnershipColumn: updated.BelongsToUser,
+			"id":                      input.ID,
+			itemsTableOwnershipColumn: input.BelongsToUser,
 		}).
 		ToSql()
 
@@ -343,8 +290,8 @@ func (m *MariaDB) buildUpdateItemQuery(updated *models.Item) (query string, args
 }
 
 // UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
-func (m *MariaDB) UpdateItem(ctx context.Context, updated *models.Item) error {
-	query, args := m.buildUpdateItemQuery(updated)
+func (m *MariaDB) UpdateItem(ctx context.Context, input *models.Item) error {
+	query, args := m.buildUpdateItemQuery(input)
 	_, err := m.db.ExecContext(ctx, query, args...)
 	return err
 }

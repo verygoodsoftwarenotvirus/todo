@@ -3,6 +3,7 @@ package mariadb
 import (
 	"context"
 	"errors"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -38,10 +39,23 @@ var (
 		",", `\,`,
 		"-", `\-`,
 	)
+	queryArgRegexp = regexp.MustCompile(`\?+`)
 )
 
 func formatQueryForSQLMock(query string) string {
 	return sqlMockReplacer.Replace(query)
+}
+
+func ensureArgCountMatchesQuery(t *testing.T, query string, args []interface{}) {
+	t.Helper()
+
+	queryArgCount := len(queryArgRegexp.FindAllString(query, -1))
+
+	if len(args) > 0 {
+		assert.Equal(t, queryArgCount, len(args))
+	} else {
+		assert.Zero(t, queryArgCount)
+	}
 }
 
 func TestProvideMariaDB(T *testing.T) {

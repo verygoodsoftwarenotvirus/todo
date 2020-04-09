@@ -31,10 +31,13 @@ var (
 )
 
 // scanUser provides a consistent way to scan something like a *sql.Row into a User struct
-func scanUser(scan database.Scanner) (*models.User, error) {
-	var x = &models.User{}
+func scanUser(scan database.Scanner, includeCount bool) (*models.User, uint64, error) {
+	var (
+		x     = &models.User{}
+		count uint64
+	)
 
-	if err := scan.Scan(
+	targetVars := []interface{}{
 		&x.ID,
 		&x.Username,
 		&x.HashedPassword,
@@ -44,34 +47,48 @@ func scanUser(scan database.Scanner) (*models.User, error) {
 		&x.CreatedOn,
 		&x.UpdatedOn,
 		&x.ArchivedOn,
-	); err != nil {
-		return nil, err
 	}
 
-	return x, nil
+	if includeCount {
+		targetVars = append(targetVars, &count)
+	}
+
+	if err := scan.Scan(targetVars...); err != nil {
+		return nil, 0, err
+	}
+
+	return x, count, nil
 }
 
 // scanUsers takes database rows and loads them into a slice of User structs
-func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, error) {
-	var list []models.User
+func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, uint64, error) {
+	var (
+		list  []models.User
+		count uint64
+	)
 
 	for rows.Next() {
-		user, err := scanUser(rows)
+		user, c, err := scanUser(rows, true)
 		if err != nil {
-			return nil, fmt.Errorf("scanning user result: %w", err)
+			return nil, 0, fmt.Errorf("scanning user result: %w", err)
 		}
+
+		if count == 0 {
+			count = c
+		}
+
 		list = append(list, *user)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	if err := rows.Close(); err != nil {
 		logger.Error(err, "closing rows")
 	}
 
-	return list, nil
+	return list, count, nil
 }
 
 // buildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID
@@ -95,7 +112,7 @@ func (m *MariaDB) buildGetUserQuery(userID uint64) (query string, args []interfa
 func (m *MariaDB) GetUser(ctx context.Context, userID uint64) (*models.User, error) {
 	query, args := m.buildGetUserQuery(userID)
 	row := m.db.QueryRowContext(ctx, query, args...)
-	u, err := scanUser(row)
+	u, _, err := scanUser(row, false)
 
 	if err != nil {
 		return nil, buildError(err, "fetching user from database")
@@ -125,7 +142,7 @@ func (m *MariaDB) buildGetUserByUsernameQuery(username string) (query string, ar
 func (m *MariaDB) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
 	query, args := m.buildGetUserByUsernameQuery(username)
 	row := m.db.QueryRowContext(ctx, query, args...)
-	u, err := scanUser(row)
+	u, _, err := scanUser(row, false)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -137,9 +154,9 @@ func (m *MariaDB) GetUserByUsername(ctx context.Context, username string) (*mode
 	return u, nil
 }
 
-// buildGetUserCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
+// buildGetAllUserCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
 // to a given filter's criteria.
-func (m *MariaDB) buildGetUserCountQuery(filter *models.QueryFilter) (query string, args []interface{}) {
+func (m *MariaDB) buildGetAllUserCountQuery() (query string) {
 	var err error
 
 	builder := m.sqlBuilder.
@@ -149,41 +166,32 @@ func (m *MariaDB) buildGetUserCountQuery(filter *models.QueryFilter) (query stri
 			fmt.Sprintf("%s.archived_on", usersTableName): nil,
 		})
 
-	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder, usersTableName)
-	}
-	query, args, err = builder.ToSql()
+	query, _, err = builder.ToSql()
 
 	m.logQueryBuildingError(err)
 
-	return query, args
+	return query
 }
 
-// GetAllUserCount fetches a count of users from the database that meet a particular filter
+// GetAllUserCount fetches a count of users from the database
 func (m *MariaDB) GetAllUserCount(ctx context.Context) (count uint64, err error) {
-	query, args := m.buildGetUserCountQuery(nil)
-	err = m.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	query := m.buildGetAllUserCountQuery()
+	err = m.db.QueryRowContext(ctx, query).Scan(&count)
 	return
 }
 
-// GetUserCount fetches a count of users from the database that meet a particular filter
-func (m *MariaDB) GetUserCount(ctx context.Context, filter *models.QueryFilter) (count uint64, err error) {
-	query, args := m.buildGetUserCountQuery(filter)
-	err = m.db.QueryRowContext(ctx, query, args...).Scan(&count)
-	return
-}
-
-// buildGetUserCountQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
+// buildGetAllUserCountQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
 // to a given filter's criteria.
 func (m *MariaDB) buildGetUsersQuery(filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 
 	builder := m.sqlBuilder.
-		Select(usersTableColumns...).
+		Select(append(usersTableColumns, fmt.Sprintf(countQuery, usersTableName))...).
 		From(usersTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.archived_on", usersTableName): nil,
-		})
+		}).
+		GroupBy(fmt.Sprintf("%s.id", usersTableName))
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder, usersTableName)
@@ -203,14 +211,9 @@ func (m *MariaDB) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mo
 		return nil, buildError(err, "querying for user")
 	}
 
-	userList, err := scanUsers(m.logger, rows)
+	userList, count, err := scanUsers(m.logger, rows)
 	if err != nil {
 		return nil, fmt.Errorf("loading response from database: %w", err)
-	}
-
-	count, err := m.GetUserCount(ctx, filter)
-	if err != nil {
-		return nil, fmt.Errorf("fetching user count: %w", err)
 	}
 
 	x := &models.UserList{
@@ -236,14 +239,12 @@ func (m *MariaDB) buildCreateUserQuery(input models.UserDatabaseCreationInput) (
 			"hashed_password",
 			"two_factor_secret",
 			"is_admin",
-			"created_on",
 		).
 		Values(
 			input.Username,
 			input.HashedPassword,
 			input.TwoFactorSecret,
 			false,
-			squirrel.Expr(currentUnixTimeQuery),
 		).
 		ToSql()
 
@@ -251,22 +252,6 @@ func (m *MariaDB) buildCreateUserQuery(input models.UserDatabaseCreationInput) (
 	// admins have DB access and will change that value via SQL query.
 	// There should also be no way to update a user via this structure
 	// such that they would have admin privileges
-
-	m.logQueryBuildingError(err)
-
-	return query, args
-}
-
-// buildUserCreationTimeQuery returns a SQL query (and arguments) that would create a given User
-func (m *MariaDB) buildUserCreationTimeQuery(userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = m.sqlBuilder.Select(fmt.Sprintf("%s.created_on", usersTableName)).
-		From(usersTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.id", usersTableName): userID,
-		}).
-		ToSql()
 
 	m.logQueryBuildingError(err)
 
@@ -289,12 +274,12 @@ func (m *MariaDB) CreateUser(ctx context.Context, input models.UserDatabaseCreat
 	}
 
 	// fetch the last inserted ID
-	if id, idErr := res.LastInsertId(); idErr == nil {
-		x.ID = uint64(id)
+	id, err := res.LastInsertId()
+	m.logIDRetrievalError(err)
+	x.ID = uint64(id)
 
-		query, args := m.buildUserCreationTimeQuery(x.ID)
-		m.logCreationTimeRetrievalError(m.db.QueryRowContext(ctx, query, args...).Scan(&x.CreatedOn))
-	}
+	// this won't be completely accurate, but it will suffice
+	x.CreatedOn = m.timeTeller.Now()
 
 	return x, nil
 }

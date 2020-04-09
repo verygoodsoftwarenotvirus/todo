@@ -3,28 +3,45 @@ package mariadb
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"errors"
 	"testing"
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 )
 
-func buildMockRowFromUser(user *models.User) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(usersTableColumns).AddRow(
-		user.ID,
-		user.Username,
-		user.HashedPassword,
-		user.PasswordLastChangedOn,
-		user.TwoFactorSecret,
-		user.IsAdmin,
-		user.CreatedOn,
-		user.UpdatedOn,
-		user.ArchivedOn,
-	)
+func buildMockRowsFromUser(users ...*models.User) *sqlmock.Rows {
+	includeCount := len(users) > 1
+	columns := usersTableColumns
+
+	if includeCount {
+		columns = append(columns, "count")
+	}
+	exampleRows := sqlmock.NewRows(columns)
+
+	for _, user := range users {
+		rowValues := []driver.Value{
+			user.ID,
+			user.Username,
+			user.HashedPassword,
+			user.PasswordLastChangedOn,
+			user.TwoFactorSecret,
+			user.IsAdmin,
+			user.CreatedOn,
+			user.UpdatedOn,
+			user.ArchivedOn,
+		}
+
+		if includeCount {
+			rowValues = append(rowValues, len(users))
+		}
+
+		exampleRows.AddRow(rowValues...)
+	}
 
 	return exampleRows
 }
@@ -45,75 +62,56 @@ func buildErroneousMockRowFromUser(user *models.User) *sqlmock.Rows {
 	return exampleRows
 }
 
-func buildFakeUser() *models.User {
-	return &models.User{
-		ID:             fake.Uint64(),
-		Username:       fake.Username(),
-		HashedPassword: fake.UUID(),
-		// byte arrays don't work with sqlmock
-		Salt:            nil,
-		TwoFactorSecret: fake.UUID(),
-		IsAdmin:         false,
-		CreatedOn:       uint64(uint32(fake.Date().Unix())),
-	}
-}
-
-func buildFakeUserDatabaseCreationInput(user *models.User) models.UserDatabaseCreationInput {
-	return models.UserDatabaseCreationInput{
-		Username:        user.Username,
-		HashedPassword:  user.HashedPassword,
-		TwoFactorSecret: user.TwoFactorSecret,
-	}
-}
-
-func TestMariaDB_buildGetUserQuery(T *testing.T) {
+func TestSqlite_buildGetUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
-		expectedUserID := fake.Uint64()
-		expectedArgCount := 1
+		exampleUser := fakemodels.BuildFakeUser()
+
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.id = ?"
+		expectedArgs := []interface{}{
+			exampleUser.ID,
+		}
 
-		actualQuery, args := m.buildGetUserQuery(expectedUserID)
+		actualQuery, actualArgs := m.buildGetUserQuery(exampleUser.ID)
+		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Len(t, args, expectedArgCount)
-
-		assert.Equal(t, expectedUserID, args[0])
+		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
 
-func TestMariaDB_GetUser(T *testing.T) {
+func TestSqlite_GetUser(T *testing.T) {
 	T.Parallel()
 
 	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.id = ?"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expected := buildFakeUser()
+		exampleUser := fakemodels.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(expected.ID).
-			WillReturnRows(buildMockRowFromUser(expected))
+			WithArgs(exampleUser.ID).
+			WillReturnRows(buildMockRowsFromUser(exampleUser))
 
-		actual, err := m.GetUser(ctx, expected.ID)
+		actual, err := m.GetUser(ctx, exampleUser.ID)
 		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
+		assert.Equal(t, exampleUser, actual)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
-		expected := buildFakeUser()
+		exampleUser := fakemodels.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(expected.ID).
+			WithArgs(exampleUser.ID).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := m.GetUser(ctx, expected.ID)
+		actual, err := m.GetUser(ctx, exampleUser.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.Equal(t, sql.ErrNoRows, err)
@@ -122,53 +120,58 @@ func TestMariaDB_GetUser(T *testing.T) {
 	})
 }
 
-func TestMariaDB_buildGetUsersQuery(T *testing.T) {
+func TestSqlite_buildGetUsersQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
+		filter := fakemodels.BuildFleshedOutQueryFilter()
 
-		expectedArgCount := 0
-		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL LIMIT 20"
+		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.created_on, users.updated_on, users.archived_on, COUNT(users.id) FROM users WHERE users.archived_on IS NULL AND users.created_on > ? AND users.created_on < ? AND users.updated_on > ? AND users.updated_on < ? GROUP BY users.id LIMIT 20 OFFSET 180"
+		expectedArgs := []interface{}{
+			filter.CreatedAfter,
+			filter.CreatedBefore,
+			filter.UpdatedAfter,
+			filter.UpdatedBefore,
+		}
 
-		actualQuery, args := m.buildGetUsersQuery(models.DefaultQueryFilter())
+		actualQuery, actualArgs := m.buildGetUsersQuery(filter)
+		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Len(t, args, expectedArgCount)
+		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
 
-func TestMariaDB_GetUsers(T *testing.T) {
+func TestSqlite_GetUsers(T *testing.T) {
 	T.Parallel()
 
-	expectedUsersQuery := "SELECT users.id, users.username, users.hashed_password, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL LIMIT 20"
-	expectedCountQuery := "SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL LIMIT 20"
+	expectedUsersQuery := "SELECT users.id, users.username, users.hashed_password, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.created_on, users.updated_on, users.archived_on, COUNT(users.id) FROM users WHERE users.archived_on IS NULL GROUP BY users.id LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		filter := models.DefaultQueryFilter()
-		expectedCount := fake.Uint64()
+		exampleUser := fakemodels.BuildFakeUser()
 		expected := &models.UserList{
 			Pagination: models.Pagination{
 				Page:       1,
 				Limit:      20,
-				TotalCount: expectedCount,
+				TotalCount: 3,
 			},
 			Users: []models.User{
-				{
-					ID:       fake.Uint64(),
-					Username: fake.Username(),
-				},
+				*exampleUser,
+				*exampleUser,
+				*exampleUser,
 			},
 		}
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).WillReturnRows(
-			buildMockRowFromUser(&expected.Users[0]),
-			buildMockRowFromUser(&expected.Users[0]),
-			buildMockRowFromUser(&expected.Users[0]),
+			buildMockRowsFromUser(
+				exampleUser,
+				exampleUser,
+				exampleUser,
+			),
 		)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
-			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
 		actual, err := m.GetUsers(ctx, filter)
 		assert.NoError(t, err)
@@ -209,52 +212,11 @@ func TestMariaDB_GetUsers(T *testing.T) {
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		ctx := context.Background()
 		filter := models.DefaultQueryFilter()
-		expected := &models.UserList{
-			Users: []models.User{
-				{
-					ID:       fake.Uint64(),
-					Username: fake.Username(),
-				},
-			},
-		}
+		exampleUser := fakemodels.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).
-			WillReturnRows(buildErroneousMockRowFromUser(&expected.Users[0]))
-
-		actual, err := m.GetUsers(ctx, filter)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-
-	T.Run("with error fetching count", func(t *testing.T) {
-		ctx := context.Background()
-		filter := models.DefaultQueryFilter()
-		expectedCount := fake.Uint64()
-		expected := &models.UserList{
-			Pagination: models.Pagination{
-				Page:       1,
-				Limit:      20,
-				TotalCount: expectedCount,
-			},
-			Users: []models.User{
-				{
-					ID:       fake.Uint64(),
-					Username: fake.Username(),
-				},
-			},
-		}
-
-		m, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).WillReturnRows(
-			buildMockRowFromUser(&expected.Users[0]),
-			buildMockRowFromUser(&expected.Users[0]),
-			buildMockRowFromUser(&expected.Users[0]),
-		)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
-			WillReturnError(errors.New("blah"))
+			WillReturnRows(buildErroneousMockRowFromUser(exampleUser))
 
 		actual, err := m.GetUsers(ctx, filter)
 		assert.Error(t, err)
@@ -264,55 +226,56 @@ func TestMariaDB_GetUsers(T *testing.T) {
 	})
 }
 
-func TestMariaDB_buildGetUserByUsernameQuery(T *testing.T) {
+func TestSqlite_buildGetUserByUsernameQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
+		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedUsername := "username"
-		expectedArgCount := 1
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.username = ?"
+		expectedArgs := []interface{}{
+			exampleUser.Username,
+		}
 
-		actualQuery, args := m.buildGetUserByUsernameQuery(expectedUsername)
+		actualQuery, actualArgs := m.buildGetUserByUsernameQuery(exampleUser.Username)
+		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Len(t, args, expectedArgCount)
-
-		assert.Equal(t, expectedUsername, args[0])
+		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
 
-func TestMariaDB_GetUserByUsername(T *testing.T) {
+func TestSqlite_GetUserByUsername(T *testing.T) {
 	T.Parallel()
 
 	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.username = ?"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expected := buildFakeUser()
+		exampleUser := fakemodels.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(expected.Username).
-			WillReturnRows(buildMockRowFromUser(expected))
+			WithArgs(exampleUser.Username).
+			WillReturnRows(buildMockRowsFromUser(exampleUser))
 
-		actual, err := m.GetUserByUsername(ctx, expected.Username)
+		actual, err := m.GetUserByUsername(ctx, exampleUser.Username)
 		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
+		assert.Equal(t, exampleUser, actual)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
-		expected := buildFakeUser()
+		exampleUser := fakemodels.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(expected.Username).
+			WithArgs(exampleUser.Username).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := m.GetUserByUsername(ctx, expected.Username)
+		actual, err := m.GetUserByUsername(ctx, exampleUser.Username)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.Equal(t, sql.ErrNoRows, err)
@@ -322,14 +285,14 @@ func TestMariaDB_GetUserByUsername(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
-		expected := buildFakeUser()
+		exampleUser := fakemodels.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(expected.Username).
+			WithArgs(exampleUser.Username).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := m.GetUserByUsername(ctx, expected.Username)
+		actual, err := m.GetUserByUsername(ctx, exampleUser.Username)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -337,120 +300,87 @@ func TestMariaDB_GetUserByUsername(T *testing.T) {
 	})
 }
 
-func TestMariaDB_buildGetUserCountQuery(T *testing.T) {
+func TestSqlite_buildGetAllUserCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
-		filter := models.DefaultQueryFilter()
 
-		expectedArgCount := 0
-		expectedQuery := "SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL LIMIT 20"
+		expectedQuery := "SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL"
 
-		actualQuery, args := m.buildGetUserCountQuery(filter)
+		actualQuery := m.buildGetAllUserCountQuery()
+		ensureArgCountMatchesQuery(t, actualQuery, nil)
 		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Len(t, args, expectedArgCount)
 	})
 }
 
-func TestMariaDB_GetUserCount(T *testing.T) {
-	T.Parallel()
-
-	expectedQuery := "SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL LIMIT 20"
-
-	T.Run("happy path", func(t *testing.T) {
-		ctx := context.Background()
-		filter := models.DefaultQueryFilter()
-		expected := fake.Uint64()
-
-		m, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expected))
-
-		actual, err := m.GetUserCount(ctx, filter)
-		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-
-	T.Run("with error querying database", func(t *testing.T) {
-		ctx := context.Background()
-		filter := models.DefaultQueryFilter()
-		m, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WillReturnError(errors.New("blah"))
-
-		actual, err := m.GetUserCount(ctx, filter)
-		assert.Error(t, err)
-		assert.Zero(t, actual)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
-func TestMariaDB_buildCreateUserQuery(T *testing.T) {
+func TestSqlite_buildCreateUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
-		expected := buildFakeUser()
-		expectedInput := buildFakeUserDatabaseCreationInput(expected)
-		expectedArgCount := 4
-		expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret,is_admin,created_on) VALUES (?,?,?,?,UNIX_TIMESTAMP())"
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
-		actualQuery, args := m.buildCreateUserQuery(expectedInput)
+		expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret,is_admin) VALUES (?,?,?,?)"
+		expectedArgs := []interface{}{
+			exampleUser.Username,
+			exampleUser.HashedPassword,
+			exampleUser.TwoFactorSecret,
+			exampleUser.IsAdmin,
+		}
+
+		actualQuery, actualArgs := m.buildCreateUserQuery(exampleInput)
+		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Len(t, args, expectedArgCount)
-
-		assert.Equal(t, expected.Username, args[0])
-		assert.Equal(t, expected.HashedPassword, args[1])
-		assert.Equal(t, expected.TwoFactorSecret, args[2])
-		assert.Equal(t, expected.IsAdmin, args[3])
+		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
 
-func TestMariaDB_CreateUser(T *testing.T) {
+func TestSqlite_CreateUser(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret,is_admin,created_on) VALUES (?,?,?,?,UNIX_TIMESTAMP())"
+	expectedQuery := "INSERT INTO users (username,hashed_password,two_factor_secret,is_admin) VALUES (?,?,?,?)"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expected := buildFakeUser()
-		expectedInput := buildFakeUserDatabaseCreationInput(expected)
-		exampleRows := sqlmock.NewResult(int64(expected.ID), 1)
-
 		m, mockDB := buildTestService(t)
+
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser.Salt = nil
+		expectedInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+
+		exampleRows := sqlmock.NewResult(int64(exampleUser.ID), 1)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
-			expected.Username,
-			expected.HashedPassword,
-			expected.TwoFactorSecret,
-			expected.IsAdmin,
+			exampleUser.Username,
+			exampleUser.HashedPassword,
+			exampleUser.TwoFactorSecret,
+			false,
 		).WillReturnResult(exampleRows)
 
-		expectedTimeQuery := "SELECT users.created_on FROM users WHERE users.id = ?"
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedTimeQuery)).
-			WillReturnRows(sqlmock.NewRows([]string{"users.created_on"}).AddRow(expected.CreatedOn))
+		mtt := &mockTimeTeller{}
+		mtt.On("Now").Return(exampleUser.CreatedOn)
+		m.timeTeller = mtt
 
 		actual, err := m.CreateUser(ctx, expectedInput)
 		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
+		assert.Equal(t, exampleUser, actual)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
-		expected := buildFakeUser()
-		expectedInput := buildFakeUserDatabaseCreationInput(expected)
-
 		m, mockDB := buildTestService(t)
+
+		exampleUser := fakemodels.BuildFakeUser()
+		expectedInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
-			expected.Username,
-			expected.HashedPassword,
-			expected.TwoFactorSecret,
-			expected.IsAdmin,
+			exampleUser.Username,
+			exampleUser.HashedPassword,
+			exampleUser.TwoFactorSecret,
+			false,
 		).WillReturnError(errors.New("blah"))
 
 		actual, err := m.CreateUser(ctx, expectedInput)
@@ -461,81 +391,85 @@ func TestMariaDB_CreateUser(T *testing.T) {
 	})
 }
 
-func TestMariaDB_buildUpdateUserQuery(T *testing.T) {
+func TestSqlite_buildUpdateUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
-		expected := buildFakeUser()
-		expectedArgCount := 4
+		exampleUser := fakemodels.BuildFakeUser()
+
 		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, two_factor_secret = ?, updated_on = UNIX_TIMESTAMP() WHERE id = ?"
+		expectedArgs := []interface{}{
+			exampleUser.Username,
+			exampleUser.HashedPassword,
+			exampleUser.TwoFactorSecret,
+			exampleUser.ID,
+		}
 
-		actualQuery, args := m.buildUpdateUserQuery(expected)
+		actualQuery, actualArgs := m.buildUpdateUserQuery(exampleUser)
+		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Len(t, args, expectedArgCount)
-
-		assert.Equal(t, expected.Username, args[0])
-		assert.Equal(t, expected.HashedPassword, args[1])
-		assert.Equal(t, expected.TwoFactorSecret, args[2])
-		assert.Equal(t, expected.ID, args[3])
+		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
 
-func TestMariaDB_UpdateUser(T *testing.T) {
+func TestSqlite_UpdateUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expected := buildFakeUser()
-		exampleRows := sqlmock.NewResult(int64(expected.ID), 1)
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleRows := sqlmock.NewResult(int64(exampleUser.ID), 1)
 		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, two_factor_secret = ?, updated_on = UNIX_TIMESTAMP() WHERE id = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
-			expected.Username,
-			expected.HashedPassword,
-			expected.TwoFactorSecret,
-			expected.ID,
+			exampleUser.Username,
+			exampleUser.HashedPassword,
+			exampleUser.TwoFactorSecret,
+			exampleUser.ID,
 		).WillReturnResult(exampleRows)
 
-		err := m.UpdateUser(ctx, expected)
+		err := m.UpdateUser(ctx, exampleUser)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
 
-func TestMariaDB_buildArchiveUserQuery(T *testing.T) {
+func TestSqlite_buildArchiveUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
-		exampleUserID := fake.Uint64()
-		expectedArgCount := 1
+		exampleUser := fakemodels.BuildFakeUser()
+
 		expectedQuery := "UPDATE users SET updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE id = ?"
+		expectedArgs := []interface{}{
+			exampleUser.ID,
+		}
 
-		actualQuery, args := m.buildArchiveUserQuery(exampleUserID)
+		actualQuery, actualArgs := m.buildArchiveUserQuery(exampleUser.ID)
+		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Len(t, args, expectedArgCount)
-
-		assert.Equal(t, exampleUserID, args[0])
+		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
 
-func TestMariaDB_ArchiveUser(T *testing.T) {
+func TestSqlite_ArchiveUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
-		expected := buildFakeUser()
+		exampleUser := fakemodels.BuildFakeUser()
 		expectedQuery := "UPDATE users SET updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE id = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(expected.ID).
+			WithArgs(exampleUser.ID).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := m.ArchiveUser(ctx, expected.ID)
+		err := m.ArchiveUser(ctx, exampleUser.ID)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")

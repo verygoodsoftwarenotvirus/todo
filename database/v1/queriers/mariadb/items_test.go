@@ -59,7 +59,7 @@ func buildErroneousMockRowFromItem(x *models.Item) *sqlmock.Rows {
 	return exampleRows
 }
 
-func TestSqlite_buildItemExistsQuery(T *testing.T) {
+func TestMariaDB_buildItemExistsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -79,7 +79,7 @@ func TestSqlite_buildItemExistsQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_ItemExists(T *testing.T) {
+func TestMariaDB_ItemExists(T *testing.T) {
 	T.Parallel()
 
 	expectedQuery := "SELECT EXISTS ( SELECT items.id FROM items WHERE items.belongs_to_user = ? AND items.id = ? )"
@@ -101,7 +101,7 @@ func TestSqlite_ItemExists(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildGetItemQuery(T *testing.T) {
+func TestMariaDB_buildGetItemQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -121,7 +121,7 @@ func TestSqlite_buildGetItemQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_GetItem(T *testing.T) {
+func TestMariaDB_GetItem(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakemodels.BuildFakeUser()
@@ -163,7 +163,7 @@ func TestSqlite_GetItem(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildGetAllItemsCountQuery(T *testing.T) {
+func TestMariaDB_buildGetAllItemsCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -177,7 +177,7 @@ func TestSqlite_buildGetAllItemsCountQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_GetAllItemsCount(T *testing.T) {
+func TestMariaDB_GetAllItemsCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -198,7 +198,7 @@ func TestSqlite_GetAllItemsCount(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildGetItemsQuery(T *testing.T) {
+func TestMariaDB_buildGetItemsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -222,7 +222,7 @@ func TestSqlite_buildGetItemsQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_GetItems(T *testing.T) {
+func TestMariaDB_GetItems(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakemodels.BuildFakeUser()
@@ -304,7 +304,7 @@ func TestSqlite_GetItems(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildCreateItemQuery(T *testing.T) {
+func TestMariaDB_buildCreateItemQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -325,7 +325,7 @@ func TestSqlite_buildCreateItemQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_CreateItem(T *testing.T) {
+func TestMariaDB_CreateItem(T *testing.T) {
 	T.Parallel()
 
 	expectedCreationQuery := "INSERT INTO items (name,details,belongs_to_user) VALUES (?,?,?)"
@@ -361,7 +361,7 @@ func TestSqlite_CreateItem(T *testing.T) {
 		m, mockDB := buildTestService(t)
 
 		exampleItem := fakemodels.BuildFakeItem()
-		expectedInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedCreationQuery)).
 			WithArgs(
@@ -370,7 +370,7 @@ func TestSqlite_CreateItem(T *testing.T) {
 				exampleItem.BelongsToUser,
 			).WillReturnError(errors.New("blah"))
 
-		actual, err := m.CreateItem(ctx, expectedInput)
+		actual, err := m.CreateItem(ctx, exampleInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -378,7 +378,7 @@ func TestSqlite_CreateItem(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildUpdateItemQuery(T *testing.T) {
+func TestMariaDB_buildUpdateItemQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -400,7 +400,7 @@ func TestSqlite_buildUpdateItemQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_UpdateItem(T *testing.T) {
+func TestMariaDB_UpdateItem(T *testing.T) {
 	T.Parallel()
 
 	expectedQuery := "UPDATE items SET name = ?, details = ?, updated_on = UNIX_TIMESTAMP() WHERE belongs_to_user = ? AND id = ?"
@@ -446,7 +446,7 @@ func TestSqlite_UpdateItem(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildArchiveItemQuery(T *testing.T) {
+func TestMariaDB_buildArchiveItemQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -466,7 +466,7 @@ func TestSqlite_buildArchiveItemQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_ArchiveItem(T *testing.T) {
+func TestMariaDB_ArchiveItem(T *testing.T) {
 	T.Parallel()
 
 	expectedQuery := "UPDATE items SET updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"

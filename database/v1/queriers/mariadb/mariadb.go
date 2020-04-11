@@ -20,8 +20,7 @@ const (
 	loggerName        = "mariadb"
 	mariaDBDriverName = "wrapped-mariadb-driver"
 
-	existencePrefix = "SELECT EXISTS ("
-	existenceSuffix = ")"
+	existencePrefix, existenceSuffix = "SELECT EXISTS (", ")"
 
 	// countQuery is a generic counter query used in a few query builders
 	countQuery = "COUNT(%s.id)"

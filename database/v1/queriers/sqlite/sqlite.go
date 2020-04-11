@@ -19,8 +19,7 @@ const (
 	loggerName       = "sqlite"
 	sqliteDriverName = "wrapped-sqlite-driver"
 
-	existencePrefix = "SELECT EXISTS ("
-	existenceSuffix = ")"
+	existencePrefix, existenceSuffix = "SELECT EXISTS (", ")"
 
 	// countQuery is a generic counter query used in a few query builders
 	countQuery = "COUNT(%s.id)"
@@ -49,8 +48,8 @@ var _ database.Database = (*Sqlite)(nil)
 type (
 	// Sqlite is our main Sqlite interaction db
 	Sqlite struct {
-		db          *sql.DB
 		logger      logging.Logger
+		db          *sql.DB
 		timeTeller  timeTeller
 		sqlBuilder  squirrel.StatementBuilderType
 		migrateOnce sync.Once

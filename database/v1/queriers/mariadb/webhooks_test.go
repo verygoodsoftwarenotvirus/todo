@@ -69,7 +69,7 @@ func buildErroneousMockRowFromWebhook(w *models.Webhook) *sqlmock.Rows {
 	return exampleRows
 }
 
-func TestSqlite_buildGetWebhookQuery(T *testing.T) {
+func TestMariaDB_buildGetWebhookQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -81,15 +81,15 @@ func TestSqlite_buildGetWebhookQuery(T *testing.T) {
 			exampleWebhook.BelongsToUser,
 			exampleWebhook.ID,
 		}
-
 		actualQuery, actualArgs := m.buildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
 
-func TestSqlite_GetWebhook(T *testing.T) {
+func TestMariaDB_GetWebhook(T *testing.T) {
 	T.Parallel()
 
 	expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.belongs_to_user = ? AND webhooks.id = ?"
@@ -160,19 +160,21 @@ func TestSqlite_GetWebhook(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildGetAllWebhooksCountQuery(T *testing.T) {
+func TestMariaDB_buildGetAllWebhooksCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
-		expected := "SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL"
 
-		actual := m.buildGetAllWebhooksCountQuery()
-		assert.Equal(t, expected, actual)
+		expectedQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL"
+		actualQuery := m.buildGetAllWebhooksCountQuery()
+
+		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		assert.Equal(t, expectedQuery, actualQuery)
 	})
 }
 
-func TestSqlite_GetAllWebhooksCount(T *testing.T) {
+func TestMariaDB_GetAllWebhooksCount(T *testing.T) {
 	T.Parallel()
 
 	expectedQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL"
@@ -206,19 +208,21 @@ func TestSqlite_GetAllWebhooksCount(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildGetAllWebhooksQuery(T *testing.T) {
+func TestMariaDB_buildGetAllWebhooksQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
-		expected := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL"
 
-		actual := m.buildGetAllWebhooksQuery()
-		assert.Equal(t, expected, actual)
+		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL"
+		actualQuery := m.buildGetAllWebhooksQuery()
+
+		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		assert.Equal(t, expectedQuery, actualQuery)
 	})
 }
 
-func TestSqlite_GetAllWebhooks(T *testing.T) {
+func TestMariaDB_GetAllWebhooks(T *testing.T) {
 	T.Parallel()
 
 	expectedListQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL"
@@ -288,7 +292,7 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildGetWebhooksQuery(T *testing.T) {
+func TestMariaDB_buildGetWebhooksQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -304,15 +308,15 @@ func TestSqlite_buildGetWebhooksQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-
 		actualQuery, actualArgs := m.buildGetWebhooksQuery(exampleUser.ID, filter)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
 
-func TestSqlite_GetWebhooks(T *testing.T) {
+func TestMariaDB_GetWebhooks(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakemodels.BuildFakeUser()
@@ -389,7 +393,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildWebhookCreationQuery(T *testing.T) {
+func TestMariaDB_buildWebhookCreationQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -407,15 +411,15 @@ func TestSqlite_buildWebhookCreationQuery(T *testing.T) {
 			strings.Join(exampleWebhook.Topics, topicsSeparator),
 			exampleWebhook.BelongsToUser,
 		}
-
 		actualQuery, actualArgs := m.buildWebhookCreationQuery(exampleWebhook)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
 
-func TestSqlite_CreateWebhook(T *testing.T) {
+func TestMariaDB_CreateWebhook(T *testing.T) {
 	T.Parallel()
 
 	expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to_user) VALUES (?,?,?,?,?,?,?,?)"
@@ -474,7 +478,7 @@ func TestSqlite_CreateWebhook(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildUpdateWebhookQuery(T *testing.T) {
+func TestMariaDB_buildUpdateWebhookQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -493,15 +497,15 @@ func TestSqlite_buildUpdateWebhookQuery(T *testing.T) {
 			exampleWebhook.BelongsToUser,
 			exampleWebhook.ID,
 		}
-
 		actualQuery, actualArgs := m.buildUpdateWebhookQuery(exampleWebhook)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
 
-func TestSqlite_UpdateWebhook(T *testing.T) {
+func TestMariaDB_UpdateWebhook(T *testing.T) {
 	T.Parallel()
 
 	expectedQuery := "UPDATE webhooks SET name = ?, content_type = ?, url = ?, method = ?, events = ?, data_types = ?, topics = ?, updated_on = UNIX_TIMESTAMP() WHERE belongs_to_user = ? AND id = ?"
@@ -522,8 +526,7 @@ func TestSqlite_UpdateWebhook(T *testing.T) {
 			strings.Join(exampleWebhook.Topics, topicsSeparator),
 			exampleWebhook.BelongsToUser,
 			exampleWebhook.ID,
-		).
-			WillReturnResult(exampleRows)
+		).WillReturnResult(exampleRows)
 
 		err := m.UpdateWebhook(ctx, exampleWebhook)
 		assert.NoError(t, err)
@@ -546,8 +549,7 @@ func TestSqlite_UpdateWebhook(T *testing.T) {
 			strings.Join(exampleWebhook.Topics, topicsSeparator),
 			exampleWebhook.BelongsToUser,
 			exampleWebhook.ID,
-		).
-			WillReturnError(errors.New("blah"))
+		).WillReturnError(errors.New("blah"))
 
 		err := m.UpdateWebhook(ctx, exampleWebhook)
 		assert.Error(t, err)
@@ -556,7 +558,7 @@ func TestSqlite_UpdateWebhook(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildArchiveWebhookQuery(T *testing.T) {
+func TestMariaDB_buildArchiveWebhookQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -568,15 +570,15 @@ func TestSqlite_buildArchiveWebhookQuery(T *testing.T) {
 			exampleWebhook.BelongsToUser,
 			exampleWebhook.ID,
 		}
-
 		actualQuery, actualArgs := m.buildArchiveWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
 
-func TestSqlite_ArchiveWebhook(T *testing.T) {
+func TestMariaDB_ArchiveWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {

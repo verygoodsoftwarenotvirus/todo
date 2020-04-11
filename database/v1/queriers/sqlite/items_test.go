@@ -361,7 +361,7 @@ func TestSqlite_CreateItem(T *testing.T) {
 		s, mockDB := buildTestService(t)
 
 		exampleItem := fakemodels.BuildFakeItem()
-		expectedInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedCreationQuery)).
 			WithArgs(
@@ -370,7 +370,7 @@ func TestSqlite_CreateItem(T *testing.T) {
 				exampleItem.BelongsToUser,
 			).WillReturnError(errors.New("blah"))
 
-		actual, err := s.CreateItem(ctx, expectedInput)
+		actual, err := s.CreateItem(ctx, exampleInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 

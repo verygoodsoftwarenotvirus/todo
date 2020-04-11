@@ -182,7 +182,7 @@ func (p *Postgres) GetAllUserCount(ctx context.Context) (count uint64, err error
 	return
 }
 
-// buildGetAllUserCountQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
+// buildGetUsersQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
 // to a given filter's criteria.
 func (p *Postgres) buildGetUsersQuery(filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
@@ -274,7 +274,7 @@ func (p *Postgres) CreateUser(ctx context.Context, input models.UserDatabaseCrea
 	if err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {
 		switch e := err.(type) {
 		case *postgres.Error:
-			if e.Code == postgres.ErrorCode("23505") {
+			if e.Code == postgres.ErrorCode(postgresRowExistsErrorCode) {
 				return nil, dbclient.ErrUserExists
 			}
 		default:
@@ -295,7 +295,9 @@ func (p *Postgres) buildUpdateUserQuery(input *models.User) (query string, args 
 		Set("hashed_password", input.HashedPassword).
 		Set("two_factor_secret", input.TwoFactorSecret).
 		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
-		Where(squirrel.Eq{"id": input.ID}).
+		Where(squirrel.Eq{
+			"id": input.ID,
+		}).
 		Suffix("RETURNING updated_on").
 		ToSql()
 
@@ -319,7 +321,9 @@ func (p *Postgres) buildArchiveUserQuery(userID uint64) (query string, args []in
 		Update(usersTableName).
 		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
 		Set("archived_on", squirrel.Expr(currentUnixTimeQuery)).
-		Where(squirrel.Eq{"id": userID}).
+		Where(squirrel.Eq{
+			"id": userID,
+		}).
 		Suffix("RETURNING archived_on").
 		ToSql()
 

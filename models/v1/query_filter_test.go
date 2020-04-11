@@ -126,7 +126,7 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 		}
 
 		sb := squirrel.StatementBuilder.Select("*").From("testing")
-		qf.ApplyToQueryBuilder(sb, "")
+		qf.ApplyToQueryBuilder(sb, exampleTableName)
 		expected := "SELECT * FROM testing"
 		actual, _, err := sb.ToSql()
 

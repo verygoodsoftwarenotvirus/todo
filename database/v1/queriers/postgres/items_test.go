@@ -404,6 +404,7 @@ func TestPostgres_UpdateItem(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		p, mockDB := buildTestService(t)
+
 		exampleItem := fakemodels.BuildFakeItem()
 
 		exampleRows := sqlmock.NewRows([]string{"updated_on"}).AddRow(uint64(time.Now().Unix()))

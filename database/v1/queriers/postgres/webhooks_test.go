@@ -7,7 +7,6 @@ import (
 	"errors"
 	"strings"
 	"testing"
-	"time"
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
@@ -82,8 +81,8 @@ func TestPostgres_buildGetWebhookQuery(T *testing.T) {
 			exampleWebhook.BelongsToUser,
 			exampleWebhook.ID,
 		}
-
 		actualQuery, actualArgs := p.buildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
@@ -166,10 +165,12 @@ func TestPostgres_buildGetAllWebhooksCountQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		expected := "SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL"
 
-		actual := p.buildGetAllWebhooksCountQuery()
-		assert.Equal(t, expected, actual)
+		expectedQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL"
+		actualQuery := p.buildGetAllWebhooksCountQuery()
+
+		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		assert.Equal(t, expectedQuery, actualQuery)
 	})
 }
 
@@ -212,10 +213,12 @@ func TestPostgres_buildGetAllWebhooksQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		expected := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL"
 
-		actual := p.buildGetAllWebhooksQuery()
-		assert.Equal(t, expected, actual)
+		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL"
+		actualQuery := p.buildGetAllWebhooksQuery()
+
+		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		assert.Equal(t, expectedQuery, actualQuery)
 	})
 }
 
@@ -305,8 +308,8 @@ func TestPostgres_buildGetWebhooksQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-
 		actualQuery, actualArgs := p.buildGetWebhooksQuery(exampleUser.ID, filter)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
@@ -408,8 +411,8 @@ func TestPostgres_buildWebhookCreationQuery(T *testing.T) {
 			strings.Join(exampleWebhook.Topics, topicsSeparator),
 			exampleWebhook.BelongsToUser,
 		}
-
 		actualQuery, actualArgs := p.buildWebhookCreationQuery(exampleWebhook)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
@@ -490,8 +493,8 @@ func TestPostgres_buildUpdateWebhookQuery(T *testing.T) {
 			exampleWebhook.BelongsToUser,
 			exampleWebhook.ID,
 		}
-
 		actualQuery, actualArgs := p.buildUpdateWebhookQuery(exampleWebhook)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
@@ -508,7 +511,7 @@ func TestPostgres_UpdateWebhook(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
-		exampleRows := sqlmock.NewRows([]string{"updated_on"}).AddRow(uint64(time.Now().Unix()))
+		exampleRows := sqlmock.NewRows([]string{"updated_on"}).AddRow(exampleWebhook.UpdatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
 			exampleWebhook.Name,
 			exampleWebhook.ContentType,
@@ -563,8 +566,8 @@ func TestPostgres_buildArchiveWebhookQuery(T *testing.T) {
 			exampleWebhook.BelongsToUser,
 			exampleWebhook.ID,
 		}
-
 		actualQuery, actualArgs := p.buildArchiveWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)

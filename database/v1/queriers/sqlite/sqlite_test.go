@@ -6,27 +6,18 @@ import (
 	"regexp"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	fake "github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
 
-func init() {
-	fake.Seed(time.Now().UnixNano())
-}
-
 func buildTestService(t *testing.T) (*Sqlite, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-
-	s := ProvideSqlite(true, db, noop.ProvideNoopLogger()).(*Sqlite)
-	s.timeTeller = &mockTimeTeller{}
-
-	return s, mock
+	s := ProvideSqlite(true, db, noop.ProvideNoopLogger())
+	return s.(*Sqlite), mock
 }
 
 var (
@@ -73,8 +64,9 @@ func TestSqlite_IsReady(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		ctx := context.Background()
 		s, _ := buildTestService(t)
-		assert.True(t, s.IsReady(context.Background()))
+		assert.True(t, s.IsReady(ctx))
 	})
 }
 
@@ -84,5 +76,14 @@ func TestSqlite_logQueryBuildingError(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		s, _ := buildTestService(t)
 		s.logQueryBuildingError(errors.New(""))
+	})
+}
+
+func TestSqlite_logIDRetrievalError(T *testing.T) {
+	T.Parallel()
+
+	T.Run("obligatory", func(t *testing.T) {
+		s, _ := buildTestService(t)
+		s.logIDRetrievalError(errors.New(""))
 	})
 }

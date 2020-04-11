@@ -87,7 +87,7 @@ func scanItems(logger logging.Logger, rows *sql.Rows) ([]models.Item, uint64, er
 	return list, count, nil
 }
 
-// buildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists.
+// buildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists
 func (p *Postgres) buildItemExistsQuery(itemID, userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -130,7 +130,7 @@ func (p *Postgres) buildGetItemQuery(itemID, userID uint64) (query string, args 
 	return query, args
 }
 
-// GetItem fetches an item from the postgres database
+// GetItem fetches an item from the database
 func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
 	query, args := p.buildGetItemQuery(itemID, userID)
 	row := p.db.QueryRowContext(ctx, query, args...)
@@ -219,7 +219,7 @@ func (p *Postgres) GetItems(ctx context.Context, userID uint64, filter *models.Q
 	return list, nil
 }
 
-// buildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments.
+// buildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments
 func (p *Postgres) buildCreateItemQuery(input *models.Item) (query string, args []interface{}) {
 	var err error
 

@@ -87,7 +87,7 @@ func scanItems(logger logging.Logger, rows *sql.Rows) ([]models.Item, uint64, er
 	return list, count, nil
 }
 
-// buildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID existm.
+// buildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists
 func (m *MariaDB) buildItemExistsQuery(itemID, userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -219,7 +219,7 @@ func (m *MariaDB) GetItems(ctx context.Context, userID uint64, filter *models.Qu
 	return list, nil
 }
 
-// buildCreateItemQuery takes an item and returns a creation query for that item and the relevant argumentm.
+// buildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments
 func (m *MariaDB) buildCreateItemQuery(input *models.Item) (query string, args []interface{}) {
 	var err error
 

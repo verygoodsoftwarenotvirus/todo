@@ -180,7 +180,7 @@ func (m *MariaDB) GetAllUserCount(ctx context.Context) (count uint64, err error)
 	return
 }
 
-// buildGetAllUserCountQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
+// buildGetUsersQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
 // to a given filter's criteria.
 func (m *MariaDB) buildGetUsersQuery(filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
@@ -294,7 +294,9 @@ func (m *MariaDB) buildUpdateUserQuery(input *models.User) (query string, args [
 		Set("hashed_password", input.HashedPassword).
 		Set("two_factor_secret", input.TwoFactorSecret).
 		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
-		Where(squirrel.Eq{"id": input.ID}).
+		Where(squirrel.Eq{
+			"id": input.ID,
+		}).
 		ToSql()
 
 	m.logQueryBuildingError(err)
@@ -318,7 +320,9 @@ func (m *MariaDB) buildArchiveUserQuery(userID uint64) (query string, args []int
 		Update(usersTableName).
 		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
 		Set("archived_on", squirrel.Expr(currentUnixTimeQuery)).
-		Where(squirrel.Eq{"id": userID}).
+		Where(squirrel.Eq{
+			"id": userID,
+		}).
 		ToSql()
 
 	m.logQueryBuildingError(err)

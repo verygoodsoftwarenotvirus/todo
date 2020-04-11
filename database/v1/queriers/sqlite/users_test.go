@@ -73,8 +73,8 @@ func TestSqlite_buildGetUserQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
-
 		actualQuery, actualArgs := s.buildGetUserQuery(exampleUser.ID)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
@@ -89,6 +89,7 @@ func TestSqlite_GetUser(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser.Salt = nil
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -134,8 +135,8 @@ func TestSqlite_buildGetUsersQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-
 		actualQuery, actualArgs := s.buildGetUsersQuery(filter)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
@@ -150,32 +151,24 @@ func TestSqlite_GetUsers(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		filter := models.DefaultQueryFilter()
-		exampleUser := fakemodels.BuildFakeUser()
-		expected := &models.UserList{
-			Pagination: models.Pagination{
-				Page:       1,
-				Limit:      20,
-				TotalCount: 3,
-			},
-			Users: []models.User{
-				*exampleUser,
-				*exampleUser,
-				*exampleUser,
-			},
-		}
+
+		exampleUserList := fakemodels.BuildFakeUserList()
+		exampleUserList.Users[0].Salt = nil
+		exampleUserList.Users[1].Salt = nil
+		exampleUserList.Users[2].Salt = nil
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).WillReturnRows(
 			buildMockRowsFromUser(
-				exampleUser,
-				exampleUser,
-				exampleUser,
+				&exampleUserList.Users[0],
+				&exampleUserList.Users[1],
+				&exampleUserList.Users[2],
 			),
 		)
 
 		actual, err := s.GetUsers(ctx, filter)
 		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
+		assert.Equal(t, exampleUserList, actual)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -183,6 +176,7 @@ func TestSqlite_GetUsers(T *testing.T) {
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
 		filter := models.DefaultQueryFilter()
+
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).
 			WillReturnError(sql.ErrNoRows)
@@ -198,6 +192,7 @@ func TestSqlite_GetUsers(T *testing.T) {
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
 		filter := models.DefaultQueryFilter()
+
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).
 			WillReturnError(errors.New("blah"))
@@ -212,11 +207,10 @@ func TestSqlite_GetUsers(T *testing.T) {
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		ctx := context.Background()
 		filter := models.DefaultQueryFilter()
-		exampleUser := fakemodels.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).
-			WillReturnRows(buildErroneousMockRowFromUser(exampleUser))
+			WillReturnRows(buildErroneousMockRowFromUser(fakemodels.BuildFakeUser()))
 
 		actual, err := s.GetUsers(ctx, filter)
 		assert.Error(t, err)
@@ -237,8 +231,8 @@ func TestSqlite_buildGetUserByUsernameQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleUser.Username,
 		}
-
 		actualQuery, actualArgs := s.buildGetUserByUsernameQuery(exampleUser.Username)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
@@ -253,6 +247,7 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser.Salt = nil
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -307,10 +302,44 @@ func TestSqlite_buildGetAllUserCountQuery(T *testing.T) {
 		s, _ := buildTestService(t)
 
 		expectedQuery := "SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL"
-
 		actualQuery := s.buildGetAllUserCountQuery()
-		ensureArgCountMatchesQuery(t, actualQuery, nil)
+
+		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
+	})
+}
+
+func TestSqlite_GetAllUserCount(T *testing.T) {
+	T.Parallel()
+
+	expectedQuery := "SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL"
+
+	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
+		exampleCount := uint64(123)
+
+		s, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(exampleCount))
+
+		actual, err := s.GetAllUserCount(ctx)
+		assert.NoError(t, err)
+		assert.Equal(t, exampleCount, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("with error querying database", func(t *testing.T) {
+		ctx := context.Background()
+		s, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WillReturnError(errors.New("blah"))
+
+		actual, err := s.GetAllUserCount(ctx)
+		assert.Error(t, err)
+		assert.Zero(t, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
 
@@ -329,8 +358,8 @@ func TestSqlite_buildCreateUserQuery(T *testing.T) {
 			exampleUser.TwoFactorSecret,
 			exampleUser.IsAdmin,
 		}
-
 		actualQuery, actualArgs := s.buildCreateUserQuery(exampleInput)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
@@ -405,8 +434,8 @@ func TestSqlite_buildUpdateUserQuery(T *testing.T) {
 			exampleUser.TwoFactorSecret,
 			exampleUser.ID,
 		}
-
 		actualQuery, actualArgs := s.buildUpdateUserQuery(exampleUser)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
@@ -419,8 +448,9 @@ func TestSqlite_UpdateUser(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 		exampleUser := fakemodels.BuildFakeUser()
-		exampleRows := sqlmock.NewResult(int64(exampleUser.ID), 1)
+
 		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, two_factor_secret = ?, updated_on = (strftime('%s','now')) WHERE id = ?"
+		exampleRows := sqlmock.NewResult(int64(exampleUser.ID), 1)
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
@@ -448,8 +478,8 @@ func TestSqlite_buildArchiveUserQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
-
 		actualQuery, actualArgs := s.buildArchiveUserQuery(exampleUser.ID)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)

@@ -81,8 +81,8 @@ func TestSqlite_buildGetWebhookQuery(T *testing.T) {
 			exampleWebhook.BelongsToUser,
 			exampleWebhook.ID,
 		}
-
 		actualQuery, actualArgs := s.buildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
@@ -165,10 +165,12 @@ func TestSqlite_buildGetAllWebhooksCountQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
-		expected := "SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL"
 
-		actual := s.buildGetAllWebhooksCountQuery()
-		assert.Equal(t, expected, actual)
+		expectedQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL"
+		actualQuery := s.buildGetAllWebhooksCountQuery()
+
+		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		assert.Equal(t, expectedQuery, actualQuery)
 	})
 }
 
@@ -211,10 +213,12 @@ func TestSqlite_buildGetAllWebhooksQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
-		expected := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL"
 
-		actual := s.buildGetAllWebhooksQuery()
-		assert.Equal(t, expected, actual)
+		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL"
+		actualQuery := s.buildGetAllWebhooksQuery()
+
+		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		assert.Equal(t, expectedQuery, actualQuery)
 	})
 }
 
@@ -304,8 +308,8 @@ func TestSqlite_buildGetWebhooksQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-
 		actualQuery, actualArgs := s.buildGetWebhooksQuery(exampleUser.ID, filter)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
@@ -407,8 +411,8 @@ func TestSqlite_buildWebhookCreationQuery(T *testing.T) {
 			strings.Join(exampleWebhook.Topics, topicsSeparator),
 			exampleWebhook.BelongsToUser,
 		}
-
 		actualQuery, actualArgs := s.buildWebhookCreationQuery(exampleWebhook)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
@@ -493,8 +497,8 @@ func TestSqlite_buildUpdateWebhookQuery(T *testing.T) {
 			exampleWebhook.BelongsToUser,
 			exampleWebhook.ID,
 		}
-
 		actualQuery, actualArgs := s.buildUpdateWebhookQuery(exampleWebhook)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
@@ -522,8 +526,7 @@ func TestSqlite_UpdateWebhook(T *testing.T) {
 			strings.Join(exampleWebhook.Topics, topicsSeparator),
 			exampleWebhook.BelongsToUser,
 			exampleWebhook.ID,
-		).
-			WillReturnResult(exampleRows)
+		).WillReturnResult(exampleRows)
 
 		err := s.UpdateWebhook(ctx, exampleWebhook)
 		assert.NoError(t, err)
@@ -546,8 +549,7 @@ func TestSqlite_UpdateWebhook(T *testing.T) {
 			strings.Join(exampleWebhook.Topics, topicsSeparator),
 			exampleWebhook.BelongsToUser,
 			exampleWebhook.ID,
-		).
-			WillReturnError(errors.New("blah"))
+		).WillReturnError(errors.New("blah"))
 
 		err := s.UpdateWebhook(ctx, exampleWebhook)
 		assert.Error(t, err)
@@ -568,8 +570,8 @@ func TestSqlite_buildArchiveWebhookQuery(T *testing.T) {
 			exampleWebhook.BelongsToUser,
 			exampleWebhook.ID,
 		}
-
 		actualQuery, actualArgs := s.buildArchiveWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)

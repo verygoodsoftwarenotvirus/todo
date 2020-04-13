@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/stretchr/testify/mock"
-	"gopkg.in/oauth2.v3"
+	oauth2 "gopkg.in/oauth2.v3"
 	oauth2server "gopkg.in/oauth2.v3/server"
 )
 

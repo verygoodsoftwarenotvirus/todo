@@ -20,8 +20,7 @@ const (
 	loggerName        = "mariadb"
 	mariaDBDriverName = "wrapped-mariadb-driver"
 
-	existencePrefix = "SELECT EXISTS ("
-	existenceSuffix = ")"
+	existencePrefix, existenceSuffix = "SELECT EXISTS (", ")"
 
 	// countQuery is a generic counter query used in a few query builders
 	countQuery = "COUNT(%s.id)"
@@ -52,6 +51,7 @@ type (
 	MariaDB struct {
 		logger      logging.Logger
 		db          *sql.DB
+		timeTeller  timeTeller
 		sqlBuilder  squirrel.StatementBuilderType
 		migrateOnce sync.Once
 		debug       bool
@@ -79,8 +79,9 @@ func ProvideMariaDB(debug bool, db *sql.DB, logger logging.Logger) database.Data
 	return &MariaDB{
 		db:         db,
 		debug:      debug,
+		timeTeller: &stdLibTimeTeller{},
 		logger:     logger.WithName(loggerName),
-		sqlBuilder: squirrel.StatementBuilder,
+		sqlBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Question),
 	}
 }
 
@@ -122,14 +123,14 @@ func (m *MariaDB) logQueryBuildingError(err error) {
 	}
 }
 
-// logCreationTimeRetrievalError logs errors that may occur during creation time retrieval.
+// logIDRetrievalError logs errors that may occur during created db row ID retrieval.
 // Such errors should be few and far between, as the generally only occur with
 // type discrepancies or other misuses of SQL. An alert should be set up for
 // any log entries with the given name, and those alerts should be investigated
 // with the utmost priority.
-func (m *MariaDB) logCreationTimeRetrievalError(err error) {
+func (m *MariaDB) logIDRetrievalError(err error) {
 	if err != nil {
-		m.logger.WithName("CREATION_TIME_RETRIEVAL").Error(err, "retrieving creation time")
+		m.logger.WithName("ROW_ID_ERROR").Error(err, "fetching row ID")
 	}
 }
 

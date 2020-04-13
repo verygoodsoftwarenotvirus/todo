@@ -19,27 +19,12 @@ type opencensusCounter struct {
 
 func (c *opencensusCounter) subtractFromCount(ctx context.Context, value uint64) {
 	atomic.AddUint64(&c.actualCount, ^value+1)
-	stats.Record(ctx, c.measure.M(int64(-c.actualCount)))
+	stats.Record(ctx, c.measure.M(int64(-value)))
 }
 
 func (c *opencensusCounter) addToCount(ctx context.Context, value uint64) {
 	atomic.AddUint64(&c.actualCount, value)
 	stats.Record(ctx, c.measure.M(int64(value)))
-}
-
-// zeroCounter zeroes out the v value. Unexported for the obvious reasons
-func (c *opencensusCounter) zeroCounter(ctx context.Context) {
-	// set existing counts to zero
-	if c.actualCount != 0 {
-		c.subtractFromCount(ctx, c.actualCount)
-		c.actualCount = 0
-	}
-}
-
-// SetCountTo satisfies our Counter interface
-func (c *opencensusCounter) setCountTo(ctx context.Context, value uint64) {
-	c.zeroCounter(ctx)
-	c.IncrementBy(ctx, value)
 }
 
 // Decrement satisfies our Counter interface

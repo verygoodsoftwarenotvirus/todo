@@ -9,7 +9,7 @@ import (
 	"time"
 
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -17,8 +17,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func buildMockRowsFromUser(includeCount bool, users ...*models.User) *sqlmock.Rows {
+func buildMockRowsFromUser(users ...*models.User) *sqlmock.Rows {
+	includeCount := len(users) > 1
 	columns := usersTableColumns
+
 	if includeCount {
 		columns = append(columns, "count")
 	}
@@ -74,8 +76,8 @@ func TestPostgres_buildGetUserQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
-
 		actualQuery, actualArgs := p.buildGetUserQuery(exampleUser.ID)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
@@ -95,7 +97,7 @@ func TestPostgres_GetUser(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(exampleUser.ID).
-			WillReturnRows(buildMockRowsFromUser(false, exampleUser))
+			WillReturnRows(buildMockRowsFromUser(exampleUser))
 
 		actual, err := p.GetUser(ctx, exampleUser.ID)
 		assert.NoError(t, err)
@@ -129,15 +131,15 @@ func TestPostgres_buildGetUsersQuery(T *testing.T) {
 		p, _ := buildTestService(t)
 		filter := fakemodels.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.created_on, users.updated_on, users.archived_on, COUNT(users.id) FROM users WHERE users.archived_on IS NULL AND created_on > $1 AND created_on < $2 AND updated_on > $3 AND updated_on < $4 GROUP BY users.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.created_on, users.updated_on, users.archived_on, COUNT(users.id) FROM users WHERE users.archived_on IS NULL AND users.created_on > $1 AND users.created_on < $2 AND users.updated_on > $3 AND users.updated_on < $4 GROUP BY users.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-
 		actualQuery, actualArgs := p.buildGetUsersQuery(filter)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
@@ -161,7 +163,6 @@ func TestPostgres_GetUsers(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).WillReturnRows(
 			buildMockRowsFromUser(
-				true,
 				&exampleUserList.Users[0],
 				&exampleUserList.Users[1],
 				&exampleUserList.Users[2],
@@ -233,8 +234,8 @@ func TestPostgres_buildGetUserByUsernameQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleUser.Username,
 		}
-
 		actualQuery, actualArgs := p.buildGetUserByUsernameQuery(exampleUser.Username)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
@@ -254,7 +255,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(exampleUser.Username).
-			WillReturnRows(buildMockRowsFromUser(false, exampleUser))
+			WillReturnRows(buildMockRowsFromUser(exampleUser))
 
 		actual, err := p.GetUserByUsername(ctx, exampleUser.Username)
 		assert.NoError(t, err)
@@ -297,29 +298,21 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetUserCountQuery(T *testing.T) {
+func TestPostgres_buildGetAllUserCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		filter := fakemodels.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL AND created_on > $1 AND created_on < $2 AND updated_on > $3 AND updated_on < $4 LIMIT 20 OFFSET 180"
-		expectedArgs := []interface{}{
-			filter.CreatedAfter,
-			filter.CreatedBefore,
-			filter.UpdatedAfter,
-			filter.UpdatedBefore,
-		}
+		expectedQuery := "SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL"
+		actualQuery := p.buildGetAllUserCountQuery()
 
-		actualQuery, actualArgs := p.buildGetUserCountQuery(filter)
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
 
-func TestPostgres_GetUserCount(T *testing.T) {
+func TestPostgres_GetAllUserCount(T *testing.T) {
 	T.Parallel()
 
 	expectedQuery := "SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL"
@@ -341,7 +334,6 @@ func TestPostgres_GetUserCount(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
-
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(errors.New("blah"))
@@ -369,8 +361,8 @@ func TestPostgres_buildCreateUserQuery(T *testing.T) {
 			exampleUser.TwoFactorSecret,
 			exampleUser.IsAdmin,
 		}
-
 		actualQuery, actualArgs := p.buildCreateUserQuery(exampleInput)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
@@ -384,11 +376,12 @@ func TestPostgres_CreateUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+		p, mockDB := buildTestService(t)
+
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleUser.Salt = nil
 		expectedInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
-		p, mockDB := buildTestService(t)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleUser.ID, exampleUser.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
 			exampleUser.Username,
@@ -406,18 +399,17 @@ func TestPostgres_CreateUser(T *testing.T) {
 
 	T.Run("with postgres row exists error", func(t *testing.T) {
 		ctx := context.Background()
+		p, mockDB := buildTestService(t)
+
 		exampleUser := fakemodels.BuildFakeUser()
 		expectedInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
-		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
 			exampleUser.Username,
 			exampleUser.HashedPassword,
 			exampleUser.TwoFactorSecret,
 			false,
-		).WillReturnError(&postgres.Error{
-			Code: "23505",
-		})
+		).WillReturnError(&postgres.Error{Code: postgresRowExistsErrorCode})
 
 		actual, err := p.CreateUser(ctx, expectedInput)
 		assert.Error(t, err)
@@ -429,10 +421,11 @@ func TestPostgres_CreateUser(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
+		p, mockDB := buildTestService(t)
+
 		exampleUser := fakemodels.BuildFakeUser()
 		expectedInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
-		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
 			exampleUser.Username,
 			exampleUser.HashedPassword,
@@ -462,8 +455,8 @@ func TestPostgres_buildUpdateUserQuery(T *testing.T) {
 			exampleUser.TwoFactorSecret,
 			exampleUser.ID,
 		}
-
 		actualQuery, actualArgs := p.buildUpdateUserQuery(exampleUser)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
@@ -506,8 +499,8 @@ func TestPostgres_buildArchiveUserQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
-
 		actualQuery, actualArgs := p.buildArchiveUserQuery(exampleUser.ID)
+
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)

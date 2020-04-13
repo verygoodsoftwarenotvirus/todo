@@ -56,7 +56,7 @@ func scanItem(scan database.Scanner, includeCount bool) (*models.Item, uint64, e
 	return x, count, nil
 }
 
-// scanItems takes some database rows and turns them into a slice of items
+// scanItems takes a logger and some database rows and turns them into a slice of items
 func scanItems(logger logging.Logger, rows *sql.Rows) ([]models.Item, uint64, error) {
 	var (
 		list  []models.Item
@@ -87,7 +87,7 @@ func scanItems(logger logging.Logger, rows *sql.Rows) ([]models.Item, uint64, er
 	return list, count, nil
 }
 
-// buildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists.
+// buildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists
 func (p *Postgres) buildItemExistsQuery(itemID, userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -130,13 +130,13 @@ func (p *Postgres) buildGetItemQuery(itemID, userID uint64) (query string, args 
 	return query, args
 }
 
-// GetItem fetches an item from the postgres database
+// GetItem fetches an item from the database
 func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
 	query, args := p.buildGetItemQuery(itemID, userID)
 	row := p.db.QueryRowContext(ctx, query, args...)
 
-	x, _, err := scanItem(row, false)
-	return x, err
+	item, _, err := scanItem(row, false)
+	return item, err
 }
 
 var (
@@ -153,7 +153,9 @@ func (p *Postgres) buildGetAllItemsCountQuery() string {
 		allItemsCountQuery, _, err = p.sqlBuilder.
 			Select(fmt.Sprintf(countQuery, itemsTableName)).
 			From(itemsTableName).
-			Where(squirrel.Eq{fmt.Sprintf("%s.archived_on", itemsTableName): nil}).
+			Where(squirrel.Eq{
+				fmt.Sprintf("%s.archived_on", itemsTableName): nil,
+			}).
 			ToSql()
 		p.logQueryBuildingError(err)
 	})
@@ -182,7 +184,7 @@ func (p *Postgres) buildGetItemsQuery(userID uint64, filter *models.QueryFilter)
 		GroupBy(fmt.Sprintf("%s.id", itemsTableName))
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, itemsTableName)
 	}
 
 	query, args, err = builder.ToSql()
@@ -217,24 +219,7 @@ func (p *Postgres) GetItems(ctx context.Context, userID uint64, filter *models.Q
 	return list, nil
 }
 
-// GetAllItemsForUser fetches every item belonging to a user
-func (p *Postgres) GetAllItemsForUser(ctx context.Context, userID uint64) ([]models.Item, error) {
-	query, args := p.buildGetItemsQuery(userID, nil)
-
-	rows, err := p.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, buildError(err, "fetching items for user")
-	}
-
-	list, _, err := scanItems(p.logger, rows)
-	if err != nil {
-		return nil, fmt.Errorf("parsing database results: %w", err)
-	}
-
-	return list, nil
-}
-
-// buildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments.
+// buildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments
 func (p *Postgres) buildCreateItemQuery(input *models.Item) (query string, args []interface{}) {
 	var err error
 
@@ -267,7 +252,6 @@ func (p *Postgres) CreateItem(ctx context.Context, input *models.ItemCreationInp
 	}
 
 	query, args := p.buildCreateItemQuery(x)
-	p.logger.WithValue("query", query).Debug("creating item")
 
 	// create the item
 	err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)

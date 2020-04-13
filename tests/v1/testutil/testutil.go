@@ -16,7 +16,7 @@ import (
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	fake "github.com/brianvoe/gofakeit"
+	fake "github.com/brianvoe/gofakeit/v5"
 	"github.com/moul/http2curl"
 	"github.com/pquerna/otp/totp"
 )

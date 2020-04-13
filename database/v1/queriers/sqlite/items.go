@@ -31,10 +31,11 @@ var (
 )
 
 // scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct
-func scanItem(scan database.Scanner) (*models.Item, error) {
+func scanItem(scan database.Scanner, includeCount bool) (*models.Item, uint64, error) {
 	x := &models.Item{}
+	var count uint64
 
-	if err := scan.Scan(
+	targetVars := []interface{}{
 		&x.ID,
 		&x.Name,
 		&x.Details,
@@ -42,37 +43,51 @@ func scanItem(scan database.Scanner) (*models.Item, error) {
 		&x.UpdatedOn,
 		&x.ArchivedOn,
 		&x.BelongsToUser,
-	); err != nil {
-		return nil, err
 	}
 
-	return x, nil
+	if includeCount {
+		targetVars = append(targetVars, &count)
+	}
+
+	if err := scan.Scan(targetVars...); err != nil {
+		return nil, 0, err
+	}
+
+	return x, count, nil
 }
 
 // scanItems takes a logger and some database rows and turns them into a slice of items
-func scanItems(logger logging.Logger, rows *sql.Rows) ([]models.Item, error) {
-	var list []models.Item
+func scanItems(logger logging.Logger, rows *sql.Rows) ([]models.Item, uint64, error) {
+	var (
+		list  []models.Item
+		count uint64
+	)
 
 	for rows.Next() {
-		x, err := scanItem(rows)
+		x, c, err := scanItem(rows, true)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
+
+		if count == 0 {
+			count = c
+		}
+
 		list = append(list, *x)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	if closeErr := rows.Close(); closeErr != nil {
 		logger.Error(closeErr, "closing database rows")
 	}
 
-	return list, nil
+	return list, count, nil
 }
 
-// buildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists.
+// buildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists
 func (s *Sqlite) buildItemExistsQuery(itemID, userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -92,10 +107,9 @@ func (s *Sqlite) buildItemExistsQuery(itemID, userID uint64) (query string, args
 }
 
 // ItemExists queries the database to see if a given item belonging to a given user exists
-func (s *Sqlite) ItemExists(ctx context.Context, itemID, userID uint64) (bool, error) {
-	var exists bool
+func (s *Sqlite) ItemExists(ctx context.Context, itemID, userID uint64) (exists bool, err error) {
 	query, args := s.buildItemExistsQuery(itemID, userID)
-	err := s.db.QueryRowContext(ctx, query, args...).Scan(&exists)
+	err = s.db.QueryRowContext(ctx, query, args...).Scan(&exists)
 	return exists, err
 }
 
@@ -116,41 +130,13 @@ func (s *Sqlite) buildGetItemQuery(itemID, userID uint64) (query string, args []
 	return query, args
 }
 
-// GetItem fetches an item from the sqlite database
+// GetItem fetches an item from the database
 func (s *Sqlite) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
 	query, args := s.buildGetItemQuery(itemID, userID)
 	row := s.db.QueryRowContext(ctx, query, args...)
-	return scanItem(row)
-}
 
-// buildGetItemCountQuery takes a QueryFilter and a user ID and returns a SQL query (and the relevant arguments) for
-// fetching the number of items belonging to a given user that meet a given query
-func (s *Sqlite) buildGetItemCountQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
-	var err error
-
-	builder := s.sqlBuilder.
-		Select(fmt.Sprintf(countQuery, itemsTableName)).
-		From(itemsTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.archived_on", itemsTableName):                   nil,
-			fmt.Sprintf("%s.%s", itemsTableName, itemsTableOwnershipColumn): userID,
-		})
-
-	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
-	}
-
-	query, args, err = builder.ToSql()
-	s.logQueryBuildingError(err)
-
-	return query, args
-}
-
-// GetItemCount will fetch the count of items from the database that meet a particular filter and belong to a particular user.
-func (s *Sqlite) GetItemCount(ctx context.Context, userID uint64, filter *models.QueryFilter) (count uint64, err error) {
-	query, args := s.buildGetItemCountQuery(userID, filter)
-	err = s.db.QueryRowContext(ctx, query, args...).Scan(&count)
-	return count, err
+	item, _, err := scanItem(row, false)
+	return item, err
 }
 
 var (
@@ -167,7 +153,9 @@ func (s *Sqlite) buildGetAllItemsCountQuery() string {
 		allItemsCountQuery, _, err = s.sqlBuilder.
 			Select(fmt.Sprintf(countQuery, itemsTableName)).
 			From(itemsTableName).
-			Where(squirrel.Eq{fmt.Sprintf("%s.archived_on", itemsTableName): nil}).
+			Where(squirrel.Eq{
+				fmt.Sprintf("%s.archived_on", itemsTableName): nil,
+			}).
 			ToSql()
 		s.logQueryBuildingError(err)
 	})
@@ -187,15 +175,16 @@ func (s *Sqlite) buildGetItemsQuery(userID uint64, filter *models.QueryFilter) (
 	var err error
 
 	builder := s.sqlBuilder.
-		Select(itemsTableColumns...).
+		Select(append(itemsTableColumns, fmt.Sprintf(countQuery, itemsTableName))...).
 		From(itemsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.archived_on", itemsTableName):                   nil,
 			fmt.Sprintf("%s.%s", itemsTableName, itemsTableOwnershipColumn): userID,
-		})
+		}).
+		GroupBy(fmt.Sprintf("%s.id", itemsTableName))
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, itemsTableName)
 	}
 
 	query, args, err = builder.ToSql()
@@ -213,46 +202,24 @@ func (s *Sqlite) GetItems(ctx context.Context, userID uint64, filter *models.Que
 		return nil, buildError(err, "querying database for items")
 	}
 
-	list, err := scanItems(s.logger, rows)
+	items, count, err := scanItems(s.logger, rows)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
-	count, err := s.GetItemCount(ctx, userID, filter)
-	if err != nil {
-		return nil, fmt.Errorf("fetching item count: %w", err)
-	}
-
-	x := &models.ItemList{
+	list := &models.ItemList{
 		Pagination: models.Pagination{
 			Page:       filter.Page,
 			Limit:      filter.Limit,
 			TotalCount: count,
 		},
-		Items: list,
-	}
-
-	return x, nil
-}
-
-// GetAllItemsForUser fetches every item belonging to a user
-func (s *Sqlite) GetAllItemsForUser(ctx context.Context, userID uint64) ([]models.Item, error) {
-	query, args := s.buildGetItemsQuery(userID, nil)
-
-	rows, err := s.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, buildError(err, "fetching items for user")
-	}
-
-	list, err := scanItems(s.logger, rows)
-	if err != nil {
-		return nil, fmt.Errorf("parsing database results: %w", err)
+		Items: items,
 	}
 
 	return list, nil
 }
 
-// buildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments.
+// buildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments
 func (s *Sqlite) buildCreateItemQuery(input *models.Item) (query string, args []interface{}) {
 	var err error
 
@@ -268,21 +235,6 @@ func (s *Sqlite) buildCreateItemQuery(input *models.Item) (query string, args []
 			input.Details,
 			input.BelongsToUser,
 		).
-		ToSql()
-
-	s.logQueryBuildingError(err)
-
-	return query, args
-}
-
-// buildItemCreationTimeQuery takes an item and returns a creation query for that item and the relevant arguments
-func (s *Sqlite) buildItemCreationTimeQuery(itemID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = s.sqlBuilder.
-		Select(fmt.Sprintf("%s.created_on", itemsTableName)).
-		From(itemsTableName).
-		Where(squirrel.Eq{fmt.Sprintf("%s.id", itemsTableName): itemID}).
 		ToSql()
 
 	s.logQueryBuildingError(err)
@@ -307,13 +259,12 @@ func (s *Sqlite) CreateItem(ctx context.Context, input *models.ItemCreationInput
 	}
 
 	// fetch the last inserted ID
-	id, idErr := res.LastInsertId()
-	if idErr == nil {
-		x.ID = uint64(id)
+	id, err := res.LastInsertId()
+	s.logIDRetrievalError(err)
+	x.ID = uint64(id)
 
-		query, args := s.buildItemCreationTimeQuery(x.ID)
-		s.logCreationTimeRetrievalError(s.db.QueryRowContext(ctx, query, args...).Scan(&x.CreatedOn))
-	}
+	// this won't be completely accurate, but it will suffice
+	x.CreatedOn = s.timeTeller.Now()
 
 	return x, nil
 }

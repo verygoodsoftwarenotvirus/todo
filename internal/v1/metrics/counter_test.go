@@ -15,9 +15,10 @@ func Test_opencensusCounter_Increment(T *testing.T) {
 		ctx := context.Background()
 
 		ct, err := ProvideUnitCounter("v", "description")
-		c, typOk := ct.(*opencensusCounter)
+		c, typOK := ct.(*opencensusCounter)
+		require.NotNil(t, c)
+		require.True(t, typOK)
 		require.NoError(t, err)
-		require.True(t, typOk)
 
 		assert.Equal(t, c.actualCount, uint64(0))
 
@@ -33,40 +34,15 @@ func Test_opencensusCounter_IncrementBy(T *testing.T) {
 		ctx := context.Background()
 
 		ct, err := ProvideUnitCounter("v", "description")
-		c, typOk := ct.(*opencensusCounter)
+		c, typOK := ct.(*opencensusCounter)
+		require.NotNil(t, c)
+		require.True(t, typOK)
 		require.NoError(t, err)
-		require.True(t, typOk)
 
 		assert.Equal(t, c.actualCount, uint64(0))
 
 		c.IncrementBy(ctx, 666)
 		assert.Equal(t, c.actualCount, uint64(666))
-	})
-}
-
-func Test_opencensusCounter_setCountTo(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		ctx := context.Background()
-
-		ct, err := ProvideUnitCounter("v", "description")
-		c, typOk := ct.(*opencensusCounter)
-		require.NoError(t, err)
-		require.True(t, typOk)
-
-		assert.Equal(t, c.actualCount, uint64(0))
-
-		c.IncrementBy(ctx, 123)
-		assert.Equal(t, c.actualCount, uint64(123))
-
-		c.Decrement(ctx)
-		expected := uint64(666)
-
-		c.setCountTo(ctx, expected)
-		actual := c.actualCount
-
-		assert.Equal(t, expected, actual)
 	})
 }
 
@@ -77,9 +53,10 @@ func Test_opencensusCounter_Decrement(T *testing.T) {
 		ctx := context.Background()
 
 		ct, err := ProvideUnitCounter("v", "description")
-		c, typOk := ct.(*opencensusCounter)
+		c, typOK := ct.(*opencensusCounter)
+		require.NotNil(t, c)
+		require.True(t, typOK)
 		require.NoError(t, err)
-		require.True(t, typOk)
 
 		assert.Equal(t, c.actualCount, uint64(0))
 

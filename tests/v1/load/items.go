@@ -11,8 +11,8 @@ import (
 )
 
 // fetchRandomItem retrieves a random item from the list of available items
-func fetchRandomItem(c *client.V1Client) *models.Item {
-	itemsRes, err := c.GetItems(context.Background(), nil)
+func fetchRandomItem(ctx context.Context, c *client.V1Client) *models.Item {
+	itemsRes, err := c.GetItems(ctx, nil)
 	if err != nil || itemsRes == nil || len(itemsRes.Items) == 0 {
 		return nil
 	}
@@ -36,7 +36,7 @@ func buildItemActions(c *client.V1Client) map[string]*Action {
 			Name: "GetItem",
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
-				if randomItem := fetchRandomItem(c); randomItem != nil {
+				if randomItem := fetchRandomItem(ctx, c); randomItem != nil {
 					return c.BuildGetItemRequest(ctx, randomItem.ID)
 				}
 				return nil, ErrUnavailableYet
@@ -55,7 +55,7 @@ func buildItemActions(c *client.V1Client) map[string]*Action {
 			Name: "UpdateItem",
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
-				if randomItem := fetchRandomItem(c); randomItem != nil {
+				if randomItem := fetchRandomItem(ctx, c); randomItem != nil {
 					newItem := fakemodels.BuildFakeItemCreationInput()
 					randomItem.Name = newItem.Name
 					randomItem.Details = newItem.Details
@@ -69,7 +69,7 @@ func buildItemActions(c *client.V1Client) map[string]*Action {
 			Name: "ArchiveItem",
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
-				if randomItem := fetchRandomItem(c); randomItem != nil {
+				if randomItem := fetchRandomItem(ctx, c); randomItem != nil {
 					return c.BuildArchiveItemRequest(ctx, randomItem.ID)
 				}
 				return nil, ErrUnavailableYet

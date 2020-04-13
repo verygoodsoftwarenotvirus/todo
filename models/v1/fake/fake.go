@@ -3,7 +3,7 @@ package fakemodels
 import (
 	"time"
 
-	fake "github.com/brianvoe/gofakeit"
+	fake "github.com/brianvoe/gofakeit/v5"
 )
 
 func init() {

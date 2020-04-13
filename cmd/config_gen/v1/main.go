@@ -33,6 +33,9 @@ const (
 	dbDebug                          = "database.debug"
 	dbProvider                       = "database.provider"
 	dbDeets                          = "database.connection_details"
+	postgres                         = "postgres"
+	sqlite                           = "sqlite"
+	mariadb                          = "mariadb"
 )
 
 type configFunc func(filepath string) error
@@ -41,9 +44,9 @@ var (
 	files = map[string]configFunc{
 		"config_files/coverage.toml":                   coverageConfig,
 		"config_files/development.toml":                developmentConfig,
-		"config_files/integration-tests-postgres.toml": buildIntegrationTestForDBImplementation("postgres", postgresDBConnDetails),
-		"config_files/integration-tests-sqlite.toml":   buildIntegrationTestForDBImplementation("sqlite", "/tmp/db"),
-		"config_files/integration-tests-mariadb.toml":  buildIntegrationTestForDBImplementation("mariadb", "dbuser:hunter2@tcp(database:3306)/todo"),
+		"config_files/integration-tests-postgres.toml": buildIntegrationTestForDBImplementation(postgres, postgresDBConnDetails),
+		"config_files/integration-tests-sqlite.toml":   buildIntegrationTestForDBImplementation(sqlite, "/tmp/db"),
+		"config_files/integration-tests-mariadb.toml":  buildIntegrationTestForDBImplementation(mariadb, "dbuser:hunter2@tcp(database:3306)/todo"),
 		"config_files/production.toml":                 productionConfig,
 	}
 )
@@ -135,7 +138,12 @@ func buildIntegrationTestForDBImplementation(dbprov, dbDeet string) configFunc {
 		cfg := config.BuildConfig()
 
 		cfg.Set(metaDebug, false)
-		cfg.Set(metaStartupDeadline, time.Minute)
+
+		sd := time.Minute
+		if dbprov == mariadb {
+			sd = 5 * time.Minute
+		}
+		cfg.Set(metaStartupDeadline, sd)
 
 		cfg.Set(serverHTTPPort, defaultPort)
 		cfg.Set(serverDebug, true)

@@ -60,28 +60,28 @@ var (
 	// RuntimeMallocsMeasurement captures the runtime memstats Mallocs field
 	RuntimeMallocsMeasurement = stats.Int64(
 		"mallocs",
-		"the cumulative measure of heap objects allocated (the number of live objects is mallocs - frees)",
+		"the cumulative count of heap objects allocated (the number of live objects is mallocs - frees)",
 		stats.UnitDimensionless,
 	)
 	// RuntimeMallocsView is the corresponding view for the above field
 	RuntimeMallocsView = &view.View{
 		Name:        "mallocs",
 		Measure:     RuntimeMallocsMeasurement,
-		Description: "the cumulative measure of heap objects allocated (the number of live objects is mallocs - frees)",
+		Description: "the cumulative count of heap objects allocated (the number of live objects is mallocs - frees)",
 		Aggregation: view.Count(),
 	}
 
 	// RuntimeFreesMeasurement captures the runtime memstats Frees field
 	RuntimeFreesMeasurement = stats.Int64(
 		"frees",
-		"cumulative measure of heap objects freed (the number of live objects is mallocs - frees)",
+		"cumulative count of heap objects freed (the number of live objects is mallocs - frees)",
 		stats.UnitDimensionless,
 	)
 	// RuntimeFreesView is the corresponding view for the above field
 	RuntimeFreesView = &view.View{
 		Name:        "frees",
 		Measure:     RuntimeFreesMeasurement,
-		Description: "cumulative measure of heap objects freed (the number of live objects is mallocs - frees)",
+		Description: "cumulative count of heap objects freed (the number of live objects is mallocs - frees)",
 		Aggregation: view.Count(),
 	}
 
@@ -465,8 +465,8 @@ func RecordRuntimeStats(interval time.Duration) (stopFn func()) {
 		for {
 			select {
 			case <-ticker.C:
-				startTime := time.Now()
 				ctx := context.Background()
+				startTime := time.Now()
 				ms := &runtime.MemStats{}
 
 				runtime.ReadMemStats(ms)

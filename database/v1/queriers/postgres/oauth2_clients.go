@@ -198,9 +198,9 @@ func (p *Postgres) buildGetOAuth2ClientQuery(clientID, userID uint64) (query str
 		Select(oauth2ClientsTableColumns...).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.id", oauth2ClientsTableName):          clientID,
-			oauth2ClientsTableOwnershipColumn:                     userID,
-			fmt.Sprintf("%s.archived_on", oauth2ClientsTableName): nil,
+			fmt.Sprintf("%s.id", oauth2ClientsTableName):                                    clientID,
+			fmt.Sprintf("%s.%s", oauth2ClientsTableName, oauth2ClientsTableOwnershipColumn): userID,
+			fmt.Sprintf("%s.archived_on", oauth2ClientsTableName):                           nil,
 		}).ToSql()
 
 	p.logQueryBuildingError(err)
@@ -239,8 +239,8 @@ func (p *Postgres) buildGetAllOAuth2ClientCountQuery() string {
 			Select(fmt.Sprintf(countQuery, oauth2ClientsTableName)).
 			From(oauth2ClientsTableName).
 			Where(squirrel.Eq{
-				fmt.Sprintf("%s.archived_on", oauth2ClientsTableName): nil},
-			).
+				fmt.Sprintf("%s.archived_on", oauth2ClientsTableName): nil,
+			}).
 			ToSql()
 
 		p.logQueryBuildingError(err)
@@ -271,7 +271,7 @@ func (p *Postgres) buildGetOAuth2ClientsQuery(userID uint64, filter *models.Quer
 		GroupBy(fmt.Sprintf("%s.id", oauth2ClientsTableName))
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder)
+		builder = filter.ApplyToQueryBuilder(builder, oauth2ClientsTableName)
 	}
 
 	query, args, err = builder.ToSql()
@@ -297,20 +297,18 @@ func (p *Postgres) GetOAuth2Clients(ctx context.Context, userID uint64, filter *
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
-	// de-pointer-ize clients
-	ll := len(list)
-	var clients = make([]models.OAuth2Client, ll)
-	for i, t := range list {
-		clients[i] = *t
-	}
-
 	ocl := &models.OAuth2ClientList{
 		Pagination: models.Pagination{
 			Page:       filter.Page,
 			Limit:      filter.Limit,
 			TotalCount: count,
 		},
-		Clients: clients,
+	}
+
+	// de-pointer-ize clients
+	ocl.Clients = make([]models.OAuth2Client, len(list))
+	for i, t := range list {
+		ocl.Clients[i] = *t
 	}
 
 	return ocl, nil

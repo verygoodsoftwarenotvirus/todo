@@ -35,7 +35,8 @@ func TestWebhooks(test *testing.T) {
 
 	test.Run("Creating", func(T *testing.T) {
 		T.Run("should be createable", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx := context.Background()
+			ctx, span := tracing.StartSpan(ctx, t.Name())
 			defer span.End()
 
 			// Create webhook
@@ -60,7 +61,8 @@ func TestWebhooks(test *testing.T) {
 
 	test.Run("Listing", func(T *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx := context.Background()
+			ctx, span := tracing.StartSpan(ctx, t.Name())
 			defer span.End()
 
 			// Create webhooks
@@ -89,7 +91,8 @@ func TestWebhooks(test *testing.T) {
 
 	test.Run("Reading", func(T *testing.T) {
 		T.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx := context.Background()
+			ctx, span := tracing.StartSpan(ctx, t.Name())
 			defer span.End()
 
 			// Fetch webhook
@@ -98,7 +101,8 @@ func TestWebhooks(test *testing.T) {
 		})
 
 		T.Run("it should be readable", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx := context.Background()
+			ctx, span := tracing.StartSpan(ctx, t.Name())
 			defer span.End()
 
 			// Create webhook
@@ -122,7 +126,8 @@ func TestWebhooks(test *testing.T) {
 
 	test.Run("Updating", func(T *testing.T) {
 		T.Run("it should return an error when trying to update something that doesn't exist", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx := context.Background()
+			ctx, span := tracing.StartSpan(ctx, t.Name())
 			defer span.End()
 
 			exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -133,7 +138,8 @@ func TestWebhooks(test *testing.T) {
 		})
 
 		T.Run("it should be updatable", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx := context.Background()
+			ctx, span := tracing.StartSpan(ctx, t.Name())
 			defer span.End()
 
 			// Create webhook
@@ -164,7 +170,8 @@ func TestWebhooks(test *testing.T) {
 
 	test.Run("Deleting", func(T *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx := context.Background()
+			ctx, span := tracing.StartSpan(ctx, t.Name())
 			defer span.End()
 
 			// Create webhook

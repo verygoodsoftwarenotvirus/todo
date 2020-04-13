@@ -3,7 +3,7 @@ package fakemodels
 import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	fake "github.com/brianvoe/gofakeit"
+	fake "github.com/brianvoe/gofakeit/v5"
 )
 
 // BuildFakeWebhook builds a faked Webhook
@@ -11,7 +11,7 @@ func BuildFakeWebhook() *models.Webhook {
 	return &models.Webhook{
 		ID:            fake.Uint64(),
 		Name:          fake.Word(),
-		ContentType:   fake.MimeType(),
+		ContentType:   fake.FileMimeType(),
 		URL:           fake.URL(),
 		Method:        fake.HTTPMethod(),
 		Events:        []string{fake.Word()},

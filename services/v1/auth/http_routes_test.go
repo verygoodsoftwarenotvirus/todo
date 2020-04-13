@@ -246,7 +246,6 @@ func TestService_LoginHandler(T *testing.T) {
 			exampleUser.Username,
 		).Return(exampleUser, nil)
 		s.userDB = udb
-		s.userDB = udb
 
 		authr := &mockauth.Authenticator{}
 		authr.On(
@@ -759,13 +758,13 @@ func TestService_validateLogin(T *testing.T) {
 			mock.Anything,
 			mock.Anything,
 		).Return(true, auth.ErrPasswordHashTooWeak)
-		s.authenticator = authr
 
 		authr.On(
 			"HashPassword",
 			mock.Anything,
 			mock.Anything,
 		).Return("", expectedErr)
+		s.authenticator = authr
 
 		actual, err := s.validateLogin(ctx, exampleInput)
 		assert.False(t, actual)
@@ -796,13 +795,13 @@ func TestService_validateLogin(T *testing.T) {
 			mock.Anything,
 			mock.Anything,
 		).Return(true, auth.ErrPasswordHashTooWeak)
-		s.authenticator = authr
 
 		authr.On(
 			"HashPassword",
 			mock.Anything,
 			mock.Anything,
 		).Return("blah", nil)
+		s.authenticator = authr
 
 		udb := &mockmodels.UserDataManager{}
 		udb.On(

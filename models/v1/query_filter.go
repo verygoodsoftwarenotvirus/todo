@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"math"
 	"net/http"
 	"net/url"
@@ -122,10 +123,15 @@ func (qf *QueryFilter) ToValues() url.Values {
 }
 
 // ApplyToQueryBuilder applies the query filter to a query builder
-func (qf *QueryFilter) ApplyToQueryBuilder(queryBuilder squirrel.SelectBuilder) squirrel.SelectBuilder {
+func (qf *QueryFilter) ApplyToQueryBuilder(queryBuilder squirrel.SelectBuilder, tableName string) squirrel.SelectBuilder {
 	if qf == nil {
 		return queryBuilder
 	}
+
+	const (
+		createdOnKey = "created_on"
+		updatedOnKey = "updated_on"
+	)
 
 	qf.SetPage(qf.Page)
 	if qp := qf.QueryPage(); qp > 0 {
@@ -139,19 +145,19 @@ func (qf *QueryFilter) ApplyToQueryBuilder(queryBuilder squirrel.SelectBuilder) 
 	}
 
 	if qf.CreatedAfter > 0 {
-		queryBuilder = queryBuilder.Where(squirrel.Gt{"created_on": qf.CreatedAfter})
+		queryBuilder = queryBuilder.Where(squirrel.Gt{fmt.Sprintf("%s.%s", tableName, createdOnKey): qf.CreatedAfter})
 	}
 
 	if qf.CreatedBefore > 0 {
-		queryBuilder = queryBuilder.Where(squirrel.Lt{"created_on": qf.CreatedBefore})
+		queryBuilder = queryBuilder.Where(squirrel.Lt{fmt.Sprintf("%s.%s", tableName, createdOnKey): qf.CreatedBefore})
 	}
 
 	if qf.UpdatedAfter > 0 {
-		queryBuilder = queryBuilder.Where(squirrel.Gt{"updated_on": qf.UpdatedAfter})
+		queryBuilder = queryBuilder.Where(squirrel.Gt{fmt.Sprintf("%s.%s", tableName, updatedOnKey): qf.UpdatedAfter})
 	}
 
 	if qf.UpdatedBefore > 0 {
-		queryBuilder = queryBuilder.Where(squirrel.Lt{"updated_on": qf.UpdatedBefore})
+		queryBuilder = queryBuilder.Where(squirrel.Lt{fmt.Sprintf("%s.%s", tableName, updatedOnKey): qf.UpdatedBefore})
 	}
 
 	return queryBuilder

@@ -63,7 +63,7 @@ var (
 				"updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
 				"belongs_to_user" BIGINT NOT NULL,
-				FOREIGN KEY ("belongs_to_user") REFERENCES "users"("id")
+				FOREIGN KEY("belongs_to_user") REFERENCES users(id)
 			);`,
 		},
 		{
@@ -78,7 +78,7 @@ var (
 				"updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
 				"belongs_to_user" BIGINT NOT NULL,
-				FOREIGN KEY ("belongs_to_user") REFERENCES "users"("id")
+				FOREIGN KEY("belongs_to_user") REFERENCES users(id)
 			);`,
 		},
 	}

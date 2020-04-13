@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -107,10 +108,11 @@ func TestQueryFilter_ToValues(T *testing.T) {
 func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 	T.Parallel()
 
+	exampleTableName := "stuff"
 	baseQueryBuilder := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar).
 		Select("things").
-		From("stuff").
-		Where(squirrel.Eq{"condition": true})
+		From(exampleTableName).
+		Where(squirrel.Eq{fmt.Sprintf("%s.condition", exampleTableName): true})
 
 	T.Run("happy path", func(t *testing.T) {
 		qf := &QueryFilter{
@@ -124,7 +126,7 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 		}
 
 		sb := squirrel.StatementBuilder.Select("*").From("testing")
-		qf.ApplyToQueryBuilder(sb)
+		qf.ApplyToQueryBuilder(sb, exampleTableName)
 		expected := "SELECT * FROM testing"
 		actual, _, err := sb.ToSql()
 
@@ -134,8 +136,9 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 
 	T.Run("basic usecase", func(t *testing.T) {
 		exampleQF := &QueryFilter{Limit: 15, Page: 2}
-		expected := "SELECT things FROM stuff WHERE condition = $1 LIMIT 15 OFFSET 15"
-		x := exampleQF.ApplyToQueryBuilder(baseQueryBuilder)
+
+		expected := "SELECT things FROM stuff WHERE stuff.condition = $1 LIMIT 15 OFFSET 15"
+		x := exampleQF.ApplyToQueryBuilder(baseQueryBuilder, exampleTableName)
 		actual, args, err := x.ToSql()
 
 		assert.Equal(t, expected, actual, "expected and actual queries don't match")
@@ -144,8 +147,9 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 	})
 
 	T.Run("returns query builder if query filter is nil", func(t *testing.T) {
-		expected := "SELECT things FROM stuff WHERE condition = $1"
-		x := (*QueryFilter)(nil).ApplyToQueryBuilder(baseQueryBuilder)
+		expected := "SELECT things FROM stuff WHERE stuff.condition = $1"
+
+		x := (*QueryFilter)(nil).ApplyToQueryBuilder(baseQueryBuilder, exampleTableName)
 		actual, args, err := x.ToSql()
 
 		assert.Equal(t, expected, actual, "expected and actual queries don't match")
@@ -163,8 +167,8 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 			UpdatedBefore: uint64(time.Now().Unix()),
 		}
 
-		expected := "SELECT things FROM stuff WHERE condition = $1 AND created_on > $2 AND created_on < $3 AND updated_on > $4 AND updated_on < $5 LIMIT 20 OFFSET 100"
-		x := exampleQF.ApplyToQueryBuilder(baseQueryBuilder)
+		expected := "SELECT things FROM stuff WHERE stuff.condition = $1 AND stuff.created_on > $2 AND stuff.created_on < $3 AND stuff.updated_on > $4 AND stuff.updated_on < $5 LIMIT 20 OFFSET 100"
+		x := exampleQF.ApplyToQueryBuilder(baseQueryBuilder, exampleTableName)
 		actual, args, err := x.ToSql()
 
 		assert.Equal(t, expected, actual, "expected and actual queries don't match")
@@ -174,8 +178,8 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 
 	T.Run("with zero limit", func(t *testing.T) {
 		exampleQF := &QueryFilter{Limit: 0, Page: 1}
-		expected := "SELECT things FROM stuff WHERE condition = $1 LIMIT 250"
-		x := exampleQF.ApplyToQueryBuilder(baseQueryBuilder)
+		expected := "SELECT things FROM stuff WHERE stuff.condition = $1 LIMIT 250"
+		x := exampleQF.ApplyToQueryBuilder(baseQueryBuilder, exampleTableName)
 		actual, args, err := x.ToSql()
 
 		assert.Equal(t, expected, actual, "expected and actual queries don't match")

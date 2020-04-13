@@ -44,7 +44,12 @@ func ensureArgCountMatchesQuery(t *testing.T, query string, args []interface{}) 
 	t.Helper()
 
 	queryArgCount := len(queryArgRegexp.FindAllString(query, -1))
-	assert.Equal(t, queryArgCount, len(args))
+
+	if len(args) > 0 {
+		assert.Equal(t, queryArgCount, len(args))
+	} else {
+		assert.Zero(t, queryArgCount)
+	}
 }
 
 func TestProvidePostgres(T *testing.T) {
@@ -59,8 +64,9 @@ func TestPostgres_IsReady(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		ctx := context.Background()
 		p, _ := buildTestService(t)
-		assert.True(t, p.IsReady(context.Background()))
+		assert.True(t, p.IsReady(ctx))
 	})
 }
 
@@ -69,6 +75,6 @@ func TestPostgres_logQueryBuildingError(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		p.logQueryBuildingError(errors.New(""))
+		p.logQueryBuildingError(errors.New("blah"))
 	})
 }

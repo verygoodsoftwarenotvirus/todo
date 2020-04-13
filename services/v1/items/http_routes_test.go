@@ -24,6 +24,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 	T.Parallel()
 
 	requestingUser := fakemodels.BuildFakeUser()
+
 	userIDFetcher := func(_ *http.Request) uint64 {
 		return requestingUser.ID
 	}
@@ -145,6 +146,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
 	requestingUser := fakemodels.BuildFakeUser()
+
 	userIDFetcher := func(_ *http.Request) uint64 {
 		return requestingUser.ID
 	}
@@ -283,6 +285,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 	T.Parallel()
 
 	requestingUser := fakemodels.BuildFakeUser()
+
 	userIDFetcher := func(_ *http.Request) uint64 {
 		return requestingUser.ID
 	}
@@ -379,6 +382,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 	T.Parallel()
 
 	requestingUser := fakemodels.BuildFakeUser()
+
 	userIDFetcher := func(_ *http.Request) uint64 {
 		return requestingUser.ID
 	}
@@ -512,6 +516,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 	T.Parallel()
 
 	requestingUser := fakemodels.BuildFakeUser()
+
 	userIDFetcher := func(_ *http.Request) uint64 {
 		return requestingUser.ID
 	}
@@ -550,6 +555,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
+
 		s.UpdateHandler()(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
@@ -599,6 +605,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
+
 		s.UpdateHandler()(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
@@ -631,6 +638,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
+
 		s.UpdateHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
@@ -664,6 +672,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
+
 		s.UpdateHandler()(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
@@ -705,6 +714,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
+
 		s.UpdateHandler()(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
@@ -717,6 +727,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 	T.Parallel()
 
 	requestingUser := fakemodels.BuildFakeUser()
+
 	userIDFetcher := func(_ *http.Request) uint64 {
 		return requestingUser.ID
 	}

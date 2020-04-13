@@ -75,6 +75,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 		h.ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
+
 		mock.AssertExpectationsForObjects(t, md, ms)
 	})
 
@@ -353,10 +354,10 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 		var b bytes.Buffer
 		require.NoError(t, json.NewEncoder(&b).Encode(exampleInput))
 
+		res := httptest.NewRecorder()
 		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", &b)
 		require.NoError(t, err)
 		require.NotNil(t, req)
-		res := httptest.NewRecorder()
 
 		s := buildTestService(t)
 		ms := &MockHTTPHandler{}
@@ -375,10 +376,10 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 		var b bytes.Buffer
 		require.NoError(t, json.NewEncoder(&b).Encode(exampleInput))
 
+		res := httptest.NewRecorder()
 		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", &b)
 		require.NoError(t, err)
 		require.NotNil(t, req)
-		res := httptest.NewRecorder()
 
 		s := buildTestService(t)
 		ed := &mockencoding.EncoderDecoder{}
@@ -456,14 +457,15 @@ func TestService_AdminMiddleware(T *testing.T) {
 		h.ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
+
 		mock.AssertExpectationsForObjects(t, ms)
 	})
 
 	T.Run("without user attached", func(t *testing.T) {
+		res := httptest.NewRecorder()
 		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
-		res := httptest.NewRecorder()
 
 		s := buildTestService(t)
 		ms := &MockHTTPHandler{}
@@ -472,6 +474,7 @@ func TestService_AdminMiddleware(T *testing.T) {
 		h.ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
+
 		mock.AssertExpectationsForObjects(t, ms)
 	})
 
@@ -499,6 +502,7 @@ func TestService_AdminMiddleware(T *testing.T) {
 		h.ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
+
 		mock.AssertExpectationsForObjects(t, ms)
 	})
 }

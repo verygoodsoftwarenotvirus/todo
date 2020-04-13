@@ -10,7 +10,7 @@ require (
 	github.com/GuiaBolso/darwin v0.0.0-20191218124601-fd6d2aa3d244
 	github.com/Masterminds/squirrel v1.2.0
 	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc
-	github.com/brianvoe/gofakeit v3.18.0+incompatible
+	github.com/brianvoe/gofakeit/v5 v5.0.0
 	github.com/emicklei/hazana v1.6.2
 	github.com/go-chi/chi v4.0.3+incompatible
 	github.com/go-chi/cors v1.0.0

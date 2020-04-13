@@ -5,7 +5,7 @@ import (
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	fake "github.com/brianvoe/gofakeit"
+	fake "github.com/brianvoe/gofakeit/v5"
 )
 
 // BuildFakeOAuth2Client builds a faked OAuth2Client

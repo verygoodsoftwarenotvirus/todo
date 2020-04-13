@@ -75,7 +75,7 @@ func TestMariaDB_logQueryBuildingError(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		m, _ := buildTestService(t)
-		m.logQueryBuildingError(errors.New(""))
+		m.logQueryBuildingError(errors.New("blah"))
 	})
 }
 
@@ -84,6 +84,6 @@ func TestMariaDB_logIDRetrievalError(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		m, _ := buildTestService(t)
-		m.logIDRetrievalError(errors.New(""))
+		m.logIDRetrievalError(errors.New("blah"))
 	})
 }

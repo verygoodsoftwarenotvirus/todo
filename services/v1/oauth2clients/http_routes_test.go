@@ -259,7 +259,6 @@ func TestService_CreateHandler(T *testing.T) {
 	})
 
 	T.Run("with error getting user", func(t *testing.T) {
-		exampleUser := fakemodels.BuildFakeUser()
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
@@ -278,7 +277,7 @@ func TestService_CreateHandler(T *testing.T) {
 			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
+			context.WithValue(req.Context(), models.UserIDKey, exampleOAuth2Client.BelongsToUser),
 		)
 		res := httptest.NewRecorder()
 
@@ -490,7 +489,6 @@ func TestService_ReadHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
-		exampleUser := fakemodels.BuildFakeUser()
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
@@ -502,7 +500,7 @@ func TestService_ReadHandler(T *testing.T) {
 			"GetOAuth2Client",
 			mock.Anything,
 			exampleOAuth2Client.ID,
-			exampleUser.ID,
+			exampleOAuth2Client.BelongsToUser,
 		).Return(exampleOAuth2Client, nil)
 		s.database = mockDB
 
@@ -512,7 +510,7 @@ func TestService_ReadHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
+			context.WithValue(req.Context(), models.UserIDKey, exampleOAuth2Client.BelongsToUser),
 		)
 		res := httptest.NewRecorder()
 
@@ -524,7 +522,6 @@ func TestService_ReadHandler(T *testing.T) {
 
 	T.Run("with no rows found", func(t *testing.T) {
 		s := buildTestService(t)
-		exampleUser := fakemodels.BuildFakeUser()
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
@@ -536,13 +533,13 @@ func TestService_ReadHandler(T *testing.T) {
 			"GetOAuth2Client",
 			mock.Anything,
 			exampleOAuth2Client.ID,
-			exampleUser.ID,
+			exampleOAuth2Client.BelongsToUser,
 		).Return(exampleOAuth2Client, sql.ErrNoRows)
 		s.database = mockDB
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
+			context.WithValue(req.Context(), models.UserIDKey, exampleOAuth2Client.BelongsToUser),
 		)
 		res := httptest.NewRecorder()
 
@@ -554,7 +551,6 @@ func TestService_ReadHandler(T *testing.T) {
 
 	T.Run("with error fetching client from database", func(t *testing.T) {
 		s := buildTestService(t)
-		exampleUser := fakemodels.BuildFakeUser()
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
@@ -566,13 +562,13 @@ func TestService_ReadHandler(T *testing.T) {
 			"GetOAuth2Client",
 			mock.Anything,
 			exampleOAuth2Client.ID,
-			exampleUser.ID,
+			exampleOAuth2Client.BelongsToUser,
 		).Return((*models.OAuth2Client)(nil), errors.New("blah"))
 		s.database = mockDB
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
+			context.WithValue(req.Context(), models.UserIDKey, exampleOAuth2Client.BelongsToUser),
 		)
 		res := httptest.NewRecorder()
 
@@ -584,7 +580,6 @@ func TestService_ReadHandler(T *testing.T) {
 
 	T.Run("with error encoding response", func(t *testing.T) {
 		s := buildTestService(t)
-		exampleUser := fakemodels.BuildFakeUser()
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
@@ -596,7 +591,7 @@ func TestService_ReadHandler(T *testing.T) {
 			"GetOAuth2Client",
 			mock.Anything,
 			exampleOAuth2Client.ID,
-			exampleUser.ID,
+			exampleOAuth2Client.BelongsToUser,
 		).Return(exampleOAuth2Client, nil)
 		s.database = mockDB
 
@@ -606,7 +601,7 @@ func TestService_ReadHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
+			context.WithValue(req.Context(), models.UserIDKey, exampleOAuth2Client.BelongsToUser),
 		)
 		res := httptest.NewRecorder()
 
@@ -622,7 +617,6 @@ func TestService_ArchiveHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
-		exampleUser := fakemodels.BuildFakeUser()
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
@@ -634,7 +628,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 			"ArchiveOAuth2Client",
 			mock.Anything,
 			exampleOAuth2Client.ID,
-			exampleUser.ID,
+			exampleOAuth2Client.BelongsToUser,
 		).Return(nil)
 		s.database = mockDB
 
@@ -644,7 +638,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
+			context.WithValue(req.Context(), models.UserIDKey, exampleOAuth2Client.BelongsToUser),
 		)
 		res := httptest.NewRecorder()
 
@@ -656,7 +650,6 @@ func TestService_ArchiveHandler(T *testing.T) {
 
 	T.Run("with no rows found", func(t *testing.T) {
 		s := buildTestService(t)
-		exampleUser := fakemodels.BuildFakeUser()
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
@@ -668,13 +661,13 @@ func TestService_ArchiveHandler(T *testing.T) {
 			"ArchiveOAuth2Client",
 			mock.Anything,
 			exampleOAuth2Client.ID,
-			exampleUser.ID,
+			exampleOAuth2Client.BelongsToUser,
 		).Return(sql.ErrNoRows)
 		s.database = mockDB
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
+			context.WithValue(req.Context(), models.UserIDKey, exampleOAuth2Client.BelongsToUser),
 		)
 		res := httptest.NewRecorder()
 
@@ -686,7 +679,6 @@ func TestService_ArchiveHandler(T *testing.T) {
 
 	T.Run("with error deleting record", func(t *testing.T) {
 		s := buildTestService(t)
-		exampleUser := fakemodels.BuildFakeUser()
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
@@ -698,13 +690,13 @@ func TestService_ArchiveHandler(T *testing.T) {
 			"ArchiveOAuth2Client",
 			mock.Anything,
 			exampleOAuth2Client.ID,
-			exampleUser.ID,
+			exampleOAuth2Client.BelongsToUser,
 		).Return(errors.New("blah"))
 		s.database = mockDB
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
+			context.WithValue(req.Context(), models.UserIDKey, exampleOAuth2Client.BelongsToUser),
 		)
 		res := httptest.NewRecorder()
 

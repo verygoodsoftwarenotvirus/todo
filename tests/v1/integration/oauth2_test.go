@@ -86,7 +86,8 @@ func TestOAuth2Clients(test *testing.T) {
 
 	test.Run("Creating", func(T *testing.T) {
 		T.Run("should be creatable", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx := context.Background()
+			ctx, span := tracing.StartSpan(ctx, t.Name())
 			defer span.End()
 
 			// Create oauth2Client
@@ -104,7 +105,8 @@ func TestOAuth2Clients(test *testing.T) {
 
 	test.Run("Reading", func(T *testing.T) {
 		T.Run("it should return an error when trying to read one that doesn't exist", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx := context.Background()
+			ctx, span := tracing.StartSpan(ctx, t.Name())
 			defer span.End()
 
 			// Fetch oauth2Client
@@ -113,7 +115,8 @@ func TestOAuth2Clients(test *testing.T) {
 		})
 
 		T.Run("it should be readable", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx := context.Background()
+			ctx, span := tracing.StartSpan(ctx, t.Name())
 			defer span.End()
 
 			// Create oauth2Client
@@ -136,7 +139,8 @@ func TestOAuth2Clients(test *testing.T) {
 
 	test.Run("Deleting", func(T *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx := context.Background()
+			ctx, span := tracing.StartSpan(ctx, t.Name())
 			defer span.End()
 
 			// Create oauth2Client
@@ -150,7 +154,8 @@ func TestOAuth2Clients(test *testing.T) {
 		})
 
 		T.Run("should be unable to authorize after being deleted", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx := context.Background()
+			ctx, span := tracing.StartSpan(ctx, t.Name())
 			defer span.End()
 
 			// create user
@@ -184,7 +189,8 @@ func TestOAuth2Clients(test *testing.T) {
 
 	test.Run("Listing", func(T *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx := context.Background()
+			ctx, span := tracing.StartSpan(ctx, t.Name())
 			defer span.End()
 
 			// Create oauth2Clients

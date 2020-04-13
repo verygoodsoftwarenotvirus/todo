@@ -379,6 +379,7 @@ func TestService_fetchOAuth2ClientIDFromRequest(T *testing.T) {
 
 	T.Run("without value present", func(t *testing.T) {
 		s := buildTestService(t)
+
 		assert.Empty(t, s.fetchOAuth2ClientIDFromRequest(buildRequest(t)))
 	})
 }

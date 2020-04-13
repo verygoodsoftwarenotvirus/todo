@@ -61,7 +61,8 @@ func TestAuth(test *testing.T) {
 	test.Parallel()
 
 	test.Run("should be able to login", func(t *testing.T) {
-		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		ctx := context.Background()
+		ctx, span := tracing.StartSpan(ctx, t.Name())
 		defer span.End()
 
 		// create a user
@@ -106,7 +107,8 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should be able to logout", func(t *testing.T) {
-		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		ctx := context.Background()
+		ctx, span := tracing.StartSpan(ctx, t.Name())
 		defer span.End()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -178,7 +180,8 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should not be able to log in with the wrong password", func(t *testing.T) {
-		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		ctx := context.Background()
+		ctx, span := tracing.StartSpan(ctx, t.Name())
 		defer span.End()
 
 		// create a user
@@ -424,7 +427,7 @@ func TestAuth(test *testing.T) {
 	test.Run("should accept a login cookie if a token is missing", func(t *testing.T) {
 		// create user
 		_, _, cookie := buildDummyUser(test)
-		assert.NotNil(test, cookie)
+		assert.NotNil(t, cookie)
 
 		req, err := http.NewRequest(http.MethodGet, todoClient.BuildURL(nil, "webhooks"), nil)
 		assert.NoError(t, err)
@@ -436,7 +439,8 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should only allow users to see their own content", func(t *testing.T) {
-		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		ctx := context.Background()
+		ctx, span := tracing.StartSpan(ctx, t.Name())
 		defer span.End()
 
 		// create user and oauth2 client A
@@ -497,12 +501,13 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should only allow clients with a given scope to see that scope's content", func(t *testing.T) {
-		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		ctx := context.Background()
+		ctx, span := tracing.StartSpan(ctx, t.Name())
 		defer span.End()
 
 		// create user
 		x, y, cookie := buildDummyUser(test)
-		assert.NotNil(test, cookie)
+		assert.NotNil(t, cookie)
 
 		input := buildDummyOAuth2ClientInput(test, x.Username, y.Password, x.TwoFactorSecret)
 		input.Scopes = []string{"absolutelynevergonnaexistascopelikethis"}

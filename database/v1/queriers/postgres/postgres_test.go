@@ -75,6 +75,6 @@ func TestPostgres_logQueryBuildingError(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		p, _ := buildTestService(t)
-		p.logQueryBuildingError(errors.New(""))
+		p.logQueryBuildingError(errors.New("blah"))
 	})
 }

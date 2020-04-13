@@ -75,7 +75,7 @@ func TestSqlite_logQueryBuildingError(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		s, _ := buildTestService(t)
-		s.logQueryBuildingError(errors.New(""))
+		s.logQueryBuildingError(errors.New("blah"))
 	})
 }
 
@@ -84,6 +84,6 @@ func TestSqlite_logIDRetrievalError(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		s, _ := buildTestService(t)
-		s.logIDRetrievalError(errors.New(""))
+		s.logIDRetrievalError(errors.New("blah"))
 	})
 }

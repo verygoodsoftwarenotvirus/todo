@@ -30,7 +30,7 @@ coverage:
     GOPATH: "/go"
   script:
     - apt-get update -y && apt-get install -y make git gcc musl-dev
-    - GO111MODULES=off go get github.com/axw/gocov/gocov
+    - GO111MODULE=off go get github.com/axw/gocov/gocov
     - make artifacts/coverage.out
 
 linting:

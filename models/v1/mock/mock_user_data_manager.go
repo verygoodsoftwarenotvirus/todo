@@ -15,42 +15,42 @@ type UserDataManager struct {
 	mock.Mock
 }
 
-// GetUser is a mock function
+// GetUser is a mock function.
 func (m *UserDataManager) GetUser(ctx context.Context, userID uint64) (*models.User, error) {
 	args := m.Called(ctx, userID)
 	return args.Get(0).(*models.User), args.Error(1)
 }
 
-// GetUserByUsername is a mock function
+// GetUserByUsername is a mock function.
 func (m *UserDataManager) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
 	args := m.Called(ctx, username)
 	return args.Get(0).(*models.User), args.Error(1)
 }
 
-// GetAllUserCount is a mock function
+// GetAllUserCount is a mock function.
 func (m *UserDataManager) GetAllUserCount(ctx context.Context) (uint64, error) {
 	args := m.Called(ctx)
 	return args.Get(0).(uint64), args.Error(1)
 }
 
-// GetUsers is a mock function
+// GetUsers is a mock function.
 func (m *UserDataManager) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
 	args := m.Called(ctx, filter)
 	return args.Get(0).(*models.UserList), args.Error(1)
 }
 
-// CreateUser is a mock function
+// CreateUser is a mock function.
 func (m *UserDataManager) CreateUser(ctx context.Context, input models.UserDatabaseCreationInput) (*models.User, error) {
 	args := m.Called(ctx, input)
 	return args.Get(0).(*models.User), args.Error(1)
 }
 
-// UpdateUser is a mock function
+// UpdateUser is a mock function.
 func (m *UserDataManager) UpdateUser(ctx context.Context, updated *models.User) error {
 	return m.Called(ctx, updated).Error(0)
 }
 
-// ArchiveUser is a mock function
+// ArchiveUser is a mock function.
 func (m *UserDataManager) ArchiveUser(ctx context.Context, userID uint64) error {
 	return m.Called(ctx, userID).Error(0)
 }

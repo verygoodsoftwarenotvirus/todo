@@ -16,14 +16,14 @@ const (
 	apiPathPrefix   = "/api/v1/"
 )
 
-// CreationInputMiddleware is a middleware for attaching OAuth2 client info to a request
+// CreationInputMiddleware is a middleware for attaching OAuth2 client info to a request.
 func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := tracing.StartSpan(req.Context(), "CreationInputMiddleware")
 		defer span.End()
 		x := new(models.OAuth2ClientCreationInput)
 
-		// decode value from request
+		// decode value from request.
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
@@ -35,31 +35,31 @@ func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// ExtractOAuth2ClientFromRequest extracts OAuth2 client data from a request
+// ExtractOAuth2ClientFromRequest extracts OAuth2 client data from a request.
 func (s *Service) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.Request) (*models.OAuth2Client, error) {
 	ctx, span := tracing.StartSpan(ctx, "ExtractOAuth2ClientFromRequest")
 	defer span.End()
 
-	logger := s.logger.WithValue("function_name", "ExtractOAuth2ClientFromRequest")
+	logger := s.logger.WithRequest(req)
 
-	// validate bearer token
+	// validate bearer token.
 	token, err := s.oauth2Handler.ValidationBearerToken(req)
 	if err != nil {
 		return nil, fmt.Errorf("validating bearer token: %w", err)
 	}
 
-	// fetch client ID
+	// fetch client ID.
 	clientID := token.GetClientID()
 	logger = logger.WithValue("client_id", clientID)
 
-	// fetch client by client ID
+	// fetch client by client ID.
 	c, err := s.database.GetOAuth2ClientByClientID(ctx, clientID)
 	if err != nil {
 		logger.Error(err, "error fetching OAuth2 Client")
 		return nil, err
 	}
 
-	// determine the scope
+	// determine the scope.
 	scope := determineScope(req)
 	hasScope := c.HasScope(scope)
 	logger = logger.WithValue("scope", scope).WithValue("scopes", strings.Join(c.Scopes, scopesSeparator))
@@ -72,9 +72,7 @@ func (s *Service) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.
 	return c, nil
 }
 
-// determineScope determines the scope of a request by its URL
-// this may be more ideally embedded as a struct field and placed
-// in the HTTP server's package instead
+// determineScope determines the scope of a request by its URL.
 func determineScope(req *http.Request) string {
 	if strings.HasPrefix(req.URL.Path, apiPathPrefix) {
 		x := strings.TrimPrefix(req.URL.Path, apiPathPrefix)
@@ -87,7 +85,7 @@ func determineScope(req *http.Request) string {
 	return ""
 }
 
-// OAuth2TokenAuthenticationMiddleware authenticates Oauth tokens
+// OAuth2TokenAuthenticationMiddleware authenticates Oauth tokens.
 func (s *Service) OAuth2TokenAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := tracing.StartSpan(req.Context(), "OAuth2TokenAuthenticationMiddleware")
@@ -101,11 +99,11 @@ func (s *Service) OAuth2TokenAuthenticationMiddleware(next http.Handler) http.Ha
 		}
 
 		tracing.AttachUserIDToSpan(span, c.BelongsToUser)
-		tracing.AttachOAuth2ClientDatabaseIDToSpan(span, c.ID)
 		tracing.AttachOAuth2ClientIDToSpan(span, c.ClientID)
+		tracing.AttachOAuth2ClientDatabaseIDToSpan(span, c.ID)
 
 		// attach both the user ID and the client object to the request. it might seem
-		// superfluous, but some things should only need to know to look for user IDs
+		// superfluous, but some things should only need to know to look for user IDs.
 		ctx = context.WithValue(ctx, models.OAuth2ClientKey, c)
 		ctx = context.WithValue(ctx, models.UserIDKey, c.BelongsToUser)
 
@@ -113,7 +111,7 @@ func (s *Service) OAuth2TokenAuthenticationMiddleware(next http.Handler) http.Ha
 	})
 }
 
-// OAuth2ClientInfoMiddleware fetches clientOAuth2Client info from requests and attaches it explicitly to a request
+// OAuth2ClientInfoMiddleware fetches clientOAuth2Client info from requests and attaches it explicitly to a request.
 func (s *Service) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := tracing.StartSpan(req.Context(), "OAuth2ClientInfoMiddleware")
@@ -129,9 +127,9 @@ func (s *Service) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
+			tracing.AttachUserIDToSpan(span, client.BelongsToUser)
 			tracing.AttachOAuth2ClientIDToSpan(span, client.ClientID)
 			tracing.AttachOAuth2ClientDatabaseIDToSpan(span, client.ID)
-			tracing.AttachUserIDToSpan(span, client.BelongsToUser)
 
 			ctx = context.WithValue(ctx, models.OAuth2ClientKey, client)
 			ctx = context.WithValue(ctx, models.UserIDKey, client.BelongsToUser)

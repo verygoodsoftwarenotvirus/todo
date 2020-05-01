@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
@@ -28,15 +27,15 @@ var (
 )
 
 type (
-	// RequestValidator validates request
+	// RequestValidator validates request.
 	RequestValidator interface {
 		Validate(req *http.Request) (bool, error)
 	}
 
-	// Service handles our users
+	// Service handles our users.
 	Service struct {
 		cookieSecret        []byte
-		database            database.Database
+		userDataManager     models.UserDataManager
 		authenticator       auth.Authenticator
 		logger              logging.Logger
 		encoderDecoder      encoding.EncoderDecoder
@@ -46,15 +45,15 @@ type (
 		userCreationEnabled bool
 	}
 
-	// UserIDFetcher fetches usernames from requests
+	// UserIDFetcher fetches usernames from requests.
 	UserIDFetcher func(*http.Request) uint64
 )
 
-// ProvideUsersService builds a new UsersService
+// ProvideUsersService builds a new UsersService.
 func ProvideUsersService(
 	authSettings config.AuthSettings,
 	logger logging.Logger,
-	db database.Database,
+	userDataManager models.UserDataManager,
 	authenticator auth.Authenticator,
 	userIDFetcher UserIDFetcher,
 	encoder encoding.EncoderDecoder,
@@ -73,7 +72,7 @@ func ProvideUsersService(
 	svc := &Service{
 		cookieSecret:        []byte(authSettings.CookieSecret),
 		logger:              logger.WithName(serviceName),
-		database:            db,
+		userDataManager:     userDataManager,
 		authenticator:       authenticator,
 		userIDFetcher:       userIDFetcher,
 		encoderDecoder:      encoder,

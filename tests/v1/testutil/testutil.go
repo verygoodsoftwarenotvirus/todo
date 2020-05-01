@@ -25,7 +25,7 @@ func init() {
 	fake.Seed(time.Now().UnixNano())
 }
 
-// DetermineServiceURL returns the URL, if properly configured
+// DetermineServiceURL returns the URL, if properly configured.
 func DetermineServiceURL() string {
 	ta := os.Getenv("TARGET_ADDRESS")
 	if ta == "" {
@@ -40,7 +40,7 @@ func DetermineServiceURL() string {
 	return u.String()
 }
 
-// EnsureServerIsUp checks that a server is up and doesn't return until it's certain one way or the other
+// EnsureServerIsUp checks that a server is up and doesn't return until it's certain one way or the other.
 func EnsureServerIsUp(address string) {
 	var (
 		isDown           = true
@@ -63,7 +63,7 @@ func EnsureServerIsUp(address string) {
 	}
 }
 
-// IsUp can check if an instance of our server is alive
+// IsUp can check if an instance of our server is alive.
 func IsUp(address string) bool {
 	uri := fmt.Sprintf("%s/_meta_/ready", address)
 	req, err := http.NewRequest(http.MethodGet, uri, nil)
@@ -83,7 +83,7 @@ func IsUp(address string) bool {
 	return res.StatusCode == http.StatusOK
 }
 
-// CreateObligatoryUser creates a user for the sake of having an OAuth2 client
+// CreateObligatoryUser creates a user for the sake of having an OAuth2 client.
 func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
 	tu, err := url.Parse(address)
 	if err != nil {
@@ -185,7 +185,7 @@ func getLoginCookie(serviceURL string, u *models.User) (*http.Cookie, error) {
 	return nil, errors.New("no cookie found :(")
 }
 
-// CreateObligatoryClient creates the OAuth2 client we need for tests
+// CreateObligatoryClient creates the OAuth2 client we need for tests.
 func CreateObligatoryClient(serviceURL string, u *models.User) (*models.OAuth2Client, error) {
 	firstOAuth2ClientURI := buildURL(serviceURL, "oauth2", "client")
 

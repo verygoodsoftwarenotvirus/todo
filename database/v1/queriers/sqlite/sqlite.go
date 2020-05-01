@@ -21,15 +21,15 @@ const (
 
 	existencePrefix, existenceSuffix = "SELECT EXISTS (", ")"
 
-	// countQuery is a generic counter query used in a few query builders
+	// countQuery is a generic counter query used in a few query builders.
 	countQuery = "COUNT(%s.id)"
 
-	// currentUnixTimeQuery is the query sqlite uses to determine the current unix time
+	// currentUnixTimeQuery is the query sqlite uses to determine the current unix time.
 	currentUnixTimeQuery = "(strftime('%s','now'))"
 )
 
 func init() {
-	// Explicitly wrap the Sqlite driver with ocsql
+	// Explicitly wrap the Sqlite driver with ocsql.
 	driver := ocsql.Wrap(
 		&sqlite.SQLiteDriver{},
 		ocsql.WithQuery(true),
@@ -39,14 +39,14 @@ func init() {
 		ocsql.WithQueryParams(true),
 	)
 
-	// Register our ocsql wrapper as a db driver
+	// Register our ocsql wrapper as a db driver.
 	sql.Register(sqliteDriverName, driver)
 }
 
 var _ database.Database = (*Sqlite)(nil)
 
 type (
-	// Sqlite is our main Sqlite interaction db
+	// Sqlite is our main Sqlite interaction db.
 	Sqlite struct {
 		logger      logging.Logger
 		db          *sql.DB
@@ -56,7 +56,7 @@ type (
 		debug       bool
 	}
 
-	// ConnectionDetails is a string alias for a Sqlite url
+	// ConnectionDetails is a string alias for a Sqlite url.
 	ConnectionDetails string
 
 	// Querier is a subset interface for sql.{DB|Tx|Stmt} objects
@@ -67,13 +67,13 @@ type (
 	}
 )
 
-// ProvideSqliteDB provides an instrumented sqlite db
+// ProvideSqliteDB provides an instrumented sqlite db.
 func ProvideSqliteDB(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
 	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to sqlite")
 	return sql.Open(sqliteDriverName, string(connectionDetails))
 }
 
-// ProvideSqlite provides a sqlite db controller
+// ProvideSqlite provides a sqlite db controller.
 func ProvideSqlite(debug bool, db *sql.DB, logger logging.Logger) database.Database {
 	return &Sqlite{
 		db:         db,
@@ -84,7 +84,7 @@ func ProvideSqlite(debug bool, db *sql.DB, logger logging.Logger) database.Datab
 	}
 }
 
-// IsReady reports whether or not the db is ready
+// IsReady reports whether or not the db is ready.
 func (s *Sqlite) IsReady(_ context.Context) (ready bool) {
 	return true
 }

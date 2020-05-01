@@ -24,12 +24,12 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
-// ProvideReporter is an obligatory function that hopefully wire will eliminate for me one day
+// ProvideReporter is an obligatory function that hopefully wire will eliminate for me one day.
 func ProvideReporter(n *newsman.Newsman) newsman.Reporter {
 	return n
 }
 
-// BuildServer builds a server
+// BuildServer builds a server.
 func BuildServer(
 	ctx context.Context,
 	cfg *config.ServerConfig,

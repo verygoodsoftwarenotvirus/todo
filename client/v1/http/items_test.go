@@ -22,6 +22,7 @@ func TestV1Client_BuildItemExistsRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		expectedMethod := http.MethodHead
 		ts := httptest.NewTLSServer(nil)
 
@@ -41,6 +42,7 @@ func TestV1Client_ItemExists(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleItem := fakemodels.BuildFakeItem()
 
 		ts := httptest.NewTLSServer(
@@ -63,6 +65,7 @@ func TestV1Client_ItemExists(T *testing.T) {
 
 	T.Run("with erroneous response", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleItem := fakemodels.BuildFakeItem()
 
 		c := buildTestClientWithInvalidURL(t)
@@ -78,11 +81,13 @@ func TestV1Client_BuildGetItemRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		expectedMethod := http.MethodGet
 		ts := httptest.NewTLSServer(nil)
 
-		c := buildTestClient(t, ts)
 		exampleItem := fakemodels.BuildFakeItem()
+
+		c := buildTestClient(t, ts)
 		actual, err := c.BuildGetItemRequest(ctx, exampleItem.ID)
 
 		require.NotNil(t, actual)
@@ -97,6 +102,7 @@ func TestV1Client_GetItem(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleItem := fakemodels.BuildFakeItem()
 
 		ts := httptest.NewTLSServer(
@@ -120,6 +126,7 @@ func TestV1Client_GetItem(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleItem := fakemodels.BuildFakeItem()
 
 		c := buildTestClientWithInvalidURL(t)
@@ -131,6 +138,7 @@ func TestV1Client_GetItem(T *testing.T) {
 
 	T.Run("with invalid response", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleItem := fakemodels.BuildFakeItem()
 
 		ts := httptest.NewTLSServer(
@@ -157,6 +165,7 @@ func TestV1Client_BuildGetItemsRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := (*models.QueryFilter)(nil)
 		expectedMethod := http.MethodGet
 		ts := httptest.NewTLSServer(nil)
@@ -175,6 +184,7 @@ func TestV1Client_GetItems(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := (*models.QueryFilter)(nil)
 
 		exampleItemList := fakemodels.BuildFakeItemList()
@@ -199,6 +209,7 @@ func TestV1Client_GetItems(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := (*models.QueryFilter)(nil)
 
 		c := buildTestClientWithInvalidURL(t)
@@ -210,6 +221,7 @@ func TestV1Client_GetItems(T *testing.T) {
 
 	T.Run("with invalid response", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := (*models.QueryFilter)(nil)
 
 		ts := httptest.NewTLSServer(
@@ -235,7 +247,10 @@ func TestV1Client_BuildCreateItemRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
+		exampleUser := fakemodels.BuildFakeUser()
 		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		expectedMethod := http.MethodPost
@@ -255,9 +270,9 @@ func TestV1Client_CreateItem(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
-		exampleInput.BelongsToUser = 0
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -267,6 +282,8 @@ func TestV1Client_CreateItem(T *testing.T) {
 
 					var x *models.ItemCreationInput
 					require.NoError(t, json.NewDecoder(req.Body).Decode(&x))
+
+					exampleInput.BelongsToUser = 0
 					assert.Equal(t, exampleInput, x)
 
 					require.NoError(t, json.NewEncoder(res).Encode(exampleItem))
@@ -284,6 +301,7 @@ func TestV1Client_CreateItem(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
 
@@ -300,6 +318,7 @@ func TestV1Client_BuildUpdateItemRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleItem := fakemodels.BuildFakeItem()
 		expectedMethod := http.MethodPut
 
@@ -318,6 +337,7 @@ func TestV1Client_UpdateItem(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleItem := fakemodels.BuildFakeItem()
 
 		ts := httptest.NewTLSServer(
@@ -336,6 +356,7 @@ func TestV1Client_UpdateItem(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleItem := fakemodels.BuildFakeItem()
 
 		err := buildTestClientWithInvalidURL(t).UpdateItem(ctx, exampleItem)
@@ -348,6 +369,7 @@ func TestV1Client_BuildArchiveItemRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		expectedMethod := http.MethodDelete
 		ts := httptest.NewTLSServer(nil)
 
@@ -369,6 +391,7 @@ func TestV1Client_ArchiveItem(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleItem := fakemodels.BuildFakeItem()
 
 		ts := httptest.NewTLSServer(
@@ -387,6 +410,7 @@ func TestV1Client_ArchiveItem(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleItem := fakemodels.BuildFakeItem()
 
 		err := buildTestClientWithInvalidURL(t).ArchiveItem(ctx, exampleItem.ID)

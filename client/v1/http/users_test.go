@@ -23,6 +23,7 @@ func TestV1Client_BuildGetUserRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		expectedMethod := http.MethodGet
 
 		ts := httptest.NewTLSServer(nil)
@@ -43,8 +44,9 @@ func TestV1Client_GetUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
-		// the hashed password is never transmitted over the wire
+		// the hashed password is never transmitted over the wire.
 		exampleUser.HashedPassword = ""
 
 		ts := httptest.NewTLSServer(
@@ -68,6 +70,7 @@ func TestV1Client_GetUser(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleUser.Salt = nil
 		exampleUser.HashedPassword = ""
@@ -85,6 +88,7 @@ func TestV1Client_BuildGetUsersRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		expectedMethod := http.MethodGet
 		ts := httptest.NewTLSServer(nil)
 
@@ -102,8 +106,9 @@ func TestV1Client_GetUsers(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUserList := fakemodels.BuildFakeUserList()
-		// the hashed password is never transmitted over the wire
+		// the hashed password is never transmitted over the wire.
 		exampleUserList.Users[0].HashedPassword = ""
 		exampleUserList.Users[1].HashedPassword = ""
 		exampleUserList.Users[2].HashedPassword = ""
@@ -128,6 +133,7 @@ func TestV1Client_GetUsers(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
+
 		c := buildTestClientWithInvalidURL(t)
 		actual, err := c.GetUsers(ctx, nil)
 
@@ -141,6 +147,7 @@ func TestV1Client_BuildCreateUserRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		expectedMethod := http.MethodPost
 		ts := httptest.NewTLSServer(nil)
 
@@ -160,6 +167,7 @@ func TestV1Client_CreateUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
 		expected := fakemodels.BuildDatabaseCreationResponse(exampleUser)
@@ -189,6 +197,7 @@ func TestV1Client_CreateUser(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
 
@@ -205,6 +214,7 @@ func TestV1Client_BuildArchiveUserRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		expectedMethod := http.MethodDelete
 		exampleUser := fakemodels.BuildFakeUser()
 
@@ -225,6 +235,7 @@ func TestV1Client_ArchiveUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		ts := httptest.NewTLSServer(
@@ -242,6 +253,7 @@ func TestV1Client_ArchiveUser(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		err := buildTestClientWithInvalidURL(t).ArchiveUser(ctx, exampleUser.ID)
@@ -254,6 +266,7 @@ func TestV1Client_BuildLoginRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
@@ -268,6 +281,7 @@ func TestV1Client_BuildLoginRequest(T *testing.T) {
 
 	T.Run("with nil input", func(t *testing.T) {
 		ctx := context.Background()
+
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
@@ -282,6 +296,7 @@ func TestV1Client_Login(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -304,6 +319,7 @@ func TestV1Client_Login(T *testing.T) {
 
 	T.Run("with nil input", func(t *testing.T) {
 		ctx := context.Background()
+
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
@@ -314,6 +330,7 @@ func TestV1Client_Login(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -326,6 +343,7 @@ func TestV1Client_Login(T *testing.T) {
 
 	T.Run("with timeout", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -348,6 +366,7 @@ func TestV1Client_Login(T *testing.T) {
 
 	T.Run("with missing cookie", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
 

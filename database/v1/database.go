@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"io"
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
@@ -19,6 +20,14 @@ type (
 		Scan(dest ...interface{}) error
 	}
 
+	// ResultIterator represents any iterable database response (i.e. sql.Rows)
+	ResultIterator interface {
+		Next() bool
+		Err() error
+		Scanner
+		io.Closer
+	}
+
 	// Querier is a subset interface for sql.{DB|Tx} objects
 	Querier interface {
 		ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
@@ -26,10 +35,10 @@ type (
 		QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
 	}
 
-	// ConnectionDetails is a string alias for dependency injection
+	// ConnectionDetails is a string alias for dependency injection.
 	ConnectionDetails string
 
-	// Database describes anything that stores data for our services
+	// Database describes anything that stores data for our services.
 	Database interface {
 		Migrate(ctx context.Context) error
 		IsReady(ctx context.Context) (ready bool)

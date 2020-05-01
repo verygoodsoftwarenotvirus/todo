@@ -14,16 +14,14 @@ import (
 
 func Test_randString(t *testing.T) {
 	t.Parallel()
-	// obligatory
 
 	actual := randString()
 	assert.NotEmpty(t, actual)
 	assert.Len(t, actual, 52)
 }
 
-func Test_buildConfig(t *testing.T) {
+func TestBuildConfig(t *testing.T) {
 	t.Parallel()
-	// obligatory
 
 	actual := BuildConfig()
 	assert.NotNil(t, actual)

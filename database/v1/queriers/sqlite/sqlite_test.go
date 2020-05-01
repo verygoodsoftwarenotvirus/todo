@@ -65,6 +65,7 @@ func TestSqlite_IsReady(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		ctx := context.Background()
+
 		s, _ := buildTestService(t)
 		assert.True(t, s.IsReady(ctx))
 	})

@@ -28,11 +28,11 @@ const (
 )
 
 type (
-	// Server is our API httpServer
+	// Server is our API httpServer.
 	Server struct {
 		DebugMode bool
 
-		// Services
+		// Services.
 		authService          *authservice.Service
 		frontendService      *frontendservice.Service
 		usersService         models.UserDataServer
@@ -40,7 +40,7 @@ type (
 		webhooksService      models.WebhookDataServer
 		itemsService         models.ItemDataServer
 
-		// infra things
+		// infra things.
 		db          database.Database
 		config      *config.ServerConfig
 		router      *chi.Mux
@@ -51,7 +51,7 @@ type (
 	}
 )
 
-// ProvideServer builds a new Server instance
+// ProvideServer builds a new Server instance.
 func ProvideServer(
 	ctx context.Context,
 	cfg *config.ServerConfig,
@@ -138,12 +138,12 @@ func (s *Server) logRoutes() {
 }
 */
 
-// Serve serves HTTP traffic
+// Serve serves HTTP traffic.
 func (s *Server) Serve() {
 	s.httpServer.Addr = fmt.Sprintf(":%d", s.config.Server.HTTPPort)
 	s.logger.Debug(fmt.Sprintf("Listening for HTTP requests on %q", s.httpServer.Addr))
 
-	// returns ErrServerClosed on graceful close
+	// returns ErrServerClosed on graceful close.
 	if err := s.httpServer.ListenAndServe(); err != nil {
 		s.logger.Error(err, "server shutting down")
 		if err == http.ErrServerClosed {
@@ -154,7 +154,7 @@ func (s *Server) Serve() {
 	}
 }
 
-// provideHTTPServer provides an HTTP httpServer
+// provideHTTPServer provides an HTTP httpServer.
 func provideHTTPServer() *http.Server {
 	// heavily inspired by https://blog.cloudflare.com/exposing-go-on-the-internet/
 	srv := &http.Server{

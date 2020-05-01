@@ -24,15 +24,15 @@ const (
 
 	existencePrefix, existenceSuffix = "SELECT EXISTS (", ")"
 
-	// countQuery is a generic counter query used in a few query builders
+	// countQuery is a generic counter query used in a few query builders.
 	countQuery = "COUNT(%s.id)"
 
-	// currentUnixTimeQuery is the query postgres uses to determine the current unix time
+	// currentUnixTimeQuery is the query postgres uses to determine the current unix time.
 	currentUnixTimeQuery = "extract(epoch FROM NOW())"
 )
 
 func init() {
-	// Explicitly wrap the Postgres driver with ocsql
+	// Explicitly wrap the Postgres driver with ocsql.
 	driver := ocsql.Wrap(
 		&postgres.Driver{},
 		ocsql.WithQuery(true),
@@ -42,14 +42,14 @@ func init() {
 		ocsql.WithQueryParams(true),
 	)
 
-	// Register our ocsql wrapper as a db driver
+	// Register our ocsql wrapper as a db driver.
 	sql.Register(postgresDriverName, driver)
 }
 
 var _ database.Database = (*Postgres)(nil)
 
 type (
-	// Postgres is our main Postgres interaction db
+	// Postgres is our main Postgres interaction db.
 	Postgres struct {
 		logger      logging.Logger
 		db          *sql.DB
@@ -58,7 +58,7 @@ type (
 		debug       bool
 	}
 
-	// ConnectionDetails is a string alias for a Postgres url
+	// ConnectionDetails is a string alias for a Postgres url.
 	ConnectionDetails string
 
 	// Querier is a subset interface for sql.{DB|Tx|Stmt} objects
@@ -69,13 +69,13 @@ type (
 	}
 )
 
-// ProvidePostgresDB provides an instrumented postgres db
+// ProvidePostgresDB provides an instrumented postgres db.
 func ProvidePostgresDB(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
 	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to postgres")
 	return sql.Open(postgresDriverName, string(connectionDetails))
 }
 
-// ProvidePostgres provides a postgres db controller
+// ProvidePostgres provides a postgres db controller.
 func ProvidePostgres(debug bool, db *sql.DB, logger logging.Logger) database.Database {
 	return &Postgres{
 		db:         db,
@@ -85,7 +85,7 @@ func ProvidePostgres(debug bool, db *sql.DB, logger logging.Logger) database.Dat
 	}
 }
 
-// IsReady reports whether or not the db is ready
+// IsReady reports whether or not the db is ready.
 func (p *Postgres) IsReady(ctx context.Context) (ready bool) {
 	numberOfUnsuccessfulAttempts := 0
 

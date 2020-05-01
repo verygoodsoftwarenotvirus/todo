@@ -12,15 +12,15 @@ import (
 )
 
 var (
-	// ErrUnavailableYet is a sentinel error value
+	// ErrUnavailableYet is a sentinel error value.
 	ErrUnavailableYet = errors.New("can't do this yet")
 )
 
 type (
-	// actionFunc represents a thing you can do
+	// actionFunc represents a thing you can do.
 	actionFunc func() (*http.Request, error)
 
-	// Action is a wrapper struct around some important values
+	// Action is a wrapper struct around some important values.
 	Action struct {
 		Action actionFunc
 		Weight int
@@ -28,7 +28,7 @@ type (
 	}
 )
 
-// RandomAction takes a client and returns a closure which is an action
+// RandomAction takes a client and returns a closure which is an action.
 func RandomAction(c *client.V1Client) *Action {
 	allActions := map[string]*Action{
 		"GetHealthCheck": {

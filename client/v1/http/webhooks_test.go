@@ -22,6 +22,7 @@ func TestV1Client_BuildGetWebhookRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		expectedMethod := http.MethodGet
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
@@ -41,6 +42,7 @@ func TestV1Client_GetWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		ts := httptest.NewTLSServer(
@@ -64,6 +66,7 @@ func TestV1Client_GetWebhook(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		actual, err := buildTestClientWithInvalidURL(t).GetWebhook(ctx, exampleWebhook.ID)
@@ -78,6 +81,7 @@ func TestV1Client_BuildGetWebhooksRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		expectedMethod := http.MethodGet
 		ts := httptest.NewTLSServer(nil)
 
@@ -95,6 +99,7 @@ func TestV1Client_GetWebhooks(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhookList := fakemodels.BuildFakeWebhookList()
 
 		ts := httptest.NewTLSServer(
@@ -129,6 +134,7 @@ func TestV1Client_BuildCreateWebhookRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		expectedMethod := http.MethodPost
 		ts := httptest.NewTLSServer(nil)
 
@@ -149,6 +155,7 @@ func TestV1Client_CreateWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 		exampleInput.BelongsToUser = 0
@@ -178,6 +185,7 @@ func TestV1Client_CreateWebhook(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
@@ -192,6 +200,7 @@ func TestV1Client_BuildUpdateWebhookRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		expectedMethod := http.MethodPut
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
@@ -210,6 +219,7 @@ func TestV1Client_UpdateWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		ts := httptest.NewTLSServer(
@@ -228,6 +238,7 @@ func TestV1Client_UpdateWebhook(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		err := buildTestClientWithInvalidURL(t).UpdateWebhook(ctx, exampleWebhook)
@@ -240,6 +251,7 @@ func TestV1Client_BuildArchiveWebhookRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		expectedMethod := http.MethodDelete
 		ts := httptest.NewTLSServer(nil)
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -260,6 +272,7 @@ func TestV1Client_ArchiveWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		ts := httptest.NewTLSServer(
@@ -277,6 +290,7 @@ func TestV1Client_ArchiveWebhook(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		err := buildTestClientWithInvalidURL(t).ArchiveWebhook(ctx, exampleWebhook.ID)

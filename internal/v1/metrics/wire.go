@@ -5,14 +5,14 @@ import (
 )
 
 var (
-	// Providers represents what this library offers to external users in the form of dependencies
+	// Providers represents what this library offers to external users in the form of dependencies.
 	Providers = wire.NewSet(
 		ProvideUnitCounter,
 		ProvideUnitCounterProvider,
 	)
 )
 
-// ProvideUnitCounterProvider provides UnitCounter providers
+// ProvideUnitCounterProvider provides UnitCounter providers.
 func ProvideUnitCounterProvider() UnitCounterProvider {
 	return ProvideUnitCounter
 }

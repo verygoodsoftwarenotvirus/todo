@@ -7,11 +7,13 @@ import (
 	"errors"
 	"testing"
 
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func buildMockRowsFromUser(users ...*models.User) *sqlmock.Rows {
@@ -62,11 +64,39 @@ func buildErroneousMockRowFromUser(user *models.User) *sqlmock.Rows {
 	return exampleRows
 }
 
+func TestSqlite_ScanUsers(T *testing.T) {
+	T.Parallel()
+
+	T.Run("surfaces row errors", func(t *testing.T) {
+		s, _ := buildTestService(t)
+		mockRows := &database.MockResultIterator{}
+
+		mockRows.On("Next").Return(false)
+		mockRows.On("Err").Return(errors.New("blah"))
+
+		_, _, err := s.scanUsers(mockRows)
+		assert.Error(t, err)
+	})
+
+	T.Run("logs row closing errors", func(t *testing.T) {
+		s, _ := buildTestService(t)
+		mockRows := &database.MockResultIterator{}
+
+		mockRows.On("Next").Return(false)
+		mockRows.On("Err").Return(nil)
+		mockRows.On("Close").Return(errors.New("blah"))
+
+		_, _, err := s.scanUsers(mockRows)
+		assert.NoError(t, err)
+	})
+}
+
 func TestSqlite_buildGetUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.id = ?"
@@ -88,6 +118,7 @@ func TestSqlite_GetUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleUser.Salt = nil
 
@@ -105,6 +136,7 @@ func TestSqlite_GetUser(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
@@ -126,6 +158,7 @@ func TestSqlite_buildGetUsersQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
+
 		filter := fakemodels.BuildFleshedOutQueryFilter()
 
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.created_on, users.updated_on, users.archived_on, COUNT(users.id) FROM users WHERE users.archived_on IS NULL AND users.created_on > ? AND users.created_on < ? AND users.updated_on > ? AND users.updated_on < ? GROUP BY users.id LIMIT 20 OFFSET 180"
@@ -150,6 +183,7 @@ func TestSqlite_GetUsers(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 
 		exampleUserList := fakemodels.BuildFakeUserList()
@@ -175,6 +209,7 @@ func TestSqlite_GetUsers(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 
 		s, mockDB := buildTestService(t)
@@ -191,6 +226,7 @@ func TestSqlite_GetUsers(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 
 		s, mockDB := buildTestService(t)
@@ -206,6 +242,7 @@ func TestSqlite_GetUsers(T *testing.T) {
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 
 		s, mockDB := buildTestService(t)
@@ -225,6 +262,7 @@ func TestSqlite_buildGetUserByUsernameQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.username = ?"
@@ -246,6 +284,7 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleUser.Salt = nil
 
@@ -263,6 +302,7 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
@@ -280,6 +320,7 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
@@ -316,6 +357,7 @@ func TestSqlite_GetAllUserCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleCount := uint64(123)
 
 		s, mockDB := buildTestService(t)
@@ -331,6 +373,7 @@ func TestSqlite_GetAllUserCount(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
+
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(errors.New("blah"))
@@ -348,6 +391,7 @@ func TestSqlite_buildCreateUserQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
+
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
@@ -373,6 +417,7 @@ func TestSqlite_CreateUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		s, mockDB := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -387,19 +432,21 @@ func TestSqlite_CreateUser(T *testing.T) {
 			false,
 		).WillReturnResult(exampleRows)
 
-		mtt := &mockTimeTeller{}
-		mtt.On("Now").Return(exampleUser.CreatedOn)
-		s.timeTeller = mtt
+		stt := &mockTimeTeller{}
+		stt.On("Now").Return(exampleUser.CreatedOn)
+		s.timeTeller = stt
 
 		actual, err := s.CreateUser(ctx, expectedInput)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleUser, actual)
 
+		mock.AssertExpectationsForObjects(t, stt)
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
+
 		s, mockDB := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -425,6 +472,7 @@ func TestSqlite_buildUpdateUserQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, two_factor_secret = ?, updated_on = (strftime('%s','now')) WHERE id = ?"
@@ -447,6 +495,7 @@ func TestSqlite_UpdateUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, two_factor_secret = ?, updated_on = (strftime('%s','now')) WHERE id = ?"
@@ -472,6 +521,7 @@ func TestSqlite_buildArchiveUserQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		expectedQuery := "UPDATE users SET updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE id = ?"
@@ -491,6 +541,7 @@ func TestSqlite_ArchiveUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 		expectedQuery := "UPDATE users SET updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE id = ?"
 

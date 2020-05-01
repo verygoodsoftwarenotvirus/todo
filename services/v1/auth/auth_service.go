@@ -20,7 +20,7 @@ const (
 
 type (
 	// OAuth2ClientValidator is a stand-in interface, where we needed to abstract
-	// a regular structure with an interface for testing purposes
+	// a regular structure with an interface for testing purposes.
 	OAuth2ClientValidator interface {
 		ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.Request) (*models.OAuth2Client, error)
 	}
@@ -31,7 +31,7 @@ type (
 		Decode(name, value string, dst interface{}) error
 	}
 
-	// UserIDFetcher is a function that fetches user IDs
+	// UserIDFetcher is a function that fetches user IDs.
 	UserIDFetcher func(*http.Request) uint64
 
 	// Service handles authentication service-wide
@@ -47,7 +47,7 @@ type (
 	}
 )
 
-// ProvideAuthService builds a new AuthService
+// ProvideAuthService builds a new AuthService.
 func ProvideAuthService(
 	logger logging.Logger,
 	cfg *config.ServerConfig,

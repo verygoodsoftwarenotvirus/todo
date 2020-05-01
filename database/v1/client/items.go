@@ -9,13 +9,13 @@ import (
 
 var _ models.ItemDataManager = (*Client)(nil)
 
-// ItemExists fetches whether or not an item exists from the database
+// ItemExists fetches whether or not an item exists from the database.
 func (c *Client) ItemExists(ctx context.Context, itemID, userID uint64) (bool, error) {
 	ctx, span := tracing.StartSpan(ctx, "ItemExists")
 	defer span.End()
 
-	tracing.AttachUserIDToSpan(span, userID)
 	tracing.AttachItemIDToSpan(span, itemID)
+	tracing.AttachUserIDToSpan(span, userID)
 
 	c.logger.WithValues(map[string]interface{}{
 		"item_id": itemID,
@@ -25,13 +25,13 @@ func (c *Client) ItemExists(ctx context.Context, itemID, userID uint64) (bool, e
 	return c.querier.ItemExists(ctx, itemID, userID)
 }
 
-// GetItem fetches an item from the database
+// GetItem fetches an item from the database.
 func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
 	ctx, span := tracing.StartSpan(ctx, "GetItem")
 	defer span.End()
 
-	tracing.AttachUserIDToSpan(span, userID)
 	tracing.AttachItemIDToSpan(span, itemID)
+	tracing.AttachUserIDToSpan(span, userID)
 
 	c.logger.WithValues(map[string]interface{}{
 		"item_id": itemID,
@@ -41,7 +41,7 @@ func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*models.It
 	return c.querier.GetItem(ctx, itemID, userID)
 }
 
-// GetAllItemsCount fetches the count of items from the database that meet a particular filter
+// GetAllItemsCount fetches the count of items from the database that meet a particular filter.
 func (c *Client) GetAllItemsCount(ctx context.Context) (count uint64, err error) {
 	ctx, span := tracing.StartSpan(ctx, "GetAllItemsCount")
 	defer span.End()
@@ -51,22 +51,24 @@ func (c *Client) GetAllItemsCount(ctx context.Context) (count uint64, err error)
 	return c.querier.GetAllItemsCount(ctx)
 }
 
-// GetItems fetches a list of items from the database that meet a particular filter
+// GetItems fetches a list of items from the database that meet a particular filter.
 func (c *Client) GetItems(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.ItemList, error) {
 	ctx, span := tracing.StartSpan(ctx, "GetItems")
 	defer span.End()
 
-	tracing.AttachUserIDToSpan(span, userID)
 	tracing.AttachFilterToSpan(span, filter)
+	tracing.AttachUserIDToSpan(span, userID)
 
-	c.logger.WithValue("user_id", userID).Debug("GetItems called")
+	c.logger.WithValues(map[string]interface{}{
+		"user_id": userID,
+	}).Debug("GetItems called")
 
 	itemList, err := c.querier.GetItems(ctx, userID, filter)
 
 	return itemList, err
 }
 
-// CreateItem creates an item in the database
+// CreateItem creates an item in the database.
 func (c *Client) CreateItem(ctx context.Context, input *models.ItemCreationInput) (*models.Item, error) {
 	ctx, span := tracing.StartSpan(ctx, "CreateItem")
 	defer span.End()
@@ -88,7 +90,7 @@ func (c *Client) UpdateItem(ctx context.Context, updated *models.Item) error {
 	return c.querier.UpdateItem(ctx, updated)
 }
 
-// ArchiveItem archives an item from the database by its ID
+// ArchiveItem archives an item from the database by its ID.
 func (c *Client) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
 	ctx, span := tracing.StartSpan(ctx, "ArchiveItem")
 	defer span.End()

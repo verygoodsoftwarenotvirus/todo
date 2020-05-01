@@ -209,7 +209,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 	T.Parallel()
 
-	// These tests have a lot of overlap to those of ExtractOAuth2ClientFromRequest, which is deliberate
+	// These tests have a lot of overlap to those of ExtractOAuth2ClientFromRequest, which is deliberate.
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
@@ -334,6 +334,7 @@ func TestService_fetchOAuth2ClientFromRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -361,6 +362,7 @@ func TestService_fetchOAuth2ClientIDFromRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()

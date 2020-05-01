@@ -11,7 +11,6 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
 const (
@@ -40,8 +39,8 @@ var (
 	}
 )
 
-// scanWebhook is a consistent way to turn a *sql.Row into a webhook struct
-func scanWebhook(scan database.Scanner, includeCount bool) (*models.Webhook, uint64, error) {
+// scanWebhook is a consistent way to turn a *sql.Row into a webhook struct.
+func (m *MariaDB) scanWebhook(scan database.Scanner, includeCount bool) (*models.Webhook, uint64, error) {
 	var (
 		x     = &models.Webhook{}
 		count uint64
@@ -86,15 +85,15 @@ func scanWebhook(scan database.Scanner, includeCount bool) (*models.Webhook, uin
 	return x, count, nil
 }
 
-// scanWebhooks provides a consistent way to turn sql rows into a slice of webhooks
-func scanWebhooks(logger logging.Logger, rows *sql.Rows) ([]models.Webhook, uint64, error) {
+// scanWebhooks provides a consistent way to turn sql rows into a slice of webhooks.
+func (m *MariaDB) scanWebhooks(rows database.ResultIterator) ([]models.Webhook, uint64, error) {
 	var (
 		list  []models.Webhook
 		count uint64
 	)
 
 	for rows.Next() {
-		webhook, c, err := scanWebhook(rows, true)
+		webhook, c, err := m.scanWebhook(rows, true)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -110,7 +109,7 @@ func scanWebhooks(logger logging.Logger, rows *sql.Rows) ([]models.Webhook, uint
 	}
 
 	if err := rows.Close(); err != nil {
-		logger.Error(err, "closing rows")
+		m.logger.Error(err, "closing rows")
 	}
 
 	return list, count, nil
@@ -132,12 +131,12 @@ func (m *MariaDB) buildGetWebhookQuery(webhookID, userID uint64) (query string, 
 	return query, args
 }
 
-// GetWebhook fetches a webhook from the database
+// GetWebhook fetches a webhook from the database.
 func (m *MariaDB) GetWebhook(ctx context.Context, webhookID, userID uint64) (*models.Webhook, error) {
 	query, args := m.buildGetWebhookQuery(webhookID, userID)
 	row := m.db.QueryRowContext(ctx, query, args...)
 
-	webhook, _, err := scanWebhook(row, false)
+	webhook, _, err := m.scanWebhook(row, false)
 	if err != nil {
 		return nil, buildError(err, "querying for webhook")
 	}
@@ -169,7 +168,7 @@ func (m *MariaDB) buildGetAllWebhooksCountQuery() string {
 	return getAllWebhooksCountQuery
 }
 
-// GetAllWebhooksCount will fetch the count of every active webhook in the database
+// GetAllWebhooksCount will fetch the count of every active webhook in the database.
 func (m *MariaDB) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
 	err = m.db.QueryRowContext(ctx, m.buildGetAllWebhooksCountQuery()).Scan(&count)
 	return count, err
@@ -180,7 +179,7 @@ var (
 	getAllWebhooksQuery        string
 )
 
-// buildGetAllWebhooksQuery returns a SQL query which will return all webhooks, regardless of ownership
+// buildGetAllWebhooksQuery returns a SQL query which will return all webhooks, regardless of ownership.
 func (m *MariaDB) buildGetAllWebhooksQuery() string {
 	getAllWebhooksQueryBuilder.Do(func() {
 		var err error
@@ -199,7 +198,7 @@ func (m *MariaDB) buildGetAllWebhooksQuery() string {
 	return getAllWebhooksQuery
 }
 
-// GetAllWebhooks fetches a list of all webhooks from the database
+// GetAllWebhooks fetches a list of all webhooks from the database.
 func (m *MariaDB) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
 	rows, err := m.db.QueryContext(ctx, m.buildGetAllWebhooksQuery())
 	if err != nil {
@@ -209,7 +208,7 @@ func (m *MariaDB) GetAllWebhooks(ctx context.Context) (*models.WebhookList, erro
 		return nil, fmt.Errorf("querying for webhooks: %w", err)
 	}
 
-	list, count, err := scanWebhooks(m.logger, rows)
+	list, count, err := m.scanWebhooks(rows)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
@@ -248,7 +247,7 @@ func (m *MariaDB) buildGetWebhooksQuery(userID uint64, filter *models.QueryFilte
 	return query, args
 }
 
-// GetWebhooks fetches a list of webhooks from the database that meet a particular filter
+// GetWebhooks fetches a list of webhooks from the database that meet a particular filter.
 func (m *MariaDB) GetWebhooks(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.WebhookList, error) {
 	query, args := m.buildGetWebhooksQuery(userID, filter)
 
@@ -260,7 +259,7 @@ func (m *MariaDB) GetWebhooks(ctx context.Context, userID uint64, filter *models
 		return nil, fmt.Errorf("querying database: %w", err)
 	}
 
-	list, count, err := scanWebhooks(m.logger, rows)
+	list, count, err := m.scanWebhooks(rows)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
@@ -310,7 +309,7 @@ func (m *MariaDB) buildWebhookCreationQuery(x *models.Webhook) (query string, ar
 	return query, args
 }
 
-// CreateWebhook creates a webhook in the database
+// CreateWebhook creates a webhook in the database.
 func (m *MariaDB) CreateWebhook(ctx context.Context, input *models.WebhookCreationInput) (*models.Webhook, error) {
 	x := &models.Webhook{
 		Name:          input.Name,
@@ -329,18 +328,18 @@ func (m *MariaDB) CreateWebhook(ctx context.Context, input *models.WebhookCreati
 		return nil, fmt.Errorf("error executing webhook creation query: %w", err)
 	}
 
-	// fetch the last inserted ID
+	// fetch the last inserted ID.
 	id, err := res.LastInsertId()
 	m.logIDRetrievalError(err)
 	x.ID = uint64(id)
 
-	// this won't be completely accurate, but it will suffice
+	// this won't be completely accurate, but it will suffice.
 	x.CreatedOn = m.timeTeller.Now()
 
 	return x, nil
 }
 
-// buildUpdateWebhookQuery takes a given webhook and returns a SQL query to update
+// buildUpdateWebhookQuery takes a given webhook and returns a SQL query to update.
 func (m *MariaDB) buildUpdateWebhookQuery(input *models.Webhook) (query string, args []interface{}) {
 	var err error
 
@@ -392,7 +391,7 @@ func (m *MariaDB) buildArchiveWebhookQuery(webhookID, userID uint64) (query stri
 	return query, args
 }
 
-// ArchiveWebhook archives a webhook from the database by its ID
+// ArchiveWebhook archives a webhook from the database by its ID.
 func (m *MariaDB) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error {
 	query, args := m.buildArchiveWebhookQuery(webhookID, userID)
 	_, err := m.db.ExecContext(ctx, query, args...)

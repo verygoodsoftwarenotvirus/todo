@@ -22,15 +22,15 @@ const (
 
 	existencePrefix, existenceSuffix = "SELECT EXISTS (", ")"
 
-	// countQuery is a generic counter query used in a few query builders
+	// countQuery is a generic counter query used in a few query builders.
 	countQuery = "COUNT(%s.id)"
 
-	// currentUnixTimeQuery is the query maria DB uses to determine the current unix time
+	// currentUnixTimeQuery is the query maria DB uses to determine the current unix time.
 	currentUnixTimeQuery = "UNIX_TIMESTAMP()"
 )
 
 func init() {
-	// Explicitly wrap the MariaDB driver with ocsql
+	// Explicitly wrap the MariaDB driver with ocsql.
 	driver := ocsql.Wrap(
 		&mysql.MySQLDriver{},
 		ocsql.WithQuery(true),
@@ -40,14 +40,14 @@ func init() {
 		ocsql.WithQueryParams(true),
 	)
 
-	// Register our ocsql wrapper as a db driver
+	// Register our ocsql wrapper as a db driver.
 	sql.Register(mariaDBDriverName, driver)
 }
 
 var _ database.Database = (*MariaDB)(nil)
 
 type (
-	// MariaDB is our main MariaDB interaction db
+	// MariaDB is our main MariaDB interaction db.
 	MariaDB struct {
 		logger      logging.Logger
 		db          *sql.DB
@@ -57,7 +57,7 @@ type (
 		debug       bool
 	}
 
-	// ConnectionDetails is a string alias for a MariaDB url
+	// ConnectionDetails is a string alias for a MariaDB url.
 	ConnectionDetails string
 
 	// Querier is a subset interface for sql.{DB|Tx|Stmt} objects
@@ -68,13 +68,13 @@ type (
 	}
 )
 
-// ProvideMariaDBConnection provides an instrumented maria DB db
+// ProvideMariaDBConnection provides an instrumented maria DB db.
 func ProvideMariaDBConnection(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
 	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to maria DB")
 	return sql.Open(mariaDBDriverName, string(connectionDetails))
 }
 
-// ProvideMariaDB provides a maria DB controller
+// ProvideMariaDB provides a maria DB controller.
 func ProvideMariaDB(debug bool, db *sql.DB, logger logging.Logger) database.Database {
 	return &MariaDB{
 		db:         db,
@@ -85,7 +85,7 @@ func ProvideMariaDB(debug bool, db *sql.DB, logger logging.Logger) database.Data
 	}
 }
 
-// IsReady reports whether or not the db is ready
+// IsReady reports whether or not the db is ready.
 func (m *MariaDB) IsReady(ctx context.Context) (ready bool) {
 	numberOfUnsuccessfulAttempts := 0
 

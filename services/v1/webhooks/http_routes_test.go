@@ -22,7 +22,7 @@ import (
 func TestWebhooksService_List(T *testing.T) {
 	T.Parallel()
 
-	requestingUser := fakemodels.BuildFakeUser()
+	exampleUser := fakemodels.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
@@ -30,20 +30,20 @@ func TestWebhooksService_List(T *testing.T) {
 		exampleWebhookList := fakemodels.BuildFakeWebhookList()
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		wd := &mockmodels.WebhookDataManager{}
 		wd.On(
 			"GetWebhooks",
 			mock.Anything,
-			requestingUser.ID,
-			mock.Anything,
+			exampleUser.ID,
+			mock.AnythingOfType("*models.QueryFilter"),
 		).Return(exampleWebhookList, nil)
-		s.webhookDatabase = wd
+		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.WebhookList")).Return(nil)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -65,20 +65,20 @@ func TestWebhooksService_List(T *testing.T) {
 		s := buildTestService()
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		wd := &mockmodels.WebhookDataManager{}
 		wd.On(
 			"GetWebhooks",
 			mock.Anything,
-			requestingUser.ID,
-			mock.Anything,
+			exampleUser.ID,
+			mock.AnythingOfType("*models.QueryFilter"),
 		).Return((*models.WebhookList)(nil), sql.ErrNoRows)
-		s.webhookDatabase = wd
+		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.WebhookList")).Return(nil)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -100,17 +100,17 @@ func TestWebhooksService_List(T *testing.T) {
 		s := buildTestService()
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		wd := &mockmodels.WebhookDataManager{}
 		wd.On(
 			"GetWebhooks",
 			mock.Anything,
-			requestingUser.ID,
-			mock.Anything,
+			exampleUser.ID,
+			mock.AnythingOfType("*models.QueryFilter"),
 		).Return((*models.WebhookList)(nil), errors.New("blah"))
-		s.webhookDatabase = wd
+		s.webhookDataManager = wd
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -133,20 +133,20 @@ func TestWebhooksService_List(T *testing.T) {
 		exampleWebhookList := fakemodels.BuildFakeWebhookList()
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		wd := &mockmodels.WebhookDataManager{}
 		wd.On(
 			"GetWebhooks",
 			mock.Anything,
-			requestingUser.ID,
-			mock.Anything,
+			exampleUser.ID,
+			mock.AnythingOfType("*models.QueryFilter"),
 		).Return(exampleWebhookList, nil)
-		s.webhookDatabase = wd
+		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.WebhookList")).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -168,8 +168,11 @@ func TestWebhooksService_List(T *testing.T) {
 func TestValidateWebhook(T *testing.T) {
 	T.Parallel()
 
+	exampleUser := fakemodels.BuildFakeUser()
+
 	T.Run("happy path", func(t *testing.T) {
 		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		assert.NoError(t, validateWebhook(exampleInput))
@@ -177,6 +180,7 @@ func TestValidateWebhook(T *testing.T) {
 
 	T.Run("with invalid method", func(t *testing.T) {
 		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 		exampleInput.Method = " MEATLOAF "
 
@@ -185,6 +189,7 @@ func TestValidateWebhook(T *testing.T) {
 
 	T.Run("with invalid url", func(t *testing.T) {
 		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 		exampleInput.URL = "%zzzzz"
 
@@ -195,12 +200,13 @@ func TestValidateWebhook(T *testing.T) {
 func TestWebhooksService_Create(T *testing.T) {
 	T.Parallel()
 
-	requestingUser := fakemodels.BuildFakeUser()
+	exampleUser := fakemodels.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		mc := &mockmetrics.UnitCounter{}
@@ -208,19 +214,19 @@ func TestWebhooksService_Create(T *testing.T) {
 		s.webhookCounter = mc
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		wd := &mockmodels.WebhookDataManager{}
 		wd.On(
 			"CreateWebhook",
 			mock.Anything,
-			mock.Anything,
+			mock.AnythingOfType("*models.WebhookCreationInput"),
 		).Return(exampleWebhook, nil)
-		s.webhookDatabase = wd
+		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Webhook")).Return(nil)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -244,11 +250,12 @@ func TestWebhooksService_Create(T *testing.T) {
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook.BelongsToUser = exampleUser.ID
 		exampleWebhook.URL = "%zzzzz"
 		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		res := httptest.NewRecorder()
@@ -270,7 +277,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		s := buildTestService()
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		res := httptest.NewRecorder()
@@ -290,19 +297,20 @@ func TestWebhooksService_Create(T *testing.T) {
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		wd := &mockmodels.WebhookDataManager{}
 		wd.On(
 			"CreateWebhook",
 			mock.Anything,
-			mock.Anything,
+			mock.AnythingOfType("*models.WebhookCreationInput"),
 		).Return((*models.Webhook)(nil), errors.New("blah"))
-		s.webhookDatabase = wd
+		s.webhookDataManager = wd
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -325,6 +333,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		mc := &mockmetrics.UnitCounter{}
@@ -332,19 +341,19 @@ func TestWebhooksService_Create(T *testing.T) {
 		s.webhookCounter = mc
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		wd := &mockmodels.WebhookDataManager{}
 		wd.On(
 			"CreateWebhook",
 			mock.Anything,
-			mock.Anything,
+			mock.AnythingOfType("*models.WebhookCreationInput"),
 		).Return(exampleWebhook, nil)
-		s.webhookDatabase = wd
+		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Webhook")).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -368,15 +377,16 @@ func TestWebhooksService_Create(T *testing.T) {
 func TestWebhooksService_Read(T *testing.T) {
 	T.Parallel()
 
-	requestingUser := fakemodels.BuildFakeUser()
+	exampleUser := fakemodels.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook.BelongsToUser = exampleUser.ID
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -388,12 +398,12 @@ func TestWebhooksService_Read(T *testing.T) {
 			"GetWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
-			requestingUser.ID,
+			exampleUser.ID,
 		).Return(exampleWebhook, nil)
-		s.webhookDatabase = wd
+		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Webhook")).Return(nil)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -415,9 +425,10 @@ func TestWebhooksService_Read(T *testing.T) {
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook.BelongsToUser = exampleUser.ID
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -429,9 +440,9 @@ func TestWebhooksService_Read(T *testing.T) {
 			"GetWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
-			requestingUser.ID,
+			exampleUser.ID,
 		).Return((*models.Webhook)(nil), sql.ErrNoRows)
-		s.webhookDatabase = wd
+		s.webhookDataManager = wd
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -452,9 +463,10 @@ func TestWebhooksService_Read(T *testing.T) {
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook.BelongsToUser = exampleUser.ID
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -466,9 +478,9 @@ func TestWebhooksService_Read(T *testing.T) {
 			"GetWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
-			requestingUser.ID,
+			exampleUser.ID,
 		).Return((*models.Webhook)(nil), errors.New("blah"))
-		s.webhookDatabase = wd
+		s.webhookDataManager = wd
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -489,9 +501,10 @@ func TestWebhooksService_Read(T *testing.T) {
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook.BelongsToUser = exampleUser.ID
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -503,12 +516,12 @@ func TestWebhooksService_Read(T *testing.T) {
 			"GetWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
-			requestingUser.ID,
+			exampleUser.ID,
 		).Return(exampleWebhook, nil)
-		s.webhookDatabase = wd
+		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Webhook")).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -530,16 +543,17 @@ func TestWebhooksService_Read(T *testing.T) {
 func TestWebhooksService_Update(T *testing.T) {
 	T.Parallel()
 
-	requestingUser := fakemodels.BuildFakeUser()
+	exampleUser := fakemodels.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -551,18 +565,18 @@ func TestWebhooksService_Update(T *testing.T) {
 			"GetWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
-			requestingUser.ID,
+			exampleUser.ID,
 		).Return(exampleWebhook, nil)
 
 		wd.On(
 			"UpdateWebhook",
 			mock.Anything,
-			mock.Anything,
+			mock.AnythingOfType("*models.Webhook"),
 		).Return(nil)
-		s.webhookDatabase = wd
+		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Webhook")).Return(nil)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -602,10 +616,11 @@ func TestWebhooksService_Update(T *testing.T) {
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -617,9 +632,9 @@ func TestWebhooksService_Update(T *testing.T) {
 			"GetWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
-			requestingUser.ID,
+			exampleUser.ID,
 		).Return((*models.Webhook)(nil), sql.ErrNoRows)
-		s.webhookDatabase = wd
+		s.webhookDataManager = wd
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -642,10 +657,11 @@ func TestWebhooksService_Update(T *testing.T) {
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -657,9 +673,9 @@ func TestWebhooksService_Update(T *testing.T) {
 			"GetWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
-			requestingUser.ID,
+			exampleUser.ID,
 		).Return((*models.Webhook)(nil), errors.New("blah"))
-		s.webhookDatabase = wd
+		s.webhookDataManager = wd
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -682,10 +698,11 @@ func TestWebhooksService_Update(T *testing.T) {
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -697,15 +714,15 @@ func TestWebhooksService_Update(T *testing.T) {
 			"GetWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
-			requestingUser.ID,
+			exampleUser.ID,
 		).Return(exampleWebhook, nil)
 
 		wd.On(
 			"UpdateWebhook",
 			mock.Anything,
-			mock.Anything,
+			mock.AnythingOfType("*models.Webhook"),
 		).Return(errors.New("blah"))
-		s.webhookDatabase = wd
+		s.webhookDataManager = wd
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -728,10 +745,11 @@ func TestWebhooksService_Update(T *testing.T) {
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -743,18 +761,18 @@ func TestWebhooksService_Update(T *testing.T) {
 			"GetWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
-			requestingUser.ID,
+			exampleUser.ID,
 		).Return(exampleWebhook, nil)
 
 		wd.On(
 			"UpdateWebhook",
 			mock.Anything,
-			mock.Anything,
+			mock.AnythingOfType("*models.Webhook"),
 		).Return(nil)
-		s.webhookDatabase = wd
+		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Webhook")).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -778,19 +796,20 @@ func TestWebhooksService_Update(T *testing.T) {
 func TestWebhooksService_Archive(T *testing.T) {
 	T.Parallel()
 
-	requestingUser := fakemodels.BuildFakeUser()
+	exampleUser := fakemodels.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook.BelongsToUser = exampleUser.ID
 
 		mc := &mockmetrics.UnitCounter{}
 		mc.On("Decrement", mock.Anything).Return()
 		s.webhookCounter = mc
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -802,9 +821,9 @@ func TestWebhooksService_Archive(T *testing.T) {
 			"ArchiveWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
-			requestingUser.ID,
+			exampleUser.ID,
 		).Return(nil)
-		s.webhookDatabase = wd
+		s.webhookDataManager = wd
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -825,9 +844,10 @@ func TestWebhooksService_Archive(T *testing.T) {
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook.BelongsToUser = exampleUser.ID
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -839,9 +859,9 @@ func TestWebhooksService_Archive(T *testing.T) {
 			"ArchiveWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
-			requestingUser.ID,
+			exampleUser.ID,
 		).Return(sql.ErrNoRows)
-		s.webhookDatabase = wd
+		s.webhookDataManager = wd
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -862,9 +882,10 @@ func TestWebhooksService_Archive(T *testing.T) {
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook.BelongsToUser = exampleUser.ID
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
-			return requestingUser.ID
+			return exampleUser.ID
 		}
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -876,9 +897,9 @@ func TestWebhooksService_Archive(T *testing.T) {
 			"ArchiveWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
-			requestingUser.ID,
+			exampleUser.ID,
 		).Return(errors.New("blah"))
-		s.webhookDatabase = wd
+		s.webhookDataManager = wd
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(

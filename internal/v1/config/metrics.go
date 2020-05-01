@@ -17,11 +17,11 @@ import (
 )
 
 const (
-	// MetricsNamespace is the namespace under which we register metrics
+	// MetricsNamespace is the namespace under which we register metrics.
 	MetricsNamespace = "todo_server"
 
 	// MinimumRuntimeCollectionInterval is the smallest interval we can collect metrics at
-	// this value is used to guard against zero values
+	// this value is used to guard against zero values.
 	MinimumRuntimeCollectionInterval = time.Second
 )
 
@@ -31,22 +31,22 @@ type (
 )
 
 var (
-	// ErrInvalidMetricsProvider is a sentinel error value
+	// ErrInvalidMetricsProvider is a sentinel error value.
 	ErrInvalidMetricsProvider = errors.New("invalid metrics provider")
-	// Prometheus represents the popular time series database
+	// Prometheus represents the popular time series database.
 	Prometheus metricsProvider = "prometheus"
-	// DefaultMetricsProvider indicates what the preferred metrics provider is
+	// DefaultMetricsProvider indicates what the preferred metrics provider is.
 	DefaultMetricsProvider = Prometheus
 
-	// ErrInvalidTracingProvider is a sentinel error value
+	// ErrInvalidTracingProvider is a sentinel error value.
 	ErrInvalidTracingProvider = errors.New("invalid tracing provider")
-	// Jaeger represents the popular distributed tracing server
+	// Jaeger represents the popular distributed tracing server.
 	Jaeger tracingProvider = "jaeger"
-	// DefaultTracingProvider indicates what the preferred tracing provider is
+	// DefaultTracingProvider indicates what the preferred tracing provider is.
 	DefaultTracingProvider = Jaeger
 )
 
-// ProvideInstrumentationHandler provides an instrumentation handler
+// ProvideInstrumentationHandler provides an instrumentation handler.
 func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) (metrics.InstrumentationHandler, error) {
 	logger = logger.WithValue("metrics_provider", cfg.Metrics.MetricsProvider)
 	logger.Debug("setting metrics provider")
@@ -83,7 +83,7 @@ func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) (m
 	}
 }
 
-// ProvideTracing provides an instrumentation handler
+// ProvideTracing provides an instrumentation handler.
 func (cfg *ServerConfig) ProvideTracing(logger logging.Logger) error {
 	trace.ApplyConfig(trace.Config{DefaultSampler: trace.ProbabilitySampler(1)})
 

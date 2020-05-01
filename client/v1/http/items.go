@@ -14,7 +14,7 @@ const (
 	itemsBasePath = "items"
 )
 
-// BuildItemExistsRequest builds an HTTP request for checking the existence of an item
+// BuildItemExistsRequest builds an HTTP request for checking the existence of an item.
 func (c *V1Client) BuildItemExistsRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
 	ctx, span := tracing.StartSpan(ctx, "BuildItemExistsRequest")
 	defer span.End()
@@ -29,7 +29,7 @@ func (c *V1Client) BuildItemExistsRequest(ctx context.Context, itemID uint64) (*
 	return http.NewRequestWithContext(ctx, http.MethodHead, uri, nil)
 }
 
-// ItemExists retrieves whether or not an item exists
+// ItemExists retrieves whether or not an item exists.
 func (c *V1Client) ItemExists(ctx context.Context, itemID uint64) (exists bool, err error) {
 	ctx, span := tracing.StartSpan(ctx, "ItemExists")
 	defer span.End()
@@ -42,7 +42,7 @@ func (c *V1Client) ItemExists(ctx context.Context, itemID uint64) (exists bool, 
 	return c.checkExistence(ctx, req)
 }
 
-// BuildGetItemRequest builds an HTTP request for fetching an item
+// BuildGetItemRequest builds an HTTP request for fetching an item.
 func (c *V1Client) BuildGetItemRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
 	ctx, span := tracing.StartSpan(ctx, "BuildGetItemRequest")
 	defer span.End()
@@ -57,7 +57,7 @@ func (c *V1Client) BuildGetItemRequest(ctx context.Context, itemID uint64) (*htt
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
-// GetItem retrieves an item
+// GetItem retrieves an item.
 func (c *V1Client) GetItem(ctx context.Context, itemID uint64) (item *models.Item, err error) {
 	ctx, span := tracing.StartSpan(ctx, "GetItem")
 	defer span.End()
@@ -74,7 +74,7 @@ func (c *V1Client) GetItem(ctx context.Context, itemID uint64) (item *models.Ite
 	return item, nil
 }
 
-// BuildGetItemsRequest builds an HTTP request for fetching items
+// BuildGetItemsRequest builds an HTTP request for fetching items.
 func (c *V1Client) BuildGetItemsRequest(ctx context.Context, filter *models.QueryFilter) (*http.Request, error) {
 	ctx, span := tracing.StartSpan(ctx, "BuildGetItemsRequest")
 	defer span.End()
@@ -88,7 +88,7 @@ func (c *V1Client) BuildGetItemsRequest(ctx context.Context, filter *models.Quer
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
-// GetItems retrieves a list of items
+// GetItems retrieves a list of items.
 func (c *V1Client) GetItems(ctx context.Context, filter *models.QueryFilter) (items *models.ItemList, err error) {
 	ctx, span := tracing.StartSpan(ctx, "GetItems")
 	defer span.End()
@@ -105,7 +105,7 @@ func (c *V1Client) GetItems(ctx context.Context, filter *models.QueryFilter) (it
 	return items, nil
 }
 
-// BuildCreateItemRequest builds an HTTP request for creating an item
+// BuildCreateItemRequest builds an HTTP request for creating an item.
 func (c *V1Client) BuildCreateItemRequest(ctx context.Context, input *models.ItemCreationInput) (*http.Request, error) {
 	ctx, span := tracing.StartSpan(ctx, "BuildCreateItemRequest")
 	defer span.End()
@@ -119,7 +119,7 @@ func (c *V1Client) BuildCreateItemRequest(ctx context.Context, input *models.Ite
 	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
-// CreateItem creates an item
+// CreateItem creates an item.
 func (c *V1Client) CreateItem(ctx context.Context, input *models.ItemCreationInput) (item *models.Item, err error) {
 	ctx, span := tracing.StartSpan(ctx, "CreateItem")
 	defer span.End()
@@ -133,7 +133,7 @@ func (c *V1Client) CreateItem(ctx context.Context, input *models.ItemCreationInp
 	return item, err
 }
 
-// BuildUpdateItemRequest builds an HTTP request for updating an item
+// BuildUpdateItemRequest builds an HTTP request for updating an item.
 func (c *V1Client) BuildUpdateItemRequest(ctx context.Context, item *models.Item) (*http.Request, error) {
 	ctx, span := tracing.StartSpan(ctx, "BuildUpdateItemRequest")
 	defer span.End()
@@ -148,7 +148,7 @@ func (c *V1Client) BuildUpdateItemRequest(ctx context.Context, item *models.Item
 	return c.buildDataRequest(ctx, http.MethodPut, uri, item)
 }
 
-// UpdateItem updates an item
+// UpdateItem updates an item.
 func (c *V1Client) UpdateItem(ctx context.Context, item *models.Item) error {
 	ctx, span := tracing.StartSpan(ctx, "UpdateItem")
 	defer span.End()
@@ -161,7 +161,7 @@ func (c *V1Client) UpdateItem(ctx context.Context, item *models.Item) error {
 	return c.executeRequest(ctx, req, &item)
 }
 
-// BuildArchiveItemRequest builds an HTTP request for updating an item
+// BuildArchiveItemRequest builds an HTTP request for updating an item.
 func (c *V1Client) BuildArchiveItemRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
 	ctx, span := tracing.StartSpan(ctx, "BuildArchiveItemRequest")
 	defer span.End()
@@ -176,7 +176,7 @@ func (c *V1Client) BuildArchiveItemRequest(ctx context.Context, itemID uint64) (
 	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
 }
 
-// ArchiveItem archives an item
+// ArchiveItem archives an item.
 func (c *V1Client) ArchiveItem(ctx context.Context, itemID uint64) error {
 	ctx, span := tracing.StartSpan(ctx, "ArchiveItem")
 	defer span.End()

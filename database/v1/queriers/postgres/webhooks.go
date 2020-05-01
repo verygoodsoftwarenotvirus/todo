@@ -11,7 +11,6 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
 const (
@@ -40,8 +39,8 @@ var (
 	}
 )
 
-// scanWebhook is a consistent way to turn a *sql.Row into a webhook struct
-func scanWebhook(scan database.Scanner, includeCount bool) (*models.Webhook, uint64, error) {
+// scanWebhook is a consistent way to turn a *sql.Row into a webhook struct.
+func (p *Postgres) scanWebhook(scan database.Scanner, includeCount bool) (*models.Webhook, uint64, error) {
 	var (
 		x     = &models.Webhook{}
 		count uint64
@@ -86,15 +85,15 @@ func scanWebhook(scan database.Scanner, includeCount bool) (*models.Webhook, uin
 	return x, count, nil
 }
 
-// scanWebhooks provides a consistent way to turn sql rows into a slice of webhooks
-func scanWebhooks(logger logging.Logger, rows *sql.Rows) ([]models.Webhook, uint64, error) {
+// scanWebhooks provides a consistent way to turn sql rows into a slice of webhooks.
+func (p *Postgres) scanWebhooks(rows database.ResultIterator) ([]models.Webhook, uint64, error) {
 	var (
 		list  []models.Webhook
 		count uint64
 	)
 
 	for rows.Next() {
-		webhook, c, err := scanWebhook(rows, true)
+		webhook, c, err := p.scanWebhook(rows, true)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -110,7 +109,7 @@ func scanWebhooks(logger logging.Logger, rows *sql.Rows) ([]models.Webhook, uint
 	}
 
 	if err := rows.Close(); err != nil {
-		logger.Error(err, "closing rows")
+		p.logger.Error(err, "closing rows")
 	}
 
 	return list, count, nil
@@ -132,12 +131,12 @@ func (p *Postgres) buildGetWebhookQuery(webhookID, userID uint64) (query string,
 	return query, args
 }
 
-// GetWebhook fetches a webhook from the database
+// GetWebhook fetches a webhook from the database.
 func (p *Postgres) GetWebhook(ctx context.Context, webhookID, userID uint64) (*models.Webhook, error) {
 	query, args := p.buildGetWebhookQuery(webhookID, userID)
 	row := p.db.QueryRowContext(ctx, query, args...)
 
-	webhook, _, err := scanWebhook(row, false)
+	webhook, _, err := p.scanWebhook(row, false)
 	if err != nil {
 		return nil, buildError(err, "querying for webhook")
 	}
@@ -169,7 +168,7 @@ func (p *Postgres) buildGetAllWebhooksCountQuery() string {
 	return getAllWebhooksCountQuery
 }
 
-// GetAllWebhooksCount will fetch the count of every active webhook in the database
+// GetAllWebhooksCount will fetch the count of every active webhook in the database.
 func (p *Postgres) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
 	err = p.db.QueryRowContext(ctx, p.buildGetAllWebhooksCountQuery()).Scan(&count)
 	return count, err
@@ -180,7 +179,7 @@ var (
 	getAllWebhooksQuery        string
 )
 
-// buildGetAllWebhooksQuery returns a SQL query which will return all webhooks, regardless of ownership
+// buildGetAllWebhooksQuery returns a SQL query which will return all webhooks, regardless of ownership.
 func (p *Postgres) buildGetAllWebhooksQuery() string {
 	getAllWebhooksQueryBuilder.Do(func() {
 		var err error
@@ -199,7 +198,7 @@ func (p *Postgres) buildGetAllWebhooksQuery() string {
 	return getAllWebhooksQuery
 }
 
-// GetAllWebhooks fetches a list of all webhooks from the database
+// GetAllWebhooks fetches a list of all webhooks from the database.
 func (p *Postgres) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
 	rows, err := p.db.QueryContext(ctx, p.buildGetAllWebhooksQuery())
 	if err != nil {
@@ -209,7 +208,7 @@ func (p *Postgres) GetAllWebhooks(ctx context.Context) (*models.WebhookList, err
 		return nil, fmt.Errorf("querying for webhooks: %w", err)
 	}
 
-	list, count, err := scanWebhooks(p.logger, rows)
+	list, count, err := p.scanWebhooks(rows)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
@@ -248,7 +247,7 @@ func (p *Postgres) buildGetWebhooksQuery(userID uint64, filter *models.QueryFilt
 	return query, args
 }
 
-// GetWebhooks fetches a list of webhooks from the database that meet a particular filter
+// GetWebhooks fetches a list of webhooks from the database that meet a particular filter.
 func (p *Postgres) GetWebhooks(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.WebhookList, error) {
 	query, args := p.buildGetWebhooksQuery(userID, filter)
 
@@ -260,7 +259,7 @@ func (p *Postgres) GetWebhooks(ctx context.Context, userID uint64, filter *model
 		return nil, fmt.Errorf("querying database: %w", err)
 	}
 
-	list, count, err := scanWebhooks(p.logger, rows)
+	list, count, err := p.scanWebhooks(rows)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
@@ -311,7 +310,7 @@ func (p *Postgres) buildWebhookCreationQuery(x *models.Webhook) (query string, a
 	return query, args
 }
 
-// CreateWebhook creates a webhook in the database
+// CreateWebhook creates a webhook in the database.
 func (p *Postgres) CreateWebhook(ctx context.Context, input *models.WebhookCreationInput) (*models.Webhook, error) {
 	x := &models.Webhook{
 		Name:          input.Name,
@@ -332,7 +331,7 @@ func (p *Postgres) CreateWebhook(ctx context.Context, input *models.WebhookCreat
 	return x, nil
 }
 
-// buildUpdateWebhookQuery takes a given webhook and returns a SQL query to update
+// buildUpdateWebhookQuery takes a given webhook and returns a SQL query to update.
 func (p *Postgres) buildUpdateWebhookQuery(input *models.Webhook) (query string, args []interface{}) {
 	var err error
 
@@ -383,7 +382,7 @@ func (p *Postgres) buildArchiveWebhookQuery(webhookID, userID uint64) (query str
 	return query, args
 }
 
-// ArchiveWebhook archives a webhook from the database by its ID
+// ArchiveWebhook archives a webhook from the database by its ID.
 func (p *Postgres) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error {
 	query, args := p.buildArchiveWebhookQuery(webhookID, userID)
 	_, err := p.db.ExecContext(ctx, query, args...)

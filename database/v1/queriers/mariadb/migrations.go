@@ -146,7 +146,7 @@ var (
 )
 
 // buildMigrationFunc returns a sync.Once compatible function closure that will
-// migrate a maria DB database
+// migrate a maria DB database.
 func buildMigrationFunc(db *sql.DB) func() {
 	return func() {
 		driver := darwin.NewGenericDriver(db, darwin.MySQLDialect{})

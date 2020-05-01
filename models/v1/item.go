@@ -6,7 +6,7 @@ import (
 )
 
 type (
-	// Item represents an item
+	// Item represents an item.
 	Item struct {
 		ID            uint64  `json:"id"`
 		Name          string  `json:"name"`
@@ -17,27 +17,27 @@ type (
 		BelongsToUser uint64  `json:"belongs_to_user"`
 	}
 
-	// ItemList represents a list of items
+	// ItemList represents a list of items.
 	ItemList struct {
 		Pagination
 		Items []Item `json:"items"`
 	}
 
-	// ItemCreationInput represents what a user could set as input for creating items
+	// ItemCreationInput represents what a user could set as input for creating items.
 	ItemCreationInput struct {
 		Name          string `json:"name"`
 		Details       string `json:"details"`
 		BelongsToUser uint64 `json:"-"`
 	}
 
-	// ItemUpdateInput represents what a user could set as input for updating items
+	// ItemUpdateInput represents what a user could set as input for updating items.
 	ItemUpdateInput struct {
 		Name          string `json:"name"`
 		Details       string `json:"details"`
 		BelongsToUser uint64 `json:"-"`
 	}
 
-	// ItemDataManager describes a structure capable of storing items permanently
+	// ItemDataManager describes a structure capable of storing items permanently.
 	ItemDataManager interface {
 		ItemExists(ctx context.Context, itemID, userID uint64) (bool, error)
 		GetItem(ctx context.Context, itemID, userID uint64) (*Item, error)
@@ -48,7 +48,7 @@ type (
 		ArchiveItem(ctx context.Context, itemID, userID uint64) error
 	}
 
-	// ItemDataServer describes a structure capable of serving traffic related to items
+	// ItemDataServer describes a structure capable of serving traffic related to items.
 	ItemDataServer interface {
 		CreationInputMiddleware(next http.Handler) http.Handler
 		UpdateInputMiddleware(next http.Handler) http.Handler
@@ -62,7 +62,7 @@ type (
 	}
 )
 
-// Update merges an ItemInput with an item
+// Update merges an ItemInput with an item.
 func (x *Item) Update(input *ItemUpdateInput) {
 	if input.Name != "" && input.Name != x.Name {
 		x.Name = input.Name
@@ -73,7 +73,7 @@ func (x *Item) Update(input *ItemUpdateInput) {
 	}
 }
 
-// ToUpdateInput creates a ItemUpdateInput struct for an item
+// ToUpdateInput creates a ItemUpdateInput struct for an item.
 func (x *Item) ToUpdateInput() *ItemUpdateInput {
 	return &ItemUpdateInput{
 		Name:    x.Name,

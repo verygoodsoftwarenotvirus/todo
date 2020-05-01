@@ -9,7 +9,6 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
 const (
@@ -30,8 +29,8 @@ var (
 	}
 )
 
-// scanUser provides a consistent way to scan something like a *sql.Row into a User struct
-func scanUser(scan database.Scanner, includeCount bool) (*models.User, uint64, error) {
+// scanUser provides a consistent way to scan something like a *sql.Row into a User struct.
+func (m *MariaDB) scanUser(scan database.Scanner, includeCount bool) (*models.User, uint64, error) {
 	var (
 		x     = &models.User{}
 		count uint64
@@ -60,15 +59,15 @@ func scanUser(scan database.Scanner, includeCount bool) (*models.User, uint64, e
 	return x, count, nil
 }
 
-// scanUsers takes database rows and loads them into a slice of User structs
-func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, uint64, error) {
+// scanUsers takes database rows and loads them into a slice of User structs.
+func (m *MariaDB) scanUsers(rows database.ResultIterator) ([]models.User, uint64, error) {
 	var (
 		list  []models.User
 		count uint64
 	)
 
 	for rows.Next() {
-		user, c, err := scanUser(rows, true)
+		user, c, err := m.scanUser(rows, true)
 		if err != nil {
 			return nil, 0, fmt.Errorf("scanning user result: %w", err)
 		}
@@ -85,7 +84,7 @@ func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, uint64, er
 	}
 
 	if err := rows.Close(); err != nil {
-		logger.Error(err, "closing rows")
+		m.logger.Error(err, "closing rows")
 	}
 
 	return list, count, nil
@@ -108,12 +107,12 @@ func (m *MariaDB) buildGetUserQuery(userID uint64) (query string, args []interfa
 	return query, args
 }
 
-// GetUser fetches a user
+// GetUser fetches a user.
 func (m *MariaDB) GetUser(ctx context.Context, userID uint64) (*models.User, error) {
 	query, args := m.buildGetUserQuery(userID)
 	row := m.db.QueryRowContext(ctx, query, args...)
-	u, _, err := scanUser(row, false)
 
+	u, _, err := m.scanUser(row, false)
 	if err != nil {
 		return nil, buildError(err, "fetching user from database")
 	}
@@ -138,12 +137,12 @@ func (m *MariaDB) buildGetUserByUsernameQuery(username string) (query string, ar
 	return query, args
 }
 
-// GetUserByUsername fetches a user by their username
+// GetUserByUsername fetches a user by their username.
 func (m *MariaDB) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
 	query, args := m.buildGetUserByUsernameQuery(username)
 	row := m.db.QueryRowContext(ctx, query, args...)
-	u, _, err := scanUser(row, false)
 
+	u, _, err := m.scanUser(row, false)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, err
@@ -173,7 +172,7 @@ func (m *MariaDB) buildGetAllUserCountQuery() (query string) {
 	return query
 }
 
-// GetAllUserCount fetches a count of users from the database
+// GetAllUserCount fetches a count of users from the database.
 func (m *MariaDB) GetAllUserCount(ctx context.Context) (count uint64, err error) {
 	query := m.buildGetAllUserCountQuery()
 	err = m.db.QueryRowContext(ctx, query).Scan(&count)
@@ -202,7 +201,7 @@ func (m *MariaDB) buildGetUsersQuery(filter *models.QueryFilter) (query string, 
 	return query, args
 }
 
-// GetUsers fetches a list of users from the database that meet a particular filter
+// GetUsers fetches a list of users from the database that meet a particular filter.
 func (m *MariaDB) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
 	query, args := m.buildGetUsersQuery(filter)
 
@@ -211,7 +210,7 @@ func (m *MariaDB) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mo
 		return nil, buildError(err, "querying for user")
 	}
 
-	userList, count, err := scanUsers(m.logger, rows)
+	userList, count, err := m.scanUsers(rows)
 	if err != nil {
 		return nil, fmt.Errorf("loading response from database: %w", err)
 	}
@@ -251,14 +250,14 @@ func (m *MariaDB) buildCreateUserQuery(input models.UserDatabaseCreationInput) (
 	// NOTE: we always default is_admin to false, on the assumption that
 	// admins have DB access and will change that value via SQL query.
 	// There should also be no way to update a user via this structure
-	// such that they would have admin privileges
+	// such that they would have admin privileges.
 
 	m.logQueryBuildingError(err)
 
 	return query, args
 }
 
-// CreateUser creates a user
+// CreateUser creates a user.
 func (m *MariaDB) CreateUser(ctx context.Context, input models.UserDatabaseCreationInput) (*models.User, error) {
 	x := &models.User{
 		Username:        input.Username,
@@ -267,18 +266,18 @@ func (m *MariaDB) CreateUser(ctx context.Context, input models.UserDatabaseCreat
 	}
 	query, args := m.buildCreateUserQuery(input)
 
-	// create the user
+	// create the user.
 	res, err := m.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error executing user creation query: %w", err)
 	}
 
-	// fetch the last inserted ID
+	// fetch the last inserted ID.
 	id, err := res.LastInsertId()
 	m.logIDRetrievalError(err)
 	x.ID = uint64(id)
 
-	// this won't be completely accurate, but it will suffice
+	// this won't be completely accurate, but it will suffice.
 	x.CreatedOn = m.timeTeller.Now()
 
 	return x, nil
@@ -330,7 +329,7 @@ func (m *MariaDB) buildArchiveUserQuery(userID uint64) (query string, args []int
 	return query, args
 }
 
-// ArchiveUser archives a user by their username
+// ArchiveUser archives a user by their username.
 func (m *MariaDB) ArchiveUser(ctx context.Context, userID uint64) error {
 	query, args := m.buildArchiveUserQuery(userID)
 	_, err := m.db.ExecContext(ctx, query, args...)

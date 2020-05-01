@@ -10,7 +10,7 @@ import (
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 )
 
-// fetchRandomWebhook retrieves a random webhook from the list of available webhooks
+// fetchRandomWebhook retrieves a random webhook from the list of available webhooks.
 func fetchRandomWebhook(c *client.V1Client) *models.Webhook {
 	webhooks, err := c.GetWebhooks(context.Background(), nil)
 	if err != nil || webhooks == nil || len(webhooks.Webhooks) == 0 {

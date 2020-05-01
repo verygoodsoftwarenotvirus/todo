@@ -27,14 +27,14 @@ const (
 )
 
 var (
-	// ErrNotFound is a handy error to return when we receive a 404 response
+	// ErrNotFound is a handy error to return when we receive a 404 response.
 	ErrNotFound = errors.New("404: not found")
 
-	// ErrUnauthorized is a handy error to return when we receive a 404 response
+	// ErrUnauthorized is a handy error to return when we receive a 404 response.
 	ErrUnauthorized = errors.New("401: not authorized")
 )
 
-// V1Client is a client for interacting with v1 of our REST API
+// V1Client is a client for interacting with v1 of our HTTP API.
 type V1Client struct {
 	plainClient  *http.Client
 	authedClient *http.Client
@@ -45,22 +45,22 @@ type V1Client struct {
 	tokenSource  oauth2.TokenSource
 }
 
-// AuthenticatedClient returns the authenticated *http.Client that we use to make most requests
+// AuthenticatedClient returns the authenticated *http.Client that we use to make most requests.
 func (c *V1Client) AuthenticatedClient() *http.Client {
 	return c.authedClient
 }
 
-// PlainClient returns the unauthenticated *http.Client that we use to make certain requests
+// PlainClient returns the unauthenticated *http.Client that we use to make certain requests.
 func (c *V1Client) PlainClient() *http.Client {
 	return c.plainClient
 }
 
-// TokenSource provides the client's token source
+// TokenSource provides the client's token source.
 func (c *V1Client) TokenSource() oauth2.TokenSource {
 	return c.tokenSource
 }
 
-// tokenEndpoint provides the oauth2 Endpoint for a given host
+// tokenEndpoint provides the oauth2 Endpoint for a given host.
 func tokenEndpoint(baseURL *url.URL) oauth2.Endpoint {
 	tu, au := *baseURL, *baseURL
 	tu.Path, au.Path = "oauth2/token", "oauth2/authorize"
@@ -71,7 +71,7 @@ func tokenEndpoint(baseURL *url.URL) oauth2.Endpoint {
 	}
 }
 
-// NewClient builds a new API client for us
+// NewClient builds a new API client for us.
 func NewClient(
 	ctx context.Context,
 	clientID,
@@ -115,7 +115,7 @@ func NewClient(
 // NewSimpleClient is a client that is capable of much less than the normal client
 // and has noops or empty values for most of its authentication and debug parts.
 // Its purpose at the time of this writing is merely so I can make users (which
-// is a route that doesn't require authentication)
+// is a route that doesn't require authentication.)
 func NewSimpleClient(ctx context.Context, address *url.URL, debug bool) (*V1Client, error) {
 	return NewClient(
 		ctx,
@@ -129,7 +129,7 @@ func NewSimpleClient(ctx context.Context, address *url.URL, debug bool) (*V1Clie
 	)
 }
 
-// buildOAuthClient does too much
+// buildOAuthClient takes care of all the OAuth2 noise and returns a nice pretty *http.Client for us to use.
 func buildOAuthClient(
 	ctx context.Context,
 	uri *url.URL,
@@ -162,7 +162,7 @@ func buildOAuthClient(
 	return client, ts
 }
 
-// closeResponseBody takes a given HTTP response and closes its body, logging if an error occurs
+// closeResponseBody takes a given HTTP response and closes its body, logging if an error occurs.
 func (c *V1Client) closeResponseBody(res *http.Response) {
 	if res != nil {
 		if err := res.Body.Close(); err != nil {
@@ -171,7 +171,7 @@ func (c *V1Client) closeResponseBody(res *http.Response) {
 	}
 }
 
-// BuildURL builds standard service URLs
+// BuildURL builds standard service URLs.
 func (c *V1Client) BuildURL(qp url.Values, parts ...string) string {
 	var u *url.URL
 	if qp != nil {
@@ -186,7 +186,7 @@ func (c *V1Client) BuildURL(qp url.Values, parts ...string) string {
 	return ""
 }
 
-// buildURL takes a given set of query parameters and URL parts, and returns
+// buildURL takes a given set of query parameters and URL parts, and returns.
 // a parsed URL object from them.
 func (c *V1Client) buildURL(queryParams url.Values, parts ...string) *url.URL {
 	tu := *c.URL
@@ -206,7 +206,7 @@ func (c *V1Client) buildURL(queryParams url.Values, parts ...string) *url.URL {
 }
 
 // buildVersionlessURL builds a URL without the `/api/v1/` prefix. It should
-// otherwise be identical to buildURL
+// otherwise be identical to buildURL.
 func (c *V1Client) buildVersionlessURL(qp url.Values, parts ...string) string {
 	tu := *c.URL
 
@@ -223,7 +223,7 @@ func (c *V1Client) buildVersionlessURL(qp url.Values, parts ...string) string {
 	return tu.ResolveReference(u).String()
 }
 
-// BuildWebsocketURL builds a standard URL and then converts its scheme to the websocket protocol
+// BuildWebsocketURL builds a standard URL and then converts its scheme to the websocket protocol.
 func (c *V1Client) BuildWebsocketURL(parts ...string) string {
 	u := c.buildURL(nil, parts...)
 	u.Scheme = "ws"
@@ -231,7 +231,7 @@ func (c *V1Client) BuildWebsocketURL(parts ...string) string {
 	return u.String()
 }
 
-// BuildHealthCheckRequest builds a health check HTTP Request
+// BuildHealthCheckRequest builds a health check HTTP request.
 func (c *V1Client) BuildHealthCheckRequest(ctx context.Context) (*http.Request, error) {
 	u := *c.URL
 	uri := fmt.Sprintf("%s://%s/_meta_/ready", u.Scheme, u.Host)
@@ -239,7 +239,7 @@ func (c *V1Client) BuildHealthCheckRequest(ctx context.Context) (*http.Request, 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
-// IsUp returns whether or not the service's health endpoint is returning 200s
+// IsUp returns whether or not the service's health endpoint is returning 200s.
 func (c *V1Client) IsUp(ctx context.Context) bool {
 	req, err := c.BuildHealthCheckRequest(ctx)
 	if err != nil {
@@ -303,7 +303,7 @@ func (c *V1Client) executeRequest(ctx context.Context, req *http.Request, out in
 	return nil
 }
 
-// executeRawRequest takes a given *http.Request and executes it with the provided
+// executeRawRequest takes a given *http.Request and executes it with the provided.
 // client, alongside some debugging logging.
 func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
 	ctx, span := tracing.StartSpan(ctx, "executeRawRequest")
@@ -330,7 +330,7 @@ func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, r
 	return res, nil
 }
 
-// checkExistence executes an HTTP request and loads the response content into a bool
+// checkExistence executes an HTTP request and loads the response content into a bool.
 func (c *V1Client) checkExistence(ctx context.Context, req *http.Request) (bool, error) {
 	ctx, span := tracing.StartSpan(ctx, "checkExistence")
 	defer span.End()
@@ -344,7 +344,8 @@ func (c *V1Client) checkExistence(ctx context.Context, req *http.Request) (bool,
 	return res.StatusCode == http.StatusOK, nil
 }
 
-// retrieve executes an HTTP request and loads the response content into a struct
+// retrieve executes an HTTP request and loads the response content into a struct. In the event of a 404,
+// the provided ErrNotFound is returned.
 func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interface{}) error {
 	ctx, span := tracing.StartSpan(ctx, "retrieve")
 	defer span.End()

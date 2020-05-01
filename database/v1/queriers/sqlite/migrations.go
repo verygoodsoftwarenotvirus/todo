@@ -85,7 +85,7 @@ var (
 )
 
 // buildMigrationFunc returns a sync.Once compatible function closure that will
-// migrate a sqlite database
+// migrate a sqlite database.
 func buildMigrationFunc(db *sql.DB) func() {
 	return func() {
 		driver := darwin.NewGenericDriver(db, darwin.SqliteDialect{})

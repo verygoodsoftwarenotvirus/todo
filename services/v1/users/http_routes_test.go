@@ -51,6 +51,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -59,7 +60,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
-		s.database = mockDB
+		s.userDataManager = mockDB
 
 		auth := &mockauth.Authenticator{}
 		auth.On(
@@ -88,6 +89,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 	T.Run("with no rows found in database", func(t *testing.T) {
 		ctx := context.Background()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -96,7 +98,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return((*models.User)(nil), sql.ErrNoRows)
-		s.database = mockDB
+		s.userDataManager = mockDB
 
 		actual, sc := s.validateCredentialChangeRequest(
 			ctx,
@@ -113,6 +115,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 	T.Run("with error fetching from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -121,7 +124,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return((*models.User)(nil), errors.New("blah"))
-		s.database = mockDB
+		s.userDataManager = mockDB
 
 		actual, sc := s.validateCredentialChangeRequest(
 			ctx,
@@ -138,6 +141,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 	T.Run("with error validating login", func(t *testing.T) {
 		ctx := context.Background()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -146,7 +150,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
-		s.database = mockDB
+		s.userDataManager = mockDB
 
 		auth := &mockauth.Authenticator{}
 		auth.On(
@@ -175,6 +179,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 	T.Run("with invalid login", func(t *testing.T) {
 		ctx := context.Background()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -183,7 +188,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
-		s.database = mockDB
+		s.userDataManager = mockDB
 
 		auth := &mockauth.Authenticator{}
 		auth.On(
@@ -221,10 +226,10 @@ func TestService_List(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUsers", mock.Anything, mock.Anything).Return(exampleUserList, nil)
-		s.database = mockDB
+		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.UserList")).Return(nil)
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -240,7 +245,7 @@ func TestService_List(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUsers", mock.Anything, mock.Anything).Return((*models.UserList)(nil), errors.New("blah"))
-		s.database = mockDB
+		s.userDataManager = mockDB
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		s.ListHandler()(res, req)
@@ -257,10 +262,10 @@ func TestService_List(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUsers", mock.Anything, mock.Anything).Return(exampleUserList, nil)
-		s.database = mockDB
+		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.UserList")).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -287,18 +292,18 @@ func TestService_Create(T *testing.T) {
 
 		db := database.BuildMockDatabase()
 		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("models.UserDatabaseCreationInput")).Return(exampleUser, nil)
-		s.database = db
+		s.userDataManager = db
 
 		mc := &mockmetrics.UnitCounter{}
 		mc.On("Increment", mock.Anything)
 		s.userCounter = mc
 
 		r := &mocknewsman.Reporter{}
-		r.On("Report", mock.Anything).Return()
+		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
 		s.reporter = r
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.UserCreationResponse")).Return(nil)
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -377,7 +382,7 @@ func TestService_Create(T *testing.T) {
 
 		db := database.BuildMockDatabase()
 		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("models.UserDatabaseCreationInput")).Return(exampleUser, errors.New("blah"))
-		s.database = db
+		s.userDataManager = db
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
@@ -408,7 +413,7 @@ func TestService_Create(T *testing.T) {
 
 		db := database.BuildMockDatabase()
 		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("models.UserDatabaseCreationInput")).Return(exampleUser, dbclient.ErrUserExists)
-		s.database = db
+		s.userDataManager = db
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
@@ -439,18 +444,18 @@ func TestService_Create(T *testing.T) {
 
 		db := database.BuildMockDatabase()
 		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("models.UserDatabaseCreationInput")).Return(exampleUser, nil)
-		s.database = db
+		s.userDataManager = db
 
 		mc := &mockmetrics.UnitCounter{}
 		mc.On("Increment", mock.Anything)
 		s.userCounter = mc
 
 		r := &mocknewsman.Reporter{}
-		r.On("Report", mock.Anything).Return()
+		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
 		s.reporter = r
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.UserCreationResponse")).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -478,13 +483,16 @@ func TestService_Read(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
+		s.userIDFetcher = func(_ *http.Request) uint64 {
+			return exampleUser.ID
+		}
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On("GetUser", mock.Anything, mock.Anything).Return(exampleUser, nil)
-		s.database = mockDB
+		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
+		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.User")).Return(nil)
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -499,10 +507,13 @@ func TestService_Read(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
+		s.userIDFetcher = func(_ *http.Request) uint64 {
+			return exampleUser.ID
+		}
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On("GetUser", mock.Anything, mock.Anything).Return(exampleUser, sql.ErrNoRows)
-		s.database = mockDB
+		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, sql.ErrNoRows)
+		s.userDataManager = mockDB
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		s.ReadHandler()(res, req)
@@ -516,10 +527,13 @@ func TestService_Read(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
+		s.userIDFetcher = func(_ *http.Request) uint64 {
+			return exampleUser.ID
+		}
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On("GetUser", mock.Anything, mock.Anything).Return(exampleUser, errors.New("blah"))
-		s.database = mockDB
+		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, errors.New("blah"))
+		s.userDataManager = mockDB
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		s.ReadHandler()(res, req)
@@ -533,13 +547,16 @@ func TestService_Read(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
+		s.userIDFetcher = func(_ *http.Request) uint64 {
+			return exampleUser.ID
+		}
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On("GetUser", mock.Anything, mock.Anything).Return(exampleUser, nil)
-		s.database = mockDB
+		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
+		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.User")).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -578,8 +595,8 @@ func TestService_NewTOTPSecret(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
-		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.Anything).Return(nil)
-		s.database = mockDB
+		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.AnythingOfType("*models.User")).Return(nil)
+		s.userDataManager = mockDB
 
 		auth := &mockauth.Authenticator{}
 		auth.On(
@@ -594,7 +611,7 @@ func TestService_NewTOTPSecret(T *testing.T) {
 		s.authenticator = auth
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.TOTPSecretRefreshResponse")).Return(nil)
 		s.encoderDecoder = ed
 
 		s.NewTOTPSecretHandler()(res, req)
@@ -656,8 +673,8 @@ func TestService_NewTOTPSecret(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
-		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.Anything).Return(nil)
-		s.database = mockDB
+		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.AnythingOfType("*models.User")).Return(nil)
+		s.userDataManager = mockDB
 
 		auth := &mockauth.Authenticator{}
 		auth.On(
@@ -702,8 +719,8 @@ func TestService_NewTOTPSecret(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
-		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.Anything).Return(errors.New("blah"))
-		s.database = mockDB
+		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.AnythingOfType("*models.User")).Return(errors.New("blah"))
+		s.userDataManager = mockDB
 
 		auth := &mockauth.Authenticator{}
 		auth.On(
@@ -748,8 +765,8 @@ func TestService_NewTOTPSecret(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
-		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.Anything).Return(nil)
-		s.database = mockDB
+		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.AnythingOfType("*models.User")).Return(nil)
+		s.userDataManager = mockDB
 
 		auth := &mockauth.Authenticator{}
 		auth.On(
@@ -764,7 +781,7 @@ func TestService_NewTOTPSecret(T *testing.T) {
 		s.authenticator = auth
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.TOTPSecretRefreshResponse")).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		s.NewTOTPSecretHandler()(res, req)
@@ -802,8 +819,8 @@ func TestService_UpdatePassword(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
-		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.Anything).Return(nil)
-		s.database = mockDB
+		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.AnythingOfType("*models.User")).Return(nil)
+		s.userDataManager = mockDB
 
 		auth := &mockauth.Authenticator{}
 		auth.On(
@@ -877,8 +894,8 @@ func TestService_UpdatePassword(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
-		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.Anything).Return(nil)
-		s.database = mockDB
+		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.AnythingOfType("*models.User")).Return(nil)
+		s.userDataManager = mockDB
 
 		auth := &mockauth.Authenticator{}
 		auth.On(
@@ -923,8 +940,8 @@ func TestService_UpdatePassword(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
-		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.Anything).Return(nil)
-		s.database = mockDB
+		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.AnythingOfType("*models.User")).Return(nil)
+		s.userDataManager = mockDB
 
 		auth := &mockauth.Authenticator{}
 		auth.On(
@@ -970,8 +987,8 @@ func TestService_UpdatePassword(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
-		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.Anything).Return(errors.New("blah"))
-		s.database = mockDB
+		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.AnythingOfType("*models.User")).Return(errors.New("blah"))
+		s.userDataManager = mockDB
 
 		auth := &mockauth.Authenticator{}
 		auth.On(
@@ -1008,10 +1025,10 @@ func TestService_Archive(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("ArchiveUser", mock.Anything, exampleUser.ID).Return(nil)
-		s.database = mockDB
+		s.userDataManager = mockDB
 
 		r := &mocknewsman.Reporter{}
-		r.On("Report", mock.Anything).Return()
+		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
 		s.reporter = r
 
 		mc := &mockmetrics.UnitCounter{}
@@ -1036,7 +1053,7 @@ func TestService_Archive(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("ArchiveUser", mock.Anything, exampleUser.ID).Return(errors.New("blah"))
-		s.database = mockDB
+		s.userDataManager = mockDB
 
 		s.ArchiveHandler()(res, req)
 

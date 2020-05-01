@@ -8,15 +8,17 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
-// CreationInputMiddleware is a middleware for fetching, parsing, and attaching an ItemInput struct from a request
+// CreationInputMiddleware is a middleware for fetching, parsing, and attaching an ItemInput struct from a request.
 func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(models.ItemCreationInput)
 		ctx, span := tracing.StartSpan(req.Context(), "CreationInputMiddleware")
 		defer span.End()
 
+		logger := s.logger.WithRequest(req)
+
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
-			s.logger.Error(err, "error encountered decoding request body")
+			logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -26,7 +28,7 @@ func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// UpdateInputMiddleware is a middleware for fetching, parsing, and attaching an ItemInput struct from a request
+// UpdateInputMiddleware is a middleware for fetching, parsing, and attaching an ItemInput struct from a request.
 // This is the same as the creation one, but that won't always be the case.
 func (s *Service) UpdateInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -34,8 +36,10 @@ func (s *Service) UpdateInputMiddleware(next http.Handler) http.Handler {
 		ctx, span := tracing.StartSpan(req.Context(), "UpdateInputMiddleware")
 		defer span.End()
 
+		logger := s.logger.WithRequest(req)
+
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
-			s.logger.Error(err, "error encountered decoding request body")
+			logger.Error(err, "error encountered decoding request body")
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}

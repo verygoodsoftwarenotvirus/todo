@@ -24,7 +24,7 @@ func init() {
 	testutil.EnsureServerIsUp(urlToUse)
 
 	// NOTE: this is sad, but also the only thing that consistently works
-	// see above for my vain attempts at a real solution to this problem
+	// see above for my vain attempts at a real solution to this problem.
 	time.Sleep(10 * time.Second)
 
 	fiftySpaces := strings.Repeat("\n", 50)

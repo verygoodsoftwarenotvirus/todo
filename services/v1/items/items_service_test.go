@@ -16,13 +16,13 @@ import (
 
 func buildTestService() *Service {
 	return &Service{
-		logger:         noop.ProvideNoopLogger(),
-		itemCounter:    &mockmetrics.UnitCounter{},
-		itemDatabase:   &mockmodels.ItemDataManager{},
-		userIDFetcher:  func(req *http.Request) uint64 { return 0 },
-		itemIDFetcher:  func(req *http.Request) uint64 { return 0 },
-		encoderDecoder: &mockencoding.EncoderDecoder{},
-		reporter:       nil,
+		logger:          noop.ProvideNoopLogger(),
+		itemCounter:     &mockmetrics.UnitCounter{},
+		itemDataManager: &mockmodels.ItemDataManager{},
+		itemIDFetcher:   func(req *http.Request) uint64 { return 0 },
+		userIDFetcher:   func(req *http.Request) uint64 { return 0 },
+		encoderDecoder:  &mockencoding.EncoderDecoder{},
+		reporter:        nil,
 	}
 }
 

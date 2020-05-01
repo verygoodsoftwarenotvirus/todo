@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	// Providers is our collection of what we provide to other services
+	// Providers is our collection of what we provide to other services.
 	Providers = wire.NewSet(
 		ProvideAuthService,
 		ProvideWebsocketAuthFunc,
@@ -16,7 +16,7 @@ var (
 	)
 )
 
-// ProvideWebsocketAuthFunc provides a WebsocketAuthFunc
+// ProvideWebsocketAuthFunc provides a WebsocketAuthFunc.
 func ProvideWebsocketAuthFunc(svc *Service) newsman.WebsocketAuthFunc {
 	return svc.WebsocketAuthFunction
 }

@@ -15,7 +15,7 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
-// argIsNotPointer checks an argument and returns whether or not it is a pointer
+// argIsNotPointer checks an argument and returns whether or not it is a pointer.
 func argIsNotPointer(i interface{}) (notAPointer bool, err error) {
 	if i == nil || reflect.TypeOf(i).Kind() != reflect.Ptr {
 		return true, errors.New("value is not a pointer")
@@ -23,7 +23,7 @@ func argIsNotPointer(i interface{}) (notAPointer bool, err error) {
 	return false, nil
 }
 
-// argIsNotNil checks an argument and returns whether or not it is nil
+// argIsNotNil checks an argument and returns whether or not it is nil.
 func argIsNotNil(i interface{}) (isNil bool, err error) {
 	if i == nil {
 		return true, errors.New("value is nil")
@@ -33,7 +33,7 @@ func argIsNotNil(i interface{}) (isNil bool, err error) {
 
 // argIsNotPointerOrNil does what it says on the tin. This function
 // is primarily useful for detecting if a destination value is valid
-// before decoding an HTTP response, for instance
+// before decoding an HTTP response, for instance.
 func argIsNotPointerOrNil(i interface{}) error {
 	if nn, err := argIsNotNil(i); nn || err != nil {
 		return err

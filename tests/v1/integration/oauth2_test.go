@@ -61,10 +61,9 @@ func checkOAuth2ClientEquality(t *testing.T, expected, actual *models.OAuth2Clie
 }
 
 func TestOAuth2Clients(test *testing.T) {
-	test.Parallel()
 	_ctx := context.Background()
 
-	// create user
+	// create user.
 	x, y, cookie := buildDummyUser(test)
 	assert.NotNil(test, cookie)
 
@@ -86,18 +85,17 @@ func TestOAuth2Clients(test *testing.T) {
 
 	test.Run("Creating", func(T *testing.T) {
 		T.Run("should be creatable", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := tracing.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			// Create oauth2Client
+			// Create oauth2Client.
 			actual, err := testClient.CreateOAuth2Client(ctx, cookie, input)
 			checkValueAndError(t, actual, err)
 
-			// Assert oauth2Client equality
+			// Assert oauth2Client equality.
 			checkOAuth2ClientEquality(t, convertInputToClient(input), actual)
 
-			// Clean up
+			// Clean up.
 			err = testClient.ArchiveOAuth2Client(ctx, actual.ID)
 			assert.NoError(t, err)
 		})
@@ -105,33 +103,31 @@ func TestOAuth2Clients(test *testing.T) {
 
 	test.Run("Reading", func(T *testing.T) {
 		T.Run("it should return an error when trying to read one that doesn't exist", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := tracing.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			// Fetch oauth2Client
+			// Fetch oauth2Client.
 			_, err := testClient.GetOAuth2Client(ctx, nonexistentID)
 			assert.Error(t, err)
 		})
 
 		T.Run("it should be readable", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := tracing.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			// Create oauth2Client
+			// Create oauth2Client.
 			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
 			c, err := testClient.CreateOAuth2Client(ctx, cookie, input)
 			checkValueAndError(t, c, err)
 
-			// Fetch oauth2Client
+			// Fetch oauth2Client.
 			actual, err := testClient.GetOAuth2Client(ctx, c.ID)
 			checkValueAndError(t, actual, err)
 
-			// Assert oauth2Client equality
+			// Assert oauth2Client equality.
 			checkOAuth2ClientEquality(t, convertInputToClient(input), actual)
 
-			// Clean up
+			// Clean up.
 			err = testClient.ArchiveOAuth2Client(ctx, actual.ID)
 			assert.NoError(t, err)
 		})
@@ -139,26 +135,24 @@ func TestOAuth2Clients(test *testing.T) {
 
 	test.Run("Deleting", func(T *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := tracing.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			// Create oauth2Client
+			// Create oauth2Client.
 			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
 			premade, err := testClient.CreateOAuth2Client(ctx, cookie, input)
 			checkValueAndError(t, premade, err)
 
-			// Clean up
+			// Clean up.
 			err = testClient.ArchiveOAuth2Client(ctx, premade.ID)
 			assert.NoError(t, err)
 		})
 
 		T.Run("should be unable to authorize after being deleted", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := tracing.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			// create user
+			// create user.
 			createdUser, createdUserInput, _ := buildDummyUser(test)
 			assert.NotNil(test, cookie)
 
@@ -166,7 +160,7 @@ func TestOAuth2Clients(test *testing.T) {
 			premade, err := todoClient.CreateOAuth2Client(ctx, cookie, input)
 			checkValueAndError(test, premade, err)
 
-			// ArchiveHandler oauth2Client
+			// archive oauth2Client.
 			err = testClient.ArchiveOAuth2Client(ctx, premade.ID)
 			assert.NoError(t, err)
 
@@ -189,11 +183,10 @@ func TestOAuth2Clients(test *testing.T) {
 
 	test.Run("Listing", func(T *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := tracing.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			// Create oauth2Clients
+			// Create oauth2Clients.
 			var expected []*models.OAuth2Client
 			for i := 0; i < 5; i++ {
 				input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
@@ -202,7 +195,7 @@ func TestOAuth2Clients(test *testing.T) {
 				expected = append(expected, oac)
 			}
 
-			// Assert oauth2Client list equality
+			// Assert oauth2Client list equality.
 			actual, err := testClient.GetOAuth2Clients(ctx, nil)
 			checkValueAndError(t, actual, err)
 			assert.True(
@@ -224,7 +217,7 @@ func TestOAuth2Clients(test *testing.T) {
 				assert.True(t, clientFound, "expected oAuth2Client ID %d to be present in results", oAuth2Client.ID)
 			}
 
-			// Clean up
+			// Clean up.
 			for _, oa2c := range expected {
 				err = testClient.ArchiveOAuth2Client(ctx, oa2c.ID)
 				assert.NoError(t, err, "error deleting client %d: %v", oa2c.ID, err)

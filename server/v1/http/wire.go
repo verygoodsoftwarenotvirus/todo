@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	// Providers is our wire superset of providers this package offers
+	// Providers is our wire superset of providers this package offers.
 	Providers = wire.NewSet(
 		paramFetcherProviders,
 		ProvideServer,
@@ -17,12 +17,12 @@ var (
 	)
 )
 
-// ProvideNamespace provides a namespace
+// ProvideNamespace provides a namespace.
 func ProvideNamespace() metrics.Namespace {
 	return serverNamespace
 }
 
-// ProvideNewsmanTypeNameManipulationFunc provides an WebhookIDFetcher
+// ProvideNewsmanTypeNameManipulationFunc provides an WebhookIDFetcher.
 func ProvideNewsmanTypeNameManipulationFunc() newsman.TypeNameManipulationFunc {
 	return func(s string) string {
 		return s

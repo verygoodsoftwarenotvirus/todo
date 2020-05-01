@@ -6,7 +6,7 @@ import (
 	fake "github.com/brianvoe/gofakeit/v5"
 )
 
-// BuildFakeItem builds a faked item
+// BuildFakeItem builds a faked item.
 func BuildFakeItem() *models.Item {
 	return &models.Item{
 		ID:            fake.Uint64(),
@@ -17,7 +17,7 @@ func BuildFakeItem() *models.Item {
 	}
 }
 
-// BuildFakeItemList builds a faked ItemList
+// BuildFakeItemList builds a faked ItemList.
 func BuildFakeItemList() *models.ItemList {
 	exampleItem1 := BuildFakeItem()
 	exampleItem2 := BuildFakeItem()
@@ -37,7 +37,7 @@ func BuildFakeItemList() *models.ItemList {
 	}
 }
 
-// BuildFakeItemUpdateInputFromItem builds a faked ItemUpdateInput from an item
+// BuildFakeItemUpdateInputFromItem builds a faked ItemUpdateInput from an item.
 func BuildFakeItemUpdateInputFromItem(item *models.Item) *models.ItemUpdateInput {
 	return &models.ItemUpdateInput{
 		Name:          item.Name,
@@ -46,13 +46,13 @@ func BuildFakeItemUpdateInputFromItem(item *models.Item) *models.ItemUpdateInput
 	}
 }
 
-// BuildFakeItemCreationInput builds a faked ItemCreationInput
+// BuildFakeItemCreationInput builds a faked ItemCreationInput.
 func BuildFakeItemCreationInput() *models.ItemCreationInput {
 	item := BuildFakeItem()
 	return BuildFakeItemCreationInputFromItem(item)
 }
 
-// BuildFakeItemCreationInputFromItem builds a faked ItemCreationInput from an item
+// BuildFakeItemCreationInputFromItem builds a faked ItemCreationInput from an item.
 func BuildFakeItemCreationInputFromItem(item *models.Item) *models.ItemCreationInput {
 	return &models.ItemCreationInput{
 		Name:          item.Name,

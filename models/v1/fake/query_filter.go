@@ -6,7 +6,7 @@ import (
 	fake "github.com/brianvoe/gofakeit/v5"
 )
 
-// BuildFleshedOutQueryFilter builds a fully fleshed out QueryFilter
+// BuildFleshedOutQueryFilter builds a fully fleshed out QueryFilter.
 func BuildFleshedOutQueryFilter() *models.QueryFilter {
 	return &models.QueryFilter{
 		Page:          10,

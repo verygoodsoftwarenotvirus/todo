@@ -8,11 +8,13 @@ import (
 	"strings"
 	"testing"
 
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func buildMockRowsFromWebhook(webhooks ...*models.Webhook) *sqlmock.Rows {
@@ -69,11 +71,39 @@ func buildErroneousMockRowFromWebhook(w *models.Webhook) *sqlmock.Rows {
 	return exampleRows
 }
 
+func TestSqlite_ScanWebhooks(T *testing.T) {
+	T.Parallel()
+
+	T.Run("surfaces row errors", func(t *testing.T) {
+		s, _ := buildTestService(t)
+		mockRows := &database.MockResultIterator{}
+
+		mockRows.On("Next").Return(false)
+		mockRows.On("Err").Return(errors.New("blah"))
+
+		_, _, err := s.scanWebhooks(mockRows)
+		assert.Error(t, err)
+	})
+
+	T.Run("logs row closing errors", func(t *testing.T) {
+		s, _ := buildTestService(t)
+		mockRows := &database.MockResultIterator{}
+
+		mockRows.On("Next").Return(false)
+		mockRows.On("Err").Return(nil)
+		mockRows.On("Close").Return(errors.New("blah"))
+
+		_, _, err := s.scanWebhooks(mockRows)
+		assert.NoError(t, err)
+	})
+}
+
 func TestSqlite_buildGetWebhookQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.belongs_to_user = ? AND webhooks.id = ?"
@@ -96,6 +126,7 @@ func TestSqlite_GetWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		s, mockDB := buildTestService(t)
@@ -112,6 +143,7 @@ func TestSqlite_GetWebhook(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		s, mockDB := buildTestService(t)
@@ -129,6 +161,7 @@ func TestSqlite_GetWebhook(T *testing.T) {
 
 	T.Run("with error from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		s, mockDB := buildTestService(t)
@@ -145,6 +178,7 @@ func TestSqlite_GetWebhook(T *testing.T) {
 
 	T.Run("with invalid response from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		s, mockDB := buildTestService(t)
@@ -181,6 +215,7 @@ func TestSqlite_GetAllWebhooksCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleCount := uint64(123)
 
 		s, mockDB := buildTestService(t)
@@ -196,6 +231,7 @@ func TestSqlite_GetAllWebhooksCount(T *testing.T) {
 
 	T.Run("with error from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(errors.New("blah"))
@@ -251,6 +287,7 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
+
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WillReturnError(sql.ErrNoRows)
@@ -265,6 +302,7 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
+
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WillReturnError(errors.New("blah"))
@@ -278,6 +316,7 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 
 	T.Run("with error from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		s, mockDB := buildTestService(t)
@@ -297,6 +336,7 @@ func TestSqlite_buildGetWebhooksQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
+
 		exampleUser := fakemodels.BuildFakeUser()
 		filter := fakemodels.BuildFleshedOutQueryFilter()
 
@@ -324,6 +364,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 		exampleWebhookList := fakemodels.BuildFakeWebhookList()
 
@@ -347,6 +388,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 
 		s, mockDB := buildTestService(t)
@@ -363,6 +405,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 
 		s, mockDB := buildTestService(t)
@@ -378,6 +421,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
@@ -398,6 +442,7 @@ func TestSqlite_buildWebhookCreationQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to_user) VALUES (?,?,?,?,?,?,?,?)"
@@ -426,6 +471,7 @@ func TestSqlite_CreateWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 		exampleRows := sqlmock.NewResult(int64(exampleWebhook.ID), 1)
@@ -442,19 +488,21 @@ func TestSqlite_CreateWebhook(T *testing.T) {
 			exampleWebhook.BelongsToUser,
 		).WillReturnResult(exampleRows)
 
-		mtt := &mockTimeTeller{}
-		mtt.On("Now").Return(exampleWebhook.CreatedOn)
-		s.timeTeller = mtt
+		stt := &mockTimeTeller{}
+		stt.On("Now").Return(exampleWebhook.CreatedOn)
+		s.timeTeller = stt
 
 		actual, err := s.CreateWebhook(ctx, exampleInput)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleWebhook, actual)
 
+		mock.AssertExpectationsForObjects(t, stt)
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
 	T.Run("with error interacting with database", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
@@ -483,6 +531,7 @@ func TestSqlite_buildUpdateWebhookQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		expectedQuery := "UPDATE webhooks SET name = ?, content_type = ?, url = ?, method = ?, events = ?, data_types = ?, topics = ?, updated_on = (strftime('%s','now')) WHERE belongs_to_user = ? AND id = ?"
@@ -512,6 +561,7 @@ func TestSqlite_UpdateWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		s, mockDB := buildTestService(t)
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
@@ -536,6 +586,7 @@ func TestSqlite_UpdateWebhook(T *testing.T) {
 
 	T.Run("with error from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		s, mockDB := buildTestService(t)
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
@@ -563,6 +614,7 @@ func TestSqlite_buildArchiveWebhookQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s, _ := buildTestService(t)
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		expectedQuery := "UPDATE webhooks SET updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
@@ -583,6 +635,7 @@ func TestSqlite_ArchiveWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 		expectedQuery := "UPDATE webhooks SET updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
 

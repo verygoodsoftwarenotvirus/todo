@@ -30,7 +30,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	bcryptHashCost := auth.ProvideBcryptHashCost()
 	authenticator := auth.ProvideBcryptAuthenticator(bcryptHashCost, logger)
 	userDataManager := users.ProvideUserDataManager(database2)
-	clientIDFetcher := httpserver.ProvideOAuth2ServiceClientIDFetcher(logger)
+	clientIDFetcher := httpserver.ProvideOAuth2ClientsServiceClientIDFetcher(logger)
 	encoderDecoder := encoding.ProvideResponseEncoder()
 	unitCounterProvider := metrics.ProvideUnitCounterProvider()
 	service, err := oauth2clients.ProvideOAuth2ClientsService(logger, database2, authenticator, clientIDFetcher, encoderDecoder, unitCounterProvider)
@@ -38,7 +38,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 		return nil, err
 	}
 	oAuth2ClientValidator := auth2.ProvideOAuth2ClientValidator(service)
-	userIDFetcher := httpserver.ProvideAuthUserIDFetcher()
+	userIDFetcher := httpserver.ProvideAuthServiceUserIDFetcher()
 	authService, err := auth2.ProvideAuthService(logger, cfg, authenticator, userDataManager, oAuth2ClientValidator, userIDFetcher, encoderDecoder)
 	if err != nil {
 		return nil, err
@@ -46,28 +46,28 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	frontendSettings := config.ProvideConfigFrontendSettings(cfg)
 	frontendService := frontend.ProvideFrontendService(logger, frontendSettings)
 	itemDataManager := items.ProvideItemDataManager(database2)
-	itemsUserIDFetcher := httpserver.ProvideItemServiceUserIDFetcher()
-	itemIDFetcher := httpserver.ProvideItemIDFetcher(logger)
+	itemIDFetcher := httpserver.ProvideItemsServiceItemIDFetcher(logger)
+	itemsUserIDFetcher := httpserver.ProvideItemsServiceUserIDFetcher()
 	websocketAuthFunc := auth2.ProvideWebsocketAuthFunc(authService)
 	typeNameManipulationFunc := httpserver.ProvideNewsmanTypeNameManipulationFunc()
 	newsmanNewsman := newsman.NewNewsman(websocketAuthFunc, typeNameManipulationFunc)
 	reporter := ProvideReporter(newsmanNewsman)
-	itemsService, err := items.ProvideItemsService(logger, itemDataManager, itemsUserIDFetcher, itemIDFetcher, encoderDecoder, unitCounterProvider, reporter)
+	itemsService, err := items.ProvideItemsService(logger, itemDataManager, itemIDFetcher, itemsUserIDFetcher, encoderDecoder, unitCounterProvider, reporter)
 	if err != nil {
 		return nil, err
 	}
 	itemDataServer := items.ProvideItemDataServer(itemsService)
 	authSettings := config.ProvideConfigAuthSettings(cfg)
-	usersUserIDFetcher := httpserver.ProvideUsernameFetcher(logger)
-	usersService, err := users.ProvideUsersService(authSettings, logger, database2, authenticator, usersUserIDFetcher, encoderDecoder, unitCounterProvider, reporter)
+	usersUserIDFetcher := httpserver.ProvideUsersServiceUserIDFetcher(logger)
+	usersService, err := users.ProvideUsersService(authSettings, logger, userDataManager, authenticator, usersUserIDFetcher, encoderDecoder, unitCounterProvider, reporter)
 	if err != nil {
 		return nil, err
 	}
 	userDataServer := users.ProvideUserDataServer(usersService)
 	oAuth2ClientDataServer := oauth2clients.ProvideOAuth2ClientDataServer(service)
 	webhookDataManager := webhooks.ProvideWebhookDataManager(database2)
-	webhooksUserIDFetcher := httpserver.ProvideWebhooksUserIDFetcher()
-	webhookIDFetcher := httpserver.ProvideWebhookIDFetcher(logger)
+	webhooksUserIDFetcher := httpserver.ProvideWebhooksServiceUserIDFetcher()
+	webhookIDFetcher := httpserver.ProvideWebhooksServiceWebhookIDFetcher(logger)
 	webhooksService, err := webhooks.ProvideWebhooksService(logger, webhookDataManager, webhooksUserIDFetcher, webhookIDFetcher, encoderDecoder, unitCounterProvider, newsmanNewsman)
 	if err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 
 // wire.go:
 
-// ProvideReporter is an obligatory function that hopefully wire will eliminate for me one day
+// ProvideReporter is an obligatory function that hopefully wire will eliminate for me one day.
 func ProvideReporter(n *newsman.Newsman) newsman.Reporter {
 	return n
 }

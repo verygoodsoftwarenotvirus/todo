@@ -48,16 +48,16 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		// begin building bad cookie
+		// begin building bad cookie.
 		// NOTE: any code here is duplicated from service.buildAuthCookie
-		// any changes made there might need to be reflected here
+		// any changes made there might need to be reflected here.
 		c := &http.Cookie{
 			Name:     CookieName,
 			Value:    "blah blah blah this is not a real cookie",
 			Path:     "/",
 			HttpOnly: true,
 		}
-		// end building bad cookie
+		// end building bad cookie.
 		req.AddCookie(c)
 
 		cookie, err := s.DecodeCookieFromRequest(req.Context(), req)
@@ -91,7 +91,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 		oacv.On(
 			"ExtractOAuth2ClientFromRequest",
 			mock.Anything,
-			mock.Anything,
+			mock.AnythingOfType("*http.Request"),
 		).Return(exampleOAuth2Client, nil)
 		s.oauth2ClientsService = oacv
 
@@ -115,7 +115,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 		oacv.On(
 			"ExtractOAuth2ClientFromRequest",
 			mock.Anything,
-			mock.Anything,
+			mock.AnythingOfType("*http.Request"),
 		).Return(exampleOAuth2Client, errors.New("blah"))
 		s.oauth2ClientsService = oacv
 
@@ -142,7 +142,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 		oacv.On(
 			"ExtractOAuth2ClientFromRequest",
 			mock.Anything,
-			mock.Anything,
+			mock.AnythingOfType("*http.Request"),
 		).Return(exampleOAuth2Client, errors.New("blah"))
 		s.oauth2ClientsService = oacv
 
@@ -251,11 +251,11 @@ func TestService_LoginHandler(T *testing.T) {
 		authr.On(
 			"ValidateLogin",
 			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
+			exampleUser.HashedPassword,
+			exampleLoginData.Password,
+			exampleUser.TwoFactorSecret,
+			exampleLoginData.TOTPToken,
+			exampleUser.Salt,
 		).Return(true, nil)
 		s.authenticator = authr
 
@@ -313,7 +313,7 @@ func TestService_LoginHandler(T *testing.T) {
 		ed.On(
 			"EncodeResponse",
 			mock.Anything,
-			mock.Anything,
+			mock.AnythingOfType("*models.ErrorResponse"),
 		).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
@@ -358,11 +358,11 @@ func TestService_LoginHandler(T *testing.T) {
 		authr.On(
 			"ValidateLogin",
 			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
+			exampleUser.HashedPassword,
+			exampleLoginData.Password,
+			exampleUser.TwoFactorSecret,
+			exampleLoginData.TOTPToken,
+			exampleUser.Salt,
 		).Return(false, nil)
 		s.authenticator = authr
 
@@ -399,11 +399,11 @@ func TestService_LoginHandler(T *testing.T) {
 		authr.On(
 			"ValidateLogin",
 			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
+			exampleUser.HashedPassword,
+			exampleLoginData.Password,
+			exampleUser.TwoFactorSecret,
+			exampleLoginData.TOTPToken,
+			exampleUser.Salt,
 		).Return(true, errors.New("blah"))
 		s.authenticator = authr
 
@@ -448,11 +448,11 @@ func TestService_LoginHandler(T *testing.T) {
 		authr.On(
 			"ValidateLogin",
 			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
+			exampleUser.HashedPassword,
+			exampleLoginData.Password,
+			exampleUser.TwoFactorSecret,
+			exampleLoginData.TOTPToken,
+			exampleUser.Salt,
 		).Return(true, nil)
 		s.authenticator = authr
 
@@ -481,7 +481,7 @@ func TestService_LoginHandler(T *testing.T) {
 		cb.On(
 			"Encode",
 			mock.Anything,
-			mock.Anything,
+			mock.AnythingOfType("models.CookieAuth"),
 		).Return("", errors.New("blah"))
 		s.cookieManager = cb
 
@@ -489,7 +489,7 @@ func TestService_LoginHandler(T *testing.T) {
 		ed.On(
 			"EncodeResponse",
 			mock.Anything,
-			mock.Anything,
+			mock.AnythingOfType("*models.ErrorResponse"),
 		).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
@@ -505,11 +505,11 @@ func TestService_LoginHandler(T *testing.T) {
 		authr.On(
 			"ValidateLogin",
 			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
+			exampleUser.HashedPassword,
+			exampleLoginData.Password,
+			exampleUser.TwoFactorSecret,
+			exampleLoginData.TOTPToken,
+			exampleUser.Salt,
 		).Return(true, nil)
 		s.authenticator = authr
 
@@ -525,7 +525,7 @@ func TestService_LoginHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 		assert.Empty(t, res.Header().Get("Set-Cookie"))
 
-		mock.AssertExpectationsForObjects(t, cb, udb, authr)
+		mock.AssertExpectationsForObjects(t, cb, ed, udb, authr)
 	})
 }
 
@@ -663,6 +663,7 @@ func TestService_validateLogin(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -676,11 +677,11 @@ func TestService_validateLogin(T *testing.T) {
 		authr.On(
 			"ValidateLogin",
 			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
+			exampleUser.HashedPassword,
+			exampleLoginData.Password,
+			exampleUser.TwoFactorSecret,
+			exampleLoginData.TOTPToken,
+			exampleUser.Salt,
 		).Return(true, nil)
 		s.authenticator = authr
 
@@ -693,6 +694,7 @@ func TestService_validateLogin(T *testing.T) {
 
 	T.Run("with too weak a password hash", func(t *testing.T) {
 		ctx := context.Background()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -706,25 +708,25 @@ func TestService_validateLogin(T *testing.T) {
 		authr.On(
 			"ValidateLogin",
 			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
+			exampleUser.HashedPassword,
+			exampleLoginData.Password,
+			exampleUser.TwoFactorSecret,
+			exampleLoginData.TOTPToken,
+			exampleUser.Salt,
 		).Return(true, auth.ErrPasswordHashTooWeak)
 		s.authenticator = authr
 
 		authr.On(
 			"HashPassword",
 			mock.Anything,
-			mock.Anything,
+			exampleLoginData.Password,
 		).Return("blah", nil)
 
 		udb := &mockmodels.UserDataManager{}
 		udb.On(
 			"UpdateUser",
 			mock.Anything,
-			mock.Anything,
+			mock.AnythingOfType("*models.User"),
 		).Return(nil)
 		s.userDB = udb
 
@@ -737,6 +739,7 @@ func TestService_validateLogin(T *testing.T) {
 
 	T.Run("with too weak a password hash and error hashing the password", func(t *testing.T) {
 		ctx := context.Background()
+
 		s := buildTestService(t)
 
 		expectedErr := errors.New("arbitrary")
@@ -752,17 +755,17 @@ func TestService_validateLogin(T *testing.T) {
 		authr.On(
 			"ValidateLogin",
 			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
+			exampleUser.HashedPassword,
+			exampleLoginData.Password,
+			exampleUser.TwoFactorSecret,
+			exampleLoginData.TOTPToken,
+			exampleUser.Salt,
 		).Return(true, auth.ErrPasswordHashTooWeak)
 
 		authr.On(
 			"HashPassword",
 			mock.Anything,
-			mock.Anything,
+			exampleLoginData.Password,
 		).Return("", expectedErr)
 		s.authenticator = authr
 
@@ -775,6 +778,7 @@ func TestService_validateLogin(T *testing.T) {
 
 	T.Run("with too weak a password hash and error updating user", func(t *testing.T) {
 		ctx := context.Background()
+
 		s := buildTestService(t)
 
 		expectedErr := errors.New("arbitrary")
@@ -789,17 +793,17 @@ func TestService_validateLogin(T *testing.T) {
 		authr.On(
 			"ValidateLogin",
 			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
+			exampleUser.HashedPassword,
+			exampleLoginData.Password,
+			exampleUser.TwoFactorSecret,
+			exampleLoginData.TOTPToken,
+			exampleUser.Salt,
 		).Return(true, auth.ErrPasswordHashTooWeak)
 
 		authr.On(
 			"HashPassword",
 			mock.Anything,
-			mock.Anything,
+			exampleLoginData.Password,
 		).Return("blah", nil)
 		s.authenticator = authr
 
@@ -807,7 +811,7 @@ func TestService_validateLogin(T *testing.T) {
 		udb.On(
 			"UpdateUser",
 			mock.Anything,
-			mock.Anything,
+			mock.AnythingOfType("*models.User"),
 		).Return(expectedErr)
 		s.userDB = udb
 
@@ -820,6 +824,7 @@ func TestService_validateLogin(T *testing.T) {
 
 	T.Run("with error validating login", func(t *testing.T) {
 		ctx := context.Background()
+
 		s := buildTestService(t)
 
 		expectedErr := errors.New("arbitrary")
@@ -834,11 +839,11 @@ func TestService_validateLogin(T *testing.T) {
 		authr.On(
 			"ValidateLogin",
 			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
+			exampleUser.HashedPassword,
+			exampleLoginData.Password,
+			exampleUser.TwoFactorSecret,
+			exampleLoginData.TOTPToken,
+			exampleUser.Salt,
 		).Return(false, expectedErr)
 		s.authenticator = authr
 
@@ -851,6 +856,7 @@ func TestService_validateLogin(T *testing.T) {
 
 	T.Run("with invalid login", func(t *testing.T) {
 		ctx := context.Background()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -864,11 +870,11 @@ func TestService_validateLogin(T *testing.T) {
 		authr.On(
 			"ValidateLogin",
 			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
+			exampleUser.HashedPassword,
+			exampleLoginData.Password,
+			exampleUser.TwoFactorSecret,
+			exampleLoginData.TOTPToken,
+			exampleUser.Salt,
 		).Return(false, nil)
 		s.authenticator = authr
 
@@ -902,7 +908,7 @@ func TestService_buildCookie(T *testing.T) {
 		cb.On(
 			"Encode",
 			mock.Anything,
-			mock.Anything,
+			mock.AnythingOfType("models.CookieAuth"),
 		).Return("", errors.New("blah"))
 		s.cookieManager = cb
 

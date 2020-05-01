@@ -34,8 +34,8 @@ var (
 	}
 )
 
-// scanOAuth2Client takes a Scanner (i.e. *sql.Row) and scans its results into an OAuth2Client struct
-func scanOAuth2Client(scan database.Scanner, includeCount bool) (*models.OAuth2Client, uint64, error) {
+// scanOAuth2Client takes a Scanner (i.e. *sql.Row) and scans its results into an OAuth2Client struct.
+func (m *MariaDB) scanOAuth2Client(scan database.Scanner, includeCount bool) (*models.OAuth2Client, uint64, error) {
 	var (
 		x      = &models.OAuth2Client{}
 		scopes string
@@ -70,15 +70,15 @@ func scanOAuth2Client(scan database.Scanner, includeCount bool) (*models.OAuth2C
 	return x, count, nil
 }
 
-// scanOAuth2Clients takes sql rows and turns them into a slice of OAuth2Clients
-func (m *MariaDB) scanOAuth2Clients(rows *sql.Rows) ([]*models.OAuth2Client, uint64, error) {
+// scanOAuth2Clients takes sql rows and turns them into a slice of OAuth2Clients.
+func (m *MariaDB) scanOAuth2Clients(rows database.ResultIterator) ([]*models.OAuth2Client, uint64, error) {
 	var (
 		list  []*models.OAuth2Client
 		count uint64
 	)
 
 	for rows.Next() {
-		client, c, err := scanOAuth2Client(rows, true)
+		client, c, err := m.scanOAuth2Client(rows, true)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -100,7 +100,7 @@ func (m *MariaDB) scanOAuth2Clients(rows *sql.Rows) ([]*models.OAuth2Client, uin
 	return list, count, nil
 }
 
-// buildGetOAuth2ClientByClientIDQuery builds a SQL query for fetching an OAuth2 client by its ClientID
+// buildGetOAuth2ClientByClientIDQuery builds a SQL query for fetching an OAuth2 client by its ClientID.
 func (m *MariaDB) buildGetOAuth2ClientByClientIDQuery(clientID string) (query string, args []interface{}) {
 	var err error
 
@@ -119,12 +119,12 @@ func (m *MariaDB) buildGetOAuth2ClientByClientIDQuery(clientID string) (query st
 	return query, args
 }
 
-// GetOAuth2ClientByClientID gets an OAuth2 client
+// GetOAuth2ClientByClientID gets an OAuth2 client.
 func (m *MariaDB) GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*models.OAuth2Client, error) {
 	query, args := m.buildGetOAuth2ClientByClientIDQuery(clientID)
 	row := m.db.QueryRowContext(ctx, query, args...)
 
-	client, _, err := scanOAuth2Client(row, false)
+	client, _, err := m.scanOAuth2Client(row, false)
 	return client, err
 }
 
@@ -133,7 +133,7 @@ var (
 	getAllOAuth2ClientsQuery        string
 )
 
-// buildGetAllOAuth2ClientsQuery builds a SQL query
+// buildGetAllOAuth2ClientsQuery builds a SQL query.
 func (m *MariaDB) buildGetAllOAuth2ClientsQuery() (query string) {
 	getAllOAuth2ClientsQueryBuilder.Do(func() {
 		var err error
@@ -152,7 +152,7 @@ func (m *MariaDB) buildGetAllOAuth2ClientsQuery() (query string) {
 	return getAllOAuth2ClientsQuery
 }
 
-// GetAllOAuth2Clients gets a list of OAuth2 clients regardless of ownership
+// GetAllOAuth2Clients gets a list of OAuth2 clients regardless of ownership.
 func (m *MariaDB) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Client, error) {
 	rows, err := m.db.QueryContext(ctx, m.buildGetAllOAuth2ClientsQuery())
 	if err != nil {
@@ -170,7 +170,7 @@ func (m *MariaDB) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Clie
 	return list, nil
 }
 
-// GetAllOAuth2ClientsForUser gets a list of OAuth2 clients belonging to a given user
+// GetAllOAuth2ClientsForUser gets a list of OAuth2 clients belonging to a given user.
 func (m *MariaDB) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64) ([]*models.OAuth2Client, error) {
 	query, args := m.buildGetOAuth2ClientsQuery(userID, nil)
 
@@ -190,7 +190,7 @@ func (m *MariaDB) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64)
 	return list, nil
 }
 
-// buildGetOAuth2ClientQuery returns a SQL query which requests a given OAuth2 client by its database ID
+// buildGetOAuth2ClientQuery returns a SQL query which requests a given OAuth2 client by its database ID.
 func (m *MariaDB) buildGetOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -208,12 +208,12 @@ func (m *MariaDB) buildGetOAuth2ClientQuery(clientID, userID uint64) (query stri
 	return query, args
 }
 
-// GetOAuth2Client retrieves an OAuth2 client from the database
+// GetOAuth2Client retrieves an OAuth2 client from the database.
 func (m *MariaDB) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*models.OAuth2Client, error) {
 	query, args := m.buildGetOAuth2ClientQuery(clientID, userID)
 	row := m.db.QueryRowContext(ctx, query, args...)
 
-	client, _, err := scanOAuth2Client(row, false)
+	client, _, err := m.scanOAuth2Client(row, false)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, err
@@ -249,7 +249,7 @@ func (m *MariaDB) buildGetAllOAuth2ClientCountQuery() string {
 	return getAllOAuth2ClientCountQuery
 }
 
-// GetAllOAuth2ClientCount will get the count of OAuth2 clients that match the current filter
+// GetAllOAuth2ClientCount will get the count of OAuth2 clients that match the current filter.
 func (m *MariaDB) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	var count uint64
 	err := m.db.QueryRowContext(ctx, m.buildGetAllOAuth2ClientCountQuery()).Scan(&count)
@@ -280,7 +280,7 @@ func (m *MariaDB) buildGetOAuth2ClientsQuery(userID uint64, filter *models.Query
 	return query, args
 }
 
-// GetOAuth2Clients gets a list of OAuth2 clients
+// GetOAuth2Clients gets a list of OAuth2 clients.
 func (m *MariaDB) GetOAuth2Clients(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
 	query, args := m.buildGetOAuth2ClientsQuery(userID, filter)
 	rows, err := m.db.QueryContext(ctx, query, args...)
@@ -343,7 +343,7 @@ func (m *MariaDB) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (quer
 	return query, args
 }
 
-// CreateOAuth2Client creates an OAuth2 client
+// CreateOAuth2Client creates an OAuth2 client.
 func (m *MariaDB) CreateOAuth2Client(ctx context.Context, input *models.OAuth2ClientCreationInput) (*models.OAuth2Client, error) {
 	x := &models.OAuth2Client{
 		Name:          input.Name,
@@ -360,12 +360,12 @@ func (m *MariaDB) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cl
 		return nil, fmt.Errorf("error executing client creation query: %w", err)
 	}
 
-	// fetch the last inserted ID
+	// fetch the last inserted ID.
 	id, err := res.LastInsertId()
 	m.logIDRetrievalError(err)
 	x.ID = uint64(id)
 
-	// this won't be completely accurate, but it will suffice
+	// this won't be completely accurate, but it will suffice.
 	x.CreatedOn = m.timeTeller.Now()
 
 	return x, nil
@@ -420,7 +420,7 @@ func (m *MariaDB) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query 
 	return query, args
 }
 
-// ArchiveOAuth2Client archives an OAuth2 client
+// ArchiveOAuth2Client archives an OAuth2 client.
 func (m *MariaDB) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error {
 	query, args := m.buildArchiveOAuth2ClientQuery(clientID, userID)
 	_, err := m.db.ExecContext(ctx, query, args...)

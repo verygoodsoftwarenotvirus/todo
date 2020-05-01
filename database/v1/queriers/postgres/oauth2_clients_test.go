@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
@@ -66,11 +67,39 @@ func buildErroneousMockRowFromOAuth2Client(c *models.OAuth2Client) *sqlmock.Rows
 	return exampleRows
 }
 
+func TestPostgres_ScanOAuth2Clients(T *testing.T) {
+	T.Parallel()
+
+	T.Run("surfaces row errors", func(t *testing.T) {
+		p, _ := buildTestService(t)
+		mockRows := &database.MockResultIterator{}
+
+		mockRows.On("Next").Return(false)
+		mockRows.On("Err").Return(errors.New("blah"))
+
+		_, _, err := p.scanOAuth2Clients(mockRows)
+		assert.Error(t, err)
+	})
+
+	T.Run("logs row closing errors", func(t *testing.T) {
+		p, _ := buildTestService(t)
+		mockRows := &database.MockResultIterator{}
+
+		mockRows.On("Next").Return(false)
+		mockRows.On("Err").Return(nil)
+		mockRows.On("Close").Return(errors.New("blah"))
+
+		_, _, err := p.scanOAuth2Clients(mockRows)
+		assert.NoError(t, err)
+	})
+}
+
 func TestPostgres_buildGetOAuth2ClientByClientIDQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.client_id = $1"
@@ -92,6 +121,7 @@ func TestPostgres_GetOAuth2ClientByClientID(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		p, mockDB := buildTestService(t)
@@ -108,6 +138,7 @@ func TestPostgres_GetOAuth2ClientByClientID(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		p, mockDB := buildTestService(t)
@@ -125,6 +156,7 @@ func TestPostgres_GetOAuth2ClientByClientID(T *testing.T) {
 
 	T.Run("with erroneous row", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		p, mockDB := buildTestService(t)
@@ -161,6 +193,7 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 		expected := []*models.OAuth2Client{
 			exampleOAuth2Client,
@@ -186,6 +219,7 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
+
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WillReturnError(sql.ErrNoRows)
 
@@ -199,6 +233,7 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 
 	T.Run("with error executing query", func(t *testing.T) {
 		ctx := context.Background()
+
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(errors.New("blah"))
@@ -212,6 +247,7 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		p, mockDB := buildTestService(t)
@@ -233,6 +269,7 @@ func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleOAuth2ClientList := fakemodels.BuildFakeOAuth2ClientList()
 
@@ -255,6 +292,7 @@ func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		p, mockDB := buildTestService(t)
@@ -270,6 +308,7 @@ func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		p, mockDB := buildTestService(t)
@@ -285,6 +324,7 @@ func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 
 	T.Run("with unscannable response", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
@@ -305,6 +345,7 @@ func TestPostgres_buildGetOAuth2ClientQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $1 AND oauth2_clients.id = $2"
@@ -327,6 +368,7 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		p, mockDB := buildTestService(t)
@@ -343,6 +385,7 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		p, mockDB := buildTestService(t)
@@ -360,6 +403,7 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		p, mockDB := buildTestService(t)
@@ -394,6 +438,7 @@ func TestPostgres_GetAllOAuth2ClientCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		expectedQuery := "SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL"
 		expectedCount := uint64(123)
 
@@ -414,6 +459,7 @@ func TestPostgres_buildGetOAuth2ClientsQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+
 		exampleUser := fakemodels.BuildFakeUser()
 		filter := fakemodels.BuildFleshedOutQueryFilter()
 
@@ -441,6 +487,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 
 		exampleOAuth2ClientList := fakemodels.BuildFakeOAuth2ClientList()
@@ -463,6 +510,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 
 	T.Run("with no rows returned from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 
 		p, mockDB := buildTestService(t)
@@ -478,6 +526,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 
 	T.Run("with error reading from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 
 		p, mockDB := buildTestService(t)
@@ -493,6 +542,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 
 	T.Run("with erroneous response", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 
 		p, mockDB := buildTestService(t)
@@ -512,6 +562,7 @@ func TestPostgres_buildCreateOAuth2ClientQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to_user) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_on"
@@ -538,6 +589,7 @@ func TestPostgres_CreateOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 		expectedInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleOAuth2Client.ID, exampleOAuth2Client.CreatedOn)
@@ -561,6 +613,7 @@ func TestPostgres_CreateOAuth2Client(T *testing.T) {
 
 	T.Run("with error writing to database", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 		expectedInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
@@ -587,6 +640,7 @@ func TestPostgres_buildUpdateOAuth2ClientQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		expectedQuery := "UPDATE oauth2_clients SET client_id = $1, client_secret = $2, scopes = $3, redirect_uri = $4, updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $5 AND id = $6 RETURNING updated_on"
@@ -613,6 +667,7 @@ func TestPostgres_UpdateOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		p, mockDB := buildTestService(t)
@@ -627,6 +682,7 @@ func TestPostgres_UpdateOAuth2Client(T *testing.T) {
 
 	T.Run("with error writing to database", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		p, mockDB := buildTestService(t)
@@ -645,6 +701,7 @@ func TestPostgres_buildArchiveOAuth2ClientQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		expectedQuery := "UPDATE oauth2_clients SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $1 AND id = $2 RETURNING archived_on"
@@ -667,6 +724,7 @@ func TestPostgres_ArchiveOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		p, mockDB := buildTestService(t)
@@ -682,6 +740,7 @@ func TestPostgres_ArchiveOAuth2Client(T *testing.T) {
 
 	T.Run("with error writing to database", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		p, mockDB := buildTestService(t)

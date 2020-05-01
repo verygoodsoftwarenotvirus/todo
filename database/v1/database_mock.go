@@ -10,7 +10,7 @@ import (
 
 var _ Database = (*MockDatabase)(nil)
 
-// BuildMockDatabase builds a mock database
+// BuildMockDatabase builds a mock database.
 func BuildMockDatabase() *MockDatabase {
 	return &MockDatabase{
 		ItemDataManager:         &mockmodels.ItemDataManager{},
@@ -20,7 +20,7 @@ func BuildMockDatabase() *MockDatabase {
 	}
 }
 
-// MockDatabase is our mock database structure
+// MockDatabase is our mock database structure.
 type MockDatabase struct {
 	mock.Mock
 
@@ -30,14 +30,39 @@ type MockDatabase struct {
 	*mockmodels.WebhookDataManager
 }
 
-// Migrate satisfies the database.Database interface
+// Migrate satisfies the Database interface.
 func (m *MockDatabase) Migrate(ctx context.Context) error {
-	args := m.Called(ctx)
-	return args.Error(0)
+	return m.Called(ctx).Error(0)
 }
 
-// IsReady satisfies the database.Database interface
+// IsReady satisfies the Database interface.
 func (m *MockDatabase) IsReady(ctx context.Context) (ready bool) {
-	args := m.Called(ctx)
-	return args.Bool(0)
+	return m.Called(ctx).Bool(0)
+}
+
+var _ ResultIterator = (*MockResultIterator)(nil)
+
+// MockResultIterator is our mock sql.Rows structure.
+type MockResultIterator struct {
+	mock.Mock
+}
+
+// Scan satisfies the ResultIterator interface.
+func (m *MockResultIterator) Scan(dest ...interface{}) error {
+	return m.Called(dest...).Error(0)
+}
+
+// Next satisfies the ResultIterator interface.
+func (m *MockResultIterator) Next() bool {
+	return m.Called().Bool(0)
+}
+
+// Err satisfies the ResultIterator interface.
+func (m *MockResultIterator) Err() error {
+	return m.Called().Error(0)
+}
+
+// Close satisfies the ResultIterator interface.
+func (m *MockResultIterator) Close() error {
+	return m.Called().Error(0)
 }

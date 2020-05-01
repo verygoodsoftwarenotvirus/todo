@@ -13,32 +13,32 @@ import (
 )
 
 func main() {
-	// initialize our logger of choice
+	// initialize our logger of choice.
 	logger := zerolog.NewZeroLogger()
 
-	// find and validate our configuration filepath
+	// find and validate our configuration filepath.
 	configFilepath := os.Getenv("CONFIGURATION_FILEPATH")
 	if configFilepath == "" {
 		logger.Fatal(errors.New("no configuration file provided"))
 	}
 
-	// parse our config file
+	// parse our config file.
 	cfg, err := config.ParseConfigFile(configFilepath)
 	if err != nil || cfg == nil {
 		logger.Fatal(err)
 	}
 
-	// only allow initialization to take so long
+	// only allow initialization to take so long.
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Meta.StartupDeadline)
 	ctx, span := tracing.StartSpan(ctx, "initialization")
 
-	// connect to our database
+	// connect to our database.
 	db, err := cfg.ProvideDatabase(ctx, logger)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	// build our server struct
+	// build our server struct.
 	server, err := BuildServer(ctx, cfg, logger, db)
 	span.End()
 	cancel()

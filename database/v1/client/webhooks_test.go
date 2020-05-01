@@ -16,6 +16,7 @@ func TestClient_GetWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		c, mockDB := buildTestClient()
@@ -34,6 +35,7 @@ func TestClient_GetAllWebhooksCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		expected := uint64(123)
 
 		c, mockDB := buildTestClient()
@@ -52,6 +54,7 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhookList := fakemodels.BuildFakeWebhookList()
 
 		c, mockDB := buildTestClient()
@@ -72,6 +75,7 @@ func TestClient_GetWebhooks(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhookList := fakemodels.BuildFakeWebhookList()
 		filter := models.DefaultQueryFilter()
 
@@ -87,6 +91,7 @@ func TestClient_GetWebhooks(T *testing.T) {
 
 	T.Run("with nil filter", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhookList := fakemodels.BuildFakeWebhookList()
 		filter := (*models.QueryFilter)(nil)
 
@@ -106,6 +111,7 @@ func TestClient_CreateWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
@@ -125,6 +131,7 @@ func TestClient_UpdateWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 		var expected error
 
@@ -144,6 +151,7 @@ func TestClient_ArchiveWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 		var expected error
 

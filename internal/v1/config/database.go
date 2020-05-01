@@ -21,7 +21,7 @@ const (
 	sqliteProviderKey   = "sqlite"
 )
 
-// ProvideDatabase provides a database implementation dependent on the configuration
+// ProvideDatabase provides a database implementation dependent on the configuration.
 func (cfg *ServerConfig) ProvideDatabase(ctx context.Context, logger logging.Logger) (database.Database, error) {
 	var (
 		debug             = cfg.Database.Debug || cfg.Meta.Debug

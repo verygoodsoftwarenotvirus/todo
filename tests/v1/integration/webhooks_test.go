@@ -31,24 +31,21 @@ func reverse(s string) string {
 }
 
 func TestWebhooks(test *testing.T) {
-	test.Parallel()
-
 	test.Run("Creating", func(T *testing.T) {
 		T.Run("should be createable", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := tracing.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			// Create webhook
+			// Create webhook.
 			exampleWebhook := fakemodels.BuildFakeWebhook()
 			exampleWebhookInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 			premade, err := todoClient.CreateWebhook(ctx, exampleWebhookInput)
 			checkValueAndError(t, premade, err)
 
-			// Assert webhook equality
+			// Assert webhook equality.
 			checkWebhookEquality(t, exampleWebhook, premade)
 
-			// Clean up
+			// Clean up.
 			err = todoClient.ArchiveWebhook(ctx, premade.ID)
 			assert.NoError(t, err)
 
@@ -61,11 +58,10 @@ func TestWebhooks(test *testing.T) {
 
 	test.Run("Listing", func(T *testing.T) {
 		T.Run("should be able to be read in a list", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := tracing.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			// Create webhooks
+			// Create webhooks.
 			var expected []*models.Webhook
 			for i := 0; i < 5; i++ {
 				exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -76,12 +72,12 @@ func TestWebhooks(test *testing.T) {
 				expected = append(expected, createdWebhook)
 			}
 
-			// Assert webhook list equality
+			// Assert webhook list equality.
 			actual, err := todoClient.GetWebhooks(ctx, nil)
 			checkValueAndError(t, actual, err)
 			assert.True(t, len(expected) <= len(actual.Webhooks))
 
-			// Clean up
+			// Clean up.
 			for _, webhook := range actual.Webhooks {
 				err = todoClient.ArchiveWebhook(ctx, webhook.ID)
 				assert.NoError(t, err)
@@ -91,34 +87,32 @@ func TestWebhooks(test *testing.T) {
 
 	test.Run("Reading", func(T *testing.T) {
 		T.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := tracing.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			// Fetch webhook
+			// Fetch webhook.
 			_, err := todoClient.GetWebhook(ctx, nonexistentID)
 			assert.Error(t, err)
 		})
 
 		T.Run("it should be readable", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := tracing.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			// Create webhook
+			// Create webhook.
 			exampleWebhook := fakemodels.BuildFakeWebhook()
 			exampleWebhookInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 			premade, err := todoClient.CreateWebhook(ctx, exampleWebhookInput)
 			checkValueAndError(t, premade, err)
 
-			// Fetch webhook
+			// Fetch webhook.
 			actual, err := todoClient.GetWebhook(ctx, premade.ID)
 			checkValueAndError(t, actual, err)
 
-			// Assert webhook equality
+			// Assert webhook equality.
 			checkWebhookEquality(t, exampleWebhook, actual)
 
-			// Clean up
+			// Clean up.
 			err = todoClient.ArchiveWebhook(ctx, actual.ID)
 			assert.NoError(t, err)
 		})
@@ -126,8 +120,7 @@ func TestWebhooks(test *testing.T) {
 
 	test.Run("Updating", func(T *testing.T) {
 		T.Run("it should return an error when trying to update something that doesn't exist", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := tracing.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
 			exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -138,31 +131,30 @@ func TestWebhooks(test *testing.T) {
 		})
 
 		T.Run("it should be updatable", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := tracing.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			// Create webhook
+			// Create webhook.
 			exampleWebhook := fakemodels.BuildFakeWebhook()
 			exampleWebhookInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 			premade, err := todoClient.CreateWebhook(ctx, exampleWebhookInput)
 			checkValueAndError(t, premade, err)
 
-			// Change webhook
+			// Change webhook.
 			premade.Name = reverse(premade.Name)
 			exampleWebhook.Name = premade.Name
 			err = todoClient.UpdateWebhook(ctx, premade)
 			assert.NoError(t, err)
 
-			// Fetch webhook
+			// Fetch webhook.
 			actual, err := todoClient.GetWebhook(ctx, premade.ID)
 			checkValueAndError(t, actual, err)
 
-			// Assert webhook equality
+			// Assert webhook equality.
 			checkWebhookEquality(t, exampleWebhook, actual)
 			assert.NotNil(t, actual.UpdatedOn)
 
-			// Clean up
+			// Clean up.
 			err = todoClient.ArchiveWebhook(ctx, actual.ID)
 			assert.NoError(t, err)
 		})
@@ -170,17 +162,16 @@ func TestWebhooks(test *testing.T) {
 
 	test.Run("Deleting", func(T *testing.T) {
 		T.Run("should be able to be deleted", func(t *testing.T) {
-			ctx := context.Background()
-			ctx, span := tracing.StartSpan(ctx, t.Name())
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			// Create webhook
+			// Create webhook.
 			exampleWebhook := fakemodels.BuildFakeWebhook()
 			exampleWebhookInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 			premade, err := todoClient.CreateWebhook(ctx, exampleWebhookInput)
 			checkValueAndError(t, premade, err)
 
-			// Clean up
+			// Clean up.
 			err = todoClient.ArchiveWebhook(ctx, premade.ID)
 			assert.NoError(t, err)
 		})

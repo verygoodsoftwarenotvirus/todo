@@ -7,7 +7,7 @@ RUN apt-get update -y && apt-get install -y make git gcc musl-dev
 
 ADD . .
 
-RUN go test -o /todo -c -coverpkg \
+RUN go test -o /integration-server -c -coverpkg \
 	gitlab.com/verygoodsoftwarenotvirus/todo/internal/..., \
 	gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/..., \
 	gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/..., \
@@ -27,9 +27,9 @@ RUN npm install && npm run build
 FROM debian:stable
 
 COPY config_files config_files
-COPY --from=build-stage /todo /todo
+COPY --from=build-stage /integration-server /integration-server
 
 EXPOSE 80
 
-ENTRYPOINT ["/todo", "-test.coverprofile=/home/integration-coverage.out"]
+ENTRYPOINT ["/integration-server", "-test.coverprofile=/home/integration-coverage.out"]
 

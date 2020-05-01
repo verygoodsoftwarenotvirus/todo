@@ -9,7 +9,7 @@ import (
 
 var _ models.WebhookDataManager = (*Client)(nil)
 
-// GetWebhook fetches a webhook from the database
+// GetWebhook fetches a webhook from the database.
 func (c *Client) GetWebhook(ctx context.Context, webhookID, userID uint64) (*models.Webhook, error) {
 	ctx, span := tracing.StartSpan(ctx, "GetWebhook")
 	defer span.End()
@@ -25,7 +25,7 @@ func (c *Client) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mod
 	return c.querier.GetWebhook(ctx, webhookID, userID)
 }
 
-// GetWebhooks fetches a list of webhooks from the database that meet a particular filter
+// GetWebhooks fetches a list of webhooks from the database that meet a particular filter.
 func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.WebhookList, error) {
 	ctx, span := tracing.StartSpan(ctx, "GetWebhooks")
 	defer span.End()
@@ -38,7 +38,7 @@ func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *models.
 	return c.querier.GetWebhooks(ctx, userID, filter)
 }
 
-// GetAllWebhooks fetches a list of webhooks from the database that meet a particular filter
+// GetAllWebhooks fetches a list of webhooks from the database that meet a particular filter.
 func (c *Client) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
 	ctx, span := tracing.StartSpan(ctx, "GetAllWebhooks")
 	defer span.End()
@@ -48,7 +48,7 @@ func (c *Client) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error
 	return c.querier.GetAllWebhooks(ctx)
 }
 
-// GetAllWebhooksCount fetches the count of webhooks from the database that meet a particular filter
+// GetAllWebhooksCount fetches the count of webhooks from the database that meet a particular filter.
 func (c *Client) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
 	ctx, span := tracing.StartSpan(ctx, "GetAllWebhooksCount")
 	defer span.End()
@@ -58,7 +58,7 @@ func (c *Client) GetAllWebhooksCount(ctx context.Context) (count uint64, err err
 	return c.querier.GetAllWebhooksCount(ctx)
 }
 
-// CreateWebhook creates a webhook in a database
+// CreateWebhook creates a webhook in a database.
 func (c *Client) CreateWebhook(ctx context.Context, input *models.WebhookCreationInput) (*models.Webhook, error) {
 	ctx, span := tracing.StartSpan(ctx, "CreateWebhook")
 	defer span.End()
@@ -83,7 +83,7 @@ func (c *Client) UpdateWebhook(ctx context.Context, input *models.Webhook) error
 	return c.querier.UpdateWebhook(ctx, input)
 }
 
-// ArchiveWebhook archives a webhook from the database
+// ArchiveWebhook archives a webhook from the database.
 func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error {
 	ctx, span := tracing.StartSpan(ctx, "ArchiveWebhook")
 	defer span.End()

@@ -58,14 +58,11 @@ func loginUser(t *testing.T, username, password, totpSecret string) *http.Cookie
 }
 
 func TestAuth(test *testing.T) {
-	test.Parallel()
-
 	test.Run("should be able to login", func(t *testing.T) {
-		ctx := context.Background()
-		ctx, span := tracing.StartSpan(ctx, t.Name())
+		ctx, span := tracing.StartSpan(context.Background(), t.Name())
 		defer span.End()
 
-		// create a user
+		// create a user.
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleUserCreationInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
 		req, err := todoClient.BuildCreateUserRequest(ctx, exampleUserCreationInput)
@@ -74,11 +71,11 @@ func TestAuth(test *testing.T) {
 		res, err := todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
 
-		// load user response
+		// load user response.
 		ucr := &models.UserCreationResponse{}
 		require.NoError(t, json.NewDecoder(res.Body).Decode(ucr))
 
-		// create login request
+		// create login request.
 		token, err := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, token, err)
 		r := &models.UserLoginInput{
@@ -97,7 +94,7 @@ func TestAuth(test *testing.T) {
 		req, err = http.NewRequest(http.MethodPost, u.String(), body)
 		checkValueAndError(t, req, err)
 
-		// execute login request
+		// execute login request.
 		res, err = todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
 		assert.Equal(t, http.StatusNoContent, res.StatusCode)
@@ -107,8 +104,7 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should be able to logout", func(t *testing.T) {
-		ctx := context.Background()
-		ctx, span := tracing.StartSpan(ctx, t.Name())
+		ctx, span := tracing.StartSpan(context.Background(), t.Name())
 		defer span.End()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -140,17 +136,17 @@ func TestAuth(test *testing.T) {
 		req, err = http.NewRequest(http.MethodPost, u.String(), body)
 		checkValueAndError(t, req, err)
 
-		// execute login request
+		// execute login request.
 		res, err = todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
 		assert.Equal(t, http.StatusNoContent, res.StatusCode)
 
-		// extract cookie
+		// extract cookie.
 		cookies := res.Cookies()
 		require.Len(t, cookies, 1)
 		loginCookie := cookies[0]
 
-		// build logout request
+		// build logout request.
 		u2, err := url.Parse(todoClient.BuildURL(nil))
 		require.NoError(t, err)
 		u2.Path = "/users/logout"
@@ -159,7 +155,7 @@ func TestAuth(test *testing.T) {
 		checkValueAndError(t, req, err)
 		req.AddCookie(loginCookie)
 
-		// execute logout request
+		// execute logout request.
 		res, err = todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
@@ -173,18 +169,17 @@ func TestAuth(test *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, u.String(), nil)
 		checkValueAndError(t, req, err)
 
-		// execute login request
+		// execute login request.
 		res, err := todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 	})
 
 	test.Run("should not be able to log in with the wrong password", func(t *testing.T) {
-		ctx := context.Background()
-		ctx, span := tracing.StartSpan(ctx, t.Name())
+		ctx, span := tracing.StartSpan(context.Background(), t.Name())
 		defer span.End()
 
-		// create a user
+		// create a user.
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleUserCreationInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
 		req, err := todoClient.BuildCreateUserRequest(ctx, exampleUserCreationInput)
@@ -193,17 +188,17 @@ func TestAuth(test *testing.T) {
 		res, err := todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
 
-		// load user response
+		// load user response.
 		ucr := &models.UserCreationResponse{}
 		require.NoError(t, json.NewDecoder(res.Body).Decode(ucr))
 
-		// create login request
+		// create login request.
 		var badPassword string
 		for _, v := range exampleUserCreationInput.Password {
 			badPassword = string(v) + badPassword
 		}
 
-		// create login request
+		// create login request.
 		token, err := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, token, err)
 		r := &models.UserLoginInput{
@@ -222,7 +217,7 @@ func TestAuth(test *testing.T) {
 		req, err = http.NewRequest(http.MethodPost, u.String(), body)
 		checkValueAndError(t, req, err)
 
-		// execute login request
+		// execute login request.
 		res, err = todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
 		assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
@@ -271,17 +266,17 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should be able to change password", func(t *testing.T) {
-		// create user
+		// create user.
 		user, ui, cookie := buildDummyUser(test)
 		require.NotNil(test, cookie)
 
-		// create login request
+		// create login request.
 		var backwardsPass string
 		for _, v := range ui.Password {
 			backwardsPass = string(v) + backwardsPass
 		}
 
-		// create password update request
+		// create password update request.
 		token, err := totp.GenerateCode(user.TwoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, token, err)
 		r := &models.PasswordUpdateInput{
@@ -301,12 +296,12 @@ func TestAuth(test *testing.T) {
 		checkValueAndError(t, req, err)
 		req.AddCookie(cookie)
 
-		// execute password update request
+		// execute password update request.
 		res, err := todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
 		assert.Equal(t, http.StatusAccepted, res.StatusCode)
 
-		// logout
+		// logout.
 
 		u2, err := url.Parse(todoClient.BuildURL(nil))
 		require.NoError(t, err)
@@ -320,7 +315,7 @@ func TestAuth(test *testing.T) {
 		checkValueAndError(t, res, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 
-		// create login request
+		// create login request.
 		newToken, err := totp.GenerateCode(user.TwoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, newToken, err)
 		l, err := json.Marshal(&models.UserLoginInput{
@@ -338,7 +333,7 @@ func TestAuth(test *testing.T) {
 		req, err = http.NewRequest(http.MethodPost, u3.String(), body)
 		checkValueAndError(t, req, err)
 
-		// execute login request
+		// execute login request.
 		res, err = todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
 		assert.Equal(t, http.StatusNoContent, res.StatusCode)
@@ -349,11 +344,11 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should be able to change 2FA Token", func(t *testing.T) {
-		// create user
+		// create user.
 		user, ui, cookie := buildDummyUser(test)
 		require.NotNil(test, cookie)
 
-		// create TOTP secret update request
+		// create TOTP secret update request.
 		token, err := totp.GenerateCode(user.TwoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, token, err)
 		ir := &models.TOTPSecretRefreshInput{
@@ -372,17 +367,17 @@ func TestAuth(test *testing.T) {
 		checkValueAndError(t, req, err)
 		req.AddCookie(cookie)
 
-		// execute TOTP secret update request
+		// execute TOTP secret update request.
 		res, err := todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
 		assert.Equal(t, http.StatusAccepted, res.StatusCode)
 
-		// load user response
+		// load user response.
 		r := &models.TOTPSecretRefreshResponse{}
 		require.NoError(t, json.NewDecoder(res.Body).Decode(r))
 		require.NotEqual(t, user.TwoFactorSecret, r.TwoFactorSecret)
 
-		// logout
+		// logout.
 
 		u2, err := url.Parse(todoClient.BuildURL(nil))
 		require.NoError(t, err)
@@ -396,7 +391,7 @@ func TestAuth(test *testing.T) {
 		checkValueAndError(t, res, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 
-		// create login request
+		// create login request.
 		newToken, err := totp.GenerateCode(r.TwoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, newToken, err)
 		l, err := json.Marshal(&models.UserLoginInput{
@@ -414,7 +409,7 @@ func TestAuth(test *testing.T) {
 		req, err = http.NewRequest(http.MethodPost, u3.String(), body)
 		checkValueAndError(t, req, err)
 
-		// execute login request
+		// execute login request.
 		res, err = todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
 		assert.Equal(t, http.StatusNoContent, res.StatusCode)
@@ -425,7 +420,7 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should accept a login cookie if a token is missing", func(t *testing.T) {
-		// create user
+		// create user.
 		_, _, cookie := buildDummyUser(test)
 		assert.NotNil(t, cookie)
 
@@ -439,11 +434,10 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should only allow users to see their own content", func(t *testing.T) {
-		ctx := context.Background()
-		ctx, span := tracing.StartSpan(ctx, t.Name())
+		ctx, span := tracing.StartSpan(context.Background(), t.Name())
 		defer span.End()
 
-		// create user and oauth2 client A
+		// create user and oauth2 client A.
 		userA, err := testutil.CreateObligatoryUser(urlToUse, debug)
 		require.NoError(t, err)
 
@@ -462,7 +456,7 @@ func TestAuth(test *testing.T) {
 		)
 		checkValueAndError(test, clientA, err)
 
-		// create user and oauth2 client B
+		// create user and oauth2 client B.
 		userB, err := testutil.CreateObligatoryUser(urlToUse, debug)
 		require.NoError(t, err)
 
@@ -481,12 +475,12 @@ func TestAuth(test *testing.T) {
 		)
 		checkValueAndError(test, clientA, err)
 
-		// create webhook for user A
+		// create webhook for user A.
 		wciA := fakemodels.BuildFakeWebhookCreationInput()
 		webhookA, err := clientA.CreateWebhook(ctx, wciA)
 		checkValueAndError(t, webhookA, err)
 
-		// create webhook for user B
+		// create webhook for user B.
 		wciB := fakemodels.BuildFakeWebhookCreationInput()
 		webhookB, err := clientB.CreateWebhook(ctx, wciB)
 		checkValueAndError(t, webhookB, err)
@@ -495,17 +489,16 @@ func TestAuth(test *testing.T) {
 		assert.Nil(t, i)
 		assert.Error(t, err, "should experience error trying to fetch entry they're not authorized for")
 
-		// Clean up
+		// Clean up.
 		assert.NoError(t, todoClient.ArchiveWebhook(ctx, webhookA.ID))
 		assert.NoError(t, todoClient.ArchiveWebhook(ctx, webhookB.ID))
 	})
 
 	test.Run("should only allow clients with a given scope to see that scope's content", func(t *testing.T) {
-		ctx := context.Background()
-		ctx, span := tracing.StartSpan(ctx, t.Name())
+		ctx, span := tracing.StartSpan(context.Background(), t.Name())
 		defer span.End()
 
-		// create user
+		// create user.
 		x, y, cookie := buildDummyUser(test)
 		assert.NotNil(t, cookie)
 

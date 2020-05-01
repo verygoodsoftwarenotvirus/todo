@@ -10,7 +10,7 @@
   provider = "postgres"
 
 [frontend]
-  static_files_directory = "/frontend"
+  static_files_directoy = "/frontend"
 
 [meta]
   debug = false

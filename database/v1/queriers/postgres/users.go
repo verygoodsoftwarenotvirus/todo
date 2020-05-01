@@ -11,7 +11,6 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	postgres "github.com/lib/pq"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
 const (
@@ -32,8 +31,8 @@ var (
 	}
 )
 
-// scanUser provides a consistent way to scan something like a *sql.Row into a User struct
-func scanUser(scan database.Scanner, includeCount bool) (*models.User, uint64, error) {
+// scanUser provides a consistent way to scan something like a *sql.Row into a User struct.
+func (p *Postgres) scanUser(scan database.Scanner, includeCount bool) (*models.User, uint64, error) {
 	var (
 		x     = &models.User{}
 		count uint64
@@ -62,15 +61,15 @@ func scanUser(scan database.Scanner, includeCount bool) (*models.User, uint64, e
 	return x, count, nil
 }
 
-// scanUsers takes database rows and loads them into a slice of User structs
-func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, uint64, error) {
+// scanUsers takes database rows and loads them into a slice of User structs.
+func (p *Postgres) scanUsers(rows database.ResultIterator) ([]models.User, uint64, error) {
 	var (
 		list  []models.User
 		count uint64
 	)
 
 	for rows.Next() {
-		user, c, err := scanUser(rows, true)
+		user, c, err := p.scanUser(rows, true)
 		if err != nil {
 			return nil, 0, fmt.Errorf("scanning user result: %w", err)
 		}
@@ -87,7 +86,7 @@ func scanUsers(logger logging.Logger, rows *sql.Rows) ([]models.User, uint64, er
 	}
 
 	if err := rows.Close(); err != nil {
-		logger.Error(err, "closing rows")
+		p.logger.Error(err, "closing rows")
 	}
 
 	return list, count, nil
@@ -110,12 +109,12 @@ func (p *Postgres) buildGetUserQuery(userID uint64) (query string, args []interf
 	return query, args
 }
 
-// GetUser fetches a user
+// GetUser fetches a user.
 func (p *Postgres) GetUser(ctx context.Context, userID uint64) (*models.User, error) {
 	query, args := p.buildGetUserQuery(userID)
 	row := p.db.QueryRowContext(ctx, query, args...)
-	u, _, err := scanUser(row, false)
 
+	u, _, err := p.scanUser(row, false)
 	if err != nil {
 		return nil, buildError(err, "fetching user from database")
 	}
@@ -140,12 +139,12 @@ func (p *Postgres) buildGetUserByUsernameQuery(username string) (query string, a
 	return query, args
 }
 
-// GetUserByUsername fetches a user by their username
+// GetUserByUsername fetches a user by their username.
 func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
 	query, args := p.buildGetUserByUsernameQuery(username)
 	row := p.db.QueryRowContext(ctx, query, args...)
-	u, _, err := scanUser(row, false)
 
+	u, _, err := p.scanUser(row, false)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, err
@@ -175,7 +174,7 @@ func (p *Postgres) buildGetAllUserCountQuery() (query string) {
 	return query
 }
 
-// GetAllUserCount fetches a count of users from the database
+// GetAllUserCount fetches a count of users from the database.
 func (p *Postgres) GetAllUserCount(ctx context.Context) (count uint64, err error) {
 	query := p.buildGetAllUserCountQuery()
 	err = p.db.QueryRowContext(ctx, query).Scan(&count)
@@ -204,7 +203,7 @@ func (p *Postgres) buildGetUsersQuery(filter *models.QueryFilter) (query string,
 	return query, args
 }
 
-// GetUsers fetches a list of users from the database that meet a particular filter
+// GetUsers fetches a list of users from the database that meet a particular filter.
 func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
 	query, args := p.buildGetUsersQuery(filter)
 
@@ -213,7 +212,7 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 		return nil, buildError(err, "querying for user")
 	}
 
-	userList, count, err := scanUsers(p.logger, rows)
+	userList, count, err := p.scanUsers(rows)
 	if err != nil {
 		return nil, fmt.Errorf("loading response from database: %w", err)
 	}
@@ -254,14 +253,14 @@ func (p *Postgres) buildCreateUserQuery(input models.UserDatabaseCreationInput) 
 	// NOTE: we always default is_admin to false, on the assumption that
 	// admins have DB access and will change that value via SQL query.
 	// There should also be no way to update a user via this structure
-	// such that they would have admin privileges
+	// such that they would have admin privileges.
 
 	p.logQueryBuildingError(err)
 
 	return query, args
 }
 
-// CreateUser creates a user
+// CreateUser creates a user.
 func (p *Postgres) CreateUser(ctx context.Context, input models.UserDatabaseCreationInput) (*models.User, error) {
 	x := &models.User{
 		Username:        input.Username,
@@ -270,7 +269,7 @@ func (p *Postgres) CreateUser(ctx context.Context, input models.UserDatabaseCrea
 	}
 	query, args := p.buildCreateUserQuery(input)
 
-	// create the user
+	// create the user.
 	if err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {
 		switch e := err.(type) {
 		case *postgres.Error:
@@ -332,7 +331,7 @@ func (p *Postgres) buildArchiveUserQuery(userID uint64) (query string, args []in
 	return query, args
 }
 
-// ArchiveUser archives a user by their username
+// ArchiveUser archives a user by their username.
 func (p *Postgres) ArchiveUser(ctx context.Context, userID uint64) error {
 	query, args := p.buildArchiveUserQuery(userID)
 	_, err := p.db.ExecContext(ctx, query, args...)

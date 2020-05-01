@@ -29,7 +29,7 @@ func init() {
 }
 
 const (
-	// CreationMiddlewareCtxKey is a string alias for referring to OAuth2 client creation data
+	// CreationMiddlewareCtxKey is a string alias for referring to OAuth2 client creation data.
 	CreationMiddlewareCtxKey models.ContextKey = "create_oauth2_client"
 
 	counterName        metrics.CounterName = "oauth2_clients"
@@ -57,10 +57,10 @@ type (
 		HandleTokenRequest(res http.ResponseWriter, req *http.Request) error
 	}
 
-	// ClientIDFetcher is a function for fetching client IDs out of requests
+	// ClientIDFetcher is a function for fetching client IDs out of requests.
 	ClientIDFetcher func(req *http.Request) uint64
 
-	// Service manages our OAuth2 clients via HTTP
+	// Service manages our OAuth2 clients via HTTP.
 	Service struct {
 		logger               logging.Logger
 		database             database.Database
@@ -96,7 +96,7 @@ func (s *clientStore) GetByID(id string) (oauth2.ClientInfo, error) {
 	return client, nil
 }
 
-// ProvideOAuth2ClientsService builds a new OAuth2ClientsService
+// ProvideOAuth2ClientsService builds a new OAuth2ClientsService.
 func ProvideOAuth2ClientsService(
 	logger logging.Logger,
 	db database.Database,
@@ -133,7 +133,7 @@ func ProvideOAuth2ClientsService(
 	return svc, nil
 }
 
-// initializeOAuth2Handler
+// initializeOAuth2Handler.
 func initializeOAuth2Handler(svc *Service) {
 	svc.oauth2Handler.SetAllowGetAccessRequest(true)
 	svc.oauth2Handler.SetClientAuthorizedHandler(svc.ClientAuthorizedHandler)
@@ -144,7 +144,7 @@ func initializeOAuth2Handler(svc *Service) {
 	svc.oauth2Handler.SetInternalErrorHandler(svc.OAuth2InternalErrorHandler)
 	svc.oauth2Handler.SetUserAuthorizationHandler(svc.UserAuthorizationHandler)
 
-	// this sad type cast is here because I have an arbitrary
+	// this sad type cast is here because I have an arbitrary.
 	// test-only interface for OAuth2 interactions.
 	if x, ok := svc.oauth2Handler.(*oauth2server.Server); ok {
 		x.Config.AllowedGrantTypes = []oauth2.GrantType{
@@ -156,12 +156,12 @@ func initializeOAuth2Handler(svc *Service) {
 	}
 }
 
-// HandleAuthorizeRequest is a simple wrapper around the internal server's HandleAuthorizeRequest
+// HandleAuthorizeRequest is a simple wrapper around the internal server's HandleAuthorizeRequest.
 func (s *Service) HandleAuthorizeRequest(res http.ResponseWriter, req *http.Request) error {
 	return s.oauth2Handler.HandleAuthorizeRequest(res, req)
 }
 
-// HandleTokenRequest is a simple wrapper around the internal server's HandleTokenRequest
+// HandleTokenRequest is a simple wrapper around the internal server's HandleTokenRequest.
 func (s *Service) HandleTokenRequest(res http.ResponseWriter, req *http.Request) error {
 	return s.oauth2Handler.HandleTokenRequest(res, req)
 }

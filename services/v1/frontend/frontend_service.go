@@ -18,7 +18,7 @@ type (
 	}
 )
 
-// ProvideFrontendService provides the frontend service to dependency injection
+// ProvideFrontendService provides the frontend service to dependency injection.
 func ProvideFrontendService(logger logging.Logger, cfg config.FrontendSettings) *Service {
 	svc := &Service{
 		config: cfg,

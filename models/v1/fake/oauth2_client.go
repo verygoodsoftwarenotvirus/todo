@@ -8,7 +8,7 @@ import (
 	fake "github.com/brianvoe/gofakeit/v5"
 )
 
-// BuildFakeOAuth2Client builds a faked OAuth2Client
+// BuildFakeOAuth2Client builds a faked OAuth2Client.
 func BuildFakeOAuth2Client() *models.OAuth2Client {
 	return &models.OAuth2Client{
 		ID:           fake.Uint64(),
@@ -27,7 +27,7 @@ func BuildFakeOAuth2Client() *models.OAuth2Client {
 	}
 }
 
-// BuildFakeOAuth2ClientList builds a faked OAuth2ClientList
+// BuildFakeOAuth2ClientList builds a faked OAuth2ClientList.
 func BuildFakeOAuth2ClientList() *models.OAuth2ClientList {
 	exampleOAuth2Client1 := BuildFakeOAuth2Client()
 	exampleOAuth2Client2 := BuildFakeOAuth2Client()
@@ -47,7 +47,7 @@ func BuildFakeOAuth2ClientList() *models.OAuth2ClientList {
 	}
 }
 
-// BuildFakeOAuth2ClientCreationInputFromClient builds a faked OAuth2ClientCreationInput
+// BuildFakeOAuth2ClientCreationInputFromClient builds a faked OAuth2ClientCreationInput.
 func BuildFakeOAuth2ClientCreationInputFromClient(client *models.OAuth2Client) *models.OAuth2ClientCreationInput {
 	return &models.OAuth2ClientCreationInput{
 		UserLoginInput: models.UserLoginInput{

@@ -16,63 +16,63 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
 
-func TestProvideItemServiceUserIDFetcher(T *testing.T) {
+func TestProvideItemsServiceUserIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		_ = ProvideItemServiceUserIDFetcher()
+		_ = ProvideItemsServiceUserIDFetcher()
 	})
 }
 
-func TestProvideItemIDFetcher(T *testing.T) {
+func TestProvideItemsServiceItemIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		_ = ProvideItemIDFetcher(noop.ProvideNoopLogger())
+		_ = ProvideItemsServiceItemIDFetcher(noop.ProvideNoopLogger())
 	})
 }
 
-func TestProvideUsernameFetcher(T *testing.T) {
+func TestProvideUsersServiceUserIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		_ = ProvideUsernameFetcher(noop.ProvideNoopLogger())
+		_ = ProvideUsersServiceUserIDFetcher(noop.ProvideNoopLogger())
 	})
 }
 
-func TestProvideAuthUserIDFetcher(T *testing.T) {
+func TestProvideAuthServiceUserIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		_ = ProvideAuthUserIDFetcher()
+		_ = ProvideAuthServiceUserIDFetcher()
 	})
 }
 
-func TestProvideWebhooksUserIDFetcher(T *testing.T) {
+func TestProvideWebhooksServiceUserIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		_ = ProvideWebhooksUserIDFetcher()
+		_ = ProvideWebhooksServiceUserIDFetcher()
 	})
 }
 
-func TestProvideWebhookIDFetcher(T *testing.T) {
+func TestProvideWebhooksServiceWebhookIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		_ = ProvideWebhookIDFetcher(noop.ProvideNoopLogger())
+		_ = ProvideWebhooksServiceWebhookIDFetcher(noop.ProvideNoopLogger())
 	})
 }
 
-func TestProvideOAuth2ServiceClientIDFetcher(T *testing.T) {
+func TestProvideOAuth2ClientsServiceClientIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		_ = ProvideOAuth2ServiceClientIDFetcher(noop.ProvideNoopLogger())
+		_ = ProvideOAuth2ClientsServiceClientIDFetcher(noop.ProvideNoopLogger())
 	})
 }
 
-func TestUserIDFetcher(T *testing.T) {
+func Test_userIDFetcherFromRequestContext(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -87,23 +87,23 @@ func TestUserIDFetcher(T *testing.T) {
 			),
 		)
 
-		actual := UserIDFetcher(req)
+		actual := userIDFetcherFromRequestContext(req)
 		assert.Equal(t, expected, actual)
 	})
 
 	T.Run("without attached value", func(t *testing.T) {
 		req := buildRequest(t)
-		actual := UserIDFetcher(req)
+		actual := userIDFetcherFromRequestContext(req)
 
 		assert.Zero(t, actual)
 	})
 }
 
-func Test_buildChiUserIDFetcher(T *testing.T) {
+func Test_buildRouteParamUserIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		fn := buildChiUserIDFetcher(noop.ProvideNoopLogger())
+		fn := buildRouteParamUserIDFetcher(noop.ProvideNoopLogger())
 		expected := uint64(123)
 
 		req := buildRequest(t)
@@ -126,7 +126,7 @@ func Test_buildChiUserIDFetcher(T *testing.T) {
 
 	T.Run("with invalid value somehow", func(t *testing.T) {
 		// NOTE: This will probably never happen in dev or production
-		fn := buildChiUserIDFetcher(noop.ProvideNoopLogger())
+		fn := buildRouteParamUserIDFetcher(noop.ProvideNoopLogger())
 		expected := uint64(0)
 
 		req := buildRequest(t)
@@ -148,11 +148,11 @@ func Test_buildChiUserIDFetcher(T *testing.T) {
 	})
 }
 
-func Test_buildChiItemIDFetcher(T *testing.T) {
+func Test_buildRouteParamItemIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		fn := buildChiItemIDFetcher(noop.ProvideNoopLogger())
+		fn := buildRouteParamItemIDFetcher(noop.ProvideNoopLogger())
 		expected := uint64(123)
 
 		req := buildRequest(t)
@@ -175,7 +175,7 @@ func Test_buildChiItemIDFetcher(T *testing.T) {
 
 	T.Run("with invalid value somehow", func(t *testing.T) {
 		// NOTE: This will probably never happen in dev or production
-		fn := buildChiItemIDFetcher(noop.ProvideNoopLogger())
+		fn := buildRouteParamItemIDFetcher(noop.ProvideNoopLogger())
 		expected := uint64(0)
 
 		req := buildRequest(t)
@@ -197,11 +197,11 @@ func Test_buildChiItemIDFetcher(T *testing.T) {
 	})
 }
 
-func Test_buildChiWebhookIDFetcher(T *testing.T) {
+func Test_buildRouteParamWebhookIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		fn := buildChiWebhookIDFetcher(noop.ProvideNoopLogger())
+		fn := buildRouteParamWebhookIDFetcher(noop.ProvideNoopLogger())
 		expected := uint64(123)
 
 		req := buildRequest(t)
@@ -224,7 +224,7 @@ func Test_buildChiWebhookIDFetcher(T *testing.T) {
 
 	T.Run("with invalid value somehow", func(t *testing.T) {
 		// NOTE: This will probably never happen in dev or production
-		fn := buildChiWebhookIDFetcher(noop.ProvideNoopLogger())
+		fn := buildRouteParamWebhookIDFetcher(noop.ProvideNoopLogger())
 		expected := uint64(0)
 
 		req := buildRequest(t)
@@ -246,11 +246,11 @@ func Test_buildChiWebhookIDFetcher(T *testing.T) {
 	})
 }
 
-func Test_buildChiOAuth2ClientIDFetcher(T *testing.T) {
+func Test_buildRouteParamOAuth2ClientIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		fn := buildChiOAuth2ClientIDFetcher(noop.ProvideNoopLogger())
+		fn := buildRouteParamOAuth2ClientIDFetcher(noop.ProvideNoopLogger())
 		expected := uint64(123)
 
 		req := buildRequest(t)
@@ -273,7 +273,7 @@ func Test_buildChiOAuth2ClientIDFetcher(T *testing.T) {
 
 	T.Run("with invalid value somehow", func(t *testing.T) {
 		// NOTE: This will probably never happen in dev or production
-		fn := buildChiOAuth2ClientIDFetcher(noop.ProvideNoopLogger())
+		fn := buildRouteParamOAuth2ClientIDFetcher(noop.ProvideNoopLogger())
 		expected := uint64(0)
 
 		req := buildRequest(t)

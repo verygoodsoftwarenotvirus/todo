@@ -105,7 +105,7 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUserCount", mock.Anything, mock.Anything).Return(uint64(123), nil)
-		s.database = mockDB
+		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))

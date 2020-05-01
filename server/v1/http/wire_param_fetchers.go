@@ -18,61 +18,61 @@ import (
 
 var (
 	paramFetcherProviders = wire.NewSet(
-		ProvideItemServiceUserIDFetcher,
-		ProvideUsernameFetcher,
-		ProvideOAuth2ServiceClientIDFetcher,
-		ProvideAuthUserIDFetcher,
-		ProvideWebhooksUserIDFetcher,
-		ProvideItemIDFetcher,
-		ProvideWebhookIDFetcher,
+		ProvideUsersServiceUserIDFetcher,
+		ProvideOAuth2ClientsServiceClientIDFetcher,
+		ProvideAuthServiceUserIDFetcher,
+		ProvideItemsServiceUserIDFetcher,
+		ProvideItemsServiceItemIDFetcher,
+		ProvideWebhooksServiceUserIDFetcher,
+		ProvideWebhooksServiceWebhookIDFetcher,
 	)
 )
 
-// ProvideItemServiceUserIDFetcher provides a UserIDFetcher
-func ProvideItemServiceUserIDFetcher() itemsservice.UserIDFetcher {
-	return UserIDFetcher
+// ProvideItemsServiceUserIDFetcher provides a UserIDFetcher.
+func ProvideItemsServiceUserIDFetcher() itemsservice.UserIDFetcher {
+	return userIDFetcherFromRequestContext
 }
 
-// ProvideItemIDFetcher provides an ItemIDFetcher
-func ProvideItemIDFetcher(logger logging.Logger) itemsservice.ItemIDFetcher {
-	return buildChiItemIDFetcher(logger)
+// ProvideItemsServiceItemIDFetcher provides an ItemIDFetcher.
+func ProvideItemsServiceItemIDFetcher(logger logging.Logger) itemsservice.ItemIDFetcher {
+	return buildRouteParamItemIDFetcher(logger)
 }
 
-// ProvideUsernameFetcher provides a UsernameFetcher
-func ProvideUsernameFetcher(logger logging.Logger) usersservice.UserIDFetcher {
-	return buildChiUserIDFetcher(logger)
+// ProvideUsersServiceUserIDFetcher provides a UsernameFetcher.
+func ProvideUsersServiceUserIDFetcher(logger logging.Logger) usersservice.UserIDFetcher {
+	return buildRouteParamUserIDFetcher(logger)
 }
 
-// ProvideAuthUserIDFetcher provides a UsernameFetcher
-func ProvideAuthUserIDFetcher() authservice.UserIDFetcher {
-	return UserIDFetcher
+// ProvideAuthServiceUserIDFetcher provides a UsernameFetcher.
+func ProvideAuthServiceUserIDFetcher() authservice.UserIDFetcher {
+	return userIDFetcherFromRequestContext
 }
 
-// ProvideWebhooksUserIDFetcher provides a UserIDFetcher
-func ProvideWebhooksUserIDFetcher() webhooksservice.UserIDFetcher {
-	return UserIDFetcher
+// ProvideWebhooksServiceUserIDFetcher provides a UserIDFetcher.
+func ProvideWebhooksServiceUserIDFetcher() webhooksservice.UserIDFetcher {
+	return userIDFetcherFromRequestContext
 }
 
-// ProvideWebhookIDFetcher provides an WebhookIDFetcher
-func ProvideWebhookIDFetcher(logger logging.Logger) webhooksservice.WebhookIDFetcher {
-	return buildChiWebhookIDFetcher(logger)
+// ProvideWebhooksServiceWebhookIDFetcher provides an WebhookIDFetcher.
+func ProvideWebhooksServiceWebhookIDFetcher(logger logging.Logger) webhooksservice.WebhookIDFetcher {
+	return buildRouteParamWebhookIDFetcher(logger)
 }
 
-// ProvideOAuth2ServiceClientIDFetcher provides a ClientIDFetcher
-func ProvideOAuth2ServiceClientIDFetcher(logger logging.Logger) oauth2clientsservice.ClientIDFetcher {
-	return buildChiOAuth2ClientIDFetcher(logger)
+// ProvideOAuth2ClientsServiceClientIDFetcher provides a ClientIDFetcher.
+func ProvideOAuth2ClientsServiceClientIDFetcher(logger logging.Logger) oauth2clientsservice.ClientIDFetcher {
+	return buildRouteParamOAuth2ClientIDFetcher(logger)
 }
 
-// UserIDFetcher fetches a user ID from a request routed by chi.
-func UserIDFetcher(req *http.Request) uint64 {
+// userIDFetcherFromRequestContext fetches a user ID from a request routed by chi.
+func userIDFetcherFromRequestContext(req *http.Request) uint64 {
 	if userID, ok := req.Context().Value(models.UserIDKey).(uint64); ok {
 		return userID
 	}
 	return 0
 }
 
-// buildChiUserIDFetcher builds a function that fetches a Username from a request routed by chi.
-func buildChiUserIDFetcher(logger logging.Logger) usersservice.UserIDFetcher {
+// buildRouteParamUserIDFetcher builds a function that fetches a Username from a request routed by chi.
+func buildRouteParamUserIDFetcher(logger logging.Logger) usersservice.UserIDFetcher {
 	return func(req *http.Request) uint64 {
 		u, err := strconv.ParseUint(chi.URLParam(req, usersservice.URIParamKey), 10, 64)
 		if err != nil {
@@ -82,10 +82,10 @@ func buildChiUserIDFetcher(logger logging.Logger) usersservice.UserIDFetcher {
 	}
 }
 
-// buildChiItemIDFetcher builds a function that fetches a ItemID from a request routed by chi.
-func buildChiItemIDFetcher(logger logging.Logger) func(req *http.Request) uint64 {
+// buildRouteParamItemIDFetcher builds a function that fetches a ItemID from a request routed by chi.
+func buildRouteParamItemIDFetcher(logger logging.Logger) func(req *http.Request) uint64 {
 	return func(req *http.Request) uint64 {
-		// we can generally disregard this error only because we should be able to validate
+		// we can generally disregard this error only because we should be able to validate.
 		// that the string only contains numbers via chi's regex url param feature.
 		u, err := strconv.ParseUint(chi.URLParam(req, itemsservice.URIParamKey), 10, 64)
 		if err != nil {
@@ -95,10 +95,10 @@ func buildChiItemIDFetcher(logger logging.Logger) func(req *http.Request) uint64
 	}
 }
 
-// chiWebhookIDFetcher fetches a WebhookID from a request routed by chi.
-func buildChiWebhookIDFetcher(logger logging.Logger) func(req *http.Request) uint64 {
+// buildRouteParamWebhookIDFetcher fetches a WebhookID from a request routed by chi.
+func buildRouteParamWebhookIDFetcher(logger logging.Logger) func(req *http.Request) uint64 {
 	return func(req *http.Request) uint64 {
-		// we can generally disregard this error only because we should be able to validate
+		// we can generally disregard this error only because we should be able to validate.
 		// that the string only contains numbers via chi's regex url param feature.
 		u, err := strconv.ParseUint(chi.URLParam(req, webhooksservice.URIParamKey), 10, 64)
 		if err != nil {
@@ -108,10 +108,10 @@ func buildChiWebhookIDFetcher(logger logging.Logger) func(req *http.Request) uin
 	}
 }
 
-// chiOAuth2ClientIDFetcher fetches a OAuth2ClientID from a request routed by chi.
-func buildChiOAuth2ClientIDFetcher(logger logging.Logger) func(req *http.Request) uint64 {
+// buildRouteParamOAuth2ClientIDFetcher fetches a OAuth2ClientID from a request routed by chi.
+func buildRouteParamOAuth2ClientIDFetcher(logger logging.Logger) func(req *http.Request) uint64 {
 	return func(req *http.Request) uint64 {
-		// we can generally disregard this error only because we should be able to validate
+		// we can generally disregard this error only because we should be able to validate.
 		// that the string only contains numbers via chi's regex url param feature.
 		u, err := strconv.ParseUint(chi.URLParam(req, oauth2clientsservice.URIParamKey), 10, 64)
 		if err != nil {

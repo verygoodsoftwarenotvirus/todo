@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	// CreateMiddlewareCtxKey is a string alias we can use for referring to item input data in contexts
+	// CreateMiddlewareCtxKey is a string alias we can use for referring to item input data in contexts.
 	CreateMiddlewareCtxKey models.ContextKey = "item_create_input"
-	// UpdateMiddlewareCtxKey is a string alias we can use for referring to item update data in contexts
+	// UpdateMiddlewareCtxKey is a string alias we can use for referring to item update data in contexts.
 	UpdateMiddlewareCtxKey models.ContextKey = "item_update_input"
 
 	counterName        metrics.CounterName = "items"
@@ -31,28 +31,28 @@ var (
 type (
 	// Service handles to-do list items
 	Service struct {
-		logger         logging.Logger
-		itemCounter    metrics.UnitCounter
-		itemDatabase   models.ItemDataManager
-		userIDFetcher  UserIDFetcher
-		itemIDFetcher  ItemIDFetcher
-		encoderDecoder encoding.EncoderDecoder
-		reporter       newsman.Reporter
+		logger          logging.Logger
+		itemDataManager models.ItemDataManager
+		itemIDFetcher   ItemIDFetcher
+		userIDFetcher   UserIDFetcher
+		itemCounter     metrics.UnitCounter
+		encoderDecoder  encoding.EncoderDecoder
+		reporter        newsman.Reporter
 	}
 
-	// UserIDFetcher is a function that fetches user IDs
+	// UserIDFetcher is a function that fetches user IDs.
 	UserIDFetcher func(*http.Request) uint64
 
-	// ItemIDFetcher is a function that fetches item IDs
+	// ItemIDFetcher is a function that fetches item IDs.
 	ItemIDFetcher func(*http.Request) uint64
 )
 
-// ProvideItemsService builds a new ItemsService
+// ProvideItemsService builds a new ItemsService.
 func ProvideItemsService(
 	logger logging.Logger,
-	db models.ItemDataManager,
-	userIDFetcher UserIDFetcher,
+	itemDataManager models.ItemDataManager,
 	itemIDFetcher ItemIDFetcher,
+	userIDFetcher UserIDFetcher,
 	encoder encoding.EncoderDecoder,
 	itemCounterProvider metrics.UnitCounterProvider,
 	reporter newsman.Reporter,
@@ -63,13 +63,13 @@ func ProvideItemsService(
 	}
 
 	svc := &Service{
-		logger:         logger.WithName(serviceName),
-		itemDatabase:   db,
-		encoderDecoder: encoder,
-		itemCounter:    itemCounter,
-		userIDFetcher:  userIDFetcher,
-		itemIDFetcher:  itemIDFetcher,
-		reporter:       reporter,
+		logger:          logger.WithName(serviceName),
+		itemIDFetcher:   itemIDFetcher,
+		userIDFetcher:   userIDFetcher,
+		itemDataManager: itemDataManager,
+		encoderDecoder:  encoder,
+		itemCounter:     itemCounter,
+		reporter:        reporter,
 	}
 
 	return svc, nil

@@ -15,7 +15,7 @@ const (
 )
 
 type (
-	// User represents a user
+	// User represents a user.
 	User struct {
 		ID                    uint64  `json:"id"`
 		Username              string  `json:"username"`
@@ -29,33 +29,33 @@ type (
 		ArchivedOn            *uint64 `json:"archived_on"`
 	}
 
-	// UserList represents a list of users
+	// UserList represents a list of users.
 	UserList struct {
 		Pagination
 		Users []User `json:"users"`
 	}
 
-	// UserLoginInput represents the payload used to log in a user
+	// UserLoginInput represents the payload used to log in a user.
 	UserLoginInput struct {
 		Username  string `json:"username"`
 		Password  string `json:"password"`
 		TOTPToken string `json:"totp_token"`
 	}
 
-	// UserCreationInput represents the input required from users to register an account
+	// UserCreationInput represents the input required from users to register an account.
 	UserCreationInput struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
 
-	// UserDatabaseCreationInput is used by the user creation route to communicate with the database
+	// UserDatabaseCreationInput is used by the user creation route to communicate with the database.
 	UserDatabaseCreationInput struct {
 		Username        string
 		HashedPassword  string
 		TwoFactorSecret string
 	}
 
-	// UserCreationResponse is a response structure for Users that doesn't contain password fields, but does contain the two factor secret
+	// UserCreationResponse is a response structure for Users that doesn't contain password fields, but does contain the two factor secret.
 	UserCreationResponse struct {
 		ID                    uint64  `json:"id"`
 		Username              string  `json:"username"`
@@ -68,25 +68,25 @@ type (
 		TwoFactorQRCode       string  `json:"qr_code"`
 	}
 
-	// PasswordUpdateInput represents input a user would provide when updating their password
+	// PasswordUpdateInput represents input a user would provide when updating their password.
 	PasswordUpdateInput struct {
 		NewPassword     string `json:"new_password"`
 		CurrentPassword string `json:"current_password"`
 		TOTPToken       string `json:"totp_token"`
 	}
 
-	// TOTPSecretRefreshInput represents input a user would provide when updating their 2FA secret
+	// TOTPSecretRefreshInput represents input a user would provide when updating their 2FA secret.
 	TOTPSecretRefreshInput struct {
 		CurrentPassword string `json:"current_password"`
 		TOTPToken       string `json:"totp_token"`
 	}
 
-	// TOTPSecretRefreshResponse represents the response we provide to a user when updating their 2FA secret
+	// TOTPSecretRefreshResponse represents the response we provide to a user when updating their 2FA secret.
 	TOTPSecretRefreshResponse struct {
 		TwoFactorSecret string `json:"two_factor_secret"`
 	}
 
-	// UserDataManager describes a structure which can manage users in permanent storage
+	// UserDataManager describes a structure which can manage users in permanent storage.
 	UserDataManager interface {
 		GetUser(ctx context.Context, userID uint64) (*User, error)
 		GetUserByUsername(ctx context.Context, username string) (*User, error)
@@ -97,7 +97,7 @@ type (
 		ArchiveUser(ctx context.Context, userID uint64) error
 	}
 
-	// UserDataServer describes a structure capable of serving traffic related to users
+	// UserDataServer describes a structure capable of serving traffic related to users.
 	UserDataServer interface {
 		UserInputMiddleware(next http.Handler) http.Handler
 		PasswordUpdateInputMiddleware(next http.Handler) http.Handler
@@ -112,7 +112,7 @@ type (
 	}
 )
 
-// Update accepts a User as input and merges those values if they're set
+// Update accepts a User as input and merges those values if they're set.
 func (u *User) Update(input *User) {
 	if input.Username != "" && input.Username != u.Username {
 		u.Username = input.Username

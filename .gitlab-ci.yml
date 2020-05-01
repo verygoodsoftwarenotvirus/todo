@@ -30,8 +30,19 @@ coverage:
     GOPATH: "/go"
   script:
     - apt-get update -y && apt-get install -y make git gcc musl-dev
-    - GO111MODULE=off go get github.com/axw/gocov/gocov
-    - make artifacts/coverage.out
+    - make coverage
+
+unit-tests:
+    stage: quality
+    image: golang:stretch
+    variables:
+      GOPATH: "/go"
+    script:
+      - apt-get update -y && apt-get install -y make git gcc musl-dev
+      - make gitlab-ci-junit-report
+    artifacts:
+      reports:
+        junit: test_artifacts/unit_test_report.xml
 
 linting:
   stage: quality

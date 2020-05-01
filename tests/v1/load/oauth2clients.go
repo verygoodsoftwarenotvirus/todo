@@ -13,7 +13,7 @@ import (
 	"github.com/pquerna/otp/totp"
 )
 
-// fetchRandomOAuth2Client retrieves a random client from the list of available clients
+// fetchRandomOAuth2Client retrieves a random client from the list of available clients.
 func fetchRandomOAuth2Client(c *client.V1Client) *models.OAuth2Client {
 	clientsRes, err := c.GetOAuth2Clients(context.Background(), nil)
 	if err != nil || clientsRes == nil || len(clientsRes.Clients) <= 1 {

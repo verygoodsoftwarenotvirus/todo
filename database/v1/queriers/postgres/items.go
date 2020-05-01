@@ -10,12 +10,11 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
 const (
-	itemsTableName            = "items"
-	itemsTableOwnershipColumn = "belongs_to_user"
+	itemsTableName           = "items"
+	itemsUserOwnershipColumn = "belongs_to_user"
 )
 
 var (
@@ -26,12 +25,12 @@ var (
 		fmt.Sprintf("%s.%s", itemsTableName, "created_on"),
 		fmt.Sprintf("%s.%s", itemsTableName, "updated_on"),
 		fmt.Sprintf("%s.%s", itemsTableName, "archived_on"),
-		fmt.Sprintf("%s.%s", itemsTableName, itemsTableOwnershipColumn),
+		fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn),
 	}
 )
 
 // scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct
-func scanItem(scan database.Scanner, includeCount bool) (*models.Item, uint64, error) {
+func (p *Postgres) scanItem(scan database.Scanner, includeCount bool) (*models.Item, uint64, error) {
 	x := &models.Item{}
 	var count uint64
 
@@ -56,15 +55,15 @@ func scanItem(scan database.Scanner, includeCount bool) (*models.Item, uint64, e
 	return x, count, nil
 }
 
-// scanItems takes a logger and some database rows and turns them into a slice of items
-func scanItems(logger logging.Logger, rows *sql.Rows) ([]models.Item, uint64, error) {
+// scanItems takes a logger and some database rows and turns them into a slice of items.
+func (p *Postgres) scanItems(rows database.ResultIterator) ([]models.Item, uint64, error) {
 	var (
 		list  []models.Item
 		count uint64
 	)
 
 	for rows.Next() {
-		x, c, err := scanItem(rows, true)
+		x, c, err := p.scanItem(rows, true)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -81,7 +80,7 @@ func scanItems(logger logging.Logger, rows *sql.Rows) ([]models.Item, uint64, er
 	}
 
 	if closeErr := rows.Close(); closeErr != nil {
-		logger.Error(closeErr, "closing database rows")
+		p.logger.Error(closeErr, "closing database rows")
 	}
 
 	return list, count, nil
@@ -97,8 +96,8 @@ func (p *Postgres) buildItemExistsQuery(itemID, userID uint64) (query string, ar
 		From(itemsTableName).
 		Suffix(existenceSuffix).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.id", itemsTableName):                            itemID,
-			fmt.Sprintf("%s.%s", itemsTableName, itemsTableOwnershipColumn): userID,
+			fmt.Sprintf("%s.id", itemsTableName):                           itemID,
+			fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn): userID,
 		}).ToSql()
 
 	p.logQueryBuildingError(err)
@@ -106,10 +105,15 @@ func (p *Postgres) buildItemExistsQuery(itemID, userID uint64) (query string, ar
 	return query, args
 }
 
-// ItemExists queries the database to see if a given item belonging to a given user exists
+// ItemExists queries the database to see if a given item belonging to a given user exists.
 func (p *Postgres) ItemExists(ctx context.Context, itemID, userID uint64) (exists bool, err error) {
 	query, args := p.buildItemExistsQuery(itemID, userID)
+
 	err = p.db.QueryRowContext(ctx, query, args...).Scan(&exists)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+
 	return exists, err
 }
 
@@ -121,21 +125,22 @@ func (p *Postgres) buildGetItemQuery(itemID, userID uint64) (query string, args 
 		Select(itemsTableColumns...).
 		From(itemsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.id", itemsTableName):                            itemID,
-			fmt.Sprintf("%s.%s", itemsTableName, itemsTableOwnershipColumn): userID,
-		}).ToSql()
+			fmt.Sprintf("%s.id", itemsTableName):                           itemID,
+			fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn): userID,
+		}).
+		ToSql()
 
 	p.logQueryBuildingError(err)
 
 	return query, args
 }
 
-// GetItem fetches an item from the database
+// GetItem fetches an item from the database.
 func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
 	query, args := p.buildGetItemQuery(itemID, userID)
 	row := p.db.QueryRowContext(ctx, query, args...)
 
-	item, _, err := scanItem(row, false)
+	item, _, err := p.scanItem(row, false)
 	return item, err
 }
 
@@ -163,7 +168,7 @@ func (p *Postgres) buildGetAllItemsCountQuery() string {
 	return allItemsCountQuery
 }
 
-// GetAllItemsCount will fetch the count of items from the database
+// GetAllItemsCount will fetch the count of items from the database.
 func (p *Postgres) GetAllItemsCount(ctx context.Context) (count uint64, err error) {
 	err = p.db.QueryRowContext(ctx, p.buildGetAllItemsCountQuery()).Scan(&count)
 	return count, err
@@ -178,8 +183,8 @@ func (p *Postgres) buildGetItemsQuery(userID uint64, filter *models.QueryFilter)
 		Select(append(itemsTableColumns, fmt.Sprintf(countQuery, itemsTableName))...).
 		From(itemsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.archived_on", itemsTableName):                   nil,
-			fmt.Sprintf("%s.%s", itemsTableName, itemsTableOwnershipColumn): userID,
+			fmt.Sprintf("%s.archived_on", itemsTableName):                  nil,
+			fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn): userID,
 		}).
 		GroupBy(fmt.Sprintf("%s.id", itemsTableName))
 
@@ -193,7 +198,7 @@ func (p *Postgres) buildGetItemsQuery(userID uint64, filter *models.QueryFilter)
 	return query, args
 }
 
-// GetItems fetches a list of items from the database that meet a particular filter
+// GetItems fetches a list of items from the database that meet a particular filter.
 func (p *Postgres) GetItems(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.ItemList, error) {
 	query, args := p.buildGetItemsQuery(userID, filter)
 
@@ -202,7 +207,7 @@ func (p *Postgres) GetItems(ctx context.Context, userID uint64, filter *models.Q
 		return nil, buildError(err, "querying database for items")
 	}
 
-	items, count, err := scanItems(p.logger, rows)
+	items, count, err := p.scanItems(rows)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
@@ -219,7 +224,7 @@ func (p *Postgres) GetItems(ctx context.Context, userID uint64, filter *models.Q
 	return list, nil
 }
 
-// buildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments
+// buildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments.
 func (p *Postgres) buildCreateItemQuery(input *models.Item) (query string, args []interface{}) {
 	var err error
 
@@ -228,7 +233,7 @@ func (p *Postgres) buildCreateItemQuery(input *models.Item) (query string, args 
 		Columns(
 			"name",
 			"details",
-			itemsTableOwnershipColumn,
+			itemsUserOwnershipColumn,
 		).
 		Values(
 			input.Name,
@@ -243,7 +248,7 @@ func (p *Postgres) buildCreateItemQuery(input *models.Item) (query string, args 
 	return query, args
 }
 
-// CreateItem creates an item in the database
+// CreateItem creates an item in the database.
 func (p *Postgres) CreateItem(ctx context.Context, input *models.ItemCreationInput) (*models.Item, error) {
 	x := &models.Item{
 		Name:          input.Name,
@@ -253,7 +258,7 @@ func (p *Postgres) CreateItem(ctx context.Context, input *models.ItemCreationInp
 
 	query, args := p.buildCreateItemQuery(x)
 
-	// create the item
+	// create the item.
 	err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
 	if err != nil {
 		return nil, fmt.Errorf("error executing item creation query: %w", err)
@@ -262,7 +267,7 @@ func (p *Postgres) CreateItem(ctx context.Context, input *models.ItemCreationInp
 	return x, nil
 }
 
-// buildUpdateItemQuery takes an item and returns an update SQL query, with the relevant query parameters
+// buildUpdateItemQuery takes an item and returns an update SQL query, with the relevant query parameters.
 func (p *Postgres) buildUpdateItemQuery(input *models.Item) (query string, args []interface{}) {
 	var err error
 
@@ -272,8 +277,8 @@ func (p *Postgres) buildUpdateItemQuery(input *models.Item) (query string, args 
 		Set("details", input.Details).
 		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id":                      input.ID,
-			itemsTableOwnershipColumn: input.BelongsToUser,
+			"id":                     input.ID,
+			itemsUserOwnershipColumn: input.BelongsToUser,
 		}).
 		Suffix("RETURNING updated_on").
 		ToSql()
@@ -298,9 +303,9 @@ func (p *Postgres) buildArchiveItemQuery(itemID, userID uint64) (query string, a
 		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
 		Set("archived_on", squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id":                      itemID,
-			"archived_on":             nil,
-			itemsTableOwnershipColumn: userID,
+			"id":                     itemID,
+			"archived_on":            nil,
+			itemsUserOwnershipColumn: userID,
 		}).
 		Suffix("RETURNING archived_on").
 		ToSql()
@@ -310,9 +315,16 @@ func (p *Postgres) buildArchiveItemQuery(itemID, userID uint64) (query string, a
 	return query, args
 }
 
-// ArchiveItem marks an item as archived in the database
+// ArchiveItem marks an item as archived in the database.
 func (p *Postgres) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
 	query, args := p.buildArchiveItemQuery(itemID, userID)
-	_, err := p.db.ExecContext(ctx, query, args...)
+
+	res, err := p.db.ExecContext(ctx, query, args...)
+	if res != nil {
+		if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
+			return sql.ErrNoRows
+		}
+	}
+
 	return err
 }

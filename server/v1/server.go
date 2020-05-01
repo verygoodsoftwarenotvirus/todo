@@ -8,10 +8,10 @@ import (
 )
 
 type (
-	// Server is the structure responsible for hosting all available protocols
+	// Server is the structure responsible for hosting all available protocols.
 	// In the events we adopted a gRPC implementation of the surface, this is
 	// the structure that would contain it and be responsible for calling its
-	// serve method
+	// serve method.
 	Server struct {
 		config     *config.ServerConfig
 		httpServer *httpserver.Server
@@ -19,13 +19,13 @@ type (
 )
 
 var (
-	// Providers is our wire superset of providers this package offers
+	// Providers is our wire superset of providers this package offers.
 	Providers = wire.NewSet(
 		ProvideServer,
 	)
 )
 
-// ProvideServer builds a new Server instance
+// ProvideServer builds a new Server instance.
 func ProvideServer(cfg *config.ServerConfig, httpServer *httpserver.Server) (*Server, error) {
 	srv := &Server{
 		config:     cfg,
@@ -35,7 +35,7 @@ func ProvideServer(cfg *config.ServerConfig, httpServer *httpserver.Server) (*Se
 	return srv, nil
 }
 
-// Serve serves HTTP traffic
+// Serve serves HTTP traffic.
 func (s *Server) Serve() {
 	s.httpServer.Serve()
 }

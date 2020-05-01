@@ -27,7 +27,7 @@ type Client struct {
 	logger  logging.Logger
 }
 
-// Migrate is a simple wrapper around the core querier Migrate call
+// Migrate is a simple wrapper around the core querier Migrate call.
 func (c *Client) Migrate(ctx context.Context) error {
 	ctx, span := tracing.StartSpan(ctx, "Migrate")
 	defer span.End()
@@ -35,7 +35,7 @@ func (c *Client) Migrate(ctx context.Context) error {
 	return c.querier.Migrate(ctx)
 }
 
-// IsReady is a simple wrapper around the core querier IsReady call
+// IsReady is a simple wrapper around the core querier IsReady call.
 func (c *Client) IsReady(ctx context.Context) (ready bool) {
 	ctx, span := tracing.StartSpan(ctx, "IsReady")
 	defer span.End()
@@ -43,7 +43,7 @@ func (c *Client) IsReady(ctx context.Context) (ready bool) {
 	return c.querier.IsReady(ctx)
 }
 
-// ProvideDatabaseClient provides a new Database client
+// ProvideDatabaseClient provides a new Database client.
 func ProvideDatabaseClient(
 	ctx context.Context,
 	db *sql.DB,

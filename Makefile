@@ -1,15 +1,17 @@
-PWD           := $(shell pwd)
-GOPATH        := $(GOPATH)
-ARTIFACTS_DIR := artifacts
-COVERAGE_OUT  := $(ARTIFACTS_DIR)/coverage.out
-CONFIG_DIR    := config_files
-GO_FORMAT     := gofmt -s -w
-
+PWD                      := $(shell pwd)
+GOPATH                   := $(GOPATH)
+ARTIFACTS_DIR            := artifacts
+COVERAGE_OUT             := $(ARTIFACTS_DIR)/coverage.out
+CONFIG_DIR               := config_files
+GO_FORMAT                := gofmt -s -w
+PACKAGE_LIST             := `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|mock|fake)'`
+DOCKER_FILES_DIR         := dockerfiles
+DOCKER_COMPOSE_FILES_DIR := compose_files
 SERVER_DOCKER_IMAGE_NAME := todo-server
 SERVER_DOCKER_REPO_NAME  := docker.io/verygoodsoftwarenotvirus/$(SERVER_DOCKER_IMAGE_NAME)
 
 $(ARTIFACTS_DIR):
-	mkdir -p $(ARTIFACTS_DIR)
+	@mkdir -p $(ARTIFACTS_DIR)
 
 ## Go-specific prerequisite stuff
 
@@ -18,13 +20,13 @@ ifndef $(shell command -v wire 2> /dev/null)
 	$(shell GO111MODULE=off go get -u github.com/google/wire/cmd/wire)
 endif
 
-ensure-gocov:
-ifndef $(shell command -v gocov 2> /dev/null)
-	$(shell GO111MODULE=off go get -u github.com/axw/gocov/gocov)
+ensure-go-junit-report:
+ifndef $(shell command -v go-junit-report 2> /dev/null)
+	$(shell GO111MODULE=off go get -u github.com/jstemmer/go-junit-report)
 endif
 
 .PHONY: dev-tools
-dev-tools: ensure-wire ensure-gocov
+dev-tools: ensure-wire ensure-go-junit-report
 
 .PHONY: vendor-clean
 vendor-clean:
@@ -57,7 +59,7 @@ clean-configs:
 	rm -rf $(CONFIG_DIR)
 
 $(CONFIG_DIR):
-	mkdir -p $(CONFIG_DIR)
+	@mkdir -p $(CONFIG_DIR)
 	go run cmd/config_gen/v1/main.go
 
 ## Testing things
@@ -72,35 +74,22 @@ lint:
 		--env=GO111MODULE=on \
 		golangci/golangci-lint:latest golangci-lint run --config=.golangci.yml ./...
 
-$(COVERAGE_OUT): $(ARTIFACTS_DIR) ensure-gocov
-	set -ex; \
-	echo "mode: set" > $(COVERAGE_OUT);
-	for pkg in `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|mock|fake)'`; do \
-		go test -coverprofile=profile.out -v -count 5 -race -failfast $$pkg; \
-		if [ $$? -ne 0 ]; then exit 1; fi; \
-		cat profile.out | grep -v "mode: atomic" >> $(COVERAGE_OUT); \
-	rm -f profile.out; \
-	done || exit 1
-	gocov convert $(COVERAGE_OUT) | gocov report
-
-.PHONY: quicktest # basically the same as coverage.out, only running once instead of with `-count` set
-quicktest: $(ARTIFACTS_DIR) ensure-gocov
-	@set -ex; \
-	echo "mode: set" > $(COVERAGE_OUT);
-	for pkg in `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|mock|fake)'`; do \
-		go test -coverprofile=profile.out -race -failfast $$pkg; \
-		if [ $$? -ne 0 ]; then exit 1; fi; \
-		cat profile.out | grep -v "mode: atomic" >> $(COVERAGE_OUT); \
-	rm -f profile.out; \
-	done || exit 1
-	gocov convert $(COVERAGE_OUT) | gocov report
-
-.PHONY: coverage-clean
-coverage-clean:
+.PHONY: clean-coverage
+clean-coverage:
 	@rm -f $(COVERAGE_OUT) profile.out;
 
 .PHONY: coverage
-coverage: coverage-clean $(COVERAGE_OUT)
+coverage: clean-coverage $(ARTIFACTS_DIR)
+	@go test -coverprofile=$(COVERAGE_OUT) -covermode=atomic -race $(PACKAGE_LIST) > /dev/null
+	@go tool cover -func=$(ARTIFACTS_DIR)/coverage.out | grep 'total:' | xargs | awk '{ print "COVERAGE: " $$3 }'
+
+gitlab-ci-junit-report: $(ARTIFACTS_DIR) ensure-go-junit-report
+	@mkdir $(CI_PROJECT_DIR)/test_artifacts
+	go test -v -race -count 5 $(PACKAGE_LIST) | go-junit-report > $(CI_PROJECT_DIR)/test_artifacts/unit_test_report.xml
+
+.PHONY: quicktest # basically the same as coverage.out, only running once instead of with `-count` set
+quicktest: $(ARTIFACTS_DIR)
+	go test -cover -race -failfast $(PACKAGE_LIST)
 
 .PHONY: format
 format:
@@ -108,12 +97,12 @@ format:
 
 .PHONY: check_formatting
 check_formatting:
-	docker build --tag check_formatting:latest --file dockerfiles/formatting.Dockerfile .
+	docker build --tag check_formatting:latest --file $(DOCKER_FILES_DIR)/formatting.Dockerfile .
 	docker run check_formatting:latest
 
 .PHONY: frontend-tests
 frontend-tests:
-	docker-compose --file compose-files/frontend-tests.json up \
+	docker-compose --file $(DOCKER_COMPOSE_FILES_DIR)/frontend-tests.json up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -129,29 +118,9 @@ lintegration-tests: integration-tests lint
 .PHONY: integration-tests
 integration-tests: integration-tests-postgres integration-tests-sqlite integration-tests-mariadb
 
-.PHONY: integration-tests-postgres
-integration-tests-postgres:
-	docker-compose --file compose-files/integration-tests-postgres.json up \
-	--build \
-	--force-recreate \
-	--remove-orphans \
-	--renew-anon-volumes \
-	--always-recreate-deps \
-	--abort-on-container-exit
-
-.PHONY: integration-tests-sqlite
-integration-tests-sqlite:
-	docker-compose --file compose-files/integration-tests-sqlite.json up \
-	--build \
-	--force-recreate \
-	--remove-orphans \
-	--renew-anon-volumes \
-	--always-recreate-deps \
-	--abort-on-container-exit
-
-.PHONY: integration-tests-mariadb
-integration-tests-mariadb:
-	docker-compose --file compose-files/integration-tests-mariadb.json up \
+.PHONY: integration-tests-
+integration-tests-%:
+	docker-compose --file $(DOCKER_COMPOSE_FILES_DIR)/integration-tests-$*.json up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -160,47 +129,27 @@ integration-tests-mariadb:
 	--abort-on-container-exit
 
 .PHONY: integration-coverage
-integration-coverage:
+integration-coverage: $(ARTIFACTS_DIR)
 	@# big thanks to https://blog.cloudflare.com/go-coverage-with-external-tests/
-	rm -f ./artifacts/integration-coverage.out
-	mkdir -p ./artifacts
-	docker-compose --file compose-files/integration-coverage.json up \
+	rm -f $(ARTIFACTS_DIR)/integration-coverage.out
+	@mkdir -p $(ARTIFACTS_DIR)
+	docker-compose --file $(DOCKER_COMPOSE_FILES_DIR)/integration-coverage.json up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
 	--renew-anon-volumes \
 	--always-recreate-deps \
 	--abort-on-container-exit
-	go tool cover -html=./artifacts/integration-coverage.out
+	go tool cover -html=$(ARTIFACTS_DIR)/integration-coverage.out
 
 ## Load tests
 
 .PHONY: load-tests
 load-tests: load-tests-postgres load-tests-sqlite load-tests-mariadb
 
-.PHONY: load-tests-postgres
-load-tests-postgres:
-	docker-compose --file compose-files/load-tests-postgres.json up \
-	--build \
-	--force-recreate \
-	--remove-orphans \
-	--renew-anon-volumes \
-	--always-recreate-deps \
-	--abort-on-container-exit
-
-.PHONY: load-tests-sqlite
-load-tests-sqlite:
-	docker-compose --file compose-files/load-tests-sqlite.json up \
-	--build \
-	--force-recreate \
-	--remove-orphans \
-	--renew-anon-volumes \
-	--always-recreate-deps \
-	--abort-on-container-exit
-
-.PHONY: load-tests-mariadb
-load-tests-mariadb:
-	docker-compose --file compose-files/load-tests-mariadb.json up \
+.PHONY: load-tests-
+load-tests-%:
+	docker-compose --file $(DOCKER_COMPOSE_FILES_DIR)/load-tests-$*.json up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -212,17 +161,17 @@ load-tests-mariadb:
 
 .PHONY: server-docker-image
 server-docker-image: wire
-	docker build --tag $(SERVER_DOCKER_IMAGE_NAME):latest --file dockerfiles/server.Dockerfile .
+	docker build --tag $(SERVER_DOCKER_IMAGE_NAME):latest --file $(DOCKER_FILES_DIR)/server.Dockerfile .
 
 .PHONY: push-server-to-docker
-push-server-to-docker: prod-server-docker-image
+push-server-to-docker: server-docker-image
 	docker push $(SERVER_DOCKER_REPO_NAME):latest
 
 ## Running
 
 .PHONY: dev
 dev:
-	docker-compose --file compose-files/development.json up \
+	docker-compose --file $(DOCKER_COMPOSE_FILES_DIR)/development.json up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -232,7 +181,7 @@ dev:
 
 .PHONY: run
 run:
-	docker-compose --file compose-files/production.json up \
+	docker-compose --file $(DOCKER_COMPOSE_FILES_DIR)/production.json up \
 	--build \
 	--force-recreate \
 	--remove-orphans \

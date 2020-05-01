@@ -89,6 +89,7 @@ func TestUnmarshalBody(T *testing.T) {
 
 	T.Run("expected use", func(t *testing.T) {
 		ctx := context.Background()
+
 		expected := "whatever"
 		res := &http.Response{
 			Body:       ioutil.NopCloser(strings.NewReader(fmt.Sprintf(`{"name": %q}`, expected))),
@@ -103,6 +104,7 @@ func TestUnmarshalBody(T *testing.T) {
 
 	T.Run("with good status but unmarshallable response", func(t *testing.T) {
 		ctx := context.Background()
+
 		res := &http.Response{
 			Body:       ioutil.NopCloser(strings.NewReader("BLAH")),
 			StatusCode: http.StatusOK,
@@ -115,6 +117,7 @@ func TestUnmarshalBody(T *testing.T) {
 
 	T.Run("with an erroneous error code", func(t *testing.T) {
 		ctx := context.Background()
+
 		res := &http.Response{
 			Body: ioutil.NopCloser(
 				strings.NewReader(
@@ -136,6 +139,7 @@ func TestUnmarshalBody(T *testing.T) {
 
 	T.Run("with an erroneous error code and unmarshallable body", func(t *testing.T) {
 		ctx := context.Background()
+
 		res := &http.Response{
 			Body:       ioutil.NopCloser(strings.NewReader("BLAH")),
 			StatusCode: http.StatusBadRequest,
@@ -149,12 +153,14 @@ func TestUnmarshalBody(T *testing.T) {
 
 	T.Run("with nil target variable", func(t *testing.T) {
 		ctx := context.Background()
+
 		err := unmarshalBody(ctx, nil, nil)
 		assert.Error(t, err, "error should be encountered when passed nil")
 	})
 
 	T.Run("with erroneous reader", func(t *testing.T) {
 		ctx := context.Background()
+
 		expected := errors.New("blah")
 
 		rc := newMockReadCloser()

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
@@ -69,11 +70,39 @@ func buildErroneousMockRowFromWebhook(w *models.Webhook) *sqlmock.Rows {
 	return exampleRows
 }
 
+func TestPostgres_ScanWebhooks(T *testing.T) {
+	T.Parallel()
+
+	T.Run("surfaces row errors", func(t *testing.T) {
+		p, _ := buildTestService(t)
+		mockRows := &database.MockResultIterator{}
+
+		mockRows.On("Next").Return(false)
+		mockRows.On("Err").Return(errors.New("blah"))
+
+		_, _, err := p.scanWebhooks(mockRows)
+		assert.Error(t, err)
+	})
+
+	T.Run("logs row closing errors", func(t *testing.T) {
+		p, _ := buildTestService(t)
+		mockRows := &database.MockResultIterator{}
+
+		mockRows.On("Next").Return(false)
+		mockRows.On("Err").Return(nil)
+		mockRows.On("Close").Return(errors.New("blah"))
+
+		_, _, err := p.scanWebhooks(mockRows)
+		assert.NoError(t, err)
+	})
+}
+
 func TestPostgres_buildGetWebhookQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.belongs_to_user = $1 AND webhooks.id = $2"
@@ -96,6 +125,7 @@ func TestPostgres_GetWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		p, mockDB := buildTestService(t)
@@ -112,6 +142,7 @@ func TestPostgres_GetWebhook(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		p, mockDB := buildTestService(t)
@@ -129,6 +160,7 @@ func TestPostgres_GetWebhook(T *testing.T) {
 
 	T.Run("with error from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		p, mockDB := buildTestService(t)
@@ -145,6 +177,7 @@ func TestPostgres_GetWebhook(T *testing.T) {
 
 	T.Run("with invalid response from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		p, mockDB := buildTestService(t)
@@ -181,6 +214,7 @@ func TestPostgres_GetAllWebhooksCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleCount := uint64(123)
 
 		p, mockDB := buildTestService(t)
@@ -196,6 +230,7 @@ func TestPostgres_GetAllWebhooksCount(T *testing.T) {
 
 	T.Run("with error from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(errors.New("blah"))
@@ -251,6 +286,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
+
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WillReturnError(sql.ErrNoRows)
@@ -265,6 +301,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
+
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WillReturnError(errors.New("blah"))
@@ -278,6 +315,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 
 	T.Run("with error from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		p, mockDB := buildTestService(t)
@@ -297,6 +335,7 @@ func TestPostgres_buildGetWebhooksQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+
 		exampleUser := fakemodels.BuildFakeUser()
 		filter := fakemodels.BuildFleshedOutQueryFilter()
 
@@ -324,6 +363,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 		exampleWebhookList := fakemodels.BuildFakeWebhookList()
 
@@ -347,6 +387,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 
 		p, mockDB := buildTestService(t)
@@ -363,6 +404,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 
 		p, mockDB := buildTestService(t)
@@ -378,6 +420,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
@@ -398,6 +441,7 @@ func TestPostgres_buildWebhookCreationQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to_user) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id, created_on"
@@ -426,6 +470,7 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleWebhook.ID, exampleWebhook.CreatedOn)
@@ -451,6 +496,7 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 
 	T.Run("with error interacting with database", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
@@ -479,6 +525,7 @@ func TestPostgres_buildUpdateWebhookQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		expectedQuery := "UPDATE webhooks SET name = $1, content_type = $2, url = $3, method = $4, events = $5, data_types = $6, topics = $7, updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $8 AND id = $9 RETURNING updated_on"
@@ -508,6 +555,7 @@ func TestPostgres_UpdateWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		p, mockDB := buildTestService(t)
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
@@ -532,6 +580,7 @@ func TestPostgres_UpdateWebhook(T *testing.T) {
 
 	T.Run("with error from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		p, mockDB := buildTestService(t)
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
@@ -559,6 +608,7 @@ func TestPostgres_buildArchiveWebhookQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		expectedQuery := "UPDATE webhooks SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1 AND id = $2 RETURNING archived_on"
@@ -579,6 +629,7 @@ func TestPostgres_ArchiveWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 		expectedQuery := "UPDATE webhooks SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1 AND id = $2 RETURNING archived_on"
 

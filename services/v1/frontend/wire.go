@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	// Providers is our collection of what we provide to other services
+	// Providers is our collection of what we provide to other services.
 	Providers = wire.NewSet(
 		ProvideFrontendService,
 	)

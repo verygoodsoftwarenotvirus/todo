@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	// Providers is our collection of what we provide to other services
+	// Providers is our collection of what we provide to other services.
 	Providers = wire.NewSet(
 		ProvideWebhooksService,
 		ProvideWebhookDataManager,
@@ -16,12 +16,12 @@ var (
 	)
 )
 
-// ProvideWebhookDataManager is an arbitrary function for dependency injection's sake
+// ProvideWebhookDataManager is an arbitrary function for dependency injection's sake.
 func ProvideWebhookDataManager(db database.Database) models.WebhookDataManager {
 	return db
 }
 
-// ProvideWebhookDataServer is an arbitrary function for dependency injection's sake
+// ProvideWebhookDataServer is an arbitrary function for dependency injection's sake.
 func ProvideWebhookDataServer(s *Service) models.WebhookDataServer {
 	return s
 }

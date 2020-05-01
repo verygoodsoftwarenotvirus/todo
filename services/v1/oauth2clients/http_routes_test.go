@@ -86,12 +86,12 @@ func TestService_ListHandler(T *testing.T) {
 			"GetOAuth2Clients",
 			mock.Anything,
 			requestingUser.ID,
-			mock.Anything,
+			mock.AnythingOfType("*models.QueryFilter"),
 		).Return(exampleOAuth2ClientList, nil)
 		s.database = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2ClientList")).Return(nil)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -115,12 +115,12 @@ func TestService_ListHandler(T *testing.T) {
 			"GetOAuth2Clients",
 			mock.Anything,
 			requestingUser.ID,
-			mock.Anything,
+			mock.AnythingOfType("*models.QueryFilter"),
 		).Return((*models.OAuth2ClientList)(nil), sql.ErrNoRows)
 		s.database = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2ClientList")).Return(nil)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -143,7 +143,7 @@ func TestService_ListHandler(T *testing.T) {
 			"GetOAuth2Clients",
 			mock.Anything,
 			requestingUser.ID,
-			mock.Anything,
+			mock.AnythingOfType("*models.QueryFilter"),
 		).Return((*models.OAuth2ClientList)(nil), errors.New("blah"))
 		s.database = mockDB
 
@@ -169,12 +169,12 @@ func TestService_ListHandler(T *testing.T) {
 			"GetOAuth2Clients",
 			mock.Anything,
 			requestingUser.ID,
-			mock.Anything,
+			mock.AnythingOfType("*models.QueryFilter"),
 		).Return(exampleOAuth2ClientList, nil)
 		s.database = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2ClientList")).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -193,9 +193,11 @@ func TestService_ListHandler(T *testing.T) {
 func TestService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
+	exampleUser := fakemodels.BuildFakeUser()
+
 	T.Run("happy path", func(t *testing.T) {
-		exampleUser := fakemodels.BuildFakeUser()
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		s := buildTestService(t)
@@ -230,7 +232,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.oauth2ClientCounter = uc
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2Client")).Return(nil)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -260,6 +262,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 	T.Run("with error getting user", func(t *testing.T) {
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		s := buildTestService(t)
@@ -288,8 +291,8 @@ func TestService_CreateHandler(T *testing.T) {
 	})
 
 	T.Run("with invalid credentials", func(t *testing.T) {
-		exampleUser := fakemodels.BuildFakeUser()
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		s := buildTestService(t)
@@ -335,8 +338,8 @@ func TestService_CreateHandler(T *testing.T) {
 	})
 
 	T.Run("with error validating password", func(t *testing.T) {
-		exampleUser := fakemodels.BuildFakeUser()
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		s := buildTestService(t)
@@ -382,8 +385,8 @@ func TestService_CreateHandler(T *testing.T) {
 	})
 
 	T.Run("with error creating oauth2 client", func(t *testing.T) {
-		exampleUser := fakemodels.BuildFakeUser()
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		s := buildTestService(t)
@@ -429,8 +432,8 @@ func TestService_CreateHandler(T *testing.T) {
 	})
 
 	T.Run("with error encoding response", func(t *testing.T) {
-		exampleUser := fakemodels.BuildFakeUser()
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		s := buildTestService(t)
@@ -465,7 +468,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.oauth2ClientCounter = uc
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2Client")).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -487,9 +490,12 @@ func TestService_CreateHandler(T *testing.T) {
 func TestService_ReadHandler(T *testing.T) {
 	T.Parallel()
 
+	exampleUser := fakemodels.BuildFakeUser()
+
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
 			return exampleOAuth2Client.ID
@@ -505,7 +511,7 @@ func TestService_ReadHandler(T *testing.T) {
 		s.database = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2Client")).Return(nil)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -523,6 +529,7 @@ func TestService_ReadHandler(T *testing.T) {
 	T.Run("with no rows found", func(t *testing.T) {
 		s := buildTestService(t)
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
 			return exampleOAuth2Client.ID
@@ -552,6 +559,7 @@ func TestService_ReadHandler(T *testing.T) {
 	T.Run("with error fetching client from database", func(t *testing.T) {
 		s := buildTestService(t)
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
 			return exampleOAuth2Client.ID
@@ -581,6 +589,7 @@ func TestService_ReadHandler(T *testing.T) {
 	T.Run("with error encoding response", func(t *testing.T) {
 		s := buildTestService(t)
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
 			return exampleOAuth2Client.ID
@@ -596,7 +605,7 @@ func TestService_ReadHandler(T *testing.T) {
 		s.database = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2Client")).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -615,9 +624,12 @@ func TestService_ReadHandler(T *testing.T) {
 func TestService_ArchiveHandler(T *testing.T) {
 	T.Parallel()
 
+	exampleUser := fakemodels.BuildFakeUser()
+
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
 			return exampleOAuth2Client.ID
@@ -651,6 +663,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 	T.Run("with no rows found", func(t *testing.T) {
 		s := buildTestService(t)
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
 			return exampleOAuth2Client.ID
@@ -680,6 +693,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 	T.Run("with error deleting record", func(t *testing.T) {
 		s := buildTestService(t)
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
 			return exampleOAuth2Client.ID

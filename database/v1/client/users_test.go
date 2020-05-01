@@ -16,6 +16,7 @@ func TestClient_GetUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		c, mockDB := buildTestClient()
@@ -34,6 +35,7 @@ func TestClient_GetUserByUsername(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		c, mockDB := buildTestClient()
@@ -47,11 +49,31 @@ func TestClient_GetUserByUsername(T *testing.T) {
 	})
 }
 
+func TestClient_GetAllUserCount(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
+
+		exampleCount := uint64(123)
+
+		c, mockDB := buildTestClient()
+		mockDB.UserDataManager.On("GetAllUserCount", mock.Anything).Return(exampleCount, nil)
+
+		actual, err := c.GetAllUserCount(ctx)
+		assert.NoError(t, err)
+		assert.Equal(t, exampleCount, actual)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
+	})
+}
+
 func TestClient_GetUsers(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUserList := fakemodels.BuildFakeUserList()
 		filter := models.DefaultQueryFilter()
 
@@ -67,6 +89,7 @@ func TestClient_GetUsers(T *testing.T) {
 
 	T.Run("with nil filter", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUserList := fakemodels.BuildFakeUserList()
 		filter := (*models.QueryFilter)(nil)
 
@@ -86,6 +109,7 @@ func TestClient_CreateUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
@@ -105,6 +129,7 @@ func TestClient_UpdateUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 		var expected error
 
@@ -123,6 +148,7 @@ func TestClient_ArchiveUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		c, mockDB := buildTestClient()

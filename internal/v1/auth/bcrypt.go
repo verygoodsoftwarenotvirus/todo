@@ -16,14 +16,14 @@ const (
 	bcryptCostCompensation     = 2
 	defaultMinimumPasswordSize = 16
 
-	// DefaultBcryptHashCost is what it says on the tin
+	// DefaultBcryptHashCost is what it says on the tin.
 	DefaultBcryptHashCost = BcryptHashCost(bcrypt.DefaultCost + bcryptCostCompensation)
 )
 
 var (
 	_ Authenticator = (*BcryptAuthenticator)(nil)
 
-	// ErrCostTooLow indicates that a password has too low a Bcrypt cost
+	// ErrCostTooLow indicates that a password has too low a Bcrypt cost.
 	ErrCostTooLow = errors.New("stored password's cost is too low")
 )
 
@@ -39,7 +39,7 @@ type (
 	BcryptHashCost uint
 )
 
-// ProvideBcryptAuthenticator returns a bcrypt powered Authenticator
+// ProvideBcryptAuthenticator returns a bcrypt powered Authenticator.
 func ProvideBcryptAuthenticator(hashCost BcryptHashCost, logger logging.Logger) Authenticator {
 	ba := &BcryptAuthenticator{
 		logger:              logger.WithName("bcrypt"),
@@ -49,7 +49,7 @@ func ProvideBcryptAuthenticator(hashCost BcryptHashCost, logger logging.Logger) 
 	return ba
 }
 
-// HashPassword takes a password and hashes it using bcrypt
+// HashPassword takes a password and hashes it using bcrypt.
 func (b *BcryptAuthenticator) HashPassword(ctx context.Context, password string) (string, error) {
 	_, span := tracing.StartSpan(ctx, "HashPassword")
 	defer span.End()
@@ -58,7 +58,7 @@ func (b *BcryptAuthenticator) HashPassword(ctx context.Context, password string)
 	return string(hashedPass), err
 }
 
-// ValidateLogin validates a login attempt by
+// ValidateLogin validates a login attempt by:
 // 1. checking that the provided password matches the stored hashed password
 // 2. checking that the temporary one-time password provided jives with the stored two factor secret
 // 3. checking that the provided hashed password isn't too weak, and returning an error otherwise
@@ -104,7 +104,7 @@ func (b *BcryptAuthenticator) PasswordMatches(ctx context.Context, hashedPasswor
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(providedPassword)) == nil
 }
 
-// hashedPasswordIsTooWeak determines if a given hashed password was hashed with too weak a bcrypt cost
+// hashedPasswordIsTooWeak determines if a given hashed password was hashed with too weak a bcrypt cost.
 func (b *BcryptAuthenticator) hashedPasswordIsTooWeak(ctx context.Context, hashedPassword string) bool {
 	_, span := tracing.StartSpan(ctx, "hashedPasswordIsTooWeak")
 	defer span.End()
@@ -114,7 +114,7 @@ func (b *BcryptAuthenticator) hashedPasswordIsTooWeak(ctx context.Context, hashe
 	return err != nil || uint(cost) < b.hashCost
 }
 
-// PasswordIsAcceptable takes a password and returns whether or not it satisfies the authenticator
+// PasswordIsAcceptable takes a password and returns whether or not it satisfies the authenticator.
 func (b *BcryptAuthenticator) PasswordIsAcceptable(pass string) bool {
 	return uint(len(pass)) >= b.minimumPasswordSize
 }

@@ -65,6 +65,7 @@ func TestMariaDB_IsReady(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		ctx := context.Background()
+
 		m, _ := buildTestService(t)
 		assert.True(t, m.IsReady(ctx))
 	})

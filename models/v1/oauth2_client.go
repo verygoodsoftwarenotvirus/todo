@@ -10,12 +10,12 @@ import (
 )
 
 const (
-	// OAuth2ClientKey is a ContextKey for use with contexts involving OAuth2 clients
+	// OAuth2ClientKey is a ContextKey for use with contexts involving OAuth2 clients.
 	OAuth2ClientKey ContextKey = "oauth2_client"
 )
 
 type (
-	// OAuth2ClientDataManager handles OAuth2 clients
+	// OAuth2ClientDataManager handles OAuth2 clients.
 	OAuth2ClientDataManager interface {
 		GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*OAuth2Client, error)
 		GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*OAuth2Client, error)
@@ -26,19 +26,19 @@ type (
 		ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error
 	}
 
-	// OAuth2ClientDataServer describes a structure capable of serving traffic related to oauth2 clients
+	// OAuth2ClientDataServer describes a structure capable of serving traffic related to oauth2 clients.
 	OAuth2ClientDataServer interface {
 		ListHandler() http.HandlerFunc
 		CreateHandler() http.HandlerFunc
 		ReadHandler() http.HandlerFunc
-		// There is deliberately no update function
+		// There is deliberately no update function.
 		ArchiveHandler() http.HandlerFunc
 
 		CreationInputMiddleware(next http.Handler) http.Handler
 		OAuth2ClientInfoMiddleware(next http.Handler) http.Handler
 		ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.Request) (*OAuth2Client, error)
 
-		// wrappers for our implementation library
+		// wrappers for our implementation library.
 		HandleAuthorizeRequest(res http.ResponseWriter, req *http.Request) error
 		HandleTokenRequest(res http.ResponseWriter, req *http.Request) error
 	}
@@ -58,7 +58,7 @@ type (
 		BelongsToUser   uint64   `json:"belongs_to_user"`
 	}
 
-	// OAuth2ClientList is a response struct containing a list of OAuth2Clients
+	// OAuth2ClientList is a response struct containing a list of OAuth2Clients.
 	OAuth2ClientList struct {
 		Pagination
 		Clients []OAuth2Client `json:"clients"`
@@ -75,7 +75,7 @@ type (
 		Scopes        []string `json:"scopes"`
 	}
 
-	// OAuth2ClientUpdateInput is a struct for use when updating OAuth2 clients
+	// OAuth2ClientUpdateInput is a struct for use when updating OAuth2 clients.
 	OAuth2ClientUpdateInput struct {
 		RedirectURI string   `json:"redirect_uri"`
 		Scopes      []string `json:"scopes"`
@@ -89,22 +89,22 @@ func (c *OAuth2Client) GetID() string {
 	return c.ClientID
 }
 
-// GetSecret returns the ClientSecret
+// GetSecret returns the ClientSecret.
 func (c *OAuth2Client) GetSecret() string {
 	return c.ClientSecret
 }
 
-// GetDomain returns the client's domain
+// GetDomain returns the client's domain.
 func (c *OAuth2Client) GetDomain() string {
 	return c.RedirectURI
 }
 
-// GetUserID returns the client's UserID
+// GetUserID returns the client's UserID.
 func (c *OAuth2Client) GetUserID() string {
 	return strconv.FormatUint(c.BelongsToUser, 10)
 }
 
-// HasScope returns whether or not the provided scope is included in the scope list
+// HasScope returns whether or not the provided scope is included in the scope list.
 func (c *OAuth2Client) HasScope(scope string) (found bool) {
 	scope = strings.TrimSpace(scope)
 	if scope == "" {

@@ -133,7 +133,7 @@ func productionConfig(filepath string) error {
 	return cfg.WriteConfigAs(filepath)
 }
 
-func buildIntegrationTestForDBImplementation(dbprov, dbDeet string) configFunc {
+func buildIntegrationTestForDBImplementation(dbprov, dbDetails string) configFunc {
 	return func(filepath string) error {
 		cfg := config.BuildConfig()
 
@@ -156,7 +156,7 @@ func buildIntegrationTestForDBImplementation(dbprov, dbDeet string) configFunc {
 
 		cfg.Set(dbDebug, false)
 		cfg.Set(dbProvider, dbprov)
-		cfg.Set(dbDeets, dbDeet)
+		cfg.Set(dbDeets, dbDetails)
 
 		return cfg.WriteConfigAs(filepath)
 	}

@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	// CreateMiddlewareCtxKey is a string alias we can use for referring to webhook input data in contexts
+	// CreateMiddlewareCtxKey is a string alias we can use for referring to webhook input data in contexts.
 	CreateMiddlewareCtxKey models.ContextKey = "webhook_create_input"
-	// UpdateMiddlewareCtxKey is a string alias we can use for referring to webhook input data in contexts
+	// UpdateMiddlewareCtxKey is a string alias we can use for referring to webhook input data in contexts.
 	UpdateMiddlewareCtxKey models.ContextKey = "webhook_update_input"
 
 	counterName        metrics.CounterName = "webhooks"
@@ -35,28 +35,28 @@ type (
 		TuneIn(newsman.Listener)
 	}
 
-	// Service handles TODO ListHandler webhooks
+	// Service handles TODO ListHandler webhooks.
 	Service struct {
-		logger           logging.Logger
-		webhookCounter   metrics.UnitCounter
-		webhookDatabase  models.WebhookDataManager
-		userIDFetcher    UserIDFetcher
-		webhookIDFetcher WebhookIDFetcher
-		encoderDecoder   encoding.EncoderDecoder
-		eventManager     eventManager
+		logger             logging.Logger
+		webhookCounter     metrics.UnitCounter
+		webhookDataManager models.WebhookDataManager
+		userIDFetcher      UserIDFetcher
+		webhookIDFetcher   WebhookIDFetcher
+		encoderDecoder     encoding.EncoderDecoder
+		eventManager       eventManager
 	}
 
-	// UserIDFetcher is a function that fetches user IDs
+	// UserIDFetcher is a function that fetches user IDs.
 	UserIDFetcher func(*http.Request) uint64
 
-	// WebhookIDFetcher is a function that fetches webhook IDs
+	// WebhookIDFetcher is a function that fetches webhook IDs.
 	WebhookIDFetcher func(*http.Request) uint64
 )
 
-// ProvideWebhooksService builds a new WebhooksService
+// ProvideWebhooksService builds a new WebhooksService.
 func ProvideWebhooksService(
 	logger logging.Logger,
-	webhookDatabase models.WebhookDataManager,
+	webhookDataManager models.WebhookDataManager,
 	userIDFetcher UserIDFetcher,
 	webhookIDFetcher WebhookIDFetcher,
 	encoder encoding.EncoderDecoder,
@@ -69,13 +69,13 @@ func ProvideWebhooksService(
 	}
 
 	svc := &Service{
-		logger:           logger.WithName(serviceName),
-		webhookDatabase:  webhookDatabase,
-		encoderDecoder:   encoder,
-		webhookCounter:   webhookCounter,
-		userIDFetcher:    userIDFetcher,
-		webhookIDFetcher: webhookIDFetcher,
-		eventManager:     em,
+		logger:             logger.WithName(serviceName),
+		webhookDataManager: webhookDataManager,
+		encoderDecoder:     encoder,
+		webhookCounter:     webhookCounter,
+		userIDFetcher:      userIDFetcher,
+		webhookIDFetcher:   webhookIDFetcher,
+		eventManager:       em,
 	}
 
 	return svc, nil

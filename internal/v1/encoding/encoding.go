@@ -10,31 +10,31 @@ import (
 )
 
 const (
-	// ContentTypeHeader is the HTTP standard header name for content type
+	// ContentTypeHeader is the HTTP standard header name for content type.
 	ContentTypeHeader = "Content-type"
-	// XMLContentType represents the XML content type
+	// XMLContentType represents the XML content type.
 	XMLContentType = "application/xml"
-	// JSONContentType represents the JSON content type
+	// JSONContentType represents the JSON content type.
 	JSONContentType = "application/json"
-	// DefaultContentType is what the library defaults to
+	// DefaultContentType is what the library defaults to.
 	DefaultContentType = JSONContentType
 )
 
 var (
-	// Providers provides ResponseEncoders for dependency injection
+	// Providers provides ResponseEncoders for dependency injection.
 	Providers = wire.NewSet(
 		ProvideResponseEncoder,
 	)
 )
 
 type (
-	// EncoderDecoder is an interface that allows for multiple implementations of HTTP response formats
+	// EncoderDecoder is an interface that allows for multiple implementations of HTTP response formats.
 	EncoderDecoder interface {
 		EncodeResponse(http.ResponseWriter, interface{}) error
 		DecodeRequest(*http.Request, interface{}) error
 	}
 
-	// ServerEncoderDecoder is our concrete implementation of EncoderDecoder
+	// ServerEncoderDecoder is our concrete implementation of EncoderDecoder.
 	ServerEncoderDecoder struct{}
 
 	encoder interface {
@@ -46,7 +46,7 @@ type (
 	}
 )
 
-// EncodeResponse encodes responses
+// EncodeResponse encodes responses.
 func (ed *ServerEncoderDecoder) EncodeResponse(res http.ResponseWriter, v interface{}) error {
 	var ct = strings.ToLower(res.Header().Get(ContentTypeHeader))
 	if ct == "" {
@@ -65,7 +65,7 @@ func (ed *ServerEncoderDecoder) EncodeResponse(res http.ResponseWriter, v interf
 	return e.Encode(v)
 }
 
-// DecodeRequest decodes responses
+// DecodeRequest decodes responses.
 func (ed *ServerEncoderDecoder) DecodeRequest(req *http.Request, v interface{}) error {
 	var ct = strings.ToLower(req.Header.Get(ContentTypeHeader))
 	if ct == "" {
@@ -83,7 +83,7 @@ func (ed *ServerEncoderDecoder) DecodeRequest(req *http.Request, v interface{}) 
 	return d.Decode(v)
 }
 
-// ProvideResponseEncoder provides a jsonResponseEncoder
+// ProvideResponseEncoder provides a jsonResponseEncoder.
 func ProvideResponseEncoder() EncoderDecoder {
 	return &ServerEncoderDecoder{}
 }

@@ -18,6 +18,7 @@ func TestClient_GetOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		c, mockDB := buildTestClient()
@@ -32,6 +33,7 @@ func TestClient_GetOAuth2Client(T *testing.T) {
 
 	T.Run("with error returned from querier", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 		expected := (*models.OAuth2Client)(nil)
 
@@ -51,6 +53,7 @@ func TestClient_GetOAuth2ClientByClientID(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		c, mockDB := buildTestClient()
@@ -65,6 +68,7 @@ func TestClient_GetOAuth2ClientByClientID(T *testing.T) {
 
 	T.Run("with error returned from querier", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		c, mockDB := buildTestClient()
@@ -83,6 +87,7 @@ func TestClient_GetAllOAuth2ClientCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleCount := uint64(123)
 
 		c, mockDB := buildTestClient()
@@ -103,6 +108,7 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		c, mockDB := buildTestClient()
 		exampleOAuth2ClientList := fakemodels.BuildFakeOAuth2ClientList()
 		filter := models.DefaultQueryFilter()
@@ -118,6 +124,7 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 
 	T.Run("with nil filter", func(t *testing.T) {
 		ctx := context.Background()
+
 		c, mockDB := buildTestClient()
 		exampleOAuth2ClientList := fakemodels.BuildFakeOAuth2ClientList()
 		filter := (*models.QueryFilter)(nil)
@@ -133,6 +140,7 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 
 	T.Run("with error returned from querier", func(t *testing.T) {
 		ctx := context.Background()
+
 		c, mockDB := buildTestClient()
 		exampleOAuth2ClientList := (*models.OAuth2ClientList)(nil)
 		filter := models.DefaultQueryFilter()
@@ -152,6 +160,7 @@ func TestClient_CreateOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		c, mockDB := buildTestClient()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -168,6 +177,7 @@ func TestClient_CreateOAuth2Client(T *testing.T) {
 
 	T.Run("with error returned from querier", func(t *testing.T) {
 		ctx := context.Background()
+
 		c, mockDB := buildTestClient()
 
 		expected := (*models.OAuth2Client)(nil)
@@ -189,6 +199,7 @@ func TestClient_UpdateOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		var expected error
@@ -208,6 +219,7 @@ func TestClient_ArchiveOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		var expected error
@@ -223,6 +235,7 @@ func TestClient_ArchiveOAuth2Client(T *testing.T) {
 
 	T.Run("with error returned from querier", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		expected := fmt.Errorf("blah")

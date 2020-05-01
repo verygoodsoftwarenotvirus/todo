@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
@@ -65,11 +66,39 @@ func buildErroneousMockRowFromUser(user *models.User) *sqlmock.Rows {
 	return exampleRows
 }
 
+func TestPostgres_ScanUsers(T *testing.T) {
+	T.Parallel()
+
+	T.Run("surfaces row errors", func(t *testing.T) {
+		p, _ := buildTestService(t)
+		mockRows := &database.MockResultIterator{}
+
+		mockRows.On("Next").Return(false)
+		mockRows.On("Err").Return(errors.New("blah"))
+
+		_, _, err := p.scanUsers(mockRows)
+		assert.Error(t, err)
+	})
+
+	T.Run("logs row closing errors", func(t *testing.T) {
+		p, _ := buildTestService(t)
+		mockRows := &database.MockResultIterator{}
+
+		mockRows.On("Next").Return(false)
+		mockRows.On("Err").Return(nil)
+		mockRows.On("Close").Return(errors.New("blah"))
+
+		_, _, err := p.scanUsers(mockRows)
+		assert.NoError(t, err)
+	})
+}
+
 func TestPostgres_buildGetUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.id = $1"
@@ -91,6 +120,7 @@ func TestPostgres_GetUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleUser.Salt = nil
 
@@ -108,6 +138,7 @@ func TestPostgres_GetUser(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		p, mockDB := buildTestService(t)
@@ -129,6 +160,7 @@ func TestPostgres_buildGetUsersQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+
 		filter := fakemodels.BuildFleshedOutQueryFilter()
 
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.created_on, users.updated_on, users.archived_on, COUNT(users.id) FROM users WHERE users.archived_on IS NULL AND users.created_on > $1 AND users.created_on < $2 AND users.updated_on > $3 AND users.updated_on < $4 GROUP BY users.id LIMIT 20 OFFSET 180"
@@ -153,6 +185,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 
 		exampleUserList := fakemodels.BuildFakeUserList()
@@ -178,6 +211,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 
 		p, mockDB := buildTestService(t)
@@ -194,6 +228,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 
 		p, mockDB := buildTestService(t)
@@ -209,6 +244,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 
 		p, mockDB := buildTestService(t)
@@ -228,6 +264,7 @@ func TestPostgres_buildGetUserByUsernameQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.username = $1"
@@ -249,6 +286,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleUser.Salt = nil
 
@@ -266,6 +304,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		p, mockDB := buildTestService(t)
@@ -283,6 +322,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		p, mockDB := buildTestService(t)
@@ -319,6 +359,7 @@ func TestPostgres_GetAllUserCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleCount := uint64(123)
 
 		p, mockDB := buildTestService(t)
@@ -334,6 +375,7 @@ func TestPostgres_GetAllUserCount(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
+
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(errors.New("blah"))
@@ -351,6 +393,7 @@ func TestPostgres_buildCreateUserQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
@@ -376,6 +419,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		p, mockDB := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -399,6 +443,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 
 	T.Run("with postgres row exists error", func(t *testing.T) {
 		ctx := context.Background()
+
 		p, mockDB := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -421,6 +466,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		ctx := context.Background()
+
 		p, mockDB := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -446,6 +492,7 @@ func TestPostgres_buildUpdateUserQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		expectedQuery := "UPDATE users SET username = $1, hashed_password = $2, two_factor_secret = $3, updated_on = extract(epoch FROM NOW()) WHERE id = $4 RETURNING updated_on"
@@ -468,6 +515,7 @@ func TestPostgres_UpdateUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		expectedQuery := "UPDATE users SET username = $1, hashed_password = $2, two_factor_secret = $3, updated_on = extract(epoch FROM NOW()) WHERE id = $4 RETURNING updated_on"
@@ -493,6 +541,7 @@ func TestPostgres_buildArchiveUserQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
+
 		exampleUser := fakemodels.BuildFakeUser()
 
 		expectedQuery := "UPDATE users SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE id = $1 RETURNING archived_on"
@@ -512,6 +561,7 @@ func TestPostgres_ArchiveUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleUser := fakemodels.BuildFakeUser()
 		expectedQuery := "UPDATE users SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE id = $1 RETURNING archived_on"
 

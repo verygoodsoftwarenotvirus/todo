@@ -33,7 +33,7 @@ func ProvideConfigFrontendSettings(c *ServerConfig) FrontendSettings {
 // END it'd be neat if wire could do this for me one day.
 
 var (
-	// Providers represents this package's offering to the dependency manager
+	// Providers represents this package's offering to the dependency manager.
 	Providers = wire.NewSet(
 		ProvideConfigServerSettings,
 		ProvideConfigAuthSettings,

@@ -9,24 +9,24 @@ import (
 )
 
 const (
-	// UserLoginInputMiddlewareCtxKey is the context key for login input
+	// UserLoginInputMiddlewareCtxKey is the context key for login input.
 	UserLoginInputMiddlewareCtxKey models.ContextKey = "user_login_input"
 
-	// UsernameFormKey is the string we look for in request forms for username information
+	// UsernameFormKey is the string we look for in request forms for username information.
 	UsernameFormKey = "username"
-	// PasswordFormKey is the string we look for in request forms for password information
+	// PasswordFormKey is the string we look for in request forms for password information.
 	PasswordFormKey = "password"
-	// TOTPTokenFormKey is the string we look for in request forms for TOTP token information
+	// TOTPTokenFormKey is the string we look for in request forms for TOTP token information.
 	TOTPTokenFormKey = "totp_token"
 )
 
-// CookieAuthenticationMiddleware checks every request for a user cookie
+// CookieAuthenticationMiddleware checks every request for a user cookie.
 func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := tracing.StartSpan(req.Context(), "CookieAuthenticationMiddleware")
 		defer span.End()
 
-		// fetch the user from the request
+		// fetch the user from the request.
 		user, err := s.FetchUserFromRequest(ctx, req)
 		if err != nil {
 			s.logger.Error(err, "error encountered fetching user")
@@ -46,22 +46,22 @@ func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 			return
 		}
 
-		// if no error was attached to the request, tell them to login first
+		// if no error was attached to the request, tell them to login first.
 		http.Redirect(res, req, "/login", http.StatusUnauthorized)
 	})
 }
 
-// AuthenticationMiddleware authenticates based on either an oauth2 token or a cookie
+// AuthenticationMiddleware authenticates based on either an oauth2 token or a cookie.
 func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken bool) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			ctx, span := tracing.StartSpan(req.Context(), "AuthenticationMiddleware")
 			defer span.End()
 
-			// let's figure out who the user is
+			// let's figure out who the user is.
 			var user *models.User
 
-			// check for a cookie first if we can
+			// check for a cookie first if we can.
 			if allowValidCookieInLieuOfAValidToken {
 				cookieAuth, err := s.DecodeCookieFromRequest(ctx, req)
 
@@ -70,13 +70,13 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 					if err != nil {
 						s.logger.Error(err, "error authenticating request")
 						http.Error(res, "fetching user", http.StatusInternalServerError)
-						// if we get here, then we just don't have a valid cookie, and we need to move on
+						// if we get here, then we just don't have a valid cookie, and we need to move on.
 						return
 					}
 				}
 			}
 
-			// if the cookie wasn't present, or didn't indicate who the user is
+			// if the cookie wasn't present, or didn't indicate who the user is.
 			if user == nil {
 				// check to see if there is an OAuth2 token for a valid client attached to the request.
 				// We do this first because it is presumed to be the primary means by which requests are made to the httpServer.
@@ -87,7 +87,7 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 					return
 				}
 
-				// attach the oauth2 client and user's info to the request
+				// attach the oauth2 client and user's info to the request.
 				ctx = context.WithValue(ctx, models.OAuth2ClientKey, oauth2Client)
 				user, err = s.userDB.GetUser(ctx, oauth2Client.BelongsToUser)
 				if err != nil {
@@ -97,14 +97,14 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 				}
 			}
 
-			// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere
+			// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere.
 			if user == nil {
 				s.logger.Debug("no user attached to request request")
 				http.Redirect(res, req, "/login", http.StatusUnauthorized)
 				return
 			}
 
-			// elsewise, load the request with extra context
+			// elsewise, load the request with extra context.
 			ctx = context.WithValue(ctx, models.UserKey, user)
 			ctx = context.WithValue(ctx, models.UserIDKey, user.ID)
 			ctx = context.WithValue(ctx, models.UserIsAdminKey, user.IsAdmin)
@@ -114,7 +114,7 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 	}
 }
 
-// AdminMiddleware restricts requests to admin users only
+// AdminMiddleware restricts requests to admin users only.
 func (s *Service) AdminMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := tracing.StartSpan(req.Context(), "AdminMiddleware")
@@ -139,7 +139,7 @@ func (s *Service) AdminMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// parseLoginInputFromForm checks a request for a login form, and returns the parsed login data if relevant
+// parseLoginInputFromForm checks a request for a login form, and returns the parsed login data if relevant.
 func parseLoginInputFromForm(req *http.Request) *models.UserLoginInput {
 	if err := req.ParseForm(); err == nil {
 		uli := &models.UserLoginInput{
@@ -155,7 +155,7 @@ func parseLoginInputFromForm(req *http.Request) *models.UserLoginInput {
 	return nil
 }
 
-// UserLoginInputMiddleware fetches user login input from requests
+// UserLoginInputMiddleware fetches user login input from requests.
 func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := tracing.StartSpan(req.Context(), "UserLoginInputMiddleware")

@@ -16,7 +16,10 @@ func TestClient_ItemExists(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		ctx := context.Background()
+
+		exampleUser := fakemodels.BuildFakeUser()
 		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem.BelongsToUser = exampleUser.ID
 
 		c, mockDB := buildTestClient()
 		mockDB.ItemDataManager.On("ItemExists", mock.Anything, exampleItem.ID, exampleItem.BelongsToUser).Return(true, nil)
@@ -34,7 +37,10 @@ func TestClient_GetItem(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		ctx := context.Background()
+
+		exampleUser := fakemodels.BuildFakeUser()
 		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem.BelongsToUser = exampleUser.ID
 
 		c, mockDB := buildTestClient()
 		mockDB.ItemDataManager.On("GetItem", mock.Anything, exampleItem.ID, exampleItem.BelongsToUser).Return(exampleItem, nil)
@@ -52,6 +58,7 @@ func TestClient_GetAllItemsCount(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleCount := uint64(123)
 
 		c, mockDB := buildTestClient()
@@ -72,6 +79,7 @@ func TestClient_GetItems(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := models.DefaultQueryFilter()
 		exampleItemList := fakemodels.BuildFakeItemList()
 
@@ -87,6 +95,7 @@ func TestClient_GetItems(T *testing.T) {
 
 	T.Run("with nil filter", func(t *testing.T) {
 		ctx := context.Background()
+
 		filter := (*models.QueryFilter)(nil)
 		exampleItemList := fakemodels.BuildFakeItemList()
 
@@ -106,7 +115,10 @@ func TestClient_CreateItem(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		ctx := context.Background()
+
+		exampleUser := fakemodels.BuildFakeUser()
 		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		c, mockDB := buildTestClient()
@@ -125,9 +137,13 @@ func TestClient_UpdateItem(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		ctx := context.Background()
-		exampleItem := fakemodels.BuildFakeItem()
-		c, mockDB := buildTestClient()
 		var expected error
+
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem.BelongsToUser = exampleUser.ID
+
+		c, mockDB := buildTestClient()
 
 		mockDB.ItemDataManager.On("UpdateItem", mock.Anything, exampleItem).Return(expected)
 
@@ -143,8 +159,12 @@ func TestClient_ArchiveItem(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		ctx := context.Background()
-		exampleItem := fakemodels.BuildFakeItem()
+
 		var expected error
+
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem.BelongsToUser = exampleUser.ID
 
 		c, mockDB := buildTestClient()
 		mockDB.ItemDataManager.On("ArchiveItem", mock.Anything, exampleItem.ID, exampleItem.BelongsToUser).Return(expected)

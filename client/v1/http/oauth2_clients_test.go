@@ -21,6 +21,7 @@ func TestV1Client_BuildGetOAuth2ClientRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		expectedMethod := http.MethodGet
 
 		ts := httptest.NewTLSServer(nil)
@@ -41,6 +42,7 @@ func TestV1Client_GetOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		ts := httptest.NewTLSServer(
@@ -64,6 +66,7 @@ func TestV1Client_GetOAuth2Client(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		c := buildTestClientWithInvalidURL(t)
@@ -79,6 +82,7 @@ func TestV1Client_BuildGetOAuth2ClientsRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		expectedMethod := http.MethodGet
 
 		ts := httptest.NewTLSServer(nil)
@@ -96,6 +100,7 @@ func TestV1Client_GetOAuth2Clients(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2ClientList := fakemodels.BuildFakeOAuth2ClientList()
 
 		ts := httptest.NewTLSServer(
@@ -118,6 +123,7 @@ func TestV1Client_GetOAuth2Clients(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
+
 		c := buildTestClientWithInvalidURL(t)
 		actual, err := c.GetOAuth2Clients(ctx, nil)
 
@@ -131,6 +137,7 @@ func TestV1Client_BuildCreateOAuth2ClientRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
@@ -171,6 +178,7 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
@@ -183,6 +191,7 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 
 	T.Run("with invalid response from server", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
@@ -219,6 +228,7 @@ func TestV1Client_BuildArchiveOAuth2ClientRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		expectedMethod := http.MethodDelete
 		ts := httptest.NewTLSServer(nil)
 
@@ -239,6 +249,7 @@ func TestV1Client_ArchiveOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		ts := httptest.NewTLSServer(
@@ -258,6 +269,7 @@ func TestV1Client_ArchiveOAuth2Client(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		ctx := context.Background()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		err := buildTestClientWithInvalidURL(t).ArchiveOAuth2Client(ctx, exampleOAuth2Client.ID)

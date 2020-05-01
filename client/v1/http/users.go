@@ -13,7 +13,7 @@ import (
 
 const usersBasePath = "users"
 
-// BuildGetUserRequest builds an HTTP request for fetching a user
+// BuildGetUserRequest builds an HTTP request for fetching a user.
 func (c *V1Client) BuildGetUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
 	ctx, span := tracing.StartSpan(ctx, "BuildGetUserRequest")
 	defer span.End()
@@ -23,7 +23,7 @@ func (c *V1Client) BuildGetUserRequest(ctx context.Context, userID uint64) (*htt
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
-// GetUser retrieves a user
+// GetUser retrieves a user.
 func (c *V1Client) GetUser(ctx context.Context, userID uint64) (user *models.User, err error) {
 	ctx, span := tracing.StartSpan(ctx, "GetUser")
 	defer span.End()
@@ -37,7 +37,7 @@ func (c *V1Client) GetUser(ctx context.Context, userID uint64) (user *models.Use
 	return user, err
 }
 
-// BuildGetUsersRequest builds an HTTP request for fetching a user
+// BuildGetUsersRequest builds an HTTP request for fetching a user.
 func (c *V1Client) BuildGetUsersRequest(ctx context.Context, filter *models.QueryFilter) (*http.Request, error) {
 	ctx, span := tracing.StartSpan(ctx, "BuildGetUsersRequest")
 	defer span.End()
@@ -47,7 +47,7 @@ func (c *V1Client) BuildGetUsersRequest(ctx context.Context, filter *models.Quer
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
-// GetUsers retrieves a list of users
+// GetUsers retrieves a list of users.
 func (c *V1Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*models.UserList, error) {
 	ctx, span := tracing.StartSpan(ctx, "GetUsers")
 	defer span.End()
@@ -63,7 +63,7 @@ func (c *V1Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 	return users, err
 }
 
-// BuildCreateUserRequest builds an HTTP request for creating a user
+// BuildCreateUserRequest builds an HTTP request for creating a user.
 func (c *V1Client) BuildCreateUserRequest(ctx context.Context, body *models.UserCreationInput) (*http.Request, error) {
 	ctx, span := tracing.StartSpan(ctx, "BuildCreateUserRequest")
 	defer span.End()
@@ -73,7 +73,7 @@ func (c *V1Client) BuildCreateUserRequest(ctx context.Context, body *models.User
 	return c.buildDataRequest(ctx, http.MethodPost, uri, body)
 }
 
-// CreateUser creates a new user
+// CreateUser creates a new user.
 func (c *V1Client) CreateUser(ctx context.Context, input *models.UserCreationInput) (*models.UserCreationResponse, error) {
 	ctx, span := tracing.StartSpan(ctx, "CreateUser")
 	defer span.End()
@@ -89,7 +89,7 @@ func (c *V1Client) CreateUser(ctx context.Context, input *models.UserCreationInp
 	return user, err
 }
 
-// BuildArchiveUserRequest builds an HTTP request for updating a user
+// BuildArchiveUserRequest builds an HTTP request for updating a user.
 func (c *V1Client) BuildArchiveUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
 	ctx, span := tracing.StartSpan(ctx, "BuildArchiveUserRequest")
 	defer span.End()
@@ -99,7 +99,7 @@ func (c *V1Client) BuildArchiveUserRequest(ctx context.Context, userID uint64) (
 	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
 }
 
-// ArchiveUser archives a user
+// ArchiveUser archives a user.
 func (c *V1Client) ArchiveUser(ctx context.Context, userID uint64) error {
 	ctx, span := tracing.StartSpan(ctx, "ArchiveUser")
 	defer span.End()
@@ -112,7 +112,7 @@ func (c *V1Client) ArchiveUser(ctx context.Context, userID uint64) error {
 	return c.executeRequest(ctx, req, nil)
 }
 
-// BuildLoginRequest builds an authenticating HTTP request
+// BuildLoginRequest builds an authenticating HTTP request.
 func (c *V1Client) BuildLoginRequest(ctx context.Context, input *models.UserLoginInput) (*http.Request, error) {
 	ctx, span := tracing.StartSpan(ctx, "BuildLoginRequest")
 	defer span.End()
@@ -130,7 +130,7 @@ func (c *V1Client) BuildLoginRequest(ctx context.Context, input *models.UserLogi
 	return c.buildDataRequest(ctx, http.MethodPost, uri, body)
 }
 
-// Login will, when provided the correct credentials, fetch a login cookie
+// Login will, when provided the correct credentials, fetch a login cookie.
 func (c *V1Client) Login(ctx context.Context, input *models.UserLoginInput) (*http.Cookie, error) {
 	ctx, span := tracing.StartSpan(ctx, "Login")
 	defer span.End()

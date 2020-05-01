@@ -8,7 +8,7 @@ import (
 	fake "github.com/brianvoe/gofakeit/v5"
 )
 
-// BuildFakeUser builds a faked User
+// BuildFakeUser builds a faked User.
 func BuildFakeUser() *models.User {
 	return &models.User{
 		ID:       uint64(fake.Uint32()),
@@ -21,7 +21,7 @@ func BuildFakeUser() *models.User {
 	}
 }
 
-// BuildDatabaseCreationResponse builds a faked UserCreationResponse
+// BuildDatabaseCreationResponse builds a faked UserCreationResponse.
 func BuildDatabaseCreationResponse(user *models.User) *models.UserCreationResponse {
 	return &models.UserCreationResponse{
 		ID:                    user.ID,
@@ -35,7 +35,7 @@ func BuildDatabaseCreationResponse(user *models.User) *models.UserCreationRespon
 	}
 }
 
-// BuildFakeUserList builds a faked UserList
+// BuildFakeUserList builds a faked UserList.
 func BuildFakeUserList() *models.UserList {
 	exampleUser1 := BuildFakeUser()
 	exampleUser2 := BuildFakeUser()
@@ -55,7 +55,7 @@ func BuildFakeUserList() *models.UserList {
 	}
 }
 
-// BuildFakeUserCreationInput builds a faked UserCreationInput
+// BuildFakeUserCreationInput builds a faked UserCreationInput.
 func BuildFakeUserCreationInput() *models.UserCreationInput {
 	exampleUser := BuildFakeUser()
 	return &models.UserCreationInput{
@@ -64,7 +64,7 @@ func BuildFakeUserCreationInput() *models.UserCreationInput {
 	}
 }
 
-// BuildFakeUserCreationInputFromUser builds a faked UserCreationInput
+// BuildFakeUserCreationInputFromUser builds a faked UserCreationInput.
 func BuildFakeUserCreationInputFromUser(user *models.User) *models.UserCreationInput {
 	return &models.UserCreationInput{
 		Username: user.Username,
@@ -72,7 +72,7 @@ func BuildFakeUserCreationInputFromUser(user *models.User) *models.UserCreationI
 	}
 }
 
-// BuildFakeUserDatabaseCreationInputFromUser builds a faked UserDatabaseCreationInput
+// BuildFakeUserDatabaseCreationInputFromUser builds a faked UserDatabaseCreationInput.
 func BuildFakeUserDatabaseCreationInputFromUser(user *models.User) models.UserDatabaseCreationInput {
 	return models.UserDatabaseCreationInput{
 		Username:        user.Username,
@@ -81,7 +81,7 @@ func BuildFakeUserDatabaseCreationInputFromUser(user *models.User) models.UserDa
 	}
 }
 
-// BuildFakeUserLoginInputFromUser builds a faked UserLoginInput
+// BuildFakeUserLoginInputFromUser builds a faked UserLoginInput.
 func BuildFakeUserLoginInputFromUser(user *models.User) *models.UserLoginInput {
 	return &models.UserLoginInput{
 		Username:  user.Username,
@@ -90,7 +90,7 @@ func BuildFakeUserLoginInputFromUser(user *models.User) *models.UserLoginInput {
 	}
 }
 
-// BuildFakePasswordUpdateInput builds a faked PasswordUpdateInput
+// BuildFakePasswordUpdateInput builds a faked PasswordUpdateInput.
 func BuildFakePasswordUpdateInput() *models.PasswordUpdateInput {
 	return &models.PasswordUpdateInput{
 		NewPassword:     fake.Password(true, true, true, true, true, 32),
@@ -99,7 +99,7 @@ func BuildFakePasswordUpdateInput() *models.PasswordUpdateInput {
 	}
 }
 
-// BuildFakeTOTPSecretRefreshInput builds a faked TOTPSecretRefreshInput
+// BuildFakeTOTPSecretRefreshInput builds a faked TOTPSecretRefreshInput.
 func BuildFakeTOTPSecretRefreshInput() *models.TOTPSecretRefreshInput {
 	return &models.TOTPSecretRefreshInput{
 		CurrentPassword: fake.Password(true, true, true, true, true, 32),

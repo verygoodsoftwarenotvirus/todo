@@ -6,7 +6,7 @@ import (
 	fake "github.com/brianvoe/gofakeit/v5"
 )
 
-// BuildFakeWebhook builds a faked Webhook
+// BuildFakeWebhook builds a faked Webhook.
 func BuildFakeWebhook() *models.Webhook {
 	return &models.Webhook{
 		ID:            fake.Uint64(),
@@ -23,7 +23,7 @@ func BuildFakeWebhook() *models.Webhook {
 	}
 }
 
-// BuildFakeWebhookList builds a faked WebhookList
+// BuildFakeWebhookList builds a faked WebhookList.
 func BuildFakeWebhookList() *models.WebhookList {
 	exampleWebhook1 := BuildFakeWebhook()
 	exampleWebhook2 := BuildFakeWebhook()
@@ -42,7 +42,7 @@ func BuildFakeWebhookList() *models.WebhookList {
 	}
 }
 
-// BuildFakeWebhookUpdateInputFromWebhook builds a faked WebhookUpdateInput
+// BuildFakeWebhookUpdateInputFromWebhook builds a faked WebhookUpdateInput.
 func BuildFakeWebhookUpdateInputFromWebhook(webhook *models.Webhook) *models.WebhookUpdateInput {
 	return &models.WebhookUpdateInput{
 		Name:          webhook.Name,
@@ -56,13 +56,13 @@ func BuildFakeWebhookUpdateInputFromWebhook(webhook *models.Webhook) *models.Web
 	}
 }
 
-// BuildFakeWebhookCreationInput builds a faked WebhookCreationInput
+// BuildFakeWebhookCreationInput builds a faked WebhookCreationInput.
 func BuildFakeWebhookCreationInput() *models.WebhookCreationInput {
 	webhook := BuildFakeWebhook()
 	return BuildFakeWebhookCreationInputFromWebhook(webhook)
 }
 
-// BuildFakeWebhookCreationInputFromWebhook builds a faked WebhookCreationInput
+// BuildFakeWebhookCreationInputFromWebhook builds a faked WebhookCreationInput.
 func BuildFakeWebhookCreationInputFromWebhook(webhook *models.Webhook) *models.WebhookCreationInput {
 	return &models.WebhookCreationInput{
 		Name:          webhook.Name,

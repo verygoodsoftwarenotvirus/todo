@@ -15,17 +15,17 @@ type UnitCounter struct {
 	mock.Mock
 }
 
-// Increment implements our UnitCounter interface
+// Increment implements our UnitCounter interface.
 func (m *UnitCounter) Increment(ctx context.Context) {
 	m.Called(ctx)
 }
 
-// IncrementBy implements our UnitCounter interface
+// IncrementBy implements our UnitCounter interface.
 func (m *UnitCounter) IncrementBy(ctx context.Context, val uint64) {
 	m.Called(ctx, val)
 }
 
-// Decrement implements our UnitCounter interface
+// Decrement implements our UnitCounter interface.
 func (m *UnitCounter) Decrement(ctx context.Context) {
 	m.Called(ctx)
 }

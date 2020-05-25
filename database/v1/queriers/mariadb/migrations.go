@@ -22,6 +22,7 @@ var (
 				"    `password_last_changed_on` INTEGER UNSIGNED,",
 				"    `two_factor_secret` VARCHAR(256) NOT NULL,",
 				"    `is_admin` BOOLEAN NOT NULL DEFAULT false,",
+				"    `two_factor_secret_verified_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    `created_on` BIGINT UNSIGNED,",
 				"    `updated_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",

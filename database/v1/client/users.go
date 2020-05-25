@@ -26,6 +26,28 @@ func (c *Client) GetUser(ctx context.Context, userID uint64) (*models.User, erro
 	return c.querier.GetUser(ctx, userID)
 }
 
+// GetUserWithUnverifiedTwoFactorSecret fetches a user.
+func (c *Client) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*models.User, error) {
+	ctx, span := tracing.StartSpan(ctx, "GetUserWithUnverifiedTwoFactorSecret")
+	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
+	c.logger.WithValue("user_id", userID).Debug("GetUserWithUnverifiedTwoFactorSecret called")
+
+	return c.querier.GetUserWithUnverifiedTwoFactorSecret(ctx, userID)
+}
+
+// VerifyUserTwoFactorSecret marks a user's two factor secret as validated.
+func (c *Client) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error {
+	ctx, span := tracing.StartSpan(ctx, "VerifyUserTwoFactorSecret")
+	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
+	c.logger.WithValue("user_id", userID).Debug("VerifyUserTwoFactorSecret called")
+
+	return c.querier.VerifyUserTwoFactorSecret(ctx, userID)
+}
+
 // GetUserByUsername fetches a user by their username.
 func (c *Client) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
 	ctx, span := tracing.StartSpan(ctx, "GetUserByUsername")

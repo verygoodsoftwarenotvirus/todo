@@ -23,6 +23,7 @@ var (
 		fmt.Sprintf("%s.password_last_changed_on", usersTableName),
 		fmt.Sprintf("%s.two_factor_secret", usersTableName),
 		fmt.Sprintf("%s.is_admin", usersTableName),
+		fmt.Sprintf("%s.two_factor_secret_verified_on", usersTableName),
 		fmt.Sprintf("%s.created_on", usersTableName),
 		fmt.Sprintf("%s.updated_on", usersTableName),
 		fmt.Sprintf("%s.archived_on", usersTableName),
@@ -43,6 +44,7 @@ func (s *Sqlite) scanUser(scan database.Scanner, includeCount bool) (*models.Use
 		&x.PasswordLastChangedOn,
 		&x.TwoFactorSecret,
 		&x.IsAdmin,
+		&x.TwoFactorSecretVerifiedOn,
 		&x.CreatedOn,
 		&x.UpdatedOn,
 		&x.ArchivedOn,
@@ -100,6 +102,9 @@ func (s *Sqlite) buildGetUserQuery(userID uint64) (query string, args []interfac
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.id", usersTableName): userID,
 		}).
+		Where(squirrel.NotEq{
+			fmt.Sprintf("%s.two_factor_secret_verified_on", usersTableName): nil,
+		}).
 		ToSql()
 
 	s.logQueryBuildingError(err)
@@ -120,6 +125,38 @@ func (s *Sqlite) GetUser(ctx context.Context, userID uint64) (*models.User, erro
 	return u, err
 }
 
+// buildGetUserWithUnverifiedTwoFactorSecretQuery returns a SQL query (and argument) for retrieving a user
+// by their database ID, who has an unverified two factor secret
+func (s *Sqlite) buildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
+	var err error
+
+	query, args, err = s.sqlBuilder.
+		Select(usersTableColumns...).
+		From(usersTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.id", usersTableName):                            userID,
+			fmt.Sprintf("%s.two_factor_secret_verified_on", usersTableName): nil,
+		}).
+		ToSql()
+
+	s.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// GetUserWithUnverifiedTwoFactorSecret fetches a user with an unverified two factor secret
+func (s *Sqlite) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*models.User, error) {
+	query, args := s.buildGetUserWithUnverifiedTwoFactorSecretQuery(userID)
+	row := s.db.QueryRowContext(ctx, query, args...)
+
+	u, _, err := s.scanUser(row, false)
+	if err != nil {
+		return nil, buildError(err, "fetching user from database")
+	}
+
+	return u, err
+}
+
 // buildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username
 func (s *Sqlite) buildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
 	var err error
@@ -129,6 +166,9 @@ func (s *Sqlite) buildGetUserByUsernameQuery(username string) (query string, arg
 		From(usersTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.username", usersTableName): username,
+		}).
+		Where(squirrel.NotEq{
+			fmt.Sprintf("%s.two_factor_secret_verified_on", usersTableName): nil,
 		}).
 		ToSql()
 
@@ -292,6 +332,7 @@ func (s *Sqlite) buildUpdateUserQuery(input *models.User) (query string, args []
 		Set("username", input.Username).
 		Set("hashed_password", input.HashedPassword).
 		Set("two_factor_secret", input.TwoFactorSecret).
+		Set("two_factor_secret_verified_on", input.TwoFactorSecretVerifiedOn).
 		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			"id": input.ID,
@@ -301,6 +342,30 @@ func (s *Sqlite) buildUpdateUserQuery(input *models.User) (query string, args []
 	s.logQueryBuildingError(err)
 
 	return query, args
+}
+
+// buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row
+func (s *Sqlite) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
+	var err error
+
+	query, args, err = s.sqlBuilder.
+		Update(usersTableName).
+		Set("two_factor_secret_verified_on", squirrel.Expr(currentUnixTimeQuery)).
+		Where(squirrel.Eq{
+			"id": userID,
+		}).
+		ToSql()
+
+	s.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// VerifyUserTwoFactorSecret marks a user's two factor secret as validated.
+func (s *Sqlite) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error {
+	query, args := s.buildVerifyUserTwoFactorSecretQuery(userID)
+	_, err := s.db.ExecContext(ctx, query, args...)
+	return err
 }
 
 // UpdateUser receives a complete User struct and updates its place in the db.

@@ -17,7 +17,7 @@ const (
 	// PasswordFormKey is the string we look for in request forms for password information.
 	PasswordFormKey = "password"
 	// TOTPTokenFormKey is the string we look for in request forms for TOTP token information.
-	TOTPTokenFormKey = "totp_token"
+	TOTPTokenFormKey = "totpToken"
 )
 
 // CookieAuthenticationMiddleware checks every request for a user cookie.
@@ -27,7 +27,7 @@ func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 		defer span.End()
 
 		// fetch the user from the request.
-		user, err := s.FetchUserFromRequest(ctx, req)
+		user, err := s.fetchUserFromCookie(ctx, req)
 		if err != nil {
 			s.logger.Error(err, "error encountered fetching user")
 			res.WriteHeader(http.StatusUnauthorized)

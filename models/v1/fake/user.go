@@ -1,11 +1,15 @@
 package fakemodels
 
 import (
+	"encoding/base32"
 	"fmt"
+	"log"
+	"time"
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	fake "github.com/brianvoe/gofakeit/v5"
+	"github.com/pquerna/otp/totp"
 )
 
 // BuildFakeUser builds a faked User.
@@ -15,9 +19,10 @@ func BuildFakeUser() *models.User {
 		Username: fake.Username(),
 		// HashedPassword: "",
 		// Salt:           []byte(fake.Word()),
-		// TwoFactorSecret: "",
-		IsAdmin:   false,
-		CreatedOn: uint64(uint32(fake.Date().Unix())),
+		TwoFactorSecret:           base32.StdEncoding.EncodeToString([]byte(fake.Password(false, true, true, false, false, 32))),
+		TwoFactorSecretVerifiedOn: func(i uint64) *uint64 { return &i }(uint64(uint32(fake.Date().Unix()))),
+		IsAdmin:                   false,
+		CreatedOn:                 uint64(uint32(fake.Date().Unix())),
 	}
 }
 
@@ -104,5 +109,18 @@ func BuildFakeTOTPSecretRefreshInput() *models.TOTPSecretRefreshInput {
 	return &models.TOTPSecretRefreshInput{
 		CurrentPassword: fake.Password(true, true, true, true, true, 32),
 		TOTPToken:       fmt.Sprintf("0%s", fake.Zip()),
+	}
+}
+
+// BuildFakeTOTPSecretValidationInputForUser builds a faked TOTPSecretVerificationInput for a given user
+func BuildFakeTOTPSecretValidationInputForUser(user *models.User) *models.TOTPSecretVerificationInput {
+	token, err := totp.GenerateCode(user.TwoFactorSecret, time.Now().UTC())
+	if err != nil {
+		log.Panicf("error generating TOTP token for fake user: %v", err)
+	}
+
+	return &models.TOTPSecretVerificationInput{
+		UserID:    user.ID,
+		TOTPToken: token,
 	}
 }

@@ -37,7 +37,10 @@ func DetermineServiceURL() string {
 		panic(err)
 	}
 
-	return u.String()
+	svcAddr := u.String()
+
+	log.Printf("using target address: %q\n", svcAddr)
+	return svcAddr
 }
 
 // EnsureServerIsUp checks that a server is up and doesn't return until it's certain one way or the other.
@@ -85,14 +88,15 @@ func IsUp(address string) bool {
 
 // CreateObligatoryUser creates a user for the sake of having an OAuth2 client.
 func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
-	tu, err := url.Parse(address)
-	if err != nil {
-		return nil, err
+	ctx := context.Background()
+	tu, parseErr := url.Parse(address)
+	if parseErr != nil {
+		return nil, parseErr
 	}
 
-	c, err := client.NewSimpleClient(context.Background(), tu, debug)
-	if err != nil {
-		return nil, err
+	c, clientInitErr := client.NewSimpleClient(ctx, tu, debug)
+	if clientInitErr != nil {
+		return nil, clientInitErr
 	}
 
 	// I had difficulty ensuring these values were unique, even when fake.Seed was called. Could've been fake's fault,
@@ -103,11 +107,20 @@ func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
 		Password: fake.Password(true, true, true, true, true, 64),
 	}
 
-	ucr, err := c.CreateUser(context.Background(), in)
-	if err != nil {
-		return nil, err
+	ucr, userCreationErr := c.CreateUser(ctx, in)
+	if userCreationErr != nil {
+		return nil, userCreationErr
 	} else if ucr == nil {
 		return nil, errors.New("something happened")
+	}
+
+	token, tokenErr := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
+	if tokenErr != nil {
+		return nil, fmt.Errorf("generating totp code: %w", tokenErr)
+	}
+
+	if validationErr := c.VerifyTOTPSecret(ctx, ucr.ID, token); validationErr != nil {
+		return nil, fmt.Errorf("verifying totp code: %w", validationErr)
 	}
 
 	u := &models.User{
@@ -155,7 +168,7 @@ func getLoginCookie(serviceURL string, u *models.User) (*http.Cookie, error) {
 					{
 						"username": %q,
 						"password": %q,
-						"totp_token": %q
+						"totpToken": %q
 					}
 				`,
 				u.Username,
@@ -187,6 +200,10 @@ func getLoginCookie(serviceURL string, u *models.User) (*http.Cookie, error) {
 
 // CreateObligatoryClient creates the OAuth2 client we need for tests.
 func CreateObligatoryClient(serviceURL string, u *models.User) (*models.OAuth2Client, error) {
+	if u == nil {
+		return nil, errors.New("user is nil")
+	}
+
 	firstOAuth2ClientURI := buildURL(serviceURL, "oauth2", "client")
 
 	code, err := totp.GenerateCode(
@@ -204,8 +221,7 @@ func CreateObligatoryClient(serviceURL string, u *models.User) (*models.OAuth2Cl
 	{
 		"username": %q,
 		"password": %q,
-		"totp_token": %q,
-
+		"totpToken": %q,
 		"belongs_to_user": %d,
 		"scopes": ["*"]
 	}

@@ -67,9 +67,9 @@ func (s *Service) WebsocketAuthFunction(req *http.Request) bool {
 	return false
 }
 
-// FetchUserFromRequest takes a request object and fetches the cookie, and then the user for that cookie.
-func (s *Service) FetchUserFromRequest(ctx context.Context, req *http.Request) (*models.User, error) {
-	ctx, span := tracing.StartSpan(ctx, "FetchUserFromRequest")
+// fetchUserFromCookie takes a request object and fetches the cookie, and then the user for that cookie.
+func (s *Service) fetchUserFromCookie(ctx context.Context, req *http.Request) (*models.User, error) {
+	ctx, span := tracing.StartSpan(ctx, "fetchUserFromCookie")
 	defer span.End()
 
 	ca, decodeErr := s.DecodeCookieFromRequest(ctx, req)
@@ -118,12 +118,10 @@ func (s *Service) LoginHandler() http.HandlerFunc {
 		logger = logger.WithValue("valid", loginValid)
 
 		if !loginValid {
-			logger.Debug("login was invalid")
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
-		logger.Debug("login was valid")
 		cookie, err := s.buildAuthCookie(loginData.user)
 		if err != nil {
 			logger.Error(err, "error building cookie")
@@ -162,6 +160,35 @@ func (s *Service) LogoutHandler() http.HandlerFunc {
 		}
 
 		res.WriteHeader(http.StatusOK)
+	}
+}
+
+// StatusHandler returns the user info for the user making the request.
+func (s *Service) StatusHandler() http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := tracing.StartSpan(req.Context(), "StatusHandler")
+		defer span.End()
+
+		logger := s.logger.WithRequest(req)
+
+		var sr *models.StatusResponse
+		userInfo, err := s.fetchUserFromCookie(ctx, req)
+		if err != nil {
+			res.WriteHeader(http.StatusUnauthorized)
+			sr = &models.StatusResponse{
+				Authenticated: false,
+				IsAdmin:       false,
+			}
+		} else {
+			sr = &models.StatusResponse{
+				Authenticated: true,
+				IsAdmin:       userInfo.IsAdmin,
+			}
+		}
+
+		if err := s.encoderDecoder.EncodeResponse(res, sr); err != nil {
+			logger.Error(err, "encoding response")
+		}
 	}
 }
 
@@ -249,7 +276,7 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 	)
 
 	// if the login is otherwise valid, but the password is too weak, try to rehash it.
-	if err == auth.ErrPasswordHashTooWeak && loginValid {
+	if err == auth.ErrCostTooLow && loginValid {
 		logger.Debug("hashed password was deemed to weak, updating its hash")
 
 		// re-hash the password
@@ -265,7 +292,7 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 		}
 
 		return loginValid, nil
-	} else if err != nil && err != auth.ErrPasswordHashTooWeak {
+	} else if err != nil && err != auth.ErrCostTooLow {
 		logger.Error(err, "issue validating login")
 		return false, fmt.Errorf("validating login: %w", err)
 	}

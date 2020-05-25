@@ -24,7 +24,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
 
-func loginUser(t *testing.T, username, password, totpSecret string) *http.Cookie {
+func loginUser(ctx context.Context, t *testing.T, username, password, totpSecret string) *http.Cookie {
 	loginURL := fmt.Sprintf("%s://%s:%s/users/login", todoClient.URL.Scheme, todoClient.URL.Hostname(), todoClient.URL.Port())
 
 	code, err := totp.GenerateCode(strings.ToUpper(totpSecret), time.Now().UTC())
@@ -34,12 +34,12 @@ func loginUser(t *testing.T, username, password, totpSecret string) *http.Cookie
 	{
 		"username": %q,
 		"password": %q,
-		"totp_token": %q
+		"totpToken": %q
 	}
 `, username, password, code)
 
 	body := strings.NewReader(bodyStr)
-	req, _ := http.NewRequest(http.MethodPost, loginURL, body)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, loginURL, body)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Fatal(err)
@@ -75,6 +75,11 @@ func TestAuth(test *testing.T) {
 		ucr := &models.UserCreationResponse{}
 		require.NoError(t, json.NewDecoder(res.Body).Decode(ucr))
 
+		secretVerificationToken, err := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
+		checkValueAndError(t, secretVerificationToken, err)
+
+		assert.NoError(t, todoClient.VerifyTOTPSecret(ctx, ucr.ID, secretVerificationToken))
+
 		// create login request.
 		token, err := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, token, err)
@@ -91,7 +96,7 @@ func TestAuth(test *testing.T) {
 		require.NoError(t, err)
 		u.Path = "/users/login"
 
-		req, err = http.NewRequest(http.MethodPost, u.String(), body)
+		req, err = http.NewRequestWithContext(ctx, http.MethodPost, u.String(), body)
 		checkValueAndError(t, req, err)
 
 		// execute login request.
@@ -118,6 +123,11 @@ func TestAuth(test *testing.T) {
 		ucr := &models.UserCreationResponse{}
 		require.NoError(t, json.NewDecoder(res.Body).Decode(ucr))
 
+		secretVerificationToken, err := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
+		checkValueAndError(t, secretVerificationToken, err)
+
+		assert.NoError(t, todoClient.VerifyTOTPSecret(ctx, ucr.ID, secretVerificationToken))
+
 		token, err := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, token, err)
 		r := &models.UserLoginInput{
@@ -133,7 +143,7 @@ func TestAuth(test *testing.T) {
 		require.NoError(t, err)
 		u.Path = "/users/login"
 
-		req, err = http.NewRequest(http.MethodPost, u.String(), body)
+		req, err = http.NewRequestWithContext(ctx, http.MethodPost, u.String(), body)
 		checkValueAndError(t, req, err)
 
 		// execute login request.
@@ -151,7 +161,7 @@ func TestAuth(test *testing.T) {
 		require.NoError(t, err)
 		u2.Path = "/users/logout"
 
-		req, err = http.NewRequest(http.MethodPost, u2.String(), nil)
+		req, err = http.NewRequestWithContext(ctx, http.MethodPost, u2.String(), nil)
 		checkValueAndError(t, req, err)
 		req.AddCookie(loginCookie)
 
@@ -162,11 +172,14 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("login request without body fails", func(t *testing.T) {
+		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		defer span.End()
+
 		u, err := url.Parse(todoClient.BuildURL(nil))
 		require.NoError(t, err)
 		u.Path = "/users/login"
 
-		req, err := http.NewRequest(http.MethodPost, u.String(), nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), nil)
 		checkValueAndError(t, req, err)
 
 		// execute login request.
@@ -214,7 +227,7 @@ func TestAuth(test *testing.T) {
 		require.NoError(t, err)
 		u.Path = "/users/login"
 
-		req, err = http.NewRequest(http.MethodPost, u.String(), body)
+		req, err = http.NewRequestWithContext(ctx, http.MethodPost, u.String(), body)
 		checkValueAndError(t, req, err)
 
 		// execute login request.
@@ -224,6 +237,9 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should not be able to login as someone that doesn't exist", func(t *testing.T) {
+		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		defer span.End()
+
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleUserCreationInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
 
@@ -245,7 +261,7 @@ func TestAuth(test *testing.T) {
 		require.NoError(t, err)
 		u.Path = "/users/login"
 
-		req, err := http.NewRequest(http.MethodPost, u.String(), body)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), body)
 		checkValueAndError(t, req, err)
 
 		res, err := todoClient.PlainClient().Do(req)
@@ -256,8 +272,56 @@ func TestAuth(test *testing.T) {
 		assert.Len(t, cookies, 0)
 	})
 
+	test.Run("should not be able to login without validating TOTP secret", func(t *testing.T) {
+		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		defer span.End()
+
+		// create a user.
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleUserCreationInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+		req, err := todoClient.BuildCreateUserRequest(ctx, exampleUserCreationInput)
+		checkValueAndError(t, req, err)
+
+		res, err := todoClient.PlainClient().Do(req)
+		checkValueAndError(t, res, err)
+
+		// load user response.
+		ucr := &models.UserCreationResponse{}
+		require.NoError(t, json.NewDecoder(res.Body).Decode(ucr))
+
+		// create login request.
+		token, err := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
+		checkValueAndError(t, token, err)
+		r := &models.UserLoginInput{
+			Username:  exampleUserCreationInput.Username,
+			Password:  exampleUserCreationInput.Password,
+			TOTPToken: token,
+		}
+		out, err := json.Marshal(r)
+		require.NoError(t, err)
+		body := bytes.NewReader(out)
+
+		u, err := url.Parse(todoClient.BuildURL(nil))
+		require.NoError(t, err)
+		u.Path = "/users/login"
+
+		req, err = http.NewRequestWithContext(ctx, http.MethodPost, u.String(), body)
+		checkValueAndError(t, req, err)
+
+		// execute login request.
+		res, err = todoClient.PlainClient().Do(req)
+		checkValueAndError(t, res, err)
+		assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
+
+		cookies := res.Cookies()
+		assert.Len(t, cookies, 0)
+	})
+
 	test.Run("should reject an unauthenticated request", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodGet, todoClient.BuildURL(nil, "webhooks"), nil)
+		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		defer span.End()
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, todoClient.BuildURL(nil, "webhooks"), nil)
 		assert.NoError(t, err)
 
 		res, err := todoClient.PlainClient().Do(req)
@@ -266,8 +330,11 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should be able to change password", func(t *testing.T) {
+		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		defer span.End()
+
 		// create user.
-		user, ui, cookie := buildDummyUser(test)
+		user, ui, cookie := buildDummyUser(ctx, test)
 		require.NotNil(test, cookie)
 
 		// create login request.
@@ -292,7 +359,7 @@ func TestAuth(test *testing.T) {
 		require.NoError(t, err)
 		u.Path = "/users/password/new"
 
-		req, err := http.NewRequest(http.MethodPut, u.String(), body)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPut, u.String(), body)
 		checkValueAndError(t, req, err)
 		req.AddCookie(cookie)
 
@@ -307,7 +374,7 @@ func TestAuth(test *testing.T) {
 		require.NoError(t, err)
 		u2.Path = "/users/logout"
 
-		req, err = http.NewRequest(http.MethodPost, u2.String(), nil)
+		req, err = http.NewRequestWithContext(ctx, http.MethodPost, u2.String(), nil)
 		checkValueAndError(t, req, err)
 		req.AddCookie(cookie)
 
@@ -330,7 +397,7 @@ func TestAuth(test *testing.T) {
 		require.NoError(t, err)
 		u3.Path = "/users/login"
 
-		req, err = http.NewRequest(http.MethodPost, u3.String(), body)
+		req, err = http.NewRequestWithContext(ctx, http.MethodPost, u3.String(), body)
 		checkValueAndError(t, req, err)
 
 		// execute login request.
@@ -343,9 +410,41 @@ func TestAuth(test *testing.T) {
 		assert.NotEqual(t, cookie, cookies[0])
 	})
 
-	test.Run("should be able to change 2FA Token", func(t *testing.T) {
+	test.Run("should be able to validate a 2FA token", func(t *testing.T) {
+		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		defer span.End()
+
 		// create user.
-		user, ui, cookie := buildDummyUser(test)
+		userInput := fakemodels.BuildFakeUserCreationInput()
+		user, err := todoClient.CreateUser(ctx, userInput)
+		assert.NotNil(t, user)
+		require.NoError(t, err)
+
+		token, err := totp.GenerateCode(user.TwoFactorSecret, time.Now().UTC())
+		checkValueAndError(t, token, err)
+
+		assert.NoError(t, todoClient.VerifyTOTPSecret(ctx, user.ID, token))
+	})
+
+	test.Run("should reject attempt to validate an invalid 2FA token", func(t *testing.T) {
+		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		defer span.End()
+
+		// create user.
+		userInput := fakemodels.BuildFakeUserCreationInput()
+		user, err := todoClient.CreateUser(ctx, userInput)
+		assert.NotNil(t, user)
+		require.NoError(t, err)
+
+		assert.Error(t, todoClient.VerifyTOTPSecret(ctx, user.ID, "NOTREAL"))
+	})
+
+	test.Run("should be able to change 2FA Token", func(t *testing.T) {
+		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		defer span.End()
+
+		// create user.
+		user, ui, cookie := buildDummyUser(ctx, test)
 		require.NotNil(test, cookie)
 
 		// create TOTP secret update request.
@@ -363,7 +462,7 @@ func TestAuth(test *testing.T) {
 		require.NoError(t, err)
 		u.Path = "/users/totp_secret/new"
 
-		req, err := http.NewRequest(http.MethodPost, u.String(), body)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), body)
 		checkValueAndError(t, req, err)
 		req.AddCookie(cookie)
 
@@ -377,13 +476,18 @@ func TestAuth(test *testing.T) {
 		require.NoError(t, json.NewDecoder(res.Body).Decode(r))
 		require.NotEqual(t, user.TwoFactorSecret, r.TwoFactorSecret)
 
+		secretVerificationToken, err := totp.GenerateCode(r.TwoFactorSecret, time.Now().UTC())
+		checkValueAndError(t, secretVerificationToken, err)
+
+		assert.NoError(t, todoClient.VerifyTOTPSecret(ctx, user.ID, secretVerificationToken))
+
 		// logout.
 
 		u2, err := url.Parse(todoClient.BuildURL(nil))
 		require.NoError(t, err)
 		u2.Path = "/users/logout"
 
-		req, err = http.NewRequest(http.MethodPost, u2.String(), nil)
+		req, err = http.NewRequestWithContext(ctx, http.MethodPost, u2.String(), nil)
 		checkValueAndError(t, req, err)
 		req.AddCookie(cookie)
 
@@ -406,7 +510,7 @@ func TestAuth(test *testing.T) {
 		require.NoError(t, err)
 		u3.Path = "/users/login"
 
-		req, err = http.NewRequest(http.MethodPost, u3.String(), body)
+		req, err = http.NewRequestWithContext(ctx, http.MethodPost, u3.String(), body)
 		checkValueAndError(t, req, err)
 
 		// execute login request.
@@ -420,11 +524,14 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should accept a login cookie if a token is missing", func(t *testing.T) {
+		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		defer span.End()
+
 		// create user.
-		_, _, cookie := buildDummyUser(test)
+		_, _, cookie := buildDummyUser(ctx, test)
 		assert.NotNil(t, cookie)
 
-		req, err := http.NewRequest(http.MethodGet, todoClient.BuildURL(nil, "webhooks"), nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, todoClient.BuildURL(nil, "webhooks"), nil)
 		assert.NoError(t, err)
 		req.AddCookie(cookie)
 
@@ -499,7 +606,7 @@ func TestAuth(test *testing.T) {
 		defer span.End()
 
 		// create user.
-		x, y, cookie := buildDummyUser(test)
+		x, y, cookie := buildDummyUser(ctx, test)
 		assert.NotNil(t, cookie)
 
 		input := buildDummyOAuth2ClientInput(test, x.Username, y.Password, x.TwoFactorSecret)

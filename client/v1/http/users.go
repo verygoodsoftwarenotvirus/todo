@@ -141,7 +141,7 @@ func (c *V1Client) Login(ctx context.Context, input *models.UserLoginInput) (*ht
 
 	req, err := c.BuildLoginRequest(ctx, input)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error building login request: %w", err)
 	}
 
 	res, err := c.plainClient.Do(req)
@@ -156,4 +156,42 @@ func (c *V1Client) Login(ctx context.Context, input *models.UserLoginInput) (*ht
 	}
 
 	return nil, errors.New("no cookies returned from request")
+}
+
+// BuildVerifyTOTPSecretRequest builds a request to validate a TOTP secret.
+func (c *V1Client) BuildVerifyTOTPSecretRequest(ctx context.Context, userID uint64, token string) (*http.Request, error) {
+	ctx, span := tracing.StartSpan(ctx, "BuildVerifyTOTPSecretRequest")
+	defer span.End()
+
+	uri := c.buildVersionlessURL(nil, usersBasePath, "totp_secret", "verify")
+
+	return c.buildDataRequest(ctx, http.MethodPost, uri, &models.TOTPSecretVerificationInput{
+		TOTPToken: token,
+		UserID:    userID,
+	})
+}
+
+// VerifyTOTPSecret builds a request to verify a TOTP secret.
+func (c *V1Client) VerifyTOTPSecret(ctx context.Context, userID uint64, token string) error {
+	ctx, span := tracing.StartSpan(ctx, "BuildVerifyTOTPSecretRequest")
+	defer span.End()
+
+	req, err := c.BuildVerifyTOTPSecretRequest(ctx, userID, token)
+	if err != nil {
+		return fmt.Errorf("error building TOTP validation request: %w", err)
+	}
+
+	res, err := c.executeRawRequest(ctx, c.plainClient, req)
+	if err != nil {
+		return fmt.Errorf("executing request: %w", err)
+	}
+	c.closeResponseBody(res)
+
+	if res.StatusCode == http.StatusBadRequest {
+		return ErrInvalidTOTPToken
+	} else if res.StatusCode != http.StatusAccepted {
+		return fmt.Errorf("erroneous response code when validating TOTP secret: %d", res.StatusCode)
+	}
+
+	return nil
 }

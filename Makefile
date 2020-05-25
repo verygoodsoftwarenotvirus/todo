@@ -3,6 +3,7 @@ GOPATH                   := $(GOPATH)
 ARTIFACTS_DIR            := artifacts
 COVERAGE_OUT             := $(ARTIFACTS_DIR)/coverage.out
 CONFIG_DIR               := config_files
+DOCKER_GO                := docker run --interactive --tty --rm --volume `pwd`:`pwd` --user `whoami`:`whoami` --workdir=`pwd` golang:latest go
 GO_FORMAT                := gofmt -s -w
 PACKAGE_LIST             := `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|mock|fake)'`
 DOCKER_FILES_DIR         := dockerfiles

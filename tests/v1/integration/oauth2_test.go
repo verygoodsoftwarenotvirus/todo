@@ -64,7 +64,7 @@ func TestOAuth2Clients(test *testing.T) {
 	_ctx := context.Background()
 
 	// create user.
-	x, y, cookie := buildDummyUser(test)
+	x, y, cookie := buildDummyUser(_ctx, test)
 	assert.NotNil(test, cookie)
 
 	input := buildDummyOAuth2ClientInput(test, x.Username, y.Password, x.TwoFactorSecret)
@@ -153,7 +153,7 @@ func TestOAuth2Clients(test *testing.T) {
 			defer span.End()
 
 			// create user.
-			createdUser, createdUserInput, _ := buildDummyUser(test)
+			createdUser, createdUserInput, _ := buildDummyUser(ctx, test)
 			assert.NotNil(test, cookie)
 
 			input := buildDummyOAuth2ClientInput(test, createdUserInput.Username, createdUserInput.Password, createdUser.TwoFactorSecret)

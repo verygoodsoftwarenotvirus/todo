@@ -17,16 +17,17 @@ const (
 type (
 	// User represents a user.
 	User struct {
-		ID                    uint64  `json:"id"`
-		Username              string  `json:"username"`
-		HashedPassword        string  `json:"-"`
-		Salt                  []byte  `json:"-"`
-		TwoFactorSecret       string  `json:"-"`
-		PasswordLastChangedOn *uint64 `json:"password_last_changed_on"`
-		IsAdmin               bool    `json:"is_admin"`
-		CreatedOn             uint64  `json:"created_on"`
-		UpdatedOn             *uint64 `json:"updated_on"`
-		ArchivedOn            *uint64 `json:"archived_on"`
+		ID                        uint64  `json:"id"`
+		Username                  string  `json:"username"`
+		HashedPassword            string  `json:"-"`
+		Salt                      []byte  `json:"-"`
+		TwoFactorSecret           string  `json:"-"`
+		PasswordLastChangedOn     *uint64 `json:"passwordLastChangedOn"`
+		TwoFactorSecretVerifiedOn *uint64 `json:"-"`
+		IsAdmin                   bool    `json:"isAdmin"`
+		CreatedOn                 uint64  `json:"createdOn"`
+		UpdatedOn                 *uint64 `json:"updatedOn"`
+		ArchivedOn                *uint64 `json:"archivedOn"`
 	}
 
 	// UserList represents a list of users.
@@ -39,7 +40,7 @@ type (
 	UserLoginInput struct {
 		Username  string `json:"username"`
 		Password  string `json:"password"`
-		TOTPToken string `json:"totp_token"`
+		TOTPToken string `json:"totpToken"`
 	}
 
 	// UserCreationInput represents the input required from users to register an account.
@@ -50,45 +51,53 @@ type (
 
 	// UserDatabaseCreationInput is used by the user creation route to communicate with the database.
 	UserDatabaseCreationInput struct {
-		Username        string
-		HashedPassword  string
-		TwoFactorSecret string
+		Username        string `json:"-"`
+		HashedPassword  string `json:"-"`
+		TwoFactorSecret string `json:"-"`
 	}
 
 	// UserCreationResponse is a response structure for Users that doesn't contain password fields, but does contain the two factor secret.
 	UserCreationResponse struct {
 		ID                    uint64  `json:"id"`
 		Username              string  `json:"username"`
-		TwoFactorSecret       string  `json:"two_factor_secret"`
-		PasswordLastChangedOn *uint64 `json:"password_last_changed_on"`
-		IsAdmin               bool    `json:"is_admin"`
-		CreatedOn             uint64  `json:"created_on"`
-		UpdatedOn             *uint64 `json:"updated_on"`
-		ArchivedOn            *uint64 `json:"archived_on"`
-		TwoFactorQRCode       string  `json:"qr_code"`
+		TwoFactorSecret       string  `json:"twoFactorSecret"`
+		PasswordLastChangedOn *uint64 `json:"passwordLastChangedOn"`
+		IsAdmin               bool    `json:"isAdmin"`
+		CreatedOn             uint64  `json:"createdOn"`
+		UpdatedOn             *uint64 `json:"updatedOn"`
+		ArchivedOn            *uint64 `json:"archivedOn"`
+		TwoFactorQRCode       string  `json:"qrCode"`
 	}
 
 	// PasswordUpdateInput represents input a user would provide when updating their password.
 	PasswordUpdateInput struct {
-		NewPassword     string `json:"new_password"`
-		CurrentPassword string `json:"current_password"`
-		TOTPToken       string `json:"totp_token"`
+		NewPassword     string `json:"newPassword"`
+		CurrentPassword string `json:"currentPassword"`
+		TOTPToken       string `json:"totpToken"`
 	}
 
 	// TOTPSecretRefreshInput represents input a user would provide when updating their 2FA secret.
 	TOTPSecretRefreshInput struct {
-		CurrentPassword string `json:"current_password"`
-		TOTPToken       string `json:"totp_token"`
+		CurrentPassword string `json:"currentPassword"`
+		TOTPToken       string `json:"totpToken"`
+	}
+
+	// TOTPSecretVerificationInput represents input a user would provide when validating their 2FA secret.
+	TOTPSecretVerificationInput struct {
+		UserID    uint64 `json:"userID"`
+		TOTPToken string `json:"totpToken"`
 	}
 
 	// TOTPSecretRefreshResponse represents the response we provide to a user when updating their 2FA secret.
 	TOTPSecretRefreshResponse struct {
-		TwoFactorSecret string `json:"two_factor_secret"`
+		TwoFactorSecret string `json:"twoFactorSecret"`
 	}
 
 	// UserDataManager describes a structure which can manage users in permanent storage.
 	UserDataManager interface {
 		GetUser(ctx context.Context, userID uint64) (*User, error)
+		GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*User, error)
+		VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error
 		GetUserByUsername(ctx context.Context, username string) (*User, error)
 		GetAllUserCount(ctx context.Context) (uint64, error)
 		GetUsers(ctx context.Context, filter *QueryFilter) (*UserList, error)
@@ -102,11 +111,13 @@ type (
 		UserInputMiddleware(next http.Handler) http.Handler
 		PasswordUpdateInputMiddleware(next http.Handler) http.Handler
 		TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handler
+		TOTPSecretVerificationInputMiddleware(next http.Handler) http.Handler
 
 		ListHandler() http.HandlerFunc
 		CreateHandler() http.HandlerFunc
 		ReadHandler() http.HandlerFunc
 		NewTOTPSecretHandler() http.HandlerFunc
+		TOTPSecretVerificationHandler() http.HandlerFunc
 		UpdatePasswordHandler() http.HandlerFunc
 		ArchiveHandler() http.HandlerFunc
 	}

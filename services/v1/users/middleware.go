@@ -15,6 +15,9 @@ const (
 	// PasswordChangeMiddlewareCtxKey is the context key for password changes.
 	PasswordChangeMiddlewareCtxKey models.ContextKey = "user_password_change"
 
+	// TOTPSecretVerificationMiddlewareCtxKey is the context key for TOTP token refreshes.
+	TOTPSecretVerificationMiddlewareCtxKey models.ContextKey = "totp_verify"
+
 	// TOTPSecretRefreshMiddlewareCtxKey is the context key for TOTP token refreshes.
 	TOTPSecretRefreshMiddlewareCtxKey models.ContextKey = "totp_refresh"
 )
@@ -55,6 +58,26 @@ func (s *Service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler 
 
 		// attach parsed value to request context.
 		ctx = context.WithValue(ctx, PasswordChangeMiddlewareCtxKey, x)
+		next.ServeHTTP(res, req.WithContext(ctx))
+	})
+}
+
+// TOTPSecretVerificationInputMiddleware fetches 2FA update input from requests.
+func (s *Service) TOTPSecretVerificationInputMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		x := new(models.TOTPSecretVerificationInput)
+		ctx, span := tracing.StartSpan(req.Context(), "TOTPSecretVerificationInputMiddleware")
+		defer span.End()
+
+		// decode the request.
+		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
+			s.logger.Error(err, "error encountered decoding request body")
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		// attach parsed value to request context.
+		ctx = context.WithValue(ctx, TOTPSecretVerificationMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }

@@ -3,9 +3,7 @@ package users
 import (
 	"bytes"
 	"context"
-	"crypto/rand"
 	"database/sql"
-	"encoding/base32"
 	"encoding/base64"
 	"fmt"
 	"image/png"
@@ -17,33 +15,16 @@ import (
 
 	"github.com/boombuler/barcode"
 	"github.com/boombuler/barcode/qr"
+	"github.com/pquerna/otp/totp"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
 const (
 	// URIParamKey is used to refer to user IDs in router params.
 	URIParamKey = "userID"
+
+	totpIssuer = "todoService"
 )
-
-// this function tests that we have appropriate access to crypto/rand
-func init() {
-	b := make([]byte, 64)
-	if _, err := rand.Read(b); err != nil {
-		panic(err)
-	}
-}
-
-// randString produces a random string.
-// https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
-func randString() (string, error) {
-	b := make([]byte, 64)
-	// Note that err == nil only if we read len(b) bytes.
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-
-	return base32.StdEncoding.EncodeToString(b), nil
-}
 
 // validateCredentialChangeRequest takes a user's credentials and determines
 // if they match what is on record.
@@ -159,10 +140,10 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 		}
 
 		// generate a two factor secret.
-		input.TwoFactorSecret, err = randString()
+		input.TwoFactorSecret, err = s.secretGenerator.GenerateTwoFactorSecret()
 		if err != nil {
 			logger.Error(err, "error generating TOTP secret")
-			res.WriteHeader(http.StatusBadRequest)
+			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
@@ -220,10 +201,10 @@ func (s *Service) buildQRCode(ctx context.Context, username, twoFactorSecret str
 		// "otpauth://totp/{{ .Issuer }}:{{ .Username }}?secret={{ .Secret }}&issuer={{ .Issuer }}",
 		fmt.Sprintf(
 			"otpauth://totp/%s:%s?secret=%s&issuer=%s",
-			"todoservice",
+			totpIssuer,
 			username,
 			twoFactorSecret,
-			"todoService",
+			totpIssuer,
 		),
 		qr.L,
 		qr.Auto,
@@ -285,6 +266,52 @@ func (s *Service) ReadHandler() http.HandlerFunc {
 	}
 }
 
+// TOTPSecretVerificationHandler accepts a TOTP token as input and returns 200 if the TOTP token
+// is validated by the user's TOTP secret.
+func (s *Service) TOTPSecretVerificationHandler() http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := tracing.StartSpan(req.Context(), "TOTPSecretVerificationHandler")
+		defer span.End()
+
+		logger := s.logger.WithRequest(req)
+
+		// check request context for parsed input.
+		input, ok := req.Context().Value(TOTPSecretVerificationMiddlewareCtxKey).(*models.TOTPSecretVerificationInput)
+		if !ok || input == nil {
+			logger.Debug("no input found on TOTP secret refresh request")
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		user, err := s.userDataManager.GetUserWithUnverifiedTwoFactorSecret(ctx, input.UserID)
+		if err != nil {
+			logger.Error(err, "fetching user")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		tracing.AttachUserIDToSpan(span, user.ID)
+		tracing.AttachUsernameToSpan(span, user.Username)
+
+		if user.TwoFactorSecretVerifiedOn != nil {
+			// I suppose if this happens too many times, we'll want to keep track of that
+			res.WriteHeader(http.StatusAlreadyReported)
+			return
+		}
+
+		if totp.Validate(input.TOTPToken, user.TwoFactorSecret) {
+			user.TwoFactorSecretVerifiedOn = nil
+			if updateUserErr := s.userDataManager.VerifyUserTwoFactorSecret(ctx, user.ID); updateUserErr != nil {
+				logger.Error(updateUserErr, "updating user to indicate their 2FA secret is validated")
+				res.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			res.WriteHeader(http.StatusAccepted)
+		} else {
+			res.WriteHeader(http.StatusBadRequest)
+		}
+	}
+}
+
 // NewTOTPSecretHandler fetches a user, and issues them a new TOTP secret, after validating
 // that information received from TOTPSecretRefreshInputContextMiddleware is valid.
 func (s *Service) NewTOTPSecretHandler() http.HandlerFunc {
@@ -330,13 +357,14 @@ func (s *Service) NewTOTPSecretHandler() http.HandlerFunc {
 		logger = logger.WithValue("user", user.ID)
 
 		// set the two factor secret.
-		tfs, err := randString()
+		tfs, err := s.secretGenerator.GenerateTwoFactorSecret()
 		if err != nil {
 			logger.Error(err, "error encountered generating random TOTP string")
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		user.TwoFactorSecret = tfs
+		user.TwoFactorSecretVerifiedOn = nil
 
 		// update the user in the database.
 		if err := s.userDataManager.UpdateUser(ctx, user); err != nil {

@@ -21,6 +21,18 @@ func (m *UserDataManager) GetUser(ctx context.Context, userID uint64) (*models.U
 	return args.Get(0).(*models.User), args.Error(1)
 }
 
+// GetUserWithUnverifiedTwoFactorSecret is a mock function.
+func (m *UserDataManager) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*models.User, error) {
+	args := m.Called(ctx, userID)
+	return args.Get(0).(*models.User), args.Error(1)
+}
+
+// VerifyUserTwoFactorSecret is a mock function.
+func (m *UserDataManager) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error {
+	args := m.Called(ctx, userID)
+	return args.Error(0)
+}
+
 // GetUserByUsername is a mock function.
 func (m *UserDataManager) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
 	args := m.Called(ctx, username)

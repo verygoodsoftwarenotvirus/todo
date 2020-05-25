@@ -30,6 +30,25 @@ func TestClient_GetUser(T *testing.T) {
 	})
 }
 
+func TestClient_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
+
+		exampleUser := fakemodels.BuildFakeUser()
+
+		c, mockDB := buildTestClient()
+		mockDB.UserDataManager.On("GetUserWithUnverifiedTwoFactorSecret", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
+
+		actual, err := c.GetUserWithUnverifiedTwoFactorSecret(ctx, exampleUser.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, exampleUser, actual)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
+	})
+}
+
 func TestClient_GetUserByUsername(T *testing.T) {
 	T.Parallel()
 

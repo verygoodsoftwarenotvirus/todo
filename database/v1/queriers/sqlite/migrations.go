@@ -21,6 +21,7 @@ var (
 				"password_last_changed_on" INTEGER,
 				"two_factor_secret" TEXT NOT NULL,
 				"is_admin" BOOLEAN NOT NULL DEFAULT 'false',
+				"two_factor_secret_verified_on" INTEGER DEFAULT NULL,
 				"created_on" INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				"updated_on" INTEGER,
 				"archived_on" INTEGER DEFAULT NULL,

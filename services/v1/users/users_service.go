@@ -32,6 +32,13 @@ type (
 		Validate(req *http.Request) (bool, error)
 	}
 
+	secretGenerator interface {
+		GenerateTwoFactorSecret() (string, error)
+	}
+
+	// UserIDFetcher fetches usernames from requests.
+	UserIDFetcher func(*http.Request) uint64
+
 	// Service handles our users.
 	Service struct {
 		cookieSecret        []byte
@@ -42,11 +49,9 @@ type (
 		userIDFetcher       UserIDFetcher
 		userCounter         metrics.UnitCounter
 		reporter            newsman.Reporter
+		secretGenerator     secretGenerator
 		userCreationEnabled bool
 	}
-
-	// UserIDFetcher fetches usernames from requests.
-	UserIDFetcher func(*http.Request) uint64
 )
 
 // ProvideUsersService builds a new UsersService.
@@ -78,6 +83,7 @@ func ProvideUsersService(
 		encoderDecoder:      encoder,
 		userCounter:         counter,
 		reporter:            reporter,
+		secretGenerator:     &standardSecretGenerator{},
 		userCreationEnabled: authSettings.EnableUserSignup,
 	}
 

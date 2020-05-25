@@ -33,6 +33,12 @@ func (m *UserDataServer) PasswordUpdateInputMiddleware(next http.Handler) http.H
 	return args.Get(0).(http.Handler)
 }
 
+// TOTPSecretVerificationInputMiddleware is a mock method to satisfy our interface requirements.
+func (m *UserDataServer) TOTPSecretVerificationInputMiddleware(next http.Handler) http.Handler {
+	args := m.Called(next)
+	return args.Get(0).(http.Handler)
+}
+
 // TOTPSecretRefreshInputMiddleware is a mock method to satisfy our interface requirements.
 func (m *UserDataServer) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handler {
 	args := m.Called(next)
@@ -53,6 +59,12 @@ func (m *UserDataServer) CreateHandler() http.HandlerFunc {
 
 // ReadHandler is a mock method to satisfy our interface requirements.
 func (m *UserDataServer) ReadHandler() http.HandlerFunc {
+	args := m.Called()
+	return args.Get(0).(http.HandlerFunc)
+}
+
+// TOTPSecretVerificationHandler is a mock method to satisfy our interface requirements.
+func (m *UserDataServer) TOTPSecretVerificationHandler() http.HandlerFunc {
 	args := m.Called()
 	return args.Get(0).(http.HandlerFunc)
 }

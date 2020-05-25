@@ -32,6 +32,9 @@ var (
 
 	// ErrUnauthorized is a handy error to return when we receive a 404 response.
 	ErrUnauthorized = errors.New("401: not authorized")
+
+	// ErrInvalidTOTPToken is an error for when our TOTP validation request goes awry
+	ErrInvalidTOTPToken = errors.New("invalid TOTP token")
 )
 
 // V1Client is a client for interacting with v1 of our HTTP API.

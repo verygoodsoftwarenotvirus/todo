@@ -48,6 +48,10 @@ func TestV1Client_GetUser(T *testing.T) {
 		exampleUser := fakemodels.BuildFakeUser()
 		// the hashed password is never transmitted over the wire.
 		exampleUser.HashedPassword = ""
+		// the two factor secret is transmitted over the wire only on creation.
+		exampleUser.TwoFactorSecret = ""
+		// the two factor secret validation is never transmitted over the wire.
+		exampleUser.TwoFactorSecretVerifiedOn = nil
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -112,6 +116,14 @@ func TestV1Client_GetUsers(T *testing.T) {
 		exampleUserList.Users[0].HashedPassword = ""
 		exampleUserList.Users[1].HashedPassword = ""
 		exampleUserList.Users[2].HashedPassword = ""
+		// the two factor secret is transmitted over the wire only on creation.
+		exampleUserList.Users[0].TwoFactorSecret = ""
+		exampleUserList.Users[1].TwoFactorSecret = ""
+		exampleUserList.Users[2].TwoFactorSecret = ""
+		// the two factor secret validation is never transmitted over the wire.
+		exampleUserList.Users[0].TwoFactorSecretVerifiedOn = nil
+		exampleUserList.Users[1].TwoFactorSecretVerifiedOn = nil
+		exampleUserList.Users[2].TwoFactorSecretVerifiedOn = nil
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -294,6 +306,8 @@ func TestV1Client_BuildLoginRequest(T *testing.T) {
 func TestV1Client_Login(T *testing.T) {
 	T.Parallel()
 
+	const expectedPath = "/users/login"
+
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -303,7 +317,7 @@ func TestV1Client_Login(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/users/login", "expected and actual paths do not match")
+					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodPost)
 
 					http.SetCookie(res, &http.Cookie{Name: exampleUser.Username})
@@ -350,7 +364,7 @@ func TestV1Client_Login(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/users/login", "expected and actual paths do not match")
+					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodPost)
 					time.Sleep(10 * time.Hour)
 				},
@@ -373,7 +387,7 @@ func TestV1Client_Login(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/users/login", "expected and actual paths do not match")
+					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodPost)
 				},
 			),
@@ -382,6 +396,113 @@ func TestV1Client_Login(T *testing.T) {
 
 		cookie, err := c.Login(ctx, exampleInput)
 		require.Nil(t, cookie)
+		assert.Error(t, err)
+	})
+}
+
+func TestV1Client_BuildValidateTOTPSecretRequest(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
+
+		ts := httptest.NewTLSServer(nil)
+		c := buildTestClient(t, ts)
+
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleInput := fakemodels.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+
+		req, err := c.BuildVerifyTOTPSecretRequest(ctx, exampleUser.ID, exampleInput.TOTPToken)
+		assert.NoError(t, err)
+		require.NotNil(t, req)
+		assert.Equal(t, req.Method, http.MethodPost)
+	})
+}
+
+func TestV1Client_ValidateTOTPSecretRequest(T *testing.T) {
+	T.Parallel()
+
+	const expectedPath = "/users/totp_secret/verify"
+
+	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
+
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleInput := fakemodels.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
+					assert.Equal(t, req.Method, http.MethodPost)
+
+					res.WriteHeader(http.StatusAccepted)
+				},
+			),
+		)
+		c := buildTestClient(t, ts)
+
+		err := c.VerifyTOTPSecret(ctx, exampleUser.ID, exampleInput.TOTPToken)
+		assert.NoError(t, err)
+	})
+
+	T.Run("with invalid code response", func(t *testing.T) {
+		ctx := context.Background()
+
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleInput := fakemodels.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
+					assert.Equal(t, req.Method, http.MethodPost)
+
+					res.WriteHeader(http.StatusBadRequest)
+				},
+			),
+		)
+		c := buildTestClient(t, ts)
+
+		err := c.VerifyTOTPSecret(ctx, exampleUser.ID, exampleInput.TOTPToken)
+		assert.Error(t, err)
+		assert.Equal(t, ErrInvalidTOTPToken, err)
+	})
+
+	T.Run("with invalid client URL", func(t *testing.T) {
+		ctx := context.Background()
+
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleInput := fakemodels.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+
+		c := buildTestClientWithInvalidURL(t)
+
+		err := c.VerifyTOTPSecret(ctx, exampleUser.ID, exampleInput.TOTPToken)
+		assert.Error(t, err)
+	})
+
+	T.Run("with timeout", func(t *testing.T) {
+		ctx := context.Background()
+
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleInput := fakemodels.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
+					assert.Equal(t, req.Method, http.MethodPost)
+
+					time.Sleep(10 * time.Minute)
+
+					res.WriteHeader(http.StatusAccepted)
+				},
+			),
+		)
+		c := buildTestClient(t, ts)
+		c.plainClient.Timeout = time.Millisecond
+
+		err := c.VerifyTOTPSecret(ctx, exampleUser.ID, exampleInput.TOTPToken)
 		assert.Error(t, err)
 	})
 }

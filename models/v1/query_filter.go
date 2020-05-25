@@ -19,22 +19,22 @@ const (
 
 	pageKey          = "page"
 	limitKey         = "limit"
-	createdBeforeKey = "created_before"
-	createdAfterKey  = "created_after"
-	updatedBeforeKey = "updated_before"
-	updatedAfterKey  = "updated_after"
-	sortByKey        = "sort_by"
+	createdBeforeKey = "createdBefore"
+	createdAfterKey  = "createdAfter"
+	updatedBeforeKey = "updatedBefore"
+	updatedAfterKey  = "updatedAfter"
+	sortByKey        = "sortBy"
 )
 
 // QueryFilter represents all the filters a user could apply to a list query.
 type QueryFilter struct {
 	Page          uint64   `json:"page"`
 	Limit         uint64   `json:"limit"`
-	CreatedAfter  uint64   `json:"created_before,omitempty"`
-	CreatedBefore uint64   `json:"created_after,omitempty"`
-	UpdatedAfter  uint64   `json:"updated_before,omitempty"`
-	UpdatedBefore uint64   `json:"updated_after,omitempty"`
-	SortBy        sortType `json:"sort_by"`
+	CreatedAfter  uint64   `json:"createdBefore,omitempty"`
+	CreatedBefore uint64   `json:"createdAfter,omitempty"`
+	UpdatedAfter  uint64   `json:"updatedBefore,omitempty"`
+	UpdatedBefore uint64   `json:"updatedAfter,omitempty"`
+	SortBy        sortType `json:"sortBy"`
 }
 
 // DefaultQueryFilter builds the default query filter.
@@ -53,7 +53,7 @@ func (qf *QueryFilter) FromParams(params url.Values) {
 	}
 
 	if i, err := strconv.ParseUint(params.Get(limitKey), 10, 64); err == nil {
-		qf.Limit = uint64(math.Max(math.Max(float64(i), 0), MaxLimit))
+		qf.Limit = uint64(math.Min(math.Max(float64(i), 0), MaxLimit))
 	}
 
 	if i, err := strconv.ParseUint(params.Get(createdBeforeKey), 10, 64); err == nil {
@@ -98,25 +98,25 @@ func (qf *QueryFilter) ToValues() url.Values {
 
 	v := url.Values{}
 	if qf.Page != 0 {
-		v.Set("page", strconv.FormatUint(qf.Page, 10))
+		v.Set(pageKey, strconv.FormatUint(qf.Page, 10))
 	}
 	if qf.Limit != 0 {
-		v.Set("limit", strconv.FormatUint(qf.Limit, 10))
+		v.Set(limitKey, strconv.FormatUint(qf.Limit, 10))
 	}
 	if qf.SortBy != "" {
-		v.Set("sort_by", string(qf.SortBy))
+		v.Set(sortByKey, string(qf.SortBy))
 	}
 	if qf.CreatedBefore != 0 {
-		v.Set("created_before", strconv.FormatUint(qf.CreatedBefore, 10))
+		v.Set(createdBeforeKey, strconv.FormatUint(qf.CreatedBefore, 10))
 	}
 	if qf.CreatedAfter != 0 {
-		v.Set("created_after", strconv.FormatUint(qf.CreatedAfter, 10))
+		v.Set(createdAfterKey, strconv.FormatUint(qf.CreatedAfter, 10))
 	}
 	if qf.UpdatedBefore != 0 {
-		v.Set("updated_before", strconv.FormatUint(qf.UpdatedBefore, 10))
+		v.Set(updatedBeforeKey, strconv.FormatUint(qf.UpdatedBefore, 10))
 	}
 	if qf.UpdatedAfter != 0 {
-		v.Set("updated_after", strconv.FormatUint(qf.UpdatedAfter, 10))
+		v.Set(updatedAfterKey, strconv.FormatUint(qf.UpdatedAfter, 10))
 	}
 
 	return v

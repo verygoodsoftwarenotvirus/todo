@@ -100,6 +100,7 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		userIDPattern := fmt.Sprintf(oauth2IDPattern, usersservice.URIParamKey)
 
 		userRouter.Get(root, s.usersService.ListHandler())
+		userRouter.With(s.authService.CookieAuthenticationMiddleware).Get("/status", s.authService.StatusHandler())
 		userRouter.With(s.usersService.UserInputMiddleware).Post(root, s.usersService.CreateHandler())
 		userRouter.Get(userIDPattern, s.usersService.ReadHandler())
 		userRouter.Delete(userIDPattern, s.usersService.ArchiveHandler())
@@ -108,6 +109,10 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 			s.authService.CookieAuthenticationMiddleware,
 			s.usersService.TOTPSecretRefreshInputMiddleware,
 		).Post("/totp_secret/new", s.usersService.NewTOTPSecretHandler())
+
+		userRouter.With(
+			s.usersService.TOTPSecretVerificationInputMiddleware,
+		).Post("/totp_secret/verify", s.usersService.TOTPSecretVerificationHandler())
 
 		userRouter.With(
 			s.authService.CookieAuthenticationMiddleware,

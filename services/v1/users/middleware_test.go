@@ -124,6 +124,54 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 	})
 }
 
+func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		s := &Service{
+			logger: noop.ProvideNoopLogger(),
+		}
+
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(nil)
+		s.encoderDecoder = ed
+
+		mh := &MockHTTPHandler{}
+		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+
+		req := buildRequest(t)
+		res := httptest.NewRecorder()
+
+		actual := s.TOTPSecretVerificationInputMiddleware(mh)
+		actual.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, ed, mh)
+	})
+
+	T.Run("with error decoding request", func(t *testing.T) {
+		s := &Service{
+			logger: noop.ProvideNoopLogger(),
+		}
+
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		s.encoderDecoder = ed
+
+		req := buildRequest(t)
+		res := httptest.NewRecorder()
+
+		mh := &MockHTTPHandler{}
+		actual := s.TOTPSecretVerificationInputMiddleware(mh)
+		actual.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusBadRequest, res.Code)
+
+		mock.AssertExpectationsForObjects(t, ed, mh)
+	})
+}
+
 func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 	T.Parallel()
 

@@ -501,7 +501,7 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 			),
 		)
 
-		actual, err := m.GetOAuth2Clients(ctx, exampleUser.ID, filter)
+		actual, err := m.GetOAuth2ClientsForUser(ctx, exampleUser.ID, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleOAuth2ClientList, actual)
 
@@ -517,7 +517,7 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := m.GetOAuth2Clients(ctx, exampleUser.ID, filter)
+		actual, err := m.GetOAuth2ClientsForUser(ctx, exampleUser.ID, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -533,7 +533,7 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := m.GetOAuth2Clients(ctx, exampleUser.ID, filter)
+		actual, err := m.GetOAuth2ClientsForUser(ctx, exampleUser.ID, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -549,7 +549,7 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
 			WillReturnRows(buildErroneousMockRowFromOAuth2Client(fakemodels.BuildFakeOAuth2Client()))
 
-		actual, err := m.GetOAuth2Clients(ctx, exampleUser.ID, filter)
+		actual, err := m.GetOAuth2ClientsForUser(ctx, exampleUser.ID, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 

@@ -23,7 +23,7 @@ import (
 )
 
 func TestService_CookieAuthenticationMiddleware(T *testing.T) {
-	T.Parallel()
+	// T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
@@ -41,10 +41,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 		require.NotNil(t, req)
 		res := httptest.NewRecorder()
 
-		cookie, err := s.buildAuthCookie(exampleUser)
-		require.NotNil(t, cookie)
-		require.NoError(t, err)
-		req.AddCookie(cookie)
+		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
 		h := s.CookieAuthenticationMiddleware(ms)
 		h.ServeHTTP(res, req)
@@ -65,10 +62,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 		require.NotNil(t, req)
 		res := httptest.NewRecorder()
 
-		cookie, err := s.buildAuthCookie(exampleUser)
-		require.NotNil(t, cookie)
-		require.NoError(t, err)
-		req.AddCookie(cookie)
+		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
 		ms := &MockHTTPHandler{}
 		h := s.CookieAuthenticationMiddleware(ms)
@@ -96,7 +90,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 }
 
 func TestService_AuthenticationMiddleware(T *testing.T) {
-	T.Parallel()
+	// T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
@@ -173,9 +167,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		c, err := s.buildAuthCookie(exampleUser)
-		require.NoError(t, err)
-		req.AddCookie(c)
+		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
 		s.AuthenticationMiddleware(true)(h).ServeHTTP(res, req)
 
@@ -186,8 +178,6 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
-		c, err := s.buildAuthCookie(exampleUser)
-		require.NoError(t, err)
 
 		mockDB := database.BuildMockDatabase().UserDataManager
 		mockDB.On("GetUser", mock.Anything, exampleUser.ID).Return((*models.User)(nil), errors.New("blah"))
@@ -197,7 +187,8 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
-		req.AddCookie(c)
+
+		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
 		h := &MockHTTPHandler{}
 		s.AuthenticationMiddleware(true)(h).ServeHTTP(res, req)
@@ -252,9 +243,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		c, err := s.buildAuthCookie(exampleUser)
-		require.NoError(t, err)
-		req.AddCookie(c)
+		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
 		h := &MockHTTPHandler{}
 		s.AuthenticationMiddleware(true)(h).ServeHTTP(res, req)
@@ -310,7 +299,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 }
 
 func Test_parseLoginInputFromForm(T *testing.T) {
-	T.Parallel()
+	// T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru", nil)
@@ -345,7 +334,7 @@ func Test_parseLoginInputFromForm(T *testing.T) {
 }
 
 func TestService_UserLoginInputMiddleware(T *testing.T) {
-	T.Parallel()
+	// T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		exampleUser := fakemodels.BuildFakeUser()
@@ -430,7 +419,7 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 }
 
 func TestService_AdminMiddleware(T *testing.T) {
-	T.Parallel()
+	// T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
@@ -444,8 +433,8 @@ func TestService_AdminMiddleware(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				models.UserKey,
-				exampleUser,
+				models.SessionInfoKey,
+				exampleUser.ToSessionInfo(),
 			),
 		)
 
@@ -490,8 +479,8 @@ func TestService_AdminMiddleware(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				models.UserKey,
-				exampleUser,
+				models.SessionInfoKey,
+				exampleUser.ToSessionInfo(),
 			),
 		)
 

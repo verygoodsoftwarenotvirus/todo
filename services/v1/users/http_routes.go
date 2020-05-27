@@ -330,29 +330,29 @@ func (s *Service) NewTOTPSecretHandler() http.HandlerFunc {
 		}
 
 		// also check for the user's ID.
-		userID, ok := ctx.Value(models.UserIDKey).(uint64)
-		if !ok {
+		si, ok := ctx.Value(models.SessionInfoKey).(*models.SessionInfo)
+		if !ok || si == nil {
 			logger.Debug("no user ID attached to TOTP secret refresh request")
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
 		// make sure this is all on the up-and-up
-		user, sc := s.validateCredentialChangeRequest(
+		user, httpStatus := s.validateCredentialChangeRequest(
 			ctx,
-			userID,
+			si.UserID,
 			input.CurrentPassword,
 			input.TOTPToken,
 		)
 
 		// if the above function returns something other than 200, it means some error occurred.
-		if sc != http.StatusOK {
-			res.WriteHeader(sc)
+		if httpStatus != http.StatusOK {
+			res.WriteHeader(httpStatus)
 			return
 		}
 
 		// document who this is for.
-		tracing.AttachUserIDToSpan(span, userID)
+		tracing.AttachUserIDToSpan(span, si.UserID)
 		tracing.AttachUsernameToSpan(span, user.Username)
 		logger = logger.WithValue("user", user.ID)
 
@@ -399,28 +399,28 @@ func (s *Service) UpdatePasswordHandler() http.HandlerFunc {
 		}
 
 		// check request context for user ID.
-		userID, ok := ctx.Value(models.UserIDKey).(uint64)
-		if !ok {
+		si, ok := ctx.Value(models.SessionInfoKey).(*models.SessionInfo)
+		if !ok || si == nil {
 			logger.Debug("no user ID attached to UpdatePasswordHandler request")
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
 		// determine relevant user ID.
-		tracing.AttachUserIDToSpan(span, userID)
-		logger = logger.WithValue("user_id", userID)
+		tracing.AttachUserIDToSpan(span, si.UserID)
+		logger = logger.WithValue("user_id", si.UserID)
 
 		// make sure everything's on the up-and-up
-		user, sc := s.validateCredentialChangeRequest(
+		user, httpStatus := s.validateCredentialChangeRequest(
 			ctx,
-			userID,
+			si.UserID,
 			input.CurrentPassword,
 			input.TOTPToken,
 		)
 
 		// if the above function returns something other than 200, it means some error occurred.
-		if sc != http.StatusOK {
-			res.WriteHeader(sc)
+		if httpStatus != http.StatusOK {
+			res.WriteHeader(httpStatus)
 			return
 		}
 

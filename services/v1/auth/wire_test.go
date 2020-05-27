@@ -7,7 +7,7 @@ import (
 )
 
 func TestProvideWebsocketAuthFunc(T *testing.T) {
-	T.Parallel()
+	// T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
 		ProvideWebsocketAuthFunc(buildTestService(t))
@@ -15,7 +15,7 @@ func TestProvideWebsocketAuthFunc(T *testing.T) {
 }
 
 func TestProvideOAuth2ClientValidator(T *testing.T) {
-	T.Parallel()
+	// T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
 		ProvideOAuth2ClientValidator(&oauth2clientsservice.Service{})

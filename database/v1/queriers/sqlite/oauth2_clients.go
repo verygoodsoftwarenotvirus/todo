@@ -280,8 +280,8 @@ func (s *Sqlite) buildGetOAuth2ClientsQuery(userID uint64, filter *models.QueryF
 	return query, args
 }
 
-// GetOAuth2Clients gets a list of OAuth2 clients.
-func (s *Sqlite) GetOAuth2Clients(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
+// GetOAuth2ClientsForUser gets a list of OAuth2 clients.
+func (s *Sqlite) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
 	query, args := s.buildGetOAuth2ClientsQuery(userID, filter)
 	rows, err := s.db.QueryContext(ctx, query, args...)
 

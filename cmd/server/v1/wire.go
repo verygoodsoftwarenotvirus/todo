@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
@@ -35,6 +36,7 @@ func BuildServer(
 	cfg *config.ServerConfig,
 	logger logging.Logger,
 	database database.Database,
+	db *sql.DB,
 ) (*server.Server, error) {
 	wire.Build(
 		config.Providers,

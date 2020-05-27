@@ -280,8 +280,8 @@ func (p *Postgres) buildGetOAuth2ClientsQuery(userID uint64, filter *models.Quer
 	return query, args
 }
 
-// GetOAuth2Clients gets a list of OAuth2 clients.
-func (p *Postgres) GetOAuth2Clients(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
+// GetOAuth2ClientsForUser gets a list of OAuth2 clients.
+func (p *Postgres) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
 	query, args := p.buildGetOAuth2ClientsQuery(userID, filter)
 	rows, err := p.db.QueryContext(ctx, query, args...)
 
@@ -418,5 +418,11 @@ func (p *Postgres) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query
 func (p *Postgres) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error {
 	query, args := p.buildArchiveOAuth2ClientQuery(clientID, userID)
 	_, err := p.db.ExecContext(ctx, query, args...)
+	p.logger.WithValues(map[string]interface{}{
+		"query":     query,
+		"err":       err,
+		"client_id": clientID,
+		"user_id":   userID,
+	}).Debug("archived oauth2 client")
 	return err
 }

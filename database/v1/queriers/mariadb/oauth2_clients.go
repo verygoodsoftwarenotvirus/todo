@@ -280,8 +280,8 @@ func (m *MariaDB) buildGetOAuth2ClientsQuery(userID uint64, filter *models.Query
 	return query, args
 }
 
-// GetOAuth2Clients gets a list of OAuth2 clients.
-func (m *MariaDB) GetOAuth2Clients(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
+// GetOAuth2ClientsForUser gets a list of OAuth2 clients.
+func (m *MariaDB) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
 	query, args := m.buildGetOAuth2ClientsQuery(userID, filter)
 	rows, err := m.db.QueryContext(ctx, query, args...)
 

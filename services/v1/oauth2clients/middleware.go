@@ -102,10 +102,8 @@ func (s *Service) OAuth2TokenAuthenticationMiddleware(next http.Handler) http.Ha
 		tracing.AttachOAuth2ClientIDToSpan(span, c.ClientID)
 		tracing.AttachOAuth2ClientDatabaseIDToSpan(span, c.ID)
 
-		// attach both the user ID and the client object to the request. it might seem
-		// superfluous, but some things should only need to know to look for user IDs.
+		// attach the client object to the request.
 		ctx = context.WithValue(ctx, models.OAuth2ClientKey, c)
-		ctx = context.WithValue(ctx, models.UserIDKey, c.BelongsToUser)
 
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
@@ -132,7 +130,6 @@ func (s *Service) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 			tracing.AttachOAuth2ClientDatabaseIDToSpan(span, client.ID)
 
 			ctx = context.WithValue(ctx, models.OAuth2ClientKey, client)
-			ctx = context.WithValue(ctx, models.UserIDKey, client.BelongsToUser)
 
 			req = req.WithContext(ctx)
 		}

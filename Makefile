@@ -88,7 +88,7 @@ gitlab-ci-junit-report: $(ARTIFACTS_DIR) ensure-go-junit-report
 	@mkdir $(CI_PROJECT_DIR)/test_artifacts
 	go test -v -race -count 5 $(PACKAGE_LIST) | go-junit-report > $(CI_PROJECT_DIR)/test_artifacts/unit_test_report.xml
 
-.PHONY: quicktest # basically the same as coverage.out, only running once instead of with `-count` set
+.PHONY: quicktest # basically only running once instead of with -count 5 or whatever
 quicktest: $(ARTIFACTS_DIR)
 	go test -cover -race -failfast $(PACKAGE_LIST)
 
@@ -103,7 +103,7 @@ check_formatting:
 
 .PHONY: frontend-tests
 frontend-tests:
-	docker-compose --file $(DOCKER_COMPOSE_FILES_DIR)/frontend-tests.json up \
+	docker-compose --file $(DOCKER_COMPOSE_FILES_DIR)/frontend-tests.yaml up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -121,7 +121,7 @@ integration-tests: integration-tests-postgres integration-tests-sqlite integrati
 
 .PHONY: integration-tests-
 integration-tests-%:
-	docker-compose --file $(DOCKER_COMPOSE_FILES_DIR)/integration-tests-$*.json up \
+	docker-compose --file $(DOCKER_COMPOSE_FILES_DIR)/integration-tests-$*.yaml up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -134,7 +134,7 @@ integration-coverage: $(ARTIFACTS_DIR)
 	@# big thanks to https://blog.cloudflare.com/go-coverage-with-external-tests/
 	rm -f $(ARTIFACTS_DIR)/integration-coverage.out
 	@mkdir -p $(ARTIFACTS_DIR)
-	docker-compose --file $(DOCKER_COMPOSE_FILES_DIR)/integration-coverage.json up \
+	docker-compose --file $(DOCKER_COMPOSE_FILES_DIR)/integration-coverage.yaml up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -150,7 +150,7 @@ load-tests: load-tests-postgres load-tests-sqlite load-tests-mariadb
 
 .PHONY: load-tests-
 load-tests-%:
-	docker-compose --file $(DOCKER_COMPOSE_FILES_DIR)/load-tests-$*.json up \
+	docker-compose --file $(DOCKER_COMPOSE_FILES_DIR)/load-tests-$*.yaml up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -172,7 +172,7 @@ push-server-to-docker: server-docker-image
 
 .PHONY: dev
 dev:
-	docker-compose --file $(DOCKER_COMPOSE_FILES_DIR)/development.json up \
+	docker-compose --file $(DOCKER_COMPOSE_FILES_DIR)/development.yaml up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -182,7 +182,7 @@ dev:
 
 .PHONY: run
 run:
-	docker-compose --file $(DOCKER_COMPOSE_FILES_DIR)/production.json up \
+	docker-compose --file $(DOCKER_COMPOSE_FILES_DIR)/production.yaml up \
 	--build \
 	--force-recreate \
 	--remove-orphans \

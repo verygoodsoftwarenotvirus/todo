@@ -39,5 +39,6 @@ var (
 		ProvideConfigAuthSettings,
 		ProvideConfigDatabaseSettings,
 		ProvideConfigFrontendSettings,
+		ProvideSessionManager,
 	)
 )

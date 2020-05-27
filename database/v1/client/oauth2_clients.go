@@ -40,13 +40,14 @@ func (c *Client) GetOAuth2ClientByClientID(ctx context.Context, clientID string)
 
 	tracing.AttachOAuth2ClientIDToSpan(span, clientID)
 	logger := c.logger.WithValue("oauth2client_client_id", clientID)
-	logger.Debug("GetOAuth2ClientByClientID called")
 
 	client, err := c.querier.GetOAuth2ClientByClientID(ctx, clientID)
 	if err != nil {
 		logger.Error(err, "error fetching oauth2 client from the querier")
 		return nil, err
 	}
+
+	logger.WithValue("client_id", client.ID).Debug("GetOAuth2ClientByClientID called")
 
 	return client, nil
 }
@@ -61,17 +62,17 @@ func (c *Client) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	return c.querier.GetAllOAuth2ClientCount(ctx)
 }
 
-// GetOAuth2Clients gets a list of OAuth2 clients.
-func (c *Client) GetOAuth2Clients(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetOAuth2Clients")
+// GetOAuth2ClientsForUser gets a list of OAuth2 clients.
+func (c *Client) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
+	ctx, span := tracing.StartSpan(ctx, "GetOAuth2ClientsForUser")
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
 	tracing.AttachFilterToSpan(span, filter)
 
-	c.logger.WithValue("user_id", userID).Debug("GetOAuth2Clients called")
+	c.logger.WithValue("user_id", userID).Debug("GetOAuth2ClientsForUser called")
 
-	return c.querier.GetOAuth2Clients(ctx, userID, filter)
+	return c.querier.GetOAuth2ClientsForUser(ctx, userID, filter)
 }
 
 // CreateOAuth2Client creates an OAuth2 client.
@@ -80,8 +81,8 @@ func (c *Client) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 	defer span.End()
 
 	logger := c.logger.WithValues(map[string]interface{}{
-		"client_id":       input.ClientID,
-		"belongs_to_user": input.BelongsToUser,
+		"oauth2client_client_id": input.ClientID,
+		"belongs_to_user":        input.BelongsToUser,
 	})
 
 	client, err := c.querier.CreateOAuth2Client(ctx, input)
@@ -90,7 +91,7 @@ func (c *Client) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 		return nil, err
 	}
 
-	logger.Debug("new oauth2 client created successfully")
+	logger.WithValue("client_id", client.ID).Debug("new oauth2 client created successfully")
 
 	return client, nil
 }

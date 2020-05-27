@@ -30,6 +30,19 @@ var (
 		},
 		{
 			Version:     2,
+			Description: "create sessions table for session manager",
+			Script: `
+			CREATE TABLE sessions (
+				token TEXT PRIMARY KEY,
+				data BYTEA NOT NULL,
+				expiry TIMESTAMPTZ NOT NULL
+			);
+
+			CREATE INDEX sessions_expiry_idx ON sessions (expiry);
+			`,
+		},
+		{
+			Version:     3,
 			Description: "create oauth2_clients table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS oauth2_clients (
@@ -48,7 +61,7 @@ var (
 			);`,
 		},
 		{
-			Version:     3,
+			Version:     4,
 			Description: "create webhooks table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
@@ -68,7 +81,7 @@ var (
 			);`,
 		},
 		{
-			Version:     4,
+			Version:     5,
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (

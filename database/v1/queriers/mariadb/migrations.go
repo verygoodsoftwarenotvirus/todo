@@ -46,6 +46,22 @@ var (
 		},
 		{
 			Version:     3,
+			Description: "create sessions table for session manager",
+			Script: strings.Join([]string{
+				"CREATE TABLE sessions (",
+				"	`token` CHAR(43) PRIMARY KEY,",
+				"	`data` BLOB NOT NULL,",
+				"	`expiry` TIMESTAMP(6) NOT NULL",
+				");",
+			}, "\n"),
+		},
+		{
+			Version:     4,
+			Description: "create sessions table for session manager",
+			Script:      "CREATE INDEX sessions_expiry_idx ON sessions (expiry);",
+		},
+		{
+			Version:     5,
 			Description: "create oauth2_clients table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS oauth2_clients (",
@@ -66,7 +82,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     4,
+			Version:     6,
 			Description: "create oauth2_clients table creation trigger",
 			Script: strings.Join([]string{
 				"CREATE TRIGGER IF NOT EXISTS oauth2_clients_creation_trigger BEFORE INSERT ON oauth2_clients FOR EACH ROW",
@@ -79,7 +95,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     5,
+			Version:     7,
 			Description: "create webhooks table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS webhooks (",
@@ -101,7 +117,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     6,
+			Version:     8,
 			Description: "create webhooks table creation trigger",
 			Script: strings.Join([]string{
 				"CREATE TRIGGER IF NOT EXISTS webhooks_creation_trigger BEFORE INSERT ON webhooks FOR EACH ROW",
@@ -114,7 +130,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     7,
+			Version:     9,
 			Description: "create items table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS items (",
@@ -131,7 +147,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     8,
+			Version:     10,
 			Description: "create items table creation trigger",
 			Script: strings.Join([]string{
 				"CREATE TRIGGER IF NOT EXISTS items_creation_trigger BEFORE INSERT ON items FOR EACH ROW",

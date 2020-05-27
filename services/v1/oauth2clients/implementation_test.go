@@ -218,7 +218,7 @@ func TestService_UserAuthorizationHandler(T *testing.T) {
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserKey, exampleUser),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 
 		actual, err := s.UserAuthorizationHandler(res, req)

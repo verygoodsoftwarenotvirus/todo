@@ -84,8 +84,8 @@ func buildOAuth2ClientActions(c *client.V1Client) map[string]*Action {
 			},
 			Weight: 100,
 		},
-		"GetOAuth2Clients": {
-			Name: "GetOAuth2Clients",
+		"GetOAuth2ClientsForUser": {
+			Name: "GetOAuth2ClientsForUser",
 			Action: func() (*http.Request, error) {
 				return c.BuildGetOAuth2ClientsRequest(context.Background(), nil)
 			},

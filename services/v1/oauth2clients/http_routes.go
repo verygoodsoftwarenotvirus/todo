@@ -33,8 +33,8 @@ func randString() string {
 
 // fetchUserID grabs a userID out of the request context.
 func (s *Service) fetchUserID(req *http.Request) uint64 {
-	if id, ok := req.Context().Value(models.UserIDKey).(uint64); ok {
-		return id
+	if si, ok := req.Context().Value(models.SessionInfoKey).(*models.SessionInfo); ok && si != nil {
+		return si.UserID
 	}
 	return 0
 }
@@ -56,7 +56,7 @@ func (s *Service) ListHandler() http.HandlerFunc {
 		logger = logger.WithValue("user_id", userID)
 
 		// fetch oauth2 clients.
-		oauth2Clients, err := s.database.GetOAuth2Clients(ctx, userID, filter)
+		oauth2Clients, err := s.database.GetOAuth2ClientsForUser(ctx, userID, filter)
 		if err == sql.ErrNoRows {
 			// just return an empty list if there are no results.
 			oauth2Clients = &models.OAuth2ClientList{
@@ -91,6 +91,10 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 			return
 		}
 
+		// set some data.
+		input.ClientID, input.ClientSecret = randString(), randString()
+		input.BelongsToUser = s.fetchUserID(req)
+
 		// keep relevant data in mind.
 		logger = logger.WithValues(map[string]interface{}{
 			"username":     input.Username,
@@ -105,7 +109,6 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		input.BelongsToUser = user.ID
 
 		// tag span since we have the info.
 		tracing.AttachUserIDToSpan(span, user.ID)
@@ -129,11 +132,6 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-
-		// set some data.
-		input.ClientID = randString()
-		input.ClientSecret = randString()
-		input.BelongsToUser = s.fetchUserID(req)
 
 		// create the client.
 		client, err := s.database.CreateOAuth2Client(ctx, input)

@@ -33,13 +33,19 @@ func main() {
 	ctx, span := tracing.StartSpan(ctx, "initialization")
 
 	// connect to our database.
-	db, err := cfg.ProvideDatabase(ctx, logger)
+	rawDB, err := cfg.ProvideDatabaseConnection(logger)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	// connect to our database.
+	dbClient, err := cfg.ProvideDatabaseClient(ctx, logger, rawDB)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
 	// build our server struct.
-	server, err := BuildServer(ctx, cfg, logger, db)
+	server, err := BuildServer(ctx, cfg, logger, dbClient, rawDB)
 	span.End()
 	cancel()
 

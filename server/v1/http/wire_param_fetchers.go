@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -20,7 +19,6 @@ var (
 	paramFetcherProviders = wire.NewSet(
 		ProvideUsersServiceUserIDFetcher,
 		ProvideOAuth2ClientsServiceClientIDFetcher,
-		ProvideAuthServiceUserIDFetcher,
 		ProvideItemsServiceUserIDFetcher,
 		ProvideItemsServiceItemIDFetcher,
 		ProvideWebhooksServiceUserIDFetcher,
@@ -43,11 +41,6 @@ func ProvideUsersServiceUserIDFetcher(logger logging.Logger) usersservice.UserID
 	return buildRouteParamUserIDFetcher(logger)
 }
 
-// ProvideAuthServiceUserIDFetcher provides a UsernameFetcher.
-func ProvideAuthServiceUserIDFetcher() authservice.UserIDFetcher {
-	return userIDFetcherFromRequestContext
-}
-
 // ProvideWebhooksServiceUserIDFetcher provides a UserIDFetcher.
 func ProvideWebhooksServiceUserIDFetcher() webhooksservice.UserIDFetcher {
 	return userIDFetcherFromRequestContext
@@ -65,8 +58,8 @@ func ProvideOAuth2ClientsServiceClientIDFetcher(logger logging.Logger) oauth2cli
 
 // userIDFetcherFromRequestContext fetches a user ID from a request routed by chi.
 func userIDFetcherFromRequestContext(req *http.Request) uint64 {
-	if userID, ok := req.Context().Value(models.UserIDKey).(uint64); ok {
-		return userID
+	if si, ok := req.Context().Value(models.SessionInfoKey).(*models.SessionInfo); ok && si != nil {
+		return si.UserID
 	}
 	return 0
 }

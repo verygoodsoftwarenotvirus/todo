@@ -108,12 +108,12 @@ func (s *Service) UserAuthorizationHandler(_ http.ResponseWriter, req *http.Requ
 	// check context for client.
 	if client, clientOk := ctx.Value(models.OAuth2ClientKey).(*models.OAuth2Client); !clientOk {
 		// check for user instead.
-		user, userOk := ctx.Value(models.UserKey).(*models.User)
-		if !userOk {
-			logger.Debug("no user attached to this request")
+		si, userOk := ctx.Value(models.SessionInfoKey).(*models.SessionInfo)
+		if !userOk || si == nil {
+			logger.Debug("no user iD attached to this request")
 			return "", errors.New("user not found")
 		}
-		uid = user.ID
+		uid = si.UserID
 	} else {
 		uid = client.BelongsToUser
 	}

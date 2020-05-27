@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -18,24 +19,41 @@ const (
 	// CookieName is the name of the cookie we attach to requests.
 	CookieName         = "todocookie"
 	cookieErrorLogName = "_COOKIE_CONSTRUCTION_ERROR_"
+
+	sessionInfoKey = "session_info"
 )
 
 // DecodeCookieFromRequest takes a request object and fetches the cookie data if it is present.
-func (s *Service) DecodeCookieFromRequest(ctx context.Context, req *http.Request) (ca *models.CookieAuth, err error) {
-	_, span := tracing.StartSpan(ctx, "DecodeCookieFromRequest")
+func (s *Service) DecodeCookieFromRequest(ctx context.Context, req *http.Request) (ca *models.SessionInfo, err error) {
+	ctx, span := tracing.StartSpan(ctx, "DecodeCookieFromRequest")
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
 
 	cookie, err := req.Cookie(CookieName)
 	if err != http.ErrNoCookie && cookie != nil {
-		decodeErr := s.cookieManager.Decode(CookieName, cookie.Value, &ca)
+		var token string
+		decodeErr := s.cookieManager.Decode(CookieName, cookie.Value, &token)
 		if decodeErr != nil {
 			logger.Error(err, "decoding request cookie")
 			return nil, fmt.Errorf("decoding request cookie: %w", decodeErr)
 		}
 
-		return ca, nil
+		// MOVEME: to middleware?
+		var sessionErr error
+		ctx, sessionErr = s.sessionManager.Load(ctx, token)
+		if sessionErr != nil {
+			logger.Error(sessionErr, "error loading token")
+			return nil, errors.New("error loading token")
+		}
+
+		si, ok := s.sessionManager.Get(ctx, sessionInfoKey).(*models.SessionInfo)
+		if !ok {
+			logger.Error(err, "fetching session data")
+			return nil, errors.New("missing session data")
+		}
+
+		return si, nil
 	}
 
 	return nil, http.ErrNoCookie
@@ -82,7 +100,6 @@ func (s *Service) fetchUserFromCookie(ctx context.Context, req *http.Request) (*
 		return nil, fmt.Errorf("fetching user from request: %w", userFetchErr)
 	}
 	tracing.AttachUserIDToSpan(span, ca.UserID)
-	tracing.AttachUsernameToSpan(span, ca.Username)
 
 	return user, nil
 }
@@ -122,18 +139,36 @@ func (s *Service) LoginHandler() http.HandlerFunc {
 			return
 		}
 
-		cookie, err := s.buildAuthCookie(loginData.user)
-		if err != nil {
-			logger.Error(err, "error building cookie")
-
+		// MOVEME: to middleware?
+		var sessionErr error
+		ctx, sessionErr = s.sessionManager.Load(ctx, "")
+		if sessionErr != nil {
+			logger.Error(sessionErr, "error loading token")
 			res.WriteHeader(http.StatusInternalServerError)
-			response := &models.ErrorResponse{
-				Code:    http.StatusInternalServerError,
-				Message: "error encountered building cookie",
-			}
-			if err := s.encoderDecoder.EncodeResponse(res, response); err != nil {
-				logger.Error(err, "encoding response")
-			}
+			return
+		}
+
+		// First renew the session token...
+		if renewTokenErr := s.sessionManager.RenewToken(ctx); renewTokenErr != nil {
+			logger.Error(err, "error encountered renewing token")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// Then make the privilege-level change.
+		s.sessionManager.Put(ctx, sessionInfoKey, loginData.user.ToSessionInfo())
+
+		token, _, err := s.sessionManager.Commit(ctx)
+		if err != nil {
+			logger.Error(err, "error encountered writing to session store")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		cookie := s.buildCookie(token)
+		if cookie == nil {
+			logger.Error(err, "error encountered building cookie")
+			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
@@ -145,10 +180,24 @@ func (s *Service) LoginHandler() http.HandlerFunc {
 // LogoutHandler is our logout route.
 func (s *Service) LogoutHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		_, span := tracing.StartSpan(req.Context(), "LogoutHandler")
+		ctx, span := tracing.StartSpan(req.Context(), "LogoutHandler")
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+
+		// MOVEME: to middleware?
+		ctx, sessionErr := s.sessionManager.Load(ctx, "")
+		if sessionErr != nil {
+			logger.Error(sessionErr, "error loading token")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if err := s.sessionManager.Clear(ctx); err != nil {
+			logger.Error(err, "clearing user session")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
 		if cookie, err := req.Cookie(CookieName); err == nil && cookie != nil {
 			c := s.buildCookie("deleted")
@@ -300,35 +349,19 @@ func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool,
 	return loginValid, err
 }
 
-// buildAuthCookie returns an authentication cookie for a given user.
-func (s *Service) buildAuthCookie(user *models.User) (*http.Cookie, error) {
-	// NOTE: code here is duplicated into the unit tests for
-	// DecodeCookieFromRequest any changes made here might need
-	// to be reflected there.
-	encoded, err := s.cookieManager.Encode(
-		CookieName,
-		models.CookieAuth{
-			UserID:   user.ID,
-			Admin:    user.IsAdmin,
-			Username: user.Username,
-		},
-	)
-
-	if err != nil {
-		// NOTE: these errors should be infrequent, and should cause alarm when they do occur
-		s.logger.WithName(cookieErrorLogName).WithValue("user_id", user.ID).Error(err, "error encoding cookie")
-		return nil, err
-	}
-
-	return s.buildCookie(encoded), nil
-}
-
 // buildCookie provides a consistent way of constructing an HTTP cookie.
 func (s *Service) buildCookie(value string) *http.Cookie {
+	encoded, err := s.cookieManager.Encode(CookieName, value)
+	if err != nil {
+		// NOTE: these errors should be infrequent, and should cause alarm when they do occur
+		s.logger.WithName(cookieErrorLogName).Error(err, "error encoding cookie")
+		return nil
+	}
+
 	// https://www.calhoun.io/securing-cookies-in-go/
 	return &http.Cookie{
 		Name:     CookieName,
-		Value:    value,
+		Value:    encoded,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   s.config.SecureCookiesOnly,

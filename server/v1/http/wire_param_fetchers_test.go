@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -40,14 +41,6 @@ func TestProvideUsersServiceUserIDFetcher(T *testing.T) {
 	})
 }
 
-func TestProvideAuthServiceUserIDFetcher(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		_ = ProvideAuthServiceUserIDFetcher()
-	})
-}
-
 func TestProvideWebhooksServiceUserIDFetcher(T *testing.T) {
 	T.Parallel()
 
@@ -76,19 +69,16 @@ func Test_userIDFetcherFromRequestContext(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		expected := uint64(123)
+		exampleUser := fakemodels.BuildFakeUser()
+		expected := exampleUser.ToSessionInfo()
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(
-				req.Context(),
-				models.UserIDKey,
-				expected,
-			),
+			context.WithValue(req.Context(), models.SessionInfoKey, expected),
 		)
 
 		actual := userIDFetcherFromRequestContext(req)
-		assert.Equal(t, expected, actual)
+		assert.Equal(t, expected.UserID, actual)
 	})
 
 	T.Run("without attached value", func(t *testing.T) {

@@ -5,15 +5,6 @@ import (
 	"net/http"
 )
 
-const (
-	// UserKey is the non-string type we use for referencing a user in a context
-	UserKey ContextKey = "user"
-	// UserIDKey is the non-string type we use for referencing a user ID in a context
-	UserIDKey ContextKey = "user_id"
-	// UserIsAdminKey is the non-string type we use for referencing a user's admin status in a context
-	UserIsAdminKey ContextKey = "is_admin"
-)
-
 type (
 	// User represents a user.
 	User struct {
@@ -135,5 +126,13 @@ func (u *User) Update(input *User) {
 
 	if input.TwoFactorSecret != "" && input.TwoFactorSecret != u.TwoFactorSecret {
 		u.TwoFactorSecret = input.TwoFactorSecret
+	}
+}
+
+// ToSessionInfo accepts a User as input and merges those values if they're set.
+func (u *User) ToSessionInfo() *SessionInfo {
+	return &SessionInfo{
+		UserID:      u.ID,
+		UserIsAdmin: u.IsAdmin,
 	}
 }

@@ -161,8 +161,7 @@ func TestOAuth2Clients(test *testing.T) {
 			checkValueAndError(test, premade, err)
 
 			// archive oauth2Client.
-			err = testClient.ArchiveOAuth2Client(ctx, premade.ID)
-			assert.NoError(t, err)
+			require.NoError(t, testClient.ArchiveOAuth2Client(ctx, premade.ID))
 
 			c2, err := client.NewClient(
 				ctx,

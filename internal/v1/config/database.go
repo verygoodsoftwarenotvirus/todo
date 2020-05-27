@@ -2,8 +2,8 @@ package config
 
 import (
 	"context"
+	"database/sql"
 	"errors"
-	"fmt"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
@@ -12,57 +12,79 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/queriers/sqlite"
 
 	"contrib.go.opencensus.io/integrations/ocsql"
+	"github.com/alexedwards/scs/mysqlstore"
+	"github.com/alexedwards/scs/postgresstore"
+	"github.com/alexedwards/scs/sqlite3store"
+	"github.com/alexedwards/scs/v2"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
 const (
-	postgresProviderKey = "postgres"
-	mariaDBProviderKey  = "mariadb"
-	sqliteProviderKey   = "sqlite"
+	// PostgresProviderKey is the string we use to refer to postgres
+	PostgresProviderKey = "postgres"
+	// MariaDBProviderKey is the string we use to refer to mariaDB
+	MariaDBProviderKey = "mariadb"
+	// SqliteProviderKey is the string we use to refer to sqlite
+	SqliteProviderKey = "sqlite"
 )
 
-// ProvideDatabase provides a database implementation dependent on the configuration.
-func (cfg *ServerConfig) ProvideDatabase(ctx context.Context, logger logging.Logger) (database.Database, error) {
-	var (
-		debug             = cfg.Database.Debug || cfg.Meta.Debug
-		connectionDetails = cfg.Database.ConnectionDetails
-	)
-
+// ProvideDatabaseConnection provides a database implementation dependent on the configuration.
+func (cfg *ServerConfig) ProvideDatabaseConnection(logger logging.Logger) (*sql.DB, error) {
 	switch cfg.Database.Provider {
-	case postgresProviderKey:
-		rawDB, err := postgres.ProvidePostgresDB(logger, connectionDetails)
-		if err != nil {
-			return nil, fmt.Errorf("establish postgres database connection: %w", err)
-		}
-		ocsql.RegisterAllViews()
-		ocsql.RecordStats(rawDB, cfg.Metrics.DBMetricsCollectionInterval)
-
-		pgdb := postgres.ProvidePostgres(debug, rawDB, logger)
-
-		return dbclient.ProvideDatabaseClient(ctx, rawDB, pgdb, debug, logger)
-	case mariaDBProviderKey:
-		rawDB, err := mariadb.ProvideMariaDBConnection(logger, connectionDetails)
-		if err != nil {
-			return nil, fmt.Errorf("establish mariadb database connection: %w", err)
-		}
-		ocsql.RegisterAllViews()
-		ocsql.RecordStats(rawDB, cfg.Metrics.DBMetricsCollectionInterval)
-
-		mdb := mariadb.ProvideMariaDB(debug, rawDB, logger)
-
-		return dbclient.ProvideDatabaseClient(ctx, rawDB, mdb, debug, logger)
-	case sqliteProviderKey:
-		rawDB, err := sqlite.ProvideSqliteDB(logger, connectionDetails)
-		if err != nil {
-			return nil, fmt.Errorf("establish sqlite database connection: %w", err)
-		}
-		ocsql.RegisterAllViews()
-		ocsql.RecordStats(rawDB, cfg.Metrics.DBMetricsCollectionInterval)
-
-		sdb := sqlite.ProvideSqlite(debug, rawDB, logger)
-
-		return dbclient.ProvideDatabaseClient(ctx, rawDB, sdb, debug, logger)
+	case PostgresProviderKey:
+		return postgres.ProvidePostgresDB(logger, cfg.Database.ConnectionDetails)
+	case MariaDBProviderKey:
+		return mariadb.ProvideMariaDBConnection(logger, cfg.Database.ConnectionDetails)
+	case SqliteProviderKey:
+		return sqlite.ProvideSqliteDB(logger, cfg.Database.ConnectionDetails)
 	default:
 		return nil, errors.New("invalid database type selected")
 	}
+}
+
+// ProvideDatabaseClient provides a database implementation dependent on the configuration.
+func (cfg *ServerConfig) ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB) (database.Database, error) {
+	if rawDB == nil {
+		return nil, errors.New("nil DB connection provided")
+	}
+
+	debug := cfg.Database.Debug || cfg.Meta.Debug
+
+	ocsql.RegisterAllViews()
+	ocsql.RecordStats(rawDB, cfg.Metrics.DBMetricsCollectionInterval)
+
+	var dbc database.Database
+	switch cfg.Database.Provider {
+	case PostgresProviderKey:
+		dbc = postgres.ProvidePostgres(debug, rawDB, logger)
+	case MariaDBProviderKey:
+		dbc = mariadb.ProvideMariaDB(debug, rawDB, logger)
+	case SqliteProviderKey:
+		dbc = sqlite.ProvideSqlite(debug, rawDB, logger)
+	default:
+		return nil, errors.New("invalid database type selected")
+	}
+
+	return dbclient.ProvideDatabaseClient(ctx, rawDB, dbc, debug, logger)
+}
+
+// ProvideSessionManager provides a session manager based on some settings.
+// There's not a great place to put this function. I don't think it belongs in Auth because it accepts a DB connection,
+// but it obviously doesn't belong in the database package, or maybe it does
+func ProvideSessionManager(authConf AuthSettings, dbConf DatabaseSettings, db *sql.DB) *scs.SessionManager {
+	sessionManager := scs.New()
+
+	switch dbConf.Provider {
+	case PostgresProviderKey:
+		sessionManager.Store = postgresstore.New(db)
+	case MariaDBProviderKey:
+		sessionManager.Store = mysqlstore.New(db)
+	case SqliteProviderKey:
+		sessionManager.Store = sqlite3store.New(db)
+	}
+
+	sessionManager.Lifetime = authConf.CookieLifetime
+	// elaborate further here later
+
+	return sessionManager
 }

@@ -16,6 +16,19 @@ github.com/GuiaBolso/darwin
 # github.com/Masterminds/squirrel v1.2.0
 ## explicit
 github.com/Masterminds/squirrel
+# github.com/alexedwards/scs/mysqlstore v0.0.0-20200503134757-95908882a5b1
+## explicit
+github.com/alexedwards/scs/mysqlstore
+# github.com/alexedwards/scs/postgresstore v0.0.0-20200503134757-95908882a5b1
+## explicit
+github.com/alexedwards/scs/postgresstore
+# github.com/alexedwards/scs/sqlite3store v0.0.0-20200503134757-95908882a5b1
+## explicit
+github.com/alexedwards/scs/sqlite3store
+# github.com/alexedwards/scs/v2 v2.3.1
+## explicit
+github.com/alexedwards/scs/v2
+github.com/alexedwards/scs/v2/memstore
 # github.com/beorn7/perks v1.0.0
 github.com/beorn7/perks/quantile
 # github.com/blang/semver v3.5.1+incompatible
@@ -78,7 +91,7 @@ github.com/heptiolabs/healthcheck
 github.com/lann/builder
 # github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0
 github.com/lann/ps
-# github.com/lib/pq v1.3.0
+# github.com/lib/pq v1.4.0
 ## explicit
 github.com/lib/pq
 github.com/lib/pq/oid

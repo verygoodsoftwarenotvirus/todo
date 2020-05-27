@@ -100,7 +100,7 @@ func NewClient(
 		logger.Debug("log level set to debug!")
 	}
 
-	ac, ts := buildOAuthClient(ctx, address, clientID, clientSecret, scopes)
+	ac, ts := buildOAuthClient(ctx, address, clientID, clientSecret, scopes, client.Timeout)
 
 	c := &V1Client{
 		URL:          address,
@@ -139,6 +139,7 @@ func buildOAuthClient(
 	clientID,
 	clientSecret string,
 	scopes []string,
+	timeout time.Duration,
 ) (*http.Client, oauth2.TokenSource) {
 	conf := clientcredentials.Config{
 		ClientID:     clientID,
@@ -159,7 +160,7 @@ func buildOAuthClient(
 			},
 			Source: ts,
 		},
-		Timeout: 5 * time.Second,
+		Timeout: timeout,
 	}
 
 	return client, ts

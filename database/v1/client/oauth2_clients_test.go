@@ -113,9 +113,9 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 		exampleOAuth2ClientList := fakemodels.BuildFakeOAuth2ClientList()
 		filter := models.DefaultQueryFilter()
 
-		mockDB.OAuth2ClientDataManager.On("GetOAuth2Clients", mock.Anything, exampleUser.ID, filter).Return(exampleOAuth2ClientList, nil)
+		mockDB.OAuth2ClientDataManager.On("GetOAuth2ClientsForUser", mock.Anything, exampleUser.ID, filter).Return(exampleOAuth2ClientList, nil)
 
-		actual, err := c.GetOAuth2Clients(ctx, exampleUser.ID, filter)
+		actual, err := c.GetOAuth2ClientsForUser(ctx, exampleUser.ID, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleOAuth2ClientList, actual)
 
@@ -129,9 +129,9 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 		exampleOAuth2ClientList := fakemodels.BuildFakeOAuth2ClientList()
 		filter := (*models.QueryFilter)(nil)
 
-		mockDB.OAuth2ClientDataManager.On("GetOAuth2Clients", mock.Anything, exampleUser.ID, filter).Return(exampleOAuth2ClientList, nil)
+		mockDB.OAuth2ClientDataManager.On("GetOAuth2ClientsForUser", mock.Anything, exampleUser.ID, filter).Return(exampleOAuth2ClientList, nil)
 
-		actual, err := c.GetOAuth2Clients(ctx, exampleUser.ID, filter)
+		actual, err := c.GetOAuth2ClientsForUser(ctx, exampleUser.ID, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleOAuth2ClientList, actual)
 
@@ -145,9 +145,9 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 		exampleOAuth2ClientList := (*models.OAuth2ClientList)(nil)
 		filter := models.DefaultQueryFilter()
 
-		mockDB.OAuth2ClientDataManager.On("GetOAuth2Clients", mock.Anything, exampleUser.ID, filter).Return(exampleOAuth2ClientList, errors.New("blah"))
+		mockDB.OAuth2ClientDataManager.On("GetOAuth2ClientsForUser", mock.Anything, exampleUser.ID, filter).Return(exampleOAuth2ClientList, errors.New("blah"))
 
-		actual, err := c.GetOAuth2Clients(ctx, exampleUser.ID, filter)
+		actual, err := c.GetOAuth2ClientsForUser(ctx, exampleUser.ID, filter)
 		assert.Error(t, err)
 		assert.Equal(t, exampleOAuth2ClientList, actual)
 

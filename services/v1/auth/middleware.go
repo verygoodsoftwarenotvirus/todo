@@ -37,9 +37,9 @@ func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 		if user != nil {
 			req = req.WithContext(
 				context.WithValue(
-					context.WithValue(ctx, models.UserKey, user),
-					models.UserIDKey,
-					user.ID,
+					ctx,
+					models.SessionInfoKey,
+					user.ToSessionInfo(),
 				),
 			)
 			next.ServeHTTP(res, req)
@@ -105,9 +105,7 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 			}
 
 			// elsewise, load the request with extra context.
-			ctx = context.WithValue(ctx, models.UserKey, user)
-			ctx = context.WithValue(ctx, models.UserIDKey, user.ID)
-			ctx = context.WithValue(ctx, models.UserIsAdminKey, user.IsAdmin)
+			ctx = context.WithValue(ctx, models.SessionInfoKey, user.ToSessionInfo())
 
 			next.ServeHTTP(res, req.WithContext(ctx))
 		})
@@ -121,15 +119,14 @@ func (s *Service) AdminMiddleware(next http.Handler) http.Handler {
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
-		user, ok := ctx.Value(models.UserKey).(*models.User)
-
-		if !ok || user == nil {
+		si, ok := ctx.Value(models.SessionInfoKey).(*models.SessionInfo)
+		if !ok || si == nil {
 			logger.Debug("AdminMiddleware called without user attached to context")
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
-		if !user.IsAdmin {
+		if !si.UserIsAdmin {
 			logger.Debug("AdminMiddleware called by non-admin user")
 			res.WriteHeader(http.StatusUnauthorized)
 			return

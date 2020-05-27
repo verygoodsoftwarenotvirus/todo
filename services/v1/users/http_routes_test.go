@@ -612,11 +612,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(
-				req.Context(),
-				models.UserIDKey,
-				exampleUser.ID,
-			),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -690,11 +686,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(
-				req.Context(),
-				models.UserIDKey,
-				exampleUser.ID,
-			),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -736,11 +728,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(
-				req.Context(),
-				models.UserIDKey,
-				exampleUser.ID,
-			),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -786,11 +774,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(
-				req.Context(),
-				models.UserIDKey,
-				exampleUser.ID,
-			),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -832,11 +816,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(
-				req.Context(),
-				models.UserIDKey,
-				exampleUser.ID,
-			),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1078,11 +1058,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(
-				req.Context(),
-				models.UserIDKey,
-				exampleUser.ID,
-			),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1153,11 +1129,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(
-				req.Context(),
-				models.UserIDKey,
-				exampleUser.ID,
-			),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1199,11 +1171,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(
-				req.Context(),
-				models.UserIDKey,
-				exampleUser.ID,
-			),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1246,11 +1214,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(
-				req.Context(),
-				models.UserIDKey,
-				exampleUser.ID,
-			),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 
 		mockDB := database.BuildMockDatabase()

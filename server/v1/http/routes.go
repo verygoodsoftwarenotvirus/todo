@@ -141,40 +141,43 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		})
 	})
 
-	router.With(s.authService.AuthenticationMiddleware(true)).Route("/api/v1", func(v1Router chi.Router) {
-		// Items
-		itemPath := "items"
-		itemRouteParam := fmt.Sprintf(numericIDPattern, itemsservice.URIParamKey)
-		itemsRouteWithPrefix := fmt.Sprintf("/%s", itemPath)
-		v1Router.Route(itemsRouteWithPrefix, func(itemsRouter chi.Router) {
-			itemsRouter.With(s.itemsService.CreationInputMiddleware).Post(root, s.itemsService.CreateHandler())
-			itemsRouter.Get(itemRouteParam, s.itemsService.ReadHandler())
-			itemsRouter.Head(itemRouteParam, s.itemsService.ExistenceHandler())
-			itemsRouter.With(s.itemsService.UpdateInputMiddleware).Put(itemRouteParam, s.itemsService.UpdateHandler())
-			itemsRouter.Delete(itemRouteParam, s.itemsService.ArchiveHandler())
-			itemsRouter.Get(root, s.itemsService.ListHandler())
-		})
+	router.With(s.authService.AuthenticationMiddleware(true)).
+		Route("/api/v1", func(v1Router chi.Router) {
+			// Items
+			itemPath := "items"
+			itemsRouteWithPrefix := fmt.Sprintf("/%s", itemPath)
+			itemRouteParam := fmt.Sprintf(numericIDPattern, itemsservice.URIParamKey)
+			v1Router.Route(itemsRouteWithPrefix, func(itemsRouter chi.Router) {
+				itemsRouter.With(s.itemsService.CreationInputMiddleware).Post(root, s.itemsService.CreateHandler())
+				itemsRouter.Route(itemRouteParam, func(singleItemRouter chi.Router) {
+					singleItemRouter.Get(root, s.itemsService.ReadHandler())
+					singleItemRouter.With(s.itemsService.UpdateInputMiddleware).Put(root, s.itemsService.UpdateHandler())
+					singleItemRouter.Delete(root, s.itemsService.ArchiveHandler())
+					singleItemRouter.Head(root, s.itemsService.ExistenceHandler())
+				})
+				itemsRouter.Get(root, s.itemsService.ListHandler())
+			})
 
-		// Webhooks.
-		v1Router.Route("/webhooks", func(webhookRouter chi.Router) {
-			sr := fmt.Sprintf(numericIDPattern, webhooksservice.URIParamKey)
-			webhookRouter.With(s.webhooksService.CreationInputMiddleware).Post(root, s.webhooksService.CreateHandler())
-			webhookRouter.Get(sr, s.webhooksService.ReadHandler())
-			webhookRouter.With(s.webhooksService.UpdateInputMiddleware).Put(sr, s.webhooksService.UpdateHandler())
-			webhookRouter.Delete(sr, s.webhooksService.ArchiveHandler())
-			webhookRouter.Get(root, s.webhooksService.ListHandler())
-		})
+			// Webhooks.
+			v1Router.Route("/webhooks", func(webhookRouter chi.Router) {
+				sr := fmt.Sprintf(numericIDPattern, webhooksservice.URIParamKey)
+				webhookRouter.With(s.webhooksService.CreationInputMiddleware).Post(root, s.webhooksService.CreateHandler())
+				webhookRouter.Get(sr, s.webhooksService.ReadHandler())
+				webhookRouter.With(s.webhooksService.UpdateInputMiddleware).Put(sr, s.webhooksService.UpdateHandler())
+				webhookRouter.Delete(sr, s.webhooksService.ArchiveHandler())
+				webhookRouter.Get(root, s.webhooksService.ListHandler())
+			})
 
-		// OAuth2 Clients.
-		v1Router.Route("/oauth2/clients", func(clientRouter chi.Router) {
-			sr := fmt.Sprintf(numericIDPattern, oauth2clientsservice.URIParamKey)
-			// CreateHandler is not bound to an OAuth2 authentication token.
-			// UpdateHandler not supported for OAuth2 clients.
-			clientRouter.Get(sr, s.oauth2ClientsService.ReadHandler())
-			clientRouter.Delete(sr, s.oauth2ClientsService.ArchiveHandler())
-			clientRouter.Get(root, s.oauth2ClientsService.ListHandler())
+			// OAuth2 Clients.
+			v1Router.Route("/oauth2/clients", func(clientRouter chi.Router) {
+				sr := fmt.Sprintf(numericIDPattern, oauth2clientsservice.URIParamKey)
+				// CreateHandler is not bound to an OAuth2 authentication token.
+				// UpdateHandler not supported for OAuth2 clients.
+				clientRouter.Get(sr, s.oauth2ClientsService.ReadHandler())
+				clientRouter.Delete(sr, s.oauth2ClientsService.ArchiveHandler())
+				clientRouter.Get(root, s.oauth2ClientsService.ListHandler())
+			})
 		})
-	})
 
 	s.router = router
 }

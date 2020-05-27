@@ -7,6 +7,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
@@ -26,7 +27,7 @@ import (
 
 // Injectors from wire.go:
 
-func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, database2 database.Database) (*server.Server, error) {
+func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, database2 database.Database, db *sql.DB) (*server.Server, error) {
 	bcryptHashCost := auth.ProvideBcryptHashCost()
 	authenticator := auth.ProvideBcryptAuthenticator(bcryptHashCost, logger)
 	userDataManager := users.ProvideUserDataManager(database2)
@@ -38,8 +39,10 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 		return nil, err
 	}
 	oAuth2ClientValidator := auth2.ProvideOAuth2ClientValidator(service)
-	userIDFetcher := httpserver.ProvideAuthServiceUserIDFetcher()
-	authService, err := auth2.ProvideAuthService(logger, cfg, authenticator, userDataManager, oAuth2ClientValidator, userIDFetcher, encoderDecoder)
+	authSettings := config.ProvideConfigAuthSettings(cfg)
+	databaseSettings := config.ProvideConfigDatabaseSettings(cfg)
+	sessionManager := config.ProvideSessionManager(authSettings, databaseSettings, db)
+	authService, err := auth2.ProvideAuthService(logger, cfg, authenticator, userDataManager, oAuth2ClientValidator, sessionManager, encoderDecoder)
 	if err != nil {
 		return nil, err
 	}
@@ -47,17 +50,16 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	frontendService := frontend.ProvideFrontendService(logger, frontendSettings)
 	itemDataManager := items.ProvideItemDataManager(database2)
 	itemIDFetcher := httpserver.ProvideItemsServiceItemIDFetcher(logger)
-	itemsUserIDFetcher := httpserver.ProvideItemsServiceUserIDFetcher()
+	userIDFetcher := httpserver.ProvideItemsServiceUserIDFetcher()
 	websocketAuthFunc := auth2.ProvideWebsocketAuthFunc(authService)
 	typeNameManipulationFunc := httpserver.ProvideNewsmanTypeNameManipulationFunc()
 	newsmanNewsman := newsman.NewNewsman(websocketAuthFunc, typeNameManipulationFunc)
 	reporter := ProvideReporter(newsmanNewsman)
-	itemsService, err := items.ProvideItemsService(logger, itemDataManager, itemIDFetcher, itemsUserIDFetcher, encoderDecoder, unitCounterProvider, reporter)
+	itemsService, err := items.ProvideItemsService(logger, itemDataManager, itemIDFetcher, userIDFetcher, encoderDecoder, unitCounterProvider, reporter)
 	if err != nil {
 		return nil, err
 	}
 	itemDataServer := items.ProvideItemDataServer(itemsService)
-	authSettings := config.ProvideConfigAuthSettings(cfg)
 	usersUserIDFetcher := httpserver.ProvideUsersServiceUserIDFetcher(logger)
 	usersService, err := users.ProvideUsersService(authSettings, logger, userDataManager, authenticator, usersUserIDFetcher, encoderDecoder, unitCounterProvider, reporter)
 	if err != nil {

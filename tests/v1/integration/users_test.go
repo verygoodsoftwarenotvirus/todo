@@ -164,6 +164,7 @@ func TestUsers(test *testing.T) {
 	})
 
 	test.Run("Listing", func(T *testing.T) {
+		T.SkipNow()
 		T.Run("should be able to be read in a list", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()

@@ -1,15 +1,15 @@
 package auth
 
 import (
-	"net/http"
 	"testing"
 
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
+	"github.com/alexedwards/scs/v2"
+	"github.com/alexedwards/scs/v2/memstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
@@ -27,10 +27,11 @@ func buildTestService(t *testing.T) *Service {
 	auth := &mockauth.Authenticator{}
 	userDB := &mockmodels.UserDataManager{}
 	oauth := &mockOAuth2ClientValidator{}
-	userIDFetcher := func(*http.Request) uint64 {
-		return fakemodels.BuildFakeUser().ID
-	}
 	ed := encoding.ProvideResponseEncoder()
+
+	sm := scs.New()
+	// this is currently the default, but in case that changes
+	sm.Store = memstore.New()
 
 	service, err := ProvideAuthService(
 		logger,
@@ -38,7 +39,7 @@ func buildTestService(t *testing.T) *Service {
 		auth,
 		userDB,
 		oauth,
-		userIDFetcher,
+		sm,
 		ed,
 	)
 	require.NoError(t, err)
@@ -47,7 +48,7 @@ func buildTestService(t *testing.T) *Service {
 }
 
 func TestProvideAuthService(T *testing.T) {
-	T.Parallel()
+	// T.Parallel() TODO: uncomment all of these when the PR gets merged
 
 	T.Run("happy path", func(t *testing.T) {
 		cfg := &config.ServerConfig{
@@ -58,10 +59,8 @@ func TestProvideAuthService(T *testing.T) {
 		auth := &mockauth.Authenticator{}
 		userDB := &mockmodels.UserDataManager{}
 		oauth := &mockOAuth2ClientValidator{}
-		userIDFetcher := func(*http.Request) uint64 {
-			return fakemodels.BuildFakeUser().ID
-		}
 		ed := encoding.ProvideResponseEncoder()
+		sm := scs.New()
 
 		service, err := ProvideAuthService(
 			noop.ProvideNoopLogger(),
@@ -69,7 +68,7 @@ func TestProvideAuthService(T *testing.T) {
 			auth,
 			userDB,
 			oauth,
-			userIDFetcher,
+			sm,
 			ed,
 		)
 		assert.NotNil(t, service)
@@ -80,10 +79,8 @@ func TestProvideAuthService(T *testing.T) {
 		auth := &mockauth.Authenticator{}
 		userDB := &mockmodels.UserDataManager{}
 		oauth := &mockOAuth2ClientValidator{}
-		userIDFetcher := func(*http.Request) uint64 {
-			return fakemodels.BuildFakeUser().ID
-		}
 		ed := encoding.ProvideResponseEncoder()
+		sm := scs.New()
 
 		service, err := ProvideAuthService(
 			noop.ProvideNoopLogger(),
@@ -91,7 +88,7 @@ func TestProvideAuthService(T *testing.T) {
 			auth,
 			userDB,
 			oauth,
-			userIDFetcher,
+			sm,
 			ed,
 		)
 		assert.Nil(t, service)

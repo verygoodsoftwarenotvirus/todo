@@ -52,7 +52,7 @@ func Test_fetchUserID(T *testing.T) {
 
 		// for the service.fetchUserID() call
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		s := buildTestService(t)
 
@@ -83,7 +83,7 @@ func TestService_ListHandler(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
-			"GetOAuth2Clients",
+			"GetOAuth2ClientsForUser",
 			mock.Anything,
 			requestingUser.ID,
 			mock.AnythingOfType("*models.QueryFilter"),
@@ -97,7 +97,7 @@ func TestService_ListHandler(T *testing.T) {
 		req := buildRequest(t)
 		// for the service.fetchUserID() call
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, requestingUser.ID),
+			context.WithValue(req.Context(), models.SessionInfoKey, requestingUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
@@ -112,7 +112,7 @@ func TestService_ListHandler(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
-			"GetOAuth2Clients",
+			"GetOAuth2ClientsForUser",
 			mock.Anything,
 			requestingUser.ID,
 			mock.AnythingOfType("*models.QueryFilter"),
@@ -125,7 +125,7 @@ func TestService_ListHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, requestingUser.ID),
+			context.WithValue(req.Context(), models.SessionInfoKey, requestingUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
@@ -140,7 +140,7 @@ func TestService_ListHandler(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
-			"GetOAuth2Clients",
+			"GetOAuth2ClientsForUser",
 			mock.Anything,
 			requestingUser.ID,
 			mock.AnythingOfType("*models.QueryFilter"),
@@ -149,7 +149,7 @@ func TestService_ListHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, requestingUser.ID),
+			context.WithValue(req.Context(), models.SessionInfoKey, requestingUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
@@ -166,7 +166,7 @@ func TestService_ListHandler(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
-			"GetOAuth2Clients",
+			"GetOAuth2ClientsForUser",
 			mock.Anything,
 			requestingUser.ID,
 			mock.AnythingOfType("*models.QueryFilter"),
@@ -179,7 +179,7 @@ func TestService_ListHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, requestingUser.ID),
+			context.WithValue(req.Context(), models.SessionInfoKey, requestingUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
@@ -240,7 +240,7 @@ func TestService_CreateHandler(T *testing.T) {
 			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
@@ -280,7 +280,7 @@ func TestService_CreateHandler(T *testing.T) {
 			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleOAuth2Client.BelongsToUser),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
@@ -327,7 +327,7 @@ func TestService_CreateHandler(T *testing.T) {
 			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
@@ -374,7 +374,7 @@ func TestService_CreateHandler(T *testing.T) {
 			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
@@ -421,7 +421,7 @@ func TestService_CreateHandler(T *testing.T) {
 			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
@@ -476,7 +476,7 @@ func TestService_CreateHandler(T *testing.T) {
 			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleUser.ID),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
@@ -516,7 +516,7 @@ func TestService_ReadHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleOAuth2Client.BelongsToUser),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
@@ -546,7 +546,7 @@ func TestService_ReadHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleOAuth2Client.BelongsToUser),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
@@ -576,7 +576,7 @@ func TestService_ReadHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleOAuth2Client.BelongsToUser),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
@@ -610,7 +610,7 @@ func TestService_ReadHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleOAuth2Client.BelongsToUser),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
@@ -650,7 +650,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleOAuth2Client.BelongsToUser),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
@@ -680,7 +680,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleOAuth2Client.BelongsToUser),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
@@ -710,7 +710,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.UserIDKey, exampleOAuth2Client.BelongsToUser),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 

@@ -180,13 +180,13 @@ func (s *Sqlite) buildGetItemsQuery(userID uint64, filter *models.QueryFilter) (
 	var err error
 
 	builder := s.sqlBuilder.
-		Select(append(itemsTableColumns, fmt.Sprintf(countQuery, itemsTableName))...).
+		Select(append(itemsTableColumns, fmt.Sprintf("(%s)", s.buildGetAllItemsCountQuery()))...).
 		From(itemsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.archived_on", itemsTableName):                  nil,
 			fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn): userID,
 		}).
-		GroupBy(fmt.Sprintf("%s.id", itemsTableName))
+		OrderBy(fmt.Sprintf("%s.id", itemsTableName))
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder, itemsTableName)

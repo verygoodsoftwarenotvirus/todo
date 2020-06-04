@@ -47,15 +47,15 @@ type (
 	OAuth2Client struct {
 		ID              uint64   `json:"id"`
 		Name            string   `json:"name"`
-		ClientID        string   `json:"client_id"`
-		ClientSecret    string   `json:"client_secret"`
-		RedirectURI     string   `json:"redirect_uri"`
+		ClientID        string   `json:"clientID"`
+		ClientSecret    string   `json:"clientSecret"`
+		RedirectURI     string   `json:"redirectURI"`
 		Scopes          []string `json:"scopes"`
-		ImplicitAllowed bool     `json:"implicit_allowed"`
-		CreatedOn       uint64   `json:"created_on"`
-		UpdatedOn       *uint64  `json:"updated_on"`
-		ArchivedOn      *uint64  `json:"archived_on"`
-		BelongsToUser   uint64   `json:"belongs_to_user"`
+		ImplicitAllowed bool     `json:"implicitAllowed"`
+		CreatedOn       uint64   `json:"createdOn"`
+		UpdatedOn       *uint64  `json:"updatedOn"`
+		ArchivedOn      *uint64  `json:"archivedOn"`
+		BelongsToUser   uint64   `json:"belongsToUser"`
 	}
 
 	// OAuth2ClientList is a response struct containing a list of OAuth2Clients.
@@ -70,14 +70,14 @@ type (
 		Name          string   `json:"name"`
 		ClientID      string   `json:"-"`
 		ClientSecret  string   `json:"-"`
-		RedirectURI   string   `json:"redirect_uri"`
+		RedirectURI   string   `json:"redirectURI"`
 		BelongsToUser uint64   `json:"-"`
 		Scopes        []string `json:"scopes"`
 	}
 
 	// OAuth2ClientUpdateInput is a struct for use when updating OAuth2 clients.
 	OAuth2ClientUpdateInput struct {
-		RedirectURI string   `json:"redirect_uri"`
+		RedirectURI string   `json:"redirectURI"`
 		Scopes      []string `json:"scopes"`
 	}
 )

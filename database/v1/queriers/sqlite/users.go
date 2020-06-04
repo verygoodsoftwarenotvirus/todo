@@ -20,6 +20,7 @@ var (
 		fmt.Sprintf("%s.id", usersTableName),
 		fmt.Sprintf("%s.username", usersTableName),
 		fmt.Sprintf("%s.hashed_password", usersTableName),
+		fmt.Sprintf("%s.requires_password_change", usersTableName),
 		fmt.Sprintf("%s.password_last_changed_on", usersTableName),
 		fmt.Sprintf("%s.two_factor_secret", usersTableName),
 		fmt.Sprintf("%s.is_admin", usersTableName),
@@ -41,6 +42,7 @@ func (s *Sqlite) scanUser(scan database.Scanner, includeCount bool) (*models.Use
 		&x.ID,
 		&x.Username,
 		&x.HashedPassword,
+		&x.RequiresPasswordChange,
 		&x.PasswordLastChangedOn,
 		&x.TwoFactorSecret,
 		&x.IsAdmin,
@@ -193,9 +195,9 @@ func (s *Sqlite) GetUserByUsername(ctx context.Context, username string) (*model
 	return u, nil
 }
 
-// buildGetAllUserCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
+// buildGetAllUsersCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
 // to a given filter's criteria.
-func (s *Sqlite) buildGetAllUserCountQuery() (query string) {
+func (s *Sqlite) buildGetAllUsersCountQuery() (query string) {
 	var err error
 
 	builder := s.sqlBuilder.
@@ -212,9 +214,9 @@ func (s *Sqlite) buildGetAllUserCountQuery() (query string) {
 	return query
 }
 
-// GetAllUserCount fetches a count of users from the database.
-func (s *Sqlite) GetAllUserCount(ctx context.Context) (count uint64, err error) {
-	query := s.buildGetAllUserCountQuery()
+// GetAllUsersCount fetches a count of users from the database.
+func (s *Sqlite) GetAllUsersCount(ctx context.Context) (count uint64, err error) {
+	query := s.buildGetAllUsersCountQuery()
 	err = s.db.QueryRowContext(ctx, query).Scan(&count)
 	return
 }
@@ -374,6 +376,35 @@ func (s *Sqlite) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) e
 func (s *Sqlite) UpdateUser(ctx context.Context, input *models.User) error {
 	query, args := s.buildUpdateUserQuery(input)
 	_, err := s.db.ExecContext(ctx, query, args...)
+	return err
+}
+
+// buildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's password
+func (s *Sqlite) buildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{}) {
+	var err error
+
+	query, args, err = s.sqlBuilder.
+		Update(usersTableName).
+		Set("hashed_password", newHash).
+		Set("requires_password_change", false).
+		Set("password_last_changed_on", squirrel.Expr(currentUnixTimeQuery)).
+		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
+		Where(squirrel.Eq{
+			"id": userID,
+		}).
+		ToSql()
+
+	s.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// UpdateUserPassword updates a user's password
+func (s *Sqlite) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
+	query, args := s.buildUpdateUserPasswordQuery(userID, newHash)
+
+	_, err := s.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 

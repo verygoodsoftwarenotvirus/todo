@@ -19,6 +19,7 @@ var (
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
 				"    `username` VARCHAR(150) NOT NULL,",
 				"    `hashed_password` VARCHAR(100) NOT NULL,",
+				"    `requires_password_change` BOOLEAN NOT NULL DEFAULT false,",
 				"    `password_last_changed_on` INTEGER UNSIGNED,",
 				"    `two_factor_secret` VARCHAR(256) NOT NULL,",
 				"    `is_admin` BOOLEAN NOT NULL DEFAULT false,",

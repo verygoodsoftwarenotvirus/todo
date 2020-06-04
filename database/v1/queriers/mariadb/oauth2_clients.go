@@ -229,9 +229,9 @@ var (
 	getAllOAuth2ClientCountQuery        string
 )
 
-// buildGetAllOAuth2ClientCountQuery returns a SQL query for the number of OAuth2 clients
+// buildGetAllOAuth2ClientsCountQuery returns a SQL query for the number of OAuth2 clients
 // in the database, regardless of ownership.
-func (m *MariaDB) buildGetAllOAuth2ClientCountQuery() string {
+func (m *MariaDB) buildGetAllOAuth2ClientsCountQuery() string {
 	getAllOAuth2ClientCountQueryBuilder.Do(func() {
 		var err error
 
@@ -252,7 +252,7 @@ func (m *MariaDB) buildGetAllOAuth2ClientCountQuery() string {
 // GetAllOAuth2ClientCount will get the count of OAuth2 clients that match the current filter.
 func (m *MariaDB) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	var count uint64
-	err := m.db.QueryRowContext(ctx, m.buildGetAllOAuth2ClientCountQuery()).Scan(&count)
+	err := m.db.QueryRowContext(ctx, m.buildGetAllOAuth2ClientsCountQuery()).Scan(&count)
 	return count, err
 }
 
@@ -262,13 +262,13 @@ func (m *MariaDB) buildGetOAuth2ClientsQuery(userID uint64, filter *models.Query
 	var err error
 
 	builder := m.sqlBuilder.
-		Select(append(oauth2ClientsTableColumns, fmt.Sprintf(countQuery, oauth2ClientsTableName))...).
+		Select(append(oauth2ClientsTableColumns, fmt.Sprintf("(%s)", m.buildGetAllOAuth2ClientsCountQuery()))...).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", oauth2ClientsTableName, oauth2ClientsTableOwnershipColumn): userID,
 			fmt.Sprintf("%s.archived_on", oauth2ClientsTableName):                           nil,
 		}).
-		GroupBy(fmt.Sprintf("%s.id", oauth2ClientsTableName))
+		OrderBy(fmt.Sprintf("%s.id", oauth2ClientsTableName))
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder, oauth2ClientsTableName)

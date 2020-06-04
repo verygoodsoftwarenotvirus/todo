@@ -229,13 +229,13 @@ func (s *Sqlite) buildGetWebhooksQuery(userID uint64, filter *models.QueryFilter
 	var err error
 
 	builder := s.sqlBuilder.
-		Select(append(webhooksTableColumns, fmt.Sprintf(countQuery, webhooksTableName))...).
+		Select(append(webhooksTableColumns, fmt.Sprintf("(%s)", s.buildGetAllWebhooksCountQuery()))...).
 		From(webhooksTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableOwnershipColumn): userID,
 			fmt.Sprintf("%s.archived_on", webhooksTableName):                      nil,
 		}).
-		GroupBy(fmt.Sprintf("%s.id", webhooksTableName))
+		OrderBy(fmt.Sprintf("%s.id", webhooksTableName))
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder, webhooksTableName)

@@ -265,7 +265,7 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user, COUNT(oauth2_clients.id) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $1 GROUP BY oauth2_clients.id"
+	expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user, (SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $1 GROUP BY oauth2_clients.id"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -426,7 +426,7 @@ func TestPostgres_buildGetAllOAuth2ClientCountQuery(T *testing.T) {
 		p, _ := buildTestService(t)
 
 		expectedQuery := "SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL"
-		actualQuery := p.buildGetAllOAuth2ClientCountQuery()
+		actualQuery := p.buildGetAllOAuth2ClientsCountQuery()
 
 		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -463,7 +463,7 @@ func TestPostgres_buildGetOAuth2ClientsQuery(T *testing.T) {
 		exampleUser := fakemodels.BuildFakeUser()
 		filter := fakemodels.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user, COUNT(oauth2_clients.id) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $1 AND oauth2_clients.created_on > $2 AND oauth2_clients.created_on < $3 AND oauth2_clients.updated_on > $4 AND oauth2_clients.updated_on < $5 GROUP BY oauth2_clients.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user, (SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $1 AND oauth2_clients.created_on > $2 AND oauth2_clients.created_on < $3 AND oauth2_clients.updated_on > $4 AND oauth2_clients.updated_on < $5 GROUP BY oauth2_clients.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,
@@ -483,7 +483,7 @@ func TestPostgres_GetOAuth2Clients(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakemodels.BuildFakeUser()
-	expectedListQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user, COUNT(oauth2_clients.id) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $1 GROUP BY oauth2_clients.id LIMIT 20"
+	expectedListQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user, (SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $1 GROUP BY oauth2_clients.id LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()

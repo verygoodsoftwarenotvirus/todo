@@ -19,6 +19,7 @@ var (
 				"username" TEXT NOT NULL,
 				"hashed_password" TEXT NOT NULL,
 				"password_last_changed_on" integer,
+				"requires_password_change" boolean NOT NULL DEFAULT 'false',
 				"two_factor_secret" TEXT NOT NULL,
 				"is_admin" boolean NOT NULL DEFAULT 'false',
 				"two_factor_secret_verified_on" BIGINT DEFAULT NULL,

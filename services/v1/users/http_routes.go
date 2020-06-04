@@ -427,8 +427,7 @@ func (s *Service) UpdatePasswordHandler() http.HandlerFunc {
 		tracing.AttachUsernameToSpan(span, user.Username)
 
 		// hash the new password.
-		var err error
-		user.HashedPassword, err = s.authenticator.HashPassword(ctx, input.NewPassword)
+		newPasswordHash, err := s.authenticator.HashPassword(ctx, input.NewPassword)
 		if err != nil {
 			logger.Error(err, "error hashing password")
 			res.WriteHeader(http.StatusInternalServerError)
@@ -436,7 +435,7 @@ func (s *Service) UpdatePasswordHandler() http.HandlerFunc {
 		}
 
 		// update the user.
-		if err = s.userDataManager.UpdateUser(ctx, user); err != nil {
+		if err = s.userDataManager.UpdateUserPassword(ctx, user.ID, newPasswordHash); err != nil {
 			logger.Error(err, "error encountered updating user")
 			res.WriteHeader(http.StatusInternalServerError)
 			return

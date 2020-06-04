@@ -1063,7 +1063,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
-		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.AnythingOfType("*models.User")).Return(nil)
+		mockDB.UserDataManager.On("UpdateUserPassword", mock.Anything, exampleUser.ID, mock.AnythingOfType("string")).Return(nil)
 		s.userDataManager = mockDB
 
 		auth := &mockauth.Authenticator{}
@@ -1134,7 +1134,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
-		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.AnythingOfType("*models.User")).Return(nil)
+		mockDB.UserDataManager.On("UpdateUserPassword", mock.Anything, exampleUser.ID, mock.AnythingOfType("string")).Return(nil)
 		s.userDataManager = mockDB
 
 		auth := &mockauth.Authenticator{}
@@ -1176,7 +1176,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
-		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.AnythingOfType("*models.User")).Return(nil)
+		mockDB.UserDataManager.On("UpdateUserPassword", mock.Anything, exampleUser.ID, mock.AnythingOfType("string")).Return(nil)
 		s.userDataManager = mockDB
 
 		auth := &mockauth.Authenticator{}
@@ -1219,7 +1219,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
-		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.AnythingOfType("*models.User")).Return(errors.New("blah"))
+		mockDB.UserDataManager.On("UpdateUserPassword", mock.Anything, exampleUser.ID, mock.AnythingOfType("string")).Return(errors.New("blah"))
 		s.userDataManager = mockDB
 
 		auth := &mockauth.Authenticator{}

@@ -8,17 +8,18 @@ import (
 type (
 	// User represents a user.
 	User struct {
-		ID                        uint64  `json:"id"`
+		Salt                      []byte  `json:"-"`
 		Username                  string  `json:"username"`
 		HashedPassword            string  `json:"-"`
-		Salt                      []byte  `json:"-"`
 		TwoFactorSecret           string  `json:"-"`
+		ID                        uint64  `json:"id"`
 		PasswordLastChangedOn     *uint64 `json:"passwordLastChangedOn"`
 		TwoFactorSecretVerifiedOn *uint64 `json:"-"`
-		IsAdmin                   bool    `json:"isAdmin"`
 		CreatedOn                 uint64  `json:"createdOn"`
 		UpdatedOn                 *uint64 `json:"updatedOn"`
 		ArchivedOn                *uint64 `json:"archivedOn"`
+		IsAdmin                   bool    `json:"isAdmin"`
+		RequiresPasswordChange    bool    `json:"requiresPasswordChange"`
 	}
 
 	// UserList represents a list of users.
@@ -90,10 +91,11 @@ type (
 		GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*User, error)
 		VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error
 		GetUserByUsername(ctx context.Context, username string) (*User, error)
-		GetAllUserCount(ctx context.Context) (uint64, error)
+		GetAllUsersCount(ctx context.Context) (uint64, error)
 		GetUsers(ctx context.Context, filter *QueryFilter) (*UserList, error)
 		CreateUser(ctx context.Context, input UserDatabaseCreationInput) (*User, error)
 		UpdateUser(ctx context.Context, updated *User) error
+		UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error
 		ArchiveUser(ctx context.Context, userID uint64) error
 	}
 

@@ -229,9 +229,9 @@ var (
 	getAllOAuth2ClientCountQuery        string
 )
 
-// buildGetAllOAuth2ClientCountQuery returns a SQL query for the number of OAuth2 clients
+// buildGetAllOAuth2ClientsCountQuery returns a SQL query for the number of OAuth2 clients
 // in the database, regardless of ownership.
-func (p *Postgres) buildGetAllOAuth2ClientCountQuery() string {
+func (p *Postgres) buildGetAllOAuth2ClientsCountQuery() string {
 	getAllOAuth2ClientCountQueryBuilder.Do(func() {
 		var err error
 
@@ -252,7 +252,7 @@ func (p *Postgres) buildGetAllOAuth2ClientCountQuery() string {
 // GetAllOAuth2ClientCount will get the count of OAuth2 clients that match the current filter.
 func (p *Postgres) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	var count uint64
-	err := p.db.QueryRowContext(ctx, p.buildGetAllOAuth2ClientCountQuery()).Scan(&count)
+	err := p.db.QueryRowContext(ctx, p.buildGetAllOAuth2ClientsCountQuery()).Scan(&count)
 	return count, err
 }
 
@@ -262,7 +262,7 @@ func (p *Postgres) buildGetOAuth2ClientsQuery(userID uint64, filter *models.Quer
 	var err error
 
 	builder := p.sqlBuilder.
-		Select(append(oauth2ClientsTableColumns, fmt.Sprintf(countQuery, oauth2ClientsTableName))...).
+		Select(append(oauth2ClientsTableColumns, fmt.Sprintf("(%s)", p.buildGetAllOAuth2ClientsCountQuery()))...).
 		From(oauth2ClientsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", oauth2ClientsTableName, oauth2ClientsTableOwnershipColumn): userID,

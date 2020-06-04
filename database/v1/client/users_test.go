@@ -49,6 +49,24 @@ func TestClient_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 	})
 }
 
+func TestClient_VerifyUserTwoFactorSecret(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
+
+		exampleUser := fakemodels.BuildFakeUser()
+
+		c, mockDB := buildTestClient()
+		mockDB.UserDataManager.On("VerifyUserTwoFactorSecret", mock.Anything, exampleUser.ID).Return(nil)
+
+		err := c.VerifyUserTwoFactorSecret(ctx, exampleUser.ID)
+		assert.NoError(t, err)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
+	})
+}
+
 func TestClient_GetUserByUsername(T *testing.T) {
 	T.Parallel()
 
@@ -77,9 +95,9 @@ func TestClient_GetAllUserCount(T *testing.T) {
 		exampleCount := uint64(123)
 
 		c, mockDB := buildTestClient()
-		mockDB.UserDataManager.On("GetAllUserCount", mock.Anything).Return(exampleCount, nil)
+		mockDB.UserDataManager.On("GetAllUsersCount", mock.Anything).Return(exampleCount, nil)
 
-		actual, err := c.GetAllUserCount(ctx)
+		actual, err := c.GetAllUsersCount(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleCount, actual)
 
@@ -156,6 +174,25 @@ func TestClient_UpdateUser(T *testing.T) {
 		mockDB.UserDataManager.On("UpdateUser", mock.Anything, exampleUser).Return(expected)
 
 		err := c.UpdateUser(ctx, exampleUser)
+		assert.NoError(t, err)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
+	})
+}
+
+func TestClient_UpdateUserPassword(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
+
+		exampleUser := fakemodels.BuildFakeUser()
+		var expected error
+
+		c, mockDB := buildTestClient()
+		mockDB.UserDataManager.On("UpdateUserPassword", mock.Anything, exampleUser.ID, exampleUser.HashedPassword).Return(expected)
+
+		err := c.UpdateUserPassword(ctx, exampleUser.ID, exampleUser.HashedPassword)
 		assert.NoError(t, err)
 
 		mock.AssertExpectationsForObjects(t, mockDB)

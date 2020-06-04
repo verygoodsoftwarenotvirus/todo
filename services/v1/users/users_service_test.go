@@ -25,7 +25,7 @@ func buildTestService(t *testing.T) *Service {
 	expectedUserCount := uint64(123)
 
 	mockDB := database.BuildMockDatabase()
-	mockDB.UserDataManager.On("GetAllUserCount", mock.Anything).Return(expectedUserCount, nil)
+	mockDB.UserDataManager.On("GetAllUsersCount", mock.Anything).Return(expectedUserCount, nil)
 
 	uc := &mockmetrics.UnitCounter{}
 	var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {

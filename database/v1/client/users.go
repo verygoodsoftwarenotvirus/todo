@@ -59,14 +59,14 @@ func (c *Client) GetUserByUsername(ctx context.Context, username string) (*model
 	return c.querier.GetUserByUsername(ctx, username)
 }
 
-// GetAllUserCount fetches a count of users from the database that meet a particular filter.
-func (c *Client) GetAllUserCount(ctx context.Context) (count uint64, err error) {
-	ctx, span := tracing.StartSpan(ctx, "GetAllUserCount")
+// GetAllUsersCount fetches a count of users from the database that meet a particular filter.
+func (c *Client) GetAllUsersCount(ctx context.Context) (count uint64, err error) {
+	ctx, span := tracing.StartSpan(ctx, "GetAllUsersCount")
 	defer span.End()
 
-	c.logger.Debug("GetAllUserCount called")
+	c.logger.Debug("GetAllUsersCount called")
 
-	return c.querier.GetAllUserCount(ctx)
+	return c.querier.GetAllUsersCount(ctx)
 }
 
 // GetUsers fetches a list of users from the database that meet a particular filter.
@@ -101,6 +101,18 @@ func (c *Client) UpdateUser(ctx context.Context, updated *models.User) error {
 	c.logger.WithValue("username", updated.Username).Debug("UpdateUser called")
 
 	return c.querier.UpdateUser(ctx, updated)
+}
+
+// UpdateUserPassword receives a complete User struct and updates its record in the database.
+// NOTE: this function uses the ID provided in the input to make its query.
+func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
+	ctx, span := tracing.StartSpan(ctx, "UpdateUser")
+	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
+	c.logger.WithValue("user_id", userID).Debug("UpdateUserPassword called")
+
+	return c.querier.UpdateUserPassword(ctx, userID, newHash)
 }
 
 // ArchiveUser archives a user.

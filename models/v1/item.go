@@ -11,10 +11,10 @@ type (
 		ID            uint64  `json:"id"`
 		Name          string  `json:"name"`
 		Details       string  `json:"details"`
-		CreatedOn     uint64  `json:"created_on"`
-		UpdatedOn     *uint64 `json:"updated_on"`
-		ArchivedOn    *uint64 `json:"archived_on"`
-		BelongsToUser uint64  `json:"belongs_to_user"`
+		CreatedOn     uint64  `json:"createdOn"`
+		UpdatedOn     *uint64 `json:"updatedOn"`
+		ArchivedOn    *uint64 `json:"archivedOn"`
+		BelongsToUser uint64  `json:"belongsToUser"`
 	}
 
 	// ItemList represents a list of items.

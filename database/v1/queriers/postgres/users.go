@@ -22,6 +22,7 @@ var (
 		fmt.Sprintf("%s.id", usersTableName),
 		fmt.Sprintf("%s.username", usersTableName),
 		fmt.Sprintf("%s.hashed_password", usersTableName),
+		fmt.Sprintf("%s.requires_password_change", usersTableName),
 		fmt.Sprintf("%s.password_last_changed_on", usersTableName),
 		fmt.Sprintf("%s.two_factor_secret", usersTableName),
 		fmt.Sprintf("%s.is_admin", usersTableName),
@@ -43,6 +44,7 @@ func (p *Postgres) scanUser(scan database.Scanner, includeCount bool) (*models.U
 		&x.ID,
 		&x.Username,
 		&x.HashedPassword,
+		&x.RequiresPasswordChange,
 		&x.PasswordLastChangedOn,
 		&x.TwoFactorSecret,
 		&x.IsAdmin,
@@ -195,9 +197,9 @@ func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*mod
 	return u, nil
 }
 
-// buildGetAllUserCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
+// buildGetAllUsersCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
 // to a given filter's criteria.
-func (p *Postgres) buildGetAllUserCountQuery() (query string) {
+func (p *Postgres) buildGetAllUsersCountQuery() (query string) {
 	var err error
 
 	builder := p.sqlBuilder.
@@ -214,9 +216,9 @@ func (p *Postgres) buildGetAllUserCountQuery() (query string) {
 	return query
 }
 
-// GetAllUserCount fetches a count of users from the database.
-func (p *Postgres) GetAllUserCount(ctx context.Context) (count uint64, err error) {
-	query := p.buildGetAllUserCountQuery()
+// GetAllUsersCount fetches a count of users from the database.
+func (p *Postgres) GetAllUsersCount(ctx context.Context) (count uint64, err error) {
+	query := p.buildGetAllUsersCountQuery()
 	err = p.db.QueryRowContext(ctx, query).Scan(&count)
 	return
 }
@@ -352,6 +354,35 @@ func (p *Postgres) buildUpdateUserQuery(input *models.User) (query string, args 
 func (p *Postgres) UpdateUser(ctx context.Context, input *models.User) error {
 	query, args := p.buildUpdateUserQuery(input)
 	return p.db.QueryRowContext(ctx, query, args...).Scan(&input.UpdatedOn)
+}
+
+// buildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's password
+func (p *Postgres) buildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{}) {
+	var err error
+
+	query, args, err = p.sqlBuilder.
+		Update(usersTableName).
+		Set("hashed_password", newHash).
+		Set("requires_password_change", false).
+		Set("password_last_changed_on", squirrel.Expr(currentUnixTimeQuery)).
+		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
+		Where(squirrel.Eq{
+			"id": userID,
+		}).
+		ToSql()
+
+	p.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// UpdateUserPassword updates a user's password
+func (p *Postgres) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
+	query, args := p.buildUpdateUserPasswordQuery(userID, newHash)
+
+	_, err := p.db.ExecContext(ctx, query, args...)
+
+	return err
 }
 
 // buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row

@@ -36,26 +36,26 @@ type (
 	Webhook struct {
 		ID            uint64   `json:"id"`
 		Name          string   `json:"name"`
-		ContentType   string   `json:"content_type"`
+		ContentType   string   `json:"contentType"`
 		URL           string   `json:"url"`
 		Method        string   `json:"method"`
 		Events        []string `json:"events"`
-		DataTypes     []string `json:"data_types"`
+		DataTypes     []string `json:"dataTypes"`
 		Topics        []string `json:"topics"`
-		CreatedOn     uint64   `json:"created_on"`
-		UpdatedOn     *uint64  `json:"updated_on"`
-		ArchivedOn    *uint64  `json:"archived_on"`
-		BelongsToUser uint64   `json:"belongs_to_user"`
+		CreatedOn     uint64   `json:"createdOn"`
+		UpdatedOn     *uint64  `json:"updatedOn"`
+		ArchivedOn    *uint64  `json:"archivedOn"`
+		BelongsToUser uint64   `json:"belongsToUser"`
 	}
 
 	// WebhookCreationInput represents what a user could set as input for creating a webhook.
 	WebhookCreationInput struct {
 		Name          string   `json:"name"`
-		ContentType   string   `json:"content_type"`
+		ContentType   string   `json:"contentType"`
 		URL           string   `json:"url"`
 		Method        string   `json:"method"`
 		Events        []string `json:"events"`
-		DataTypes     []string `json:"data_types"`
+		DataTypes     []string `json:"dataTypes"`
 		Topics        []string `json:"topics"`
 		BelongsToUser uint64   `json:"-"`
 	}
@@ -63,11 +63,11 @@ type (
 	// WebhookUpdateInput represents what a user could set as input for updating a webhook.
 	WebhookUpdateInput struct {
 		Name          string   `json:"name"`
-		ContentType   string   `json:"content_type"`
+		ContentType   string   `json:"contentType"`
 		URL           string   `json:"url"`
 		Method        string   `json:"method"`
 		Events        []string `json:"events"`
-		DataTypes     []string `json:"data_types"`
+		DataTypes     []string `json:"dataTypes"`
 		Topics        []string `json:"topics"`
 		BelongsToUser uint64   `json:"-"`
 	}

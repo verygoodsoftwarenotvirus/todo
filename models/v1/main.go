@@ -22,7 +22,7 @@ type (
 	Pagination struct {
 		Page       uint64 `json:"page"`
 		Limit      uint64 `json:"limit"`
-		TotalCount uint64 `json:"total_count"`
+		TotalCount uint64 `json:"totalCount"`
 	}
 
 	// CountResponse is what we respond with when a user requests a count of data types.

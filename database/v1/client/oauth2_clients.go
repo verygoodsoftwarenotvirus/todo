@@ -40,14 +40,13 @@ func (c *Client) GetOAuth2ClientByClientID(ctx context.Context, clientID string)
 
 	tracing.AttachOAuth2ClientIDToSpan(span, clientID)
 	logger := c.logger.WithValue("oauth2client_client_id", clientID)
+	logger.Debug("GetOAuth2ClientByClientID called")
 
 	client, err := c.querier.GetOAuth2ClientByClientID(ctx, clientID)
 	if err != nil {
 		logger.Error(err, "error fetching oauth2 client from the querier")
 		return nil, err
 	}
-
-	logger.WithValue("client_id", client.ID).Debug("GetOAuth2ClientByClientID called")
 
 	return client, nil
 }

@@ -13,11 +13,27 @@ import (
 )
 
 const (
+	// DevelopmentRunMode is the run mode for a development environment
+	DevelopmentRunMode runMode = "development"
+	// TestingRunMode is the run mode for a testing environment
+	TestingRunMode runMode = "testing"
+	// ProductionRunMode is the run mode for a production environment
+	ProductionRunMode runMode = "production"
+
 	defaultStartupDeadline                   = time.Minute
+	defaultRunMode                           = DevelopmentRunMode
 	defaultCookieLifetime                    = 24 * time.Hour
 	defaultMetricsCollectionInterval         = 2 * time.Second
 	defaultDatabaseMetricsCollectionInterval = 2 * time.Second
 	randStringSize                           = 32
+)
+
+var (
+	validModes = map[runMode]struct{}{
+		DevelopmentRunMode: {},
+		TestingRunMode:     {},
+		ProductionRunMode:  {},
+	}
 )
 
 func init() {
@@ -28,6 +44,8 @@ func init() {
 }
 
 type (
+	runMode string
+
 	// MetaSettings is primarily used for development.
 	MetaSettings struct {
 		// Debug enables debug mode service-wide
@@ -35,6 +53,8 @@ type (
 		Debug bool `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
 		// StartupDeadline indicates how long the service can take to spin up. This includes database migrations, configuring services, etc.
 		StartupDeadline time.Duration `json:"startup_deadline" mapstructure:"startup_deadline" toml:"startup_deadline,omitempty"`
+		// RunMode indicates the current run mode
+		RunMode runMode `json:"run_mode" mapstructure:"run_mode" toml:"run_mode,omitempty"`
 	}
 
 	// ServerSettings describes the settings pertinent to the HTTP serving portion of the service.
@@ -123,6 +143,7 @@ func BuildConfig() *viper.Viper {
 	cfg := viper.New()
 
 	// meta stuff.
+	cfg.SetDefault("meta.run_mode", defaultRunMode)
 	cfg.SetDefault("meta.startup_deadline", defaultStartupDeadline)
 
 	// auth stuff.
@@ -153,6 +174,10 @@ func ParseConfigFile(filename string) (*ServerConfig, error) {
 	var serverConfig *ServerConfig
 	if err := cfg.Unmarshal(&serverConfig); err != nil {
 		return nil, fmt.Errorf("trying to unmarshal the config: %w", err)
+	}
+
+	if _, ok := validModes[serverConfig.Meta.RunMode]; !ok {
+		return nil, fmt.Errorf("invalid run mode: %q", serverConfig.Meta.RunMode)
 	}
 
 	return serverConfig, nil

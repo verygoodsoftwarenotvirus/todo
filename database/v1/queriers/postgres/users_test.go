@@ -237,7 +237,7 @@ func TestPostgres_buildGetUsersQuery(T *testing.T) {
 
 		filter := fakemodels.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on, COUNT(users.id) FROM users WHERE users.archived_on IS NULL AND users.created_on > $1 AND users.created_on < $2 AND users.updated_on > $3 AND users.updated_on < $4 GROUP BY users.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on, (SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL) FROM users WHERE users.archived_on IS NULL AND users.created_on > $1 AND users.created_on < $2 AND users.updated_on > $3 AND users.updated_on < $4 ORDER BY users.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -255,7 +255,7 @@ func TestPostgres_buildGetUsersQuery(T *testing.T) {
 func TestPostgres_GetUsers(T *testing.T) {
 	T.Parallel()
 
-	expectedUsersQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on, COUNT(users.id) FROM users WHERE users.archived_on IS NULL GROUP BY users.id LIMIT 20"
+	expectedUsersQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on, (SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL) FROM users WHERE users.archived_on IS NULL ORDER BY users.id LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()

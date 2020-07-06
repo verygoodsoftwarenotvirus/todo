@@ -229,12 +229,12 @@ func (p *Postgres) buildGetUsersQuery(filter *models.QueryFilter) (query string,
 	var err error
 
 	builder := p.sqlBuilder.
-		Select(append(usersTableColumns, fmt.Sprintf(countQuery, usersTableName))...).
+		Select(append(usersTableColumns, fmt.Sprintf("(%s)", p.buildGetAllUsersCountQuery()))...).
 		From(usersTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.archived_on", usersTableName): nil,
 		}).
-		GroupBy(fmt.Sprintf("%s.id", usersTableName))
+		OrderBy(fmt.Sprintf("%s.id", usersTableName))
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder, usersTableName)

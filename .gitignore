@@ -24,7 +24,7 @@
 .DS_Store
 
 # # Go
-# vendor
+vendor
 
 # Python
 .env

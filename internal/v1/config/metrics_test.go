@@ -19,9 +19,7 @@ func TestServerConfig_ProvideInstrumentationHandler(T *testing.T) {
 			},
 		}
 
-		ih, err := c.ProvideInstrumentationHandler(noop.ProvideNoopLogger())
-		assert.NoError(t, err)
-		assert.NotNil(t, ih)
+		assert.NotNil(t, c.ProvideInstrumentationHandler(noop.ProvideNoopLogger()))
 	})
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -14,6 +15,7 @@ const (
 	defaultFrontendFilepath          = "/frontend"
 	postgresDBConnDetails            = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
 	metaDebug                        = "meta.debug"
+	metaRunMode                      = "meta.run_mode"
 	metaStartupDeadline              = "meta.startup_deadline"
 	serverHTTPPort                   = "server.http_port"
 	serverDebug                      = "server.debug"
@@ -33,28 +35,36 @@ const (
 	dbDebug                          = "database.debug"
 	dbProvider                       = "database.provider"
 	dbDeets                          = "database.connection_details"
-	postgres                         = "postgres"
-	sqlite                           = "sqlite"
-	mariadb                          = "mariadb"
+
+	// run modes
+	developmentEnv = "development"
+	testingEnv     = "testing"
+
+	// database providers
+	postgres = "postgres"
+	sqlite   = "sqlite"
+	mariadb  = "mariadb"
 )
 
-type configFunc func(filepath string) error
+type configFunc func(filePath string) error
 
 var (
 	files = map[string]configFunc{
-		"config_files/coverage.toml":                   coverageConfig,
-		"config_files/development.toml":                developmentConfig,
-		"config_files/integration-tests-postgres.toml": buildIntegrationTestForDBImplementation(postgres, postgresDBConnDetails),
-		"config_files/integration-tests-sqlite.toml":   buildIntegrationTestForDBImplementation(sqlite, "/tmp/db"),
-		"config_files/integration-tests-mariadb.toml":  buildIntegrationTestForDBImplementation(mariadb, "dbuser:hunter2@tcp(database:3306)/todo"),
-		"config_files/production.toml":                 productionConfig,
+		"environments/testing/coverage.toml":                                coverageConfig,
+		"environments/local/config.toml":                                    developmentConfig,
+		"environments/testing/config_files/coverage_new.toml":               developmentConfig,
+		"environments/testing/config_files/integration-tests-postgres.toml": buildIntegrationTestForDBImplementation(postgres, postgresDBConnDetails),
+		"environments/testing/config_files/integration-tests-sqlite.toml":   buildIntegrationTestForDBImplementation(sqlite, "/tmp/db"),
+		"environments/testing/config_files/integration-tests-mariadb.toml":  buildIntegrationTestForDBImplementation(mariadb, "dbuser:hunter2@tcp(database:3306)/todo"),
 	}
 )
 
-func developmentConfig(filepath string) error {
+func developmentConfig(filePath string) error {
 	cfg := config.BuildConfig()
 
+	cfg.Set(metaRunMode, developmentEnv)
 	cfg.Set(metaStartupDeadline, time.Minute)
+
 	cfg.Set(serverHTTPPort, defaultPort)
 	cfg.Set(serverDebug, true)
 
@@ -75,14 +85,20 @@ func developmentConfig(filepath string) error {
 	cfg.Set(metricsRuntimeCollectionInterval, time.Second)
 
 	cfg.Set(dbDebug, true)
-	cfg.Set(dbProvider, "postgres")
+	cfg.Set(dbProvider, postgres)
 	cfg.Set(dbDeets, postgresDBConnDetails)
 
-	return cfg.WriteConfigAs(filepath)
+	if writeErr := cfg.WriteConfigAs(filePath); writeErr != nil {
+		return fmt.Errorf("error writing developmentEnv config: %w", writeErr)
+	}
+
+	return nil
 }
 
-func coverageConfig(filepath string) error {
+func coverageConfig(filePath string) error {
 	cfg := config.BuildConfig()
+
+	cfg.Set(metaRunMode, testingEnv)
 
 	cfg.Set(serverHTTPPort, defaultPort)
 	cfg.Set(serverDebug, true)
@@ -95,52 +111,25 @@ func coverageConfig(filepath string) error {
 	cfg.Set(authCookieSecret, debugCookieSecret)
 
 	cfg.Set(dbDebug, false)
-	cfg.Set(dbProvider, "postgres")
+	cfg.Set(dbProvider, postgres)
 	cfg.Set(dbDeets, postgresDBConnDetails)
 
-	return cfg.WriteConfigAs(filepath)
+	if writeErr := cfg.WriteConfigAs(filePath); writeErr != nil {
+		return fmt.Errorf("error writing coverage config: %w", writeErr)
+	}
+
+	return nil
 }
 
-func productionConfig(filepath string) error {
-	cfg := config.BuildConfig()
-
-	cfg.Set(metaDebug, false)
-	cfg.Set(metaStartupDeadline, time.Minute)
-
-	cfg.Set(serverHTTPPort, defaultPort)
-	cfg.Set(serverDebug, false)
-
-	cfg.Set(frontendDebug, false)
-	cfg.Set(frontendStaticFilesDir, defaultFrontendFilepath)
-	cfg.Set(frontendCacheStatics, false)
-
-	cfg.Set(authDebug, false)
-	cfg.Set(authCookieDomain, "")
-	cfg.Set(authCookieSecret, debugCookieSecret)
-	cfg.Set(authCookieLifetime, oneDay)
-	cfg.Set(authSecureCookiesOnly, false)
-	cfg.Set(authEnableUserSignup, true)
-
-	cfg.Set(metricsProvider, "prometheus")
-	cfg.Set(metricsTracer, "jaeger")
-	cfg.Set(metricsDBCollectionInterval, time.Second)
-	cfg.Set(metricsRuntimeCollectionInterval, time.Second)
-
-	cfg.Set(dbDebug, false)
-	cfg.Set(dbProvider, "postgres")
-	cfg.Set(dbDeets, postgresDBConnDetails)
-
-	return cfg.WriteConfigAs(filepath)
-}
-
-func buildIntegrationTestForDBImplementation(dbprov, dbDetails string) configFunc {
-	return func(filepath string) error {
+func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configFunc {
+	return func(filePath string) error {
 		cfg := config.BuildConfig()
 
+		cfg.Set(metaRunMode, testingEnv)
 		cfg.Set(metaDebug, false)
 
 		sd := time.Minute
-		if dbprov == mariadb {
+		if dbVendor == mariadb {
 			sd = 5 * time.Minute
 		}
 		cfg.Set(metaStartupDeadline, sd)
@@ -155,17 +144,21 @@ func buildIntegrationTestForDBImplementation(dbprov, dbDetails string) configFun
 		cfg.Set(metricsTracer, "jaeger")
 
 		cfg.Set(dbDebug, false)
-		cfg.Set(dbProvider, dbprov)
+		cfg.Set(dbProvider, dbVendor)
 		cfg.Set(dbDeets, dbDetails)
 
-		return cfg.WriteConfigAs(filepath)
+		if writeErr := cfg.WriteConfigAs(filePath); writeErr != nil {
+			return fmt.Errorf("error writing integration test config for %s: %w", dbVendor, writeErr)
+		}
+
+		return nil
 	}
 }
 
 func main() {
-	for filepath, fun := range files {
-		if err := fun(filepath); err != nil {
-			log.Fatal(err)
+	for filePath, fun := range files {
+		if err := fun(filePath); err != nil {
+			log.Fatalf("error rendering %s: %v", filePath, err)
 		}
 	}
 }

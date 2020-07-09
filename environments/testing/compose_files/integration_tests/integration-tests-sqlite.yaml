@@ -1,0 +1,19 @@
+version: '3.3'
+services:
+    todo-server:
+        environment:
+            CONFIGURATION_FILEPATH: '/etc/config.toml'
+        ports:
+            - 80:8888
+        build:
+            context: '../../../../'
+            dockerfile: 'environments/testing/dockerfiles/integration-server-sqlite.Dockerfile'
+    test:
+        environment:
+            TARGET_ADDRESS: 'http://todo-server:8888'
+        links:
+            - todo-server
+        build:
+            context: '../../../../'
+            dockerfile: 'environments/testing/dockerfiles/integration-tests.Dockerfile'
+        container_name: 'sqlite_integration_tests'

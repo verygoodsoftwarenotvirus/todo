@@ -1,0 +1,28 @@
+
+[auth]
+  cookie_lifetime = "24h0m0s"
+  cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"
+  enable_user_signup = true
+
+[database]
+  connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
+  debug = false
+  provider = "postgres"
+
+[frontend]
+  static_files_directory = "/frontend"
+
+[meta]
+  debug = false
+  run_mode = "testing"
+  startup_deadline = "1m0s"
+
+[metrics]
+  database_metrics_collection_interval = "2s"
+  metrics_provider = "prometheus"
+  runtime_metrics_collection_interval = "2s"
+  tracing_provider = "jaeger"
+
+[server]
+  debug = true
+  http_port = 8888

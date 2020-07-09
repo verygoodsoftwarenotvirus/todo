@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
@@ -38,7 +39,7 @@ func (cfg *ServerConfig) ProvideDatabaseConnection(logger logging.Logger) (*sql.
 	case SqliteProviderKey:
 		return sqlite.ProvideSqliteDB(logger, cfg.Database.ConnectionDetails)
 	default:
-		return nil, errors.New("invalid database type selected")
+		return nil, fmt.Errorf("invalid database type selected: %q", cfg.Database.Provider)
 	}
 }
 

@@ -94,13 +94,8 @@ func ProvideServer(
 		return nil, err
 	}
 
-	ih, err := cfg.ProvideInstrumentationHandler(logger)
-	if err != nil && err != config.ErrInvalidMetricsProvider {
-		return nil, err
-	}
-	if ih != nil {
-		srv.setupRouter(cfg.Frontend, ih)
-	}
+	metricsHandler := cfg.ProvideInstrumentationHandler(logger)
+	srv.setupRouter(cfg.Frontend, metricsHandler)
 
 	srv.httpServer.Handler = &ochttp.Handler{
 		Handler:        srv.router,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -21,11 +22,18 @@ const (
 
 	existencePrefix, existenceSuffix = "SELECT EXISTS (", ")"
 
+	idColumn            = "id"
+	createdOnColumn     = "created_on"
+	lastUpdatedOnColumn = "last_updated_on"
+	archivedOnColumn    = "archived_on"
+
 	// countQuery is a generic counter query used in a few query builders.
 	countQuery = "COUNT(%s.id)"
 
 	// currentUnixTimeQuery is the query sqlite uses to determine the current unix time.
 	currentUnixTimeQuery = "(strftime('%s','now'))"
+
+	defaultBucketSize = uint64(1000)
 )
 
 func init() {
@@ -43,7 +51,7 @@ func init() {
 	sql.Register(sqliteDriverName, driver)
 }
 
-var _ database.Database = (*Sqlite)(nil)
+var _ database.DataManager = (*Sqlite)(nil)
 
 type (
 	// Sqlite is our main Sqlite interaction db.
@@ -74,7 +82,7 @@ func ProvideSqliteDB(logger logging.Logger, connectionDetails database.Connectio
 }
 
 // ProvideSqlite provides a sqlite db controller.
-func ProvideSqlite(debug bool, db *sql.DB, logger logging.Logger) database.Database {
+func ProvideSqlite(debug bool, db *sql.DB, logger logging.Logger) database.DataManager {
 	return &Sqlite{
 		db:         db,
 		debug:      debug,
@@ -123,4 +131,14 @@ func buildError(err error, msg string) error {
 	}
 
 	return fmt.Errorf(msg, err)
+}
+
+func joinUint64s(in []uint64, separator string) string {
+	out := []string{}
+
+	for _, x := range in {
+		out = append(out, strconv.FormatUint(x, 10))
+	}
+
+	return strings.Join(out, separator)
 }

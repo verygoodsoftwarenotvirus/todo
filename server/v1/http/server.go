@@ -41,7 +41,7 @@ type (
 		itemsService         models.ItemDataServer
 
 		// infra things.
-		db          database.Database
+		db          database.DataManager
 		config      *config.ServerConfig
 		router      *chi.Mux
 		httpServer  *http.Server
@@ -61,7 +61,7 @@ func ProvideServer(
 	usersService models.UserDataServer,
 	oauth2Service models.OAuth2ClientDataServer,
 	webhooksService models.WebhookDataServer,
-	db database.Database,
+	db database.DataManager,
 	logger logging.Logger,
 	encoder encoding.EncoderDecoder,
 	newsManager *newsman.Newsman,

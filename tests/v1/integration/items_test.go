@@ -2,13 +2,18 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
+	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
 
 func checkItemEquality(t *testing.T, expected, actual *models.Item) {
@@ -78,6 +83,144 @@ func TestItems(test *testing.T) {
 			// Clean up.
 			for _, createdItem := range actual.Items {
 				err = todoClient.ArchiveItem(ctx, createdItem.ID)
+				assert.NoError(t, err)
+			}
+		})
+	})
+
+	test.Run("Searching", func(T *testing.T) {
+		T.Run("should be able to be search for items", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			// Create items.
+			exampleItem := fakemodels.BuildFakeItem()
+			var expected []*models.Item
+			for i := 0; i < 5; i++ {
+				// Create item.
+				exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+				exampleItemInput.Name = fmt.Sprintf("%s %d", exampleItemInput.Name, i)
+				createdItem, itemCreationErr := todoClient.CreateItem(ctx, exampleItemInput)
+				checkValueAndError(t, createdItem, itemCreationErr)
+
+				expected = append(expected, createdItem)
+			}
+
+			exampleLimit := uint8(20)
+
+			// Assert item list equality.
+			actual, err := todoClient.SearchItems(ctx, exampleItem.Name, exampleLimit)
+			checkValueAndError(t, actual, err)
+			assert.True(
+				t,
+				len(expected) <= len(actual),
+				"expected %d to be <= %d",
+				len(expected),
+				len(actual),
+			)
+
+			// Clean up.
+			for _, createdItem := range expected {
+				err = todoClient.ArchiveItem(ctx, createdItem.ID)
+				assert.NoError(t, err)
+			}
+		})
+
+		T.Run("should only receive your own items", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			// create user and oauth2 client A.
+			userA, err := testutil.CreateObligatoryUser(urlToUse, debug)
+			require.NoError(t, err)
+
+			ca, err := testutil.CreateObligatoryClient(urlToUse, userA)
+			require.NoError(t, err)
+
+			clientA, err := client.NewClient(
+				ctx,
+				ca.ClientID,
+				ca.ClientSecret,
+				todoClient.URL,
+				noop.ProvideNoopLogger(),
+				buildHTTPClient(),
+				ca.Scopes,
+				true,
+			)
+			checkValueAndError(test, clientA, err)
+
+			// Create items for user A.
+			exampleItemA := fakemodels.BuildFakeItem()
+			var createdForA []*models.Item
+			for i := 0; i < 5; i++ {
+				// Create item.
+				exampleItemInputA := fakemodels.BuildFakeItemCreationInputFromItem(exampleItemA)
+				exampleItemInputA.Name = fmt.Sprintf("%s %d", exampleItemInputA.Name, i)
+
+				createdItem, itemCreationErr := clientA.CreateItem(ctx, exampleItemInputA)
+				checkValueAndError(t, createdItem, itemCreationErr)
+
+				createdForA = append(createdForA, createdItem)
+			}
+
+			exampleLimit := uint8(20)
+			query := exampleItemA.Name
+
+			// create user and oauth2 client B.
+			userB, err := testutil.CreateObligatoryUser(urlToUse, debug)
+			require.NoError(t, err)
+
+			cb, err := testutil.CreateObligatoryClient(urlToUse, userB)
+			require.NoError(t, err)
+
+			clientB, err := client.NewClient(
+				ctx,
+				cb.ClientID,
+				cb.ClientSecret,
+				todoClient.URL,
+				noop.ProvideNoopLogger(),
+				buildHTTPClient(),
+				cb.Scopes,
+				true,
+			)
+			checkValueAndError(test, clientB, err)
+
+			// Create items for user B.
+			exampleItemB := fakemodels.BuildFakeItem()
+			exampleItemB.Name = reverse(exampleItemA.Name)
+			var createdForB []*models.Item
+			for i := 0; i < 5; i++ {
+				// Create item.
+				exampleItemInputB := fakemodels.BuildFakeItemCreationInputFromItem(exampleItemB)
+				exampleItemInputB.Name = fmt.Sprintf("%s %d", exampleItemInputB.Name, i)
+
+				createdItem, itemCreationErr := clientB.CreateItem(ctx, exampleItemInputB)
+				checkValueAndError(t, createdItem, itemCreationErr)
+
+				createdForB = append(createdForB, createdItem)
+			}
+
+			expected := createdForA
+
+			// Assert item list equality.
+			actual, err := clientA.SearchItems(ctx, query, exampleLimit)
+			checkValueAndError(t, actual, err)
+			assert.True(
+				t,
+				len(expected) <= len(actual),
+				"expected results length %d to be <= %d",
+				len(expected),
+				len(actual),
+			)
+
+			// Clean up.
+			for _, createdItem := range createdForA {
+				err = clientA.ArchiveItem(ctx, createdItem.ID)
+				assert.NoError(t, err)
+			}
+
+			for _, createdItem := range createdForB {
+				err = clientB.ArchiveItem(ctx, createdItem.ID)
 				assert.NoError(t, err)
 			}
 		})

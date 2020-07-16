@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
@@ -72,6 +73,42 @@ func (c *V1Client) GetItem(ctx context.Context, itemID uint64) (item *models.Ite
 	}
 
 	return item, nil
+}
+
+// BuildSearchItemsRequest builds an HTTP request for querying items.
+func (c *V1Client) BuildSearchItemsRequest(ctx context.Context, query string, limit uint8) (*http.Request, error) {
+	ctx, span := tracing.StartSpan(ctx, "BuildSearchItemsRequest")
+	defer span.End()
+
+	params := url.Values{}
+	params.Set(models.SearchQueryKey, query)
+	params.Set(models.LimitQueryKey, strconv.FormatUint(uint64(limit), 10))
+
+	uri := c.BuildURL(
+		params,
+		itemsBasePath,
+		"search",
+	)
+	tracing.AttachRequestURIToSpan(span, uri)
+
+	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+}
+
+// SearchItems searches for a list of items.
+func (c *V1Client) SearchItems(ctx context.Context, query string, limit uint8) (items []models.Item, err error) {
+	ctx, span := tracing.StartSpan(ctx, "SearchItems")
+	defer span.End()
+
+	req, err := c.BuildSearchItemsRequest(ctx, query, limit)
+	if err != nil {
+		return nil, fmt.Errorf("building request: %w", err)
+	}
+
+	if retrieveErr := c.retrieve(ctx, req, &items); retrieveErr != nil {
+		return nil, retrieveErr
+	}
+
+	return items, nil
 }
 
 // BuildGetItemsRequest builds an HTTP request for fetching items.

@@ -110,6 +110,31 @@ func TestClient_GetItems(T *testing.T) {
 	})
 }
 
+func TestClient_GetItemsWithIDs(T *testing.T) {
+	T.Parallel()
+
+	exampleUser := fakemodels.BuildFakeUser()
+
+	T.Run("obligatory", func(t *testing.T) {
+		ctx := context.Background()
+
+		exampleItemList := fakemodels.BuildFakeItemList().Items
+		var exampleIDs []uint64
+		for _, x := range exampleItemList {
+			exampleIDs = append(exampleIDs, x.ID)
+		}
+
+		c, mockDB := buildTestClient()
+		mockDB.ItemDataManager.On("GetItemsWithIDs", mock.Anything, exampleUser.ID, defaultLimit, exampleIDs).Return(exampleItemList, nil)
+
+		actual, err := c.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleIDs)
+		assert.NoError(t, err)
+		assert.Equal(t, exampleItemList, actual)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
+	})
+}
+
 func TestClient_CreateItem(T *testing.T) {
 	T.Parallel()
 

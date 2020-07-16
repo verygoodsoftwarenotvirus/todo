@@ -16,12 +16,16 @@
   static_files_directory = "/frontend"
 
 [meta]
+  debug = true
   run_mode = "testing"
   startup_deadline = "1m0s"
 
 [metrics]
   database_metrics_collection_interval = "2s"
   runtime_metrics_collection_interval = "2s"
+
+[search]
+  items_index_path = "items.bleve"
 
 [server]
   debug = true

@@ -44,3 +44,7 @@ frontend/v1/public/bundle.*
 
 *.coverprofile
 *.profile
+
+cmd/playground
+*.bleve
+*.sqlite

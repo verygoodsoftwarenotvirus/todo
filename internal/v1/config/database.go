@@ -44,7 +44,7 @@ func (cfg *ServerConfig) ProvideDatabaseConnection(logger logging.Logger) (*sql.
 }
 
 // ProvideDatabaseClient provides a database implementation dependent on the configuration.
-func (cfg *ServerConfig) ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB) (database.Database, error) {
+func (cfg *ServerConfig) ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB) (database.DataManager, error) {
 	if rawDB == nil {
 		return nil, errors.New("nil DB connection provided")
 	}
@@ -54,7 +54,7 @@ func (cfg *ServerConfig) ProvideDatabaseClient(ctx context.Context, logger loggi
 	ocsql.RegisterAllViews()
 	ocsql.RecordStats(rawDB, cfg.Metrics.DBMetricsCollectionInterval)
 
-	var dbc database.Database
+	var dbc database.DataManager
 	switch cfg.Database.Provider {
 	case PostgresProviderKey:
 		dbc = postgres.ProvidePostgres(debug, rawDB, logger)

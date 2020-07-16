@@ -35,9 +35,8 @@ func BuildFakeOAuth2ClientList() *models.OAuth2ClientList {
 
 	return &models.OAuth2ClientList{
 		Pagination: models.Pagination{
-			Page:       1,
-			Limit:      20,
-			TotalCount: 3,
+			Page:  1,
+			Limit: 20,
 		},
 		Clients: []models.OAuth2Client{
 			*exampleOAuth2Client1,

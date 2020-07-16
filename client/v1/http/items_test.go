@@ -182,6 +182,8 @@ func TestV1Client_BuildGetItemsRequest(T *testing.T) {
 func TestV1Client_GetItems(T *testing.T) {
 	T.Parallel()
 
+	const expectedPath = "/api/v1/items"
+
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -192,7 +194,7 @@ func TestV1Client_GetItems(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/api/v1/items", "expected and actual paths do not match")
+					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodGet)
 					require.NoError(t, json.NewEncoder(res).Encode(exampleItemList))
 				},
@@ -227,7 +229,7 @@ func TestV1Client_GetItems(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/api/v1/items", "expected and actual paths do not match")
+					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodGet)
 					require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
 				},
@@ -236,6 +238,99 @@ func TestV1Client_GetItems(T *testing.T) {
 
 		c := buildTestClient(t, ts)
 		actual, err := c.GetItems(ctx, filter)
+
+		assert.Nil(t, actual)
+		assert.Error(t, err, "error should be returned")
+	})
+}
+
+func TestV1Client_BuildSearchItemsRequest(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
+
+		limit := models.DefaultQueryFilter().Limit
+		exampleQuery := "whatever"
+
+		expectedMethod := http.MethodGet
+		ts := httptest.NewTLSServer(nil)
+
+		c := buildTestClient(t, ts)
+		actual, err := c.BuildSearchItemsRequest(ctx, exampleQuery, limit)
+
+		require.NotNil(t, actual)
+		assert.NoError(t, err, "no error should be returned")
+		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
+	})
+}
+
+func TestV1Client_SearchItems(T *testing.T) {
+	T.Parallel()
+
+	const expectedPath = "/api/v1/items/search"
+
+	T.Run("happy path", func(t *testing.T) {
+		ctx := context.Background()
+
+		limit := models.DefaultQueryFilter().Limit
+		exampleQuery := "whatever"
+
+		exampleItemList := fakemodels.BuildFakeItemList().Items
+
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
+					assert.Equal(t, req.URL.Query().Get(models.SearchQueryKey), exampleQuery, "expected and actual search query param do not match")
+					assert.Equal(t, req.URL.Query().Get(models.LimitQueryKey), strconv.FormatUint(uint64(limit), 10), "expected and actual limit query param do not match")
+					assert.Equal(t, req.Method, http.MethodGet)
+					require.NoError(t, json.NewEncoder(res).Encode(exampleItemList))
+				},
+			),
+		)
+
+		c := buildTestClient(t, ts)
+		actual, err := c.SearchItems(ctx, exampleQuery, limit)
+
+		require.NotNil(t, actual)
+		assert.NoError(t, err, "no error should be returned")
+		assert.Equal(t, exampleItemList, actual)
+	})
+
+	T.Run("with invalid client URL", func(t *testing.T) {
+		ctx := context.Background()
+
+		limit := models.DefaultQueryFilter().Limit
+		exampleQuery := "whatever"
+
+		c := buildTestClientWithInvalidURL(t)
+		actual, err := c.SearchItems(ctx, exampleQuery, limit)
+
+		assert.Nil(t, actual)
+		assert.Error(t, err, "error should be returned")
+	})
+
+	T.Run("with invalid response", func(t *testing.T) {
+		ctx := context.Background()
+
+		limit := models.DefaultQueryFilter().Limit
+		exampleQuery := "whatever"
+
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
+					assert.Equal(t, req.URL.Query().Get(models.SearchQueryKey), exampleQuery, "expected and actual search query param do not match")
+					assert.Equal(t, req.URL.Query().Get(models.LimitQueryKey), strconv.FormatUint(uint64(limit), 10), "expected and actual limit query param do not match")
+					assert.Equal(t, req.Method, http.MethodGet)
+					require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
+				},
+			),
+		)
+
+		c := buildTestClient(t, ts)
+		actual, err := c.SearchItems(ctx, exampleQuery, limit)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
@@ -268,6 +363,8 @@ func TestV1Client_BuildCreateItemRequest(T *testing.T) {
 func TestV1Client_CreateItem(T *testing.T) {
 	T.Parallel()
 
+	const expectedPath = "/api/v1/items"
+
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -277,7 +374,7 @@ func TestV1Client_CreateItem(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/api/v1/items", "expected and actual paths do not match")
+					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodPost)
 
 					var x *models.ItemCreationInput

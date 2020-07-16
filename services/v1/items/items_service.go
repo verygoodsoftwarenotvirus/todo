@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
@@ -29,6 +31,9 @@ var (
 )
 
 type (
+	// SearchIndex is a type alias for dependency injection's sake
+	SearchIndex search.IndexManager
+
 	// Service handles to-do list items
 	Service struct {
 		logger          logging.Logger
@@ -38,6 +43,7 @@ type (
 		itemCounter     metrics.UnitCounter
 		encoderDecoder  encoding.EncoderDecoder
 		reporter        newsman.Reporter
+		search          SearchIndex
 	}
 
 	// UserIDFetcher is a function that fetches user IDs.
@@ -56,6 +62,7 @@ func ProvideItemsService(
 	encoder encoding.EncoderDecoder,
 	itemCounterProvider metrics.UnitCounterProvider,
 	reporter newsman.Reporter,
+	searchIndexManager SearchIndex,
 ) (*Service, error) {
 	itemCounter, err := itemCounterProvider(counterName, counterDescription)
 	if err != nil {
@@ -70,7 +77,25 @@ func ProvideItemsService(
 		encoderDecoder:  encoder,
 		itemCounter:     itemCounter,
 		reporter:        reporter,
+		search:          searchIndexManager,
 	}
 
 	return svc, nil
+}
+
+// ProvideItemsServiceSearchIndex provides an items service search index
+func ProvideItemsServiceSearchIndex(
+	searchSettings config.SearchSettings,
+	indexProvider search.IndexManagerProvider,
+	logger logging.Logger,
+) (SearchIndex, error) {
+	logger.WithValue("index_path", searchSettings.ItemsIndexPath).Debug("setting up items search index")
+
+	searchIndex, indexInitErr := indexProvider(searchSettings.ItemsIndexPath, models.ItemsSearchIndexName, logger)
+	if indexInitErr != nil {
+		logger.Error(indexInitErr, "setting up items search index")
+		return nil, indexInitErr
+	}
+
+	return searchIndex, nil
 }

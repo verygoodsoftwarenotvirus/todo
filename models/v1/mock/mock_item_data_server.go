@@ -27,6 +27,12 @@ func (m *ItemDataServer) UpdateInputMiddleware(next http.Handler) http.Handler {
 	return args.Get(0).(http.Handler)
 }
 
+// SearchHandler implements our interface requirements.
+func (m *ItemDataServer) SearchHandler() http.HandlerFunc {
+	args := m.Called()
+	return args.Get(0).(http.HandlerFunc)
+}
+
 // ListHandler implements our interface requirements.
 func (m *ItemDataServer) ListHandler() http.HandlerFunc {
 	args := m.Called()

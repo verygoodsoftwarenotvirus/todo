@@ -11,6 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search/bleve"
 	server "gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
@@ -35,7 +36,7 @@ func BuildServer(
 	ctx context.Context,
 	cfg *config.ServerConfig,
 	logger logging.Logger,
-	database database.Database,
+	database database.DataManager,
 	db *sql.DB,
 ) (*server.Server, error) {
 	wire.Build(
@@ -57,6 +58,7 @@ func BuildServer(
 		frontendservice.Providers,
 		webhooksservice.Providers,
 		oauth2clientsservice.Providers,
+		bleve.Providers,
 	)
 	return nil, nil
 }

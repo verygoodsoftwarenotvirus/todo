@@ -204,6 +204,6 @@ func TestCreateBodyFromStruct(T *testing.T) {
 		x := &testBreakableStruct{Thing: "stuff"}
 		_, err := createBodyFromStruct(x)
 
-		assert.Error(t, err, "expected no error creating JSON from valid struct")
+		assert.Error(t, err, "expected error creating JSON from invalid struct")
 	})
 }

@@ -446,7 +446,7 @@ func TestV1Client_ValidateTOTPSecretRequest(T *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	T.Run("with invalid code response", func(t *testing.T) {
+	T.Run("with bad request response", func(t *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -467,6 +467,28 @@ func TestV1Client_ValidateTOTPSecretRequest(T *testing.T) {
 		err := c.VerifyTOTPSecret(ctx, exampleUser.ID, exampleInput.TOTPToken)
 		assert.Error(t, err)
 		assert.Equal(t, ErrInvalidTOTPToken, err)
+	})
+
+	T.Run("with otherwise invalid status code response", func(t *testing.T) {
+		ctx := context.Background()
+
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleInput := fakemodels.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
+					assert.Equal(t, req.Method, http.MethodPost)
+
+					res.WriteHeader(http.StatusInternalServerError)
+				},
+			),
+		)
+		c := buildTestClient(t, ts)
+
+		err := c.VerifyTOTPSecret(ctx, exampleUser.ID, exampleInput.TOTPToken)
+		assert.Error(t, err)
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {

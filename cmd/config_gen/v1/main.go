@@ -35,6 +35,7 @@ const (
 	dbDebug                          = "database.debug"
 	dbProvider                       = "database.provider"
 	dbDeets                          = "database.connection_details"
+	searchItemsIndexPath             = "search.items_index_path"
 
 	// run modes
 	developmentEnv = "development"
@@ -44,15 +45,18 @@ const (
 	postgres = "postgres"
 	sqlite   = "sqlite"
 	mariadb  = "mariadb"
+
+	// search index paths
+	defaultItemsIndexPath = "items.bleve"
 )
 
 type configFunc func(filePath string) error
 
 var (
 	files = map[string]configFunc{
-		"environments/testing/coverage.toml":                                coverageConfig,
 		"environments/local/config.toml":                                    developmentConfig,
-		"environments/testing/config_files/coverage_new.toml":               developmentConfig,
+		"environments/testing/config_files/frontend-tests.toml":             frontendTests,
+		"environments/testing/config_files/coverage.toml":                   coverageConfig,
 		"environments/testing/config_files/integration-tests-postgres.toml": buildIntegrationTestForDBImplementation(postgres, postgresDBConnDetails),
 		"environments/testing/config_files/integration-tests-sqlite.toml":   buildIntegrationTestForDBImplementation(sqlite, "/tmp/db"),
 		"environments/testing/config_files/integration-tests-mariadb.toml":  buildIntegrationTestForDBImplementation(mariadb, "dbuser:hunter2@tcp(database:3306)/todo"),
@@ -63,6 +67,7 @@ func developmentConfig(filePath string) error {
 	cfg := config.BuildConfig()
 
 	cfg.Set(metaRunMode, developmentEnv)
+	cfg.Set(metaDebug, true)
 	cfg.Set(metaStartupDeadline, time.Minute)
 
 	cfg.Set(serverHTTPPort, defaultPort)
@@ -73,7 +78,7 @@ func developmentConfig(filePath string) error {
 	cfg.Set(frontendCacheStatics, false)
 
 	cfg.Set(authDebug, true)
-	cfg.Set(authCookieDomain, "")
+	cfg.Set(authCookieDomain, "localhost")
 	cfg.Set(authCookieSecret, debugCookieSecret)
 	cfg.Set(authCookieLifetime, oneDay)
 	cfg.Set(authSecureCookiesOnly, false)
@@ -88,6 +93,46 @@ func developmentConfig(filePath string) error {
 	cfg.Set(dbProvider, postgres)
 	cfg.Set(dbDeets, postgresDBConnDetails)
 
+	cfg.Set(searchItemsIndexPath, defaultItemsIndexPath)
+
+	if writeErr := cfg.WriteConfigAs(filePath); writeErr != nil {
+		return fmt.Errorf("error writing developmentEnv config: %w", writeErr)
+	}
+
+	return nil
+}
+
+func frontendTests(filePath string) error {
+	cfg := config.BuildConfig()
+
+	cfg.Set(metaRunMode, developmentEnv)
+	cfg.Set(metaStartupDeadline, time.Minute)
+
+	cfg.Set(serverHTTPPort, defaultPort)
+	cfg.Set(serverDebug, true)
+
+	cfg.Set(frontendDebug, true)
+	cfg.Set(frontendStaticFilesDir, defaultFrontendFilepath)
+	cfg.Set(frontendCacheStatics, false)
+
+	cfg.Set(authDebug, true)
+	cfg.Set(authCookieDomain, "localhost")
+	cfg.Set(authCookieSecret, debugCookieSecret)
+	cfg.Set(authCookieLifetime, oneDay)
+	cfg.Set(authSecureCookiesOnly, false)
+	cfg.Set(authEnableUserSignup, true)
+
+	cfg.Set(metricsProvider, "prometheus")
+	cfg.Set(metricsTracer, "jaeger")
+	cfg.Set(metricsDBCollectionInterval, time.Second)
+	cfg.Set(metricsRuntimeCollectionInterval, time.Second)
+
+	cfg.Set(dbDebug, true)
+	cfg.Set(dbProvider, postgres)
+	cfg.Set(dbDeets, postgresDBConnDetails)
+
+	cfg.Set(searchItemsIndexPath, defaultItemsIndexPath)
+
 	if writeErr := cfg.WriteConfigAs(filePath); writeErr != nil {
 		return fmt.Errorf("error writing developmentEnv config: %w", writeErr)
 	}
@@ -99,6 +144,7 @@ func coverageConfig(filePath string) error {
 	cfg := config.BuildConfig()
 
 	cfg.Set(metaRunMode, testingEnv)
+	cfg.Set(metaDebug, true)
 
 	cfg.Set(serverHTTPPort, defaultPort)
 	cfg.Set(serverDebug, true)
@@ -113,6 +159,8 @@ func coverageConfig(filePath string) error {
 	cfg.Set(dbDebug, false)
 	cfg.Set(dbProvider, postgres)
 	cfg.Set(dbDeets, postgresDBConnDetails)
+
+	cfg.Set(searchItemsIndexPath, defaultItemsIndexPath)
 
 	if writeErr := cfg.WriteConfigAs(filePath); writeErr != nil {
 		return fmt.Errorf("error writing coverage config: %w", writeErr)
@@ -146,6 +194,8 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 		cfg.Set(dbDebug, false)
 		cfg.Set(dbProvider, dbVendor)
 		cfg.Set(dbDeets, dbDetails)
+
+		cfg.Set(searchItemsIndexPath, defaultItemsIndexPath)
 
 		if writeErr := cfg.WriteConfigAs(filePath); writeErr != nil {
 			return fmt.Errorf("error writing integration test config for %s: %w", dbVendor, writeErr)

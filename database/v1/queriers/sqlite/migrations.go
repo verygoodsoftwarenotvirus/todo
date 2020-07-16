@@ -24,7 +24,7 @@ var (
 				"is_admin" BOOLEAN NOT NULL DEFAULT 'false',
 				"two_factor_secret_verified_on" INTEGER DEFAULT NULL,
 				"created_on" INTEGER NOT NULL DEFAULT (strftime('%s','now')),
-				"updated_on" INTEGER,
+				"last_updated_on" INTEGER,
 				"archived_on" INTEGER DEFAULT NULL,
 				CONSTRAINT username_unique UNIQUE (username)
 			);`,
@@ -55,7 +55,7 @@ var (
 				"scopes" TEXT NOT NULL,
 				"implicit_allowed" BOOLEAN NOT NULL DEFAULT 'false',
 				"created_on" INTEGER NOT NULL DEFAULT (strftime('%s','now')),
-				"updated_on" INTEGER,
+				"last_updated_on" INTEGER,
 				"archived_on" INTEGER DEFAULT NULL,
 				"belongs_to_user" INTEGER NOT NULL,
 				FOREIGN KEY(belongs_to_user) REFERENCES users(id)
@@ -75,7 +75,7 @@ var (
 				"data_types" TEXT NOT NULL,
 				"topics" TEXT NOT NULL,
 				"created_on" INTEGER NOT NULL DEFAULT (strftime('%s','now')),
-				"updated_on" INTEGER,
+				"last_updated_on" INTEGER,
 				"archived_on" INTEGER DEFAULT NULL,
 				"belongs_to_user" INTEGER NOT NULL,
 				FOREIGN KEY(belongs_to_user) REFERENCES users(id)
@@ -90,7 +90,7 @@ var (
 				"name" CHARACTER VARYING NOT NULL,
 				"details" CHARACTER VARYING NOT NULL DEFAULT '',
 				"created_on" INTEGER NOT NULL DEFAULT (strftime('%s','now')),
-				"updated_on" INTEGER DEFAULT NULL,
+				"last_updated_on" INTEGER DEFAULT NULL,
 				"archived_on" INTEGER DEFAULT NULL,
 				"belongs_to_user" INTEGER NOT NULL,
 				FOREIGN KEY(belongs_to_user) REFERENCES users(id)

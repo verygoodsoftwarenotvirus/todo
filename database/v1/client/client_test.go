@@ -12,6 +12,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
 
+const (
+	defaultLimit = uint8(20)
+)
+
 func buildTestClient() (*Client, *database.MockDatabase) {
 	db := database.BuildMockDatabase()
 	c := &Client{

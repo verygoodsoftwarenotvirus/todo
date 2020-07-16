@@ -19,12 +19,8 @@ import (
 )
 
 func buildMockRowsFromUser(users ...*models.User) *sqlmock.Rows {
-	includeCount := len(users) > 1
 	columns := usersTableColumns
 
-	if includeCount {
-		columns = append(columns, "count")
-	}
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, user := range users {
@@ -40,10 +36,6 @@ func buildMockRowsFromUser(users ...*models.User) *sqlmock.Rows {
 			user.CreatedOn,
 			user.UpdatedOn,
 			user.ArchivedOn,
-		}
-
-		if includeCount {
-			rowValues = append(rowValues, len(users))
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -80,7 +72,7 @@ func TestPostgres_ScanUsers(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, _, err := p.scanUsers(mockRows)
+		_, err := p.scanUsers(mockRows)
 		assert.Error(t, err)
 	})
 
@@ -92,7 +84,7 @@ func TestPostgres_ScanUsers(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, _, err := p.scanUsers(mockRows)
+		_, err := p.scanUsers(mockRows)
 		assert.NoError(t, err)
 	})
 }
@@ -105,7 +97,7 @@ func TestPostgres_buildGetUserQuery(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.id = $1 AND users.two_factor_secret_verified_on IS NOT NULL"
+		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = $1 AND users.two_factor_secret_verified_on IS NOT NULL"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
@@ -120,7 +112,7 @@ func TestPostgres_buildGetUserQuery(T *testing.T) {
 func TestPostgres_GetUser(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.id = $1 AND users.two_factor_secret_verified_on IS NOT NULL"
+	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = $1 AND users.two_factor_secret_verified_on IS NOT NULL"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -171,7 +163,7 @@ func TestPostgres_buildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.id = $1 AND users.two_factor_secret_verified_on IS NULL"
+		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = $1 AND users.two_factor_secret_verified_on IS NULL"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
@@ -186,7 +178,7 @@ func TestPostgres_buildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 func TestPostgres_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.id = $1 AND users.two_factor_secret_verified_on IS NULL"
+	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = $1 AND users.two_factor_secret_verified_on IS NULL"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -237,7 +229,7 @@ func TestPostgres_buildGetUsersQuery(T *testing.T) {
 
 		filter := fakemodels.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on, (SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL) FROM users WHERE users.archived_on IS NULL AND users.created_on > $1 AND users.created_on < $2 AND users.updated_on > $3 AND users.updated_on < $4 ORDER BY users.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.created_on > $1 AND users.created_on < $2 AND users.last_updated_on > $3 AND users.last_updated_on < $4 ORDER BY users.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -255,7 +247,7 @@ func TestPostgres_buildGetUsersQuery(T *testing.T) {
 func TestPostgres_GetUsers(T *testing.T) {
 	T.Parallel()
 
-	expectedUsersQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on, (SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL) FROM users WHERE users.archived_on IS NULL ORDER BY users.id LIMIT 20"
+	expectedUsersQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL ORDER BY users.id LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -341,7 +333,7 @@ func TestPostgres_buildGetUserByUsernameQuery(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.username = $1 AND users.two_factor_secret_verified_on IS NOT NULL"
+		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.username = $1 AND users.two_factor_secret_verified_on IS NOT NULL"
 		expectedArgs := []interface{}{
 			exampleUser.Username,
 		}
@@ -356,7 +348,7 @@ func TestPostgres_buildGetUserByUsernameQuery(T *testing.T) {
 func TestPostgres_GetUserByUsername(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.username = $1 AND users.two_factor_secret_verified_on IS NOT NULL"
+	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.username = $1 AND users.two_factor_secret_verified_on IS NOT NULL"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -578,7 +570,7 @@ func TestPostgres_buildUpdateUserQuery(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET username = $1, hashed_password = $2, two_factor_secret = $3, two_factor_secret_verified_on = $4, updated_on = extract(epoch FROM NOW()) WHERE id = $5 RETURNING updated_on"
+		expectedQuery := "UPDATE users SET username = $1, hashed_password = $2, two_factor_secret = $3, two_factor_secret_verified_on = $4, last_updated_on = extract(epoch FROM NOW()) WHERE id = $5 RETURNING last_updated_on"
 		expectedArgs := []interface{}{
 			exampleUser.Username,
 			exampleUser.HashedPassword,
@@ -602,8 +594,8 @@ func TestPostgres_UpdateUser(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET username = $1, hashed_password = $2, two_factor_secret = $3, two_factor_secret_verified_on = $4, updated_on = extract(epoch FROM NOW()) WHERE id = $5 RETURNING updated_on"
-		exampleRows := sqlmock.NewRows([]string{"updated_on"}).AddRow(uint64(time.Now().Unix()))
+		expectedQuery := "UPDATE users SET username = $1, hashed_password = $2, two_factor_secret = $3, two_factor_secret_verified_on = $4, last_updated_on = extract(epoch FROM NOW()) WHERE id = $5 RETURNING last_updated_on"
+		exampleRows := sqlmock.NewRows([]string{"last_updated_on"}).AddRow(uint64(time.Now().Unix()))
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
@@ -629,7 +621,7 @@ func TestPostgres_buildUpdateUserPasswordQuery(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET hashed_password = $1, requires_password_change = $2, password_last_changed_on = extract(epoch FROM NOW()), updated_on = extract(epoch FROM NOW()) WHERE id = $3"
+		expectedQuery := "UPDATE users SET hashed_password = $1, requires_password_change = $2, password_last_changed_on = extract(epoch FROM NOW()), last_updated_on = extract(epoch FROM NOW()) WHERE id = $3"
 		expectedArgs := []interface{}{
 			exampleUser.HashedPassword,
 			false,
@@ -650,7 +642,7 @@ func TestPostgres_UpdateUserPassword(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
-		expectedQuery := "UPDATE users SET hashed_password = $1, requires_password_change = $2, password_last_changed_on = extract(epoch FROM NOW()), updated_on = extract(epoch FROM NOW()) WHERE id = $3"
+		expectedQuery := "UPDATE users SET hashed_password = $1, requires_password_change = $2, password_last_changed_on = extract(epoch FROM NOW()), last_updated_on = extract(epoch FROM NOW()) WHERE id = $3"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
@@ -715,7 +707,7 @@ func TestPostgres_buildArchiveUserQuery(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE id = $1 RETURNING archived_on"
+		expectedQuery := "UPDATE users SET archived_on = extract(epoch FROM NOW()) WHERE id = $1 RETURNING archived_on"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
@@ -734,7 +726,7 @@ func TestPostgres_ArchiveUser(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
-		expectedQuery := "UPDATE users SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE id = $1 RETURNING archived_on"
+		expectedQuery := "UPDATE users SET archived_on = extract(epoch FROM NOW()) WHERE id = $1 RETURNING archived_on"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).

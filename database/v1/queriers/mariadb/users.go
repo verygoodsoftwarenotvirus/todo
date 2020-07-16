@@ -12,30 +12,36 @@ import (
 )
 
 const (
-	usersTableName = "users"
+	usersTableName                         = "users"
+	usersTableUsernameColumn               = "username"
+	usersTableHashedPasswordColumn         = "hashed_password"
+	usersTableRequiresPasswordChangeColumn = "requires_password_change"
+	usersTablePasswordLastChangedOnColumn  = "password_last_changed_on"
+	usersTableTwoFactorColumn              = "two_factor_secret"
+	usersTableIsAdminColumn                = "is_admin"
+	usersTableTwoFactorVerifiedOnColumn    = "two_factor_secret_verified_on"
 )
 
 var (
 	usersTableColumns = []string{
-		fmt.Sprintf("%s.id", usersTableName),
-		fmt.Sprintf("%s.username", usersTableName),
-		fmt.Sprintf("%s.hashed_password", usersTableName),
-		fmt.Sprintf("%s.requires_password_change", usersTableName),
-		fmt.Sprintf("%s.password_last_changed_on", usersTableName),
-		fmt.Sprintf("%s.two_factor_secret", usersTableName),
-		fmt.Sprintf("%s.is_admin", usersTableName),
-		fmt.Sprintf("%s.two_factor_secret_verified_on", usersTableName),
-		fmt.Sprintf("%s.created_on", usersTableName),
-		fmt.Sprintf("%s.updated_on", usersTableName),
-		fmt.Sprintf("%s.archived_on", usersTableName),
+		fmt.Sprintf("%s.%s", usersTableName, idColumn),
+		fmt.Sprintf("%s.%s", usersTableName, usersTableUsernameColumn),
+		fmt.Sprintf("%s.%s", usersTableName, usersTableHashedPasswordColumn),
+		fmt.Sprintf("%s.%s", usersTableName, usersTableRequiresPasswordChangeColumn),
+		fmt.Sprintf("%s.%s", usersTableName, usersTablePasswordLastChangedOnColumn),
+		fmt.Sprintf("%s.%s", usersTableName, usersTableTwoFactorColumn),
+		fmt.Sprintf("%s.%s", usersTableName, usersTableIsAdminColumn),
+		fmt.Sprintf("%s.%s", usersTableName, usersTableTwoFactorVerifiedOnColumn),
+		fmt.Sprintf("%s.%s", usersTableName, createdOnColumn),
+		fmt.Sprintf("%s.%s", usersTableName, lastUpdatedOnColumn),
+		fmt.Sprintf("%s.%s", usersTableName, archivedOnColumn),
 	}
 )
 
 // scanUser provides a consistent way to scan something like a *sql.Row into a User struct.
-func (m *MariaDB) scanUser(scan database.Scanner, includeCount bool) (*models.User, uint64, error) {
+func (m *MariaDB) scanUser(scan database.Scanner) (*models.User, error) {
 	var (
-		x     = &models.User{}
-		count uint64
+		x = &models.User{}
 	)
 
 	targetVars := []interface{}{
@@ -52,46 +58,37 @@ func (m *MariaDB) scanUser(scan database.Scanner, includeCount bool) (*models.Us
 		&x.ArchivedOn,
 	}
 
-	if includeCount {
-		targetVars = append(targetVars, &count)
-	}
-
 	if err := scan.Scan(targetVars...); err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	return x, count, nil
+	return x, nil
 }
 
 // scanUsers takes database rows and loads them into a slice of User structs.
-func (m *MariaDB) scanUsers(rows database.ResultIterator) ([]models.User, uint64, error) {
+func (m *MariaDB) scanUsers(rows database.ResultIterator) ([]models.User, error) {
 	var (
-		list  []models.User
-		count uint64
+		list []models.User
 	)
 
 	for rows.Next() {
-		user, c, err := m.scanUser(rows, true)
+		user, err := m.scanUser(rows)
 		if err != nil {
-			return nil, 0, fmt.Errorf("scanning user result: %w", err)
-		}
-
-		if count == 0 {
-			count = c
+			return nil, fmt.Errorf("scanning user result: %w", err)
 		}
 
 		list = append(list, *user)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	if err := rows.Close(); err != nil {
 		m.logger.Error(err, "closing rows")
 	}
 
-	return list, count, nil
+	return list, nil
 }
 
 // buildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID
@@ -102,10 +99,11 @@ func (m *MariaDB) buildGetUserQuery(userID uint64) (query string, args []interfa
 		Select(usersTableColumns...).
 		From(usersTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.id", usersTableName): userID,
+			fmt.Sprintf("%s.%s", usersTableName, idColumn):         userID,
+			fmt.Sprintf("%s.%s", usersTableName, archivedOnColumn): nil,
 		}).
 		Where(squirrel.NotEq{
-			fmt.Sprintf("%s.two_factor_secret_verified_on", usersTableName): nil,
+			fmt.Sprintf("%s.%s", usersTableName, usersTableTwoFactorVerifiedOnColumn): nil,
 		}).
 		ToSql()
 
@@ -119,7 +117,7 @@ func (m *MariaDB) GetUser(ctx context.Context, userID uint64) (*models.User, err
 	query, args := m.buildGetUserQuery(userID)
 	row := m.db.QueryRowContext(ctx, query, args...)
 
-	u, _, err := m.scanUser(row, false)
+	u, err := m.scanUser(row)
 	if err != nil {
 		return nil, buildError(err, "fetching user from database")
 	}
@@ -136,8 +134,9 @@ func (m *MariaDB) buildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) 
 		Select(usersTableColumns...).
 		From(usersTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.id", usersTableName):                            userID,
-			fmt.Sprintf("%s.two_factor_secret_verified_on", usersTableName): nil,
+			fmt.Sprintf("%s.%s", usersTableName, idColumn):                            userID,
+			fmt.Sprintf("%s.%s", usersTableName, usersTableTwoFactorVerifiedOnColumn): nil,
+			fmt.Sprintf("%s.%s", usersTableName, archivedOnColumn):                    nil,
 		}).
 		ToSql()
 
@@ -151,7 +150,7 @@ func (m *MariaDB) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, user
 	query, args := m.buildGetUserWithUnverifiedTwoFactorSecretQuery(userID)
 	row := m.db.QueryRowContext(ctx, query, args...)
 
-	u, _, err := m.scanUser(row, false)
+	u, err := m.scanUser(row)
 	if err != nil {
 		return nil, buildError(err, "fetching user from database")
 	}
@@ -167,10 +166,11 @@ func (m *MariaDB) buildGetUserByUsernameQuery(username string) (query string, ar
 		Select(usersTableColumns...).
 		From(usersTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.username", usersTableName): username,
+			fmt.Sprintf("%s.%s", usersTableName, usersTableUsernameColumn): username,
+			fmt.Sprintf("%s.%s", usersTableName, archivedOnColumn):         nil,
 		}).
 		Where(squirrel.NotEq{
-			fmt.Sprintf("%s.two_factor_secret_verified_on", usersTableName): nil,
+			fmt.Sprintf("%s.%s", usersTableName, usersTableTwoFactorVerifiedOnColumn): nil,
 		}).
 		ToSql()
 
@@ -184,7 +184,7 @@ func (m *MariaDB) GetUserByUsername(ctx context.Context, username string) (*mode
 	query, args := m.buildGetUserByUsernameQuery(username)
 	row := m.db.QueryRowContext(ctx, query, args...)
 
-	u, _, err := m.scanUser(row, false)
+	u, err := m.scanUser(row)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, err
@@ -204,7 +204,7 @@ func (m *MariaDB) buildGetAllUsersCountQuery() (query string) {
 		Select(fmt.Sprintf(countQuery, usersTableName)).
 		From(usersTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.archived_on", usersTableName): nil,
+			fmt.Sprintf("%s.%s", usersTableName, archivedOnColumn): nil,
 		})
 
 	query, _, err = builder.ToSql()
@@ -227,12 +227,12 @@ func (m *MariaDB) buildGetUsersQuery(filter *models.QueryFilter) (query string, 
 	var err error
 
 	builder := m.sqlBuilder.
-		Select(append(usersTableColumns, fmt.Sprintf(countQuery, usersTableName))...).
+		Select(usersTableColumns...).
 		From(usersTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.archived_on", usersTableName): nil,
+			fmt.Sprintf("%s.%s", usersTableName, archivedOnColumn): nil,
 		}).
-		GroupBy(fmt.Sprintf("%s.id", usersTableName))
+		OrderBy(fmt.Sprintf("%s.%s", usersTableName, idColumn))
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder, usersTableName)
@@ -252,16 +252,15 @@ func (m *MariaDB) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mo
 		return nil, buildError(err, "querying for user")
 	}
 
-	userList, count, err := m.scanUsers(rows)
+	userList, err := m.scanUsers(rows)
 	if err != nil {
 		return nil, fmt.Errorf("loading response from database: %w", err)
 	}
 
 	x := &models.UserList{
 		Pagination: models.Pagination{
-			Page:       filter.Page,
-			Limit:      filter.Limit,
-			TotalCount: count,
+			Page:  filter.Page,
+			Limit: filter.Limit,
 		},
 		Users: userList,
 	}
@@ -276,10 +275,10 @@ func (m *MariaDB) buildCreateUserQuery(input models.UserDatabaseCreationInput) (
 	query, args, err = m.sqlBuilder.
 		Insert(usersTableName).
 		Columns(
-			"username",
-			"hashed_password",
-			"two_factor_secret",
-			"is_admin",
+			usersTableUsernameColumn,
+			usersTableHashedPasswordColumn,
+			usersTableTwoFactorColumn,
+			usersTableIsAdminColumn,
 		).
 		Values(
 			input.Username,
@@ -331,13 +330,13 @@ func (m *MariaDB) buildUpdateUserQuery(input *models.User) (query string, args [
 
 	query, args, err = m.sqlBuilder.
 		Update(usersTableName).
-		Set("username", input.Username).
-		Set("hashed_password", input.HashedPassword).
-		Set("two_factor_secret", input.TwoFactorSecret).
-		Set("two_factor_secret_verified_on", input.TwoFactorSecretVerifiedOn).
-		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
+		Set(usersTableUsernameColumn, input.Username).
+		Set(usersTableHashedPasswordColumn, input.HashedPassword).
+		Set(usersTableTwoFactorColumn, input.TwoFactorSecret).
+		Set(usersTableTwoFactorVerifiedOnColumn, input.TwoFactorSecretVerifiedOn).
+		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id": input.ID,
+			idColumn: input.ID,
 		}).
 		ToSql()
 
@@ -352,9 +351,9 @@ func (m *MariaDB) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query stri
 
 	query, args, err = m.sqlBuilder.
 		Update(usersTableName).
-		Set("two_factor_secret_verified_on", squirrel.Expr(currentUnixTimeQuery)).
+		Set(usersTableTwoFactorVerifiedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id": userID,
+			idColumn: userID,
 		}).
 		ToSql()
 
@@ -385,12 +384,12 @@ func (m *MariaDB) buildUpdateUserPasswordQuery(userID uint64, newHash string) (q
 
 	query, args, err = m.sqlBuilder.
 		Update(usersTableName).
-		Set("hashed_password", newHash).
-		Set("requires_password_change", false).
-		Set("password_last_changed_on", squirrel.Expr(currentUnixTimeQuery)).
-		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
+		Set(usersTableHashedPasswordColumn, newHash).
+		Set(usersTableRequiresPasswordChangeColumn, false).
+		Set(usersTablePasswordLastChangedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id": userID,
+			idColumn: userID,
 		}).
 		ToSql()
 
@@ -413,10 +412,9 @@ func (m *MariaDB) buildArchiveUserQuery(userID uint64) (query string, args []int
 
 	query, args, err = m.sqlBuilder.
 		Update(usersTableName).
-		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
-		Set("archived_on", squirrel.Expr(currentUnixTimeQuery)).
+		Set(archivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id": userID,
+			idColumn: userID,
 		}).
 		ToSql()
 

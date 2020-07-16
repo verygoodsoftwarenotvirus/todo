@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -24,11 +25,18 @@ const (
 
 	existencePrefix, existenceSuffix = "SELECT EXISTS (", ")"
 
+	idColumn            = "id"
+	createdOnColumn     = "created_on"
+	lastUpdatedOnColumn = "last_updated_on"
+	archivedOnColumn    = "archived_on"
+
 	// countQuery is a generic counter query used in a few query builders.
 	countQuery = "COUNT(%s.id)"
 
 	// currentUnixTimeQuery is the query postgres uses to determine the current unix time.
 	currentUnixTimeQuery = "extract(epoch FROM NOW())"
+
+	defaultBucketSize = uint64(1000)
 )
 
 func init() {
@@ -46,7 +54,7 @@ func init() {
 	sql.Register(postgresDriverName, driver)
 }
 
-var _ database.Database = (*Postgres)(nil)
+var _ database.DataManager = (*Postgres)(nil)
 
 type (
 	// Postgres is our main Postgres interaction db.
@@ -76,7 +84,7 @@ func ProvidePostgresDB(logger logging.Logger, connectionDetails database.Connect
 }
 
 // ProvidePostgres provides a postgres db controller.
-func ProvidePostgres(debug bool, db *sql.DB, logger logging.Logger) database.Database {
+func ProvidePostgres(debug bool, db *sql.DB, logger logging.Logger) database.DataManager {
 	return &Postgres{
 		db:         db,
 		debug:      debug,
@@ -135,4 +143,14 @@ func buildError(err error, msg string) error {
 	}
 
 	return fmt.Errorf(msg, err)
+}
+
+func joinUint64s(in []uint64) string {
+	out := []string{}
+
+	for _, x := range in {
+		out = append(out, strconv.FormatUint(x, 10))
+	}
+
+	return strings.Join(out, ",")
 }

@@ -17,12 +17,7 @@ import (
 )
 
 func buildMockRowsFromUser(users ...*models.User) *sqlmock.Rows {
-	includeCount := len(users) > 1
 	columns := usersTableColumns
-
-	if includeCount {
-		columns = append(columns, "count")
-	}
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, user := range users {
@@ -38,10 +33,6 @@ func buildMockRowsFromUser(users ...*models.User) *sqlmock.Rows {
 			user.CreatedOn,
 			user.UpdatedOn,
 			user.ArchivedOn,
-		}
-
-		if includeCount {
-			rowValues = append(rowValues, len(users))
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -78,7 +69,7 @@ func TestSqlite_ScanUsers(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, _, err := s.scanUsers(mockRows)
+		_, err := s.scanUsers(mockRows)
 		assert.Error(t, err)
 	})
 
@@ -90,7 +81,7 @@ func TestSqlite_ScanUsers(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, _, err := s.scanUsers(mockRows)
+		_, err := s.scanUsers(mockRows)
 		assert.NoError(t, err)
 	})
 }
@@ -103,7 +94,7 @@ func TestSqlite_buildGetUserQuery(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.id = ? AND users.two_factor_secret_verified_on IS NOT NULL"
+		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = ? AND users.two_factor_secret_verified_on IS NOT NULL"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
@@ -118,7 +109,7 @@ func TestSqlite_buildGetUserQuery(T *testing.T) {
 func TestSqlite_GetUser(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.id = ? AND users.two_factor_secret_verified_on IS NOT NULL"
+	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = ? AND users.two_factor_secret_verified_on IS NOT NULL"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -169,7 +160,7 @@ func TestSqlite_buildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.id = ? AND users.two_factor_secret_verified_on IS NULL"
+		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = ? AND users.two_factor_secret_verified_on IS NULL"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
@@ -184,7 +175,7 @@ func TestSqlite_buildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 func TestSqlite_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.id = ? AND users.two_factor_secret_verified_on IS NULL"
+	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = ? AND users.two_factor_secret_verified_on IS NULL"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -235,7 +226,7 @@ func TestSqlite_buildGetUsersQuery(T *testing.T) {
 
 		filter := fakemodels.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on, COUNT(users.id) FROM users WHERE users.archived_on IS NULL AND users.created_on > ? AND users.created_on < ? AND users.updated_on > ? AND users.updated_on < ? GROUP BY users.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.created_on > ? AND users.created_on < ? AND users.last_updated_on > ? AND users.last_updated_on < ? GROUP BY users.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -253,7 +244,7 @@ func TestSqlite_buildGetUsersQuery(T *testing.T) {
 func TestSqlite_GetUsers(T *testing.T) {
 	T.Parallel()
 
-	expectedUsersQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on, COUNT(users.id) FROM users WHERE users.archived_on IS NULL GROUP BY users.id LIMIT 20"
+	expectedUsersQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL GROUP BY users.id LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -339,7 +330,7 @@ func TestSqlite_buildGetUserByUsernameQuery(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.username = ? AND users.two_factor_secret_verified_on IS NOT NULL"
+		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.username = ? AND users.two_factor_secret_verified_on IS NOT NULL"
 		expectedArgs := []interface{}{
 			exampleUser.Username,
 		}
@@ -354,7 +345,7 @@ func TestSqlite_buildGetUserByUsernameQuery(T *testing.T) {
 func TestSqlite_GetUserByUsername(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.updated_on, users.archived_on FROM users WHERE users.username = ? AND users.two_factor_secret_verified_on IS NOT NULL"
+	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.is_admin, users.two_factor_secret_verified_on, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.username = ? AND users.two_factor_secret_verified_on IS NOT NULL"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -557,7 +548,7 @@ func TestSqlite_buildUpdateUserQuery(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, two_factor_secret = ?, two_factor_secret_verified_on = ?, updated_on = (strftime('%s','now')) WHERE id = ?"
+		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, two_factor_secret = ?, two_factor_secret_verified_on = ?, last_updated_on = (strftime('%s','now')) WHERE id = ?"
 		expectedArgs := []interface{}{
 			exampleUser.Username,
 			exampleUser.HashedPassword,
@@ -581,7 +572,7 @@ func TestSqlite_UpdateUser(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, two_factor_secret = ?, two_factor_secret_verified_on = ?, updated_on = (strftime('%s','now')) WHERE id = ?"
+		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, two_factor_secret = ?, two_factor_secret_verified_on = ?, last_updated_on = (strftime('%s','now')) WHERE id = ?"
 		exampleRows := sqlmock.NewResult(int64(exampleUser.ID), 1)
 
 		s, mockDB := buildTestService(t)
@@ -608,7 +599,7 @@ func TestSqlite_buildUpdateUserPasswordQuery(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET hashed_password = ?, requires_password_change = ?, password_last_changed_on = (strftime('%s','now')), updated_on = (strftime('%s','now')) WHERE id = ?"
+		expectedQuery := "UPDATE users SET hashed_password = ?, requires_password_change = ?, password_last_changed_on = (strftime('%s','now')), last_updated_on = (strftime('%s','now')) WHERE id = ?"
 		expectedArgs := []interface{}{
 			exampleUser.HashedPassword,
 			false,
@@ -629,7 +620,7 @@ func TestSqlite_UpdateUserPassword(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
-		expectedQuery := "UPDATE users SET hashed_password = ?, requires_password_change = ?, password_last_changed_on = (strftime('%s','now')), updated_on = (strftime('%s','now')) WHERE id = ?"
+		expectedQuery := "UPDATE users SET hashed_password = ?, requires_password_change = ?, password_last_changed_on = (strftime('%s','now')), last_updated_on = (strftime('%s','now')) WHERE id = ?"
 
 		m, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
@@ -694,7 +685,7 @@ func TestSqlite_buildArchiveUserQuery(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE id = ?"
+		expectedQuery := "UPDATE users SET archived_on = (strftime('%s','now')) WHERE id = ?"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
@@ -713,7 +704,7 @@ func TestSqlite_ArchiveUser(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
-		expectedQuery := "UPDATE users SET updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE id = ?"
+		expectedQuery := "UPDATE users SET archived_on = (strftime('%s','now')) WHERE id = ?"
 
 		s, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).

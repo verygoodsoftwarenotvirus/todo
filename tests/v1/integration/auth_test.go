@@ -563,6 +563,11 @@ func TestAuth(test *testing.T) {
 		)
 		checkValueAndError(test, clientA, err)
 
+		// create webhook for user A.
+		wciA := fakemodels.BuildFakeWebhookCreationInput()
+		webhookA, err := clientA.CreateWebhook(ctx, wciA)
+		checkValueAndError(t, webhookA, err)
+
 		// create user and oauth2 client B.
 		userB, err := testutil.CreateObligatoryUser(urlToUse, debug)
 		require.NoError(t, err)
@@ -580,12 +585,7 @@ func TestAuth(test *testing.T) {
 			cb.Scopes,
 			true,
 		)
-		checkValueAndError(test, clientA, err)
-
-		// create webhook for user A.
-		wciA := fakemodels.BuildFakeWebhookCreationInput()
-		webhookA, err := clientA.CreateWebhook(ctx, wciA)
-		checkValueAndError(t, webhookA, err)
+		checkValueAndError(test, clientB, err)
 
 		// create webhook for user B.
 		wciB := fakemodels.BuildFakeWebhookCreationInput()

@@ -18,12 +18,7 @@ import (
 )
 
 func buildMockRowsFromOAuth2Client(clients ...*models.OAuth2Client) *sqlmock.Rows {
-	includeCount := len(clients) > 1
 	columns := oauth2ClientsTableColumns
-
-	if includeCount {
-		columns = append(columns, "count")
-	}
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, c := range clients {
@@ -38,10 +33,6 @@ func buildMockRowsFromOAuth2Client(clients ...*models.OAuth2Client) *sqlmock.Row
 			c.UpdatedOn,
 			c.ArchivedOn,
 			c.BelongsToUser,
-		}
-
-		if includeCount {
-			rowValues = append(rowValues, len(clients))
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -77,7 +68,7 @@ func TestMariaDB_ScanOAuth2Clients(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, _, err := m.scanOAuth2Clients(mockRows)
+		_, err := m.scanOAuth2Clients(mockRows)
 		assert.Error(t, err)
 	})
 
@@ -89,7 +80,7 @@ func TestMariaDB_ScanOAuth2Clients(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, _, err := m.scanOAuth2Clients(mockRows)
+		_, err := m.scanOAuth2Clients(mockRows)
 		assert.NoError(t, err)
 	})
 }
@@ -102,7 +93,7 @@ func TestMariaDB_buildGetOAuth2ClientByClientIDQuery(T *testing.T) {
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
-		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.client_id = ?"
+		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.client_id = ?"
 		expectedArgs := []interface{}{
 			exampleOAuth2Client.ClientID,
 		}
@@ -117,7 +108,7 @@ func TestMariaDB_buildGetOAuth2ClientByClientIDQuery(T *testing.T) {
 func TestMariaDB_GetOAuth2ClientByClientID(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.client_id = ?"
+	expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.client_id = ?"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -178,7 +169,7 @@ func TestMariaDB_buildGetAllOAuth2ClientsQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		m, _ := buildTestService(t)
 
-		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL"
+		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL"
 		actualQuery := m.buildGetAllOAuth2ClientsQuery()
 
 		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
@@ -189,7 +180,7 @@ func TestMariaDB_buildGetAllOAuth2ClientsQuery(T *testing.T) {
 func TestMariaDB_GetAllOAuth2Clients(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL"
+	expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -265,7 +256,7 @@ func TestMariaDB_GetAllOAuth2Clients(T *testing.T) {
 func TestMariaDB_GetAllOAuth2ClientsForUser(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user, (SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = ? ORDER BY oauth2_clients.id"
+	expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = ? GROUP BY oauth2_clients.id"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -348,7 +339,7 @@ func TestMariaDB_buildGetOAuth2ClientQuery(T *testing.T) {
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
-		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = ? AND oauth2_clients.id = ?"
+		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = ? AND oauth2_clients.id = ?"
 		expectedArgs := []interface{}{
 			exampleOAuth2Client.BelongsToUser,
 			exampleOAuth2Client.ID,
@@ -364,7 +355,7 @@ func TestMariaDB_buildGetOAuth2ClientQuery(T *testing.T) {
 func TestMariaDB_GetOAuth2Client(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = ? AND oauth2_clients.id = ?"
+	expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = ? AND oauth2_clients.id = ?"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -463,7 +454,7 @@ func TestMariaDB_buildGetOAuth2ClientsQuery(T *testing.T) {
 		exampleUser := fakemodels.BuildFakeUser()
 		filter := fakemodels.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user, (SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = ? AND oauth2_clients.created_on > ? AND oauth2_clients.created_on < ? AND oauth2_clients.updated_on > ? AND oauth2_clients.updated_on < ? ORDER BY oauth2_clients.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = ? AND oauth2_clients.created_on > ? AND oauth2_clients.created_on < ? AND oauth2_clients.last_updated_on > ? AND oauth2_clients.last_updated_on < ? GROUP BY oauth2_clients.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,
@@ -483,7 +474,7 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakemodels.BuildFakeUser()
-	expectedListQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user, (SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = ? ORDER BY oauth2_clients.id LIMIT 20"
+	expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = ? GROUP BY oauth2_clients.id LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -493,7 +484,7 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 		exampleOAuth2ClientList := fakemodels.BuildFakeOAuth2ClientList()
 
 		m, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).WillReturnRows(
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WillReturnRows(
 			buildMockRowsFromOAuth2Client(
 				&exampleOAuth2ClientList.Clients[0],
 				&exampleOAuth2ClientList.Clients[1],
@@ -514,7 +505,7 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 		filter := models.DefaultQueryFilter()
 
 		m, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := m.GetOAuth2ClientsForUser(ctx, exampleUser.ID, filter)
@@ -530,7 +521,7 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 		filter := models.DefaultQueryFilter()
 
 		m, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := m.GetOAuth2ClientsForUser(ctx, exampleUser.ID, filter)
@@ -546,7 +537,7 @@ func TestMariaDB_GetOAuth2Clients(T *testing.T) {
 		filter := models.DefaultQueryFilter()
 
 		m, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnRows(buildErroneousMockRowFromOAuth2Client(fakemodels.BuildFakeOAuth2Client()))
 
 		actual, err := m.GetOAuth2ClientsForUser(ctx, exampleUser.ID, filter)
@@ -648,7 +639,7 @@ func TestMariaDB_buildUpdateOAuth2ClientQuery(T *testing.T) {
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
-		expectedQuery := "UPDATE oauth2_clients SET client_id = ?, client_secret = ?, scopes = ?, redirect_uri = ?, updated_on = UNIX_TIMESTAMP() WHERE belongs_to_user = ? AND id = ?"
+		expectedQuery := "UPDATE oauth2_clients SET client_id = ?, client_secret = ?, scopes = ?, redirect_uri = ?, last_updated_on = UNIX_TIMESTAMP() WHERE belongs_to_user = ? AND id = ?"
 		expectedArgs := []interface{}{
 			exampleOAuth2Client.ClientID,
 			exampleOAuth2Client.ClientSecret,
@@ -668,7 +659,7 @@ func TestMariaDB_buildUpdateOAuth2ClientQuery(T *testing.T) {
 func TestMariaDB_UpdateOAuth2Client(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "UPDATE oauth2_clients SET client_id = ?, client_secret = ?, scopes = ?, redirect_uri = ?, updated_on = UNIX_TIMESTAMP() WHERE belongs_to_user = ? AND id = ?"
+	expectedQuery := "UPDATE oauth2_clients SET client_id = ?, client_secret = ?, scopes = ?, redirect_uri = ?, last_updated_on = UNIX_TIMESTAMP() WHERE belongs_to_user = ? AND id = ?"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -709,7 +700,7 @@ func TestMariaDB_buildArchiveOAuth2ClientQuery(T *testing.T) {
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
-		expectedQuery := "UPDATE oauth2_clients SET updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE belongs_to_user = ? AND id = ?"
+		expectedQuery := "UPDATE oauth2_clients SET last_updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE belongs_to_user = ? AND id = ?"
 		expectedArgs := []interface{}{
 			exampleOAuth2Client.BelongsToUser,
 			exampleOAuth2Client.ID,
@@ -725,7 +716,7 @@ func TestMariaDB_buildArchiveOAuth2ClientQuery(T *testing.T) {
 func TestMariaDB_ArchiveOAuth2Client(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "UPDATE oauth2_clients SET updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE belongs_to_user = ? AND id = ?"
+	expectedQuery := "UPDATE oauth2_clients SET last_updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE belongs_to_user = ? AND id = ?"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()

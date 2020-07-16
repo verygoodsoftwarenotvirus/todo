@@ -14,25 +14,26 @@ import (
 
 const (
 	itemsTableName           = "items"
+	itemsTableNameColumn     = "name"
+	itemsTableDetailsColumn  = "details"
 	itemsUserOwnershipColumn = "belongs_to_user"
 )
 
 var (
 	itemsTableColumns = []string{
-		fmt.Sprintf("%s.%s", itemsTableName, "id"),
-		fmt.Sprintf("%s.%s", itemsTableName, "name"),
-		fmt.Sprintf("%s.%s", itemsTableName, "details"),
-		fmt.Sprintf("%s.%s", itemsTableName, "created_on"),
-		fmt.Sprintf("%s.%s", itemsTableName, "updated_on"),
-		fmt.Sprintf("%s.%s", itemsTableName, "archived_on"),
+		fmt.Sprintf("%s.%s", itemsTableName, idColumn),
+		fmt.Sprintf("%s.%s", itemsTableName, itemsTableNameColumn),
+		fmt.Sprintf("%s.%s", itemsTableName, itemsTableDetailsColumn),
+		fmt.Sprintf("%s.%s", itemsTableName, createdOnColumn),
+		fmt.Sprintf("%s.%s", itemsTableName, lastUpdatedOnColumn),
+		fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn),
 		fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn),
 	}
 )
 
 // scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct
-func (s *Sqlite) scanItem(scan database.Scanner, includeCount bool) (*models.Item, uint64, error) {
+func (s *Sqlite) scanItem(scan database.Scanner) (*models.Item, error) {
 	x := &models.Item{}
-	var count uint64
 
 	targetVars := []interface{}{
 		&x.ID,
@@ -44,46 +45,37 @@ func (s *Sqlite) scanItem(scan database.Scanner, includeCount bool) (*models.Ite
 		&x.BelongsToUser,
 	}
 
-	if includeCount {
-		targetVars = append(targetVars, &count)
-	}
-
 	if err := scan.Scan(targetVars...); err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	return x, count, nil
+	return x, nil
 }
 
 // scanItems takes a logger and some database rows and turns them into a slice of items.
-func (s *Sqlite) scanItems(rows database.ResultIterator) ([]models.Item, uint64, error) {
+func (s *Sqlite) scanItems(rows database.ResultIterator) ([]models.Item, error) {
 	var (
-		list  []models.Item
-		count uint64
+		list []models.Item
 	)
 
 	for rows.Next() {
-		x, c, err := s.scanItem(rows, true)
+		x, err := s.scanItem(rows)
 		if err != nil {
-			return nil, 0, err
-		}
-
-		if count == 0 {
-			count = c
+			return nil, err
 		}
 
 		list = append(list, *x)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	if closeErr := rows.Close(); closeErr != nil {
 		s.logger.Error(closeErr, "closing database rows")
 	}
 
-	return list, count, nil
+	return list, nil
 }
 
 // buildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists
@@ -91,12 +83,12 @@ func (s *Sqlite) buildItemExistsQuery(itemID, userID uint64) (query string, args
 	var err error
 
 	query, args, err = s.sqlBuilder.
-		Select(fmt.Sprintf("%s.id", itemsTableName)).
+		Select(fmt.Sprintf("%s.%s", itemsTableName, idColumn)).
 		Prefix(existencePrefix).
 		From(itemsTableName).
 		Suffix(existenceSuffix).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.id", itemsTableName):                           itemID,
+			fmt.Sprintf("%s.%s", itemsTableName, idColumn):                 itemID,
 			fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn): userID,
 		}).ToSql()
 
@@ -125,7 +117,7 @@ func (s *Sqlite) buildGetItemQuery(itemID, userID uint64) (query string, args []
 		Select(itemsTableColumns...).
 		From(itemsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.id", itemsTableName):                           itemID,
+			fmt.Sprintf("%s.%s", itemsTableName, idColumn):                 itemID,
 			fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn): userID,
 		}).
 		ToSql()
@@ -139,9 +131,7 @@ func (s *Sqlite) buildGetItemQuery(itemID, userID uint64) (query string, args []
 func (s *Sqlite) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
 	query, args := s.buildGetItemQuery(itemID, userID)
 	row := s.db.QueryRowContext(ctx, query, args...)
-
-	item, _, err := s.scanItem(row, false)
-	return item, err
+	return s.scanItem(row)
 }
 
 var (
@@ -159,7 +149,7 @@ func (s *Sqlite) buildGetAllItemsCountQuery() string {
 			Select(fmt.Sprintf(countQuery, itemsTableName)).
 			From(itemsTableName).
 			Where(squirrel.Eq{
-				fmt.Sprintf("%s.archived_on", itemsTableName): nil,
+				fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn): nil,
 			}).
 			ToSql()
 		s.logQueryBuildingError(err)
@@ -174,19 +164,75 @@ func (s *Sqlite) GetAllItemsCount(ctx context.Context) (count uint64, err error)
 	return count, err
 }
 
+// buildGetAllItemsQuery returns a query that fetches every item in the database within a bucketed range.
+func (s *Sqlite) buildGetAllItemsQuery(beginID, endID uint64) (query string, args []interface{}) {
+	allItemsQuery, args, err := s.sqlBuilder.
+		Select(itemsTableColumns...).
+		From(itemsTableName).
+		Where(squirrel.Gt{
+			fmt.Sprintf("%s.%s", itemsTableName, idColumn): beginID,
+		}).
+		Where(squirrel.Lt{
+			fmt.Sprintf("%s.%s", itemsTableName, idColumn): endID,
+		}).
+		ToSql()
+	s.logQueryBuildingError(err)
+
+	return allItemsQuery, args
+}
+
+// GetAllItems fetches all items from the database and writes them to a channel. This method primarily exists
+// to aid in administrative data tasks,
+func (s *Sqlite) GetAllItems(ctx context.Context, resultChannel chan []models.Item) error {
+	count, err := s.GetAllItemsCount(ctx)
+	if err != nil {
+		return err
+	}
+
+	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
+		endID := beginID + defaultBucketSize
+		go func(begin uint64, end uint64) {
+			query, args := s.buildGetAllItemsQuery(begin, end)
+			logger := s.logger.WithValues(map[string]interface{}{
+				"query": query,
+				"begin": begin,
+				"end":   end,
+			})
+
+			rows, err := s.db.Query(query, args...)
+			if err == sql.ErrNoRows {
+				return
+			} else if err != nil {
+				logger.Error(err, "querying for database rows")
+				return
+			}
+
+			items, err := s.scanItems(rows)
+			if err != nil {
+				logger.Error(err, "scanning database rows")
+				return
+			}
+
+			resultChannel <- items
+		}(beginID, endID)
+	}
+
+	return nil
+}
+
 // buildGetItemsQuery builds a SQL query selecting items that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
 func (s *Sqlite) buildGetItemsQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 
 	builder := s.sqlBuilder.
-		Select(append(itemsTableColumns, fmt.Sprintf("(%s)", s.buildGetAllItemsCountQuery()))...).
+		Select(itemsTableColumns...).
 		From(itemsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.archived_on", itemsTableName):                  nil,
+			fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn):         nil,
 			fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn): userID,
 		}).
-		OrderBy(fmt.Sprintf("%s.id", itemsTableName))
+		OrderBy(fmt.Sprintf("%s.%s", itemsTableName, idColumn))
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder, itemsTableName)
@@ -207,21 +253,77 @@ func (s *Sqlite) GetItems(ctx context.Context, userID uint64, filter *models.Que
 		return nil, buildError(err, "querying database for items")
 	}
 
-	items, count, err := s.scanItems(rows)
+	items, err := s.scanItems(rows)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
 	list := &models.ItemList{
 		Pagination: models.Pagination{
-			Page:       filter.Page,
-			Limit:      filter.Limit,
-			TotalCount: count,
+			Page:  filter.Page,
+			Limit: filter.Limit,
 		},
 		Items: items,
 	}
 
 	return list, nil
+}
+
+// buildGetItemsWithIDsQuery builds a SQL query selecting items that belong to a given user,
+// and have IDs that exist within a given set of IDs. Returns both the query and the relevant
+// args to pass to the query executor. This function is primarily intended for use with a search
+// index, which would provide a slice of string IDs to query against. This function accepts a
+// slice of uint64s instead of a slice of strings in order to ensure all the provided strings
+// are valid database IDs, because there's no way in squirrel to escape them in the unnest join,
+// and if we accept strings we could leave ourselves vulnerable to SQL injection attacks.
+func (s *Sqlite) buildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []uint64) (query string, args []interface{}) {
+	var err error
+
+	var whenThenStatement string
+	for i, id := range ids {
+		if i != 0 {
+			whenThenStatement += " "
+		}
+		whenThenStatement += fmt.Sprintf("WHEN %d THEN %d", id, i)
+	}
+	whenThenStatement += " END"
+
+	builder := s.sqlBuilder.
+		Select(itemsTableColumns...).
+		From(itemsTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", itemsTableName, idColumn):                 ids,
+			fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn):         nil,
+			fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn): userID,
+		}).
+		OrderBy(fmt.Sprintf("CASE %s.%s %s", itemsTableName, idColumn, whenThenStatement)).
+		Limit(uint64(limit))
+
+	query, args, err = builder.ToSql()
+	s.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// GetItemsWithIDs fetches a list of items from the database that exist within a given set of IDs.
+func (s *Sqlite) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]models.Item, error) {
+	if limit == 0 {
+		limit = uint8(models.DefaultLimit)
+	}
+
+	query, args := s.buildGetItemsWithIDsQuery(userID, limit, ids)
+
+	rows, err := s.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, buildError(err, "querying database for items")
+	}
+
+	items, err := s.scanItems(rows)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return items, nil
 }
 
 // buildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments.
@@ -231,8 +333,8 @@ func (s *Sqlite) buildCreateItemQuery(input *models.Item) (query string, args []
 	query, args, err = s.sqlBuilder.
 		Insert(itemsTableName).
 		Columns(
-			"name",
-			"details",
+			itemsTableNameColumn,
+			itemsTableDetailsColumn,
 			itemsUserOwnershipColumn,
 		).
 		Values(
@@ -280,11 +382,11 @@ func (s *Sqlite) buildUpdateItemQuery(input *models.Item) (query string, args []
 
 	query, args, err = s.sqlBuilder.
 		Update(itemsTableName).
-		Set("name", input.Name).
-		Set("details", input.Details).
-		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
+		Set(itemsTableNameColumn, input.Name).
+		Set(itemsTableDetailsColumn, input.Details).
+		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id":                     input.ID,
+			idColumn:                 input.ID,
 			itemsUserOwnershipColumn: input.BelongsToUser,
 		}).
 		ToSql()
@@ -307,11 +409,11 @@ func (s *Sqlite) buildArchiveItemQuery(itemID, userID uint64) (query string, arg
 
 	query, args, err = s.sqlBuilder.
 		Update(itemsTableName).
-		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
-		Set("archived_on", squirrel.Expr(currentUnixTimeQuery)).
+		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Set(archivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id":                     itemID,
-			"archived_on":            nil,
+			idColumn:                 itemID,
+			archivedOnColumn:         nil,
 			itemsUserOwnershipColumn: userID,
 		}).
 		ToSql()

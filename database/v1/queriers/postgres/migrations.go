@@ -24,7 +24,7 @@ var (
 				"is_admin" boolean NOT NULL DEFAULT 'false',
 				"two_factor_secret_verified_on" BIGINT DEFAULT NULL,
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
-				"updated_on" BIGINT DEFAULT NULL,
+				"last_updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
 				UNIQUE ("username")
 			);`,
@@ -55,7 +55,7 @@ var (
 				"scopes" TEXT NOT NULL,
 				"implicit_allowed" boolean NOT NULL DEFAULT 'false',
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
-				"updated_on" BIGINT DEFAULT NULL,
+				"last_updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
 				"belongs_to_user" BIGINT NOT NULL,
 				FOREIGN KEY("belongs_to_user") REFERENCES users(id)
@@ -75,7 +75,7 @@ var (
 				"data_types" TEXT NOT NULL,
 				"topics" TEXT NOT NULL,
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
-				"updated_on" BIGINT DEFAULT NULL,
+				"last_updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
 				"belongs_to_user" BIGINT NOT NULL,
 				FOREIGN KEY("belongs_to_user") REFERENCES users(id)
@@ -90,7 +90,7 @@ var (
 				"name" CHARACTER VARYING NOT NULL,
 				"details" CHARACTER VARYING NOT NULL DEFAULT '',
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
-				"updated_on" BIGINT DEFAULT NULL,
+				"last_updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
 				"belongs_to_user" BIGINT NOT NULL,
 				FOREIGN KEY("belongs_to_user") REFERENCES users(id)

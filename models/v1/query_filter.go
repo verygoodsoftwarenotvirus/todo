@@ -17,19 +17,23 @@ const (
 	// DefaultLimit represents how many results we return in a response by default.
 	DefaultLimit = 20
 
-	pageKey          = "page"
-	limitKey         = "limit"
-	createdBeforeKey = "createdBefore"
-	createdAfterKey  = "createdAfter"
-	updatedBeforeKey = "updatedBefore"
-	updatedAfterKey  = "updatedAfter"
-	sortByKey        = "sortBy"
+	// SearchQueryKey is the query param key we use to find search queries in requests
+	SearchQueryKey = "q"
+	// LimitQueryKey is the query param key we use to specify a limit in a query
+	LimitQueryKey = "limit"
+
+	pageQueryKey          = "page"
+	createdBeforeQueryKey = "createdBefore"
+	createdAfterQueryKey  = "createdAfter"
+	updatedBeforeQueryKey = "updatedBefore"
+	updatedAfterQueryKey  = "updatedAfter"
+	sortByQueryKey        = "sortBy"
 )
 
 // QueryFilter represents all the filters a user could apply to a list query.
 type QueryFilter struct {
 	Page          uint64   `json:"page"`
-	Limit         uint64   `json:"limit"`
+	Limit         uint8    `json:"limit"`
 	CreatedAfter  uint64   `json:"createdBefore,omitempty"`
 	CreatedBefore uint64   `json:"createdAfter,omitempty"`
 	UpdatedAfter  uint64   `json:"updatedBefore,omitempty"`
@@ -48,31 +52,31 @@ func DefaultQueryFilter() *QueryFilter {
 
 // FromParams overrides the core QueryFilter values with values retrieved from url.Params
 func (qf *QueryFilter) FromParams(params url.Values) {
-	if i, err := strconv.ParseUint(params.Get(pageKey), 10, 64); err == nil {
+	if i, err := strconv.ParseUint(params.Get(pageQueryKey), 10, 64); err == nil {
 		qf.Page = uint64(math.Max(float64(i), 1))
 	}
 
-	if i, err := strconv.ParseUint(params.Get(limitKey), 10, 64); err == nil {
-		qf.Limit = uint64(math.Min(math.Max(float64(i), 0), MaxLimit))
+	if i, err := strconv.ParseUint(params.Get(LimitQueryKey), 10, 64); err == nil {
+		qf.Limit = uint8(math.Min(math.Max(float64(i), 0), MaxLimit))
 	}
 
-	if i, err := strconv.ParseUint(params.Get(createdBeforeKey), 10, 64); err == nil {
+	if i, err := strconv.ParseUint(params.Get(createdBeforeQueryKey), 10, 64); err == nil {
 		qf.CreatedBefore = uint64(math.Max(float64(i), 0))
 	}
 
-	if i, err := strconv.ParseUint(params.Get(createdAfterKey), 10, 64); err == nil {
+	if i, err := strconv.ParseUint(params.Get(createdAfterQueryKey), 10, 64); err == nil {
 		qf.CreatedAfter = uint64(math.Max(float64(i), 0))
 	}
 
-	if i, err := strconv.ParseUint(params.Get(updatedBeforeKey), 10, 64); err == nil {
+	if i, err := strconv.ParseUint(params.Get(updatedBeforeQueryKey), 10, 64); err == nil {
 		qf.UpdatedBefore = uint64(math.Max(float64(i), 0))
 	}
 
-	if i, err := strconv.ParseUint(params.Get(updatedAfterKey), 10, 64); err == nil {
+	if i, err := strconv.ParseUint(params.Get(updatedAfterQueryKey), 10, 64); err == nil {
 		qf.UpdatedAfter = uint64(math.Max(float64(i), 0))
 	}
 
-	switch strings.ToLower(params.Get(sortByKey)) {
+	switch strings.ToLower(params.Get(sortByQueryKey)) {
 	case string(SortAscending):
 		qf.SortBy = SortAscending
 	case string(SortDescending):
@@ -87,7 +91,7 @@ func (qf *QueryFilter) SetPage(page uint64) {
 
 // QueryPage calculates a query page from the current filter values.
 func (qf *QueryFilter) QueryPage() uint64 {
-	return qf.Limit * (qf.Page - 1)
+	return uint64(qf.Limit) * (qf.Page - 1)
 }
 
 // ToValues returns a url.Values from a QueryFilter
@@ -98,25 +102,25 @@ func (qf *QueryFilter) ToValues() url.Values {
 
 	v := url.Values{}
 	if qf.Page != 0 {
-		v.Set(pageKey, strconv.FormatUint(qf.Page, 10))
+		v.Set(pageQueryKey, strconv.FormatUint(qf.Page, 10))
 	}
 	if qf.Limit != 0 {
-		v.Set(limitKey, strconv.FormatUint(qf.Limit, 10))
+		v.Set(LimitQueryKey, strconv.FormatUint(uint64(qf.Limit), 10))
 	}
 	if qf.SortBy != "" {
-		v.Set(sortByKey, string(qf.SortBy))
+		v.Set(sortByQueryKey, string(qf.SortBy))
 	}
 	if qf.CreatedBefore != 0 {
-		v.Set(createdBeforeKey, strconv.FormatUint(qf.CreatedBefore, 10))
+		v.Set(createdBeforeQueryKey, strconv.FormatUint(qf.CreatedBefore, 10))
 	}
 	if qf.CreatedAfter != 0 {
-		v.Set(createdAfterKey, strconv.FormatUint(qf.CreatedAfter, 10))
+		v.Set(createdAfterQueryKey, strconv.FormatUint(qf.CreatedAfter, 10))
 	}
 	if qf.UpdatedBefore != 0 {
-		v.Set(updatedBeforeKey, strconv.FormatUint(qf.UpdatedBefore, 10))
+		v.Set(updatedBeforeQueryKey, strconv.FormatUint(qf.UpdatedBefore, 10))
 	}
 	if qf.UpdatedAfter != 0 {
-		v.Set(updatedAfterKey, strconv.FormatUint(qf.UpdatedAfter, 10))
+		v.Set(updatedAfterQueryKey, strconv.FormatUint(qf.UpdatedAfter, 10))
 	}
 
 	return v
@@ -130,7 +134,7 @@ func (qf *QueryFilter) ApplyToQueryBuilder(queryBuilder squirrel.SelectBuilder, 
 
 	const (
 		createdOnKey = "created_on"
-		updatedOnKey = "updated_on"
+		updatedOnKey = "last_updated_on"
 	)
 
 	qf.SetPage(qf.Page)
@@ -139,7 +143,7 @@ func (qf *QueryFilter) ApplyToQueryBuilder(queryBuilder squirrel.SelectBuilder, 
 	}
 
 	if qf.Limit > 0 {
-		queryBuilder = queryBuilder.Limit(qf.Limit)
+		queryBuilder = queryBuilder.Limit(uint64(qf.Limit))
 	} else {
 		queryBuilder = queryBuilder.Limit(MaxLimit)
 	}

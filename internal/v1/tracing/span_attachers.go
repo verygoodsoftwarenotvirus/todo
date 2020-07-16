@@ -18,6 +18,7 @@ const (
 	oauth2ClientIDSpanAttachmentKey         = "client_id"
 	webhookIDSpanAttachmentKey              = "webhook_id"
 	requestURISpanAttachmentKey             = "request_uri"
+	searchQuerySpanAttachmentKey            = "search_query"
 )
 
 func attachUint64ToSpan(span *trace.Span, attachmentKey string, id uint64) {
@@ -37,7 +38,7 @@ func AttachFilterToSpan(span *trace.Span, filter *models.QueryFilter) {
 	if filter != nil && span != nil {
 		span.AddAttributes(
 			trace.StringAttribute(filterPageSpanAttachmentKey, strconv.FormatUint(filter.QueryPage(), 10)),
-			trace.StringAttribute(filterLimitSpanAttachmentKey, strconv.FormatUint(filter.Limit, 10)),
+			trace.StringAttribute(filterLimitSpanAttachmentKey, strconv.FormatUint(uint64(filter.Limit), 10)),
 		)
 	}
 }
@@ -75,4 +76,9 @@ func AttachWebhookIDToSpan(span *trace.Span, webhookID uint64) {
 // AttachRequestURIToSpan attaches a given URI to a span.
 func AttachRequestURIToSpan(span *trace.Span, uri string) {
 	attachStringToSpan(span, requestURISpanAttachmentKey, uri)
+}
+
+// AttachSearchQueryToSpan attaches a given search query to a span.
+func AttachSearchQueryToSpan(span *trace.Span, query string) {
+	attachStringToSpan(span, searchQuerySpanAttachmentKey, query)
 }

@@ -10,7 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
-var _ database.Database = (*Client)(nil)
+var _ database.DataManager = (*Client)(nil)
 
 /*
 	NOTE: the primary purpose of this client is to allow convenient
@@ -22,7 +22,7 @@ var _ database.Database = (*Client)(nil)
 // the actual database querying is performed.
 type Client struct {
 	db      *sql.DB
-	querier database.Database
+	querier database.DataManager
 	debug   bool
 	logger  logging.Logger
 }
@@ -43,14 +43,14 @@ func (c *Client) IsReady(ctx context.Context) (ready bool) {
 	return c.querier.IsReady(ctx)
 }
 
-// ProvideDatabaseClient provides a new Database client.
+// ProvideDatabaseClient provides a new DataManager client.
 func ProvideDatabaseClient(
 	ctx context.Context,
 	db *sql.DB,
-	querier database.Database,
+	querier database.DataManager,
 	debug bool,
 	logger logging.Logger,
-) (database.Database, error) {
+) (database.DataManager, error) {
 	c := &Client{
 		db:      db,
 		querier: querier,

@@ -23,6 +23,9 @@
   runtime_metrics_collection_interval = "2s"
   tracing_provider = "jaeger"
 
+[search]
+  items_index_path = "items.bleve"
+
 [server]
   debug = true
   http_port = 8888

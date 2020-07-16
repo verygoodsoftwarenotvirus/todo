@@ -8,6 +8,7 @@ import (
 	"time"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search"
 
 	"github.com/spf13/viper"
 )
@@ -113,6 +114,11 @@ type (
 		RuntimeMetricsCollectionInterval time.Duration `json:"runtime_metrics_collection_interval" mapstructure:"runtime_metrics_collection_interval" toml:"runtime_metrics_collection_interval,omitempty"`
 	}
 
+	// SearchSettings contains settings regarding search indices.
+	SearchSettings struct {
+		ItemsIndexPath search.IndexPath `json:"items_index_path" mapstructure:"items_index_path" toml:"items_index_path,omitempty"`
+	}
+
 	// ServerConfig is our server configuration struct. It is comprised of all the other setting structs
 	// For information on this structs fields, refer to their definitions.
 	ServerConfig struct {
@@ -122,14 +128,12 @@ type (
 		Server   ServerSettings   `json:"server" mapstructure:"server" toml:"server,omitempty"`
 		Database DatabaseSettings `json:"database" mapstructure:"database" toml:"database,omitempty"`
 		Metrics  MetricsSettings  `json:"metrics" mapstructure:"metrics" toml:"metrics,omitempty"`
+		Search   SearchSettings   `json:"search" mapstructure:"search" toml:"search,omitempty"`
 	}
-
-	// MarshalFunc is a function that can marshal a config.
-	MarshalFunc func(v interface{}) ([]byte, error)
 )
 
 // EncodeToFile renders your config to a file given your favorite encoder.
-func (cfg *ServerConfig) EncodeToFile(path string, marshaler MarshalFunc) error {
+func (cfg *ServerConfig) EncodeToFile(path string, marshaler func(v interface{}) ([]byte, error)) error {
 	byteSlice, err := marshaler(*cfg)
 	if err != nil {
 		return err
@@ -147,8 +151,6 @@ func BuildConfig() *viper.Viper {
 	cfg.SetDefault("meta.startup_deadline", defaultStartupDeadline)
 
 	// auth stuff.
-	// NOTE: this will result in an ever-changing cookie secret per server instance running.
-	cfg.SetDefault("auth.cookie_secret", randString())
 	cfg.SetDefault("auth.cookie_lifetime", defaultCookieLifetime)
 	cfg.SetDefault("auth.enable_user_signup", true)
 
@@ -180,13 +182,18 @@ func ParseConfigFile(filename string) (*ServerConfig, error) {
 		return nil, fmt.Errorf("invalid run mode: %q", serverConfig.Meta.RunMode)
 	}
 
+	// set the cookie secret to something (relatively) secure if not provided
+	if serverConfig.Auth.CookieSecret == "" {
+		serverConfig.Auth.CookieSecret = randString(randStringSize)
+	}
+
 	return serverConfig, nil
 }
 
 // randString produces a random string.
 // https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
-func randString() string {
-	b := make([]byte, randStringSize)
+func randString(size uint) string {
+	b := make([]byte, size)
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}

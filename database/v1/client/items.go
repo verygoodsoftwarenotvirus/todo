@@ -51,6 +51,16 @@ func (c *Client) GetAllItemsCount(ctx context.Context) (count uint64, err error)
 	return c.querier.GetAllItemsCount(ctx)
 }
 
+// GetAllItems fetches a list of all items in the database.
+func (c *Client) GetAllItems(ctx context.Context, results chan []models.Item) error {
+	ctx, span := tracing.StartSpan(ctx, "GetItems")
+	defer span.End()
+
+	c.logger.Debug("GetAllItems called")
+
+	return c.querier.GetAllItems(ctx, results)
+}
+
 // GetItems fetches a list of items from the database that meet a particular filter.
 func (c *Client) GetItems(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.ItemList, error) {
 	ctx, span := tracing.StartSpan(ctx, "GetItems")
@@ -64,6 +74,23 @@ func (c *Client) GetItems(ctx context.Context, userID uint64, filter *models.Que
 	}).Debug("GetItems called")
 
 	itemList, err := c.querier.GetItems(ctx, userID, filter)
+
+	return itemList, err
+}
+
+// GetItemsWithIDs fetches items from the database within a given set of IDs.
+func (c *Client) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]models.Item, error) {
+	ctx, span := tracing.StartSpan(ctx, "GetItems")
+	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
+
+	c.logger.WithValues(map[string]interface{}{
+		"user_id":  userID,
+		"id_count": len(ids),
+	}).Debug("GetItemsWithIDs called")
+
+	itemList, err := c.querier.GetItemsWithIDs(ctx, userID, limit, ids)
 
 	return itemList, err
 }

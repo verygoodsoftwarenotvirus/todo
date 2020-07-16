@@ -51,6 +51,49 @@ func (s *Service) ListHandler() http.HandlerFunc {
 	}
 }
 
+// SearchHandler is our list route.
+func (s *Service) SearchHandler() http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := tracing.StartSpan(req.Context(), "SearchHandler")
+		defer span.End()
+
+		logger := s.logger.WithRequest(req)
+
+		// we only parse the filter here because it will contain the limit
+		filter := models.ExtractQueryFilter(req)
+		query := req.URL.Query().Get(models.SearchQueryKey)
+		logger = logger.WithValue("search_query", query)
+
+		// determine user ID.
+		userID := s.userIDFetcher(req)
+		tracing.AttachUserIDToSpan(span, userID)
+		logger = logger.WithValue("user_id", userID)
+
+		relevantIDs, searchErr := s.search.Search(ctx, query, userID)
+		if searchErr != nil {
+			logger.Error(searchErr, "error encountered executing search query")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// fetch items from database.
+		items, err := s.itemDataManager.GetItemsWithIDs(ctx, userID, filter.Limit, relevantIDs)
+		if err == sql.ErrNoRows {
+			// in the event no rows exist return an empty list.
+			items = []models.Item{}
+		} else if err != nil {
+			logger.Error(err, "error encountered fetching items")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// encode our response and peace.
+		if err = s.encoderDecoder.EncodeResponse(res, items); err != nil {
+			logger.Error(err, "encoding response")
+		}
+	}
+}
+
 // CreateHandler is our item creation route.
 func (s *Service) CreateHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
@@ -91,6 +134,9 @@ func (s *Service) CreateHandler() http.HandlerFunc {
 			Topics:    []string{topicName},
 			EventType: string(models.Create),
 		})
+		if searchIndexErr := s.search.Index(ctx, x.ID, x); searchIndexErr != nil {
+			s.logger.Error(searchIndexErr, "adding item to search index")
+		}
 
 		// encode our response and peace.
 		res.WriteHeader(http.StatusCreated)
@@ -217,6 +263,9 @@ func (s *Service) UpdateHandler() http.HandlerFunc {
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+		if searchIndexErr := s.search.Index(ctx, x.ID, x); searchIndexErr != nil {
+			s.logger.Error(searchIndexErr, "adding item to search index")
+		}
 
 		// notify relevant parties.
 		s.reporter.Report(newsman.Event{
@@ -269,6 +318,9 @@ func (s *Service) ArchiveHandler() http.HandlerFunc {
 			Data:      &models.Item{ID: itemID},
 			Topics:    []string{topicName},
 		})
+		if indexDeleteErr := s.search.Delete(ctx, itemID); indexDeleteErr != nil {
+			s.logger.Error(indexDeleteErr, "error removing item from search index")
+		}
 
 		// encode our response and peace.
 		res.WriteHeader(http.StatusNoContent)

@@ -19,6 +19,7 @@ import (
 
 const (
 	root             = "/"
+	searchRoot       = "/search"
 	numericIDPattern = "/{%s:[0-9]+}"
 	oauth2IDPattern  = "/{%s:[0-9_\\-]+}"
 )
@@ -156,6 +157,7 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 					singleItemRouter.Head(root, s.itemsService.ExistenceHandler())
 				})
 				itemsRouter.Get(root, s.itemsService.ListHandler())
+				itemsRouter.Get(searchRoot, s.itemsService.SearchHandler())
 			})
 
 			// Webhooks.

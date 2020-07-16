@@ -25,9 +25,8 @@ func BuildFakeItemList() *models.ItemList {
 
 	return &models.ItemList{
 		Pagination: models.Pagination{
-			Page:       1,
-			Limit:      20,
-			TotalCount: 3,
+			Page:  1,
+			Limit: 20,
 		},
 		Items: []models.Item{
 			*exampleItem1,

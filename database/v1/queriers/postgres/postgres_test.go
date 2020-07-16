@@ -13,6 +13,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
 
+const (
+	defaultLimit = uint8(20)
+)
+
 func buildTestService(t *testing.T) (*Postgres, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
@@ -32,6 +36,8 @@ var (
 		"?", `\?`,
 		",", `\,`,
 		"-", `\-`,
+		"[", `\[`,
+		"]", `\]`,
 	)
 	queryArgRegexp = regexp.MustCompile(`\$\d+`)
 )
@@ -77,5 +83,27 @@ func TestPostgres_logQueryBuildingError(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		p, _ := buildTestService(t)
 		p.logQueryBuildingError(errors.New("blah"))
+	})
+}
+
+func Test_joinUint64s(T *testing.T) {
+	T.Parallel()
+
+	T.Run("obligatory", func(t *testing.T) {
+		exampleInput := []uint64{123, 456, 789}
+
+		expected := "123,456,789"
+		actual := joinUint64s(exampleInput)
+
+		assert.Equal(t, expected, actual, "expected %s to equal %s", expected, actual)
+	})
+}
+
+func TestProvidePostgresDB(T *testing.T) {
+	T.Parallel()
+
+	T.Run("obligatory", func(t *testing.T) {
+		_, err := ProvidePostgresDB(noop.ProvideNoopLogger(), "")
+		assert.NoError(t, err)
 	})
 }

@@ -13,11 +13,12 @@ var (
 		ProvideItemsService,
 		ProvideItemDataManager,
 		ProvideItemDataServer,
+		ProvideItemsServiceSearchIndex,
 	)
 )
 
 // ProvideItemDataManager turns a database into an ItemDataManager.
-func ProvideItemDataManager(db database.Database) models.ItemDataManager {
+func ProvideItemDataManager(db database.DataManager) models.ItemDataManager {
 	return db
 }
 

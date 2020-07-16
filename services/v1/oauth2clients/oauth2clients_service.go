@@ -63,7 +63,7 @@ type (
 	// Service manages our OAuth2 clients via HTTP.
 	Service struct {
 		logger               logging.Logger
-		database             database.Database
+		database             database.DataManager
 		authenticator        auth.Authenticator
 		encoderDecoder       encoding.EncoderDecoder
 		urlClientIDExtractor func(req *http.Request) uint64
@@ -72,11 +72,11 @@ type (
 	}
 
 	clientStore struct {
-		database database.Database
+		database database.DataManager
 	}
 )
 
-func newClientStore(db database.Database) *clientStore {
+func newClientStore(db database.DataManager) *clientStore {
 	cs := &clientStore{
 		database: db,
 	}
@@ -99,7 +99,7 @@ func (s *clientStore) GetByID(id string) (oauth2.ClientInfo, error) {
 // ProvideOAuth2ClientsService builds a new OAuth2ClientsService.
 func ProvideOAuth2ClientsService(
 	logger logging.Logger,
-	db database.Database,
+	db database.DataManager,
 	authenticator auth.Authenticator,
 	clientIDFetcher ClientIDFetcher,
 	encoderDecoder encoding.EncoderDecoder,

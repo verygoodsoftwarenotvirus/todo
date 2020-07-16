@@ -43,18 +43,17 @@ func init() {
 	}
 
 	todoClient = initializeClient(oa2Client)
+	todoClient.Debug = urlToUse == "" // change this for debug logs
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)
 }
 
 func buildHTTPClient() *http.Client {
-	httpc := &http.Client{
+	return &http.Client{
 		Transport: http.DefaultTransport,
 		Timeout:   5 * time.Second,
 	}
-
-	return httpc
 }
 
 func initializeClient(oa2Client *models.OAuth2Client) *client.V1Client {

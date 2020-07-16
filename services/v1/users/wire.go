@@ -17,7 +17,7 @@ var (
 )
 
 // ProvideUserDataManager is an arbitrary function for dependency injection's sake.
-func ProvideUserDataManager(db database.Database) models.UserDataManager {
+func ProvideUserDataManager(db database.DataManager) models.UserDataManager {
 	return db
 }
 

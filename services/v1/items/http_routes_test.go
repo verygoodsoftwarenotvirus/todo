@@ -4,12 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
+	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search/mock"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
@@ -145,6 +147,203 @@ func TestItemsService_ListHandler(T *testing.T) {
 	})
 }
 
+func TestItemsService_SearchHandler(T *testing.T) {
+	T.Parallel()
+
+	exampleUser := fakemodels.BuildFakeUser()
+	userIDFetcher := func(_ *http.Request) uint64 {
+		return exampleUser.ID
+	}
+
+	T.Run("happy path", func(t *testing.T) {
+		s := buildTestService()
+
+		s.userIDFetcher = userIDFetcher
+
+		exampleQuery := "whatever"
+		exampleLimit := uint8(123)
+		exampleItemList := fakemodels.BuildFakeItemList().Items
+		var exampleItemIDs []uint64
+		for _, x := range exampleItemList {
+			exampleItemIDs = append(exampleItemIDs, x.ID)
+		}
+
+		si := &mocksearch.MockIndexManager{}
+		si.On("Search", mock.Anything, exampleQuery, exampleUser.ID).Return(exampleItemIDs, nil)
+		s.search = si
+
+		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager.On("GetItemsWithIDs", mock.Anything, exampleUser.ID, exampleLimit, exampleItemIDs).Return(exampleItemList, nil)
+		s.itemDataManager = itemDataManager
+
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("[]models.Item")).Return(nil)
+		s.encoderDecoder = ed
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequest(
+			http.MethodGet,
+			fmt.Sprintf("http://todo.verygoodsoftwarenotvirus.ru?q=%s&limit=%d", exampleQuery, exampleLimit),
+			nil,
+		)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		s.SearchHandler()(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, si, itemDataManager, ed)
+	})
+
+	T.Run("with error conducting search", func(t *testing.T) {
+		s := buildTestService()
+
+		s.userIDFetcher = userIDFetcher
+
+		exampleQuery := "whatever"
+		exampleLimit := uint8(123)
+
+		si := &mocksearch.MockIndexManager{}
+		si.On("Search", mock.Anything, exampleQuery, exampleUser.ID).Return([]uint64{}, errors.New("arbitrary"))
+		s.search = si
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequest(
+			http.MethodGet,
+			fmt.Sprintf("http://todo.verygoodsoftwarenotvirus.ru?q=%s&limit=%d", exampleQuery, exampleLimit),
+			nil,
+		)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		s.SearchHandler()(res, req)
+
+		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, si)
+	})
+
+	T.Run("with now rows returned", func(t *testing.T) {
+		s := buildTestService()
+
+		s.userIDFetcher = userIDFetcher
+
+		exampleQuery := "whatever"
+		exampleLimit := uint8(123)
+		exampleItemList := fakemodels.BuildFakeItemList().Items
+		var exampleItemIDs []uint64
+		for _, x := range exampleItemList {
+			exampleItemIDs = append(exampleItemIDs, x.ID)
+		}
+
+		si := &mocksearch.MockIndexManager{}
+		si.On("Search", mock.Anything, exampleQuery, exampleUser.ID).Return(exampleItemIDs, nil)
+		s.search = si
+
+		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager.On("GetItemsWithIDs", mock.Anything, exampleUser.ID, exampleLimit, exampleItemIDs).Return([]models.Item{}, sql.ErrNoRows)
+		s.itemDataManager = itemDataManager
+
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("[]models.Item")).Return(nil)
+		s.encoderDecoder = ed
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequest(
+			http.MethodGet,
+			fmt.Sprintf("http://todo.verygoodsoftwarenotvirus.ru?q=%s&limit=%d", exampleQuery, exampleLimit),
+			nil,
+		)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		s.SearchHandler()(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, si, itemDataManager, ed)
+	})
+
+	T.Run("with error fetching from database", func(t *testing.T) {
+		s := buildTestService()
+
+		s.userIDFetcher = userIDFetcher
+
+		exampleQuery := "whatever"
+		exampleLimit := uint8(123)
+		exampleItemList := fakemodels.BuildFakeItemList().Items
+		var exampleItemIDs []uint64
+		for _, x := range exampleItemList {
+			exampleItemIDs = append(exampleItemIDs, x.ID)
+		}
+
+		si := &mocksearch.MockIndexManager{}
+		si.On("Search", mock.Anything, exampleQuery, exampleUser.ID).Return(exampleItemIDs, nil)
+		s.search = si
+
+		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager.On("GetItemsWithIDs", mock.Anything, exampleUser.ID, exampleLimit, exampleItemIDs).Return([]models.Item{}, errors.New("arbitrary"))
+		s.itemDataManager = itemDataManager
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequest(
+			http.MethodGet,
+			fmt.Sprintf("http://todo.verygoodsoftwarenotvirus.ru?q=%s&limit=%d", exampleQuery, exampleLimit),
+			nil,
+		)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		s.SearchHandler()(res, req)
+
+		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, si, itemDataManager)
+	})
+
+	T.Run("with error encoding response", func(t *testing.T) {
+		s := buildTestService()
+
+		s.userIDFetcher = userIDFetcher
+
+		exampleQuery := "whatever"
+		exampleLimit := uint8(123)
+		exampleItemList := fakemodels.BuildFakeItemList().Items
+		var exampleItemIDs []uint64
+		for _, x := range exampleItemList {
+			exampleItemIDs = append(exampleItemIDs, x.ID)
+		}
+
+		si := &mocksearch.MockIndexManager{}
+		si.On("Search", mock.Anything, exampleQuery, exampleUser.ID).Return(exampleItemIDs, nil)
+		s.search = si
+
+		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager.On("GetItemsWithIDs", mock.Anything, exampleUser.ID, exampleLimit, exampleItemIDs).Return(exampleItemList, nil)
+		s.itemDataManager = itemDataManager
+
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("[]models.Item")).Return(errors.New("arbitrary"))
+		s.encoderDecoder = ed
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequest(
+			http.MethodGet,
+			fmt.Sprintf("http://todo.verygoodsoftwarenotvirus.ru?q=%s&limit=%d", exampleQuery, exampleLimit),
+			nil,
+		)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		s.SearchHandler()(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, si, itemDataManager, ed)
+	})
+}
+
 func TestItemsService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
@@ -173,6 +372,10 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		r := &mocknewsman.Reporter{}
 		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
 		s.reporter = r
+
+		si := &mocksearch.MockIndexManager{}
+		si.On("Index", mock.Anything, exampleItem.ID, exampleItem).Return(nil)
+		s.search = si
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Item")).Return(nil)
@@ -266,6 +469,10 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		r := &mocknewsman.Reporter{}
 		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
 		s.reporter = r
+
+		si := &mocksearch.MockIndexManager{}
+		si.On("Index", mock.Anything, exampleItem.ID, exampleItem).Return(nil)
+		s.search = si
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Item")).Return(errors.New("blah"))
@@ -563,6 +770,10 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
 		s.reporter = r
 
+		si := &mocksearch.MockIndexManager{}
+		si.On("Index", mock.Anything, exampleItem.ID, exampleItem).Return(nil)
+		s.search = si
+
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Item")).Return(nil)
 		s.encoderDecoder = ed
@@ -732,6 +943,10 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
 		s.reporter = r
 
+		si := &mocksearch.MockIndexManager{}
+		si.On("Index", mock.Anything, exampleItem.ID, exampleItem).Return(nil)
+		s.search = si
+
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Item")).Return(errors.New("blah"))
 		s.encoderDecoder = ed
@@ -781,6 +996,10 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		r := &mocknewsman.Reporter{}
 		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
 		s.reporter = r
+
+		si := &mocksearch.MockIndexManager{}
+		si.On("Delete", mock.Anything, exampleItem.ID).Return(nil)
+		s.search = si
 
 		mc := &mockmetrics.UnitCounter{}
 		mc.On("Decrement", mock.Anything).Return()

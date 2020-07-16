@@ -15,7 +15,7 @@ import (
 func Test_randString(t *testing.T) {
 	t.Parallel()
 
-	actual := randString()
+	actual := randString(randStringSize)
 	assert.NotEmpty(t, actual)
 	assert.Len(t, actual, 52)
 }

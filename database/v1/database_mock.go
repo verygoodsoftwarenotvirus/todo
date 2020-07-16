@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var _ Database = (*MockDatabase)(nil)
+var _ DataManager = (*MockDatabase)(nil)
 
 // BuildMockDatabase builds a mock database.
 func BuildMockDatabase() *MockDatabase {
@@ -30,12 +30,12 @@ type MockDatabase struct {
 	*mockmodels.WebhookDataManager
 }
 
-// Migrate satisfies the Database interface.
+// Migrate satisfies the DataManager interface.
 func (m *MockDatabase) Migrate(ctx context.Context) error {
 	return m.Called(ctx).Error(0)
 }
 
-// IsReady satisfies the Database interface.
+// IsReady satisfies the DataManager interface.
 func (m *MockDatabase) IsReady(ctx context.Context) (ready bool) {
 	return m.Called(ctx).Bool(0)
 }

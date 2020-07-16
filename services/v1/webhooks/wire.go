@@ -17,7 +17,7 @@ var (
 )
 
 // ProvideWebhookDataManager is an arbitrary function for dependency injection's sake.
-func ProvideWebhookDataManager(db database.Database) models.WebhookDataManager {
+func ProvideWebhookDataManager(db database.DataManager) models.WebhookDataManager {
 	return db
 }
 

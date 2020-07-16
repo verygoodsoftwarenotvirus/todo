@@ -15,6 +15,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search/bleve"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
 	auth2 "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
@@ -28,7 +29,7 @@ import (
 // Injectors from wire.go:
 
 // BuildServer builds a server.
-func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, database2 database.Database, db *sql.DB) (*server.Server, error) {
+func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, database2 database.DataManager, db *sql.DB) (*server.Server, error) {
 	bcryptHashCost := auth.ProvideBcryptHashCost()
 	authenticator := auth.ProvideBcryptAuthenticator(bcryptHashCost, logger)
 	userDataManager := users.ProvideUserDataManager(database2)
@@ -56,7 +57,13 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	typeNameManipulationFunc := httpserver.ProvideNewsmanTypeNameManipulationFunc()
 	newsmanNewsman := newsman.NewNewsman(websocketAuthFunc, typeNameManipulationFunc)
 	reporter := ProvideReporter(newsmanNewsman)
-	itemsService, err := items.ProvideItemsService(logger, itemDataManager, itemIDFetcher, userIDFetcher, encoderDecoder, unitCounterProvider, reporter)
+	searchSettings := config.ProvideSearchSettings(cfg)
+	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
+	itemsSearchIndex, err := items.ProvideItemsServiceSearchIndex(searchSettings, indexManagerProvider, logger)
+	if err != nil {
+		return nil, err
+	}
+	itemsService, err := items.ProvideItemsService(logger, itemDataManager, itemIDFetcher, userIDFetcher, encoderDecoder, unitCounterProvider, reporter, itemsSearchIndex)
 	if err != nil {
 		return nil, err
 	}

@@ -18,32 +18,38 @@ const (
 	typesSeparator  = `,`
 	topicsSeparator = `,`
 
-	webhooksTableName            = "webhooks"
-	webhooksTableOwnershipColumn = "belongs_to_user"
+	webhooksTableName              = "webhooks"
+	webhooksTableNameColumn        = "name"
+	webhooksTableContentTypeColumn = "content_type"
+	webhooksTableURLColumn         = "url"
+	webhooksTableMethodColumn      = "method"
+	webhooksTableEventsColumn      = "events"
+	webhooksTableDataTypesColumn   = "data_types"
+	webhooksTableTopicsColumn      = "topics"
+	webhooksTableOwnershipColumn   = "belongs_to_user"
 )
 
 var (
 	webhooksTableColumns = []string{
-		fmt.Sprintf("%s.id", webhooksTableName),
-		fmt.Sprintf("%s.name", webhooksTableName),
-		fmt.Sprintf("%s.content_type", webhooksTableName),
-		fmt.Sprintf("%s.url", webhooksTableName),
-		fmt.Sprintf("%s.method", webhooksTableName),
-		fmt.Sprintf("%s.events", webhooksTableName),
-		fmt.Sprintf("%s.data_types", webhooksTableName),
-		fmt.Sprintf("%s.topics", webhooksTableName),
-		fmt.Sprintf("%s.created_on", webhooksTableName),
-		fmt.Sprintf("%s.updated_on", webhooksTableName),
-		fmt.Sprintf("%s.archived_on", webhooksTableName),
+		fmt.Sprintf("%s.%s", webhooksTableName, idColumn),
+		fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableNameColumn),
+		fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableContentTypeColumn),
+		fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableURLColumn),
+		fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableMethodColumn),
+		fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableEventsColumn),
+		fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableDataTypesColumn),
+		fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableTopicsColumn),
+		fmt.Sprintf("%s.%s", webhooksTableName, createdOnColumn),
+		fmt.Sprintf("%s.%s", webhooksTableName, lastUpdatedOnColumn),
+		fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn),
 		fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableOwnershipColumn),
 	}
 )
 
 // scanWebhook is a consistent way to turn a *sql.Row into a webhook struct.
-func (m *MariaDB) scanWebhook(scan database.Scanner, includeCount bool) (*models.Webhook, uint64, error) {
+func (m *MariaDB) scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 	var (
-		x     = &models.Webhook{}
-		count uint64
+		x = &models.Webhook{}
 		eventsStr,
 		dataTypesStr,
 		topicsStr string
@@ -64,12 +70,8 @@ func (m *MariaDB) scanWebhook(scan database.Scanner, includeCount bool) (*models
 		&x.BelongsToUser,
 	}
 
-	if includeCount {
-		targetVars = append(targetVars, &count)
-	}
-
 	if err := scan.Scan(targetVars...); err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	if events := strings.Split(eventsStr, eventsSeparator); len(events) >= 1 && events[0] != "" {
@@ -82,37 +84,32 @@ func (m *MariaDB) scanWebhook(scan database.Scanner, includeCount bool) (*models
 		x.Topics = topics
 	}
 
-	return x, count, nil
+	return x, nil
 }
 
 // scanWebhooks provides a consistent way to turn sql rows into a slice of webhooks.
-func (m *MariaDB) scanWebhooks(rows database.ResultIterator) ([]models.Webhook, uint64, error) {
+func (m *MariaDB) scanWebhooks(rows database.ResultIterator) ([]models.Webhook, error) {
 	var (
-		list  []models.Webhook
-		count uint64
+		list []models.Webhook
 	)
 
 	for rows.Next() {
-		webhook, c, err := m.scanWebhook(rows, true)
+		webhook, err := m.scanWebhook(rows)
 		if err != nil {
-			return nil, 0, err
-		}
-
-		if count == 0 {
-			count = c
+			return nil, err
 		}
 
 		list = append(list, *webhook)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	if err := rows.Close(); err != nil {
 		m.logger.Error(err, "closing rows")
 	}
 
-	return list, count, nil
+	return list, nil
 }
 
 // buildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook
@@ -123,7 +120,7 @@ func (m *MariaDB) buildGetWebhookQuery(webhookID, userID uint64) (query string, 
 		Select(webhooksTableColumns...).
 		From(webhooksTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.id", webhooksTableName):                               webhookID,
+			fmt.Sprintf("%s.%s", webhooksTableName, idColumn):                     webhookID,
 			fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableOwnershipColumn): userID,
 		}).ToSql()
 
@@ -136,7 +133,7 @@ func (m *MariaDB) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mo
 	query, args := m.buildGetWebhookQuery(webhookID, userID)
 	row := m.db.QueryRowContext(ctx, query, args...)
 
-	webhook, _, err := m.scanWebhook(row, false)
+	webhook, err := m.scanWebhook(row)
 	if err != nil {
 		return nil, buildError(err, "querying for webhook")
 	}
@@ -158,7 +155,7 @@ func (m *MariaDB) buildGetAllWebhooksCountQuery() string {
 			Select(fmt.Sprintf(countQuery, webhooksTableName)).
 			From(webhooksTableName).
 			Where(squirrel.Eq{
-				fmt.Sprintf("%s.archived_on", webhooksTableName): nil,
+				fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn): nil,
 			}).
 			ToSql()
 
@@ -188,7 +185,7 @@ func (m *MariaDB) buildGetAllWebhooksQuery() string {
 			Select(webhooksTableColumns...).
 			From(webhooksTableName).
 			Where(squirrel.Eq{
-				fmt.Sprintf("%s.archived_on", webhooksTableName): nil,
+				fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn): nil,
 			}).
 			ToSql()
 
@@ -200,7 +197,9 @@ func (m *MariaDB) buildGetAllWebhooksQuery() string {
 
 // GetAllWebhooks fetches a list of all webhooks from the database.
 func (m *MariaDB) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
-	rows, err := m.db.QueryContext(ctx, m.buildGetAllWebhooksQuery())
+	query := m.buildGetAllWebhooksQuery()
+
+	rows, err := m.db.QueryContext(ctx, query)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, err
@@ -208,15 +207,14 @@ func (m *MariaDB) GetAllWebhooks(ctx context.Context) (*models.WebhookList, erro
 		return nil, fmt.Errorf("querying for webhooks: %w", err)
 	}
 
-	list, count, err := m.scanWebhooks(rows)
+	list, err := m.scanWebhooks(rows)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
 	x := &models.WebhookList{
 		Pagination: models.Pagination{
-			Page:       1,
-			TotalCount: count,
+			Page: 1,
 		},
 		Webhooks: list,
 	}
@@ -229,13 +227,13 @@ func (m *MariaDB) buildGetWebhooksQuery(userID uint64, filter *models.QueryFilte
 	var err error
 
 	builder := m.sqlBuilder.
-		Select(append(webhooksTableColumns, fmt.Sprintf("(%s)", m.buildGetAllWebhooksCountQuery()))...).
+		Select(webhooksTableColumns...).
 		From(webhooksTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableOwnershipColumn): userID,
-			fmt.Sprintf("%s.archived_on", webhooksTableName):                      nil,
+			fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn):             nil,
 		}).
-		OrderBy(fmt.Sprintf("%s.id", webhooksTableName))
+		OrderBy(fmt.Sprintf("%s.%s", webhooksTableName, idColumn))
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder, webhooksTableName)
@@ -259,16 +257,15 @@ func (m *MariaDB) GetWebhooks(ctx context.Context, userID uint64, filter *models
 		return nil, fmt.Errorf("querying database: %w", err)
 	}
 
-	list, count, err := m.scanWebhooks(rows)
+	list, err := m.scanWebhooks(rows)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
 	x := &models.WebhookList{
 		Pagination: models.Pagination{
-			Page:       filter.Page,
-			TotalCount: count,
-			Limit:      filter.Limit,
+			Page:  filter.Page,
+			Limit: filter.Limit,
 		},
 		Webhooks: list,
 	}
@@ -283,13 +280,13 @@ func (m *MariaDB) buildWebhookCreationQuery(x *models.Webhook) (query string, ar
 	query, args, err = m.sqlBuilder.
 		Insert(webhooksTableName).
 		Columns(
-			"name",
-			"content_type",
-			"url",
-			"method",
-			"events",
-			"data_types",
-			"topics",
+			webhooksTableNameColumn,
+			webhooksTableContentTypeColumn,
+			webhooksTableURLColumn,
+			webhooksTableMethodColumn,
+			webhooksTableEventsColumn,
+			webhooksTableDataTypesColumn,
+			webhooksTableTopicsColumn,
 			webhooksTableOwnershipColumn,
 		).
 		Values(
@@ -345,16 +342,16 @@ func (m *MariaDB) buildUpdateWebhookQuery(input *models.Webhook) (query string, 
 
 	query, args, err = m.sqlBuilder.
 		Update(webhooksTableName).
-		Set("name", input.Name).
-		Set("content_type", input.ContentType).
-		Set("url", input.URL).
-		Set("method", input.Method).
-		Set("events", strings.Join(input.Events, topicsSeparator)).
-		Set("data_types", strings.Join(input.DataTypes, typesSeparator)).
-		Set("topics", strings.Join(input.Topics, topicsSeparator)).
-		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
+		Set(webhooksTableNameColumn, input.Name).
+		Set(webhooksTableContentTypeColumn, input.ContentType).
+		Set(webhooksTableURLColumn, input.URL).
+		Set(webhooksTableMethodColumn, input.Method).
+		Set(webhooksTableEventsColumn, strings.Join(input.Events, topicsSeparator)).
+		Set(webhooksTableDataTypesColumn, strings.Join(input.DataTypes, typesSeparator)).
+		Set(webhooksTableTopicsColumn, strings.Join(input.Topics, topicsSeparator)).
+		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id":                         input.ID,
+			idColumn:                     input.ID,
 			webhooksTableOwnershipColumn: input.BelongsToUser,
 		}).
 		ToSql()
@@ -377,12 +374,12 @@ func (m *MariaDB) buildArchiveWebhookQuery(webhookID, userID uint64) (query stri
 
 	query, args, err = m.sqlBuilder.
 		Update(webhooksTableName).
-		Set("updated_on", squirrel.Expr(currentUnixTimeQuery)).
-		Set("archived_on", squirrel.Expr(currentUnixTimeQuery)).
+		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Set(archivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			"id":                         webhookID,
+			idColumn:                     webhookID,
 			webhooksTableOwnershipColumn: userID,
-			"archived_on":                nil,
+			archivedOnColumn:             nil,
 		}).
 		ToSql()
 

@@ -17,12 +17,8 @@ import (
 )
 
 func buildMockRowsFromWebhook(webhooks ...*models.Webhook) *sqlmock.Rows {
-	includeCount := len(webhooks) > 1
 	columns := webhooksTableColumns
 
-	if includeCount {
-		columns = append(columns, "count")
-	}
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, w := range webhooks {
@@ -39,10 +35,6 @@ func buildMockRowsFromWebhook(webhooks ...*models.Webhook) *sqlmock.Rows {
 			w.UpdatedOn,
 			w.ArchivedOn,
 			w.BelongsToUser,
-		}
-
-		if includeCount {
-			rowValues = append(rowValues, len(webhooks))
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -80,7 +72,7 @@ func TestPostgres_ScanWebhooks(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, _, err := p.scanWebhooks(mockRows)
+		_, err := p.scanWebhooks(mockRows)
 		assert.Error(t, err)
 	})
 
@@ -92,7 +84,7 @@ func TestPostgres_ScanWebhooks(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, _, err := p.scanWebhooks(mockRows)
+		_, err := p.scanWebhooks(mockRows)
 		assert.NoError(t, err)
 	})
 }
@@ -105,7 +97,7 @@ func TestPostgres_buildGetWebhookQuery(T *testing.T) {
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
-		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.belongs_to_user = $1 AND webhooks.id = $2"
+		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.belongs_to_user = $1 AND webhooks.id = $2"
 		expectedArgs := []interface{}{
 			exampleWebhook.BelongsToUser,
 			exampleWebhook.ID,
@@ -121,7 +113,7 @@ func TestPostgres_buildGetWebhookQuery(T *testing.T) {
 func TestPostgres_GetWebhook(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.belongs_to_user = $1 AND webhooks.id = $2"
+	expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.belongs_to_user = $1 AND webhooks.id = $2"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -249,7 +241,7 @@ func TestPostgres_buildGetAllWebhooksQuery(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		p, _ := buildTestService(t)
 
-		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL"
+		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL"
 		actualQuery := p.buildGetAllWebhooksQuery()
 
 		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
@@ -260,7 +252,7 @@ func TestPostgres_buildGetAllWebhooksQuery(T *testing.T) {
 func TestPostgres_GetAllWebhooks(T *testing.T) {
 	T.Parallel()
 
-	expectedListQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL"
+	expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -269,7 +261,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 		exampleWebhookList.Limit = 0
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).WillReturnRows(
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WillReturnRows(
 			buildMockRowsFromWebhook(
 				&exampleWebhookList.Webhooks[0],
 				&exampleWebhookList.Webhooks[1],
@@ -288,7 +280,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 		ctx := context.Background()
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := p.GetAllWebhooks(ctx)
@@ -303,7 +295,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 		ctx := context.Background()
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := p.GetAllWebhooks(ctx)
@@ -319,7 +311,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnRows(buildErroneousMockRowFromWebhook(exampleWebhook))
 
 		actual, err := p.GetAllWebhooks(ctx)
@@ -339,7 +331,7 @@ func TestPostgres_buildGetWebhooksQuery(T *testing.T) {
 		exampleUser := fakemodels.BuildFakeUser()
 		filter := fakemodels.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.updated_on, webhooks.archived_on, webhooks.belongs_to_user, (SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $1 AND webhooks.created_on > $2 AND webhooks.created_on < $3 AND webhooks.updated_on > $4 AND webhooks.updated_on < $5 ORDER BY webhooks.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $1 AND webhooks.created_on > $2 AND webhooks.created_on < $3 AND webhooks.last_updated_on > $4 AND webhooks.last_updated_on < $5 ORDER BY webhooks.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,
@@ -359,7 +351,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakemodels.BuildFakeUser()
-	expectedListQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.updated_on, webhooks.archived_on, webhooks.belongs_to_user, (SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $1 ORDER BY webhooks.id LIMIT 20"
+	expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $1 ORDER BY webhooks.id LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -368,7 +360,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 		exampleWebhookList := fakemodels.BuildFakeWebhookList()
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(exampleUser.ID).
 			WillReturnRows(
 				buildMockRowsFromWebhook(
@@ -391,7 +383,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 		filter := models.DefaultQueryFilter()
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := p.GetWebhooks(ctx, exampleUser.ID, filter)
@@ -408,7 +400,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 		filter := models.DefaultQueryFilter()
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := p.GetWebhooks(ctx, exampleUser.ID, filter)
@@ -425,7 +417,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		p, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedListQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnRows(buildErroneousMockRowFromWebhook(exampleWebhook))
 
 		actual, err := p.GetWebhooks(ctx, exampleUser.ID, filter)
@@ -528,7 +520,7 @@ func TestPostgres_buildUpdateWebhookQuery(T *testing.T) {
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
-		expectedQuery := "UPDATE webhooks SET name = $1, content_type = $2, url = $3, method = $4, events = $5, data_types = $6, topics = $7, updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $8 AND id = $9 RETURNING updated_on"
+		expectedQuery := "UPDATE webhooks SET name = $1, content_type = $2, url = $3, method = $4, events = $5, data_types = $6, topics = $7, last_updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $8 AND id = $9 RETURNING last_updated_on"
 		expectedArgs := []interface{}{
 			exampleWebhook.Name,
 			exampleWebhook.ContentType,
@@ -551,7 +543,7 @@ func TestPostgres_buildUpdateWebhookQuery(T *testing.T) {
 func TestPostgres_UpdateWebhook(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "UPDATE webhooks SET name = $1, content_type = $2, url = $3, method = $4, events = $5, data_types = $6, topics = $7, updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $8 AND id = $9 RETURNING updated_on"
+	expectedQuery := "UPDATE webhooks SET name = $1, content_type = $2, url = $3, method = $4, events = $5, data_types = $6, topics = $7, last_updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $8 AND id = $9 RETURNING last_updated_on"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -559,7 +551,7 @@ func TestPostgres_UpdateWebhook(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
-		exampleRows := sqlmock.NewRows([]string{"updated_on"}).AddRow(exampleWebhook.UpdatedOn)
+		exampleRows := sqlmock.NewRows([]string{"last_updated_on"}).AddRow(exampleWebhook.UpdatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
 			exampleWebhook.Name,
 			exampleWebhook.ContentType,
@@ -611,7 +603,7 @@ func TestPostgres_buildArchiveWebhookQuery(T *testing.T) {
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
-		expectedQuery := "UPDATE webhooks SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1 AND id = $2 RETURNING archived_on"
+		expectedQuery := "UPDATE webhooks SET last_updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1 AND id = $2 RETURNING archived_on"
 		expectedArgs := []interface{}{
 			exampleWebhook.BelongsToUser,
 			exampleWebhook.ID,
@@ -631,7 +623,7 @@ func TestPostgres_ArchiveWebhook(T *testing.T) {
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
-		expectedQuery := "UPDATE webhooks SET updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1 AND id = $2 RETURNING archived_on"
+		expectedQuery := "UPDATE webhooks SET last_updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1 AND id = $2 RETURNING archived_on"
 
 		p, mockDB := buildTestService(t)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(

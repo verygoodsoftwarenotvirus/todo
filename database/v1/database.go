@@ -38,8 +38,8 @@ type (
 	// ConnectionDetails is a string alias for dependency injection.
 	ConnectionDetails string
 
-	// Database describes anything that stores data for our services.
-	Database interface {
+	// DataManager describes anything that stores data for our services.
+	DataManager interface {
 		Migrate(ctx context.Context) error
 		IsReady(ctx context.Context) (ready bool)
 

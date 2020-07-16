@@ -3,6 +3,13 @@ package models
 import (
 	"context"
 	"net/http"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search"
+)
+
+const (
+	// ItemsSearchIndexName is the name of the index used to search through items.
+	ItemsSearchIndexName search.IndexName = "items"
 )
 
 type (
@@ -42,7 +49,9 @@ type (
 		ItemExists(ctx context.Context, itemID, userID uint64) (bool, error)
 		GetItem(ctx context.Context, itemID, userID uint64) (*Item, error)
 		GetAllItemsCount(ctx context.Context) (uint64, error)
+		GetAllItems(ctx context.Context, resultChannel chan []Item) error
 		GetItems(ctx context.Context, userID uint64, filter *QueryFilter) (*ItemList, error)
+		GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]Item, error)
 		CreateItem(ctx context.Context, input *ItemCreationInput) (*Item, error)
 		UpdateItem(ctx context.Context, updated *Item) error
 		ArchiveItem(ctx context.Context, itemID, userID uint64) error
@@ -53,6 +62,7 @@ type (
 		CreationInputMiddleware(next http.Handler) http.Handler
 		UpdateInputMiddleware(next http.Handler) http.Handler
 
+		SearchHandler() http.HandlerFunc
 		ListHandler() http.HandlerFunc
 		CreateHandler() http.HandlerFunc
 		ExistenceHandler() http.HandlerFunc

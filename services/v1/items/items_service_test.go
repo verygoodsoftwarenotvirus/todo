@@ -8,6 +8,7 @@ import (
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
+	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search/mock"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -22,6 +23,7 @@ func buildTestService() *Service {
 		itemIDFetcher:   func(req *http.Request) uint64 { return 0 },
 		userIDFetcher:   func(req *http.Request) uint64 { return 0 },
 		encoderDecoder:  &mockencoding.EncoderDecoder{},
+		search:          &mocksearch.MockIndexManager{},
 		reporter:        nil,
 	}
 }
@@ -42,6 +44,7 @@ func TestProvideItemsService(T *testing.T) {
 			&mockencoding.EncoderDecoder{},
 			ucp,
 			nil,
+			&mocksearch.MockIndexManager{},
 		)
 
 		assert.NotNil(t, s)
@@ -61,6 +64,7 @@ func TestProvideItemsService(T *testing.T) {
 			&mockencoding.EncoderDecoder{},
 			ucp,
 			nil,
+			&mocksearch.MockIndexManager{},
 		)
 
 		assert.Nil(t, s)

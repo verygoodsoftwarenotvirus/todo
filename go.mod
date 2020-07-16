@@ -13,6 +13,7 @@ require (
 	github.com/alexedwards/scs/postgresstore v0.0.0-20200503134757-95908882a5b1
 	github.com/alexedwards/scs/sqlite3store v0.0.0-20200503134757-95908882a5b1
 	github.com/alexedwards/scs/v2 v2.3.1
+	github.com/blevesearch/bleve v1.0.9
 	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc
 	github.com/brianvoe/gofakeit/v5 v5.0.0
 	github.com/emicklei/hazana v1.6.2

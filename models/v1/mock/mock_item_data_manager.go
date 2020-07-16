@@ -33,10 +33,22 @@ func (m *ItemDataManager) GetAllItemsCount(ctx context.Context) (uint64, error) 
 	return args.Get(0).(uint64), args.Error(1)
 }
 
+// GetAllItems is a mock function.
+func (m *ItemDataManager) GetAllItems(ctx context.Context, results chan []models.Item) error {
+	args := m.Called(ctx, results)
+	return args.Error(0)
+}
+
 // GetItems is a mock function.
 func (m *ItemDataManager) GetItems(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.ItemList, error) {
 	args := m.Called(ctx, userID, filter)
 	return args.Get(0).(*models.ItemList), args.Error(1)
+}
+
+// GetItemsWithIDs is a mock function.
+func (m *ItemDataManager) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]models.Item, error) {
+	args := m.Called(ctx, userID, limit, ids)
+	return args.Get(0).([]models.Item), args.Error(1)
 }
 
 // CreateItem is a mock function.

@@ -2,6 +2,7 @@ package mariadb
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
 	"regexp"
 	"strings"
@@ -11,6 +12,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+)
+
+const (
+	defaultLimit = uint8(20)
 )
 
 func buildTestService(t *testing.T) (*MariaDB, sqlmock.Sqlmock) {
@@ -52,6 +57,13 @@ func ensureArgCountMatchesQuery(t *testing.T, query string, args []interface{}) 
 	}
 }
 
+func interfacesToDriverValues(in []interface{}) (out []driver.Value) {
+	for _, x := range in {
+		out = append(out, driver.Value(x))
+	}
+	return out
+}
+
 func TestProvideMariaDB(T *testing.T) {
 	T.Parallel()
 
@@ -86,5 +98,14 @@ func TestMariaDB_logIDRetrievalError(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		m, _ := buildTestService(t)
 		m.logIDRetrievalError(errors.New("blah"))
+	})
+}
+
+func TestProvideMariaDBConnection(T *testing.T) {
+	T.Parallel()
+
+	T.Run("obligatory", func(t *testing.T) {
+		_, err := ProvideMariaDBConnection(noop.ProvideNoopLogger(), "")
+		assert.NoError(t, err)
 	})
 }

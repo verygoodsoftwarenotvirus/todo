@@ -29,19 +29,19 @@ func TestFromParams(T *testing.T) {
 		}
 
 		exampleInput := url.Values{
-			pageKey:          []string{strconv.Itoa(int(expected.Page))},
-			limitKey:         []string{strconv.Itoa(int(expected.Limit))},
-			createdBeforeKey: []string{strconv.Itoa(int(expected.CreatedAfter))},
-			createdAfterKey:  []string{strconv.Itoa(int(expected.CreatedBefore))},
-			updatedBeforeKey: []string{strconv.Itoa(int(expected.UpdatedAfter))},
-			updatedAfterKey:  []string{strconv.Itoa(int(expected.UpdatedBefore))},
-			sortByKey:        []string{string(expected.SortBy)},
+			pageQueryKey:          []string{strconv.Itoa(int(expected.Page))},
+			LimitQueryKey:         []string{strconv.Itoa(int(expected.Limit))},
+			createdBeforeQueryKey: []string{strconv.Itoa(int(expected.CreatedAfter))},
+			createdAfterQueryKey:  []string{strconv.Itoa(int(expected.CreatedBefore))},
+			updatedBeforeQueryKey: []string{strconv.Itoa(int(expected.UpdatedAfter))},
+			updatedAfterQueryKey:  []string{strconv.Itoa(int(expected.UpdatedBefore))},
+			sortByQueryKey:        []string{string(expected.SortBy)},
 		}
 
 		actual.FromParams(exampleInput)
 		assert.Equal(t, expected, actual)
 
-		exampleInput[sortByKey] = []string{string(SortAscending)}
+		exampleInput[sortByQueryKey] = []string{string(SortAscending)}
 
 		actual.FromParams(exampleInput)
 		assert.Equal(t, SortAscending, actual.SortBy)
@@ -84,13 +84,13 @@ func TestQueryFilter_ToValues(T *testing.T) {
 			SortBy:        SortDescending,
 		}
 		expected := url.Values{
-			pageKey:          []string{strconv.Itoa(int(qf.Page))},
-			limitKey:         []string{strconv.Itoa(int(qf.Limit))},
-			createdBeforeKey: []string{strconv.Itoa(int(qf.CreatedAfter))},
-			createdAfterKey:  []string{strconv.Itoa(int(qf.CreatedBefore))},
-			updatedBeforeKey: []string{strconv.Itoa(int(qf.UpdatedAfter))},
-			updatedAfterKey:  []string{strconv.Itoa(int(qf.UpdatedBefore))},
-			sortByKey:        []string{string(qf.SortBy)},
+			pageQueryKey:          []string{strconv.Itoa(int(qf.Page))},
+			LimitQueryKey:         []string{strconv.Itoa(int(qf.Limit))},
+			createdBeforeQueryKey: []string{strconv.Itoa(int(qf.CreatedAfter))},
+			createdAfterQueryKey:  []string{strconv.Itoa(int(qf.CreatedBefore))},
+			updatedBeforeQueryKey: []string{strconv.Itoa(int(qf.UpdatedAfter))},
+			updatedAfterQueryKey:  []string{strconv.Itoa(int(qf.UpdatedBefore))},
+			sortByQueryKey:        []string{string(qf.SortBy)},
 		}
 
 		actual := qf.ToValues()
@@ -167,7 +167,7 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 			UpdatedBefore: uint64(time.Now().Unix()),
 		}
 
-		expected := "SELECT things FROM stuff WHERE stuff.condition = $1 AND stuff.created_on > $2 AND stuff.created_on < $3 AND stuff.updated_on > $4 AND stuff.updated_on < $5 LIMIT 20 OFFSET 100"
+		expected := "SELECT things FROM stuff WHERE stuff.condition = $1 AND stuff.created_on > $2 AND stuff.created_on < $3 AND stuff.last_updated_on > $4 AND stuff.last_updated_on < $5 LIMIT 20 OFFSET 100"
 		x := exampleQF.ApplyToQueryBuilder(baseQueryBuilder, exampleTableName)
 		actual, args, err := x.ToSql()
 
@@ -202,13 +202,13 @@ func TestExtractQueryFilter(T *testing.T) {
 			SortBy:        SortDescending,
 		}
 		exampleInput := url.Values{
-			pageKey:          []string{strconv.Itoa(int(expected.Page))},
-			limitKey:         []string{strconv.Itoa(int(expected.Limit))},
-			createdBeforeKey: []string{strconv.Itoa(int(expected.CreatedAfter))},
-			createdAfterKey:  []string{strconv.Itoa(int(expected.CreatedBefore))},
-			updatedBeforeKey: []string{strconv.Itoa(int(expected.UpdatedAfter))},
-			updatedAfterKey:  []string{strconv.Itoa(int(expected.UpdatedBefore))},
-			sortByKey:        []string{string(expected.SortBy)},
+			pageQueryKey:          []string{strconv.Itoa(int(expected.Page))},
+			LimitQueryKey:         []string{strconv.Itoa(int(expected.Limit))},
+			createdBeforeQueryKey: []string{strconv.Itoa(int(expected.CreatedAfter))},
+			createdAfterQueryKey:  []string{strconv.Itoa(int(expected.CreatedBefore))},
+			updatedBeforeQueryKey: []string{strconv.Itoa(int(expected.UpdatedAfter))},
+			updatedAfterQueryKey:  []string{strconv.Itoa(int(expected.UpdatedBefore))},
+			sortByQueryKey:        []string{string(expected.SortBy)},
 		}
 
 		req, err := http.NewRequest(http.MethodGet, "https://verygoodsoftwarenotvirus.ru", nil)

@@ -21,8 +21,11 @@ RUN npm install && npm run build
 # final stage
 FROM debian:stretch
 
-RUN groupadd -g 999 appuser && \
-    useradd -r -u 999 -g appuser appuser
+RUN mkdir /home/appuser
+RUN groupadd --gid 999 appuser && \
+    useradd --system --uid 999 --gid appuser appuser
+RUN chown appuser /home/appuser
+WORKDIR /home/appuser
 USER appuser
 
 COPY environments/testing/config_files/integration-tests-sqlite.toml /etc/config.toml

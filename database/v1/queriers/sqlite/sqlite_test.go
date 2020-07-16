@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
 	"regexp"
 	"strings"
@@ -11,6 +12,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+)
+
+const (
+	defaultLimit = uint8(20)
 )
 
 func buildTestService(t *testing.T) (*Sqlite, sqlmock.Sqlmock) {
@@ -52,6 +57,13 @@ func ensureArgCountMatchesQuery(t *testing.T, query string, args []interface{}) 
 	}
 }
 
+func interfacesToDriverValues(in []interface{}) (out []driver.Value) {
+	for _, x := range in {
+		out = append(out, driver.Value(x))
+	}
+	return out
+}
+
 func TestProvideSqlite(T *testing.T) {
 	T.Parallel()
 
@@ -86,5 +98,27 @@ func TestSqlite_logIDRetrievalError(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		s, _ := buildTestService(t)
 		s.logIDRetrievalError(errors.New("blah"))
+	})
+}
+
+func Test_joinUint64s(T *testing.T) {
+	T.Parallel()
+
+	T.Run("obligatory", func(t *testing.T) {
+		exampleInput := []uint64{123, 456, 789}
+
+		expected := "123,456,789"
+		actual := joinUint64s(exampleInput, ",")
+
+		assert.Equal(t, expected, actual, "expected %s to equal %s", expected, actual)
+	})
+}
+
+func TestProvideSqliteDB(T *testing.T) {
+	T.Parallel()
+
+	T.Run("obligatory", func(t *testing.T) {
+		_, err := ProvideSqliteDB(noop.ProvideNoopLogger(), "")
+		assert.NoError(t, err)
 	})
 }

@@ -22,11 +22,18 @@ const (
 
 	existencePrefix, existenceSuffix = "SELECT EXISTS (", ")"
 
+	idColumn            = "id"
+	createdOnColumn     = "created_on"
+	lastUpdatedOnColumn = "last_updated_on"
+	archivedOnColumn    = "archived_on"
+
 	// countQuery is a generic counter query used in a few query builders.
 	countQuery = "COUNT(%s.id)"
 
 	// currentUnixTimeQuery is the query maria DB uses to determine the current unix time.
 	currentUnixTimeQuery = "UNIX_TIMESTAMP()"
+
+	defaultBucketSize = uint64(1000)
 )
 
 func init() {
@@ -44,7 +51,7 @@ func init() {
 	sql.Register(mariaDBDriverName, driver)
 }
 
-var _ database.Database = (*MariaDB)(nil)
+var _ database.DataManager = (*MariaDB)(nil)
 
 type (
 	// MariaDB is our main MariaDB interaction db.
@@ -75,7 +82,7 @@ func ProvideMariaDBConnection(logger logging.Logger, connectionDetails database.
 }
 
 // ProvideMariaDB provides a maria DB controller.
-func ProvideMariaDB(debug bool, db *sql.DB, logger logging.Logger) database.Database {
+func ProvideMariaDB(debug bool, db *sql.DB, logger logging.Logger) database.DataManager {
 	return &MariaDB{
 		db:         db,
 		debug:      debug,

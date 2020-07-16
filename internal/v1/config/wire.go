@@ -30,6 +30,12 @@ func ProvideConfigFrontendSettings(c *ServerConfig) FrontendSettings {
 	return c.Frontend
 }
 
+// ProvideSearchSettings is an obligatory function that
+// we're required to have because wire doesn't do it for us.
+func ProvideSearchSettings(c *ServerConfig) SearchSettings {
+	return c.Search
+}
+
 // END it'd be neat if wire could do this for me one day.
 
 var (
@@ -39,6 +45,7 @@ var (
 		ProvideConfigAuthSettings,
 		ProvideConfigDatabaseSettings,
 		ProvideConfigFrontendSettings,
+		ProvideSearchSettings,
 		ProvideSessionManager,
 	)
 )

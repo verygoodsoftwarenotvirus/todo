@@ -34,56 +34,68 @@ It's a good idea to run `make quicktest lintegration-tests` before commits. You 
 ## repo organization overview
 
 ```
-├── artifacts              // gitignored, where coverage reports and such go
+├── artifacts                      // gitignored, where coverage reports and such go
 ├── client
 │   └── v1
-│       └── http           // service client, used in integration tests
+│       └── http                   // service client, used in integration tests
 ├── cmd
-│   ├── config_gen         // helper binary that generates our config files programmatically so they're always correct
+│   ├── config_gen                 // helper binary that generates our config files programmatically so they're always correct
 │   │   └── v1
-│   ├── server             // the main attraction
+│   ├── server                     // the main attraction
 │   │   └── v1
-│   └── tools              // helper tool I built for debugging login stuff, displays a given TOTP token on a loop
-│       └── two_factor
-├── compose-files          // docker-compose configurations
-├── config_files           // service configuration files
+│   └── tools              
+│       ├── index_initializer      // tool that hydrates a bleve search index folder
+│       └── two_factor             // tool for debugging login stuff, displays a given TOTP token on a loop
 ├── database
 │   └── v1
-│       ├── client         // dbclient, wraps all querier calls in tracing and log statements
-│       └── queriers       // where all the supported databases actually get queried
+│       ├── client                 // dbclient, wraps all querier calls in tracing and log statements
+│       └── queriers               // where all the supported databases actually get queried
 │           ├── mariadb
 │           ├── postgres
 │           └── sqlite
-├── deploy
-│   ├── grafana            // grafana configuration files
-│   └── prometheus         // prometheus configuration files
-├── development            // metadevelopment files, right now just a documentation of what Gitlab badges are active
-├── dockerfiles
-├── frontend               // the lipstick on this pig
+├── environments
+│   ├── local
+│   │   ├── grafana
+│   │   │   └── dashboards
+│   │   └── prometheus
+│   └── testing
+│       ├── compose_files         // docker-compose configurations
+│       │   ├── integration_tests
+│       │   └── load_tests
+│       ├── config_files          // service configuration files
+│       ├── dockerfiles           // Dockerfiles for the various test servers/runners
+│       ├── grafana
+│       │   └── dashboards
+│       └── prometheus
+├── frontend                       // the lipstick on this pig
 │   └── v1
-│       ├── node_modules   // the notorious, also gitignored
-│       ├── public         // the only thing in here that isn't built is the home index.html page
+│       ├── node_modules           // the notorious, also gitignored
+│       ├── public                 // the only thing in here that isn't built is the home index.html page
 │       └── src
-│           ├── components // the place for common frontend elements
+│           ├── components         // the place for common frontend elements
 │           └── pages
 │               └── items
-├── internal               // packages really not meant for use outside this repository, unlike the clients
+├── internal                       // packages really not meant for use outside this repository, unlike the clients
 │   └── v1
-│       ├── auth           // where password encryption/TOTP token verification happens
+│       ├── auth                   // where password encryption/TOTP token verification happens
 │       │   └── mock
-│       ├── config         // configuration parsing/client initialization
-│       ├── encoding       // helper lib for encoding HTTP responses
+│       ├── config                 // configuration parsing/client initialization
+│       ├── encoding               // helper lib for encoding HTTP responses
 │       │   └── mock
-│       ├── metrics        // abstraction to provide some stability in the telemetry library space for myself
+│       ├── metrics                // abstraction to provide some stability in the telemetry library space for myself
 │       │   └── mock
-│       └── tracing        // helper libs for attaching certain IDs to spans, other such things
-├── models                 // one models repository to rule them all
+│       ├── search
+│       │   ├── bleve
+│       │   └── mock
+│       └── tracing                // helper libs for attaching certain IDs to spans, other such things
+├── models                         // one models repository to rule them all
 │   └── v1
-│       ├── fake           // the one blessed way of creating fake variables in this repo
+│       ├── fake                   // the one blessed way of creating fake variables in this repo
 │       └── mock
-├── server                 // notice how there's room for multiple protocols, HTTP is simply the only one present
+├── server                         // notice how there's room for multiple protocols, HTTP is simply the only one present
 │   └── v1
-├── services               // I tried to make it so that you could very easily spin any of these up in their own service if your little heart so desired.
+│       └── http
+├── services                       // I tried to make it so that you could very easily spin any of these up in their own service if your little heart so desired.
 │   └── v1
 │       ├── auth
 │       ├── frontend
@@ -93,10 +105,10 @@ It's a good idea to run `make quicktest lintegration-tests` before commits. You 
 │       └── webhooks
 └── tests
     └── v1
-        ├── frontend       // selenium webdriver tests in go
-        ├── integration    // using the built in go testing tool, the aforementioned client and server to test everybody working in harmony
-        ├── load           // load tests, run primarily in CI, but able to be run locally as well
-        └── testutil       // some helper functions for these more involved tests only
+        ├── frontend               // selenium webdriver tests in go
+        ├── integration            // using the built in go testing tool, the aforementioned client and server to test everybody working in harmony
+        ├── load                   // load tests, run primarily in CI, but able to be run locally as well
+        └── testutil               // some helper functions for these more involved tests only
 ```
 
 ## running the server

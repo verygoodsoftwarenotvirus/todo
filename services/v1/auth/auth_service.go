@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
@@ -48,30 +47,27 @@ type (
 // ProvideAuthService builds a new AuthService.
 func ProvideAuthService(
 	logger logging.Logger,
-	cfg *config.ServerConfig,
+	cfg config.AuthSettings,
 	authenticator auth.Authenticator,
 	database models.UserDataManager,
 	oauth2ClientsService OAuth2ClientValidator,
 	sessionManager *scs.SessionManager,
 	encoder encoding.EncoderDecoder,
 ) (*Service, error) {
-	if cfg == nil {
-		return nil, errors.New("nil config provided")
-	}
-
 	svc := &Service{
 		logger:               logger.WithName(serviceName),
 		encoderDecoder:       encoder,
-		config:               cfg.Auth,
+		config:               cfg,
 		userDB:               database,
 		oauth2ClientsService: oauth2ClientsService,
 		authenticator:        authenticator,
 		sessionManager:       sessionManager,
 		cookieManager: securecookie.New(
 			securecookie.GenerateRandomKey(64),
-			[]byte(cfg.Auth.CookieSecret),
+			[]byte(cfg.CookieSecret),
 		),
 	}
+	svc.sessionManager.Lifetime = cfg.CookieLifetime
 
 	return svc, nil
 }

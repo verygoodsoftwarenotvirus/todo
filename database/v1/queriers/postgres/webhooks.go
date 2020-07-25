@@ -67,7 +67,7 @@ func (p *Postgres) scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 		&dataTypesStr,
 		&topicsStr,
 		&x.CreatedOn,
-		&x.UpdatedOn,
+		&x.LastUpdatedOn,
 		&x.ArchivedOn,
 		&x.BelongsToUser,
 	}
@@ -357,7 +357,7 @@ func (p *Postgres) buildUpdateWebhookQuery(input *models.Webhook) (query string,
 // UpdateWebhook updates a particular webhook. Note that UpdateWebhook expects the provided input to have a valid ID.
 func (p *Postgres) UpdateWebhook(ctx context.Context, input *models.Webhook) error {
 	query, args := p.buildUpdateWebhookQuery(input)
-	return p.db.QueryRowContext(ctx, query, args...).Scan(&input.UpdatedOn)
+	return p.db.QueryRowContext(ctx, query, args...).Scan(&input.LastUpdatedOn)
 }
 
 // buildArchiveWebhookQuery returns a SQL query (and arguments) that will mark a webhook as archived.

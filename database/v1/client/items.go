@@ -53,7 +53,7 @@ func (c *Client) GetAllItemsCount(ctx context.Context) (count uint64, err error)
 
 // GetAllItems fetches a list of all items in the database.
 func (c *Client) GetAllItems(ctx context.Context, results chan []models.Item) error {
-	ctx, span := tracing.StartSpan(ctx, "GetItems")
+	ctx, span := tracing.StartSpan(ctx, "GetAllItems")
 	defer span.End()
 
 	c.logger.Debug("GetAllItems called")
@@ -80,7 +80,7 @@ func (c *Client) GetItems(ctx context.Context, userID uint64, filter *models.Que
 
 // GetItemsWithIDs fetches items from the database within a given set of IDs.
 func (c *Client) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]models.Item, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetItems")
+	ctx, span := tracing.StartSpan(ctx, "GetItemsWithIDs")
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)

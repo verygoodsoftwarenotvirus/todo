@@ -54,7 +54,7 @@ func (m *MariaDB) scanOAuth2Client(scan database.Scanner) (*models.OAuth2Client,
 		&x.RedirectURI,
 		&x.ClientSecret,
 		&x.CreatedOn,
-		&x.UpdatedOn,
+		&x.LastUpdatedOn,
 		&x.ArchivedOn,
 		&x.BelongsToUser,
 	}
@@ -165,7 +165,7 @@ func (m *MariaDB) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Clie
 
 // GetAllOAuth2ClientsForUser gets a list of OAuth2 clients belonging to a given user.
 func (m *MariaDB) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64) ([]*models.OAuth2Client, error) {
-	query, args := m.buildGetOAuth2ClientsQuery(userID, nil)
+	query, args := m.buildGetOAuth2ClientsForUserQuery(userID, nil)
 
 	rows, err := m.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -249,9 +249,9 @@ func (m *MariaDB) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	return count, err
 }
 
-// buildGetOAuth2ClientsQuery returns a SQL query (and arguments) that will retrieve a list of OAuth2 clients that
+// buildGetOAuth2ClientsForUserQuery returns a SQL query (and arguments) that will retrieve a list of OAuth2 clients that
 // meet the given filter's criteria (if relevant) and belong to a given user.
-func (m *MariaDB) buildGetOAuth2ClientsQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
+func (m *MariaDB) buildGetOAuth2ClientsForUserQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 
 	builder := m.sqlBuilder.
@@ -261,7 +261,7 @@ func (m *MariaDB) buildGetOAuth2ClientsQuery(userID uint64, filter *models.Query
 			fmt.Sprintf("%s.%s", oauth2ClientsTableName, oauth2ClientsTableOwnershipColumn): userID,
 			fmt.Sprintf("%s.%s", oauth2ClientsTableName, archivedOnColumn):                  nil,
 		}).
-		GroupBy(fmt.Sprintf("%s.%s", oauth2ClientsTableName, idColumn))
+		OrderBy(fmt.Sprintf("%s.%s", oauth2ClientsTableName, idColumn))
 
 	if filter != nil {
 		builder = filter.ApplyToQueryBuilder(builder, oauth2ClientsTableName)
@@ -275,7 +275,7 @@ func (m *MariaDB) buildGetOAuth2ClientsQuery(userID uint64, filter *models.Query
 
 // GetOAuth2ClientsForUser gets a list of OAuth2 clients.
 func (m *MariaDB) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
-	query, args := m.buildGetOAuth2ClientsQuery(userID, filter)
+	query, args := m.buildGetOAuth2ClientsForUserQuery(userID, filter)
 	rows, err := m.db.QueryContext(ctx, query, args...)
 
 	if err != nil {

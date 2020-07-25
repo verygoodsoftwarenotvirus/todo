@@ -28,12 +28,12 @@ const (
 
 var (
 	// ErrNotFound is a handy error to return when we receive a 404 response.
-	ErrNotFound = errors.New("404: not found")
+	ErrNotFound = fmt.Errorf("%d: not found", http.StatusNotFound)
 
-	// ErrUnauthorized is a handy error to return when we receive a 404 response.
-	ErrUnauthorized = errors.New("401: not authorized")
+	// ErrUnauthorized is a handy error to return when we receive a 401 response.
+	ErrUnauthorized = fmt.Errorf("%d: not authorized", http.StatusUnauthorized)
 
-	// ErrInvalidTOTPToken is an error for when our TOTP validation request goes awry
+	// ErrInvalidTOTPToken is an error for when our TOTP validation request goes awry.
 	ErrInvalidTOTPToken = errors.New("invalid TOTP token")
 )
 

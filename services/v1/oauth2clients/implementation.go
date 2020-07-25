@@ -110,7 +110,7 @@ func (s *Service) UserAuthorizationHandler(_ http.ResponseWriter, req *http.Requ
 		// check for user instead.
 		si, userOk := ctx.Value(models.SessionInfoKey).(*models.SessionInfo)
 		if !userOk || si == nil {
-			logger.Debug("no user iD attached to this request")
+			logger.Debug("no user attached to this request")
 			return "", errors.New("user not found")
 		}
 		uid = si.UserID

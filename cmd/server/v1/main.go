@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"errors"
-	"log"
+	"fmt"
 	"os"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
@@ -25,7 +25,7 @@ func main() {
 	// parse our config file.
 	cfg, err := config.ParseConfigFile(configFilepath)
 	if err != nil || cfg == nil {
-		logger.Fatal(err)
+		logger.Fatal(fmt.Errorf("error parsing configuration file: %w", err))
 	}
 
 	// only allow initialization to take so long.
@@ -36,14 +36,14 @@ func main() {
 	logger.Debug("connecting to database")
 	rawDB, err := cfg.ProvideDatabaseConnection(logger)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatal(fmt.Errorf("error connecting to database: %w", err))
 	}
 
 	// establish the database client.
 	logger.Debug("setting up database client")
 	dbClient, err := cfg.ProvideDatabaseClient(ctx, logger, rawDB)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatal(fmt.Errorf("error initializing database client: %w", err))
 	}
 
 	// build our server struct.
@@ -53,7 +53,7 @@ func main() {
 	cancel()
 
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(fmt.Errorf("error initializing HTTP server: %w", err))
 	}
 
 	// I slept and dreamt that life was joy.

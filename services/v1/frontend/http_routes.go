@@ -10,15 +10,6 @@ import (
 	"github.com/spf13/afero"
 )
 
-// Routes returns a map of route to HandlerFunc for the parent router to set.
-// this keeps routing logic in the frontend service and not in the server itself.
-func (s *Service) Routes() map[string]http.HandlerFunc {
-	return map[string]http.HandlerFunc{
-		// "/login":    s.LoginPage,
-		// "/register": s.RegistrationPage,
-	}
-}
-
 func (s *Service) buildStaticFileServer(fileDir string) (*afero.HttpFs, error) {
 	var afs afero.Fs
 	if s.config.CacheStaticFiles {

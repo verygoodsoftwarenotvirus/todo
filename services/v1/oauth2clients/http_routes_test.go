@@ -74,7 +74,7 @@ func Test_fetchUserID(T *testing.T) {
 func TestService_ListHandler(T *testing.T) {
 	T.Parallel()
 
-	requestingUser := fakemodels.BuildFakeUser()
+	exampleUser := fakemodels.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
@@ -85,7 +85,7 @@ func TestService_ListHandler(T *testing.T) {
 		mockDB.OAuth2ClientDataManager.On(
 			"GetOAuth2ClientsForUser",
 			mock.Anything,
-			requestingUser.ID,
+			exampleUser.ID,
 			mock.AnythingOfType("*models.QueryFilter"),
 		).Return(exampleOAuth2ClientList, nil)
 		s.database = mockDB
@@ -97,11 +97,11 @@ func TestService_ListHandler(T *testing.T) {
 		req := buildRequest(t)
 		// for the service.fetchUserID() call
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.SessionInfoKey, requestingUser.ToSessionInfo()),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
-		s.ListHandler()(res, req)
+		s.ListHandler(res, req)
 		assert.Equal(t, http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB, ed)
@@ -114,7 +114,7 @@ func TestService_ListHandler(T *testing.T) {
 		mockDB.OAuth2ClientDataManager.On(
 			"GetOAuth2ClientsForUser",
 			mock.Anything,
-			requestingUser.ID,
+			exampleUser.ID,
 			mock.AnythingOfType("*models.QueryFilter"),
 		).Return((*models.OAuth2ClientList)(nil), sql.ErrNoRows)
 		s.database = mockDB
@@ -125,11 +125,11 @@ func TestService_ListHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.SessionInfoKey, requestingUser.ToSessionInfo()),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
-		s.ListHandler()(res, req)
+		s.ListHandler(res, req)
 		assert.Equal(t, http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB, ed)
@@ -142,18 +142,18 @@ func TestService_ListHandler(T *testing.T) {
 		mockDB.OAuth2ClientDataManager.On(
 			"GetOAuth2ClientsForUser",
 			mock.Anything,
-			requestingUser.ID,
+			exampleUser.ID,
 			mock.AnythingOfType("*models.QueryFilter"),
 		).Return((*models.OAuth2ClientList)(nil), errors.New("blah"))
 		s.database = mockDB
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.SessionInfoKey, requestingUser.ToSessionInfo()),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
-		s.ListHandler()(res, req)
+		s.ListHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB)
@@ -168,7 +168,7 @@ func TestService_ListHandler(T *testing.T) {
 		mockDB.OAuth2ClientDataManager.On(
 			"GetOAuth2ClientsForUser",
 			mock.Anything,
-			requestingUser.ID,
+			exampleUser.ID,
 			mock.AnythingOfType("*models.QueryFilter"),
 		).Return(exampleOAuth2ClientList, nil)
 		s.database = mockDB
@@ -179,11 +179,11 @@ func TestService_ListHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), models.SessionInfoKey, requestingUser.ToSessionInfo()),
+			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
-		s.ListHandler()(res, req)
+		s.ListHandler(res, req)
 		assert.Equal(t, http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB, ed)
@@ -237,14 +237,14 @@ func TestService_CreateHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
+			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext(
 			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
-		s.CreateHandler()(res, req)
+		s.CreateHandler(res, req)
 		assert.Equal(t, http.StatusCreated, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB, a, uc, ed)
@@ -256,7 +256,7 @@ func TestService_CreateHandler(T *testing.T) {
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
 
-		s.CreateHandler()(res, req)
+		s.CreateHandler(res, req)
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
 
@@ -277,14 +277,14 @@ func TestService_CreateHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
+			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext(
 			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
-		s.CreateHandler()(res, req)
+		s.CreateHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB)
@@ -324,14 +324,14 @@ func TestService_CreateHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
+			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext(
 			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
-		s.CreateHandler()(res, req)
+		s.CreateHandler(res, req)
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB, a)
@@ -371,14 +371,14 @@ func TestService_CreateHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
+			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext(
 			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
-		s.CreateHandler()(res, req)
+		s.CreateHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB, a)
@@ -418,14 +418,14 @@ func TestService_CreateHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
+			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext(
 			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
-		s.CreateHandler()(res, req)
+		s.CreateHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB, a)
@@ -473,14 +473,14 @@ func TestService_CreateHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), CreationMiddlewareCtxKey, exampleInput),
+			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext(
 			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
 		)
 		res := httptest.NewRecorder()
 
-		s.CreateHandler()(res, req)
+		s.CreateHandler(res, req)
 		assert.Equal(t, http.StatusCreated, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB, a, uc, ed)
@@ -520,7 +520,7 @@ func TestService_ReadHandler(T *testing.T) {
 		)
 		res := httptest.NewRecorder()
 
-		s.ReadHandler()(res, req)
+		s.ReadHandler(res, req)
 		assert.Equal(t, http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB, ed)
@@ -550,7 +550,7 @@ func TestService_ReadHandler(T *testing.T) {
 		)
 		res := httptest.NewRecorder()
 
-		s.ReadHandler()(res, req)
+		s.ReadHandler(res, req)
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB)
@@ -580,7 +580,7 @@ func TestService_ReadHandler(T *testing.T) {
 		)
 		res := httptest.NewRecorder()
 
-		s.ReadHandler()(res, req)
+		s.ReadHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB)
@@ -614,7 +614,7 @@ func TestService_ReadHandler(T *testing.T) {
 		)
 		res := httptest.NewRecorder()
 
-		s.ReadHandler()(res, req)
+		s.ReadHandler(res, req)
 		assert.Equal(t, http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB, ed)
@@ -654,7 +654,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 		)
 		res := httptest.NewRecorder()
 
-		s.ArchiveHandler()(res, req)
+		s.ArchiveHandler(res, req)
 		assert.Equal(t, http.StatusNoContent, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB, uc)
@@ -684,7 +684,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 		)
 		res := httptest.NewRecorder()
 
-		s.ArchiveHandler()(res, req)
+		s.ArchiveHandler(res, req)
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB)
@@ -714,7 +714,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 		)
 		res := httptest.NewRecorder()
 
-		s.ArchiveHandler()(res, req)
+		s.ArchiveHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB)

@@ -29,8 +29,8 @@ func init() {
 }
 
 const (
-	// CreationMiddlewareCtxKey is a string alias for referring to OAuth2 client creation data.
-	CreationMiddlewareCtxKey models.ContextKey = "create_oauth2_client"
+	// creationMiddlewareCtxKey is a string alias for referring to OAuth2 client creation data.
+	creationMiddlewareCtxKey models.ContextKey = "create_oauth2_client"
 
 	counterName        metrics.CounterName = "oauth2_clients"
 	counterDescription string              = "number of oauth2 clients managed by the oauth2 client service"

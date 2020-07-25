@@ -109,7 +109,7 @@ frontend-tests:
 lintegration-tests: integration-tests lint
 
 .PHONY: integration-tests
-integration-tests: integration-tests-postgres integration-tests-sqlite integration-tests-mariadb
+integration-tests: integration-tests-sqlite integration-tests-postgres integration-tests-mariadb
 
 .PHONY: integration-tests-
 integration-tests-%:
@@ -138,7 +138,7 @@ integration-coverage: $(ARTIFACTS_DIR) vendor
 ## Load tests
 
 .PHONY: load-tests
-load-tests: load-tests-postgres load-tests-sqlite load-tests-mariadb
+load-tests: load-tests-sqlite load-tests-postgres load-tests-mariadb
 
 .PHONY: load-tests-
 load-tests-%:

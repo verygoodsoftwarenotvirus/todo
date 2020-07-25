@@ -30,7 +30,7 @@ func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(ctx, CreationMiddlewareCtxKey, x)
+		ctx = context.WithValue(ctx, creationMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }

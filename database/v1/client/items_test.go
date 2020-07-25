@@ -72,6 +72,24 @@ func TestClient_GetAllItemsCount(T *testing.T) {
 	})
 }
 
+func TestClient_GetAllItems(T *testing.T) {
+	T.Parallel()
+
+	T.Run("obligatory", func(t *testing.T) {
+		ctx := context.Background()
+
+		results := make(chan []models.Item)
+
+		c, mockDB := buildTestClient()
+		mockDB.ItemDataManager.On("GetAllItems", mock.Anything, results).Return(nil)
+
+		err := c.GetAllItems(ctx, results)
+		assert.NoError(t, err)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
+	})
+}
+
 func TestClient_GetItems(T *testing.T) {
 	T.Parallel()
 

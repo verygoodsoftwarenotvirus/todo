@@ -19,10 +19,8 @@ func buildTestService(t *testing.T) *Service {
 	t.Helper()
 
 	logger := noop.ProvideNoopLogger()
-	cfg := &config.ServerConfig{
-		Auth: config.AuthSettings{
-			CookieSecret: "BLAHBLAHBLAHPRETENDTHISISSECRET!",
-		},
+	cfg := config.AuthSettings{
+		CookieSecret: "BLAHBLAHBLAHPRETENDTHISISSECRET!",
 	}
 	auth := &mockauth.Authenticator{}
 	userDB := &mockmodels.UserDataManager{}
@@ -48,13 +46,9 @@ func buildTestService(t *testing.T) *Service {
 }
 
 func TestProvideAuthService(T *testing.T) {
-	// T.Parallel() TODO: uncomment all of these when the PR gets merged
-
 	T.Run("happy path", func(t *testing.T) {
-		cfg := &config.ServerConfig{
-			Auth: config.AuthSettings{
-				CookieSecret: "BLAHBLAHBLAHPRETENDTHISISSECRET!",
-			},
+		cfg := config.AuthSettings{
+			CookieSecret: "BLAHBLAHBLAHPRETENDTHISISSECRET!",
 		}
 		auth := &mockauth.Authenticator{}
 		userDB := &mockmodels.UserDataManager{}
@@ -73,25 +67,5 @@ func TestProvideAuthService(T *testing.T) {
 		)
 		assert.NotNil(t, service)
 		assert.NoError(t, err)
-	})
-
-	T.Run("with nil config", func(t *testing.T) {
-		auth := &mockauth.Authenticator{}
-		userDB := &mockmodels.UserDataManager{}
-		oauth := &mockOAuth2ClientValidator{}
-		ed := encoding.ProvideResponseEncoder()
-		sm := scs.New()
-
-		service, err := ProvideAuthService(
-			noop.ProvideNoopLogger(),
-			nil,
-			auth,
-			userDB,
-			oauth,
-			sm,
-			ed,
-		)
-		assert.Nil(t, service)
-		assert.Error(t, err)
 	})
 }

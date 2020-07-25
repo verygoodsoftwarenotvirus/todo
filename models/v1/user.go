@@ -16,7 +16,7 @@ type (
 		PasswordLastChangedOn     *uint64 `json:"passwordLastChangedOn"`
 		TwoFactorSecretVerifiedOn *uint64 `json:"-"`
 		CreatedOn                 uint64  `json:"createdOn"`
-		UpdatedOn                 *uint64 `json:"updatedOn"`
+		LastUpdatedOn             *uint64 `json:"lastUpdatedOn"`
 		ArchivedOn                *uint64 `json:"archivedOn"`
 		IsAdmin                   bool    `json:"isAdmin"`
 		RequiresPasswordChange    bool    `json:"requiresPasswordChange"`
@@ -43,6 +43,7 @@ type (
 
 	// UserDatabaseCreationInput is used by the user creation route to communicate with the database.
 	UserDatabaseCreationInput struct {
+		Salt            []byte `json:"-"`
 		Username        string `json:"-"`
 		HashedPassword  string `json:"-"`
 		TwoFactorSecret string `json:"-"`
@@ -56,7 +57,7 @@ type (
 		PasswordLastChangedOn *uint64 `json:"passwordLastChangedOn"`
 		IsAdmin               bool    `json:"isAdmin"`
 		CreatedOn             uint64  `json:"createdOn"`
-		UpdatedOn             *uint64 `json:"updatedOn"`
+		LastUpdatedOn         *uint64 `json:"lastUpdatedOn"`
 		ArchivedOn            *uint64 `json:"archivedOn"`
 		TwoFactorQRCode       string  `json:"qrCode"`
 	}
@@ -106,13 +107,13 @@ type (
 		TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handler
 		TOTPSecretVerificationInputMiddleware(next http.Handler) http.Handler
 
-		ListHandler() http.HandlerFunc
-		CreateHandler() http.HandlerFunc
-		ReadHandler() http.HandlerFunc
-		NewTOTPSecretHandler() http.HandlerFunc
-		TOTPSecretVerificationHandler() http.HandlerFunc
-		UpdatePasswordHandler() http.HandlerFunc
-		ArchiveHandler() http.HandlerFunc
+		ListHandler(res http.ResponseWriter, req *http.Request)
+		CreateHandler(res http.ResponseWriter, req *http.Request)
+		ReadHandler(res http.ResponseWriter, req *http.Request)
+		NewTOTPSecretHandler(res http.ResponseWriter, req *http.Request)
+		TOTPSecretVerificationHandler(res http.ResponseWriter, req *http.Request)
+		UpdatePasswordHandler(res http.ResponseWriter, req *http.Request)
+		ArchiveHandler(res http.ResponseWriter, req *http.Request)
 	}
 )
 

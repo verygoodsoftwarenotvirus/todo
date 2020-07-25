@@ -9,17 +9,17 @@ import (
 )
 
 const (
-	// UserCreationMiddlewareCtxKey is the context key for creation input.
-	UserCreationMiddlewareCtxKey models.ContextKey = "user_creation_input"
+	// userCreationMiddlewareCtxKey is the context key for creation input.
+	userCreationMiddlewareCtxKey models.ContextKey = "user_creation_input"
 
-	// PasswordChangeMiddlewareCtxKey is the context key for password changes.
-	PasswordChangeMiddlewareCtxKey models.ContextKey = "user_password_change"
+	// passwordChangeMiddlewareCtxKey is the context key for password changes.
+	passwordChangeMiddlewareCtxKey models.ContextKey = "user_password_change"
 
-	// TOTPSecretVerificationMiddlewareCtxKey is the context key for TOTP token refreshes.
-	TOTPSecretVerificationMiddlewareCtxKey models.ContextKey = "totp_verify"
+	// totpSecretVerificationMiddlewareCtxKey is the context key for TOTP token refreshes.
+	totpSecretVerificationMiddlewareCtxKey models.ContextKey = "totp_verify"
 
-	// TOTPSecretRefreshMiddlewareCtxKey is the context key for TOTP token refreshes.
-	TOTPSecretRefreshMiddlewareCtxKey models.ContextKey = "totp_refresh"
+	// totpSecretRefreshMiddlewareCtxKey is the context key for TOTP token refreshes.
+	totpSecretRefreshMiddlewareCtxKey models.ContextKey = "totp_refresh"
 )
 
 // UserInputMiddleware fetches user input from requests.
@@ -37,7 +37,7 @@ func (s *Service) UserInputMiddleware(next http.Handler) http.Handler {
 		}
 
 		// attach parsed value to request context.
-		ctx = context.WithValue(ctx, UserCreationMiddlewareCtxKey, x)
+		ctx = context.WithValue(ctx, userCreationMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }
@@ -57,7 +57,7 @@ func (s *Service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler 
 		}
 
 		// attach parsed value to request context.
-		ctx = context.WithValue(ctx, PasswordChangeMiddlewareCtxKey, x)
+		ctx = context.WithValue(ctx, passwordChangeMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }
@@ -77,7 +77,7 @@ func (s *Service) TOTPSecretVerificationInputMiddleware(next http.Handler) http.
 		}
 
 		// attach parsed value to request context.
-		ctx = context.WithValue(ctx, TOTPSecretVerificationMiddlewareCtxKey, x)
+		ctx = context.WithValue(ctx, totpSecretVerificationMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }
@@ -97,7 +97,7 @@ func (s *Service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handl
 		}
 
 		// attach parsed value to request context.
-		ctx = context.WithValue(ctx, TOTPSecretRefreshMiddlewareCtxKey, x)
+		ctx = context.WithValue(ctx, totpSecretRefreshMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }

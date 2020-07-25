@@ -37,6 +37,8 @@ var (
 		"?", `\?`,
 		",", `\,`,
 		"-", `\-`,
+		"[", `\[`,
+		"]", `\]`,
 	)
 	queryArgRegexp = regexp.MustCompile(`\?+`)
 )
@@ -98,19 +100,6 @@ func TestSqlite_logIDRetrievalError(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		s, _ := buildTestService(t)
 		s.logIDRetrievalError(errors.New("blah"))
-	})
-}
-
-func Test_joinUint64s(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		exampleInput := []uint64{123, 456, 789}
-
-		expected := "123,456,789"
-		actual := joinUint64s(exampleInput, ",")
-
-		assert.Equal(t, expected, actual, "expected %s to equal %s", expected, actual)
 	})
 }
 

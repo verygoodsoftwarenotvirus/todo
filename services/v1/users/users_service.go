@@ -34,6 +34,7 @@ type (
 
 	secretGenerator interface {
 		GenerateTwoFactorSecret() (string, error)
+		GenerateSalt() ([]byte, error)
 	}
 
 	// UserIDFetcher fetches usernames from requests.

@@ -49,9 +49,6 @@ func buildDummyUser(ctx context.Context, t *testing.T) (*models.UserCreationResp
 	require.NoError(t, err)
 	require.NoError(t, todoClient.VerifyTOTPSecret(ctx, user.ID, token))
 
-	if err != nil {
-		t.FailNow()
-	}
 	cookie := loginUser(ctx, t, userInput.Username, userInput.Password, user.TwoFactorSecret)
 
 	require.NoError(t, err)
@@ -67,7 +64,7 @@ func checkUserCreationEquality(t *testing.T, expected *models.UserCreationInput,
 	assert.Equal(t, expected.Username, actual.Username)
 	assert.NotEmpty(t, actual.TwoFactorSecret)
 	assert.NotZero(t, actual.CreatedOn)
-	assert.Nil(t, actual.UpdatedOn)
+	assert.Nil(t, actual.LastUpdatedOn)
 	assert.Nil(t, actual.ArchivedOn)
 }
 
@@ -77,7 +74,7 @@ func checkUserEquality(t *testing.T, expected *models.UserCreationInput, actual 
 	assert.NotZero(t, actual.ID)
 	assert.Equal(t, expected.Username, actual.Username)
 	assert.NotZero(t, actual.CreatedOn)
-	assert.Nil(t, actual.UpdatedOn)
+	assert.Nil(t, actual.LastUpdatedOn)
 	assert.Nil(t, actual.ArchivedOn)
 }
 
@@ -160,33 +157,6 @@ func TestUsers(test *testing.T) {
 			// Execute.
 			err = todoClient.ArchiveUser(ctx, u.ID)
 			assert.NoError(t, err)
-		})
-	})
-
-	test.Run("Listing", func(T *testing.T) {
-		T.SkipNow()
-		T.Run("should be able to be read in a list", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
-			defer span.End()
-
-			// Create users.
-			var expected []*models.UserCreationResponse
-			for i := 0; i < 5; i++ {
-				user, _, c := buildDummyUser(ctx, t)
-				assert.NotNil(t, c)
-				expected = append(expected, user)
-			}
-
-			// Assert user list equality.
-			actual, err := todoClient.GetUsers(ctx, nil)
-			checkValueAndError(t, actual, err)
-			assert.True(t, len(expected) <= len(actual.Users))
-
-			// Clean up.
-			for _, user := range actual.Users {
-				err = todoClient.ArchiveUser(ctx, user.ID)
-				assert.NoError(t, err)
-			}
 		})
 	})
 }

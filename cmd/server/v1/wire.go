@@ -43,6 +43,7 @@ func BuildServer(
 		config.Providers,
 		auth.Providers,
 		// server things,
+		bleve.Providers,
 		server.Providers,
 		encoding.Providers,
 		httpserver.Providers,
@@ -58,7 +59,6 @@ func BuildServer(
 		frontendservice.Providers,
 		webhooksservice.Providers,
 		oauth2clientsservice.Providers,
-		bleve.Providers,
 	)
 	return nil, nil
 }

@@ -86,7 +86,7 @@ func TestClient_GetUserByUsername(T *testing.T) {
 	})
 }
 
-func TestClient_GetAllUserCount(T *testing.T) {
+func TestClient_GetAllUsersCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {

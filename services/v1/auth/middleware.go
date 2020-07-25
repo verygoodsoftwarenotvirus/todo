@@ -9,15 +9,15 @@ import (
 )
 
 const (
-	// UserLoginInputMiddlewareCtxKey is the context key for login input.
-	UserLoginInputMiddlewareCtxKey models.ContextKey = "user_login_input"
+	// userLoginInputMiddlewareCtxKey is the context key for login input.
+	userLoginInputMiddlewareCtxKey models.ContextKey = "user_login_input"
 
-	// UsernameFormKey is the string we look for in request forms for username information.
-	UsernameFormKey = "username"
-	// PasswordFormKey is the string we look for in request forms for password information.
-	PasswordFormKey = "password"
-	// TOTPTokenFormKey is the string we look for in request forms for TOTP token information.
-	TOTPTokenFormKey = "totpToken"
+	// usernameFormKey is the string we look for in request forms for username information.
+	usernameFormKey = "username"
+	// passwordFormKey is the string we look for in request forms for password information.
+	passwordFormKey = "password"
+	// totpTokenFormKey is the string we look for in request forms for TOTP token information.
+	totpTokenFormKey = "totpToken"
 )
 
 // CookieAuthenticationMiddleware checks every request for a user cookie.
@@ -140,9 +140,9 @@ func (s *Service) AdminMiddleware(next http.Handler) http.Handler {
 func parseLoginInputFromForm(req *http.Request) *models.UserLoginInput {
 	if err := req.ParseForm(); err == nil {
 		uli := &models.UserLoginInput{
-			Username:  req.FormValue(UsernameFormKey),
-			Password:  req.FormValue(PasswordFormKey),
-			TOTPToken: req.FormValue(TOTPTokenFormKey),
+			Username:  req.FormValue(usernameFormKey),
+			Password:  req.FormValue(passwordFormKey),
+			TOTPToken: req.FormValue(totpTokenFormKey),
 		}
 
 		if uli.Username != "" && uli.Password != "" && uli.TOTPToken != "" {
@@ -167,7 +167,7 @@ func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		ctx = context.WithValue(ctx, UserLoginInputMiddlewareCtxKey, x)
+		ctx = context.WithValue(ctx, userLoginInputMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }

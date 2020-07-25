@@ -210,14 +210,14 @@ daily-load-tests-sqlite:on-schedule:
 
 # miscellaneous
 
-gitlabcr:
- stage: publish
- image: docker:latest
- services:
-   - docker:dind
- script:
-   - docker login --username=gitlab-ci-token --password=$CI_JOB_TOKEN registry.gitlab.com
-   - docker build --tag registry.gitlab.com/verygoodsoftwarenotvirus/todo:latest --file dockerfiles/server.Dockerfile .
-   - docker push registry.gitlab.com/verygoodsoftwarenotvirus/todo:latest
- only:
-   - master
+#gitlabcr:
+# stage: publish
+# image: docker:latest
+# services:
+#   - docker:dind
+# script:
+#   - docker login --username=gitlab-ci-token --password=$CI_JOB_TOKEN registry.gitlab.com
+#   - docker build --tag registry.gitlab.com/verygoodsoftwarenotvirus/todo:latest --file environments/production/Dockerfile .
+#   - docker push registry.gitlab.com/verygoodsoftwarenotvirus/todo:latest
+# only:
+#   - master

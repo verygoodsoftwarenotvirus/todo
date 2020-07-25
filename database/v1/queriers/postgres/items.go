@@ -40,7 +40,7 @@ func (p *Postgres) scanItem(scan database.Scanner) (*models.Item, error) {
 		&x.Name,
 		&x.Details,
 		&x.CreatedOn,
-		&x.UpdatedOn,
+		&x.LastUpdatedOn,
 		&x.ArchivedOn,
 		&x.BelongsToUser,
 	}
@@ -130,11 +130,8 @@ func (p *Postgres) buildGetItemQuery(itemID, userID uint64) (query string, args 
 // GetItem fetches an item from the database.
 func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
 	query, args := p.buildGetItemQuery(itemID, userID)
-
 	row := p.db.QueryRowContext(ctx, query, args...)
-	item, err := p.scanItem(row)
-
-	return item, err
+	return p.scanItem(row)
 }
 
 var (
@@ -163,14 +160,13 @@ func (p *Postgres) buildGetAllItemsCountQuery() string {
 
 // GetAllItemsCount will fetch the count of items from the database.
 func (p *Postgres) GetAllItemsCount(ctx context.Context) (count uint64, err error) {
-	query := p.buildGetAllItemsCountQuery()
-	err = p.db.QueryRowContext(ctx, query).Scan(&count)
+	err = p.db.QueryRowContext(ctx, p.buildGetAllItemsCountQuery()).Scan(&count)
 	return count, err
 }
 
-// buildGetAllItemsQuery returns a query that fetches every item in the database within a bucketed range.
-func (p *Postgres) buildGetAllItemsQuery(beginID, endID uint64) (query string, args []interface{}) {
-	allItemsQuery, args, err := p.sqlBuilder.
+// buildGetBatchOfItemsQuery returns a query that fetches every item in the database within a bucketed range.
+func (p *Postgres) buildGetBatchOfItemsQuery(beginID, endID uint64) (query string, args []interface{}) {
+	query, args, err := p.sqlBuilder.
 		Select(itemsTableColumns...).
 		From(itemsTableName).
 		Where(squirrel.Gt{
@@ -182,11 +178,11 @@ func (p *Postgres) buildGetAllItemsQuery(beginID, endID uint64) (query string, a
 		ToSql()
 	p.logQueryBuildingError(err)
 
-	return allItemsQuery, args
+	return query, args
 }
 
-// GetAllItems fetches all items from the database and writes them to a channel. This method primarily exists
-// to aid in administrative data tasks,
+// GetAllItems fetches every item from the database and writes them to a channel. This method primarily exists
+// to aid in administrative data tasks.
 func (p *Postgres) GetAllItems(ctx context.Context, resultChannel chan []models.Item) error {
 	count, err := p.GetAllItemsCount(ctx)
 	if err != nil {
@@ -195,8 +191,8 @@ func (p *Postgres) GetAllItems(ctx context.Context, resultChannel chan []models.
 
 	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
 		endID := beginID + defaultBucketSize
-		go func(begin uint64, end uint64) {
-			query, args := p.buildGetAllItemsQuery(begin, end)
+		go func(begin, end uint64) {
+			query, args := p.buildGetBatchOfItemsQuery(begin, end)
 			logger := p.logger.WithValues(map[string]interface{}{
 				"query": query,
 				"begin": begin,
@@ -390,7 +386,7 @@ func (p *Postgres) buildUpdateItemQuery(input *models.Item) (query string, args 
 // UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
 func (p *Postgres) UpdateItem(ctx context.Context, input *models.Item) error {
 	query, args := p.buildUpdateItemQuery(input)
-	return p.db.QueryRowContext(ctx, query, args...).Scan(&input.UpdatedOn)
+	return p.db.QueryRowContext(ctx, query, args...).Scan(&input.LastUpdatedOn)
 }
 
 // buildArchiveItemQuery returns a SQL query which marks a given item belonging to a given user as archived.

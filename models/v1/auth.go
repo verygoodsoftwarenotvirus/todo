@@ -14,11 +14,19 @@ func init() {
 	gob.Register(&SessionInfo{})
 }
 
-// SessionInfo represents what we encode in our authentication cookies.
-type SessionInfo struct {
-	UserID      uint64 `json:"-"`
-	UserIsAdmin bool   `json:"-"`
-}
+type (
+	// SessionInfo represents what we encode in our authentication cookies.
+	SessionInfo struct {
+		UserID      uint64 `json:"-"`
+		UserIsAdmin bool   `json:"-"`
+	}
+
+	// StatusResponse is what we encode when the frontend wants to check auth status
+	StatusResponse struct {
+		Authenticated bool `json:"isAuthenticated"`
+		IsAdmin       bool `json:"isAdmin"`
+	}
+)
 
 // ToBytes returns the gob encoded session info
 func (i *SessionInfo) ToBytes() []byte {
@@ -29,10 +37,4 @@ func (i *SessionInfo) ToBytes() []byte {
 	}
 
 	return b.Bytes()
-}
-
-// StatusResponse is what we encode when the frontend wants to check auth status
-type StatusResponse struct {
-	Authenticated bool `json:"isAuthenticated"`
-	IsAdmin       bool `json:"isAdmin"`
 }

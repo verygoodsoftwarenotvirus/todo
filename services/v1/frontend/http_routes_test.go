@@ -78,14 +78,6 @@ func TestService_StaticDir(T *testing.T) {
 	})
 }
 
-func TestService_Routes(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		assert.NotNil(t, (&Service{}).Routes())
-	})
-}
-
 func TestService_buildStaticFileServer(T *testing.T) {
 	T.Parallel()
 

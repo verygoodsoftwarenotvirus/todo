@@ -23,8 +23,6 @@ import (
 )
 
 func TestService_CookieAuthenticationMiddleware(T *testing.T) {
-	// T.Parallel()
-
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 		exampleUser := fakemodels.BuildFakeUser()
@@ -90,8 +88,6 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 }
 
 func TestService_AuthenticationMiddleware(T *testing.T) {
-	// T.Parallel()
-
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
@@ -299,8 +295,6 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 }
 
 func Test_parseLoginInputFromForm(T *testing.T) {
-	// T.Parallel()
-
 	T.Run("happy path", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
@@ -310,9 +304,9 @@ func Test_parseLoginInputFromForm(T *testing.T) {
 		expected := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		req.Form = map[string][]string{
-			UsernameFormKey:  {expected.Username},
-			PasswordFormKey:  {expected.Password},
-			TOTPTokenFormKey: {expected.TOTPToken},
+			usernameFormKey:  {expected.Username},
+			passwordFormKey:  {expected.Password},
+			totpTokenFormKey: {expected.TOTPToken},
 		}
 
 		actual := parseLoginInputFromForm(req)
@@ -334,8 +328,6 @@ func Test_parseLoginInputFromForm(T *testing.T) {
 }
 
 func TestService_UserLoginInputMiddleware(T *testing.T) {
-	// T.Parallel()
-
 	T.Run("happy path", func(t *testing.T) {
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -387,9 +379,9 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		form := url.Values{
-			UsernameFormKey:  {exampleInput.Username},
-			PasswordFormKey:  {exampleInput.Password},
-			TOTPTokenFormKey: {exampleInput.TOTPToken},
+			usernameFormKey:  {exampleInput.Username},
+			passwordFormKey:  {exampleInput.Password},
+			totpTokenFormKey: {exampleInput.TOTPToken},
 		}
 
 		req, err := http.NewRequest(
@@ -419,8 +411,6 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 }
 
 func TestService_AdminMiddleware(T *testing.T) {
-	// T.Parallel()
-
 	T.Run("happy path", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)

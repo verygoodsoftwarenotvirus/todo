@@ -54,7 +54,7 @@ func (s *Sqlite) scanOAuth2Client(scan database.Scanner) (*models.OAuth2Client, 
 		&x.RedirectURI,
 		&x.ClientSecret,
 		&x.CreatedOn,
-		&x.UpdatedOn,
+		&x.LastUpdatedOn,
 		&x.ArchivedOn,
 		&x.BelongsToUser,
 	}
@@ -165,7 +165,7 @@ func (s *Sqlite) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Clien
 
 // GetAllOAuth2ClientsForUser gets a list of OAuth2 clients belonging to a given user.
 func (s *Sqlite) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64) ([]*models.OAuth2Client, error) {
-	query, args := s.buildGetOAuth2ClientsQuery(userID, nil)
+	query, args := s.buildGetOAuth2ClientsForUserQuery(userID, nil)
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -249,9 +249,9 @@ func (s *Sqlite) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	return count, err
 }
 
-// buildGetOAuth2ClientsQuery returns a SQL query (and arguments) that will retrieve a list of OAuth2 clients that
+// buildGetOAuth2ClientsForUserQuery returns a SQL query (and arguments) that will retrieve a list of OAuth2 clients that
 // meet the given filter's criteria (if relevant) and belong to a given user.
-func (s *Sqlite) buildGetOAuth2ClientsQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
+func (s *Sqlite) buildGetOAuth2ClientsForUserQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 
 	builder := s.sqlBuilder.
@@ -275,7 +275,7 @@ func (s *Sqlite) buildGetOAuth2ClientsQuery(userID uint64, filter *models.QueryF
 
 // GetOAuth2ClientsForUser gets a list of OAuth2 clients.
 func (s *Sqlite) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
-	query, args := s.buildGetOAuth2ClientsQuery(userID, filter)
+	query, args := s.buildGetOAuth2ClientsForUserQuery(userID, filter)
 	rows, err := s.db.QueryContext(ctx, query, args...)
 
 	if err != nil {

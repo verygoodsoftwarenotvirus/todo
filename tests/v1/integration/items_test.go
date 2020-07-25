@@ -114,7 +114,7 @@ func TestItems(test *testing.T) {
 			assert.True(
 				t,
 				len(expected) <= len(actual),
-				"expected %d to be <= %d",
+				"expected results length %d to be <= %d",
 				len(expected),
 				len(actual),
 			)
@@ -321,7 +321,7 @@ func TestItems(test *testing.T) {
 
 			// Assert item equality.
 			checkItemEquality(t, exampleItem, actual)
-			assert.NotNil(t, actual.UpdatedOn)
+			assert.NotNil(t, actual.LastUpdatedOn)
 
 			// Clean up item.
 			assert.NoError(t, todoClient.ArchiveItem(ctx, createdItem.ID))

@@ -15,10 +15,10 @@ import (
 )
 
 const (
-	// CreateMiddlewareCtxKey is a string alias we can use for referring to item input data in contexts.
-	CreateMiddlewareCtxKey models.ContextKey = "item_create_input"
-	// UpdateMiddlewareCtxKey is a string alias we can use for referring to item update data in contexts.
-	UpdateMiddlewareCtxKey models.ContextKey = "item_update_input"
+	// createMiddlewareCtxKey is a string alias we can use for referring to item input data in contexts.
+	createMiddlewareCtxKey models.ContextKey = "item_create_input"
+	// updateMiddlewareCtxKey is a string alias we can use for referring to item update data in contexts.
+	updateMiddlewareCtxKey models.ContextKey = "item_update_input"
 
 	counterName        metrics.CounterName = "items"
 	counterDescription string              = "the number of items managed by the items service"
@@ -83,7 +83,7 @@ func ProvideItemsService(
 	return svc, nil
 }
 
-// ProvideItemsServiceSearchIndex provides an items service search index
+// ProvideItemsServiceSearchIndex provides a search index for the service
 func ProvideItemsServiceSearchIndex(
 	searchSettings config.SearchSettings,
 	indexProvider search.IndexManagerProvider,

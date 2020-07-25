@@ -14,9 +14,11 @@ import (
 )
 
 const (
-	eventsSeparator = `,`
-	typesSeparator  = `,`
-	topicsSeparator = `,`
+	commaSeparator = ","
+
+	eventsSeparator = commaSeparator
+	typesSeparator  = commaSeparator
+	topicsSeparator = commaSeparator
 
 	webhooksTableName              = "webhooks"
 	webhooksTableNameColumn        = "name"
@@ -65,7 +67,7 @@ func (m *MariaDB) scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 		&dataTypesStr,
 		&topicsStr,
 		&x.CreatedOn,
-		&x.UpdatedOn,
+		&x.LastUpdatedOn,
 		&x.ArchivedOn,
 		&x.BelongsToUser,
 	}
@@ -197,9 +199,7 @@ func (m *MariaDB) buildGetAllWebhooksQuery() string {
 
 // GetAllWebhooks fetches a list of all webhooks from the database.
 func (m *MariaDB) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
-	query := m.buildGetAllWebhooksQuery()
-
-	rows, err := m.db.QueryContext(ctx, query)
+	rows, err := m.db.QueryContext(ctx, m.buildGetAllWebhooksQuery())
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, err

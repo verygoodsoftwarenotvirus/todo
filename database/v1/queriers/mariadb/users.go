@@ -15,11 +15,12 @@ const (
 	usersTableName                         = "users"
 	usersTableUsernameColumn               = "username"
 	usersTableHashedPasswordColumn         = "hashed_password"
+	usersTableSaltColumn                   = "salt"
 	usersTableRequiresPasswordChangeColumn = "requires_password_change"
 	usersTablePasswordLastChangedOnColumn  = "password_last_changed_on"
 	usersTableTwoFactorColumn              = "two_factor_secret"
-	usersTableIsAdminColumn                = "is_admin"
 	usersTableTwoFactorVerifiedOnColumn    = "two_factor_secret_verified_on"
+	usersTableIsAdminColumn                = "is_admin"
 )
 
 var (
@@ -27,11 +28,12 @@ var (
 		fmt.Sprintf("%s.%s", usersTableName, idColumn),
 		fmt.Sprintf("%s.%s", usersTableName, usersTableUsernameColumn),
 		fmt.Sprintf("%s.%s", usersTableName, usersTableHashedPasswordColumn),
+		fmt.Sprintf("%s.%s", usersTableName, usersTableSaltColumn),
 		fmt.Sprintf("%s.%s", usersTableName, usersTableRequiresPasswordChangeColumn),
 		fmt.Sprintf("%s.%s", usersTableName, usersTablePasswordLastChangedOnColumn),
 		fmt.Sprintf("%s.%s", usersTableName, usersTableTwoFactorColumn),
-		fmt.Sprintf("%s.%s", usersTableName, usersTableIsAdminColumn),
 		fmt.Sprintf("%s.%s", usersTableName, usersTableTwoFactorVerifiedOnColumn),
+		fmt.Sprintf("%s.%s", usersTableName, usersTableIsAdminColumn),
 		fmt.Sprintf("%s.%s", usersTableName, createdOnColumn),
 		fmt.Sprintf("%s.%s", usersTableName, lastUpdatedOnColumn),
 		fmt.Sprintf("%s.%s", usersTableName, archivedOnColumn),
@@ -48,13 +50,14 @@ func (m *MariaDB) scanUser(scan database.Scanner) (*models.User, error) {
 		&x.ID,
 		&x.Username,
 		&x.HashedPassword,
+		&x.Salt,
 		&x.RequiresPasswordChange,
 		&x.PasswordLastChangedOn,
 		&x.TwoFactorSecret,
-		&x.IsAdmin,
 		&x.TwoFactorSecretVerifiedOn,
+		&x.IsAdmin,
 		&x.CreatedOn,
-		&x.UpdatedOn,
+		&x.LastUpdatedOn,
 		&x.ArchivedOn,
 	}
 
@@ -277,12 +280,14 @@ func (m *MariaDB) buildCreateUserQuery(input models.UserDatabaseCreationInput) (
 		Columns(
 			usersTableUsernameColumn,
 			usersTableHashedPasswordColumn,
+			usersTableSaltColumn,
 			usersTableTwoFactorColumn,
 			usersTableIsAdminColumn,
 		).
 		Values(
 			input.Username,
 			input.HashedPassword,
+			input.Salt,
 			input.TwoFactorSecret,
 			false,
 		).
@@ -332,6 +337,7 @@ func (m *MariaDB) buildUpdateUserQuery(input *models.User) (query string, args [
 		Update(usersTableName).
 		Set(usersTableUsernameColumn, input.Username).
 		Set(usersTableHashedPasswordColumn, input.HashedPassword).
+		Set(usersTableSaltColumn, input.Salt).
 		Set(usersTableTwoFactorColumn, input.TwoFactorSecret).
 		Set(usersTableTwoFactorVerifiedOnColumn, input.TwoFactorSecretVerifiedOn).
 		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
@@ -345,7 +351,45 @@ func (m *MariaDB) buildUpdateUserQuery(input *models.User) (query string, args [
 	return query, args
 }
 
-// buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row
+// UpdateUser receives a complete User struct and updates its place in the db.
+// NOTE this function uses the ID provided in the input to make its query. Pass in
+// incomplete models at your peril.
+func (m *MariaDB) UpdateUser(ctx context.Context, input *models.User) error {
+	query, args := m.buildUpdateUserQuery(input)
+	_, err := m.db.ExecContext(ctx, query, args...)
+	return err
+}
+
+// buildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's password.
+func (m *MariaDB) buildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{}) {
+	var err error
+
+	query, args, err = m.sqlBuilder.
+		Update(usersTableName).
+		Set(usersTableHashedPasswordColumn, newHash).
+		Set(usersTableRequiresPasswordChangeColumn, false).
+		Set(usersTablePasswordLastChangedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Where(squirrel.Eq{
+			idColumn: userID,
+		}).
+		ToSql()
+
+	m.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// UpdateUserPassword updates a user's password.
+func (m *MariaDB) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
+	query, args := m.buildUpdateUserPasswordQuery(userID, newHash)
+
+	_, err := m.db.ExecContext(ctx, query, args...)
+
+	return err
+}
+
+// buildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret
 func (m *MariaDB) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -369,44 +413,7 @@ func (m *MariaDB) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) 
 	return err
 }
 
-// UpdateUser receives a complete User struct and updates its place in the db.
-// NOTE this function uses the ID provided in the input to make its query. Pass in
-// anonymous structs or incomplete models at your peril.
-func (m *MariaDB) UpdateUser(ctx context.Context, input *models.User) error {
-	query, args := m.buildUpdateUserQuery(input)
-	_, err := m.db.ExecContext(ctx, query, args...)
-	return err
-}
-
-// buildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's password
-func (m *MariaDB) buildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = m.sqlBuilder.
-		Update(usersTableName).
-		Set(usersTableHashedPasswordColumn, newHash).
-		Set(usersTableRequiresPasswordChangeColumn, false).
-		Set(usersTablePasswordLastChangedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Where(squirrel.Eq{
-			idColumn: userID,
-		}).
-		ToSql()
-
-	m.logQueryBuildingError(err)
-
-	return query, args
-}
-
-// UpdateUserPassword updates a user's password
-func (m *MariaDB) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
-	query, args := m.buildUpdateUserPasswordQuery(userID, newHash)
-
-	_, err := m.db.ExecContext(ctx, query, args...)
-
-	return err
-}
-
+// buildArchiveUserQuery builds a SQL query that marks a user as archived.
 func (m *MariaDB) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -423,7 +430,7 @@ func (m *MariaDB) buildArchiveUserQuery(userID uint64) (query string, args []int
 	return query, args
 }
 
-// ArchiveUser archives a user by their username.
+// ArchiveUser marks a user as archived.
 func (m *MariaDB) ArchiveUser(ctx context.Context, userID uint64) error {
 	query, args := m.buildArchiveUserQuery(userID)
 	_, err := m.db.ExecContext(ctx, query, args...)

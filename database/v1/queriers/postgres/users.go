@@ -17,11 +17,12 @@ const (
 	usersTableName                         = "users"
 	usersTableUsernameColumn               = "username"
 	usersTableHashedPasswordColumn         = "hashed_password"
+	usersTableSaltColumn                   = "salt"
 	usersTableRequiresPasswordChangeColumn = "requires_password_change"
 	usersTablePasswordLastChangedOnColumn  = "password_last_changed_on"
 	usersTableTwoFactorColumn              = "two_factor_secret"
-	usersTableIsAdminColumn                = "is_admin"
 	usersTableTwoFactorVerifiedOnColumn    = "two_factor_secret_verified_on"
+	usersTableIsAdminColumn                = "is_admin"
 )
 
 var (
@@ -29,11 +30,12 @@ var (
 		fmt.Sprintf("%s.%s", usersTableName, idColumn),
 		fmt.Sprintf("%s.%s", usersTableName, usersTableUsernameColumn),
 		fmt.Sprintf("%s.%s", usersTableName, usersTableHashedPasswordColumn),
+		fmt.Sprintf("%s.%s", usersTableName, usersTableSaltColumn),
 		fmt.Sprintf("%s.%s", usersTableName, usersTableRequiresPasswordChangeColumn),
 		fmt.Sprintf("%s.%s", usersTableName, usersTablePasswordLastChangedOnColumn),
 		fmt.Sprintf("%s.%s", usersTableName, usersTableTwoFactorColumn),
-		fmt.Sprintf("%s.%s", usersTableName, usersTableIsAdminColumn),
 		fmt.Sprintf("%s.%s", usersTableName, usersTableTwoFactorVerifiedOnColumn),
+		fmt.Sprintf("%s.%s", usersTableName, usersTableIsAdminColumn),
 		fmt.Sprintf("%s.%s", usersTableName, createdOnColumn),
 		fmt.Sprintf("%s.%s", usersTableName, lastUpdatedOnColumn),
 		fmt.Sprintf("%s.%s", usersTableName, archivedOnColumn),
@@ -50,13 +52,14 @@ func (p *Postgres) scanUser(scan database.Scanner) (*models.User, error) {
 		&x.ID,
 		&x.Username,
 		&x.HashedPassword,
+		&x.Salt,
 		&x.RequiresPasswordChange,
 		&x.PasswordLastChangedOn,
 		&x.TwoFactorSecret,
-		&x.IsAdmin,
 		&x.TwoFactorSecretVerifiedOn,
+		&x.IsAdmin,
 		&x.CreatedOn,
-		&x.UpdatedOn,
+		&x.LastUpdatedOn,
 		&x.ArchivedOn,
 	}
 
@@ -279,12 +282,14 @@ func (p *Postgres) buildCreateUserQuery(input models.UserDatabaseCreationInput) 
 		Columns(
 			usersTableUsernameColumn,
 			usersTableHashedPasswordColumn,
+			usersTableSaltColumn,
 			usersTableTwoFactorColumn,
 			usersTableIsAdminColumn,
 		).
 		Values(
 			input.Username,
 			input.HashedPassword,
+			input.Salt,
 			input.TwoFactorSecret,
 			false,
 		).
@@ -333,6 +338,7 @@ func (p *Postgres) buildUpdateUserQuery(input *models.User) (query string, args 
 		Update(usersTableName).
 		Set(usersTableUsernameColumn, input.Username).
 		Set(usersTableHashedPasswordColumn, input.HashedPassword).
+		Set(usersTableSaltColumn, input.Salt).
 		Set(usersTableTwoFactorColumn, input.TwoFactorSecret).
 		Set(usersTableTwoFactorVerifiedOnColumn, input.TwoFactorSecretVerifiedOn).
 		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
@@ -349,13 +355,13 @@ func (p *Postgres) buildUpdateUserQuery(input *models.User) (query string, args 
 
 // UpdateUser receives a complete User struct and updates its place in the db.
 // NOTE this function uses the ID provided in the input to make its query. Pass in
-// anonymous structs or incomplete models at your peril.
+// incomplete models at your peril.
 func (p *Postgres) UpdateUser(ctx context.Context, input *models.User) error {
 	query, args := p.buildUpdateUserQuery(input)
-	return p.db.QueryRowContext(ctx, query, args...).Scan(&input.UpdatedOn)
+	return p.db.QueryRowContext(ctx, query, args...).Scan(&input.LastUpdatedOn)
 }
 
-// buildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's password
+// buildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's password.
 func (p *Postgres) buildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{}) {
 	var err error
 
@@ -368,6 +374,7 @@ func (p *Postgres) buildUpdateUserPasswordQuery(userID uint64, newHash string) (
 		Where(squirrel.Eq{
 			idColumn: userID,
 		}).
+		Suffix(fmt.Sprintf("RETURNING %s", lastUpdatedOnColumn)).
 		ToSql()
 
 	p.logQueryBuildingError(err)
@@ -375,7 +382,7 @@ func (p *Postgres) buildUpdateUserPasswordQuery(userID uint64, newHash string) (
 	return query, args
 }
 
-// UpdateUserPassword updates a user's password
+// UpdateUserPassword updates a user's password.
 func (p *Postgres) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
 	query, args := p.buildUpdateUserPasswordQuery(userID, newHash)
 
@@ -384,7 +391,7 @@ func (p *Postgres) UpdateUserPassword(ctx context.Context, userID uint64, newHas
 	return err
 }
 
-// buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row
+// buildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret
 func (p *Postgres) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -408,6 +415,7 @@ func (p *Postgres) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64)
 	return err
 }
 
+// buildArchiveUserQuery builds a SQL query that marks a user as archived.
 func (p *Postgres) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -425,7 +433,7 @@ func (p *Postgres) buildArchiveUserQuery(userID uint64) (query string, args []in
 	return query, args
 }
 
-// ArchiveUser archives a user by their username.
+// ArchiveUser marks a user as archived.
 func (p *Postgres) ArchiveUser(ctx context.Context, userID uint64) error {
 	query, args := p.buildArchiveUserQuery(userID)
 	_, err := p.db.ExecContext(ctx, query, args...)

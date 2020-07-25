@@ -224,7 +224,7 @@ func TestService_ListHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		s.ListHandler()(res, req)
+		s.ListHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -239,7 +239,7 @@ func TestService_ListHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		s.ListHandler()(res, req)
+		s.ListHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -260,7 +260,7 @@ func TestService_ListHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		s.ListHandler()(res, req)
+		s.ListHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -301,13 +301,13 @@ func TestService_CreateHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				UserCreationMiddlewareCtxKey,
+				userCreationMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
 
 		s.userCreationEnabled = true
-		s.CreateHandler()(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusCreated, res.Code)
 
@@ -319,7 +319,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		s.userCreationEnabled = false
-		s.CreateHandler()(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusForbidden, res.Code)
 	})
@@ -329,7 +329,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		s.userCreationEnabled = true
-		s.CreateHandler()(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
@@ -348,20 +348,20 @@ func TestService_CreateHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				UserCreationMiddlewareCtxKey,
+				userCreationMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
 
 		s.userCreationEnabled = true
-		s.CreateHandler()(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
 		mock.AssertExpectationsForObjects(t, auth)
 	})
 
-	T.Run("with error generating secret", func(t *testing.T) {
+	T.Run("with error generating two factor secret", func(t *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -383,13 +383,49 @@ func TestService_CreateHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				UserCreationMiddlewareCtxKey,
+				userCreationMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
 
 		s.userCreationEnabled = true
-		s.CreateHandler()(res, req)
+		s.CreateHandler(res, req)
+
+		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, auth, db, sg)
+	})
+
+	T.Run("with error generating salt", func(t *testing.T) {
+		s := buildTestService(t)
+
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+
+		auth := &mockauth.Authenticator{}
+		auth.On("HashPassword", mock.Anything, exampleInput.Password).Return(exampleUser.HashedPassword, nil)
+		s.authenticator = auth
+
+		db := database.BuildMockDatabase()
+		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("models.UserDatabaseCreationInput")).Return(exampleUser, nil)
+		s.userDataManager = db
+
+		sg := &mockSecretGenerator{}
+		sg.On("GenerateTwoFactorSecret").Return("PRETENDTHISISASECRET", nil)
+		sg.On("GenerateSalt").Return([]byte{}, errors.New("blah"))
+		s.secretGenerator = sg
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(),
+				userCreationMiddlewareCtxKey,
+				exampleInput,
+			),
+		)
+
+		s.userCreationEnabled = true
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -414,13 +450,13 @@ func TestService_CreateHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				UserCreationMiddlewareCtxKey,
+				userCreationMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
 
 		s.userCreationEnabled = true
-		s.CreateHandler()(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -445,13 +481,13 @@ func TestService_CreateHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				UserCreationMiddlewareCtxKey,
+				userCreationMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
 
 		s.userCreationEnabled = true
-		s.CreateHandler()(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 
@@ -488,13 +524,13 @@ func TestService_CreateHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				UserCreationMiddlewareCtxKey,
+				userCreationMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
 
 		s.userCreationEnabled = true
-		s.CreateHandler()(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusCreated, res.Code)
 
@@ -522,7 +558,7 @@ func TestService_ReadHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		s.ReadHandler()(res, req)
+		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -542,7 +578,7 @@ func TestService_ReadHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		s.ReadHandler()(res, req)
+		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
@@ -562,7 +598,7 @@ func TestService_ReadHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		s.ReadHandler()(res, req)
+		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -586,7 +622,7 @@ func TestService_ReadHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		s.ReadHandler()(res, req)
+		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -607,7 +643,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				TOTPSecretRefreshMiddlewareCtxKey,
+				totpSecretRefreshMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
@@ -636,7 +672,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.TOTPSecretRefreshResponse")).Return(nil)
 		s.encoderDecoder = ed
 
-		s.NewTOTPSecretHandler()(res, req)
+		s.NewTOTPSecretHandler(res, req)
 
 		assert.Equal(t, http.StatusAccepted, res.Code)
 
@@ -647,7 +683,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		s.NewTOTPSecretHandler()(res, req)
+		s.NewTOTPSecretHandler(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
@@ -661,12 +697,12 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				TOTPSecretRefreshMiddlewareCtxKey,
+				totpSecretRefreshMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
 
-		s.NewTOTPSecretHandler()(res, req)
+		s.NewTOTPSecretHandler(res, req)
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 	})
@@ -681,7 +717,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				TOTPSecretRefreshMiddlewareCtxKey,
+				totpSecretRefreshMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
@@ -706,7 +742,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		).Return(false, errors.New("blah"))
 		s.authenticator = auth
 
-		s.NewTOTPSecretHandler()(res, req)
+		s.NewTOTPSecretHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -723,7 +759,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				TOTPSecretRefreshMiddlewareCtxKey,
+				totpSecretRefreshMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
@@ -752,11 +788,11 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		sg.On("GenerateTwoFactorSecret").Return("", errors.New("blah"))
 		s.secretGenerator = sg
 
-		s.NewTOTPSecretHandler()(res, req)
+		s.NewTOTPSecretHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, auth)
+		mock.AssertExpectationsForObjects(t, mockDB, auth, sg)
 	})
 
 	T.Run("with error updating user in database", func(t *testing.T) {
@@ -769,7 +805,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				TOTPSecretRefreshMiddlewareCtxKey,
+				totpSecretRefreshMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
@@ -794,7 +830,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = auth
 
-		s.NewTOTPSecretHandler()(res, req)
+		s.NewTOTPSecretHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -811,7 +847,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				TOTPSecretRefreshMiddlewareCtxKey,
+				totpSecretRefreshMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
@@ -840,7 +876,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.TOTPSecretRefreshResponse")).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
-		s.NewTOTPSecretHandler()(res, req)
+		s.NewTOTPSecretHandler(res, req)
 
 		assert.Equal(t, http.StatusAccepted, res.Code)
 
@@ -862,7 +898,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				TOTPSecretVerificationMiddlewareCtxKey,
+				totpSecretVerificationMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
@@ -872,7 +908,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		mockDB.UserDataManager.On("VerifyUserTwoFactorSecret", mock.Anything, exampleUser.ID).Return(nil)
 		s.userDataManager = mockDB
 
-		s.TOTPSecretVerificationHandler()(res, req)
+		s.TOTPSecretVerificationHandler(res, req)
 
 		assert.Equal(t, http.StatusAccepted, res.Code)
 
@@ -891,7 +927,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		mockDB.UserDataManager.On("GetUserWithUnverifiedTwoFactorSecret", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
 		s.userDataManager = mockDB
 
-		s.TOTPSecretVerificationHandler()(res, req)
+		s.TOTPSecretVerificationHandler(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 
@@ -909,7 +945,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				TOTPSecretVerificationMiddlewareCtxKey,
+				totpSecretVerificationMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
@@ -918,7 +954,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		mockDB.UserDataManager.On("GetUserWithUnverifiedTwoFactorSecret", mock.Anything, exampleUser.ID).Return((*models.User)(nil), errors.New("blah"))
 		s.userDataManager = mockDB
 
-		s.TOTPSecretVerificationHandler()(res, req)
+		s.TOTPSecretVerificationHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -937,7 +973,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				TOTPSecretVerificationMiddlewareCtxKey,
+				totpSecretVerificationMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
@@ -948,7 +984,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		mockDB.UserDataManager.On("GetUserWithUnverifiedTwoFactorSecret", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
 		s.userDataManager = mockDB
 
-		s.TOTPSecretVerificationHandler()(res, req)
+		s.TOTPSecretVerificationHandler(res, req)
 
 		assert.Equal(t, http.StatusAlreadyReported, res.Code)
 
@@ -967,7 +1003,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				TOTPSecretVerificationMiddlewareCtxKey,
+				totpSecretVerificationMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
@@ -976,37 +1012,9 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		mockDB.UserDataManager.On("GetUserWithUnverifiedTwoFactorSecret", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
 		s.userDataManager = mockDB
 
-		s.TOTPSecretVerificationHandler()(res, req)
+		s.TOTPSecretVerificationHandler(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB)
-	})
-
-	T.Run("with error updating user", func(t *testing.T) {
-		s := buildTestService(t)
-
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleUser.TwoFactorSecretVerifiedOn = nil
-		exampleInput := fakemodels.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
-
-		res, req := httptest.NewRecorder(), buildRequest(t)
-		req = req.WithContext(
-			context.WithValue(
-				req.Context(),
-				TOTPSecretVerificationMiddlewareCtxKey,
-				exampleInput,
-			),
-		)
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On("GetUserWithUnverifiedTwoFactorSecret", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
-		mockDB.UserDataManager.On("VerifyUserTwoFactorSecret", mock.Anything, exampleUser.ID).Return(nil)
-		s.userDataManager = mockDB
-
-		s.TOTPSecretVerificationHandler()(res, req)
-
-		assert.Equal(t, http.StatusAccepted, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB)
 	})
@@ -1022,7 +1030,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				TOTPSecretVerificationMiddlewareCtxKey,
+				totpSecretVerificationMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
@@ -1032,7 +1040,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		mockDB.UserDataManager.On("VerifyUserTwoFactorSecret", mock.Anything, exampleUser.ID).Return(errors.New("blah"))
 		s.userDataManager = mockDB
 
-		s.TOTPSecretVerificationHandler()(res, req)
+		s.TOTPSecretVerificationHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -1053,7 +1061,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				PasswordChangeMiddlewareCtxKey,
+				passwordChangeMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
@@ -1079,7 +1087,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		auth.On("HashPassword", mock.Anything, exampleInput.NewPassword).Return("blah", nil)
 		s.authenticator = auth
 
-		s.UpdatePasswordHandler()(res, req)
+		s.UpdatePasswordHandler(res, req)
 
 		assert.Equal(t, http.StatusAccepted, res.Code)
 
@@ -1090,7 +1098,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		s.UpdatePasswordHandler()(res, req)
+		s.UpdatePasswordHandler(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
@@ -1104,12 +1112,12 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				PasswordChangeMiddlewareCtxKey,
+				passwordChangeMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
 
-		s.UpdatePasswordHandler()(res, req)
+		s.UpdatePasswordHandler(res, req)
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 	})
@@ -1124,7 +1132,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				PasswordChangeMiddlewareCtxKey,
+				passwordChangeMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
@@ -1149,7 +1157,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		).Return(false, errors.New("blah"))
 		s.authenticator = auth
 
-		s.UpdatePasswordHandler()(res, req)
+		s.UpdatePasswordHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -1166,7 +1174,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				PasswordChangeMiddlewareCtxKey,
+				passwordChangeMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
@@ -1192,7 +1200,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		auth.On("HashPassword", mock.Anything, exampleInput.NewPassword).Return("blah", errors.New("blah"))
 		s.authenticator = auth
 
-		s.UpdatePasswordHandler()(res, req)
+		s.UpdatePasswordHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -1209,7 +1217,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
-				PasswordChangeMiddlewareCtxKey,
+				passwordChangeMiddlewareCtxKey,
 				exampleInput,
 			),
 		)
@@ -1235,7 +1243,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		auth.On("HashPassword", mock.Anything, exampleInput.NewPassword).Return("blah", nil)
 		s.authenticator = auth
 
-		s.UpdatePasswordHandler()(res, req)
+		s.UpdatePasswordHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -1267,7 +1275,7 @@ func TestService_Archive(T *testing.T) {
 		mc.On("Decrement", mock.Anything)
 		s.userCounter = mc
 
-		s.ArchiveHandler()(res, req)
+		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, http.StatusNoContent, res.Code)
 
@@ -1287,7 +1295,7 @@ func TestService_Archive(T *testing.T) {
 		mockDB.UserDataManager.On("ArchiveUser", mock.Anything, exampleUser.ID).Return(errors.New("blah"))
 		s.userDataManager = mockDB
 
-		s.ArchiveHandler()(res, req)
+		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -1307,6 +1315,6 @@ func TestService_buildQRCode(T *testing.T) {
 		actual := s.buildQRCode(ctx, exampleUser.Username, exampleUser.TwoFactorSecret)
 
 		assert.NotEmpty(t, actual)
-		assert.True(t, strings.HasPrefix(actual, "data:image/jpeg;base64,"))
+		assert.True(t, strings.HasPrefix(actual, base64ImagePrefix))
 	})
 }

@@ -40,7 +40,7 @@ func (m *MariaDB) scanItem(scan database.Scanner) (*models.Item, error) {
 		&x.Name,
 		&x.Details,
 		&x.CreatedOn,
-		&x.UpdatedOn,
+		&x.LastUpdatedOn,
 		&x.ArchivedOn,
 		&x.BelongsToUser,
 	}
@@ -131,9 +131,7 @@ func (m *MariaDB) buildGetItemQuery(itemID, userID uint64) (query string, args [
 func (m *MariaDB) GetItem(ctx context.Context, itemID, userID uint64) (*models.Item, error) {
 	query, args := m.buildGetItemQuery(itemID, userID)
 	row := m.db.QueryRowContext(ctx, query, args...)
-
-	item, err := m.scanItem(row)
-	return item, err
+	return m.scanItem(row)
 }
 
 var (
@@ -166,9 +164,9 @@ func (m *MariaDB) GetAllItemsCount(ctx context.Context) (count uint64, err error
 	return count, err
 }
 
-// buildGetAllItemsQuery returns a query that fetches every item in the database within a bucketed range.
-func (m *MariaDB) buildGetAllItemsQuery(beginID, endID uint64) (query string, args []interface{}) {
-	allItemsQuery, args, err := m.sqlBuilder.
+// buildGetBatchOfItemsQuery returns a query that fetches every item in the database within a bucketed range.
+func (m *MariaDB) buildGetBatchOfItemsQuery(beginID, endID uint64) (query string, args []interface{}) {
+	query, args, err := m.sqlBuilder.
 		Select(itemsTableColumns...).
 		From(itemsTableName).
 		Where(squirrel.Gt{
@@ -180,11 +178,11 @@ func (m *MariaDB) buildGetAllItemsQuery(beginID, endID uint64) (query string, ar
 		ToSql()
 	m.logQueryBuildingError(err)
 
-	return allItemsQuery, args
+	return query, args
 }
 
-// GetAllItems fetches all items from the database and writes them to a channel. This method primarily exists
-// to aid in administrative data tasks,
+// GetAllItems fetches every item from the database and writes them to a channel. This method primarily exists
+// to aid in administrative data tasks.
 func (m *MariaDB) GetAllItems(ctx context.Context, resultChannel chan []models.Item) error {
 	count, err := m.GetAllItemsCount(ctx)
 	if err != nil {
@@ -193,8 +191,8 @@ func (m *MariaDB) GetAllItems(ctx context.Context, resultChannel chan []models.I
 
 	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
 		endID := beginID + defaultBucketSize
-		go func(begin uint64, end uint64) {
-			query, args := m.buildGetAllItemsQuery(begin, end)
+		go func(begin, end uint64) {
+			query, args := m.buildGetBatchOfItemsQuery(begin, end)
 			logger := m.logger.WithValues(map[string]interface{}{
 				"query": query,
 				"begin": begin,

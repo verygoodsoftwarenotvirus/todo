@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -131,14 +130,4 @@ func buildError(err error, msg string) error {
 	}
 
 	return fmt.Errorf(msg, err)
-}
-
-func joinUint64s(in []uint64, separator string) string {
-	out := []string{}
-
-	for _, x := range in {
-		out = append(out, strconv.FormatUint(x, 10))
-	}
-
-	return strings.Join(out, separator)
 }

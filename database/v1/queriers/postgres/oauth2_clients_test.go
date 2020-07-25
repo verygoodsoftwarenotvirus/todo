@@ -31,7 +31,7 @@ func buildMockRowsFromOAuth2Client(clients ...*models.OAuth2Client) *sqlmock.Row
 			c.RedirectURI,
 			c.ClientSecret,
 			c.CreatedOn,
-			c.UpdatedOn,
+			c.LastUpdatedOn,
 			c.ArchivedOn,
 			c.BelongsToUser,
 		}
@@ -51,7 +51,7 @@ func buildErroneousMockRowFromOAuth2Client(c *models.OAuth2Client) *sqlmock.Rows
 		c.RedirectURI,
 		c.ClientSecret,
 		c.CreatedOn,
-		c.UpdatedOn,
+		c.LastUpdatedOn,
 		c.BelongsToUser,
 		c.ID,
 	)
@@ -257,7 +257,7 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $1 GROUP BY oauth2_clients.id"
+	expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $1 ORDER BY oauth2_clients.id"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -411,7 +411,7 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetAllOAuth2ClientCountQuery(T *testing.T) {
+func TestPostgres_buildGetAllOAuth2ClientsCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -446,7 +446,7 @@ func TestPostgres_GetAllOAuth2ClientCount(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetOAuth2ClientsQuery(T *testing.T) {
+func TestPostgres_buildGetOAuth2ClientsForUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -455,7 +455,7 @@ func TestPostgres_buildGetOAuth2ClientsQuery(T *testing.T) {
 		exampleUser := fakemodels.BuildFakeUser()
 		filter := fakemodels.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $1 AND oauth2_clients.created_on > $2 AND oauth2_clients.created_on < $3 AND oauth2_clients.last_updated_on > $4 AND oauth2_clients.last_updated_on < $5 GROUP BY oauth2_clients.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $1 AND oauth2_clients.created_on > $2 AND oauth2_clients.created_on < $3 AND oauth2_clients.last_updated_on > $4 AND oauth2_clients.last_updated_on < $5 ORDER BY oauth2_clients.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,
@@ -463,7 +463,7 @@ func TestPostgres_buildGetOAuth2ClientsQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := p.buildGetOAuth2ClientsQuery(exampleUser.ID, filter)
+		actualQuery, actualArgs := p.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, filter)
 
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -471,11 +471,11 @@ func TestPostgres_buildGetOAuth2ClientsQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_GetOAuth2Clients(T *testing.T) {
+func TestPostgres_GetOAuth2ClientsForUser(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakemodels.BuildFakeUser()
-	expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $1 GROUP BY oauth2_clients.id LIMIT 20"
+	expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $1 ORDER BY oauth2_clients.id LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()

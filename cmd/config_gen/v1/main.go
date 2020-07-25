@@ -35,7 +35,7 @@ const (
 	dbDebug                          = "database.debug"
 	dbProvider                       = "database.provider"
 	dbDeets                          = "database.connection_details"
-	searchItemsIndexPath             = "search.items_index_path"
+	itemsSearchIndexPath             = "search.items_index_path"
 
 	// run modes
 	developmentEnv = "development"
@@ -47,7 +47,7 @@ const (
 	mariadb  = "mariadb"
 
 	// search index paths
-	defaultItemsIndexPath = "items.bleve"
+	defaultItemsSearchIndexPath = "items.bleve"
 )
 
 type configFunc func(filePath string) error
@@ -55,7 +55,7 @@ type configFunc func(filePath string) error
 var (
 	files = map[string]configFunc{
 		"environments/local/config.toml":                                    developmentConfig,
-		"environments/testing/config_files/frontend-tests.toml":             frontendTests,
+		"environments/testing/config_files/frontend-tests.toml":             frontendTestsConfig,
 		"environments/testing/config_files/coverage.toml":                   coverageConfig,
 		"environments/testing/config_files/integration-tests-postgres.toml": buildIntegrationTestForDBImplementation(postgres, postgresDBConnDetails),
 		"environments/testing/config_files/integration-tests-sqlite.toml":   buildIntegrationTestForDBImplementation(sqlite, "/tmp/db"),
@@ -93,7 +93,7 @@ func developmentConfig(filePath string) error {
 	cfg.Set(dbProvider, postgres)
 	cfg.Set(dbDeets, postgresDBConnDetails)
 
-	cfg.Set(searchItemsIndexPath, defaultItemsIndexPath)
+	cfg.Set(itemsSearchIndexPath, defaultItemsSearchIndexPath)
 
 	if writeErr := cfg.WriteConfigAs(filePath); writeErr != nil {
 		return fmt.Errorf("error writing developmentEnv config: %w", writeErr)
@@ -102,7 +102,7 @@ func developmentConfig(filePath string) error {
 	return nil
 }
 
-func frontendTests(filePath string) error {
+func frontendTestsConfig(filePath string) error {
 	cfg := config.BuildConfig()
 
 	cfg.Set(metaRunMode, developmentEnv)
@@ -131,7 +131,7 @@ func frontendTests(filePath string) error {
 	cfg.Set(dbProvider, postgres)
 	cfg.Set(dbDeets, postgresDBConnDetails)
 
-	cfg.Set(searchItemsIndexPath, defaultItemsIndexPath)
+	cfg.Set(itemsSearchIndexPath, defaultItemsSearchIndexPath)
 
 	if writeErr := cfg.WriteConfigAs(filePath); writeErr != nil {
 		return fmt.Errorf("error writing developmentEnv config: %w", writeErr)
@@ -160,7 +160,7 @@ func coverageConfig(filePath string) error {
 	cfg.Set(dbProvider, postgres)
 	cfg.Set(dbDeets, postgresDBConnDetails)
 
-	cfg.Set(searchItemsIndexPath, defaultItemsIndexPath)
+	cfg.Set(itemsSearchIndexPath, defaultItemsSearchIndexPath)
 
 	if writeErr := cfg.WriteConfigAs(filePath); writeErr != nil {
 		return fmt.Errorf("error writing coverage config: %w", writeErr)
@@ -195,7 +195,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 		cfg.Set(dbProvider, dbVendor)
 		cfg.Set(dbDeets, dbDetails)
 
-		cfg.Set(searchItemsIndexPath, defaultItemsIndexPath)
+		cfg.Set(itemsSearchIndexPath, defaultItemsSearchIndexPath)
 
 		if writeErr := cfg.WriteConfigAs(filePath); writeErr != nil {
 			return fmt.Errorf("error writing integration test config for %s: %w", dbVendor, writeErr)

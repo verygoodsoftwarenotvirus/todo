@@ -152,7 +152,7 @@ func TestWebhooks(test *testing.T) {
 
 			// Assert webhook equality.
 			checkWebhookEquality(t, exampleWebhook, actual)
-			assert.NotNil(t, actual.UpdatedOn)
+			assert.NotNil(t, actual.LastUpdatedOn)
 
 			// Clean up.
 			err = todoClient.ArchiveWebhook(ctx, actual.ID)

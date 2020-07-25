@@ -161,3 +161,9 @@ dev: vendor
 	--renew-anon-volumes \
 	--always-recreate-deps \
 	--abort-on-container-exit
+
+## housekeeping
+
+.PHONY: show_tree
+show_tree:
+	tree -d -I vendor

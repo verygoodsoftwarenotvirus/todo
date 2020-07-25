@@ -30,6 +30,7 @@ import (
 
 // BuildServer builds a server.
 func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, database2 database.DataManager, db *sql.DB) (*server.Server, error) {
+	authSettings := config.ProvideConfigAuthSettings(cfg)
 	bcryptHashCost := auth.ProvideBcryptHashCost()
 	authenticator := auth.ProvideBcryptAuthenticator(bcryptHashCost, logger)
 	userDataManager := users.ProvideUserDataManager(database2)
@@ -41,10 +42,9 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 		return nil, err
 	}
 	oAuth2ClientValidator := auth2.ProvideOAuth2ClientValidator(service)
-	authSettings := config.ProvideConfigAuthSettings(cfg)
 	databaseSettings := config.ProvideConfigDatabaseSettings(cfg)
 	sessionManager := config.ProvideSessionManager(authSettings, databaseSettings, db)
-	authService, err := auth2.ProvideAuthService(logger, cfg, authenticator, userDataManager, oAuth2ClientValidator, sessionManager, encoderDecoder)
+	authService, err := auth2.ProvideAuthService(logger, authSettings, authenticator, userDataManager, oAuth2ClientValidator, sessionManager, encoderDecoder)
 	if err != nil {
 		return nil, err
 	}
@@ -59,11 +59,11 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	reporter := ProvideReporter(newsmanNewsman)
 	searchSettings := config.ProvideSearchSettings(cfg)
 	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
-	itemsSearchIndex, err := items.ProvideItemsServiceSearchIndex(searchSettings, indexManagerProvider, logger)
+	searchIndex, err := items.ProvideItemsServiceSearchIndex(searchSettings, indexManagerProvider, logger)
 	if err != nil {
 		return nil, err
 	}
-	itemsService, err := items.ProvideItemsService(logger, itemDataManager, itemIDFetcher, userIDFetcher, encoderDecoder, unitCounterProvider, reporter, itemsSearchIndex)
+	itemsService, err := items.ProvideItemsService(logger, itemDataManager, itemIDFetcher, userIDFetcher, encoderDecoder, unitCounterProvider, reporter, searchIndex)
 	if err != nil {
 		return nil, err
 	}

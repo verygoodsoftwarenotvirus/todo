@@ -131,7 +131,7 @@ func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
 		TwoFactorSecret:       ucr.TwoFactorSecret,
 		PasswordLastChangedOn: ucr.PasswordLastChangedOn,
 		CreatedOn:             ucr.CreatedOn,
-		UpdatedOn:             ucr.UpdatedOn,
+		LastUpdatedOn:         ucr.LastUpdatedOn,
 		ArchivedOn:            ucr.ArchivedOn,
 	}
 
@@ -222,7 +222,7 @@ func CreateObligatoryClient(serviceURL string, u *models.User) (*models.OAuth2Cl
 		"username": %q,
 		"password": %q,
 		"totpToken": %q,
-		"belongs_to_user": %d,
+		"belongsToUser": %d,
 		"scopes": ["*"]
 	}
 		`, u.Username, u.HashedPassword, code, u.ID)),

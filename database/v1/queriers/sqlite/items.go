@@ -40,7 +40,7 @@ func (s *Sqlite) scanItem(scan database.Scanner) (*models.Item, error) {
 		&x.Name,
 		&x.Details,
 		&x.CreatedOn,
-		&x.UpdatedOn,
+		&x.LastUpdatedOn,
 		&x.ArchivedOn,
 		&x.BelongsToUser,
 	}
@@ -164,9 +164,9 @@ func (s *Sqlite) GetAllItemsCount(ctx context.Context) (count uint64, err error)
 	return count, err
 }
 
-// buildGetAllItemsQuery returns a query that fetches every item in the database within a bucketed range.
-func (s *Sqlite) buildGetAllItemsQuery(beginID, endID uint64) (query string, args []interface{}) {
-	allItemsQuery, args, err := s.sqlBuilder.
+// buildGetBatchOfItemsQuery returns a query that fetches every item in the database within a bucketed range.
+func (s *Sqlite) buildGetBatchOfItemsQuery(beginID, endID uint64) (query string, args []interface{}) {
+	query, args, err := s.sqlBuilder.
 		Select(itemsTableColumns...).
 		From(itemsTableName).
 		Where(squirrel.Gt{
@@ -178,11 +178,11 @@ func (s *Sqlite) buildGetAllItemsQuery(beginID, endID uint64) (query string, arg
 		ToSql()
 	s.logQueryBuildingError(err)
 
-	return allItemsQuery, args
+	return query, args
 }
 
-// GetAllItems fetches all items from the database and writes them to a channel. This method primarily exists
-// to aid in administrative data tasks,
+// GetAllItems fetches every item from the database and writes them to a channel. This method primarily exists
+// to aid in administrative data tasks.
 func (s *Sqlite) GetAllItems(ctx context.Context, resultChannel chan []models.Item) error {
 	count, err := s.GetAllItemsCount(ctx)
 	if err != nil {
@@ -191,8 +191,8 @@ func (s *Sqlite) GetAllItems(ctx context.Context, resultChannel chan []models.It
 
 	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
 		endID := beginID + defaultBucketSize
-		go func(begin uint64, end uint64) {
-			query, args := s.buildGetAllItemsQuery(begin, end)
+		go func(begin, end uint64) {
+			query, args := s.buildGetBatchOfItemsQuery(begin, end)
 			logger := s.logger.WithValues(map[string]interface{}{
 				"query": query,
 				"begin": begin,

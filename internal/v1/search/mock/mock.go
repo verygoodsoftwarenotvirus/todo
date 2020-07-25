@@ -8,27 +8,27 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var _ search.IndexManager = (*MockIndexManager)(nil)
+var _ search.IndexManager = (*IndexManager)(nil)
 
-// MockIndexManager is a mock IndexManager
-type MockIndexManager struct {
+// IndexManager is a mock IndexManager
+type IndexManager struct {
 	mock.Mock
 }
 
 // Index implements our interface
-func (m *MockIndexManager) Index(ctx context.Context, id uint64, value interface{}) error {
+func (m *IndexManager) Index(ctx context.Context, id uint64, value interface{}) error {
 	args := m.Called(ctx, id, value)
 	return args.Error(0)
 }
 
 // Search implements our interface
-func (m *MockIndexManager) Search(ctx context.Context, query string, userID uint64) (ids []uint64, err error) {
+func (m *IndexManager) Search(ctx context.Context, query string, userID uint64) (ids []uint64, err error) {
 	args := m.Called(ctx, query, userID)
 	return args.Get(0).([]uint64), args.Error(1)
 }
 
 // Delete implements our interface
-func (m *MockIndexManager) Delete(ctx context.Context, id uint64) error {
+func (m *IndexManager) Delete(ctx context.Context, id uint64) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
 }

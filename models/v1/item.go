@@ -19,7 +19,7 @@ type (
 		Name          string  `json:"name"`
 		Details       string  `json:"details"`
 		CreatedOn     uint64  `json:"createdOn"`
-		UpdatedOn     *uint64 `json:"updatedOn"`
+		LastUpdatedOn *uint64 `json:"lastUpdatedOn"`
 		ArchivedOn    *uint64 `json:"archivedOn"`
 		BelongsToUser uint64  `json:"belongsToUser"`
 	}
@@ -62,13 +62,13 @@ type (
 		CreationInputMiddleware(next http.Handler) http.Handler
 		UpdateInputMiddleware(next http.Handler) http.Handler
 
-		SearchHandler() http.HandlerFunc
-		ListHandler() http.HandlerFunc
-		CreateHandler() http.HandlerFunc
-		ExistenceHandler() http.HandlerFunc
-		ReadHandler() http.HandlerFunc
-		UpdateHandler() http.HandlerFunc
-		ArchiveHandler() http.HandlerFunc
+		SearchHandler(res http.ResponseWriter, req *http.Request)
+		ListHandler(res http.ResponseWriter, req *http.Request)
+		CreateHandler(res http.ResponseWriter, req *http.Request)
+		ExistenceHandler(res http.ResponseWriter, req *http.Request)
+		ReadHandler(res http.ResponseWriter, req *http.Request)
+		UpdateHandler(res http.ResponseWriter, req *http.Request)
+		ArchiveHandler(res http.ResponseWriter, req *http.Request)
 	}
 )
 

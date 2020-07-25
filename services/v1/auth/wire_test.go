@@ -4,20 +4,22 @@ import (
 	"testing"
 
 	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestProvideWebsocketAuthFunc(T *testing.T) {
-	// T.Parallel()
+	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		ProvideWebsocketAuthFunc(buildTestService(t))
+		assert.NotNil(t, ProvideWebsocketAuthFunc(buildTestService(t)))
 	})
 }
 
 func TestProvideOAuth2ClientValidator(T *testing.T) {
-	// T.Parallel()
+	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		ProvideOAuth2ClientValidator(&oauth2clientsservice.Service{})
+		assert.NotNil(t, ProvideOAuth2ClientValidator(&oauth2clientsservice.Service{}))
 	})
 }

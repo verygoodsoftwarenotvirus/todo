@@ -83,49 +83,45 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		router.Get("/*", staticFileServer)
 	}
 
-	for route, handler := range s.frontendService.Routes() {
-		router.Get(route, handler)
-	}
-
 	router.With(
 		s.authService.AuthenticationMiddleware(true),
 		s.authService.AdminMiddleware,
 	).Route("/admin", func(adminRouter chi.Router) {
-		adminRouter.Post("/cycle_cookie_secret", s.authService.CycleSecretHandler())
+		adminRouter.Post("/cycle_cookie_secret", s.authService.CycleSecretHandler)
 	})
 
 	router.Route("/users", func(userRouter chi.Router) {
-		userRouter.With(s.authService.UserLoginInputMiddleware).Post("/login", s.authService.LoginHandler())
-		userRouter.With(s.authService.CookieAuthenticationMiddleware).Post("/logout", s.authService.LogoutHandler())
+		userRouter.With(s.authService.UserLoginInputMiddleware).Post("/login", s.authService.LoginHandler)
+		userRouter.With(s.authService.CookieAuthenticationMiddleware).Post("/logout", s.authService.LogoutHandler)
 
 		userIDPattern := fmt.Sprintf(oauth2IDPattern, usersservice.URIParamKey)
 
-		userRouter.Get(root, s.usersService.ListHandler())
-		userRouter.With(s.authService.CookieAuthenticationMiddleware).Get("/status", s.authService.StatusHandler())
-		userRouter.With(s.usersService.UserInputMiddleware).Post(root, s.usersService.CreateHandler())
-		userRouter.Get(userIDPattern, s.usersService.ReadHandler())
-		userRouter.Delete(userIDPattern, s.usersService.ArchiveHandler())
+		userRouter.Get(root, s.usersService.ListHandler)
+		userRouter.With(s.authService.CookieAuthenticationMiddleware).Get("/status", s.authService.StatusHandler)
+		userRouter.With(s.usersService.UserInputMiddleware).Post(root, s.usersService.CreateHandler)
+		userRouter.Get(userIDPattern, s.usersService.ReadHandler)
+		userRouter.Delete(userIDPattern, s.usersService.ArchiveHandler)
 
 		userRouter.With(
 			s.authService.CookieAuthenticationMiddleware,
 			s.usersService.TOTPSecretRefreshInputMiddleware,
-		).Post("/totp_secret/new", s.usersService.NewTOTPSecretHandler())
+		).Post("/totp_secret/new", s.usersService.NewTOTPSecretHandler)
 
 		userRouter.With(
 			s.usersService.TOTPSecretVerificationInputMiddleware,
-		).Post("/totp_secret/verify", s.usersService.TOTPSecretVerificationHandler())
+		).Post("/totp_secret/verify", s.usersService.TOTPSecretVerificationHandler)
 
 		userRouter.With(
 			s.authService.CookieAuthenticationMiddleware,
 			s.usersService.PasswordUpdateInputMiddleware,
-		).Put("/password/new", s.usersService.UpdatePasswordHandler())
+		).Put("/password/new", s.usersService.UpdatePasswordHandler)
 	})
 
 	router.Route("/oauth2", func(oauth2Router chi.Router) {
 		oauth2Router.With(
 			s.authService.CookieAuthenticationMiddleware,
 			s.oauth2ClientsService.CreationInputMiddleware,
-		).Post("/client", s.oauth2ClientsService.CreateHandler())
+		).Post("/client", s.oauth2ClientsService.CreateHandler)
 
 		oauth2Router.With(s.oauth2ClientsService.OAuth2ClientInfoMiddleware).
 			Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
@@ -149,25 +145,25 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 			itemsRouteWithPrefix := fmt.Sprintf("/%s", itemPath)
 			itemRouteParam := fmt.Sprintf(numericIDPattern, itemsservice.URIParamKey)
 			v1Router.Route(itemsRouteWithPrefix, func(itemsRouter chi.Router) {
-				itemsRouter.With(s.itemsService.CreationInputMiddleware).Post(root, s.itemsService.CreateHandler())
+				itemsRouter.With(s.itemsService.CreationInputMiddleware).Post(root, s.itemsService.CreateHandler)
 				itemsRouter.Route(itemRouteParam, func(singleItemRouter chi.Router) {
-					singleItemRouter.Get(root, s.itemsService.ReadHandler())
-					singleItemRouter.With(s.itemsService.UpdateInputMiddleware).Put(root, s.itemsService.UpdateHandler())
-					singleItemRouter.Delete(root, s.itemsService.ArchiveHandler())
-					singleItemRouter.Head(root, s.itemsService.ExistenceHandler())
+					singleItemRouter.Get(root, s.itemsService.ReadHandler)
+					singleItemRouter.With(s.itemsService.UpdateInputMiddleware).Put(root, s.itemsService.UpdateHandler)
+					singleItemRouter.Delete(root, s.itemsService.ArchiveHandler)
+					singleItemRouter.Head(root, s.itemsService.ExistenceHandler)
 				})
-				itemsRouter.Get(root, s.itemsService.ListHandler())
-				itemsRouter.Get(searchRoot, s.itemsService.SearchHandler())
+				itemsRouter.Get(root, s.itemsService.ListHandler)
+				itemsRouter.Get(searchRoot, s.itemsService.SearchHandler)
 			})
 
 			// Webhooks.
 			v1Router.Route("/webhooks", func(webhookRouter chi.Router) {
 				sr := fmt.Sprintf(numericIDPattern, webhooksservice.URIParamKey)
-				webhookRouter.With(s.webhooksService.CreationInputMiddleware).Post(root, s.webhooksService.CreateHandler())
-				webhookRouter.Get(sr, s.webhooksService.ReadHandler())
-				webhookRouter.With(s.webhooksService.UpdateInputMiddleware).Put(sr, s.webhooksService.UpdateHandler())
-				webhookRouter.Delete(sr, s.webhooksService.ArchiveHandler())
-				webhookRouter.Get(root, s.webhooksService.ListHandler())
+				webhookRouter.With(s.webhooksService.CreationInputMiddleware).Post(root, s.webhooksService.CreateHandler)
+				webhookRouter.Get(sr, s.webhooksService.ReadHandler)
+				webhookRouter.With(s.webhooksService.UpdateInputMiddleware).Put(sr, s.webhooksService.UpdateHandler)
+				webhookRouter.Delete(sr, s.webhooksService.ArchiveHandler)
+				webhookRouter.Get(root, s.webhooksService.ListHandler)
 			})
 
 			// OAuth2 Clients.
@@ -175,9 +171,9 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 				sr := fmt.Sprintf(numericIDPattern, oauth2clientsservice.URIParamKey)
 				// CreateHandler is not bound to an OAuth2 authentication token.
 				// UpdateHandler not supported for OAuth2 clients.
-				clientRouter.Get(sr, s.oauth2ClientsService.ReadHandler())
-				clientRouter.Delete(sr, s.oauth2ClientsService.ArchiveHandler())
-				clientRouter.Get(root, s.oauth2ClientsService.ListHandler())
+				clientRouter.Get(sr, s.oauth2ClientsService.ReadHandler)
+				clientRouter.Delete(sr, s.oauth2ClientsService.ArchiveHandler)
+				clientRouter.Get(root, s.oauth2ClientsService.ListHandler)
 			})
 		})
 

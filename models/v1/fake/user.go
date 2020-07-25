@@ -35,7 +35,7 @@ func BuildDatabaseCreationResponse(user *models.User) *models.UserCreationRespon
 		PasswordLastChangedOn: user.PasswordLastChangedOn,
 		IsAdmin:               user.IsAdmin,
 		CreatedOn:             user.CreatedOn,
-		UpdatedOn:             user.UpdatedOn,
+		LastUpdatedOn:         user.LastUpdatedOn,
 		ArchivedOn:            user.ArchivedOn,
 	}
 }

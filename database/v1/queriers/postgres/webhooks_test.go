@@ -32,7 +32,7 @@ func buildMockRowsFromWebhook(webhooks ...*models.Webhook) *sqlmock.Rows {
 			strings.Join(w.DataTypes, typesSeparator),
 			strings.Join(w.Topics, topicsSeparator),
 			w.CreatedOn,
-			w.UpdatedOn,
+			w.LastUpdatedOn,
 			w.ArchivedOn,
 			w.BelongsToUser,
 		}
@@ -55,7 +55,7 @@ func buildErroneousMockRowFromWebhook(w *models.Webhook) *sqlmock.Rows {
 		strings.Join(w.DataTypes, typesSeparator),
 		strings.Join(w.Topics, topicsSeparator),
 		w.CreatedOn,
-		w.UpdatedOn,
+		w.LastUpdatedOn,
 		w.ID,
 	)
 
@@ -551,7 +551,7 @@ func TestPostgres_UpdateWebhook(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
-		exampleRows := sqlmock.NewRows([]string{"last_updated_on"}).AddRow(exampleWebhook.UpdatedOn)
+		exampleRows := sqlmock.NewRows([]string{"last_updated_on"}).AddRow(exampleWebhook.LastUpdatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WithArgs(
 			exampleWebhook.Name,
 			exampleWebhook.ContentType,

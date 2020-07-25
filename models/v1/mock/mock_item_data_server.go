@@ -28,43 +28,36 @@ func (m *ItemDataServer) UpdateInputMiddleware(next http.Handler) http.Handler {
 }
 
 // SearchHandler implements our interface requirements.
-func (m *ItemDataServer) SearchHandler() http.HandlerFunc {
-	args := m.Called()
-	return args.Get(0).(http.HandlerFunc)
+func (m *ItemDataServer) SearchHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
 }
 
 // ListHandler implements our interface requirements.
-func (m *ItemDataServer) ListHandler() http.HandlerFunc {
-	args := m.Called()
-	return args.Get(0).(http.HandlerFunc)
+func (m *ItemDataServer) ListHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
 }
 
 // CreateHandler implements our interface requirements.
-func (m *ItemDataServer) CreateHandler() http.HandlerFunc {
-	args := m.Called()
-	return args.Get(0).(http.HandlerFunc)
+func (m *ItemDataServer) CreateHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
 }
 
 // ExistenceHandler implements our interface requirements.
-func (m *ItemDataServer) ExistenceHandler() http.HandlerFunc {
-	args := m.Called()
-	return args.Get(0).(http.HandlerFunc)
+func (m *ItemDataServer) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
 }
 
 // ReadHandler implements our interface requirements.
-func (m *ItemDataServer) ReadHandler() http.HandlerFunc {
-	args := m.Called()
-	return args.Get(0).(http.HandlerFunc)
+func (m *ItemDataServer) ReadHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
 }
 
 // UpdateHandler implements our interface requirements.
-func (m *ItemDataServer) UpdateHandler() http.HandlerFunc {
-	args := m.Called()
-	return args.Get(0).(http.HandlerFunc)
+func (m *ItemDataServer) UpdateHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
 }
 
 // ArchiveHandler implements our interface requirements.
-func (m *ItemDataServer) ArchiveHandler() http.HandlerFunc {
-	args := m.Called()
-	return args.Get(0).(http.HandlerFunc)
+func (m *ItemDataServer) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
 }

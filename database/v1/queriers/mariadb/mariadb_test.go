@@ -37,6 +37,8 @@ var (
 		"?", `\?`,
 		",", `\,`,
 		"-", `\-`,
+		"[", `\[`,
+		"]", `\]`,
 	)
 	queryArgRegexp = regexp.MustCompile(`\?+`)
 )

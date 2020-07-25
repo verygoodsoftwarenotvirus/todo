@@ -14,9 +14,11 @@ import (
 )
 
 const (
-	eventsSeparator = `,`
-	typesSeparator  = `,`
-	topicsSeparator = `,`
+	commaSeparator = ","
+
+	eventsSeparator = commaSeparator
+	typesSeparator  = commaSeparator
+	topicsSeparator = commaSeparator
 
 	webhooksTableName              = "webhooks"
 	webhooksTableNameColumn        = "name"
@@ -65,7 +67,7 @@ func (s *Sqlite) scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 		&dataTypesStr,
 		&topicsStr,
 		&x.CreatedOn,
-		&x.UpdatedOn,
+		&x.LastUpdatedOn,
 		&x.ArchivedOn,
 		&x.BelongsToUser,
 	}

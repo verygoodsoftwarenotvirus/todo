@@ -23,7 +23,7 @@
 # OSX
 .DS_Store
 
-# # Go
+# Go
 vendor
 
 # Python

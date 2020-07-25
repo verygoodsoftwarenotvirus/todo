@@ -171,9 +171,9 @@ func (c *V1Client) BuildVerifyTOTPSecretRequest(ctx context.Context, userID uint
 	})
 }
 
-// VerifyTOTPSecret builds a request to verify a TOTP secret.
+// VerifyTOTPSecret executes a request to verify a TOTP secret.
 func (c *V1Client) VerifyTOTPSecret(ctx context.Context, userID uint64, token string) error {
-	ctx, span := tracing.StartSpan(ctx, "BuildVerifyTOTPSecretRequest")
+	ctx, span := tracing.StartSpan(ctx, "VerifyTOTPSecret")
 	defer span.End()
 
 	req, err := c.BuildVerifyTOTPSecretRequest(ctx, userID, token)

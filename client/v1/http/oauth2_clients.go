@@ -51,7 +51,7 @@ func (c *V1Client) BuildGetOAuth2ClientsRequest(ctx context.Context, filter *mod
 
 // GetOAuth2Clients gets a list of OAuth2 clients.
 func (c *V1Client) GetOAuth2Clients(ctx context.Context, filter *models.QueryFilter) (*models.OAuth2ClientList, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetOAuth2ClientsForUser")
+	ctx, span := tracing.StartSpan(ctx, "GetOAuth2Clients")
 	defer span.End()
 
 	req, err := c.BuildGetOAuth2ClientsRequest(ctx, filter)

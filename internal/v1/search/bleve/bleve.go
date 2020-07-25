@@ -9,7 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/blevesearch/bleve"
+	bleve "github.com/blevesearch/bleve"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
@@ -43,7 +43,13 @@ func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger l
 		var newIndexErr error
 
 		switch name {
-		case testingSearchIndexName, models.ItemsSearchIndexName:
+		case testingSearchIndexName:
+			index, newIndexErr = bleve.New(string(path), bleve.NewIndexMapping())
+			if newIndexErr != nil {
+				logger.Error(newIndexErr, "failed to create new index")
+				return nil, newIndexErr
+			}
+		case models.ItemsSearchIndexName:
 			index, newIndexErr = bleve.New(string(path), buildItemMapping())
 			if newIndexErr != nil {
 				logger.Error(newIndexErr, "failed to create new index")
@@ -65,14 +71,16 @@ func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger l
 	return im, nil
 }
 
+// Index implements our IndexManager interface
 func (sm *bleveIndexManager) Index(ctx context.Context, id uint64, value interface{}) error {
 	_, span := tracing.StartSpan(ctx, "Index")
 	defer span.End()
 
 	sm.logger.WithValue("id", id).Debug("adding to index")
-	return sm.index.Index(strconv.FormatUint(id, 10), value)
+	return sm.index.Index(strconv.FormatUint(id, base), value)
 }
 
+// Search implements our IndexManager interface
 func (sm *bleveIndexManager) Search(ctx context.Context, query string, userID uint64) (ids []uint64, err error) {
 	_, span := tracing.StartSpan(ctx, "Search")
 	defer span.End()
@@ -85,14 +93,14 @@ func (sm *bleveIndexManager) Search(ctx context.Context, query string, userID ui
 	}).Debug("performing search")
 
 	searchRequest := bleve.NewSearchRequest(bleve.NewQueryStringQuery(query))
-	searchResult, err := sm.index.SearchInContext(ctx, searchRequest)
+	searchResults, err := sm.index.SearchInContext(ctx, searchRequest)
 	if err != nil {
 		sm.logger.Error(err, "performing search query")
 		return nil, err
 	}
 
 	out := []uint64{}
-	for _, result := range searchResult.Hits {
+	for _, result := range searchResults.Hits {
 		x, err := strconv.ParseUint(result.ID, base, bitSize)
 		if err != nil {
 			// this should literally never happen
@@ -104,10 +112,11 @@ func (sm *bleveIndexManager) Search(ctx context.Context, query string, userID ui
 	return out, nil
 }
 
+// Delete implements our IndexManager interface
 func (sm *bleveIndexManager) Delete(ctx context.Context, id uint64) error {
 	_, span := tracing.StartSpan(ctx, "Delete")
 	defer span.End()
 
-	sm.logger.WithValue("id", id).Debug("adding to index")
-	return sm.index.Delete(strconv.FormatUint(id, 10))
+	sm.logger.WithValue("id", id).Debug("removing from index")
+	return sm.index.Delete(strconv.FormatUint(id, base))
 }

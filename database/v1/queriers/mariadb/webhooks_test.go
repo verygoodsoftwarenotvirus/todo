@@ -33,7 +33,7 @@ func buildMockRowsFromWebhook(webhooks ...*models.Webhook) *sqlmock.Rows {
 			strings.Join(w.DataTypes, typesSeparator),
 			strings.Join(w.Topics, topicsSeparator),
 			w.CreatedOn,
-			w.UpdatedOn,
+			w.LastUpdatedOn,
 			w.ArchivedOn,
 			w.BelongsToUser,
 		}
@@ -56,7 +56,7 @@ func buildErroneousMockRowFromWebhook(w *models.Webhook) *sqlmock.Rows {
 		strings.Join(w.DataTypes, typesSeparator),
 		strings.Join(w.Topics, topicsSeparator),
 		w.CreatedOn,
-		w.UpdatedOn,
+		w.LastUpdatedOn,
 		w.ID,
 	)
 

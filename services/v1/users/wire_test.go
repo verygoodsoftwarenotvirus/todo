@@ -4,20 +4,22 @@ import (
 	"testing"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestProvideReportDataManager(T *testing.T) {
+func TestProvideUserDataManager(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		ProvideUserDataManager(database.BuildMockDatabase())
+		assert.NotNil(t, ProvideUserDataManager(database.BuildMockDatabase()))
 	})
 }
 
-func TestProvideReportDataServer(T *testing.T) {
+func TestProvideUserDataServer(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		ProvideUserDataServer(buildTestService(t))
+		assert.NotNil(t, ProvideUserDataServer(buildTestService(t)))
 	})
 }

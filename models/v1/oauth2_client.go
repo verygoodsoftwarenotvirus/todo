@@ -15,34 +15,6 @@ const (
 )
 
 type (
-	// OAuth2ClientDataManager handles OAuth2 clients.
-	OAuth2ClientDataManager interface {
-		GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*OAuth2Client, error)
-		GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*OAuth2Client, error)
-		GetAllOAuth2ClientCount(ctx context.Context) (uint64, error)
-		GetOAuth2ClientsForUser(ctx context.Context, userID uint64, filter *QueryFilter) (*OAuth2ClientList, error)
-		CreateOAuth2Client(ctx context.Context, input *OAuth2ClientCreationInput) (*OAuth2Client, error)
-		UpdateOAuth2Client(ctx context.Context, updated *OAuth2Client) error
-		ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error
-	}
-
-	// OAuth2ClientDataServer describes a structure capable of serving traffic related to oauth2 clients.
-	OAuth2ClientDataServer interface {
-		ListHandler() http.HandlerFunc
-		CreateHandler() http.HandlerFunc
-		ReadHandler() http.HandlerFunc
-		// There is deliberately no update function.
-		ArchiveHandler() http.HandlerFunc
-
-		CreationInputMiddleware(next http.Handler) http.Handler
-		OAuth2ClientInfoMiddleware(next http.Handler) http.Handler
-		ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.Request) (*OAuth2Client, error)
-
-		// wrappers for our implementation library.
-		HandleAuthorizeRequest(res http.ResponseWriter, req *http.Request) error
-		HandleTokenRequest(res http.ResponseWriter, req *http.Request) error
-	}
-
 	// OAuth2Client represents a user-authorized API client
 	OAuth2Client struct {
 		ID              uint64   `json:"id"`
@@ -53,7 +25,7 @@ type (
 		Scopes          []string `json:"scopes"`
 		ImplicitAllowed bool     `json:"implicitAllowed"`
 		CreatedOn       uint64   `json:"createdOn"`
-		UpdatedOn       *uint64  `json:"updatedOn"`
+		LastUpdatedOn   *uint64  `json:"lastUpdatedOn"`
 		ArchivedOn      *uint64  `json:"archivedOn"`
 		BelongsToUser   uint64   `json:"belongsToUser"`
 	}
@@ -79,6 +51,34 @@ type (
 	OAuth2ClientUpdateInput struct {
 		RedirectURI string   `json:"redirectURI"`
 		Scopes      []string `json:"scopes"`
+	}
+
+	// OAuth2ClientDataManager handles OAuth2 clients.
+	OAuth2ClientDataManager interface {
+		GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*OAuth2Client, error)
+		GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*OAuth2Client, error)
+		GetAllOAuth2ClientCount(ctx context.Context) (uint64, error)
+		GetOAuth2ClientsForUser(ctx context.Context, userID uint64, filter *QueryFilter) (*OAuth2ClientList, error)
+		CreateOAuth2Client(ctx context.Context, input *OAuth2ClientCreationInput) (*OAuth2Client, error)
+		UpdateOAuth2Client(ctx context.Context, updated *OAuth2Client) error
+		ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error
+	}
+
+	// OAuth2ClientDataServer describes a structure capable of serving traffic related to oauth2 clients.
+	OAuth2ClientDataServer interface {
+		ListHandler(res http.ResponseWriter, req *http.Request)
+		CreateHandler(res http.ResponseWriter, req *http.Request)
+		ReadHandler(res http.ResponseWriter, req *http.Request)
+		// There is deliberately no update function.
+		ArchiveHandler(res http.ResponseWriter, req *http.Request)
+
+		CreationInputMiddleware(next http.Handler) http.Handler
+		OAuth2ClientInfoMiddleware(next http.Handler) http.Handler
+		ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.Request) (*OAuth2Client, error)
+
+		// wrappers for our implementation library.
+		HandleAuthorizeRequest(res http.ResponseWriter, req *http.Request) error
+		HandleTokenRequest(res http.ResponseWriter, req *http.Request) error
 	}
 )
 

@@ -54,7 +54,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.ListHandler()(res, req)
+		s.ListHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -83,7 +83,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.ListHandler()(res, req)
+		s.ListHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -108,7 +108,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.ListHandler()(res, req)
+		s.ListHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -139,7 +139,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.ListHandler()(res, req)
+		s.ListHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -168,7 +168,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 			exampleItemIDs = append(exampleItemIDs, x.ID)
 		}
 
-		si := &mocksearch.MockIndexManager{}
+		si := &mocksearch.IndexManager{}
 		si.On("Search", mock.Anything, exampleQuery, exampleUser.ID).Return(exampleItemIDs, nil)
 		s.search = si
 
@@ -189,7 +189,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.SearchHandler()(res, req)
+		s.SearchHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -204,8 +204,8 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		exampleQuery := "whatever"
 		exampleLimit := uint8(123)
 
-		si := &mocksearch.MockIndexManager{}
-		si.On("Search", mock.Anything, exampleQuery, exampleUser.ID).Return([]uint64{}, errors.New("arbitrary"))
+		si := &mocksearch.IndexManager{}
+		si.On("Search", mock.Anything, exampleQuery, exampleUser.ID).Return([]uint64{}, errors.New("blah"))
 		s.search = si
 
 		res := httptest.NewRecorder()
@@ -217,7 +217,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.SearchHandler()(res, req)
+		s.SearchHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -237,7 +237,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 			exampleItemIDs = append(exampleItemIDs, x.ID)
 		}
 
-		si := &mocksearch.MockIndexManager{}
+		si := &mocksearch.IndexManager{}
 		si.On("Search", mock.Anything, exampleQuery, exampleUser.ID).Return(exampleItemIDs, nil)
 		s.search = si
 
@@ -258,7 +258,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.SearchHandler()(res, req)
+		s.SearchHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -278,12 +278,12 @@ func TestItemsService_SearchHandler(T *testing.T) {
 			exampleItemIDs = append(exampleItemIDs, x.ID)
 		}
 
-		si := &mocksearch.MockIndexManager{}
+		si := &mocksearch.IndexManager{}
 		si.On("Search", mock.Anything, exampleQuery, exampleUser.ID).Return(exampleItemIDs, nil)
 		s.search = si
 
 		itemDataManager := &mockmodels.ItemDataManager{}
-		itemDataManager.On("GetItemsWithIDs", mock.Anything, exampleUser.ID, exampleLimit, exampleItemIDs).Return([]models.Item{}, errors.New("arbitrary"))
+		itemDataManager.On("GetItemsWithIDs", mock.Anything, exampleUser.ID, exampleLimit, exampleItemIDs).Return([]models.Item{}, errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
 		res := httptest.NewRecorder()
@@ -295,7 +295,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.SearchHandler()(res, req)
+		s.SearchHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -315,7 +315,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 			exampleItemIDs = append(exampleItemIDs, x.ID)
 		}
 
-		si := &mocksearch.MockIndexManager{}
+		si := &mocksearch.IndexManager{}
 		si.On("Search", mock.Anything, exampleQuery, exampleUser.ID).Return(exampleItemIDs, nil)
 		s.search = si
 
@@ -324,7 +324,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("[]models.Item")).Return(errors.New("arbitrary"))
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("[]models.Item")).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -336,7 +336,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.SearchHandler()(res, req)
+		s.SearchHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -373,7 +373,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
 		s.reporter = r
 
-		si := &mocksearch.MockIndexManager{}
+		si := &mocksearch.IndexManager{}
 		si.On("Index", mock.Anything, exampleItem.ID, exampleItem).Return(nil)
 		s.search = si
 
@@ -390,13 +390,13 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		req = req.WithContext(context.WithValue(req.Context(), CreateMiddlewareCtxKey, exampleInput))
+		req = req.WithContext(context.WithValue(req.Context(), createMiddlewareCtxKey, exampleInput))
 
-		s.CreateHandler()(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusCreated, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager, mc, r, ed)
+		mock.AssertExpectationsForObjects(t, itemDataManager, mc, r, si, ed)
 	})
 
 	T.Run("without input attached", func(t *testing.T) {
@@ -413,7 +413,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.CreateHandler()(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
@@ -428,7 +428,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		itemDataManager := &mockmodels.ItemDataManager{}
-		itemDataManager.On("CreateItem", mock.Anything, mock.AnythingOfType("*models.ItemCreationInput")).Return(exampleItem, errors.New("blah"))
+		itemDataManager.On("CreateItem", mock.Anything, mock.AnythingOfType("*models.ItemCreationInput")).Return((*models.Item)(nil), errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
 		res := httptest.NewRecorder()
@@ -440,9 +440,9 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		req = req.WithContext(context.WithValue(req.Context(), CreateMiddlewareCtxKey, exampleInput))
+		req = req.WithContext(context.WithValue(req.Context(), createMiddlewareCtxKey, exampleInput))
 
-		s.CreateHandler()(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -470,7 +470,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
 		s.reporter = r
 
-		si := &mocksearch.MockIndexManager{}
+		si := &mocksearch.IndexManager{}
 		si.On("Index", mock.Anything, exampleItem.ID, exampleItem).Return(nil)
 		s.search = si
 
@@ -487,13 +487,13 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		req = req.WithContext(context.WithValue(req.Context(), CreateMiddlewareCtxKey, exampleInput))
+		req = req.WithContext(context.WithValue(req.Context(), createMiddlewareCtxKey, exampleInput))
 
-		s.CreateHandler()(res, req)
+		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusCreated, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager, mc, r, ed)
+		mock.AssertExpectationsForObjects(t, itemDataManager, mc, r, si, ed)
 	})
 }
 
@@ -529,7 +529,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.ExistenceHandler()(res, req)
+		s.ExistenceHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -560,7 +560,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.ExistenceHandler()(res, req)
+		s.ExistenceHandler(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
@@ -591,7 +591,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.ExistenceHandler()(res, req)
+		s.ExistenceHandler(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
@@ -635,7 +635,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.ReadHandler()(res, req)
+		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -666,7 +666,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.ReadHandler()(res, req)
+		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
@@ -697,7 +697,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.ReadHandler()(res, req)
+		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -732,7 +732,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.ReadHandler()(res, req)
+		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -770,7 +770,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
 		s.reporter = r
 
-		si := &mocksearch.MockIndexManager{}
+		si := &mocksearch.IndexManager{}
 		si.On("Index", mock.Anything, exampleItem.ID, exampleItem).Return(nil)
 		s.search = si
 
@@ -787,9 +787,9 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
+		req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
 
-		s.UpdateHandler()(res, req)
+		s.UpdateHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -810,7 +810,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.UpdateHandler()(res, req)
+		s.UpdateHandler(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
@@ -841,9 +841,9 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
+		req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
 
-		s.UpdateHandler()(res, req)
+		s.UpdateHandler(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
@@ -876,9 +876,9 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
+		req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
 
-		s.UpdateHandler()(res, req)
+		s.UpdateHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -912,9 +912,9 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
+		req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
 
-		s.UpdateHandler()(res, req)
+		s.UpdateHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -943,7 +943,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
 		s.reporter = r
 
-		si := &mocksearch.MockIndexManager{}
+		si := &mocksearch.IndexManager{}
 		si.On("Index", mock.Anything, exampleItem.ID, exampleItem).Return(nil)
 		s.search = si
 
@@ -960,9 +960,9 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		req = req.WithContext(context.WithValue(req.Context(), UpdateMiddlewareCtxKey, exampleInput))
+		req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
 
-		s.UpdateHandler()(res, req)
+		s.UpdateHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -997,7 +997,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
 		s.reporter = r
 
-		si := &mocksearch.MockIndexManager{}
+		si := &mocksearch.IndexManager{}
 		si.On("Delete", mock.Anything, exampleItem.ID).Return(nil)
 		s.search = si
 
@@ -1014,7 +1014,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.ArchiveHandler()(res, req)
+		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, http.StatusNoContent, res.Code)
 
@@ -1045,7 +1045,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.ArchiveHandler()(res, req)
+		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
@@ -1076,7 +1076,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.ArchiveHandler()(res, req)
+		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 

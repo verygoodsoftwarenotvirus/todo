@@ -30,7 +30,7 @@ func buildMockRowsFromOAuth2Client(clients ...*models.OAuth2Client) *sqlmock.Row
 			c.RedirectURI,
 			c.ClientSecret,
 			c.CreatedOn,
-			c.UpdatedOn,
+			c.LastUpdatedOn,
 			c.ArchivedOn,
 			c.BelongsToUser,
 		}
@@ -49,7 +49,7 @@ func buildErroneousMockRowFromOAuth2Client(c *models.OAuth2Client) *sqlmock.Rows
 		c.RedirectURI,
 		c.ClientSecret,
 		c.CreatedOn,
-		c.UpdatedOn,
+		c.LastUpdatedOn,
 		c.BelongsToUser,
 		c.ID,
 	)
@@ -409,7 +409,7 @@ func TestSqlite_GetOAuth2Client(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildGetAllOAuth2ClientCountQuery(T *testing.T) {
+func TestSqlite_buildGetAllOAuth2ClientsCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -444,7 +444,7 @@ func TestSqlite_GetAllOAuth2ClientCount(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildGetOAuth2ClientsQuery(T *testing.T) {
+func TestSqlite_buildGetOAuth2ClientsForUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -461,7 +461,7 @@ func TestSqlite_buildGetOAuth2ClientsQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := s.buildGetOAuth2ClientsQuery(exampleUser.ID, filter)
+		actualQuery, actualArgs := s.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, filter)
 
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -469,7 +469,7 @@ func TestSqlite_buildGetOAuth2ClientsQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_GetOAuth2Clients(T *testing.T) {
+func TestSqlite_GetOAuth2ClientsForUser(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakemodels.BuildFakeUser()

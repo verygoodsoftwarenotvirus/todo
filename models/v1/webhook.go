@@ -9,29 +9,6 @@ import (
 )
 
 type (
-	// WebhookDataManager describes a structure capable of storing webhooks.
-	WebhookDataManager interface {
-		GetWebhook(ctx context.Context, webhookID, userID uint64) (*Webhook, error)
-		GetAllWebhooksCount(ctx context.Context) (uint64, error)
-		GetWebhooks(ctx context.Context, userID uint64, filter *QueryFilter) (*WebhookList, error)
-		GetAllWebhooks(ctx context.Context) (*WebhookList, error)
-		CreateWebhook(ctx context.Context, input *WebhookCreationInput) (*Webhook, error)
-		UpdateWebhook(ctx context.Context, updated *Webhook) error
-		ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error
-	}
-
-	// WebhookDataServer describes a structure capable of serving traffic related to webhooks.
-	WebhookDataServer interface {
-		CreationInputMiddleware(next http.Handler) http.Handler
-		UpdateInputMiddleware(next http.Handler) http.Handler
-
-		ListHandler() http.HandlerFunc
-		CreateHandler() http.HandlerFunc
-		ReadHandler() http.HandlerFunc
-		UpdateHandler() http.HandlerFunc
-		ArchiveHandler() http.HandlerFunc
-	}
-
 	// Webhook represents a webhook listener, an endpoint to send an HTTP request to upon an event.
 	Webhook struct {
 		ID            uint64   `json:"id"`
@@ -43,7 +20,7 @@ type (
 		DataTypes     []string `json:"dataTypes"`
 		Topics        []string `json:"topics"`
 		CreatedOn     uint64   `json:"createdOn"`
-		UpdatedOn     *uint64  `json:"updatedOn"`
+		LastUpdatedOn *uint64  `json:"lastUpdatedOn"`
 		ArchivedOn    *uint64  `json:"archivedOn"`
 		BelongsToUser uint64   `json:"belongsToUser"`
 	}
@@ -76,6 +53,29 @@ type (
 	WebhookList struct {
 		Pagination
 		Webhooks []Webhook `json:"webhooks"`
+	}
+
+	// WebhookDataManager describes a structure capable of storing webhooks.
+	WebhookDataManager interface {
+		GetWebhook(ctx context.Context, webhookID, userID uint64) (*Webhook, error)
+		GetAllWebhooksCount(ctx context.Context) (uint64, error)
+		GetWebhooks(ctx context.Context, userID uint64, filter *QueryFilter) (*WebhookList, error)
+		GetAllWebhooks(ctx context.Context) (*WebhookList, error)
+		CreateWebhook(ctx context.Context, input *WebhookCreationInput) (*Webhook, error)
+		UpdateWebhook(ctx context.Context, updated *Webhook) error
+		ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error
+	}
+
+	// WebhookDataServer describes a structure capable of serving traffic related to webhooks.
+	WebhookDataServer interface {
+		CreationInputMiddleware(next http.Handler) http.Handler
+		UpdateInputMiddleware(next http.Handler) http.Handler
+
+		ListHandler(res http.ResponseWriter, req *http.Request)
+		CreateHandler(res http.ResponseWriter, req *http.Request)
+		ReadHandler(res http.ResponseWriter, req *http.Request)
+		UpdateHandler(res http.ResponseWriter, req *http.Request)
+		ArchiveHandler(res http.ResponseWriter, req *http.Request)
 	}
 )
 

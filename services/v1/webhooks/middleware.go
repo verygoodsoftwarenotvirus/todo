@@ -21,7 +21,7 @@ func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(ctx, CreateMiddlewareCtxKey, x)
+		ctx = context.WithValue(ctx, createMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }
@@ -40,7 +40,7 @@ func (s *Service) UpdateInputMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(ctx, UpdateMiddlewareCtxKey, x)
+		ctx = context.WithValue(ctx, updateMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }

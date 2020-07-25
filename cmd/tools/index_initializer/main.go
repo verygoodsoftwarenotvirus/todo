@@ -2,16 +2,17 @@ package main
 
 import (
 	"context"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search/bleve"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"log"
 	"time"
 
-	flag "github.com/spf13/pflag"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search/bleve"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	flag "github.com/spf13/pflag"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
 )
 
 var (
@@ -71,7 +72,7 @@ func main() {
 
 	im, err := bleve.NewBleveIndexManager(search.IndexPath(indexOutputPath), search.IndexName(typeName), logger)
 	if err != nil {
-		log.Fatalf("%v", err)
+		log.Fatal(err)
 	}
 
 	cfg := &config.ServerConfig{
@@ -98,22 +99,27 @@ func main() {
 		log.Fatalf("error initializing database client: %v", err)
 	}
 
-	outputChan := make(chan []models.Item)
-	if queryErr := dbClient.GetAllItems(ctx, outputChan); queryErr != nil {
-		log.Fatalf("error fetching items from database: %v", err)
-	}
-
-	for {
-		select {
-		case items := <-outputChan:
-			for _, x := range items {
-				if searchIndexErr := im.Index(ctx, x.ID, x); searchIndexErr != nil {
-					logger.WithValue("id", x.ID).Error(searchIndexErr, "error adding to search index")
-				}
-			}
-		case <-time.After(deadline):
-			logger.Info("terminating")
-			return
+	switch typeName {
+	case "item":
+		outputChan := make(chan []models.Item)
+		if queryErr := dbClient.GetAllItems(ctx, outputChan); queryErr != nil {
+			log.Fatalf("error fetching items from database: %v", err)
 		}
+
+		for {
+			select {
+			case items := <-outputChan:
+				for _, x := range items {
+					if searchIndexErr := im.Index(ctx, x.ID, x); searchIndexErr != nil {
+						logger.WithValue("id", x.ID).Error(searchIndexErr, "error adding to search index")
+					}
+				}
+			case <-time.After(deadline):
+				logger.Info("terminating")
+				return
+			}
+		}
+	default:
+		log.Fatal("this should never occur")
 	}
 }

@@ -16,7 +16,7 @@ import (
 	"github.com/alexedwards/scs/mysqlstore"
 	"github.com/alexedwards/scs/postgresstore"
 	"github.com/alexedwards/scs/sqlite3store"
-	"github.com/alexedwards/scs/v2"
+	scs "github.com/alexedwards/scs/v2"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
@@ -63,7 +63,7 @@ func (cfg *ServerConfig) ProvideDatabaseClient(ctx context.Context, logger loggi
 	case SqliteProviderKey:
 		dbc = sqlite.ProvideSqlite(debug, rawDB, logger)
 	default:
-		return nil, errors.New("invalid database type selected")
+		return nil, fmt.Errorf("invalid database type selected: %q", cfg.Database.Provider)
 	}
 
 	return dbclient.ProvideDatabaseClient(ctx, rawDB, dbc, debug, logger)
@@ -85,7 +85,7 @@ func ProvideSessionManager(authConf AuthSettings, dbConf DatabaseSettings, db *s
 	}
 
 	sessionManager.Lifetime = authConf.CookieLifetime
-	// elaborate further here later
+	// elaborate further here later if you so choose
 
 	return sessionManager
 }

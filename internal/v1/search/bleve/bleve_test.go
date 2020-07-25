@@ -13,17 +13,19 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
 )
 
-type exampleType struct {
-	ID            uint64 `json:"id"`
-	Name          string `json:"name"`
-	BelongsToUser uint64 `json:"belongsToUser"`
-}
+type (
+	exampleType struct {
+		ID            uint64 `json:"id"`
+		Name          string `json:"name"`
+		BelongsToUser uint64 `json:"belongsToUser"`
+	}
 
-type exampleTypeWithStringID struct {
-	ID            string `json:"id"`
-	Name          string `json:"name"`
-	BelongsToUser uint64 `json:"belongsToUser"`
-}
+	exampleTypeWithStringID struct {
+		ID            string `json:"id"`
+		Name          string `json:"name"`
+		BelongsToUser uint64 `json:"belongsToUser"`
+	}
+)
 
 func TestNewBleveIndexManager(T *testing.T) {
 	T.Parallel()
@@ -127,7 +129,7 @@ func TestBleveIndexManager_Search(T *testing.T) {
 		ctx := context.Background()
 
 		const exampleQuery = "search_test"
-		exampleIndexPath := search.IndexPath("search_test_1.bleve")
+		exampleIndexPath := search.IndexPath("search_test_3.bleve")
 
 		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.ProvideNoopLogger())
 		assert.NoError(t, err)
@@ -153,7 +155,7 @@ func TestBleveIndexManager_Search(T *testing.T) {
 		ctx := context.Background()
 
 		const exampleQuery = "search_test"
-		exampleIndexPath := search.IndexPath("search_test_3.bleve")
+		exampleIndexPath := search.IndexPath("search_test_4.bleve")
 
 		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.ProvideNoopLogger())
 		assert.NoError(t, err)

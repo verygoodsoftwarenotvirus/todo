@@ -46,43 +46,36 @@ func (m *UserDataServer) TOTPSecretRefreshInputMiddleware(next http.Handler) htt
 }
 
 // ListHandler is a mock method to satisfy our interface requirements.
-func (m *UserDataServer) ListHandler() http.HandlerFunc {
-	args := m.Called()
-	return args.Get(0).(http.HandlerFunc)
+func (m *UserDataServer) ListHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
 }
 
 // CreateHandler is a mock method to satisfy our interface requirements.
-func (m *UserDataServer) CreateHandler() http.HandlerFunc {
-	args := m.Called()
-	return args.Get(0).(http.HandlerFunc)
+func (m *UserDataServer) CreateHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
 }
 
 // ReadHandler is a mock method to satisfy our interface requirements.
-func (m *UserDataServer) ReadHandler() http.HandlerFunc {
-	args := m.Called()
-	return args.Get(0).(http.HandlerFunc)
+func (m *UserDataServer) ReadHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
 }
 
 // TOTPSecretVerificationHandler is a mock method to satisfy our interface requirements.
-func (m *UserDataServer) TOTPSecretVerificationHandler() http.HandlerFunc {
-	args := m.Called()
-	return args.Get(0).(http.HandlerFunc)
+func (m *UserDataServer) TOTPSecretVerificationHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
 }
 
 // NewTOTPSecretHandler is a mock method to satisfy our interface requirements.
-func (m *UserDataServer) NewTOTPSecretHandler() http.HandlerFunc {
-	args := m.Called()
-	return args.Get(0).(http.HandlerFunc)
+func (m *UserDataServer) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
 }
 
 // UpdatePasswordHandler is a mock method to satisfy our interface requirements.
-func (m *UserDataServer) UpdatePasswordHandler() http.HandlerFunc {
-	args := m.Called()
-	return args.Get(0).(http.HandlerFunc)
+func (m *UserDataServer) UpdatePasswordHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
 }
 
 // ArchiveHandler is a mock method to satisfy our interface requirements.
-func (m *UserDataServer) ArchiveHandler() http.HandlerFunc {
-	args := m.Called()
-	return args.Get(0).(http.HandlerFunc)
+func (m *UserDataServer) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
 }

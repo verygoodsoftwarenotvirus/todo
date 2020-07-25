@@ -26,7 +26,7 @@ func (c *Client) GetUser(ctx context.Context, userID uint64) (*models.User, erro
 	return c.querier.GetUser(ctx, userID)
 }
 
-// GetUserWithUnverifiedTwoFactorSecret fetches a user.
+// GetUserWithUnverifiedTwoFactorSecret fetches a user with an unverified 2FA secret.
 func (c *Client) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*models.User, error) {
 	ctx, span := tracing.StartSpan(ctx, "GetUserWithUnverifiedTwoFactorSecret")
 	defer span.End()
@@ -103,10 +103,9 @@ func (c *Client) UpdateUser(ctx context.Context, updated *models.User) error {
 	return c.querier.UpdateUser(ctx, updated)
 }
 
-// UpdateUserPassword receives a complete User struct and updates its record in the database.
-// NOTE: this function uses the ID provided in the input to make its query.
+// UpdateUserPassword updates a user's password hash in the database.
 func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
-	ctx, span := tracing.StartSpan(ctx, "UpdateUser")
+	ctx, span := tracing.StartSpan(ctx, "UpdateUserPassword")
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)

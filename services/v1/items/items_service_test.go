@@ -23,8 +23,8 @@ func buildTestService() *Service {
 		itemIDFetcher:   func(req *http.Request) uint64 { return 0 },
 		userIDFetcher:   func(req *http.Request) uint64 { return 0 },
 		encoderDecoder:  &mockencoding.EncoderDecoder{},
-		search:          &mocksearch.MockIndexManager{},
 		reporter:        nil,
+		search:          &mocksearch.IndexManager{},
 	}
 }
 
@@ -44,7 +44,7 @@ func TestProvideItemsService(T *testing.T) {
 			&mockencoding.EncoderDecoder{},
 			ucp,
 			nil,
-			&mocksearch.MockIndexManager{},
+			&mocksearch.IndexManager{},
 		)
 
 		assert.NotNil(t, s)
@@ -64,7 +64,7 @@ func TestProvideItemsService(T *testing.T) {
 			&mockencoding.EncoderDecoder{},
 			ucp,
 			nil,
-			&mocksearch.MockIndexManager{},
+			&mocksearch.IndexManager{},
 		)
 
 		assert.Nil(t, s)

@@ -101,7 +101,7 @@ func TestClient_GetAllOAuth2ClientCount(T *testing.T) {
 	})
 }
 
-func TestClient_GetOAuth2Clients(T *testing.T) {
+func TestClient_GetOAuth2ClientsForUser(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakemodels.BuildFakeUser()

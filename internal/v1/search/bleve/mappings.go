@@ -1,9 +1,9 @@
 package bleve
 
 import (
-	"github.com/blevesearch/bleve"
-	"github.com/blevesearch/bleve/analysis/lang/en"
-	"github.com/blevesearch/bleve/mapping"
+	bleve "github.com/blevesearch/bleve"
+	en "github.com/blevesearch/bleve/analysis/lang/en"
+	mapping "github.com/blevesearch/bleve/mapping"
 )
 
 func buildItemMapping() *mapping.IndexMappingImpl {
@@ -12,7 +12,6 @@ func buildItemMapping() *mapping.IndexMappingImpl {
 	englishTextFieldMapping := bleve.NewTextFieldMapping()
 	englishTextFieldMapping.Analyzer = en.AnalyzerName
 
-	// items
 	itemMapping := bleve.NewDocumentMapping()
 	itemMapping.AddFieldMappingsAt("name", englishTextFieldMapping)
 	itemMapping.AddFieldMappingsAt("details", englishTextFieldMapping)

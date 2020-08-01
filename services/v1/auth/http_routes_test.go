@@ -44,6 +44,8 @@ func attachCookieToRequestForTest(t *testing.T, s *Service, req *http.Request, u
 }
 
 func TestService_DecodeCookieFromRequest(T *testing.T) {
+	T.Parallel()
+
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
@@ -99,6 +101,8 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 }
 
 func TestService_WebsocketAuthFunction(T *testing.T) {
+	T.Parallel()
+
 	T.Run("with valid oauth2 client", func(t *testing.T) {
 		s := buildTestService(t)
 
@@ -173,6 +177,8 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 }
 
 func TestService_fetchUserFromCookie(T *testing.T) {
+	T.Parallel()
+
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
@@ -240,6 +246,8 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 }
 
 func TestService_LoginHandler(T *testing.T) {
+	T.Parallel()
+
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
@@ -529,6 +537,8 @@ func TestService_LoginHandler(T *testing.T) {
 }
 
 func TestService_LogoutHandler(T *testing.T) {
+	T.Parallel()
+
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
@@ -585,6 +595,8 @@ func TestService_LogoutHandler(T *testing.T) {
 }
 
 func TestService_fetchLoginDataFromRequest(T *testing.T) {
+	T.Parallel()
+
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 
@@ -676,6 +688,8 @@ func TestService_fetchLoginDataFromRequest(T *testing.T) {
 }
 
 func TestService_validateLogin(T *testing.T) {
+	T.Parallel()
+
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -902,6 +916,8 @@ func TestService_validateLogin(T *testing.T) {
 }
 
 func TestService_StatusHandler(T *testing.T) {
+	T.Parallel()
+
 	T.Run("normal operation", func(t *testing.T) {
 		s := buildTestService(t)
 
@@ -990,6 +1006,8 @@ func TestService_StatusHandler(T *testing.T) {
 }
 
 func TestService_CycleSecretHandler(T *testing.T) {
+	T.Parallel()
+
 	T.Run("normal operation", func(t *testing.T) {
 		s := buildTestService(t)
 
@@ -1013,6 +1031,8 @@ func TestService_CycleSecretHandler(T *testing.T) {
 }
 
 func TestService_buildCookie(T *testing.T) {
+	T.Parallel()
+
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService(t)
 

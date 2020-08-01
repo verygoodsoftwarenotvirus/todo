@@ -12,7 +12,7 @@ require (
 	github.com/alexedwards/scs/mysqlstore v0.0.0-20200503134757-95908882a5b1
 	github.com/alexedwards/scs/postgresstore v0.0.0-20200503134757-95908882a5b1
 	github.com/alexedwards/scs/sqlite3store v0.0.0-20200503134757-95908882a5b1
-	github.com/alexedwards/scs/v2 v2.3.1
+	github.com/alexedwards/scs/v2 v2.4.0
 	github.com/blevesearch/bleve v1.0.9
 	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc
 	github.com/brianvoe/gofakeit/v5 v5.0.0
@@ -28,6 +28,7 @@ require (
 	github.com/moul/http2curl v1.0.0
 	github.com/pquerna/otp v1.2.0
 	github.com/spf13/afero v1.2.2
+	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.6.2
 	github.com/stretchr/testify v1.5.1
 	github.com/tebeka/selenium v0.9.9

@@ -118,7 +118,6 @@ func (p *Postgres) buildGetOAuth2ClientByClientIDQuery(clientID string) (query s
 func (p *Postgres) GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*models.OAuth2Client, error) {
 	query, args := p.buildGetOAuth2ClientByClientIDQuery(clientID)
 	row := p.db.QueryRowContext(ctx, query, args...)
-
 	return p.scanOAuth2Client(row)
 }
 

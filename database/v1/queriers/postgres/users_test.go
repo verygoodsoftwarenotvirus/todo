@@ -20,7 +20,6 @@ import (
 
 func buildMockRowsFromUser(users ...*models.User) *sqlmock.Rows {
 	columns := usersTableColumns
-
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, user := range users {
@@ -636,6 +635,7 @@ func TestPostgres_UpdateUserPassword(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
+
 		expectedQuery := "UPDATE users SET hashed_password = $1, requires_password_change = $2, password_last_changed_on = extract(epoch FROM NOW()), last_updated_on = extract(epoch FROM NOW()) WHERE id = $3 RETURNING last_updated_on"
 
 		p, mockDB := buildTestService(t)
@@ -679,6 +679,7 @@ func TestPostgres_VerifyUserTwoFactorSecret(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
+
 		expectedQuery := "UPDATE users SET two_factor_secret_verified_on = extract(epoch FROM NOW()) WHERE id = $1"
 
 		p, mockDB := buildTestService(t)

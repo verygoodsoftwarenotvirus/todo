@@ -1,3 +1,9 @@
+/*
+Command index_initializer is a CLI that takes in some data via flags about your
+database and the type you want to index, and hydrates a Bleve index full of that type.
+This tool is to be used in the event of some data corruption that takes the search index
+out of commission.
+*/
 package main
 
 import (

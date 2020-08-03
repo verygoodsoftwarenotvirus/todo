@@ -110,7 +110,6 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 		userRouter.With(
 			s.usersService.TOTPSecretVerificationInputMiddleware,
 		).Post("/totp_secret/verify", s.usersService.TOTPSecretVerificationHandler)
-
 		userRouter.With(
 			s.authService.CookieAuthenticationMiddleware,
 			s.usersService.PasswordUpdateInputMiddleware,

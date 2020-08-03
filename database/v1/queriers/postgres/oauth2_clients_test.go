@@ -19,7 +19,6 @@ import (
 
 func buildMockRowsFromOAuth2Client(clients ...*models.OAuth2Client) *sqlmock.Rows {
 	columns := oauth2ClientsTableColumns
-
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, c := range clients {
@@ -35,7 +34,6 @@ func buildMockRowsFromOAuth2Client(clients ...*models.OAuth2Client) *sqlmock.Row
 			c.ArchivedOn,
 			c.BelongsToUser,
 		}
-
 		exampleRows.AddRow(rowValues...)
 	}
 

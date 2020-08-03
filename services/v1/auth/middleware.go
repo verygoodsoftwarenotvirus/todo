@@ -120,6 +120,7 @@ func (s *Service) AdminMiddleware(next http.Handler) http.Handler {
 
 		logger := s.logger.WithRequest(req)
 		si, ok := ctx.Value(models.SessionInfoKey).(*models.SessionInfo)
+
 		if !ok || si == nil {
 			logger.Debug("AdminMiddleware called without user attached to context")
 			res.WriteHeader(http.StatusUnauthorized)

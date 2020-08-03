@@ -41,7 +41,7 @@ var (
 			);
 
 			CREATE INDEX sessions_expiry_idx ON sessions (expiry);
-			`,
+		`,
 		},
 		{
 			Version:     3,

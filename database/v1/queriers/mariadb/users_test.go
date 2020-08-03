@@ -613,6 +613,7 @@ func TestMariaDB_UpdateUserPassword(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
+
 		expectedQuery := "UPDATE users SET hashed_password = ?, requires_password_change = ?, password_last_changed_on = UNIX_TIMESTAMP(), last_updated_on = UNIX_TIMESTAMP() WHERE id = ?"
 
 		m, mockDB := buildTestService(t)
@@ -656,6 +657,7 @@ func TestMariaDB_VerifyUserTwoFactorSecret(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
+
 		expectedQuery := "UPDATE users SET two_factor_secret_verified_on = UNIX_TIMESTAMP() WHERE id = ?"
 
 		m, mockDB := buildTestService(t)

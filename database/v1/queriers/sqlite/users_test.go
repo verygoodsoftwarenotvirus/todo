@@ -613,6 +613,7 @@ func TestSqlite_UpdateUserPassword(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
+
 		expectedQuery := "UPDATE users SET hashed_password = ?, requires_password_change = ?, password_last_changed_on = (strftime('%s','now')), last_updated_on = (strftime('%s','now')) WHERE id = ?"
 
 		s, mockDB := buildTestService(t)
@@ -656,6 +657,7 @@ func TestSqlite_VerifyUserTwoFactorSecret(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
+
 		expectedQuery := "UPDATE users SET two_factor_secret_verified_on = (strftime('%s','now')) WHERE id = ?"
 
 		s, mockDB := buildTestService(t)

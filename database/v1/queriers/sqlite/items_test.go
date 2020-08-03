@@ -298,7 +298,6 @@ func TestSqlite_GetAllItems(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
-
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedGetQuery)).
 			WithArgs(
 				uint64(1),
@@ -362,7 +361,6 @@ func TestSqlite_GetAllItems(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
-
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedGetQuery)).
 			WithArgs(
 				uint64(1),
@@ -390,7 +388,6 @@ func TestSqlite_GetAllItems(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
-
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedGetQuery)).
 			WithArgs(
 				uint64(1),
@@ -419,7 +416,6 @@ func TestSqlite_GetAllItems(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
-
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedGetQuery)).
 			WithArgs(
 				uint64(1),
@@ -603,6 +599,7 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 		for _, item := range exampleItemList.Items {
 			exampleItemIDs = append(exampleItemIDs, item.ID)
 		}
+
 		expectedQuery, expectedArgs := s.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleItemIDs)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -633,6 +630,7 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 		for _, item := range exampleItemList.Items {
 			exampleItemIDs = append(exampleItemIDs, item.ID)
 		}
+
 		expectedQuery, expectedArgs := s.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleItemIDs)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -640,6 +638,7 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := s.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleItemIDs)
+
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.Equal(t, sql.ErrNoRows, err)
@@ -657,6 +656,7 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 		for _, item := range exampleItemList.Items {
 			exampleItemIDs = append(exampleItemIDs, item.ID)
 		}
+
 		expectedQuery, expectedArgs := s.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleItemIDs)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -664,6 +664,7 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 			WillReturnError(errors.New("blah"))
 
 		actual, err := s.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleItemIDs)
+
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -680,6 +681,7 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 		for _, item := range exampleItemList.Items {
 			exampleItemIDs = append(exampleItemIDs, item.ID)
 		}
+
 		expectedQuery, expectedArgs := s.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleItemIDs)
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -689,6 +691,7 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 			WillReturnRows(buildErroneousMockRowFromItem(exampleItem))
 
 		actual, err := s.GetItemsWithIDs(ctx, exampleUser.ID, 0, exampleItemIDs)
+
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 

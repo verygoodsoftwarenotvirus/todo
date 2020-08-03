@@ -231,6 +231,10 @@ issues:
         - lll
         - bodyclose
 
+    - path: tests/v1
+      linters:
+        - gosec
+
     - path: tests/v1/testutil/
       linters:
         - bodyclose

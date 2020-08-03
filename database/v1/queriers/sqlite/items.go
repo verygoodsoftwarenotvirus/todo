@@ -176,6 +176,7 @@ func (s *Sqlite) buildGetBatchOfItemsQuery(beginID, endID uint64) (query string,
 			fmt.Sprintf("%s.%s", itemsTableName, idColumn): endID,
 		}).
 		ToSql()
+
 	s.logQueryBuildingError(err)
 
 	return query, args

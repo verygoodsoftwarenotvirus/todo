@@ -176,6 +176,7 @@ func (p *Postgres) buildGetBatchOfItemsQuery(beginID, endID uint64) (query strin
 			fmt.Sprintf("%s.%s", itemsTableName, idColumn): endID,
 		}).
 		ToSql()
+
 	p.logQueryBuildingError(err)
 
 	return query, args
@@ -283,7 +284,6 @@ func (p *Postgres) buildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []u
 		From(itemsTableName).
 		Join(fmt.Sprintf("unnest('{%s}'::int[])", joinUint64s(ids))).
 		Suffix(fmt.Sprintf("WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT %d", limit))
-
 	builder := p.sqlBuilder.
 		Select(itemsTableColumns...).
 		FromSelect(subqueryBuilder, itemsTableName).

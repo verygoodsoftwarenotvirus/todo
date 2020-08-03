@@ -19,7 +19,6 @@ import (
 
 func buildMockRowsFromItems(items ...*models.Item) *sqlmock.Rows {
 	columns := itemsTableColumns
-
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, x := range items {
@@ -299,7 +298,6 @@ func TestPostgres_GetAllItems(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
-
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedGetQuery)).
 			WithArgs(
 				uint64(1),
@@ -363,7 +361,6 @@ func TestPostgres_GetAllItems(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
-
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedGetQuery)).
 			WithArgs(
 				uint64(1),
@@ -391,7 +388,6 @@ func TestPostgres_GetAllItems(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
-
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedGetQuery)).
 			WithArgs(
 				uint64(1),
@@ -420,7 +416,6 @@ func TestPostgres_GetAllItems(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
-
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedGetQuery)).
 			WithArgs(
 				uint64(1),
@@ -629,6 +624,7 @@ func TestPostgres_GetItemsWithIDs(T *testing.T) {
 		p, mockDB := buildTestService(t)
 
 		exampleItemIDs := []uint64{123, 456, 789}
+
 		expectedQuery := fmt.Sprintf("SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user FROM (SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user FROM items JOIN unnest('{%s}'::int[]) WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT %d) AS items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1", joinUint64s(exampleItemIDs), defaultLimit)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -636,6 +632,7 @@ func TestPostgres_GetItemsWithIDs(T *testing.T) {
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := p.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleItemIDs)
+
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.Equal(t, sql.ErrNoRows, err)
@@ -649,6 +646,7 @@ func TestPostgres_GetItemsWithIDs(T *testing.T) {
 		p, mockDB := buildTestService(t)
 
 		exampleItemIDs := []uint64{123, 456, 789}
+
 		expectedQuery := fmt.Sprintf("SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user FROM (SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user FROM items JOIN unnest('{%s}'::int[]) WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT %d) AS items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1", joinUint64s(exampleItemIDs), defaultLimit)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -656,6 +654,7 @@ func TestPostgres_GetItemsWithIDs(T *testing.T) {
 			WillReturnError(errors.New("blah"))
 
 		actual, err := p.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleItemIDs)
+
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -668,6 +667,7 @@ func TestPostgres_GetItemsWithIDs(T *testing.T) {
 		p, mockDB := buildTestService(t)
 
 		exampleItemIDs := []uint64{123, 456, 789}
+
 		expectedQuery := fmt.Sprintf("SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user FROM (SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user FROM items JOIN unnest('{%s}'::int[]) WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT %d) AS items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1", joinUint64s(exampleItemIDs), defaultLimit)
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -677,6 +677,7 @@ func TestPostgres_GetItemsWithIDs(T *testing.T) {
 			WillReturnRows(buildErroneousMockRowFromItem(exampleItem))
 
 		actual, err := p.GetItemsWithIDs(ctx, exampleUser.ID, 0, exampleItemIDs)
+
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 

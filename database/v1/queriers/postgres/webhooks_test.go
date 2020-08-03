@@ -18,7 +18,6 @@ import (
 
 func buildMockRowsFromWebhook(webhooks ...*models.Webhook) *sqlmock.Rows {
 	columns := webhooksTableColumns
-
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, w := range webhooks {

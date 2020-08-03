@@ -18,12 +18,12 @@ type ServiceAttacker struct {
 	todoClient *client.V1Client
 }
 
-// Setup implement's hazana's Attacker interface.
+// Setup implements hazana's Attacker interface.
 func (a *ServiceAttacker) Setup(_ hazana.Config) error {
 	return nil
 }
 
-// Do implement's hazana's Attacker interface.
+// Do implements hazana's Attacker interface.
 func (a *ServiceAttacker) Do(_ context.Context) hazana.DoResult {
 	// Do performs one request and is executed in a separate goroutine.
 	// The context is used to cancel the request on timeout.

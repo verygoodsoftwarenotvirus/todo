@@ -34,7 +34,6 @@ func buildMockRowsFromOAuth2Client(clients ...*models.OAuth2Client) *sqlmock.Row
 			c.ArchivedOn,
 			c.BelongsToUser,
 		}
-
 		exampleRows.AddRow(rowValues...)
 	}
 

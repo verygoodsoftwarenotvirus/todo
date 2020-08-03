@@ -28,15 +28,15 @@ type (
 	CountResponse struct {
 		Count uint64 `json:"count"`
 	}
+
+	// ErrorResponse represents a response we might send to the user in the event of an error.
+	ErrorResponse struct {
+		Message string `json:"message"`
+		Code    uint   `json:"code"`
+	}
 )
 
 var _ error = (*ErrorResponse)(nil)
-
-// ErrorResponse represents a response we might send to the user in the event of an error.
-type ErrorResponse struct {
-	Message string `json:"message"`
-	Code    uint   `json:"code"`
-}
 
 func (er *ErrorResponse) Error() string {
 	return fmt.Sprintf("%d: %s", er.Code, er.Message)

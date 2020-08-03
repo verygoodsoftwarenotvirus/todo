@@ -176,6 +176,7 @@ func (m *MariaDB) buildGetBatchOfItemsQuery(beginID, endID uint64) (query string
 			fmt.Sprintf("%s.%s", itemsTableName, idColumn): endID,
 		}).
 		ToSql()
+
 	m.logQueryBuildingError(err)
 
 	return query, args

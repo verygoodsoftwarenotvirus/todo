@@ -182,12 +182,12 @@ func TestV1Client_BuildGetItemsRequest(T *testing.T) {
 func TestV1Client_GetItems(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/api/v1/items"
-
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
 		filter := (*models.QueryFilter)(nil)
+
+		expectedPath := "/api/v1/items"
 
 		exampleItemList := fakemodels.BuildFakeItemList()
 
@@ -225,6 +225,8 @@ func TestV1Client_GetItems(T *testing.T) {
 		ctx := context.Background()
 
 		filter := (*models.QueryFilter)(nil)
+
+		expectedPath := "/api/v1/items"
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -363,13 +365,13 @@ func TestV1Client_BuildCreateItemRequest(T *testing.T) {
 func TestV1Client_CreateItem(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/api/v1/items"
-
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+
+		expectedPath := "/api/v1/items"
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(

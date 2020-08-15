@@ -19,15 +19,30 @@ var (
 	paramFetcherProviders = wire.NewSet(
 		ProvideUsersServiceUserIDFetcher,
 		ProvideOAuth2ClientsServiceClientIDFetcher,
-		ProvideItemsServiceUserIDFetcher,
-		ProvideItemsServiceItemIDFetcher,
-		ProvideWebhooksServiceUserIDFetcher,
 		ProvideWebhooksServiceWebhookIDFetcher,
+		ProvideWebhooksServiceUserIDFetcher,
+		ProvideItemsServiceItemIDFetcher,
+		ProvideItemsServiceUserIDFetcher,
 	)
 )
 
-// ProvideItemsServiceUserIDFetcher provides a UserIDFetcher.
-func ProvideItemsServiceUserIDFetcher() itemsservice.UserIDFetcher {
+// ProvideUsersServiceUserIDFetcher provides a UsernameFetcher.
+func ProvideUsersServiceUserIDFetcher(logger logging.Logger) usersservice.UserIDFetcher {
+	return buildRouteParamUserIDFetcher(logger)
+}
+
+// ProvideOAuth2ClientsServiceClientIDFetcher provides a ClientIDFetcher.
+func ProvideOAuth2ClientsServiceClientIDFetcher(logger logging.Logger) oauth2clientsservice.ClientIDFetcher {
+	return buildRouteParamOAuth2ClientIDFetcher(logger)
+}
+
+// ProvideWebhooksServiceWebhookIDFetcher provides an WebhookIDFetcher.
+func ProvideWebhooksServiceWebhookIDFetcher(logger logging.Logger) webhooksservice.WebhookIDFetcher {
+	return buildRouteParamWebhookIDFetcher(logger)
+}
+
+// ProvideWebhooksServiceUserIDFetcher provides a UserIDFetcher.
+func ProvideWebhooksServiceUserIDFetcher() webhooksservice.UserIDFetcher {
 	return userIDFetcherFromRequestContext
 }
 
@@ -36,24 +51,9 @@ func ProvideItemsServiceItemIDFetcher(logger logging.Logger) itemsservice.ItemID
 	return buildRouteParamItemIDFetcher(logger)
 }
 
-// ProvideUsersServiceUserIDFetcher provides a UsernameFetcher.
-func ProvideUsersServiceUserIDFetcher(logger logging.Logger) usersservice.UserIDFetcher {
-	return buildRouteParamUserIDFetcher(logger)
-}
-
-// ProvideWebhooksServiceUserIDFetcher provides a UserIDFetcher.
-func ProvideWebhooksServiceUserIDFetcher() webhooksservice.UserIDFetcher {
+// ProvideItemsServiceUserIDFetcher provides a UserIDFetcher.
+func ProvideItemsServiceUserIDFetcher() itemsservice.UserIDFetcher {
 	return userIDFetcherFromRequestContext
-}
-
-// ProvideWebhooksServiceWebhookIDFetcher provides an WebhookIDFetcher.
-func ProvideWebhooksServiceWebhookIDFetcher(logger logging.Logger) webhooksservice.WebhookIDFetcher {
-	return buildRouteParamWebhookIDFetcher(logger)
-}
-
-// ProvideOAuth2ClientsServiceClientIDFetcher provides a ClientIDFetcher.
-func ProvideOAuth2ClientsServiceClientIDFetcher(logger logging.Logger) oauth2clientsservice.ClientIDFetcher {
-	return buildRouteParamOAuth2ClientIDFetcher(logger)
 }
 
 // userIDFetcherFromRequestContext fetches a user ID from a request routed by chi.

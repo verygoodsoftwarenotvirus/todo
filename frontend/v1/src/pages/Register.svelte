@@ -1,5 +1,5 @@
 <script>
-  import { Link, navigate } from "svelte-routing";
+  import { navigate } from "svelte-routing";
 
   let username = "";
   let password = "";

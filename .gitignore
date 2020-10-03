@@ -12,7 +12,7 @@
 
 # pretty good IDEs
 .idea
-.vscode/
+frontend/tsvelte/.vscode/
 
 # Vim
 *.swp

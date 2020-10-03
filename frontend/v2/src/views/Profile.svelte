@@ -112,10 +112,6 @@
                 <i class="fas fa-map-marker-alt mr-2 text-lg text-gray-500"></i>
                 Los Angeles, California
               </div>
-              <div class="mb-2 text-gray-700 mt-10">
-                <i class="fas fa-briefcase mr-2 text-lg text-gray-500"></i>
-                Solution Manager - Creative Tim Officer
-              </div>
               <div class="mb-2 text-gray-700">
                 <i class="fas fa-university mr-2 text-lg text-gray-500"></i>
                 University of Computer Science

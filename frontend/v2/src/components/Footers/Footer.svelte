@@ -23,7 +23,7 @@
       <div class="w-full lg:w-6/12 px-4">
         <h4 class="text-3xl font-semibold">Let's keep in touch!</h4>
         <h5 class="text-lg mt-0 mb-2 text-gray-700">
-          Find us on any of these platforms, we respond 1-2 business days.
+          We like you.
         </h5>
       </div>
       <div class="w-full lg:w-6/12 px-4">
@@ -49,22 +49,6 @@
                   href="https://blog.creative-tim.com?ref=tws-footer"
                 >
                   Blog
-                </a>
-              </li>
-              <li>
-                <a
-                  class="text-gray-700 hover:text-gray-900 font-semibold block pb-2 text-sm"
-                  href="https://www.github.com/creativetimofficial?ref=tws-footer"
-                >
-                  Github
-                </a>
-              </li>
-              <li>
-                <a
-                  class="text-gray-700 hover:text-gray-900 font-semibold block pb-2 text-sm"
-                  href="https://www.creative-tim.com/bootstrap-themes/free?ref=tws-footer"
-                >
-                  Free Products
                 </a>
               </li>
             </ul>

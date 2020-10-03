@@ -11,7 +11,6 @@
   import Dashboard from "views/admin/Dashboard.svelte";
   import Settings from "views/admin/Settings.svelte";
   import Tables from "views/admin/Tables.svelte";
-  import Maps from "views/admin/Maps.svelte";
 
   export let location: Location;
   export let admin: String = "";
@@ -27,7 +26,6 @@
         <Route path="dashboard" component="{Dashboard}" />
         <Route path="settings" component="{Settings}" />
         <Route path="tables" component="{Tables}" />
-        <Route path="maps" component="{Maps}" />
       </Router>
       <FooterAdmin />
     </div>

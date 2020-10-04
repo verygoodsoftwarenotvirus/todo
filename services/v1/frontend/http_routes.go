@@ -92,11 +92,11 @@ func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, erro
 		if _, ok := validRoutes[req.URL.Path]; ok {
 			rl.Debug("rerouting")
 			req.URL.Path = "/"
-		} else {
-			if itemsFrontendPathRegex.MatchString(req.URL.Path) {
-				rl.Debug("rerouting item request")
-				req.URL.Path = "/"
-			}
+		}
+
+		if itemsFrontendPathRegex.MatchString(req.URL.Path) {
+			rl.Debug("rerouting item request")
+			req.URL.Path = "/"
 		}
 
 		fs.ServeHTTP(res, req)

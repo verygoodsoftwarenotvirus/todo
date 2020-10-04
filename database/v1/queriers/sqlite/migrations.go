@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/Masterminds/squirrel"
 
 	"github.com/GuiaBolso/darwin"
+	"github.com/Masterminds/squirrel"
 )
 
 var (

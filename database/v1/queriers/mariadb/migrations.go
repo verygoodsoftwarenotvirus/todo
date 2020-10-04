@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/Masterminds/squirrel"
 	"strings"
 
 	"github.com/GuiaBolso/darwin"
+	"github.com/Masterminds/squirrel"
 )
 
 var currentMigration float64 = 0

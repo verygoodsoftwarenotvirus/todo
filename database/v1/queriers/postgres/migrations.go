@@ -4,14 +4,23 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"github.com/Masterminds/squirrel"
 
 	"github.com/GuiaBolso/darwin"
 )
 
+var currentMigration float64 = 0
+
+func incrementMigrationVersion() float64 {
+	currentMigration++
+	return currentMigration
+}
+
 var (
 	migrations = []darwin.Migration{
 		{
-			Version:     1,
+			Version:     incrementMigrationVersion(),
 			Description: "create users table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS users (
@@ -31,7 +40,7 @@ var (
 			);`,
 		},
 		{
-			Version:     2,
+			Version:     incrementMigrationVersion(),
 			Description: "create sessions table for session manager",
 			Script: `
 			CREATE TABLE sessions (
@@ -44,7 +53,7 @@ var (
 		`,
 		},
 		{
-			Version:     3,
+			Version:     incrementMigrationVersion(),
 			Description: "create oauth2_clients table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS oauth2_clients (
@@ -63,7 +72,7 @@ var (
 			);`,
 		},
 		{
-			Version:     4,
+			Version:     incrementMigrationVersion(),
 			Description: "create webhooks table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
@@ -83,7 +92,7 @@ var (
 			);`,
 		},
 		{
-			Version:     5,
+			Version:     incrementMigrationVersion(),
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (
@@ -106,20 +115,47 @@ func buildMigrationFunc(db *sql.DB) func() {
 	return func() {
 		driver := darwin.NewGenericDriver(db, darwin.PostgresDialect{})
 		if err := darwin.New(driver, migrations, nil).Migrate(); err != nil {
-			panic(err)
+			panic(fmt.Errorf("error migrating database: %w", err))
 		}
 	}
 }
 
 // Migrate migrates the database. It does so by invoking the migrateOnce function via sync.Once, so it should be
 // safe (as in idempotent, though not necessarily recommended) to call this function multiple times.
-func (p *Postgres) Migrate(ctx context.Context) error {
+func (p *Postgres) Migrate(ctx context.Context, createTestUser bool) error {
 	p.logger.Info("migrating db")
 	if !p.IsReady(ctx) {
 		return errors.New("db is not ready yet")
 	}
 
 	p.migrateOnce.Do(buildMigrationFunc(p.db))
+
+	if createTestUser {
+		query, args, err := p.sqlBuilder.
+			Insert(usersTableName).
+			Columns(
+				usersTableUsernameColumn,
+				usersTableHashedPasswordColumn,
+				usersTableSaltColumn,
+				usersTableTwoFactorColumn,
+				usersTableIsAdminColumn,
+				usersTableTwoFactorVerifiedOnColumn,
+			).
+			Values(
+				"username",
+				"$2a$10$JzD3CNBqPmwq.IidQuO7eu3zKdu8vEIi3HkLk8/qRjrzb7eNLKlKG",
+				[]byte("aaaaaaaaaaaaaaaa"),
+				"IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=",
+				true,
+				squirrel.Expr(currentUnixTimeQuery),
+			).
+			ToSql()
+		p.logQueryBuildingError(err)
+
+		if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
+			return dbErr
+		}
+	}
 
 	return nil
 }

@@ -6,6 +6,7 @@
 
 [database]
   connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
+  create_test_user = false
   debug = false
   provider = "postgres"
 

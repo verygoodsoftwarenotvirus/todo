@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"github.com/Masterminds/squirrel"
 
 	"github.com/GuiaBolso/darwin"
 )
@@ -106,20 +108,47 @@ func buildMigrationFunc(db *sql.DB) func() {
 	return func() {
 		driver := darwin.NewGenericDriver(db, darwin.SqliteDialect{})
 		if err := darwin.New(driver, migrations, nil).Migrate(); err != nil {
-			panic(err)
+			panic(fmt.Errorf("error migrating database: %w", err))
 		}
 	}
 }
 
 // Migrate migrates the database. It does so by invoking the migrateOnce function via sync.Once, so it should be
 // safe (as in idempotent, though not necessarily recommended) to call this function multiple times.
-func (s *Sqlite) Migrate(ctx context.Context) error {
+func (s *Sqlite) Migrate(ctx context.Context, createTestUser bool) error {
 	s.logger.Info("migrating db")
 	if !s.IsReady(ctx) {
 		return errors.New("db is not ready yet")
 	}
 
 	s.migrateOnce.Do(buildMigrationFunc(s.db))
+
+	if createTestUser {
+		query, args, err := s.sqlBuilder.
+			Insert(usersTableName).
+			Columns(
+				usersTableUsernameColumn,
+				usersTableHashedPasswordColumn,
+				usersTableSaltColumn,
+				usersTableTwoFactorColumn,
+				usersTableIsAdminColumn,
+				usersTableTwoFactorVerifiedOnColumn,
+			).
+			Values(
+				"username",
+				"$2a$10$JzD3CNBqPmwq.IidQuO7eu3zKdu8vEIi3HkLk8/qRjrzb7eNLKlKG",
+				[]byte("aaaaaaaaaaaaaaaa"),
+				"IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=",
+				true,
+				squirrel.Expr(currentUnixTimeQuery),
+			).
+			ToSql()
+		s.logQueryBuildingError(err)
+
+		if _, dbErr := s.db.ExecContext(ctx, query, args...); dbErr != nil {
+			return dbErr
+		}
+	}
 
 	return nil
 }

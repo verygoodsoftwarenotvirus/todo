@@ -35,6 +35,7 @@ const (
 	dbDebug                          = "database.debug"
 	dbProvider                       = "database.provider"
 	dbDeets                          = "database.connection_details"
+	dbCreateTestUser                 = "database.create_test_user"
 	itemsSearchIndexPath             = "search.items_index_path"
 
 	// run modes
@@ -92,6 +93,7 @@ func developmentConfig(filePath string) error {
 	cfg.Set(dbDebug, true)
 	cfg.Set(dbProvider, postgres)
 	cfg.Set(dbDeets, postgresDBConnDetails)
+	cfg.Set(dbCreateTestUser, true)
 
 	cfg.Set(itemsSearchIndexPath, defaultItemsSearchIndexPath)
 
@@ -130,6 +132,7 @@ func frontendTestsConfig(filePath string) error {
 	cfg.Set(dbDebug, true)
 	cfg.Set(dbProvider, postgres)
 	cfg.Set(dbDeets, postgresDBConnDetails)
+	cfg.Set(dbCreateTestUser, false)
 
 	cfg.Set(itemsSearchIndexPath, defaultItemsSearchIndexPath)
 
@@ -159,6 +162,7 @@ func coverageConfig(filePath string) error {
 	cfg.Set(dbDebug, false)
 	cfg.Set(dbProvider, postgres)
 	cfg.Set(dbDeets, postgresDBConnDetails)
+	cfg.Set(dbCreateTestUser, false)
 
 	cfg.Set(itemsSearchIndexPath, defaultItemsSearchIndexPath)
 
@@ -194,6 +198,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 		cfg.Set(dbDebug, false)
 		cfg.Set(dbProvider, dbVendor)
 		cfg.Set(dbDeets, dbDetails)
+		cfg.Set(dbCreateTestUser, false)
 
 		cfg.Set(itemsSearchIndexPath, defaultItemsSearchIndexPath)
 

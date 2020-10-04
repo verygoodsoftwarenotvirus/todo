@@ -59,6 +59,15 @@ var (
 
 	// itemsFrontendPathRegex matches URLs against our frontend router's specification for specific item routes.
 	itemsFrontendPathRegex = regexp.MustCompile(`/items/\d+`)
+
+	validRoutes = map[string]struct{}{
+		"/auth/register": {},
+		"/auth/login":    {},
+		"/admin":         {},
+		"/items":         {},
+		"/items/new":     {},
+		"/password/new":  {},
+	}
 )
 
 // StaticDir builds a static directory handler.
@@ -79,19 +88,15 @@ func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, erro
 	return func(res http.ResponseWriter, req *http.Request) {
 		rl := s.logger.WithRequest(req)
 		rl.Debug("static file requested")
-		switch req.URL.Path {
-		// list your frontend history routes here.
-		case "/register",
-			"/login",
-			"/items",
-			"/items/new",
-			"/password/new":
+
+		if _, ok := validRoutes[req.URL.Path]; ok {
 			rl.Debug("rerouting")
 			req.URL.Path = "/"
-		}
-		if itemsFrontendPathRegex.MatchString(req.URL.Path) {
-			rl.Debug("rerouting item request")
-			req.URL.Path = "/"
+		} else {
+			if itemsFrontendPathRegex.MatchString(req.URL.Path) {
+				rl.Debug("rerouting item request")
+				req.URL.Path = "/"
+			}
 		}
 
 		fs.ServeHTTP(res, req)

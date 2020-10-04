@@ -40,7 +40,7 @@ type (
 
 	// DataManager describes anything that stores data for our services.
 	DataManager interface {
-		Migrate(ctx context.Context) error
+		Migrate(ctx context.Context, createTestUser bool) error
 		IsReady(ctx context.Context) (ready bool)
 
 		models.ItemDataManager

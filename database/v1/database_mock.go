@@ -31,8 +31,8 @@ type MockDatabase struct {
 }
 
 // Migrate satisfies the DataManager interface.
-func (m *MockDatabase) Migrate(ctx context.Context) error {
-	return m.Called(ctx).Error(0)
+func (m *MockDatabase) Migrate(ctx context.Context, createTestUser bool) error {
+	return m.Called(ctx, createTestUser).Error(0)
 }
 
 // IsReady satisfies the DataManager interface.

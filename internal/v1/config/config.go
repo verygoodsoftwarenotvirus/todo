@@ -96,6 +96,8 @@ type (
 	DatabaseSettings struct {
 		// Debug determines if debug logging or other development conditions are active.
 		Debug bool `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
+		// CreateTestUser determines if we should create a test user.
+		CreateTestUser bool `json:"create_test_user" mapstructure:"create_test_user" toml:"create_test_user,omitempty"`
 		// Provider indicates what database we'll connect to (postgres, mysql, etc.)
 		Provider string `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
 		// ConnectionDetails indicates how our database driver should connect to the instance.

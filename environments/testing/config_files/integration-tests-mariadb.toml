@@ -6,6 +6,7 @@
 
 [database]
   connection_details = "dbuser:hunter2@tcp(database:3306)/todo"
+  create_test_user = false
   debug = false
   provider = "mariadb"
 

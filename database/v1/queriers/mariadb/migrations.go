@@ -4,15 +4,24 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"github.com/Masterminds/squirrel"
 	"strings"
 
 	"github.com/GuiaBolso/darwin"
 )
 
+var currentMigration float64 = 0
+
+func incrementMigrationVersion() float64 {
+	currentMigration++
+	return currentMigration
+}
+
 var (
 	migrations = []darwin.Migration{
 		{
-			Version:     1,
+			Version:     incrementMigrationVersion(),
 			Description: "create users table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS users (",
@@ -34,7 +43,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     2,
+			Version:     incrementMigrationVersion(),
 			Description: "create users table creation trigger",
 			Script: strings.Join([]string{
 				"CREATE TRIGGER IF NOT EXISTS users_creation_trigger BEFORE INSERT ON users FOR EACH ROW",
@@ -47,7 +56,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     3,
+			Version:     incrementMigrationVersion(),
 			Description: "create sessions table for session manager",
 			Script: strings.Join([]string{
 				"CREATE TABLE sessions (",
@@ -58,12 +67,12 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     4,
+			Version:     incrementMigrationVersion(),
 			Description: "create sessions table for session manager",
 			Script:      "CREATE INDEX sessions_expiry_idx ON sessions (expiry);",
 		},
 		{
-			Version:     5,
+			Version:     incrementMigrationVersion(),
 			Description: "create oauth2_clients table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS oauth2_clients (",
@@ -84,7 +93,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     6,
+			Version:     incrementMigrationVersion(),
 			Description: "create oauth2_clients table creation trigger",
 			Script: strings.Join([]string{
 				"CREATE TRIGGER IF NOT EXISTS oauth2_clients_creation_trigger BEFORE INSERT ON oauth2_clients FOR EACH ROW",
@@ -97,7 +106,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     7,
+			Version:     incrementMigrationVersion(),
 			Description: "create webhooks table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS webhooks (",
@@ -119,7 +128,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     8,
+			Version:     incrementMigrationVersion(),
 			Description: "create webhooks table creation trigger",
 			Script: strings.Join([]string{
 				"CREATE TRIGGER IF NOT EXISTS webhooks_creation_trigger BEFORE INSERT ON webhooks FOR EACH ROW",
@@ -132,7 +141,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     9,
+			Version:     incrementMigrationVersion(),
 			Description: "create items table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS items (",
@@ -149,7 +158,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     10,
+			Version:     incrementMigrationVersion(),
 			Description: "create items table creation trigger",
 			Script: strings.Join([]string{
 				"CREATE TRIGGER IF NOT EXISTS items_creation_trigger BEFORE INSERT ON items FOR EACH ROW",
@@ -170,17 +179,44 @@ func buildMigrationFunc(db *sql.DB) func() {
 	return func() {
 		driver := darwin.NewGenericDriver(db, darwin.MySQLDialect{})
 		if err := darwin.New(driver, migrations, nil).Migrate(); err != nil {
-			panic(err)
+			panic(fmt.Errorf("error migrating database: %w", err))
 		}
 	}
 }
 
 // Migrate migrates the database. It does so by invoking the migrateOnce function via sync.Once, so it should be
 // safe (as in idempotent, though not necessarily recommended) to call this function multiple times.
-func (m *MariaDB) Migrate(ctx context.Context) error {
+func (m *MariaDB) Migrate(ctx context.Context, createTestUser bool) error {
 	m.logger.Info("migrating db")
 	if !m.IsReady(ctx) {
 		return errors.New("db is not ready yet")
+	}
+
+	if createTestUser {
+		query, args, err := m.sqlBuilder.
+			Insert(usersTableName).
+			Columns(
+				usersTableUsernameColumn,
+				usersTableHashedPasswordColumn,
+				usersTableSaltColumn,
+				usersTableTwoFactorColumn,
+				usersTableIsAdminColumn,
+				usersTableTwoFactorVerifiedOnColumn,
+			).
+			Values(
+				"username",
+				"$2a$10$JzD3CNBqPmwq.IidQuO7eu3zKdu8vEIi3HkLk8/qRjrzb7eNLKlKG",
+				[]byte("aaaaaaaaaaaaaaaa"),
+				"IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=",
+				true,
+				squirrel.Expr(currentUnixTimeQuery),
+			).
+			ToSql()
+		m.logQueryBuildingError(err)
+
+		if _, dbErr := m.db.ExecContext(ctx, query, args...); dbErr != nil {
+			return dbErr
+		}
 	}
 
 	m.migrateOnce.Do(buildMigrationFunc(m.db))

@@ -28,11 +28,11 @@ type Client struct {
 }
 
 // Migrate is a simple wrapper around the core querier Migrate call.
-func (c *Client) Migrate(ctx context.Context) error {
+func (c *Client) Migrate(ctx context.Context, createTestUser bool) error {
 	ctx, span := tracing.StartSpan(ctx, "Migrate")
 	defer span.End()
 
-	return c.querier.Migrate(ctx)
+	return c.querier.Migrate(ctx, createTestUser)
 }
 
 // IsReady is a simple wrapper around the core querier IsReady call.
@@ -46,10 +46,11 @@ func (c *Client) IsReady(ctx context.Context) (ready bool) {
 // ProvideDatabaseClient provides a new DataManager client.
 func ProvideDatabaseClient(
 	ctx context.Context,
-	db *sql.DB,
-	querier database.DataManager,
-	debug bool,
 	logger logging.Logger,
+	querier database.DataManager,
+	db *sql.DB,
+	createTestUser,
+	debug bool,
 ) (database.DataManager, error) {
 	c := &Client{
 		db:      db,
@@ -63,7 +64,7 @@ func ProvideDatabaseClient(
 	}
 
 	c.logger.Debug("migrating querier")
-	if err := c.querier.Migrate(ctx); err != nil {
+	if err := c.querier.Migrate(ctx, createTestUser); err != nil {
 		return nil, err
 	}
 	c.logger.Debug("querier migrated!")

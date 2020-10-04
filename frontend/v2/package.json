@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "build": "rollup -c",
-    "dev": "rollup -c -w",
+    "autobuild": "rollup -c -w",
     "start": "sirv public -s",
     "build:tailwind": "tailwind build public/assets/styles/index.css -o public/assets/styles/tailwind.css",
     "build:fontawesome": "mkdir -p public/assets/third-party/@fortawesome/fontawesome-free/webfonts && mkdir -p public/assets/third-party/@fortawesome/fontawesome-free/css && cp -a ./node_modules/@fortawesome/fontawesome-free/webfonts public/assets/third-party/@fortawesome/fontawesome-free/ && cp ./node_modules/@fortawesome/fontawesome-free/css/all.min.css public/assets/third-party/@fortawesome/fontawesome-free/css/all.min.css",

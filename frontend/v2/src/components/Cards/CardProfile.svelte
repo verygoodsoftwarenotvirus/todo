@@ -1,6 +1,6 @@
 <script lang="typescript">
   // core components
-  const team2: String = "../assets/img/team-2-800x800.jpg";
+  const team2: string = "../assets/img/team-2-800x800.jpg";
 </script>
 
 <div

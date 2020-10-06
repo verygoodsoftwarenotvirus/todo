@@ -2,7 +2,7 @@
   import { link } from "svelte-routing";
 
   // core components
-  import UserDropdown from "components/Dropdowns/UserDropdown.svelte";
+  import UserDropdown from "../Dropdowns/UserDropdown.svelte";
 </script>
 
 <!-- Navbar -->

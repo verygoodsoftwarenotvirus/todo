@@ -1,6 +1,6 @@
 <script lang="typescript">
   // core components
-  import CardStats from "components/Cards/CardStats.svelte";
+  import CardStats from "../Cards/CardStats.svelte";
 </script>
 
 <!-- Header -->

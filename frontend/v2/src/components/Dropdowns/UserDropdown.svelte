@@ -4,7 +4,7 @@
 
   // core components
 
-  const image: String = "../assets/img/team-1-800x800.jpg";
+  const image: string = "../assets/img/team-1-800x800.jpg";
 
   let dropdownPopoverShow: Boolean = false;
 

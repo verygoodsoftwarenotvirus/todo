@@ -2,7 +2,7 @@
   import { link } from "svelte-routing";
 
   // core components
-  import PagesDropdown from "components/Dropdowns/PagesDropdown.svelte";
+  // import PagesDropdown from "../components/Dropdowns/PagesDropdown.svelte";
 
   let navbarOpen: Boolean = false;
 

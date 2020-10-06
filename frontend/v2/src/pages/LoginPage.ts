@@ -10,17 +10,42 @@ export const getUserInfo = () =>
     });
 
 export class LoginPage {
+    usernameInput: string;
+    passwordInput: string;
+    totpTokenInput: string;
+
     constructor() {
+        this.usernameInput = '';
+        this.passwordInput = '';
+        this.totpTokenInput = '';
     }
 
-    static login = async function(creds: LoginRequest) {
-        return axios.post(backendRoutes.LOGIN, creds, {withCredentials: true})
-            .then(() => {
+    state = () => {
+        console.log(`
+    username: ${this.usernameInput}
+    password: ${this.passwordInput}
+    2FA code: ${this.totpTokenInput}
+        `)
+    }
+
+    buildLoginRequest = (): LoginRequest => {
+        return {
+            username: this.usernameInput,
+            password: this.passwordInput,
+            totpToken: this.totpTokenInput,
+        } as LoginRequest
+    }
+
+    login = async () => {
+        let creds: LoginRequest = this.buildLoginRequest();
+
+        return axios.post(backendRoutes.LOGIN, creds, {withCredentials: true}).then(() => {
                 getUserInfo().then((statusResponse: AxiosResponse<AuthStatus>) => {
                     return statusResponse;
                 });
             })
-            .catch(() => {
+            .catch((reason: object) => {
+                console.error(`something went awry: ${reason}`)
                 return new AuthStatus();
             });
     }

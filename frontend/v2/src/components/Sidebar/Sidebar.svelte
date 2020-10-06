@@ -2,10 +2,10 @@
   import { link } from "svelte-routing";
 
   // core components
-  import NotificationDropdown from "components/Dropdowns/NotificationDropdown.svelte";
-  import UserDropdown from "components/Dropdowns/UserDropdown.svelte";
+  import NotificationDropdown from "../Dropdowns/NotificationDropdown.svelte";
+  import UserDropdown from "../Dropdowns/UserDropdown.svelte";
 
-  let collapseShow: String = "hidden";
+  let collapseShow: string = "hidden";
 
   function toggleCollapseShow(classes) {
     collapseShow = classes;

@@ -1,9 +1,8 @@
 <script lang="typescript">
   import { link } from "svelte-routing";
 
-  // core components
-  const github: String = "../assets/img/github.svg";
-  const google: String = "../assets/img/google.svg";
+  import { LoginPage } from "../../pages/LoginPage";
+  const page = new LoginPage();
 
   export let location: Location;
 </script>
@@ -28,7 +27,8 @@
                 id="grid-username"
                 type="text"
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                placeholder="Email"
+                placeholder="username"
+                bind:value={page.usernameInput}
               />
             </div>
 
@@ -44,6 +44,7 @@
                 type="password"
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                 placeholder="Password"
+                bind:value={page.passwordInput}
               />
             </div>
 
@@ -59,15 +60,23 @@
                 type="text"
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                 placeholder="123456"
+                bind:value={page.totpTokenInput}
               />
             </div>
 
             <div class="text-center mt-6">
               <button
-                class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear transition-all duration-150"
-                type="button"
+                      class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear transition-all duration-150"
+                      type="button"
               >
                 Sign In
+              </button>
+              <button
+                      class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear transition-all duration-150"
+                      type="button"
+                      on:click={page.state()}
+              >
+                state
               </button>
             </div>
           </form>

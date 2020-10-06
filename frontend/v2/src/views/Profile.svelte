@@ -1,9 +1,9 @@
 <script lang="typescript">
   // core components
-  import AuthNavbar from "components/Navbars/AuthNavbar.svelte";
-  import Footer from "components/Footers/Footer.svelte";
+  import AuthNavbar from "../components/Navbars/AuthNavbar.svelte";
+  import Footer from "../components/Footers/Footer.svelte";
 
-  const team2: String = "/assets/img/team-2-800x800.jpg";
+  const team2: string = "/assets/img/team-2-800x800.jpg";
 
   export let location: Location;
 </script>

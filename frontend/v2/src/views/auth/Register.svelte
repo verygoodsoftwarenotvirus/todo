@@ -1,7 +1,7 @@
 <script lang="typescript">
   // core components
-  const github: String = "../assets/img/github.svg";
-  const google: String = "../assets/img/google.svg";
+  const github: string = "../assets/img/github.svg";
+  const google: string = "../assets/img/google.svg";
 
   export let location: Location;
 </script>

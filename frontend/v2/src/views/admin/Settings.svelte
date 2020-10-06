@@ -1,7 +1,7 @@
 <script lang="typescript">
   // core components
-  import CardSettings from "components/Cards/CardSettings.svelte";
-  import CardProfile from "components/Cards/CardProfile.svelte";
+  import CardSettings from "../../components/Cards/CardSettings.svelte";
+  import CardProfile from "../../components/Cards/CardProfile.svelte";
 
   export let location: Location;
 </script>

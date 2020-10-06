@@ -1,6 +1,6 @@
 <script lang="typescript">
   // core components
-  import CardTable from "components/Cards/CardTable.svelte";
+  import CardTable from "../../components/Cards/CardTable.svelte";
 
   export let location: Location;
 </script>

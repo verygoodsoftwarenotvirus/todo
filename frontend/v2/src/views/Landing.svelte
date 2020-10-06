@@ -2,13 +2,13 @@
   import { link } from "svelte-routing";
 
   // core components
-  import AuthNavbar from "components/Navbars/AuthNavbar.svelte";
-  import Footer from "components/Footers/Footer.svelte";
+  import AuthNavbar from "../components/Navbars/AuthNavbar.svelte";
+  import Footer from "../components/Footers/Footer.svelte";
 
-  const team1: String = "/assets/img/team-1-800x800.jpg";
-  const team2: String = "/assets/img/team-2-800x800.jpg";
-  const team3: String = "/assets/img/team-3-800x800.jpg";
-  const team4: String = "/assets/img/team-4-470x470.png";
+  const team1: string = "/assets/img/team-1-800x800.jpg";
+  const team2: string = "/assets/img/team-2-800x800.jpg";
+  const team3: string = "/assets/img/team-3-800x800.jpg";
+  const team4: string = "/assets/img/team-4-470x470.png";
 
   export let location: Location;
 </script>

@@ -2,8 +2,8 @@
   import { Link } from "svelte-routing";
 
   // core components
-  import IndexNavbar from "components/Navbars/IndexNavbar.svelte";
-  import Footer from "components/Footers/Footer.svelte";
+  import IndexNavbar from "../components/Navbars/IndexNavbar.svelte";
+  import Footer from "../components/Footers/Footer.svelte";
 
   export let location: Location;
 </script>

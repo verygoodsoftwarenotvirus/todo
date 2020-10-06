@@ -9,10 +9,8 @@
 
   // No Layout Pages
   import Index from "./views/Index.svelte";
-  import Landing from "./views/Landing.svelte";
-  import Profile from "./views/Profile.svelte";
 
-  export let url: String = "";
+  export let url: string = "";
 </script>
 
 <Router url="{url}">

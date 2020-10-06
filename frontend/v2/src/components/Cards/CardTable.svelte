@@ -1,20 +1,20 @@
 <script lang="typescript">
   // core components
-  import TableDropdown from "components/Dropdowns/TableDropdown.svelte";
+  import TableDropdown from "../Dropdowns/TableDropdown.svelte";
 
-  const bootstrap: String = "../assets/img/bootstrap.jpg";
-  const angular: String = "../assets/img/angular.jpg";
-  const sketch: String = "../assets/img/sketch.jpg";
-  const react: String = "../assets/img/react.jpg";
-  const vue: String = "../assets/img/react.jpg";
+  const bootstrap: string = "../assets/img/bootstrap.jpg";
+  const angular: string = "../assets/img/angular.jpg";
+  const sketch: string = "../assets/img/sketch.jpg";
+  const react: string = "../assets/img/react.jpg";
+  const vue: string = "../assets/img/react.jpg";
 
-  const team1: String = "../assets/img/team-1-800x800.jpg";
-  const team2: String = "../assets/img/team-2-800x800.jpg";
-  const team3: String = "../assets/img/team-3-800x800.jpg";
-  const team4: String = "../assets/img/team-4-470x470.png";
+  const team1: string = "../assets/img/team-1-800x800.jpg";
+  const team2: string = "../assets/img/team-2-800x800.jpg";
+  const team3: string = "../assets/img/team-3-800x800.jpg";
+  const team4: string = "../assets/img/team-4-470x470.png";
 
   // can be one of light or dark
-  export let color: String = "light";
+  export let color: string = "light";
 </script>
 
 <div

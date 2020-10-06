@@ -55,7 +55,7 @@ services:
             - tracing-server
             - database
         volumes:
-            - source: '../../frontend/v2/public'
+            - source: '../../frontend/v2/dist'
               target: '/frontend'
               type: 'bind'
             - source: '../../environments/local/config.toml'

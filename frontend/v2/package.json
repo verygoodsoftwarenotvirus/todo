@@ -27,13 +27,13 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "5.14.0",
-    "axios": "^0.20.0",
-    "svelte-routing": "^1.4.2",
-    "sirv-cli": "^1.0.6",
-    "@tailwindcss/custom-forms": "0.2.1",
     "@popperjs/core": "2.5.1",
+    "@tailwindcss/custom-forms": "0.2.1",
     "@types/chart.js": "^2.9.25",
+    "axios": "^0.20.0",
     "chart.js": "2.9.3",
+    "sirv-cli": "^1.0.6",
+    "svelte-routing": "^1.4.2",
     "tailwindcss": "1.8.10"
   }
 }

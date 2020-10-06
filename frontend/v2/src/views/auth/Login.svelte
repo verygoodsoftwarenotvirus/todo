@@ -1,8 +1,15 @@
 <script lang="typescript">
   import { link } from "svelte-routing";
+  import { onMount } from 'svelte';
+
+  import { backendRoutes } from "../../constants";
 
   import { LoginPage } from "../../pages/LoginPage";
   const page = new LoginPage();
+
+  onMount(() => {
+    console.log(backendRoutes.LOGIN);
+  })
 
   export let location: Location;
 </script>
@@ -68,15 +75,9 @@
               <button
                       class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear transition-all duration-150"
                       type="button"
+                      on:click={page.login()}
               >
                 Sign In
-              </button>
-              <button
-                      class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear transition-all duration-150"
-                      type="button"
-                      on:click={page.state()}
-              >
-                state
               </button>
             </div>
           </form>

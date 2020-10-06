@@ -30,6 +30,6 @@ USER appuser
 
 COPY environments/testing/config_files/frontend-tests.toml /etc/config.toml
 COPY --from=build-stage /todo /todo
-COPY --from=frontend-build-stage /app/public /frontend
+COPY --from=frontend-build-stage /app/dist /frontend
 
 ENTRYPOINT ["/todo"]

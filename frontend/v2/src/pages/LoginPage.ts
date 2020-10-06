@@ -1,13 +1,8 @@
 import axios, { AxiosResponse } from 'axios';
-import { backendRoutes } from "../constants/routes";
 import { AuthStatus, LoginRequest } from "../models";
-import { methods } from "../constants/http";
 
 export const getUserInfo = () =>
-    axios.get( backendRoutes.USER_AUTH_STATUS, {
-        method: methods.GET,
-        withCredentials: true,
-    });
+    axios.get("/users/status", {withCredentials: true});
 
 export class LoginPage {
     usernameInput: string;
@@ -20,14 +15,6 @@ export class LoginPage {
         this.totpTokenInput = '';
     }
 
-    state = () => {
-        console.log(`
-    username: ${this.usernameInput}
-    password: ${this.passwordInput}
-    2FA code: ${this.totpTokenInput}
-        `)
-    }
-
     buildLoginRequest = (): LoginRequest => {
         return {
             username: this.usernameInput,
@@ -37,9 +24,10 @@ export class LoginPage {
     }
 
     login = async () => {
-        let creds: LoginRequest = this.buildLoginRequest();
+        const path = "/users/login"
 
-        return axios.post(backendRoutes.LOGIN, creds, {withCredentials: true}).then(() => {
+        return axios.post(path, this.buildLoginRequest(), {withCredentials: true})
+            .then(() => {
                 getUserInfo().then((statusResponse: AxiosResponse<AuthStatus>) => {
                     return statusResponse;
                 });

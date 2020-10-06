@@ -13,7 +13,7 @@ FROM golang:stretch AS build-stage
 WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
 COPY . .
-COPY --from=frontend-build-stage /app/public /frontend
+COPY --from=frontend-build-stage /app/dist /frontend
 
 RUN go build -trimpath -o /todo gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
 

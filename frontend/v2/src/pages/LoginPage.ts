@@ -1,4 +1,6 @@
 import axios, { AxiosResponse } from 'axios';
+import { navigate } from "svelte-routing";
+
 import { AuthStatus, LoginRequest } from "../models";
 
 export const getUserInfo = () =>
@@ -29,7 +31,7 @@ export class LoginPage {
         return axios.post(path, this.buildLoginRequest(), {withCredentials: true})
             .then(() => {
                 getUserInfo().then((statusResponse: AxiosResponse<AuthStatus>) => {
-                    return statusResponse;
+                    navigate("/", { replace: true });
                 });
             })
             .catch((reason: object) => {

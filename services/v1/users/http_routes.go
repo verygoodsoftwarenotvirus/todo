@@ -13,8 +13,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
-	"github.com/boombuler/barcode"
-	"github.com/boombuler/barcode/qr"
+	"github.com/makiuchi-d/gozxing"
+	"github.com/makiuchi-d/gozxing/qrcode"
 	"github.com/pquerna/otp/totp"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
@@ -172,7 +172,6 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	ucr := &models.UserCreationResponse{
 		ID:                    user.ID,
 		Username:              user.Username,
-		TwoFactorSecret:       user.TwoFactorSecret,
 		PasswordLastChangedOn: user.PasswordLastChangedOn,
 		CreatedOn:             user.CreatedOn,
 		LastUpdatedOn:         user.LastUpdatedOn,
@@ -199,35 +198,25 @@ func (s *Service) buildQRCode(ctx context.Context, username, twoFactorSecret str
 	_, span := tracing.StartSpan(ctx, "buildQRCode")
 	defer span.End()
 
-	// encode two factor secret as authenticator-friendly QR code
-	qrcode, err := qr.Encode(
-		// "otpauth://totp/{{ .Issuer }}:{{ .Username }}?secret={{ .Secret }}&issuer={{ .Issuer }}",
-		fmt.Sprintf(
-			"otpauth://totp/%s:%s?secret=%s&issuer=%s",
-			totpIssuer,
-			username,
-			twoFactorSecret,
-			totpIssuer,
-		),
-		qr.L,
-		qr.Auto,
+	// "otpauth://totp/{{ .Issuer }}:{{ .Username }}?secret={{ .Secret }}&issuer={{ .Issuer }}",
+	otpString := fmt.Sprintf(
+		"otpauth://totp/%s:%s?secret=%s&issuer=%s",
+		totpIssuer,
+		username,
+		twoFactorSecret,
+		totpIssuer,
 	)
+
+	bmp, err := qrcode.NewQRCodeWriter().EncodeWithoutHint(otpString, gozxing.BarcodeFormat_QR_CODE, 128, 128)
 	if err != nil {
 		s.logger.Error(err, "trying to encode secret to qr code")
 		return ""
 	}
 
-	// scale the QR code so that it's not a PNG for ants.
-	qrcode, err = barcode.Scale(qrcode, 256, 256)
-	if err != nil {
-		s.logger.Error(err, "trying to enlarge qr code")
-		return ""
-	}
-
 	// encode the QR code to PNG.
 	var b bytes.Buffer
-	if err = png.Encode(&b, qrcode); err != nil {
-		s.logger.Error(err, "trying to encode qr code to png")
+	if err = png.Encode(&b, bmp); err != nil {
+		s.logger.Error(err, "trying to encode secret to qr code")
 		return ""
 	}
 

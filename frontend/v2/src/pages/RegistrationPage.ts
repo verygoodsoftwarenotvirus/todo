@@ -10,12 +10,15 @@ export class RegistrationPage {
     usernameInput: string;
     passwordInput: string;
     passwordRepeatInput: string;
+    postRegistrationQRCode: string;
 
     constructor() {
-        this.registrationMayProceed = false;
         this.usernameInput = '';
         this.passwordInput = '';
         this.passwordRepeatInput = '';
+
+        this.registrationMayProceed = false;
+        this.postRegistrationQRCode = '';
     }
 
     evaluateInputs = (): void => {

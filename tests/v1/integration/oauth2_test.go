@@ -8,6 +8,7 @@ import (
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -67,7 +68,10 @@ func TestOAuth2Clients(test *testing.T) {
 	x, y, cookie := buildDummyUser(_ctx, test)
 	assert.NotNil(test, cookie)
 
-	input := buildDummyOAuth2ClientInput(test, x.Username, y.Password, x.TwoFactorSecret)
+	twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(x.TwoFactorQRCode)
+	require.NoError(test, err)
+
+	input := buildDummyOAuth2ClientInput(test, x.Username, y.Password, twoFactorSecret)
 	premade, err := todoClient.CreateOAuth2Client(_ctx, cookie, input)
 	checkValueAndError(test, premade, err)
 
@@ -116,7 +120,7 @@ func TestOAuth2Clients(test *testing.T) {
 			defer span.End()
 
 			// Create oauth2Client.
-			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
+			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, twoFactorSecret)
 			c, err := testClient.CreateOAuth2Client(ctx, cookie, input)
 			checkValueAndError(t, c, err)
 
@@ -139,7 +143,7 @@ func TestOAuth2Clients(test *testing.T) {
 			defer span.End()
 
 			// Create oauth2Client.
-			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
+			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, twoFactorSecret)
 			premade, err := testClient.CreateOAuth2Client(ctx, cookie, input)
 			checkValueAndError(t, premade, err)
 
@@ -156,7 +160,10 @@ func TestOAuth2Clients(test *testing.T) {
 			createdUser, createdUserInput, _ := buildDummyUser(ctx, test)
 			assert.NotNil(test, cookie)
 
-			input := buildDummyOAuth2ClientInput(test, createdUserInput.Username, createdUserInput.Password, createdUser.TwoFactorSecret)
+			createdUserTwoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(createdUser.TwoFactorQRCode)
+			require.NoError(t, err)
+
+			input := buildDummyOAuth2ClientInput(test, createdUserInput.Username, createdUserInput.Password, createdUserTwoFactorSecret)
 			premade, err := todoClient.CreateOAuth2Client(ctx, cookie, input)
 			checkValueAndError(test, premade, err)
 
@@ -188,7 +195,7 @@ func TestOAuth2Clients(test *testing.T) {
 			// Create oauth2Clients.
 			var expected []*models.OAuth2Client
 			for i := 0; i < 5; i++ {
-				input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, x.TwoFactorSecret)
+				input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, twoFactorSecret)
 				oac, err := testClient.CreateOAuth2Client(ctx, cookie, input)
 				checkValueAndError(t, oac, err)
 				expected = append(expected, oac)

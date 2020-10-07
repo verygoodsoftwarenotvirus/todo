@@ -1,10 +1,13 @@
 package testutil
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image/png"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -17,8 +20,14 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	fake "github.com/brianvoe/gofakeit/v5"
+	"github.com/makiuchi-d/gozxing"
+	"github.com/makiuchi-d/gozxing/qrcode"
 	"github.com/moul/http2curl"
 	"github.com/pquerna/otp/totp"
+)
+
+const (
+	base64ImagePrefix = `data:image/jpeg;base64,`
 )
 
 func init() {
@@ -99,9 +108,7 @@ func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
 		return nil, clientInitErr
 	}
 
-	// I had difficulty ensuring these values were unique, even when fake.Seed was called. Could've been fake's fault,
-	// could've been docker's fault. In either case, it wasn't worth the time to investigate and determine the culprit
-	username := fake.Username() + fake.HexColor() + fake.Country()
+	username := fake.Password(true, true, true, false, false, 32)
 	in := &models.UserCreationInput{
 		Username: username,
 		Password: fake.Password(true, true, true, true, true, 64),
@@ -114,7 +121,12 @@ func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
 		return nil, errors.New("something happened")
 	}
 
-	token, tokenErr := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
+	twoFactorSecret, err := ParseTwoFactorSecretFromBase64EncodedQRCode(ucr.TwoFactorQRCode)
+	if err != nil {
+		return nil, err
+	}
+
+	token, tokenErr := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
 	if tokenErr != nil {
 		return nil, fmt.Errorf("generating totp code: %w", tokenErr)
 	}
@@ -128,7 +140,7 @@ func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
 		Username: ucr.Username,
 		// this is a dirty trick to reuse most of this model,
 		HashedPassword:        in.Password,
-		TwoFactorSecret:       ucr.TwoFactorSecret,
+		TwoFactorSecret:       twoFactorSecret,
 		PasswordLastChangedOn: ucr.PasswordLastChangedOn,
 		CreatedOn:             ucr.CreatedOn,
 		LastUpdatedOn:         ucr.LastUpdatedOn,
@@ -262,4 +274,39 @@ func CreateObligatoryClient(serviceURL string, u *models.User) (*models.OAuth2Cl
 	}
 
 	return &o, json.NewDecoder(res.Body).Decode(&o)
+}
+
+// ParseTwoFactorSecretFromBase64EncodedQRCode accepts a base64-encoded QR code representing an otpauth:// URI,
+// parses the QR code and extracts the 2FA secret from the URI. It can also return an error
+func ParseTwoFactorSecretFromBase64EncodedQRCode(qrCode string) (string, error) {
+	qrCode = strings.TrimPrefix(qrCode, base64ImagePrefix)
+
+	unbased, err := base64.StdEncoding.DecodeString(qrCode)
+	if err != nil {
+		return "", fmt.Errorf("Cannot decode b64: %w", err)
+	}
+
+	im, err := png.Decode(bytes.NewReader(unbased))
+	if err != nil {
+		return "", fmt.Errorf("Bad png: %w", err)
+	}
+
+	bb, err := gozxing.NewBinaryBitmapFromImage(im)
+	if err != nil {
+		return "", fmt.Errorf("Bad binary bitmap: %w", err)
+	}
+
+	res, err := qrcode.NewQRCodeReader().DecodeWithoutHints(bb)
+	if err != nil {
+		return "", fmt.Errorf("error decoding: %w", err)
+	}
+
+	totpDetails := res.String()
+
+	u, err := url.Parse(totpDetails)
+	if err != nil {
+		return "", fmt.Errorf("error parsing URI: %w", err)
+	}
+
+	return u.Query().Get("secret"), nil
 }

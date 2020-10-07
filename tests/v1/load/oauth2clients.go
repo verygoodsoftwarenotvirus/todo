@@ -9,6 +9,7 @@ import (
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 
 	"github.com/pquerna/otp/totp"
 )
@@ -49,18 +50,23 @@ func buildOAuth2ClientActions(c *client.V1Client) map[string]*Action {
 				ui := fakemodels.BuildFakeUserCreationInput()
 				u, err := c.CreateUser(ctx, ui)
 				if err != nil {
-					return c.BuildHealthCheckRequest(ctx)
+					return nil, err
+				}
+
+				twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(u.TwoFactorQRCode)
+				if err != nil {
+					return nil, err
 				}
 
 				uli := &models.UserLoginInput{
 					Username:  ui.Username,
 					Password:  ui.Password,
-					TOTPToken: mustBuildCode(u.TwoFactorSecret),
+					TOTPToken: mustBuildCode(twoFactorSecret),
 				}
 
 				cookie, err := c.Login(ctx, uli)
 				if err != nil {
-					return c.BuildHealthCheckRequest(ctx)
+					return nil, err
 				}
 
 				req, err := c.BuildCreateOAuth2ClientRequest(

@@ -75,13 +75,16 @@ func TestAuth(test *testing.T) {
 		ucr := &models.UserCreationResponse{}
 		require.NoError(t, json.NewDecoder(res.Body).Decode(ucr))
 
-		secretVerificationToken, err := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
+		twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(ucr.TwoFactorQRCode)
+		require.NoError(t, err)
+
+		secretVerificationToken, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, secretVerificationToken, err)
 
 		assert.NoError(t, todoClient.VerifyTOTPSecret(ctx, ucr.ID, secretVerificationToken))
 
 		// create login request.
-		token, err := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
+		token, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, token, err)
 		r := &models.UserLoginInput{
 			Username:  exampleUserCreationInput.Username,
@@ -123,12 +126,15 @@ func TestAuth(test *testing.T) {
 		ucr := &models.UserCreationResponse{}
 		require.NoError(t, json.NewDecoder(res.Body).Decode(ucr))
 
-		secretVerificationToken, err := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
+		twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(ucr.TwoFactorQRCode)
+		require.NoError(t, err)
+
+		secretVerificationToken, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, secretVerificationToken, err)
 
 		assert.NoError(t, todoClient.VerifyTOTPSecret(ctx, ucr.ID, secretVerificationToken))
 
-		token, err := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
+		token, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, token, err)
 		r := &models.UserLoginInput{
 			Username:  exampleUserCreationInput.Username,
@@ -211,8 +217,11 @@ func TestAuth(test *testing.T) {
 			badPassword = string(v) + badPassword
 		}
 
+		twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(ucr.TwoFactorQRCode)
+		require.NoError(t, err)
+
 		// create login request.
-		token, err := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
+		token, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, token, err)
 		r := &models.UserLoginInput{
 			Username:  exampleUserCreationInput.Username,
@@ -289,8 +298,11 @@ func TestAuth(test *testing.T) {
 		ucr := &models.UserCreationResponse{}
 		require.NoError(t, json.NewDecoder(res.Body).Decode(ucr))
 
+		twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(ucr.TwoFactorQRCode)
+		require.NoError(t, err)
+
 		// create login request.
-		token, err := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
+		token, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, token, err)
 		r := &models.UserLoginInput{
 			Username:  exampleUserCreationInput.Username,
@@ -343,8 +355,11 @@ func TestAuth(test *testing.T) {
 			backwardsPass = string(v) + backwardsPass
 		}
 
+		twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(user.TwoFactorQRCode)
+		require.NoError(t, err)
+
 		// create password update request.
-		token, err := totp.GenerateCode(user.TwoFactorSecret, time.Now().UTC())
+		token, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, token, err)
 		r := &models.PasswordUpdateInput{
 			CurrentPassword: ui.Password,
@@ -382,8 +397,11 @@ func TestAuth(test *testing.T) {
 		checkValueAndError(t, res, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 
+		twoFactorSecret, err = testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(user.TwoFactorQRCode)
+		require.NoError(t, err)
+
 		// create login request.
-		newToken, err := totp.GenerateCode(user.TwoFactorSecret, time.Now().UTC())
+		newToken, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, newToken, err)
 		l, err := json.Marshal(&models.UserLoginInput{
 			Username:  user.Username,
@@ -420,7 +438,10 @@ func TestAuth(test *testing.T) {
 		assert.NotNil(t, user)
 		require.NoError(t, err)
 
-		token, err := totp.GenerateCode(user.TwoFactorSecret, time.Now().UTC())
+		twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(user.TwoFactorQRCode)
+		require.NoError(t, err)
+
+		token, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, token, err)
 
 		assert.NoError(t, todoClient.VerifyTOTPSecret(ctx, user.ID, token))
@@ -447,8 +468,11 @@ func TestAuth(test *testing.T) {
 		user, ui, cookie := buildDummyUser(ctx, test)
 		require.NotNil(test, cookie)
 
+		twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(user.TwoFactorQRCode)
+		require.NoError(t, err)
+
 		// create TOTP secret update request.
-		token, err := totp.GenerateCode(user.TwoFactorSecret, time.Now().UTC())
+		token, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, token, err)
 		ir := &models.TOTPSecretRefreshInput{
 			CurrentPassword: ui.Password,
@@ -471,10 +495,13 @@ func TestAuth(test *testing.T) {
 		checkValueAndError(t, res, err)
 		assert.Equal(t, http.StatusAccepted, res.StatusCode)
 
+		twoFactorSecret, err = testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(user.TwoFactorQRCode)
+		require.NoError(t, err)
+
 		// load user response.
 		r := &models.TOTPSecretRefreshResponse{}
 		require.NoError(t, json.NewDecoder(res.Body).Decode(r))
-		require.NotEqual(t, user.TwoFactorSecret, r.TwoFactorSecret)
+		require.NotEqual(t, twoFactorSecret, r.TwoFactorSecret)
 
 		secretVerificationToken, err := totp.GenerateCode(r.TwoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, secretVerificationToken, err)
@@ -609,7 +636,10 @@ func TestAuth(test *testing.T) {
 		x, y, cookie := buildDummyUser(ctx, test)
 		assert.NotNil(t, cookie)
 
-		input := buildDummyOAuth2ClientInput(test, x.Username, y.Password, x.TwoFactorSecret)
+		twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(x.TwoFactorQRCode)
+		require.NoError(t, err)
+
+		input := buildDummyOAuth2ClientInput(test, x.Username, y.Password, twoFactorSecret)
 		input.Scopes = []string{"absolutelynevergonnaexistascopelikethis"}
 		premade, err := todoClient.CreateOAuth2Client(ctx, cookie, input)
 		checkValueAndError(test, premade, err)

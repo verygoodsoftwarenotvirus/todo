@@ -11,6 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -45,11 +46,14 @@ func buildDummyUser(ctx context.Context, t *testing.T) (*models.UserCreationResp
 	require.NotNil(t, user)
 	require.NoError(t, err)
 
-	token, err := totp.GenerateCode(user.TwoFactorSecret, time.Now().UTC())
+	twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(user.TwoFactorQRCode)
+	require.NoError(t, err)
+
+	token, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
 	require.NoError(t, err)
 	require.NoError(t, todoClient.VerifyTOTPSecret(ctx, user.ID, token))
 
-	cookie := loginUser(ctx, t, userInput.Username, userInput.Password, user.TwoFactorSecret)
+	cookie := loginUser(ctx, t, userInput.Username, userInput.Password, twoFactorSecret)
 
 	require.NoError(t, err)
 	require.NotNil(t, cookie)
@@ -60,9 +64,12 @@ func buildDummyUser(ctx context.Context, t *testing.T) (*models.UserCreationResp
 func checkUserCreationEquality(t *testing.T, expected *models.UserCreationInput, actual *models.UserCreationResponse) {
 	t.Helper()
 
+	twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(actual.TwoFactorQRCode)
+	assert.NoError(t, err)
+
 	assert.NotZero(t, actual.ID)
 	assert.Equal(t, expected.Username, actual.Username)
-	assert.NotEmpty(t, actual.TwoFactorSecret)
+	assert.NotEmpty(t, twoFactorSecret)
 	assert.NotZero(t, actual.CreatedOn)
 	assert.Nil(t, actual.LastUpdatedOn)
 	assert.Nil(t, actual.ArchivedOn)
@@ -115,10 +122,15 @@ func TestUsers(test *testing.T) {
 			// Create user.
 			exampleUserInput := fakemodels.BuildFakeUserCreationInput()
 			premade, err := todoClient.CreateUser(ctx, exampleUserInput)
-			checkValueAndError(t, premade, err)
-			assert.NotEmpty(t, premade.TwoFactorSecret)
+			require.NoError(t, err)
 
-			secretVerificationToken, err := totp.GenerateCode(premade.TwoFactorSecret, time.Now().UTC())
+			twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(premade.TwoFactorQRCode)
+			assert.NoError(t, err)
+
+			checkValueAndError(t, premade, err)
+			assert.NotEmpty(t, twoFactorSecret)
+
+			secretVerificationToken, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
 			checkValueAndError(t, secretVerificationToken, err)
 
 			assert.NoError(t, todoClient.VerifyTOTPSecret(ctx, premade.ID, secretVerificationToken))

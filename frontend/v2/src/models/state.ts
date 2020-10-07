@@ -20,6 +20,11 @@ export interface RegistrationRequest {
     repeatedPassword: string;
 }
 
+export interface TOTPTokenValidationRequest {
+    userID: number;
+    totpToken: string;
+}
+
 export interface UserRegistrationResponse {
     id: number;
     username: string;

@@ -24,6 +24,7 @@ require (
 	github.com/gorilla/securecookie v1.1.1
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
 	github.com/lib/pq v1.4.0
+	github.com/makiuchi-d/gozxing v0.0.0-20200903113411-25f730ed83da
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/moul/http2curl v1.0.0
 	github.com/pquerna/otp v1.2.0
@@ -37,5 +38,6 @@ require (
 	go.opencensus.io v0.22.3
 	golang.org/x/crypto v0.0.0-20200311171314-f7b00557c8c4
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gopkg.in/oauth2.v3 v3.12.0
 )

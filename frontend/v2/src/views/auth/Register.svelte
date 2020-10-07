@@ -1,7 +1,9 @@
 <script lang="typescript">
-  // core components
-  const github: string = "../assets/img/github.svg";
-  const google: string = "../assets/img/google.svg";
+  import { link } from "svelte-routing";
+
+  import { RegistrationPage } from "../../pages";
+
+  const page = new RegistrationPage();
 
   export let location: Location;
 </script>
@@ -27,36 +29,42 @@
                 type="text"
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                 placeholder="Username"
+                on:keyup={page.evaluateInputs()}
+                bind:value={page.usernameInput}
               />
             </div>
 
             <div class="relative w-full mb-3">
               <label
-                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                      for="grid-password-1"
+                class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                for="grid-password-1"
               >
                 Password
               </label>
               <input
-                      id="grid-password-1"
-                      type="password"
-                      class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                      placeholder="Password"
+                id="grid-password-1"
+                type="password"
+                class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
+                placeholder="Password"
+                on:keyup={page.evaluateInputs()}
+                bind:value={page.passwordInput}
               />
             </div>
 
             <div class="relative w-full mb-3">
               <label
-                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                      for="grid-password-2"
+                class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                for="grid-password-2"
               >
                 Confirm Password
               </label>
               <input
-                  id="grid-password-2"
-                  type="password"
-                  class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                  placeholder="Password Again"
+                id="grid-password-2"
+                type="password"
+                class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
+                placeholder="Password Again"
+                on:keyup={page.evaluateInputs()}
+                bind:value={page.passwordRepeatInput}
               />
             </div>
 
@@ -82,6 +90,7 @@
               <button
                 class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear transition-all duration-150"
                 type="button"
+                on:click={page.register()}
               >
                 Create Account
               </button>

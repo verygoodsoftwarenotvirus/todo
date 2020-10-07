@@ -1,15 +1,9 @@
 <script lang="typescript">
   import { link } from "svelte-routing";
-  import { onMount } from 'svelte';
 
-  import { backendRoutes } from "../../constants";
+  import { LoginPage } from "../../pages";
 
-  import { LoginPage } from "../../pages/LoginPage";
   const page = new LoginPage();
-
-  onMount(() => {
-    console.log(backendRoutes.LOGIN);
-  })
 
   export let location: Location;
 </script>

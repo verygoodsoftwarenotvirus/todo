@@ -35,7 +35,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	authenticator := auth.ProvideBcryptAuthenticator(bcryptHashCost, logger)
 	userDataManager := users.ProvideUserDataManager(database2)
 	clientIDFetcher := httpserver.ProvideOAuth2ClientsServiceClientIDFetcher(logger)
-	encoderDecoder := encoding.ProvideResponseEncoder()
+	encoderDecoder := encoding.ProvideResponseEncoder(logger)
 	unitCounterProvider := metrics.ProvideUnitCounterProvider()
 	service, err := oauth2clients.ProvideOAuth2ClientsService(logger, database2, authenticator, clientIDFetcher, encoderDecoder, unitCounterProvider)
 	if err != nil {

@@ -9,6 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,26 +25,53 @@ func TestServerEncoderDecoder_EncodeResponse(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		expectation := "name"
 		ex := &example{Name: expectation}
-		ed := ProvideResponseEncoder()
+		ed := ProvideResponseEncoder(noop.ProvideNoopLogger())
 
 		res := httptest.NewRecorder()
-		err := ed.EncodeResponse(res, ex)
 
-		assert.NoError(t, err)
+		ed.EncodeResponse(res, ex)
 		assert.Equal(t, res.Body.String(), fmt.Sprintf("{%q:%q}\n", "name", ex.Name))
 	})
 
 	T.Run("as XML", func(t *testing.T) {
 		expectation := "name"
 		ex := &example{Name: expectation}
-		ed := ProvideResponseEncoder()
+		ed := ProvideResponseEncoder(noop.ProvideNoopLogger())
 
 		res := httptest.NewRecorder()
 		res.Header().Set(ContentTypeHeader, "application/xml")
 
-		err := ed.EncodeResponse(res, ex)
-		assert.NoError(t, err)
+		ed.EncodeResponse(res, ex)
 		assert.Equal(t, fmt.Sprintf("<example><name>%s</name></example>", expectation), res.Body.String())
+	})
+}
+
+func TestServerEncoderDecoder_EncodeError(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		exampleMessage := "something went awry"
+		exampleCode := http.StatusBadRequest
+
+		ed := ProvideResponseEncoder(noop.ProvideNoopLogger())
+
+		res := httptest.NewRecorder()
+
+		ed.EncodeError(res, exampleMessage, exampleCode)
+		assert.Equal(t, res.Body.String(), fmt.Sprintf("{\"message\":%q,\"code\":%d}\n", exampleMessage, exampleCode))
+	})
+
+	T.Run("as XML", func(t *testing.T) {
+		exampleMessage := "something went awry"
+		exampleCode := http.StatusBadRequest
+
+		ed := ProvideResponseEncoder(noop.ProvideNoopLogger())
+
+		res := httptest.NewRecorder()
+		res.Header().Set(ContentTypeHeader, "application/xml")
+
+		ed.EncodeError(res, exampleMessage, exampleCode)
+		assert.Equal(t, fmt.Sprintf("<ErrorResponse><Message>%s</Message><Code>%d</Code></ErrorResponse>", exampleMessage, exampleCode), res.Body.String())
 	})
 }
 
@@ -52,7 +81,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		expectation := "name"
 		e := &example{Name: expectation}
-		ed := ProvideResponseEncoder()
+		ed := ProvideResponseEncoder(noop.ProvideNoopLogger())
 
 		bs, err := json.Marshal(e)
 		require.NoError(t, err)
@@ -68,7 +97,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 	T.Run("as XML", func(t *testing.T) {
 		expectation := "name"
 		e := &example{Name: expectation}
-		ed := ProvideResponseEncoder()
+		ed := ProvideResponseEncoder(noop.ProvideNoopLogger())
 
 		bs, err := xml.Marshal(e)
 		require.NoError(t, err)

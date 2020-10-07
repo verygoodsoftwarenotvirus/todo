@@ -33,7 +33,7 @@ type (
 	// ErrorResponse represents a response we might send to the user in the event of an error.
 	ErrorResponse struct {
 		Message string `json:"message"`
-		Code    uint   `json:"code"`
+		Code    int    `json:"code"`
 	}
 )
 

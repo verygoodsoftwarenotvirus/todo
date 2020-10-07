@@ -25,7 +25,7 @@ func buildTestService(t *testing.T) *Service {
 	auth := &mockauth.Authenticator{}
 	userDB := &mockmodels.UserDataManager{}
 	oauth := &mockOAuth2ClientValidator{}
-	ed := encoding.ProvideResponseEncoder()
+	ed := encoding.ProvideResponseEncoder(logger)
 
 	sm := scs.New()
 	// this is currently the default, but in case that changes
@@ -49,13 +49,14 @@ func TestProvideAuthService(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		logger := noop.ProvideNoopLogger()
 		cfg := config.AuthSettings{
 			CookieSecret: "BLAHBLAHBLAHPRETENDTHISISSECRET!",
 		}
 		auth := &mockauth.Authenticator{}
 		userDB := &mockmodels.UserDataManager{}
 		oauth := &mockOAuth2ClientValidator{}
-		ed := encoding.ProvideResponseEncoder()
+		ed := encoding.ProvideResponseEncoder(logger)
 		sm := scs.New()
 
 		service, err := ProvideAuthService(

@@ -114,37 +114,6 @@ func TestItemsService_ListHandler(T *testing.T) {
 
 		mock.AssertExpectationsForObjects(t, itemDataManager)
 	})
-
-	T.Run("with error encoding response", func(t *testing.T) {
-		s := buildTestService()
-
-		s.userIDFetcher = userIDFetcher
-
-		exampleItemList := fakemodels.BuildFakeItemList()
-
-		itemDataManager := &mockmodels.ItemDataManager{}
-		itemDataManager.On("GetItems", mock.Anything, exampleUser.ID, mock.AnythingOfType("*models.QueryFilter")).Return(exampleItemList, nil)
-		s.itemDataManager = itemDataManager
-
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.ItemList")).Return(errors.New("blah"))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ListHandler(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, ed)
-	})
 }
 
 func TestItemsService_SearchHandler(T *testing.T) {
@@ -301,47 +270,6 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 		mock.AssertExpectationsForObjects(t, si, itemDataManager)
 	})
-
-	T.Run("with error encoding response", func(t *testing.T) {
-		s := buildTestService()
-
-		s.userIDFetcher = userIDFetcher
-
-		exampleQuery := "whatever"
-		exampleLimit := uint8(123)
-		exampleItemList := fakemodels.BuildFakeItemList().Items
-		var exampleItemIDs []uint64
-		for _, x := range exampleItemList {
-			exampleItemIDs = append(exampleItemIDs, x.ID)
-		}
-
-		si := &mocksearch.IndexManager{}
-		si.On("Search", mock.Anything, exampleQuery, exampleUser.ID).Return(exampleItemIDs, nil)
-		s.search = si
-
-		itemDataManager := &mockmodels.ItemDataManager{}
-		itemDataManager.On("GetItemsWithIDs", mock.Anything, exampleUser.ID, exampleLimit, exampleItemIDs).Return(exampleItemList, nil)
-		s.itemDataManager = itemDataManager
-
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("[]models.Item")).Return(errors.New("blah"))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
-			http.MethodGet,
-			fmt.Sprintf("http://todo.verygoodsoftwarenotvirus.ru?q=%s&limit=%d", exampleQuery, exampleLimit),
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.SearchHandler(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, si, itemDataManager, ed)
-	})
 }
 
 func TestItemsService_CreateHandler(T *testing.T) {
@@ -447,53 +375,6 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
 		mock.AssertExpectationsForObjects(t, itemDataManager)
-	})
-
-	T.Run("with error encoding response", func(t *testing.T) {
-		s := buildTestService()
-
-		s.userIDFetcher = userIDFetcher
-
-		exampleItem := fakemodels.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
-
-		itemDataManager := &mockmodels.ItemDataManager{}
-		itemDataManager.On("CreateItem", mock.Anything, mock.AnythingOfType("*models.ItemCreationInput")).Return(exampleItem, nil)
-		s.itemDataManager = itemDataManager
-
-		mc := &mockmetrics.UnitCounter{}
-		mc.On("Increment", mock.Anything)
-		s.itemCounter = mc
-
-		r := &mocknewsman.Reporter{}
-		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
-		s.reporter = r
-
-		si := &mocksearch.IndexManager{}
-		si.On("Index", mock.Anything, exampleItem.ID, exampleItem).Return(nil)
-		s.search = si
-
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Item")).Return(errors.New("blah"))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		req = req.WithContext(context.WithValue(req.Context(), createMiddlewareCtxKey, exampleInput))
-
-		s.CreateHandler(res, req)
-
-		assert.Equal(t, http.StatusCreated, res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, mc, r, si, ed)
 	})
 }
 
@@ -703,41 +584,6 @@ func TestItemsService_ReadHandler(T *testing.T) {
 
 		mock.AssertExpectationsForObjects(t, itemDataManager)
 	})
-
-	T.Run("with error encoding response", func(t *testing.T) {
-		s := buildTestService()
-
-		s.userIDFetcher = userIDFetcher
-
-		exampleItem := fakemodels.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
-		s.itemIDFetcher = func(req *http.Request) uint64 {
-			return exampleItem.ID
-		}
-
-		itemDataManager := &mockmodels.ItemDataManager{}
-		itemDataManager.On("GetItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return(exampleItem, nil)
-		s.itemDataManager = itemDataManager
-
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Item")).Return(errors.New("blah"))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ReadHandler(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, ed)
-	})
 }
 
 func TestItemsService_UpdateHandler(T *testing.T) {
@@ -920,54 +766,6 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		mock.AssertExpectationsForObjects(t, itemDataManager)
 	})
-
-	T.Run("with error encoding response", func(t *testing.T) {
-		s := buildTestService()
-
-		s.userIDFetcher = userIDFetcher
-
-		exampleItem := fakemodels.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeItemUpdateInputFromItem(exampleItem)
-
-		s.itemIDFetcher = func(req *http.Request) uint64 {
-			return exampleItem.ID
-		}
-
-		itemDataManager := &mockmodels.ItemDataManager{}
-		itemDataManager.On("GetItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return(exampleItem, nil)
-		itemDataManager.On("UpdateItem", mock.Anything, mock.AnythingOfType("*models.Item")).Return(nil)
-		s.itemDataManager = itemDataManager
-
-		r := &mocknewsman.Reporter{}
-		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
-		s.reporter = r
-
-		si := &mocksearch.IndexManager{}
-		si.On("Index", mock.Anything, exampleItem.ID, exampleItem).Return(nil)
-		s.search = si
-
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Item")).Return(errors.New("blah"))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
-
-		s.UpdateHandler(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, r, itemDataManager, ed)
-	})
 }
 
 func TestItemsService_ArchiveHandler(T *testing.T) {
@@ -1081,5 +879,48 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
 		mock.AssertExpectationsForObjects(t, itemDataManager)
+	})
+
+	T.Run("with error removing from search index", func(t *testing.T) {
+		s := buildTestService()
+
+		s.userIDFetcher = userIDFetcher
+
+		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem.BelongsToUser = exampleUser.ID
+		s.itemIDFetcher = func(req *http.Request) uint64 {
+			return exampleItem.ID
+		}
+
+		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager.On("ArchiveItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return(nil)
+		s.itemDataManager = itemDataManager
+
+		r := &mocknewsman.Reporter{}
+		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
+		s.reporter = r
+
+		si := &mocksearch.IndexManager{}
+		si.On("Delete", mock.Anything, exampleItem.ID).Return(errors.New("blah"))
+		s.search = si
+
+		mc := &mockmetrics.UnitCounter{}
+		mc.On("Decrement", mock.Anything).Return()
+		s.itemCounter = mc
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequest(
+			http.MethodGet,
+			"http://todo.verygoodsoftwarenotvirus.ru",
+			nil,
+		)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		s.ArchiveHandler(res, req)
+
+		assert.Equal(t, http.StatusNoContent, res.Code)
+
+		mock.AssertExpectationsForObjects(t, itemDataManager, mc, r)
 	})
 }

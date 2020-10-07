@@ -14,7 +14,7 @@ FROM node:latest AS frontend-build-stage
 
 WORKDIR /app
 
-ADD frontend/v1 .
+ADD frontend/v2 .
 
 RUN npm install && npm run build
 

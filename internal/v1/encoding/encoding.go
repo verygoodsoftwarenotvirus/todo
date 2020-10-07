@@ -6,7 +6,10 @@ import (
 	"net/http"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
 	"github.com/google/wire"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
 )
 
 const (
@@ -30,12 +33,15 @@ var (
 type (
 	// EncoderDecoder is an interface that allows for multiple implementations of HTTP response formats.
 	EncoderDecoder interface {
-		EncodeResponse(http.ResponseWriter, interface{}) error
-		DecodeRequest(*http.Request, interface{}) error
+		EncodeResponse(res http.ResponseWriter, val interface{})
+		EncodeError(res http.ResponseWriter, msg string, code int)
+		DecodeRequest(req *http.Request, dest interface{}) error
 	}
 
 	// ServerEncoderDecoder is our concrete implementation of EncoderDecoder.
-	ServerEncoderDecoder struct{}
+	ServerEncoderDecoder struct {
+		logger logging.Logger
+	}
 
 	encoder interface {
 		Encode(v interface{}) error
@@ -46,8 +52,8 @@ type (
 	}
 )
 
-// EncodeResponse encodes responses.
-func (ed *ServerEncoderDecoder) EncodeResponse(res http.ResponseWriter, v interface{}) error {
+// EncodeError encodes errors to responses.
+func (ed *ServerEncoderDecoder) EncodeError(res http.ResponseWriter, msg string, code int) {
 	var ct = strings.ToLower(res.Header().Get(ContentTypeHeader))
 	if ct == "" {
 		ct = DefaultContentType
@@ -62,7 +68,36 @@ func (ed *ServerEncoderDecoder) EncodeResponse(res http.ResponseWriter, v interf
 	}
 
 	res.Header().Set(ContentTypeHeader, ct)
-	return e.Encode(v)
+
+	if http.StatusText(code) != "" {
+		res.WriteHeader(code)
+	}
+
+	if err := e.Encode(&models.ErrorResponse{Message: msg, Code: code}); err != nil {
+		ed.logger.Error(err, "encoding error response")
+	}
+}
+
+// EncodeResponse encodes responses.
+func (ed *ServerEncoderDecoder) EncodeResponse(res http.ResponseWriter, v interface{}) {
+	var ct = strings.ToLower(res.Header().Get(ContentTypeHeader))
+	if ct == "" {
+		ct = DefaultContentType
+	}
+
+	var e encoder
+	switch ct {
+	case XMLContentType:
+		e = xml.NewEncoder(res)
+	default:
+		e = json.NewEncoder(res)
+	}
+
+	res.Header().Set(ContentTypeHeader, ct)
+
+	if err := e.Encode(v); err != nil {
+		ed.logger.Error(err, "encoding response")
+	}
 }
 
 // DecodeRequest decodes responses.
@@ -84,6 +119,8 @@ func (ed *ServerEncoderDecoder) DecodeRequest(req *http.Request, v interface{}) 
 }
 
 // ProvideResponseEncoder provides a jsonResponseEncoder.
-func ProvideResponseEncoder() EncoderDecoder {
-	return &ServerEncoderDecoder{}
+func ProvideResponseEncoder(logger logging.Logger) EncoderDecoder {
+	return &ServerEncoderDecoder{
+		logger: logger.WithName("response_encoder"),
+	}
 }

@@ -92,9 +92,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// let everybody know we're good.
 	res.WriteHeader(http.StatusCreated)
-	if err = s.encoderDecoder.EncodeResponse(res, wh); err != nil {
-		logger.Error(err, "encoding response")
-	}
+	s.encoderDecoder.EncodeResponse(res, wh)
 }
 
 // ListHandler is our list route.
@@ -125,9 +123,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode the response.
-	if err = s.encoderDecoder.EncodeResponse(res, webhooks); err != nil {
-		logger.Error(err, "encoding response")
-	}
+	s.encoderDecoder.EncodeResponse(res, webhooks)
 }
 
 // ReadHandler returns a GET handler that returns an webhook.
@@ -160,9 +156,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode the response.
-	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
-		logger.Error(err, "encoding response")
-	}
+	s.encoderDecoder.EncodeResponse(res, x)
 }
 
 // UpdateHandler returns a handler that updates an webhook.
@@ -220,9 +214,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	})
 
 	// let everybody know we're good.
-	if err = s.encoderDecoder.EncodeResponse(res, wh); err != nil {
-		logger.Error(err, "encoding response")
-	}
+	s.encoderDecoder.EncodeResponse(res, wh)
 }
 
 // ArchiveHandler returns a handler that archives an webhook.

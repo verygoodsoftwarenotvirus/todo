@@ -12,6 +12,7 @@ import (
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth/mock"
+	encoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -245,27 +246,6 @@ func TestService_ListHandler(T *testing.T) {
 
 		mock.AssertExpectationsForObjects(t, mockDB)
 	})
-
-	T.Run("with error encoding response", func(t *testing.T) {
-		s := buildTestService(t)
-
-		exampleUserList := fakemodels.BuildFakeUserList()
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On("GetUsers", mock.Anything, mock.Anything).Return(exampleUserList, nil)
-		s.userDataManager = mockDB
-
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.UserList")).Return(errors.New("blah"))
-		s.encoderDecoder = ed
-
-		res, req := httptest.NewRecorder(), buildRequest(t)
-		s.ListHandler(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB, ed)
-	})
 }
 
 func TestService_CreateHandler(T *testing.T) {
@@ -473,6 +453,8 @@ func TestService_CreateHandler(T *testing.T) {
 		auth.On("HashPassword", mock.Anything, exampleInput.Password).Return(exampleUser.HashedPassword, nil)
 		s.authenticator = auth
 
+		s.encoderDecoder = encoding.ProvideResponseEncoder(s.logger)
+
 		db := database.BuildMockDatabase()
 		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("models.UserDatabaseCreationInput")).Return(exampleUser, dbclient.ErrUserExists)
 		s.userDataManager = db
@@ -492,49 +474,6 @@ func TestService_CreateHandler(T *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 
 		mock.AssertExpectationsForObjects(t, auth, db)
-	})
-
-	T.Run("with error encoding response", func(t *testing.T) {
-		s := buildTestService(t)
-
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
-
-		auth := &mockauth.Authenticator{}
-		auth.On("HashPassword", mock.Anything, exampleInput.Password).Return(exampleUser.HashedPassword, nil)
-		s.authenticator = auth
-
-		db := database.BuildMockDatabase()
-		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("models.UserDatabaseCreationInput")).Return(exampleUser, nil)
-		s.userDataManager = db
-
-		mc := &mockmetrics.UnitCounter{}
-		mc.On("Increment", mock.Anything)
-		s.userCounter = mc
-
-		r := &mocknewsman.Reporter{}
-		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
-		s.reporter = r
-
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.UserCreationResponse")).Return(errors.New("blah"))
-		s.encoderDecoder = ed
-
-		res, req := httptest.NewRecorder(), buildRequest(t)
-		req = req.WithContext(
-			context.WithValue(
-				req.Context(),
-				userCreationMiddlewareCtxKey,
-				exampleInput,
-			),
-		)
-
-		s.userCreationEnabled = true
-		s.CreateHandler(res, req)
-
-		assert.Equal(t, http.StatusCreated, res.Code)
-
-		mock.AssertExpectationsForObjects(t, auth, db, mc, r, ed)
 	})
 }
 
@@ -603,30 +542,6 @@ func TestService_ReadHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB)
-	})
-
-	T.Run("with error encoding response", func(t *testing.T) {
-		s := buildTestService(t)
-
-		exampleUser := fakemodels.BuildFakeUser()
-		s.userIDFetcher = func(_ *http.Request) uint64 {
-			return exampleUser.ID
-		}
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
-		s.userDataManager = mockDB
-
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.User")).Return(errors.New("blah"))
-		s.encoderDecoder = ed
-
-		res, req := httptest.NewRecorder(), buildRequest(t)
-		s.ReadHandler(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 }
 
@@ -835,52 +750,6 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB, auth)
-	})
-
-	T.Run("with error encoding response", func(t *testing.T) {
-		s := buildTestService(t)
-
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeTOTPSecretRefreshInput()
-
-		res, req := httptest.NewRecorder(), buildRequest(t)
-		req = req.WithContext(
-			context.WithValue(
-				req.Context(),
-				totpSecretRefreshMiddlewareCtxKey,
-				exampleInput,
-			),
-		)
-		req = req.WithContext(
-			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
-		)
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
-		mockDB.UserDataManager.On("UpdateUser", mock.Anything, mock.AnythingOfType("*models.User")).Return(nil)
-		s.userDataManager = mockDB
-
-		auth := &mockauth.Authenticator{}
-		auth.On(
-			"ValidateLogin",
-			mock.Anything,
-			exampleUser.HashedPassword,
-			exampleInput.CurrentPassword,
-			exampleUser.TwoFactorSecret,
-			exampleInput.TOTPToken,
-			exampleUser.Salt,
-		).Return(true, nil)
-		s.authenticator = auth
-
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.TOTPSecretRefreshResponse")).Return(errors.New("blah"))
-		s.encoderDecoder = ed
-
-		s.NewTOTPSecretHandler(res, req)
-
-		assert.Equal(t, http.StatusAccepted, res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB, auth, ed)
 	})
 }
 

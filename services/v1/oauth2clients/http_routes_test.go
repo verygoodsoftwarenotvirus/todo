@@ -158,36 +158,6 @@ func TestService_ListHandler(T *testing.T) {
 
 		mock.AssertExpectationsForObjects(t, mockDB)
 	})
-
-	T.Run("with error encoding response", func(t *testing.T) {
-		s := buildTestService(t)
-
-		exampleOAuth2ClientList := fakemodels.BuildFakeOAuth2ClientList()
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.On(
-			"GetOAuth2ClientsForUser",
-			mock.Anything,
-			exampleUser.ID,
-			mock.AnythingOfType("*models.QueryFilter"),
-		).Return(exampleOAuth2ClientList, nil)
-		s.database = mockDB
-
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2ClientList")).Return(errors.New("blah"))
-		s.encoderDecoder = ed
-
-		req := buildRequest(t)
-		req = req.WithContext(
-			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
-		)
-		res := httptest.NewRecorder()
-
-		s.ListHandler(res, req)
-		assert.Equal(t, http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB, ed)
-	})
 }
 
 func TestService_CreateHandler(T *testing.T) {
@@ -430,61 +400,6 @@ func TestService_CreateHandler(T *testing.T) {
 
 		mock.AssertExpectationsForObjects(t, mockDB, a)
 	})
-
-	T.Run("with error encoding response", func(t *testing.T) {
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
-		exampleOAuth2Client.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
-
-		s := buildTestService(t)
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On(
-			"GetUserByUsername",
-			mock.Anything,
-			exampleInput.Username,
-		).Return(exampleUser, nil)
-		mockDB.OAuth2ClientDataManager.On(
-			"CreateOAuth2Client",
-			mock.Anything,
-			exampleInput,
-		).Return(exampleOAuth2Client, nil)
-		s.database = mockDB
-
-		a := &mockauth.Authenticator{}
-		a.On(
-			"ValidateLogin",
-			mock.Anything,
-			exampleUser.HashedPassword,
-			exampleInput.Password,
-			exampleUser.TwoFactorSecret,
-			exampleInput.TOTPToken,
-			exampleUser.Salt,
-		).Return(true, nil)
-		s.authenticator = a
-
-		uc := &mockmetrics.UnitCounter{}
-		uc.On("Increment", mock.Anything).Return()
-		s.oauth2ClientCounter = uc
-
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2Client")).Return(errors.New("blah"))
-		s.encoderDecoder = ed
-
-		req := buildRequest(t)
-		req = req.WithContext(
-			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
-		)
-		req = req.WithContext(
-			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
-		)
-		res := httptest.NewRecorder()
-
-		s.CreateHandler(res, req)
-		assert.Equal(t, http.StatusCreated, res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB, a, uc, ed)
-	})
 }
 
 func TestService_ReadHandler(T *testing.T) {
@@ -584,40 +499,6 @@ func TestService_ReadHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB)
-	})
-
-	T.Run("with error encoding response", func(t *testing.T) {
-		s := buildTestService(t)
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
-		exampleOAuth2Client.BelongsToUser = exampleUser.ID
-
-		s.urlClientIDExtractor = func(req *http.Request) uint64 {
-			return exampleOAuth2Client.ID
-		}
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.On(
-			"GetOAuth2Client",
-			mock.Anything,
-			exampleOAuth2Client.ID,
-			exampleOAuth2Client.BelongsToUser,
-		).Return(exampleOAuth2Client, nil)
-		s.database = mockDB
-
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2Client")).Return(errors.New("blah"))
-		s.encoderDecoder = ed
-
-		req := buildRequest(t)
-		req = req.WithContext(
-			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
-		)
-		res := httptest.NewRecorder()
-
-		s.ReadHandler(res, req)
-		assert.Equal(t, http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 }
 

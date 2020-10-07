@@ -44,9 +44,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode our response and peace.
-	if err = s.encoderDecoder.EncodeResponse(res, items); err != nil {
-		logger.Error(err, "encoding response")
-	}
+	s.encoderDecoder.EncodeResponse(res, items)
 }
 
 // SearchHandler is our search route.
@@ -85,9 +83,7 @@ func (s *Service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode our response and peace.
-	if err = s.encoderDecoder.EncodeResponse(res, items); err != nil {
-		logger.Error(err, "encoding response")
-	}
+	s.encoderDecoder.EncodeResponse(res, items)
 }
 
 // CreateHandler is our item creation route.
@@ -135,9 +131,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// encode our response and peace.
 	res.WriteHeader(http.StatusCreated)
-	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
-		logger.Error(err, "encoding response")
-	}
+	s.encoderDecoder.EncodeResponse(res, x)
 }
 
 // ExistenceHandler returns a HEAD handler that returns 200 if an item exists, 404 otherwise.
@@ -201,9 +195,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode our response and peace.
-	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
-		logger.Error(err, "encoding response")
-	}
+	s.encoderDecoder.EncodeResponse(res, x)
 }
 
 // UpdateHandler returns a handler that updates an item.
@@ -264,9 +256,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode our response and peace.
-	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
-		logger.Error(err, "encoding response")
-	}
+	s.encoderDecoder.EncodeResponse(res, x)
 }
 
 // ArchiveHandler returns a handler that archives an item.

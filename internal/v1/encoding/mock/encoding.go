@@ -16,8 +16,13 @@ type EncoderDecoder struct {
 }
 
 // EncodeResponse satisfies our EncoderDecoder interface.
-func (m *EncoderDecoder) EncodeResponse(res http.ResponseWriter, v interface{}) error {
-	return m.Called(res, v).Error(0)
+func (m *EncoderDecoder) EncodeResponse(res http.ResponseWriter, v interface{}) {
+	m.Called(res, v)
+}
+
+// EncodeError satisfies our EncoderDecoder interface.
+func (m *EncoderDecoder) EncodeError(res http.ResponseWriter, msg string, code int) {
+	m.Called(res, msg, code)
 }
 
 // DecodeRequest satisfies our EncoderDecoder interface.

@@ -115,9 +115,7 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	if errRes != nil || loginData == nil {
 		logger.Error(errRes, "error encountered fetching login data from request")
 		res.WriteHeader(http.StatusUnauthorized)
-		if err := s.encoderDecoder.EncodeResponse(res, errRes); err != nil {
-			logger.Error(err, "encoding response")
-		}
+		s.encoderDecoder.EncodeError(res, errRes.Message, errRes.Code)
 		return
 	}
 
@@ -213,11 +211,8 @@ func (s *Service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context(), "StatusHandler")
 	defer span.End()
 
-	logger := s.logger.WithRequest(req)
-
 	var sr *models.StatusResponse
-	userInfo, err := s.fetchUserFromCookie(ctx, req)
-	if err != nil {
+	if userInfo, err := s.fetchUserFromCookie(ctx, req); err != nil {
 		res.WriteHeader(http.StatusUnauthorized)
 		sr = &models.StatusResponse{
 			Authenticated: false,
@@ -230,9 +225,7 @@ func (s *Service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	if err := s.encoderDecoder.EncodeResponse(res, sr); err != nil {
-		logger.Error(err, "encoding response")
-	}
+	s.encoderDecoder.EncodeResponse(res, sr)
 }
 
 // CycleSecretHandler rotates the cookie building secret with a new random secret.

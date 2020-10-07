@@ -68,9 +68,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode response and peace.
-	if err = s.encoderDecoder.EncodeResponse(res, oauth2Clients); err != nil {
-		logger.Error(err, "encoding response")
-	}
+	s.encoderDecoder.EncodeResponse(res, oauth2Clients)
 }
 
 // CreateHandler is our OAuth2 client creation route.
@@ -143,9 +141,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	s.oauth2ClientCounter.Increment(ctx)
 
 	res.WriteHeader(http.StatusCreated)
-	if err = s.encoderDecoder.EncodeResponse(res, client); err != nil {
-		logger.Error(err, "encoding response")
-	}
+	s.encoderDecoder.EncodeResponse(res, client)
 }
 
 // ReadHandler is a route handler for retrieving an OAuth2 client.
@@ -178,9 +174,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode response and peace.
-	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
-		logger.Error(err, "encoding response")
-	}
+	s.encoderDecoder.EncodeResponse(res, x)
 }
 
 // ArchiveHandler is a route handler for archiving an OAuth2 client.

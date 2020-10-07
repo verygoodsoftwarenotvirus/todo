@@ -11,7 +11,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth/mock"
-	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
@@ -316,43 +315,6 @@ func TestService_LoginHandler(T *testing.T) {
 		assert.Empty(t, res.Header().Get("Set-Cookie"))
 
 		mock.AssertExpectationsForObjects(t, udb)
-	})
-
-	T.Run("with error encoding error fetching login data", func(t *testing.T) {
-		s := buildTestService(t)
-
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
-
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On(
-			"EncodeResponse",
-			mock.AnythingOfType("*httptest.ResponseRecorder"),
-			mock.AnythingOfType("*models.ErrorResponse"),
-		).Return(errors.New("blah"))
-		s.encoderDecoder = ed
-
-		udb := &mockmodels.UserDataManager{}
-		udb.On(
-			"GetUserByUsername",
-			mock.Anything,
-			exampleUser.Username,
-		).Return(exampleUser, errors.New("arbitrary"))
-		s.userDB = udb
-
-		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		res := httptest.NewRecorder()
-		req = req.WithContext(context.WithValue(req.Context(), userLoginInputMiddlewareCtxKey, exampleLoginData))
-
-		s.LoginHandler(res, req)
-
-		assert.Equal(t, http.StatusUnauthorized, res.Code)
-		assert.Empty(t, res.Header().Get("Set-Cookie"))
-
-		mock.AssertExpectationsForObjects(t, ed, udb)
 	})
 
 	T.Run("with invalid login", func(t *testing.T) {
@@ -968,40 +930,6 @@ func TestService_StatusHandler(T *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 
 		mock.AssertExpectationsForObjects(t, udb)
-	})
-
-	T.Run("with error encoding response", func(t *testing.T) {
-		s := buildTestService(t)
-
-		exampleUser := fakemodels.BuildFakeUser()
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodPost, "https://blah.com", nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
-
-		udb := &mockmodels.UserDataManager{}
-		udb.On(
-			"GetUser",
-			mock.Anything,
-			exampleUser.ID,
-		).Return(exampleUser, nil)
-		s.userDB = udb
-
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On(
-			"EncodeResponse",
-			mock.AnythingOfType("*httptest.ResponseRecorder"),
-			mock.AnythingOfType("*models.StatusResponse"),
-		).Return(errors.New("blah"))
-		s.encoderDecoder = ed
-
-		s.StatusHandler(res, req)
-		assert.Equal(t, http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, udb, ed)
 	})
 }
 

@@ -89,9 +89,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode response.
-	if err = s.encoderDecoder.EncodeResponse(res, users); err != nil {
-		logger.Error(err, "encoding response")
-	}
+	s.encoderDecoder.EncodeResponse(res, users)
 }
 
 // CreateHandler is our user creation route.
@@ -160,6 +158,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		if err == dbclient.ErrUserExists {
 			logger.Info("duplicate username attempted")
 			res.WriteHeader(http.StatusBadRequest)
+			s.encoderDecoder.EncodeError(res, "username already taken", http.StatusBadRequest)
 			return
 		}
 
@@ -192,9 +191,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// encode and peace.
 	res.WriteHeader(http.StatusCreated)
-	if err = s.encoderDecoder.EncodeResponse(res, ucr); err != nil {
-		logger.Error(err, "encoding response")
-	}
+	s.encoderDecoder.EncodeResponse(res, ucr)
 }
 
 // buildQRCode builds a QR code for a given username and secret.
@@ -265,9 +262,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode response and peace.
-	if err = s.encoderDecoder.EncodeResponse(res, x); err != nil {
-		logger.Error(err, "encoding response")
-	}
+	s.encoderDecoder.EncodeResponse(res, x)
 }
 
 // TOTPSecretVerificationHandler accepts a TOTP token as input and returns 200 if the TOTP token
@@ -375,9 +370,7 @@ func (s *Service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 
 	// let the requester know we're all good.
 	res.WriteHeader(http.StatusAccepted)
-	if err := s.encoderDecoder.EncodeResponse(res, &models.TOTPSecretRefreshResponse{TwoFactorSecret: user.TwoFactorSecret}); err != nil {
-		logger.Error(err, "encoding response")
-	}
+	s.encoderDecoder.EncodeResponse(res, &models.TOTPSecretRefreshResponse{TwoFactorSecret: user.TwoFactorSecret})
 }
 
 // UpdatePasswordHandler updates a user's password, after validating that information received

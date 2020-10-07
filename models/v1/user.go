@@ -53,7 +53,7 @@ type (
 	UserCreationResponse struct {
 		ID                    uint64  `json:"id"`
 		Username              string  `json:"username"`
-		TwoFactorSecret       string  `json:"twoFactorSecret"`
+		TwoFactorSecret       string  `json:"twoFactorSecret"` // TODO: remove me
 		PasswordLastChangedOn *uint64 `json:"passwordLastChangedOn"`
 		IsAdmin               bool    `json:"isAdmin"`
 		CreatedOn             uint64  `json:"createdOn"`

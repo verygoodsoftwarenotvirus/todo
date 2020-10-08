@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -220,6 +221,15 @@ func TestWebhooksService_Create(T *testing.T) {
 		s.userIDFetcher = func(req *http.Request) uint64 {
 			return exampleUser.ID
 		}
+
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On(
+			"EncodeError",
+			mock.Anything,
+			fmt.Sprintf(`invalid URL provided: parse %q: invalid URL escape "%%zz"`, exampleWebhook.URL),
+			http.StatusBadRequest,
+		)
+		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(

@@ -1,11 +1,39 @@
 <script lang="typescript">
-  import { link } from "svelte-routing";
+  import axios, {AxiosResponse} from 'axios';
+  import { link, navigate } from "svelte-routing";
 
-  import { LoginPage } from "../../pages";
-
-  const page = new LoginPage();
+  import type { AuthStatus, LoginRequest } from "../../models";
 
   export let location: Location;
+
+    let usernameInput = '';
+    let passwordInput = '';
+    let totpTokenInput = '';
+
+    function buildLoginRequest(): LoginRequest {
+        return {
+            username: this.usernameInput,
+            password: this.passwordInput,
+            totpToken: this.totpTokenInput,
+        } as LoginRequest
+    }
+
+    async function login() {
+        const path = "/users/login"
+
+        console.debug("login called!");
+
+        return axios.post(path, this.buildLoginRequest(), {withCredentials: true})
+            .then(() => {
+              axios.get("/users/status", {withCredentials: true}).then((statusResponse: AxiosResponse<AuthStatus>) => {
+                navigate("/", { state: {}, replace: true });
+              });
+            })
+            .catch((reason: object) => {
+                console.error(`something went awry: ${reason}`);
+            });
+    }
+
 </script>
 
 <div class="container mx-auto px-4 h-full">
@@ -29,7 +57,7 @@
                 type="text"
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                 placeholder="username"
-                bind:value={page.usernameInput}
+                bind:value={usernameInput}
               />
             </div>
 
@@ -45,7 +73,7 @@
                 type="password"
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                 placeholder="Password"
-                bind:value={page.passwordInput}
+                bind:value={passwordInput}
               />
             </div>
 
@@ -61,15 +89,15 @@
                 type="text"
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                 placeholder="123456"
-                bind:value={page.totpTokenInput}
+                bind:value={totpTokenInput}
               />
             </div>
 
             <div class="text-center mt-6">
               <button
-                      class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear transition-all duration-150"
-                      type="button"
-                      on:click={page.login()}
+                class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear transition-all duration-150"
+                type="button"
+                on:click={login}
               >
                 Sign In
               </button>

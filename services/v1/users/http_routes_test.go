@@ -297,6 +297,15 @@ func TestService_CreateHandler(T *testing.T) {
 	T.Run("with user creation disabled", func(t *testing.T) {
 		s := buildTestService(t)
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On(
+			"EncodeError",
+			mock.Anything,
+			"user creation is disabled",
+			http.StatusForbidden,
+		)
+		s.encoderDecoder = ed
+
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		s.userCreationEnabled = false
 		s.CreateHandler(res, req)
@@ -848,6 +857,15 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		)
 
 		exampleUser.TwoFactorSecretVerifiedOn = og
+
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On(
+			"EncodeError",
+			mock.Anything,
+			"TOTP secret already verified",
+			http.StatusAlreadyReported,
+		)
+		s.encoderDecoder = ed
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUserWithUnverifiedTwoFactorSecret", mock.Anything, exampleUser.ID).Return(exampleUser, nil)

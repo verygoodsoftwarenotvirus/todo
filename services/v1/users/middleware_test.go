@@ -57,6 +57,12 @@ func TestService_UserInputMiddleware(T *testing.T) {
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On(
+			"EncodeError",
+			mock.Anything,
+			"invalid request content",
+			http.StatusBadRequest,
+		)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -109,6 +115,12 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On(
+			"EncodeError",
+			mock.Anything,
+			"invalid request content",
+			http.StatusBadRequest,
+		)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -156,6 +168,12 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 		}
 
 		ed := &mockencoding.EncoderDecoder{}
+		ed.On(
+			"EncodeError",
+			mock.Anything,
+			"invalid request content",
+			http.StatusBadRequest,
+		)
 		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
@@ -205,6 +223,12 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On(
+			"EncodeError",
+			mock.Anything,
+			"invalid request content",
+			http.StatusBadRequest,
+		)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)

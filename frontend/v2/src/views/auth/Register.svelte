@@ -1,21 +1,133 @@
 <script lang="typescript">
-  import { link } from "svelte-routing";
+  import axios, {AxiosError, AxiosResponse} from 'axios';
+  import { link, navigate } from "svelte-routing";
 
-  import { RegistrationPage } from "../../pages";
-
-  const page = new RegistrationPage();
+  import type { RegistrationRequest, UserRegistrationResponse, TOTPTokenValidationRequest, ErrorResponse } from "../../models";
 
   export let location: Location;
+
+  let usernameInput = '';
+  let passwordInput = '';
+  let passwordRepeatInput = '';
+
+  let registrationMayProceed = false;
+  let registrationError = '';
+  let postRegistrationQRCode = '';
+  let postRegistrationUserID = -1;
+
+  let totpTokenValidationMayProceed = false;
+  let totpTokenValidationInput = '';
+
+  function evaluateCreationInputs(): string {
+    const usernameIsLongEnough = usernameInput.length >= 8;
+    const passwordsMatch = passwordInput === passwordRepeatInput;
+    const passwordIsLongEnough = passwordInput.length >= 8;
+
+    const reasons: string[] = [];
+    if (!usernameIsLongEnough) {
+      reasons.push('username has too few characters');
+    } else if (!passwordsMatch) {
+      reasons.push("passwords don't match");
+    } else if (passwordsMatch && !passwordIsLongEnough) {
+      reasons.push('password is not long enough');
+    }
+
+    registrationMayProceed = usernameIsLongEnough && passwordIsLongEnough && passwordsMatch
+
+    console.debug(`evaluateInputs called, registrationMayProceed = ${registrationMayProceed}`);
+
+    if (reasons.length == 1) {
+      return reasons.pop() || '';
+    } else if (reasons.length > 1) {
+      const last = reasons.pop();
+      const reason = reasons.join(', ') + ' and ' + last;
+
+      console.debug(`evaluateInputs called, reason = ${reason}`);
+
+      return reason
+    }
+
+    return "";
+  }
+
+  function buildRegistrationRequest(): RegistrationRequest {
+    return {
+      username: usernameInput,
+      password: passwordInput,
+      repeatedPassword: passwordRepeatInput,
+    } as RegistrationRequest;
+  }
+
+  async function register() {
+    console.debug("RegistrationPage.register called")
+
+    const path = "/users/"
+
+    if (!registrationMayProceed) {
+      // this should never occur
+      registrationError = evaluateCreationInputs();
+      throw new Error("registration input is not valid!");
+    }
+
+    return axios.post(path, buildRegistrationRequest())
+            .then((response: AxiosResponse<UserRegistrationResponse | ErrorResponse>) => {
+              const data = response.data as UserRegistrationResponse;
+
+              postRegistrationQRCode = data.qrCode;
+              postRegistrationUserID = data.id;
+
+              return data;
+            })
+            .catch((reason: AxiosError) => {
+              if (reason.response) {
+                const data = reason.response.data as ErrorResponse;
+                console.error(data.message);
+                registrationError = data.message;
+              }
+            });
+  }
+
+  function evaluateValidationInputs(): void  {
+    totpTokenValidationMayProceed = totpTokenValidationInput.length === 6
+    console.debug(`evaluateInputs called, registrationMayProceed = ${registrationMayProceed}`);
+  }
+
+  function buildTOTPTokenValidationRequest(): TOTPTokenValidationRequest {
+    return {
+      userID: postRegistrationUserID,
+      totpToken: totpTokenValidationInput,
+    } as TOTPTokenValidationRequest;
+  }
+
+  async function validateTOTPToken(){
+    console.debug("RegistrationPage.validateTOTPToken called")
+
+    const path = "/users/totp_secret/verify"
+
+    if (!totpTokenValidationMayProceed) {
+      // this should never occur
+      throw new Error("TOTP token validation input is not valid!");
+    }
+
+    return axios.post(path, buildTOTPTokenValidationRequest())
+            .then((response: AxiosResponse) => {
+              navigate("/auth/login", { state: {}, replace: true });
+            })
+            .catch((reason: AxiosError) => {
+              if (reason.response) {
+                const data = reason.response.data as ErrorResponse;
+                console.error(data.message);
+              }
+            });
+  }
 </script>
 
 <div class="container mx-auto px-4 h-full">
   <div class="flex content-center items-center justify-center h-full">
     <div class="w-full lg:w-6/12 px-4">
-      <div
-        class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-gray-300 border-0"
-      >
-        <div class="rounded-t mb-0 px-6 py-6"></div>
-        {#if page.postRegistrationQRCode === ''}
+      <div class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-gray-300 border-0">
+        <div class="rounded-t mb-0 px-6 py-6"></div> <!-- spacer div -->
+        {#if postRegistrationQRCode === ''}
           <div class="flex-auto px-4 lg:px-10 py-10 pt-0">
             <form>
               <div class="relative w-full mb-3">
@@ -30,8 +142,8 @@
                   type="text"
                   class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                   placeholder="Username"
-                  on:keyup={page.evaluateCreationInputs()}
-                  bind:value={page.usernameInput}
+                  on:keyup={evaluateCreationInputs}
+                  bind:value={usernameInput}
                 />
               </div>
 
@@ -47,8 +159,8 @@
                   type="password"
                   class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                   placeholder="Password"
-                  on:keyup={page.evaluateCreationInputs()}
-                  bind:value={page.passwordInput}
+                  on:keyup={evaluateCreationInputs}
+                  bind:value={passwordInput}
                 />
               </div>
 
@@ -64,8 +176,8 @@
                   type="password"
                   class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                   placeholder="Password Again"
-                  on:keyup={page.evaluateCreationInputs()}
-                  bind:value={page.passwordRepeatInput}
+                  on:keyup={evaluateCreationInputs}
+                  bind:value={passwordRepeatInput}
                 />
               </div>
 
@@ -87,11 +199,13 @@
               </div>
               -->
 
+              <p class="text-red-600">{registrationError}</p>
+
               <div class="text-center mt-6">
                 <button
                   class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear transition-all duration-150"
                   type="button"
-                  on:click={page.register()}
+                  on:click={register}
                 >
                   Create Account
                 </button>
@@ -102,7 +216,8 @@
           <div class="text-center">
             <img
               class="w-1/2 object-center inline p-4"
-              src={page.postRegistrationQRCode}
+              src={postRegistrationQRCode}
+              alt="two factor authentication secret encoded as a QR code"
             >
             <p class="m-4">
               Save the secret this QR code contains in your 2FA Code generator of choice.
@@ -112,10 +227,10 @@
               Enter an example generated code to verify you've completed the above step:
               <input
                 id="totpTokenInput"
-                bind:value={page.totpTokenValidationInput}
+                bind:value={totpTokenValidationInput}
                 type="text"
                 placeholder="2FA Token"
-                on:keyup={page.evaluateValidationInputs()}
+                on:keyup={evaluateValidationInputs}
               >
             </p>
             <p class="p-4">
@@ -123,7 +238,7 @@
                 id="totpTokenSubmitButton"
                 class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear transition-all duration-150"
                 type="button"
-                on:click={page.validateTOTPToken()}
+                on:click={validateTOTPToken}
               >
                 I've saved it!
               </button>

@@ -80,6 +80,12 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 			mock.AnythingOfType("*http.Request"),
 			mock.Anything,
 		).Return(errors.New("blah"))
+		ed.On(
+			"EncodeError",
+			mock.Anything,
+			"invalid request content",
+			http.StatusBadRequest,
+		)
 		s.encoderDecoder = ed
 
 		mh := &mockHTTPHandler{}

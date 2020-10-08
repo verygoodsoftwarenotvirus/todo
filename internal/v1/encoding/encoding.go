@@ -69,10 +69,6 @@ func (ed *ServerEncoderDecoder) EncodeError(res http.ResponseWriter, msg string,
 
 	res.Header().Set(ContentTypeHeader, ct)
 
-	if http.StatusText(code) != "" {
-		res.WriteHeader(code)
-	}
-
 	if err := e.Encode(&models.ErrorResponse{Message: msg, Code: code}); err != nil {
 		ed.logger.Error(err, "encoding error response")
 	}

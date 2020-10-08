@@ -50,16 +50,14 @@ func (s *Service) validateCredentialChangeRequest(
 	}
 
 	// validate login.
-	valid, err := s.authenticator.ValidateLogin(
+	if valid, validationErr := s.authenticator.ValidateLogin(
 		ctx,
 		user.HashedPassword,
 		password,
 		user.TwoFactorSecret,
 		totpToken,
 		user.Salt,
-	)
-
-	if err != nil {
+	); validationErr != nil {
 		logger.Error(err, "error encountered generating random TOTP string")
 		return nil, http.StatusInternalServerError
 	} else if !valid {
@@ -104,6 +102,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	if !s.userCreationEnabled {
 		logger.Info("disallowing user creation")
 		res.WriteHeader(http.StatusForbidden)
+		s.encoderDecoder.EncodeError(res, "user creation is disabled", http.StatusForbidden)
 		return
 	}
 
@@ -282,6 +281,7 @@ func (s *Service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 	if user.TwoFactorSecretVerifiedOn != nil {
 		// I suppose if this happens too many times, we'll want to keep track of that
 		res.WriteHeader(http.StatusAlreadyReported)
+		s.encoderDecoder.EncodeError(res, "TOTP secret already verified", http.StatusAlreadyReported)
 		return
 	}
 

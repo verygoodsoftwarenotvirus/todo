@@ -63,10 +63,11 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 	input.BelongsToUser = userID
 
-	// ensure everythings on the up-and-up
+	// ensure everything's on the up-and-up
 	if err := validateWebhook(input); err != nil {
 		logger.Info("invalid method provided")
 		res.WriteHeader(http.StatusBadRequest)
+		s.encoderDecoder.EncodeError(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 

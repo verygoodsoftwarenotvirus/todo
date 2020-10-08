@@ -5,11 +5,6 @@
   import AuthNavbar from "../components/Navbars/AuthNavbar.svelte";
   import Footer from "../components/Footers/Footer.svelte";
 
-  const team1: string = "/assets/img/team-1-800x800.jpg";
-  const team2: string = "/assets/img/team-2-800x800.jpg";
-  const team3: string = "/assets/img/team-3-800x800.jpg";
-  const team4: string = "/assets/img/team-4-470x470.png";
-
   export let location: Location;
 </script>
 
@@ -306,7 +301,7 @@
             <div class="px-6">
               <img
                 alt="..."
-                src="{team1}"
+                src="https://picsum.photos/seed/todo/800/800"
                 class="shadow-lg rounded-full mx-auto max-w-120-px"
               />
               <div class="pt-6 text-center">
@@ -341,7 +336,7 @@
             <div class="px-6">
               <img
                 alt="..."
-                src="{team2}"
+                src="https://picsum.photos/seed/todo/800/800"
                 class="shadow-lg rounded-full mx-auto max-w-120-px"
               />
               <div class="pt-6 text-center">
@@ -370,7 +365,7 @@
             <div class="px-6">
               <img
                 alt="..."
-                src="{team3}"
+                src="https://picsum.photos/seed/todo/800/800"
                 class="shadow-lg rounded-full mx-auto max-w-120-px"
               />
               <div class="pt-6 text-center">
@@ -405,7 +400,7 @@
             <div class="px-6">
               <img
                 alt="..."
-                src="{team4}"
+                src="https://picsum.photos/seed/todo/800/800"
                 class="shadow-lg rounded-full mx-auto max-w-120-px"
               />
               <div class="pt-6 text-center">

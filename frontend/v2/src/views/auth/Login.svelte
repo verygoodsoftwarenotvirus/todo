@@ -12,9 +12,9 @@
 
     function buildLoginRequest(): LoginRequest {
         return {
-            username: this.usernameInput,
-            password: this.passwordInput,
-            totpToken: this.totpTokenInput,
+            username: usernameInput,
+            password: passwordInput,
+            totpToken: totpTokenInput,
         } as LoginRequest
     }
 
@@ -23,7 +23,7 @@
 
         console.debug("login called!");
 
-        return axios.post(path, this.buildLoginRequest(), {withCredentials: true})
+        return axios.post(path, buildLoginRequest(), {withCredentials: true})
             .then(() => {
               axios.get("/users/status", {withCredentials: true}).then((statusResponse: AxiosResponse<AuthStatus>) => {
                 navigate("/", { state: {}, replace: true });
@@ -39,9 +39,7 @@
 <div class="container mx-auto px-4 h-full">
   <div class="flex content-center items-center justify-center h-full">
     <div class="w-full lg:w-4/12 px-4">
-      <div
-        class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-gray-300 border-0"
-      >
+      <div class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-gray-300 border-0">
         <div class="rounded-t mb-0 px-6 py-6"></div>
         <div class="flex-auto px-4 lg:px-10 py-10 pt-0">
           <form>

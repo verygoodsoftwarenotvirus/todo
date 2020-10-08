@@ -1,17 +1,14 @@
-<script lang="typescript">
-  // core components
-  import CardTable from "../../components/Cards/CardTable.svelte";
+<script>
+    // core components
+    import CardTable from "../../components/Cards/CardTable.svelte";
+    export let location;
+  </script>
 
-  export let location: Location;
-</script>
-
-<div class="flex flex-wrap mt-4">
-<!--
-  <div class="w-full mb-12 px-4">
-    <CardTable />
+  <div class="flex flex-wrap mt-4">
+    <div class="w-full mb-12 px-4">
+      <CardTable />
+    </div>
+    <div class="w-full mb-12 px-4">
+      <CardTable color="dark" />
+    </div>
   </div>
-  <div class="w-full mb-12 px-4">
-    <CardTable color="dark" />
-  </div>
--->
-</div>

@@ -10,7 +10,7 @@
   // pages for this layout
   import Dashboard from "../views/admin/Dashboard.svelte";
   import Settings from "../views/admin/Settings.svelte";
-  import Tables from "../views/admin/Tables.svelte";
+import Tables from "../views/admin/Tables.svelte";
 
   export let location: Location;
   export let admin: string = "";

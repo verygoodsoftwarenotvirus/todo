@@ -1,15 +1,22 @@
 <script lang="typescript">
-  // library for creating dropdown menu appear on click
-  import { createPopper } from "@popperjs/core";
-
-  // core components
-
-  const image: string = "../assets/img/team-1-800x800.jpg";
+  import { axios, AxiosResponse } from "axios";
+  import { link, navigate } from "svelte-routing";
+  import { createPopper } from "@popperjs/core";  // library for creating dropdown menu appear on click
 
   let dropdownPopoverShow: Boolean = false;
 
   let btnDropdownRef;
   let popoverDropdownRef;
+
+  function logout() {
+    axios.post("/users/logout", {
+      withCredentials: true,
+    }).then((response: AxiosResponse) => {
+      if (response.status === 200) {
+        navigate("/login", { state: {}, replace: true })
+      }
+    });
+  }
 
   const toggleDropdown = (event) => {
     event.preventDefault();
@@ -38,7 +45,7 @@
         <img
           alt="..."
           class="w-full rounded-full align-middle border-none shadow-lg"
-          src="{image}"
+          src="https://picsum.photos/seed/todo/256/256"
         />
       </span>
     </div>
@@ -48,29 +55,21 @@
     class="bg-white text-base z-50 float-left py-2 list-none text-left rounded shadow-lg min-w-48 {dropdownPopoverShow ? 'block':'hidden'}"
   >
     <a
-      href="#pablo" on:click={(e) => e.preventDefault()}
+      use:link
+      href="/admin/settings" on:click={(e) => e.preventDefault()}
       class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent text-gray-800"
     >
-      Action
-    </a>
-    <a
-      href="#pablo" on:click={(e) => e.preventDefault()}
-      class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent text-gray-800"
-    >
-      Another action
-    </a>
-    <a
-      href="#pablo" on:click={(e) => e.preventDefault()}
-      class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent text-gray-800"
-    >
-      Something else here
+      <i class="fa fa-cogs"></i>
+      Settings
     </a>
     <div class="h-0 my-2 border border-solid border-gray-200" />
     <a
-      href="#pablo" on:click={(e) => e.preventDefault()}
+      href="."
+      on:click={logout}
       class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent text-gray-800"
     >
-      Seprated link
+      <i class="fa fa-sign-out-alt"></i>
+      Log Out
     </a>
   </div>
 </div>

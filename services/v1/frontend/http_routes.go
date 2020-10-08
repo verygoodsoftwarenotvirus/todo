@@ -61,12 +61,15 @@ var (
 	itemsFrontendPathRegex = regexp.MustCompile(`/items/\d+`)
 
 	validRoutes = map[string]struct{}{
-		"/auth/register": {},
-		"/auth/login":    {},
-		"/admin":         {},
-		"/items":         {},
-		"/items/new":     {},
-		"/password/new":  {},
+		"/admin/settings":  {},
+		"/admin/dashboard": {},
+		"/admin/tables":    {},
+		"/auth/register":   {},
+		"/auth/login":      {},
+		"/admin":           {},
+		"/items":           {},
+		"/items/new":       {},
+		"/password/new":    {},
 	}
 )
 

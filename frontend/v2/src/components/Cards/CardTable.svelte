@@ -2,17 +2,6 @@
   // core components
   import TableDropdown from "../Dropdowns/TableDropdown.svelte";
 
-  const bootstrap: string = "../assets/img/bootstrap.jpg";
-  const angular: string = "../assets/img/angular.jpg";
-  const sketch: string = "../assets/img/sketch.jpg";
-  const react: string = "../assets/img/react.jpg";
-  const vue: string = "../assets/img/react.jpg";
-
-  const team1: string = "../assets/img/team-1-800x800.jpg";
-  const team2: string = "../assets/img/team-2-800x800.jpg";
-  const team3: string = "../assets/img/team-3-800x800.jpg";
-  const team4: string = "../assets/img/team-4-470x470.png";
-
   // can be one of light or dark
   export let color: string = "light";
 </script>
@@ -72,7 +61,7 @@
             class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-left flex items-center"
           >
             <img
-              src="{bootstrap}"
+              src="https://picsum.photos/seed/todo/128/128"
               class="h-12 w-12 bg-white rounded-full border"
               alt="..."
             />
@@ -97,22 +86,22 @@
           >
             <div class="flex">
               <img
-                src="{team1}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow"
               />
               <img
-                src="{team2}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow -ml-4"
               />
               <img
-                src="{team3}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow -ml-4"
               />
               <img
-                src="{team4}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow -ml-4"
               />
@@ -146,7 +135,7 @@
             class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-left flex items-center"
           >
             <img
-              src="{angular}"
+              src="https://picsum.photos/seed/todo/128/128"
               class="h-12 w-12 bg-white rounded-full border"
               alt="..."
             />
@@ -172,22 +161,22 @@
           >
             <div class="flex">
               <img
-                src="{team1}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow"
               />
               <img
-                src="{team2}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow -ml-4"
               />
               <img
-                src="{team3}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow -ml-4"
               />
               <img
-                src="{team4}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow -ml-4"
               />
@@ -221,7 +210,7 @@
             class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-left flex items-center"
           >
             <img
-              src="{sketch}"
+                    src="https://picsum.photos/seed/todo/128/128"
               class="h-12 w-12 bg-white rounded-full border"
               alt="..."
             />
@@ -246,22 +235,22 @@
           >
             <div class="flex">
               <img
-                src="{team1}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow"
               />
               <img
-                src="{team2}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow -ml-4"
               />
               <img
-                src="{team3}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow -ml-4"
               />
               <img
-                src="{team4}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow -ml-4"
               />
@@ -295,7 +284,7 @@
             class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-left flex items-center"
           >
             <img
-              src="{react}"
+              src="https://picsum.photos/seed/todo/128/128"
               class="h-12 w-12 bg-white rounded-full border"
               alt="..."
             />
@@ -320,22 +309,22 @@
           >
             <div class="flex">
               <img
-                src="{team1}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow"
               />
               <img
-                src="{team2}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow -ml-4"
               />
               <img
-                src="{team3}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow -ml-4"
               />
               <img
-                src="{team4}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow -ml-4"
               />
@@ -369,7 +358,7 @@
             class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-left flex items-center"
           >
             <img
-              src="{vue}"
+              src="https://picsum.photos/seed/todo/128/128"
               class="h-12 w-12 bg-white rounded-full border"
               alt="..."
             />
@@ -395,22 +384,22 @@
           >
             <div class="flex">
               <img
-                src="{team1}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow"
               />
               <img
-                src="{team2}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow -ml-4"
               />
               <img
-                src="{team3}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow -ml-4"
               />
               <img
-                src="{team4}"
+                src="https://picsum.photos/seed/todo/800/800"
                 alt="..."
                 class="w-10 h-10 rounded-full border-2 border-gray-100 shadow -ml-4"
               />

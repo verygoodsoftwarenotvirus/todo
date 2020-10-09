@@ -30,8 +30,12 @@
     "@popperjs/core": "2.5.1",
     "@tailwindcss/custom-forms": "0.2.1",
     "@types/chart.js": "^2.9.25",
+    "@types/faker": "^5.1.2",
     "axios": "^0.20.0",
     "chart.js": "2.9.3",
+    "dayjs": "^1.9.1",
+    "factory.ts": "^0.5.1",
+    "faker": "^5.1.0",
     "sirv-cli": "^1.0.6",
     "svelte-routing": "^1.4.2",
     "tailwindcss": "1.8.10"

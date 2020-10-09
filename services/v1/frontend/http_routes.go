@@ -58,18 +58,20 @@ var (
 	// 		eventsFrontendPathRegex = regexp.MustCompile(`/event/\d+`)
 
 	// itemsFrontendPathRegex matches URLs against our frontend router's specification for specific item routes.
-	itemsFrontendPathRegex = regexp.MustCompile(`/items/\d+`)
+	itemsFrontendPathRegex = regexp.MustCompile(`/things/items/\d+`)
 
 	validRoutes = map[string]struct{}{
-		"/admin/settings":  {},
-		"/admin/dashboard": {},
-		"/admin/tables":    {},
-		"/auth/register":   {},
-		"/auth/login":      {},
-		"/admin":           {},
-		"/items":           {},
-		"/items/new":       {},
-		"/password/new":    {},
+		"/settings":         {},
+		"/admin/settings":   {},
+		"/dashboard":        {},
+		"/admin/dashboard":  {},
+		"/admin/tables":     {},
+		"/auth/register":    {},
+		"/auth/login":       {},
+		"/admin":            {},
+		"/things/items":     {},
+		"/things/items/new": {},
+		"/password/new":     {},
 	}
 )
 

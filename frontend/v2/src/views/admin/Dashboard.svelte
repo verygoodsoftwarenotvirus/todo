@@ -1,5 +1,5 @@
 <script lang="typescript">
-  import CardTable from "../../components/Cards/CardTable.svelte";
+  import CardTable from "../../components/Tables/CardTable.svelte";
 
   export let location: Location;
 </script>

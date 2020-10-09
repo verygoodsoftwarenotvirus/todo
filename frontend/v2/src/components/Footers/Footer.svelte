@@ -38,7 +38,7 @@
               <li>
                 <a
                   class="text-gray-700 hover:text-gray-900 font-semibold block pb-2 text-sm"
-                  href="https://www.creative-tim.com/presentation?ref=tws-footer"
+                  href="#"
                 >
                   About Us
                 </a>
@@ -46,7 +46,7 @@
               <li>
                 <a
                   class="text-gray-700 hover:text-gray-900 font-semibold block pb-2 text-sm"
-                  href="https://blog.creative-tim.com?ref=tws-footer"
+                  href="#"
                 >
                   Blog
                 </a>
@@ -63,7 +63,7 @@
               <li>
                 <a
                   class="text-gray-700 hover:text-gray-900 font-semibold block pb-2 text-sm"
-                  href="https://creative-tim.com/terms?ref=tws-footer"
+                  href="#"
                 >
                   Terms & Conditions
                 </a>
@@ -71,7 +71,7 @@
               <li>
                 <a
                   class="text-gray-700 hover:text-gray-900 font-semibold block pb-2 text-sm"
-                  href="https://creative-tim.com/privacy?ref=tws-footer"
+                  href="#"
                 >
                   Privacy Policy
                 </a>
@@ -79,7 +79,7 @@
               <li>
                 <a
                   class="text-gray-700 hover:text-gray-900 font-semibold block pb-2 text-sm"
-                  href="https://creative-tim.com/contact-us?ref=tws-footer"
+                  href="#"
                 >
                   Contact Us
                 </a>

@@ -11,6 +11,8 @@
   import Admin from "./layouts/Admin.svelte";
   // Auth Layout
   import Auth from "./layouts/Auth.svelte";
+  // Auth Layout
+  import Things from "./layouts/Things.svelte";
 
   // No Layout Pages
   import Index from "./views/Index.svelte";
@@ -34,6 +36,8 @@
   <Route path="admin/*admin" component="{Admin}" />
   <!-- auth layout -->
   <Route path="auth/*auth" component="{Auth}" />
+  <!-- auth layout -->
+  <Route path="things/*things" component="{Things}" />
   <!-- no layout pages -->
   <Route path="/" component="{Index}" />
 </Router>

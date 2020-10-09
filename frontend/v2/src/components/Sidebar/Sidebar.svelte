@@ -49,15 +49,13 @@
     <div
       class="md:flex md:flex-col md:items-stretch md:opacity-100 md:relative md:mt-4 md:shadow-none shadow absolute top-0 left-0 right-0 z-40 overflow-y-auto overflow-x-hidden h-auto items-center flex-1 rounded {collapseShow}"
     >
-      <!-- Divider -->
+
+      <!--
+
       <hr class="my-4 md:min-w-full" />
-      <!-- Heading -->
-      <h6
-              class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline"
-      >
+      <h6 class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline">
         Pages
       </h6>
-      <!-- Navigation -->
 
       <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
         <li class="items-center">
@@ -82,7 +80,7 @@
           </a>
         </li>
       </ul>
-
+      -->
 
 
       <h6 class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline">
@@ -95,7 +93,7 @@
           <a
             use:link
             class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-            href="/auth/login"
+            href="/things/items"
           >
             <i class="fas fa-list-ul text-gray-400 mr-2 text-sm"></i>
             Items

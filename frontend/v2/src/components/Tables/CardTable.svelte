@@ -1,6 +1,6 @@
 <script lang="typescript">
   // core components
-  import TableDropdown from "../Dropdowns/TableDropdown.svelte";
+  import TableDropdown from "../TableDropdowns/TableDropdown.svelte";
 
   // can be one of light or dark
   export let color: string = "light";

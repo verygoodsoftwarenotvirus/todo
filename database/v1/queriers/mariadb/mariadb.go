@@ -13,7 +13,7 @@ import (
 	"contrib.go.opencensus.io/integrations/ocsql"
 	"github.com/Masterminds/squirrel"
 	"github.com/go-sql-driver/mysql"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
 const (

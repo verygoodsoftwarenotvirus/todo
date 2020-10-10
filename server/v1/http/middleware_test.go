@@ -56,13 +56,9 @@ func TestServer_loggingMiddleware(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestServer()
 
-		mh := &mockHTTPHandler{}
-		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
-
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		s.loggingMiddleware(mh).ServeHTTP(res, req)
+		buildLoggingMiddleware(s.logger)(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {})).ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
-		mock.AssertExpectationsForObjects(t, mh)
 	})
 }

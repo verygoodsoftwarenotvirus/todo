@@ -9,7 +9,7 @@ import (
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 const (
@@ -22,7 +22,7 @@ const (
 func TestBcrypt_HashPassword(T *testing.T) {
 	T.Parallel()
 
-	x := auth.ProvideBcryptAuthenticator(auth.DefaultBcryptHashCost, noop.ProvideNoopLogger())
+	x := auth.ProvideBcryptAuthenticator(auth.DefaultBcryptHashCost, noop.NewLogger())
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -37,7 +37,7 @@ func TestBcrypt_HashPassword(T *testing.T) {
 func TestBcrypt_PasswordMatches(T *testing.T) {
 	T.Parallel()
 
-	x := auth.ProvideBcryptAuthenticator(auth.DefaultBcryptHashCost, noop.ProvideNoopLogger())
+	x := auth.ProvideBcryptAuthenticator(auth.DefaultBcryptHashCost, noop.NewLogger())
 
 	T.Run("normal usage", func(t *testing.T) {
 		t.Parallel()
@@ -59,7 +59,7 @@ func TestBcrypt_PasswordMatches(T *testing.T) {
 func TestBcrypt_PasswordIsAcceptable(T *testing.T) {
 	T.Parallel()
 
-	x := auth.ProvideBcryptAuthenticator(auth.DefaultBcryptHashCost, noop.ProvideNoopLogger())
+	x := auth.ProvideBcryptAuthenticator(auth.DefaultBcryptHashCost, noop.NewLogger())
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -72,7 +72,7 @@ func TestBcrypt_PasswordIsAcceptable(T *testing.T) {
 func TestBcrypt_ValidateLogin(T *testing.T) {
 	T.Parallel()
 
-	x := auth.ProvideBcryptAuthenticator(auth.DefaultBcryptHashCost, noop.ProvideNoopLogger())
+	x := auth.ProvideBcryptAuthenticator(auth.DefaultBcryptHashCost, noop.NewLogger())
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -152,6 +152,6 @@ func TestProvideBcrypt(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		auth.ProvideBcryptAuthenticator(auth.DefaultBcryptHashCost, noop.ProvideNoopLogger())
+		auth.ProvideBcryptAuthenticator(auth.DefaultBcryptHashCost, noop.NewLogger())
 	})
 }

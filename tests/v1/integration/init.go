@@ -12,7 +12,7 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
 )
 
 const (
@@ -27,7 +27,7 @@ var (
 
 func init() {
 	urlToUse = testutil.DetermineServiceURL()
-	logger := zerolog.NewZeroLogger()
+	logger := zerolog.NewLogger()
 
 	logger.WithValue("url", urlToUse).Info("checking server")
 	testutil.EnsureServerIsUp(urlToUse)
@@ -67,7 +67,7 @@ func initializeClient(oa2Client *models.OAuth2Client) *client.V1Client {
 		oa2Client.ClientID,
 		oa2Client.ClientSecret,
 		uri,
-		zerolog.NewZeroLogger(),
+		zerolog.NewLogger(),
 		buildHTTPClient(),
 		oa2Client.Scopes,
 		debug,

@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 const (
@@ -19,7 +19,7 @@ const (
 func buildTestClient() (*Client, *database.MockDatabase) {
 	db := database.BuildMockDatabase()
 	c := &Client{
-		logger:  noop.ProvideNoopLogger(),
+		logger:  noop.NewLogger(),
 		querier: db,
 	}
 	return c, db
@@ -80,7 +80,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.On("Migrate", mock.Anything, false).Return(nil)
 
-		actual, err := ProvideDatabaseClient(ctx, noop.ProvideNoopLogger(), mockDB, nil, false, true)
+		actual, err := ProvideDatabaseClient(ctx, noop.NewLogger(), mockDB, nil, false, true)
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 
@@ -94,7 +94,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.On("Migrate", mock.Anything, false).Return(expected)
 
-		x, actual := ProvideDatabaseClient(ctx, noop.ProvideNoopLogger(), mockDB, nil, false, true)
+		x, actual := ProvideDatabaseClient(ctx, noop.NewLogger(), mockDB, nil, false, true)
 		assert.Nil(t, x)
 		assert.Error(t, actual)
 		assert.Equal(t, expected, actual)

@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,7 +25,7 @@ func TestServerEncoderDecoder_EncodeResponse(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		expectation := "name"
 		ex := &example{Name: expectation}
-		ed := ProvideResponseEncoder(noop.ProvideNoopLogger())
+		ed := ProvideResponseEncoder(noop.NewLogger())
 
 		res := httptest.NewRecorder()
 
@@ -36,7 +36,7 @@ func TestServerEncoderDecoder_EncodeResponse(T *testing.T) {
 	T.Run("as XML", func(t *testing.T) {
 		expectation := "name"
 		ex := &example{Name: expectation}
-		ed := ProvideResponseEncoder(noop.ProvideNoopLogger())
+		ed := ProvideResponseEncoder(noop.NewLogger())
 
 		res := httptest.NewRecorder()
 		res.Header().Set(ContentTypeHeader, "application/xml")
@@ -53,7 +53,7 @@ func TestServerEncoderDecoder_EncodeError(T *testing.T) {
 		exampleMessage := "something went awry"
 		exampleCode := http.StatusBadRequest
 
-		ed := ProvideResponseEncoder(noop.ProvideNoopLogger())
+		ed := ProvideResponseEncoder(noop.NewLogger())
 
 		res := httptest.NewRecorder()
 
@@ -65,7 +65,7 @@ func TestServerEncoderDecoder_EncodeError(T *testing.T) {
 		exampleMessage := "something went awry"
 		exampleCode := http.StatusBadRequest
 
-		ed := ProvideResponseEncoder(noop.ProvideNoopLogger())
+		ed := ProvideResponseEncoder(noop.NewLogger())
 
 		res := httptest.NewRecorder()
 		res.Header().Set(ContentTypeHeader, "application/xml")
@@ -81,7 +81,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		expectation := "name"
 		e := &example{Name: expectation}
-		ed := ProvideResponseEncoder(noop.ProvideNoopLogger())
+		ed := ProvideResponseEncoder(noop.NewLogger())
 
 		bs, err := json.Marshal(e)
 		require.NoError(t, err)
@@ -97,7 +97,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 	T.Run("as XML", func(t *testing.T) {
 		expectation := "name"
 		e := &example{Name: expectation}
-		ed := ProvideResponseEncoder(noop.ProvideNoopLogger())
+		ed := ProvideResponseEncoder(noop.NewLogger())
 
 		bs, err := xml.Marshal(e)
 		require.NoError(t, err)

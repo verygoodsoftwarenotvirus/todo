@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func TestWebhook_Update(T *testing.T) {
@@ -52,7 +52,7 @@ func TestWebhook_ToListener(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		w := &Webhook{}
-		w.ToListener(noop.ProvideNoopLogger())
+		w.ToListener(noop.NewLogger())
 	})
 }
 
@@ -61,7 +61,7 @@ func Test_buildErrorLogFunc(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		w := &Webhook{}
-		actual := buildErrorLogFunc(w, noop.ProvideNoopLogger())
+		actual := buildErrorLogFunc(w, noop.NewLogger())
 		actual(errors.New("blah"))
 	})
 }

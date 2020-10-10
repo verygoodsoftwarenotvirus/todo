@@ -24,7 +24,11 @@ const (
 	oauth2IDPattern  = "/{%s:[0-9_\\-]+}"
 )
 
-func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHandler metrics.Handler) {
+func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Handler) {
+	if cfg == nil {
+		panic("config should not be nil")
+	}
+
 	router := chi.NewRouter()
 
 	// Basic CORS, for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
@@ -54,7 +58,7 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 	router.Use(
 		middleware.RequestID,
 		middleware.Timeout(maxTimeout),
-		s.loggingMiddleware,
+		buildLoggingMiddleware(s.logger.WithName("middleware")),
 		ch.Handler,
 	)
 
@@ -76,7 +80,7 @@ func (s *Server) setupRouter(frontendConfig config.FrontendSettings, metricsHand
 	// Frontend routes.
 	if s.config.Frontend.StaticFilesDirectory != "" {
 		s.logger.Debug("setting static file server")
-		staticFileServer, err := s.frontendService.StaticDir(frontendConfig.StaticFilesDirectory)
+		staticFileServer, err := s.frontendService.StaticDir(cfg.Frontend.StaticFilesDirectory)
 		if err != nil {
 			s.logger.Error(err, "establishing static file server")
 		}

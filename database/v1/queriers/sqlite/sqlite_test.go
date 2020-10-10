@@ -11,7 +11,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 const (
@@ -21,7 +21,7 @@ const (
 func buildTestService(t *testing.T) (*Sqlite, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	s := ProvideSqlite(true, db, noop.ProvideNoopLogger())
+	s := ProvideSqlite(true, db, noop.NewLogger())
 	return s.(*Sqlite), mock
 }
 
@@ -107,7 +107,7 @@ func TestProvideSqliteDB(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		_, err := ProvideSqliteDB(noop.ProvideNoopLogger(), "")
+		_, err := ProvideSqliteDB(noop.NewLogger(), "")
 		assert.NoError(t, err)
 	})
 }

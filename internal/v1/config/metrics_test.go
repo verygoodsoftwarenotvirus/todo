@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func TestServerConfig_ProvideInstrumentationHandler(T *testing.T) {
@@ -19,7 +19,7 @@ func TestServerConfig_ProvideInstrumentationHandler(T *testing.T) {
 			},
 		}
 
-		assert.NotNil(t, c.ProvideInstrumentationHandler(noop.ProvideNoopLogger()))
+		assert.NotNil(t, c.ProvideInstrumentationHandler(noop.NewLogger()))
 	})
 }
 
@@ -33,6 +33,6 @@ func TestServerConfig_ProvideTracing(T *testing.T) {
 			},
 		}
 
-		assert.NoError(t, c.ProvideTracing(noop.ProvideNoopLogger()))
+		assert.NoError(t, c.ProvideTracing(noop.NewLogger()))
 	})
 }

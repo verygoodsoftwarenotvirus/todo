@@ -14,7 +14,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func TestProvideItemsServiceUserIDFetcher(T *testing.T) {
@@ -29,7 +29,7 @@ func TestProvideItemsServiceItemIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		_ = ProvideItemsServiceItemIDFetcher(noop.ProvideNoopLogger())
+		_ = ProvideItemsServiceItemIDFetcher(noop.NewLogger())
 	})
 }
 
@@ -37,7 +37,7 @@ func TestProvideUsersServiceUserIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		_ = ProvideUsersServiceUserIDFetcher(noop.ProvideNoopLogger())
+		_ = ProvideUsersServiceUserIDFetcher(noop.NewLogger())
 	})
 }
 
@@ -53,7 +53,7 @@ func TestProvideWebhooksServiceWebhookIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		_ = ProvideWebhooksServiceWebhookIDFetcher(noop.ProvideNoopLogger())
+		_ = ProvideWebhooksServiceWebhookIDFetcher(noop.NewLogger())
 	})
 }
 
@@ -61,7 +61,7 @@ func TestProvideOAuth2ClientsServiceClientIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		_ = ProvideOAuth2ClientsServiceClientIDFetcher(noop.ProvideNoopLogger())
+		_ = ProvideOAuth2ClientsServiceClientIDFetcher(noop.NewLogger())
 	})
 }
 
@@ -93,7 +93,7 @@ func Test_buildRouteParamUserIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		fn := buildRouteParamUserIDFetcher(noop.ProvideNoopLogger())
+		fn := buildRouteParamUserIDFetcher(noop.NewLogger())
 		expected := uint64(123)
 
 		req := buildRequest(t)
@@ -116,7 +116,7 @@ func Test_buildRouteParamUserIDFetcher(T *testing.T) {
 
 	T.Run("with invalid value somehow", func(t *testing.T) {
 		// NOTE: This will probably never happen in dev or production
-		fn := buildRouteParamUserIDFetcher(noop.ProvideNoopLogger())
+		fn := buildRouteParamUserIDFetcher(noop.NewLogger())
 		expected := uint64(0)
 
 		req := buildRequest(t)
@@ -142,7 +142,7 @@ func Test_buildRouteParamItemIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		fn := buildRouteParamItemIDFetcher(noop.ProvideNoopLogger())
+		fn := buildRouteParamItemIDFetcher(noop.NewLogger())
 		expected := uint64(123)
 
 		req := buildRequest(t)
@@ -165,7 +165,7 @@ func Test_buildRouteParamItemIDFetcher(T *testing.T) {
 
 	T.Run("with invalid value somehow", func(t *testing.T) {
 		// NOTE: This will probably never happen in dev or production
-		fn := buildRouteParamItemIDFetcher(noop.ProvideNoopLogger())
+		fn := buildRouteParamItemIDFetcher(noop.NewLogger())
 		expected := uint64(0)
 
 		req := buildRequest(t)
@@ -191,7 +191,7 @@ func Test_buildRouteParamWebhookIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		fn := buildRouteParamWebhookIDFetcher(noop.ProvideNoopLogger())
+		fn := buildRouteParamWebhookIDFetcher(noop.NewLogger())
 		expected := uint64(123)
 
 		req := buildRequest(t)
@@ -214,7 +214,7 @@ func Test_buildRouteParamWebhookIDFetcher(T *testing.T) {
 
 	T.Run("with invalid value somehow", func(t *testing.T) {
 		// NOTE: This will probably never happen in dev or production
-		fn := buildRouteParamWebhookIDFetcher(noop.ProvideNoopLogger())
+		fn := buildRouteParamWebhookIDFetcher(noop.NewLogger())
 		expected := uint64(0)
 
 		req := buildRequest(t)
@@ -240,7 +240,7 @@ func Test_buildRouteParamOAuth2ClientIDFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		fn := buildRouteParamOAuth2ClientIDFetcher(noop.ProvideNoopLogger())
+		fn := buildRouteParamOAuth2ClientIDFetcher(noop.NewLogger())
 		expected := uint64(123)
 
 		req := buildRequest(t)
@@ -263,7 +263,7 @@ func Test_buildRouteParamOAuth2ClientIDFetcher(T *testing.T) {
 
 	T.Run("with invalid value somehow", func(t *testing.T) {
 		// NOTE: This will probably never happen in dev or production
-		fn := buildRouteParamOAuth2ClientIDFetcher(noop.ProvideNoopLogger())
+		fn := buildRouteParamOAuth2ClientIDFetcher(noop.NewLogger())
 		expected := uint64(0)
 
 		req := buildRequest(t)

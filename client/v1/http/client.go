@@ -14,8 +14,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 
 	"github.com/moul/http2curl"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 	"go.opencensus.io/plugin/ochttp"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
@@ -125,7 +125,7 @@ func NewSimpleClient(ctx context.Context, address *url.URL, debug bool) (*V1Clie
 		"",
 		"",
 		address,
-		noop.ProvideNoopLogger(),
+		noop.NewLogger(),
 		&http.Client{Timeout: 5 * time.Second},
 		[]string{"*"},
 		debug,

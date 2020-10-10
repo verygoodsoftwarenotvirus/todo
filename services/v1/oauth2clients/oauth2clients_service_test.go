@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 	"gopkg.in/oauth2.v3/manage"
 	oauth2server "gopkg.in/oauth2.v3/server"
 	oauth2store "gopkg.in/oauth2.v3/store"
@@ -35,7 +35,7 @@ func buildTestService(t *testing.T) *Service {
 
 	service := &Service{
 		database:             database.BuildMockDatabase(),
-		logger:               noop.ProvideNoopLogger(),
+		logger:               noop.NewLogger(),
 		encoderDecoder:       &mockencoding.EncoderDecoder{},
 		authenticator:        &mockauth.Authenticator{},
 		urlClientIDExtractor: func(req *http.Request) uint64 { return 0 },
@@ -58,7 +58,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		}
 
 		service, err := ProvideOAuth2ClientsService(
-			noop.ProvideNoopLogger(),
+			noop.NewLogger(),
 			mockDB,
 			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },
@@ -80,7 +80,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		}
 
 		service, err := ProvideOAuth2ClientsService(
-			noop.ProvideNoopLogger(),
+			noop.NewLogger(),
 			mockDB,
 			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },

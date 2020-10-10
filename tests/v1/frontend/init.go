@@ -7,7 +7,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
 )
 
 var urlToUse string
@@ -19,7 +19,7 @@ const (
 func init() {
 	urlToUse = testutil.DetermineServiceURL()
 
-	logger := zerolog.NewZeroLogger()
+	logger := zerolog.NewLogger()
 	logger.WithValue("url", urlToUse).Info("checking server")
 	testutil.EnsureServerIsUp(urlToUse)
 

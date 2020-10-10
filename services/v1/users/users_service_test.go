@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
@@ -34,7 +34,7 @@ func buildTestService(t *testing.T) *Service {
 
 	service, err := ProvideUsersService(
 		config.AuthSettings{},
-		noop.ProvideNoopLogger(),
+		noop.NewLogger(),
 		database.BuildMockDatabase(),
 		&mockauth.Authenticator{},
 		func(req *http.Request) uint64 { return 0 },
@@ -59,7 +59,7 @@ func TestProvideUsersService(T *testing.T) {
 
 		service, err := ProvideUsersService(
 			config.AuthSettings{},
-			noop.ProvideNoopLogger(),
+			noop.NewLogger(),
 			database.BuildMockDatabase(),
 			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },
@@ -78,7 +78,7 @@ func TestProvideUsersService(T *testing.T) {
 
 		service, err := ProvideUsersService(
 			config.AuthSettings{},
-			noop.ProvideNoopLogger(),
+			noop.NewLogger(),
 			database.BuildMockDatabase(),
 			&mockauth.Authenticator{},
 			nil,
@@ -97,7 +97,7 @@ func TestProvideUsersService(T *testing.T) {
 
 		service, err := ProvideUsersService(
 			config.AuthSettings{},
-			noop.ProvideNoopLogger(),
+			noop.NewLogger(),
 			database.BuildMockDatabase(),
 			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },

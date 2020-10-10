@@ -12,13 +12,13 @@ import (
 	"github.com/alexedwards/scs/v2/memstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func buildTestService(t *testing.T) *Service {
 	t.Helper()
 
-	logger := noop.ProvideNoopLogger()
+	logger := noop.NewLogger()
 	cfg := config.AuthSettings{
 		CookieSecret: "BLAHBLAHBLAHPRETENDTHISISSECRET!",
 	}
@@ -49,7 +49,7 @@ func TestProvideAuthService(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		logger := noop.ProvideNoopLogger()
+		logger := noop.NewLogger()
 		cfg := config.AuthSettings{
 			CookieSecret: "BLAHBLAHBLAHPRETENDTHISISSECRET!",
 		}
@@ -60,7 +60,7 @@ func TestProvideAuthService(T *testing.T) {
 		sm := scs.New()
 
 		service, err := ProvideAuthService(
-			noop.ProvideNoopLogger(),
+			noop.NewLogger(),
 			cfg,
 			auth,
 			userDB,

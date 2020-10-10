@@ -13,7 +13,7 @@ import (
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func mustBuildCode(t *testing.T, totpSecret string) string {
@@ -80,7 +80,7 @@ func TestOAuth2Clients(test *testing.T) {
 		premade.ClientID,
 		premade.ClientSecret,
 		todoClient.URL,
-		noop.ProvideNoopLogger(),
+		noop.NewLogger(),
 		todoClient.PlainClient(),
 		premade.Scopes,
 		debug,
@@ -175,7 +175,7 @@ func TestOAuth2Clients(test *testing.T) {
 				premade.ClientID,
 				premade.ClientSecret,
 				todoClient.URL,
-				noop.ProvideNoopLogger(),
+				noop.NewLogger(),
 				buildHTTPClient(),
 				premade.Scopes,
 				true,

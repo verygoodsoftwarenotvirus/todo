@@ -17,7 +17,7 @@ import (
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
 
 	"github.com/go-chi/chi"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 	"go.opencensus.io/plugin/ochttp"
 )
@@ -95,7 +95,7 @@ func ProvideServer(
 	}
 
 	metricsHandler := cfg.ProvideInstrumentationHandler(logger)
-	srv.setupRouter(cfg.Frontend, metricsHandler)
+	srv.setupRouter(cfg, metricsHandler)
 
 	srv.httpServer.Handler = &ochttp.Handler{
 		Handler:        srv.router,

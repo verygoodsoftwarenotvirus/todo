@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func buildRequest(t *testing.T) *http.Request {
@@ -31,7 +31,7 @@ func TestService_StaticDir(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		s := &Service{logger: noop.ProvideNoopLogger()}
+		s := &Service{logger: noop.NewLogger()}
 
 		cwd, err := os.Getwd()
 		require.NoError(t, err)
@@ -48,7 +48,7 @@ func TestService_StaticDir(T *testing.T) {
 	})
 
 	T.Run("with frontend routing path", func(t *testing.T) {
-		s := &Service{logger: noop.ProvideNoopLogger()}
+		s := &Service{logger: noop.NewLogger()}
 		exampleDir := "."
 
 		hf, err := s.StaticDir(exampleDir)
@@ -57,21 +57,6 @@ func TestService_StaticDir(T *testing.T) {
 
 		req, res := buildRequest(t), httptest.NewRecorder()
 		req.URL.Path = "/auth/login"
-		hf(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code)
-	})
-
-	T.Run("with frontend items routing path", func(t *testing.T) {
-		s := &Service{logger: noop.ProvideNoopLogger()}
-		exampleDir := "."
-
-		hf, err := s.StaticDir(exampleDir)
-		assert.NoError(t, err)
-		assert.NotNil(t, hf)
-
-		req, res := buildRequest(t), httptest.NewRecorder()
-		req.URL.Path = "/items/123"
 		hf(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)

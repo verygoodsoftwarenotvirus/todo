@@ -63,7 +63,7 @@ func EnsureServerIsUp(address string) {
 
 	for isDown {
 		if !IsUp(address) {
-			log.Print("waiting before pinging again")
+			log.Printf("waiting %s before pinging again", interval)
 			time.Sleep(interval)
 			numberOfAttempts++
 			if numberOfAttempts >= maxAttempts {

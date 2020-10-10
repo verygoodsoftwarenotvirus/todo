@@ -13,7 +13,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func checkItemEquality(t *testing.T, expected, actual *models.Item) {
@@ -142,7 +142,7 @@ func TestItems(test *testing.T) {
 				ca.ClientID,
 				ca.ClientSecret,
 				todoClient.URL,
-				noop.ProvideNoopLogger(),
+				noop.NewLogger(),
 				buildHTTPClient(),
 				ca.Scopes,
 				true,
@@ -178,7 +178,7 @@ func TestItems(test *testing.T) {
 				cb.ClientID,
 				cb.ClientSecret,
 				todoClient.URL,
-				noop.ProvideNoopLogger(),
+				noop.NewLogger(),
 				buildHTTPClient(),
 				cb.Scopes,
 				true,

@@ -12,12 +12,12 @@ import (
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func buildTestService() *Service {
 	return &Service{
-		logger:          noop.ProvideNoopLogger(),
+		logger:          noop.NewLogger(),
 		itemCounter:     &mockmetrics.UnitCounter{},
 		itemDataManager: &mockmodels.ItemDataManager{},
 		itemIDFetcher:   func(req *http.Request) uint64 { return 0 },
@@ -37,7 +37,7 @@ func TestProvideItemsService(T *testing.T) {
 		}
 
 		s, err := ProvideItemsService(
-			noop.ProvideNoopLogger(),
+			noop.NewLogger(),
 			&mockmodels.ItemDataManager{},
 			func(req *http.Request) uint64 { return 0 },
 			func(req *http.Request) uint64 { return 0 },
@@ -57,7 +57,7 @@ func TestProvideItemsService(T *testing.T) {
 		}
 
 		s, err := ProvideItemsService(
-			noop.ProvideNoopLogger(),
+			noop.NewLogger(),
 			&mockmodels.ItemDataManager{},
 			func(req *http.Request) uint64 { return 0 },
 			func(req *http.Request) uint64 { return 0 },

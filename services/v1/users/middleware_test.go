@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 var _ http.Handler = (*MockHTTPHandler)(nil)
@@ -29,7 +29,7 @@ func TestService_UserInputMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := &Service{
-			logger: noop.ProvideNoopLogger(),
+			logger: noop.NewLogger(),
 		}
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -52,7 +52,7 @@ func TestService_UserInputMiddleware(T *testing.T) {
 
 	T.Run("with error decoding request", func(t *testing.T) {
 		s := &Service{
-			logger: noop.ProvideNoopLogger(),
+			logger: noop.NewLogger(),
 		}
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -83,7 +83,7 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := &Service{
-			logger: noop.ProvideNoopLogger(),
+			logger: noop.NewLogger(),
 		}
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -106,7 +106,7 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 
 	T.Run("with error decoding request", func(t *testing.T) {
 		s := &Service{
-			logger: noop.ProvideNoopLogger(),
+			logger: noop.NewLogger(),
 		}
 
 		mockDB := database.BuildMockDatabase()
@@ -141,7 +141,7 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := &Service{
-			logger: noop.ProvideNoopLogger(),
+			logger: noop.NewLogger(),
 		}
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -164,7 +164,7 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 
 	T.Run("with error decoding request", func(t *testing.T) {
 		s := &Service{
-			logger: noop.ProvideNoopLogger(),
+			logger: noop.NewLogger(),
 		}
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -195,7 +195,7 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := &Service{
-			logger: noop.ProvideNoopLogger(),
+			logger: noop.NewLogger(),
 		}
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -218,7 +218,7 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 
 	T.Run("with error decoding request", func(t *testing.T) {
 		s := &Service{
-			logger: noop.ProvideNoopLogger(),
+			logger: noop.NewLogger(),
 		}
 
 		ed := &mockencoding.EncoderDecoder{}

@@ -20,7 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
@@ -31,9 +31,9 @@ func buildTestServer() *Server {
 		config:     &config.ServerConfig{},
 		encoder:    &mockencoding.EncoderDecoder{},
 		httpServer: provideHTTPServer(),
-		logger:     noop.ProvideNoopLogger(),
+		logger:     noop.NewLogger(),
 		frontendService: frontendservice.ProvideFrontendService(
-			noop.ProvideNoopLogger(),
+			noop.NewLogger(),
 			config.FrontendSettings{},
 		),
 		webhooksService:      &mockmodels.WebhookDataServer{},
@@ -71,7 +71,7 @@ func TestProvideServer(T *testing.T) {
 			&oauth2clientsservice.Service{},
 			&webhooksservice.Service{},
 			mockDB,
-			noop.ProvideNoopLogger(),
+			noop.NewLogger(),
 			&mockencoding.EncoderDecoder{},
 			newsman.NewNewsman(nil, nil),
 		)
@@ -104,7 +104,7 @@ func TestProvideServer(T *testing.T) {
 			&oauth2clientsservice.Service{},
 			&webhooksservice.Service{},
 			mockDB,
-			noop.ProvideNoopLogger(),
+			noop.NewLogger(),
 			&mockencoding.EncoderDecoder{},
 			newsman.NewNewsman(nil, nil),
 		)
@@ -135,7 +135,7 @@ func TestProvideServer(T *testing.T) {
 			&oauth2clientsservice.Service{},
 			&webhooksservice.Service{},
 			mockDB,
-			noop.ProvideNoopLogger(),
+			noop.NewLogger(),
 			&mockencoding.EncoderDecoder{},
 			newsman.NewNewsman(nil, nil),
 		)

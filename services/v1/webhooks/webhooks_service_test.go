@@ -11,13 +11,13 @@ import (
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
 func buildTestService() *Service {
 	return &Service{
-		logger:             noop.ProvideNoopLogger(),
+		logger:             noop.NewLogger(),
 		webhookCounter:     &mockmetrics.UnitCounter{},
 		webhookDataManager: &mockmodels.WebhookDataManager{},
 		userIDFetcher:      func(req *http.Request) uint64 { return 0 },
@@ -36,7 +36,7 @@ func TestProvideWebhooksService(T *testing.T) {
 		}
 
 		actual, err := ProvideWebhooksService(
-			noop.ProvideNoopLogger(),
+			noop.NewLogger(),
 			&mockmodels.WebhookDataManager{},
 			func(req *http.Request) uint64 { return 0 },
 			func(req *http.Request) uint64 { return 0 },
@@ -55,7 +55,7 @@ func TestProvideWebhooksService(T *testing.T) {
 		}
 
 		actual, err := ProvideWebhooksService(
-			noop.ProvideNoopLogger(),
+			noop.NewLogger(),
 			&mockmodels.WebhookDataManager{},
 			func(req *http.Request) uint64 { return 0 },
 			func(req *http.Request) uint64 { return 0 },

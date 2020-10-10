@@ -9,12 +9,12 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
 )
 
 func main() {
 	// initialize our logger of choice.
-	logger := zerolog.NewZeroLogger()
+	logger := zerolog.NewLogger()
 
 	// find and validate our configuration filepath.
 	configFilepath := os.Getenv("CONFIGURATION_FILEPATH")

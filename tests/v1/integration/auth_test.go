@@ -21,7 +21,7 @@ import (
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func loginUser(ctx context.Context, t *testing.T, username, password, totpSecret string) *http.Cookie {
@@ -583,7 +583,7 @@ func TestAuth(test *testing.T) {
 			ca.ClientID,
 			ca.ClientSecret,
 			todoClient.URL,
-			noop.ProvideNoopLogger(),
+			noop.NewLogger(),
 			buildHTTPClient(),
 			ca.Scopes,
 			true,
@@ -607,7 +607,7 @@ func TestAuth(test *testing.T) {
 			cb.ClientID,
 			cb.ClientSecret,
 			todoClient.URL,
-			noop.ProvideNoopLogger(),
+			noop.NewLogger(),
 			buildHTTPClient(),
 			cb.Scopes,
 			true,
@@ -649,7 +649,7 @@ func TestAuth(test *testing.T) {
 			premade.ClientID,
 			premade.ClientSecret,
 			todoClient.URL,
-			noop.ProvideNoopLogger(),
+			noop.NewLogger(),
 			buildHTTPClient(),
 			premade.Scopes,
 			true,

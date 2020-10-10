@@ -18,7 +18,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	flag "github.com/spf13/pflag"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
 )
 
 var (
@@ -59,7 +59,7 @@ func init() {
 
 func main() {
 	flag.Parse()
-	logger := zerolog.NewZeroLogger().WithName("search_index_initializer")
+	logger := zerolog.NewLogger().WithName("search_index_initializer")
 	ctx := context.Background()
 
 	if indexOutputPath == "" {

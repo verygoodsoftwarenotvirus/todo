@@ -10,7 +10,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 const (
@@ -20,7 +20,7 @@ const (
 func buildTestService(t *testing.T) (*Postgres, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	p := ProvidePostgres(true, db, noop.ProvideNoopLogger())
+	p := ProvidePostgres(true, db, noop.NewLogger())
 	return p.(*Postgres), mock
 }
 
@@ -103,7 +103,7 @@ func TestProvidePostgresDB(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		_, err := ProvidePostgresDB(noop.ProvideNoopLogger(), "")
+		_, err := ProvidePostgresDB(noop.NewLogger(), "")
 		assert.NoError(t, err)
 	})
 }

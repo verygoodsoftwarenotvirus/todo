@@ -11,7 +11,7 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/gorilla/securecookie"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
 const (

@@ -11,7 +11,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 const (
@@ -21,7 +21,7 @@ const (
 func buildTestService(t *testing.T) (*MariaDB, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	m := ProvideMariaDB(true, db, noop.ProvideNoopLogger())
+	m := ProvideMariaDB(true, db, noop.NewLogger())
 	return m.(*MariaDB), mock
 }
 
@@ -107,7 +107,7 @@ func TestProvideMariaDBConnection(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		_, err := ProvideMariaDBConnection(noop.ProvideNoopLogger(), "")
+		_, err := ProvideMariaDBConnection(noop.NewLogger(), "")
 		assert.NoError(t, err)
 	})
 }

@@ -19,6 +19,7 @@ require (
 	github.com/go-chi/chi v4.0.3+incompatible
 	github.com/go-chi/cors v1.0.0
 	github.com/go-sql-driver/mysql v1.5.0
+	github.com/google/uuid v1.1.2 // indirect
 	github.com/google/wire v0.4.0
 	github.com/gorilla/securecookie v1.1.1
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
@@ -26,13 +27,14 @@ require (
 	github.com/makiuchi-d/gozxing v0.0.0-20200903113411-25f730ed83da
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/moul/http2curl v1.0.0
+	github.com/panjf2000/ants v1.3.0 // indirect
 	github.com/pquerna/otp v1.2.0
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.6.2
 	github.com/stretchr/testify v1.5.1
 	github.com/tebeka/selenium v0.9.9
-	gitlab.com/verygoodsoftwarenotvirus/logging v1.0.2
+	gitlab.com/verygoodsoftwarenotvirus/logging/v2 v2.0.0
 	gitlab.com/verygoodsoftwarenotvirus/newsman v1.0.1
 	go.opencensus.io v0.22.3
 	golang.org/x/crypto v0.0.0-20200311171314-f7b00557c8c4

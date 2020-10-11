@@ -1,25 +1,29 @@
-# build stage
-FROM golang:stretch AS build-stage
-
-WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
-
-RUN apt-get update -y && apt-get install -y make git gcc musl-dev
-
-ADD . .
-
-RUN go build -trimpath -o /todo -v gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
-
 # frontend-build-stage
 FROM node:latest AS frontend-build-stage
 
 WORKDIR /app
 
-ADD frontend/v2 .
+COPY frontend/v2 .
 
-RUN npm install && npm run build
+RUN ls -Al
+
+RUN npm run install:clean
+
+# build stage
+FROM golang:stretch AS build-stage
+
+WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
+
+COPY . .
+COPY --from=frontend-build-stage /app/dist /frontend
+
+RUN go build -trimpath -o /todo -v gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
 
 # final stage
 FROM debian:stretch
+
+COPY --from=build-stage /todo /todo
+COPY --from=frontend-build-stage /app/dist /frontend
 
 RUN mkdir /home/appuser
 RUN groupadd --gid 999 appuser && \
@@ -29,7 +33,7 @@ WORKDIR /home/appuser
 USER appuser
 
 COPY environments/testing/config_files/frontend-tests.toml /etc/config.toml
-COPY --from=build-stage /todo /todo
-COPY --from=frontend-build-stage /app/dist /frontend
+
+RUN ls -Al /frontend
 
 ENTRYPOINT ["/todo"]

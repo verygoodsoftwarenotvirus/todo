@@ -1,21 +1,23 @@
 <script lang="typescript">
-  import axios, {AxiosResponse} from 'axios';
+  import axios, {AxiosError, AxiosResponse} from 'axios';
   import { link, navigate } from "svelte-routing";
 
   import type { AuthStatus, LoginRequest } from "../../models";
 
   export let location: Location;
 
-    let usernameInput = '';
-    let passwordInput = '';
-    let totpTokenInput = '';
+    let usernameInput: string = '';
+    let passwordInput: string = '';
+    let totpTokenInput: string = '';
+
+    let loginError: string = '';
 
     function buildLoginRequest(): LoginRequest {
         return {
             username: usernameInput,
             password: passwordInput,
             totpToken: totpTokenInput,
-        } as LoginRequest
+        };
     }
 
     async function login() {
@@ -29,8 +31,15 @@
                 navigate("/", { state: {}, replace: true });
               });
             })
-            .catch((reason: object) => {
-                console.error(`something went awry: ${reason}`);
+            .catch((reason: AxiosError) => {
+              if (reason.response) {
+                if (reason.response.status === 401) {
+                  loginError = 'invalid credentials: please try again'
+                } else {
+                  loginError = reason.response.toString();
+                  console.error(reason.response);
+                }
+              }
             });
     }
 
@@ -46,12 +55,12 @@
             <div class="relative w-full mb-3">
               <label
                 class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                for="grid-username"
+                for="usernameInput"
               >
                 Username
               </label>
               <input
-                id="grid-username"
+                id="usernameInput"
                 type="text"
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                 placeholder="username"
@@ -62,12 +71,12 @@
             <div class="relative w-full mb-3">
               <label
                 class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                for="grid-password"
+                for="passwordInput"
               >
                 Password
               </label>
               <input
-                id="grid-password"
+                id="passwordInput"
                 type="password"
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                 placeholder="Password"
@@ -78,12 +87,12 @@
             <div class="relative w-full mb-3">
               <label
                 class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                for="grid-two-factor"
+                for="totpTokenInput"
               >
                 2FA Token
               </label>
               <input
-                id="grid-two-factor"
+                id="totpTokenInput"
                 type="text"
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                 placeholder="123456"
@@ -91,8 +100,13 @@
               />
             </div>
 
+            {#if loginError !== ''}
+            <p class="text-red-600">{loginError}</p>
+            {/if}
+
             <div class="text-center mt-6">
               <button
+                id="loginButton"
                 class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear transition-all duration-150"
                 type="button"
                 on:click={login}

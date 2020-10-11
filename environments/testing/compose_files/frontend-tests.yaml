@@ -55,6 +55,10 @@ services:
         depends_on:
             - firefox
             - chrome
+        volumes:
+            - source: '../../../artifacts'
+              target: '/artifacts'
+              type: 'bind'
     todo-server:
         build:
             context: '../../../'

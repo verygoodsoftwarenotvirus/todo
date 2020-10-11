@@ -38,16 +38,7 @@ linting:
     - go mod vendor
     - golangci-lint run --config=.golangci.yml --deadline=15m
 
-build-frontend-v1:
-  stage: quality
-  image: node:latest
-  before_script:
-    - cd frontend/v1
-    - npm install
-  script:
-    - npm run build
-
-build-frontend-v2:
+build-frontend:
   stage: quality
   image: node:latest
   before_script:

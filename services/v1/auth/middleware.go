@@ -26,10 +26,13 @@ func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 		ctx, span := tracing.StartSpan(req.Context(), "CookieAuthenticationMiddleware")
 		defer span.End()
 
+		logger := s.logger.WithValue("cookie_count", len(req.Cookies()))
+		logger.Info("CookieAuthenticationMiddleware called")
+
 		// fetch the user from the request.
 		user, err := s.fetchUserFromCookie(ctx, req)
 		if err != nil {
-			s.logger.Error(err, "error encountered fetching user")
+			logger.Error(err, "error encountered fetching user")
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		}

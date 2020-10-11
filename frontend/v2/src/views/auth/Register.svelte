@@ -133,12 +133,12 @@
               <div class="relative w-full mb-3">
                 <label
                   class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                  for="grid-username"
+                  for="usernameInput"
                 >
                   Username
                 </label>
                 <input
-                  id="grid-username"
+                  id="usernameInput"
                   type="text"
                   class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                   placeholder="Username"
@@ -150,12 +150,12 @@
               <div class="relative w-full mb-3">
                 <label
                   class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                  for="grid-password-1"
+                  for="passwordInput"
                 >
                   Password
                 </label>
                 <input
-                  id="grid-password-1"
+                  id="passwordInput"
                   type="password"
                   class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                   placeholder="Password"
@@ -167,12 +167,12 @@
               <div class="relative w-full mb-3">
                 <label
                   class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                  for="grid-password-2"
+                  for="passwordRepeatInput"
                 >
                   Confirm Password
                 </label>
                 <input
-                  id="grid-password-2"
+                  id="passwordRepeatInput"
                   type="password"
                   class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                   placeholder="Password Again"
@@ -203,6 +203,7 @@
 
               <div class="text-center mt-6">
                 <button
+                  id="registrationButton"
                   class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear transition-all duration-150"
                   type="button"
                   on:click={register}
@@ -215,6 +216,7 @@
         {:else}
           <div class="text-center">
             <img
+              id="twoFactorSecretQRCode"
               class="w-1/2 object-center inline p-4"
               src={postRegistrationQRCode}
               alt="two factor authentication secret encoded as a QR code"

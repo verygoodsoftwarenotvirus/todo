@@ -55,7 +55,7 @@ type configFunc func(filePath string) error
 
 var (
 	files = map[string]configFunc{
-		"environments/local/config.toml":                                    developmentConfig,
+		"environments/local/config.toml":                                    localDevelopmentCOnfig,
 		"environments/testing/config_files/frontend-tests.toml":             frontendTestsConfig,
 		"environments/testing/config_files/coverage.toml":                   coverageConfig,
 		"environments/testing/config_files/integration-tests-postgres.toml": buildIntegrationTestForDBImplementation(postgres, postgresDBConnDetails),
@@ -64,7 +64,7 @@ var (
 	}
 )
 
-func developmentConfig(filePath string) error {
+func localDevelopmentCOnfig(filePath string) error {
 	cfg := config.BuildConfig()
 
 	cfg.Set(metaRunMode, developmentEnv)
@@ -95,7 +95,7 @@ func developmentConfig(filePath string) error {
 	cfg.Set(dbDeets, postgresDBConnDetails)
 	cfg.Set(dbCreateTestUser, true)
 
-	cfg.Set(itemsSearchIndexPath, defaultItemsSearchIndexPath)
+	cfg.Set(itemsSearchIndexPath, "/search_indices/items.bleve")
 
 	if writeErr := cfg.WriteConfigAs(filePath); writeErr != nil {
 		return fmt.Errorf("error writing developmentEnv config: %w", writeErr)

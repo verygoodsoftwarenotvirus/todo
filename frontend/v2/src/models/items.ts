@@ -3,6 +3,20 @@ import faker from "faker";
 
 import {defaultFactories} from "@/models/fakes";
 
+export class ItemList {
+    page: number;
+    limit: number;
+    totalCount: number;
+    items: Item[];
+
+    constructor() {
+        this.page = 0;
+        this.limit = 0;
+        this.totalCount = 0;
+        this.items = [];
+    }
+}
+
 export class Item {
     id: number;
     name: string;
@@ -10,12 +24,14 @@ export class Item {
     createdOn: number;
     updatedOn?: number;
     archivedOn?: number;
+    belongsToUser: number;
 
     constructor() {
         this.id = 0;
         this.name = "";
         this.details = "";
         this.createdOn = 0;
+        this.belongsToUser = 0;
     }
 
     static areEqual = function(
@@ -33,6 +49,7 @@ export class Item {
 export const fakeItemFactory = Factory.Sync.makeFactory<Item> ({
     name: Factory.Sync.each(() =>  faker.random.word()),
     details: Factory.Sync.each(() =>  faker.random.word()),
+    belongsToUser: Factory.Sync.each(() =>  faker.random.number()),
     ...defaultFactories,
 });
 

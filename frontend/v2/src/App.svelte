@@ -1,7 +1,7 @@
 <!-- App.svelte -->
 <script lang="typescript">
-  import axios, { AxiosError } from "axios";
-  import { Router, Route } from "svelte-routing";
+  import axios, { AxiosResponse, AxiosError } from "axios";
+  import {Router, Route, navigate} from "svelte-routing";
   import { onMount } from 'svelte';
 
   import { AuthStatus } from "./models";
@@ -20,14 +20,14 @@
   export let url: string = "";
 
   onMount(async () => {
-    try {
-      const res = await axios.get("/users/status")
-      const data = res.data as AuthStatus;
-      authStatus.setAuthStatus(data);
-    } catch (e: any) {
-      const as = new AuthStatus();
-      authStatus.setAuthStatus(as);
-    }
+    console.debug("fetching user status from App.svelte")
+    axios.get("/users/status", { withCredentials: true })
+          .then((response: AxiosResponse<AuthStatus>) => {
+            authStatus.setAuthStatus(response.data);
+          })
+          .catch((error: AxiosError) => {
+            console.error(error);
+          });
   })
 </script>
 

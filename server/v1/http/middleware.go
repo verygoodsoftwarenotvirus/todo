@@ -22,6 +22,10 @@ func formatSpanNameForRequest(req *http.Request) string {
 	)
 }
 
+var donNotLog = map[string]struct{}{
+	"/metrics": {},
+}
+
 func buildLoggingMiddleware(logger logging.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -30,11 +34,13 @@ func buildLoggingMiddleware(logger logging.Logger) func(next http.Handler) http.
 			start := time.Now()
 			next.ServeHTTP(ww, req)
 
-			logger.WithRequest(req).WithValues(map[string]interface{}{
-				"status":        ww.Status(),
-				"bytes_written": ww.BytesWritten(),
-				"elapsed":       time.Since(start),
-			}).Debug("responded to request")
+			if _, ok := donNotLog[req.URL.Path]; !ok {
+				logger.WithRequest(req).WithValues(map[string]interface{}{
+					"status":        ww.Status(),
+					"bytes_written": ww.BytesWritten(),
+					"elapsed":       time.Since(start),
+				}).Debug("responded to request")
+			}
 		})
 	}
 }

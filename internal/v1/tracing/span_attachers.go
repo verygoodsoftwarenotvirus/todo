@@ -11,6 +11,7 @@ import (
 const (
 	itemIDSpanAttachmentKey                 = "item_id"
 	userIDSpanAttachmentKey                 = "user_id"
+	userIsAdminSpanAttachmentKey            = "is_admin"
 	usernameSpanAttachmentKey               = "username"
 	filterPageSpanAttachmentKey             = "filter_page"
 	filterLimitSpanAttachmentKey            = "filter_limit"
@@ -33,6 +34,12 @@ func attachStringToSpan(span *trace.Span, key, str string) {
 	}
 }
 
+func attachBooleanToSpan(span *trace.Span, key string, b bool) {
+	if span != nil {
+		span.AddAttributes(trace.BoolAttribute(key, b))
+	}
+}
+
 // AttachFilterToSpan provides a consistent way to attach a filter's info to a span.
 func AttachFilterToSpan(span *trace.Span, filter *models.QueryFilter) {
 	if filter != nil && span != nil {
@@ -51,6 +58,17 @@ func AttachItemIDToSpan(span *trace.Span, itemID uint64) {
 // AttachUserIDToSpan provides a consistent way to attach a user's ID to a span.
 func AttachUserIDToSpan(span *trace.Span, userID uint64) {
 	attachUint64ToSpan(span, userIDSpanAttachmentKey, userID)
+}
+
+// AttachUserAdminStatusToSpan provides a consistent way to attach a user's admin status to a span.
+func AttachUserAdminStatusToSpan(span *trace.Span, isAdmin bool) {
+	attachBooleanToSpan(span, userIsAdminSpanAttachmentKey, isAdmin)
+}
+
+// AttachSessionInfoToSpan provides a consistent way to attach a SessionInfo object to a span.
+func AttachSessionInfoToSpan(span *trace.Span, info models.SessionInfo) {
+	attachUint64ToSpan(span, userIDSpanAttachmentKey, info.UserID)
+	attachBooleanToSpan(span, userIsAdminSpanAttachmentKey, info.UserIsAdmin)
 }
 
 // AttachOAuth2ClientDatabaseIDToSpan is a consistent way to attach an oauth2 client's ID to a span.

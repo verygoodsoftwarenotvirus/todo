@@ -28,28 +28,23 @@ func (s *Service) DecodeCookieFromRequest(ctx context.Context, req *http.Request
 	ctx, span := tracing.StartSpan(ctx, "DecodeCookieFromRequest")
 	defer span.End()
 
-	logger := s.logger.WithRequest(req)
-
 	cookie, err := req.Cookie(CookieName)
 	if err != http.ErrNoCookie && cookie != nil {
 		var token string
 		decodeErr := s.cookieManager.Decode(CookieName, cookie.Value, &token)
 		if decodeErr != nil {
-			logger.Error(err, "decoding request cookie")
 			return nil, fmt.Errorf("decoding request cookie: %w", decodeErr)
 		}
 
 		var sessionErr error
 		ctx, sessionErr = s.sessionManager.Load(ctx, token)
 		if sessionErr != nil {
-			logger.Error(sessionErr, "error loading token")
 			return nil, errors.New("error loading token")
 		}
 
 		si, ok := s.sessionManager.Get(ctx, sessionInfoKey).(*models.SessionInfo)
 		if !ok {
 			errToReturn := errors.New("no session info attached to context")
-			logger.Error(errToReturn, "fetching session data")
 			return nil, errToReturn
 		}
 
@@ -92,11 +87,13 @@ func (s *Service) fetchUserFromCookie(ctx context.Context, req *http.Request) (*
 
 	ca, decodeErr := s.DecodeCookieFromRequest(ctx, req)
 	if decodeErr != nil {
+		s.logger.Debug("trouble fetching cookie data from request")
 		return nil, fmt.Errorf("fetching cookie data from request: %w", decodeErr)
 	}
 
 	user, userFetchErr := s.userDB.GetUser(req.Context(), ca.UserID)
 	if userFetchErr != nil {
+		s.logger.Debug("trouble fetching user from request")
 		return nil, fmt.Errorf("fetching user from request: %w", userFetchErr)
 	}
 	tracing.AttachUserIDToSpan(span, ca.UserID)

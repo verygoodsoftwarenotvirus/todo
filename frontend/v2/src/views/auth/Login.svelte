@@ -10,6 +10,7 @@
     let passwordInput: string = '';
     let totpTokenInput: string = '';
 
+    let canLogin: boolean = false;
     let loginError: string = '';
 
     function buildLoginRequest(): LoginRequest {
@@ -20,15 +21,28 @@
         };
     }
 
+    function evaluateInputs(): void {
+      canLogin = usernameInput !== '' && passwordInput !== '' && totpTokenInput.length > 0 && totpTokenInput.length < 7;
+    }
+
     async function login() {
         const path = "/users/login"
 
         console.debug("login called!");
 
+        evaluateInputs();
+        if (!canLogin) {
+          throw new Error("invalid input!");
+        }
+
         return axios.post(path, buildLoginRequest(), {withCredentials: true})
             .then(() => {
               axios.get("/users/status", {withCredentials: true}).then((statusResponse: AxiosResponse<AuthStatus>) => {
-                navigate("/", { state: {}, replace: true });
+                if (statusResponse.data.isAdmin) {
+                  navigate("/admin", { state: {}, replace: true });
+                } else {
+                  navigate("/", { state: {}, replace: true });
+                }
               });
             })
             .catch((reason: AxiosError) => {
@@ -51,7 +65,7 @@
       <div class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-gray-300 border-0">
         <div class="rounded-t mb-0 px-6 py-6"></div>
         <div class="flex-auto px-4 lg:px-10 py-10 pt-0">
-          <form>
+          <form on:submit|preventDefault="{login}">
             <div class="relative w-full mb-3">
               <label
                 class="block uppercase text-gray-700 text-xs font-bold mb-2"
@@ -64,6 +78,7 @@
                 type="text"
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                 placeholder="username"
+                on:keyup={evaluateInputs}
                 bind:value={usernameInput}
               />
             </div>
@@ -79,7 +94,8 @@
                 id="passwordInput"
                 type="password"
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                placeholder="Password"
+                placeholder="password1"
+                on:keyup={evaluateInputs}
                 bind:value={passwordInput}
               />
             </div>
@@ -96,6 +112,7 @@
                 type="text"
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                 placeholder="123456"
+                on:keyup={evaluateInputs}
                 bind:value={totpTokenInput}
               />
             </div>
@@ -106,10 +123,9 @@
 
             <div class="text-center mt-6">
               <button
+                type="submit"
                 id="loginButton"
                 class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear transition-all duration-150"
-                type="button"
-                on:click={login}
               >
                 Sign In
               </button>

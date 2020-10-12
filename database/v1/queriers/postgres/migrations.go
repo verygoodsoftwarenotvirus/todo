@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-
 	"github.com/GuiaBolso/darwin"
 	"github.com/Masterminds/squirrel"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/example_data"
 )
 
 var currentMigration float64 = 0
@@ -93,6 +93,18 @@ var (
 		},
 		{
 			Version:     incrementMigrationVersion(),
+			Description: "create audit log table",
+			Script: `
+			CREATE TABLE IF NOT EXISTS audit_log (
+				"id" BIGSERIAL NOT NULL PRIMARY KEY,
+				"event_id" TEXT NOT NULL,
+				"last_updated_on" BIGINT DEFAULT NULL,
+				"performed_by_user" BIGINT NOT NULL,
+				FOREIGN KEY("performed_by_user") REFERENCES users(id)
+			);`,
+		},
+		{
+			Version:     incrementMigrationVersion(),
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (
@@ -131,31 +143,69 @@ func (p *Postgres) Migrate(ctx context.Context, createTestUser bool) error {
 	p.migrateOnce.Do(buildMigrationFunc(p.db))
 
 	if createTestUser {
-		query, args, err := p.sqlBuilder.
-			Insert(usersTableName).
-			Columns(
-				usersTableUsernameColumn,
-				usersTableHashedPasswordColumn,
-				usersTableSaltColumn,
-				usersTableTwoFactorColumn,
-				usersTableIsAdminColumn,
-				usersTableTwoFactorVerifiedOnColumn,
-			).
-			Values(
-				"username",
-				"$2a$10$JzD3CNBqPmwq.IidQuO7eu3zKdu8vEIi3HkLk8/qRjrzb7eNLKlKG",
-				[]byte("aaaaaaaaaaaaaaaa"),
-				// `otpauth://totp/todo:username?secret=IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=&issuer=todo`
-				"IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=",
-				true,
-				squirrel.Expr(currentUnixTimeQuery),
-			).
-			ToSql()
-		p.logQueryBuildingError(err)
+		for _, x := range example_data.ExampleUsers {
+			query, args, err := p.sqlBuilder.
+				Insert(usersTableName).
+				Columns(
+					usersTableUsernameColumn,
+					usersTableHashedPasswordColumn,
+					usersTableSaltColumn,
+					usersTableTwoFactorColumn,
+					usersTableIsAdminColumn,
+					usersTableTwoFactorVerifiedOnColumn,
+				).
+				Values(
+					x.Username,
+					x.HashedPassword,
+					x.Salt,
+					x.TwoFactorSecret,
+					x.IsAdmin,
+					squirrel.Expr(currentUnixTimeQuery),
+				).
+				ToSql()
+			p.logQueryBuildingError(err)
 
-		if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
-			return dbErr
+			if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
+				return dbErr
+			}
 		}
+
+		for _, x := range example_data.ExampleItemMap {
+			for _, y := range x {
+				query, args := p.buildCreateItemQuery(y)
+				if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
+					return dbErr
+				}
+			}
+		}
+
+		/*
+			query, args, err := p.sqlBuilder.
+				Insert(usersTableName).
+				Columns(
+					usersTableUsernameColumn,
+					usersTableHashedPasswordColumn,
+					usersTableSaltColumn,
+					usersTableTwoFactorColumn,
+					usersTableIsAdminColumn,
+					usersTableTwoFactorVerifiedOnColumn,
+				).
+				Values(
+					"username",
+					"$2a$10$JzD3CNBqPmwq.IidQuO7eu3zKdu8vEIi3HkLk8/qRjrzb7eNLKlKG",
+					[]byte("aaaaaaaaaaaaaaaa"),
+					// `otpauth://totp/todo:username?secret=IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=&issuer=todo`
+					"IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=",
+					true,
+					squirrel.Expr(currentUnixTimeQuery),
+				).
+				ToSql()
+			p.logQueryBuildingError(err)
+
+			if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
+				return dbErr
+			}
+		*/
 	}
 
 	return nil

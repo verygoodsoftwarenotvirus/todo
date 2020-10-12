@@ -1,5 +1,7 @@
 <script lang="typescript">
-  import { Router, Route } from "svelte-routing";
+  import {onMount} from "svelte";
+  import axios, { AxiosResponse, AxiosError } from "axios";
+  import {Router, Route, navigate} from "svelte-routing";
 
   // components for this layout
   import PlainNavbar from "../components/Navbars/PlainNavbar.svelte";
@@ -10,8 +12,22 @@
   // pages for this layout
   import Items from "../views/things/Items.svelte";
 
+  import {AuthStatus} from "../models";
+  import {authStatus} from "../stores";
+
   export let location: Location;
   export let admin: string = "";
+
+  onMount(async () => {
+    console.debug("checking status from Things layout");
+    axios.get("/users/status", { withCredentials: true })
+         .then((res: AxiosResponse<AuthStatus>) => {
+           authStatus.setAuthStatus(res.data);
+         })
+         .catch((error: AxiosError) => {
+           navigate("/", { state: {}, replace: true });
+         });
+  })
 </script>
 
 <div>

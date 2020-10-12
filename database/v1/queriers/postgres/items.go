@@ -270,6 +270,57 @@ func (p *Postgres) GetItems(ctx context.Context, userID uint64, filter *models.Q
 	return list, nil
 }
 
+// buildGetItemsForAdminQuery builds a SQL query selecting items that adhere to a given QueryFilter and belong to a given user,
+// and returns both the query and the relevant args to pass to the query executor.
+func (p *Postgres) buildGetItemsForAdminQuery(filter *models.QueryFilter) (query string, args []interface{}) {
+	var err error
+
+	where := squirrel.Eq{}
+	if filter.IncludeArchived {
+		where[fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn)] = nil
+	}
+
+	builder := p.sqlBuilder.
+		Select(itemsTableColumns...).
+		From(itemsTableName).
+		Where(where).
+		OrderBy(fmt.Sprintf("%s.%s", itemsTableName, idColumn))
+
+	if filter != nil {
+		builder = filter.ApplyToQueryBuilder(builder, itemsTableName)
+	}
+
+	query, args, err = builder.ToSql()
+	p.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// GetItemsForAdmin fetches a list of items from the database that meet a particular filter for all users.
+func (p *Postgres) GetItemsForAdmin(ctx context.Context, filter *models.QueryFilter) (*models.ItemList, error) {
+	query, args := p.buildGetItemsForAdminQuery(filter)
+
+	rows, err := p.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, buildError(err, "querying database for items")
+	}
+
+	items, err := p.scanItems(rows)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	list := &models.ItemList{
+		Pagination: models.Pagination{
+			Page:  filter.Page,
+			Limit: filter.Limit,
+		},
+		Items: items,
+	}
+
+	return list, nil
+}
+
 // buildGetItemsWithIDsQuery builds a SQL query selecting items that belong to a given user,
 // and have IDs that exist within a given set of IDs. Returns both the query and the relevant
 // args to pass to the query executor. This function is primarily intended for use with a search
@@ -305,6 +356,53 @@ func (p *Postgres) GetItemsWithIDs(ctx context.Context, userID uint64, limit uin
 	}
 
 	query, args := p.buildGetItemsWithIDsQuery(userID, limit, ids)
+
+	rows, err := p.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, buildError(err, "querying database for items")
+	}
+
+	items, err := p.scanItems(rows)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return items, nil
+}
+
+// buildGetItemsWithIDsForAdminQuery builds a SQL query selecting items that exist within a given set of IDs.
+// Returns both the query and the relevant args to pass to the query executor.
+// This function is primarily intended for use with a search index, which would provide a slice of string IDs to query against.
+// This function accepts a slice of uint64s instead of a slice of strings in order to ensure all the provided strings
+// are valid database IDs, because there's no way in squirrel to escape them in the unnest join,
+// and if we accept strings we could leave ourselves vulnerable to SQL injection attacks.
+func (p *Postgres) buildGetItemsWithIDsForAdminQuery(limit uint8, ids []uint64) (query string, args []interface{}) {
+	var err error
+
+	subqueryBuilder := p.sqlBuilder.Select(itemsTableColumns...).
+		From(itemsTableName).
+		Join(fmt.Sprintf("unnest('{%s}'::int[])", joinUint64s(ids))).
+		Suffix(fmt.Sprintf("WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT %d", limit))
+	builder := p.sqlBuilder.
+		Select(itemsTableColumns...).
+		FromSelect(subqueryBuilder, itemsTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn): nil,
+		})
+
+	query, args, err = builder.ToSql()
+	p.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// GetItemsWithIDsForAdmin fetches a list of items from the database that exist within a given set of IDs.
+func (p *Postgres) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]models.Item, error) {
+	if limit == 0 {
+		limit = uint8(models.DefaultLimit)
+	}
+
+	query, args := p.buildGetItemsWithIDsForAdminQuery(limit, ids)
 
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {

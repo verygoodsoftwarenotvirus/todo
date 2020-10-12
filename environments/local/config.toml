@@ -30,7 +30,7 @@
   tracing_provider = "jaeger"
 
 [search]
-  items_index_path = "items.bleve"
+  items_index_path = "/search_indices/items.bleve"
 
 [server]
   debug = true

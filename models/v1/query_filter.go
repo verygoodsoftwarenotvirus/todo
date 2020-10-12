@@ -22,23 +22,25 @@ const (
 	// LimitQueryKey is the query param key we use to specify a limit in a query
 	LimitQueryKey = "limit"
 
-	pageQueryKey          = "page"
-	createdBeforeQueryKey = "createdBefore"
-	createdAfterQueryKey  = "createdAfter"
-	updatedBeforeQueryKey = "updatedBefore"
-	updatedAfterQueryKey  = "updatedAfter"
-	sortByQueryKey        = "sortBy"
+	pageQueryKey            = "page"
+	createdBeforeQueryKey   = "createdBefore"
+	createdAfterQueryKey    = "createdAfter"
+	updatedBeforeQueryKey   = "updatedBefore"
+	updatedAfterQueryKey    = "updatedAfter"
+	includeArchivedQueryKey = "includeArchived"
+	sortByQueryKey          = "sortBy"
 )
 
 // QueryFilter represents all the filters a user could apply to a list query.
 type QueryFilter struct {
-	Page          uint64   `json:"page"`
-	Limit         uint8    `json:"limit"`
-	CreatedAfter  uint64   `json:"createdBefore,omitempty"`
-	CreatedBefore uint64   `json:"createdAfter,omitempty"`
-	UpdatedAfter  uint64   `json:"updatedBefore,omitempty"`
-	UpdatedBefore uint64   `json:"updatedAfter,omitempty"`
-	SortBy        sortType `json:"sortBy"`
+	Page            uint64   `json:"page"`
+	Limit           uint8    `json:"limit"`
+	CreatedAfter    uint64   `json:"createdBefore,omitempty"`
+	CreatedBefore   uint64   `json:"createdAfter,omitempty"`
+	UpdatedAfter    uint64   `json:"updatedBefore,omitempty"`
+	UpdatedBefore   uint64   `json:"updatedAfter,omitempty"`
+	IncludeArchived bool     `json:"includeArchived,omitempty"`
+	SortBy          sortType `json:"sortBy"`
 }
 
 // DefaultQueryFilter builds the default query filter.
@@ -74,6 +76,10 @@ func (qf *QueryFilter) FromParams(params url.Values) {
 
 	if i, err := strconv.ParseUint(params.Get(updatedAfterQueryKey), 10, 64); err == nil {
 		qf.UpdatedAfter = uint64(math.Max(float64(i), 0))
+	}
+
+	if i, err := strconv.ParseBool(params.Get(includeArchivedQueryKey)); err == nil {
+		qf.IncludeArchived = i
 	}
 
 	switch strings.ToLower(params.Get(sortByQueryKey)) {
@@ -122,6 +128,7 @@ func (qf *QueryFilter) ToValues() url.Values {
 	if qf.UpdatedAfter != 0 {
 		v.Set(updatedAfterQueryKey, strconv.FormatUint(qf.UpdatedAfter, 10))
 	}
+	v.Set(includeArchivedQueryKey, strconv.FormatBool(qf.IncludeArchived))
 
 	return v
 }

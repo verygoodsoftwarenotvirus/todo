@@ -2,6 +2,7 @@ package items
 
 import (
 	"errors"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"net/http"
 	"testing"
 
@@ -17,14 +18,14 @@ import (
 
 func buildTestService() *Service {
 	return &Service{
-		logger:          noop.NewLogger(),
-		itemCounter:     &mockmetrics.UnitCounter{},
-		itemDataManager: &mockmodels.ItemDataManager{},
-		itemIDFetcher:   func(req *http.Request) uint64 { return 0 },
-		userIDFetcher:   func(req *http.Request) uint64 { return 0 },
-		encoderDecoder:  &mockencoding.EncoderDecoder{},
-		reporter:        nil,
-		search:          &mocksearch.IndexManager{},
+		logger:             noop.NewLogger(),
+		itemCounter:        &mockmetrics.UnitCounter{},
+		itemDataManager:    &mockmodels.ItemDataManager{},
+		itemIDFetcher:      func(req *http.Request) uint64 { return 0 },
+		sessionInfoFetcher: func(*http.Request) (*models.SessionInfo, error) { return &models.SessionInfo{}, nil },
+		encoderDecoder:     &mockencoding.EncoderDecoder{},
+		reporter:           nil,
+		search:             &mocksearch.IndexManager{},
 	}
 }
 
@@ -40,7 +41,7 @@ func TestProvideItemsService(T *testing.T) {
 			noop.NewLogger(),
 			&mockmodels.ItemDataManager{},
 			func(req *http.Request) uint64 { return 0 },
-			func(req *http.Request) uint64 { return 0 },
+			func(*http.Request) (*models.SessionInfo, error) { return &models.SessionInfo{}, nil },
 			&mockencoding.EncoderDecoder{},
 			ucp,
 			nil,
@@ -60,7 +61,7 @@ func TestProvideItemsService(T *testing.T) {
 			noop.NewLogger(),
 			&mockmodels.ItemDataManager{},
 			func(req *http.Request) uint64 { return 0 },
-			func(req *http.Request) uint64 { return 0 },
+			func(*http.Request) (*models.SessionInfo, error) { return &models.SessionInfo{}, nil },
 			&mockencoding.EncoderDecoder{},
 			ucp,
 			nil,

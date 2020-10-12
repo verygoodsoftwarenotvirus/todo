@@ -60,18 +60,22 @@ var (
 	// itemsFrontendPathRegex matches URLs against our frontend router's specification for specific item routes.
 	itemsFrontendPathRegex = regexp.MustCompile(`/things/items/\d+`)
 
+	// itemsAdminFrontendPathRegex matches URLs against our frontend router's specification for specific item routes.
+	itemsAdminFrontendPathRegex = regexp.MustCompile(`/admin/things/items/\d+`)
+
 	validRoutes = map[string]struct{}{
-		"/settings":         {},
-		"/admin/settings":   {},
-		"/dashboard":        {},
-		"/admin/dashboard":  {},
-		"/admin/tables":     {},
-		"/auth/register":    {},
-		"/auth/login":       {},
-		"/admin":            {},
-		"/things/items":     {},
-		"/things/items/new": {},
-		"/password/new":     {},
+		"/admin":             {},
+		"/admin/settings":    {},
+		"/admin/dashboard":   {},
+		"admin/things/items": {},
+		"admin/users":        {},
+		"/auth/register":     {},
+		"/auth/login":        {},
+		"/things/items":      {},
+		"/things/items/new":  {},
+		"/settings":          {},
+		"/dashboard":         {},
+		"/password/new":      {},
 	}
 )
 
@@ -99,7 +103,7 @@ func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, erro
 			req.URL.Path = "/"
 		}
 
-		if itemsFrontendPathRegex.MatchString(req.URL.Path) {
+		if itemsFrontendPathRegex.MatchString(req.URL.Path) || itemsAdminFrontendPathRegex.MatchString(req.URL.Path) {
 			rl.Debug("rerouting item request")
 			req.URL.Path = "/"
 		}

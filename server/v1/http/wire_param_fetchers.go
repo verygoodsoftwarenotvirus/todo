@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -23,6 +24,7 @@ var (
 		ProvideWebhooksServiceUserIDFetcher,
 		ProvideItemsServiceItemIDFetcher,
 		ProvideItemsServiceUserIDFetcher,
+		ProvideItemsSessionInfoFetcher,
 	)
 )
 
@@ -56,12 +58,25 @@ func ProvideItemsServiceUserIDFetcher() itemsservice.UserIDFetcher {
 	return userIDFetcherFromRequestContext
 }
 
+// ProvideItemsSessionInfoFetcher provides a SessionInfoFetcher.
+func ProvideItemsSessionInfoFetcher() itemsservice.SessionInfoFetcher {
+	return sessionInfoFetcherFromRequestContext
+}
+
 // userIDFetcherFromRequestContext fetches a user ID from a request routed by chi.
 func userIDFetcherFromRequestContext(req *http.Request) uint64 {
 	if si, ok := req.Context().Value(models.SessionInfoKey).(*models.SessionInfo); ok && si != nil {
 		return si.UserID
 	}
 	return 0
+}
+
+// sessionInfoFetcherFromRequestContext fetches a SessionInfo from a request routed by chi.
+func sessionInfoFetcherFromRequestContext(req *http.Request) (*models.SessionInfo, error) {
+	if si, ok := req.Context().Value(models.SessionInfoKey).(*models.SessionInfo); ok && si != nil {
+		return si, nil
+	}
+	return nil, errors.New("no session info attached to request")
 }
 
 // buildRouteParamUserIDFetcher builds a function that fetches a Username from a request routed by chi.

@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+
 import type {AuthStatus} from "@/models";
 
 function buildAuthStatus() {

@@ -22,12 +22,12 @@ FROM debian:stretch
 
 COPY --from=build-stage /todo /todo
 
-RUN mkdir /home/appuser
-RUN groupadd --gid 999 appuser && \
-    useradd --system --uid 999 --gid appuser appuser
-RUN chown appuser /home/appuser
-WORKDIR /home/appuser
-USER appuser
+#RUN mkdir /home/appuser
+#RUN groupadd --gid 999 appuser && \
+#    useradd --system --uid 999 --gid appuser appuser
+#RUN chown appuser /home/appuser
+#WORKDIR /home/appuser
+#USER appuser
 
 ENV DOCKER=true
 

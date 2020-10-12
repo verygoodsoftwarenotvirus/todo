@@ -17,6 +17,7 @@ type (
 	IndexManager interface {
 		Index(ctx context.Context, id uint64, value interface{}) error
 		Search(ctx context.Context, query string, userID uint64) (ids []uint64, err error)
+		SearchForAdmin(ctx context.Context, query string) (ids []uint64, err error)
 		Delete(ctx context.Context, id uint64) (err error)
 	}
 

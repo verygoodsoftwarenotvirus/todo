@@ -1,5 +1,5 @@
 <script lang="typescript">
-  import { axios, AxiosResponse } from "axios";
+  import axios, { AxiosResponse } from "axios";
   import { link, navigate } from "svelte-routing";
   import { createPopper } from "@popperjs/core";  // library for creating dropdown menu appear on click
 
@@ -13,7 +13,7 @@
       withCredentials: true,
     }).then((response: AxiosResponse) => {
       if (response.status === 200) {
-        navigate("/login", { state: {}, replace: true })
+        navigate("/auth/login", { state: {}, replace: true })
       }
     });
   }
@@ -63,13 +63,12 @@
       Settings
     </a>
     <div class="h-0 my-2 border border-solid border-gray-200" />
-    <a
-      href="."
+    <button
       on:click={logout}
       class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent text-gray-800"
     >
       <i class="fa fa-sign-out-alt"></i>
       Log Out
-    </a>
+    </button>
   </div>
 </div>

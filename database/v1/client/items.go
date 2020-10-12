@@ -2,6 +2,7 @@ package dbclient
 
 import (
 	"context"
+	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -78,6 +79,20 @@ func (c *Client) GetItems(ctx context.Context, userID uint64, filter *models.Que
 	return itemList, err
 }
 
+// GetItemsForAdmin fetches a list of items from the database that meet a particular filter for all users.
+func (c *Client) GetItemsForAdmin(ctx context.Context, filter *models.QueryFilter) (*models.ItemList, error) {
+	ctx, span := tracing.StartSpan(ctx, "GetItemsForAdmin")
+	defer span.End()
+
+	tracing.AttachFilterToSpan(span, filter)
+
+	c.logger.Debug("GetItemsForAdmin called")
+
+	itemList, err := c.querier.GetItemsForAdmin(ctx, filter)
+
+	return itemList, err
+}
+
 // GetItemsWithIDs fetches items from the database within a given set of IDs.
 func (c *Client) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]models.Item, error) {
 	ctx, span := tracing.StartSpan(ctx, "GetItemsWithIDs")
@@ -87,10 +102,27 @@ func (c *Client) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8
 
 	c.logger.WithValues(map[string]interface{}{
 		"user_id":  userID,
+		"limit":    limit,
 		"id_count": len(ids),
 	}).Debug("GetItemsWithIDs called")
 
 	itemList, err := c.querier.GetItemsWithIDs(ctx, userID, limit, ids)
+
+	return itemList, err
+}
+
+// GetItemsWithIDsForAdmin fetches items from the database within a given set of IDs.
+func (c *Client) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]models.Item, error) {
+	ctx, span := tracing.StartSpan(ctx, "GetItemsWithIDsForAdmin")
+	defer span.End()
+
+	c.logger.WithValues(map[string]interface{}{
+		"limit":    limit,
+		"id_count": len(ids),
+		"ids":      ids,
+	}).Debug(fmt.Sprintf("GetItemsWithIDsForAdmin called: %v", ids))
+
+	itemList, err := c.querier.GetItemsWithIDsForAdmin(ctx, limit, ids)
 
 	return itemList, err
 }

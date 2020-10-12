@@ -36,18 +36,21 @@ type (
 
 	// Service handles to-do list items
 	Service struct {
-		logger          logging.Logger
-		itemDataManager models.ItemDataManager
-		itemIDFetcher   ItemIDFetcher
-		userIDFetcher   UserIDFetcher
-		itemCounter     metrics.UnitCounter
-		encoderDecoder  encoding.EncoderDecoder
-		reporter        newsman.Reporter
-		search          SearchIndex
+		logger             logging.Logger
+		itemDataManager    models.ItemDataManager
+		itemIDFetcher      ItemIDFetcher
+		sessionInfoFetcher SessionInfoFetcher
+		itemCounter        metrics.UnitCounter
+		encoderDecoder     encoding.EncoderDecoder
+		reporter           newsman.Reporter
+		search             SearchIndex
 	}
 
 	// UserIDFetcher is a function that fetches user IDs.
 	UserIDFetcher func(*http.Request) uint64
+
+	// SessionInfoFetcher is a function that fetches user IDs.
+	SessionInfoFetcher func(*http.Request) (*models.SessionInfo, error)
 
 	// ItemIDFetcher is a function that fetches item IDs.
 	ItemIDFetcher func(*http.Request) uint64
@@ -58,7 +61,7 @@ func ProvideItemsService(
 	logger logging.Logger,
 	itemDataManager models.ItemDataManager,
 	itemIDFetcher ItemIDFetcher,
-	userIDFetcher UserIDFetcher,
+	sessionInfoFetcher SessionInfoFetcher,
 	encoder encoding.EncoderDecoder,
 	itemCounterProvider metrics.UnitCounterProvider,
 	reporter newsman.Reporter,
@@ -70,14 +73,14 @@ func ProvideItemsService(
 	}
 
 	svc := &Service{
-		logger:          logger.WithName(serviceName),
-		itemIDFetcher:   itemIDFetcher,
-		userIDFetcher:   userIDFetcher,
-		itemDataManager: itemDataManager,
-		encoderDecoder:  encoder,
-		itemCounter:     itemCounter,
-		reporter:        reporter,
-		search:          searchIndexManager,
+		logger:             logger.WithName(serviceName),
+		itemIDFetcher:      itemIDFetcher,
+		sessionInfoFetcher: sessionInfoFetcher,
+		itemDataManager:    itemDataManager,
+		encoderDecoder:     encoder,
+		itemCounter:        itemCounter,
+		reporter:           reporter,
+		search:             searchIndexManager,
 	}
 
 	return svc, nil

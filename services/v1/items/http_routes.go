@@ -2,18 +2,35 @@ package items
 
 import (
 	"database/sql"
-	"net/http"
-
+	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
+	"net/http"
+	"strings"
 )
 
 const (
 	// URIParamKey is a standard string that we'll use to refer to item IDs with.
 	URIParamKey = "itemID"
 )
+
+// fetchSessionInfo grabs a SessionInfo out of the request context.
+func fetchSessionInfo(req *http.Request) *models.SessionInfo {
+	if si, ok := req.Context().Value(models.SessionInfoKey).(*models.SessionInfo); ok && si != nil {
+		return si
+	}
+	return &models.SessionInfo{}
+}
+
+func parseBool(str string) bool {
+	switch str {
+	case "1", "t", "T", "true", "TRUE", "True":
+		return true
+	default:
+		return false
+	}
+}
 
 // ListHandler is our list route.
 func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
@@ -26,12 +43,29 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	filter := models.ExtractQueryFilter(req)
 
 	// determine user ID.
-	userID := s.userIDFetcher(req)
-	tracing.AttachUserIDToSpan(span, userID)
-	logger = logger.WithValue("user_id", userID)
+	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	if sessionInfoRetrievalErr != nil {
+		res.WriteHeader(http.StatusUnauthorized)
+		s.encoderDecoder.EncodeError(res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+	tracing.AttachSessionInfoToSpan(span, *si)
+	logger = logger.WithValue("user_id", si.UserID)
 
-	// fetch items from database.
-	items, err := s.itemDataManager.GetItems(ctx, userID, filter)
+	// determine if it's an admin request
+	rawQueryAdminKey := req.URL.Query().Get("admin")
+	adminQueryPresent := parseBool(rawQueryAdminKey)
+	isAdminRequest := si.UserIsAdmin && adminQueryPresent
+
+	var (
+		items *models.ItemList
+		err   error
+	)
+	if si.UserIsAdmin && isAdminRequest {
+		items, err = s.itemDataManager.GetItemsForAdmin(ctx, filter)
+	} else {
+		items, err = s.itemDataManager.GetItems(ctx, si.UserID, filter)
+	}
 	if err == sql.ErrNoRows {
 		// in the event no rows exist return an empty list.
 		items = &models.ItemList{
@@ -53,6 +87,7 @@ func (s *Service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	logger.Debug("items search handler hit")
 
 	// we only parse the filter here because it will contain the limit
 	filter := models.ExtractQueryFilter(req)
@@ -60,24 +95,56 @@ func (s *Service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue("search_query", query)
 
 	// determine user ID.
-	userID := s.userIDFetcher(req)
-	tracing.AttachUserIDToSpan(span, userID)
-	logger = logger.WithValue("user_id", userID)
+	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	if sessionInfoRetrievalErr != nil {
+		res.WriteHeader(http.StatusUnauthorized)
+		s.encoderDecoder.EncodeError(res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+	tracing.AttachSessionInfoToSpan(span, *si)
+	logger = logger.WithValue("user_id", si.UserID)
 
-	relevantIDs, searchErr := s.search.Search(ctx, query, userID)
+	// determine if it's an admin request
+	rawQueryAdminKey := req.URL.Query().Get("admin")
+	adminQueryPresent := parseBool(rawQueryAdminKey)
+	isAdminRequest := si.UserIsAdmin && adminQueryPresent
+
+	var (
+		relevantIDs []uint64
+		searchErr   error
+
+		items []models.Item
+		dbErr error
+	)
+	if isAdminRequest {
+		relevantIDs, searchErr = s.search.SearchForAdmin(ctx, query)
+	} else {
+		relevantIDs, searchErr = s.search.Search(ctx, query, si.UserID)
+	}
 	if searchErr != nil {
 		logger.Error(searchErr, "error encountered executing search query")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	relevantIDstrings := []string{}
+	for _, x := range relevantIDs {
+		relevantIDstrings = append(relevantIDstrings, fmt.Sprintf("%d", x))
+	}
+	conglom := strings.Join(relevantIDstrings, ",")
+	logger.Debug(conglom)
+
 	// fetch items from database.
-	items, err := s.itemDataManager.GetItemsWithIDs(ctx, userID, filter.Limit, relevantIDs)
-	if err == sql.ErrNoRows {
+	if isAdminRequest {
+		items, dbErr = s.itemDataManager.GetItemsWithIDsForAdmin(ctx, filter.Limit, relevantIDs)
+	} else {
+		items, dbErr = s.itemDataManager.GetItemsWithIDs(ctx, si.UserID, filter.Limit, relevantIDs)
+	}
+	if dbErr == sql.ErrNoRows {
 		// in the event no rows exist return an empty list.
 		items = []models.Item{}
-	} else if err != nil {
-		logger.Error(err, "error encountered fetching items")
+	} else if dbErr != nil {
+		logger.Error(dbErr, "error encountered fetching items")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -102,10 +169,15 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// determine user ID.
-	userID := s.userIDFetcher(req)
-	logger = logger.WithValue("user_id", userID)
-	tracing.AttachUserIDToSpan(span, userID)
-	input.BelongsToUser = userID
+	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	if sessionInfoRetrievalErr != nil {
+		res.WriteHeader(http.StatusUnauthorized)
+		s.encoderDecoder.EncodeError(res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+	tracing.AttachSessionInfoToSpan(span, *si)
+	logger = logger.WithValue("user_id", si.UserID)
+	input.BelongsToUser = si.UserID
 
 	// create item in database.
 	x, err := s.itemDataManager.CreateItem(ctx, input)
@@ -142,9 +214,14 @@ func (s *Service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	userID := s.userIDFetcher(req)
-	tracing.AttachUserIDToSpan(span, userID)
-	logger = logger.WithValue("user_id", userID)
+	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	if sessionInfoRetrievalErr != nil {
+		res.WriteHeader(http.StatusUnauthorized)
+		s.encoderDecoder.EncodeError(res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+	tracing.AttachSessionInfoToSpan(span, *si)
+	logger = logger.WithValue("user_id", si.UserID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -152,7 +229,7 @@ func (s *Service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue("item_id", itemID)
 
 	// fetch item from database.
-	exists, err := s.itemDataManager.ItemExists(ctx, itemID, userID)
+	exists, err := s.itemDataManager.ItemExists(ctx, itemID, si.UserID)
 	if err != nil && err != sql.ErrNoRows {
 		logger.Error(err, "error checking item existence in database")
 		res.WriteHeader(http.StatusNotFound)
@@ -174,9 +251,14 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	userID := s.userIDFetcher(req)
-	tracing.AttachUserIDToSpan(span, userID)
-	logger = logger.WithValue("user_id", userID)
+	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	if sessionInfoRetrievalErr != nil {
+		res.WriteHeader(http.StatusUnauthorized)
+		s.encoderDecoder.EncodeError(res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+	tracing.AttachSessionInfoToSpan(span, *si)
+	logger = logger.WithValue("user_id", si.UserID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -184,7 +266,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue("item_id", itemID)
 
 	// fetch item from database.
-	x, err := s.itemDataManager.GetItem(ctx, itemID, userID)
+	x, err := s.itemDataManager.GetItem(ctx, itemID, si.UserID)
 	if err == sql.ErrNoRows {
 		res.WriteHeader(http.StatusNotFound)
 		return
@@ -214,10 +296,15 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// determine user ID.
-	userID := s.userIDFetcher(req)
-	logger = logger.WithValue("user_id", userID)
-	tracing.AttachUserIDToSpan(span, userID)
-	input.BelongsToUser = userID
+	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	if sessionInfoRetrievalErr != nil {
+		res.WriteHeader(http.StatusUnauthorized)
+		s.encoderDecoder.EncodeError(res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+	tracing.AttachSessionInfoToSpan(span, *si)
+	logger = logger.WithValue("user_id", si.UserID)
+	input.BelongsToUser = si.UserID
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -225,7 +312,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	// fetch item from database.
-	x, err := s.itemDataManager.GetItem(ctx, itemID, userID)
+	x, err := s.itemDataManager.GetItem(ctx, itemID, si.UserID)
 	if err == sql.ErrNoRows {
 		res.WriteHeader(http.StatusNotFound)
 		return
@@ -268,9 +355,14 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	userID := s.userIDFetcher(req)
-	logger = logger.WithValue("user_id", userID)
-	tracing.AttachUserIDToSpan(span, userID)
+	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	if sessionInfoRetrievalErr != nil {
+		res.WriteHeader(http.StatusUnauthorized)
+		s.encoderDecoder.EncodeError(res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+	tracing.AttachSessionInfoToSpan(span, *si)
+	logger = logger.WithValue("user_id", si.UserID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -278,7 +370,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	// archive the item in the database.
-	err = s.itemDataManager.ArchiveItem(ctx, itemID, userID)
+	err = s.itemDataManager.ArchiveItem(ctx, itemID, si.UserID)
 	if err == sql.ErrNoRows {
 		res.WriteHeader(http.StatusNotFound)
 		return

@@ -5,13 +5,20 @@
   import NotificationDropdown from "../Dropdowns/NotificationDropdown.svelte";
   import UserDropdown from "../Dropdowns/UserDropdown.svelte";
 
-  let collapseShow: string = "hidden";
+  import { AuthStatus } from "../../models";
+  import { authStatus } from "../../stores";
 
+  export let location: Location;
+
+  let collapseShow: string = "hidden";
   function toggleCollapseShow(classes) {
     collapseShow = classes;
   }
 
-  export let location: Location;
+  let currentAuthStatus = {};
+  authStatus.subscribe((value: AuthStatus) => {
+    currentAuthStatus = value;
+  });
 </script>
 
 <nav
@@ -50,56 +57,97 @@
       class="md:flex md:flex-col md:items-stretch md:opacity-100 md:relative md:mt-4 md:shadow-none shadow absolute top-0 left-0 right-0 z-40 overflow-y-auto overflow-x-hidden h-auto items-center flex-1 rounded {collapseShow}"
     >
 
-      <!--
+      <div>
+        <h6 class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline">
+          Things
+        </h6>
+        <!-- Navigation -->
 
+        <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
+          <li class="items-center">
+            <a
+              use:link
+              class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
+              href="/things/items"
+            >
+              <i class="fas fa-list-ul text-gray-400 mr-2 text-sm"></i>
+              Items
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      {#if currentAuthStatus.isAdmin}
       <hr class="my-4 md:min-w-full" />
-      <h6 class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline">
-        Pages
-      </h6>
+      <div>
+        <h6 class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline">
+          Admin
+        </h6>
 
-      <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
-        <li class="items-center">
-          <a
-            use:link
-            class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-            href="/auth/login"
-          >
-            <i class="fas fa-fingerprint text-gray-400 mr-2 text-sm"></i>
-            Login
-          </a>
-        </li>
+        <!-- USERS -->
 
-        <li class="items-center">
-          <a
-            use:link
-            class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-            href="/auth/register"
-          >
-            <i class="fas fa-clipboard-list text-gray-400 mr-2 text-sm"></i>
-            Register
-          </a>
-        </li>
-      </ul>
-      -->
+        <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
+          <li class="items-center">
+            <a
+              use:link
+              class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
+              href="/admin/users"
+            >
+              <i class="fas fa-users text-gray-400 mr-2 text-sm"></i>
+              Users
+            </a>
+          </li>
+        </ul>
+
+        <!-- OAUTH2 CLIENTS -->
+
+        <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
+          <li class="items-center">
+            <a
+              use:link
+              class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
+              href="/admin/oauth2_clients"
+            >
+              <i class="fas fa-robot text-gray-400 mr-2 text-sm"></i>
+              OAuth2 Clients
+            </a>
+          </li>
+        </ul>
+
+        <!-- WEBHOOKS -->
+
+        <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
+          <li class="items-center">
+            <a
+              use:link
+              class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
+              href="/admin/webhooks"
+            >
+              <i class="fas fa-network-wired text-gray-400 mr-2 text-sm"></i>
+              Webhooks
+            </a>
+          </li>
+        </ul>
 
 
-      <h6 class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline">
-        Things
-      </h6>
-      <!-- Navigation -->
+        <!-- AUDIT LOG -->
 
-      <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
-        <li class="items-center">
-          <a
-            use:link
-            class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-            href="/things/items"
-          >
-            <i class="fas fa-list-ul text-gray-400 mr-2 text-sm"></i>
-            Items
-          </a>
-        </li>
-      </ul>
+        <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
+          <li class="items-center">
+            <a
+                    use:link
+                    class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
+                    href="/admin/audit_log"
+            >
+              <i class="fas fa-record-vinyl text-gray-400 mr-2 text-sm"></i>
+              Audit Log
+            </a>
+          </li>
+        </ul>
+
+      </div>
+      {/if}
+
     </div>
   </div>
 </nav>

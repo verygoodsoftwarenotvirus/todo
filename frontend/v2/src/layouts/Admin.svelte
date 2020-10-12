@@ -1,5 +1,10 @@
 <script lang="typescript">
-  import { Router, Route } from "svelte-routing";
+  import axios, {AxiosError, AxiosResponse} from "axios";
+  import { onMount } from "svelte";
+  import { navigate, Router, Route } from "svelte-routing";
+
+  import { authStatus } from "../stores";
+  import { AuthStatus } from "../models";
 
   // components for this layout
   import AdminNavbar from "../components/Navbars/AdminNavbar.svelte";
@@ -14,6 +19,17 @@
 
   export let location: Location;
   export let admin: string = "";
+
+  onMount(async () => {
+    console.debug("checking status from Admin layout");
+    const res = await axios.get("/users/status", { withCredentials: true });
+    const as: AuthStatus = res.data;
+    authStatus.setAuthStatus(as);
+
+    if (!as.isAdmin) {
+      navigate("/", { state: {}, replace: true });
+    }
+  })
 </script>
 
 <div>

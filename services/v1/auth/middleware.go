@@ -32,7 +32,6 @@ func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 		// fetch the user from the request.
 		user, err := s.fetchUserFromCookie(ctx, req)
 		if err != nil {
-			logger.Error(err, "error encountered fetching user")
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -50,7 +49,7 @@ func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 		}
 
 		// if no error was attached to the request, tell them to login first.
-		http.Redirect(res, req, "/login", http.StatusUnauthorized)
+		http.Redirect(res, req, "/auth/login", http.StatusUnauthorized)
 	})
 }
 
@@ -85,8 +84,7 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 				// We do this first because it is presumed to be the primary means by which requests are made to the httpServer.
 				oauth2Client, err := s.oauth2ClientsService.ExtractOAuth2ClientFromRequest(ctx, req)
 				if err != nil || oauth2Client == nil {
-					s.logger.Error(err, "fetching oauth2 client")
-					http.Redirect(res, req, "/login", http.StatusUnauthorized)
+					http.Redirect(res, req, "/auth/login", http.StatusUnauthorized)
 					return
 				}
 
@@ -103,7 +101,7 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 			// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere.
 			if user == nil {
 				s.logger.Debug("no user attached to request request")
-				http.Redirect(res, req, "/login", http.StatusUnauthorized)
+				http.Redirect(res, req, "/auth/login", http.StatusUnauthorized)
 				return
 			}
 

@@ -26,14 +26,14 @@ func TestItemsService_ListHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakemodels.BuildFakeUser()
-	userIDFetcher := func(_ *http.Request) uint64 {
-		return exampleUser.ID
+	sessionInfoFetcher := func(_ *http.Request) (*models.SessionInfo, error) {
+		return &models.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItemList := fakemodels.BuildFakeItemList()
 
@@ -64,7 +64,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 	T.Run("with no rows returned", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		itemDataManager := &mockmodels.ItemDataManager{}
 		itemDataManager.On("GetItems", mock.Anything, exampleUser.ID, mock.AnythingOfType("*models.QueryFilter")).Return((*models.ItemList)(nil), sql.ErrNoRows)
@@ -93,7 +93,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 	T.Run("with error fetching items from database", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		itemDataManager := &mockmodels.ItemDataManager{}
 		itemDataManager.On("GetItems", mock.Anything, exampleUser.ID, mock.AnythingOfType("*models.QueryFilter")).Return((*models.ItemList)(nil), errors.New("blah"))
@@ -120,14 +120,14 @@ func TestItemsService_SearchHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakemodels.BuildFakeUser()
-	userIDFetcher := func(_ *http.Request) uint64 {
-		return exampleUser.ID
+	sessionInfoFetcher := func(_ *http.Request) (*models.SessionInfo, error) {
+		return &models.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleQuery := "whatever"
 		exampleLimit := uint8(123)
@@ -168,7 +168,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 	T.Run("with error conducting search", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleQuery := "whatever"
 		exampleLimit := uint8(123)
@@ -196,7 +196,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 	T.Run("with now rows returned", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleQuery := "whatever"
 		exampleLimit := uint8(123)
@@ -237,7 +237,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 	T.Run("with error fetching from database", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleQuery := "whatever"
 		exampleLimit := uint8(123)
@@ -276,14 +276,14 @@ func TestItemsService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakemodels.BuildFakeUser()
-	userIDFetcher := func(_ *http.Request) uint64 {
-		return exampleUser.ID
+	sessionInfoFetcher := func(_ *http.Request) (*models.SessionInfo, error) {
+		return &models.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
@@ -330,7 +330,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 	T.Run("without input attached", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -349,7 +349,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 	T.Run("with error creating item", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
@@ -382,14 +382,14 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakemodels.BuildFakeUser()
-	userIDFetcher := func(_ *http.Request) uint64 {
-		return exampleUser.ID
+	sessionInfoFetcher := func(_ *http.Request) (*models.SessionInfo, error) {
+		return &models.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
@@ -420,7 +420,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 	T.Run("with no such item in database", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
@@ -451,7 +451,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 	T.Run("with error fetching item from database", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
@@ -484,14 +484,14 @@ func TestItemsService_ReadHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakemodels.BuildFakeUser()
-	userIDFetcher := func(_ *http.Request) uint64 {
-		return exampleUser.ID
+	sessionInfoFetcher := func(_ *http.Request) (*models.SessionInfo, error) {
+		return &models.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
@@ -526,7 +526,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 	T.Run("with no such item in database", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
@@ -557,7 +557,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 	T.Run("with error fetching item from database", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
@@ -590,14 +590,14 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakemodels.BuildFakeUser()
-	userIDFetcher := func(_ *http.Request) uint64 {
-		return exampleUser.ID
+	sessionInfoFetcher := func(_ *http.Request) (*models.SessionInfo, error) {
+		return &models.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
@@ -645,7 +645,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 	T.Run("without update input", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -664,7 +664,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 	T.Run("with no rows fetching item", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
@@ -699,7 +699,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 	T.Run("with error fetching item", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
@@ -734,7 +734,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 	T.Run("with error updating item", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
@@ -772,14 +772,14 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakemodels.BuildFakeUser()
-	userIDFetcher := func(_ *http.Request) uint64 {
-		return exampleUser.ID
+	sessionInfoFetcher := func(_ *http.Request) (*models.SessionInfo, error) {
+		return &models.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
@@ -822,7 +822,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 	T.Run("with no item in database", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
@@ -853,7 +853,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 	T.Run("with error writing to database", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
@@ -884,7 +884,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 	T.Run("with error removing from search index", func(t *testing.T) {
 		s := buildTestService()
 
-		s.userIDFetcher = userIDFetcher
+		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID

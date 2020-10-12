@@ -3,6 +3,7 @@ package bleve
 import (
 	"context"
 	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/example_data"
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search"
@@ -68,6 +69,14 @@ func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger l
 		logger: logger.WithName(fmt.Sprintf("%s_search", name)),
 	}
 
+	for _, x := range example_data.ExampleItemMap {
+		for _, y := range x {
+			if e := im.Index(context.Background(), y.ID, y); e != nil {
+				panic(e)
+			}
+		}
+	}
+
 	return im, nil
 }
 
@@ -108,6 +117,37 @@ func (sm *bleveIndexManager) Search(ctx context.Context, query string, userID ui
 		}
 		out = append(out, x)
 	}
+
+	return out, nil
+}
+
+// SearchForAdmin implements our IndexManager interface
+func (sm *bleveIndexManager) SearchForAdmin(ctx context.Context, query string) (ids []uint64, err error) {
+	_, span := tracing.StartSpan(ctx, "SearchForAdmin")
+	defer span.End()
+
+	tracing.AttachSearchQueryToSpan(span, query)
+	logger := sm.logger.WithValue("search_query", query)
+	logger.Debug("performing search for admin")
+
+	searchRequest := bleve.NewSearchRequest(bleve.NewQueryStringQuery(query))
+	searchResults, err := sm.index.SearchInContext(ctx, searchRequest)
+	if err != nil {
+		sm.logger.Error(err, "performing search query")
+		return nil, err
+	}
+
+	out := []uint64{}
+	for _, result := range searchResults.Hits {
+		x, err := strconv.ParseUint(result.ID, base, bitSize)
+		if err != nil {
+			// this should literally never happen
+			return nil, err
+		}
+		out = append(out, x)
+	}
+
+	logger.Info(fmt.Sprintf("%v", out))
 
 	return out, nil
 }

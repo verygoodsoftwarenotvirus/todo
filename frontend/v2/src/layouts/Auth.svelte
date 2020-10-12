@@ -1,5 +1,7 @@
 <script lang="typescript">
-  import { Router, Route } from "svelte-routing";
+  // import {onMount} from "svelte";
+  // import axios from "axios";
+  import {Router, Route, navigate} from "svelte-routing";
 
   // components for this layout
   import AuthNavbar from "../components/Navbars/AuthNavbar.svelte";
@@ -9,10 +11,24 @@
   import Login from "../views/auth/Login.svelte";
   import Register from "../views/auth/Register.svelte";
 
+  // import {AuthStatus} from "../models";
+  // import {authStatus} from "../stores";
+
   const registerBg2: string = "../assets/img/register_bg_2.png";
 
   export let auth: string = "";
   export let location: Location;
+
+  // onMount(async () => {
+  //   console.debug("checking status from Auth layout");
+  //   const res = await axios.get("/users/status", { withCredentials: true });
+  //   const as: AuthStatus = res.data;
+  //   authStatus.setAuthStatus(as);
+  //
+  //   if (!as.isAdmin) {
+  //     navigate("/", { state: {}, replace: true });
+  //   }
+  // })
 </script>
 
 <div>

@@ -3,7 +3,6 @@ package bleve
 import (
 	"context"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/example_data"
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search"
@@ -67,14 +66,6 @@ func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger l
 	im := &bleveIndexManager{
 		index:  index,
 		logger: logger.WithName(fmt.Sprintf("%s_search", name)),
-	}
-
-	for _, x := range example_data.ExampleItemMap {
-		for _, y := range x {
-			if e := im.Index(context.Background(), y.ID, y); e != nil {
-				panic(e)
-			}
-		}
 	}
 
 	return im, nil

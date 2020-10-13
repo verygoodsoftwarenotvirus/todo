@@ -1,6 +1,7 @@
 <script lang="typescript">
   import axios, { AxiosResponse, AxiosError } from "axios";
   import { onMount } from "svelte";
+  import { link } from "svelte-routing";
 
   // core components
   import TableDropdown from "../TableDropdowns/TableDropdown.svelte";
@@ -50,7 +51,7 @@
 
     axios.get(uri, { withCredentials: true })
             .then((response: AxiosResponse<ItemList>) => {
-              items = response.data.items || [];
+              items = response.data || [];
               console.dir(items);
             })
             .catch((error: AxiosError) => {
@@ -166,7 +167,14 @@
           <th
             class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-left flex items-center"
           >
-            <span class="ml-3 font-bold btext-gray-700">{item.id}</span>
+            <span class="ml-3 font-bold btext-gray-700">
+            <a
+              use:link
+              href="/things/items/{item.id}"
+            >
+              {item.id}
+            </a>
+            </span>
           </th>
           <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4">
             {item.name}

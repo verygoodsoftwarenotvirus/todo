@@ -5,9 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/example_data"
+
 	"github.com/GuiaBolso/darwin"
 	"github.com/Masterminds/squirrel"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/example_data"
 )
 
 var currentMigration float64 = 0

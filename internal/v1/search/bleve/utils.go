@@ -15,11 +15,11 @@ var (
 func ensureQueryIsRestrictedToUser(query string, userID uint64) string {
 	switch {
 	case belongsToUserWithMandatedRestrictionRegexp.MatchString(query):
-		return query
+		return fmt.Sprintf("%q", query)
 	case belongsToUserWithoutMandatedRestrictionRegexp.MatchString(query):
-		query = belongsToUserWithoutMandatedRestrictionRegexp.ReplaceAllString(query, fmt.Sprintf("+belongsToUser:%d", userID))
+		query = fmt.Sprintf("%q", belongsToUserWithoutMandatedRestrictionRegexp.ReplaceAllString(query, fmt.Sprintf("+belongsToUser:%d", userID)))
 	case !belongsToUserWithMandatedRestrictionRegexp.MatchString(query):
-		query = fmt.Sprintf("%s +belongsToUser:%d", query, userID)
+		query = fmt.Sprintf("%q +belongsToUser:%d", query, userID)
 	}
 
 	return query

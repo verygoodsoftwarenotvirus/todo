@@ -11,6 +11,7 @@
 
   // pages for this layout
   import Items from "../views/things/Items.svelte";
+  import Item from "../views/things/Item.svelte";
 
   import {AuthStatus} from "../models";
   import {authStatus} from "../stores";
@@ -25,7 +26,7 @@
            authStatus.setAuthStatus(res.data);
          })
          .catch((error: AxiosError) => {
-           navigate("/", { state: {}, replace: true });
+           navigate("/auth/login", { state: {}, replace: true });
          });
   })
 </script>
@@ -38,6 +39,9 @@
     <div class="px-4 md:px-10 mx-auto w-full -m-24">
       <Router url="things">
         <Route path="items" component="{Items}" />
+        <Route path="items/:id" let:params>
+          <Item id="{params.id}" />
+        </Route>
       </Router>
       <FooterAdmin />
     </div>

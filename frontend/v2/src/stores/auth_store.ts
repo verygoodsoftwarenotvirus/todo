@@ -7,9 +7,9 @@ function buildAuthStatus() {
 
     return {
         subscribe,
-        setAuthStatus: (authStatus: AuthStatus) => set(authStatus),
+        setAuthStatus: (x: AuthStatus) => set(x),
         logout: () => set({}),
     };
 }
 
-export const authStatus = buildAuthStatus();
+export const authStatusStore = buildAuthStatus();

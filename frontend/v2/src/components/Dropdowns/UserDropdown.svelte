@@ -8,6 +8,10 @@
   let btnDropdownRef;
   let popoverDropdownRef;
 
+  function goToSettings() {
+    navigate("/admin/settings", { state: {}, replace: true });
+  }
+
   function logout() {
     axios.post("/users/logout", {
       withCredentials: true,
@@ -54,18 +58,17 @@
     bind:this="{popoverDropdownRef}"
     class="bg-white text-base z-50 float-left py-2 list-none text-left rounded shadow-lg min-w-48 {dropdownPopoverShow ? 'block':'hidden'}"
   >
-    <a
-      use:link
-      href="/admin/settings" on:click={(e) => e.preventDefault()}
+    <button
+      on:click={goToSettings}
       class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent text-gray-800"
     >
       <i class="fa fa-cogs"></i>
       Settings
-    </a>
+    </button>
     <div class="h-0 my-2 border border-solid border-gray-200" />
     <button
-      on:click={logout}
-      class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent text-gray-800"
+        on:click={logout}
+        class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent text-red-600"
     >
       <i class="fa fa-sign-out-alt"></i>
       Log Out

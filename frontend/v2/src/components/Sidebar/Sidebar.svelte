@@ -6,7 +6,7 @@
   import UserDropdown from "../Dropdowns/UserDropdown.svelte";
 
   import { AuthStatus } from "../../models";
-  import { authStatus } from "../../stores";
+  import { authStatusStore } from "../../stores";
 
   export let location: Location;
 
@@ -16,7 +16,7 @@
   }
 
   let currentAuthStatus = {};
-  authStatus.subscribe((value: AuthStatus) => {
+  authStatusStore.subscribe((value: AuthStatus) => {
     currentAuthStatus = value;
   });
 </script>

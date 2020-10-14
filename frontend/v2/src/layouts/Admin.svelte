@@ -3,7 +3,7 @@
   import { onMount } from "svelte";
   import { navigate, Router, Route } from "svelte-routing";
 
-  import { authStatus } from "../stores";
+  import { authStatusStore } from "../stores";
   import { AuthStatus } from "../models";
 
   // components for this layout
@@ -24,7 +24,7 @@
     console.debug("checking status from Admin layout");
     const res = await axios.get("/users/status", { withCredentials: true });
     const as: AuthStatus = res.data;
-    authStatus.setAuthStatus(as);
+    authStatusStore.setAuthStatus(as);
 
     if (!as.isAdmin) {
       navigate("/", { state: {}, replace: true });

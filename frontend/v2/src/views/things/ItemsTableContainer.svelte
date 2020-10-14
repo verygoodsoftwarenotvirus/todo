@@ -14,9 +14,9 @@
     let itemRetrievalError = '';
     let items: Item[] = []; // fakeItemFactory.buildList(10);
 
-    import { authStatus } from "../../stores";
+    import { authStatusStore } from "../../stores";
     let currentAuthStatus = {};
-    authStatus.subscribe((value: AuthStatus) => {
+    authStatusStore.subscribe((value: AuthStatus) => {
         currentAuthStatus = value;
     });
 

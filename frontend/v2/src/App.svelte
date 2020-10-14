@@ -5,7 +5,7 @@
   import { onMount } from 'svelte';
 
   import { AuthStatus } from "./models";
-  import { authStatus } from "./stores/auth_store";
+  import { authStatusStore } from "./stores/auth_store";
 
   // Admin Layout
   import Admin from "./layouts/Admin.svelte";
@@ -23,7 +23,7 @@
     console.debug("fetching user status from App.svelte")
     axios.get("/users/status", { withCredentials: true })
           .then((response: AxiosResponse<AuthStatus>) => {
-            authStatus.setAuthStatus(response.data);
+            authStatusStore.setAuthStatus(response.data);
           })
           .catch((error: AxiosError) => {
             console.error(error);

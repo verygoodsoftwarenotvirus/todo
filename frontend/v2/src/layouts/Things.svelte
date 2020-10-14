@@ -10,11 +10,12 @@
   import FooterAdmin from "../components/Footers/FooterAdmin.svelte";
 
   // pages for this layout
-  import Items from "../views/things/Items.svelte";
-  import Item from "../views/things/Item.svelte";
+  import ItemsTablePage from "../views/things/ItemsTableContainer.svelte";
+  import ReadUpdateDeleteItem from "../components/Things/Items/ReadUpdateDeleteItem.svelte";
+  import CreateItem from "../components/Things/Items/CreateItem.svelte";
 
   import {AuthStatus} from "../models";
-  import {authStatus} from "../stores";
+  import {authStatusStore} from "../stores";
 
   export let location: Location;
   export let admin: string = "";
@@ -23,7 +24,7 @@
     console.debug("checking status from Things layout");
     axios.get("/users/status", { withCredentials: true })
          .then((res: AxiosResponse<AuthStatus>) => {
-           authStatus.setAuthStatus(res.data);
+           authStatusStore.setAuthStatus(res.data);
          })
          .catch((error: AxiosError) => {
            navigate("/auth/login", { state: {}, replace: true });
@@ -38,10 +39,11 @@
     <HeaderStats />
     <div class="px-4 md:px-10 mx-auto w-full -m-24">
       <Router url="things">
-        <Route path="items" component="{Items}" />
+        <Route path="items" component="{ItemsTablePage}" />
         <Route path="items/:id" let:params>
-          <Item id="{params.id}" />
+          <ReadUpdateDeleteItem id="{params.id}" />
         </Route>
+        <Route path="items/new" component="{CreateItem}" />
       </Router>
       <FooterAdmin />
     </div>

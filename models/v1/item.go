@@ -74,6 +74,12 @@ type (
 	}
 )
 
+type DiffReport struct {
+	FieldName string
+	OldValue  string
+	NewValue  string
+}
+
 // Update merges an ItemInput with an item.
 func (x *Item) Update(input *ItemUpdateInput) {
 	if input.Name != "" && input.Name != x.Name {

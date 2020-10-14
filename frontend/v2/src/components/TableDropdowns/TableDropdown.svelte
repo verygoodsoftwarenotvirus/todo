@@ -9,6 +9,7 @@
   let btnDropdownRef;
   let popoverDropdownRef;
 
+  export let deletionFunc;
   const toggleDropdown = (event) => {
     event.preventDefault();
     if (dropdownPopoverShow) {
@@ -38,10 +39,7 @@
     <span
       class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent text-gray-800"
     >
-      <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-        Delete Item
-      </button>
+      this doesn't do anything useful yet
     </span>
-
   </div>
 </div>

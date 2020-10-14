@@ -4,10 +4,10 @@
   import { link, navigate } from "svelte-routing";
 
   // core components
-  import TableDropdown from "../TableDropdowns/TableDropdown.svelte";
+  import TableDropdown from "../../TableDropdowns/TableDropdown.svelte";
 
-  import { renderUnixTime, inheritQueryFilterSearchParams } from "../../utils"
-  import { Item, ItemList } from "../../models/"
+  import { renderUnixTime, inheritQueryFilterSearchParams } from "../../../utils"
+  import { Item, ItemList } from "../../../models/"
 
   export let adminMode: boolean = false;
   let searchQuery: string = '';
@@ -27,9 +27,9 @@
     fetchItems();
   }
 
-  import { authStatusStore } from "../../stores";
+  import { authStatus } from "../../../stores";
   let currentAuthStatus = {};
-  authStatusStore.subscribe((value: AuthStatus) => {
+  authStatus.subscribe((value: AuthStatus) => {
     currentAuthStatus = value;
   });
 

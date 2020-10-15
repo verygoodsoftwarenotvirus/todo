@@ -1,17 +1,12 @@
 import { writable } from 'svelte/store';
 
-function buildAdminModeStatus() {
-    const { subscribe, set, update } = writable({});
-
-    let adminMode: boolean = false;
+function createAdminModeStore() {
+    const { subscribe, update } = writable<boolean>(false);
 
     return {
         subscribe,
-        toggleAdminStatus: () => {
-            adminMode = !adminMode
-            set(adminMode);
-        },
+        toggle: () => update(n => !n),
     };
 }
 
-export const adminModeStatus = buildAdminModeStatus();
+export const adminModeStore = createAdminModeStore();

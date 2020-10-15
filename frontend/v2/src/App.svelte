@@ -11,7 +11,9 @@
   import Admin from "./layouts/Admin.svelte";
   // Auth Layout
   import Auth from "./layouts/Auth.svelte";
-  // Auth Layout
+  // User Layout
+  import User from "./layouts/User.svelte";
+  // Things Layout
   import Things from "./layouts/Things.svelte";
 
   // No Layout Pages
@@ -19,10 +21,11 @@
 
   export let url: string = "";
 
-  onMount(async () => {
+  onMount(() => {
     console.debug("fetching user status from App.svelte")
     axios.get("/users/status", { withCredentials: true })
           .then((response: AxiosResponse<AuthStatus>) => {
+            console.debug("setting auth status from App.svelte");
             authStatusStore.setAuthStatus(response.data);
           })
           .catch((error: AxiosError) => {
@@ -36,7 +39,9 @@
   <Route path="admin/*admin" component="{Admin}" />
   <!-- auth layout -->
   <Route path="auth/*auth" component="{Auth}" />
-  <!-- auth layout -->
+  <!-- users layout -->
+  <Route path="user/*user" component="{User}" />
+  <!-- things layout -->
   <Route path="things/*things" component="{Things}" />
   <!-- no layout pages -->
   <Route path="/" component="{Index}" />

@@ -1,7 +1,7 @@
 <script lang="typescript">
     // core components
     import axios, {AxiosError, AxiosResponse} from "axios";
-    import {onMount} from "svelte";
+    import { onDestroy, onMount} from "svelte";
 
     import ItemsTable from "../../components/Things/Items/ItemsTable.svelte";
 
@@ -15,9 +15,10 @@
 
     import { authStatusStore } from "../../stores";
     let currentAuthStatus = {};
-    authStatusStore.subscribe((value: AuthStatus) => {
+    const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: AuthStatus) => {
         currentAuthStatus = value;
     });
+    // onDestroy(unsubscribeFromAuthStatusUpdates);
 
     onMount(() => {
         console.debug("views/things/items.onMount called");

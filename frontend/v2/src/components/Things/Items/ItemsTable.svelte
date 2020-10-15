@@ -1,14 +1,12 @@
 <script lang="typescript">
   import axios, { AxiosResponse, AxiosError } from "axios";
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { link, navigate } from "svelte-routing";
 
   import { renderUnixTime, inheritQueryFilterSearchParams } from "../../../utils"
   import { Item, ItemList } from "../../../models/"
 
-  let adminMode: boolean = false;
   let searchQuery: string = '';
-
   let currentPage: number = 0;
   let pageQuantity: number = 20;
 
@@ -24,11 +22,19 @@
     fetchItems();
   }
 
+  import { adminModeStore } from "../../../stores";
+  let adminMode: boolean = false;
+  const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe((value: boolean) => {
+    adminMode = value;
+    console.debug(`setting adminMode to ${adminMode} via the adminModeStore`);
+  });
+
   import { authStatusStore } from "../../../stores";
   let currentAuthStatus = {};
-  authStatusStore.subscribe((value: AuthStatus) => {
+  const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: AuthStatus) => {
     currentAuthStatus = value;
   });
+  // onDestroy(unsubscribeFromAuthStatusUpdates);
 
   function search(): void {
     if (searchQuery.length >= 3) {
@@ -155,7 +161,8 @@
         <h3 class="font-semibold text-lg text-gray-800">
           Items
           <a use:link href="/things/items/new">
-            <i class="fa fa-plus-circle text-green-500"></i>
+            <!-- <i class="fa fa-plus-circle text-green-500"></i> -->
+            🆕
           </a>
         </h3>
       </div>

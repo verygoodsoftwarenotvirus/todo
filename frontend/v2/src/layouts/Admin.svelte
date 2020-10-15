@@ -1,10 +1,7 @@
 <script lang="typescript">
   import axios, {AxiosError, AxiosResponse} from "axios";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import { navigate, Router, Route } from "svelte-routing";
-
-  import { authStatusStore } from "../stores";
-  import { AuthStatus } from "../models";
 
   // components for this layout
   import AdminNavbar from "../components/Navbars/AdminNavbar.svelte";
@@ -18,18 +15,34 @@
   import Tables from "../views/admin/Tables.svelte";
 
   export let location: Location;
-  export let admin: string = "";
 
-  onMount(async () => {
-    console.debug("checking status from Admin layout");
-    const res = await axios.get("/users/status", { withCredentials: true });
-    const as: AuthStatus = res.data;
-    authStatusStore.setAuthStatus(as);
+  import { authStatusStore } from "../stores";
+  import { AuthStatus } from "../models";
 
-    if (!as.isAdmin) {
-      navigate("/", { state: {}, replace: true });
+  let currentAuthStatus = {};
+  const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: AuthStatus) => {
+    currentAuthStatus = value;
+  });
+  // onDestroy(unsubscribeFromAuthStatusUpdates);
+
+  onMount(() => {
+    if (!currentAuthStatus.isAuthenticated) {
+      console.debug("I would fuck you off back to the login page");
+    } else {
+      console.debug("Admin layout onMount called");
     }
   })
+
+  // onMount(async () => {
+  //   console.debug("checking status from Admin layout");
+  //   const res = await axios.get("/users/status", { withCredentials: true });
+  //   const as: AuthStatus = res.data;
+  //   authStatusStore.setAuthStatus(as);
+  //
+  //   if (!as.isAdmin) {
+  //     navigate("/", { state: {}, replace: true });
+  //   }
+  // })
 </script>
 
 <div>

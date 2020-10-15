@@ -69,6 +69,7 @@ var (
 		"/admin/dashboard":   {},
 		"admin/things/items": {},
 		"admin/users":        {},
+		"/user/settings":     {},
 		"/auth/register":     {},
 		"/auth/login":        {},
 		"/things/items":      {},

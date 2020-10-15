@@ -3,14 +3,33 @@
   import { link, navigate } from "svelte-routing";
   import { createPopper } from "@popperjs/core";  // library for creating dropdown menu appear on click
 
-  let dropdownPopoverShow: Boolean = false;
+  import {AuthStatus} from "../../models";
 
+  let dropdownPopoverShow: Boolean = false;
   let btnDropdownRef;
+
   let popoverDropdownRef;
+
+  import { authStatusStore } from "../../stores";
+  let currentAuthStatus: AuthStatus = new AuthStatus();
+  const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: AuthStatus) => {
+    currentAuthStatus = value;
+  });
+
+
+  import { adminModeStore } from "../../stores";
+  let adminMode: boolean = false;
+  const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe((value: boolean) => {
+    adminMode = value;
+  });
+
+  function toggleAdminMode(): void {
+
+   }
 
   function goToSettings() {
     dropdownPopoverShow = false;
-    navigate("/admin/settings", { state: {}, replace: true });
+    navigate("/user/settings", { state: {}, replace: true });
   }
 
   function logout() {
@@ -67,13 +86,36 @@
       <i class="fa fa-cogs"></i>
       Settings
     </button>
+    {#if currentAuthStatus.isAdmin}
     <div class="h-0 my-2 border border-solid border-gray-200" />
     <button
-        on:click={logout}
-        class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent text-red-600"
+      on:click={logout}
+      class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent {adminMode ? 'underline text-indigo-500' : ''} "
+    >
+      <i class="fa fa-user-secret"></i>
+      Admin Mode {adminMode ? '🔓' : '🔒'}
+    </button>
+    {/if}
+    <div class="h-0 my-2 border border-solid border-gray-200" />
+    <button
+            on:click={logout}
+            class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent text-red-600"
     >
       <i class="fa fa-sign-out-alt"></i>
       Log Out
     </button>
   </div>
 </div>
+
+<style>
+  .toggle-checkbox:checked{
+    /*@apply:right-0 border-green-400;*/
+    right:0;
+    border-color:#68D391;
+  }
+
+  .toggle-checkbox:checked + .toggle-label{
+    /*@apply:bg-green-400;*/
+    background-color:#68D391;
+  }
+</style>

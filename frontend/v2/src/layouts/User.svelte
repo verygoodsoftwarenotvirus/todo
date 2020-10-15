@@ -1,5 +1,5 @@
 <script lang="typescript">
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount} from "svelte";
   import axios, { AxiosResponse, AxiosError } from "axios";
   import {Router, Route, navigate} from "svelte-routing";
 
@@ -10,9 +10,7 @@
   import FooterAdmin from "../components/Footers/FooterAdmin.svelte";
 
   // pages for this layout
-  import ItemsTablePage from "../views/things/ItemsTableContainer.svelte";
-  import ReadUpdateDeleteItem from "../components/Things/Items/ReadUpdateDeleteItem.svelte";
-  import CreateItem from "../components/Things/Items/CreateItem.svelte";
+  import UserSettings from "../views/user/Settings.svelte"
 
   export let location: Location;
 
@@ -20,13 +18,12 @@
   import { AuthStatus } from "../models";
   let currentAuthStatus = {};
   const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: AuthStatus) => {
-    console.log("setting authStore status");
     currentAuthStatus = value;
   });
   // onDestroy(unsubscribeFromAuthStatusUpdates);
 
-  onMount(async () => {
-    console.debug("Things layout onMount called");
+  onMount(() => {
+    console.debug("User layout onMount called");
   })
 </script>
 
@@ -36,12 +33,8 @@
     <PlainNavbar />
     <HeaderStats />
     <div class="px-4 md:px-10 mx-auto w-full -m-24">
-      <Router url="things">
-        <Route path="items" component="{ItemsTablePage}" />
-        <Route path="items/:id" let:params>
-          <ReadUpdateDeleteItem id="{params.id}" />
-        </Route>
-        <Route path="items/new" component="{CreateItem}" />
+      <Router url="user">
+        <Route path="user/settings" component="{UserSettings}" />
       </Router>
       <FooterAdmin />
     </div>

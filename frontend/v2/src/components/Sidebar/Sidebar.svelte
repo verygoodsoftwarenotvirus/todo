@@ -1,4 +1,5 @@
 <script lang="typescript">
+  import { onDestroy } from "svelte";
   import { link } from "svelte-routing";
 
   // core components
@@ -16,9 +17,10 @@
   }
 
   let currentAuthStatus = {};
-  authStatusStore.subscribe((value: AuthStatus) => {
+  const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: AuthStatus) => {
     currentAuthStatus = value;
   });
+  // onDestroy(unsubscribeFromAuthStatusUpdates())
 </script>
 
 <nav

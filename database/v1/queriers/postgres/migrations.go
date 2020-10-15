@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/example_data"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/exampledata"
 
 	"github.com/GuiaBolso/darwin"
 	"github.com/Masterminds/squirrel"
@@ -145,43 +145,45 @@ func (p *Postgres) Migrate(ctx context.Context, createTestUser bool) error {
 	p.migrateOnce.Do(buildMigrationFunc(p.db))
 
 	if createTestUser {
-		for _, x := range example_data.ExampleUsers {
-			query, args, err := p.sqlBuilder.
-				Insert(usersTableName).
-				Columns(
-					usersTableUsernameColumn,
-					usersTableHashedPasswordColumn,
-					usersTableSaltColumn,
-					usersTableTwoFactorColumn,
-					usersTableIsAdminColumn,
-					usersTableTwoFactorVerifiedOnColumn,
-				).
-				Values(
-					x.Username,
-					x.HashedPassword,
-					x.Salt,
-					x.TwoFactorSecret,
-					x.IsAdmin,
-					squirrel.Expr(currentUnixTimeQuery),
-				).
-				ToSql()
-			p.logQueryBuildingError(err)
+		const usingDemoCodeThatShouldBeDeletedLater = true
 
-			if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
-				return dbErr
-			}
-		}
+		if usingDemoCodeThatShouldBeDeletedLater {
+			for _, x := range exampledata.ExampleUsers {
+				query, args, err := p.sqlBuilder.
+					Insert(usersTableName).
+					Columns(
+						usersTableUsernameColumn,
+						usersTableHashedPasswordColumn,
+						usersTableSaltColumn,
+						usersTableTwoFactorColumn,
+						usersTableIsAdminColumn,
+						usersTableTwoFactorVerifiedOnColumn,
+					).
+					Values(
+						x.Username,
+						x.HashedPassword,
+						x.Salt,
+						x.TwoFactorSecret,
+						x.IsAdmin,
+						squirrel.Expr(currentUnixTimeQuery),
+					).
+					ToSql()
+				p.logQueryBuildingError(err)
 
-		for _, x := range example_data.ExampleItemMap {
-			for _, y := range x {
-				query, args := p.buildCreateItemQuery(y)
 				if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
 					return dbErr
 				}
 			}
-		}
 
-		/*
+			for _, x := range exampledata.ExampleItemMap {
+				for _, y := range x {
+					query, args := p.buildCreateItemQuery(y)
+					if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
+						return dbErr
+					}
+				}
+			}
+		} else {
 			query, args, err := p.sqlBuilder.
 				Insert(usersTableName).
 				Columns(
@@ -207,7 +209,7 @@ func (p *Postgres) Migrate(ctx context.Context, createTestUser bool) error {
 			if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
 				return dbErr
 			}
-		*/
+		}
 	}
 
 	return nil

@@ -8,10 +8,11 @@ import (
 type (
 	// AuditEvent represents an event we might want to log for audit purposes.
 	AuditEvent struct {
-		ID              uint64 `json:"id"`
-		Type            string `json:"name"`
-		CreatedOn       uint64 `json:"createdOn"`
-		PerformedByUser uint64 `json:"performedByUser"`
+		ID              uint64                 `json:"id"`
+		Type            string                 `json:"name"`
+		CreatedOn       uint64                 `json:"createdOn"`
+		PerformedByUser uint64                 `json:"performedByUser"`
+		Changes         []AuditUpdateFieldDiff `json:"changes"`
 	}
 
 	// AuditEventList represents a list of items.
@@ -27,18 +28,11 @@ type (
 		BelongsToUser uint64 `json:"-"`
 	}
 
-	// AuditEventUpdateInput represents what a user could set as input for updating items.
-	AuditEventUpdateInput struct {
-		Name          string `json:"name"`
-		Details       string `json:"details"`
-		BelongsToUser uint64 `json:"-"`
-	}
-
-	// AuditUpdateFieldDiff
+	// AuditUpdateFieldDiff keeps track of what gets modified within audit reports
 	AuditUpdateFieldDiff struct {
-		Field    string
-		OldValue string
-		NewValue string
+		FieldName string `json:"fieldName"`
+		OldValue  string `json:"oldValue"`
+		NewValue  string `json:"newValue"`
 	}
 
 	// AuditEventDataManager describes a structure capable of storing items permanently.

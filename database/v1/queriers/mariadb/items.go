@@ -275,8 +275,12 @@ func (m *MariaDB) GetItems(ctx context.Context, userID uint64, filter *models.Qu
 func (m *MariaDB) buildGetItemsForAdminQuery(filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 
+	if filter == nil {
+		filter = models.DefaultQueryFilter()
+	}
+
 	where := squirrel.Eq{}
-	if filter.IncludeArchived {
+	if filter != nil && filter.IncludeArchived {
 		where[fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn)] = nil
 	}
 
@@ -286,9 +290,7 @@ func (m *MariaDB) buildGetItemsForAdminQuery(filter *models.QueryFilter) (query 
 		Where(where).
 		OrderBy(fmt.Sprintf("%s.%s", itemsTableName, idColumn))
 
-	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder, itemsTableName)
-	}
+	filter.ApplyToQueryBuilder(builder, itemsTableName)
 
 	query, args, err = builder.ToSql()
 	m.logQueryBuildingError(err)

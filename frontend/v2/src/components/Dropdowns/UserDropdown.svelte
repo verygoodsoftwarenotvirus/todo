@@ -9,6 +9,7 @@
   let popoverDropdownRef;
 
   function goToSettings() {
+    dropdownPopoverShow = false;
     navigate("/admin/settings", { state: {}, replace: true });
   }
 
@@ -18,6 +19,7 @@
     }).then((response: AxiosResponse) => {
       if (response.status === 200) {
         navigate("/auth/login", { state: {}, replace: true })
+        dropdownPopoverShow = false;
       }
     });
   }

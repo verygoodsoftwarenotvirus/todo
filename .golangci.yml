@@ -230,6 +230,7 @@ issues:
         - gosec
         - lll
         - bodyclose
+        - unparam
 
     - path: tests/v1
       linters:

@@ -2,7 +2,6 @@ package items
 
 import (
 	"errors"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"net/http"
 	"testing"
 
@@ -10,6 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
 	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
 	"github.com/stretchr/testify/assert"

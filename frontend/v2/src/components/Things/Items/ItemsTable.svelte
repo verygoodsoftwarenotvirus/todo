@@ -3,13 +3,10 @@
   import { onMount } from "svelte";
   import { link, navigate } from "svelte-routing";
 
-  // core components
-  import TableDropdown from "../../TableDropdowns/TableDropdown.svelte";
-
   import { renderUnixTime, inheritQueryFilterSearchParams } from "../../../utils"
   import { Item, ItemList } from "../../../models/"
 
-  export let adminMode: boolean = false;
+  let adminMode: boolean = false;
   let searchQuery: string = '';
 
   let currentPage: number = 0;
@@ -27,9 +24,9 @@
     fetchItems();
   }
 
-  import { authStatus } from "../../../stores";
+  import { authStatusStore } from "../../../stores";
   let currentAuthStatus = {};
-  authStatus.subscribe((value: AuthStatus) => {
+  authStatusStore.subscribe((value: AuthStatus) => {
     currentAuthStatus = value;
   });
 
@@ -124,6 +121,28 @@
             });
   }
 
+  function promptDelete(id: number) {
+    console.debug("components/tables/ItemsTable promptDelete called");
+
+    if (confirm(`are you sure you want to delete item #${id}?`)) {
+      const path: string = `/api/v1/items/${id}`;
+
+      axios.delete(path, { withCredentials: true })
+              .then((response: AxiosResponse<Item>) => {
+                if (response.status === 204) {
+                  fetchItems();
+                }
+              })
+              .catch((error: AxiosError) => {
+                if (error.response) {
+                  if (error.response.data) {
+                    itemRetrievalError = error.response.data;
+                  }
+                }
+              });
+    }
+  }
+
   onMount(fetchItems)
 </script>
 
@@ -169,6 +188,7 @@
       {#if itemRetrievalError !== ''}
         <span class="text-red-600">{itemRetrievalError}</span>
       {/if}
+
       <!--{#if currentAuthStatus.isAdmin}-->
       <!--  <button class="{adminMode ? 'bg-red-500 hover:bg-red-700' : 'bg-blue-500 hover:bg-blue-700'} text-white font-bold py-1 px-2 rounded" on:click={toggleAdminMode}>-->
       <!--    <i class="fa fa-toolbox"></i> Admin Mode: {adminMode ? 'ON' : 'OFF'}-->
@@ -237,8 +257,8 @@
               {item.belongsToUser}
             </td>
           {/if}
-          <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-right">
-            <TableDropdown />
+          <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-right text-red-600">
+            <div on:click={promptDelete(item.id)}><i class="fa fa-trash"></i></div>
           </td>
         </tr>
       {/each}

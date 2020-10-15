@@ -3,25 +3,19 @@ package items
 import (
 	"database/sql"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
-	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"net/http"
 	"strings"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+
+	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
 const (
 	// URIParamKey is a standard string that we'll use to refer to item IDs with.
 	URIParamKey = "itemID"
 )
-
-// fetchSessionInfo grabs a SessionInfo out of the request context.
-func fetchSessionInfo(req *http.Request) *models.SessionInfo {
-	if si, ok := req.Context().Value(models.SessionInfoKey).(*models.SessionInfo); ok && si != nil {
-		return si
-	}
-	return &models.SessionInfo{}
-}
 
 func parseBool(str string) bool {
 	switch str {

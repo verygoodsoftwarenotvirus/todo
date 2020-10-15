@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config/viper"
 )
 
 const (
@@ -65,7 +65,7 @@ var (
 )
 
 func localDevelopmentCOnfig(filePath string) error {
-	cfg := config.BuildConfig()
+	cfg := viper.BuildViperConfig()
 
 	cfg.Set(metaRunMode, developmentEnv)
 	cfg.Set(metaDebug, true)
@@ -105,7 +105,7 @@ func localDevelopmentCOnfig(filePath string) error {
 }
 
 func frontendTestsConfig(filePath string) error {
-	cfg := config.BuildConfig()
+	cfg := viper.BuildViperConfig()
 
 	cfg.Set(metaRunMode, developmentEnv)
 	cfg.Set(metaStartupDeadline, time.Minute)
@@ -144,7 +144,7 @@ func frontendTestsConfig(filePath string) error {
 }
 
 func coverageConfig(filePath string) error {
-	cfg := config.BuildConfig()
+	cfg := viper.BuildViperConfig()
 
 	cfg.Set(metaRunMode, testingEnv)
 	cfg.Set(metaDebug, true)
@@ -175,7 +175,7 @@ func coverageConfig(filePath string) error {
 
 func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configFunc {
 	return func(filePath string) error {
-		cfg := config.BuildConfig()
+		cfg := viper.BuildViperConfig()
 
 		cfg.Set(metaRunMode, testingEnv)
 		cfg.Set(metaDebug, false)

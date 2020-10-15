@@ -275,8 +275,12 @@ func (s *Sqlite) GetItems(ctx context.Context, userID uint64, filter *models.Que
 func (s *Sqlite) buildGetItemsForAdminQuery(filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 
+	if filter == nil {
+		filter = models.DefaultQueryFilter()
+	}
+
 	where := squirrel.Eq{}
-	if filter.IncludeArchived {
+	if filter != nil && filter.IncludeArchived {
 		where[fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn)] = nil
 	}
 

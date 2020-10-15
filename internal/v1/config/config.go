@@ -3,34 +3,42 @@ package config
 import (
 	"crypto/rand"
 	"encoding/base32"
-	"fmt"
 	"io/ioutil"
 	"time"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search"
-
-	"github.com/spf13/viper"
 )
 
 const (
 	// DevelopmentRunMode is the run mode for a development environment
-	DevelopmentRunMode runMode = "development"
+	DevelopmentRunMode RunMode = "development"
 	// TestingRunMode is the run mode for a testing environment
-	TestingRunMode runMode = "testing"
+	TestingRunMode RunMode = "testing"
 	// ProductionRunMode is the run mode for a production environment
-	ProductionRunMode runMode = "production"
+	ProductionRunMode RunMode = "production"
 
-	defaultStartupDeadline                   = time.Minute
-	defaultRunMode                           = DevelopmentRunMode
-	defaultCookieLifetime                    = 24 * time.Hour
-	defaultMetricsCollectionInterval         = 2 * time.Second
-	defaultDatabaseMetricsCollectionInterval = 2 * time.Second
-	randStringSize                           = 32
+	// DefaultStartupDeadline is the default amount of time we allow for server startup
+	DefaultStartupDeadline = time.Minute
+
+	// DefaultRunMode is the default run mode
+	DefaultRunMode = DevelopmentRunMode
+
+	// DefaultCookieLifetime is the default amount of time we authorize cookies for
+	DefaultCookieLifetime = 24 * time.Hour
+
+	// DefaultMetricsCollectionInterval is the default amount of time we wait between runtime metrics queries
+	DefaultMetricsCollectionInterval = 2 * time.Second
+
+	// DefaultDatabaseMetricsCollectionInterval is the default amount of time we wait between database metrics queries
+	DefaultDatabaseMetricsCollectionInterval = 2 * time.Second
+
+	randStringSize = 32
 )
 
 var (
-	validModes = map[runMode]struct{}{
+	// ValidModes is a helper map with every valid RunMode present
+	ValidModes = map[RunMode]struct{}{
 		DevelopmentRunMode: {},
 		TestingRunMode:     {},
 		ProductionRunMode:  {},
@@ -45,7 +53,8 @@ func init() {
 }
 
 type (
-	runMode string
+	// RunMode describes what method of operation the server is under
+	RunMode string
 
 	// MetaSettings is primarily used for development.
 	MetaSettings struct {
@@ -55,7 +64,7 @@ type (
 		// StartupDeadline indicates how long the service can take to spin up. This includes database migrations, configuring services, etc.
 		StartupDeadline time.Duration `json:"startup_deadline" mapstructure:"startup_deadline" toml:"startup_deadline,omitempty"`
 		// RunMode indicates the current run mode
-		RunMode runMode `json:"run_mode" mapstructure:"run_mode" toml:"run_mode,omitempty"`
+		RunMode RunMode `json:"run_mode" mapstructure:"run_mode" toml:"run_mode,omitempty"`
 	}
 
 	// ServerSettings describes the settings pertinent to the HTTP serving portion of the service.
@@ -145,58 +154,10 @@ func (cfg *ServerConfig) EncodeToFile(path string, marshaler func(v interface{})
 	return ioutil.WriteFile(path, byteSlice, 0600)
 }
 
-// BuildConfig is a constructor function that initializes a viper config.
-func BuildConfig() *viper.Viper {
-	cfg := viper.New()
-
-	// meta stuff.
-	cfg.SetDefault("meta.run_mode", defaultRunMode)
-	cfg.SetDefault("meta.startup_deadline", defaultStartupDeadline)
-
-	// auth stuff.
-	cfg.SetDefault("auth.cookie_lifetime", defaultCookieLifetime)
-	cfg.SetDefault("auth.enable_user_signup", true)
-
-	// metrics stuff.
-	cfg.SetDefault("metrics.database_metrics_collection_interval", defaultMetricsCollectionInterval)
-	cfg.SetDefault("metrics.runtime_metrics_collection_interval", defaultDatabaseMetricsCollectionInterval)
-
-	// server stuff.
-	cfg.SetDefault("server.http_port", 80)
-
-	return cfg
-}
-
-// ParseConfigFile parses a configuration file.
-func ParseConfigFile(filename string) (*ServerConfig, error) {
-	cfg := BuildConfig()
-	cfg.SetConfigFile(filename)
-
-	if err := cfg.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("trying to read the config file: %w", err)
-	}
-
-	var serverConfig *ServerConfig
-	if err := cfg.Unmarshal(&serverConfig); err != nil {
-		return nil, fmt.Errorf("trying to unmarshal the config: %w", err)
-	}
-
-	if _, ok := validModes[serverConfig.Meta.RunMode]; !ok {
-		return nil, fmt.Errorf("invalid run mode: %q", serverConfig.Meta.RunMode)
-	}
-
-	// set the cookie secret to something (relatively) secure if not provided
-	if serverConfig.Auth.CookieSecret == "" {
-		serverConfig.Auth.CookieSecret = randString(randStringSize)
-	}
-
-	return serverConfig, nil
-}
-
-// randString produces a random string.
+// RandString produces a random string.
 // https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
-func randString(size uint) string {
-	b := make([]byte, size)
+func RandString() string {
+	b := make([]byte, randStringSize)
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}

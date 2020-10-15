@@ -2,16 +2,17 @@ package frontend
 
 import (
 	"bytes"
-	"github.com/makiuchi-d/gozxing"
-	"github.com/makiuchi-d/gozxing/qrcode"
-	"github.com/pquerna/otp/totp"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 	"image/png"
 	"net/url"
 	"os"
 	"testing"
 	"time"
 
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
+
+	"github.com/makiuchi-d/gozxing"
+	"github.com/makiuchi-d/gozxing/qrcode"
+	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tebeka/selenium"
@@ -188,7 +189,7 @@ func TestRegistrationFlow(T *testing.T) {
 			qrScreenshotBytes, qrCodeScreenshotErr := qrCode.Screenshot(false)
 			require.NoError(t, qrCodeScreenshotErr)
 
-			t.Logf("took screenshit of QR code: %q", user.Username)
+			t.Logf("took screenshot of QR code: %q", user.Username)
 
 			img, err := png.Decode(bytes.NewReader(qrScreenshotBytes))
 			require.NoError(t, err)

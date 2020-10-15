@@ -1,4 +1,4 @@
-package example_data
+package exampledata
 
 import "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
@@ -88,6 +88,7 @@ var (
 		IsAdmin:         true,
 	}
 
+	// ExampleUsers blah blah blah
 	ExampleUsers = []*models.User{
 		defaultExampleUser,
 		exampleUser1,
@@ -95,6 +96,7 @@ var (
 		exampleUser3,
 	}
 
+	// ExampleItemMap blah blah blah
 	ExampleItemMap = map[string][]*models.Item{
 		defaultUsername: {
 			{

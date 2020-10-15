@@ -74,21 +74,29 @@ type (
 	}
 )
 
-type DiffReport struct {
-	FieldName string
-	OldValue  string
-	NewValue  string
-}
-
 // Update merges an ItemInput with an item.
-func (x *Item) Update(input *ItemUpdateInput) {
-	if input.Name != "" && input.Name != x.Name {
+func (x *Item) Update(input *ItemUpdateInput) []AuditUpdateFieldDiff {
+	var out []AuditUpdateFieldDiff
+
+	if input.Name != x.Name {
 		x.Name = input.Name
+		out = append(out, AuditUpdateFieldDiff{
+			FieldName: "Name",
+			OldValue:  x.Name,
+			NewValue:  input.Name,
+		})
 	}
 
-	if input.Details != "" && input.Details != x.Details {
+	if input.Details != x.Details {
 		x.Details = input.Details
+		out = append(out, AuditUpdateFieldDiff{
+			FieldName: "Details",
+			OldValue:  x.Details,
+			NewValue:  input.Details,
+		})
 	}
+
+	return out
 }
 
 // ToUpdateInput creates a ItemUpdateInput struct for an item.

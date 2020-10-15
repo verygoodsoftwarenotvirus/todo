@@ -75,22 +75,24 @@ func TestQueryFilter_ToValues(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		qf := &QueryFilter{
-			Page:          100,
-			Limit:         50,
-			CreatedAfter:  123456789,
-			CreatedBefore: 123456789,
-			UpdatedAfter:  123456789,
-			UpdatedBefore: 123456789,
-			SortBy:        SortDescending,
+			Page:            100,
+			Limit:           50,
+			CreatedAfter:    123456789,
+			CreatedBefore:   123456789,
+			UpdatedAfter:    123456789,
+			UpdatedBefore:   123456789,
+			IncludeArchived: true,
+			SortBy:          SortDescending,
 		}
 		expected := url.Values{
-			pageQueryKey:          []string{strconv.Itoa(int(qf.Page))},
-			LimitQueryKey:         []string{strconv.Itoa(int(qf.Limit))},
-			createdBeforeQueryKey: []string{strconv.Itoa(int(qf.CreatedAfter))},
-			createdAfterQueryKey:  []string{strconv.Itoa(int(qf.CreatedBefore))},
-			updatedBeforeQueryKey: []string{strconv.Itoa(int(qf.UpdatedAfter))},
-			updatedAfterQueryKey:  []string{strconv.Itoa(int(qf.UpdatedBefore))},
-			sortByQueryKey:        []string{string(qf.SortBy)},
+			pageQueryKey:            []string{strconv.Itoa(int(qf.Page))},
+			LimitQueryKey:           []string{strconv.Itoa(int(qf.Limit))},
+			createdBeforeQueryKey:   []string{strconv.Itoa(int(qf.CreatedAfter))},
+			createdAfterQueryKey:    []string{strconv.Itoa(int(qf.CreatedBefore))},
+			updatedBeforeQueryKey:   []string{strconv.Itoa(int(qf.UpdatedAfter))},
+			updatedAfterQueryKey:    []string{strconv.Itoa(int(qf.UpdatedBefore))},
+			includeArchivedQueryKey: []string{strconv.FormatBool(qf.IncludeArchived)},
+			sortByQueryKey:          []string{string(qf.SortBy)},
 		}
 
 		actual := qf.ToValues()

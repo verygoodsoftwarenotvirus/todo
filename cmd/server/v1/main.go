@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config/viper"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
@@ -23,7 +23,7 @@ func main() {
 	}
 
 	// parse our config file.
-	cfg, err := config.ParseConfigFile(configFilepath)
+	cfg, err := viper.ParseConfigFile(configFilepath)
 	if err != nil || cfg == nil {
 		logger.Fatal(fmt.Errorf("error parsing configuration file: %w", err))
 	}

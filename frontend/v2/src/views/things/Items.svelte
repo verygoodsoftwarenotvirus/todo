@@ -3,7 +3,7 @@
     import axios, {AxiosError, AxiosResponse} from "axios";
     import { onDestroy, onMount} from "svelte";
 
-    import ItemsTable from "../../components/Things/Items/ItemsTable.svelte";
+    import ItemsTable from "../../components/Things/Tables/ItemsTable.svelte";
 
     import {inheritQueryFilterSearchParams} from "../../utils";
     import {Item, ItemList, fakeItemFactory } from "../../models";

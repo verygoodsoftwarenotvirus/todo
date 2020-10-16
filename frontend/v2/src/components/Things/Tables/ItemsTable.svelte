@@ -4,7 +4,7 @@
   import { link, navigate } from "svelte-routing";
 
   import { renderUnixTime, inheritQueryFilterSearchParams } from "../../../utils"
-  import { Item, ItemList } from "../../../models/"
+  import { Item, ItemList } from "../../../models"
 
   let searchQuery: string = '';
   let currentPage: number = 0;
@@ -232,7 +232,9 @@
               Belongs to User
             </th>
           {/if}
-          <th class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200"></th>
+          <th class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
+            Delete
+          </th>
         </tr>
       </thead>
       <tbody>

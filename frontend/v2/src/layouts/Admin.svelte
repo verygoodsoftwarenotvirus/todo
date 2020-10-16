@@ -1,6 +1,6 @@
 <script lang="typescript">
   import axios, {AxiosError, AxiosResponse} from "axios";
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy } from "svelte";
   import { navigate, Router, Route } from "svelte-routing";
 
   // components for this layout
@@ -22,30 +22,14 @@
   let currentAuthStatus = {};
   const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: AuthStatus) => {
     currentAuthStatus = value;
+    if (!currentAuthStatus) {
+      navigate("/auth/login", { state: {}, replace: true });
+    }
   });
   // onDestroy(unsubscribeFromAuthStatusUpdates);
 
   import { Logger } from "../logger"
   let logger = new Logger();
-
-  onMount(() => {
-    if (!currentAuthStatus.isAuthenticated) {
-      logger.debug("I would fuck you off back to the login page");
-    } else {
-      logger.debug("Admin layout onMount called");
-    }
-  })
-
-  // onMount(async () => {
-  //   logger.debug("checking status from Admin layout");
-  //   const res = await axios.get("/users/status", { withCredentials: true });
-  //   const as: AuthStatus = res.data;
-  //   authStatusStore.setAuthStatus(as);
-  //
-  //   if (!as.isAdmin) {
-  //     navigate("/", { state: {}, replace: true });
-  //   }
-  // })
 </script>
 
 <div>

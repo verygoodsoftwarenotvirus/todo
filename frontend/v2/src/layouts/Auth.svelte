@@ -22,7 +22,6 @@
   import {AuthStatus} from "../models";
   let currentAuthStatus = {};
   const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: AuthStatus) => {
-    logger.debug("setting authStore status");
     currentAuthStatus = value;
   });
   // onDestroy(unsubscribeFromAuthStatusUpdates);

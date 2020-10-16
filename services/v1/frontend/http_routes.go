@@ -64,19 +64,18 @@ var (
 	itemsAdminFrontendPathRegex = regexp.MustCompile(`/admin/things/items/\d+`)
 
 	validRoutes = map[string]struct{}{
-		"/admin":             {},
-		"/admin/settings":    {},
-		"/admin/dashboard":   {},
-		"admin/things/items": {},
-		"admin/users":        {},
-		"/user/settings":     {},
-		"/auth/register":     {},
-		"/auth/login":        {},
-		"/things/items":      {},
-		"/things/items/new":  {},
-		"/settings":          {},
-		"/dashboard":         {},
-		"/password/new":      {},
+		"/auth/register":        {},
+		"/auth/login":           {},
+		"/things/items":         {},
+		"/things/items/new":     {},
+		"/admin":                {},
+		"/admin/dashboard":      {},
+		"/admin/users":          {},
+		"/admin/oauth2_clients": {},
+		"/admin/webhooks":       {},
+		"/admin/audit_log":      {},
+		"/admin/settings":       {},
+		"/user/settings":        {},
 	}
 )
 

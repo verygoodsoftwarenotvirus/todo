@@ -28,11 +28,13 @@ export class Logger {
     includeContextByDefault: boolean
     level: LogLevel;
     context: Map<string, string>;
+    debugOnlyContext: Map<string, string>;
 
     constructor(level: LogLevel = LogLevel.Info, context: Map<string, string> | null = null) {
         this.level = level;
         this.includeContextByDefault = false;
         this.context = context ? new Map(context) : new Map();
+        this.debugOnlyContext = new Map();
     }
 
     private static buildStyle(bgColor: string = 'black', textColor: string = 'white'): string {
@@ -84,9 +86,16 @@ export class Logger {
         const prefix = debugPrefix;
         const style = Logger.buildStyle(debugBackgroundColor, debugTextColor);
 
+        let ctx = new Map(this.context);
+        for (const x of this.debugOnlyContext.entries()) {
+            if (!ctx.has(x[0])) {
+                ctx.set(x[0], x[1]);
+            }
+        }
+
         if (this.level >= LogLevel.Debug) {
             ( this.includeContextByDefault || includeCtx ) ?
-                console.debug(prefix, style, this.context, s) :
+                console.debug(prefix, style, ctx, s) :
                 console.debug(prefix, style, s);
         }
     }

@@ -23,19 +23,19 @@
 
   export let url: string = "";
 
-  let logger = new Logger().withValue("source", "App.Svelte");
+  let logger = new Logger().withValue("source", "src/App.svelte");
 
   onMount(() => {
     logger.withValue("functionName", "onMount").debug("called", true);
 
-    axios.get("/users/status", { withCredentials: true })
-          .then((response: AxiosResponse<AuthStatus>) => {
-            logger.debug("setting auth status from App.svelte");
-            authStatusStore.setAuthStatus(response.data);
-          })
-          .catch((error: AxiosError) => {
-            logger.error(error.toString());
-          });
+    // axios.get("/users/status", { withCredentials: true })
+    //       .then((response: AxiosResponse<AuthStatus>) => {
+    //         logger.debug("setting auth status from App.svelte");
+    //         authStatusStore.setAuthStatus(response.data);
+    //       })
+    //       .catch((error: AxiosError) => {
+    //         logger.error(error.toString());
+    //       });
   })
 </script>
 

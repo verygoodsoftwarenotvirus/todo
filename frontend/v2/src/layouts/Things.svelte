@@ -23,8 +23,10 @@
   import { AuthStatus } from "../models";
   let currentAuthStatus = {};
   const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: AuthStatus) => {
-    logger.debug("setting authStore status");
     currentAuthStatus = value;
+    if (!currentAuthStatus) {
+      navigate("/auth/login", { state: {}, replace: true });
+    }
   });
   // onDestroy(unsubscribeFromAuthStatusUpdates);
 </script>

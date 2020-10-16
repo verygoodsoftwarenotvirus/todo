@@ -446,7 +446,7 @@ func TestPostgres_buildWebhookCreationQuery(T *testing.T) {
 			strings.Join(exampleWebhook.Topics, topicsSeparator),
 			exampleWebhook.BelongsToUser,
 		}
-		actualQuery, actualArgs := p.buildWebhookCreationQuery(exampleWebhook)
+		actualQuery, actualArgs := p.buildCreateWebhookQuery(exampleWebhook)
 
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

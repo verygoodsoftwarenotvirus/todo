@@ -4,7 +4,7 @@
   import { link, navigate } from "svelte-routing";
 
   import { renderUnixTime, inheritQueryFilterSearchParams } from "../../../utils"
-  import { Item, ItemList } from "../../../models"
+  import { User, UserList } from "../../../models"
 
   let searchQuery: string = '';
   let currentPage: number = 0;
@@ -14,7 +14,7 @@
   let incrementDisabled: boolean = true;
   let decrementDisabled: boolean = true;
 
-  export let items: Item[] = [];
+  export let users: User[] = [];
   export let dataRetrievalError: string = '';
 
   import {Logger} from "../../../logger";
@@ -24,7 +24,7 @@
   let adminMode: boolean = false;
   const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe((value: boolean) => {
     adminMode = value;
-    fetchItems();
+    fetchUsers();
   });
 
   import { authStatusStore } from "../../../stores";
@@ -37,45 +37,47 @@
   function search(): void {
     if (searchQuery.length >= 3) {
       logger.debug(`searching for items: ${searchQuery}`)
-      searchItems();
+      searchUsers();
     }
   }
 
-  function searchItems() {
-    logger.debug("components/tables/ItemsTable searchItems called");
+  function searchUsers() {
+    logger.debug("components/tables/UsersTable searchUsers called");
 
-    const path: string = "/api/v1/items/search";
+    throw new Error("unimplemented");
 
-    const pageURLParams: URLSearchParams = new URLSearchParams(window.location.search);
-    const outboundURLParams: URLSearchParams = inheritQueryFilterSearchParams(pageURLParams);
+    const path: string = "/api/v1/users/search";
 
-    if (adminMode) {
-      outboundURLParams.set("admin", "true");
-    }
-    outboundURLParams.set("q", searchQuery)
-
-    const qs = outboundURLParams.toString()
-    const uri = `${path}?${qs}`;
-
-    axios.get(uri, { withCredentials: true })
-            .then((response: AxiosResponse<ItemList>) => {
-              items = response.data || [];
-              currentPage = -1;
-            })
-            .catch((error: AxiosError) => {
-              if (error.response) {
-                if (error.response.data) {
-                  dataRetrievalError = error.response.data;
-                }
-              }
-            });
+    // const pageURLParams: URLSearchParams = new URLSearchParams(window.location.search);
+    // const outboundURLParams: URLSearchParams = inheritQueryFilterSearchParams(pageURLParams);
+    //
+    // if (adminMode) {
+    //   outboundURLParams.set("admin", "true");
+    // }
+    // outboundURLParams.set("q", searchQuery)
+    //
+    // const qs = outboundURLParams.toString()
+    // const uri = `${path}?${qs}`;
+    //
+    // axios.get(uri, { withCredentials: true })
+    //         .then((response: AxiosResponse<UserList>) => {
+    //           items = response.data || [];
+    //           currentPage = -1;
+    //         })
+    //         .catch((error: AxiosError) => {
+    //           if (error.response) {
+    //             if (error.response.data) {
+    //               itemRetrievalError = error.response.data;
+    //             }
+    //           }
+    //         });
   }
 
   function incrementPage() {
     if (!incrementDisabled) {
         logger.debug(`incrementPage called`);
         currentPage += 1;
-        fetchItems();
+        fetchUsers();
     }
   }
 
@@ -83,7 +85,7 @@
     if (!decrementDisabled) {
         logger.debug(`decrementPage called`);
         currentPage -= 1;
-        fetchItems();
+        fetchUsers();
     }
   }
 
@@ -91,10 +93,10 @@
     logger.debug(`examplePostDeletionFunc called`);
   }
 
-  function fetchItems() {
-    logger.debug("components/tables/ItemsTable fetchItems called");
+  function fetchUsers() {
+    logger.debug("components/tables/UsersTable fetchUsers called");
 
-    const path: string = "/api/v1/items";
+    const path: string = "/users";
 
     const pageURLParams: URLSearchParams = new URLSearchParams(window.location.search);
     const outboundURLParams: URLSearchParams = inheritQueryFilterSearchParams(pageURLParams);
@@ -109,11 +111,13 @@
     const uri = `${path}?${qs}`;
 
     axios.get(uri, { withCredentials: true })
-            .then((response: AxiosResponse<ItemList>) => {
-              items = response.data.items || [];
+            .then((response: AxiosResponse<UserList>) => {
+              users = response.data.users || [];
+
+              console.dir(users);
 
               currentPage = response.data.page;
-              incrementDisabled = items.length === 0;
+              incrementDisabled = users.length === 0;
               decrementDisabled = currentPage === 1;
             })
             .catch((error: AxiosError) => {
@@ -126,15 +130,15 @@
   }
 
   function promptDelete(id: number) {
-    logger.debug("components/tables/ItemsTable promptDelete called");
+    logger.debug("components/tables/UsersTable promptDelete called");
 
-    if (confirm(`are you sure you want to delete item #${id}?`)) {
-      const path: string = `/api/v1/items/${id}`;
+    if (confirm(`are you sure you want to delete user #${id}?`)) {
+      const path: string = `/users/${id}`;
 
       axios.delete(path, { withCredentials: true })
-              .then((response: AxiosResponse<Item>) => {
+              .then((response: AxiosResponse<User>) => {
                 if (response.status === 204) {
-                  fetchItems();
+                  fetchUsers();
                 }
               })
               .catch((error: AxiosError) => {
@@ -146,10 +150,6 @@
               });
     }
   }
-
-  function goToNewPage() {
-    navigate("/things/items/new", { state: {}, replace: true });
-  }
 </script>
 
 <div
@@ -159,11 +159,8 @@
     <div class="flex flex-wrap items-center">
       <div class="relative w-full px-4 max-w-full flex-grow flex-1">
         <h3 class="font-semibold text-lg text-gray-800">
-          Items
-          <button class="border-2 font-bold py-1 px-4 m-2 rounded" on:click={goToNewPage}>
-            🆕
-          </button>
-          <button class="border-2 font-bold py-1 px-4 m-2 rounded" on:click={fetchItems}>
+          Users
+          <button class="border-2 font-bold py-1 px-4 m-2 rounded" on:click={fetchUsers}>
             🔄
           </button>
         </h3>
@@ -183,7 +180,7 @@
 
       <div>
         per page:
-        <select bind:value={pageQuantity} on:blur={fetchItems} class="appearance-none border p-1 rounded leading-tight">
+        <select bind:value={pageQuantity} on:blur={fetchUsers} class="appearance-none border p-1 rounded leading-tight">
           <option>20</option>
           <option>35</option>
           <option>50</option>
@@ -214,10 +211,16 @@
             ID
           </th>
           <th class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
-            Name
+            Username
           </th>
           <th class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
-            Details
+            Due For Password Change?
+          </th>
+          <th class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
+            Password Last Changed
+          </th>
+          <th class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
+            Admin?
           </th>
           <th class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
             Created On
@@ -225,45 +228,41 @@
           <th class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
             Last Updated On
           </th>
-          {#if currentAuthStatus.isAdmin && adminMode}
-            <th class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
-              Belongs to User
-            </th>
-          {/if}
           <th class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
             Delete
           </th>
         </tr>
       </thead>
       <tbody>
-      {#each items as item}
+      {#each users as user}
         <tr>
-          <a use:link href="/things/items/{item.id}">
+          <a use:link href="/admin/users/{user.id}">
             <th class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-left flex items-center">
               <span class="ml-3 font-bold btext-gray-700">
-                {item.id}
+                {user.id}
               </span>
             </th>
           </a>
           <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4">
-            {item.name}
+            {user.username}
           </td>
           <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4">
-            {item.details}
+            {user.requiresPasswordChange}
           </td>
           <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4">
-            {renderUnixTime(item.createdOn)}
+            {renderUnixTime(user.passwordLastChangedOn)}
           </td>
           <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4">
-            {renderUnixTime(item.lastUpdatedOn)}
+            {user.isAdmin}
           </td>
-          {#if currentAuthStatus.isAdmin && adminMode}
-            <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4">
-              {item.belongsToUser}
-            </td>
-          {/if}
+          <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4">
+            {renderUnixTime(user.createdOn)}
+          </td>
+          <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4">
+            {renderUnixTime(user.lastUpdatedOn)}
+          </td>
           <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-right text-red-600">
-            <div on:click={promptDelete(item.id)}><i class="fa fa-trash"></i></div>
+            <div on:click={promptDelete(user.id)}><i class="fa fa-trash"></i></div>
           </td>
         </tr>
       {/each}

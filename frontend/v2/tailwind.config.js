@@ -10,6 +10,8 @@ module.exports = {
       "./*.html",
       "./**/*.js",
       "./*.js",
+      "./**/*.jt",
+      "./*.ts",
       "./**/*.svelte",
       "./*.svelte",
     ],

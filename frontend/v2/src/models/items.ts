@@ -1,18 +1,15 @@
 import * as Factory from "factory.ts";
 import faker from "faker";
 
-import {defaultFactories} from "@/models/fakes";
+import { Pagination } from "@/models/api";
+import { defaultFactories } from "@/models/fakes";
 
-export class ItemList {
-    page: number;
-    limit: number;
-    totalCount: number;
+export class ItemList extends Pagination{
     items: Item[];
 
     constructor() {
-        this.page = 0;
-        this.limit = 0;
-        this.totalCount = 0;
+        super();
+
         this.items = [];
     }
 }

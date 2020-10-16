@@ -8,6 +8,8 @@
   import Sidebar from "../components/Sidebar/Sidebar.svelte";
   import FooterAdmin from "../components/Footers/FooterAdmin.svelte";
 
+  import AdminUsersTable from "../components/Things/Tables/AdminUsersTable.svelte";
+
   // pages for this layout
   import Dashboard from "../views/admin/Dashboard.svelte";
   import Settings from "../views/admin/Settings.svelte";
@@ -38,6 +40,7 @@
       <Router url="admin">
         <Route path="dashboard" component="{Dashboard}" />
         <Route path="settings" component="{Settings}" />
+        <Route path="users" component="{AdminUsersTable}" />
       </Router>
       <FooterAdmin />
     </div>

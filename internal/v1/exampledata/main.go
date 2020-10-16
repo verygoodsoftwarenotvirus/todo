@@ -56,49 +56,41 @@ const (
 )
 
 var (
-	defaultExampleUser = &models.User{
-		Username:        defaultUsername,
-		HashedPassword:  "$2a$10$JzD3CNBqPmwq.IidQuO7eu3zKdu8vEIi3HkLk8/qRjrzb7eNLKlKG",
-		Salt:            []byte("aaaaaaaaaaaaaaaa"),
-		TwoFactorSecret: "IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=",
-		IsAdmin:         true,
-	}
-
-	exampleUser1 = &models.User{
-		Username:        exampleUsername1,
-		HashedPassword:  "$2a$10$JzD3CNBqPmwq.IidQuO7eu3zKdu8vEIi3HkLk8/qRjrzb7eNLKlKG",
-		Salt:            []byte("aaaaaaaaaaaaaaaa"),
-		TwoFactorSecret: "IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=",
-		IsAdmin:         true,
-	}
-
-	exampleUser2 = &models.User{
-		Username:        exampleUsername2,
-		HashedPassword:  "$2a$10$JzD3CNBqPmwq.IidQuO7eu3zKdu8vEIi3HkLk8/qRjrzb7eNLKlKG",
-		Salt:            []byte("aaaaaaaaaaaaaaaa"),
-		TwoFactorSecret: "IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=",
-		IsAdmin:         true,
-	}
-
-	exampleUser3 = &models.User{
-		Username:        exampleUsername3,
-		HashedPassword:  "$2a$10$JzD3CNBqPmwq.IidQuO7eu3zKdu8vEIi3HkLk8/qRjrzb7eNLKlKG",
-		Salt:            []byte("aaaaaaaaaaaaaaaa"),
-		TwoFactorSecret: "IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=",
-		IsAdmin:         true,
-	}
-
 	// ExampleUsers blah blah blah
 	ExampleUsers = []*models.User{
-		defaultExampleUser,
-		exampleUser1,
-		exampleUser2,
-		exampleUser3,
+		{
+			Username:        defaultUsername,
+			HashedPassword:  "$2a$10$JzD3CNBqPmwq.IidQuO7eu3zKdu8vEIi3HkLk8/qRjrzb7eNLKlKG",
+			Salt:            []byte("aaaaaaaaaaaaaaaa"),
+			TwoFactorSecret: "IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=",
+			IsAdmin:         true,
+		},
+		{
+			Username:        exampleUsername1,
+			HashedPassword:  "$2a$10$JzD3CNBqPmwq.IidQuO7eu3zKdu8vEIi3HkLk8/qRjrzb7eNLKlKG",
+			Salt:            []byte("aaaaaaaaaaaaaaaa"),
+			TwoFactorSecret: "IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=",
+			IsAdmin:         true,
+		},
+		{
+			Username:        exampleUsername2,
+			HashedPassword:  "$2a$10$JzD3CNBqPmwq.IidQuO7eu3zKdu8vEIi3HkLk8/qRjrzb7eNLKlKG",
+			Salt:            []byte("aaaaaaaaaaaaaaaa"),
+			TwoFactorSecret: "IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=",
+			IsAdmin:         true,
+		},
+		{
+			Username:        exampleUsername3,
+			HashedPassword:  "$2a$10$JzD3CNBqPmwq.IidQuO7eu3zKdu8vEIi3HkLk8/qRjrzb7eNLKlKG",
+			Salt:            []byte("aaaaaaaaaaaaaaaa"),
+			TwoFactorSecret: "IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=",
+			IsAdmin:         true,
+		},
 	}
 
-	// ExampleItemMap blah blah blah
-	ExampleItemMap = map[string][]*models.Item{
-		defaultUsername: {
+	// ExampleItems blah blah blah
+	ExampleItems = [][]*models.Item{
+		{
 			{
 				Name:          "Apple #1",
 				BelongsToUser: 1,
@@ -120,7 +112,7 @@ var (
 				BelongsToUser: 1,
 			},
 		},
-		exampleUsername1: {
+		{
 			{
 				Name:          "Application #1",
 				BelongsToUser: 2,
@@ -142,7 +134,7 @@ var (
 				BelongsToUser: 2,
 			},
 		},
-		exampleUsername2: {
+		{
 			{
 				Name:          "Appliance #1",
 				BelongsToUser: 3,
@@ -164,7 +156,7 @@ var (
 				BelongsToUser: 3,
 			},
 		},
-		exampleUsername3: {
+		{
 			{
 				Name:          "Apple #1",
 				BelongsToUser: 4,
@@ -185,6 +177,204 @@ var (
 				Name:          "Apple Jack #5",
 				BelongsToUser: 4,
 			},
+		},
+	}
+
+	// ExampleOAuth2Clients blah blah blah
+	ExampleOAuth2Clients = []*models.OAuth2Client{
+		{
+			Name:            "example client 1",
+			ClientID:        "FAKEANDUNIMPORTANT",
+			ClientSecret:    "EOFITDNMKRANPTNAAU",
+			RedirectURI:     "https://localhost",
+			Scopes:          []string{"*"},
+			ImplicitAllowed: true,
+			BelongsToUser:   1,
+		},
+		{
+			Name:            "example client 2",
+			ClientID:        "FAKEANDUNIMPORTANT",
+			ClientSecret:    "OTTNANIANFAEKRUPMD",
+			RedirectURI:     "https://localhost",
+			Scopes:          []string{"*"},
+			ImplicitAllowed: true,
+			BelongsToUser:   1,
+		},
+		{
+			Name:            "example client 3",
+			ClientID:        "FAKEANDUNIMPORTANT",
+			ClientSecret:    "ATMNFUDRANEPOKTANI",
+			RedirectURI:     "https://localhost",
+			Scopes:          []string{"*"},
+			ImplicitAllowed: true,
+			BelongsToUser:   1,
+		},
+		{
+			Name:            "example client 4",
+			ClientID:        "FAKEANDUNIMPORTANT",
+			ClientSecret:    "NEIATMOFDRNATNPKAU",
+			RedirectURI:     "https://localhost",
+			Scopes:          []string{"*"},
+			ImplicitAllowed: true,
+			BelongsToUser:   1,
+		},
+		{
+			Name:            "example client 5",
+			ClientID:        "FAKEANDUNIMPORTANT",
+			ClientSecret:    "IKNNDAUOMANEFTATRP",
+			RedirectURI:     "https://localhost",
+			Scopes:          []string{"*"},
+			ImplicitAllowed: true,
+			BelongsToUser:   2,
+		},
+		{
+			Name:            "example client 6",
+			ClientID:        "FAKEANDUNIMPORTANT",
+			ClientSecret:    "EOFITDNMKRANPTNAAU",
+			RedirectURI:     "https://localhost",
+			Scopes:          []string{"*"},
+			ImplicitAllowed: true,
+			BelongsToUser:   2,
+		},
+		{
+			Name:            "example client 7",
+			ClientID:        "FAKEANDUNIMPORTANT",
+			ClientSecret:    "OTTNANIANFAEKRUPMD",
+			RedirectURI:     "https://localhost",
+			Scopes:          []string{"*"},
+			ImplicitAllowed: true,
+			BelongsToUser:   2,
+		},
+		{
+			Name:            "example client 8",
+			ClientID:        "FAKEANDUNIMPORTANT",
+			ClientSecret:    "ATMNFUDRANEPOKTANI",
+			RedirectURI:     "https://localhost",
+			Scopes:          []string{"*"},
+			ImplicitAllowed: true,
+			BelongsToUser:   3,
+		},
+		{
+			Name:            "example client 9",
+			ClientID:        "FAKEANDUNIMPORTANT",
+			ClientSecret:    "NEIATMOFDRNATNPKAU",
+			RedirectURI:     "https://localhost",
+			Scopes:          []string{"*"},
+			ImplicitAllowed: true,
+			BelongsToUser:   3,
+		},
+		{
+			Name:            "example client 10",
+			ClientID:        "FAKEANDUNIMPORTANT",
+			ClientSecret:    "IKNNDAUOMANEFTATRP",
+			RedirectURI:     "https://localhost",
+			Scopes:          []string{"*"},
+			ImplicitAllowed: true,
+			BelongsToUser:   3,
+		},
+	}
+
+	// ExampleWebhooks blah blah blah
+	ExampleWebhooks = []*models.Webhook{
+		{
+			Name:          "example webhook 1",
+			ContentType:   "application/json",
+			URL:           "https://farts.org",
+			Method:        "POST",
+			Events:        []string{"*"},
+			DataTypes:     []string{"*"},
+			Topics:        []string{"*"},
+			BelongsToUser: 1,
+		},
+		{
+			Name:          "example webhook 2",
+			ContentType:   "application/json",
+			URL:           "https://farts.org",
+			Method:        "POST",
+			Events:        []string{"*"},
+			DataTypes:     []string{"*"},
+			Topics:        []string{"*"},
+			BelongsToUser: 1,
+		},
+		{
+			Name:          "example webhook 3",
+			ContentType:   "application/json",
+			URL:           "https://farts.org",
+			Method:        "POST",
+			Events:        []string{"*"},
+			DataTypes:     []string{"*"},
+			Topics:        []string{"*"},
+			BelongsToUser: 1,
+		},
+		{
+			Name:          "example webhook 4",
+			ContentType:   "application/json",
+			URL:           "https://farts.org",
+			Method:        "POST",
+			Events:        []string{"*"},
+			DataTypes:     []string{"*"},
+			Topics:        []string{"*"},
+			BelongsToUser: 1,
+		},
+		{
+			Name:          "example webhook 5",
+			ContentType:   "application/json",
+			URL:           "https://farts.org",
+			Method:        "POST",
+			Events:        []string{"*"},
+			DataTypes:     []string{"*"},
+			Topics:        []string{"*"},
+			BelongsToUser: 2,
+		},
+		{
+			Name:          "example webhook 6",
+			ContentType:   "application/json",
+			URL:           "https://farts.org",
+			Method:        "POST",
+			Events:        []string{"*"},
+			DataTypes:     []string{"*"},
+			Topics:        []string{"*"},
+			BelongsToUser: 2,
+		},
+		{
+			Name:          "example webhook 7",
+			ContentType:   "application/json",
+			URL:           "https://farts.org",
+			Method:        "POST",
+			Events:        []string{"*"},
+			DataTypes:     []string{"*"},
+			Topics:        []string{"*"},
+			BelongsToUser: 2,
+		},
+		{
+			Name:          "example webhook 8",
+			ContentType:   "application/json",
+			URL:           "https://farts.org",
+			Method:        "POST",
+			Events:        []string{"*"},
+			DataTypes:     []string{"*"},
+			Topics:        []string{"*"},
+			BelongsToUser: 3,
+		},
+		{
+			Name:          "example webhook 9",
+			ContentType:   "application/json",
+			URL:           "https://farts.org",
+			Method:        "POST",
+			Events:        []string{"*"},
+			DataTypes:     []string{"*"},
+			Topics:        []string{"*"},
+			BelongsToUser: 3,
+		},
+		{
+			Name:          "example webhook 10",
+			ContentType:   "application/json",
+			URL:           "https://farts.org",
+			Method:        "POST",
+			Events:        []string{"*"},
+			DataTypes:     []string{"*"},
+			Topics:        []string{"*"},
+			BelongsToUser: 3,
 		},
 	}
 )

@@ -45,7 +45,8 @@
               axios.get("/users/status", {withCredentials: true}).then((statusResponse: AxiosResponse<AuthStatus>) => {
                 authStatusStore.setAuthStatus(statusResponse);
                 if (statusResponse.data.isAdmin) {
-                  navigate("/admin", { state: {}, replace: true });
+                  navigate("/admin/dashboard", { state: {}, replace: true });
+                  location.reload();
                 } else {
                   navigate("/", { state: {}, replace: true });
                 }

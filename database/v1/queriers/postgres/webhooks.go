@@ -273,8 +273,8 @@ func (p *Postgres) GetWebhooks(ctx context.Context, userID uint64, filter *model
 	return x, err
 }
 
-// buildWebhookCreationQuery returns a SQL query (and arguments) that would create a given webhook
-func (p *Postgres) buildWebhookCreationQuery(x *models.Webhook) (query string, args []interface{}) {
+// buildCreateWebhookQuery returns a SQL query (and arguments) that would create a given webhook
+func (p *Postgres) buildCreateWebhookQuery(x *models.Webhook) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = p.sqlBuilder.
@@ -320,7 +320,7 @@ func (p *Postgres) CreateWebhook(ctx context.Context, input *models.WebhookCreat
 		BelongsToUser: input.BelongsToUser,
 	}
 
-	query, args := p.buildWebhookCreationQuery(x)
+	query, args := p.buildCreateWebhookQuery(x)
 	if err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {
 		return nil, fmt.Errorf("error executing webhook creation query: %w", err)
 	}

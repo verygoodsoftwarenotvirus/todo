@@ -100,7 +100,7 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 
 		userIDPattern := fmt.Sprintf(oauth2IDPattern, usersservice.URIParamKey)
 
-		userRouter.Get(root, s.usersService.ListHandler)
+		userRouter.With(s.authService.AdminMiddleware).Get(root, s.usersService.ListHandler)
 		userRouter.With(s.authService.CookieAuthenticationMiddleware).Get("/status", s.authService.StatusHandler)
 		userRouter.With(s.usersService.UserInputMiddleware).Post(root, s.usersService.CreateHandler)
 		userRouter.Get(userIDPattern, s.usersService.ReadHandler)

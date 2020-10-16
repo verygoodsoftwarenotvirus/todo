@@ -175,12 +175,26 @@ func (p *Postgres) Migrate(ctx context.Context, createTestUser bool) error {
 				}
 			}
 
-			for _, x := range exampledata.ExampleItemMap {
+			for _, x := range exampledata.ExampleItems {
 				for _, y := range x {
 					query, args := p.buildCreateItemQuery(y)
 					if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
 						return dbErr
 					}
+				}
+			}
+
+			for _, x := range exampledata.ExampleOAuth2Clients {
+				query, args := p.buildCreateOAuth2ClientQuery(x)
+				if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
+					return dbErr
+				}
+			}
+
+			for _, x := range exampledata.ExampleWebhooks {
+				query, args := p.buildCreateWebhookQuery(x)
+				if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
+					return dbErr
 				}
 			}
 		} else {

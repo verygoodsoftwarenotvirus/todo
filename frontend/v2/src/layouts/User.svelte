@@ -1,5 +1,5 @@
 <script lang="typescript">
-  import { onDestroy, onMount} from "svelte";
+  import { onDestroy } from "svelte";
   import axios, { AxiosResponse, AxiosError } from "axios";
   import {Router, Route, navigate} from "svelte-routing";
 
@@ -22,9 +22,6 @@
   });
   // onDestroy(unsubscribeFromAuthStatusUpdates);
 
-  onMount(() => {
-    console.debug("User layout onMount called");
-  })
 </script>
 
 <div>

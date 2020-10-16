@@ -15,18 +15,17 @@
 
   export let location: Location;
 
+  import {Logger} from "../logger";
+  let logger = new Logger();
+
   import { authStatusStore } from "../stores";
   import {AuthStatus} from "../models";
   let currentAuthStatus = {};
   const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: AuthStatus) => {
-    console.log("setting authStore status");
+    logger.debug("setting authStore status");
     currentAuthStatus = value;
   });
   // onDestroy(unsubscribeFromAuthStatusUpdates);
-
-  onMount(async () => {
-    console.debug("Auth layout onMount called");
-  })
 </script>
 
 <div>

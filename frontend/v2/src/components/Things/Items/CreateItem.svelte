@@ -4,6 +4,7 @@
   import axios, {AxiosError, AxiosResponse} from "axios";
 
   import { Item } from "../../../models";
+  import {Logger} from "../../../logger";
 
   export let id: number = 0;
 
@@ -11,12 +12,14 @@
   let item: Item = new Item();
   let apiError: string = '';
 
+  let logger = new Logger();
+
   function createItem(): void {
-    console.debug(`vies/things/Item.createItem called`);
+    logger.debug(`vies/things/Item.createItem called`);
 
     const path: string = `/api/v1/items`;
 
-    console.dir(item);
+    logger.dir(item);
 
     axios.post(path, item, { withCredentials: true })
             .then((response: AxiosResponse<Item>) => {

@@ -17,16 +17,14 @@
   export let items: Item[] = [];
   export let itemRetrievalError: string = '';
 
-  function toggleAdminMode(): void {
-    adminMode = !adminMode;
-    fetchItems();
-  }
+  import {Logger} from "../../../logger";
+  let logger = new Logger();
 
   import { adminModeStore } from "../../../stores";
   let adminMode: boolean = false;
   const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe((value: boolean) => {
     adminMode = value;
-    console.debug(`setting adminMode to ${adminMode} via the adminModeStore`);
+    fetchItems();
   });
 
   import { authStatusStore } from "../../../stores";
@@ -38,13 +36,13 @@
 
   function search(): void {
     if (searchQuery.length >= 3) {
-      console.debug(`searching for items: ${searchQuery}`)
+      logger.debug(`searching for items: ${searchQuery}`)
       searchItems();
     }
   }
 
   function searchItems() {
-    console.debug("components/tables/ItemsTable searchItems called");
+    logger.debug("components/tables/ItemsTable searchItems called");
 
     const path: string = "/api/v1/items/search";
 
@@ -75,7 +73,7 @@
 
   function incrementPage() {
     if (!incrementDisabled) {
-      console.debug(`incrementPage called`);
+        logger.debug(`incrementPage called`);
         currentPage += 1;
         fetchItems();
     }
@@ -83,18 +81,18 @@
 
   function decrementPage() {
     if (!decrementDisabled) {
-      console.debug(`decrementPage called`);
+        logger.debug(`decrementPage called`);
         currentPage -= 1;
         fetchItems();
     }
   }
 
   function examplePostDeletionFunc() {
-    console.debug(`examplePostDeletionFunc called`);
+    logger.debug(`examplePostDeletionFunc called`);
   }
 
   function fetchItems() {
-    console.debug("components/tables/ItemsTable fetchItems called");
+    logger.debug("components/tables/ItemsTable fetchItems called");
 
     const path: string = "/api/v1/items";
 
@@ -128,7 +126,7 @@
   }
 
   function promptDelete(id: number) {
-    console.debug("components/tables/ItemsTable promptDelete called");
+    logger.debug("components/tables/ItemsTable promptDelete called");
 
     if (confirm(`are you sure you want to delete item #${id}?`)) {
       const path: string = `/api/v1/items/${id}`;
@@ -149,6 +147,10 @@
     }
   }
 
+  function goToNewPage() {
+    navigate("/things/items/new", { state: {}, replace: true });
+  }
+
   onMount(fetchItems)
 </script>
 
@@ -160,10 +162,12 @@
       <div class="relative w-full px-4 max-w-full flex-grow flex-1">
         <h3 class="font-semibold text-lg text-gray-800">
           Items
-          <a use:link href="/things/items/new">
-            <!-- <i class="fa fa-plus-circle text-green-500"></i> -->
+          <button class="border-2 font-bold py-1 px-4 m-2 rounded" on:click={goToNewPage}>
             🆕
-          </a>
+          </button>
+          <button class="border-2 font-bold py-1 px-4 m-2 rounded" on:click={fetchItems}>
+            🔄
+          </button>
         </h3>
       </div>
 
@@ -195,12 +199,6 @@
       {#if itemRetrievalError !== ''}
         <span class="text-red-600">{itemRetrievalError}</span>
       {/if}
-
-      <!--{#if currentAuthStatus.isAdmin}-->
-      <!--  <button class="{adminMode ? 'bg-red-500 hover:bg-red-700' : 'bg-blue-500 hover:bg-blue-700'} text-white font-bold py-1 px-2 rounded" on:click={toggleAdminMode}>-->
-      <!--    <i class="fa fa-toolbox"></i> Admin Mode: {adminMode ? 'ON' : 'OFF'}-->
-      <!--  </button>-->
-      <!--{/if}-->
 
       <span class="mr-2 ml-2">
 

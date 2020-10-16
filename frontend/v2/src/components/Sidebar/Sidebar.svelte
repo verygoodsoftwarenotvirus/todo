@@ -131,18 +131,32 @@
           </li>
         </ul>
 
-
         <!-- AUDIT LOG -->
 
         <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
           <li class="items-center">
             <a
-                    use:link
-                    class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-                    href="/admin/audit_log"
+              use:link
+              class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
+              href="/admin/audit_log"
             >
               <i class="fas fa-record-vinyl text-gray-400 mr-2 text-sm"></i>
               Audit Log
+            </a>
+          </li>
+        </ul>
+
+        <!-- SERVER SETTINGS -->
+
+        <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
+          <li class="items-center">
+            <a
+              use:link
+              class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
+              href="/admin/settings"
+            >
+              <i class="fas fa-cog text-gray-400 mr-2 text-sm"></i>
+              Server Settings
             </a>
           </li>
         </ul>

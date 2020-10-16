@@ -25,16 +25,19 @@
   });
   // onDestroy(unsubscribeFromAuthStatusUpdates);
 
+  import { Logger } from "../logger"
+  let logger = new Logger();
+
   onMount(() => {
     if (!currentAuthStatus.isAuthenticated) {
-      console.debug("I would fuck you off back to the login page");
+      logger.debug("I would fuck you off back to the login page");
     } else {
-      console.debug("Admin layout onMount called");
+      logger.debug("Admin layout onMount called");
     }
   })
 
   // onMount(async () => {
-  //   console.debug("checking status from Admin layout");
+  //   logger.debug("checking status from Admin layout");
   //   const res = await axios.get("/users/status", { withCredentials: true });
   //   const as: AuthStatus = res.data;
   //   authStatusStore.setAuthStatus(as);

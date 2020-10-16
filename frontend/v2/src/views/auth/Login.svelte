@@ -13,6 +13,9 @@
     let canLogin: boolean = false;
     let loginError: string = '';
 
+    import { Logger } from "../../logger";
+    let logger = new Logger();
+
     function buildLoginRequest(): LoginRequest {
         return {
             username: usernameInput,
@@ -25,10 +28,12 @@
       canLogin = usernameInput !== '' && passwordInput !== '' && totpTokenInput.length > 0 && totpTokenInput.length < 7;
     }
 
+    import { authStatusStore } from "../../stores"
+
     async function login() {
         const path = "/users/login"
 
-        console.debug("login called!");
+        logger.debug("login called!");
 
         evaluateInputs();
         if (!canLogin) {
@@ -38,6 +43,7 @@
         return axios.post(path, buildLoginRequest(), {withCredentials: true})
             .then(() => {
               axios.get("/users/status", {withCredentials: true}).then((statusResponse: AxiosResponse<AuthStatus>) => {
+                authStatusStore.setAuthStatus(statusResponse);
                 if (statusResponse.data.isAdmin) {
                   navigate("/admin", { state: {}, replace: true });
                 } else {
@@ -51,7 +57,7 @@
                   loginError = 'invalid credentials: please try again'
                 } else {
                   loginError = reason.response.toString();
-                  console.error(reason.response);
+                  logger.error(reason.response);
                 }
               }
             });

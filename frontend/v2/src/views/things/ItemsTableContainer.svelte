@@ -20,8 +20,11 @@
     });
     // onDestroy(unsubscribeFromAuthStatusUpdates);
 
+    import {Logger} from "../../logger";
+    let logger = new Logger();
+
     onMount(() => {
-        console.debug("views/things/items.onMount called");
+        logger.debug("views/things/items.onMount called");
 
         const path: string = "/api/v1/items";
 

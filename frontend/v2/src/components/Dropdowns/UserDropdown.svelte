@@ -23,10 +23,6 @@
     adminMode = value;
   });
 
-  function toggleAdminMode(): void {
-
-   }
-
   function goToSettings() {
     dropdownPopoverShow = false;
     navigate("/user/settings", { state: {}, replace: true });
@@ -89,7 +85,7 @@
     {#if currentAuthStatus.isAdmin}
     <div class="h-0 my-2 border border-solid border-gray-200" />
     <button
-      on:click={logout}
+      on:click={adminModeStore.toggle}
       class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent {adminMode ? 'underline text-indigo-500' : ''} "
     >
       <i class="fa fa-user-secret"></i>

@@ -7,6 +7,8 @@
   import { AuthStatus } from "./models";
   import { authStatusStore } from "./stores/auth_store";
 
+  import { Logger, LogLevel } from "./logger";
+
   // Admin Layout
   import Admin from "./layouts/Admin.svelte";
   // Auth Layout
@@ -21,15 +23,18 @@
 
   export let url: string = "";
 
+  let logger = new Logger().withValue("source", "App.Svelte");
+
   onMount(() => {
-    console.debug("fetching user status from App.svelte")
+    logger.withValue("functionName", "onMount").debug("called", true);
+
     axios.get("/users/status", { withCredentials: true })
           .then((response: AxiosResponse<AuthStatus>) => {
-            console.debug("setting auth status from App.svelte");
+            logger.debug("setting auth status from App.svelte");
             authStatusStore.setAuthStatus(response.data);
           })
           .catch((error: AxiosError) => {
-            console.error(error);
+            logger.error(error.toString());
           });
   })
 </script>
@@ -39,7 +44,7 @@
   <Route path="admin/*admin" component="{Admin}" />
   <!-- auth layout -->
   <Route path="auth/*auth" component="{Auth}" />
-  <!-- users layout -->
+  <!-- user layout -->
   <Route path="user/*user" component="{User}" />
   <!-- things layout -->
   <Route path="things/*things" component="{Things}" />

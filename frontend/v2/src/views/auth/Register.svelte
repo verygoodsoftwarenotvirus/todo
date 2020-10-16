@@ -18,6 +18,9 @@
   let totpTokenValidationMayProceed = false;
   let totpTokenValidationInput = '';
 
+  import { Logger } from "../../logger";
+  let logger = new Logger();
+
   function evaluateCreationInputs(): string {
     const usernameIsLongEnough = usernameInput.length >= 8;
     const passwordsMatch = passwordInput === passwordRepeatInput;
@@ -34,7 +37,7 @@
 
     registrationMayProceed = usernameIsLongEnough && passwordIsLongEnough && passwordsMatch
 
-    console.debug(`evaluateInputs called, registrationMayProceed = ${registrationMayProceed}`);
+    logger.debug(`evaluateInputs called, registrationMayProceed = ${registrationMayProceed}`);
 
     if (reasons.length == 1) {
       return reasons.pop() || '';
@@ -42,7 +45,7 @@
       const last = reasons.pop();
       const reason = reasons.join(', ') + ' and ' + last;
 
-      console.debug(`evaluateInputs called, reason = ${reason}`);
+      logger.debug(`evaluateInputs called, reason = ${reason}`);
 
       return reason
     }
@@ -59,7 +62,7 @@
   }
 
   async function register() {
-    console.debug("RegistrationPage.register called")
+    logger.debug("RegistrationPage.register called")
 
     const path = "/users/"
 
@@ -81,7 +84,7 @@
             .catch((reason: AxiosError) => {
               if (reason.response) {
                 const data = reason.response.data as ErrorResponse;
-                console.error(data.message);
+                logger.error(data.message);
                 registrationError = data.message;
               }
             });
@@ -89,7 +92,7 @@
 
   function evaluateValidationInputs(): void  {
     totpTokenValidationMayProceed = totpTokenValidationInput.length === 6
-    console.debug(`evaluateInputs called, registrationMayProceed = ${registrationMayProceed}`);
+    logger.debug(`evaluateInputs called, registrationMayProceed = ${registrationMayProceed}`);
   }
 
   function buildTOTPTokenValidationRequest(): TOTPTokenValidationRequest {
@@ -100,7 +103,7 @@
   }
 
   async function validateTOTPToken(){
-    console.debug("RegistrationPage.validateTOTPToken called")
+    logger.debug("RegistrationPage.validateTOTPToken called")
 
     const path = "/users/totp_secret/verify"
 
@@ -116,7 +119,7 @@
             .catch((reason: AxiosError) => {
               if (reason.response) {
                 const data = reason.response.data as ErrorResponse;
-                console.error(data.message);
+                logger.error(data.message);
               }
             });
   }

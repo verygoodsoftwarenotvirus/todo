@@ -4,6 +4,7 @@
   import axios, {AxiosError, AxiosResponse} from "axios";
 
   import { Item } from "../../../models";
+  import { Logger } from "../../../logger";
 
   export let id: number = 0;
 
@@ -19,8 +20,10 @@
 
   onMount(fetchItem);
 
+  let logger = new Logger();
+
   function fetchItem(): void {
-    console.debug(`vies/things/Item.fetchItem called`);
+    logger.debug(`vies/things/Item.fetchItem called`);
 
     if (id === 0) {
       throw new Error("id cannot be zero!");
@@ -43,7 +46,7 @@
   }
 
   function saveItem(): void {
-    console.debug(`vies/things/Item.saveItem called`);
+    logger.debug(`vies/things/Item.saveItem called`);
 
     if (id === 0) {
       throw new Error("id cannot be zero!");
@@ -69,7 +72,7 @@
   }
 
   function deleteItem(): void {
-    console.debug(`vies/things/Item.deleteItem called`);
+    logger.debug(`vies/things/Item.deleteItem called`);
 
     if (id === 0) {
       throw new Error("id cannot be zero!");

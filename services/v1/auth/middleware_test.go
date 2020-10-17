@@ -373,6 +373,7 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 		s := buildTestService(t)
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On("EncodeErrorResponse", mock.Anything, "attached input is invalid", http.StatusBadRequest)
 		s.encoderDecoder = ed
 
 		ms := &MockHTTPHandler{}

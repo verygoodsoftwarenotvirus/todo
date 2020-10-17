@@ -1,19 +1,19 @@
 import axios, {AxiosError, AxiosResponse} from "axios";
 import { writable } from 'svelte/store';
 
-import type {AuthStatus} from "@/models";
+import type {UserStatus} from "@/models";
 
 function buildAuthStatus() {
     const { subscribe, set, update } = writable({});
 
     const ass = {
         subscribe,
-        setAuthStatus: (x: AuthStatus) => set(x),
+        setAuthStatus: (x: UserStatus) => set(x),
         logout: () => set({}),
     };
 
     axios.get("/users/status", { withCredentials: true })
-        .then((response: AxiosResponse<AuthStatus>) => {
+        .then((response: AxiosResponse<UserStatus>) => {
             ass.setAuthStatus(response.data);
         })
         .catch((err: AxiosError) => {

@@ -32,7 +32,8 @@ func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 		// fetch the user from the request.
 		user, err := s.fetchUserFromCookie(ctx, req)
 		if err != nil {
-			res.WriteHeader(http.StatusUnauthorized)
+			// we deliberately aren't logging here because it's done in fetchUserFromCookie
+			s.encoderDecoder.EncodeErrorResponse(res, "cookie required", http.StatusUnauthorized)
 			return
 		}
 
@@ -115,6 +116,8 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 
 // AdminMiddleware restricts requests to admin users only.
 func (s *Service) AdminMiddleware(next http.Handler) http.Handler {
+	const staticError = "admin status required"
+
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := tracing.StartSpan(req.Context(), "AdminMiddleware")
 		defer span.End()
@@ -124,13 +127,13 @@ func (s *Service) AdminMiddleware(next http.Handler) http.Handler {
 
 		if !ok || si == nil {
 			logger.Debug("AdminMiddleware called without user attached to context")
-			res.WriteHeader(http.StatusUnauthorized)
+			s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusUnauthorized)
 			return
 		}
 
 		if !si.UserIsAdmin {
 			logger.Debug("AdminMiddleware called by non-admin user")
-			res.WriteHeader(http.StatusUnauthorized)
+			s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusUnauthorized)
 			return
 		}
 
@@ -164,7 +167,7 @@ func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
 			if x = parseLoginInputFromForm(req); x == nil {
 				s.logger.Error(err, "error encountered decoding request body")
-				res.WriteHeader(http.StatusBadRequest)
+				s.encoderDecoder.EncodeErrorResponse(res, "attached input is invalid", http.StatusBadRequest)
 				return
 			}
 		}

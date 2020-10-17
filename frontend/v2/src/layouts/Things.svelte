@@ -22,10 +22,10 @@
   let logger = new Logger();
 
   import {authStatusStore} from "../stores";
-  import {AuthStatus} from "../models";
+  import {UserStatus} from "../models";
 
   let currentAuthStatus = {};
-  const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: AuthStatus) => {
+  const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
     if (!currentAuthStatus) {
       navigate("/auth/login", {state: {}, replace: true});

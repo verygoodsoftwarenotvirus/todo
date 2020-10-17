@@ -108,29 +108,37 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 
 	logger := s.logger.WithRequest(req)
 
-	loginData, errRes := s.fetchLoginDataFromRequest(req)
-	if errRes != nil || loginData == nil {
-		logger.Error(errRes, "error encountered fetching login data from request")
-		res.WriteHeader(http.StatusUnauthorized)
-		s.encoderDecoder.EncodeError(res, errRes.Message, errRes.Code)
+	loginData, ok := ctx.Value(userLoginInputMiddlewareCtxKey).(*models.UserLoginInput)
+	if !ok {
+		logger.Error(nil, "no UserLoginInput found for /login request")
+		s.encoderDecoder.EncodeErrorResponse(res, "error validating request", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachUserIDToSpan(span, loginData.user.ID)
-	tracing.AttachUsernameToSpan(span, loginData.user.Username)
+	user, err := s.userDB.GetUserByUsername(ctx, loginData.Username)
+	if user == nil || (err != nil && err == sql.ErrNoRows) {
+		logger.WithValue("user_is_nil", user == nil).Error(err, "error fetching user")
+		s.encoderDecoder.EncodeErrorResponse(res, "error validating request", http.StatusUnauthorized)
+		return
+	}
 
-	logger = logger.WithValue("user", loginData.user.ID)
-	loginValid, err := s.validateLogin(ctx, *loginData)
+	tracing.AttachUserIDToSpan(span, user.ID)
+	tracing.AttachUsernameToSpan(span, user.Username)
+	logger = logger.WithValue("user_id", user.ID)
+
+	const staticError = "error encountered, please try again later"
+
+	loginValid, err := s.validateLogin(ctx, loginData, user)
 	if err != nil {
 		logger.Error(err, "error encountered validating login")
-		res.WriteHeader(http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusUnauthorized)
 		return
 	}
-	logger = logger.WithValue("valid", loginValid)
+	logger = logger.WithValue("login_valid", loginValid)
 
 	if !loginValid {
 		logger.Debug("login was invalid")
-		res.WriteHeader(http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(res, "login was invalid", http.StatusUnauthorized)
 		return
 	}
 
@@ -138,28 +146,28 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, sessionErr = s.sessionManager.Load(ctx, "")
 	if sessionErr != nil {
 		logger.Error(sessionErr, "error loading token")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusInternalServerError)
 		return
 	}
 
 	if renewTokenErr := s.sessionManager.RenewToken(ctx); renewTokenErr != nil {
 		logger.Error(err, "error encountered renewing token")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusInternalServerError)
 		return
 	}
-	s.sessionManager.Put(ctx, sessionInfoKey, loginData.user.ToSessionInfo())
+	s.sessionManager.Put(ctx, sessionInfoKey, user.ToSessionInfo())
 
 	token, expiry, err := s.sessionManager.Commit(ctx)
 	if err != nil {
 		logger.Error(err, "error encountered writing to session store")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusInternalServerError)
 		return
 	}
 
 	cookie, err := s.buildCookie(token, expiry)
 	if err != nil {
 		logger.Error(err, "error encountered building cookie")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusInternalServerError)
 		return
 	}
 
@@ -177,13 +185,13 @@ func (s *Service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, sessionErr := s.sessionManager.Load(ctx, "")
 	if sessionErr != nil {
 		logger.Error(sessionErr, "error loading token")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeErrorResponse(res, "error encountered, please try again later", http.StatusInternalServerError)
 		return
 	}
 
 	if err := s.sessionManager.Clear(ctx); err != nil {
 		logger.Error(err, "clearing user session")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeErrorResponse(res, "error encountered, please try again later", http.StatusInternalServerError)
 		return
 	}
 
@@ -193,14 +201,12 @@ func (s *Service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 			http.SetCookie(res, c)
 		} else {
 			logger.Error(cookieBuildingErr, "error encountered building cookie")
-			res.WriteHeader(http.StatusInternalServerError)
+			s.encoderDecoder.EncodeErrorResponse(res, "error encountered, please try again later", http.StatusInternalServerError)
 			return
 		}
 	} else {
-		logger.WithError(cookieRetrievalErr).Debug("logout was called, no cookie was found")
+		logger.WithError(cookieRetrievalErr).Debug("logout was called, but encountered error loading cookie from request")
 	}
-
-	res.WriteHeader(http.StatusOK)
 }
 
 // StatusHandler returns the user info for the user making the request.
@@ -208,21 +214,26 @@ func (s *Service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context(), "StatusHandler")
 	defer span.End()
 
-	var sr *models.StatusResponse
+	var (
+		usr *models.UserStatusResponse
+		sc  int
+	)
+
 	if userInfo, err := s.fetchUserFromCookie(ctx, req); err != nil {
-		res.WriteHeader(http.StatusUnauthorized)
-		sr = &models.StatusResponse{
+		sc = http.StatusUnauthorized
+		usr = &models.UserStatusResponse{
 			Authenticated: false,
 			IsAdmin:       false,
 		}
 	} else {
-		sr = &models.StatusResponse{
+		sc = http.StatusOK
+		usr = &models.UserStatusResponse{
 			Authenticated: true,
 			IsAdmin:       userInfo.IsAdmin,
 		}
 	}
 
-	s.encoderDecoder.EncodeResponse(res, sr)
+	s.encoderDecoder.EncodeResponseWithStatus(res, usr, sc)
 }
 
 // CycleSecretHandler rotates the cookie building secret with a new random secret.
@@ -241,59 +252,13 @@ func (s *Service) CycleSecretHandler(res http.ResponseWriter, req *http.Request)
 	res.WriteHeader(http.StatusCreated)
 }
 
-type loginData struct {
-	loginInput *models.UserLoginInput
-	user       *models.User
-}
-
-// fetchLoginDataFromRequest searches a given HTTP request for parsed login input data, and
-// returns a helper struct with the relevant login information.
-func (s *Service) fetchLoginDataFromRequest(req *http.Request) (*loginData, *models.ErrorResponse) {
-	ctx, span := tracing.StartSpan(req.Context(), "fetchLoginDataFromRequest")
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-
-	loginInput, ok := ctx.Value(userLoginInputMiddlewareCtxKey).(*models.UserLoginInput)
-	if !ok {
-		logger.Debug("no UserLoginInput found for /login request")
-		return nil, &models.ErrorResponse{
-			Code: http.StatusUnauthorized,
-		}
-	}
-
-	username := loginInput.Username
-	tracing.AttachUsernameToSpan(span, username)
-
-	// you could ensure there isn't an unsatisfied password reset token
-	// requested before allowing login here.
-
-	user, err := s.userDB.GetUserByUsername(ctx, username)
-	if err == sql.ErrNoRows {
-		logger.Error(err, "no matching user")
-		return nil, &models.ErrorResponse{Code: http.StatusBadRequest}
-	} else if err != nil {
-		logger.Error(err, "error fetching user")
-		return nil, &models.ErrorResponse{Code: http.StatusInternalServerError}
-	}
-	tracing.AttachUserIDToSpan(span, user.ID)
-
-	ld := &loginData{
-		loginInput: loginInput,
-		user:       user,
-	}
-
-	return ld, nil
-}
-
 // validateLogin takes login information and returns whether or not the login is valid.
 // In the event that there's an error, this function will return false and the error.
-func (s *Service) validateLogin(ctx context.Context, loginInfo loginData) (bool, error) {
+func (s *Service) validateLogin(ctx context.Context, loginInput *models.UserLoginInput, user *models.User) (bool, error) {
 	ctx, span := tracing.StartSpan(ctx, "validateLogin")
 	defer span.End()
 
 	// alias the relevant data.
-	user, loginInput := loginInfo.user, loginInfo.loginInput
 	logger := s.logger.WithValue("username", user.Username)
 
 	// check for login validity.

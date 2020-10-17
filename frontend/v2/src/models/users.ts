@@ -77,3 +77,13 @@ export class UserRegistrationResponse {
         this.passwordLastChangedOn = 0;
     }
 }
+
+export class UserStatus {
+    isAuthenticated: boolean;
+    isAdmin: boolean;
+
+    constructor() {
+        this.isAuthenticated = false;
+        this.isAdmin = false;
+    }
+}

@@ -82,7 +82,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	users, err := s.userDataManager.GetUsers(ctx, qf)
 	if err != nil {
 		logger.Error(err, "error fetching users for ListHandler route")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -101,8 +101,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// just decline the request from the get-go
 	if !s.userCreationEnabled {
 		logger.Info("disallowing user creation")
-		res.WriteHeader(http.StatusForbidden)
-		s.encoderDecoder.EncodeError(res, "user creation is disabled", http.StatusForbidden)
+		s.encoderDecoder.EncodeErrorResponse(res, "user creation is disabled", http.StatusForbidden)
 		return
 	}
 
@@ -110,7 +109,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	userInput, ok := ctx.Value(userCreationMiddlewareCtxKey).(*models.UserCreationInput)
 	if !ok {
 		logger.Info("valid input not attached to UsersService CreateHandler request")
-		res.WriteHeader(http.StatusBadRequest)
+		s.encoderDecoder.EncodeNoInputResponse(res)
 		return
 	}
 	tracing.AttachUsernameToSpan(span, userInput.Username)
@@ -124,7 +123,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	hp, err := s.authenticator.HashPassword(ctx, userInput.Password)
 	if err != nil {
 		logger.Error(err, "valid input not attached to request")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -139,7 +138,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input.TwoFactorSecret, err = s.secretGenerator.GenerateTwoFactorSecret()
 	if err != nil {
 		logger.Error(err, "error generating TOTP secret")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -147,7 +146,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input.Salt, err = s.secretGenerator.GenerateSalt()
 	if err != nil {
 		logger.Error(err, "error generating salt")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -156,13 +155,12 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		if err == dbclient.ErrUserExists {
 			logger.Info("duplicate username attempted")
-			res.WriteHeader(http.StatusBadRequest)
-			s.encoderDecoder.EncodeError(res, "username already taken", http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(res, "username already taken", http.StatusBadRequest)
 			return
 		}
 
 		logger.Error(err, "error creating user")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -188,8 +186,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	})
 
 	// encode and peace.
-	res.WriteHeader(http.StatusCreated)
-	s.encoderDecoder.EncodeResponse(res, ucr)
+	s.encoderDecoder.EncodeResponseWithStatus(res, ucr, http.StatusCreated)
 }
 
 // buildQRCode builds a QR code for a given username and secret.
@@ -241,11 +238,11 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	x, err := s.userDataManager.GetUser(ctx, userID)
 	if err == sql.ErrNoRows {
 		logger.Debug("no such user")
-		res.WriteHeader(http.StatusNotFound)
+		s.encoderDecoder.EncodeNotFoundResponse(res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error fetching user from database")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -265,14 +262,14 @@ func (s *Service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 	input, ok := req.Context().Value(totpSecretVerificationMiddlewareCtxKey).(*models.TOTPSecretVerificationInput)
 	if !ok || input == nil {
 		logger.Debug("no input found on TOTP secret refresh request")
-		res.WriteHeader(http.StatusBadRequest)
+		s.encoderDecoder.EncodeNoInputResponse(res)
 		return
 	}
 
 	user, err := s.userDataManager.GetUserWithUnverifiedTwoFactorSecret(ctx, input.UserID)
 	if err != nil {
 		logger.Error(err, "fetching user")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 	tracing.AttachUserIDToSpan(span, user.ID)
@@ -280,21 +277,22 @@ func (s *Service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 
 	if user.TwoFactorSecretVerifiedOn != nil {
 		// I suppose if this happens too many times, we'll want to keep track of that
-		res.WriteHeader(http.StatusAlreadyReported)
-		s.encoderDecoder.EncodeError(res, "TOTP secret already verified", http.StatusAlreadyReported)
+		s.encoderDecoder.EncodeErrorResponse(res, "TOTP secret already verified", http.StatusAlreadyReported)
 		return
 	}
 
+	var statusCode int
 	if totp.Validate(input.TOTPToken, user.TwoFactorSecret) {
 		if updateUserErr := s.userDataManager.VerifyUserTwoFactorSecret(ctx, user.ID); updateUserErr != nil {
 			logger.Error(updateUserErr, "updating user to indicate their 2FA secret is validated")
-			res.WriteHeader(http.StatusInternalServerError)
+			s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 			return
 		}
-		res.WriteHeader(http.StatusAccepted)
+		statusCode = http.StatusAccepted
 	} else {
-		res.WriteHeader(http.StatusBadRequest)
+		statusCode = http.StatusBadRequest
 	}
+	res.WriteHeader(statusCode)
 }
 
 // NewTOTPSecretHandler fetches a user, and issues them a new TOTP secret, after validating
@@ -309,7 +307,7 @@ func (s *Service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	input, ok := req.Context().Value(totpSecretRefreshMiddlewareCtxKey).(*models.TOTPSecretRefreshInput)
 	if !ok {
 		logger.Debug("no input found on TOTP secret refresh request")
-		res.WriteHeader(http.StatusBadRequest)
+		s.encoderDecoder.EncodeNoInputResponse(res)
 		return
 	}
 
@@ -317,7 +315,7 @@ func (s *Service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	si, ok := ctx.Value(models.SessionInfoKey).(*models.SessionInfo)
 	if !ok || si == nil {
 		logger.Debug("no user ID attached to TOTP secret refresh request")
-		res.WriteHeader(http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(res, "invalid request", http.StatusUnauthorized)
 		return
 	}
 
@@ -344,7 +342,7 @@ func (s *Service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	tfs, err := s.secretGenerator.GenerateTwoFactorSecret()
 	if err != nil {
 		logger.Error(err, "error encountered generating random TOTP string")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 	user.TwoFactorSecret = tfs
@@ -353,13 +351,13 @@ func (s *Service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	// update the user in the database.
 	if err := s.userDataManager.UpdateUser(ctx, user); err != nil {
 		logger.Error(err, "error encountered updating TOTP token")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
 	// let the requester know we're all good.
-	res.WriteHeader(http.StatusAccepted)
-	s.encoderDecoder.EncodeResponse(res, &models.TOTPSecretRefreshResponse{TwoFactorSecret: user.TwoFactorSecret})
+	result := &models.TOTPSecretRefreshResponse{TwoFactorSecret: user.TwoFactorSecret}
+	s.encoderDecoder.EncodeResponseWithStatus(res, result, http.StatusAccepted)
 }
 
 // UpdatePasswordHandler updates a user's password, after validating that information received
@@ -374,7 +372,7 @@ func (s *Service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	input, ok := ctx.Value(passwordChangeMiddlewareCtxKey).(*models.PasswordUpdateInput)
 	if !ok {
 		logger.Debug("no input found on UpdatePasswordHandler request")
-		res.WriteHeader(http.StatusBadRequest)
+		s.encoderDecoder.EncodeNoInputResponse(res)
 		return
 	}
 
@@ -382,7 +380,7 @@ func (s *Service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	si, ok := ctx.Value(models.SessionInfoKey).(*models.SessionInfo)
 	if !ok || si == nil {
 		logger.Debug("no user ID attached to UpdatePasswordHandler request")
-		res.WriteHeader(http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(res, "invalid request", http.StatusUnauthorized)
 		return
 	}
 
@@ -410,14 +408,14 @@ func (s *Service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	newPasswordHash, err := s.authenticator.HashPassword(ctx, input.NewPassword)
 	if err != nil {
 		logger.Error(err, "error hashing password")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
 	// update the user.
 	if err = s.userDataManager.UpdateUserPassword(ctx, user.ID, newPasswordHash); err != nil {
 		logger.Error(err, "error encountered updating user")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -440,7 +438,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	// do the deed.
 	if err := s.userDataManager.ArchiveUser(ctx, userID); err != nil {
 		logger.Error(err, "deleting user from database")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 

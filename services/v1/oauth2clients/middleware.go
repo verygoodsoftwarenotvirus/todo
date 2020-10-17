@@ -26,8 +26,7 @@ func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 		// decode value from request.
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
-			res.WriteHeader(http.StatusBadRequest)
-			s.encoderDecoder.EncodeError(res, "invalid request content", http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 

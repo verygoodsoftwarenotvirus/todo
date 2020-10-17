@@ -3,7 +3,7 @@
   import { link, navigate } from "svelte-routing";
   import { createPopper } from "@popperjs/core";  // library for creating dropdown menu appear on click
 
-  import {AuthStatus} from "../../models";
+  import {UserStatus} from "../../models";
 
   let dropdownPopoverShow: Boolean = false;
   let btnDropdownRef;
@@ -11,8 +11,8 @@
   let popoverDropdownRef;
 
   import { authStatusStore } from "../../stores";
-  let currentAuthStatus: AuthStatus = new AuthStatus();
-  const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: AuthStatus) => {
+  let currentAuthStatus: UserStatus = new UserStatus();
+  const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
   });
 

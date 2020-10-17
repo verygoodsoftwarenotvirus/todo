@@ -6,7 +6,7 @@
   import NotificationDropdown from "../Dropdowns/NotificationDropdown.svelte";
   import UserDropdown from "../Dropdowns/UserDropdown.svelte";
 
-  import { AuthStatus } from "../../models";
+  import { UserStatus } from "../../models";
   import { authStatusStore } from "../../stores";
 
   export let location: Location;
@@ -17,7 +17,7 @@
   }
 
   let currentAuthStatus = {};
-  const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: AuthStatus) => {
+  const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
   });
   // onDestroy(unsubscribeFromAuthStatusUpdates())

@@ -21,8 +21,8 @@ type (
 		UserIsAdmin bool   `json:"-"`
 	}
 
-	// StatusResponse is what we encode when the frontend wants to check auth status
-	StatusResponse struct {
+	// UserStatusResponse is what we encode when the frontend wants to check auth status
+	UserStatusResponse struct {
 		Authenticated bool `json:"isAuthenticated"`
 		IsAdmin       bool `json:"isAdmin"`
 	}

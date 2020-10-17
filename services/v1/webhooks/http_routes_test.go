@@ -224,7 +224,7 @@ func TestWebhooksService_Create(T *testing.T) {
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On(
-			"EncodeError",
+			"EncodeErrorResponse",
 			mock.Anything,
 			fmt.Sprintf(`invalid URL provided: parse %q: invalid URL escape "%%zz"`, exampleWebhook.URL),
 			http.StatusBadRequest,

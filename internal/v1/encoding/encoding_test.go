@@ -57,8 +57,9 @@ func TestServerEncoderDecoder_EncodeError(T *testing.T) {
 
 		res := httptest.NewRecorder()
 
-		ed.EncodeError(res, exampleMessage, exampleCode)
+		ed.EncodeErrorResponse(res, exampleMessage, exampleCode)
 		assert.Equal(t, res.Body.String(), fmt.Sprintf("{\"message\":%q,\"code\":%d}\n", exampleMessage, exampleCode))
+		assert.Equal(t, exampleCode, res.Code, "expected status code to match")
 	})
 
 	T.Run("as XML", func(t *testing.T) {
@@ -70,8 +71,9 @@ func TestServerEncoderDecoder_EncodeError(T *testing.T) {
 		res := httptest.NewRecorder()
 		res.Header().Set(ContentTypeHeader, "application/xml")
 
-		ed.EncodeError(res, exampleMessage, exampleCode)
+		ed.EncodeErrorResponse(res, exampleMessage, exampleCode)
 		assert.Equal(t, fmt.Sprintf("<ErrorResponse><Message>%s</Message><Code>%d</Code></ErrorResponse>", exampleMessage, exampleCode), res.Body.String())
+		assert.Equal(t, exampleCode, res.Code, "expected status code to match")
 	})
 }
 

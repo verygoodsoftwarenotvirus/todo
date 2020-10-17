@@ -81,7 +81,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 			mock.Anything,
 		).Return(errors.New("blah"))
 		ed.On(
-			"EncodeError",
+			"EncodeErrorResponse",
 			mock.Anything,
 			"invalid request content",
 			http.StatusBadRequest,

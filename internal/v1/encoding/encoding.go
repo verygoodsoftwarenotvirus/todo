@@ -28,13 +28,20 @@ var (
 	Providers = wire.NewSet(
 		ProvideResponseEncoder,
 	)
+
+	_ EncoderDecoder = (*ServerEncoderDecoder)(nil)
 )
 
 type (
 	// EncoderDecoder is an interface that allows for multiple implementations of HTTP response formats.
 	EncoderDecoder interface {
 		EncodeResponse(res http.ResponseWriter, val interface{})
-		EncodeError(res http.ResponseWriter, msg string, code int)
+		EncodeResponseWithStatus(res http.ResponseWriter, val interface{}, statusCode int)
+		EncodeErrorResponse(res http.ResponseWriter, msg string, statusCode int)
+		EncodeNoInputResponse(res http.ResponseWriter)
+		EncodeNotFoundResponse(res http.ResponseWriter)
+		EncodeUnspecifiedInternalServerError(res http.ResponseWriter)
+		EncodeUnauthorizedResponse(res http.ResponseWriter)
 		DecodeRequest(req *http.Request, dest interface{}) error
 	}
 
@@ -52,8 +59,8 @@ type (
 	}
 )
 
-// EncodeError encodes errors to responses.
-func (ed *ServerEncoderDecoder) EncodeError(res http.ResponseWriter, msg string, code int) {
+// EncodeErrorResponse encodes errors to responses.
+func (ed *ServerEncoderDecoder) EncodeErrorResponse(res http.ResponseWriter, msg string, statusCode int) {
 	var ct = strings.ToLower(res.Header().Get(ContentTypeHeader))
 	if ct == "" {
 		ct = DefaultContentType
@@ -68,14 +75,35 @@ func (ed *ServerEncoderDecoder) EncodeError(res http.ResponseWriter, msg string,
 	}
 
 	res.Header().Set(ContentTypeHeader, ct)
+	res.WriteHeader(statusCode)
 
-	if err := e.Encode(&models.ErrorResponse{Message: msg, Code: code}); err != nil {
+	if err := e.Encode(&models.ErrorResponse{Message: msg, Code: statusCode}); err != nil {
 		ed.logger.Error(err, "encoding error response")
 	}
 }
 
+// EncodeNoInputResponse encodes a generic 400 error to a response.
+func (ed *ServerEncoderDecoder) EncodeNoInputResponse(res http.ResponseWriter) {
+	ed.EncodeErrorResponse(res, "no input attached to request", http.StatusBadRequest)
+}
+
+// EncodeNotFoundResponse encodes a generic 404 error to a response.
+func (ed *ServerEncoderDecoder) EncodeNotFoundResponse(res http.ResponseWriter) {
+	ed.EncodeErrorResponse(res, "not found", http.StatusNotFound)
+}
+
+// EncodeUnspecifiedInternalServerError encodes a generic 500 error to a response.
+func (ed *ServerEncoderDecoder) EncodeUnspecifiedInternalServerError(res http.ResponseWriter) {
+	ed.EncodeErrorResponse(res, "something has gone awry", http.StatusInternalServerError)
+}
+
+// EncodeUnauthorizedResponse encodes a generic 401 error to a response.
+func (ed *ServerEncoderDecoder) EncodeUnauthorizedResponse(res http.ResponseWriter) {
+	ed.EncodeErrorResponse(res, "invalid credentials provided", http.StatusUnauthorized)
+}
+
 // EncodeResponse encodes responses.
-func (ed *ServerEncoderDecoder) EncodeResponse(res http.ResponseWriter, v interface{}) {
+func (ed *ServerEncoderDecoder) encodeResponse(res http.ResponseWriter, v interface{}, statusCode int) {
 	var ct = strings.ToLower(res.Header().Get(ContentTypeHeader))
 	if ct == "" {
 		ct = DefaultContentType
@@ -90,10 +118,21 @@ func (ed *ServerEncoderDecoder) EncodeResponse(res http.ResponseWriter, v interf
 	}
 
 	res.Header().Set(ContentTypeHeader, ct)
+	res.WriteHeader(statusCode)
 
 	if err := e.Encode(v); err != nil {
 		ed.logger.Error(err, "encoding response")
 	}
+}
+
+// EncodeResponse encodes successful responses.
+func (ed *ServerEncoderDecoder) EncodeResponse(res http.ResponseWriter, v interface{}) {
+	ed.encodeResponse(res, v, http.StatusOK)
+}
+
+// EncodeResponseWithStatus encodes responses and writes the provided status to the response.
+func (ed *ServerEncoderDecoder) EncodeResponseWithStatus(res http.ResponseWriter, v interface{}, statusCode int) {
+	ed.encodeResponse(res, v, statusCode)
 }
 
 // DecodeRequest decodes responses.

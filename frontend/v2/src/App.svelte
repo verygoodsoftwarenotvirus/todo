@@ -4,7 +4,7 @@
   import {Router, Route, navigate} from "svelte-routing";
   import { onMount } from 'svelte';
 
-  import { AuthStatus } from "./models";
+  import { UserStatus } from "./models";
   import { authStatusStore } from "./stores/auth_store";
 
   import { Logger, LogLevel } from "./logger";

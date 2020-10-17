@@ -299,7 +299,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On(
-			"EncodeError",
+			"EncodeErrorResponse",
 			mock.Anything,
 			"user creation is disabled",
 			http.StatusForbidden,
@@ -860,7 +860,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On(
-			"EncodeError",
+			"EncodeErrorResponse",
 			mock.Anything,
 			"TOTP secret already verified",
 			http.StatusAlreadyReported,

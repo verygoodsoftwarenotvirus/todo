@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -291,30 +290,16 @@ func TestService_LoginHandler(T *testing.T) {
 	T.Run("with error fetching login data from request", func(t *testing.T) {
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
-
-		udb := &mockmodels.UserDataManager{}
-		udb.On(
-			"GetUserByUsername",
-			mock.Anything,
-			exampleUser.Username,
-		).Return(exampleUser, errors.New("arbitrary"))
-		s.userDB = udb
-
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
 		res := httptest.NewRecorder()
-		req = req.WithContext(context.WithValue(req.Context(), userLoginInputMiddlewareCtxKey, exampleLoginData))
 
 		s.LoginHandler(res, req)
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 		assert.Empty(t, res.Header().Get("Set-Cookie"))
-
-		mock.AssertExpectationsForObjects(t, udb)
 	})
 
 	T.Run("with invalid login", func(t *testing.T) {
@@ -556,99 +541,6 @@ func TestService_LogoutHandler(T *testing.T) {
 	})
 }
 
-func TestService_fetchLoginDataFromRequest(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		s := buildTestService(t)
-
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
-
-		udb := &mockmodels.UserDataManager{}
-		udb.On(
-			"GetUserByUsername",
-			mock.Anything,
-			exampleUser.Username,
-		).Return(exampleUser, nil)
-		s.userDB = udb
-
-		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		req = req.WithContext(context.WithValue(req.Context(), userLoginInputMiddlewareCtxKey, exampleLoginData))
-		loginData, err := s.fetchLoginDataFromRequest(req)
-
-		require.NotNil(t, loginData)
-		assert.Equal(t, loginData.user, exampleUser)
-		assert.Nil(t, err)
-
-		mock.AssertExpectationsForObjects(t, udb)
-	})
-
-	T.Run("without login data attached to request", func(t *testing.T) {
-		s := buildTestService(t)
-
-		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		_, err = s.fetchLoginDataFromRequest(req)
-		assert.Error(t, err)
-	})
-
-	T.Run("with DB error fetching user", func(t *testing.T) {
-		s := buildTestService(t)
-
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
-
-		udb := &mockmodels.UserDataManager{}
-		udb.On(
-			"GetUserByUsername",
-			mock.Anything,
-			exampleUser.Username,
-		).Return((*models.User)(nil), sql.ErrNoRows)
-		s.userDB = udb
-
-		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		req = req.WithContext(context.WithValue(req.Context(), userLoginInputMiddlewareCtxKey, exampleLoginData))
-		_, err = s.fetchLoginDataFromRequest(req)
-		assert.Error(t, err)
-
-		mock.AssertExpectationsForObjects(t, udb)
-	})
-
-	T.Run("with error fetching user", func(t *testing.T) {
-		s := buildTestService(t)
-
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
-
-		udb := &mockmodels.UserDataManager{}
-		udb.On(
-			"GetUserByUsername",
-			mock.Anything,
-			exampleUser.Username,
-		).Return((*models.User)(nil), errors.New("blah"))
-		s.userDB = udb
-
-		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		req = req.WithContext(context.WithValue(req.Context(), userLoginInputMiddlewareCtxKey, exampleLoginData))
-		_, err = s.fetchLoginDataFromRequest(req)
-		assert.Error(t, err)
-
-		mock.AssertExpectationsForObjects(t, udb)
-	})
-}
-
 func TestService_validateLogin(T *testing.T) {
 	T.Parallel()
 
@@ -659,10 +551,6 @@ func TestService_validateLogin(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
-		exampleInput := loginData{
-			loginInput: exampleLoginData,
-			user:       exampleUser,
-		}
 
 		authr := &mockauth.Authenticator{}
 		authr.On(
@@ -676,7 +564,7 @@ func TestService_validateLogin(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = authr
 
-		actual, err := s.validateLogin(ctx, exampleInput)
+		actual, err := s.validateLogin(ctx, exampleLoginData, exampleUser)
 		assert.True(t, actual)
 		assert.NoError(t, err)
 
@@ -690,10 +578,6 @@ func TestService_validateLogin(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
-		exampleInput := loginData{
-			loginInput: exampleLoginData,
-			user:       exampleUser,
-		}
 
 		authr := &mockauth.Authenticator{}
 		authr.On(
@@ -721,7 +605,7 @@ func TestService_validateLogin(T *testing.T) {
 		).Return(nil)
 		s.userDB = udb
 
-		actual, err := s.validateLogin(ctx, exampleInput)
+		actual, err := s.validateLogin(ctx, exampleLoginData, exampleUser)
 		assert.True(t, actual)
 		assert.NoError(t, err)
 
@@ -737,10 +621,6 @@ func TestService_validateLogin(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
-		exampleInput := loginData{
-			loginInput: exampleLoginData,
-			user:       exampleUser,
-		}
 
 		authr := &mockauth.Authenticator{}
 		authr.On(
@@ -760,7 +640,7 @@ func TestService_validateLogin(T *testing.T) {
 		).Return("", expectedErr)
 		s.authenticator = authr
 
-		actual, err := s.validateLogin(ctx, exampleInput)
+		actual, err := s.validateLogin(ctx, exampleLoginData, exampleUser)
 		assert.False(t, actual)
 		assert.Error(t, err)
 
@@ -775,10 +655,6 @@ func TestService_validateLogin(T *testing.T) {
 		expectedErr := errors.New("arbitrary")
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
-		exampleInput := loginData{
-			loginInput: exampleLoginData,
-			user:       exampleUser,
-		}
 
 		authr := &mockauth.Authenticator{}
 		authr.On(
@@ -806,7 +682,7 @@ func TestService_validateLogin(T *testing.T) {
 		).Return(expectedErr)
 		s.userDB = udb
 
-		actual, err := s.validateLogin(ctx, exampleInput)
+		actual, err := s.validateLogin(ctx, exampleLoginData, exampleUser)
 		assert.False(t, actual)
 		assert.Error(t, err)
 
@@ -821,10 +697,6 @@ func TestService_validateLogin(T *testing.T) {
 		expectedErr := errors.New("arbitrary")
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
-		exampleInput := loginData{
-			loginInput: exampleLoginData,
-			user:       exampleUser,
-		}
 
 		authr := &mockauth.Authenticator{}
 		authr.On(
@@ -838,7 +710,7 @@ func TestService_validateLogin(T *testing.T) {
 		).Return(false, expectedErr)
 		s.authenticator = authr
 
-		actual, err := s.validateLogin(ctx, exampleInput)
+		actual, err := s.validateLogin(ctx, exampleLoginData, exampleUser)
 		assert.False(t, actual)
 		assert.Error(t, err)
 
@@ -852,10 +724,6 @@ func TestService_validateLogin(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
-		exampleInput := loginData{
-			loginInput: exampleLoginData,
-			user:       exampleUser,
-		}
 
 		authr := &mockauth.Authenticator{}
 		authr.On(
@@ -869,7 +737,7 @@ func TestService_validateLogin(T *testing.T) {
 		).Return(false, nil)
 		s.authenticator = authr
 
-		actual, err := s.validateLogin(ctx, exampleInput)
+		actual, err := s.validateLogin(ctx, exampleLoginData, exampleUser)
 		assert.False(t, actual)
 		assert.NoError(t, err)
 

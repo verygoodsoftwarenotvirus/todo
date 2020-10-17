@@ -2,7 +2,7 @@
   import axios, {AxiosError, AxiosResponse} from 'axios';
   import { link, navigate } from "svelte-routing";
 
-  import type { AuthStatus, LoginRequest } from "../../models";
+  import type { UserStatus, LoginRequest } from "../../models";
 
   export let location: Location;
 
@@ -42,7 +42,7 @@
 
         return axios.post(path, buildLoginRequest(), {withCredentials: true})
             .then(() => {
-              axios.get("/users/status", {withCredentials: true}).then((statusResponse: AxiosResponse<AuthStatus>) => {
+              axios.get("/users/status", {withCredentials: true}).then((statusResponse: AxiosResponse<UserStatus>) => {
                 authStatusStore.setAuthStatus(statusResponse);
                 if (statusResponse.data.isAdmin) {
                   navigate("/admin/dashboard", { state: {}, replace: true });

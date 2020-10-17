@@ -34,7 +34,8 @@ var (
 				"requires_password_change" boolean NOT NULL DEFAULT 'false',
 				"two_factor_secret" TEXT NOT NULL,
 				"two_factor_secret_verified_on" BIGINT DEFAULT NULL,
-				"is_admin" boolean NOT NULL DEFAULT 'false',
+				"is_admin" BOOLEAN NOT NULL DEFAULT 'false',
+				"status" TEXT NOT NULL DEFAULT 'created',
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				"last_updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
@@ -144,60 +145,9 @@ func (p *Postgres) Migrate(ctx context.Context, createTestUser bool) error {
 
 	p.migrateOnce.Do(buildMigrationFunc(p.db))
 
-	if createTestUser {
-		const usingDemoCodeThatShouldBeDeletedLater = true
-
-		if usingDemoCodeThatShouldBeDeletedLater {
-			for _, x := range exampledata.ExampleUsers {
-				query, args, err := p.sqlBuilder.
-					Insert(usersTableName).
-					Columns(
-						usersTableUsernameColumn,
-						usersTableHashedPasswordColumn,
-						usersTableSaltColumn,
-						usersTableTwoFactorColumn,
-						usersTableIsAdminColumn,
-						usersTableTwoFactorVerifiedOnColumn,
-					).
-					Values(
-						x.Username,
-						x.HashedPassword,
-						x.Salt,
-						x.TwoFactorSecret,
-						x.IsAdmin,
-						squirrel.Expr(currentUnixTimeQuery),
-					).
-					ToSql()
-				p.logQueryBuildingError(err)
-
-				if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
-					return dbErr
-				}
-			}
-
-			for _, x := range exampledata.ExampleItems {
-				for _, y := range x {
-					query, args := p.buildCreateItemQuery(y)
-					if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
-						return dbErr
-					}
-				}
-			}
-
-			for _, x := range exampledata.ExampleOAuth2Clients {
-				query, args := p.buildCreateOAuth2ClientQuery(x)
-				if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
-					return dbErr
-				}
-			}
-
-			for _, x := range exampledata.ExampleWebhooks {
-				query, args := p.buildCreateWebhookQuery(x)
-				if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
-					return dbErr
-				}
-			}
-		} else {
+	const usingDemoCodeThatShouldBeDeletedLater = true
+	if createTestUser && usingDemoCodeThatShouldBeDeletedLater {
+		for _, x := range exampledata.ExampleUsers {
 			query, args, err := p.sqlBuilder.
 				Insert(usersTableName).
 				Columns(
@@ -209,12 +159,11 @@ func (p *Postgres) Migrate(ctx context.Context, createTestUser bool) error {
 					usersTableTwoFactorVerifiedOnColumn,
 				).
 				Values(
-					"username",
-					"$2a$10$JzD3CNBqPmwq.IidQuO7eu3zKdu8vEIi3HkLk8/qRjrzb7eNLKlKG",
-					[]byte("aaaaaaaaaaaaaaaa"),
-					// `otpauth://totp/todo:username?secret=IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=&issuer=todo`
-					"IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=",
-					true,
+					x.Username,
+					x.HashedPassword,
+					x.Salt,
+					x.TwoFactorSecret,
+					x.IsAdmin,
 					squirrel.Expr(currentUnixTimeQuery),
 				).
 				ToSql()
@@ -223,6 +172,55 @@ func (p *Postgres) Migrate(ctx context.Context, createTestUser bool) error {
 			if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
 				return dbErr
 			}
+		}
+
+		for _, x := range exampledata.ExampleItems {
+			for _, y := range x {
+				query, args := p.buildCreateItemQuery(y)
+				if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
+					return dbErr
+				}
+			}
+		}
+
+		for _, x := range exampledata.ExampleOAuth2Clients {
+			query, args := p.buildCreateOAuth2ClientQuery(x)
+			if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
+				return dbErr
+			}
+		}
+
+		for _, x := range exampledata.ExampleWebhooks {
+			query, args := p.buildCreateWebhookQuery(x)
+			if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
+				return dbErr
+			}
+		}
+	} else {
+		query, args, err := p.sqlBuilder.
+			Insert(usersTableName).
+			Columns(
+				usersTableUsernameColumn,
+				usersTableHashedPasswordColumn,
+				usersTableSaltColumn,
+				usersTableTwoFactorColumn,
+				usersTableIsAdminColumn,
+				usersTableTwoFactorVerifiedOnColumn,
+			).
+			Values(
+				"username",
+				"$2a$10$JzD3CNBqPmwq.IidQuO7eu3zKdu8vEIi3HkLk8/qRjrzb7eNLKlKG",
+				[]byte("aaaaaaaaaaaaaaaa"),
+				// `otpauth://totp/todo:username?secret=IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=&issuer=todo`
+				"IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=",
+				true,
+				squirrel.Expr(currentUnixTimeQuery),
+			).
+			ToSql()
+		p.logQueryBuildingError(err)
+
+		if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
+			return dbErr
 		}
 	}
 

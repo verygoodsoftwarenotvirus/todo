@@ -39,8 +39,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		res.WriteHeader(http.StatusUnauthorized)
-		s.encoderDecoder.EncodeError(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 	tracing.AttachSessionInfoToSpan(span, *si)
@@ -67,7 +66,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		}
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching items")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -91,8 +90,7 @@ func (s *Service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		res.WriteHeader(http.StatusUnauthorized)
-		s.encoderDecoder.EncodeError(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 	tracing.AttachSessionInfoToSpan(span, *si)
@@ -117,7 +115,7 @@ func (s *Service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	}
 	if searchErr != nil {
 		logger.Error(searchErr, "error encountered executing search query")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -139,7 +137,7 @@ func (s *Service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 		items = []models.Item{}
 	} else if dbErr != nil {
 		logger.Error(dbErr, "error encountered fetching items")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -158,15 +156,14 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input, ok := ctx.Value(createMiddlewareCtxKey).(*models.ItemCreationInput)
 	if !ok {
 		logger.Info("valid input not attached to request")
-		res.WriteHeader(http.StatusBadRequest)
+		s.encoderDecoder.EncodeNoInputResponse(res)
 		return
 	}
 
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		res.WriteHeader(http.StatusUnauthorized)
-		s.encoderDecoder.EncodeError(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 	tracing.AttachSessionInfoToSpan(span, *si)
@@ -177,7 +174,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	x, err := s.itemDataManager.CreateItem(ctx, input)
 	if err != nil {
 		logger.Error(err, "error creating item")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -196,8 +193,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode our response and peace.
-	res.WriteHeader(http.StatusCreated)
-	s.encoderDecoder.EncodeResponse(res, x)
+	s.encoderDecoder.EncodeResponseWithStatus(res, x, http.StatusCreated)
 }
 
 // ExistenceHandler returns a HEAD handler that returns 200 if an item exists, 404 otherwise.
@@ -210,8 +206,7 @@ func (s *Service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		res.WriteHeader(http.StatusUnauthorized)
-		s.encoderDecoder.EncodeError(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 	tracing.AttachSessionInfoToSpan(span, *si)
@@ -226,14 +221,10 @@ func (s *Service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	exists, err := s.itemDataManager.ItemExists(ctx, itemID, si.UserID)
 	if err != nil && err != sql.ErrNoRows {
 		logger.Error(err, "error checking item existence in database")
-		res.WriteHeader(http.StatusNotFound)
-		return
 	}
 
-	if exists {
-		res.WriteHeader(http.StatusOK)
-	} else {
-		res.WriteHeader(http.StatusNotFound)
+	if !exists || err != nil && err != sql.ErrNoRows {
+		s.encoderDecoder.EncodeNotFoundResponse(res)
 	}
 }
 
@@ -247,8 +238,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		res.WriteHeader(http.StatusUnauthorized)
-		s.encoderDecoder.EncodeError(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 	tracing.AttachSessionInfoToSpan(span, *si)
@@ -262,11 +252,11 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	// fetch item from database.
 	x, err := s.itemDataManager.GetItem(ctx, itemID, si.UserID)
 	if err == sql.ErrNoRows {
-		res.WriteHeader(http.StatusNotFound)
+		s.encoderDecoder.EncodeNotFoundResponse(res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error fetching item from database")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -285,15 +275,14 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	input, ok := ctx.Value(updateMiddlewareCtxKey).(*models.ItemUpdateInput)
 	if !ok {
 		logger.Info("no input attached to request")
-		res.WriteHeader(http.StatusBadRequest)
+		s.encoderDecoder.EncodeNoInputResponse(res)
 		return
 	}
 
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		res.WriteHeader(http.StatusUnauthorized)
-		s.encoderDecoder.EncodeError(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 	tracing.AttachSessionInfoToSpan(span, *si)
@@ -308,11 +297,11 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	// fetch item from database.
 	x, err := s.itemDataManager.GetItem(ctx, itemID, si.UserID)
 	if err == sql.ErrNoRows {
-		res.WriteHeader(http.StatusNotFound)
+		s.encoderDecoder.EncodeNotFoundResponse(res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error encountered getting item")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -322,7 +311,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	// update item in database.
 	if err = s.itemDataManager.UpdateItem(ctx, x); err != nil {
 		logger.Error(err, "error encountered updating item")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -351,8 +340,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		res.WriteHeader(http.StatusUnauthorized)
-		s.encoderDecoder.EncodeError(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 	tracing.AttachSessionInfoToSpan(span, *si)
@@ -366,11 +354,11 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	// archive the item in the database.
 	err = s.itemDataManager.ArchiveItem(ctx, itemID, si.UserID)
 	if err == sql.ErrNoRows {
-		res.WriteHeader(http.StatusNotFound)
+		s.encoderDecoder.EncodeNotFoundResponse(res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error encountered deleting item")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 

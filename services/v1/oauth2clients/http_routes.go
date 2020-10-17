@@ -63,7 +63,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		}
 	} else if err != nil {
 		logger.Error(err, "encountered error getting list of oauth2 clients from database")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -82,7 +82,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input, ok := ctx.Value(creationMiddlewareCtxKey).(*models.OAuth2ClientCreationInput)
 	if !ok {
 		logger.Info("valid input not attached to request")
-		res.WriteHeader(http.StatusBadRequest)
+		s.encoderDecoder.EncodeNoInputResponse(res)
 		return
 	}
 
@@ -101,7 +101,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	user, err := s.database.GetUserByUsername(ctx, input.Username)
 	if err != nil {
 		logger.Error(err, "fetching user by username")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -120,11 +120,11 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	if !valid {
 		logger.Debug("invalid credentials provided")
-		res.WriteHeader(http.StatusUnauthorized)
+		s.encoderDecoder.EncodeUnauthorizedResponse(res)
 		return
 	} else if err != nil {
 		logger.Error(err, "validating user credentials")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -132,7 +132,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	client, err := s.database.CreateOAuth2Client(ctx, input)
 	if err != nil {
 		logger.Error(err, "creating oauth2Client in the database")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -140,8 +140,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachOAuth2ClientDatabaseIDToSpan(span, client.ID)
 	s.oauth2ClientCounter.Increment(ctx)
 
-	res.WriteHeader(http.StatusCreated)
-	s.encoderDecoder.EncodeResponse(res, client)
+	s.encoderDecoder.EncodeResponseWithStatus(res, client, http.StatusCreated)
 }
 
 // ReadHandler is a route handler for retrieving an OAuth2 client.
@@ -165,11 +164,11 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	x, err := s.database.GetOAuth2Client(ctx, oauth2ClientID, userID)
 	if err == sql.ErrNoRows {
 		logger.Debug("ReadHandler called on nonexistent client")
-		res.WriteHeader(http.StatusNotFound)
+		s.encoderDecoder.EncodeNotFoundResponse(res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error fetching oauth2Client from database")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -197,11 +196,11 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	// mark client as archived.
 	err := s.database.ArchiveOAuth2Client(ctx, oauth2ClientID, userID)
 	if err == sql.ErrNoRows {
-		res.WriteHeader(http.StatusNotFound)
+		s.encoderDecoder.EncodeNotFoundResponse(res)
 		return
 	} else if err != nil {
 		logger.Error(err, "encountered error deleting oauth2 client")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 

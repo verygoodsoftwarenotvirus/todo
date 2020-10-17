@@ -32,8 +32,7 @@ func (s *Service) UserInputMiddleware(next http.Handler) http.Handler {
 		// decode the request.
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
-			res.WriteHeader(http.StatusBadRequest)
-			s.encoderDecoder.EncodeError(res, "invalid request content", http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
@@ -53,8 +52,7 @@ func (s *Service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler 
 		// decode the request.
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
-			res.WriteHeader(http.StatusBadRequest)
-			s.encoderDecoder.EncodeError(res, "invalid request content", http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
@@ -74,8 +72,7 @@ func (s *Service) TOTPSecretVerificationInputMiddleware(next http.Handler) http.
 		// decode the request.
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
-			res.WriteHeader(http.StatusBadRequest)
-			s.encoderDecoder.EncodeError(res, "invalid request content", http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
@@ -95,8 +92,7 @@ func (s *Service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handl
 		// decode the request.
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
-			res.WriteHeader(http.StatusBadRequest)
-			s.encoderDecoder.EncodeError(res, "invalid request content", http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 

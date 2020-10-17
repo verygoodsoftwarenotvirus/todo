@@ -18,6 +18,7 @@ type (
 		CreatedOn                 uint64  `json:"createdOn"`
 		LastUpdatedOn             *uint64 `json:"lastUpdatedOn"`
 		ArchivedOn                *uint64 `json:"archivedOn"`
+		Status                    string  `json:"status"`
 		IsAdmin                   bool    `json:"isAdmin"`
 		RequiresPasswordChange    bool    `json:"requiresPasswordChange"`
 	}

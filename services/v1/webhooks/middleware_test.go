@@ -55,7 +55,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
 		ed.On(
-			"EncodeError",
+			"EncodeErrorResponse",
 			mock.Anything,
 			"invalid request content",
 			http.StatusBadRequest,
@@ -109,7 +109,7 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
 		ed.On(
-			"EncodeError",
+			"EncodeErrorResponse",
 			mock.Anything,
 			"invalid request content",
 			http.StatusBadRequest,

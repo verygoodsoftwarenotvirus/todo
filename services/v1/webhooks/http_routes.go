@@ -58,7 +58,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input, ok := ctx.Value(createMiddlewareCtxKey).(*models.WebhookCreationInput)
 	if !ok {
 		logger.Info("valid input not attached to request")
-		res.WriteHeader(http.StatusBadRequest)
+		s.encoderDecoder.EncodeNoInputResponse(res)
 		return
 	}
 	input.BelongsToUser = userID
@@ -66,8 +66,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// ensure everything's on the up-and-up
 	if err := validateWebhook(input); err != nil {
 		logger.Info("invalid method provided")
-		res.WriteHeader(http.StatusBadRequest)
-		s.encoderDecoder.EncodeError(res, err.Error(), http.StatusBadRequest)
+		s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -75,7 +74,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	wh, err := s.webhookDataManager.CreateWebhook(ctx, input)
 	if err != nil {
 		logger.Error(err, "error creating webhook")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -92,8 +91,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	s.eventManager.TuneIn(l)
 
 	// let everybody know we're good.
-	res.WriteHeader(http.StatusCreated)
-	s.encoderDecoder.EncodeResponse(res, wh)
+	s.encoderDecoder.EncodeResponseWithStatus(res, wh, http.StatusCreated)
 }
 
 // ListHandler is our list route.
@@ -119,7 +117,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		}
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching webhooks")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -148,11 +146,11 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	x, err := s.webhookDataManager.GetWebhook(ctx, webhookID, userID)
 	if err == sql.ErrNoRows {
 		logger.Debug("No rows found in webhook database")
-		res.WriteHeader(http.StatusNotFound)
+		s.encoderDecoder.EncodeNotFoundResponse(res)
 		return
 	} else if err != nil {
 		logger.Error(err, "Error fetching webhook from webhook database")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -181,7 +179,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	input, ok := ctx.Value(updateMiddlewareCtxKey).(*models.WebhookUpdateInput)
 	if !ok {
 		logger.Info("no input attached to request")
-		res.WriteHeader(http.StatusBadRequest)
+		s.encoderDecoder.EncodeNoInputResponse(res)
 		return
 	}
 
@@ -189,11 +187,11 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	wh, err := s.webhookDataManager.GetWebhook(ctx, webhookID, userID)
 	if err == sql.ErrNoRows {
 		logger.Debug("no rows found for webhook")
-		res.WriteHeader(http.StatusNotFound)
+		s.encoderDecoder.EncodeNotFoundResponse(res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error encountered getting webhook")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -203,7 +201,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	// save the update in the database.
 	if err = s.webhookDataManager.UpdateWebhook(ctx, wh); err != nil {
 		logger.Error(err, "error encountered updating webhook")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 
@@ -239,11 +237,11 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	err := s.webhookDataManager.ArchiveWebhook(ctx, webhookID, userID)
 	if err == sql.ErrNoRows {
 		logger.Debug("no rows found for webhook")
-		res.WriteHeader(http.StatusNotFound)
+		s.encoderDecoder.EncodeErrorResponse(res, "webhook not found", http.StatusNotFound)
 		return
 	} else if err != nil {
 		logger.Error(err, "error encountered deleting webhook")
-		res.WriteHeader(http.StatusInternalServerError)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
 		return
 	}
 

@@ -1,13 +1,3 @@
-export class AuthStatus {
-    isAuthenticated: boolean;
-    isAdmin: boolean;
-
-    constructor() {
-      this.isAuthenticated = false;
-      this.isAdmin = false;
-    }
-}
-
 export class LoginRequest {
     username: string;
     password: string;

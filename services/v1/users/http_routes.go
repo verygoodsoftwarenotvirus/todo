@@ -123,6 +123,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// and when that changes, this can/should be removed.
 	logger = logger.WithValue("username", userInput.Username)
 
+	// ensure the password isn't garbage-tier
 	if err := passwordvalidator.Validate(userInput.Password, minimumPasswordEntropy); err != nil {
 		s.encoderDecoder.EncodeErrorResponse(res, "password too weak!", http.StatusBadRequest)
 		return
@@ -412,6 +413,12 @@ func (s *Service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	}
 
 	tracing.AttachUsernameToSpan(span, user.Username)
+
+	// ensure the password isn't garbage-tier
+	if err := passwordvalidator.Validate(input.NewPassword, minimumPasswordEntropy); err != nil {
+		s.encoderDecoder.EncodeErrorResponse(res, "new password is too weak!", http.StatusBadRequest)
+		return
+	}
 
 	// hash the new password.
 	newPasswordHash, err := s.authenticator.HashPassword(ctx, input.NewPassword)

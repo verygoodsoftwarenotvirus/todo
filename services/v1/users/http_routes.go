@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"fmt"
+
 	"image/png"
 	"net/http"
 
@@ -13,6 +14,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
+	passwordvalidator "github.com/lane-c-wagner/go-password-validator"
 	"github.com/makiuchi-d/gozxing"
 	"github.com/makiuchi-d/gozxing/qrcode"
 	"github.com/pquerna/otp/totp"
@@ -25,6 +27,8 @@ const (
 
 	totpIssuer        = "todoService"
 	base64ImagePrefix = "data:image/jpeg;base64,"
+
+	minimumPasswordEntropy = 75
 )
 
 // validateCredentialChangeRequest takes a user's credentials and determines
@@ -118,6 +122,11 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// the logging statements below are only in the event of errors. If
 	// and when that changes, this can/should be removed.
 	logger = logger.WithValue("username", userInput.Username)
+
+	if err := passwordvalidator.Validate(userInput.Password, minimumPasswordEntropy); err != nil {
+		s.encoderDecoder.EncodeErrorResponse(res, "password too weak!", http.StatusBadRequest)
+		return
+	}
 
 	// hash the password.
 	hp, err := s.authenticator.HashPassword(ctx, userInput.Password)

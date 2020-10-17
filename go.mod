@@ -23,6 +23,7 @@ require (
 	github.com/google/wire v0.4.0
 	github.com/gorilla/securecookie v1.1.1
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
+	github.com/lane-c-wagner/go-password-validator v0.1.0
 	github.com/lib/pq v1.4.0
 	github.com/makiuchi-d/gozxing v0.0.0-20200903113411-25f730ed83da
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible

@@ -12,7 +12,7 @@ function buildAuthStatus() {
         logout: () => set({}),
     };
 
-    axios.get("/users/status", { withCredentials: true })
+    axios.get("/auth/status", { withCredentials: true })
         .then((response: AxiosResponse<UserStatus>) => {
             ass.setAuthStatus(response.data);
         })

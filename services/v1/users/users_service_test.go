@@ -11,6 +11,7 @@ import (
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -38,6 +39,7 @@ func buildTestService(t *testing.T) *Service {
 		database.BuildMockDatabase(),
 		&mockauth.Authenticator{},
 		func(req *http.Request) uint64 { return 0 },
+		func(req *http.Request) (*models.SessionInfo, error) { return nil, nil },
 		&mockencoding.EncoderDecoder{},
 		ucp,
 		newsman.NewNewsman(nil, nil),
@@ -63,6 +65,7 @@ func TestProvideUsersService(T *testing.T) {
 			database.BuildMockDatabase(),
 			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },
+			func(req *http.Request) (*models.SessionInfo, error) { return nil, nil },
 			&mockencoding.EncoderDecoder{},
 			ucp,
 			nil,
@@ -81,6 +84,7 @@ func TestProvideUsersService(T *testing.T) {
 			noop.NewLogger(),
 			database.BuildMockDatabase(),
 			&mockauth.Authenticator{},
+			nil,
 			nil,
 			&mockencoding.EncoderDecoder{},
 			ucp,
@@ -101,6 +105,7 @@ func TestProvideUsersService(T *testing.T) {
 			database.BuildMockDatabase(),
 			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },
+			func(req *http.Request) (*models.SessionInfo, error) { return nil, nil },
 			&mockencoding.EncoderDecoder{},
 			ucp,
 			nil,

@@ -17,11 +17,11 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
-func TestProvideItemsServiceUserIDFetcher(T *testing.T) {
+func TestProvideItemsServiceSessionInfoFetcher(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
-		_ = ProvideItemsServiceUserIDFetcher()
+		_ = ProvideItemsServiceSessionInfoFetcher()
 	})
 }
 
@@ -38,6 +38,14 @@ func TestProvideUsersServiceUserIDFetcher(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		_ = ProvideUsersServiceUserIDFetcher(noop.NewLogger())
+	})
+}
+
+func TestProvideUsersServiceSessionInfoFetcher(T *testing.T) {
+	T.Parallel()
+
+	T.Run("obligatory", func(t *testing.T) {
+		_ = ProvideUsersServiceSessionInfoFetcher()
 	})
 }
 

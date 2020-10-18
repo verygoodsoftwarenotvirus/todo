@@ -106,7 +106,7 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 				return
 			}
 
-			// elsewise, load the request with extra context.
+			// otherwise, load the request with extra context.
 			ctx = context.WithValue(ctx, models.SessionInfoKey, user.ToSessionInfo())
 
 			next.ServeHTTP(res, req.WithContext(ctx))

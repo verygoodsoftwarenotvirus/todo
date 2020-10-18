@@ -18,7 +18,7 @@ func (c *V1Client) BuildGetUserRequest(ctx context.Context, userID uint64) (*htt
 	ctx, span := tracing.StartSpan(ctx, "BuildGetUserRequest")
 	defer span.End()
 
-	uri := c.buildVersionlessURL(nil, usersBasePath, strconv.FormatUint(userID, 10))
+	uri := c.buildURL(nil, usersBasePath, strconv.FormatUint(userID, 10)).String()
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
@@ -42,7 +42,7 @@ func (c *V1Client) BuildGetUsersRequest(ctx context.Context, filter *models.Quer
 	ctx, span := tracing.StartSpan(ctx, "BuildGetUsersRequest")
 	defer span.End()
 
-	uri := c.buildVersionlessURL(filter.ToValues(), usersBasePath)
+	uri := c.buildURL(filter.ToValues(), usersBasePath).String()
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
@@ -94,7 +94,7 @@ func (c *V1Client) BuildArchiveUserRequest(ctx context.Context, userID uint64) (
 	ctx, span := tracing.StartSpan(ctx, "BuildArchiveUserRequest")
 	defer span.End()
 
-	uri := c.buildVersionlessURL(nil, usersBasePath, strconv.FormatUint(userID, 10))
+	uri := c.buildURL(nil, usersBasePath, strconv.FormatUint(userID, 10)).String()
 
 	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
 }

@@ -40,6 +40,9 @@ type (
 	// UserIDFetcher fetches usernames from requests.
 	UserIDFetcher func(*http.Request) uint64
 
+	// SessionInfoFetcher is a function that fetches user IDs.
+	SessionInfoFetcher func(*http.Request) (*models.SessionInfo, error)
+
 	// Service handles our users.
 	Service struct {
 		cookieSecret        []byte
@@ -48,6 +51,7 @@ type (
 		logger              logging.Logger
 		encoderDecoder      encoding.EncoderDecoder
 		userIDFetcher       UserIDFetcher
+		sessionInfoFetcher  SessionInfoFetcher
 		userCounter         metrics.UnitCounter
 		reporter            newsman.Reporter
 		secretGenerator     secretGenerator
@@ -62,6 +66,7 @@ func ProvideUsersService(
 	userDataManager models.UserDataManager,
 	authenticator auth.Authenticator,
 	userIDFetcher UserIDFetcher,
+	sessionInfoFetcher SessionInfoFetcher,
 	encoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
 	reporter newsman.Reporter,
@@ -81,6 +86,7 @@ func ProvideUsersService(
 		userDataManager:     userDataManager,
 		authenticator:       authenticator,
 		userIDFetcher:       userIDFetcher,
+		sessionInfoFetcher:  sessionInfoFetcher,
 		encoderDecoder:      encoder,
 		userCounter:         counter,
 		reporter:            reporter,

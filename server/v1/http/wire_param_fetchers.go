@@ -19,18 +19,23 @@ import (
 var (
 	paramFetcherProviders = wire.NewSet(
 		ProvideUsersServiceUserIDFetcher,
+		ProvideUsersServiceSessionInfoFetcher,
 		ProvideOAuth2ClientsServiceClientIDFetcher,
 		ProvideWebhooksServiceWebhookIDFetcher,
 		ProvideWebhooksServiceUserIDFetcher,
 		ProvideItemsServiceItemIDFetcher,
-		ProvideItemsServiceUserIDFetcher,
-		ProvideItemsSessionInfoFetcher,
+		ProvideItemsServiceSessionInfoFetcher,
 	)
 )
 
 // ProvideUsersServiceUserIDFetcher provides a UsernameFetcher.
 func ProvideUsersServiceUserIDFetcher(logger logging.Logger) usersservice.UserIDFetcher {
 	return buildRouteParamUserIDFetcher(logger)
+}
+
+// ProvideUsersServiceSessionInfoFetcher provides a SessionInfoFetcher.
+func ProvideUsersServiceSessionInfoFetcher() usersservice.SessionInfoFetcher {
+	return sessionInfoFetcherFromRequestContext
 }
 
 // ProvideOAuth2ClientsServiceClientIDFetcher provides a ClientIDFetcher.
@@ -53,13 +58,8 @@ func ProvideItemsServiceItemIDFetcher(logger logging.Logger) itemsservice.ItemID
 	return buildRouteParamItemIDFetcher(logger)
 }
 
-// ProvideItemsServiceUserIDFetcher provides a UserIDFetcher.
-func ProvideItemsServiceUserIDFetcher() itemsservice.UserIDFetcher {
-	return userIDFetcherFromRequestContext
-}
-
-// ProvideItemsSessionInfoFetcher provides a SessionInfoFetcher.
-func ProvideItemsSessionInfoFetcher() itemsservice.SessionInfoFetcher {
+// ProvideItemsServiceSessionInfoFetcher provides a SessionInfoFetcher.
+func ProvideItemsServiceSessionInfoFetcher() itemsservice.SessionInfoFetcher {
 	return sessionInfoFetcherFromRequestContext
 }
 

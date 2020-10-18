@@ -57,7 +57,7 @@ func TestV1Client_GetUser(T *testing.T) {
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
 					assert.True(t, strings.HasSuffix(req.URL.String(), strconv.Itoa(int(exampleUser.ID))))
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/users/%d", exampleUser.ID), "expected and actual paths do not match")
+					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/users/%d", exampleUser.ID), "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodGet)
 					require.NoError(t, json.NewEncoder(res).Encode(exampleUser))
 				},
@@ -128,7 +128,7 @@ func TestV1Client_GetUsers(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/users", "expected and actual paths do not match")
+					assert.Equal(t, req.URL.Path, "/api/v1/users", "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodGet)
 					require.NoError(t, json.NewEncoder(res).Encode(exampleUserList))
 				},
@@ -253,7 +253,7 @@ func TestV1Client_ArchiveUser(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/users/%d", exampleUser.ID), "expected and actual paths do not match")
+					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/users/%d", exampleUser.ID), "expected and actual paths do not match")
 					assert.Equal(t, req.Method, http.MethodDelete)
 				},
 			),

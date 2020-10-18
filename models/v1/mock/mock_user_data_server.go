@@ -60,6 +60,11 @@ func (m *UserDataServer) ReadHandler(res http.ResponseWriter, req *http.Request)
 	m.Called(res, req)
 }
 
+// SelfHandler is a mock method to satisfy our interface requirements.
+func (m *UserDataServer) SelfHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
+}
+
 // TOTPSecretVerificationHandler is a mock method to satisfy our interface requirements.
 func (m *UserDataServer) TOTPSecretVerificationHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)

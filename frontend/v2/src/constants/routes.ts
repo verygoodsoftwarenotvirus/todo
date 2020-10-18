@@ -1,6 +1,6 @@
 export enum backendRoutes {
   USER_REGISTRATION  = "/users/",
-  USER_AUTH_STATUS   = "/users/status",
+  USER_AUTH_STATUS   = "/auth/status",
   LOGIN              = "/users/login",
   LOGOUT             = "/users/logout",
   VERIFY_2FA_SECRET  = "/users/totp_secret/verify",

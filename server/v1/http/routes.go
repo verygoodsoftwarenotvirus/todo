@@ -21,7 +21,6 @@ const (
 	root             = "/"
 	searchRoot       = "/search"
 	numericIDPattern = "/{%s:[0-9]+}"
-	oauth2IDPattern  = "/{%s:[0-9_\\-]+}"
 )
 
 func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Handler) {
@@ -94,30 +93,13 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 		adminRouter.Post("/cycle_cookie_secret", s.authService.CycleSecretHandler)
 	})
 
+	router.Get("/auth/status", s.authService.StatusHandler)
+
 	router.Route("/users", func(userRouter chi.Router) {
 		userRouter.With(s.authService.UserLoginInputMiddleware).Post("/login", s.authService.LoginHandler)
 		userRouter.With(s.authService.CookieAuthenticationMiddleware).Post("/logout", s.authService.LogoutHandler)
-
-		userIDPattern := fmt.Sprintf(oauth2IDPattern, usersservice.URIParamKey)
-
-		userRouter.With(s.authService.AdminMiddleware).Get(root, s.usersService.ListHandler)
-		userRouter.With(s.authService.CookieAuthenticationMiddleware).Get("/status", s.authService.StatusHandler)
 		userRouter.With(s.usersService.UserInputMiddleware).Post(root, s.usersService.CreateHandler)
-		userRouter.Get(userIDPattern, s.usersService.ReadHandler)
-		userRouter.Delete(userIDPattern, s.usersService.ArchiveHandler)
-
-		userRouter.With(
-			s.authService.CookieAuthenticationMiddleware,
-			s.usersService.TOTPSecretRefreshInputMiddleware,
-		).Post("/totp_secret/new", s.usersService.NewTOTPSecretHandler)
-
-		userRouter.With(
-			s.usersService.TOTPSecretVerificationInputMiddleware,
-		).Post("/totp_secret/verify", s.usersService.TOTPSecretVerificationHandler)
-		userRouter.With(
-			s.authService.CookieAuthenticationMiddleware,
-			s.usersService.PasswordUpdateInputMiddleware,
-		).Put("/password/new", s.usersService.UpdatePasswordHandler)
+		userRouter.With(s.usersService.TOTPSecretVerificationInputMiddleware).Post("/totp_secret/verify", s.usersService.TOTPSecretVerificationHandler)
 	})
 
 	router.Route("/oauth2", func(oauth2Router chi.Router) {
@@ -128,7 +110,6 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 
 		oauth2Router.With(s.oauth2ClientsService.OAuth2ClientInfoMiddleware).
 			Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
-				s.logger.WithRequest(req).Debug("oauth2 authorize route hit")
 				if err := s.oauth2ClientsService.HandleAuthorizeRequest(res, req); err != nil {
 					http.Error(res, err.Error(), http.StatusBadRequest)
 				}
@@ -143,6 +124,39 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 
 	router.With(s.authService.AuthenticationMiddleware(true)).
 		Route("/api/v1", func(v1Router chi.Router) {
+			// Users
+			v1Router.Route("/users", func(usersRouter chi.Router) {
+				userIDPattern := fmt.Sprintf(numericIDPattern, usersservice.URIParamKey)
+
+				usersRouter.With(s.authService.AdminMiddleware).Get(root, s.usersService.ListHandler)
+				usersRouter.Get("/self", s.usersService.SelfHandler)
+				usersRouter.Get(userIDPattern, s.usersService.ReadHandler)
+				usersRouter.Delete(userIDPattern, s.usersService.ArchiveHandler)
+
+				usersRouter.With(s.usersService.TOTPSecretRefreshInputMiddleware).Post("/totp_secret/new", s.usersService.NewTOTPSecretHandler)
+				usersRouter.With(s.usersService.PasswordUpdateInputMiddleware).Put("/password/new", s.usersService.UpdatePasswordHandler)
+			})
+
+			// OAuth2 Clients.
+			v1Router.Route("/oauth2/clients", func(clientRouter chi.Router) {
+				sr := fmt.Sprintf(numericIDPattern, oauth2clientsservice.URIParamKey)
+				// CreateHandler is not bound to an OAuth2 authentication token.
+				// UpdateHandler not supported for OAuth2 clients.
+				clientRouter.Get(sr, s.oauth2ClientsService.ReadHandler)
+				clientRouter.Delete(sr, s.oauth2ClientsService.ArchiveHandler)
+				clientRouter.Get(root, s.oauth2ClientsService.ListHandler)
+			})
+
+			// Webhooks.
+			v1Router.Route("/webhooks", func(webhookRouter chi.Router) {
+				sr := fmt.Sprintf(numericIDPattern, webhooksservice.URIParamKey)
+				webhookRouter.With(s.webhooksService.CreationInputMiddleware).Post(root, s.webhooksService.CreateHandler)
+				webhookRouter.Get(sr, s.webhooksService.ReadHandler)
+				webhookRouter.With(s.webhooksService.UpdateInputMiddleware).Put(sr, s.webhooksService.UpdateHandler)
+				webhookRouter.Delete(sr, s.webhooksService.ArchiveHandler)
+				webhookRouter.Get(root, s.webhooksService.ListHandler)
+			})
+
 			// Items
 			itemPath := "items"
 			itemsRouteWithPrefix := fmt.Sprintf("/%s", itemPath)
@@ -157,26 +171,6 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 				})
 				itemsRouter.Get(root, s.itemsService.ListHandler)
 				itemsRouter.Get(searchRoot, s.itemsService.SearchHandler)
-			})
-
-			// Webhooks.
-			v1Router.Route("/webhooks", func(webhookRouter chi.Router) {
-				sr := fmt.Sprintf(numericIDPattern, webhooksservice.URIParamKey)
-				webhookRouter.With(s.webhooksService.CreationInputMiddleware).Post(root, s.webhooksService.CreateHandler)
-				webhookRouter.Get(sr, s.webhooksService.ReadHandler)
-				webhookRouter.With(s.webhooksService.UpdateInputMiddleware).Put(sr, s.webhooksService.UpdateHandler)
-				webhookRouter.Delete(sr, s.webhooksService.ArchiveHandler)
-				webhookRouter.Get(root, s.webhooksService.ListHandler)
-			})
-
-			// OAuth2 Clients.
-			v1Router.Route("/oauth2/clients", func(clientRouter chi.Router) {
-				sr := fmt.Sprintf(numericIDPattern, oauth2clientsservice.URIParamKey)
-				// CreateHandler is not bound to an OAuth2 authentication token.
-				// UpdateHandler not supported for OAuth2 clients.
-				clientRouter.Get(sr, s.oauth2ClientsService.ReadHandler)
-				clientRouter.Delete(sr, s.oauth2ClientsService.ArchiveHandler)
-				clientRouter.Get(root, s.oauth2ClientsService.ListHandler)
 			})
 		})
 

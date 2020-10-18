@@ -230,6 +230,41 @@ func (s *Service) buildQRCode(ctx context.Context, username, twoFactorSecret str
 	return fmt.Sprintf("%s%s", base64ImagePrefix, base64.StdEncoding.EncodeToString(b.Bytes()))
 }
 
+// SelfHandler returns information about the user making the request.
+func (s *Service) SelfHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := tracing.StartSpan(req.Context(), "ReadHandler")
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+
+	si, err := s.sessionInfoFetcher(req)
+	if err != nil {
+		logger.Error(err, "session info missing from request context")
+		s.encoderDecoder.EncodeUnauthorizedResponse(res)
+		return
+	}
+
+	// figure out who this is all for.
+	userID := si.UserID
+	logger = logger.WithValue("user_id", userID)
+	tracing.AttachUserIDToSpan(span, userID)
+
+	// fetch user data.
+	x, err := s.userDataManager.GetUser(ctx, userID)
+	if err == sql.ErrNoRows {
+		logger.Debug("no such user")
+		s.encoderDecoder.EncodeNotFoundResponse(res)
+		return
+	} else if err != nil {
+		logger.Error(err, "error fetching user from database")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		return
+	}
+
+	// encode response and peace.
+	s.encoderDecoder.EncodeResponse(res, x)
+}
+
 // ReadHandler is our read route.
 func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context(), "ReadHandler")
@@ -240,8 +275,6 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	// figure out who this is all for.
 	userID := s.userIDFetcher(req)
 	logger = logger.WithValue("user_id", userID)
-
-	// document it for posterity.
 	tracing.AttachUserIDToSpan(span, userID)
 
 	// fetch user data.

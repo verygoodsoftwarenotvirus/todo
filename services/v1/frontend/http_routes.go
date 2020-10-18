@@ -96,15 +96,19 @@ func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, erro
 
 	return func(res http.ResponseWriter, req *http.Request) {
 		rl := s.logger.WithRequest(req)
-		rl.Debug("static file requested")
+
+		if s.logStaticFiles {
+			rl.Debug("static file requested")
+		}
 
 		if _, ok := validRoutes[req.URL.Path]; ok {
-			rl.Debug("rerouting")
 			req.URL.Path = "/"
 		}
 
 		if itemsFrontendPathRegex.MatchString(req.URL.Path) || itemsAdminFrontendPathRegex.MatchString(req.URL.Path) {
-			rl.Debug("rerouting item request")
+			if s.logStaticFiles {
+				rl.Debug("rerouting item request")
+			}
 			req.URL.Path = "/"
 		}
 

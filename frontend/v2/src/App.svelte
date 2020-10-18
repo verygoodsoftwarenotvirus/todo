@@ -28,7 +28,7 @@
   onMount(() => {
     logger.withValue("functionName", "onMount").debug("called", true);
 
-    // axios.get("/users/status", { withCredentials: true })
+    // axios.get("/auth/status", { withCredentials: true })
     //       .then((response: AxiosResponse<AuthStatus>) => {
     //         logger.debug("setting auth status from App.svelte");
     //         authStatusStore.setAuthStatus(response.data);

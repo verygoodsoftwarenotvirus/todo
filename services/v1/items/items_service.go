@@ -46,9 +46,6 @@ type (
 		search             SearchIndex
 	}
 
-	// UserIDFetcher is a function that fetches user IDs.
-	UserIDFetcher func(*http.Request) uint64
-
 	// SessionInfoFetcher is a function that fetches user IDs.
 	SessionInfoFetcher func(*http.Request) (*models.SessionInfo, error)
 

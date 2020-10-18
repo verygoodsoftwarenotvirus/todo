@@ -372,7 +372,7 @@ func TestAuth(test *testing.T) {
 
 		u, err := url.Parse(todoClient.BuildURL(nil))
 		require.NoError(t, err)
-		u.Path = "/users/password/new"
+		u.Path = "/api/v1/users/password/new"
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPut, u.String(), body)
 		checkValueAndError(t, req, err)
@@ -484,7 +484,7 @@ func TestAuth(test *testing.T) {
 
 		u, err := url.Parse(todoClient.BuildURL(nil))
 		require.NoError(t, err)
-		u.Path = "/users/totp_secret/new"
+		u.Path = "/api/v1/users/totp_secret/new"
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), body)
 		checkValueAndError(t, req, err)

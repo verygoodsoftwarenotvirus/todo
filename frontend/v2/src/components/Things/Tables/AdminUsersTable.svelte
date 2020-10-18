@@ -96,7 +96,7 @@
   function fetchUsers() {
     logger.debug("components/tables/UsersTable fetchUsers called");
 
-    const path: string = "/users";
+    const path: string = "/api/v1/users";
 
     const pageURLParams: URLSearchParams = new URLSearchParams(window.location.search);
     const outboundURLParams: URLSearchParams = inheritQueryFilterSearchParams(pageURLParams);
@@ -133,7 +133,7 @@
     logger.debug("components/tables/UsersTable promptDelete called");
 
     if (confirm(`are you sure you want to delete user #${id}?`)) {
-      const path: string = `/users/${id}`;
+      const path: string = `/api/v1/users/${id}`;
 
       axios.delete(path, { withCredentials: true })
               .then((response: AxiosResponse<User>) => {

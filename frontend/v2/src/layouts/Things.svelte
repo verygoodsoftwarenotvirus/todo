@@ -1,6 +1,5 @@
 <script lang="typescript">
-  import {onDestroy, onMount} from "svelte";
-  import axios, {AxiosResponse, AxiosError} from "axios";
+  import {onDestroy} from "svelte";
   import {Router, Route, navigate} from "svelte-routing";
 
   // components for this layout
@@ -9,20 +8,19 @@
   import AdminNavbar from "../components/Navbars/AdminNavbar.svelte";
 
   // custom components for this layout
-  import ReadUpdateDeleteItem from "../components/Things/RUD/ReadUpdateDeleteItem.svelte";
+  import ReadUpdateDeleteItem from "../components/Things/ReadUpdateDelete/Item.svelte";
   import CreateItem from "../components/Things/Creation/CreateItem.svelte";
 
   // pages for this layout
   import Items from "../views/things/Items.svelte";
 
-  export let location: Location;
-
-  import {Logger} from "../logger";
-
-  let logger = new Logger();
-
   import {authStatusStore} from "../stores";
   import {UserStatus} from "../models";
+  import {Logger} from "../logger";
+
+  export let location: Location;
+
+  let logger = new Logger();
 
   let currentAuthStatus = {};
   const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {

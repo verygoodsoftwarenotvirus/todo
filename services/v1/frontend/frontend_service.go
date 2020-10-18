@@ -13,8 +13,9 @@ const (
 type (
 	// Service is responsible for serving HTML (and other static resources)
 	Service struct {
-		logger logging.Logger
-		config config.FrontendSettings
+		logger         logging.Logger
+		logStaticFiles bool
+		config         config.FrontendSettings
 	}
 )
 

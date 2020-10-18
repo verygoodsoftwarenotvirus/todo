@@ -34,6 +34,7 @@ var (
 				"    `two_factor_secret` VARCHAR(256) NOT NULL,",
 				"    `two_factor_secret_verified_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    `is_admin` BOOLEAN NOT NULL DEFAULT false,",
+				"    `status` VARCHAR(32) NOT NULL DEFAULT 'created',",
 				"    `created_on` BIGINT UNSIGNED,",
 				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",

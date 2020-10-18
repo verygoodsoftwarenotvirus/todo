@@ -52,7 +52,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	frontendService := frontend.ProvideFrontendService(logger, frontendSettings)
 	itemDataManager := items.ProvideItemDataManager(database2)
 	itemIDFetcher := httpserver.ProvideItemsServiceItemIDFetcher(logger)
-	sessionInfoFetcher := httpserver.ProvideItemsSessionInfoFetcher()
+	sessionInfoFetcher := httpserver.ProvideItemsServiceSessionInfoFetcher()
 	websocketAuthFunc := auth2.ProvideWebsocketAuthFunc(authService)
 	typeNameManipulationFunc := httpserver.ProvideNewsmanTypeNameManipulationFunc()
 	newsmanNewsman := newsman.NewNewsman(websocketAuthFunc, typeNameManipulationFunc)
@@ -69,7 +69,8 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	}
 	itemDataServer := items.ProvideItemDataServer(itemsService)
 	userIDFetcher := httpserver.ProvideUsersServiceUserIDFetcher(logger)
-	usersService, err := users.ProvideUsersService(authSettings, logger, userDataManager, authenticator, userIDFetcher, encoderDecoder, unitCounterProvider, reporter)
+	usersSessionInfoFetcher := httpserver.ProvideUsersServiceSessionInfoFetcher()
+	usersService, err := users.ProvideUsersService(authSettings, logger, userDataManager, authenticator, userIDFetcher, usersSessionInfoFetcher, encoderDecoder, unitCounterProvider, reporter)
 	if err != nil {
 		return nil, err
 	}

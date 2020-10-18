@@ -110,6 +110,7 @@ type (
 		ListHandler(res http.ResponseWriter, req *http.Request)
 		CreateHandler(res http.ResponseWriter, req *http.Request)
 		ReadHandler(res http.ResponseWriter, req *http.Request)
+		SelfHandler(res http.ResponseWriter, req *http.Request)
 		NewTOTPSecretHandler(res http.ResponseWriter, req *http.Request)
 		TOTPSecretVerificationHandler(res http.ResponseWriter, req *http.Request)
 		UpdatePasswordHandler(res http.ResponseWriter, req *http.Request)

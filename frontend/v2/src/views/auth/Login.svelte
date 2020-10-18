@@ -42,7 +42,7 @@
 
         return axios.post(path, buildLoginRequest(), {withCredentials: true})
             .then(() => {
-              axios.get("/users/status", {withCredentials: true}).then((statusResponse: AxiosResponse<UserStatus>) => {
+              axios.get("/auth/status", {withCredentials: true}).then((statusResponse: AxiosResponse<UserStatus>) => {
                 authStatusStore.setAuthStatus(statusResponse);
                 if (statusResponse.data.isAdmin) {
                   navigate("/admin/dashboard", { state: {}, replace: true });

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
@@ -108,6 +109,10 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		).Return((*models.OAuth2Client)(nil), sql.ErrNoRows)
 		s.database = mockDB
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeErrorResponse", mock.Anything, "no such oauth2 client", http.StatusUnauthorized)
+		s.encoderDecoder = ed
+
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
 		req = req.WithContext(
@@ -116,10 +121,10 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		actual, err := s.AuthorizeScopeHandler(res, req)
 
 		assert.Error(t, err)
-		assert.Equal(t, http.StatusNotFound, res.Code)
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
 		assert.Empty(t, actual)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 
 	T.Run("without client attached to request and error fetching client info", func(t *testing.T) {
@@ -135,6 +140,10 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		).Return((*models.OAuth2Client)(nil), errors.New("blah"))
 		s.database = mockDB
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
 		req = req.WithContext(
@@ -146,18 +155,24 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 		assert.Empty(t, actual)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 
 	T.Run("without client attached to request", func(t *testing.T) {
 		s := buildTestService(t)
-		req := buildRequest(t)
-		res := httptest.NewRecorder()
+
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeErrorResponse", mock.Anything, "no scope information found", http.StatusBadRequest)
+		s.encoderDecoder = ed
+
+		req, res := buildRequest(t), httptest.NewRecorder()
 		actual, err := s.AuthorizeScopeHandler(res, req)
 
 		assert.Error(t, err)
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 		assert.Empty(t, actual)
+
+		mock.AssertExpectationsForObjects(t, ed)
 	})
 
 	T.Run("with invalid scope & client ID but no client", func(t *testing.T) {
@@ -172,6 +187,10 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 			exampleOAuth2Client.ClientID,
 		).Return(exampleOAuth2Client, nil)
 		s.database = mockDB
+
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeErrorResponse", mock.Anything, "not authorized for scope", http.StatusUnauthorized)
+		s.encoderDecoder = ed
 
 		req := buildRequest(t)
 		req.URL.Path = fmt.Sprintf("%s/blah", apiURLPrefix)

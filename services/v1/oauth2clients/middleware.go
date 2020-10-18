@@ -139,13 +139,15 @@ func (s *Service) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 }
 
 func (s *Service) fetchOAuth2ClientFromRequest(req *http.Request) *models.OAuth2Client {
-	client, ok := req.Context().Value(models.OAuth2ClientKey).(*models.OAuth2Client)
-	_ = ok // we don't really care, but the linters do
-	return client
+	if client, ok := req.Context().Value(models.OAuth2ClientKey).(*models.OAuth2Client); ok {
+		return client
+	}
+	return nil
 }
 
 func (s *Service) fetchOAuth2ClientIDFromRequest(req *http.Request) string {
-	clientID, ok := req.Context().Value(clientIDKey).(string)
-	_ = ok // we don't really care, but the linters do
-	return clientID
+	if clientID, ok := req.Context().Value(clientIDKey).(string); ok {
+		return clientID
+	}
+	return ""
 }

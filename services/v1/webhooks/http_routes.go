@@ -74,7 +74,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	wh, err := s.webhookDataManager.CreateWebhook(ctx, input)
 	if err != nil {
 		logger.Error(err, "error creating webhook")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -117,7 +117,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		}
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching webhooks")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -150,7 +150,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	} else if err != nil {
 		logger.Error(err, "Error fetching webhook from webhook database")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -191,7 +191,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	} else if err != nil {
 		logger.Error(err, "error encountered getting webhook")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -201,7 +201,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	// save the update in the database.
 	if err = s.webhookDataManager.UpdateWebhook(ctx, wh); err != nil {
 		logger.Error(err, "error encountered updating webhook")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -237,11 +237,11 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	err := s.webhookDataManager.ArchiveWebhook(ctx, webhookID, userID)
 	if err == sql.ErrNoRows {
 		logger.Debug("no rows found for webhook")
-		s.encoderDecoder.EncodeErrorResponse(res, "webhook not found", http.StatusNotFound)
+		s.encoderDecoder.EncodeNotFoundResponse(res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error encountered deleting webhook")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 

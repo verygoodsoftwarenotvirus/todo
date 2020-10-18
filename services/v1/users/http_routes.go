@@ -86,7 +86,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	users, err := s.userDataManager.GetUsers(ctx, qf)
 	if err != nil {
 		logger.Error(err, "error fetching users for ListHandler route")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -133,7 +133,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	hp, err := s.authenticator.HashPassword(ctx, userInput.Password)
 	if err != nil {
 		logger.Error(err, "valid input not attached to request")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -148,7 +148,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input.TwoFactorSecret, err = s.secretGenerator.GenerateTwoFactorSecret()
 	if err != nil {
 		logger.Error(err, "error generating TOTP secret")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -156,7 +156,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input.Salt, err = s.secretGenerator.GenerateSalt()
 	if err != nil {
 		logger.Error(err, "error generating salt")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -170,7 +170,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		}
 
 		logger.Error(err, "error creating user")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -252,7 +252,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	} else if err != nil {
 		logger.Error(err, "error fetching user from database")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -279,7 +279,7 @@ func (s *Service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 	user, err := s.userDataManager.GetUserWithUnverifiedTwoFactorSecret(ctx, input.UserID)
 	if err != nil {
 		logger.Error(err, "fetching user")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 	tracing.AttachUserIDToSpan(span, user.ID)
@@ -295,7 +295,7 @@ func (s *Service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 	if totp.Validate(input.TOTPToken, user.TwoFactorSecret) {
 		if updateUserErr := s.userDataManager.VerifyUserTwoFactorSecret(ctx, user.ID); updateUserErr != nil {
 			logger.Error(updateUserErr, "updating user to indicate their 2FA secret is validated")
-			s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 			return
 		}
 		statusCode = http.StatusAccepted
@@ -352,7 +352,7 @@ func (s *Service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	tfs, err := s.secretGenerator.GenerateTwoFactorSecret()
 	if err != nil {
 		logger.Error(err, "error encountered generating random TOTP string")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 	user.TwoFactorSecret = tfs
@@ -361,7 +361,7 @@ func (s *Service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	// update the user in the database.
 	if err := s.userDataManager.UpdateUser(ctx, user); err != nil {
 		logger.Error(err, "error encountered updating TOTP token")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -424,14 +424,14 @@ func (s *Service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	newPasswordHash, err := s.authenticator.HashPassword(ctx, input.NewPassword)
 	if err != nil {
 		logger.Error(err, "error hashing password")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
 	// update the user.
 	if err = s.userDataManager.UpdateUserPassword(ctx, user.ID, newPasswordHash); err != nil {
 		logger.Error(err, "error encountered updating user")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -454,7 +454,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	// do the deed.
 	if err := s.userDataManager.ArchiveUser(ctx, userID); err != nil {
 		logger.Error(err, "deleting user from database")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 

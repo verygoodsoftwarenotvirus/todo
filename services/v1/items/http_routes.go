@@ -66,7 +66,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		}
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching items")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -115,7 +115,7 @@ func (s *Service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	}
 	if searchErr != nil {
 		logger.Error(searchErr, "error encountered executing search query")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -137,7 +137,7 @@ func (s *Service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 		items = []models.Item{}
 	} else if dbErr != nil {
 		logger.Error(dbErr, "error encountered fetching items")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -174,7 +174,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	x, err := s.itemDataManager.CreateItem(ctx, input)
 	if err != nil {
 		logger.Error(err, "error creating item")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -256,7 +256,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	} else if err != nil {
 		logger.Error(err, "error fetching item from database")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -301,7 +301,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	} else if err != nil {
 		logger.Error(err, "error encountered getting item")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -311,7 +311,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	// update item in database.
 	if err = s.itemDataManager.UpdateItem(ctx, x); err != nil {
 		logger.Error(err, "error encountered updating item")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -358,7 +358,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	} else if err != nil {
 		logger.Error(err, "error encountered deleting item")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 

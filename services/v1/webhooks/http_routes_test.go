@@ -44,7 +44,7 @@ func TestWebhooksService_List(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.WebhookList")).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.WebhookList"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -79,7 +79,7 @@ func TestWebhooksService_List(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.WebhookList")).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.WebhookList"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -113,6 +113,10 @@ func TestWebhooksService_List(T *testing.T) {
 		).Return((*models.WebhookList)(nil), errors.New("blah"))
 		s.webhookDataManager = wd
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -125,7 +129,7 @@ func TestWebhooksService_List(T *testing.T) {
 		s.ListHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, wd)
+		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
 }
 
@@ -190,7 +194,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Webhook")).Return(nil)
+		ed.On("EncodeResponseWithStatus", mock.Anything, mock.AnythingOfType("*models.Webhook"), http.StatusCreated)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -253,6 +257,10 @@ func TestWebhooksService_Create(T *testing.T) {
 			return exampleUser.ID
 		}
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNoInputResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -264,6 +272,8 @@ func TestWebhooksService_Create(T *testing.T) {
 
 		s.CreateHandler(res, req)
 		assert.Equal(t, http.StatusBadRequest, res.Code)
+
+		mock.AssertExpectationsForObjects(t, ed)
 	})
 
 	T.Run("with error creating webhook", func(t *testing.T) {
@@ -285,6 +295,10 @@ func TestWebhooksService_Create(T *testing.T) {
 		).Return((*models.Webhook)(nil), errors.New("blah"))
 		s.webhookDataManager = wd
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -299,7 +313,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		s.CreateHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, wd)
+		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
 }
 
@@ -332,7 +346,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Webhook")).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Webhook"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -373,6 +387,10 @@ func TestWebhooksService_Read(T *testing.T) {
 		).Return((*models.Webhook)(nil), sql.ErrNoRows)
 		s.webhookDataManager = wd
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNotFoundResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -385,7 +403,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		s.ReadHandler(res, req)
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
-		mock.AssertExpectationsForObjects(t, wd)
+		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
 
 	T.Run("with error fetching webhook from database", func(t *testing.T) {
@@ -411,6 +429,10 @@ func TestWebhooksService_Read(T *testing.T) {
 		).Return((*models.Webhook)(nil), errors.New("blah"))
 		s.webhookDataManager = wd
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -423,7 +445,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		s.ReadHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, wd)
+		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
 }
 
@@ -463,7 +485,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Webhook")).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Webhook"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -486,6 +508,10 @@ func TestWebhooksService_Update(T *testing.T) {
 	T.Run("without update input", func(t *testing.T) {
 		s := buildTestService()
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNoInputResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -497,6 +523,8 @@ func TestWebhooksService_Update(T *testing.T) {
 
 		s.UpdateHandler(res, req)
 		assert.Equal(t, http.StatusBadRequest, res.Code)
+
+		mock.AssertExpectationsForObjects(t, ed)
 	})
 
 	T.Run("with no rows fetching webhook", func(t *testing.T) {
@@ -523,6 +551,10 @@ func TestWebhooksService_Update(T *testing.T) {
 		).Return((*models.Webhook)(nil), sql.ErrNoRows)
 		s.webhookDataManager = wd
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNotFoundResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -537,7 +569,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		s.UpdateHandler(res, req)
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
-		mock.AssertExpectationsForObjects(t, wd)
+		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
 
 	T.Run("with error fetching webhook", func(t *testing.T) {
@@ -564,6 +596,10 @@ func TestWebhooksService_Update(T *testing.T) {
 		).Return((*models.Webhook)(nil), errors.New("blah"))
 		s.webhookDataManager = wd
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -578,7 +614,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		s.UpdateHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, wd)
+		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
 
 	T.Run("with error updating webhook", func(t *testing.T) {
@@ -611,6 +647,10 @@ func TestWebhooksService_Update(T *testing.T) {
 		).Return(errors.New("blah"))
 		s.webhookDataManager = wd
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -625,7 +665,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		s.UpdateHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, wd)
+		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
 }
 
@@ -699,6 +739,10 @@ func TestWebhooksService_Archive(T *testing.T) {
 		).Return(sql.ErrNoRows)
 		s.webhookDataManager = wd
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNotFoundResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -711,7 +755,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		s.ArchiveHandler(res, req)
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
-		mock.AssertExpectationsForObjects(t, wd)
+		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
 
 	T.Run("with error reading from database", func(t *testing.T) {
@@ -737,6 +781,10 @@ func TestWebhooksService_Archive(T *testing.T) {
 		).Return(errors.New("blah"))
 		s.webhookDataManager = wd
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -749,6 +797,6 @@ func TestWebhooksService_Archive(T *testing.T) {
 		s.ArchiveHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, wd)
+		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
 }

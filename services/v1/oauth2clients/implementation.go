@@ -77,7 +77,7 @@ func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reque
 			return "", err
 		} else if err != nil {
 			logger.Error(err, "error fetching OAuth2 Client")
-			s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 			return "", err
 		}
 

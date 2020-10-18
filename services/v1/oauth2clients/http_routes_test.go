@@ -91,7 +91,7 @@ func TestService_ListHandler(T *testing.T) {
 		s.database = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2ClientList")).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2ClientList"))
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -120,7 +120,7 @@ func TestService_ListHandler(T *testing.T) {
 		s.database = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2ClientList")).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2ClientList"))
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -147,6 +147,10 @@ func TestService_ListHandler(T *testing.T) {
 		).Return((*models.OAuth2ClientList)(nil), errors.New("blah"))
 		s.database = mockDB
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		req := buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
@@ -156,7 +160,7 @@ func TestService_ListHandler(T *testing.T) {
 		s.ListHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 }
 
@@ -202,7 +206,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.oauth2ClientCounter = uc
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2Client")).Return(nil)
+		ed.On("EncodeResponseWithStatus", mock.Anything, mock.AnythingOfType("*models.OAuth2Client"), http.StatusCreated)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -223,11 +227,17 @@ func TestService_CreateHandler(T *testing.T) {
 	T.Run("with missing input", func(t *testing.T) {
 		s := buildTestService(t)
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNoInputResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
 
 		s.CreateHandler(res, req)
 		assert.Equal(t, http.StatusBadRequest, res.Code)
+
+		mock.AssertExpectationsForObjects(t, ed)
 	})
 
 	T.Run("with error getting user", func(t *testing.T) {
@@ -245,6 +255,10 @@ func TestService_CreateHandler(T *testing.T) {
 		).Return((*models.User)(nil), errors.New("blah"))
 		s.database = mockDB
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		req := buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
@@ -257,7 +271,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.CreateHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 
 	T.Run("with invalid credentials", func(t *testing.T) {
@@ -292,6 +306,10 @@ func TestService_CreateHandler(T *testing.T) {
 		).Return(false, nil)
 		s.authenticator = a
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnauthorizedResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		req := buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
@@ -304,7 +322,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.CreateHandler(res, req)
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, a)
+		mock.AssertExpectationsForObjects(t, mockDB, a, ed)
 	})
 
 	T.Run("with error validating password", func(t *testing.T) {
@@ -339,6 +357,10 @@ func TestService_CreateHandler(T *testing.T) {
 		).Return(true, errors.New("blah"))
 		s.authenticator = a
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		req := buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
@@ -351,7 +373,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.CreateHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, a)
+		mock.AssertExpectationsForObjects(t, mockDB, a, ed)
 	})
 
 	T.Run("with error creating oauth2 client", func(t *testing.T) {
@@ -386,6 +408,10 @@ func TestService_CreateHandler(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = a
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		req := buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
@@ -398,7 +424,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.CreateHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, a)
+		mock.AssertExpectationsForObjects(t, mockDB, a, ed)
 	})
 }
 
@@ -426,7 +452,7 @@ func TestService_ReadHandler(T *testing.T) {
 		s.database = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2Client")).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2Client"))
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -459,6 +485,10 @@ func TestService_ReadHandler(T *testing.T) {
 		).Return(exampleOAuth2Client, sql.ErrNoRows)
 		s.database = mockDB
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNotFoundResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		req := buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
@@ -468,7 +498,7 @@ func TestService_ReadHandler(T *testing.T) {
 		s.ReadHandler(res, req)
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 
 	T.Run("with error fetching client from database", func(t *testing.T) {
@@ -489,6 +519,10 @@ func TestService_ReadHandler(T *testing.T) {
 		).Return((*models.OAuth2Client)(nil), errors.New("blah"))
 		s.database = mockDB
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		req := buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
@@ -498,7 +532,7 @@ func TestService_ReadHandler(T *testing.T) {
 		s.ReadHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 }
 
@@ -559,6 +593,10 @@ func TestService_ArchiveHandler(T *testing.T) {
 		).Return(sql.ErrNoRows)
 		s.database = mockDB
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNotFoundResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		req := buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
@@ -568,7 +606,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 		s.ArchiveHandler(res, req)
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 
 	T.Run("with error deleting record", func(t *testing.T) {
@@ -589,6 +627,10 @@ func TestService_ArchiveHandler(T *testing.T) {
 		).Return(errors.New("blah"))
 		s.database = mockDB
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		req := buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(req.Context(), models.SessionInfoKey, exampleUser.ToSessionInfo()),
@@ -598,6 +640,6 @@ func TestService_ArchiveHandler(T *testing.T) {
 		s.ArchiveHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 }

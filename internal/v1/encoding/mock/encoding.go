@@ -23,6 +23,7 @@ func (m *EncoderDecoder) EncodeResponse(res http.ResponseWriter, val interface{}
 // EncodeResponseWithStatus satisfies our EncoderDecoder interface.
 func (m *EncoderDecoder) EncodeResponseWithStatus(res http.ResponseWriter, val interface{}, statusCode int) {
 	m.Called(res, val, statusCode)
+	res.WriteHeader(statusCode)
 }
 
 // EncodeErrorResponse satisfies our EncoderDecoder interface.
@@ -43,8 +44,8 @@ func (m *EncoderDecoder) EncodeNotFoundResponse(res http.ResponseWriter) {
 	res.WriteHeader(http.StatusNotFound)
 }
 
-// EncodeUnspecifiedInternalServerError satisfies our EncoderDecoder interface.
-func (m *EncoderDecoder) EncodeUnspecifiedInternalServerError(res http.ResponseWriter) {
+// EncodeUnspecifiedInternalServerErrorResponse satisfies our EncoderDecoder interface.
+func (m *EncoderDecoder) EncodeUnspecifiedInternalServerErrorResponse(res http.ResponseWriter) {
 	m.Called(res)
 	res.WriteHeader(http.StatusInternalServerError)
 }

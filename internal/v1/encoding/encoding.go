@@ -40,7 +40,7 @@ type (
 		EncodeErrorResponse(res http.ResponseWriter, msg string, statusCode int)
 		EncodeNoInputResponse(res http.ResponseWriter)
 		EncodeNotFoundResponse(res http.ResponseWriter)
-		EncodeUnspecifiedInternalServerError(res http.ResponseWriter)
+		EncodeUnspecifiedInternalServerErrorResponse(res http.ResponseWriter)
 		EncodeUnauthorizedResponse(res http.ResponseWriter)
 		DecodeRequest(req *http.Request, dest interface{}) error
 	}
@@ -89,11 +89,11 @@ func (ed *ServerEncoderDecoder) EncodeNoInputResponse(res http.ResponseWriter) {
 
 // EncodeNotFoundResponse encodes a generic 404 error to a response.
 func (ed *ServerEncoderDecoder) EncodeNotFoundResponse(res http.ResponseWriter) {
-	ed.EncodeErrorResponse(res, "not found", http.StatusNotFound)
+	ed.EncodeErrorResponse(res, "resource not found", http.StatusNotFound)
 }
 
-// EncodeUnspecifiedInternalServerError encodes a generic 500 error to a response.
-func (ed *ServerEncoderDecoder) EncodeUnspecifiedInternalServerError(res http.ResponseWriter) {
+// EncodeUnspecifiedInternalServerErrorResponse encodes a generic 500 error to a response.
+func (ed *ServerEncoderDecoder) EncodeUnspecifiedInternalServerErrorResponse(res http.ResponseWriter) {
 	ed.EncodeErrorResponse(res, "something has gone awry", http.StatusInternalServerError)
 }
 

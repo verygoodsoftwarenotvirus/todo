@@ -221,7 +221,7 @@ func TestService_ListHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.UserList")).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.UserList"))
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -239,12 +239,16 @@ func TestService_ListHandler(T *testing.T) {
 		mockDB.UserDataManager.On("GetUsers", mock.Anything, mock.Anything).Return((*models.UserList)(nil), errors.New("blah"))
 		s.userDataManager = mockDB
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		s.ListHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 }
 
@@ -274,7 +278,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.reporter = r
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.UserCreationResponse")).Return(nil)
+		ed.On("EncodeResponseWithStatus", mock.Anything, mock.AnythingOfType("*models.UserCreationResponse"), http.StatusCreated)
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -316,6 +320,10 @@ func TestService_CreateHandler(T *testing.T) {
 	T.Run("with missing input", func(t *testing.T) {
 		s := buildTestService(t)
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNoInputResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		s.userCreationEnabled = true
 		s.CreateHandler(res, req)
@@ -333,6 +341,10 @@ func TestService_CreateHandler(T *testing.T) {
 		auth.On("HashPassword", mock.Anything, exampleInput.Password).Return(exampleUser.HashedPassword, errors.New("blah"))
 		s.authenticator = auth
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(
@@ -347,7 +359,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, auth)
+		mock.AssertExpectationsForObjects(t, auth, ed)
 	})
 
 	T.Run("with error generating two factor secret", func(t *testing.T) {
@@ -368,6 +380,10 @@ func TestService_CreateHandler(T *testing.T) {
 		sg.On("GenerateTwoFactorSecret").Return("", errors.New("blah"))
 		s.secretGenerator = sg
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(
@@ -382,7 +398,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, auth, db, sg)
+		mock.AssertExpectationsForObjects(t, auth, db, sg, ed)
 	})
 
 	T.Run("with error generating salt", func(t *testing.T) {
@@ -404,6 +420,10 @@ func TestService_CreateHandler(T *testing.T) {
 		sg.On("GenerateSalt").Return([]byte{}, errors.New("blah"))
 		s.secretGenerator = sg
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(
@@ -418,7 +438,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, auth, db, sg)
+		mock.AssertExpectationsForObjects(t, auth, db, sg, ed)
 	})
 
 	T.Run("with error creating entry in database", func(t *testing.T) {
@@ -435,6 +455,10 @@ func TestService_CreateHandler(T *testing.T) {
 		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("models.UserDatabaseCreationInput")).Return(exampleUser, errors.New("blah"))
 		s.userDataManager = db
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(
@@ -449,7 +473,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, auth, db)
+		mock.AssertExpectationsForObjects(t, auth, db, ed)
 	})
 
 	T.Run("with pre-existing entry in database", func(t *testing.T) {
@@ -502,7 +526,7 @@ func TestService_ReadHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.User")).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.User"))
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -525,12 +549,16 @@ func TestService_ReadHandler(T *testing.T) {
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, sql.ErrNoRows)
 		s.userDataManager = mockDB
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNotFoundResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 
 	T.Run("with error reading from database", func(t *testing.T) {
@@ -545,12 +573,16 @@ func TestService_ReadHandler(T *testing.T) {
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, errors.New("blah"))
 		s.userDataManager = mockDB
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 }
 
@@ -593,7 +625,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		s.authenticator = auth
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.TOTPSecretRefreshResponse")).Return(nil)
+		ed.On("EncodeResponseWithStatus", mock.Anything, mock.AnythingOfType("*models.TOTPSecretRefreshResponse"), http.StatusAccepted)
 		s.encoderDecoder = ed
 
 		s.NewTOTPSecretHandler(res, req)
@@ -606,6 +638,10 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 	T.Run("without input attached to request", func(t *testing.T) {
 		s := buildTestService(t)
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNoInputResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		s.NewTOTPSecretHandler(res, req)
 
@@ -614,6 +650,10 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 
 	T.Run("with input attached but without user information", func(t *testing.T) {
 		s := buildTestService(t)
+
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeErrorResponse", mock.Anything, "invalid request", http.StatusUnauthorized)
+		s.encoderDecoder = ed
 
 		exampleInput := fakemodels.BuildFakeTOTPSecretRefreshInput()
 
@@ -629,6 +669,8 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		s.NewTOTPSecretHandler(res, req)
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
+
+		mock.AssertExpectationsForObjects(t, ed)
 	})
 
 	T.Run("with error validating login", func(t *testing.T) {
@@ -712,11 +754,15 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		sg.On("GenerateTwoFactorSecret").Return("", errors.New("blah"))
 		s.secretGenerator = sg
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		s.NewTOTPSecretHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, auth, sg)
+		mock.AssertExpectationsForObjects(t, mockDB, auth, sg, ed)
 	})
 
 	T.Run("with error updating user in database", func(t *testing.T) {
@@ -754,11 +800,15 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = auth
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		s.NewTOTPSecretHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, auth)
+		mock.AssertExpectationsForObjects(t, mockDB, auth, ed)
 	})
 }
 
@@ -805,11 +855,15 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		mockDB.UserDataManager.On("GetUserWithUnverifiedTwoFactorSecret", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
 		s.userDataManager = mockDB
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNoInputResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		s.TOTPSecretVerificationHandler(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 
 	T.Run("with error fetching user", func(t *testing.T) {
@@ -828,6 +882,10 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 			),
 		)
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUserWithUnverifiedTwoFactorSecret", mock.Anything, exampleUser.ID).Return((*models.User)(nil), errors.New("blah"))
 		s.userDataManager = mockDB
@@ -836,7 +894,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 
 	T.Run("with secret already validated", func(t *testing.T) {
@@ -927,11 +985,15 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		mockDB.UserDataManager.On("VerifyUserTwoFactorSecret", mock.Anything, exampleUser.ID).Return(errors.New("blah"))
 		s.userDataManager = mockDB
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		s.TOTPSecretVerificationHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 }
 
@@ -984,14 +1046,24 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 	T.Run("without input attached to request", func(t *testing.T) {
 		s := buildTestService(t)
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNoInputResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		s.UpdatePasswordHandler(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
+
+		mock.AssertExpectationsForObjects(t, ed)
 	})
 
 	T.Run("with input but without user info", func(t *testing.T) {
 		s := buildTestService(t)
+
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeErrorResponse", mock.Anything, "invalid request", http.StatusUnauthorized)
+		s.encoderDecoder = ed
 
 		exampleInput := fakemodels.BuildFakePasswordUpdateInput()
 
@@ -1007,6 +1079,8 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		s.UpdatePasswordHandler(res, req)
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
+
+		mock.AssertExpectationsForObjects(t, ed)
 	})
 
 	T.Run("with error validating login", func(t *testing.T) {
@@ -1087,11 +1161,15 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		auth.On("HashPassword", mock.Anything, exampleInput.NewPassword).Return("blah", errors.New("blah"))
 		s.authenticator = auth
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		s.UpdatePasswordHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, auth)
+		mock.AssertExpectationsForObjects(t, mockDB, auth, ed)
 	})
 
 	T.Run("with error updating user", func(t *testing.T) {
@@ -1130,11 +1208,15 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		auth.On("HashPassword", mock.Anything, exampleInput.NewPassword).Return("blah", nil)
 		s.authenticator = auth
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		s.UpdatePasswordHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, auth)
+		mock.AssertExpectationsForObjects(t, mockDB, auth, ed)
 	})
 }
 
@@ -1182,11 +1264,15 @@ func TestService_Archive(T *testing.T) {
 		mockDB.UserDataManager.On("ArchiveUser", mock.Anything, exampleUser.ID).Return(errors.New("blah"))
 		s.userDataManager = mockDB
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		s.ArchiveHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 }
 

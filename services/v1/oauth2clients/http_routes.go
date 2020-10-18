@@ -63,7 +63,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		}
 	} else if err != nil {
 		logger.Error(err, "encountered error getting list of oauth2 clients from database")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -101,7 +101,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	user, err := s.database.GetUserByUsername(ctx, input.Username)
 	if err != nil {
 		logger.Error(err, "fetching user by username")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -124,7 +124,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	} else if err != nil {
 		logger.Error(err, "validating user credentials")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -132,7 +132,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	client, err := s.database.CreateOAuth2Client(ctx, input)
 	if err != nil {
 		logger.Error(err, "creating oauth2Client in the database")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -168,7 +168,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	} else if err != nil {
 		logger.Error(err, "error fetching oauth2Client from database")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 
@@ -200,7 +200,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	} else if err != nil {
 		logger.Error(err, "encountered error deleting oauth2 client")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerError(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
 

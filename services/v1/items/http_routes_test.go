@@ -42,7 +42,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.ItemList")).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.ItemList"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -71,7 +71,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.ItemList")).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.ItemList"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -99,6 +99,10 @@ func TestItemsService_ListHandler(T *testing.T) {
 		itemDataManager.On("GetItems", mock.Anything, exampleUser.ID, mock.AnythingOfType("*models.QueryFilter")).Return((*models.ItemList)(nil), errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -112,7 +116,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager)
+		mock.AssertExpectationsForObjects(t, itemDataManager, ed)
 	})
 }
 
@@ -146,7 +150,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("[]models.Item")).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("[]models.Item"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -177,6 +181,10 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		si.On("Search", mock.Anything, exampleQuery, exampleUser.ID).Return([]uint64{}, errors.New("blah"))
 		s.search = si
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -190,7 +198,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, si)
+		mock.AssertExpectationsForObjects(t, si, ed)
 	})
 
 	T.Run("with now rows returned", func(t *testing.T) {
@@ -215,7 +223,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("[]models.Item")).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("[]models.Item"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -255,6 +263,10 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		itemDataManager.On("GetItemsWithIDs", mock.Anything, exampleUser.ID, exampleLimit, exampleItemIDs).Return([]models.Item{}, errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -268,7 +280,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, si, itemDataManager)
+		mock.AssertExpectationsForObjects(t, si, itemDataManager, ed)
 	})
 }
 
@@ -306,7 +318,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		s.search = si
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Item")).Return(nil)
+		ed.On("EncodeResponseWithStatus", mock.Anything, mock.AnythingOfType("*models.Item"), http.StatusCreated)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -332,6 +344,10 @@ func TestItemsService_CreateHandler(T *testing.T) {
 
 		s.sessionInfoFetcher = sessionInfoFetcher
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNoInputResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -344,6 +360,8 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
+
+		mock.AssertExpectationsForObjects(t, ed)
 	})
 
 	T.Run("with error creating item", func(t *testing.T) {
@@ -358,6 +376,10 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		itemDataManager := &mockmodels.ItemDataManager{}
 		itemDataManager.On("CreateItem", mock.Anything, mock.AnythingOfType("*models.ItemCreationInput")).Return((*models.Item)(nil), errors.New("blah"))
 		s.itemDataManager = itemDataManager
+
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
@@ -374,7 +396,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager)
+		mock.AssertExpectationsForObjects(t, itemDataManager, ed)
 	})
 }
 
@@ -432,6 +454,10 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		itemDataManager.On("ItemExists", mock.Anything, exampleItem.ID, exampleUser.ID).Return(false, sql.ErrNoRows)
 		s.itemDataManager = itemDataManager
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNotFoundResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -445,7 +471,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager)
+		mock.AssertExpectationsForObjects(t, itemDataManager, ed)
 	})
 
 	T.Run("with error fetching item from database", func(t *testing.T) {
@@ -463,6 +489,10 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		itemDataManager.On("ItemExists", mock.Anything, exampleItem.ID, exampleUser.ID).Return(false, errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNotFoundResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -476,7 +506,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager)
+		mock.AssertExpectationsForObjects(t, itemDataManager, ed)
 	})
 }
 
@@ -504,7 +534,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Item")).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Item"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -538,6 +568,10 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		itemDataManager.On("GetItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return((*models.Item)(nil), sql.ErrNoRows)
 		s.itemDataManager = itemDataManager
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNotFoundResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -551,7 +585,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager)
+		mock.AssertExpectationsForObjects(t, itemDataManager, ed)
 	})
 
 	T.Run("with error fetching item from database", func(t *testing.T) {
@@ -569,6 +603,10 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		itemDataManager.On("GetItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return((*models.Item)(nil), errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -582,7 +620,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager)
+		mock.AssertExpectationsForObjects(t, itemDataManager, ed)
 	})
 }
 
@@ -621,7 +659,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s.search = si
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Item")).Return(nil)
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Item"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -647,6 +685,10 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		s.sessionInfoFetcher = sessionInfoFetcher
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNoInputResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -659,6 +701,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s.UpdateHandler(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
+
+		mock.AssertExpectationsForObjects(t, ed)
 	})
 
 	T.Run("with no rows fetching item", func(t *testing.T) {
@@ -678,6 +722,10 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		itemDataManager.On("GetItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return((*models.Item)(nil), sql.ErrNoRows)
 		s.itemDataManager = itemDataManager
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNotFoundResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -693,7 +741,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager)
+		mock.AssertExpectationsForObjects(t, itemDataManager, ed)
 	})
 
 	T.Run("with error fetching item", func(t *testing.T) {
@@ -713,6 +761,10 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		itemDataManager.On("GetItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return((*models.Item)(nil), errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -728,7 +780,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager)
+		mock.AssertExpectationsForObjects(t, itemDataManager, ed)
 	})
 
 	T.Run("with error updating item", func(t *testing.T) {
@@ -749,6 +801,10 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		itemDataManager.On("UpdateItem", mock.Anything, mock.AnythingOfType("*models.Item")).Return(errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -764,7 +820,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager)
+		mock.AssertExpectationsForObjects(t, itemDataManager, ed)
 	})
 }
 
@@ -834,6 +890,10 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager.On("ArchiveItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return(sql.ErrNoRows)
 		s.itemDataManager = itemDataManager
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeNotFoundResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -847,7 +907,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager)
+		mock.AssertExpectationsForObjects(t, itemDataManager, ed)
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
@@ -865,6 +925,10 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager.On("ArchiveItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return(errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(
 			http.MethodGet,
@@ -878,7 +942,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager)
+		mock.AssertExpectationsForObjects(t, itemDataManager, ed)
 	})
 
 	T.Run("with error removing from search index", func(t *testing.T) {

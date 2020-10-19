@@ -18,7 +18,7 @@
   export let dataRetrievalError: string = '';
 
   import {Logger} from "../../../logger";
-  let logger = new Logger();
+  let logger = new Logger().withDebugValue("source", "src/components/Things/Tables/AdminUsersTable.svelte");
 
   import { adminModeStore } from "../../../stores";
   let adminMode: boolean = false;
@@ -42,7 +42,7 @@
   }
 
   function searchUsers() {
-    logger.debug("components/tables/UsersTable searchUsers called");
+    logger.debug("searchUsers called");
 
     throw new Error("unimplemented");
 
@@ -94,7 +94,7 @@
   }
 
   function fetchUsers() {
-    logger.debug("components/tables/UsersTable fetchUsers called");
+    logger.debug("fetchUsers called");
 
     const path: string = "/api/v1/users";
 
@@ -130,7 +130,7 @@
   }
 
   function promptDelete(id: number) {
-    logger.debug("components/tables/UsersTable promptDelete called");
+    logger.debug("promptDelete called");
 
     if (confirm(`are you sure you want to delete user #${id}?`)) {
       const path: string = `/api/v1/users/${id}`;
@@ -152,9 +152,7 @@
   }
 </script>
 
-<div
-  class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded bg-white"
->
+<div class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded bg-white">
   <div class="rounded-t mb-0 px-4 py-3 border-0">
     <div class="flex flex-wrap items-center">
       <div class="relative w-full px-4 max-w-full flex-grow flex-1">

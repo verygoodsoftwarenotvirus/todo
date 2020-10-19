@@ -20,12 +20,13 @@
 
   export let location: Location;
 
-  let logger = new Logger();
+  let logger = new Logger().withDebugValue("source", "src/layouts/Things.svelte");
 
   let currentAuthStatus = {};
   const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
-    if (!currentAuthStatus) {
+    if (!currentAuthStatus || !currentAuthStatus.isAuthenticated) {
+      logger.debug(`navigating to /auth/login because user is unauthenticated`);
       navigate("/auth/login", {state: {}, replace: true});
     }
   });

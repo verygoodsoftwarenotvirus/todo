@@ -16,7 +16,7 @@
   export let location: Location;
 
   import {Logger} from "../logger";
-  let logger = new Logger();
+  let logger = new Logger().withDebugValue("source", "src/layouts/Auth.svelte");
 
   import { authStatusStore } from "../stores";
   import {UserStatus} from "../models";

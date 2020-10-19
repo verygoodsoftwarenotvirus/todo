@@ -19,7 +19,7 @@
   let totpTokenValidationInput = '';
 
   import { Logger } from "../../logger";
-  let logger = new Logger();
+  let logger = new Logger().withDebugValue("source", "src/views/auth/Register.svelte");
 
   function evaluateCreationInputs(): string {
     const usernameIsLongEnough = usernameInput.length >= 8;
@@ -37,15 +37,11 @@
 
     registrationMayProceed = usernameIsLongEnough && passwordIsLongEnough && passwordsMatch
 
-    logger.debug(`evaluateInputs called, registrationMayProceed = ${registrationMayProceed}`);
-
     if (reasons.length == 1) {
       return reasons.pop() || '';
     } else if (reasons.length > 1) {
       const last = reasons.pop();
       const reason = reasons.join(', ') + ' and ' + last;
-
-      logger.debug(`evaluateInputs called, reason = ${reason}`);
 
       return reason
     }
@@ -62,7 +58,7 @@
   }
 
   async function register() {
-    logger.debug("RegistrationPage.register called")
+    logger.debug("register called")
 
     const path = "/users/"
 
@@ -92,7 +88,6 @@
 
   function evaluateValidationInputs(): void  {
     totpTokenValidationMayProceed = totpTokenValidationInput.length === 6
-    logger.debug(`evaluateInputs called, registrationMayProceed = ${registrationMayProceed}`);
   }
 
   function buildTOTPTokenValidationRequest(): TOTPTokenValidationRequest {
@@ -103,7 +98,7 @@
   }
 
   async function validateTOTPToken(){
-    logger.debug("RegistrationPage.validateTOTPToken called")
+    logger.debug("validateTOTPToken called")
 
     const path = "/users/totp_secret/verify"
 
@@ -114,11 +109,12 @@
 
     return axios.post(path, buildTOTPTokenValidationRequest())
             .then((response: AxiosResponse) => {
+              logger.debug(`navigating to /auth/login because totp validation request succeeded`);
               navigate("/auth/login", { state: {}, replace: true });
             })
-            .catch((reason: AxiosError) => {
+            .catch((reason: AxiosError<ErrorResponse>) => {
               if (reason.response) {
-                const data = reason.response.data as ErrorResponse;
+                const data = reason.response.data;
                 logger.error(data.message);
               }
             });

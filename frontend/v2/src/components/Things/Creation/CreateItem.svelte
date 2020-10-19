@@ -12,10 +12,10 @@
   let item: Item = new Item();
   let apiError: string = '';
 
-  let logger = new Logger();
+  let logger = new Logger().withDebugValue("source", "src/components/Things/Creation/CreateItem.svelte");
 
   function createItem(): void {
-    logger.debug(`vies/things/Item.createItem called`);
+    logger.debug(`createItem called`);
 
     const path: string = `/api/v1/items`;
 
@@ -24,7 +24,8 @@
     axios.post(path, item, { withCredentials: true })
             .then((response: AxiosResponse<Item>) => {
               const newItem = response.data;
-              navigate( `/things/items/${newItem.id}`, { state: {}, replace: true} );
+              logger.debug(`navigating to /things/items/${newItem.id} via creation promise resolution`);
+              navigate(`/things/items/${newItem.id}`, { state: {}, replace: true});
             })
             .catch((error: AxiosError) => {
               if (error.response) {

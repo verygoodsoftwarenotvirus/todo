@@ -4,18 +4,19 @@
   import { navigate } from "svelte-routing";
 
   import { authStatusStore } from "../../stores";
-  import { UserStatus } from "../../models";
+  import { User, UserStatus } from "../../models";
   import { Logger } from "../../logger";
 
   export let location: Location;
 
   let user: User = new User();
-  let logger = new Logger();
+  let logger = new Logger().withDebugValue("source", "src/views/user/Settings.svelte");
 
   let currentAuthStatus = {};
   const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
-    if (!currentAuthStatus) {
+    if (!currentAuthStatus || !currentAuthStatus.isAuthenticated) {
+      logger.debug(`navigating to /auth/login because the user is not authenticated upon authStatusStore update`);
       navigate("/auth/login", { state: {}, replace: true });
     }
   });

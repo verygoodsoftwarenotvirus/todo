@@ -14,17 +14,19 @@
   import { UserStatus } from "../models";
   import { Logger } from "../logger"
 
+  let logger = new Logger().withDebugValue("source", "src/layouts/User.svelte");
+
   let currentAuthStatus = {};
   const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
-    if (!currentAuthStatus) {
+    if (!currentAuthStatus || !currentAuthStatus.isAuthenticated) {
+      logger.debug(`navigating to /auth/login because user is unauthenticated`);
       navigate("/auth/login", { state: {}, replace: true });
     }
   });
   // onDestroy(unsubscribeFromAuthStatusUpdates);
 
   export let location: Location;
-  let logger = new Logger();
 </script>
 
 <div>

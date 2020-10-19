@@ -18,7 +18,7 @@
   export let dataRetrievalError: string = '';
 
   import {Logger} from "../../../logger";
-  let logger = new Logger();
+  let logger = new Logger().withDebugValue("source", "src/components/Things/Tables/ItemsTable.svelte");
 
   import { adminModeStore } from "../../../stores";
   let adminMode: boolean = false;
@@ -42,7 +42,7 @@
   }
 
   function searchItems() {
-    logger.debug("components/tables/ItemsTable searchItems called");
+    logger.debug("searchItems called");
 
     const path: string = "/api/v1/items/search";
 
@@ -92,7 +92,7 @@
   }
 
   function fetchItems() {
-    logger.debug("components/tables/ItemsTable fetchItems called");
+    logger.debug("fetchItems called");
 
     const path: string = "/api/v1/items";
 
@@ -126,7 +126,7 @@
   }
 
   function promptDelete(id: number) {
-    logger.debug("components/tables/ItemsTable promptDelete called");
+    logger.debug("promptDelete called");
 
     if (confirm(`are you sure you want to delete item #${id}?`)) {
       const path: string = `/api/v1/items/${id}`;
@@ -148,6 +148,7 @@
   }
 
   function goToNewPage() {
+    logger.debug(`navigating to /things/items/new via goToNewPage`);
     navigate("/things/items/new", { state: {}, replace: true });
   }
 </script>

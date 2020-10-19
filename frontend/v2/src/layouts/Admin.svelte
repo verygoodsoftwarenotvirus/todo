@@ -17,19 +17,20 @@
   import AdminUsersTable from "../components/Things/Tables/AdminUsersTable.svelte";
   import ReadUpdateDeleteUser from "../components/Things/ReadUpdateDelete/User.svelte";
 
+  import { Logger } from "../logger";
+  let logger = new Logger().withDebugValue("source", "src/layouts/Admin.svelte");
+
   export let location: Location;
 
   let currentAuthStatus = {};
   const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
-    if (!currentAuthStatus) {
-      navigate("/auth/login", { state: {}, replace: true });
-    }
+    // if (!currentAuthStatus || !currentAuthStatus.isAuthenticated || !currentAuthStatus.isAdmin) {
+    //   logger.debug(`navigating to /auth/login because the user is not authenticated`);
+    //   navigate("/auth/login", { state: {}, replace: true });
+    // }
   });
   // onDestroy(unsubscribeFromAuthStatusUpdates);
-
-  import { Logger } from "../logger"
-  let logger = new Logger();
 </script>
 
 <div>

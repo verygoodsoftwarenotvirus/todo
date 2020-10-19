@@ -14,7 +14,7 @@
     let loginError: string = '';
 
     import { Logger } from "../../logger";
-    let logger = new Logger();
+    let logger = new Logger().withDebugValue("source", "src/views/auth/Login.svelte");
 
     function buildLoginRequest(): LoginRequest {
         return {
@@ -43,11 +43,15 @@
         return axios.post(path, buildLoginRequest(), {withCredentials: true})
             .then(() => {
               axios.get("/auth/status", {withCredentials: true}).then((statusResponse: AxiosResponse<UserStatus>) => {
+
                 authStatusStore.setAuthStatus(statusResponse);
+
                 if (statusResponse.data.isAdmin) {
+                  logger.debug(`navigating to /admin/dashboard because user is an authenticated admin`);
                   navigate("/admin/dashboard", { state: {}, replace: true });
                   location.reload();
                 } else {
+                  logger.debug(`navigating to homepage because user is a plain user`);
                   navigate("/", { state: {}, replace: true });
                 }
               });

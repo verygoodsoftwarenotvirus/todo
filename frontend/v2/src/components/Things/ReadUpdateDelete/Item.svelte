@@ -20,10 +20,10 @@
 
   onMount(fetchItem);
 
-  let logger = new Logger();
+  let logger = new Logger().withDebugValue("source", "src/components/Things/ReadUpdateDelete/Item.svelte");
 
   function fetchItem(): void {
-    logger.debug(`vies/things/Item.fetchItem called`);
+    logger.debug(`fetchItem called`);
 
     if (id === 0) {
       throw new Error("id cannot be zero!");
@@ -46,7 +46,7 @@
   }
 
   function saveItem(): void {
-    logger.debug(`vies/things/Item.saveItem called`);
+    logger.debug(`saveItem called`);
 
     if (id === 0) {
       throw new Error("id cannot be zero!");
@@ -72,7 +72,7 @@
   }
 
   function deleteItem(): void {
-    logger.debug(`vies/things/Item.deleteItem called`);
+    logger.debug(`deleteItem called`);
 
     if (id === 0) {
       throw new Error("id cannot be zero!");
@@ -83,6 +83,7 @@
     axios.delete(path, { withCredentials: true })
             .then((response: AxiosResponse<Item>) => {
               if (response.status === 204) {
+                logger.debug(`navigating to /things/items because via deletion promise resolution`);
                 navigate("/things/items", { state: {}, replace: true });
               }
             })

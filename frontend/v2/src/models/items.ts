@@ -3,6 +3,8 @@ import faker from "faker";
 
 import { Pagination } from "@/models/api";
 import { defaultFactories } from "@/models/fakes";
+import type { APITableCell, APITableHeader } from "@/models/apiTable/models";
+import { renderUnixTime } from "@/utils";
 
 export class ItemList extends Pagination{
     items: Item[];
@@ -40,6 +42,30 @@ export class Item {
             i1.name === i2.name &&
             i1.details === i2.details
         );
+    }
+
+    // this function should return everything there are no presumed fields
+    static headers = (): APITableHeader[] => {
+        return [
+            {content: "ID", requiresAdmin: false},
+            {content: "Name", requiresAdmin: false},
+            {content: "Details", requiresAdmin: false},
+            {content: "Created On", requiresAdmin: false},
+            {content: "Last Updated On", requiresAdmin: false},
+            {content: "Belongs to User", requiresAdmin: true},
+        ];
+    }
+
+    // this function should return everything there are no presumed fields
+    static asRow = (x: Item): APITableCell[] => {
+        return [
+            { fieldName: 'id', content: x.id.toString(), requiresAdmin: false },
+            { fieldName: 'name', content: x.name, requiresAdmin: false },
+            { fieldName: 'details', content: x.details, requiresAdmin: false },
+            { fieldName: 'createdOn', content: renderUnixTime(x.createdOn), requiresAdmin: false },
+            { fieldName: 'lastUpdatedOn', content: renderUnixTime(x.updatedOn), requiresAdmin: false },
+            { fieldName: 'belongsToUser', content: x.belongsToUser.toString(), requiresAdmin: true },
+        ]
     }
 }
 

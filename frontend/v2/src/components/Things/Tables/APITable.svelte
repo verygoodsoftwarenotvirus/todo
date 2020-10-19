@@ -12,6 +12,7 @@
   export let headers: string[] = [];
   export let rows: string[][] = [[]];
   export let newPageLink: string = '';
+  export let individualPageLink: string= '';
 
   export let dataRetrievalError: string = '';
 
@@ -22,9 +23,10 @@
   export let decrementPageFunction;
   export let fetchFunction;
   export let deleteFunction;
+  export let rowRenderFunction;
 
   import {Logger} from "../../../logger";
-  let logger = new Logger();
+  let logger = new Logger().withDebugValue("source", "src/components/Things/Tables/APITable.svelte");
 
   import { adminModeStore } from "../../../stores";
   let adminMode: boolean = false;
@@ -48,6 +50,7 @@
   }
 
   function goToNewPage() {
+    logger.debug(`navigating to ${newPageLink} via goToNewPage`);
     navigate(newPageLink, { state: {}, replace: true });
   }
 </script>
@@ -90,13 +93,13 @@
         </select>
       </div>
 
-      <span class="mr-2 ml-2">
+      <span class="mr-2 ml-2"></span>
 
       {#if dataRetrievalError !== ''}
         <span class="text-red-600">{dataRetrievalError}</span>
       {/if}
 
-      <span class="mr-2 ml-2">
+      <span class="mr-2 ml-2"></span>
 
       <div class="flex border-grey-light border">
         <input class="w-full rounded ml-1" type="text" placeholder="Search..." bind:value={searchQuery} on:keyup={search}>
@@ -109,45 +112,62 @@
       <thead>
         <tr>
           {#each headers as header}
-          <th class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
-            {header}
-          </th>
+            {#if header.requiresAdmin}
+              {#if currentAuthStatus.isAdmin && adminMode}
+                <th class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
+                  {header.content}
+                </th>
+              {/if}
+            {:else}
+              <th class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
+                {header.content}
+              </th>
+            {/if}
           {/each}
-          {#if currentAuthStatus.isAdmin && adminMode}
-            <th class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
-              Belongs to User
-            </th>
-          {/if}
           <th class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
             Delete
           </th>
         </tr>
       </thead>
       <tbody>
-      <tr>
+
       {#each rows as row}
-        <a use:link href="/fart">
-          <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-left flex items-center">
-              <span class="ml-3 font-bold btext-gray-700">
-                666
-              </span>
+        <tr>
+          {#each rowRenderFunction(row) as cell}
+            {#if cell.fieldName === 'id'}
+              <a use:link href="{individualPageLink}/{row.id}">
+                <th class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-left flex items-center">
+                  <span class="ml-3 font-bold btext-gray-700">
+                    {row.id}
+                  </span>
+                </th>
+              </a>
+            {:else}
+              {#if cell.requiresAdmin}
+                {#if currentAuthStatus.isAdmin && adminMode}
+                  <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4">
+                    {cell.content}
+                  </td>
+                {/if}
+              {:else}
+                <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4">
+                  {cell.content}
+                </td>
+              {/if}
+            {/if}
+          {/each}
+          <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-right text-red-600" on:click={deleteFunction(row.id)}>
+            <div><i class="fa fa-trash"></i></div>
           </td>
-        </a>
-        {#each row as cell}
-          <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4">
-            {cell}
-          </td>
-        {/each}
+        </tr>
       {/each}
+
         <!--{#if currentAuthStatus.isAdmin && adminMode}-->
         <!--  <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4">-->
         <!--    {item.belongsToUser}-->
         <!--  </td>-->
         <!--{/if}-->
-        <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-right text-red-600">
-          <div><i class="fa fa-trash"></i></div>
-        </td>
-      </tr>
+
       </tbody>
     </table>
   </div>

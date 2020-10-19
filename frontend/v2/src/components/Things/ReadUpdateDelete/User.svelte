@@ -20,10 +20,10 @@
 
   onMount(fetchUser);
 
-  let logger = new Logger();
+  let logger = new Logger().withDebugValue("source", "src/components/Things/ReadUpdateDelete/User.svelte");
 
   function fetchUser(): void {
-    logger.debug(`vies/things/User.fetchUser called`);
+    logger.debug(`fetchUser called`);
 
     if (id === 0) {
       throw new Error("id cannot be zero!");
@@ -46,7 +46,7 @@
   }
 
   function saveUser(): void {
-    logger.debug(`vies/things/User.saveUser called`);
+    logger.debug(`saveUser called`);
 
     if (id === 0) {
       throw new Error("id cannot be zero!");
@@ -72,7 +72,7 @@
   }
 
   function deleteUser(): void {
-    logger.debug(`vies/things/User.deleteUser called`);
+    logger.debug(`deleteUser called`);
 
     if (id === 0) {
       throw new Error("id cannot be zero!");
@@ -83,6 +83,7 @@
     axios.delete(path, { withCredentials: true })
             .then((response: AxiosResponse<User>) => {
               if (response.status === 204) {
+                logger.debug(`navigating to /things/users via user deletion promise resolution`);
                 navigate("/things/users", { state: {}, replace: true });
               }
             })

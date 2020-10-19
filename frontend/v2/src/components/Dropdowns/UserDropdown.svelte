@@ -10,12 +10,14 @@
 
   let popoverDropdownRef;
 
+  import {Logger} from "../../logger";
+  let logger = new Logger().withDebugValue("source", "src/components/Dropdowns/UserDropdown.svelte");
+
   import { authStatusStore } from "../../stores";
   let currentAuthStatus: UserStatus = new UserStatus();
   const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
   });
-
 
   import { adminModeStore } from "../../stores";
   let adminMode: boolean = false;
@@ -25,6 +27,7 @@
 
   function goToSettings() {
     dropdownPopoverShow = false;
+    logger.debug(`navigating to /user/settings via goToSettings`);
     navigate("/user/settings", { state: {}, replace: true });
   }
 
@@ -33,6 +36,7 @@
       withCredentials: true,
     }).then((response: AxiosResponse) => {
       if (response.status === 200) {
+        logger.debug(`navigating to /auth/login via logout promise resolution`);
         navigate("/auth/login", { state: {}, replace: true })
         dropdownPopoverShow = false;
       }

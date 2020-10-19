@@ -1,6 +1,6 @@
 <script lang="typescript">
-  import {onDestroy} from "svelte";
-  import {Router, Route, navigate} from "svelte-routing";
+  import { onDestroy } from "svelte";
+  import { Router, Route, navigate } from "svelte-routing";
 
   // components for this layout
   import Sidebar from "../components/Sidebar/Sidebar.svelte";
@@ -25,12 +25,12 @@
   let currentAuthStatus = {};
   const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
-    if (!currentAuthStatus || !currentAuthStatus.isAuthenticated) {
-      logger.debug(`navigating to /auth/login because user is unauthenticated`);
-      navigate("/auth/login", {state: {}, replace: true});
-    }
+    // if (!currentAuthStatus || !currentAuthStatus.isAuthenticated) {
+    //   logger.debug(`navigating to /auth/login because user is unauthenticated`);
+    //   navigate("/auth/login", {state: {}, replace: true});
+    // }
   });
-  // onDestroy(unsubscribeFromAuthStatusUpdates);
+  onDestroy(unsubscribeFromAuthStatusUpdates);
 </script>
 
 <div>

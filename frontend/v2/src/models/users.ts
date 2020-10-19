@@ -3,6 +3,7 @@ import faker from "faker";
 
 import { Pagination } from "@/models/api";
 import {defaultFactories} from "@/models/fakes";
+import {isNumeric} from "@/utils";
 
 export class UserList extends Pagination {
     items: User[];
@@ -85,5 +86,41 @@ export class UserStatus {
     constructor() {
         this.isAuthenticated = false;
         this.isAdmin = false;
+    }
+}
+
+export class UserPasswordUpdateRequest {
+    newPassword: string;
+    currentPassword: string;
+    totpToken: string;
+
+    constructor() {
+        this.newPassword = '';
+        this.currentPassword = '';
+        this.totpToken = '';
+    }
+
+    goodToGo(): boolean {
+        return this.newPassword !== '' &&
+        this.currentPassword != '' &&
+        this.currentPassword !== this.newPassword &&
+        this.totpToken.length === 6 &&
+        isNumeric(this.totpToken)
+    }
+}
+
+export class UserTwoFactorSecretUpdateRequest {
+    currentPassword: string;
+    totpToken: string;
+
+    constructor() {
+        this.currentPassword = '';
+        this.totpToken = '';
+    }
+
+    goodToGo(): boolean {
+        return this.currentPassword != '' &&
+            this.totpToken.length === 6 &&
+            isNumeric(this.totpToken)
     }
 }

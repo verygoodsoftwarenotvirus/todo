@@ -3,11 +3,10 @@
     import axios, { AxiosError, AxiosResponse } from "axios";
     import { onDestroy, onMount} from "svelte";
 
-    import ItemsTable from "../../components/Things/Tables/ItemsTable.svelte";
-    import APITable from "../../components/Things/Tables/APITable.svelte";
+    import APITable from "../../components/APITable/APITable.svelte";
 
     import { inheritQueryFilterSearchParams } from "../../utils";
-    import { Item, ItemList } from "../../models";
+    import {Item, ItemList, QueryFilter} from "../../models";
 
     export let location;
 
@@ -56,11 +55,11 @@
 
     // begin experimental API table code
 
+    let queryFilter = new QueryFilter();
+
     let apiTableIncrementDisabled: boolean = false;
     let apiTableDecrementDisabled: boolean = false;
 
-    let apiTableCurrentPage: number = 1;
-    let apiTablePageQuantity: number = 20;
     let apiTableSearchQuery: string = '';
 
     function searchItems() {
@@ -68,8 +67,8 @@
 
         const path: string = "/api/v1/items/search";
 
-        const pageURLParams: URLSearchParams = new URLSearchParams(window.location.search);
-        const outboundURLParams: URLSearchParams = inheritQueryFilterSearchParams(pageURLParams);
+        const qf = QueryFilter.fromURLSearchParams();
+        const outboundURLParams = qf.toURLSearchParams();
 
         if (adminMode) {
             outboundURLParams.set("admin", "true");
@@ -82,12 +81,12 @@
         axios.get(uri, { withCredentials: true })
             .then((response: AxiosResponse<ItemList>) => {
                 items = response.data || [];
-                apiTableCurrentPage = -1;
+                queryFilter.page = -1;
             })
             .catch((error: AxiosError) => {
                 if (error.response) {
                     if (error.response.data) {
-                        dataRetrievalError = error.response.data;
+                        itemRetrievalError = error.response.data;
                     }
                 }
             });
@@ -96,7 +95,7 @@
     function incrementPage() {
         if (!apiTableIncrementDisabled) {
             logger.debug(`incrementPage called`);
-            apiTableCurrentPage += 1;
+            queryFilter.page += 1;
             fetchItems();
         }
     }
@@ -104,7 +103,7 @@
     function decrementPage() {
         if (!apiTableDecrementDisabled) {
             logger.debug(`decrementPage called`);
-            apiTableCurrentPage -= 1;
+            queryFilter.page -= 1;
             fetchItems();
         }
     }
@@ -114,14 +113,12 @@
 
         const path: string = "/api/v1/items";
 
-        const pageURLParams: URLSearchParams = new URLSearchParams(window.location.search);
-        const outboundURLParams: URLSearchParams = inheritQueryFilterSearchParams(pageURLParams);
+        const qf = QueryFilter.fromURLSearchParams();
+        const outboundURLParams = qf.toURLSearchParams();
 
         if (adminMode) {
             outboundURLParams.set("admin", "true");
         }
-        outboundURLParams.set("page", apiTableCurrentPage.toString());
-        outboundURLParams.set("limit", apiTablePageQuantity.toString());
 
         const qs = outboundURLParams.toString()
         const uri = `${path}?${qs}`;

@@ -1,15 +1,16 @@
-import axios, { AxiosError, AxiosResponse } from "axios";
+import type { AxiosError, AxiosResponse } from "axios";
 import { writable } from 'svelte/store';
 
-import { UserStatus } from "@/models";
+import { ErrorResponse, UserStatus } from "@/models";
 import { Logger } from "@/logger";
+import { checkAuthStatusRequest } from "@/requests";
 
 const logger = new Logger().withDebugValue("source", "src/stores/auth_store.ts");
 
 function buildAuthStatus() {
     const { subscribe, set, update } = writable({});
 
-    const ass = {
+    const userStatusStore = {
         subscribe,
         setAuthStatus: (x: UserStatus) => {
             logger.withValue("userStatus", x).debug("setting auth status");
@@ -18,20 +19,15 @@ function buildAuthStatus() {
         logout: () => set({}),
     };
 
-    axios.get("/auth/status", { withCredentials: true })
+    checkAuthStatusRequest
         .then((response: AxiosResponse<UserStatus>) => {
-            ass.setAuthStatus(response.data);
+            userStatusStore.setAuthStatus(response.data);
         })
-        .catch((err: AxiosError) => {
-            ass.setAuthStatus(new UserStatus());
-            console.error(err);
-        })
+        .catch((err: AxiosError<ErrorResponse>) => {
+            userStatusStore.setAuthStatus(new UserStatus());
+        });
 
-    const x = new UserStatus()
-    x.isAuthenticated = true;
-    ass.setAuthStatus(x)
-
-    return ass;
+    return userStatusStore;
 }
 
 export const authStatusStore = buildAuthStatus();

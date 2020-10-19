@@ -1,7 +1,7 @@
 <script lang="typescript">
   import { link, navigate } from "svelte-routing";
 
-  import { UserStatus } from "../../../models"
+  import { UserStatus } from "../../models"
 
   // local state
   let searchQuery: string = '';
@@ -25,17 +25,17 @@
   export let deleteFunction;
   export let rowRenderFunction;
 
-  import {Logger} from "../../../logger";
+  import {Logger} from "../../logger";
   let logger = new Logger().withDebugValue("source", "src/components/Things/Tables/APITable.svelte");
 
-  import { adminModeStore } from "../../../stores";
+  import { adminModeStore } from "../../stores";
   let adminMode: boolean = false;
   const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe((value: boolean) => {
     adminMode = value;
     fetchFunction();
   });
 
-  import { authStatusStore } from "../../../stores";
+  import { authStatusStore } from "../../stores";
   let currentAuthStatus = {};
   const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;

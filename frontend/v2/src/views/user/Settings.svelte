@@ -4,13 +4,21 @@
   import { navigate } from "svelte-routing";
 
   import { authStatusStore } from "../../stores";
-  import { User, UserStatus } from "../../models";
+  import { User, UserStatus, UserPasswordUpdateRequest, UserTwoFactorSecretUpdateRequest, ErrorResponse } from "../../models";
   import { Logger } from "../../logger";
 
   export let location: Location;
 
+  let userFetchError: string = '';
+
+  let ogUser: User = new User();
   let user: User = new User();
   let logger = new Logger().withDebugValue("source", "src/views/user/Settings.svelte");
+
+  let userInfoCanBeSaved: boolean = false;
+
+  let passwordUpdate = new UserPasswordUpdateRequest();
+  let twoFactorSecretUpdate = new UserTwoFactorSecretUpdateRequest();
 
   let currentAuthStatus = {};
   const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
@@ -22,202 +30,192 @@
   });
 
   onMount(() => {
-    axios.get("/auth/status", {withCredentials: true})
-         .then((resp: AxiosResponse<UserStatus>) => {
-
+    axios.get("/api/v1/users/self", {withCredentials: true})
+         .then((resp: AxiosResponse<User>) => {
+            user = resp.data;
+            ogUser = {...user};
           })
-         .catch((err: AxiosError) => {
-
+         .catch((err: AxiosError<ErrorResponse>) => {
+           userFetchError = err.data.message;
           });
   })
 </script>
 
 <div class="flex flex-wrap">
   <div class="w-full px-4">
-    <div
-            class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-gray-200 border-0"
-    >
+    <div class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-gray-200 border-0">
+
       <div class="rounded-t bg-white mb-0 px-6 py-6">
         <div class="text-center flex justify-between">
           <h6 class="text-gray-800 text-xl font-bold">My account</h6>
-          <button
-                  class="bg-red-500 text-white active:bg-red-600 font-bold uppercase text-xs px-4 py-2 rounded shadow hover:shadow-md outline-none focus:outline-none mr-1 ease-linear transition-all duration-150"
-                  type="button"
-          >
-            Settings
-          </button>
         </div>
       </div>
+
       <div class="flex-auto px-4 lg:px-10 py-10 pt-0">
-        <form>
+        <div class="text-center flex justify-between">
           <h6 class="text-gray-500 text-sm mt-3 mb-6 font-bold uppercase">
             User Info
           </h6>
-          <div class="flex flex-wrap">
-            <div class="w-full lg:w-6/12 px-4">
-              <div class="relative w-full mb-3">
-                <label
-                  class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                  for="grid-username"
-                >
-                  Username
-                </label>
-                <input
-                  id="grid-username"
-                  type="text"
-                  class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                  bind:value={user}
-                />
-              </div>
-            </div>
-            <div class="w-full lg:w-6/12 px-4">
-              <div class="relative w-full mb-3">
-                <label
-                        class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                        for="grid-email"
-                >
-                  Email address
-                </label>
-                <input
-                        id="grid-email"
-                        type="email"
-                        class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                        value="jesse@example.com"
-                />
-              </div>
-            </div>
-            <div class="w-full lg:w-6/12 px-4">
-              <div class="relative w-full mb-3">
-                <label
-                        class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                        for="grid-first-name"
-                >
-                  First Name
-                </label>
-                <input
-                        id="grid-first-name"
-                        type="text"
-                        class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                        value="Lucky"
-                />
-              </div>
-            </div>
-            <div class="w-full lg:w-6/12 px-4">
-              <div class="relative w-full mb-3">
-                <label
-                        class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                        for="grid-last-name"
-                >
-                  Last Name
-                </label>
-                <input
-                        id="grid-last-name"
-                        type="text"
-                        class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                        value="Jesse"
-                />
-              </div>
+          <button
+                  class="{passwordUpdate.goodToGo() ? 'bg-blue-500' : 'bg-gray-300'} text-white active:bg-blue-600 font-bold uppercase text-xs rounded p-3 m-2"
+                  type="button"
+          >
+            Update
+          </button>
+        </div>
+        <div class="flex flex-wrap">
+          <div class="w-full lg:w-6/12 px-4">
+            <div class="relative w-full mb-3">
+              <label
+                class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                for="grid-username"
+              >
+                Username
+              </label>
+              <input
+                id="grid-username"
+                type="text"
+                disabled
+                class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-gray-300 rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
+                bind:value={user.username}
+              />
             </div>
           </div>
+          <div class="w-full lg:w-6/12 px-4">
+            <div class="relative w-full mb-3">
+              <label
+                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                      for="grid-email"
+              >
+                Email address
+              </label>
+              <input
+                      id="grid-email"
+                      type="email"
+                      class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-gray-300 rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
+                      disabled
+                      value="we don't want your stinkin' email"
+              />
+            </div>
+          </div>
+        </div>
 
-          <hr class="mt-6 border-b-1 border-gray-400" />
+        <hr class="mt-6 border-b-1 border-gray-400" />
 
+        <div class="text-center flex justify-between">
           <h6 class="text-gray-500 text-sm mt-3 mb-6 font-bold uppercase">
-            Contact Information
+            Password
           </h6>
-          <div class="flex flex-wrap">
-            <div class="w-full lg:w-12/12 px-4">
-              <div class="relative w-full mb-3">
-                <label
-                        class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                        for="grid-address"
-                >
-                  Address
-                </label>
-                <input
-                        id="grid-address"
-                        type="text"
-                        class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                        value="Bld Mihail Kogalniceanu, nr. 8 Bl 1, Sc 1, Ap 09"
-                />
-              </div>
-            </div>
-            <div class="w-full lg:w-4/12 px-4">
-              <div class="relative w-full mb-3">
-                <label
-                        class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                        for="grid-city"
-                >
-                  City
-                </label>
-                <input
-                        id="grid-city"
-                        type="email"
-                        class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                        value="New York"
-                />
-              </div>
-            </div>
-            <div class="w-full lg:w-4/12 px-4">
-              <div class="relative w-full mb-3">
-                <label
-                        class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                        for="grid-country"
-                >
-                  Country
-                </label>
-                <input
-                        id="grid-country"
-                        type="text"
-                        class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                        value="United States"
-                />
-              </div>
-            </div>
-            <div class="w-full lg:w-4/12 px-4">
-              <div class="relative w-full mb-3">
-                <label
-                        class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                        for="grid-postal-code"
-                >
-                  Postal Code
-                </label>
-                <input
-                        id="grid-postal-code"
-                        type="text"
-                        class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                        value="Postal Code"
-                />
-              </div>
+          <button
+                  class="{passwordUpdate.goodToGo() ? 'bg-blue-500' : 'bg-gray-300'} text-white active:bg-blue-600 font-bold uppercase text-xs rounded p-3 m-2"
+                  type="button"
+          >
+            Change Password
+          </button>
+        </div>
+        <div class="flex flex-wrap">
+          <div class="w-full lg:w-4/12 px-4">
+            <div class="relative w-full mb-3">
+              <label
+                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                      for="grid-password-update-current-password"
+              >
+                Current Password
+              </label>
+              <input
+                      id="grid-password-update-current-password"
+                      type="password"
+                      class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
+                      bind:value={passwordUpdate.currentPassword}
+              />
             </div>
           </div>
+          <div class="w-full lg:w-4/12 px-4">
+            <div class="relative w-full mb-3">
+              <label
+                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                      for="grid-password-update-new-password"
+              >
+                New Password
+              </label>
+              <input
+                      id="grid-password-update-new-password"
+                      type="password"
+                      class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
+                      bind:value={passwordUpdate.newPassword}
+              />
+            </div>
+          </div>
+          <div class="w-full lg:w-4/12 px-4">
+            <div class="relative w-full mb-3">
+              <label
+                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                      for="grid-password-update-totp-token"
+              >
+                2FA Token
+              </label>
+              <input
+                      id="grid-password-update-totp-token"
+                      type="text"
+                      class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
+                      bind:value={passwordUpdate.totpToken}
+              />
+            </div>
+          </div>
+        </div>
 
-          <hr class="mt-6 border-b-1 border-gray-400" />
+        <hr class="mt-6 border-b-1 border-gray-400" />
 
+
+        <div class="text-center flex justify-between">
           <h6 class="text-gray-500 text-sm mt-3 mb-6 font-bold uppercase">
-            About Me
+            Change 2FA Secret
           </h6>
-          <div class="flex flex-wrap">
-            <div class="w-full lg:w-12/12 px-4">
-              <div class="relative w-full mb-3">
-                <label
-                        class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                        for="grid-about-me"
-                >
-                  About me
-                </label>
-                <textarea
-                        id="grid-about-me"
-                        type="text"
-                        class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                        rows="4"
-                        value="A beautiful Dashboard for Svelte & Tailwind CSS. It is Free
-                and Open Source."
-                />
-              </div>
+          <button
+            class="{twoFactorSecretUpdate.goodToGo() ? 'bg-blue-500' : 'bg-gray-300'} text-white active:bg-blue-600 font-bold uppercase text-xs rounded p-3 m-2"
+            type="button"
+          >
+            Change 2FA Secret
+          </button>
+        </div>
+
+<!--        <h6 class="text-gray-500 text-sm mt-3 mb-6 font-bold uppercase">-->
+<!--          Change 2FA Secret-->
+<!--        </h6>-->
+        <div class="flex flex-wrap">
+          <div class="w-full lg:w-6/12 px-4">
+            <div class="relative w-full mb-3">
+              <label
+                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                      for="grid-2fa-update-current-password"
+              >
+                Current Password
+              </label>
+              <input
+                      id="grid-2fa-update-current-password"
+                      type="password"
+                      class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
+                      bind:value={twoFactorSecretUpdate.currentPassword}
+              />
             </div>
           </div>
-        </form>
+          <div class="w-full lg:w-6/12 px-4">
+            <div class="relative w-full mb-3">
+              <label
+                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                      for="grid-2fa-update-totp-token"
+              >
+                2FA Token
+              </label>
+              <input
+                      id="grid-2fa-update-totp-token"
+                      type="text"
+                      class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
+                      bind:value={twoFactorSecretUpdate.totpToken}
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

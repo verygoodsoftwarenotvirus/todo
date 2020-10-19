@@ -29,6 +29,7 @@
     }
 
     import { authStatusStore } from "../../stores"
+  import {checkAuthStatusRequest, loginRequest} from "../../requests";
 
     async function login() {
         const path = "/users/login"
@@ -40,9 +41,8 @@
           throw new Error("invalid input!");
         }
 
-        return axios.post(path, buildLoginRequest(), {withCredentials: true})
-            .then(() => {
-              axios.get("/auth/status", {withCredentials: true}).then((statusResponse: AxiosResponse<UserStatus>) => {
+        return loginRequest(buildLoginRequest()).then(() => {
+              checkAuthStatusRequest.then((statusResponse: AxiosResponse<UserStatus>) => {
 
                 authStatusStore.setAuthStatus(statusResponse);
 

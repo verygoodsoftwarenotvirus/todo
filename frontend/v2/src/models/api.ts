@@ -9,3 +9,13 @@ export class Pagination {
         this.totalCount = 0;
     }
 }
+
+export class ErrorResponse {
+    message: string;
+    code: number;
+
+    constructor() {
+        this.message = '';
+        this.code = 0;
+    }
+}

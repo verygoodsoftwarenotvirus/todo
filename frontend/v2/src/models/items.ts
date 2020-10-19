@@ -3,7 +3,7 @@ import faker from "faker";
 
 import { Pagination } from "@/models/api";
 import { defaultFactories } from "@/models/fakes";
-import type { APITableCell, APITableHeader } from "@/models/apiTable/models";
+import type { APITableCell, APITableHeader } from "@/components/APITable/models";
 import { renderUnixTime } from "@/utils";
 
 export class ItemList extends Pagination{

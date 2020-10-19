@@ -114,8 +114,6 @@
             .then((response: AxiosResponse<UserList>) => {
               users = response.data.users || [];
 
-              console.dir(users);
-
               currentPage = response.data.page;
               incrementDisabled = users.length === 0;
               decrementDisabled = currentPage === 1;

@@ -32,14 +32,4 @@ export class TOTPTokenValidationRequest {
     }
 }
 
-export class ErrorResponse {
-    message: string;
-    code: number;
-
-    constructor() {
-        this.message = '';
-        this.code = 0;
-    }
-}
-
 // TODO: do these need to exist, and if so, do they need to exist here?

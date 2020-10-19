@@ -1,13 +1,9 @@
 <!-- App.svelte -->
 <script lang="typescript">
-  import axios, { AxiosResponse, AxiosError } from "axios";
   import {Router, Route, navigate} from "svelte-routing";
-  import { onMount } from 'svelte';
 
-  import { UserStatus } from "./models";
-  import { authStatusStore } from "./stores/auth_store";
-
-  import { Logger, LogLevel } from "./logger";
+  import { Logger } from "@/logger";
+  import {checkAuthStatusRequest} from "@/requests";
 
   // Admin Layout
   import Admin from "./layouts/Admin.svelte";
@@ -25,16 +21,7 @@
 
   let logger = new Logger().withDebugValue("source", "src/App.svelte");
 
-  // onMount(() => {
-  //   axios.get("/auth/status", { withCredentials: true })
-  //         .then((response: AxiosResponse<AuthStatus>) => {
-  //           logger.debug("setting auth status from App.svelte");
-  //           authStatusStore.setAuthStatus(response.data);
-  //         })
-  //         .catch((error: AxiosError) => {
-  //           logger.error(error.toString());
-  //         });
-  // })
+  checkAuthStatusRequest.then(() => {})
 </script>
 
 <Router url="{url}">

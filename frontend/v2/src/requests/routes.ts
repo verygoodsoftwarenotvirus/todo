@@ -1,13 +1,18 @@
 export enum backendRoutes {
-  USER_REGISTRATION  = "/users/",
-  USER_AUTH_STATUS   = "/auth/status",
-  LOGIN              = "/users/login",
-  LOGOUT             = "/users/logout",
-  VERIFY_2FA_SECRET  = "/users/totp_secret/verify",
-  VALID_INGREDIENTS  = "/api/v1/valid_ingredients",
-  VALID_INGREDIENT   = "/api/v1/valid_ingredients/{}",
-  VALID_INSTRUMENTS  = "/api/v1/valid_instruments",
-  VALID_INSTRUMENT   = "/api/v1/valid_instruments/{}",
-  VALID_PREPARATIONS = "/api/v1/valid_preparations",
-  VALID_PREPARATION  = "/api/v1/valid_preparations/{}",
+  // User accounts
+  USER_REGISTRATION   = "/users/",
+  LOGIN               = "/users/login",
+  LOGOUT              = "/users/logout",
+  INDIVIDUAL_USER     = "/api/v1/users/{}",
+
+  // Auth
+  USER_AUTH_STATUS    = "/auth/status",
+  USER_SELF_INFO      = "/api/v1/users/self",
+  VERIFY_2FA_SECRET   = "/users/totp_secret/verify",
+
+  // Items
+  CREATE_ITEM         = "/api/v1/items",
+  GET_ITEMS           = "/api/v1/items",
+  INDIVIDUAL_ITEM     = "/api/v1/items/{}",
+  SEARCH_ITEMS        = "/api/v1/items/search",
 }

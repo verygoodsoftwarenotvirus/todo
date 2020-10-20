@@ -35,9 +35,9 @@
     fetchFunction();
   });
 
-  import { authStatusStore } from "../../stores";
+  import { userStatusStore } from "../../stores";
   let currentAuthStatus = {};
-  const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
+  const unsubscribeFromAuthStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
   });
   // onDestroy(unsubscribeFromAuthStatusUpdates);

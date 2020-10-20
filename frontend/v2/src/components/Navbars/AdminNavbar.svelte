@@ -5,10 +5,10 @@
   // core components
   import UserDropdown from "../Dropdowns/UserDropdown.svelte";
 
-  import { authStatusStore } from "../../stores";
+  import { userStatusStore } from "../../stores";
   import {UserStatus} from "../../models";
   let currentAuthStatus = {};
-  const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
+  const unsubscribeFromAuthStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
   });
   // onDestroy(unsubscribeFromAuthStatusUpdates);

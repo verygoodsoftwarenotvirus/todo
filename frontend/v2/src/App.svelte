@@ -1,9 +1,9 @@
 <!-- App.svelte -->
 <script lang="typescript">
+  import {AxiosError, AxiosResponse} from "axios";
   import {Router, Route, navigate} from "svelte-routing";
 
   import { Logger } from "@/logger";
-  import {checkAuthStatusRequest} from "@/requests";
 
   // Admin Layout
   import Admin from "./layouts/Admin.svelte";
@@ -12,16 +12,14 @@
   // User Layout
   import User from "./layouts/User.svelte";
   // Things Layout
-  import Things from "./layouts/Things.svelte";
 
+  import Things from "./layouts/Things.svelte";
   // No Layout Pages
   import Index from "./views/Index.svelte";
 
   export let url: string = "";
 
   let logger = new Logger().withDebugValue("source", "src/App.svelte");
-
-  checkAuthStatusRequest.then(() => {})
 </script>
 
 <Router url="{url}">

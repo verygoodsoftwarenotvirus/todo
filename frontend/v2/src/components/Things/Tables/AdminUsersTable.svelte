@@ -4,7 +4,7 @@
   import { link, navigate } from "svelte-routing";
 
   import { renderUnixTime, inheritQueryFilterSearchParams } from "../../../utils"
-  import { User, UserList } from "../../../models"
+  import {QueryFilter, User, UserList, UserStatus} from "../../../models"
 
   let searchQuery: string = '';
   let currentPage: number = 0;
@@ -20,58 +20,20 @@
   import {Logger} from "../../../logger";
   let logger = new Logger().withDebugValue("source", "src/components/Things/Tables/AdminUsersTable.svelte");
 
-  import { adminModeStore } from "../../../stores";
+  import {V1APIClient} from "../../../requests";
+
+  import { adminModeStore, userStatusStore } from "../../../stores";
   let adminMode: boolean = false;
+  let currentAuthStatus = {};
   const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe((value: boolean) => {
     adminMode = value;
     fetchUsers();
   });
 
-  import { authStatusStore } from "../../../stores";
-  let currentAuthStatus = {};
-  const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
+  const unsubscribeFromAuthStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
   });
   // onDestroy(unsubscribeFromAuthStatusUpdates);
-
-  function search(): void {
-    if (searchQuery.length >= 3) {
-      logger.debug(`searching for items: ${searchQuery}`)
-      searchUsers();
-    }
-  }
-
-  function searchUsers() {
-    logger.debug("searchUsers called");
-
-    throw new Error("unimplemented");
-
-    const path: string = "/api/v1/users/search";
-
-    // const pageURLParams: URLSearchParams = new URLSearchParams(window.location.search);
-    // const outboundURLParams: URLSearchParams = inheritQueryFilterSearchParams(pageURLParams);
-    //
-    // if (adminMode) {
-    //   outboundURLParams.set("admin", "true");
-    // }
-    // outboundURLParams.set("q", searchQuery)
-    //
-    // const qs = outboundURLParams.toString()
-    // const uri = `${path}?${qs}`;
-    //
-    // axios.get(uri, { withCredentials: true })
-    //         .then((response: AxiosResponse<UserList>) => {
-    //           items = response.data || [];
-    //           currentPage = -1;
-    //         })
-    //         .catch((error: AxiosError) => {
-    //           if (error.response) {
-    //             if (error.response.data) {
-    //               itemRetrievalError = error.response.data;
-    //             }
-    //           }
-    //         });
-  }
 
   function incrementPage() {
     if (!incrementDisabled) {
@@ -96,21 +58,9 @@
   function fetchUsers() {
     logger.debug("fetchUsers called");
 
-    const path: string = "/api/v1/users";
+    const qf = QueryFilter.fromURLSearchParams()
 
-    const pageURLParams: URLSearchParams = new URLSearchParams(window.location.search);
-    const outboundURLParams: URLSearchParams = inheritQueryFilterSearchParams(pageURLParams);
-
-    if (adminMode) {
-      outboundURLParams.set("admin", "true");
-    }
-    outboundURLParams.set("page", currentPage.toString());
-    outboundURLParams.set("limit", pageQuantity.toString());
-
-    const qs = outboundURLParams.toString()
-    const uri = `${path}?${qs}`;
-
-    axios.get(uri, { withCredentials: true })
+    V1APIClient.fetchListOfUsers(qf, adminMode)
             .then((response: AxiosResponse<UserList>) => {
               users = response.data.users || [];
 
@@ -131,9 +81,7 @@
     logger.debug("promptDelete called");
 
     if (confirm(`are you sure you want to delete user #${id}?`)) {
-      const path: string = `/api/v1/users/${id}`;
-
-      axios.delete(path, { withCredentials: true })
+      V1APIClient.deleteUser(id)
               .then((response: AxiosResponse<User>) => {
                 if (response.status === 204) {
                   fetchUsers();

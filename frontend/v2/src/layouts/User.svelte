@@ -10,14 +10,14 @@
   // pages for this layout
   import Settings from "../views/user/Settings.svelte";
 
-  import { authStatusStore } from "../stores";
+  import { userStatusStore } from "../stores";
   import { UserStatus } from "../models";
   import { Logger } from "../logger"
 
   let logger = new Logger().withDebugValue("source", "src/layouts/User.svelte");
 
   let currentAuthStatus = {};
-  const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
+  const unsubscribeFromAuthStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
     if (!currentAuthStatus || !currentAuthStatus.isAuthenticated) {
       logger.debug(`navigating to /auth/login because user is unauthenticated`);

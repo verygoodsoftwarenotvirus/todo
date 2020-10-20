@@ -5,6 +5,7 @@
 
   import { Item } from "../../../models";
   import { Logger } from "../../../logger";
+  import {V1APIClient} from "../../../requests";
 
   export let id: number = 0;
 
@@ -29,9 +30,7 @@
       throw new Error("id cannot be zero!");
     }
 
-    const path: string = `/api/v1/items/${id}`;
-
-    axios.get(path, { withCredentials: true })
+    V1APIClient.fetchItem(id)
             .then((response: AxiosResponse<Item>) => {
               item = { ...response.data };
               originalItem = { ...response.data };
@@ -56,7 +55,7 @@
 
     const path: string = `/api/v1/items/${id}`;
 
-    axios.put(path, item, { withCredentials: true })
+    V1APIClient.saveItem(item)
             .then((response: AxiosResponse<Item>) => {
               item = { ...response.data };
               originalItem = { ...response.data };
@@ -78,9 +77,7 @@
       throw new Error("id cannot be zero!");
     }
 
-    const path: string = `/api/v1/items/${id}`;
-
-    axios.delete(path, { withCredentials: true })
+    V1APIClient.deleteItem(id)
             .then((response: AxiosResponse<Item>) => {
               if (response.status === 204) {
                 logger.debug(`navigating to /things/items because via deletion promise resolution`);

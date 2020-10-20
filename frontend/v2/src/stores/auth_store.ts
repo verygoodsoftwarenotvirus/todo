@@ -3,11 +3,11 @@ import { writable } from 'svelte/store';
 
 import { ErrorResponse, UserStatus } from "@/models";
 import { Logger } from "@/logger";
-import { checkAuthStatusRequest } from "@/requests";
+import { V1APIClient } from "@/requests";
 
 const logger = new Logger().withDebugValue("source", "src/stores/auth_store.ts");
 
-function buildAuthStatus() {
+function buildUserStatusStore() {
     const { subscribe, set, update } = writable({});
 
     const userStatusStore = {
@@ -19,7 +19,7 @@ function buildAuthStatus() {
         logout: () => set({}),
     };
 
-    checkAuthStatusRequest
+    V1APIClient.checkAuthStatusRequest()
         .then((response: AxiosResponse<UserStatus>) => {
             userStatusStore.setAuthStatus(response.data);
         })
@@ -30,4 +30,4 @@ function buildAuthStatus() {
     return userStatusStore;
 }
 
-export const authStatusStore = buildAuthStatus();
+export const userStatusStore = buildUserStatusStore();

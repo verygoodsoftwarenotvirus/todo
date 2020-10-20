@@ -3,13 +3,14 @@
   import { onMount } from "svelte";
   import axios, {AxiosError, AxiosResponse} from "axios";
 
-  import { Item } from "../../../models";
+  import {Item, ItemCreationInput} from "../../../models";
   import {Logger} from "../../../logger";
+  import {V1APIClient} from "../../../requests";
 
   export let id: number = 0;
 
   // local state
-  let item: Item = new Item();
+  let item: ItemCreationInput = new ItemCreationInput();
   let apiError: string = '';
 
   let logger = new Logger().withDebugValue("source", "src/components/Things/Creation/CreateItem.svelte");
@@ -19,9 +20,7 @@
 
     const path: string = `/api/v1/items`;
 
-    logger.dir(item);
-
-    axios.post(path, item, { withCredentials: true })
+    V1APIClient.createItem(item)
             .then((response: AxiosResponse<Item>) => {
               const newItem = response.data;
               logger.debug(`navigating to /things/items/${newItem.id} via creation promise resolution`);

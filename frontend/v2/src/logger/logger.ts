@@ -38,7 +38,7 @@ export class Logger {
     private readonly context: Map<string, any>;
     private readonly debugOnlyContext: Map<string, any>;
 
-    protected actualLogFunc: (prefix: string, style: string, context?: Map<string, any> | string, content?: string) => void;
+    protected actualLogFunc: (prefix: string, style: string, content: string, context?: Map<string, any> | string) => void;
 
     constructor(level: LogLevel = defaultLogLevel, context: Map<string, any> | null = null) {
         this._level = level;
@@ -110,7 +110,7 @@ export class Logger {
         const style = Logger.buildStyle(infoBackgroundColor, infoTextColor);
 
         ( this.includeContextByDefault || includeCtx ) ?
-            this.actualLogFunc(prefix, style, this.context, s) :
+            this.actualLogFunc(prefix, style, s, this.context) :
             this.actualLogFunc(prefix, style, s);
     }
 
@@ -127,7 +127,7 @@ export class Logger {
 
         if (this.level >= LogLevel.Debug) {
             ( this.includeContextByDefault || includeCtx ) ?
-                this.actualLogFunc(prefix, style, ctx, s) :
+                this.actualLogFunc(prefix, style, s,  ctx) :
                 this.actualLogFunc(prefix, style, s);
         }
     }
@@ -138,7 +138,7 @@ export class Logger {
 
         if (this.level >= LogLevel.Warning) {
             ( this.includeContextByDefault || includeCtx ) ?
-                this.actualLogFunc(prefix, style, this.context, s) :
+                this.actualLogFunc(prefix, style, s, this.context) :
                 this.actualLogFunc(prefix, style, s);
         }
     }
@@ -149,7 +149,7 @@ export class Logger {
 
         if (this.level >= LogLevel.Error) {
             ( this.includeContextByDefault || includeCtx ) ?
-                this.actualLogFunc(prefix, style, this.context, s) :
+                this.actualLogFunc(prefix, style, s, this.context) :
                 this.actualLogFunc(prefix, style, s);
         }
     }
@@ -160,7 +160,7 @@ export class Logger {
 
         if (this.level >= LogLevel.WTF) {
             ( this.includeContextByDefault || includeCtx ) ?
-                this.actualLogFunc(prefix, style, this.context, s) :
+                this.actualLogFunc(prefix, style, s, this.context) :
                 this.actualLogFunc(prefix, style, s);
         }
     }

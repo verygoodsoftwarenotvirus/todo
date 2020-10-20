@@ -51,7 +51,7 @@ export class QueryFilter {
         out.updatedBefore = parseInt(input.get(queryFilterKeyUpdatedBefore) || '0');
         out.updatedAfter = parseInt(input.get(queryFilterKeyUpdatedAfter) || '0');
         out.includeArchived = parseBool(input.get(queryFilterKeyIncludeArchived) || 'false');
-        out.sortBy = input.get(queryFilterKeySortBy) as SortBy;
+        out.sortBy = input.get(queryFilterKeySortBy) as SortBy || SortBy.ASCENDING;
 
         return out
     }
@@ -59,11 +59,22 @@ export class QueryFilter {
     toURLSearchParams(adminMode: boolean = false): URLSearchParams {
         const out = new URLSearchParams();
 
-        out.set(queryFilterKeyPage, this.page.toString());
-        out.set(queryFilterKeyCreatedBefore, this.createdBefore.toString());
-        out.set(queryFilterKeyCreatedAfter, this.createdAfter.toString());
-        out.set(queryFilterKeyUpdatedBefore, this.updatedBefore.toString());
-        out.set(queryFilterKeyUpdatedAfter, this.updatedAfter.toString());
+        if (this.page !== 0) {
+            out.set(queryFilterKeyPage, this.page.toString());
+        }
+        if (this.createdBefore !== 0) {
+            out.set(queryFilterKeyCreatedBefore, this.createdBefore.toString());
+        }
+        if (this.createdAfter !== 0) {
+            out.set(queryFilterKeyCreatedAfter, this.createdAfter.toString());
+        }
+        if (this.updatedBefore !== 0) {
+            out.set(queryFilterKeyUpdatedBefore, this.updatedBefore.toString());
+        }
+        if (this.updatedAfter !== 0) {
+            out.set(queryFilterKeyUpdatedAfter, this.updatedAfter.toString());
+        }
+
         out.set(queryFilterKeyIncludeArchived, this.includeArchived.toString());
         out.set(queryFilterKeySortBy, this.sortBy);
 

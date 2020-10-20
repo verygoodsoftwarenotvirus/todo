@@ -13,13 +13,14 @@
   import {Logger} from "../../logger";
   let logger = new Logger().withDebugValue("source", "src/components/Dropdowns/UserDropdown.svelte");
 
-  import { authStatusStore } from "../../stores";
+  import { userStatusStore } from "../../stores";
   let currentAuthStatus: UserStatus = new UserStatus();
-  const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
+  const unsubscribeFromAuthStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
   });
 
   import { adminModeStore } from "../../stores";
+  import {V1APIClient} from "../../requests";
   let adminMode: boolean = false;
   const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe((value: boolean) => {
     adminMode = value;
@@ -32,9 +33,7 @@
   }
 
   function logout() {
-    axios.post("/users/logout", {
-      withCredentials: true,
-    }).then((response: AxiosResponse) => {
+    V1APIClient.logout().then((response: AxiosResponse) => {
       if (response.status === 200) {
         logger.debug(`navigating to /auth/login via logout promise resolution`);
         navigate("/auth/login", { state: {}, replace: true })

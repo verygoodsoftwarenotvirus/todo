@@ -6,6 +6,8 @@
 
   export let location: Location;
 
+  let registrationRequest = new RegistrationRequest();
+
   let usernameInput = '';
   let passwordInput = '';
   let passwordRepeatInput = '';
@@ -13,18 +15,18 @@
   let registrationMayProceed = false;
   let registrationError = '';
   let postRegistrationQRCode = '';
-  let postRegistrationUserID = -1;
-
   let totpTokenValidationMayProceed = false;
-  let totpTokenValidationInput = '';
+
+  const totpValidationRequest = new TOTPTokenValidationRequest();
 
   import { Logger } from "../../logger";
+  import {V1APIClient} from "../../requests";
   let logger = new Logger().withDebugValue("source", "src/views/auth/Register.svelte");
 
   function evaluateCreationInputs(): string {
-    const usernameIsLongEnough = usernameInput.length >= 8;
-    const passwordsMatch = passwordInput === passwordRepeatInput;
-    const passwordIsLongEnough = passwordInput.length >= 8;
+    const usernameIsLongEnough = registrationRequest.username.length >= 8;
+    const passwordsMatch = registrationRequest.password === registrationRequest.repeatedPassword;
+    const passwordIsLongEnough = registrationRequest.length >= 8;
 
     const reasons: string[] = [];
     if (!usernameIsLongEnough) {
@@ -37,7 +39,7 @@
 
     registrationMayProceed = usernameIsLongEnough && passwordIsLongEnough && passwordsMatch
 
-    if (reasons.length == 1) {
+    if (reasons.length === 1) {
       return reasons.pop() || '';
     } else if (reasons.length > 1) {
       const last = reasons.pop();
@@ -47,14 +49,6 @@
     }
 
     return "";
-  }
-
-  function buildRegistrationRequest(): RegistrationRequest {
-    return {
-      username: usernameInput,
-      password: passwordInput,
-      repeatedPassword: passwordRepeatInput,
-    } as RegistrationRequest;
   }
 
   async function register() {
@@ -68,18 +62,18 @@
       throw new Error("registration input is not valid!");
     }
 
-    return axios.post(path, buildRegistrationRequest())
-            .then((response: AxiosResponse<UserRegistrationResponse | ErrorResponse>) => {
-              const data = response.data as UserRegistrationResponse;
+    return V1APIClient.registrationRequest(registrationRequest)
+            .then((response: AxiosResponse<UserRegistrationResponse>) => {
+              const data = response.data;
 
               postRegistrationQRCode = data.qrCode;
-              postRegistrationUserID = data.id;
+              totpValidationRequest.userID = data.id;
 
               return data;
             })
-            .catch((reason: AxiosError) => {
+            .catch((reason: AxiosError<ErrorResponse>) => {
               if (reason.response) {
-                const data = reason.response.data as ErrorResponse;
+                const data = reason.response.data;
                 logger.error(data.message);
                 registrationError = data.message;
               }
@@ -87,14 +81,7 @@
   }
 
   function evaluateValidationInputs(): void  {
-    totpTokenValidationMayProceed = totpTokenValidationInput.length === 6
-  }
-
-  function buildTOTPTokenValidationRequest(): TOTPTokenValidationRequest {
-    return {
-      userID: postRegistrationUserID,
-      totpToken: totpTokenValidationInput,
-    } as TOTPTokenValidationRequest;
+    totpTokenValidationMayProceed = totpValidationRequest.totpToken.length === 6
   }
 
   async function validateTOTPToken(){
@@ -107,7 +94,7 @@
       throw new Error("TOTP token validation input is not valid!");
     }
 
-    return axios.post(path, buildTOTPTokenValidationRequest())
+    return V1APIClient.validateTOTPSecretWithToken(totpValidationRequest)
             .then((response: AxiosResponse) => {
               logger.debug(`navigating to /auth/login because totp validation request succeeded`);
               navigate("/auth/login", { state: {}, replace: true });
@@ -228,7 +215,7 @@
               Enter an example generated code to verify you've completed the above step:
               <input
                 id="totpTokenInput"
-                bind:value={totpTokenValidationInput}
+                bind:value={totpValidationRequest.totpToken}
                 type="text"
                 placeholder="2FA Token"
                 on:keyup={evaluateValidationInputs}

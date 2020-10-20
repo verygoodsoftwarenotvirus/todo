@@ -1,10 +1,11 @@
 <script lang="typescript">
   import { navigate } from "svelte-routing";
   import { onMount } from "svelte";
-  import axios, {AxiosError, AxiosResponse} from "axios";
+  import { AxiosError, AxiosResponse } from "axios";
 
   import { User } from "../../../models";
   import { Logger } from "../../../logger";
+  import { V1APIClient } from "../../../requests";
 
   export let id: number = 0;
 
@@ -18,32 +19,7 @@
     needsToBeSaved = !User.areEqual(user, originalUser);
   }
 
-  onMount(fetchUser);
-
   let logger = new Logger().withDebugValue("source", "src/components/Things/ReadUpdateDelete/User.svelte");
-
-  function fetchUser(): void {
-    logger.debug(`fetchUser called`);
-
-    if (id === 0) {
-      throw new Error("id cannot be zero!");
-    }
-
-    const path: string = `/api/v1/users/${id}`;
-
-    axios.get(path, { withCredentials: true })
-            .then((response: AxiosResponse<User>) => {
-              user = { ...response.data };
-              originalUser = { ...response.data };
-            })
-            .catch((error: AxiosError) => {
-              if (error.response) {
-                if (error.response.data) {
-                  userRetrievalError = error.response.data;
-                }
-              }
-            });
-  }
 
   function saveUser(): void {
     logger.debug(`saveUser called`);
@@ -56,7 +32,7 @@
 
     const path: string = `/api/v1/users/${id}`;
 
-    axios.put(path, user, { withCredentials: true })
+    V1APIClient.saveUser(user)
             .then((response: AxiosResponse<User>) => {
               user = { ...response.data };
               originalUser = { ...response.data };
@@ -71,21 +47,17 @@
             });
   }
 
-  function deleteUser(): void {
-    logger.debug(`deleteUser called`);
+  function fetchUser(): void {
+    logger.debug(`fetchUser called`);
 
     if (id === 0) {
       throw new Error("id cannot be zero!");
     }
 
-    const path: string = `/api/v1/users/${id}`;
-
-    axios.delete(path, { withCredentials: true })
+    V1APIClient.fetchUser(id)
             .then((response: AxiosResponse<User>) => {
-              if (response.status === 204) {
-                logger.debug(`navigating to /things/users via user deletion promise resolution`);
-                navigate("/things/users", { state: {}, replace: true });
-              }
+              user = { ...response.data };
+              originalUser = { ...response.data };
             })
             .catch((error: AxiosError) => {
               if (error.response) {
@@ -95,6 +67,8 @@
               }
             });
   }
+
+  onMount(fetchUser);
 </script>
 
 <div class="relative flex flex-col min-w-0 break-words bg-white w-full mb-6 shadow-lg rounded">

@@ -3,9 +3,10 @@
   import axios, {AxiosError, AxiosResponse} from "axios";
   import { navigate } from "svelte-routing";
 
-  import { authStatusStore } from "../../stores";
+  import { userStatusStore } from "../../stores";
   import { User, UserStatus, UserPasswordUpdateRequest, UserTwoFactorSecretUpdateRequest, ErrorResponse } from "../../models";
   import { Logger } from "../../logger";
+  import { V1APIClient } from "../../requests";
 
   export let location: Location;
 
@@ -21,7 +22,7 @@
   let twoFactorSecretUpdate = new UserTwoFactorSecretUpdateRequest();
 
   let currentAuthStatus = {};
-  const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
+  const unsubscribeFromAuthStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
     if (!currentAuthStatus || !currentAuthStatus.isAuthenticated) {
       logger.debug(`navigating to /auth/login because the user is not authenticated upon authStatusStore update`);
@@ -30,7 +31,7 @@
   });
 
   onMount(() => {
-    axios.get("/api/v1/users/self", {withCredentials: true})
+    V1APIClient.selfRequest
          .then((resp: AxiosResponse<User>) => {
             user = resp.data;
             ogUser = {...user};

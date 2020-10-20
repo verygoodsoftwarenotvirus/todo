@@ -28,8 +28,8 @@
       canLogin = usernameInput !== '' && passwordInput !== '' && totpTokenInput.length > 0 && totpTokenInput.length < 7;
     }
 
-    import { authStatusStore } from "../../stores"
-  import {checkAuthStatusRequest, loginRequest} from "../../requests";
+    import { userStatusStore } from "../../stores"
+    import { V1APIClient } from "../../requests";
 
     async function login() {
         const path = "/users/login"
@@ -41,10 +41,9 @@
           throw new Error("invalid input!");
         }
 
-        return loginRequest(buildLoginRequest()).then(() => {
-              checkAuthStatusRequest.then((statusResponse: AxiosResponse<UserStatus>) => {
-
-                authStatusStore.setAuthStatus(statusResponse);
+        return V1APIClient.loginRequest(buildLoginRequest()).then(() => {
+              V1APIClient.checkAuthStatusRequest().then((statusResponse: AxiosResponse<UserStatus>) => {
+                userStatusStore.setAuthStatus(statusResponse.data);
 
                 if (statusResponse.data.isAdmin) {
                   logger.debug(`navigating to /admin/dashboard because user is an authenticated admin`);
@@ -62,7 +61,7 @@
                   loginError = 'invalid credentials: please try again'
                 } else {
                   loginError = reason.response.toString();
-                  logger.error(reason.response);
+                  logger.error(JSON.stringify(reason.response));
                 }
               }
             });

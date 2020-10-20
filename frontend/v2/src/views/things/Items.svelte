@@ -1,23 +1,22 @@
 <script lang="typescript">
     // core components
-    import axios, { AxiosError, AxiosResponse } from "axios";
+    import { AxiosError, AxiosResponse } from "axios";
     import { onDestroy, onMount} from "svelte";
 
     import APITable from "../../components/APITable/APITable.svelte";
 
-    import { inheritQueryFilterSearchParams } from "../../utils";
-    import {Item, ItemList, QueryFilter} from "../../models";
+    import {ErrorResponse, Item, ItemList, QueryFilter, UserStatus} from "../../models";
 
     export let location;
 
     let itemRetrievalError = '';
-    let items: Item[] = []; // fakeItemFactory.buildList(10);
+    let items: Item[] = [];
 
     const useAPITable: boolean = true;
 
-    import { authStatusStore } from "../../stores";
+    import { userStatusStore } from "../../stores";
     let currentAuthStatus = {};
-    const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
+    const unsubscribeFromAuthStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
         currentAuthStatus = value;
     });
 
@@ -29,18 +28,13 @@
     // onDestroy(unsubscribeFromAdminModeUpdates);
 
     import { Logger } from "../../logger";
+    import { V1APIClient } from "../../requests";
     let logger = new Logger().withDebugValue("source", "src/views/things/Items.svelte");
 
     onMount(() => {
-        const path: string = "/api/v1/items";
+        const qf = QueryFilter.fromURLSearchParams();
 
-        const pageURLParams: URLSearchParams = new URLSearchParams(window.location.search);
-        const outboundURLParams: URLSearchParams = inheritQueryFilterSearchParams(pageURLParams);
-
-        const qs = outboundURLParams.toString()
-        const uri = "/api/v1/items?" + qs;
-
-        axios.get(uri, { withCredentials: true })
+        V1APIClient.fetchListOfItems(qf, adminMode)
             .then((response: AxiosResponse<ItemList>) => {
                 items = response.data.items || [];
             })
@@ -65,22 +59,11 @@
     function searchItems() {
         logger.debug("searchItems called");
 
-        const path: string = "/api/v1/items/search";
-
         const qf = QueryFilter.fromURLSearchParams();
-        const outboundURLParams = qf.toURLSearchParams();
 
-        if (adminMode) {
-            outboundURLParams.set("admin", "true");
-        }
-        outboundURLParams.set("q", apiTableSearchQuery)
-
-        const qs = outboundURLParams.toString()
-        const uri = `${path}?${qs}`;
-
-        axios.get(uri, { withCredentials: true })
+        V1APIClient.searchForItems(apiTableSearchQuery, qf, adminMode)
             .then((response: AxiosResponse<ItemList>) => {
-                items = response.data || [];
+                items = response.data.items || [];
                 queryFilter.page = -1;
             })
             .catch((error: AxiosError) => {
@@ -111,25 +94,15 @@
     function fetchItems() {
         logger.debug("fetchItems called");
 
-        const path: string = "/api/v1/items";
-
         const qf = QueryFilter.fromURLSearchParams();
-        const outboundURLParams = qf.toURLSearchParams();
 
-        if (adminMode) {
-            outboundURLParams.set("admin", "true");
-        }
-
-        const qs = outboundURLParams.toString()
-        const uri = `${path}?${qs}`;
-
-        axios.get(uri, { withCredentials: true })
+        V1APIClient.fetchListOfItems(qf, adminMode)
             .then((response: AxiosResponse<ItemList>) => {
                 items = response.data.items || [];
 
-                apiTableCurrentPage = response.data.page;
+                queryFilter.page = response.data.page;
                 apiTableIncrementDisabled = items.length === 0;
-                apiTableDecrementDisabled = apiTableCurrentPage === 1;
+                apiTableDecrementDisabled = queryFilter.page === 1;
             })
             .catch((error: AxiosError) => {
                 if (error.response) {
@@ -146,16 +119,16 @@
         if (confirm(`are you sure you want to delete item #${id}?`)) {
             const path: string = `/api/v1/items/${id}`;
 
-            axios.delete(path, { withCredentials: true })
+            V1APIClient.deleteItem(id)
                 .then((response: AxiosResponse<Item>) => {
                     if (response.status === 204) {
                         fetchItems();
                     }
                 })
-                .catch((error: AxiosError) => {
+                .catch((error: AxiosError<ErrorResponse>) => {
                     if (error.response) {
                         if (error.response.data) {
-                            itemRetrievalError = error.response.data;
+                            itemRetrievalError = error.response.data.message;
                         }
                     }
                 });

@@ -18,10 +18,10 @@
   import {Logger} from "../logger";
   let logger = new Logger().withDebugValue("source", "src/layouts/Auth.svelte");
 
-  import { authStatusStore } from "../stores";
+  import { userStatusStore } from "../stores";
   import {UserStatus} from "../models";
   let currentAuthStatus = {};
-  const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
+  const unsubscribeFromAuthStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
   });
   // onDestroy(unsubscribeFromAuthStatusUpdates);

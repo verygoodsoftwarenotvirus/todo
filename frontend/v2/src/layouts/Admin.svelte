@@ -3,7 +3,7 @@
   import { onDestroy } from "svelte";
   import { navigate, Router, Route } from "svelte-routing";
 
-  import { authStatusStore } from "../stores";
+  import { userStatusStore } from "../stores";
   import { UserStatus } from "../models";
 
   // components for this layout
@@ -23,7 +23,7 @@
   export let location: Location;
 
   let currentAuthStatus = {};
-  const unsubscribeFromAuthStatusUpdates = authStatusStore.subscribe((value: UserStatus) => {
+  const unsubscribeFromAuthStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
     // if (!currentAuthStatus || !currentAuthStatus.isAuthenticated || !currentAuthStatus.isAdmin) {
     //   logger.debug(`navigating to /auth/login because the user is not authenticated`);

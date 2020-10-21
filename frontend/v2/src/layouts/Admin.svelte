@@ -23,14 +23,14 @@
   export let location: Location;
 
   let currentAuthStatus = {};
-  const unsubscribeFromAuthStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
+  const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
     // if (!currentAuthStatus || !currentAuthStatus.isAuthenticated || !currentAuthStatus.isAdmin) {
     //   logger.debug(`navigating to /auth/login because the user is not authenticated`);
     //   navigate("/auth/login", { state: {}, replace: true });
     // }
   });
-  // onDestroy(unsubscribeFromAuthStatusUpdates);
+  // onDestroy(unsubscribeFromUserStatusUpdates);
 </script>
 
 <div>

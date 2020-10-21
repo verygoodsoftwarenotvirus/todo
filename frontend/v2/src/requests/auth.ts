@@ -4,7 +4,8 @@ import type {
     RegistrationRequest,
     LoginRequest,
     TOTPTokenValidationRequest,
-    UserStatus,
+    UserPasswordUpdateRequest,
+    UserTwoFactorSecretUpdateRequest,
 } from "@/models";
 
 import { Logger } from "@/logger";
@@ -37,7 +38,6 @@ export function logout(): Promise<AxiosResponse> {
       .then(requestLogFunction(logger, uri));
 }
 
-
 export function validateTOTPSecretWithToken(validationRequest: TOTPTokenValidationRequest): Promise<AxiosResponse> {
     const uri = backendRoutes.VERIFY_2FA_SECRET;
     return axios.post(uri, validationRequest)
@@ -46,6 +46,18 @@ export function validateTOTPSecretWithToken(validationRequest: TOTPTokenValidati
 
 export function registrationRequest(rr: RegistrationRequest): Promise<AxiosResponse> {
     const uri = backendRoutes.USER_REGISTRATION;
-    return axios.post(uri, registrationRequest)
+    return axios.post(uri, rr)
+        .then(requestLogFunction(logger, uri));
+}
+
+export function passwordChangeRequest(pcr: UserPasswordUpdateRequest): Promise<AxiosResponse> {
+    const uri = backendRoutes.CHANGE_PASSWORD;
+    return axios.put(uri, pcr)
+        .then(requestLogFunction(logger, uri));
+}
+
+export function twoFactorSecretChangeRequest(sur: UserTwoFactorSecretUpdateRequest): Promise<AxiosResponse> {
+    const uri = backendRoutes.CHANGE_2FA_SECRET;
+    return axios.post(uri, sur)
         .then(requestLogFunction(logger, uri));
 }

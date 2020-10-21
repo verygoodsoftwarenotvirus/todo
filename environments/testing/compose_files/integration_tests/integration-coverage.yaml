@@ -36,6 +36,8 @@ services:
             JAEGER_SERVICE_NAME: 'coverage-server'
             TARGET_ADDRESS: 'http://coverage-server'
             WAIT_FOR_COVERAGE: 'yes'
+            DB_ADDRESS: 'postgres://dbuser:hunter2@database:5432/todo?sslmode=disable'
+            DB_VENDOR: 'postgres'
         links:
             - coverage-server
         build:

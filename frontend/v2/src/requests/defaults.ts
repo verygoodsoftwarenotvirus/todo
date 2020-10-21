@@ -8,7 +8,7 @@ export const defaultAPIRequestConfig: AxiosRequestConfig = {
 
 export function requestLogFunction(logger: Logger, uri: string) {
     return (response: AxiosResponse) => {
-        logger.debug(`request made to ${uri}`);
+        logger.withDebugValue("responseStatus", response.status.toString()).debug(`request made to ${uri}`);
         return response;
     }
 }

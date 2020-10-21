@@ -12,6 +12,8 @@
   create_test_user = true
   debug = true
   provider = "postgres"
+  run_migrations = true
+  should_migrate0 = true
 
 [frontend]
   cache_static_files = false

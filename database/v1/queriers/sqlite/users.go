@@ -413,6 +413,34 @@ func (s *Sqlite) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) e
 	return err
 }
 
+// buildMakeUserAdminQuery returns a SQL query (and arguments) that would make a given user an admin.
+func (s *Sqlite) buildMakeUserAdminQuery(userID uint64) (query string, args []interface{}) {
+	var err error
+
+	s.logger.WithValue("user_id", userID).Info("making user an admin")
+
+	query, args, err = s.sqlBuilder.
+		Update("users").
+		Set("is_admin", true).
+		Where(squirrel.Eq{
+			"id": userID,
+		}).
+		ToSql()
+
+	s.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// MakeUserAdmin updates a user's password.
+func (s *Sqlite) MakeUserAdmin(ctx context.Context, userID uint64) error {
+	query, args := s.buildMakeUserAdminQuery(userID)
+
+	_, err := s.db.ExecContext(ctx, query, args...)
+
+	return err
+}
+
 // buildArchiveUserQuery builds a SQL query that marks a user as archived.
 func (s *Sqlite) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error

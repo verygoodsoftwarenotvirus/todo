@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/middleware"
@@ -22,8 +23,10 @@ func formatSpanNameForRequest(req *http.Request) string {
 	)
 }
 
-var donNotLog = map[string]struct{}{
+var doMotLog = map[string]struct{}{
 	"/metrics": {},
+	"/build/":  {},
+	"/assets/": {},
 }
 
 func buildLoggingMiddleware(logger logging.Logger) func(next http.Handler) http.Handler {
@@ -34,7 +37,15 @@ func buildLoggingMiddleware(logger logging.Logger) func(next http.Handler) http.
 			start := time.Now()
 			next.ServeHTTP(ww, req)
 
-			if _, ok := donNotLog[req.URL.Path]; !ok {
+			shouldLog := true
+			for route := range doMotLog {
+				if !strings.HasPrefix(req.URL.Path, route) || req.URL.Path == route {
+					shouldLog = false
+					break
+				}
+			}
+
+			if shouldLog {
 				logger.WithRequest(req).WithValues(map[string]interface{}{
 					"status":        ww.Status(),
 					"bytes_written": ww.BytesWritten(),

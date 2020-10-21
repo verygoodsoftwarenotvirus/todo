@@ -16,7 +16,7 @@
 
     import { userStatusStore } from "../../stores";
     let currentAuthStatus = {};
-    const unsubscribeFromAuthStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
+    const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
         currentAuthStatus = value;
     });
 

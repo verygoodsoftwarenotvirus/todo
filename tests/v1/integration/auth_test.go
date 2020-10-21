@@ -372,7 +372,7 @@ func TestAuth(test *testing.T) {
 
 		u, err := url.Parse(todoClient.BuildURL(nil))
 		require.NoError(t, err)
-		u.Path = "/api/v1/users/password/new"
+		u.Path = "/users/password/new"
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPut, u.String(), body)
 		checkValueAndError(t, req, err)
@@ -381,7 +381,8 @@ func TestAuth(test *testing.T) {
 		// execute password update request.
 		res, err := todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
-		assert.Equal(t, http.StatusAccepted, res.StatusCode)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		assert.Equal(t, "/auth/login", res.Request.URL.Path)
 
 		// logout.
 
@@ -484,7 +485,7 @@ func TestAuth(test *testing.T) {
 
 		u, err := url.Parse(todoClient.BuildURL(nil))
 		require.NoError(t, err)
-		u.Path = "/api/v1/users/totp_secret/new"
+		u.Path = "/users/totp_secret/new"
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), body)
 		checkValueAndError(t, req, err)

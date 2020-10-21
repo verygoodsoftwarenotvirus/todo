@@ -3,6 +3,8 @@ services:
     load-tests:
         environment:
             TARGET_ADDRESS: 'http://todo-server:8888'
+            DB_ADDRESS: '/tmp/db'
+            DB_VENDOR: 'sqlite'
         links:
             - todo-server
         build:

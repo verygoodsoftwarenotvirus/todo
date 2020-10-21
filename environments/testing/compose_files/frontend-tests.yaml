@@ -46,6 +46,8 @@ services:
         environment:
             DOCKER: 'true'
             TARGET_ADDRESS: 'http://todo-server:8888'
+            DB_ADDRESS: 'postgres://dbuser:hunter2@database:5432/todo?sslmode=disable'
+            DB_VENDOR: 'postgres'
         links:
             - selenium-hub
             - todo-server

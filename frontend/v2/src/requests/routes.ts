@@ -8,6 +8,8 @@ export enum backendRoutes {
   // Auth
   USER_AUTH_STATUS    = "/auth/status",
   USER_SELF_INFO      = "/api/v1/users/self",
+  CHANGE_PASSWORD     = "/users/password/new",
+  CHANGE_2FA_SECRET   = "/users/totp_secret/new",
   VERIFY_2FA_SECRET   = "/users/totp_secret/verify",
 
   // Items

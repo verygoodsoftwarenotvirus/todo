@@ -15,6 +15,8 @@ services:
     load-tests:
         environment:
             TARGET_ADDRESS: 'http://todo-server:8888'
+            DB_ADDRESS: 'dbuser:hunter2@tcp(database:3306)/todo'
+            DB_VENDOR: 'mariadb'
         links:
             - todo-server
         build:

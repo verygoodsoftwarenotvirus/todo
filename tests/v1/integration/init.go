@@ -3,6 +3,9 @@ package integration
 import (
 	"context"
 	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	"net/http"
 	"net/url"
 	"strings"
@@ -26,6 +29,9 @@ var (
 )
 
 func init() {
+	ctx, span := tracing.StartSpan(context.Background(), "init")
+	defer span.End()
+
 	urlToUse = testutil.DetermineServiceURL()
 	logger := zerolog.NewLogger()
 
@@ -35,6 +41,33 @@ func init() {
 	ogUser, err := testutil.CreateObligatoryUser(urlToUse, debug)
 	if err != nil {
 		logger.Fatal(err)
+	}
+
+	// make the user an admin
+	dbURL, dbVendor := testutil.DetermineDatabaseURL()
+	tempCfg := config.ServerConfig{
+		Metrics: config.MetricsSettings{
+			DBMetricsCollectionInterval: config.DefaultDatabaseMetricsCollectionInterval,
+		},
+		Database: config.DatabaseSettings{
+			Provider:          dbVendor,
+			ConnectionDetails: database.ConnectionDetails(dbURL),
+			RunMigrations:     false,
+		},
+	}
+
+	dbConn, dbConnectionErr := tempCfg.ProvideDatabaseConnection(logger)
+	if dbConnectionErr != nil {
+		logger.Fatal(dbConnectionErr)
+	}
+
+	db, dbClientInitErr := tempCfg.ProvideDatabaseClient(ctx, logger, dbConn)
+	if dbClientInitErr != nil {
+		logger.Fatal(dbClientInitErr)
+	}
+
+	if makeAdminErr := db.MakeUserAdmin(ctx, ogUser.ID); makeAdminErr != nil {
+		logger.Fatal(makeAdminErr)
 	}
 
 	oa2Client, err := testutil.CreateObligatoryClient(urlToUse, ogUser)

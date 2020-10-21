@@ -1,7 +1,7 @@
 import type { AxiosError, AxiosResponse } from "axios";
 import { writable } from 'svelte/store';
 
-import { ErrorResponse, UserStatus } from "@/models";
+import {ErrorResponse, UserStatus} from "@/models";
 import { Logger } from "@/logger";
 import { V1APIClient } from "@/requests";
 
@@ -16,7 +16,7 @@ function buildUserStatusStore() {
             logger.withValue("userStatus", x).debug("setting auth status");
             set(x);
         },
-        logout: () => set({}),
+        logout: () => set(new UserStatus()),
     };
 
     V1APIClient.checkAuthStatusRequest()

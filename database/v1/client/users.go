@@ -114,6 +114,17 @@ func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash 
 	return c.querier.UpdateUserPassword(ctx, userID, newHash)
 }
 
+// MakeUserAdmin updates a user's password hash in the database.
+func (c *Client) MakeUserAdmin(ctx context.Context, userID uint64) error {
+	ctx, span := tracing.StartSpan(ctx, "UpdateUserPassword")
+	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
+	c.logger.WithValue("user_id", userID).Debug("UpdateUserPassword called")
+
+	return c.querier.MakeUserAdmin(ctx, userID)
+}
+
 // ArchiveUser archives a user.
 func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 	ctx, span := tracing.StartSpan(ctx, "ArchiveUser")

@@ -100,6 +100,14 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 		userRouter.With(s.authService.CookieAuthenticationMiddleware).Post("/logout", s.authService.LogoutHandler)
 		userRouter.With(s.usersService.UserInputMiddleware).Post(root, s.usersService.CreateHandler)
 		userRouter.With(s.usersService.TOTPSecretVerificationInputMiddleware).Post("/totp_secret/verify", s.usersService.TOTPSecretVerificationHandler)
+		userRouter.With(
+			s.authService.AuthenticationMiddleware(true),
+			s.usersService.TOTPSecretRefreshInputMiddleware,
+		).Post("/totp_secret/new", s.usersService.NewTOTPSecretHandler)
+		userRouter.With(
+			s.authService.AuthenticationMiddleware(true),
+			s.usersService.PasswordUpdateInputMiddleware,
+		).Put("/password/new", s.usersService.UpdatePasswordHandler)
 	})
 
 	router.Route("/oauth2", func(oauth2Router chi.Router) {
@@ -130,11 +138,8 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 
 				usersRouter.With(s.authService.AdminMiddleware).Get(root, s.usersService.ListHandler)
 				usersRouter.Get("/self", s.usersService.SelfHandler)
-				usersRouter.Get(userIDPattern, s.usersService.ReadHandler)
+				usersRouter.With(s.authService.AdminMiddleware).Get(userIDPattern, s.usersService.ReadHandler)
 				usersRouter.Delete(userIDPattern, s.usersService.ArchiveHandler)
-
-				usersRouter.With(s.usersService.TOTPSecretRefreshInputMiddleware).Post("/totp_secret/new", s.usersService.NewTOTPSecretHandler)
-				usersRouter.With(s.usersService.PasswordUpdateInputMiddleware).Put("/password/new", s.usersService.UpdatePasswordHandler)
 			})
 
 			// OAuth2 Clients.

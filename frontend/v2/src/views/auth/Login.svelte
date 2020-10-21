@@ -41,7 +41,7 @@
           throw new Error("invalid input!");
         }
 
-        return V1APIClient.loginRequest(buildLoginRequest()).then(() => {
+        return V1APIClient.login(buildLoginRequest()).then(() => {
               V1APIClient.checkAuthStatusRequest().then((statusResponse: AxiosResponse<UserStatus>) => {
                 userStatusStore.setAuthStatus(statusResponse.data);
 

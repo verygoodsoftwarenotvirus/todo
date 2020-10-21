@@ -83,7 +83,14 @@ type (
 
 	// TOTPSecretRefreshResponse represents the response we provide to a user when updating their 2FA secret.
 	TOTPSecretRefreshResponse struct {
+		TwoFactorQRCode string `json:"qrCode"`
 		TwoFactorSecret string `json:"twoFactorSecret"`
+	}
+
+	// AdminUserDataManager contains administrative user functions that we don't necessarily want to expose
+	// to, say, the collection of handlers
+	AdminUserDataManager interface {
+		MakeUserAdmin(ctx context.Context, userID uint64) error
 	}
 
 	// UserDataManager describes a structure which can manage users in permanent storage.

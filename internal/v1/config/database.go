@@ -66,7 +66,7 @@ func (cfg *ServerConfig) ProvideDatabaseClient(ctx context.Context, logger loggi
 		return nil, fmt.Errorf("invalid database type selected: %q", cfg.Database.Provider)
 	}
 
-	return dbclient.ProvideDatabaseClient(ctx, logger, dbc, rawDB, cfg.Database.CreateTestUser, debug)
+	return dbclient.ProvideDatabaseClient(ctx, logger, dbc, rawDB, cfg.Database.CreateTestUser, cfg.Database.RunMigrations, debug)
 }
 
 // ProvideSessionManager provides a session manager based on some settings.

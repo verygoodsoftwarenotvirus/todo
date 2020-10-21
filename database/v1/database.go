@@ -45,6 +45,7 @@ type (
 
 		models.ItemDataManager
 		models.UserDataManager
+		models.AdminUserDataManager
 		models.OAuth2ClientDataManager
 		models.WebhookDataManager
 	}

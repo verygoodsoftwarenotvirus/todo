@@ -1,26 +1,28 @@
 import {
-    fetchListOfItems,
-    createItem,
     saveItem,
     fetchItem,
+    createItem,
     deleteItem,
     searchForItems,
+    fetchListOfItems,
 } from './items';
 
 import {
-    selfRequest,
-    checkAuthStatusRequest,
-    validateTOTPSecretWithToken,
-    registrationRequest,
     login,
     logout,
+    selfRequest,
+    registrationRequest,
+    passwordChangeRequest,
+    checkAuthStatusRequest,
+    validateTOTPSecretWithToken,
+    twoFactorSecretChangeRequest,
 } from './auth';
 
 import {
-    fetchUser,
-    fetchListOfUsers,
     saveUser,
+    fetchUser,
     deleteUser,
+    fetchListOfUsers,
 } from './users';
 
 export class V1APIClient {
@@ -34,6 +36,8 @@ export class V1APIClient {
     static login = login;
     static logout = logout;
     static selfRequest = selfRequest;
+    static passwordChangeRequest = passwordChangeRequest;
+    static twoFactorSecretChangeRequest = twoFactorSecretChangeRequest;
     static registrationRequest = registrationRequest;
     static checkAuthStatusRequest = checkAuthStatusRequest;
     static validateTOTPSecretWithToken = validateTOTPSecretWithToken;

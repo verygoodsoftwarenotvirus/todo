@@ -37,10 +37,10 @@
 
   import { userStatusStore } from "../../stores";
   let currentAuthStatus = {};
-  const unsubscribeFromAuthStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
+  const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
   });
-  // onDestroy(unsubscribeFromAuthStatusUpdates);
+  // onDestroy(unsubscribeFromUserStatusUpdates);
 
   function search(): void {
     if (searchQuery.length >= 3) {

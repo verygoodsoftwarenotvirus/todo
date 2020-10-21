@@ -21,10 +21,10 @@
   import { userStatusStore } from "../stores";
   import {UserStatus} from "../models";
   let currentAuthStatus = {};
-  const unsubscribeFromAuthStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
+  const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
   });
-  // onDestroy(unsubscribeFromAuthStatusUpdates);
+  // onDestroy(unsubscribeFromUserStatusUpdates);
 </script>
 
 <div>

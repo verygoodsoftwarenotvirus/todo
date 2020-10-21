@@ -13,7 +13,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 
-	"github.com/moul/http2curl"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 	"go.opencensus.io/plugin/ochttp"
@@ -314,9 +313,9 @@ func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, r
 	defer span.End()
 
 	var logger = c.logger
-	if command, err := http2curl.GetCurlCommand(req); err == nil && c.Debug {
-		logger = c.logger.WithValue("curl", command.String())
-	}
+	//if command, err := http2curl.GetCurlCommand(req); err == nil && c.Debug {
+	//	logger = c.logger.WithValue("curl", command.String())
+	//}
 
 	res, err := client.Do(req.WithContext(ctx))
 	if err != nil {

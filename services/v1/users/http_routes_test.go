@@ -164,7 +164,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 		)
 
 		assert.Nil(t, actual)
-		assert.Equal(t, http.StatusInternalServerError, sc)
+		assert.Equal(t, http.StatusBadRequest, sc)
 
 		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
@@ -710,7 +710,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 
 		s.NewTOTPSecretHandler(res, req)
 
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
+		assert.Equal(t, http.StatusBadRequest, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
@@ -1038,7 +1038,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		s.UpdatePasswordHandler(res, req)
 
-		assert.Equal(t, http.StatusAccepted, res.Code)
+		assert.Equal(t, http.StatusSeeOther, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
@@ -1120,7 +1120,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		s.UpdatePasswordHandler(res, req)
 
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
+		assert.Equal(t, http.StatusBadRequest, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})

@@ -30,10 +30,10 @@
     fetchUsers();
   });
 
-  const unsubscribeFromAuthStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
+  const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
   });
-  // onDestroy(unsubscribeFromAuthStatusUpdates);
+  // onDestroy(unsubscribeFromUserStatusUpdates);
 
   function incrementPage() {
     if (!incrementDisabled) {

@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -141,6 +142,26 @@ func (s *Service) AdminMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// AdminUserImpersonationMiddleware restricts requests to admin users only.
+func (s *Service) AdminUserImpersonationMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := tracing.StartSpan(req.Context(), "OperatingAsAdminMiddleware")
+		defer span.End()
+
+		s.logger.WithRequest(req).Debug("AdminUserImpersonationMiddleware called")
+
+		asUser, err := strconv.ParseUint(req.Header.Get("X-Admin-As-User"), 10, 64)
+		if err != nil {
+			s.encoderDecoder.EncodeErrorResponse(res, "invalid admin-as-user header", http.StatusUnauthorized)
+			return
+		}
+
+		req = req.WithContext(context.WithValue(ctx, models.AdminAsUserKey, asUser))
+
+		next.ServeHTTP(res, req)
+	})
+}
+
 // parseLoginInputFromForm checks a request for a login form, and returns the parsed login data if relevant.
 func parseLoginInputFromForm(req *http.Request) *models.UserLoginInput {
 	if err := req.ParseForm(); err == nil {
@@ -162,6 +183,8 @@ func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := tracing.StartSpan(req.Context(), "UserLoginInputMiddleware")
 		defer span.End()
+
+		s.logger.Debug("UserLoginInputMiddleware called")
 
 		x := new(models.UserLoginInput)
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {

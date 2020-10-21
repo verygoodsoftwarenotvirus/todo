@@ -1,10 +1,16 @@
 <script lang="typescript">
-  import { onMount } from "svelte";
+  import {onDestroy, onMount} from "svelte";
   import axios, {AxiosError, AxiosResponse} from "axios";
   import { navigate } from "svelte-routing";
 
   import { userStatusStore } from "../../stores";
-  import { User, UserStatus, UserPasswordUpdateRequest, UserTwoFactorSecretUpdateRequest, ErrorResponse } from "../../models";
+  import {
+    User,
+    UserStatus,
+    UserPasswordUpdateRequest,
+    UserTwoFactorSecretUpdateRequest,
+    ErrorResponse,
+  } from "../../models";
   import { Logger } from "../../logger";
   import { V1APIClient } from "../../requests";
 
@@ -18,27 +24,45 @@
 
   let userInfoCanBeSaved: boolean = false;
 
+  let updatePasswordError: string = '';
   let passwordUpdate = new UserPasswordUpdateRequest();
+
+  let twoFactorSecretUpdateError: string = '';
   let twoFactorSecretUpdate = new UserTwoFactorSecretUpdateRequest();
 
-  let currentAuthStatus = {};
-  const unsubscribeFromAuthStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
-    currentAuthStatus = value;
-    if (!currentAuthStatus || !currentAuthStatus.isAuthenticated) {
+  let currentUserStatus: UserStatus = new UserStatus();
+  const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
+    currentUserStatus = value;
+    if (!currentUserStatus || !currentUserStatus.isAuthenticated) {
       logger.debug(`navigating to /auth/login because the user is not authenticated upon authStatusStore update`);
       navigate("/auth/login", { state: {}, replace: true });
     }
   });
+  onDestroy(unsubscribeFromUserStatusUpdates);
+
+  function submitChangePasswordRequest() {
+    logger.debug(`submitChangePasswordRequest invoked`);
+
+    V1APIClient.passwordChangeRequest(passwordUpdate)
+      .then((res: AxiosResponse) => {
+        logger.withValue("responseData", res.data).info("passwordChangeRequest returned");
+        navigate("/auth/login", { state: {}, replace: false });
+      })
+      .catch((err: AxiosError<ErrorResponse>) => {
+        logger.error(err.message);
+        updatePasswordError = err.message;
+      });
+  }
 
   onMount(() => {
-    V1APIClient.selfRequest
+    V1APIClient.selfRequest()
          .then((resp: AxiosResponse<User>) => {
-            user = resp.data;
-            ogUser = {...user};
-          })
+           user = resp.data;
+           ogUser = {...user};
+         })
          .catch((err: AxiosError<ErrorResponse>) => {
-           userFetchError = err.data.message;
-          });
+           userFetchError = err.message;
+         });
   })
 </script>
 
@@ -99,17 +123,16 @@
               />
             </div>
           </div>
-        </div>
-
-        <hr class="mt-6 border-b-1 border-gray-400" />
+        </div>        <hr class="mt-6 border-b-1 border-gray-400" />
 
         <div class="text-center flex justify-between">
           <h6 class="text-gray-500 text-sm mt-3 mb-6 font-bold uppercase">
             Password
           </h6>
           <button
-                  class="{passwordUpdate.goodToGo() ? 'bg-blue-500' : 'bg-gray-300'} text-white active:bg-blue-600 font-bold uppercase text-xs rounded p-3 m-2"
-                  type="button"
+              on:click={submitChangePasswordRequest}
+              class="{passwordUpdate.goodToGo() ? 'bg-blue-500' : 'bg-gray-300'} text-white active:bg-blue-600 font-bold uppercase text-xs rounded p-3 m-2"
+              type="button"
           >
             Change Password
           </button>
@@ -165,58 +188,6 @@
           </div>
         </div>
 
-        <hr class="mt-6 border-b-1 border-gray-400" />
-
-
-        <div class="text-center flex justify-between">
-          <h6 class="text-gray-500 text-sm mt-3 mb-6 font-bold uppercase">
-            Change 2FA Secret
-          </h6>
-          <button
-            class="{twoFactorSecretUpdate.goodToGo() ? 'bg-blue-500' : 'bg-gray-300'} text-white active:bg-blue-600 font-bold uppercase text-xs rounded p-3 m-2"
-            type="button"
-          >
-            Change 2FA Secret
-          </button>
-        </div>
-
-<!--        <h6 class="text-gray-500 text-sm mt-3 mb-6 font-bold uppercase">-->
-<!--          Change 2FA Secret-->
-<!--        </h6>-->
-        <div class="flex flex-wrap">
-          <div class="w-full lg:w-6/12 px-4">
-            <div class="relative w-full mb-3">
-              <label
-                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                      for="grid-2fa-update-current-password"
-              >
-                Current Password
-              </label>
-              <input
-                      id="grid-2fa-update-current-password"
-                      type="password"
-                      class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                      bind:value={twoFactorSecretUpdate.currentPassword}
-              />
-            </div>
-          </div>
-          <div class="w-full lg:w-6/12 px-4">
-            <div class="relative w-full mb-3">
-              <label
-                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                      for="grid-2fa-update-totp-token"
-              >
-                2FA Token
-              </label>
-              <input
-                      id="grid-2fa-update-totp-token"
-                      type="text"
-                      class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                      bind:value={twoFactorSecretUpdate.totpToken}
-              />
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </div>

@@ -8,6 +8,9 @@ import (
 const (
 	// SessionInfoKey is the non-string type we use for referencing SessionInfo structs
 	SessionInfoKey ContextKey = "session_info"
+
+	// AdminAsUserKey is the non-string type we use for communicating whether a user is being impersonated
+	AdminAsUserKey ContextKey = "admin_as_user"
 )
 
 func init() {

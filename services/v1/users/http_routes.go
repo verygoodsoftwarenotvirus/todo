@@ -13,6 +13,7 @@ import (
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 
 	passwordvalidator "github.com/lane-c-wagner/go-password-validator"
 	"github.com/makiuchi-d/gozxing"
@@ -62,10 +63,10 @@ func (s *Service) validateCredentialChangeRequest(
 		totpToken,
 		user.Salt,
 	); validationErr != nil {
-		logger.Error(err, "error encountered generating random TOTP string")
-		return nil, http.StatusInternalServerError
+		logger.Error(err, "error encountered validating credentials")
+		return nil, http.StatusBadRequest
 	} else if !valid {
-		logger.WithValue("valid", valid).Error(err, "invalid attempt to cycle TOTP token")
+		logger.WithValue("valid", valid).Error(err, "invalid credentials")
 		return nil, http.StatusUnauthorized
 	}
 
@@ -399,7 +400,10 @@ func (s *Service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	}
 
 	// let the requester know we're all good.
-	result := &models.TOTPSecretRefreshResponse{TwoFactorSecret: user.TwoFactorSecret}
+	result := &models.TOTPSecretRefreshResponse{
+		TwoFactorSecret: user.TwoFactorSecret,
+		TwoFactorQRCode: s.buildQRCode(ctx, user.Username, user.TwoFactorSecret),
+	}
 	s.encoderDecoder.EncodeResponseWithStatus(res, result, http.StatusAccepted)
 }
 
@@ -468,8 +472,18 @@ func (s *Service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	// we're all good.
-	res.WriteHeader(http.StatusAccepted)
+	// we're all good, log the user out
+	cookie, cookieRetrievalErr := req.Cookie(auth.CookieName)
+	if cookieRetrievalErr != nil {
+		// this should never occur in production
+		logger.Error(cookieRetrievalErr, "retrieving cookie to invalidate upon request")
+	} else {
+		cookie.MaxAge = -1
+		http.SetCookie(res, cookie)
+	}
+
+	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Redirections#Temporary_redirections
+	http.Redirect(res, req, "/auth/login", http.StatusSeeOther)
 }
 
 // ArchiveHandler is a handler for archiving a user.

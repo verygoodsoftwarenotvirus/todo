@@ -9,11 +9,15 @@
 
 [database]
   connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
-  create_test_user = true
   debug = true
   provider = "postgres"
   run_migrations = true
   should_migrate0 = true
+
+  [database.create_test_user]
+    is_admin = true
+    password = "password"
+    username = "username"
 
 [frontend]
   cache_static_files = false

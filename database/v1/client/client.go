@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
@@ -28,11 +29,11 @@ type Client struct {
 }
 
 // Migrate is a simple wrapper around the core querier Migrate call.
-func (c *Client) Migrate(ctx context.Context, createTestUser bool) error {
+func (c *Client) Migrate(ctx context.Context, authenticator auth.Authenticator, testUserConfig *database.UserCreationConfig) error {
 	ctx, span := tracing.StartSpan(ctx, "Migrate")
 	defer span.End()
 
-	return c.querier.Migrate(ctx, createTestUser)
+	return c.querier.Migrate(ctx, authenticator, testUserConfig)
 }
 
 // IsReady is a simple wrapper around the core querier IsReady call.
@@ -49,8 +50,9 @@ func ProvideDatabaseClient(
 	logger logging.Logger,
 	querier database.DataManager,
 	db *sql.DB,
+	authenticator auth.Authenticator,
+	testUserConfig *database.UserCreationConfig,
 	shouldMigrate,
-	createTestUser,
 	debug bool,
 ) (database.DataManager, error) {
 	c := &Client{
@@ -66,7 +68,7 @@ func ProvideDatabaseClient(
 
 	if shouldMigrate {
 		c.logger.Debug("migrating querier")
-		if err := c.querier.Migrate(ctx, createTestUser); err != nil {
+		if err := c.querier.Migrate(ctx, authenticator, testUserConfig); err != nil {
 			return nil, err
 		}
 		c.logger.Debug("querier migrated!")

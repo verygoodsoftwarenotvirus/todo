@@ -136,7 +136,7 @@ func TestUsers(test *testing.T) {
 			assert.NoError(t, todoClient.VerifyTOTPSecret(ctx, premade.ID, secretVerificationToken))
 
 			// Fetch user.
-			actual, err := todoClient.GetUser(ctx, premade.ID)
+			actual, err := adminClient.GetUser(ctx, premade.ID)
 			if err != nil {
 				t.Logf("error encountered trying to fetch user %q: %v\n", premade.Username, err)
 			}

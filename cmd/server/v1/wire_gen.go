@@ -29,10 +29,8 @@ import (
 // Injectors from wire.go:
 
 // BuildServer builds a server.
-func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, database2 database.DataManager, db *sql.DB) (*server.Server, error) {
+func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, database2 database.DataManager, db *sql.DB, authenticator auth.Authenticator) (*server.Server, error) {
 	authSettings := config.ProvideConfigAuthSettings(cfg)
-	bcryptHashCost := auth.ProvideBcryptHashCost()
-	authenticator := auth.ProvideBcryptAuthenticator(bcryptHashCost, logger)
 	userDataManager := users.ProvideUserDataManager(database2)
 	clientIDFetcher := httpserver.ProvideOAuth2ClientsServiceClientIDFetcher(logger)
 	encoderDecoder := encoding.ProvideResponseEncoder(logger)

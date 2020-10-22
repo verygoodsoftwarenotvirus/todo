@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"io"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
@@ -28,6 +29,13 @@ type (
 		io.Closer
 	}
 
+	// UserCreationConfig is a helper struct because of cyclical imports
+	UserCreationConfig struct {
+		Username string
+		Password string
+		IsAdmin  bool
+	}
+
 	// Querier is a subset interface for sql.{DB|Tx} objects
 	Querier interface {
 		ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
@@ -40,7 +48,7 @@ type (
 
 	// DataManager describes anything that stores data for our services.
 	DataManager interface {
-		Migrate(ctx context.Context, createTestUser bool) error
+		Migrate(ctx context.Context, authenticator auth.Authenticator, testUserConfig *UserCreationConfig) error
 		IsReady(ctx context.Context) (ready bool)
 
 		models.ItemDataManager

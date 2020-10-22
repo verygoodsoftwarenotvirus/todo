@@ -1,4 +1,4 @@
 /*
-Package viper provides configuration structs for every service
+Package viper provides a file-based implementation of our config package
 */
 package viper

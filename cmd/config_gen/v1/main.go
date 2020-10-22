@@ -35,7 +35,9 @@ const (
 	dbDebug                          = "database.debug"
 	dbProvider                       = "database.provider"
 	dbDeets                          = "database.connection_details"
-	dbCreateTestUser                 = "database.create_test_user"
+	dbCreateTestUserUsername         = "database.create_test_user.username"
+	dbCreateTestUserPassword         = "database.create_test_user.password"
+	dbCreateTestUserIsAdmin          = "database.create_test_user.is_admin"
 	dbRunMigrations                  = "database.run_migrations"
 	itemsSearchIndexPath             = "search.items_index_path"
 
@@ -95,7 +97,10 @@ func localDevelopmentCOnfig(filePath string) error {
 	cfg.Set(dbRunMigrations, true)
 	cfg.Set(dbProvider, postgres)
 	cfg.Set(dbDeets, postgresDBConnDetails)
-	cfg.Set(dbCreateTestUser, true)
+
+	cfg.Set(dbCreateTestUserUsername, "username")
+	cfg.Set(dbCreateTestUserPassword, "password")
+	cfg.Set(dbCreateTestUserIsAdmin, true)
 
 	cfg.Set(itemsSearchIndexPath, "/search_indices/items.bleve")
 
@@ -135,7 +140,10 @@ func frontendTestsConfig(filePath string) error {
 	cfg.Set(dbProvider, postgres)
 	cfg.Set(dbRunMigrations, true)
 	cfg.Set(dbDeets, postgresDBConnDetails)
-	cfg.Set(dbCreateTestUser, false)
+
+	cfg.Set(dbCreateTestUserUsername, "username")
+	cfg.Set(dbCreateTestUserPassword, "password")
+	cfg.Set(dbCreateTestUserIsAdmin, false)
 
 	cfg.Set(itemsSearchIndexPath, defaultItemsSearchIndexPath)
 
@@ -166,7 +174,10 @@ func coverageConfig(filePath string) error {
 	cfg.Set(dbProvider, postgres)
 	cfg.Set(dbRunMigrations, true)
 	cfg.Set(dbDeets, postgresDBConnDetails)
-	cfg.Set(dbCreateTestUser, false)
+
+	cfg.Set(dbCreateTestUserUsername, "username")
+	cfg.Set(dbCreateTestUserPassword, "password")
+	cfg.Set(dbCreateTestUserIsAdmin, false)
 
 	cfg.Set(itemsSearchIndexPath, defaultItemsSearchIndexPath)
 
@@ -203,7 +214,10 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 		cfg.Set(dbProvider, dbVendor)
 		cfg.Set(dbRunMigrations, true)
 		cfg.Set(dbDeets, dbDetails)
-		cfg.Set(dbCreateTestUser, false)
+
+		cfg.Set(dbCreateTestUserUsername, "exampleUser")
+		cfg.Set(dbCreateTestUserPassword, "integration-tests-are-cool")
+		cfg.Set(dbCreateTestUserIsAdmin, true)
 
 		cfg.Set(itemsSearchIndexPath, defaultItemsSearchIndexPath)
 

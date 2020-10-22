@@ -279,7 +279,7 @@ var (
 		{
 			Name:          "example webhook 1",
 			ContentType:   "application/json",
-			URL:           "https://farts.org",
+			URL:           "http://localhost",
 			Method:        "POST",
 			Events:        []string{"*"},
 			DataTypes:     []string{"*"},
@@ -289,7 +289,7 @@ var (
 		{
 			Name:          "example webhook 2",
 			ContentType:   "application/json",
-			URL:           "https://farts.org",
+			URL:           "http://localhost",
 			Method:        "POST",
 			Events:        []string{"*"},
 			DataTypes:     []string{"*"},
@@ -299,7 +299,7 @@ var (
 		{
 			Name:          "example webhook 3",
 			ContentType:   "application/json",
-			URL:           "https://farts.org",
+			URL:           "http://localhost",
 			Method:        "POST",
 			Events:        []string{"*"},
 			DataTypes:     []string{"*"},
@@ -309,7 +309,7 @@ var (
 		{
 			Name:          "example webhook 4",
 			ContentType:   "application/json",
-			URL:           "https://farts.org",
+			URL:           "http://localhost",
 			Method:        "POST",
 			Events:        []string{"*"},
 			DataTypes:     []string{"*"},
@@ -319,7 +319,7 @@ var (
 		{
 			Name:          "example webhook 5",
 			ContentType:   "application/json",
-			URL:           "https://farts.org",
+			URL:           "http://localhost",
 			Method:        "POST",
 			Events:        []string{"*"},
 			DataTypes:     []string{"*"},
@@ -329,7 +329,7 @@ var (
 		{
 			Name:          "example webhook 6",
 			ContentType:   "application/json",
-			URL:           "https://farts.org",
+			URL:           "http://localhost",
 			Method:        "POST",
 			Events:        []string{"*"},
 			DataTypes:     []string{"*"},
@@ -339,7 +339,7 @@ var (
 		{
 			Name:          "example webhook 7",
 			ContentType:   "application/json",
-			URL:           "https://farts.org",
+			URL:           "http://localhost",
 			Method:        "POST",
 			Events:        []string{"*"},
 			DataTypes:     []string{"*"},
@@ -349,7 +349,7 @@ var (
 		{
 			Name:          "example webhook 8",
 			ContentType:   "application/json",
-			URL:           "https://farts.org",
+			URL:           "http://localhost",
 			Method:        "POST",
 			Events:        []string{"*"},
 			DataTypes:     []string{"*"},
@@ -359,7 +359,7 @@ var (
 		{
 			Name:          "example webhook 9",
 			ContentType:   "application/json",
-			URL:           "https://farts.org",
+			URL:           "http://localhost",
 			Method:        "POST",
 			Events:        []string{"*"},
 			DataTypes:     []string{"*"},
@@ -369,7 +369,7 @@ var (
 		{
 			Name:          "example webhook 10",
 			ContentType:   "application/json",
-			URL:           "https://farts.org",
+			URL:           "http://localhost",
 			Method:        "POST",
 			Events:        []string{"*"},
 			DataTypes:     []string{"*"},

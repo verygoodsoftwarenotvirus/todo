@@ -6,11 +6,15 @@
 
 [database]
   connection_details = "/tmp/db"
-  create_test_user = false
   debug = false
   provider = "sqlite"
   run_migrations = true
   should_migrate0 = true
+
+  [database.create_test_user]
+    is_admin = true
+    password = "integration-tests-are-cool"
+    username = "exampleUser"
 
 [frontend]
   static_files_directory = "/frontend"

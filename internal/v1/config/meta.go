@@ -1,0 +1,16 @@
+package config
+
+import (
+	"time"
+)
+
+// MetaSettings is primarily used for development.
+type MetaSettings struct {
+	// Debug enables debug mode service-wide
+	// NOTE: this debug should override all other debugs, which is to say, if this is enabled, all of them are enabled.
+	Debug bool `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
+	// StartupDeadline indicates how long the service can take to spin up. This includes database migrations, configuring services, etc.
+	StartupDeadline time.Duration `json:"startup_deadline" mapstructure:"startup_deadline" toml:"startup_deadline,omitempty"`
+	// RunMode indicates the current run mode
+	RunMode RunMode `json:"run_mode" mapstructure:"run_mode" toml:"run_mode,omitempty"`
+}

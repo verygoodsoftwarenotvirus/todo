@@ -38,10 +38,10 @@ func BuildServer(
 	logger logging.Logger,
 	database database.DataManager,
 	db *sql.DB,
+	authenticator auth.Authenticator,
 ) (*server.Server, error) {
 	wire.Build(
 		config.Providers,
-		auth.Providers,
 		// server things,
 		bleve.Providers,
 		server.Providers,

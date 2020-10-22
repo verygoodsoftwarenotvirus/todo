@@ -18,6 +18,7 @@ frontend/tsvelte/.vscode/
 *.swp
 
 # Sqlite databases
+*.sqlite
 *.db
 
 # OSX
@@ -40,12 +41,13 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# svelte compilation artifacts
 frontend/v1/public/bundle.*
 frontend/v2/public/bundle.*
 
+# go test profiles
 *.coverprofile
 *.profile
 
-cmd/playground
+# bleve indices
 *.bleve
-*.sqlite

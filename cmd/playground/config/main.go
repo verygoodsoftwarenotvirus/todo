@@ -1,13 +1,22 @@
+package main
 
+import (
+	"fmt"
+	//
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config/viper"
+	"io/ioutil"
+)
+
+const exampleConfig = `
 [auth]
   cookie_lifetime = "24h0m0s"
   cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"
   enable_user_signup = true
 
 [database]
-  connection_details = "dbuser:hunter2@tcp(database:3306)/todo"
+  connection_details = "/tmp/db"
   debug = false
-  provider = "mariadb"
+  provider = "sqlite"
   run_migrations = true
   should_migrate0 = true
 
@@ -22,7 +31,7 @@
 [meta]
   debug = false
   run_mode = "testing"
-  startup_deadline = "5m0s"
+  startup_deadline = "1m0s"
 
 [metrics]
   database_metrics_collection_interval = "2s"
@@ -36,3 +45,23 @@
 [server]
   debug = true
   http_port = 8888
+`
+
+func mustnt(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+func main() {
+	f, fileCreateErr := ioutil.TempFile("", "*.toml")
+	mustnt(fileCreateErr)
+
+	_, writeErr := f.WriteString(exampleConfig)
+	mustnt(writeErr)
+
+	cfg, configParseErr := viper.ParseConfigFile(f.Name())
+	mustnt(configParseErr)
+
+	fmt.Println(cfg.Database.CreateTestUser)
+}

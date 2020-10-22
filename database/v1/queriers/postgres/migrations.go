@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/exampledata"
 
 	"github.com/GuiaBolso/darwin"
@@ -100,10 +102,9 @@ var (
 			Script: `
 			CREATE TABLE IF NOT EXISTS audit_log (
 				"id" BIGSERIAL NOT NULL PRIMARY KEY,
-				"event_id" TEXT NOT NULL,
-				"last_updated_on" BIGINT DEFAULT NULL,
-				"performed_by_user" BIGINT NOT NULL,
-				FOREIGN KEY("performed_by_user") REFERENCES users(id)
+				"event_type" TEXT NOT NULL,
+				"event_data" JSONB NOT NULL,
+				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW())
 			);`,
 		},
 		{
@@ -137,7 +138,7 @@ func buildMigrationFunc(db *sql.DB) func() {
 
 // Migrate migrates the database. It does so by invoking the migrateOnce function via sync.Once, so it should be
 // safe (as in idempotent, though not necessarily recommended) to call this function multiple times.
-func (p *Postgres) Migrate(ctx context.Context, createTestUser bool) error {
+func (p *Postgres) Migrate(ctx context.Context, authenticator auth.Authenticator, testUserConfig *database.UserCreationConfig) error {
 	p.logger.Info("migrating db")
 	if !p.IsReady(ctx) {
 		return errors.New("db is not ready yet")
@@ -146,7 +147,7 @@ func (p *Postgres) Migrate(ctx context.Context, createTestUser bool) error {
 	p.migrateOnce.Do(buildMigrationFunc(p.db))
 
 	const usingDemoCodeThatShouldBeDeletedLater = true
-	if createTestUser && usingDemoCodeThatShouldBeDeletedLater {
+	if testUserConfig != nil && usingDemoCodeThatShouldBeDeletedLater {
 		for _, x := range exampledata.ExampleUsers {
 			query, args, err := p.sqlBuilder.
 				Insert(usersTableName).
@@ -196,7 +197,14 @@ func (p *Postgres) Migrate(ctx context.Context, createTestUser bool) error {
 				return dbErr
 			}
 		}
-	} else {
+	}
+
+	if testUserConfig != nil {
+		hp, err := authenticator.HashPassword(ctx, testUserConfig.Password)
+		if err != nil {
+			return err
+		}
+
 		query, args, err := p.sqlBuilder.
 			Insert(usersTableName).
 			Columns(
@@ -208,12 +216,12 @@ func (p *Postgres) Migrate(ctx context.Context, createTestUser bool) error {
 				usersTableTwoFactorVerifiedOnColumn,
 			).
 			Values(
-				"username",
-				"$2a$10$JzD3CNBqPmwq.IidQuO7eu3zKdu8vEIi3HkLk8/qRjrzb7eNLKlKG",
+				testUserConfig.Username,
+				hp,
 				[]byte("aaaaaaaaaaaaaaaa"),
-				// `otpauth://totp/todo:username?secret=IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=&issuer=todo`
-				"IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=",
-				true,
+				// `otpauth://totp/todo:username?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&issuer=todo`
+				"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+				testUserConfig.IsAdmin,
 				squirrel.Expr(currentUnixTimeQuery),
 			).
 			ToSql()
@@ -222,6 +230,8 @@ func (p *Postgres) Migrate(ctx context.Context, createTestUser bool) error {
 		if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
 			return dbErr
 		}
+
+		p.logger.WithValue("username", testUserConfig.Username).Debug("created user")
 	}
 
 	return nil

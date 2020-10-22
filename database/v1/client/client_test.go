@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -30,28 +31,28 @@ func TestMigrate(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+		authenticator := &mockauth.Authenticator{}
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.On("Migrate", mock.Anything, false).Return(nil)
+		mockDB.On("Migrate", mock.Anything, authenticator, (*database.UserCreationConfig)(nil)).Return(nil)
 
 		c := &Client{querier: mockDB}
-		actual := c.Migrate(ctx, false)
-		assert.NoError(t, actual)
+		assert.NoError(t, c.Migrate(ctx, authenticator, nil))
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, authenticator, mockDB)
 	})
 
 	T.Run("bubbles up errors", func(t *testing.T) {
 		ctx := context.Background()
+		authenticator := &mockauth.Authenticator{}
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.On("Migrate", mock.Anything, false).Return(errors.New("blah"))
+		mockDB.On("Migrate", mock.Anything, authenticator, (*database.UserCreationConfig)(nil)).Return(errors.New("blah"))
 
 		c := &Client{querier: mockDB}
-		actual := c.Migrate(ctx, false)
-		assert.Error(t, actual)
+		assert.Error(t, c.Migrate(ctx, authenticator, nil))
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, authenticator, mockDB)
 	})
 }
 
@@ -76,29 +77,31 @@ func TestProvideDatabaseClient(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
+		authenticator := &mockauth.Authenticator{}
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.On("Migrate", mock.Anything, false).Return(nil)
+		mockDB.On("Migrate", mock.Anything, authenticator, (*database.UserCreationConfig)(nil)).Return(nil)
 
-		actual, err := ProvideDatabaseClient(ctx, noop.NewLogger(), mockDB, nil, false, true)
+		actual, err := ProvideDatabaseClient(ctx, noop.NewLogger(), mockDB, nil, authenticator, nil, true, true)
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, authenticator, mockDB)
 	})
 
 	T.Run("with error migrating querier", func(t *testing.T) {
 		ctx := context.Background()
+		authenticator := &mockauth.Authenticator{}
 
 		expected := errors.New("blah")
 		mockDB := database.BuildMockDatabase()
-		mockDB.On("Migrate", mock.Anything, false).Return(expected)
+		mockDB.On("Migrate", mock.Anything, authenticator, (*database.UserCreationConfig)(nil)).Return(expected)
 
-		x, actual := ProvideDatabaseClient(ctx, noop.NewLogger(), mockDB, nil, false, true)
+		x, actual := ProvideDatabaseClient(ctx, noop.NewLogger(), mockDB, nil, authenticator, nil, true, true)
 		assert.Nil(t, x)
 		assert.Error(t, actual)
 		assert.Equal(t, expected, actual)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, authenticator, mockDB)
 	})
 }

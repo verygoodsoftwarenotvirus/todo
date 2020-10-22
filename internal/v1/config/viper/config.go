@@ -28,8 +28,8 @@ func BuildViperConfig() *viper.Viper {
 	cfg.SetDefault("auth.cookie_lifetime", config.DefaultCookieLifetime)
 	cfg.SetDefault("auth.enable_user_signup", true)
 
-	// dtabase stuff
-	cfg.SetDefault("database.should_migrate0", true)
+	// database stuff
+	cfg.SetDefault("database.run_migrations", true)
 
 	// metrics stuff.
 	cfg.SetDefault("metrics.database_metrics_collection_interval", config.DefaultMetricsCollectionInterval)

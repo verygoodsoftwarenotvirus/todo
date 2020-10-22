@@ -10,7 +10,6 @@ import (
 	"image/png"
 	"log"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"os"
 	"strings"
@@ -22,7 +21,6 @@ import (
 	fake "github.com/brianvoe/gofakeit/v5"
 	"github.com/makiuchi-d/gozxing"
 	"github.com/makiuchi-d/gozxing/qrcode"
-	"github.com/moul/http2curl"
 	"github.com/pquerna/otp/totp"
 )
 
@@ -53,9 +51,14 @@ func DetermineServiceURL() string {
 }
 
 // DetermineDatabaseURL returns the DB connection URL, if properly configured.
-func DetermineDatabaseURL() (string, string) {
+func DetermineDatabaseURL() (address, vendor string) {
+	dbv := os.Getenv("DB_VENDOR")
+	if dbv == "" {
+		panic("must provide DB vendor!")
+	}
+
 	dba := os.Getenv("DB_ADDRESS")
-	if dba == "" {
+	if dba == "" && dbv != "sqlite" {
 		panic("must provide target address!")
 	}
 
@@ -66,11 +69,6 @@ func DetermineDatabaseURL() (string, string) {
 	svcAddr := u.String()
 
 	log.Printf("using target address: %q\n", svcAddr)
-
-	dbv := os.Getenv("DB_VENDOR")
-	if dbv == "" {
-		panic("must provide DB vendor!")
-	}
 
 	return svcAddr, dbv
 }
@@ -261,6 +259,7 @@ func CreateObligatoryClient(serviceURL string, u *models.User) (*models.OAuth2Cl
 		"scopes": ["*"]
 	}
 		`, u.Username, u.HashedPassword, code, u.ID)),
+		// remember we use u.HashedPassword as a temp container for the plain password
 	)
 	if err != nil {
 		return nil, err
@@ -268,15 +267,9 @@ func CreateObligatoryClient(serviceURL string, u *models.User) (*models.OAuth2Cl
 
 	cookie, err := getLoginCookie(serviceURL, u)
 	if err != nil || cookie == nil {
-		log.Fatalf("\ncookie problems!\n\tcookie == nil: %v\n\t\t\t  err: %v\n\t", cookie == nil, err)
+		log.Fatalf("\ncookie problems!\n\tcookie == nil: %v\n\terr: %v\n\t", cookie == nil, err)
 	}
 	req.AddCookie(cookie)
-	var o models.OAuth2Client
-
-	var command fmt.Stringer
-	if command, err = http2curl.GetCurlCommand(req); err == nil {
-		log.Println(command.String())
-	}
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -291,12 +284,9 @@ func CreateObligatoryClient(serviceURL string, u *models.User) (*models.OAuth2Cl
 		}
 	}()
 
-	bdump, err := httputil.DumpResponse(res, true)
-	if err == nil && req.Method != http.MethodGet {
-		log.Println(string(bdump))
-	}
-
-	return &o, json.NewDecoder(res.Body).Decode(&o)
+	var o models.OAuth2Client
+	err = json.NewDecoder(res.Body).Decode(&o)
+	return &o, err
 }
 
 // ParseTwoFactorSecretFromBase64EncodedQRCode accepts a base64-encoded QR code representing an otpauth:// URI,

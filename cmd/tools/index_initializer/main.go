@@ -8,6 +8,7 @@ package main
 
 import (
 	"context"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
 	"log"
 	"time"
 
@@ -100,7 +101,7 @@ func main() {
 
 	// establish the database client.
 	logger.Debug("setting up database client")
-	dbClient, err := cfg.ProvideDatabaseClient(ctx, logger, rawDB)
+	dbClient, err := cfg.ProvideDatabaseClient(ctx, logger, rawDB, auth.ProvideBcryptAuthenticator(auth.DefaultBcryptHashCost, logger))
 	if err != nil {
 		log.Fatalf("error initializing database client: %v", err)
 	}

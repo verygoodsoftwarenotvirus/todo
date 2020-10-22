@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
 	"github.com/stretchr/testify/mock"
@@ -33,8 +34,8 @@ type MockDatabase struct {
 }
 
 // Migrate satisfies the DataManager interface.
-func (m *MockDatabase) Migrate(ctx context.Context, createTestUser bool) error {
-	return m.Called(ctx, createTestUser).Error(0)
+func (m *MockDatabase) Migrate(ctx context.Context, authenticator auth.Authenticator, ucc *UserCreationConfig) error {
+	return m.Called(ctx, authenticator, ucc).Error(0)
 }
 
 // IsReady satisfies the DataManager interface.

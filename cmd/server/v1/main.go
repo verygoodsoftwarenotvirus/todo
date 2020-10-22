@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config/viper"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 
@@ -41,14 +42,15 @@ func main() {
 
 	// establish the database client.
 	logger.Debug("setting up database client")
-	dbClient, err := cfg.ProvideDatabaseClient(ctx, logger, rawDB)
+	authenticator := auth.ProvideBcryptAuthenticator(auth.ProvideBcryptHashCost(), logger)
+	dbClient, err := cfg.ProvideDatabaseClient(ctx, logger, rawDB, authenticator)
 	if err != nil {
 		logger.Fatal(fmt.Errorf("error initializing database client: %w", err))
 	}
 
 	// build our server struct.
 	logger.Debug("building server")
-	server, err := BuildServer(ctx, cfg, logger, dbClient, rawDB)
+	server, err := BuildServer(ctx, cfg, logger, dbClient, rawDB, authenticator)
 	span.End()
 	cancel()
 

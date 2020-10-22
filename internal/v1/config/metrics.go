@@ -23,11 +23,26 @@ const (
 	// MinimumRuntimeCollectionInterval is the smallest interval we can collect metrics at
 	// this value is used to guard against zero values.
 	MinimumRuntimeCollectionInterval = time.Second
+
+	// DefaultMetricsCollectionInterval is the default amount of time we wait between runtime metrics queries
+	DefaultMetricsCollectionInterval = 2 * time.Second
 )
 
 type (
 	metricsProvider string
 	tracingProvider string
+
+	// MetricsSettings contains settings about how we report our metrics.
+	MetricsSettings struct {
+		// MetricsProvider indicates where our metrics should go.
+		MetricsProvider metricsProvider `json:"metrics_provider" mapstructure:"metrics_provider" toml:"metrics_provider,omitempty"`
+		// TracingProvider indicates where our traces should go.
+		TracingProvider tracingProvider `json:"tracing_provider" mapstructure:"tracing_provider" toml:"tracing_provider,omitempty"`
+		// DBMetricsCollectionInterval is the interval we collect database statistics at.
+		DBMetricsCollectionInterval time.Duration `json:"database_metrics_collection_interval" mapstructure:"database_metrics_collection_interval" toml:"database_metrics_collection_interval,omitempty"`
+		// RuntimeMetricsCollectionInterval  is the interval we collect runtime statistics at.
+		RuntimeMetricsCollectionInterval time.Duration `json:"runtime_metrics_collection_interval" mapstructure:"runtime_metrics_collection_interval" toml:"runtime_metrics_collection_interval,omitempty"`
+	}
 )
 
 var (

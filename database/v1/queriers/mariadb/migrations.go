@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
+
 	"github.com/GuiaBolso/darwin"
 	"github.com/Masterminds/squirrel"
 )
@@ -143,6 +146,32 @@ var (
 		},
 		{
 			Version:     incrementMigrationVersion(),
+			Description: "create audit log table",
+			Script: strings.Join([]string{
+				"CREATE TABLE IF NOT EXISTS audit_log (",
+				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
+				"    `event_type` VARCHAR(256) NOT NULL,",
+				"    `event_data` JSON NOT NULL,",
+				"    `created_on` BIGINT UNSIGNED,",
+				"    PRIMARY KEY (`id`)",
+				");",
+			}, "\n"),
+		},
+		{
+			Version:     incrementMigrationVersion(),
+			Description: "create audit_log table creation trigger",
+			Script: strings.Join([]string{
+				"CREATE TRIGGER IF NOT EXISTS audit_log_creation_trigger BEFORE INSERT ON audit_log FOR EACH ROW",
+				"BEGIN",
+				"  IF (new.created_on is null)",
+				"  THEN",
+				"    SET new.created_on = UNIX_TIMESTAMP();",
+				"  END IF;",
+				"END;",
+			}, "\n"),
+		},
+		{
+			Version:     incrementMigrationVersion(),
 			Description: "create items table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS items (",
@@ -187,13 +216,20 @@ func buildMigrationFunc(db *sql.DB) func() {
 
 // Migrate migrates the database. It does so by invoking the migrateOnce function via sync.Once, so it should be
 // safe (as in idempotent, though not necessarily recommended) to call this function multiple times.
-func (m *MariaDB) Migrate(ctx context.Context, createTestUser bool) error {
+func (m *MariaDB) Migrate(ctx context.Context, authenticator auth.Authenticator, testUserConfig *database.UserCreationConfig) error {
 	m.logger.Info("migrating db")
 	if !m.IsReady(ctx) {
 		return errors.New("db is not ready yet")
 	}
 
-	if createTestUser {
+	m.migrateOnce.Do(buildMigrationFunc(m.db))
+
+	if testUserConfig != nil {
+		hp, err := authenticator.HashPassword(ctx, testUserConfig.Password)
+		if err != nil {
+			return err
+		}
+
 		query, args, err := m.sqlBuilder.
 			Insert(usersTableName).
 			Columns(
@@ -205,12 +241,12 @@ func (m *MariaDB) Migrate(ctx context.Context, createTestUser bool) error {
 				usersTableTwoFactorVerifiedOnColumn,
 			).
 			Values(
-				"username",
-				"$2a$10$JzD3CNBqPmwq.IidQuO7eu3zKdu8vEIi3HkLk8/qRjrzb7eNLKlKG",
+				testUserConfig.Username,
+				hp,
 				[]byte("aaaaaaaaaaaaaaaa"),
-				// `otpauth://totp/todo:username?secret=IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=&issuer=todo`
-				"IFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQI=",
-				true,
+				// `otpauth://totp/todo:username?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&issuer=todo`
+				"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+				testUserConfig.IsAdmin,
 				squirrel.Expr(currentUnixTimeQuery),
 			).
 			ToSql()
@@ -219,9 +255,9 @@ func (m *MariaDB) Migrate(ctx context.Context, createTestUser bool) error {
 		if _, dbErr := m.db.ExecContext(ctx, query, args...); dbErr != nil {
 			return dbErr
 		}
-	}
 
-	m.migrateOnce.Do(buildMigrationFunc(m.db))
+		m.logger.WithValue("username", testUserConfig.Username).Debug("created user")
+	}
 
 	return nil
 }

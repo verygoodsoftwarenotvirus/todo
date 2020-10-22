@@ -115,6 +115,8 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	logger = logger.WithValue("username", loginData.Username)
+
 	user, err := s.userDB.GetUserByUsername(ctx, loginData.Username)
 	if user == nil || (err != nil && err == sql.ErrNoRows) {
 		logger.WithValue("user_is_nil", user == nil).Error(err, "error fetching user")

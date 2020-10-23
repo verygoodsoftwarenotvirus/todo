@@ -413,34 +413,6 @@ func (m *MariaDB) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) 
 	return err
 }
 
-// buildMakeUserAdminQuery returns a SQL query (and arguments) that would make a given user an admin.
-func (m *MariaDB) buildMakeUserAdminQuery(userID uint64) (query string, args []interface{}) {
-	var err error
-
-	m.logger.WithValue("user_id", userID).Info("making user an admin")
-
-	query, args, err = m.sqlBuilder.
-		Update("users").
-		Set("is_admin", true).
-		Where(squirrel.Eq{
-			"id": userID,
-		}).
-		ToSql()
-
-	m.logQueryBuildingError(err)
-
-	return query, args
-}
-
-// MakeUserAdmin updates a user's password.
-func (m *MariaDB) MakeUserAdmin(ctx context.Context, userID uint64) error {
-	query, args := m.buildMakeUserAdminQuery(userID)
-
-	_, err := m.db.ExecContext(ctx, query, args...)
-
-	return err
-}
-
 // buildArchiveUserQuery builds a SQL query that marks a user as archived.
 func (m *MariaDB) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error

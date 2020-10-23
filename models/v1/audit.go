@@ -6,13 +6,19 @@ import (
 )
 
 type (
+	// AuditUpdateFieldDiff keeps track of what gets modified within audit reports
+	AuditUpdateFieldDiff struct {
+		FieldName string `json:"fieldName"`
+		OldValue  string `json:"oldValue"`
+		NewValue  string `json:"newValue"`
+	}
+
 	// AuditEvent represents an event we might want to log for audit purposes.
 	AuditEvent struct {
-		ID              uint64                 `json:"id"`
-		Type            string                 `json:"name"`
-		CreatedOn       uint64                 `json:"createdOn"`
-		PerformedByUser uint64                 `json:"performedByUser"`
-		Changes         []AuditUpdateFieldDiff `json:"changes"`
+		ID        uint64                 `json:"id"`
+		EventType string                 `json:"name"`
+		EventData []AuditUpdateFieldDiff `json:"changes"`
+		CreatedOn uint64                 `json:"createdOn"`
 	}
 
 	// AuditEventList represents a list of items.
@@ -28,20 +34,12 @@ type (
 		BelongsToUser uint64 `json:"-"`
 	}
 
-	// AuditUpdateFieldDiff keeps track of what gets modified within audit reports
-	AuditUpdateFieldDiff struct {
-		FieldName string `json:"fieldName"`
-		OldValue  string `json:"oldValue"`
-		NewValue  string `json:"newValue"`
-	}
-
 	// AuditEventDataManager describes a structure capable of storing items permanently.
 	AuditEventDataManager interface {
-		GetAuditEvent(ctx context.Context, itemID, userID uint64) (*AuditEvent, error)
+		GetAuditEvent(ctx context.Context, eventID uint64) (*AuditEvent, error)
 		GetAllAuditEventsCount(ctx context.Context) (uint64, error)
 		GetAllAuditEvents(ctx context.Context, resultChannel chan []AuditEvent) error
 		GetAuditEvents(ctx context.Context, filter *QueryFilter) (*AuditEventList, error)
-		GetAuditEventsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]AuditEvent, error)
 		CreateAuditEvent(ctx context.Context, input *AuditEventCreationInput) (*AuditEvent, error)
 	}
 
@@ -49,7 +47,6 @@ type (
 	AuditEventDataServer interface {
 		CreationInputMiddleware(next http.Handler) http.Handler
 
-		SearchHandler(res http.ResponseWriter, req *http.Request)
 		ListHandler(res http.ResponseWriter, req *http.Request)
 		CreateHandler(res http.ResponseWriter, req *http.Request)
 		ReadHandler(res http.ResponseWriter, req *http.Request)

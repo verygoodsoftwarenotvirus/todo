@@ -5,8 +5,6 @@ WORKDIR /app
 
 COPY frontend/v2 .
 
-RUN ls -Al
-
 RUN npm run install:clean
 
 # build stage
@@ -33,7 +31,5 @@ WORKDIR /home/appuser
 USER appuser
 
 COPY environments/testing/config_files/frontend-tests.toml /etc/config.toml
-
-RUN ls -Al /frontend
 
 ENTRYPOINT ["/todo"]

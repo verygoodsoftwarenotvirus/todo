@@ -3,6 +3,7 @@ package dbclient
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
@@ -69,7 +70,7 @@ func ProvideDatabaseClient(
 	if shouldMigrate {
 		c.logger.Debug("migrating querier")
 		if err := c.querier.Migrate(ctx, authenticator, testUserConfig); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error migrating database: %w", err)
 		}
 		c.logger.Debug("querier migrated!")
 	}

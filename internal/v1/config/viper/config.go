@@ -3,7 +3,7 @@ package viper
 import (
 	"crypto/rand"
 	"fmt"
-
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 
 	"github.com/spf13/viper"
@@ -42,10 +42,12 @@ func BuildViperConfig() *viper.Viper {
 }
 
 // ParseConfigFile parses a configuration file.
-func ParseConfigFile(filename string) (*config.ServerConfig, error) {
+func ParseConfigFile(logger logging.Logger, filePath string) (*config.ServerConfig, error) {
 	cfg := BuildViperConfig()
-	cfg.SetConfigFile(filename)
 
+	logger.WithValue("filepath", filePath).Debug("parsing config file")
+
+	cfg.SetConfigFile(filePath)
 	if err := cfg.ReadInConfig(); err != nil {
 		return nil, fmt.Errorf("trying to read the config file: %w", err)
 	}
@@ -63,6 +65,13 @@ func ParseConfigFile(filename string) (*config.ServerConfig, error) {
 	if serverConfig.Auth.CookieSecret == "" {
 		serverConfig.Auth.CookieSecret = config.RandString()
 	}
+
+	logger.WithValues(map[string]interface{}{
+		"is_nil": serverConfig.Database.CreateTestUser == nil,
+		// "username": serverConfig.Database.CreateTestUser.Username,
+		// "password": serverConfig.Database.CreateTestUser.Password,
+		// "is_admin": serverConfig.Database.CreateTestUser.IsAdmin,
+	}).Debug("CHECK ME CHECK ME CHECK ME CHECK ME CHECK ME")
 
 	return serverConfig, nil
 }

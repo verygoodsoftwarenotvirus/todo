@@ -9,12 +9,11 @@
   debug = false
   provider = "mariadb"
   run_migrations = true
-  should_migrate0 = true
 
   [database.create_test_user]
     is_admin = true
-    password = "integration-tests-are-cool"
-    username = "exampleUser"
+    password = "integration-tests-for-mariadb-are-cool"
+    username = "mariadbExampleUser"
 
 [frontend]
   static_files_directory = "/frontend"

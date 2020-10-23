@@ -415,35 +415,6 @@ func (p *Postgres) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64)
 	return err
 }
 
-// buildMakeUserAdminQuery returns a SQL query (and arguments) that would make a given user an admin.
-func (p *Postgres) buildMakeUserAdminQuery(userID uint64) (query string, args []interface{}) {
-	var err error
-
-	p.logger.WithValue("user_id", userID).Info("making user an admin")
-
-	query, args, err = p.sqlBuilder.
-		Update("users").
-		Set("is_admin", true).
-		Where(squirrel.Eq{
-			"id": userID,
-		}).
-		Suffix("RETURNING last_updated_on").
-		ToSql()
-
-	p.logQueryBuildingError(err)
-
-	return query, args
-}
-
-// MakeUserAdmin updates a user's password.
-func (p *Postgres) MakeUserAdmin(ctx context.Context, userID uint64) error {
-	query, args := p.buildMakeUserAdminQuery(userID)
-
-	_, err := p.db.ExecContext(ctx, query, args...)
-
-	return err
-}
-
 // buildArchiveUserQuery builds a SQL query that marks a user as archived.
 func (p *Postgres) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error

@@ -28,6 +28,8 @@
       canLogin = usernameInput !== '' && passwordInput !== '' && totpTokenInput.length > 0 && totpTokenInput.length < 7;
     }
 
+    let dumpingGround: string = '';
+
     import { userStatusStore } from "../../stores"
     import { V1APIClient } from "../../requests";
 
@@ -35,27 +37,38 @@
         const path = "/users/login"
 
         logger.debug("login called!");
+        dumpingGround = "login called!";
 
         evaluateInputs();
         if (!canLogin) {
+          dumpingGround = "error thrown!";
           throw new Error("invalid input!");
         }
 
+        dumpingGround = "login can proceed!";
+
         return V1APIClient.login(buildLoginRequest()).then(() => {
+              dumpingGround = "login response received!";
+
               V1APIClient.checkAuthStatusRequest().then((statusResponse: AxiosResponse<UserStatus>) => {
+                dumpingGround = "status response received!";
+
                 userStatusStore.setAuthStatus(statusResponse.data);
 
                 if (statusResponse.data.isAdmin) {
+                  dumpingGround = "navigating to admin dashboard!";
                   logger.debug(`navigating to /admin/dashboard because user is an authenticated admin`);
                   navigate("/admin/dashboard", { state: {}, replace: true });
                   location.reload();
                 } else {
+                  dumpingGround = "navigating to homepage!";
                   logger.debug(`navigating to homepage because user is a plain user`);
                   navigate("/", { state: {}, replace: true });
                 }
               });
             })
             .catch((reason: AxiosError) => {
+              dumpingGround = "login promise catch called! "+ JSON.stringify(reason)
               if (reason.response) {
                 if (reason.response.status === 401) {
                   loginError = 'invalid credentials: please try again'
@@ -89,6 +102,7 @@
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                 placeholder="username"
                 on:keyup={evaluateInputs}
+                on:blur={evaluateInputs}
                 bind:value={usernameInput}
               />
             </div>
@@ -106,6 +120,7 @@
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                 placeholder="password1"
                 on:keyup={evaluateInputs}
+                on:blur={evaluateInputs}
                 bind:value={passwordInput}
               />
             </div>
@@ -123,6 +138,7 @@
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                 placeholder="123456"
                 on:keyup={evaluateInputs}
+                on:blur={evaluateInputs}
                 bind:value={totpTokenInput}
               />
             </div>
@@ -131,8 +147,11 @@
             <p class="text-red-600">{loginError}</p>
             {/if}
 
+            <p class="text-orange-500">{ dumpingGround }</p>
+
             <div class="text-center mt-6">
               <button
+                on:click={login}
                 type="submit"
                 id="loginButton"
                 class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear transition-all duration-150"

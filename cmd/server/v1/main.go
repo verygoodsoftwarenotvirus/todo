@@ -24,9 +24,9 @@ func main() {
 	}
 
 	// parse our config file.
-	cfg, err := viper.ParseConfigFile(configFilepath)
+	cfg, err := viper.ParseConfigFile(logger, configFilepath)
 	if err != nil || cfg == nil {
-		logger.Fatal(fmt.Errorf("error parsing configuration file: %w", err))
+		logger.WithValue("config_filepath", configFilepath).Fatal(fmt.Errorf("error parsing configuration file: %w", err))
 	}
 
 	// only allow initialization to take so long.
@@ -51,6 +51,7 @@ func main() {
 	// build our server struct.
 	logger.Debug("building server")
 	server, err := BuildServer(ctx, cfg, logger, dbClient, rawDB, authenticator)
+
 	span.End()
 	cancel()
 

@@ -16,7 +16,7 @@ import (
 func BuildFakeUser() *models.User {
 	return &models.User{
 		ID:       uint64(fake.Uint32()),
-		Username: fake.Username(),
+		Username: fake.Password(true, true, true, false, false, 32),
 		// HashedPassword: "",
 		// Salt:           []byte(fake.Word()),
 		TwoFactorSecret:           base32.StdEncoding.EncodeToString([]byte(fake.Password(false, true, true, false, false, 32))),

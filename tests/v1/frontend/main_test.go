@@ -27,13 +27,14 @@ func runTestOnAllSupportedBrowsers(t *testing.T, tp testProvider) {
 		Log: &firefox.Log{Level: firefox.Debug},
 	})
 
-	capMap := map[string]selenium.Capabilities{
+	capabilities := map[string]selenium.Capabilities{
 		"firefox": firefoxCaps,
 		"chrome":  chromeCaps,
 	}
 
-	for bn, caps := range capMap {
-		caps.AddLogging(log.Capabilities{
+	for browserName, capability := range capabilities {
+		capability["browserName"] = browserName
+		capability.AddLogging(log.Capabilities{
 			log.Server:      log.Debug,
 			log.Browser:     log.Debug,
 			log.Client:      log.Debug,
@@ -41,14 +42,13 @@ func runTestOnAllSupportedBrowsers(t *testing.T, tp testProvider) {
 			log.Performance: log.Debug,
 			log.Profiler:    log.Debug,
 		})
-		caps["browserName"] = bn
 
-		wd, err := selenium.NewRemote(caps, seleniumHubAddr)
+		wd, err := selenium.NewRemote(capability, seleniumHubAddr)
 		if err != nil {
-			panic(err)
+			require.NoError(t, err)
 		}
 
-		t.Run(bn, tp(wd))
+		t.Run(browserName, tp(wd))
 		assert.NoError(t, wd.Quit())
 	}
 }
@@ -73,6 +73,7 @@ type testProvider func(driver selenium.WebDriver) func(t *testing.T)
 func TestLoginPage(T *testing.T) {
 	runTestOnAllSupportedBrowsers(T, func(driver selenium.WebDriver) func(t *testing.T) {
 		return func(t *testing.T) {
+
 			// Navigate to the login page.
 			reqURI := urlToUse + "/auth/login"
 			require.NoError(t, driver.Get(reqURI))

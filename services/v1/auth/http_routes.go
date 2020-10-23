@@ -173,8 +173,14 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	redirectTarget := "/"
+	if user.IsAdmin {
+		redirectTarget = "/admin/dashboard"
+	}
+
 	http.SetCookie(res, cookie)
-	res.WriteHeader(http.StatusNoContent)
+	// res.WriteHeader(http.StatusNoContent)
+	http.Redirect(res, req, redirectTarget, http.StatusSeeOther)
 }
 
 // LogoutHandler is our logout route.

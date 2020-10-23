@@ -200,9 +200,9 @@ func (p *Postgres) Migrate(ctx context.Context, authenticator auth.Authenticator
 	}
 
 	if testUserConfig != nil {
-		hp, err := authenticator.HashPassword(ctx, testUserConfig.Password)
+		hashedPassword, err := authenticator.HashPassword(ctx, testUserConfig.Password)
 		if err != nil {
-			return err
+			return fmt.Errorf("error hashing test user password: %w", err)
 		}
 
 		query, args, err := p.sqlBuilder.
@@ -217,7 +217,7 @@ func (p *Postgres) Migrate(ctx context.Context, authenticator auth.Authenticator
 			).
 			Values(
 				testUserConfig.Username,
-				hp,
+				hashedPassword,
 				[]byte("aaaaaaaaaaaaaaaa"),
 				// `otpauth://totp/todo:username?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&issuer=todo`
 				"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
@@ -228,7 +228,8 @@ func (p *Postgres) Migrate(ctx context.Context, authenticator auth.Authenticator
 		p.logQueryBuildingError(err)
 
 		if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
-			return dbErr
+			p.logger.Error(err, "creating user")
+			return fmt.Errorf("error creating test user: %w", dbErr)
 		}
 
 		p.logger.WithValue("username", testUserConfig.Username).Debug("created user")

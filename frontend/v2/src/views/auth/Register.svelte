@@ -2,7 +2,10 @@
   import axios, {AxiosError, AxiosResponse} from 'axios';
   import { link, navigate } from "svelte-routing";
 
-  import type { RegistrationRequest, UserRegistrationResponse, TOTPTokenValidationRequest, ErrorResponse } from "../../models";
+  import { Logger } from "../../logger";
+  import {V1APIClient} from "../../requests";
+
+  import { RegistrationRequest, UserRegistrationResponse, TOTPTokenValidationRequest, ErrorResponse } from "../../models";
 
   export let location: Location;
 
@@ -19,22 +22,20 @@
 
   const totpValidationRequest = new TOTPTokenValidationRequest();
 
-  import { Logger } from "../../logger";
-  import {V1APIClient} from "../../requests";
   let logger = new Logger().withDebugValue("source", "src/views/auth/Register.svelte");
 
   function evaluateCreationInputs(): string {
     const usernameIsLongEnough = registrationRequest.username.length >= 8;
     const passwordsMatch = registrationRequest.password === registrationRequest.repeatedPassword;
-    const passwordIsLongEnough = registrationRequest.length >= 8;
+    const passwordIsLongEnough = registrationRequest.password.length >= 8;
 
     const reasons: string[] = [];
     if (!usernameIsLongEnough) {
-      reasons.push('username has too few characters');
+      reasons.push(`username '${registrationRequest.username}' has too few characters`);
     } else if (!passwordsMatch) {
       reasons.push("passwords don't match");
     } else if (passwordsMatch && !passwordIsLongEnough) {
-      reasons.push('password is not long enough');
+      reasons.push(`password is not long enough (has ${registrationRequest.password.length})`);
     }
 
     registrationMayProceed = usernameIsLongEnough && passwordIsLongEnough && passwordsMatch
@@ -43,9 +44,7 @@
       return reasons.pop() || '';
     } else if (reasons.length > 1) {
       const last = reasons.pop();
-      const reason = reasons.join(', ') + ' and ' + last;
-
-      return reason
+      return reasons.join(', ') + ' and ' + last;
     }
 
     return "";
@@ -129,7 +128,8 @@
                   class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                   placeholder="Username"
                   on:keyup={evaluateCreationInputs}
-                  bind:value={usernameInput}
+                  on:blur={evaluateCreationInputs}
+                  bind:value={registrationRequest.username}
                 />
               </div>
 
@@ -146,7 +146,8 @@
                   class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                   placeholder="Password"
                   on:keyup={evaluateCreationInputs}
-                  bind:value={passwordInput}
+                  on:blur={evaluateCreationInputs}
+                  bind:value={registrationRequest.password}
                 />
               </div>
 
@@ -163,7 +164,8 @@
                   class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                   placeholder="Password Again"
                   on:keyup={evaluateCreationInputs}
-                  bind:value={passwordRepeatInput}
+                  on:blur={evaluateCreationInputs}
+                  bind:value={registrationRequest.repeatedPassword}
                 />
               </div>
 
@@ -219,6 +221,7 @@
                 type="text"
                 placeholder="2FA Token"
                 on:keyup={evaluateValidationInputs}
+                on:blur={evaluateValidationInputs}
               >
             </p>
             <p class="p-4">

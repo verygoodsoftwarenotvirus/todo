@@ -50,6 +50,9 @@ const (
 	sqlite   = "sqlite"
 	mariadb  = "mariadb"
 
+	// testuser stuff
+	defaultPassword = "password"
+
 	// search index paths
 	defaultItemsSearchIndexPath = "items.bleve"
 )
@@ -98,8 +101,8 @@ func localDevelopmentCOnfig(filePath string) error {
 	cfg.Set(dbProvider, postgres)
 	cfg.Set(dbDeets, postgresDBConnDetails)
 
-	cfg.Set(dbCreateTestUserUsername, "username")
-	cfg.Set(dbCreateTestUserPassword, "password")
+	cfg.Set(dbCreateTestUserUsername, "localUser")
+	cfg.Set(dbCreateTestUserPassword, defaultPassword)
 	cfg.Set(dbCreateTestUserIsAdmin, true)
 
 	cfg.Set(itemsSearchIndexPath, "/search_indices/items.bleve")
@@ -141,10 +144,6 @@ func frontendTestsConfig(filePath string) error {
 	cfg.Set(dbRunMigrations, true)
 	cfg.Set(dbDeets, postgresDBConnDetails)
 
-	cfg.Set(dbCreateTestUserUsername, "username")
-	cfg.Set(dbCreateTestUserPassword, "password")
-	cfg.Set(dbCreateTestUserIsAdmin, false)
-
 	cfg.Set(itemsSearchIndexPath, defaultItemsSearchIndexPath)
 
 	if writeErr := cfg.WriteConfigAs(filePath); writeErr != nil {
@@ -175,8 +174,8 @@ func coverageConfig(filePath string) error {
 	cfg.Set(dbRunMigrations, true)
 	cfg.Set(dbDeets, postgresDBConnDetails)
 
-	cfg.Set(dbCreateTestUserUsername, "username")
-	cfg.Set(dbCreateTestUserPassword, "password")
+	cfg.Set(dbCreateTestUserUsername, "coverageUser")
+	cfg.Set(dbCreateTestUserPassword, defaultPassword)
 	cfg.Set(dbCreateTestUserIsAdmin, false)
 
 	cfg.Set(itemsSearchIndexPath, defaultItemsSearchIndexPath)
@@ -215,8 +214,8 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 		cfg.Set(dbRunMigrations, true)
 		cfg.Set(dbDeets, dbDetails)
 
-		cfg.Set(dbCreateTestUserUsername, "exampleUser")
-		cfg.Set(dbCreateTestUserPassword, "integration-tests-are-cool")
+		cfg.Set(dbCreateTestUserUsername, fmt.Sprintf("%sExampleUser", dbVendor))
+		cfg.Set(dbCreateTestUserPassword, fmt.Sprintf("integration-tests-for-%s-are-cool", dbVendor))
 		cfg.Set(dbCreateTestUserIsAdmin, true)
 
 		cfg.Set(itemsSearchIndexPath, defaultItemsSearchIndexPath)

@@ -12,12 +12,6 @@
   debug = true
   provider = "postgres"
   run_migrations = true
-  should_migrate0 = true
-
-  [database.create_test_user]
-    is_admin = false
-    password = "password"
-    username = "username"
 
 [frontend]
   cache_static_files = false

@@ -21,6 +21,7 @@ const queryFilterKeySortBy: string = "sortBy";
 
 export class QueryFilter {
     page: number;
+    limit: number;
     createdBefore: number;
     createdAfter: number;
     updatedBefore: number;
@@ -30,6 +31,7 @@ export class QueryFilter {
 
     constructor() {
         this.page = 0;
+        this.limit = 20;
         this.createdBefore = 0;
         this.createdAfter = 0;
         this.updatedBefore = 0;

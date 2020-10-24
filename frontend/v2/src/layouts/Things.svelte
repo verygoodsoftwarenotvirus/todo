@@ -4,7 +4,7 @@
 
   // components for this layout
   import Sidebar from "../components/Sidebar/Sidebar.svelte";
-  import FooterAdmin from "../components/Footers/FooterAdmin.svelte";
+  import AdminFooter from "../components/Footers/AdminFooter.svelte";
   import AdminNavbar from "../components/Navbars/AdminNavbar.svelte";
 
   // custom components for this layout
@@ -45,7 +45,7 @@
         </Route>
         <Route path="items/new" component="{CreateItem}" />
       </Router>
-      <FooterAdmin />
+      <AdminFooter />
     </div>
   </div>
 </div>

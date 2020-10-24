@@ -5,25 +5,25 @@
   // components for this layout
   import AdminNavbar from "../components/Navbars/AdminNavbar.svelte";
   import Sidebar from "../components/Sidebar/Sidebar.svelte";
-  import FooterAdmin from "../components/Footers/FooterAdmin.svelte";
+  import AdminFooter from "../components/Footers/AdminFooter.svelte";
 
   // pages for this layout
   import Settings from "../views/user/Settings.svelte";
 
   import { userStatusStore } from "../stores";
-  import { UserStatus } from "../models";
+  import {User, UserStatus} from "../models";
   import { Logger } from "../logger"
 
   let logger = new Logger().withDebugValue("source", "src/layouts/User.svelte");
 
-  let currentAuthStatus = {};
-  const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
-    currentAuthStatus = value;
-    if (!currentAuthStatus || !currentAuthStatus.isAuthenticated) {
-      logger.debug(`navigating to /auth/login because user is unauthenticated`);
-      navigate("/auth/login", { state: {}, replace: true });
-    }
-  });
+  // let currentUserStatus: UserStatus = new UserStatus();
+  // const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
+  //   currentUserStatus = value;
+  //   if (!currentUserStatus || !currentUserStatus.isAuthenticated) {
+  //     logger.debug(`navigating to /auth/login because user is unauthenticated`);
+  //     navigate("/auth/login", { state: {}, replace: true });
+  //   }
+  // });
   // onDestroy(unsubscribeFromUserStatusUpdates);
 
   export let location: Location;
@@ -37,7 +37,7 @@
       <Router url="admin">
         <Route path="settings" component="{Settings}" />
       </Router>
-      <FooterAdmin />
+      <AdminFooter />
     </div>
   </div>
 </div>

@@ -8,12 +8,12 @@ import { V1APIClient } from "@/requests";
 const logger = new Logger().withDebugValue("source", "src/stores/auth_store.ts");
 
 function buildUserStatusStore() {
-    const { subscribe, set, update } = writable({});
+    const { subscribe, set } = writable({});
 
     const userStatusStore = {
         subscribe,
-        setAuthStatus: (x: UserStatus) => {
-            logger.withValue("userStatus", x).debug("setting auth status");
+        setUserStatus: (x: UserStatus) => {
+            logger.withValue("userStatus", x).debug("setting user status");
             set(x);
         },
         logout: () => set(new UserStatus()),
@@ -21,10 +21,10 @@ function buildUserStatusStore() {
 
     V1APIClient.checkAuthStatusRequest()
         .then((response: AxiosResponse<UserStatus>) => {
-            userStatusStore.setAuthStatus(response.data);
+            userStatusStore.setUserStatus(response.data);
         })
         .catch((err: AxiosError<ErrorResponse>) => {
-            userStatusStore.setAuthStatus(new UserStatus());
+            userStatusStore.setUserStatus(new UserStatus());
         });
 
     return userStatusStore;

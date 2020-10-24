@@ -25,7 +25,7 @@
     const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe((value: boolean) => {
         adminMode = value;
     });
-    // onDestroy(unsubscribeFromAdminModeUpdates);
+    onDestroy(unsubscribeFromAdminModeUpdates);
 
     import { Logger } from "../../logger";
     import { V1APIClient } from "../../requests";

@@ -2,82 +2,68 @@
   import axios, {AxiosError, AxiosResponse} from 'axios';
   import { link, navigate } from "svelte-routing";
 
-  import type { UserStatus, LoginRequest } from "../../models";
+  import { UserStatus, LoginRequest } from "../../models";
+  import { userStatusStore, sessionSettingsStore } from "../../stores"
+  import { V1APIClient } from "../../requests";
+  import { Logger } from "../../logger";
+  import {translations} from "../../i18n";
+  import {SessionSettings} from "../../models";
 
   export let location: Location;
 
-    let usernameInput: string = '';
-    let passwordInput: string = '';
-    let totpTokenInput: string = '';
+  // set up translations
+  let currentSessionSettings = new SessionSettings();
+  let translationsToUse = translations.messagesFor(currentSessionSettings.language).pages.login;
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = translations.messagesFor(currentSessionSettings.language).pages.login;
+  });
 
-    let canLogin: boolean = false;
-    let loginError: string = '';
+  let logger = new Logger().withDebugValue("source", "src/views/auth/Login.svelte");
 
-    import { Logger } from "../../logger";
-    let logger = new Logger().withDebugValue("source", "src/views/auth/Login.svelte");
+  const loginRequest = new LoginRequest()
+  let canLogin: boolean = false;
+  let loginError: string = '';
 
-    function buildLoginRequest(): LoginRequest {
-        return {
-            username: usernameInput,
-            password: passwordInput,
-            totpToken: totpTokenInput,
-        };
+  function evaluateInputs(): void {
+    canLogin = loginRequest.username !== '' &&
+               loginRequest.password !== '' &&
+               loginRequest.totpToken.length > 0 &&
+               loginRequest.totpToken.length <= 6;
+  }
+
+  async function login() {
+    logger.debug("login called!");
+    evaluateInputs();
+
+    if (!canLogin) {
+      throw new Error("invalid input!");
     }
 
-    function evaluateInputs(): void {
-      canLogin = usernameInput !== '' && passwordInput !== '' && totpTokenInput.length > 0 && totpTokenInput.length < 7;
-    }
+    return V1APIClient.login(loginRequest)
+      .then((res: AxiosResponse<UserStatus>) => {
+        const userStatus: UserStatus = res.data;
+        userStatusStore.setUserStatus(userStatus);
 
-    let dumpingGround: string = '';
-
-    import { userStatusStore } from "../../stores"
-    import { V1APIClient } from "../../requests";
-  import {User} from "../../models";
-
-    async function login() {
-        const path = "/users/login"
-
-        logger.debug("login called!");
-        dumpingGround = "login called!";
-
-        evaluateInputs();
-        if (!canLogin) {
-          dumpingGround = "error thrown!";
-          throw new Error("invalid input!");
+        if (userStatus.isAdmin) {
+          logger.debug(`navigating to /admin/dashboard because user is an authenticated admin`);
+          navigate("/admin/dashboard", { state: {}, replace: true });
+        } else {
+          logger.debug(`navigating to homepage because user is a plain user`);
+          navigate("/", { state: {}, replace: true });
         }
-
-        dumpingGround = "login can proceed!";
-
-        return V1APIClient.login(buildLoginRequest()).then((res: AxiosResponse<UserStatus>) => {
-              dumpingGround = `login response received! status: ${res.status}, ${JSON.stringify(res.data)}`;
-
-              const userStatus: UserStatus = res.data;
-              userStatusStore.setAuthStatus(userStatus);
-
-              if (userStatus.isAdmin) {
-                dumpingGround = "navigating to admin dashboard!";
-                logger.debug(`navigating to /admin/dashboard because user is an authenticated admin`);
-                navigate("/admin/dashboard", { state: {}, replace: true });
-                location.reload();
-              } else {
-                dumpingGround = "navigating to homepage!";
-                logger.debug(`navigating to homepage because user is a plain user`);
-                navigate("/", { state: {}, replace: true });
-              }
-            })
-            .catch((reason: AxiosError) => {
-              dumpingGround = `login promise catch called! ${JSON.stringify(reason)}`;
-              if (reason.response) {
-                if (reason.response.status === 401) {
-                  loginError = 'invalid credentials: please try again'
-                } else {
-                  loginError = reason.response.toString();
-                  logger.error(JSON.stringify(reason.response));
-                }
-              }
-            });
-    }
-
+      })
+      .catch((reason: AxiosError) => {
+        if (reason.response) {
+          if (reason.response.status === 401) {
+            loginError = 'invalid credentials: please try again'
+          } else {
+            loginError = reason.response.toString();
+            logger.error(JSON.stringify(reason.response));
+          }
+        }
+      });
+  }
 </script>
 
 <div class="container mx-auto px-4 h-full">
@@ -92,16 +78,16 @@
                 class="block uppercase text-gray-700 text-xs font-bold mb-2"
                 for="usernameInput"
               >
-                Username
+                {translationsToUse.inputLabels.username}
               </label>
               <input
                 id="usernameInput"
                 type="text"
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                placeholder="username"
+                placeholder="{translationsToUse.inputPlaceholders.username}"
                 on:keyup={evaluateInputs}
                 on:blur={evaluateInputs}
-                bind:value={usernameInput}
+                bind:value={loginRequest.username}
               />
             </div>
 
@@ -110,16 +96,16 @@
                 class="block uppercase text-gray-700 text-xs font-bold mb-2"
                 for="passwordInput"
               >
-                Password
+                {translationsToUse.inputLabels.password}
               </label>
               <input
                 id="passwordInput"
                 type="password"
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                placeholder="password1"
+                placeholder="{translationsToUse.inputPlaceholders.password}"
                 on:keyup={evaluateInputs}
                 on:blur={evaluateInputs}
-                bind:value={passwordInput}
+                bind:value={loginRequest.password}
               />
             </div>
 
@@ -128,24 +114,22 @@
                 class="block uppercase text-gray-700 text-xs font-bold mb-2"
                 for="totpTokenInput"
               >
-                2FA Token
+                {translationsToUse.inputLabels.twoFactorCode}
               </label>
               <input
                 id="totpTokenInput"
                 type="text"
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                placeholder="123456"
+                placeholder="{translationsToUse.inputPlaceholders.twoFactorCode}"
                 on:keyup={evaluateInputs}
                 on:blur={evaluateInputs}
-                bind:value={totpTokenInput}
+                bind:value={loginRequest.totpToken}
               />
             </div>
 
             {#if loginError !== ''}
             <p class="text-red-600">{loginError}</p>
             {/if}
-
-            <p class="text-orange-500">{ dumpingGround }</p>
 
             <div class="text-center mt-6">
               <button
@@ -154,7 +138,7 @@
                 id="loginButton"
                 class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear transition-all duration-150"
               >
-                Sign In
+                {translationsToUse.buttons.login}
               </button>
             </div>
           </form>
@@ -162,13 +146,13 @@
       </div>
       <div class="flex flex-wrap mt-6 relative">
         <div class="w-1/2">
-          <a href="#pablo" on:click={(e) => e.preventDefault()} class="text-gray-300">
-            <small>Forgot password?</small>
+          <a href="##" on:click={(e) => e.preventDefault()} class="text-gray-300">
+            <small>{translationsToUse.linkTexts.forgotPassword}</small>
           </a>
         </div>
         <div class="w-1/2 text-right">
           <a use:link href="/auth/register" class="text-gray-300">
-            <small>Create new account</small>
+            <small>{translationsToUse.linkTexts.createAccount}</small>
           </a>
         </div>
       </div>

@@ -1,13 +1,12 @@
 <script lang="typescript">
   // core components
-  import CardSettings from "../../components/Cards/CardSettings.svelte";
-  import CardProfile from "../../components/Cards/CardProfile.svelte";
+  import SettingsCard from "../../components/Cards/SettingsCard.svelte";
 
   export let location: Location;
 </script>
 
 <div class="flex flex-wrap">
   <div class="w-full px-4">
-    <CardSettings />
+    <SettingsCard />
   </div>
 </div>

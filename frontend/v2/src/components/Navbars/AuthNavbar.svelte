@@ -1,14 +1,28 @@
 <script lang="typescript">
   import { link } from "svelte-routing";
+  import {onDestroy} from "svelte";
 
   // core components
   // import PagesDropdown from "../components/Dropdowns/PagesDropdown.svelte";
+
+  import {SessionSettings} from "../../models";
+  import {translations} from "../../i18n";
+  import {sessionSettingsStore} from "../../stores";
 
   let navbarOpen: Boolean = false;
 
   function setNavbarOpen() {
     navbarOpen = !navbarOpen;
   }
+
+  // set up translations
+  let currentSessionSettings = new SessionSettings();
+  let translationsToUse = translations.messagesFor(currentSessionSettings.language).components.navbars.authNavbar;
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = translations.messagesFor(currentSessionSettings.language).components.navbars.authNavbar;
+  });
+  onDestroy(unsubscribeFromSettingsUpdates);
 </script>
 
 <nav
@@ -25,7 +39,7 @@
         class="text-white text-sm font-bold leading-relaxed inline-block mr-4 py-2 whitespace-no-wrap uppercase"
         href="/"
       >
-        Todo
+        {translationsToUse.serviceName}
       </a>
       <button
         class="cursor-pointer text-xl leading-none px-3 py-1 border border-solid border-transparent rounded bg-transparent block lg:hidden outline-none focus:outline-none"

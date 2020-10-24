@@ -40,6 +40,7 @@
     "sirv-cli": "^1.0.6",
     "string-format": "^2.0.0",
     "svelte-routing": "^1.4.2",
-    "tailwindcss": "1.8.10"
+    "tailwindcss": "1.8.10",
+    "typed-intl": "^1.0.3"
   }
 }

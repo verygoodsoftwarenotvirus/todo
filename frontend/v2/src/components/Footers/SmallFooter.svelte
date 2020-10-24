@@ -1,8 +1,20 @@
 <script lang="typescript">
-  // make dynamic date to be added to footer
-  let date: Number = new Date().getFullYear();
+  import {onDestroy} from "svelte";
+
+  import {SessionSettings} from "../../models";
+  import {translations} from "../../i18n";
+  import {sessionSettingsStore} from "../../stores";
 
   export let absolute: Boolean = false;
+
+  // set up translations
+  let currentSessionSettings = new SessionSettings();
+  let translationsToUse = translations.messagesFor(currentSessionSettings.language).components.footers.smallFooter;
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = translations.messagesFor(currentSessionSettings.language).components.footers.smallFooter;
+  });
+  onDestroy(unsubscribeFromSettingsUpdates);
 </script>
 
 <footer
@@ -15,7 +27,7 @@
         <div
           class="text-sm text-gray-600 font-semibold py-1 text-center md:text-left"
         >
-          Copyright © {date}
+          {translationsToUse.copyright} {new Date().getFullYear()}
         </div>
       </div>
       <div class="w-full md:w-8/12 px-4">
@@ -25,7 +37,7 @@
               href="#"
               class="text-white hover:text-gray-400 text-sm font-semibold block py-1 px-3"
             >
-              About Us
+              {translationsToUse.aboutUs}
             </a>
           </li>
           <li>
@@ -33,7 +45,7 @@
               href="#"
               class="text-white hover:text-gray-400 text-sm font-semibold block py-1 px-3"
             >
-              Blog
+              {translationsToUse.blog}
             </a>
           </li>
         </ul>

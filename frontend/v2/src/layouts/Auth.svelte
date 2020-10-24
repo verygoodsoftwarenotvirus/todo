@@ -1,11 +1,13 @@
 <script lang="typescript">
-  import { onDestroy, onMount} from "svelte";
-  import axios from "axios";
   import {Router, Route, navigate} from "svelte-routing";
+
+  import { userStatusStore } from "../stores";
+  import {UserStatus} from "../models";
+  import {onDestroy} from "svelte";
 
   // components for this layout
   import AuthNavbar from "../components/Navbars/AuthNavbar.svelte";
-  import FooterSmall from "../components/Footers/FooterSmall.svelte";
+  import SmallFooter from "../components/Footers/SmallFooter.svelte";
 
   // pages for this layout
   import Login from "../views/auth/Login.svelte";
@@ -18,13 +20,11 @@
   import {Logger} from "../logger";
   let logger = new Logger().withDebugValue("source", "src/layouts/Auth.svelte");
 
-  import { userStatusStore } from "../stores";
-  import {UserStatus} from "../models";
   let currentAuthStatus = {};
   const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
   });
-  // onDestroy(unsubscribeFromUserStatusUpdates);
+  onDestroy(unsubscribeFromUserStatusUpdates);
 </script>
 
 <div>
@@ -39,7 +39,7 @@
         <Route path="login" component="{Login}" />
         <Route path="register" component="{Register}" />
       </Router>
-      <FooterSmall absolute="true" />
+      <SmallFooter absolute="true" />
     </section>
   </main>
 </div>

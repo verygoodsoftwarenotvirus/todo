@@ -1,3 +1,19 @@
+<script lang="typescript">
+  import {onDestroy} from "svelte";
+
+  import {SessionSettings} from "../../models";
+  import {translations} from "../../i18n";
+  import {sessionSettingsStore} from "../../stores";
+
+  let currentSessionSettings = new SessionSettings();
+  let translationsToUse = translations.messagesFor(currentSessionSettings.language).footers.mainFooter;
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = translations.messagesFor(currentSessionSettings.language).footers.mainFooter;
+  });
+  onDestroy(unsubscribeFromSettingsUpdates);
+</script>
+
 <footer class="relative bg-gray-300 pt-8 pb-6">
   <div
     class="bottom-auto top-0 left-0 right-0 w-full absolute pointer-events-none overflow-hidden -mt-20 h-20"
@@ -21,9 +37,9 @@
   <div class="container mx-auto px-4">
     <div class="flex flex-wrap text-center lg:text-left">
       <div class="w-full lg:w-6/12 px-4">
-        <h4 class="text-3xl font-semibold">Let's keep in touch!</h4>
+        <h4 class="text-3xl font-semibold">{translationsToUse.keepInTouch}</h4>
         <h5 class="text-lg mt-0 mb-2 text-gray-700">
-          We like you.
+          {translationsToUse.weLikeYou}
         </h5>
       </div>
       <div class="w-full lg:w-6/12 px-4">
@@ -32,23 +48,23 @@
             <span
               class="block uppercase text-gray-600 text-sm font-semibold mb-2"
             >
-              Useful Links
+              {translationsToUse.usefulLinks}
             </span>
             <ul class="list-unstyled">
               <li>
                 <a
                   class="text-gray-700 hover:text-gray-900 font-semibold block pb-2 text-sm"
-                  href="#"
+                  href="##"
                 >
-                  About Us
+                  {translationsToUse.aboutUs}
                 </a>
               </li>
               <li>
                 <a
                   class="text-gray-700 hover:text-gray-900 font-semibold block pb-2 text-sm"
-                  href="#"
+                  href="##"
                 >
-                  Blog
+                  {translationsToUse.blog}
                 </a>
               </li>
             </ul>
@@ -57,31 +73,31 @@
             <span
               class="block uppercase text-gray-600 text-sm font-semibold mb-2"
             >
-              Other Resources
+              {translationsToUse.otherResources}
             </span>
             <ul class="list-unstyled">
               <li>
                 <a
                   class="text-gray-700 hover:text-gray-900 font-semibold block pb-2 text-sm"
-                  href="#"
+                  href="##"
                 >
-                  Terms & Conditions
+                  {translationsToUse.termsAndConditions}
                 </a>
               </li>
               <li>
                 <a
                   class="text-gray-700 hover:text-gray-900 font-semibold block pb-2 text-sm"
-                  href="#"
+                  href="##"
                 >
-                  Privacy Policy
+                  {translationsToUse.privacyPolicy}
                 </a>
               </li>
               <li>
                 <a
                   class="text-gray-700 hover:text-gray-900 font-semibold block pb-2 text-sm"
-                  href="#"
+                  href="##"
                 >
-                  Contact Us
+                  {translationsToUse.contactUs}
                 </a>
               </li>
             </ul>

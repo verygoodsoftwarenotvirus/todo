@@ -1,19 +1,24 @@
 <script lang="typescript">
   import { link, navigate } from "svelte-routing";
 
-  import { UserStatus } from "../../models"
+  import {Logger} from "../../logger";
+  import {adminModeStore, sessionSettingsStore, userStatusStore} from "../../stores";
+  import {QueryFilter, SessionSettings, UserStatus} from "../../models";
+  import {translations} from "../../i18n";
+
+  let logger = new Logger().withDebugValue("source", "src/components/Things/Tables/APITable.svelte");
+
+  const queryFilter = new QueryFilter();
 
   // local state
   let searchQuery: string = '';
   let currentPage: number = 0;
-  let pageQuantity: number = 20;
 
   export let title: string = '';
   export let headers: string[] = [];
   export let rows: string[][] = [[]];
   export let newPageLink: string = '';
   export let individualPageLink: string= '';
-
   export let dataRetrievalError: string = '';
 
   export let searchFunction;
@@ -25,22 +30,24 @@
   export let deleteFunction;
   export let rowRenderFunction;
 
-  import {Logger} from "../../logger";
-  let logger = new Logger().withDebugValue("source", "src/components/Things/Tables/APITable.svelte");
+  // set up translations
+  let currentSessionSettings = new SessionSettings();
+  let translationsToUse = translations.messagesFor(currentSessionSettings.language).components.apiTable;
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = translations.messagesFor(currentSessionSettings.language).components.apiTable;
+  });
 
-  import { adminModeStore } from "../../stores";
   let adminMode: boolean = false;
   const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe((value: boolean) => {
     adminMode = value;
     fetchFunction();
   });
 
-  import { userStatusStore } from "../../stores";
   let currentAuthStatus = {};
   const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
   });
-  // onDestroy(unsubscribeFromUserStatusUpdates);
 
   function search(): void {
     if (searchQuery.length >= 3) {
@@ -75,7 +82,7 @@
           <button on:click={decrementPageFunction} disabled={decrementDisabled}><i class="fa fa-arrow-circle-left"></i></button>
           &nbsp;
           {#if currentPage > 0 }
-            Page {currentPage}
+            {translationsToUse.page} {currentPage}
           {/if}
           &nbsp;
           <button on:click={incrementPageFunction} disabled={incrementDisabled}><i class="fa fa-arrow-circle-right"></i></button>
@@ -83,8 +90,8 @@
       </div>
 
       <div>
-        per page:
-        <select bind:value={pageQuantity} on:blur={fetchFunction} class="appearance-none border p-1 rounded leading-tight">
+        {translationsToUse.perPage}:
+        <select bind:value={queryFilter.limit} on:blur={fetchFunction} class="appearance-none border p-1 rounded leading-tight">
           <option>20</option>
           <option>35</option>
           <option>50</option>
@@ -102,7 +109,7 @@
       <span class="mr-2 ml-2"></span>
 
       <div class="flex border-grey-light border">
-        <input class="w-full rounded ml-1" type="text" placeholder="Search..." bind:value={searchQuery} on:keyup={search}>
+        <input class="w-full rounded ml-1" type="text" placeholder={translationsToUse.inputPlaceholders.search} bind:value={searchQuery} on:keyup={search}>
       </div>
     </div>
   </div>
@@ -125,7 +132,7 @@
             {/if}
           {/each}
           <th class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
-            Delete
+            {translationsToUse.delete}
           </th>
         </tr>
       </thead>

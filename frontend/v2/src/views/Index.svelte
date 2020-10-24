@@ -3,7 +3,7 @@
 
   // core components
   import IndexNavbar from "../components/Navbars/IndexNavbar.svelte";
-  import Footer from "../components/Footers/Footer.svelte";
+  import Footer from "../components/Footers/MainFooter.svelte";
 
   export let location: Location;
 </script>

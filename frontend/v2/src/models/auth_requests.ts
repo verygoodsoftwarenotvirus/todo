@@ -31,5 +31,3 @@ export class TOTPTokenValidationRequest {
         this.totpToken = '';
     }
 }
-
-// TODO: do these need to exist, and if so, do they need to exist here?

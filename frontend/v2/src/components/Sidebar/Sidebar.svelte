@@ -3,11 +3,11 @@
   import { link } from "svelte-routing";
 
   // core components
-  import NotificationDropdown from "../Dropdowns/NotificationDropdown.svelte";
   import UserDropdown from "../Dropdowns/UserDropdown.svelte";
 
-  import { UserStatus } from "../../models";
-  import { userStatusStore } from "../../stores";
+  import {SessionSettings, UserStatus} from "../../models";
+  import {sessionSettingsStore, userStatusStore} from "../../stores";
+  import {translations} from "../../i18n";
 
   export let location: Location;
 
@@ -20,7 +20,17 @@
   const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
   });
-  // onDestroy(unsubscribeFromUserStatusUpdates())
+  onDestroy(unsubscribeFromUserStatusUpdates())
+
+  // set up translations
+  let currentSessionSettings = new SessionSettings();
+  let translationsToUse = translations.messagesFor(currentSessionSettings.language).components.sidebars.primary;
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = translations.messagesFor(currentSessionSettings.language).components.sidebars.primary;
+  });
+  onDestroy(unsubscribeFromSettingsUpdates);
+
 </script>
 
 <nav
@@ -43,12 +53,12 @@
       class="md:block text-left md:pb-2 text-gray-700 mr-0 inline-block whitespace-no-wrap text-sm uppercase font-bold p-4 px-0"
       href="/"
     >
-      Todo
+      {translationsToUse.serviceName}
     </a>
     <!-- User -->
     <ul class="md:hidden items-center flex flex-wrap list-none">
       <li class="inline-block relative">
-        <NotificationDropdown />
+        <!-- <NotificationDropdown /> -->
       </li>
       <li class="inline-block relative">
         <UserDropdown />
@@ -61,7 +71,7 @@
 
       <div>
         <h6 class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline">
-          Things
+          {translationsToUse.things}
         </h6>
         <!-- Navigation -->
 
@@ -73,7 +83,7 @@
               href="/things/items"
             >
               <i class="fas fa-list-ul text-gray-400 mr-2 text-sm"></i>
-              Items
+              {translationsToUse.items}
             </a>
           </li>
         </ul>
@@ -83,7 +93,7 @@
       <hr class="my-4 md:min-w-full" />
       <div>
         <h6 class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline">
-          Admin
+          {translationsToUse.admin}
         </h6>
 
         <!-- USERS -->
@@ -96,7 +106,7 @@
               href="/admin/users"
             >
               <i class="fas fa-users text-gray-400 mr-2 text-sm"></i>
-              Users
+              {translationsToUse.users}
             </a>
           </li>
         </ul>
@@ -111,7 +121,7 @@
               href="/admin/oauth2_clients"
             >
               <i class="fas fa-robot text-gray-400 mr-2 text-sm"></i>
-              OAuth2 Clients
+              {translationsToUse.oauth2Clients}
             </a>
           </li>
         </ul>
@@ -126,7 +136,7 @@
               href="/admin/webhooks"
             >
               <i class="fas fa-network-wired text-gray-400 mr-2 text-sm"></i>
-              Webhooks
+              {translationsToUse.webhooks}
             </a>
           </li>
         </ul>
@@ -141,7 +151,7 @@
               href="/admin/audit_log"
             >
               <i class="fas fa-record-vinyl text-gray-400 mr-2 text-sm"></i>
-              Audit Log
+              {translationsToUse.auditLog}
             </a>
           </li>
         </ul>
@@ -156,7 +166,7 @@
               href="/admin/settings"
             >
               <i class="fas fa-cog text-gray-400 mr-2 text-sm"></i>
-              Server Settings
+              {translationsToUse.serverSettings}
             </a>
           </li>
         </ul>

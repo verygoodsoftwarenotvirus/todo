@@ -1,26 +1,38 @@
 <script lang="typescript">
   import axios, {AxiosError, AxiosResponse} from 'axios';
   import { link, navigate } from "svelte-routing";
+  import {onDestroy} from "svelte";
 
   import { Logger } from "../../logger";
   import {V1APIClient} from "../../requests";
+  import {
+    RegistrationRequest,
+    UserRegistrationResponse,
+    TOTPTokenValidationRequest,
+    ErrorResponse,
+    SessionSettings
+  } from "../../models";
+  import {translations} from "../../i18n";
+  import {sessionSettingsStore} from "../../stores";
 
-  import { RegistrationRequest, UserRegistrationResponse, TOTPTokenValidationRequest, ErrorResponse } from "../../models";
+  // set up translations
+  let currentSessionSettings = new SessionSettings();
+  let translationsToUse = translations.messagesFor(currentSessionSettings.language).pages.registration;
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = translations.messagesFor(currentSessionSettings.language).pages.registration;
+  });
+  onDestroy(unsubscribeFromSettingsUpdates);
 
   export let location: Location;
 
-  let registrationRequest = new RegistrationRequest();
-
-  let usernameInput = '';
-  let passwordInput = '';
-  let passwordRepeatInput = '';
+  const registrationRequest = new RegistrationRequest();
+  const totpValidationRequest = new TOTPTokenValidationRequest();
 
   let registrationMayProceed = false;
   let registrationError = '';
   let postRegistrationQRCode = '';
   let totpTokenValidationMayProceed = false;
-
-  const totpValidationRequest = new TOTPTokenValidationRequest();
 
   let logger = new Logger().withDebugValue("source", "src/views/auth/Register.svelte");
 
@@ -40,10 +52,10 @@
 
     registrationMayProceed = usernameIsLongEnough && passwordIsLongEnough && passwordsMatch
 
+    let last = reasons.pop()
     if (reasons.length === 1) {
-      return reasons.pop() || '';
+      return last || '';
     } else if (reasons.length > 1) {
-      const last = reasons.pop();
       return reasons.join(', ') + ' and ' + last;
     }
 
@@ -51,9 +63,7 @@
   }
 
   async function register() {
-    logger.debug("register called")
-
-    const path = "/users/"
+    logger.debug("register called");
 
     if (!registrationMayProceed) {
       // this should never occur
@@ -62,21 +72,21 @@
     }
 
     return V1APIClient.registrationRequest(registrationRequest)
-            .then((response: AxiosResponse<UserRegistrationResponse>) => {
-              const data = response.data;
+      .then((response: AxiosResponse<UserRegistrationResponse>) => {
+        const data = response.data;
 
-              postRegistrationQRCode = data.qrCode;
-              totpValidationRequest.userID = data.id;
+        postRegistrationQRCode = data.qrCode;
+        totpValidationRequest.userID = data.id;
 
-              return data;
-            })
-            .catch((reason: AxiosError<ErrorResponse>) => {
-              if (reason.response) {
-                const data = reason.response.data;
-                logger.error(data.message);
-                registrationError = data.message;
-              }
-            });
+        return data;
+      })
+      .catch((reason: AxiosError<ErrorResponse>) => {
+        if (reason.response) {
+          const data = reason.response.data;
+          logger.error(data.message);
+          registrationError = data.message;
+        }
+      });
   }
 
   function evaluateValidationInputs(): void  {
@@ -94,16 +104,16 @@
     }
 
     return V1APIClient.validateTOTPSecretWithToken(totpValidationRequest)
-            .then((response: AxiosResponse) => {
-              logger.debug(`navigating to /auth/login because totp validation request succeeded`);
-              navigate("/auth/login", { state: {}, replace: true });
-            })
-            .catch((reason: AxiosError<ErrorResponse>) => {
-              if (reason.response) {
-                const data = reason.response.data;
-                logger.error(data.message);
-              }
-            });
+      .then((response: AxiosResponse) => {
+        logger.debug(`navigating to /auth/login because totp validation request succeeded`);
+        navigate("/auth/login", { state: {}, replace: true });
+      })
+      .catch((reason: AxiosError<ErrorResponse>) => {
+        if (reason.response) {
+          const data = reason.response.data;
+          logger.error(data.message);
+        }
+      });
   }
 </script>
 
@@ -120,13 +130,13 @@
                   class="block uppercase text-gray-700 text-xs font-bold mb-2"
                   for="usernameInput"
                 >
-                  Username
+                  {translationsToUse.inputLabels.username}
                 </label>
                 <input
                   id="usernameInput"
                   type="text"
                   class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                  placeholder="Username"
+                  placeholder={translationsToUse.inputPlaceholders.username}
                   on:keyup={evaluateCreationInputs}
                   on:blur={evaluateCreationInputs}
                   bind:value={registrationRequest.username}
@@ -138,13 +148,13 @@
                   class="block uppercase text-gray-700 text-xs font-bold mb-2"
                   for="passwordInput"
                 >
-                  Password
+                  {translationsToUse.inputLabels.password}
                 </label>
                 <input
                   id="passwordInput"
                   type="password"
                   class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                  placeholder="Password"
+                  placeholder={translationsToUse.inputPlaceholders.password}
                   on:keyup={evaluateCreationInputs}
                   on:blur={evaluateCreationInputs}
                   bind:value={registrationRequest.password}
@@ -156,13 +166,13 @@
                   class="block uppercase text-gray-700 text-xs font-bold mb-2"
                   for="passwordRepeatInput"
                 >
-                  Confirm Password
+                  {translationsToUse.inputLabels.passwordRepeat}
                 </label>
                 <input
                   id="passwordRepeatInput"
                   type="password"
                   class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                  placeholder="Password Again"
+                  placeholder={translationsToUse.inputPlaceholders.passwordRepeat}
                   on:keyup={evaluateCreationInputs}
                   on:blur={evaluateCreationInputs}
                   bind:value={registrationRequest.repeatedPassword}
@@ -196,7 +206,7 @@
                   type="button"
                   on:click={register}
                 >
-                  Create Account
+                  {translationsToUse.buttons.register}
                 </button>
               </div>
             </form>
@@ -210,16 +220,15 @@
               alt="two factor authentication secret encoded as a QR code"
             >
             <p class="m-4">
-              Save the secret this QR code contains in your 2FA Code generator of choice.
-              You'll be required to generate a token from it on every login.
+              {translationsToUse.notices.saveQRSecretNotice}
             </p>
             <p class="p-4">
-              Enter an example generated code to verify you've completed the above step:
+              {translationsToUse.instructions.enterGeneratedTwoFactorCode}
               <input
                 id="totpTokenInput"
                 bind:value={totpValidationRequest.totpToken}
                 type="text"
-                placeholder="2FA Token"
+                placeholder={translationsToUse.inputPlaceholders.twoFactorCode}
                 on:keyup={evaluateValidationInputs}
                 on:blur={evaluateValidationInputs}
               >
@@ -231,7 +240,7 @@
                 type="button"
                 on:click={validateTOTPToken}
               >
-                I've saved it!
+                {translationsToUse.buttons.submitVerification}
               </button>
             </p>
           </div>
@@ -241,7 +250,7 @@
         <div class="w-1/2"></div>
         <div class="w-1/2 text-right">
           <a use:link href="/auth/login" class="text-gray-300">
-            <small>Login instead?</small>
+            <small>{translationsToUse.linkTexts.loginInstead}</small>
           </a>
         </div>
       </div>

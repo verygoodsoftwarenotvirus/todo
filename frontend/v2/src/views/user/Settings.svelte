@@ -10,25 +10,25 @@
     UserPasswordUpdateRequest,
     UserTwoFactorSecretUpdateRequest,
     ErrorResponse,
+    SessionSettings,
   } from "../../models";
   import { Logger } from "../../logger";
   import { V1APIClient } from "../../requests";
+  import {translations} from "../../i18n";
+  import {sessionSettingsStore} from "../../stores";
 
   export let location: Location;
 
-  let userFetchError: string = '';
-
-  let ogUser: User = new User();
-  let user: User = new User();
   let logger = new Logger().withDebugValue("source", "src/views/user/Settings.svelte");
 
-  let userInfoCanBeSaved: boolean = false;
-
-  let updatePasswordError: string = '';
-  let passwordUpdate = new UserPasswordUpdateRequest();
-
-  let twoFactorSecretUpdateError: string = '';
-  let twoFactorSecretUpdate = new UserTwoFactorSecretUpdateRequest();
+  // set up translations
+  let currentSessionSettings = new SessionSettings();
+  let translationsToUse = translations.messagesFor(currentSessionSettings.language).userSettingsPage;
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = translations.messagesFor(currentSessionSettings.language).userSettingsPage;
+  });
+  onDestroy(unsubscribeFromSettingsUpdates);
 
   let currentUserStatus: UserStatus = new UserStatus();
   const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
@@ -39,6 +39,16 @@
     }
   });
   onDestroy(unsubscribeFromUserStatusUpdates);
+
+  let ogUser: User = new User();
+  let user: User = new User();
+  let passwordUpdate = new UserPasswordUpdateRequest();
+  let twoFactorSecretUpdate = new UserTwoFactorSecretUpdateRequest();
+
+  let userInfoCanBeSaved: boolean = false;
+  let userFetchError: string = '';
+  let updatePasswordError: string = '';
+  let twoFactorSecretUpdateError: string = '';
 
   function submitChangePasswordRequest() {
     logger.debug(`submitChangePasswordRequest invoked`);
@@ -72,20 +82,20 @@
 
       <div class="rounded-t bg-white mb-0 px-6 py-6">
         <div class="text-center flex justify-between">
-          <h6 class="text-gray-800 text-xl font-bold">My account</h6>
+          <h6 class="text-gray-800 text-xl font-bold">{translationsToUse.myAccount}</h6>
         </div>
       </div>
 
       <div class="flex-auto px-4 lg:px-10 py-10 pt-0">
         <div class="text-center flex justify-between">
           <h6 class="text-gray-500 text-sm mt-3 mb-6 font-bold uppercase">
-            User Info
+            {translationsToUse.sectionLabels.userInfo}
           </h6>
           <button
-                  class="{passwordUpdate.goodToGo() ? 'bg-blue-500' : 'bg-gray-300'} text-white active:bg-blue-600 font-bold uppercase text-xs rounded p-3 m-2"
-                  type="button"
+            class="{passwordUpdate.goodToGo() ? 'bg-blue-500' : 'bg-gray-300'} text-white active:bg-blue-600 font-bold uppercase text-xs rounded p-3 m-2"
+            type="button"
           >
-            Update
+            {translationsToUse.buttons.updateUserInfo}
           </button>
         </div>
         <div class="flex flex-wrap">
@@ -95,7 +105,7 @@
                 class="block uppercase text-gray-700 text-xs font-bold mb-2"
                 for="grid-username"
               >
-                Username
+                {translationsToUse.inputLabels.username}
               </label>
               <input
                 id="grid-username"
@@ -109,85 +119,89 @@
           <div class="w-full lg:w-6/12 px-4">
             <div class="relative w-full mb-3">
               <label
-                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                      for="grid-email"
+                class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                for="grid-email"
               >
-                Email address
+                {translationsToUse.inputLabels.emailAddress}
               </label>
               <input
-                      id="grid-email"
-                      type="email"
-                      class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-gray-300 rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                      disabled
-                      value="we don't want your stinkin' email"
+                id="grid-email"
+                type="email"
+                class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-gray-300 rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
+                disabled
+                value="we don't want your stinkin' email"
               />
             </div>
           </div>
-        </div>        <hr class="mt-6 border-b-1 border-gray-400" />
+        </div>
+
+        <hr class="mt-6 border-b-1 border-gray-400" />
 
         <div class="text-center flex justify-between">
           <h6 class="text-gray-500 text-sm mt-3 mb-6 font-bold uppercase">
-            Password
+            {translationsToUse.sectionLabels.password}
           </h6>
           <button
-              on:click={submitChangePasswordRequest}
-              class="{passwordUpdate.goodToGo() ? 'bg-blue-500' : 'bg-gray-300'} text-white active:bg-blue-600 font-bold uppercase text-xs rounded p-3 m-2"
-              type="button"
+            on:click={submitChangePasswordRequest}
+            class="{passwordUpdate.goodToGo() ? 'bg-blue-500' : 'bg-gray-300'} text-white active:bg-blue-600 font-bold uppercase text-xs rounded p-3 m-2"
+            type="button"
           >
-            Change Password
+            {translationsToUse.buttons.changePassword}
           </button>
         </div>
         <div class="flex flex-wrap">
           <div class="w-full lg:w-4/12 px-4">
             <div class="relative w-full mb-3">
               <label
-                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                      for="grid-password-update-current-password"
+                class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                for="grid-password-update-current-password"
               >
-                Current Password
+                {translationsToUse.inputLabels.currentPassword}
               </label>
               <input
-                      id="grid-password-update-current-password"
-                      type="password"
-                      class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                      bind:value={passwordUpdate.currentPassword}
+                id="grid-password-update-current-password"
+                type="password"
+                placeholder={translationsToUse.inputPlaceholders.currentPassword}
+                class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
+                bind:value={passwordUpdate.currentPassword}
               />
             </div>
           </div>
           <div class="w-full lg:w-4/12 px-4">
             <div class="relative w-full mb-3">
               <label
-                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                      for="grid-password-update-new-password"
+                class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                for="grid-password-update-new-password"
               >
-                New Password
+                {translationsToUse.inputLabels.newPassword}
               </label>
               <input
-                      id="grid-password-update-new-password"
-                      type="password"
-                      class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                      bind:value={passwordUpdate.newPassword}
+                id="grid-password-update-new-password"
+                type="password"
+                placeholder={translationsToUse.inputPlaceholders.newPassword}
+                class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
+                bind:value={passwordUpdate.newPassword}
               />
             </div>
           </div>
           <div class="w-full lg:w-4/12 px-4">
             <div class="relative w-full mb-3">
               <label
-                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                      for="grid-password-update-totp-token"
+                class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                for="grid-password-update-totp-token"
               >
-                2FA Token
+                {translationsToUse.inputLabels.twoFactorToken}
               </label>
               <input
-                      id="grid-password-update-totp-token"
-                      type="text"
-                      class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                      bind:value={passwordUpdate.totpToken}
+                id="grid-password-update-totp-token"
+                type="text"
+                placeholder={translationsToUse.inputPlaceholders.twoFactorToken}
+                class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
+                bind:value={passwordUpdate.totpToken}
               />
             </div>
           </div>
         </div>
-
       </div>
     </div>
   </div>

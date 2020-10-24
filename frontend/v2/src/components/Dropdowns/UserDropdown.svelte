@@ -2,8 +2,12 @@
   import axios, { AxiosResponse } from "axios";
   import { link, navigate } from "svelte-routing";
   import { createPopper } from "@popperjs/core";  // library for creating dropdown menu appear on click
+  import {onDestroy} from "svelte";
 
-  import {UserStatus} from "../../models";
+  import {V1APIClient} from "../../requests";
+  import {translations} from "../../i18n";
+  import {sessionSettingsStore, adminModeStore, userStatusStore} from "../../stores";
+  import {SessionSettings, UserStatus} from "../../models";
 
   let dropdownPopoverShow: Boolean = false;
   let btnDropdownRef;
@@ -13,18 +17,26 @@
   import {Logger} from "../../logger";
   let logger = new Logger().withDebugValue("source", "src/components/Dropdowns/UserDropdown.svelte");
 
-  import { userStatusStore } from "../../stores";
+  // set up translations
+  let currentSessionSettings = new SessionSettings();
+  let translationsToUse = translations.messagesFor(currentSessionSettings.language).components.dropdowns.userDropDown;
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = translations.messagesFor(currentSessionSettings.language).components.dropdowns.userDropDown;
+  });
+  onDestroy(unsubscribeFromSettingsUpdates);
+
   let currentAuthStatus: UserStatus = new UserStatus();
   const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
   });
+  onDestroy(unsubscribeFromUserStatusUpdates);
 
-  import { adminModeStore } from "../../stores";
-  import {V1APIClient} from "../../requests";
   let adminMode: boolean = false;
   const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe((value: boolean) => {
     adminMode = value;
   });
+  onDestroy(unsubscribeFromAdminModeUpdates);
 
   function goToSettings() {
     dropdownPopoverShow = false;
@@ -58,7 +70,7 @@
 <div>
   <a
     class="text-gray-600 block"
-    href="#pablo"
+    href="##"
     bind:this="{btnDropdownRef}"
     on:click="{toggleDropdown}"
   >
@@ -83,7 +95,7 @@
       class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent text-gray-800"
     >
       <i class="fa fa-cogs"></i>
-      Settings
+      {translationsToUse.settings}
     </button>
     {#if currentAuthStatus.isAdmin}
     <div class="h-0 my-2 border border-solid border-gray-200" />
@@ -92,7 +104,7 @@
       class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent {adminMode ? 'underline text-indigo-500' : ''} "
     >
       <i class="fa fa-user-secret"></i>
-      Admin Mode {adminMode ? '🔓' : '🔒'}
+      {translationsToUse.adminMode} {adminMode ? '🔓' : '🔒'}
     </button>
     {/if}
     <div class="h-0 my-2 border border-solid border-gray-200" />
@@ -101,20 +113,7 @@
             class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent text-red-600"
     >
       <i class="fa fa-sign-out-alt"></i>
-      Log Out
+      {translationsToUse.logout}
     </button>
   </div>
 </div>
-
-<style>
-  .toggle-checkbox:checked{
-    /*@apply:right-0 border-green-400;*/
-    right:0;
-    border-color:#68D391;
-  }
-
-  .toggle-checkbox:checked + .toggle-label{
-    /*@apply:bg-green-400;*/
-    background-color:#68D391;
-  }
-</style>

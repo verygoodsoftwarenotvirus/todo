@@ -5,17 +5,28 @@
   // core components
   import UserDropdown from "../Dropdowns/UserDropdown.svelte";
 
-  import { userStatusStore } from "../../stores";
-  import {UserStatus} from "../../models";
+  import {sessionSettingsStore, userStatusStore} from "../../stores";
+  import {SessionSettings, UserStatus} from "../../models";
+  import {translations} from "../../i18n";
+
   let currentAuthStatus = {};
   const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
     currentAuthStatus = value;
   });
-  // onDestroy(unsubscribeFromUserStatusUpdates);
+  onDestroy(unsubscribeFromUserStatusUpdates);
+
+  // set up translations
+  let currentSessionSettings = new SessionSettings();
+  let translationsToUse = translations.messagesFor(currentSessionSettings.language).components.navbars.adminNavbar;
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = translations.messagesFor(currentSessionSettings.language).components.navbars.adminNavbar;
+  });
+  onDestroy(unsubscribeFromSettingsUpdates);
 </script>
 
 <!-- Navbar -->
-<navre
+<nav
   class="absolute top-0 left-0 w-full z-10 bg-transparent md:flex-row md:flex-no-wrap md:justify-start flex items-center p-4"
 >
   <div
@@ -28,7 +39,7 @@
       use:link
       href="/admin"
     >
-      Dashboard
+      {translationsToUse.dashboard}
     </a>
     {/if}
     <!-- User -->
@@ -36,7 +47,7 @@
       <UserDropdown />
     </ul>
   </div>
-</navre>
+</nav>
 <div class="relative bg-red-500 md:pt-32 pb-32 pt-12">
   <div class="px-4 md:px-10 mx-auto w-full">
   </div>

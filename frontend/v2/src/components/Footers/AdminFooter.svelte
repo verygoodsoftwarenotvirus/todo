@@ -1,6 +1,19 @@
 <script lang="typescript">
   // make dynamic date to be added to footer
-  let date: Number = new Date().getFullYear();
+  import {SessionSettings} from "../../models";
+  import {translations} from "../../i18n";
+  import {sessionSettingsStore} from "../../stores";
+  import {onDestroy} from "svelte";
+
+  // set up translations
+  let currentSessionSettings = new SessionSettings();
+  let translationsToUse = translations.messagesFor(currentSessionSettings.language).components.footers.adminFooter;
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = translations.messagesFor(currentSessionSettings.language).components.footers.adminFooter;
+  });
+  onDestroy(unsubscribeFromSettingsUpdates);
+
 </script>
 
 <footer class="block py-4">
@@ -11,25 +24,25 @@
         <div
           class="text-sm text-gray-600 font-semibold py-1 text-center md:text-left"
         >
-          Copyright © {date}
+          {translationsToUse.copyright} {new Date().getFullYear()}
         </div>
       </div>
       <div class="w-full md:w-8/12 px-4">
         <ul class="flex flex-wrap list-none md:justify-end justify-center">
           <li>
             <a
-              href="#"
+              href="##"
               class="text-gray-700 hover:text-gray-900 text-sm font-semibold block py-1 px-3"
             >
-              About Us
+              {translationsToUse.aboutUs}
             </a>
           </li>
           <li>
             <a
-              href="#"
+              href="##"
               class="text-gray-700 hover:text-gray-900 text-sm font-semibold block py-1 px-3"
             >
-              Blog
+              {translationsToUse.blog}
             </a>
           </li>
         </ul>

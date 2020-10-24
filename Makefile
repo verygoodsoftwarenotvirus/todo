@@ -23,7 +23,7 @@ clean_search_indices:
 	@rm -rf $(SEARCH_INDICES_DIR)
 
 .PHONY: config_files
-config_files: vendor
+config_files:
 	go run cmd/config_gen/v1/main.go
 
 base_prereqs: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) config_files

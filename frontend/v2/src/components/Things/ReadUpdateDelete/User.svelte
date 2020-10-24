@@ -1,11 +1,13 @@
 <script lang="typescript">
   import { navigate } from "svelte-routing";
-  import { onMount } from "svelte";
+  import {onDestroy, onMount} from "svelte";
   import { AxiosError, AxiosResponse } from "axios";
 
-  import { User } from "../../../models";
+  import {SessionSettings, User} from "../../../models";
   import { Logger } from "../../../logger";
   import { V1APIClient } from "../../../requests";
+  import {translations} from "../../../i18n";
+  import {sessionSettingsStore} from "../../../stores";
 
   export let id: number = 0;
 
@@ -21,6 +23,15 @@
 
   let logger = new Logger().withDebugValue("source", "src/components/Things/ReadUpdateDelete/User.svelte");
 
+  // set up translations
+  let currentSessionSettings = new SessionSettings();
+  let translationsToUse = translations.messagesFor(currentSessionSettings.language).pages.registration;
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = translations.messagesFor(currentSessionSettings.language).pages.registration;
+  });
+  onDestroy(unsubscribeFromSettingsUpdates);
+
   function saveUser(): void {
     logger.debug(`saveUser called`);
 
@@ -30,21 +41,19 @@
       throw new Error("no changes to save!");
     }
 
-    const path: string = `/api/v1/users/${id}`;
-
     V1APIClient.saveUser(user)
-            .then((response: AxiosResponse<User>) => {
-              user = { ...response.data };
-              originalUser = { ...response.data };
-              needsToBeSaved = false;
-            })
-            .catch((error: AxiosError) => {
-              if (error.response) {
-                if (error.response.data) {
-                  userRetrievalError = error.response.data;
-                }
-              }
-            });
+      .then((response: AxiosResponse<User>) => {
+        user = { ...response.data };
+        originalUser = { ...response.data };
+        needsToBeSaved = false;
+      })
+      .catch((error: AxiosError) => {
+        if (error.response) {
+          if (error.response.data) {
+            userRetrievalError = error.response.data;
+          }
+        }
+      });
   }
 
   function fetchUser(): void {
@@ -55,17 +64,17 @@
     }
 
     V1APIClient.fetchUser(id)
-            .then((response: AxiosResponse<User>) => {
-              user = { ...response.data };
-              originalUser = { ...response.data };
-            })
-            .catch((error: AxiosError) => {
-              if (error.response) {
-                if (error.response.data) {
-                  userRetrievalError = error.response.data;
-                }
-              }
-            });
+      .then((response: AxiosResponse<User>) => {
+        user = { ...response.data };
+        originalUser = { ...response.data };
+      })
+      .catch((error: AxiosError) => {
+        if (error.response) {
+          if (error.response.data) {
+            userRetrievalError = error.response.data;
+          }
+        }
+      });
   }
 
   onMount(fetchUser);
@@ -95,12 +104,6 @@
         <input class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white" id="grid-first-name" type="text" on:keyup={evaluateChanges} bind:value={user.username}>
         <!--  <p class="text-red-500 text-xs italic">Please fill out this field.</p>-->
       </div>
-<!--      <div class="w-full md:w-1/2 px-3">-->
-<!--        <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="grid-last-name">-->
-<!--          Details-->
-<!--        </label>-->
-<!--        <input class="appearance-none block w-full text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="grid-last-name" type="text" on:keyup={evaluateChanges} bind:value={user.details}>-->
-<!--      </div>-->
       <div class="flex w-full mr-3 mt-4 max-w-full flex-grow justify-end flex-1">
         <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" on:click={deleteUser}><i class="fa fa-trash-alt"></i> Delete</button>
       </div>

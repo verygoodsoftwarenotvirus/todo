@@ -90,88 +90,88 @@
       </div>
 
       {#if currentAuthStatus.isAdmin}
-      <hr class="my-4 md:min-w-full" />
-      <div>
-        <h6 class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline">
-          {translationsToUse.admin}
-        </h6>
+        <hr class="my-4 md:min-w-full" />
+        <div>
+          <h6 class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline">
+            {translationsToUse.admin}
+          </h6>
 
-        <!-- USERS -->
+          <!-- USERS -->
 
-        <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
-          <li class="items-center">
-            <a
-              use:link
-              class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-              href="/admin/users"
-            >
-              <i class="fas fa-users text-gray-400 mr-2 text-sm"></i>
-              {translationsToUse.users}
-            </a>
-          </li>
-        </ul>
+          <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
+            <li class="items-center">
+              <a
+                use:link
+                class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
+                href="/admin/users"
+              >
+                <i class="fas fa-users text-gray-400 mr-2 text-sm"></i>
+                {translationsToUse.users}
+              </a>
+            </li>
+          </ul>
 
-        <!-- OAUTH2 CLIENTS -->
+          <!-- OAUTH2 CLIENTS -->
 
-        <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
-          <li class="items-center">
-            <a
-              use:link
-              class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-              href="/admin/oauth2_clients"
-            >
-              <i class="fas fa-robot text-gray-400 mr-2 text-sm"></i>
-              {translationsToUse.oauth2Clients}
-            </a>
-          </li>
-        </ul>
+          <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
+            <li class="items-center">
+              <a
+                use:link
+                class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
+                href="/admin/oauth2_clients"
+              >
+                <i class="fas fa-robot text-gray-400 mr-2 text-sm"></i>
+                {translationsToUse.oauth2Clients}
+              </a>
+            </li>
+          </ul>
 
-        <!-- WEBHOOKS -->
+          <!-- WEBHOOKS -->
 
-        <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
-          <li class="items-center">
-            <a
-              use:link
-              class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-              href="/admin/webhooks"
-            >
-              <i class="fas fa-network-wired text-gray-400 mr-2 text-sm"></i>
-              {translationsToUse.webhooks}
-            </a>
-          </li>
-        </ul>
+          <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
+            <li class="items-center">
+              <a
+                use:link
+                class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
+                href="/admin/webhooks"
+              >
+                <i class="fas fa-network-wired text-gray-400 mr-2 text-sm"></i>
+                {translationsToUse.webhooks}
+              </a>
+            </li>
+          </ul>
 
-        <!-- AUDIT LOG -->
+          <!-- AUDIT LOG -->
 
-        <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
-          <li class="items-center">
-            <a
-              use:link
-              class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-              href="/admin/audit_log"
-            >
-              <i class="fas fa-record-vinyl text-gray-400 mr-2 text-sm"></i>
-              {translationsToUse.auditLog}
-            </a>
-          </li>
-        </ul>
+          <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
+            <li class="items-center">
+              <a
+                use:link
+                class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
+                href="/admin/audit_log"
+              >
+                <i class="fas fa-record-vinyl text-gray-400 mr-2 text-sm"></i>
+                {translationsToUse.auditLog}
+              </a>
+            </li>
+          </ul>
 
-        <!-- SERVER SETTINGS -->
+          <!-- SERVER SETTINGS -->
 
-        <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
-          <li class="items-center">
-            <a
-              use:link
-              class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-              href="/admin/settings"
-            >
-              <i class="fas fa-cog text-gray-400 mr-2 text-sm"></i>
-              {translationsToUse.serverSettings}
-            </a>
-          </li>
-        </ul>
+          <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
+            <li class="items-center">
+              <a
+                use:link
+                class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
+                href="/admin/settings"
+              >
+                <i class="fas fa-cog text-gray-400 mr-2 text-sm"></i>
+                {translationsToUse.serverSettings}
+              </a>
+            </li>
+          </ul>
 
-      </div>
+        </div>
       {/if}
 
     </div>

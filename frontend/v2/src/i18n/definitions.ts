@@ -154,6 +154,30 @@ export const translations = translate(
         },
       },
     },
+    models: {
+      item: {
+        actions: {
+          create: "Create Item"
+        },
+        labels: {
+          name: "Name",
+          details: "Details",
+        },
+        inputPlaceholders: {
+          name: "name",
+          details: "details",
+        },
+      },
+      user: {
+        actions: {},
+        labels: {
+          name: "Name",
+        },
+        inputPlaceholders: {
+          name: "name",
+        },
+      },
+    },
   },
 )
 // .supporting(mexicanSpanish,

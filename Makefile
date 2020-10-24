@@ -26,7 +26,7 @@ clean_search_indices:
 config_files: vendor
 	go run cmd/config_gen/v1/main.go
 
-base_prereqs: vendor clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) config_files
+base_prereqs: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) config_files
 
 ## Go-specific prerequisite stuff
 

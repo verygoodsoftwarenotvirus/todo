@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tebeka/selenium"
+	"github.com/tebeka/selenium/chrome"
 	"github.com/tebeka/selenium/firefox"
 	"github.com/tebeka/selenium/log"
 )
@@ -26,6 +27,7 @@ func runTestOnAllSupportedBrowsers(t *testing.T, tp testProvider) {
 	firefoxCaps.AddFirefox(firefox.Capabilities{
 		Log: &firefox.Log{Level: firefox.Debug},
 	})
+	chromeCaps.AddChrome(chrome.Capabilities{})
 
 	capabilities := map[string]selenium.Capabilities{
 		"firefox": firefoxCaps,
@@ -276,8 +278,6 @@ func TestRegistrationFlow(T *testing.T) {
 			t.Logf("clicked login page login button")
 
 			time.Sleep(5 * time.Second)
-
-			saveScreenshotTo(t, driver, "/artifacts/fart.png")
 
 			expectedURL = urlToUse + "/"
 			actualURL, err = driver.CurrentURL()

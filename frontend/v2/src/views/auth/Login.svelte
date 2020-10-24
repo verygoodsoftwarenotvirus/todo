@@ -32,6 +32,7 @@
 
     import { userStatusStore } from "../../stores"
     import { V1APIClient } from "../../requests";
+  import {User} from "../../models";
 
     async function login() {
         const path = "/users/login"
@@ -47,28 +48,25 @@
 
         dumpingGround = "login can proceed!";
 
-        return V1APIClient.login(buildLoginRequest()).then(() => {
-              dumpingGround = "login response received!";
+        return V1APIClient.login(buildLoginRequest()).then((res: AxiosResponse<UserStatus>) => {
+              dumpingGround = `login response received! status: ${res.status}, ${JSON.stringify(res.data)}`;
 
-              V1APIClient.checkAuthStatusRequest().then((statusResponse: AxiosResponse<UserStatus>) => {
-                dumpingGround = "status response received!";
+              const userStatus: UserStatus = res.data;
+              userStatusStore.setAuthStatus(userStatus);
 
-                userStatusStore.setAuthStatus(statusResponse.data);
-
-                if (statusResponse.data.isAdmin) {
-                  dumpingGround = "navigating to admin dashboard!";
-                  logger.debug(`navigating to /admin/dashboard because user is an authenticated admin`);
-                  navigate("/admin/dashboard", { state: {}, replace: true });
-                  location.reload();
-                } else {
-                  dumpingGround = "navigating to homepage!";
-                  logger.debug(`navigating to homepage because user is a plain user`);
-                  navigate("/", { state: {}, replace: true });
-                }
-              });
+              if (userStatus.isAdmin) {
+                dumpingGround = "navigating to admin dashboard!";
+                logger.debug(`navigating to /admin/dashboard because user is an authenticated admin`);
+                navigate("/admin/dashboard", { state: {}, replace: true });
+                location.reload();
+              } else {
+                dumpingGround = "navigating to homepage!";
+                logger.debug(`navigating to homepage because user is a plain user`);
+                navigate("/", { state: {}, replace: true });
+              }
             })
             .catch((reason: AxiosError) => {
-              dumpingGround = "login promise catch called! "+ JSON.stringify(reason)
+              dumpingGround = `login promise catch called! ${JSON.stringify(reason)}`;
               if (reason.response) {
                 if (reason.response.status === 401) {
                   loginError = 'invalid credentials: please try again'

@@ -85,16 +85,20 @@ func (s *Service) fetchUserFromCookie(ctx context.Context, req *http.Request) (*
 	ctx, span := tracing.StartSpan(ctx, "fetchUserFromCookie")
 	defer span.End()
 
+	logger := s.logger.WithRequest(req).WithValue("cookie_count", len(req.Cookies()))
+
+	logger.Debug("fetchUserFromCookie called")
+
 	ca, decodeErr := s.DecodeCookieFromRequest(ctx, req)
 	if decodeErr != nil {
-		s.logger.Debug("trouble fetching cookie data from request")
+		s.logger.WithError(decodeErr).Debug("unable to fetch cookie data from request")
 		return nil, fmt.Errorf("fetching cookie data from request: %w", decodeErr)
 	}
 
 	user, userFetchErr := s.userDB.GetUser(req.Context(), ca.UserID)
 	if userFetchErr != nil {
-		s.logger.Debug("trouble fetching user from request")
-		return nil, fmt.Errorf("fetching user from request: %w", userFetchErr)
+		s.logger.Debug("unable to determine user from request")
+		return nil, fmt.Errorf("determining user from request: %w", userFetchErr)
 	}
 	tracing.AttachUserIDToSpan(span, ca.UserID)
 
@@ -107,6 +111,7 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	logger.Debug("LoginHandler called")
 
 	loginData, ok := ctx.Value(userLoginInputMiddlewareCtxKey).(*models.UserLoginInput)
 	if !ok {
@@ -173,14 +178,14 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	redirectTarget := "/"
-	if user.IsAdmin {
-		redirectTarget = "/admin/dashboard"
-	}
+	logger.Debug("login successful")
 
 	http.SetCookie(res, cookie)
-	// res.WriteHeader(http.StatusNoContent)
-	http.Redirect(res, req, redirectTarget, http.StatusSeeOther)
+	statusResponse := &models.UserStatusResponse{
+		Authenticated: true,
+		IsAdmin:       user.IsAdmin,
+	}
+	s.encoderDecoder.EncodeResponseWithStatus(res, statusResponse, http.StatusAccepted)
 }
 
 // LogoutHandler is our logout route.

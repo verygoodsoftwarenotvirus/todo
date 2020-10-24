@@ -40,24 +40,24 @@ export function logout(): Promise<AxiosResponse> {
 
 export function validateTOTPSecretWithToken(validationRequest: TOTPTokenValidationRequest): Promise<AxiosResponse> {
     const uri = backendRoutes.VERIFY_2FA_SECRET;
-    return axios.post(uri, validationRequest)
+    return axios.post(uri, validationRequest, defaultAPIRequestConfig)
         .then(requestLogFunction(logger, uri));
 }
 
 export function registrationRequest(rr: RegistrationRequest): Promise<AxiosResponse> {
     const uri = backendRoutes.USER_REGISTRATION;
-    return axios.post(uri, rr)
+    return axios.post(uri, rr, defaultAPIRequestConfig)
         .then(requestLogFunction(logger, uri));
 }
 
 export function passwordChangeRequest(pcr: UserPasswordUpdateRequest): Promise<AxiosResponse> {
     const uri = backendRoutes.CHANGE_PASSWORD;
-    return axios.put(uri, pcr)
+    return axios.put(uri, pcr, defaultAPIRequestConfig)
         .then(requestLogFunction(logger, uri));
 }
 
 export function twoFactorSecretChangeRequest(sur: UserTwoFactorSecretUpdateRequest): Promise<AxiosResponse> {
     const uri = backendRoutes.CHANGE_2FA_SECRET;
-    return axios.post(uri, sur)
+    return axios.post(uri, sur, defaultAPIRequestConfig)
         .then(requestLogFunction(logger, uri));
 }

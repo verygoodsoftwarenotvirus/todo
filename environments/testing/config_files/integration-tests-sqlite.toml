@@ -12,8 +12,8 @@
 
   [database.create_test_user]
     is_admin = true
-    password = "integration-tests-for-sqlite-are-cool"
-    username = "sqliteExampleUser"
+    password = "integration-tests-are-cool"
+    username = "exampleUser"
 
 [frontend]
   static_files_directory = "/frontend"

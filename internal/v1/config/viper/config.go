@@ -3,10 +3,11 @@ package viper
 import (
 	"crypto/rand"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 
 	"github.com/spf13/viper"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
 func init() {

@@ -75,7 +75,6 @@ type testProvider func(driver selenium.WebDriver) func(t *testing.T)
 func TestLoginPage(T *testing.T) {
 	runTestOnAllSupportedBrowsers(T, func(driver selenium.WebDriver) func(t *testing.T) {
 		return func(t *testing.T) {
-
 			// Navigate to the login page.
 			reqURI := urlToUse + "/auth/login"
 			require.NoError(t, driver.Get(reqURI))

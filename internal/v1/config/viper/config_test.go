@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func Test_randString(t *testing.T) {
@@ -60,7 +61,7 @@ connection_details = "%s"
 			},
 		}
 
-		cfg, err := ParseConfigFile(tf.Name())
+		cfg, err := ParseConfigFile(noop.NewLogger(), tf.Name())
 		assert.NoError(t, err)
 
 		assert.Equal(t, expectedConfig.Server.HTTPPort, cfg.Server.HTTPPort)
@@ -73,7 +74,7 @@ connection_details = "%s"
 	})
 
 	T.Run("with nonexistent file", func(t *testing.T) {
-		cfg, err := ParseConfigFile("/this/doesn't/even/exist/lol")
+		cfg, err := ParseConfigFile(noop.NewLogger(), "/this/doesn't/even/exist/lol")
 		assert.Error(t, err)
 		assert.Nil(t, cfg)
 	})

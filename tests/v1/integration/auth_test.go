@@ -45,7 +45,7 @@ func loginUser(ctx context.Context, t *testing.T, username, password, totpSecret
 		log.Fatal(err)
 	}
 
-	assert.Equal(t, http.StatusNoContent, resp.StatusCode, "login should be successful")
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode, "login should be successful")
 
 	cookies := resp.Cookies()
 	if len(cookies) == 1 {
@@ -105,7 +105,7 @@ func TestAuth(test *testing.T) {
 		// execute login request.
 		res, err = todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
-		assert.Equal(t, http.StatusNoContent, res.StatusCode)
+		assert.Equal(t, http.StatusAccepted, res.StatusCode)
 
 		cookies := res.Cookies()
 		assert.Len(t, cookies, 1)
@@ -155,7 +155,7 @@ func TestAuth(test *testing.T) {
 		// execute login request.
 		res, err = todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
-		assert.Equal(t, http.StatusNoContent, res.StatusCode)
+		assert.Equal(t, http.StatusAccepted, res.StatusCode)
 
 		// extract cookie.
 		cookies := res.Cookies()
@@ -422,7 +422,7 @@ func TestAuth(test *testing.T) {
 		// execute login request.
 		res, err = todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
-		assert.Equal(t, http.StatusNoContent, res.StatusCode)
+		assert.Equal(t, http.StatusAccepted, res.StatusCode)
 
 		cookies := res.Cookies()
 		require.Len(t, cookies, 1)
@@ -544,7 +544,7 @@ func TestAuth(test *testing.T) {
 		// execute login request.
 		res, err = todoClient.PlainClient().Do(req)
 		checkValueAndError(t, res, err)
-		assert.Equal(t, http.StatusNoContent, res.StatusCode)
+		assert.Equal(t, http.StatusAccepted, res.StatusCode)
 
 		cookies := res.Cookies()
 		require.Len(t, cookies, 1)

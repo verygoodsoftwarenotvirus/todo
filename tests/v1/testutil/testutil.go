@@ -187,6 +187,7 @@ func buildURL(address string, parts ...string) string {
 
 func getLoginCookie(serviceURL string, u *models.User) (*http.Cookie, error) {
 	uri := buildURL(serviceURL, "users", "login")
+
 	code, err := totp.GenerateCode(strings.ToUpper(u.TwoFactorSecret), time.Now().UTC())
 	if err != nil {
 		return nil, fmt.Errorf("generating totp token: %w", err)

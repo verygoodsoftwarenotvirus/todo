@@ -281,7 +281,7 @@ func TestService_LoginHandler(T *testing.T) {
 
 		s.LoginHandler(res, req)
 
-		assert.Equal(t, http.StatusNoContent, res.Code)
+		assert.Equal(t, http.StatusAccepted, res.Code)
 		assert.NotEmpty(t, res.Header().Get("Set-Cookie"))
 
 		mock.AssertExpectationsForObjects(t, udb, authr)

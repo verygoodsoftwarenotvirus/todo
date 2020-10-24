@@ -100,7 +100,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 		x, actual := ProvideDatabaseClient(ctx, noop.NewLogger(), mockDB, nil, authenticator, nil, true, true)
 		assert.Nil(t, x)
 		assert.Error(t, actual)
-		assert.Equal(t, expected, actual)
+		assert.Equal(t, expected, errors.Unwrap(actual))
 
 		mock.AssertExpectationsForObjects(t, authenticator, mockDB)
 	})

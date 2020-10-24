@@ -214,8 +214,8 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 		cfg.Set(dbRunMigrations, true)
 		cfg.Set(dbDeets, dbDetails)
 
-		cfg.Set(dbCreateTestUserUsername, fmt.Sprintf("%sExampleUser", dbVendor))
-		cfg.Set(dbCreateTestUserPassword, fmt.Sprintf("integration-tests-for-%s-are-cool", dbVendor))
+		cfg.Set(dbCreateTestUserUsername, "exampleUser")
+		cfg.Set(dbCreateTestUserPassword, "integration-tests-are-cool")
 		cfg.Set(dbCreateTestUserIsAdmin, true)
 
 		cfg.Set(itemsSearchIndexPath, defaultItemsSearchIndexPath)

@@ -39,6 +39,7 @@ docker-security:
     - ls -Al
     - pwd
     - whoami
+    - find . -type f -name "*.Dockerfile"
     - make docker-security-lint
 
 linting:

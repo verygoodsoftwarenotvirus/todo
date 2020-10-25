@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"image/png"
 	"net/url"
-	"os"
 	"testing"
 	"time"
 
@@ -53,21 +52,6 @@ func runTestOnAllSupportedBrowsers(t *testing.T, tp testProvider) {
 		t.Run(browserName, tp(wd))
 		assert.NoError(t, wd.Quit())
 	}
-}
-
-func saveScreenshotTo(t *testing.T, driver selenium.WebDriver, path string) {
-	t.Helper()
-
-	screenshotAsBytes, err := driver.Screenshot()
-	require.NoError(t, err)
-
-	im, err := png.Decode(bytes.NewReader(screenshotAsBytes))
-	require.NoError(t, err)
-
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_CREATE, 0744)
-	require.NoError(t, err)
-
-	require.NoError(t, png.Encode(f, im))
 }
 
 type testProvider func(driver selenium.WebDriver) func(t *testing.T)

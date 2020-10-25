@@ -1,6 +1,6 @@
 <script lang="typescript">
   // core components
-  import AuthNavbar from "../components/Navbars/AuthNavbar.svelte";
+  import AuthNavbar from "../Navbars/AuthNavbar.svelte";
   import Footer from "../components/Footers/Footer.svelte";
 
   export let location: Location;

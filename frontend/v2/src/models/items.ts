@@ -5,8 +5,9 @@ import { Pagination } from "@/models/api";
 import { defaultFactories } from "@/models/fakes";
 import type { APITableCell, APITableHeader } from "@/components/APITable/models";
 import { renderUnixTime } from "@/utils";
+import type {itemModel} from "@/i18n";
 
-export class ItemList extends Pagination{
+export class ItemList extends Pagination {
     items: Item[];
 
     constructor() {
@@ -45,14 +46,15 @@ export class Item {
     }
 
     // this function should return everything there are no presumed fields
-    static headers = (): APITableHeader[] => {
+    static headers = (translations: Readonly<itemModel>): APITableHeader[] => {
+        const columns = translations.columns;
         return [
-            {content: "ID", requiresAdmin: false},
-            {content: "Name", requiresAdmin: false},
-            {content: "Details", requiresAdmin: false},
-            {content: "Created On", requiresAdmin: false},
-            {content: "Last Updated On", requiresAdmin: false},
-            {content: "Belongs to User", requiresAdmin: true},
+            {content: columns.id, requiresAdmin: false},
+            {content: columns.name, requiresAdmin: false},
+            {content: columns.details, requiresAdmin: false},
+            {content: columns.createdOn, requiresAdmin: false},
+            {content: columns.lastUpdatedOn, requiresAdmin: false},
+            {content: columns.belongsToUser, requiresAdmin: true},
         ];
     }
 

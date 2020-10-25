@@ -71,7 +71,7 @@ rewire: ensure-wire clean_wire wire
 
 .PHONY: docker-security-lint
 docker-security-lint:
-	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` openpolicyagent/conftest:latest test --trace --policy docker_security.rego `find . -type f -name "*.Dockerfile"`
+	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` openpolicyagent/conftest:latest test --policy docker_security.rego `find . -type f -name "*.Dockerfile"`
 
 .PHONY: lint
 lint:

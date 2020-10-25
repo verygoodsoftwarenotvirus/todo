@@ -93,7 +93,7 @@ gitlab-ci-junit-report: $(ARTIFACTS_DIR) ensure-go-junit-report
 	go test -v -race -count 5 $(PACKAGE_LIST) | go-junit-report > $(CI_PROJECT_DIR)/test_artifacts/unit_test_report.xml
 
 .PHONY: quicktest # basically only running once instead of with -count 5 or whatever
-quicktest: base_prereqs
+quicktest: $(ARTIFACTS_DIR) vendor
 	go test -cover -race -failfast $(PACKAGE_LIST)
 
 .PHONY: format
@@ -101,12 +101,12 @@ format: base_prereqs
 	for file in `find $(PWD) -name '*.go'`; do $(GO_FORMAT) $$file; done
 
 .PHONY: check_formatting
-check_formatting: base_prereqs
+check_formatting: vendor
 	docker build --tag check_formatting:latest --file environments/testing/dockerfiles/formatting.Dockerfile .
 	docker run --rm check_formatting:latest
 
 .PHONY: frontend-tests
-frontend-tests: base_prereqs
+frontend-tests:
 	docker-compose --file $(TEST_DOCKER_COMPOSE_FILES_DIR)/frontend-tests.yaml up \
 	--build \
 	--force-recreate \
@@ -124,7 +124,7 @@ lintegration-tests: integration-tests lint
 integration-tests: integration-tests-sqlite integration-tests-postgres integration-tests-mariadb
 
 .PHONY: integration-tests-
-integration-tests-%: base_prereqs
+integration-tests-%:
 	docker-compose --file $(TEST_DOCKER_COMPOSE_FILES_DIR)/integration_tests/integration-tests-$*.yaml up \
 	--build \
 	--force-recreate \
@@ -153,7 +153,7 @@ integration-coverage: base_prereqs
 load-tests: load-tests-sqlite load-tests-postgres load-tests-mariadb
 
 .PHONY: load-tests-
-load-tests-%: base_prereqs
+load-tests-%:
 	docker-compose --file $(TEST_DOCKER_COMPOSE_FILES_DIR)/load_tests/load-tests-$*.yaml up \
 	--build \
 	--force-recreate \

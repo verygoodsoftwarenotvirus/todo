@@ -37,7 +37,7 @@ docker-security:
     - pwd
     - whoami
     - find . -type f -name "*.Dockerfile"
-    - test --policy docker_security.rego `find . -type f -name "*.Dockerfile"`
+    - conftest test --policy docker_security.rego $(find . -type f -name "*.Dockerfile")
 
 linting:
   stage: quality

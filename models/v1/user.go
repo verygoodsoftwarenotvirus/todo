@@ -3,6 +3,13 @@ package models
 import (
 	"context"
 	"net/http"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search"
+)
+
+const (
+	// UsersSearchIndexName is the name of the index used to search through items.
+	UsersSearchIndexName search.IndexName = "users"
 )
 
 type (

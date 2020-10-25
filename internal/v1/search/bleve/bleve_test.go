@@ -95,12 +95,12 @@ func TestBleveIndexManager_Search(T *testing.T) {
 		assert.NoError(t, err)
 		require.NotNil(t, im)
 
-		x := &exampleType{
+		x := exampleType{
 			ID:            123,
 			Name:          exampleQuery,
 			BelongsToUser: exampleUserID,
 		}
-		assert.NoError(t, im.Index(ctx, x.ID, x))
+		assert.NoError(t, im.Index(ctx, x.ID, &x))
 
 		results, err := im.Search(ctx, x.Name, exampleUserID)
 		assert.NotEmpty(t, results)

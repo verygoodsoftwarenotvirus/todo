@@ -10,6 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	bleve "github.com/blevesearch/bleve"
+	"github.com/blevesearch/bleve/search/searcher"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
@@ -85,14 +86,16 @@ func (sm *bleveIndexManager) Search(ctx context.Context, query string, userID ui
 	_, span := tracing.StartSpan(ctx, "Search")
 	defer span.End()
 
-	query = ensureQueryIsRestrictedToUser(query, userID)
 	tracing.AttachSearchQueryToSpan(span, query)
 	sm.logger.WithValues(map[string]interface{}{
 		"search_query": query,
 		"user_id":      userID,
 	}).Debug("performing search")
 
-	searchRequest := bleve.NewSearchRequest(bleve.NewQueryStringQuery(query))
+	q := bleve.NewFuzzyQuery(query)
+	q.SetFuzziness(searcher.MaxFuzziness)
+
+	searchRequest := bleve.NewSearchRequest(q)
 	searchResults, err := sm.index.SearchInContext(ctx, searchRequest)
 	if err != nil {
 		sm.logger.Error(err, "performing search query")
@@ -114,14 +117,17 @@ func (sm *bleveIndexManager) Search(ctx context.Context, query string, userID ui
 
 // SearchForAdmin implements our IndexManager interface
 func (sm *bleveIndexManager) SearchForAdmin(ctx context.Context, query string) (ids []uint64, err error) {
-	_, span := tracing.StartSpan(ctx, "SearchForAdmin")
+	ctx, span := tracing.StartSpan(ctx, "SearchForAdmin")
 	defer span.End()
 
 	tracing.AttachSearchQueryToSpan(span, query)
 	logger := sm.logger.WithValue("search_query", query)
 	logger.Debug("performing search for admin")
 
-	searchRequest := bleve.NewSearchRequest(bleve.NewQueryStringQuery(query))
+	q := bleve.NewFuzzyQuery(query)
+	q.SetFuzziness(2)
+
+	searchRequest := bleve.NewSearchRequest(q)
 	searchResults, err := sm.index.SearchInContext(ctx, searchRequest)
 	if err != nil {
 		sm.logger.Error(err, "performing search query")

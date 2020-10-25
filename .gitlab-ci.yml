@@ -29,15 +29,20 @@ before_script:
 #    - apt-get update -y && apt-get install -y make git gcc musl-dev
 #    - make coverage
 
-docker-security:
+docker-security-lint:
   stage: quality
-  image: openpolicyagent/conftest:latest
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    GOPATH: "/go"
   script:
+    - apk add --update --no-cache make
     - ls -Al
     - pwd
     - whoami
     - find . -type f -name "*.Dockerfile"
-    - conftest test --policy docker_security.rego $(find . -type f -name "*.Dockerfile")
+    - make docker-security-lint
 
 #linting:
 #  stage: quality

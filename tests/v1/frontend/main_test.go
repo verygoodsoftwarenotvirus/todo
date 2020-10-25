@@ -91,8 +91,6 @@ func TestLoginPage(T *testing.T) {
 				return elem.IsDisplayed()
 			}, 10*time.Second, time.Second)
 
-			saveScreenshotTo(t, driver, "/artifacts/fart.png")
-
 			require.NoError(t, waitForLoginButtonErr, "unable to find loginButton: %v", waitForLoginButtonErr)
 
 			// fetch the button.

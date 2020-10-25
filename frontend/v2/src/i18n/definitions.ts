@@ -169,7 +169,10 @@ export const translations = translate(
         },
       },
       user: {
-        actions: {},
+        actions: {
+          save: "Save",
+          delete: "Delete",
+        },
         labels: {
           name: "Name",
         },

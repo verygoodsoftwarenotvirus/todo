@@ -9,6 +9,7 @@ import (
 
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
+	"github.com/corona10/goimagehash"
 	"github.com/makiuchi-d/gozxing"
 	"github.com/makiuchi-d/gozxing/qrcode"
 	"github.com/pquerna/otp/totp"
@@ -85,6 +86,19 @@ func TestLoginPage(T *testing.T) {
 			actual, isDisplayedErr := loginButton.IsDisplayed()
 			assert.NoError(t, isDisplayedErr)
 			assert.True(t, actual)
+
+			screenshotAsBytes, err := driver.Screenshot()
+			require.NoError(t, err)
+
+			img, err := png.Decode(bytes.NewReader(screenshotAsBytes))
+			require.NoError(t, err)
+
+			phash, err := goimagehash.PerceptionHash(img)
+			require.NoError(t, err)
+
+			const expectedPhash = ""
+
+			assert.Equal(t, expectedPhash, phash)
 		}
 	})
 }

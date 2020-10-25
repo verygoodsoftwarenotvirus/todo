@@ -16,6 +16,7 @@ require (
 	github.com/alexedwards/scs/v2 v2.4.0
 	github.com/blevesearch/bleve v1.0.9
 	github.com/brianvoe/gofakeit/v5 v5.0.0
+	github.com/corona10/goimagehash v1.0.3
 	github.com/emicklei/hazana v1.6.2
 	github.com/go-chi/chi v4.0.3+incompatible
 	github.com/go-chi/cors v1.0.0

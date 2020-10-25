@@ -29,6 +29,15 @@ coverage:
     - apt-get update -y && apt-get install -y make git gcc musl-dev
     - make coverage
 
+docker-security:
+  stage: quality
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - apk add --update --no-cache make
+    - make docker-security-lint
+
 linting:
   stage: quality
   image: golangci/golangci-lint:latest # v1.18

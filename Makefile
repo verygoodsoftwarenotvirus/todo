@@ -69,6 +69,10 @@ rewire: ensure-wire clean_wire wire
 
 ## Testing things
 
+.PHONY: docker-security-lint
+docker-security-lint:
+	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` openpolicyagent/conftest test --policy docker_security.rego `find . -type f -name "*.Dockerfile"`
+
 .PHONY: lint
 lint:
 	@docker pull golangci/golangci-lint:latest

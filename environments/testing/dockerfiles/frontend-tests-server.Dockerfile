@@ -1,5 +1,5 @@
 # frontend-build-stage
-FROM node:latest AS frontend-build-stage
+FROM node:lts-stretch AS frontend-build-stage
 
 WORKDIR /app
 

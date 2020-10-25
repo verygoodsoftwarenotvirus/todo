@@ -4,7 +4,7 @@ RUN apt-get update -y && apt-get install -y make git gcc musl-dev
 
 WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
-ADD . .
+COPY . .
 
 ENTRYPOINT [ "go", "test", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/integration" ]
 

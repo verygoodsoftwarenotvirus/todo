@@ -5,16 +5,16 @@ WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
 RUN apt-get update -y && apt-get install -y make git gcc musl-dev
 
-ADD . .
+COPY . .
 
 RUN go build -trimpath -o /todo -v gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
 
 # frontend-build-stage
-FROM node:latest AS frontend-build-stage
+FROM node:lts-stretch AS frontend-build-stage
 
 WORKDIR /app
 
-ADD frontend/v2 .
+COPY frontend/v2 .
 
 RUN npm install && npm run build
 

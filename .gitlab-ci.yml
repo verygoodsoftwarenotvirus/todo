@@ -31,16 +31,13 @@ coverage:
 
 docker-security:
   stage: quality
-  image: docker:latest
-  services:
-    - docker:dind
+  image: openpolicyagent/conftest:latest
   script:
-    - apk add --update --no-cache make
     - ls -Al
     - pwd
     - whoami
     - find . -type f -name "*.Dockerfile"
-    - make docker-security-lint
+    - test --policy docker_security.rego `find . -type f -name "*.Dockerfile"`
 
 linting:
   stage: quality

@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search"
+
+	v "github.com/RussellLuo/validating/v2"
 )
 
 const (
@@ -105,4 +107,32 @@ func (x *Item) ToUpdateInput() *ItemUpdateInput {
 		Name:    x.Name,
 		Details: x.Details,
 	}
+}
+
+// Validate validates a ItemCreationInput
+func (x *ItemCreationInput) Validate() error {
+	err := v.Validate(v.Schema{
+		v.F("name", x.Name):       &minimumStringLengthValidator{minLength: 1},
+		v.F("details", x.Details): &minimumStringLengthValidator{minLength: 1},
+	})
+
+	// for whatever reason, returning straight from v.Validate makes my tests fail /shrug
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Validate validates a ItemUpdateInput
+func (x *ItemUpdateInput) Validate() error {
+	err := v.Validate(v.Schema{
+		v.F("name", x.Name):       &minimumStringLengthValidator{minLength: 1},
+		v.F("details", x.Details): &minimumStringLengthValidator{minLength: 1},
+	})
+
+	// for whatever reason, returning straight from v.Validate makes my tests fail /shrug
+	if err != nil {
+		return err
+	}
+	return nil
 }

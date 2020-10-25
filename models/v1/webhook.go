@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	v "github.com/RussellLuo/validating/v2"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
@@ -130,4 +131,42 @@ func (w *Webhook) ToListener(logger logging.Logger) newsman.Listener {
 			Topics:    w.Topics,
 		},
 	)
+}
+
+// Validate validates a WebhookCreationInput
+func (w *WebhookCreationInput) Validate() error {
+	err := v.Validate(v.Schema{
+		v.F("name", w.Name):                &minimumStringLengthValidator{minLength: 1},
+		v.F("url", w.URL):                  &urlValidator{},
+		v.F("method", &w.Method):           v.In(http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete),
+		v.F("contentType", &w.ContentType): v.In("application/json", "application/xml"),
+		v.F("events", &w.Events):           &minimumStringSliceLengthValidator{minLength: 1},
+		v.F("dataTypes", &w.DataTypes):     &minimumStringSliceLengthValidator{minLength: 1},
+		v.F("topics", &w.Topics):           &minimumStringSliceLengthValidator{minLength: 1},
+	})
+
+	// for whatever reason, returning straight from v.Validate makes my tests fail /shrug
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Validate validates a WebhookUpdateInput
+func (w *WebhookUpdateInput) Validate() error {
+	err := v.Validate(v.Schema{
+		v.F("name", w.Name):                &minimumStringLengthValidator{minLength: 1},
+		v.F("url", w.URL):                  &urlValidator{},
+		v.F("method", &w.Method):           v.In(http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete),
+		v.F("contentType", &w.ContentType): v.In("application/json", "application/xml"),
+		v.F("events", &w.Events):           &minimumStringSliceLengthValidator{minLength: 1},
+		v.F("dataTypes", &w.DataTypes):     &minimumStringSliceLengthValidator{minLength: 1},
+		v.F("topics", &w.Topics):           &minimumStringSliceLengthValidator{minLength: 1},
+	})
+
+	// for whatever reason, returning straight from v.Validate makes my tests fail /shrug
+	if err != nil {
+		return err
+	}
+	return nil
 }

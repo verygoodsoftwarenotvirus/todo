@@ -23,6 +23,12 @@ func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		if err := x.Validate(); err != nil {
+			logger.Error(err, "provided input was invalid")
+			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		ctx = context.WithValue(ctx, createMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
@@ -41,6 +47,12 @@ func (s *Service) UpdateInputMiddleware(next http.Handler) http.Handler {
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
 			logger.Error(err, "error encountered decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(res, "invalid request content", http.StatusBadRequest)
+			return
+		}
+
+		if err := x.Validate(); err != nil {
+			logger.Error(err, "provided input was invalid")
+			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
 			return
 		}
 

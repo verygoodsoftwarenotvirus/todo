@@ -9,6 +9,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.4.1
 	github.com/GuiaBolso/darwin v0.0.0-20191218124601-fd6d2aa3d244
 	github.com/Masterminds/squirrel v1.2.0
+	github.com/RussellLuo/validating/v2 v2.1.0
 	github.com/alexedwards/scs/mysqlstore v0.0.0-20200503134757-95908882a5b1
 	github.com/alexedwards/scs/postgresstore v0.0.0-20200503134757-95908882a5b1
 	github.com/alexedwards/scs/sqlite3store v0.0.0-20200503134757-95908882a5b1

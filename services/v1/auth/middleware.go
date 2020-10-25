@@ -27,9 +27,6 @@ func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 		ctx, span := tracing.StartSpan(req.Context(), "CookieAuthenticationMiddleware")
 		defer span.End()
 
-		logger := s.logger.WithValue("cookie_count", len(req.Cookies()))
-		logger.Info("CookieAuthenticationMiddleware called")
-
 		// fetch the user from the request.
 		user, err := s.fetchUserFromCookie(ctx, req)
 		if err != nil {
@@ -62,9 +59,10 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 			ctx, span := tracing.StartSpan(req.Context(), "AuthenticationMiddleware")
 			defer span.End()
 
+			logger := s.logger.WithRequest(req)
+
 			// let's figure out who the user is.
 			var user *models.User
-			logger := s.logger.WithRequest(req)
 
 			// check for a cookie first if we can.
 			if allowValidCookieInLieuOfAValidToken {
@@ -150,15 +148,21 @@ func (s *Service) AdminUserImpersonationMiddleware(next http.Handler) http.Handl
 		ctx, span := tracing.StartSpan(req.Context(), "OperatingAsAdminMiddleware")
 		defer span.End()
 
-		s.logger.WithRequest(req).Debug("AdminUserImpersonationMiddleware called")
+		logger := s.logger.WithRequest(req)
+		logger.Debug("AdminUserImpersonationMiddleware called")
 
-		asUser, err := strconv.ParseUint(req.Header.Get("X-Admin-As-User"), 10, 64)
-		if err != nil {
-			s.encoderDecoder.EncodeErrorResponse(res, "invalid admin-as-user header", http.StatusUnauthorized)
-			return
+		if xAsUser := req.Header.Get("X-Admin-As-User"); xAsUser != "" {
+			asUser, err := strconv.ParseUint(xAsUser, 10, 64)
+			if err != nil {
+				logger.Error(err, "error encountered trying to parse X-Admin-As-User header")
+				s.encoderDecoder.EncodeErrorResponse(res, "invalid X-Admin-As-User header", http.StatusUnauthorized)
+				return
+			}
+
+			// REFACTORME: if user isn't an admin, 401 here
+
+			req = req.WithContext(context.WithValue(ctx, models.AdminAsUserKey, asUser))
 		}
-
-		req = req.WithContext(context.WithValue(ctx, models.AdminAsUserKey, asUser))
 
 		next.ServeHTTP(res, req)
 	})
@@ -186,12 +190,13 @@ func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 		ctx, span := tracing.StartSpan(req.Context(), "UserLoginInputMiddleware")
 		defer span.End()
 
-		s.logger.Debug("UserLoginInputMiddleware called")
+		logger := s.logger.WithRequest(req)
+		logger.Debug("UserLoginInputMiddleware called")
 
 		x := new(models.UserLoginInput)
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
 			if x = parseLoginInputFromForm(req); x == nil {
-				s.logger.Error(err, "error encountered decoding request body")
+				logger.Error(err, "error encountered decoding request body")
 				s.encoderDecoder.EncodeErrorResponse(res, "attached input is invalid", http.StatusBadRequest)
 				return
 			}

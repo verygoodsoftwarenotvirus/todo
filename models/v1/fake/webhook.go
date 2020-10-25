@@ -1,6 +1,8 @@
 package fakemodels
 
 import (
+	"net/http"
+
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	fake "github.com/brianvoe/gofakeit/v5"
@@ -11,9 +13,9 @@ func BuildFakeWebhook() *models.Webhook {
 	return &models.Webhook{
 		ID:            fake.Uint64(),
 		Name:          fake.Word(),
-		ContentType:   fake.FileMimeType(),
+		ContentType:   "application/json",
 		URL:           fake.URL(),
-		Method:        fake.HTTPMethod(),
+		Method:        http.MethodPost,
 		Events:        []string{fake.Word()},
 		DataTypes:     []string{fake.Word()},
 		Topics:        []string{fake.Word()},

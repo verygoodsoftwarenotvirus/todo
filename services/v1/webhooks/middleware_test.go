@@ -1,12 +1,17 @@
 package webhooks
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -28,16 +33,17 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
+		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
 
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(nil)
-		s.encoderDecoder = ed
+		exampleUpdateInput := fakemodels.BuildFakeWebhookCreationInput()
+		jsonBytes, err := json.Marshal(&exampleUpdateInput)
+		require.NoError(t, err)
 
 		mh := &MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -46,7 +52,26 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, ed, mh)
+		mock.AssertExpectationsForObjects(t, mh)
+	})
+
+	T.Run("bad input", func(t *testing.T) {
+		s := buildTestService()
+		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
+
+		exampleUpdateInput := &models.WebhookCreationInput{}
+		jsonBytes, err := json.Marshal(&exampleUpdateInput)
+		require.NoError(t, err)
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, req)
+
+		actual := s.CreationInputMiddleware(&MockHTTPHandler{})
+		actual.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
 
 	T.Run("with error decoding request", func(t *testing.T) {
@@ -82,16 +107,17 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		s := buildTestService()
+		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
 
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(nil)
-		s.encoderDecoder = ed
+		exampleUpdateInput := fakemodels.BuildFakeWebhookUpdateInputFromWebhook(fakemodels.BuildFakeWebhook())
+		jsonBytes, err := json.Marshal(&exampleUpdateInput)
+		require.NoError(t, err)
 
 		mh := &MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -100,7 +126,7 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, ed, mh)
+		mock.AssertExpectationsForObjects(t, mh)
 	})
 
 	T.Run("with error decoding request", func(t *testing.T) {

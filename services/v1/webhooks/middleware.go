@@ -15,9 +15,17 @@ func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 		ctx, span := tracing.StartSpan(req.Context(), "CreationInputMiddleware")
 		defer span.End()
 
+		logger := s.logger.WithRequest(req)
+
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
-			s.logger.Error(err, "error encountered decoding request body")
+			logger.Error(err, "error encountered decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(res, "invalid request content", http.StatusBadRequest)
+			return
+		}
+
+		if err := x.Validate(); err != nil {
+			logger.Error(err, "provided input was invalid")
+			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -34,9 +42,17 @@ func (s *Service) UpdateInputMiddleware(next http.Handler) http.Handler {
 		ctx, span := tracing.StartSpan(req.Context(), "UpdateInputMiddleware")
 		defer span.End()
 
+		logger := s.logger.WithRequest(req)
+
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
-			s.logger.Error(err, "error encountered decoding request body")
+			logger.Error(err, "error encountered decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(res, "invalid request content", http.StatusBadRequest)
+			return
+		}
+
+		if err := x.Validate(); err != nil {
+			logger.Error(err, "provided input was invalid")
+			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
 			return
 		}
 

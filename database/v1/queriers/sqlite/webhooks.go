@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-	"sync"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -143,26 +142,19 @@ func (s *Sqlite) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mod
 	return webhook, nil
 }
 
-var (
-	getAllWebhooksCountQueryBuilder sync.Once
-	getAllWebhooksCountQuery        string
-)
-
 // buildGetAllWebhooksCountQuery returns a query which would return the count of webhooks regardless of ownership.
 func (s *Sqlite) buildGetAllWebhooksCountQuery() string {
-	getAllWebhooksCountQueryBuilder.Do(func() {
-		var err error
+	var err error
 
-		getAllWebhooksCountQuery, _, err = s.sqlBuilder.
-			Select(fmt.Sprintf(countQuery, webhooksTableName)).
-			From(webhooksTableName).
-			Where(squirrel.Eq{
-				fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn): nil,
-			}).
-			ToSql()
+	getAllWebhooksCountQuery, _, err := s.sqlBuilder.
+		Select(fmt.Sprintf(countQuery, webhooksTableName)).
+		From(webhooksTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn): nil,
+		}).
+		ToSql()
 
-		s.logQueryBuildingError(err)
-	})
+	s.logQueryBuildingError(err)
 
 	return getAllWebhooksCountQuery
 }
@@ -173,26 +165,19 @@ func (s *Sqlite) GetAllWebhooksCount(ctx context.Context) (count uint64, err err
 	return count, err
 }
 
-var (
-	getAllWebhooksQueryBuilder sync.Once
-	getAllWebhooksQuery        string
-)
-
 // buildGetAllWebhooksQuery returns a SQL query which will return all webhooks, regardless of ownership.
 func (s *Sqlite) buildGetAllWebhooksQuery() string {
-	getAllWebhooksQueryBuilder.Do(func() {
-		var err error
+	var err error
 
-		getAllWebhooksQuery, _, err = s.sqlBuilder.
-			Select(webhooksTableColumns...).
-			From(webhooksTableName).
-			Where(squirrel.Eq{
-				fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn): nil,
-			}).
-			ToSql()
+	getAllWebhooksQuery, _, err := s.sqlBuilder.
+		Select(webhooksTableColumns...).
+		From(webhooksTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn): nil,
+		}).
+		ToSql()
 
-		s.logQueryBuildingError(err)
-	})
+	s.logQueryBuildingError(err)
 
 	return getAllWebhooksQuery
 }
@@ -273,8 +258,8 @@ func (s *Sqlite) GetWebhooks(ctx context.Context, userID uint64, filter *models.
 	return x, err
 }
 
-// buildWebhookCreationQuery returns a SQL query (and arguments) that would create a given webhook
-func (s *Sqlite) buildWebhookCreationQuery(x *models.Webhook) (query string, args []interface{}) {
+// buildCreateWebhookQuery returns a SQL query (and arguments) that would create a given webhook
+func (s *Sqlite) buildCreateWebhookQuery(x *models.Webhook) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = s.sqlBuilder.
@@ -319,7 +304,7 @@ func (s *Sqlite) CreateWebhook(ctx context.Context, input *models.WebhookCreatio
 		BelongsToUser: input.BelongsToUser,
 	}
 
-	query, args := s.buildWebhookCreationQuery(x)
+	query, args := s.buildCreateWebhookQuery(x)
 	res, err := s.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error executing webhook creation query: %w", err)

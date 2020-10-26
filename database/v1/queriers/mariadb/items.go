@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"sync"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -134,26 +133,19 @@ func (m *MariaDB) GetItem(ctx context.Context, itemID, userID uint64) (*models.I
 	return m.scanItem(row)
 }
 
-var (
-	allItemsCountQueryBuilder sync.Once
-	allItemsCountQuery        string
-)
-
 // buildGetAllItemsCountQuery returns a query that fetches the total number of items in the database.
 // This query only gets generated once, and is otherwise returned from cache.
 func (m *MariaDB) buildGetAllItemsCountQuery() string {
-	allItemsCountQueryBuilder.Do(func() {
-		var err error
+	var err error
 
-		allItemsCountQuery, _, err = m.sqlBuilder.
-			Select(fmt.Sprintf(countQuery, itemsTableName)).
-			From(itemsTableName).
-			Where(squirrel.Eq{
-				fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn): nil,
-			}).
-			ToSql()
-		m.logQueryBuildingError(err)
-	})
+	allItemsCountQuery, _, err := m.sqlBuilder.
+		Select(fmt.Sprintf(countQuery, itemsTableName)).
+		From(itemsTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn): nil,
+		}).
+		ToSql()
+	m.logQueryBuildingError(err)
 
 	return allItemsCountQuery
 }

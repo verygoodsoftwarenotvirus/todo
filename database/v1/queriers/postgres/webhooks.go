@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-	"sync"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -143,26 +142,19 @@ func (p *Postgres) GetWebhook(ctx context.Context, webhookID, userID uint64) (*m
 	return webhook, nil
 }
 
-var (
-	getAllWebhooksCountQueryBuilder sync.Once
-	getAllWebhooksCountQuery        string
-)
-
 // buildGetAllWebhooksCountQuery returns a query which would return the count of webhooks regardless of ownership.
 func (p *Postgres) buildGetAllWebhooksCountQuery() string {
-	getAllWebhooksCountQueryBuilder.Do(func() {
-		var err error
+	var err error
 
-		getAllWebhooksCountQuery, _, err = p.sqlBuilder.
-			Select(fmt.Sprintf(countQuery, webhooksTableName)).
-			From(webhooksTableName).
-			Where(squirrel.Eq{
-				fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn): nil,
-			}).
-			ToSql()
+	getAllWebhooksCountQuery, _, err := p.sqlBuilder.
+		Select(fmt.Sprintf(countQuery, webhooksTableName)).
+		From(webhooksTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn): nil,
+		}).
+		ToSql()
 
-		p.logQueryBuildingError(err)
-	})
+	p.logQueryBuildingError(err)
 
 	return getAllWebhooksCountQuery
 }
@@ -173,26 +165,19 @@ func (p *Postgres) GetAllWebhooksCount(ctx context.Context) (count uint64, err e
 	return count, err
 }
 
-var (
-	getAllWebhooksQueryBuilder sync.Once
-	getAllWebhooksQuery        string
-)
-
 // buildGetAllWebhooksQuery returns a SQL query which will return all webhooks, regardless of ownership.
 func (p *Postgres) buildGetAllWebhooksQuery() string {
-	getAllWebhooksQueryBuilder.Do(func() {
-		var err error
+	var err error
 
-		getAllWebhooksQuery, _, err = p.sqlBuilder.
-			Select(webhooksTableColumns...).
-			From(webhooksTableName).
-			Where(squirrel.Eq{
-				fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn): nil,
-			}).
-			ToSql()
+	getAllWebhooksQuery, _, err := p.sqlBuilder.
+		Select(webhooksTableColumns...).
+		From(webhooksTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn): nil,
+		}).
+		ToSql()
 
-		p.logQueryBuildingError(err)
-	})
+	p.logQueryBuildingError(err)
 
 	return getAllWebhooksQuery
 }

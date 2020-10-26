@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-	"sync"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -143,26 +142,19 @@ func (m *MariaDB) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mo
 	return webhook, nil
 }
 
-var (
-	getAllWebhooksCountQueryBuilder sync.Once
-	getAllWebhooksCountQuery        string
-)
-
 // buildGetAllWebhooksCountQuery returns a query which would return the count of webhooks regardless of ownership.
 func (m *MariaDB) buildGetAllWebhooksCountQuery() string {
-	getAllWebhooksCountQueryBuilder.Do(func() {
-		var err error
+	var err error
 
-		getAllWebhooksCountQuery, _, err = m.sqlBuilder.
-			Select(fmt.Sprintf(countQuery, webhooksTableName)).
-			From(webhooksTableName).
-			Where(squirrel.Eq{
-				fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn): nil,
-			}).
-			ToSql()
+	getAllWebhooksCountQuery, _, err := m.sqlBuilder.
+		Select(fmt.Sprintf(countQuery, webhooksTableName)).
+		From(webhooksTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn): nil,
+		}).
+		ToSql()
 
-		m.logQueryBuildingError(err)
-	})
+	m.logQueryBuildingError(err)
 
 	return getAllWebhooksCountQuery
 }
@@ -173,26 +165,19 @@ func (m *MariaDB) GetAllWebhooksCount(ctx context.Context) (count uint64, err er
 	return count, err
 }
 
-var (
-	getAllWebhooksQueryBuilder sync.Once
-	getAllWebhooksQuery        string
-)
-
 // buildGetAllWebhooksQuery returns a SQL query which will return all webhooks, regardless of ownership.
 func (m *MariaDB) buildGetAllWebhooksQuery() string {
-	getAllWebhooksQueryBuilder.Do(func() {
-		var err error
+	var err error
 
-		getAllWebhooksQuery, _, err = m.sqlBuilder.
-			Select(webhooksTableColumns...).
-			From(webhooksTableName).
-			Where(squirrel.Eq{
-				fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn): nil,
-			}).
-			ToSql()
+	getAllWebhooksQuery, _, err := m.sqlBuilder.
+		Select(webhooksTableColumns...).
+		From(webhooksTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn): nil,
+		}).
+		ToSql()
 
-		m.logQueryBuildingError(err)
-	})
+	m.logQueryBuildingError(err)
 
 	return getAllWebhooksQuery
 }
@@ -273,8 +258,8 @@ func (m *MariaDB) GetWebhooks(ctx context.Context, userID uint64, filter *models
 	return x, err
 }
 
-// buildWebhookCreationQuery returns a SQL query (and arguments) that would create a given webhook
-func (m *MariaDB) buildWebhookCreationQuery(x *models.Webhook) (query string, args []interface{}) {
+// buildCreateWebhookQuery returns a SQL query (and arguments) that would create a given webhook
+func (m *MariaDB) buildCreateWebhookQuery(x *models.Webhook) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = m.sqlBuilder.
@@ -319,7 +304,7 @@ func (m *MariaDB) CreateWebhook(ctx context.Context, input *models.WebhookCreati
 		BelongsToUser: input.BelongsToUser,
 	}
 
-	query, args := m.buildWebhookCreationQuery(x)
+	query, args := m.buildCreateWebhookQuery(x)
 	res, err := m.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error executing webhook creation query: %w", err)

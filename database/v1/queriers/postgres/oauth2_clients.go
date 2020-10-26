@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-	"sync"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -121,26 +120,19 @@ func (p *Postgres) GetOAuth2ClientByClientID(ctx context.Context, clientID strin
 	return p.scanOAuth2Client(row)
 }
 
-var (
-	getAllOAuth2ClientsQueryBuilder sync.Once
-	getAllOAuth2ClientsQuery        string
-)
-
 // buildGetAllOAuth2ClientsQuery builds a SQL query.
 func (p *Postgres) buildGetAllOAuth2ClientsQuery() (query string) {
-	getAllOAuth2ClientsQueryBuilder.Do(func() {
-		var err error
+	var err error
 
-		getAllOAuth2ClientsQuery, _, err = p.sqlBuilder.
-			Select(oauth2ClientsTableColumns...).
-			From(oauth2ClientsTableName).
-			Where(squirrel.Eq{
-				fmt.Sprintf("%s.%s", oauth2ClientsTableName, archivedOnColumn): nil,
-			}).
-			ToSql()
+	getAllOAuth2ClientsQuery, _, err := p.sqlBuilder.
+		Select(oauth2ClientsTableColumns...).
+		From(oauth2ClientsTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", oauth2ClientsTableName, archivedOnColumn): nil,
+		}).
+		ToSql()
 
-		p.logQueryBuildingError(err)
-	})
+	p.logQueryBuildingError(err)
 
 	return getAllOAuth2ClientsQuery
 }
@@ -217,27 +209,20 @@ func (p *Postgres) GetOAuth2Client(ctx context.Context, clientID, userID uint64)
 	return client, nil
 }
 
-var (
-	getAllOAuth2ClientCountQueryBuilder sync.Once
-	getAllOAuth2ClientCountQuery        string
-)
-
 // buildGetAllOAuth2ClientsCountQuery returns a SQL query for the number of OAuth2 clients
 // in the database, regardless of ownership.
 func (p *Postgres) buildGetAllOAuth2ClientsCountQuery() string {
-	getAllOAuth2ClientCountQueryBuilder.Do(func() {
-		var err error
+	var err error
 
-		getAllOAuth2ClientCountQuery, _, err = p.sqlBuilder.
-			Select(fmt.Sprintf(countQuery, oauth2ClientsTableName)).
-			From(oauth2ClientsTableName).
-			Where(squirrel.Eq{
-				fmt.Sprintf("%s.%s", oauth2ClientsTableName, archivedOnColumn): nil,
-			}).
-			ToSql()
+	getAllOAuth2ClientCountQuery, _, err := p.sqlBuilder.
+		Select(fmt.Sprintf(countQuery, oauth2ClientsTableName)).
+		From(oauth2ClientsTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", oauth2ClientsTableName, archivedOnColumn): nil,
+		}).
+		ToSql()
 
-		p.logQueryBuildingError(err)
-	})
+	p.logQueryBuildingError(err)
 
 	return getAllOAuth2ClientCountQuery
 }

@@ -111,8 +111,6 @@ func TestMariaDB_buildGetUserQuery(T *testing.T) {
 func TestMariaDB_GetUser(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = ? AND users.two_factor_secret_verified_on IS NOT NULL"
-
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -120,8 +118,12 @@ func TestMariaDB_GetUser(T *testing.T) {
 		exampleUser.Salt = nil
 
 		m, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := m.buildGetUserQuery(exampleUser.ID)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.ID).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnRows(buildMockRowsFromUser(exampleUser))
 
 		actual, err := m.GetUser(ctx, exampleUser.ID)
@@ -137,8 +139,12 @@ func TestMariaDB_GetUser(T *testing.T) {
 		exampleUser := fakemodels.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := m.buildGetUserQuery(exampleUser.ID)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.ID).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := m.GetUser(ctx, exampleUser.ID)
@@ -173,8 +179,6 @@ func TestMariaDB_buildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 func TestMariaDB_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = ? AND users.two_factor_secret_verified_on IS NULL"
-
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -182,8 +186,12 @@ func TestMariaDB_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		exampleUser.Salt = nil
 
 		m, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := m.buildGetUserWithUnverifiedTwoFactorSecretQuery(exampleUser.ID)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.ID).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnRows(buildMockRowsFromUser(exampleUser))
 
 		actual, err := m.GetUserWithUnverifiedTwoFactorSecret(ctx, exampleUser.ID)
@@ -199,8 +207,12 @@ func TestMariaDB_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		exampleUser := fakemodels.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := m.buildGetUserWithUnverifiedTwoFactorSecretQuery(exampleUser.ID)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.ID).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := m.GetUserWithUnverifiedTwoFactorSecret(ctx, exampleUser.ID)
@@ -238,8 +250,6 @@ func TestMariaDB_buildGetUsersQuery(T *testing.T) {
 func TestMariaDB_GetUsers(T *testing.T) {
 	T.Parallel()
 
-	expectedUsersQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL ORDER BY users.id LIMIT 20"
-
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -251,13 +261,19 @@ func TestMariaDB_GetUsers(T *testing.T) {
 		exampleUserList.Users[2].Salt = nil
 
 		m, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).WillReturnRows(
-			buildMockRowsFromUser(
-				&exampleUserList.Users[0],
-				&exampleUserList.Users[1],
-				&exampleUserList.Users[2],
-			),
-		)
+		expectedQuery, expectedArgs := m.buildGetUsersQuery(filter)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
+			WillReturnRows(
+				buildMockRowsFromUser(
+					&exampleUserList.Users[0],
+					&exampleUserList.Users[1],
+					&exampleUserList.Users[2],
+				),
+			)
 
 		actual, err := m.GetUsers(ctx, filter)
 		assert.NoError(t, err)
@@ -272,7 +288,12 @@ func TestMariaDB_GetUsers(T *testing.T) {
 		filter := models.DefaultQueryFilter()
 
 		m, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).
+		expectedQuery, expectedArgs := m.buildGetUsersQuery(filter)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := m.GetUsers(ctx, filter)
@@ -289,7 +310,12 @@ func TestMariaDB_GetUsers(T *testing.T) {
 		filter := models.DefaultQueryFilter()
 
 		m, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).
+		expectedQuery, expectedArgs := m.buildGetUsersQuery(filter)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := m.GetUsers(ctx, filter)
@@ -305,7 +331,12 @@ func TestMariaDB_GetUsers(T *testing.T) {
 		filter := models.DefaultQueryFilter()
 
 		m, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).
+		expectedQuery, expectedArgs := m.buildGetUsersQuery(filter)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnRows(buildErroneousMockRowFromUser(fakemodels.BuildFakeUser()))
 
 		actual, err := m.GetUsers(ctx, filter)
@@ -339,8 +370,6 @@ func TestMariaDB_buildGetUserByUsernameQuery(T *testing.T) {
 func TestMariaDB_GetUserByUsername(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.username = ? AND users.two_factor_secret_verified_on IS NOT NULL"
-
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -348,8 +377,12 @@ func TestMariaDB_GetUserByUsername(T *testing.T) {
 		exampleUser.Salt = nil
 
 		m, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := m.buildGetUserByUsernameQuery(exampleUser.Username)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.Username).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnRows(buildMockRowsFromUser(exampleUser))
 
 		actual, err := m.GetUserByUsername(ctx, exampleUser.Username)
@@ -365,8 +398,12 @@ func TestMariaDB_GetUserByUsername(T *testing.T) {
 		exampleUser := fakemodels.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := m.buildGetUserByUsernameQuery(exampleUser.Username)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.Username).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := m.GetUserByUsername(ctx, exampleUser.Username)
@@ -383,8 +420,12 @@ func TestMariaDB_GetUserByUsername(T *testing.T) {
 		exampleUser := fakemodels.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := m.buildGetUserByUsernameQuery(exampleUser.Username)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.Username).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := m.GetUserByUsername(ctx, exampleUser.Username)
@@ -412,15 +453,16 @@ func TestMariaDB_buildGetAllUsersCountQuery(T *testing.T) {
 func TestMariaDB_GetAllUsersCount(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL"
-
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
 		exampleCount := uint64(123)
 
 		m, mockDB := buildTestService(t)
+		expectedQuery := m.buildGetAllUsersCountQuery()
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs().
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(exampleCount))
 
 		actual, err := m.GetAllUsersCount(ctx)
@@ -434,7 +476,10 @@ func TestMariaDB_GetAllUsersCount(T *testing.T) {
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
+		expectedQuery := m.buildGetAllUsersCountQuery()
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs().
 			WillReturnError(errors.New("blah"))
 
 		actual, err := m.GetAllUsersCount(ctx)
@@ -473,8 +518,6 @@ func TestMariaDB_buildCreateUserQuery(T *testing.T) {
 func TestMariaDB_CreateUser(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "INSERT INTO users (username,hashed_password,salt,two_factor_secret,is_admin) VALUES (?,?,?,?,?)"
-
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -485,14 +528,14 @@ func TestMariaDB_CreateUser(T *testing.T) {
 		exampleUser.Salt = nil
 		expectedInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
+		expectedQuery, expectedArgs := m.buildCreateUserQuery(expectedInput)
+
 		exampleRows := sqlmock.NewResult(int64(exampleUser.ID), 1)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
-			exampleUser.Username,
-			exampleUser.HashedPassword,
-			exampleUser.Salt,
-			exampleUser.TwoFactorSecret,
-			false,
-		).WillReturnResult(exampleRows)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
+			WillReturnResult(exampleRows)
 
 		mtt := &mockTimeTeller{}
 		mtt.On("Now").Return(exampleUser.CreatedOn)
@@ -515,13 +558,13 @@ func TestMariaDB_CreateUser(T *testing.T) {
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 		expectedInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
-			exampleUser.Username,
-			exampleUser.HashedPassword,
-			exampleUser.Salt,
-			exampleUser.TwoFactorSecret,
-			false,
-		).WillReturnError(errors.New("blah"))
+		expectedQuery, expectedArgs := m.buildCreateUserQuery(expectedInput)
+
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
+			WillReturnError(errors.New("blah"))
 
 		actual, err := m.CreateUser(ctx, expectedInput)
 		assert.Error(t, err)
@@ -563,19 +606,16 @@ func TestMariaDB_UpdateUser(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
-
-		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, salt = ?, two_factor_secret = ?, two_factor_secret_verified_on = ?, last_updated_on = UNIX_TIMESTAMP() WHERE id = ?"
 		exampleRows := sqlmock.NewResult(int64(exampleUser.ID), 1)
 
 		m, mockDB := buildTestService(t)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
-			exampleUser.Username,
-			exampleUser.HashedPassword,
-			exampleUser.Salt,
-			exampleUser.TwoFactorSecret,
-			exampleUser.TwoFactorSecretVerifiedOn,
-			exampleUser.ID,
-		).WillReturnResult(exampleRows)
+		expectedQuery, expectedArgs := m.buildUpdateUserQuery(exampleUser)
+
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
+			WillReturnResult(exampleRows)
 
 		err := m.UpdateUser(ctx, exampleUser)
 		assert.NoError(t, err)
@@ -614,14 +654,14 @@ func TestMariaDB_UpdateUserPassword(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET hashed_password = ?, requires_password_change = ?, password_last_changed_on = UNIX_TIMESTAMP(), last_updated_on = UNIX_TIMESTAMP() WHERE id = ?"
-
 		m, mockDB := buildTestService(t)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
-			exampleUser.HashedPassword,
-			false,
-			exampleUser.ID,
-		).WillReturnResult(driver.ResultNoRows)
+		expectedQuery, expectedArgs := m.buildUpdateUserPasswordQuery(exampleUser.ID, exampleUser.HashedPassword)
+
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
+			WillReturnResult(driver.ResultNoRows)
 
 		err := m.UpdateUserPassword(ctx, exampleUser.ID, exampleUser.HashedPassword)
 		assert.NoError(t, err)
@@ -658,11 +698,13 @@ func TestMariaDB_VerifyUserTwoFactorSecret(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET two_factor_secret_verified_on = UNIX_TIMESTAMP() WHERE id = ?"
-
 		m, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := m.buildVerifyUserTwoFactorSecretQuery(exampleUser.ID)
+
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.ID).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		err := m.VerifyUserTwoFactorSecret(ctx, exampleUser.ID)
@@ -699,11 +741,14 @@ func TestMariaDB_ArchiveUser(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
-		expectedQuery := "UPDATE users SET archived_on = UNIX_TIMESTAMP() WHERE id = ?"
 
 		m, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := m.buildArchiveUserQuery(exampleUser.ID)
+
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.ID).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		err := m.ArchiveUser(ctx, exampleUser.ID)

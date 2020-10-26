@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-	"sync"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -121,26 +120,19 @@ func (s *Sqlite) GetOAuth2ClientByClientID(ctx context.Context, clientID string)
 	return s.scanOAuth2Client(row)
 }
 
-var (
-	getAllOAuth2ClientsQueryBuilder sync.Once
-	getAllOAuth2ClientsQuery        string
-)
-
 // buildGetAllOAuth2ClientsQuery builds a SQL query.
 func (s *Sqlite) buildGetAllOAuth2ClientsQuery() (query string) {
-	getAllOAuth2ClientsQueryBuilder.Do(func() {
-		var err error
+	var err error
 
-		getAllOAuth2ClientsQuery, _, err = s.sqlBuilder.
-			Select(oauth2ClientsTableColumns...).
-			From(oauth2ClientsTableName).
-			Where(squirrel.Eq{
-				fmt.Sprintf("%s.%s", oauth2ClientsTableName, archivedOnColumn): nil,
-			}).
-			ToSql()
+	getAllOAuth2ClientsQuery, _, err := s.sqlBuilder.
+		Select(oauth2ClientsTableColumns...).
+		From(oauth2ClientsTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", oauth2ClientsTableName, archivedOnColumn): nil,
+		}).
+		ToSql()
 
-		s.logQueryBuildingError(err)
-	})
+	s.logQueryBuildingError(err)
 
 	return getAllOAuth2ClientsQuery
 }
@@ -217,27 +209,20 @@ func (s *Sqlite) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (
 	return client, nil
 }
 
-var (
-	getAllOAuth2ClientCountQueryBuilder sync.Once
-	getAllOAuth2ClientCountQuery        string
-)
-
 // buildGetAllOAuth2ClientsCountQuery returns a SQL query for the number of OAuth2 clients
 // in the database, regardless of ownership.
 func (s *Sqlite) buildGetAllOAuth2ClientsCountQuery() string {
-	getAllOAuth2ClientCountQueryBuilder.Do(func() {
-		var err error
+	var err error
 
-		getAllOAuth2ClientCountQuery, _, err = s.sqlBuilder.
-			Select(fmt.Sprintf(countQuery, oauth2ClientsTableName)).
-			From(oauth2ClientsTableName).
-			Where(squirrel.Eq{
-				fmt.Sprintf("%s.%s", oauth2ClientsTableName, archivedOnColumn): nil,
-			}).
-			ToSql()
+	getAllOAuth2ClientCountQuery, _, err := s.sqlBuilder.
+		Select(fmt.Sprintf(countQuery, oauth2ClientsTableName)).
+		From(oauth2ClientsTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", oauth2ClientsTableName, archivedOnColumn): nil,
+		}).
+		ToSql()
 
-		s.logQueryBuildingError(err)
-	})
+	s.logQueryBuildingError(err)
 
 	return getAllOAuth2ClientCountQuery
 }

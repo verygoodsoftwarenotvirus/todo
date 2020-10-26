@@ -113,16 +113,18 @@ func TestSqlite_buildGetWebhookQuery(T *testing.T) {
 func TestSqlite_GetWebhook(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.belongs_to_user = ? AND webhooks.id = ?"
-
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleWebhook.BelongsToUser, exampleWebhook.ID).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnRows(buildMockRowsFromWebhook(exampleWebhook))
 
 		actual, err := s.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
@@ -138,8 +140,12 @@ func TestSqlite_GetWebhook(T *testing.T) {
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleWebhook.BelongsToUser, exampleWebhook.ID).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := s.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
@@ -156,8 +162,12 @@ func TestSqlite_GetWebhook(T *testing.T) {
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleWebhook.BelongsToUser, exampleWebhook.ID).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := s.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
@@ -173,8 +183,12 @@ func TestSqlite_GetWebhook(T *testing.T) {
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleWebhook.BelongsToUser, exampleWebhook.ID).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnRows(buildErroneousMockRowFromWebhook(exampleWebhook))
 
 		actual, err := s.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
@@ -202,15 +216,16 @@ func TestSqlite_buildGetAllWebhooksCountQuery(T *testing.T) {
 func TestSqlite_GetAllWebhooksCount(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL"
-
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
 		exampleCount := uint64(123)
 
 		s, mockDB := buildTestService(t)
+		expectedQuery := s.buildGetAllWebhooksCountQuery()
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs().
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(exampleCount))
 
 		actual, err := s.GetAllWebhooksCount(ctx)
@@ -224,7 +239,10 @@ func TestSqlite_GetAllWebhooksCount(T *testing.T) {
 		ctx := context.Background()
 
 		s, mockDB := buildTestService(t)
+		expectedQuery := s.buildGetAllWebhooksCountQuery()
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs().
 			WillReturnError(errors.New("blah"))
 
 		actual, err := s.GetAllWebhooksCount(ctx)
@@ -252,8 +270,6 @@ func TestSqlite_buildGetAllWebhooksQuery(T *testing.T) {
 func TestSqlite_GetAllWebhooks(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL"
-
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -261,13 +277,17 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 		exampleWebhookList.Limit = 0
 
 		s, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).WillReturnRows(
-			buildMockRowsFromWebhook(
-				&exampleWebhookList.Webhooks[0],
-				&exampleWebhookList.Webhooks[1],
-				&exampleWebhookList.Webhooks[2],
-			),
-		)
+		expectedQuery := s.buildGetAllWebhooksQuery()
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs().
+			WillReturnRows(
+				buildMockRowsFromWebhook(
+					&exampleWebhookList.Webhooks[0],
+					&exampleWebhookList.Webhooks[1],
+					&exampleWebhookList.Webhooks[2],
+				),
+			)
 
 		actual, err := s.GetAllWebhooks(ctx)
 		assert.NoError(t, err)
@@ -280,7 +300,10 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 		ctx := context.Background()
 
 		s, mockDB := buildTestService(t)
+		expectedQuery := s.buildGetAllWebhooksQuery()
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs().
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := s.GetAllWebhooks(ctx)
@@ -295,7 +318,10 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 		ctx := context.Background()
 
 		s, mockDB := buildTestService(t)
+		expectedQuery := s.buildGetAllWebhooksQuery()
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs().
 			WillReturnError(errors.New("blah"))
 
 		actual, err := s.GetAllWebhooks(ctx)
@@ -311,7 +337,10 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		s, mockDB := buildTestService(t)
+		expectedQuery := s.buildGetAllWebhooksQuery()
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs().
 			WillReturnRows(buildErroneousMockRowFromWebhook(exampleWebhook))
 
 		actual, err := s.GetAllWebhooks(ctx)
@@ -351,7 +380,6 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakemodels.BuildFakeUser()
-	expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = ? ORDER BY webhooks.id LIMIT 20"
 
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
@@ -360,8 +388,12 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 		exampleWebhookList := fakemodels.BuildFakeWebhookList()
 
 		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildGetWebhooksQuery(exampleUser.ID, filter)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.ID).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnRows(
 				buildMockRowsFromWebhook(
 					&exampleWebhookList.Webhooks[0],
@@ -383,7 +415,12 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 		filter := models.DefaultQueryFilter()
 
 		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildGetWebhooksQuery(exampleUser.ID, filter)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := s.GetWebhooks(ctx, exampleUser.ID, filter)
@@ -400,7 +437,12 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 		filter := models.DefaultQueryFilter()
 
 		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildGetWebhooksQuery(exampleUser.ID, filter)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := s.GetWebhooks(ctx, exampleUser.ID, filter)
@@ -417,7 +459,12 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
 		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildGetWebhooksQuery(exampleUser.ID, filter)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnRows(buildErroneousMockRowFromWebhook(exampleWebhook))
 
 		actual, err := s.GetWebhooks(ctx, exampleUser.ID, filter)
@@ -428,7 +475,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildWebhookCreationQuery(T *testing.T) {
+func TestSqlite_buildCreateWebhookQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -447,7 +494,7 @@ func TestSqlite_buildWebhookCreationQuery(T *testing.T) {
 			strings.Join(exampleWebhook.Topics, topicsSeparator),
 			exampleWebhook.BelongsToUser,
 		}
-		actualQuery, actualArgs := s.buildWebhookCreationQuery(exampleWebhook)
+		actualQuery, actualArgs := s.buildCreateWebhookQuery(exampleWebhook)
 
 		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -458,8 +505,6 @@ func TestSqlite_buildWebhookCreationQuery(T *testing.T) {
 func TestSqlite_CreateWebhook(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to_user) VALUES (?,?,?,?,?,?,?,?)"
-
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -468,16 +513,13 @@ func TestSqlite_CreateWebhook(T *testing.T) {
 		exampleRows := sqlmock.NewResult(int64(exampleWebhook.ID), 1)
 
 		s, mockDB := buildTestService(t)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
-			exampleWebhook.Name,
-			exampleWebhook.ContentType,
-			exampleWebhook.URL,
-			exampleWebhook.Method,
-			strings.Join(exampleWebhook.Events, eventsSeparator),
-			strings.Join(exampleWebhook.DataTypes, typesSeparator),
-			strings.Join(exampleWebhook.Topics, topicsSeparator),
-			exampleWebhook.BelongsToUser,
-		).WillReturnResult(exampleRows)
+		expectedQuery, expectedArgs := s.buildCreateWebhookQuery(exampleWebhook)
+
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
+			WillReturnResult(exampleRows)
 
 		stt := &mockTimeTeller{}
 		stt.On("Now").Return(exampleWebhook.CreatedOn)
@@ -498,16 +540,13 @@ func TestSqlite_CreateWebhook(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		s, mockDB := buildTestService(t)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
-			exampleWebhook.Name,
-			exampleWebhook.ContentType,
-			exampleWebhook.URL,
-			exampleWebhook.Method,
-			strings.Join(exampleWebhook.Events, eventsSeparator),
-			strings.Join(exampleWebhook.DataTypes, typesSeparator),
-			strings.Join(exampleWebhook.Topics, topicsSeparator),
-			exampleWebhook.BelongsToUser,
-		).WillReturnError(errors.New("blah"))
+		expectedQuery, expectedArgs := s.buildCreateWebhookQuery(exampleWebhook)
+
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
+			WillReturnError(errors.New("blah"))
 
 		actual, err := s.CreateWebhook(ctx, exampleInput)
 		assert.Error(t, err)
@@ -548,26 +587,20 @@ func TestSqlite_buildUpdateWebhookQuery(T *testing.T) {
 func TestSqlite_UpdateWebhook(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "UPDATE webhooks SET name = ?, content_type = ?, url = ?, method = ?, events = ?, data_types = ?, topics = ?, last_updated_on = (strftime('%s','now')) WHERE belongs_to_user = ? AND id = ?"
-
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
+		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildUpdateWebhookQuery(exampleWebhook)
+
 		exampleRows := sqlmock.NewResult(int64(exampleWebhook.ID), 1)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
-			exampleWebhook.Name,
-			exampleWebhook.ContentType,
-			exampleWebhook.URL,
-			exampleWebhook.Method,
-			strings.Join(exampleWebhook.Events, eventsSeparator),
-			strings.Join(exampleWebhook.DataTypes, typesSeparator),
-			strings.Join(exampleWebhook.Topics, topicsSeparator),
-			exampleWebhook.BelongsToUser,
-			exampleWebhook.ID,
-		).WillReturnResult(exampleRows)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
+			WillReturnResult(exampleRows)
 
 		err := s.UpdateWebhook(ctx, exampleWebhook)
 		assert.NoError(t, err)
@@ -578,20 +611,16 @@ func TestSqlite_UpdateWebhook(T *testing.T) {
 	T.Run("with error from database", func(t *testing.T) {
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
-			exampleWebhook.Name,
-			exampleWebhook.ContentType,
-			exampleWebhook.URL,
-			exampleWebhook.Method,
-			strings.Join(exampleWebhook.Events, eventsSeparator),
-			strings.Join(exampleWebhook.DataTypes, typesSeparator),
-			strings.Join(exampleWebhook.Topics, topicsSeparator),
-			exampleWebhook.BelongsToUser,
-			exampleWebhook.ID,
-		).WillReturnError(errors.New("blah"))
+		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildUpdateWebhookQuery(exampleWebhook)
+
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
+			WillReturnError(errors.New("blah"))
 
 		err := s.UpdateWebhook(ctx, exampleWebhook)
 		assert.Error(t, err)
@@ -628,13 +657,15 @@ func TestSqlite_ArchiveWebhook(T *testing.T) {
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
-		expectedQuery := "UPDATE webhooks SET last_updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
 
 		s, mockDB := buildTestService(t)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
-			exampleWebhook.BelongsToUser,
-			exampleWebhook.ID,
-		).WillReturnResult(sqlmock.NewResult(1, 1))
+		expectedQuery, expectedArgs := s.buildArchiveWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
+
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
+			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		err := s.ArchiveWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
 		assert.NoError(t, err)

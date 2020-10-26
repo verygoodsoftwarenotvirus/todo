@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"sync"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
@@ -134,26 +133,19 @@ func (s *Sqlite) GetItem(ctx context.Context, itemID, userID uint64) (*models.It
 	return s.scanItem(row)
 }
 
-var (
-	allItemsCountQueryBuilder sync.Once
-	allItemsCountQuery        string
-)
-
 // buildGetAllItemsCountQuery returns a query that fetches the total number of items in the database.
 // This query only gets generated once, and is otherwise returned from cache.
 func (s *Sqlite) buildGetAllItemsCountQuery() string {
-	allItemsCountQueryBuilder.Do(func() {
-		var err error
+	var err error
 
-		allItemsCountQuery, _, err = s.sqlBuilder.
-			Select(fmt.Sprintf(countQuery, itemsTableName)).
-			From(itemsTableName).
-			Where(squirrel.Eq{
-				fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn): nil,
-			}).
-			ToSql()
-		s.logQueryBuildingError(err)
-	})
+	allItemsCountQuery, _, err := s.sqlBuilder.
+		Select(fmt.Sprintf(countQuery, itemsTableName)).
+		From(itemsTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn): nil,
+		}).
+		ToSql()
+	s.logQueryBuildingError(err)
 
 	return allItemsCountQuery
 }

@@ -43,6 +43,16 @@ var (
 	queryArgRegexp = regexp.MustCompile(`\?+`)
 )
 
+func interfaceToDriverValue(in []interface{}) []driver.Value {
+	out := []driver.Value{}
+
+	for _, x := range in {
+		out = append(out, driver.Value(x))
+	}
+
+	return out
+}
+
 func formatQueryForSQLMock(query string) string {
 	return sqlMockReplacer.Replace(query)
 }
@@ -57,13 +67,6 @@ func ensureArgCountMatchesQuery(t *testing.T, query string, args []interface{}) 
 	} else {
 		assert.Zero(t, queryArgCount)
 	}
-}
-
-func interfacesToDriverValues(in []interface{}) (out []driver.Value) {
-	for _, x := range in {
-		out = append(out, driver.Value(x))
-	}
-	return out
 }
 
 func TestProvideMariaDB(T *testing.T) {

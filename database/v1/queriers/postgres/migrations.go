@@ -177,8 +177,7 @@ func (p *Postgres) Migrate(ctx context.Context, authenticator auth.Authenticator
 
 		for _, x := range exampledata.ExampleItems {
 			for _, y := range x {
-				query, args := p.buildCreateItemQuery(y)
-				if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
+				if _, dbErr := p.CreateItem(ctx, y); dbErr != nil {
 					return dbErr
 				}
 			}

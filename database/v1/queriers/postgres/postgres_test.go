@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
 	"regexp"
 	"strings"
@@ -41,6 +42,16 @@ var (
 	)
 	queryArgRegexp = regexp.MustCompile(`\$\d+`)
 )
+
+func interfaceToDriverValue(in []interface{}) []driver.Value {
+	out := []driver.Value{}
+
+	for _, x := range in {
+		out = append(out, driver.Value(x))
+	}
+
+	return out
+}
 
 func formatQueryForSQLMock(query string) string {
 	return sqlMockReplacer.Replace(query)

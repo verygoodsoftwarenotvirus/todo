@@ -89,7 +89,7 @@ var (
 	}
 
 	// ExampleItems blah blah blah
-	ExampleItems = [][]*models.Item{
+	ExampleItems = [][]*models.ItemCreationInput{
 		{
 			{
 				Name:          "Apple #1",

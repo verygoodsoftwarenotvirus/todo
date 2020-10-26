@@ -111,8 +111,6 @@ func TestSqlite_buildGetUserQuery(T *testing.T) {
 func TestSqlite_GetUser(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = ? AND users.two_factor_secret_verified_on IS NOT NULL"
-
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -120,8 +118,12 @@ func TestSqlite_GetUser(T *testing.T) {
 		exampleUser.Salt = nil
 
 		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildGetUserQuery(exampleUser.ID)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.ID).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnRows(buildMockRowsFromUser(exampleUser))
 
 		actual, err := s.GetUser(ctx, exampleUser.ID)
@@ -137,8 +139,12 @@ func TestSqlite_GetUser(T *testing.T) {
 		exampleUser := fakemodels.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildGetUserQuery(exampleUser.ID)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.ID).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := s.GetUser(ctx, exampleUser.ID)
@@ -173,8 +179,6 @@ func TestSqlite_buildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 func TestSqlite_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = ? AND users.two_factor_secret_verified_on IS NULL"
-
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -182,8 +186,12 @@ func TestSqlite_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		exampleUser.Salt = nil
 
 		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildGetUserWithUnverifiedTwoFactorSecretQuery(exampleUser.ID)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.ID).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnRows(buildMockRowsFromUser(exampleUser))
 
 		actual, err := s.GetUserWithUnverifiedTwoFactorSecret(ctx, exampleUser.ID)
@@ -199,8 +207,12 @@ func TestSqlite_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		exampleUser := fakemodels.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildGetUserWithUnverifiedTwoFactorSecretQuery(exampleUser.ID)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.ID).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := s.GetUserWithUnverifiedTwoFactorSecret(ctx, exampleUser.ID)
@@ -238,8 +250,6 @@ func TestSqlite_buildGetUsersQuery(T *testing.T) {
 func TestSqlite_GetUsers(T *testing.T) {
 	T.Parallel()
 
-	expectedUsersQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL ORDER BY users.id LIMIT 20"
-
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -251,13 +261,19 @@ func TestSqlite_GetUsers(T *testing.T) {
 		exampleUserList.Users[2].Salt = nil
 
 		s, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).WillReturnRows(
-			buildMockRowsFromUser(
-				&exampleUserList.Users[0],
-				&exampleUserList.Users[1],
-				&exampleUserList.Users[2],
-			),
-		)
+		expectedQuery, expectedArgs := s.buildGetUsersQuery(filter)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
+			WillReturnRows(
+				buildMockRowsFromUser(
+					&exampleUserList.Users[0],
+					&exampleUserList.Users[1],
+					&exampleUserList.Users[2],
+				),
+			)
 
 		actual, err := s.GetUsers(ctx, filter)
 		assert.NoError(t, err)
@@ -272,7 +288,12 @@ func TestSqlite_GetUsers(T *testing.T) {
 		filter := models.DefaultQueryFilter()
 
 		s, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).
+		expectedQuery, expectedArgs := s.buildGetUsersQuery(filter)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := s.GetUsers(ctx, filter)
@@ -289,7 +310,12 @@ func TestSqlite_GetUsers(T *testing.T) {
 		filter := models.DefaultQueryFilter()
 
 		s, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).
+		expectedQuery, expectedArgs := s.buildGetUsersQuery(filter)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := s.GetUsers(ctx, filter)
@@ -305,7 +331,12 @@ func TestSqlite_GetUsers(T *testing.T) {
 		filter := models.DefaultQueryFilter()
 
 		s, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedUsersQuery)).
+		expectedQuery, expectedArgs := s.buildGetUsersQuery(filter)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnRows(buildErroneousMockRowFromUser(fakemodels.BuildFakeUser()))
 
 		actual, err := s.GetUsers(ctx, filter)
@@ -339,8 +370,6 @@ func TestSqlite_buildGetUserByUsernameQuery(T *testing.T) {
 func TestSqlite_GetUserByUsername(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.username = ? AND users.two_factor_secret_verified_on IS NOT NULL"
-
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -348,8 +377,12 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 		exampleUser.Salt = nil
 
 		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildGetUserByUsernameQuery(exampleUser.Username)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.Username).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnRows(buildMockRowsFromUser(exampleUser))
 
 		actual, err := s.GetUserByUsername(ctx, exampleUser.Username)
@@ -365,8 +398,12 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 		exampleUser := fakemodels.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildGetUserByUsernameQuery(exampleUser.Username)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.Username).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := s.GetUserByUsername(ctx, exampleUser.Username)
@@ -383,8 +420,12 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 		exampleUser := fakemodels.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildGetUserByUsernameQuery(exampleUser.Username)
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.Username).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := s.GetUserByUsername(ctx, exampleUser.Username)
@@ -412,15 +453,16 @@ func TestSqlite_buildGetAllUsersCountQuery(T *testing.T) {
 func TestSqlite_GetAllUsersCount(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL"
-
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
 		exampleCount := uint64(123)
 
 		s, mockDB := buildTestService(t)
+		expectedQuery := s.buildGetAllUsersCountQuery()
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs().
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(exampleCount))
 
 		actual, err := s.GetAllUsersCount(ctx)
@@ -434,7 +476,10 @@ func TestSqlite_GetAllUsersCount(T *testing.T) {
 		ctx := context.Background()
 
 		s, mockDB := buildTestService(t)
+		expectedQuery := s.buildGetAllUsersCountQuery()
+
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs().
 			WillReturnError(errors.New("blah"))
 
 		actual, err := s.GetAllUsersCount(ctx)
@@ -473,8 +518,6 @@ func TestSqlite_buildCreateUserQuery(T *testing.T) {
 func TestSqlite_CreateUser(T *testing.T) {
 	T.Parallel()
 
-	expectedQuery := "INSERT INTO users (username,hashed_password,salt,two_factor_secret,is_admin) VALUES (?,?,?,?,?)"
-
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -485,14 +528,14 @@ func TestSqlite_CreateUser(T *testing.T) {
 		exampleUser.Salt = nil
 		expectedInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
+		expectedQuery, expectedArgs := s.buildCreateUserQuery(expectedInput)
+
 		exampleRows := sqlmock.NewResult(int64(exampleUser.ID), 1)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
-			exampleUser.Username,
-			exampleUser.HashedPassword,
-			exampleUser.Salt,
-			exampleUser.TwoFactorSecret,
-			false,
-		).WillReturnResult(exampleRows)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
+			WillReturnResult(exampleRows)
 
 		stt := &mockTimeTeller{}
 		stt.On("Now").Return(exampleUser.CreatedOn)
@@ -515,13 +558,13 @@ func TestSqlite_CreateUser(T *testing.T) {
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 		expectedInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
-			exampleUser.Username,
-			exampleUser.HashedPassword,
-			exampleUser.Salt,
-			exampleUser.TwoFactorSecret,
-			false,
-		).WillReturnError(errors.New("blah"))
+		expectedQuery, expectedArgs := s.buildCreateUserQuery(expectedInput)
+
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
+			WillReturnError(errors.New("blah"))
 
 		actual, err := s.CreateUser(ctx, expectedInput)
 		assert.Error(t, err)
@@ -564,18 +607,16 @@ func TestSqlite_UpdateUser(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, salt = ?, two_factor_secret = ?, two_factor_secret_verified_on = ?, last_updated_on = (strftime('%s','now')) WHERE id = ?"
 		exampleRows := sqlmock.NewResult(int64(exampleUser.ID), 1)
 
 		s, mockDB := buildTestService(t)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
-			exampleUser.Username,
-			exampleUser.HashedPassword,
-			exampleUser.Salt,
-			exampleUser.TwoFactorSecret,
-			exampleUser.TwoFactorSecretVerifiedOn,
-			exampleUser.ID,
-		).WillReturnResult(exampleRows)
+		expectedQuery, expectedArgs := s.buildUpdateUserQuery(exampleUser)
+
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
+			WillReturnResult(exampleRows)
 
 		err := s.UpdateUser(ctx, exampleUser)
 		assert.NoError(t, err)
@@ -614,14 +655,14 @@ func TestSqlite_UpdateUserPassword(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET hashed_password = ?, requires_password_change = ?, password_last_changed_on = (strftime('%s','now')), last_updated_on = (strftime('%s','now')) WHERE id = ?"
-
 		s, mockDB := buildTestService(t)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).WithArgs(
-			exampleUser.HashedPassword,
-			false,
-			exampleUser.ID,
-		).WillReturnResult(driver.ResultNoRows)
+		expectedQuery, expectedArgs := s.buildUpdateUserPasswordQuery(exampleUser.ID, exampleUser.HashedPassword)
+
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
+			WillReturnResult(driver.ResultNoRows)
 
 		err := s.UpdateUserPassword(ctx, exampleUser.ID, exampleUser.HashedPassword)
 		assert.NoError(t, err)
@@ -658,11 +699,13 @@ func TestSqlite_VerifyUserTwoFactorSecret(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET two_factor_secret_verified_on = (strftime('%s','now')) WHERE id = ?"
-
 		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildVerifyUserTwoFactorSecretQuery(exampleUser.ID)
+
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.ID).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		err := s.VerifyUserTwoFactorSecret(ctx, exampleUser.ID)
@@ -699,11 +742,14 @@ func TestSqlite_ArchiveUser(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
-		expectedQuery := "UPDATE users SET archived_on = (strftime('%s','now')) WHERE id = ?"
 
 		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildArchiveUserQuery(exampleUser.ID)
+
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(exampleUser.ID).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		err := s.ArchiveUser(ctx, exampleUser.ID)

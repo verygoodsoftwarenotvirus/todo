@@ -26,6 +26,7 @@ func BuildMockDatabase() *MockDatabase {
 type MockDatabase struct {
 	mock.Mock
 
+	*mockmodels.AuditLogEntryDataManager
 	*mockmodels.ItemDataManager
 	*mockmodels.UserDataManager
 	*mockmodels.AdminUserDataManager

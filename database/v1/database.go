@@ -51,6 +51,7 @@ type (
 		Migrate(ctx context.Context, authenticator auth.Authenticator, testUserConfig *UserCreationConfig) error
 		IsReady(ctx context.Context) (ready bool)
 
+		models.AuditLogEntryDataManager
 		models.ItemDataManager
 		models.UserDataManager
 		models.AdminUserDataManager

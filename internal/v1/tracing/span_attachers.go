@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	auditLogEntryIDSpanAttachmentKey        = "audit_log_entry"
+	auditLogEntryIDSpanAttachmentKey        = "audit_log_entry_id"
+	auditLogEntryEventTypeSpanAttachmentKey = "event_type"
 	itemIDSpanAttachmentKey                 = "item_id"
 	userIDSpanAttachmentKey                 = "user_id"
 	userIsAdminSpanAttachmentKey            = "is_admin"
@@ -54,6 +55,11 @@ func AttachFilterToSpan(span *trace.Span, filter *models.QueryFilter) {
 // AttachAuditLogEntryIDToSpan attaches an audit log entry ID to a given span.
 func AttachAuditLogEntryIDToSpan(span *trace.Span, entryID uint64) {
 	attachUint64ToSpan(span, auditLogEntryIDSpanAttachmentKey, entryID)
+}
+
+// AttachAuditLogEntryEventTypeToSpan attaches an audit log entry ID to a given span.
+func AttachAuditLogEntryEventTypeToSpan(span *trace.Span, eventType string) {
+	attachStringToSpan(span, auditLogEntryEventTypeSpanAttachmentKey, eventType)
 }
 
 // AttachItemIDToSpan attaches an item ID to a given span.

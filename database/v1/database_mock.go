@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
@@ -14,11 +15,12 @@ var _ DataManager = (*MockDatabase)(nil)
 // BuildMockDatabase builds a mock database.
 func BuildMockDatabase() *MockDatabase {
 	return &MockDatabase{
-		ItemDataManager:         &mockmodels.ItemDataManager{},
-		UserDataManager:         &mockmodels.UserDataManager{},
-		AdminUserDataManager:    &mockmodels.AdminUserDataManager{},
-		OAuth2ClientDataManager: &mockmodels.OAuth2ClientDataManager{},
-		WebhookDataManager:      &mockmodels.WebhookDataManager{},
+		AuditLogEntryDataManager: &mockmodels.AuditLogEntryDataManager{},
+		ItemDataManager:          &mockmodels.ItemDataManager{},
+		UserDataManager:          &mockmodels.UserDataManager{},
+		AdminUserDataManager:     &mockmodels.AdminUserDataManager{},
+		OAuth2ClientDataManager:  &mockmodels.OAuth2ClientDataManager{},
+		WebhookDataManager:       &mockmodels.WebhookDataManager{},
 	}
 }
 
@@ -42,6 +44,12 @@ func (m *MockDatabase) Migrate(ctx context.Context, authenticator auth.Authentic
 // IsReady satisfies the DataManager interface.
 func (m *MockDatabase) IsReady(ctx context.Context) (ready bool) {
 	return m.Called(ctx).Bool(0)
+}
+
+// BeginTx satisfies the DataManager interface.
+func (m *MockDatabase) BeginTx(ctx context.Context, options *sql.TxOptions) (*sql.Tx, error) {
+	args := m.Called(ctx, options)
+	return args.Get(0).(*sql.Tx), args.Error(1)
 }
 
 var _ ResultIterator = (*MockResultIterator)(nil)

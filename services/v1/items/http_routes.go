@@ -17,6 +17,7 @@ const (
 	URIParamKey = "itemID"
 )
 
+// parseBool differs from strconv.ParseBool in that it returns false by default
 func parseBool(str string) bool {
 	switch str {
 	case "1", "t", "T", "true", "TRUE", "True":

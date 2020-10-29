@@ -45,6 +45,14 @@ func (c *Client) IsReady(ctx context.Context) (ready bool) {
 	return c.querier.IsReady(ctx)
 }
 
+// BeginTx is a simple wrapper around the core querier BeginTx call.
+func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
+	ctx, span := tracing.StartSpan(ctx, "BeginTx")
+	defer span.End()
+
+	return c.querier.BeginTx(ctx, opts)
+}
+
 // ProvideDatabaseClient provides a new DataManager client.
 func ProvideDatabaseClient(
 	ctx context.Context,

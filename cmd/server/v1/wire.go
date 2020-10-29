@@ -5,7 +5,6 @@ package main
 import (
 	"context"
 	"database/sql"
-
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
@@ -14,6 +13,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search/bleve"
 	server "gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
+	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
@@ -36,12 +36,13 @@ func BuildServer(
 	ctx context.Context,
 	cfg *config.ServerConfig,
 	logger logging.Logger,
-	database database.DataManager,
+	dbm database.DataManager,
 	db *sql.DB,
 	authenticator auth.Authenticator,
 ) (*server.Server, error) {
 	wire.Build(
 		config.Providers,
+		database.Providers,
 		// server things,
 		bleve.Providers,
 		server.Providers,
@@ -53,6 +54,7 @@ func BuildServer(
 		newsman.NewNewsman,
 		ProvideReporter,
 		// services,
+		auditservice.Providers,
 		authservice.Providers,
 		usersservice.Providers,
 		itemsservice.Providers,

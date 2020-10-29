@@ -9,7 +9,6 @@ import (
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
 	"github.com/alexedwards/scs/v2"
-	"github.com/alexedwards/scs/v2/memstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
@@ -19,25 +18,16 @@ func buildTestService(t *testing.T) *Service {
 	t.Helper()
 
 	logger := noop.NewLogger()
-	cfg := config.AuthSettings{
-		CookieSecret: "BLAHBLAHBLAHPRETENDTHISISSECRET!",
-	}
-	auth := &mockauth.Authenticator{}
-	userDB := &mockmodels.UserDataManager{}
-	oauth := &mockOAuth2ClientValidator{}
 	ed := encoding.ProvideResponseEncoder(logger)
-
-	sm := scs.New()
-	// this is currently the default, but in case that changes
-	sm.Store = memstore.New()
 
 	service, err := ProvideAuthService(
 		logger,
-		cfg,
-		auth,
-		userDB,
-		oauth,
-		sm,
+		config.AuthSettings{CookieSecret: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
+		&mockauth.Authenticator{},
+		&mockmodels.UserDataManager{},
+		&mockmodels.AuditLogEntryDataManager{},
+		&mockOAuth2ClientValidator{},
+		scs.New(),
 		ed,
 	)
 	require.NoError(t, err)
@@ -50,22 +40,16 @@ func TestProvideAuthService(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		logger := noop.NewLogger()
-		cfg := config.AuthSettings{
-			CookieSecret: "BLAHBLAHBLAHPRETENDTHISISSECRET!",
-		}
-		auth := &mockauth.Authenticator{}
-		userDB := &mockmodels.UserDataManager{}
-		oauth := &mockOAuth2ClientValidator{}
 		ed := encoding.ProvideResponseEncoder(logger)
-		sm := scs.New()
 
 		service, err := ProvideAuthService(
-			noop.NewLogger(),
-			cfg,
-			auth,
-			userDB,
-			oauth,
-			sm,
+			logger,
+			config.AuthSettings{CookieSecret: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
+			&mockauth.Authenticator{},
+			&mockmodels.UserDataManager{},
+			&mockmodels.AuditLogEntryDataManager{},
+			&mockOAuth2ClientValidator{},
+			scs.New(),
 			ed,
 		)
 		assert.NotNil(t, service)

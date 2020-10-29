@@ -91,6 +91,10 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 		s.authService.AdminMiddleware,
 	).Route("/_admin_", func(adminRouter chi.Router) {
 		adminRouter.Post("/cycle_cookie_secret", s.authService.CycleSecretHandler)
+
+		entryIDRouteParam := fmt.Sprintf(numericIDPattern, itemsservice.URIParamKey)
+		adminRouter.Get(entryIDRouteParam, s.itemsService.ReadHandler)
+		adminRouter.Get("/audit_log/entries", s.itemsService.ListHandler)
 	})
 
 	router.Get("/auth/status", s.authService.StatusHandler)
@@ -165,10 +169,10 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 			// Items
 			itemPath := "items"
 			itemsRouteWithPrefix := fmt.Sprintf("/%s", itemPath)
-			itemRouteParam := fmt.Sprintf(numericIDPattern, itemsservice.URIParamKey)
+			itemIDRouteParam := fmt.Sprintf(numericIDPattern, itemsservice.URIParamKey)
 			v1Router.Route(itemsRouteWithPrefix, func(itemsRouter chi.Router) {
 				itemsRouter.With(s.itemsService.CreationInputMiddleware).Post(root, s.itemsService.CreateHandler)
-				itemsRouter.Route(itemRouteParam, func(singleItemRouter chi.Router) {
+				itemsRouter.Route(itemIDRouteParam, func(singleItemRouter chi.Router) {
 					singleItemRouter.Get(root, s.itemsService.ReadHandler)
 					singleItemRouter.With(s.itemsService.UpdateInputMiddleware).Put(root, s.itemsService.UpdateHandler)
 					singleItemRouter.Delete(root, s.itemsService.ArchiveHandler)

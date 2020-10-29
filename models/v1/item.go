@@ -76,6 +76,17 @@ type (
 	}
 )
 
+// Update merges an ItemInput with an item.
+func (x *Item) Update(input *ItemUpdateInput) {
+	if input.Name != "" && input.Name != x.Name {
+		x.Name = input.Name
+	}
+
+	if input.Details != "" && input.Details != x.Details {
+		x.Details = input.Details
+	}
+}
+
 // ToUpdateInput creates a ItemUpdateInput struct for an item.
 func (x *Item) ToUpdateInput() *ItemUpdateInput {
 	return &ItemUpdateInput{

@@ -74,9 +74,7 @@ func (c *Client) GetItems(ctx context.Context, userID uint64, filter *models.Que
 		"user_id": userID,
 	}).Debug("GetItems called")
 
-	itemList, err := c.querier.GetItems(ctx, userID, filter)
-
-	return itemList, err
+	return c.querier.GetItems(ctx, userID, filter)
 }
 
 // GetItemsForAdmin fetches a list of items from the database that meet a particular filter for all users.
@@ -85,7 +83,6 @@ func (c *Client) GetItemsForAdmin(ctx context.Context, filter *models.QueryFilte
 	defer span.End()
 
 	tracing.AttachFilterToSpan(span, filter)
-
 	c.logger.Debug("GetItemsForAdmin called")
 
 	itemList, err := c.querier.GetItemsForAdmin(ctx, filter)

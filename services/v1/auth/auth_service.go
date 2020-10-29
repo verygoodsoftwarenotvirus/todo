@@ -37,6 +37,7 @@ type (
 		logger               logging.Logger
 		authenticator        auth.Authenticator
 		userDB               models.UserDataManager
+		auditLog             models.AuditLogEntryDataManager
 		oauth2ClientsService OAuth2ClientValidator
 		encoderDecoder       encoding.EncoderDecoder
 		cookieManager        cookieEncoderDecoder
@@ -49,7 +50,8 @@ func ProvideAuthService(
 	logger logging.Logger,
 	cfg config.AuthSettings,
 	authenticator auth.Authenticator,
-	database models.UserDataManager,
+	userDataManager models.UserDataManager,
+	auditLog models.AuditLogEntryDataManager,
 	oauth2ClientsService OAuth2ClientValidator,
 	sessionManager *scs.SessionManager,
 	encoder encoding.EncoderDecoder,
@@ -58,7 +60,8 @@ func ProvideAuthService(
 		logger:               logger.WithName(serviceName),
 		encoderDecoder:       encoder,
 		config:               cfg,
-		userDB:               database,
+		userDB:               userDataManager,
+		auditLog:             auditLog,
 		oauth2ClientsService: oauth2ClientsService,
 		authenticator:        authenticator,
 		sessionManager:       sessionManager,

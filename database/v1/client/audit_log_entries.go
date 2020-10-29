@@ -2,66 +2,62 @@ package dbclient
 
 import (
 	"context"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
 var _ models.AuditLogEntryDataManager = (*Client)(nil)
 
-// GetItem fetches an item from the database.
+// GetAuditLogEntry fetches an audit log entry from the database.
 func (c *Client) GetAuditLogEntry(ctx context.Context, entryID uint64) (*models.AuditLogEntry, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetItem")
+	ctx, span := tracing.StartSpan(ctx, "GetAuditLogEntry")
 	defer span.End()
 
 	tracing.AttachAuditLogEntryIDToSpan(span, entryID)
-
-	c.logger.WithValues(map[string]interface{}{
-		"item_id": entryID,
-	}).Debug("GetItem called")
+	c.logger.WithValue("audit_log_entry_id", entryID).Debug("GetAuditLogEntry called")
 
 	return c.querier.GetAuditLogEntry(ctx, entryID)
 }
 
-// GetAllItemsCount fetches the count of items from the database that meet a particular filter.
+// GetAllAuditLogEntriesCount fetches the count of audit log entries from the database that meet a particular filter.
 func (c *Client) GetAllAuditLogEntriesCount(ctx context.Context) (count uint64, err error) {
-	ctx, span := tracing.StartSpan(ctx, "GetAllItemsCount")
+	ctx, span := tracing.StartSpan(ctx, "GetAllAuditLogEntriesCount")
 	defer span.End()
 
-	c.logger.Debug("GetAllItemsCount called")
+	c.logger.Debug("GetAllAuditLogEntriesCount called")
 
-	return c.querier.GetAllItemsCount(ctx)
+	return c.querier.GetAllAuditLogEntriesCount(ctx)
 }
 
-// GetAllItems fetches a list of all items in the database.
+// GetAllAuditLogEntries fetches a list of all audit log entries in the database.
 func (c *Client) GetAllAuditLogEntries(ctx context.Context, results chan []models.AuditLogEntry) error {
-	ctx, span := tracing.StartSpan(ctx, "GetAllItems")
+	ctx, span := tracing.StartSpan(ctx, "GetAllAuditLogEntries")
 	defer span.End()
 
-	c.logger.Debug("GetAllItems called")
+	c.logger.Debug("GetAllAuditLogEntries called")
 
 	return c.querier.GetAllAuditLogEntries(ctx, results)
 }
 
-// GetItems fetches a list of items from the database that meet a particular filter.
+// GetAuditLogEntries fetches a list of audit log entries from the database that meet a particular filter.
 func (c *Client) GetAuditLogEntries(ctx context.Context, filter *models.QueryFilter) (*models.AuditLogEntryList, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetItems")
+	ctx, span := tracing.StartSpan(ctx, "GetAuditLogEntries")
 	defer span.End()
 
 	tracing.AttachFilterToSpan(span, filter)
+	c.logger.Debug("GetAuditLogEntries called")
 
-	c.logger.Debug("GetItems called")
-
-	itemList, err := c.querier.GetAuditLogEntries(ctx, filter)
-
-	return itemList, err
+	return c.querier.GetAuditLogEntries(ctx, filter)
 }
 
-// CreateItem creates an item in the database.
-func (c *Client) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) (*models.AuditLogEntry, error) {
-	ctx, span := tracing.StartSpan(ctx, "CreateItem")
+// CreateAuditLogEntry creates an audit log entry in the database.
+func (c *Client) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) error {
+	ctx, span := tracing.StartSpan(ctx, "CreateAuditLogEntry")
 	defer span.End()
 
-	c.logger.WithValue("input", input).Debug("CreateItem called")
+	tracing.AttachAuditLogEntryEventTypeToSpan(span, string(input.EventType))
+	c.logger.WithValue("event_type", input.EventType).Debug("CreateAuditLogEntry called")
 
 	return c.querier.CreateAuditLogEntry(ctx, input)
 }

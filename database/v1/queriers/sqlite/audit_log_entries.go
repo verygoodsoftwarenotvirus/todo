@@ -214,7 +214,7 @@ func (s *Sqlite) GetAuditLogEntries(ctx context.Context, filter *models.QueryFil
 			Page:  filter.Page,
 			Limit: filter.Limit,
 		},
-		AuditLogEntries: auditLogEntries,
+		Entries: auditLogEntries,
 	}
 
 	return list, nil
@@ -243,7 +243,7 @@ func (s *Sqlite) buildCreateAuditLogEntryQuery(input *models.AuditLogEntry) (que
 }
 
 // CreateAuditLogEntry creates an audit log entry in the database.
-func (s *Sqlite) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) (*models.AuditLogEntry, error) {
+func (s *Sqlite) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) error {
 	x := &models.AuditLogEntry{
 		EventType: input.EventType,
 		Context:   input.Context,
@@ -254,8 +254,8 @@ func (s *Sqlite) CreateAuditLogEntry(ctx context.Context, input *models.AuditLog
 	// create the audit log entry.
 	err := s.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
 	if err != nil {
-		return nil, fmt.Errorf("error executing audit log entry creation query: %w", err)
+		return fmt.Errorf("error executing audit log entry creation query: %w", err)
 	}
 
-	return x, nil
+	return nil
 }

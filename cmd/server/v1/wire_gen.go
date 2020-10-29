@@ -18,6 +18,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search/bleve"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/audit"
 	auth2 "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
@@ -29,28 +30,36 @@ import (
 // Injectors from wire.go:
 
 // BuildServer builds a server.
-func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, database2 database.DataManager, db *sql.DB, authenticator auth.Authenticator) (*server.Server, error) {
+func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, dbm database.DataManager, db *sql.DB, authenticator auth.Authenticator) (*server.Server, error) {
 	authSettings := config.ProvideConfigAuthSettings(cfg)
-	userDataManager := users.ProvideUserDataManager(database2)
+	userDataManager := database.ProvideUserDataManager(dbm)
+	auditLogEntryDataManager := database.ProvideAuditLogEntryDataManager(dbm)
 	clientIDFetcher := httpserver.ProvideOAuth2ClientsServiceClientIDFetcher(logger)
 	encoderDecoder := encoding.ProvideResponseEncoder(logger)
 	unitCounterProvider := metrics.ProvideUnitCounterProvider()
-	service, err := oauth2clients.ProvideOAuth2ClientsService(logger, database2, authenticator, clientIDFetcher, encoderDecoder, unitCounterProvider)
+	service, err := oauth2clients.ProvideOAuth2ClientsService(logger, dbm, authenticator, clientIDFetcher, encoderDecoder, unitCounterProvider)
 	if err != nil {
 		return nil, err
 	}
 	oAuth2ClientValidator := auth2.ProvideOAuth2ClientValidator(service)
 	databaseSettings := config.ProvideConfigDatabaseSettings(cfg)
 	sessionManager := config.ProvideSessionManager(authSettings, databaseSettings, db)
-	authService, err := auth2.ProvideAuthService(logger, authSettings, authenticator, userDataManager, oAuth2ClientValidator, sessionManager, encoderDecoder)
+	authService, err := auth2.ProvideAuthService(logger, authSettings, authenticator, userDataManager, auditLogEntryDataManager, oAuth2ClientValidator, sessionManager, encoderDecoder)
 	if err != nil {
 		return nil, err
 	}
 	frontendSettings := config.ProvideConfigFrontendSettings(cfg)
 	frontendService := frontend.ProvideFrontendService(logger, frontendSettings)
-	itemDataManager := items.ProvideItemDataManager(database2)
+	entryIDFetcher := httpserver.ProvideAuditServiceItemIDFetcher(logger)
+	sessionInfoFetcher := httpserver.ProvideAuditServiceSessionInfoFetcher()
+	auditService, err := audit.ProvideAuditService(logger, auditLogEntryDataManager, entryIDFetcher, sessionInfoFetcher, unitCounterProvider, encoderDecoder)
+	if err != nil {
+		return nil, err
+	}
+	auditLogEntryDataServer := audit.ProvideAuditLogEntryDataServer(auditService)
+	itemDataManager := database.ProvideItemDataManager(dbm)
 	itemIDFetcher := httpserver.ProvideItemsServiceItemIDFetcher(logger)
-	sessionInfoFetcher := httpserver.ProvideItemsServiceSessionInfoFetcher()
+	itemsSessionInfoFetcher := httpserver.ProvideItemsServiceSessionInfoFetcher()
 	websocketAuthFunc := auth2.ProvideWebsocketAuthFunc(authService)
 	typeNameManipulationFunc := httpserver.ProvideNewsmanTypeNameManipulationFunc()
 	newsmanNewsman := newsman.NewNewsman(websocketAuthFunc, typeNameManipulationFunc)
@@ -61,7 +70,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
-	itemsService, err := items.ProvideItemsService(logger, itemDataManager, itemIDFetcher, sessionInfoFetcher, encoderDecoder, unitCounterProvider, reporter, searchIndex)
+	itemsService, err := items.ProvideItemsService(logger, itemDataManager, itemIDFetcher, itemsSessionInfoFetcher, encoderDecoder, unitCounterProvider, reporter, searchIndex)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +83,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	}
 	userDataServer := users.ProvideUserDataServer(usersService)
 	oAuth2ClientDataServer := oauth2clients.ProvideOAuth2ClientDataServer(service)
-	webhookDataManager := webhooks.ProvideWebhookDataManager(database2)
+	webhookDataManager := database.ProvideWebhookDataManager(dbm)
 	webhooksUserIDFetcher := httpserver.ProvideWebhooksServiceUserIDFetcher()
 	webhookIDFetcher := httpserver.ProvideWebhooksServiceWebhookIDFetcher(logger)
 	webhooksService, err := webhooks.ProvideWebhooksService(logger, webhookDataManager, webhooksUserIDFetcher, webhookIDFetcher, encoderDecoder, unitCounterProvider, newsmanNewsman)
@@ -82,7 +91,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 		return nil, err
 	}
 	webhookDataServer := webhooks.ProvideWebhookDataServer(webhooksService)
-	httpserverServer, err := httpserver.ProvideServer(ctx, cfg, authService, frontendService, itemDataServer, userDataServer, oAuth2ClientDataServer, webhookDataServer, database2, logger, encoderDecoder, newsmanNewsman)
+	httpserverServer, err := httpserver.ProvideServer(ctx, cfg, authService, frontendService, auditLogEntryDataServer, itemDataServer, userDataServer, oAuth2ClientDataServer, webhookDataServer, dbm, logger, encoderDecoder, newsmanNewsman)
 	if err != nil {
 		return nil, err
 	}

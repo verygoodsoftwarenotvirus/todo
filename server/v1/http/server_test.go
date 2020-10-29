@@ -11,6 +11,7 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
+	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
@@ -66,6 +67,7 @@ func TestProvideServer(T *testing.T) {
 			},
 			&authservice.Service{},
 			&frontendservice.Service{},
+			&auditservice.Service{},
 			&itemsservice.Service{},
 			&usersservice.Service{},
 			&oauth2clientsservice.Service{},
@@ -99,6 +101,7 @@ func TestProvideServer(T *testing.T) {
 			},
 			&authservice.Service{},
 			&frontendservice.Service{},
+			&auditservice.Service{},
 			&itemsservice.Service{},
 			&usersservice.Service{},
 			&oauth2clientsservice.Service{},
@@ -130,6 +133,7 @@ func TestProvideServer(T *testing.T) {
 			},
 			&authservice.Service{},
 			&frontendservice.Service{},
+			&auditservice.Service{},
 			&itemsservice.Service{},
 			&usersservice.Service{},
 			&oauth2clientsservice.Service{},

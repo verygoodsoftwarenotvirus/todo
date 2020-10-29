@@ -40,7 +40,6 @@ func (m *AuditLogEntryDataManager) GetAuditLogEntries(ctx context.Context, filte
 }
 
 // CreateAuditLogEntry is a mock function.
-func (m *AuditLogEntryDataManager) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) (*models.AuditLogEntry, error) {
-	args := m.Called(ctx, input)
-	return args.Get(0).(*models.AuditLogEntry), args.Error(1)
+func (m *AuditLogEntryDataManager) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) error {
+	return m.Called(ctx, input).Error(0)
 }

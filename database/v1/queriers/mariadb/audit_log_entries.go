@@ -214,7 +214,7 @@ func (m *MariaDB) GetAuditLogEntries(ctx context.Context, filter *models.QueryFi
 			Page:  filter.Page,
 			Limit: filter.Limit,
 		},
-		AuditLogEntries: auditLogEntries,
+		Entries: auditLogEntries,
 	}
 
 	return list, nil
@@ -243,7 +243,7 @@ func (m *MariaDB) buildCreateAuditLogEntryQuery(input *models.AuditLogEntry) (qu
 }
 
 // CreateAuditLogEntry creates an audit log entry in the database.
-func (m *MariaDB) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) (*models.AuditLogEntry, error) {
+func (m *MariaDB) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) error {
 	x := &models.AuditLogEntry{
 		EventType: input.EventType,
 		Context:   input.Context,
@@ -254,8 +254,8 @@ func (m *MariaDB) CreateAuditLogEntry(ctx context.Context, input *models.AuditLo
 	// create the audit log entry.
 	err := m.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
 	if err != nil {
-		return nil, fmt.Errorf("error executing audit log entry creation query: %w", err)
+		return fmt.Errorf("error executing audit log entry creation query: %w", err)
 	}
 
-	return x, nil
+	return nil
 }

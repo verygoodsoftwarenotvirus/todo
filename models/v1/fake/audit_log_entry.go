@@ -10,7 +10,7 @@ import (
 func BuildFakeAuditLogEntry() *models.AuditLogEntry {
 	return &models.AuditLogEntry{
 		ID:        fake.Uint64(),
-		EventType: fake.Word(),
+		EventType: models.SuccessfulLoginEventType,
 		Context:   map[string]string{"fake": "true"},
 		CreatedOn: uint64(uint32(fake.Date().Unix())),
 	}
@@ -27,7 +27,7 @@ func BuildFakeAuditLogEntryList() *models.AuditLogEntryList {
 			Page:  1,
 			Limit: 20,
 		},
-		AuditLogEntries: []models.AuditLogEntry{
+		Entries: []models.AuditLogEntry{
 			*exampleAuditLogEntry1,
 			*exampleAuditLogEntry2,
 			*exampleAuditLogEntry3,

@@ -179,6 +179,15 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	logger.Debug("login successful")
+	auditLogEntryCreationError := s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
+		EventType: models.SuccessfulLoginEventType,
+		Context: map[string]string{
+			"user_id": fmt.Sprintf("%d", user.ID),
+		},
+	})
+	if auditLogEntryCreationError != nil {
+		logger.Error(auditLogEntryCreationError, "creating successful audit log entry")
+	}
 
 	http.SetCookie(res, cookie)
 	statusResponse := &models.UserStatusResponse{

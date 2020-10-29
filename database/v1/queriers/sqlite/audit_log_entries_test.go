@@ -223,9 +223,9 @@ func TestSqlite_GetAllAuditLogEntries(T *testing.T) {
 			).
 			WillReturnRows(
 				buildMockRowsFromAuditLogEntries(
-					&exampleAuditLogEntryList.AuditLogEntries[0],
-					&exampleAuditLogEntryList.AuditLogEntries[1],
-					&exampleAuditLogEntryList.AuditLogEntries[2],
+					&exampleAuditLogEntryList.Entries[0],
+					&exampleAuditLogEntryList.Entries[1],
+					&exampleAuditLogEntryList.Entries[2],
 				),
 			)
 
@@ -403,9 +403,9 @@ func TestSqlite_GetAuditLogEntries(T *testing.T) {
 			).
 			WillReturnRows(
 				buildMockRowsFromAuditLogEntries(
-					&exampleAuditLogEntryList.AuditLogEntries[0],
-					&exampleAuditLogEntryList.AuditLogEntries[1],
-					&exampleAuditLogEntryList.AuditLogEntries[2],
+					&exampleAuditLogEntryList.Entries[0],
+					&exampleAuditLogEntryList.Entries[1],
+					&exampleAuditLogEntryList.Entries[2],
 				),
 			)
 
@@ -524,9 +524,7 @@ func TestSqlite_CreateAuditLogEntry(T *testing.T) {
 			).
 			WillReturnRows(exampleRows)
 
-		actual, err := s.CreateAuditLogEntry(ctx, exampleInput)
-		assert.NoError(t, err)
-		assert.Equal(t, exampleAuditLogEntry, actual)
+		assert.NoError(t, s.CreateAuditLogEntry(ctx, exampleInput))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -546,9 +544,7 @@ func TestSqlite_CreateAuditLogEntry(T *testing.T) {
 			).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := s.CreateAuditLogEntry(ctx, exampleInput)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
+		assert.Error(t, s.CreateAuditLogEntry(ctx, exampleInput))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

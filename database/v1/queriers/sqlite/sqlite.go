@@ -96,6 +96,11 @@ func (s *Sqlite) IsReady(_ context.Context) (ready bool) {
 	return true
 }
 
+// BeginTx begins a transaction.
+func (s *Sqlite) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
+	return s.db.BeginTx(ctx, opts)
+}
+
 // logQueryBuildingError logs errors that may occur during query construction.
 // Such errors should be few and far between, as the generally only occur with
 // type discrepancies or other misuses of SQL. An alert should be set up for

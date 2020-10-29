@@ -9,13 +9,16 @@ import (
 )
 
 type (
+	// eventType is an enumertion-like string type
+	eventType string
+
 	// AuditLogContext keeps track of what gets modified within audit reports
 	AuditLogContext map[string]string
 
 	// AuditLogEntry represents an event we might want to log for audit purposes.
 	AuditLogEntry struct {
 		ID        uint64          `json:"id"`
-		EventType string          `json:"eventType"`
+		EventType eventType       `json:"eventType"`
 		Context   AuditLogContext `json:"context"`
 		CreatedOn uint64          `json:"createdOn"`
 	}
@@ -23,12 +26,12 @@ type (
 	// AuditLogEntryList represents a list of items.
 	AuditLogEntryList struct {
 		Pagination
-		AuditLogEntries []AuditLogEntry `json:"auditLogEntries"`
+		Entries []AuditLogEntry `json:"entries"`
 	}
 
 	// AuditLogEntryCreationInput represents what a user could set as input for creating items.
 	AuditLogEntryCreationInput struct {
-		EventType string          `json:"eventType"`
+		EventType eventType       `json:"eventType"`
 		Context   AuditLogContext `json:"context"`
 	}
 
@@ -38,27 +41,22 @@ type (
 		GetAllAuditLogEntriesCount(ctx context.Context) (uint64, error)
 		GetAllAuditLogEntries(ctx context.Context, resultChannel chan []AuditLogEntry) error
 		GetAuditLogEntries(ctx context.Context, filter *QueryFilter) (*AuditLogEntryList, error)
-		CreateAuditLogEntry(ctx context.Context, input *AuditLogEntryCreationInput) (*AuditLogEntry, error)
+		CreateAuditLogEntry(ctx context.Context, input *AuditLogEntryCreationInput) error
 	}
 
 	// AuditLogEntryDataServer describes a structure capable of serving traffic related to items.
 	AuditLogEntryDataServer interface {
-		CreationInputMiddleware(next http.Handler) http.Handler
-
 		ListHandler(res http.ResponseWriter, req *http.Request)
-		CreateHandler(res http.ResponseWriter, req *http.Request)
 		ReadHandler(res http.ResponseWriter, req *http.Request)
 	}
 )
 
-// Make the Attrs struct implement the driver.Valuer interface. This method
-// simply returns the JSON-encoded representation of the struct.
+// Value implements the driver.Valuer interface.
 func (d AuditLogContext) Value() (driver.Value, error) {
 	return json.Marshal(d)
 }
 
-// Make the Attrs struct implement the sql.Scanner interface. This method
-// simply decodes a JSON-encoded value into the struct fields.
+// Scan implements the sql.Scanner interface.
 func (d *AuditLogContext) Scan(value interface{}) error {
 	b, ok := value.([]byte)
 	if !ok {
@@ -67,3 +65,10 @@ func (d *AuditLogContext) Scan(value interface{}) error {
 
 	return json.Unmarshal(b, &d)
 }
+
+// Event Types
+
+const (
+	// SuccessfulLoginEventType events indicate a user successfully authenticated into the service via username + password + 2fa.
+	SuccessfulLoginEventType eventType = "successful_login"
+)

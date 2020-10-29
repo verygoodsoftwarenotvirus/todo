@@ -272,6 +272,10 @@ func TestService_LoginHandler(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = authr
 
+		auditLog := &mockmodels.AuditLogEntryDataManager{}
+		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput")).Return(nil)
+		s.auditLog = auditLog
+
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)

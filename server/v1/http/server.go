@@ -25,6 +25,7 @@ import (
 const (
 	maxTimeout      = 120 * time.Second
 	serverNamespace = "todo-service"
+	loggerName      = "api_server"
 )
 
 type (
@@ -35,6 +36,7 @@ type (
 		// Services.
 		authService          *authservice.Service
 		frontendService      *frontendservice.Service
+		auditService         models.AuditLogEntryDataServer
 		usersService         models.UserDataServer
 		oauth2ClientsService models.OAuth2ClientDataServer
 		webhooksService      models.WebhookDataServer
@@ -57,6 +59,7 @@ func ProvideServer(
 	cfg *config.ServerConfig,
 	authService *authservice.Service,
 	frontendService *frontendservice.Service,
+	auditService models.AuditLogEntryDataServer,
 	itemsService models.ItemDataServer,
 	usersService models.UserDataServer,
 	oauth2Service models.OAuth2ClientDataServer,
@@ -79,9 +82,10 @@ func ProvideServer(
 		config:      cfg,
 		encoder:     encoder,
 		httpServer:  provideHTTPServer(),
-		logger:      logger.WithName("api_server"),
+		logger:      logger.WithName(loggerName),
 		newsManager: newsManager,
 		// services,
+		auditService:         auditService,
 		webhooksService:      webhooksService,
 		frontendService:      frontendService,
 		usersService:         usersService,

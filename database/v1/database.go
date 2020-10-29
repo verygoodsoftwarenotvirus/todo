@@ -50,6 +50,7 @@ type (
 	DataManager interface {
 		Migrate(ctx context.Context, authenticator auth.Authenticator, testUserConfig *UserCreationConfig) error
 		IsReady(ctx context.Context) (ready bool)
+		BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
 
 		models.AuditLogEntryDataManager
 		models.ItemDataManager

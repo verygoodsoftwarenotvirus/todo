@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/audit"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -25,6 +26,8 @@ var (
 		ProvideWebhooksServiceUserIDFetcher,
 		ProvideItemsServiceItemIDFetcher,
 		ProvideItemsServiceSessionInfoFetcher,
+		ProvideAuditServiceItemIDFetcher,
+		ProvideAuditServiceSessionInfoFetcher,
 	)
 )
 
@@ -63,6 +66,16 @@ func ProvideItemsServiceSessionInfoFetcher() itemsservice.SessionInfoFetcher {
 	return sessionInfoFetcherFromRequestContext
 }
 
+// ProvideAuditServiceItemIDFetcher provides an EntryIDFetcher.
+func ProvideAuditServiceItemIDFetcher(logger logging.Logger) auditservice.EntryIDFetcher {
+	return buildRouteParamEntryIDFetcher(logger)
+}
+
+// ProvideAuditServiceSessionInfoFetcher provides a SessionInfoFetcher.
+func ProvideAuditServiceSessionInfoFetcher() auditservice.SessionInfoFetcher {
+	return sessionInfoFetcherFromRequestContext
+}
+
 // userIDFetcherFromRequestContext fetches a user ID from a request routed by chi.
 func userIDFetcherFromRequestContext(req *http.Request) uint64 {
 	if si, ok := req.Context().Value(models.SessionInfoKey).(*models.SessionInfo); ok && si != nil {
@@ -97,7 +110,20 @@ func buildRouteParamItemIDFetcher(logger logging.Logger) func(req *http.Request)
 		// that the string only contains numbers via chi's regex url param feature.
 		u, err := strconv.ParseUint(chi.URLParam(req, itemsservice.URIParamKey), 10, 64)
 		if err != nil {
-			logger.Error(err, "fetching ItemID from request")
+			logger.Error(err, "fetching item ID from request")
+		}
+		return u
+	}
+}
+
+// buildRouteParamEntryIDFetcher builds a function that fetches a ItemID from a request routed by chi.
+func buildRouteParamEntryIDFetcher(logger logging.Logger) func(req *http.Request) uint64 {
+	return func(req *http.Request) uint64 {
+		// we can generally disregard this error only because we should be able to validate.
+		// that the string only contains numbers via chi's regex url param feature.
+		u, err := strconv.ParseUint(chi.URLParam(req, auditservice.URIParamKey), 10, 64)
+		if err != nil {
+			logger.Error(err, "fetching audit log entry ID from request")
 		}
 		return u
 	}
@@ -110,7 +136,7 @@ func buildRouteParamWebhookIDFetcher(logger logging.Logger) func(req *http.Reque
 		// that the string only contains numbers via chi's regex url param feature.
 		u, err := strconv.ParseUint(chi.URLParam(req, webhooksservice.URIParamKey), 10, 64)
 		if err != nil {
-			logger.Error(err, "fetching WebhookID from request")
+			logger.Error(err, "fetching webhook ID from request")
 		}
 		return u
 	}
@@ -123,7 +149,7 @@ func buildRouteParamOAuth2ClientIDFetcher(logger logging.Logger) func(req *http.
 		// that the string only contains numbers via chi's regex url param feature.
 		u, err := strconv.ParseUint(chi.URLParam(req, oauth2clientsservice.URIParamKey), 10, 64)
 		if err != nil {
-			logger.Error(err, "fetching OAuth2ClientID from request")
+			logger.Error(err, "fetching OAuth2 client ID from request")
 		}
 		return u
 	}

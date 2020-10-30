@@ -133,6 +133,7 @@ func (s *Service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	} else {
 		items, dbErr = s.itemDataManager.GetItemsWithIDs(ctx, si.UserID, filter.Limit, relevantIDs)
 	}
+
 	if dbErr == sql.ErrNoRows {
 		// in the event no rows exist return an empty list.
 		items = []models.Item{}

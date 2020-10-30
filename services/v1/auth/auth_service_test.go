@@ -1,11 +1,13 @@
 package auth
 
 import (
+	"net/http"
 	"testing"
 
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
 	"github.com/alexedwards/scs/v2"
@@ -29,6 +31,7 @@ func buildTestService(t *testing.T) *Service {
 		&mockOAuth2ClientValidator{},
 		scs.New(),
 		ed,
+		func(*http.Request) (*models.SessionInfo, error) { return &models.SessionInfo{}, nil },
 	)
 	require.NoError(t, err)
 
@@ -51,6 +54,7 @@ func TestProvideAuthService(T *testing.T) {
 			&mockOAuth2ClientValidator{},
 			scs.New(),
 			ed,
+			func(*http.Request) (*models.SessionInfo, error) { return &models.SessionInfo{}, nil },
 		)
 		assert.NotNil(t, service)
 		assert.NoError(t, err)

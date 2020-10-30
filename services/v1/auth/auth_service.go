@@ -31,6 +31,9 @@ type (
 		Decode(name, value string, dst interface{}) error
 	}
 
+	// SessionInfoFetcher is a function that fetches user IDs.
+	SessionInfoFetcher func(*http.Request) (*models.SessionInfo, error)
+
 	// Service handles authentication service-wide
 	Service struct {
 		config               config.AuthSettings
@@ -42,6 +45,7 @@ type (
 		encoderDecoder       encoding.EncoderDecoder
 		cookieManager        cookieEncoderDecoder
 		sessionManager       *scs.SessionManager
+		sessionInfoFetcher   SessionInfoFetcher
 	}
 )
 
@@ -55,6 +59,7 @@ func ProvideAuthService(
 	oauth2ClientsService OAuth2ClientValidator,
 	sessionManager *scs.SessionManager,
 	encoder encoding.EncoderDecoder,
+	sessionInfoFetcher SessionInfoFetcher,
 ) (*Service, error) {
 	svc := &Service{
 		logger:               logger.WithName(serviceName),
@@ -65,6 +70,7 @@ func ProvideAuthService(
 		oauth2ClientsService: oauth2ClientsService,
 		authenticator:        authenticator,
 		sessionManager:       sessionManager,
+		sessionInfoFetcher:   sessionInfoFetcher,
 		cookieManager: securecookie.New(
 			securecookie.GenerateRandomKey(64),
 			[]byte(cfg.CookieSecret),

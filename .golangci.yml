@@ -96,7 +96,7 @@ linters-settings:
     local-prefixes: gitlab.com/verygoodsoftwarenotvirus/todo
   gocyclo:
     # minimal code complexity to report, 30 by default (but we recommend 10-20)
-    min-complexity: 12
+    min-complexity: 15
   gosec:
     exclude:
       - G304

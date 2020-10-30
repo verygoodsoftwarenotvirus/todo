@@ -234,7 +234,6 @@ func (m *MariaDB) buildCreateAuditLogEntryQuery(input *models.AuditLogEntry) (qu
 			input.EventType,
 			input.Context,
 		).
-		Suffix(fmt.Sprintf("RETURNING %s, %s", idColumn, createdOnColumn)).
 		ToSql()
 
 	m.logQueryBuildingError(err)
@@ -243,7 +242,7 @@ func (m *MariaDB) buildCreateAuditLogEntryQuery(input *models.AuditLogEntry) (qu
 }
 
 // CreateAuditLogEntry creates an audit log entry in the database.
-func (m *MariaDB) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) error {
+func (m *MariaDB) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) {
 	x := &models.AuditLogEntry{
 		EventType: input.EventType,
 		Context:   input.Context,
@@ -252,10 +251,7 @@ func (m *MariaDB) CreateAuditLogEntry(ctx context.Context, input *models.AuditLo
 	query, args := m.buildCreateAuditLogEntryQuery(x)
 
 	// create the audit log entry.
-	err := m.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
-	if err != nil {
-		return fmt.Errorf("error executing audit log entry creation query: %w", err)
+	if _, err := m.db.ExecContext(ctx, query, args...); err != nil {
+		m.logger.WithValue("event_type", input.EventType).Error(err, "executing audit log entry creation query")
 	}
-
-	return nil
 }

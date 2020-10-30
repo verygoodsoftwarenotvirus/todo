@@ -332,6 +332,10 @@ func TestService_LoginHandler(T *testing.T) {
 		).Return(false, nil)
 		s.authenticator = authr
 
+		auditLog := &mockmodels.AuditLogEntryDataManager{}
+		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput")).Return(nil)
+		s.auditLog = auditLog
+
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
@@ -495,6 +499,10 @@ func TestService_LogoutHandler(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
+		auditLog := &mockmodels.AuditLogEntryDataManager{}
+		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput")).Return(nil)
+		s.auditLog = auditLog
+
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
@@ -568,7 +576,7 @@ func TestService_validateLogin(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = authr
 
-		actual, err := s.validateLogin(ctx, exampleLoginData, exampleUser)
+		actual, err := s.validateLogin(ctx, exampleUser, exampleLoginData)
 		assert.True(t, actual)
 		assert.NoError(t, err)
 
@@ -592,7 +600,7 @@ func TestService_validateLogin(T *testing.T) {
 			exampleUser.TwoFactorSecret,
 			exampleLoginData.TOTPToken,
 			exampleUser.Salt,
-		).Return(true, auth.ErrCostTooLow)
+		).Return(true, auth.ErrPasswordHashTooWeak)
 		s.authenticator = authr
 
 		authr.On(
@@ -609,7 +617,7 @@ func TestService_validateLogin(T *testing.T) {
 		).Return(nil)
 		s.userDB = udb
 
-		actual, err := s.validateLogin(ctx, exampleLoginData, exampleUser)
+		actual, err := s.validateLogin(ctx, exampleUser, exampleLoginData)
 		assert.True(t, actual)
 		assert.NoError(t, err)
 
@@ -635,7 +643,7 @@ func TestService_validateLogin(T *testing.T) {
 			exampleUser.TwoFactorSecret,
 			exampleLoginData.TOTPToken,
 			exampleUser.Salt,
-		).Return(true, auth.ErrCostTooLow)
+		).Return(true, auth.ErrPasswordHashTooWeak)
 
 		authr.On(
 			"HashPassword",
@@ -644,7 +652,7 @@ func TestService_validateLogin(T *testing.T) {
 		).Return("", expectedErr)
 		s.authenticator = authr
 
-		actual, err := s.validateLogin(ctx, exampleLoginData, exampleUser)
+		actual, err := s.validateLogin(ctx, exampleUser, exampleLoginData)
 		assert.False(t, actual)
 		assert.Error(t, err)
 
@@ -686,7 +694,7 @@ func TestService_validateLogin(T *testing.T) {
 		).Return(expectedErr)
 		s.userDB = udb
 
-		actual, err := s.validateLogin(ctx, exampleLoginData, exampleUser)
+		actual, err := s.validateLogin(ctx, exampleUser, exampleLoginData)
 		assert.False(t, actual)
 		assert.Error(t, err)
 
@@ -714,7 +722,7 @@ func TestService_validateLogin(T *testing.T) {
 		).Return(false, expectedErr)
 		s.authenticator = authr
 
-		actual, err := s.validateLogin(ctx, exampleLoginData, exampleUser)
+		actual, err := s.validateLogin(ctx, exampleUser, exampleLoginData)
 		assert.False(t, actual)
 		assert.Error(t, err)
 
@@ -741,7 +749,7 @@ func TestService_validateLogin(T *testing.T) {
 		).Return(false, nil)
 		s.authenticator = authr
 
-		actual, err := s.validateLogin(ctx, exampleLoginData, exampleUser)
+		actual, err := s.validateLogin(ctx, exampleUser, exampleLoginData)
 		assert.False(t, actual)
 		assert.NoError(t, err)
 
@@ -812,6 +820,10 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
+
+		auditLog := &mockmodels.AuditLogEntryDataManager{}
+		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput")).Return(nil)
+		s.auditLog = auditLog
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(http.MethodPost, "https://blah.com", nil)

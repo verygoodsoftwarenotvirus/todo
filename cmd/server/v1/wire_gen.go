@@ -44,18 +44,16 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	oAuth2ClientValidator := auth2.ProvideOAuth2ClientValidator(service)
 	databaseSettings := config.ProvideConfigDatabaseSettings(cfg)
 	sessionManager := config.ProvideSessionManager(authSettings, databaseSettings, db)
-	authService, err := auth2.ProvideAuthService(logger, authSettings, authenticator, userDataManager, auditLogEntryDataManager, oAuth2ClientValidator, sessionManager, encoderDecoder)
+	sessionInfoFetcher := httpserver.ProvideAuthServiceSessionInfoFetcher()
+	authService, err := auth2.ProvideAuthService(logger, authSettings, authenticator, userDataManager, auditLogEntryDataManager, oAuth2ClientValidator, sessionManager, encoderDecoder, sessionInfoFetcher)
 	if err != nil {
 		return nil, err
 	}
 	frontendSettings := config.ProvideConfigFrontendSettings(cfg)
 	frontendService := frontend.ProvideFrontendService(logger, frontendSettings)
 	entryIDFetcher := httpserver.ProvideAuditServiceItemIDFetcher(logger)
-	sessionInfoFetcher := httpserver.ProvideAuditServiceSessionInfoFetcher()
-	auditService, err := audit.ProvideAuditService(logger, auditLogEntryDataManager, entryIDFetcher, sessionInfoFetcher, unitCounterProvider, encoderDecoder)
-	if err != nil {
-		return nil, err
-	}
+	auditSessionInfoFetcher := httpserver.ProvideAuditServiceSessionInfoFetcher()
+	auditService := audit.ProvideAuditService(logger, auditLogEntryDataManager, entryIDFetcher, auditSessionInfoFetcher, encoderDecoder)
 	auditLogEntryDataServer := audit.ProvideAuditLogEntryDataServer(auditService)
 	itemDataManager := database.ProvideItemDataManager(dbm)
 	itemIDFetcher := httpserver.ProvideItemsServiceItemIDFetcher(logger)

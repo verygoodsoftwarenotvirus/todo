@@ -62,5 +62,5 @@ func main() {
 	// I slept and dreamt that life was joy.
 	//   I awoke and saw that life was service.
 	//   	I acted and behold, service deployed.
-	server.Serve()
+	go server.Serve()
 }

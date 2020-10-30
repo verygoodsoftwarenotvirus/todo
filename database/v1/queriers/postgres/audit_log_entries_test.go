@@ -524,7 +524,7 @@ func TestPostgres_CreateAuditLogEntry(T *testing.T) {
 			).
 			WillReturnRows(exampleRows)
 
-		assert.NoError(t, p.CreateAuditLogEntry(ctx, exampleInput))
+		p.CreateAuditLogEntry(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -544,7 +544,7 @@ func TestPostgres_CreateAuditLogEntry(T *testing.T) {
 			).
 			WillReturnError(errors.New("blah"))
 
-		assert.Error(t, p.CreateAuditLogEntry(ctx, exampleInput))
+		p.CreateAuditLogEntry(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

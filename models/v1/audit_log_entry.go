@@ -41,7 +41,7 @@ type (
 		GetAllAuditLogEntriesCount(ctx context.Context) (uint64, error)
 		GetAllAuditLogEntries(ctx context.Context, resultChannel chan []AuditLogEntry) error
 		GetAuditLogEntries(ctx context.Context, filter *QueryFilter) (*AuditLogEntryList, error)
-		CreateAuditLogEntry(ctx context.Context, input *AuditLogEntryCreationInput) error
+		CreateAuditLogEntry(ctx context.Context, input *AuditLogEntryCreationInput)
 	}
 
 	// AuditLogEntryDataServer describes a structure capable of serving traffic related to items.
@@ -69,6 +69,14 @@ func (d *AuditLogContext) Scan(value interface{}) error {
 // Event Types
 
 const (
+	// CycleCookoieSecretEventType events indicate a user successfully authenticated into the service via username + password + 2fa.
+	CycleCookoieSecretEventType eventType = "cookie_secret_cycled"
 	// SuccessfulLoginEventType events indicate a user successfully authenticated into the service via username + password + 2fa.
 	SuccessfulLoginEventType eventType = "successful_login"
+	// UnsuccessfulLoginBadPasswordEventType events indicate a user attempted to authenticate into the service, but failed.
+	UnsuccessfulLoginBadPasswordEventType eventType = "unsuccessful_login_bad_password"
+	// UnsuccessfulLoginBad2FATokenEventType events indicate a user attempted to authenticate into the service, but failed.
+	UnsuccessfulLoginBad2FATokenEventType eventType = "unsuccessful_login_bad_2fa_token"
+	// LogoutEventType events indicate a user successfully authenticated into the service via username + password + 2fa.
+	LogoutEventType eventType = "user_logged_out"
 )

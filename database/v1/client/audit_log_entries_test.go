@@ -30,25 +30,6 @@ func TestClient_GetAuditLogEntry(T *testing.T) {
 	})
 }
 
-func TestClient_GetAllAuditLogEntriesCount(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		ctx := context.Background()
-
-		exampleCount := uint64(123)
-
-		c, mockDB := buildTestClient()
-		mockDB.AuditLogEntryDataManager.On("GetAllAuditLogEntriesCount", mock.Anything).Return(exampleCount, nil)
-
-		actual, err := c.GetAllAuditLogEntriesCount(ctx)
-		assert.NoError(t, err)
-		assert.Equal(t, exampleCount, actual)
-
-		mock.AssertExpectationsForObjects(t, mockDB)
-	})
-}
-
 func TestClient_GetAllAuditLogEntries(T *testing.T) {
 	T.Parallel()
 
@@ -115,8 +96,7 @@ func TestClient_CreateAuditLogEntry(T *testing.T) {
 		c, mockDB := buildTestClient()
 		mockDB.AuditLogEntryDataManager.On("CreateAuditLogEntry", mock.Anything, exampleInput).Return(nil)
 
-		err := c.CreateAuditLogEntry(ctx, exampleInput)
-		assert.NoError(t, err)
+		c.CreateAuditLogEntry(ctx, exampleInput)
 
 		mock.AssertExpectationsForObjects(t, mockDB)
 	})

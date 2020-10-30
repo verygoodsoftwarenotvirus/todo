@@ -52,12 +52,12 @@ func (c *Client) GetAuditLogEntries(ctx context.Context, filter *models.QueryFil
 }
 
 // CreateAuditLogEntry creates an audit log entry in the database.
-func (c *Client) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) error {
+func (c *Client) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) {
 	ctx, span := tracing.StartSpan(ctx, "CreateAuditLogEntry")
 	defer span.End()
 
 	tracing.AttachAuditLogEntryEventTypeToSpan(span, string(input.EventType))
 	c.logger.WithValue("event_type", input.EventType).Debug("CreateAuditLogEntry called")
 
-	return c.querier.CreateAuditLogEntry(ctx, input)
+	c.querier.CreateAuditLogEntry(ctx, input)
 }

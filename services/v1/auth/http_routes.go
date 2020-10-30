@@ -21,6 +21,7 @@ const (
 	cookieErrorLogName = "_COOKIE_CONSTRUCTION_ERROR_"
 
 	sessionInfoKey = "session_info"
+	staticError    = "error encountered, please try again later"
 )
 
 // DecodeCookieFromRequest takes a request object and fetches the cookie data if it is present.
@@ -119,7 +120,6 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeErrorResponse(res, "error validating request", http.StatusUnauthorized)
 		return
 	}
-
 	logger = logger.WithValue("username", loginData.Username)
 
 	user, err := s.userDB.GetUserByUsername(ctx, loginData.Username)
@@ -133,18 +133,42 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachUsernameToSpan(span, user.Username)
 	logger = logger.WithValue("user_id", user.ID)
 
-	const staticError = "error encountered, please try again later"
-
-	loginValid, err := s.validateLogin(ctx, loginData, user)
+	loginValid, err := s.validateLogin(ctx, user, loginData)
+	logger = logger.WithValue("login_valid", loginValid)
 	if err != nil {
 		logger.Error(err, "error encountered validating login")
+
+		if err == auth.ErrInvalidTwoFactorCode {
+			s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
+				EventType: models.UnsuccessfulLoginBad2FATokenEventType,
+				Context: map[string]string{
+					"user_id":    fmt.Sprintf("%d", user.ID),
+					"REFACTORME": "yes plz",
+				},
+			})
+		} else if err == auth.ErrPasswordDoesNotMatch {
+			s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
+				EventType: models.UnsuccessfulLoginBadPasswordEventType,
+				Context: map[string]string{
+					"user_id":    fmt.Sprintf("%d", user.ID),
+					"REFACTORME": "yes plz",
+				},
+			})
+		}
+
 		s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusUnauthorized)
 		return
-	}
-	logger = logger.WithValue("login_valid", loginValid)
-
-	if !loginValid {
+	} else if !loginValid {
 		logger.Debug("login was invalid")
+
+		s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
+			EventType: models.UnsuccessfulLoginBadPasswordEventType,
+			Context: map[string]string{
+				"user_id":    fmt.Sprintf("%d", user.ID),
+				"REFACTORME": "yes plz",
+			},
+		})
+
 		s.encoderDecoder.EncodeErrorResponse(res, "login was invalid", http.StatusUnauthorized)
 		return
 	}
@@ -179,15 +203,12 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	logger.Debug("login successful")
-	auditLogEntryCreationError := s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
+	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
 		EventType: models.SuccessfulLoginEventType,
 		Context: map[string]string{
 			"user_id": fmt.Sprintf("%d", user.ID),
 		},
 	})
-	if auditLogEntryCreationError != nil {
-		logger.Error(auditLogEntryCreationError, "creating successful audit log entry")
-	}
 
 	http.SetCookie(res, cookie)
 	statusResponse := &models.UserStatusResponse{
@@ -204,6 +225,14 @@ func (s *Service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 
 	logger := s.logger.WithRequest(req)
 
+	// determine user ID.
+	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	if sessionInfoRetrievalErr != nil {
+		logger.Error(sessionInfoRetrievalErr, "error fetching sessionInfo")
+		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+
 	ctx, sessionErr := s.sessionManager.Load(ctx, "")
 	if sessionErr != nil {
 		logger.Error(sessionErr, "error loading token")
@@ -211,8 +240,8 @@ func (s *Service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err := s.sessionManager.Clear(ctx); err != nil {
-		logger.Error(err, "clearing user session")
+	if sessionClearErr := s.sessionManager.Clear(ctx); sessionClearErr != nil {
+		logger.Error(sessionClearErr, "clearing user session")
 		s.encoderDecoder.EncodeErrorResponse(res, "error encountered, please try again later", http.StatusInternalServerError)
 		return
 	}
@@ -221,6 +250,13 @@ func (s *Service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 		if c, cookieBuildingErr := s.buildCookie("deleted", time.Time{}); cookieBuildingErr == nil && c != nil {
 			c.MaxAge = -1
 			http.SetCookie(res, c)
+
+			s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
+				EventType: models.LogoutEventType,
+				Context: map[string]string{
+					"user_id": fmt.Sprintf("%d", si.UserID),
+				},
+			})
 		} else {
 			logger.Error(cookieBuildingErr, "error encountered building cookie")
 			s.encoderDecoder.EncodeErrorResponse(res, "error encountered, please try again later", http.StatusInternalServerError)
@@ -260,23 +296,38 @@ func (s *Service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 
 // CycleSecretHandler rotates the cookie building secret with a new random secret.
 func (s *Service) CycleSecretHandler(res http.ResponseWriter, req *http.Request) {
-	_, span := tracing.StartSpan(req.Context(), "CycleSecretHandler")
+	ctx, span := tracing.StartSpan(req.Context(), "CycleSecretHandler")
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
 	logger.Info("cycling cookie secret!")
+
+	// determine user ID.
+	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	if sessionInfoRetrievalErr != nil {
+		logger.Error(sessionInfoRetrievalErr, "error fetching sessionInfo")
+		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
 
 	s.cookieManager = securecookie.New(
 		securecookie.GenerateRandomKey(64),
 		[]byte(s.config.CookieSecret),
 	)
 
+	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
+		EventType: models.CycleCookoieSecretEventType,
+		Context: map[string]string{
+			"user_id": fmt.Sprintf("%d", si.UserID),
+		},
+	})
+
 	res.WriteHeader(http.StatusCreated)
 }
 
 // validateLogin takes login information and returns whether or not the login is valid.
 // In the event that there's an error, this function will return false and the error.
-func (s *Service) validateLogin(ctx context.Context, loginInput *models.UserLoginInput, user *models.User) (bool, error) {
+func (s *Service) validateLogin(ctx context.Context, user *models.User, loginInput *models.UserLoginInput) (bool, error) {
 	ctx, span := tracing.StartSpan(ctx, "validateLogin")
 	defer span.End()
 
@@ -293,29 +344,34 @@ func (s *Service) validateLogin(ctx context.Context, loginInput *models.UserLogi
 		user.Salt,
 	)
 
-	// if the login is otherwise valid, but the password is too weak, try to rehash it.
-	if err == auth.ErrCostTooLow && loginValid {
-		logger.Debug("hashed password was deemed to weak, updating its hash")
+	if err != nil {
+		switch err {
+		case auth.ErrCostTooLow, auth.ErrPasswordHashTooWeak:
+			// if the login is otherwise valid, but the password is too weak, try to rehash it.
+			logger.Debug("hashed password was deemed to weak, updating its hash")
 
-		// re-hash the password
-		updated, hashErr := s.authenticator.HashPassword(ctx, loginInput.Password)
-		if hashErr != nil {
-			return false, fmt.Errorf("updating password hash: %w", hashErr)
+			// re-hash the password
+			updated, hashErr := s.authenticator.HashPassword(ctx, loginInput.Password)
+			if hashErr != nil {
+				return false, fmt.Errorf("updating password hash: %w", hashErr)
+			}
+
+			// update stored hashed password in the database.
+			user.HashedPassword = updated
+			if updateErr := s.userDB.UpdateUser(ctx, user); updateErr != nil {
+				return false, fmt.Errorf("saving updated password hash: %w", updateErr)
+			}
+
+			return loginValid, nil
+		case auth.ErrInvalidTwoFactorCode, auth.ErrPasswordDoesNotMatch:
+			return false, err
+		default:
+			logger.Error(err, "issue validating login")
+			return false, err
 		}
-
-		// update stored hashed password in the database.
-		user.HashedPassword = updated
-		if updateErr := s.userDB.UpdateUser(ctx, user); updateErr != nil {
-			return false, fmt.Errorf("saving updated password hash: %w", updateErr)
-		}
-
-		return loginValid, nil
-	} else if err != nil && err != auth.ErrCostTooLow {
-		logger.Error(err, "issue validating login")
-		return false, fmt.Errorf("validating login: %w", err)
 	}
 
-	return loginValid, err
+	return loginValid, nil
 }
 
 // buildCookie provides a consistent way of constructing an HTTP cookie.

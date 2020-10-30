@@ -234,7 +234,6 @@ func (s *Sqlite) buildCreateAuditLogEntryQuery(input *models.AuditLogEntry) (que
 			input.EventType,
 			input.Context,
 		).
-		Suffix(fmt.Sprintf("RETURNING %s, %s", idColumn, createdOnColumn)).
 		ToSql()
 
 	s.logQueryBuildingError(err)
@@ -243,7 +242,7 @@ func (s *Sqlite) buildCreateAuditLogEntryQuery(input *models.AuditLogEntry) (que
 }
 
 // CreateAuditLogEntry creates an audit log entry in the database.
-func (s *Sqlite) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) error {
+func (s *Sqlite) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) {
 	x := &models.AuditLogEntry{
 		EventType: input.EventType,
 		Context:   input.Context,
@@ -252,10 +251,7 @@ func (s *Sqlite) CreateAuditLogEntry(ctx context.Context, input *models.AuditLog
 	query, args := s.buildCreateAuditLogEntryQuery(x)
 
 	// create the audit log entry.
-	err := s.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
-	if err != nil {
-		return fmt.Errorf("error executing audit log entry creation query: %w", err)
+	if _, err := s.db.ExecContext(ctx, query, args...); err != nil {
+		s.logger.WithValue("event_type", input.EventType).Error(err, "executing audit log entry creation query")
 	}
-
-	return nil
 }

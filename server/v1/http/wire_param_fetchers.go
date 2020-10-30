@@ -7,6 +7,7 @@ import (
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/audit"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
@@ -28,6 +29,7 @@ var (
 		ProvideItemsServiceSessionInfoFetcher,
 		ProvideAuditServiceItemIDFetcher,
 		ProvideAuditServiceSessionInfoFetcher,
+		ProvideAuthServiceSessionInfoFetcher,
 	)
 )
 
@@ -76,7 +78,14 @@ func ProvideAuditServiceSessionInfoFetcher() auditservice.SessionInfoFetcher {
 	return sessionInfoFetcherFromRequestContext
 }
 
+// ProvideAuthServiceSessionInfoFetcher provides a SessionInfoFetcher.
+func ProvideAuthServiceSessionInfoFetcher() authservice.SessionInfoFetcher {
+	return sessionInfoFetcherFromRequestContext
+}
+
 // userIDFetcherFromRequestContext fetches a user ID from a request routed by chi.
+// NOTE: this function isn't technically a URI param fetcher, but it does fetch
+// something from the request context, which is what chi.URLParam does too.
 func userIDFetcherFromRequestContext(req *http.Request) uint64 {
 	if si, ok := req.Context().Value(models.SessionInfoKey).(*models.SessionInfo); ok && si != nil {
 		return si.UserID
@@ -85,6 +94,8 @@ func userIDFetcherFromRequestContext(req *http.Request) uint64 {
 }
 
 // sessionInfoFetcherFromRequestContext fetches a SessionInfo from a request routed by chi.
+// NOTE: this function isn't technically a URI param fetcher, but it does fetch
+// something from the request context, which is what chi.URLParam does too.
 func sessionInfoFetcherFromRequestContext(req *http.Request) (*models.SessionInfo, error) {
 	if si, ok := req.Context().Value(models.SessionInfoKey).(*models.SessionInfo); ok && si != nil {
 		return si, nil

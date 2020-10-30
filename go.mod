@@ -16,12 +16,10 @@ require (
 	github.com/alexedwards/scs/v2 v2.4.0
 	github.com/blevesearch/bleve v1.0.9
 	github.com/brianvoe/gofakeit/v5 v5.0.0
-	github.com/corona10/goimagehash v1.0.3
 	github.com/emicklei/hazana v1.6.2
 	github.com/go-chi/chi v4.0.3+incompatible
 	github.com/go-chi/cors v1.0.0
 	github.com/go-sql-driver/mysql v1.5.0
-	github.com/google/uuid v1.1.2 // indirect
 	github.com/google/wire v0.4.0
 	github.com/gorilla/securecookie v1.1.1
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
@@ -30,7 +28,6 @@ require (
 	github.com/makiuchi-d/gozxing v0.0.0-20200903113411-25f730ed83da
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/moul/http2curl v1.0.0
-	github.com/panjf2000/ants v1.3.0 // indirect
 	github.com/pquerna/otp v1.2.0
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/pflag v1.0.3

@@ -127,7 +127,8 @@ func TestBcrypt_ValidateLogin(T *testing.T) {
 			code,
 			nil,
 		)
-		assert.NoError(t, err, "unexpected error encountered validating login: %v", err)
+		assert.Error(t, err, "unexpected error encountered validating login: %v", err)
+		assert.Equal(t, err, auth.ErrPasswordDoesNotMatch)
 		assert.False(t, valid)
 	})
 

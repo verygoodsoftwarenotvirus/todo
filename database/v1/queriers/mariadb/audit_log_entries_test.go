@@ -492,7 +492,7 @@ func TestMariaDB_buildCreateAuditLogEntryQuery(T *testing.T) {
 
 		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
 
-		expectedQuery := "INSERT INTO audit_log (event_type,context) VALUES (?,?) RETURNING id, created_on"
+		expectedQuery := "INSERT INTO audit_log (event_type,context) VALUES (?,?)"
 		expectedArgs := []interface{}{
 			exampleAuditLogEntry.EventType,
 			exampleAuditLogEntry.Context,
@@ -517,14 +517,12 @@ func TestMariaDB_CreateAuditLogEntry(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
-		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleAuditLogEntry.ID, exampleAuditLogEntry.CreatedOn)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(
 				interfaceToDriverValue(expectedArgs)...,
-			).
-			WillReturnRows(exampleRows)
+			)
 
-		assert.NoError(t, m.CreateAuditLogEntry(ctx, exampleInput))
+		m.CreateAuditLogEntry(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -538,13 +536,13 @@ func TestMariaDB_CreateAuditLogEntry(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(
 				interfaceToDriverValue(expectedArgs)...,
 			).
 			WillReturnError(errors.New("blah"))
 
-		assert.Error(t, m.CreateAuditLogEntry(ctx, exampleInput))
+		m.CreateAuditLogEntry(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

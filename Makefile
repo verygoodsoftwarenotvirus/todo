@@ -10,6 +10,9 @@ TEST_DOCKER_COMPOSE_FILES_DIR := environments/testing/compose_files
 
 ## non-PHONY folders/files
 
+clean:
+	rm -rf .root-*
+
 $(ARTIFACTS_DIR):
 	@mkdir -p $(ARTIFACTS_DIR)
 
@@ -98,10 +101,11 @@ gitlab-ci-junit-report: $(ARTIFACTS_DIR) ensure-go-junit-report
 
 .PHONY: quicktest # basically only running once instead of with -count 5 or whatever
 quicktest: $(ARTIFACTS_DIR) vendor
+	go vet ./...
 	go test -cover -race -failfast $(PACKAGE_LIST)
 
 .PHONY: format
-format: base_prereqs
+format:
 	for file in `find $(PWD) -name '*.go'`; do $(GO_FORMAT) $$file; done
 
 .PHONY: check_formatting

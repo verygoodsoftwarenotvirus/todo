@@ -4,20 +4,27 @@ import (
 	"context"
 	"fmt"
 	immuschema "github.com/codenotary/immudb/pkg/api/schema"
+	"google.golang.org/grpc"
 	"log"
+	"os"
 
 	immuclient "github.com/codenotary/immudb/pkg/client"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
 	"google.golang.org/grpc/metadata"
 )
 
+const (
+	databaseName = "auditlog"
+)
+
 type AuditLogConfig struct {
-	DevMode      bool
-	DirPath      string
-	Username     string
-	Password     string
-	ServerPort   int
-	DatabaseName string
+	DevMode          bool
+	DirPath          string
+	DatabaseUsername string
+	DatabasePassword string
+	DatabasePort     int
+	DatabaseHost     string
+	DatabaseName     string
 
 	PEMEncodedSigningKey string
 	SigningKeyFilepath   string
@@ -34,14 +41,17 @@ func main() {
 	const (
 		username = "username"
 		password = "FuckFuckFuck123!"
+
+		dirPath = "./artifacts/audit_log"
 	)
 
 	cfg := AuditLogConfig{
-		DirPath:      "./artifacts/audit_log",
-		ServerPort:   3322,
-		DatabaseName: "auditlog",
-		Password:     password,
-		Username:     username,
+		DirPath:          dirPath,
+		DatabasePort:     3322,
+		DatabaseName:     "auditlog",
+		DatabasePassword: password,
+		DatabaseUsername: username,
+		DatabaseHost:     "0.0.0.0",
 		PEMEncodedSigningKey: `-----BEGIN PRIVATE KEY-----
 MIGkAgEBBDB7kh4WsXnskAGMZ/ATdYB0/TxCdpgj1dNhKbgK4k7rGvyaMd6xE4/L
 bwbiFO5WXaagBwYFK4EEACKhZANiAAQs+yyAbBguvXURexlmc8aCeoBacYWuag3C
@@ -51,7 +61,12 @@ ORUoaMVfHJ4YYW8vdZmX0MJf11ZZJv3YAiSXD8CMLKPBGJog/4yPv2ijk8pqS/Em
 `,
 	}
 
-	_, err := buildServer(ctx, logger, cfg)
+	logger.Info("removing directory")
+	if err := os.RemoveAll(dirPath); err != nil {
+		logger.Fatal(err)
+	}
+
+	_, err := buildAndStartServer(ctx, logger, cfg)
 	if err != nil {
 		log.Fatal("error building server: ", err)
 	}
@@ -60,7 +75,24 @@ ORUoaMVfHJ4YYW8vdZmX0MJf11ZZJv3YAiSXD8CMLKPBGJog/4yPv2ijk8pqS/Em
 
 	key := []byte("key")
 
-	client, err := immuclient.NewImmuClient(immuclient.DefaultOptions())
+	clientOptions := &immuclient.Options{
+		Dir:                ".",
+		Address:            "127.0.0.1",
+		Port:               3322,
+		HealthCheckRetries: 5,
+		MTLs:               false,
+		Auth:               true,
+		Config:             "configs/immuclient.toml",
+		TokenFileName:      "token",
+		DialOptions:        &[]grpc.DialOption{},
+		Tkns:               immuclient.NewTokenService().WithTokenFileName("token").WithHds(immuclient.NewHomedirService()),
+		Metrics:            true,
+		PidPath:            "",
+		PrometheusHost:     "",
+		PrometheusPort:     "",
+		LogFileName:        "",
+	}
+	client, err := immuclient.NewImmuClient(clientOptions)
 	if err != nil {
 		log.Fatal("error building client: ", err)
 	}

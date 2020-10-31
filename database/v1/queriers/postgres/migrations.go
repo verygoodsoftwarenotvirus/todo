@@ -109,6 +109,16 @@ var (
 		},
 		{
 			Version:     incrementMigrationVersion(),
+			Description: "create audit log table",
+			Script:      `REVOKE ALL ON TABLE audit_log FROM public;`,
+		},
+		{
+			Version:     incrementMigrationVersion(),
+			Description: "create audit log table",
+			Script:      `GRANT SELECT, INSERT ON TABLE audit_log TO public;`,
+		},
+		{
+			Version:     incrementMigrationVersion(),
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (

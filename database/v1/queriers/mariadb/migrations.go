@@ -157,6 +157,11 @@ var (
 				");",
 			}, "\n"),
 		},
+		//
+		//	Script:      "REVOKE ALL ON TABLE audit_log FROM public;",
+		//
+		//	Script:      "GRANT SELECT, INSERT ON TABLE audit_log TO public;",
+		//
 		{
 			Version:     incrementMigrationVersion(),
 			Description: "create audit_log table creation trigger",

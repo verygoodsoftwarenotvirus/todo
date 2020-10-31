@@ -69,8 +69,8 @@ func ParseConfigFile(logger logging.Logger, filePath string) (*config.ServerConf
 
 	logger.WithValues(map[string]interface{}{
 		"is_nil": serverConfig.Database.CreateTestUser == nil,
-		// "username": serverConfig.Database.CreateTestUser.Username,
-		// "password": serverConfig.Database.CreateTestUser.Password,
+		// "username": serverConfig.Database.CreateTestUser.DatabaseUsername,
+		// "password": serverConfig.Database.CreateTestUser.DatabasePassword,
 		// "is_admin": serverConfig.Database.CreateTestUser.IsAdmin,
 	}).Debug("CHECK ME CHECK ME CHECK ME CHECK ME CHECK ME")
 

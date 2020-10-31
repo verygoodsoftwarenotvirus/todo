@@ -16,6 +16,7 @@ require (
 	github.com/alexedwards/scs/v2 v2.4.0
 	github.com/blevesearch/bleve v1.0.9
 	github.com/brianvoe/gofakeit/v5 v5.0.0
+	github.com/codenotary/immudb v0.8.0
 	github.com/emicklei/hazana v1.6.2
 	github.com/go-chi/chi v4.0.3+incompatible
 	github.com/go-chi/cors v1.0.0
@@ -31,14 +32,15 @@ require (
 	github.com/pquerna/otp v1.2.0
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/pflag v1.0.3
-	github.com/spf13/viper v1.6.2
+	github.com/spf13/viper v1.6.3
 	github.com/stretchr/testify v1.5.1
 	github.com/tebeka/selenium v0.9.9
 	gitlab.com/verygoodsoftwarenotvirus/logging/v2 v2.0.0
 	gitlab.com/verygoodsoftwarenotvirus/newsman v1.0.1
 	go.opencensus.io v0.22.3
-	golang.org/x/crypto v0.0.0-20200311171314-f7b00557c8c4
+	golang.org/x/crypto v0.0.0-20200423211502-4bdfaf469ed5
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
+	google.golang.org/grpc v1.33.1
 	gopkg.in/oauth2.v3 v3.12.0
 )

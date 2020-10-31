@@ -824,7 +824,6 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		auditLog := &mockmodels.AuditLogEntryDataManager{}
 		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput")).Return(nil)
 		s.auditLog = auditLog
-
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(http.MethodPost, "https://blah.com", nil)
 		require.NotNil(t, req)

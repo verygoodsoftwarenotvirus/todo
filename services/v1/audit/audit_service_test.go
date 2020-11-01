@@ -15,7 +15,7 @@ import (
 func buildTestService() *Service {
 	return &Service{
 		logger:                 noop.NewLogger(),
-		auditLog:               &mockmodels.AuditLogEntryDataManager{},
+		auditLog:               &mockmodels.AuditLogDataManager{},
 		auditLogEntryIDFetcher: func(req *http.Request) uint64 { return 0 },
 		sessionInfoFetcher:     func(*http.Request) (*models.SessionInfo, error) { return &models.SessionInfo{}, nil },
 		encoderDecoder:         &mockencoding.EncoderDecoder{},
@@ -28,7 +28,7 @@ func TestProvideAuditService(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		s := ProvideAuditService(
 			noop.NewLogger(),
-			&mockmodels.AuditLogEntryDataManager{},
+			&mockmodels.AuditLogDataManager{},
 			func(req *http.Request) uint64 { return 0 },
 			func(*http.Request) (*models.SessionInfo, error) { return &models.SessionInfo{}, nil },
 			&mockencoding.EncoderDecoder{},

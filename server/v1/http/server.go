@@ -18,7 +18,6 @@ import (
 
 	"github.com/go-chi/chi"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 	"go.opencensus.io/plugin/ochttp"
 )
 
@@ -36,20 +35,19 @@ type (
 		// Services.
 		authService          *authservice.Service
 		frontendService      *frontendservice.Service
-		auditService         models.AuditLogEntryDataServer
+		auditService         models.AuditLogDataServer
 		usersService         models.UserDataServer
 		oauth2ClientsService models.OAuth2ClientDataServer
 		webhooksService      models.WebhookDataServer
 		itemsService         models.ItemDataServer
 
 		// infra things.
-		db          database.DataManager
-		config      *config.ServerConfig
-		router      *chi.Mux
-		httpServer  *http.Server
-		logger      logging.Logger
-		encoder     encoding.EncoderDecoder
-		newsManager *newsman.Newsman
+		db         database.DataManager
+		config     *config.ServerConfig
+		router     *chi.Mux
+		httpServer *http.Server
+		logger     logging.Logger
+		encoder    encoding.EncoderDecoder
 	}
 )
 
@@ -59,7 +57,7 @@ func ProvideServer(
 	cfg *config.ServerConfig,
 	authService *authservice.Service,
 	frontendService *frontendservice.Service,
-	auditService models.AuditLogEntryDataServer,
+	auditService models.AuditLogDataServer,
 	itemsService models.ItemDataServer,
 	usersService models.UserDataServer,
 	oauth2Service models.OAuth2ClientDataServer,
@@ -67,7 +65,6 @@ func ProvideServer(
 	db database.DataManager,
 	logger logging.Logger,
 	encoder encoding.EncoderDecoder,
-	newsManager *newsman.Newsman,
 ) (*Server, error) {
 	if len(cfg.Auth.CookieSecret) < 32 {
 		err := errors.New("cookie secret is too short, must be at least 32 characters in length")
@@ -78,12 +75,11 @@ func ProvideServer(
 	srv := &Server{
 		DebugMode: cfg.Server.Debug,
 		// infra things,
-		db:          db,
-		config:      cfg,
-		encoder:     encoder,
-		httpServer:  provideHTTPServer(),
-		logger:      logger.WithName(loggerName),
-		newsManager: newsManager,
+		db:         db,
+		config:     cfg,
+		encoder:    encoder,
+		httpServer: provideHTTPServer(),
+		logger:     logger.WithName(loggerName),
 		// services,
 		auditService:         auditService,
 		webhooksService:      webhooksService,
@@ -104,19 +100,6 @@ func ProvideServer(
 	srv.httpServer.Handler = &ochttp.Handler{
 		Handler:        srv.router,
 		FormatSpanName: formatSpanNameForRequest,
-	}
-
-	allWebhooks, err := db.GetAllWebhooks(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("initializing webhooks: %w", err)
-	}
-
-	for i := 0; i < len(allWebhooks.Webhooks); i++ {
-		wh := allWebhooks.Webhooks[i]
-		// NOTE: we must guarantee that whatever is stored in the database is valid, otherwise
-		// newsman will try (and fail) to execute requests constantly
-		l := wh.ToListener(srv.logger)
-		srv.newsManager.TuneIn(l)
 	}
 
 	return srv, nil

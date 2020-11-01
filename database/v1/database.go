@@ -52,7 +52,7 @@ type (
 		IsReady(ctx context.Context) (ready bool)
 		BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
 
-		models.AuditLogEntryDataManager
+		models.AuditLogDataManager
 		models.ItemDataManager
 		models.UserDataManager
 		models.AdminUserDataManager

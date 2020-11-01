@@ -19,7 +19,7 @@ var (
 )
 
 // ProvideAuditLogEntryDataManager is an arbitrary function for dependency injection's sake.
-func ProvideAuditLogEntryDataManager(db DataManager) models.AuditLogEntryDataManager {
+func ProvideAuditLogEntryDataManager(db DataManager) models.AuditLogDataManager {
 	return db
 }
 

@@ -20,7 +20,7 @@ func TestClient_GetAuditLogEntry(T *testing.T) {
 		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
 
 		c, mockDB := buildTestClient()
-		mockDB.AuditLogEntryDataManager.On("GetAuditLogEntry", mock.Anything, exampleAuditLogEntry.ID).Return(exampleAuditLogEntry, nil)
+		mockDB.AuditLogDataManager.On("GetAuditLogEntry", mock.Anything, exampleAuditLogEntry.ID).Return(exampleAuditLogEntry, nil)
 
 		actual, err := c.GetAuditLogEntry(ctx, exampleAuditLogEntry.ID)
 		assert.NoError(t, err)
@@ -39,7 +39,7 @@ func TestClient_GetAllAuditLogEntries(T *testing.T) {
 		results := make(chan []models.AuditLogEntry)
 
 		c, mockDB := buildTestClient()
-		mockDB.AuditLogEntryDataManager.On("GetAllAuditLogEntries", mock.Anything, results).Return(nil)
+		mockDB.AuditLogDataManager.On("GetAllAuditLogEntries", mock.Anything, results).Return(nil)
 
 		err := c.GetAllAuditLogEntries(ctx, results)
 		assert.NoError(t, err)
@@ -58,7 +58,7 @@ func TestClient_GetAuditLogEntries(T *testing.T) {
 		exampleAuditLogEntryList := fakemodels.BuildFakeAuditLogEntryList()
 
 		c, mockDB := buildTestClient()
-		mockDB.AuditLogEntryDataManager.On("GetAuditLogEntries", mock.Anything, filter).Return(exampleAuditLogEntryList, nil)
+		mockDB.AuditLogDataManager.On("GetAuditLogEntries", mock.Anything, filter).Return(exampleAuditLogEntryList, nil)
 
 		actual, err := c.GetAuditLogEntries(ctx, filter)
 		assert.NoError(t, err)
@@ -74,7 +74,7 @@ func TestClient_GetAuditLogEntries(T *testing.T) {
 		exampleAuditLogEntryList := fakemodels.BuildFakeAuditLogEntryList()
 
 		c, mockDB := buildTestClient()
-		mockDB.AuditLogEntryDataManager.On("GetAuditLogEntries", mock.Anything, filter).Return(exampleAuditLogEntryList, nil)
+		mockDB.AuditLogDataManager.On("GetAuditLogEntries", mock.Anything, filter).Return(exampleAuditLogEntryList, nil)
 
 		actual, err := c.GetAuditLogEntries(ctx, filter)
 		assert.NoError(t, err)
@@ -94,7 +94,7 @@ func TestClient_CreateAuditLogEntry(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
 		c, mockDB := buildTestClient()
-		mockDB.AuditLogEntryDataManager.On("CreateAuditLogEntry", mock.Anything, exampleInput).Return(nil)
+		mockDB.AuditLogDataManager.On("CreateAuditLogEntry", mock.Anything, exampleInput).Return(nil)
 
 		c.CreateAuditLogEntry(ctx, exampleInput)
 

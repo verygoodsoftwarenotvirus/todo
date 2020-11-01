@@ -8,14 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestProvideWebsocketAuthFunc(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		assert.NotNil(t, ProvideWebsocketAuthFunc(buildTestService(t)))
-	})
-}
-
 func TestProvideOAuth2ClientValidator(T *testing.T) {
 	T.Parallel()
 

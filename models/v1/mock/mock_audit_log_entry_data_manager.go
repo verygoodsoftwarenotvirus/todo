@@ -8,38 +8,128 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var _ models.AuditLogEntryDataManager = (*AuditLogEntryDataManager)(nil)
+var _ models.AuditLogDataManager = (*AuditLogDataManager)(nil)
 
-// AuditLogEntryDataManager is a mocked models.AuditLogEntryDataManager for testing.
-type AuditLogEntryDataManager struct {
+// AuditLogDataManager is a mocked models.AuditLogDataManager for testing.
+type AuditLogDataManager struct {
 	mock.Mock
 }
 
 // GetAuditLogEntry is a mock function.
-func (m *AuditLogEntryDataManager) GetAuditLogEntry(ctx context.Context, entryID uint64) (*models.AuditLogEntry, error) {
+func (m *AuditLogDataManager) GetAuditLogEntry(ctx context.Context, entryID uint64) (*models.AuditLogEntry, error) {
 	args := m.Called(ctx, entryID)
 	return args.Get(0).(*models.AuditLogEntry), args.Error(1)
 }
 
 // GetAllAuditLogEntriesCount is a mock function.
-func (m *AuditLogEntryDataManager) GetAllAuditLogEntriesCount(ctx context.Context) (uint64, error) {
+func (m *AuditLogDataManager) GetAllAuditLogEntriesCount(ctx context.Context) (uint64, error) {
 	args := m.Called(ctx)
 	return args.Get(0).(uint64), args.Error(1)
 }
 
 // GetAllAuditLogEntries is a mock function.
-func (m *AuditLogEntryDataManager) GetAllAuditLogEntries(ctx context.Context, results chan []models.AuditLogEntry) error {
+func (m *AuditLogDataManager) GetAllAuditLogEntries(ctx context.Context, results chan []models.AuditLogEntry) error {
 	args := m.Called(ctx, results)
 	return args.Error(0)
 }
 
 // GetAuditLogEntries is a mock function.
-func (m *AuditLogEntryDataManager) GetAuditLogEntries(ctx context.Context, filter *models.QueryFilter) (*models.AuditLogEntryList, error) {
+func (m *AuditLogDataManager) GetAuditLogEntries(ctx context.Context, filter *models.QueryFilter) (*models.AuditLogEntryList, error) {
 	args := m.Called(ctx, filter)
 	return args.Get(0).(*models.AuditLogEntryList), args.Error(1)
 }
 
 // CreateAuditLogEntry is a mock function.
-func (m *AuditLogEntryDataManager) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) {
+func (m *AuditLogDataManager) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) {
 	m.Called(ctx, input)
+}
+
+// LogCycleCookieSecretEvent implements our interface.
+func (m *AuditLogDataManager) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
+	m.Called(ctx, userID)
+}
+
+// LogSuccessfulLoginEvent implements our interface.
+func (m *AuditLogDataManager) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
+	m.Called(ctx, userID)
+}
+
+// LogUnsuccessfulLoginBadPasswordEvent implements our interface.
+func (m *AuditLogDataManager) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
+	m.Called(ctx, userID)
+}
+
+// LogUnsuccessfulLoginBad2FATokenEvent implements our interface.
+func (m *AuditLogDataManager) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
+	m.Called(ctx, userID)
+}
+
+// LogLogoutEvent implements our interface.
+func (m *AuditLogDataManager) LogLogoutEvent(ctx context.Context, userID uint64) {
+	m.Called(ctx, userID)
+}
+
+// LogItemCreationEvent implements our interface.
+func (m *AuditLogDataManager) LogItemCreationEvent(ctx context.Context, userID, itemID uint64) {
+	m.Called(ctx, userID, itemID)
+}
+
+// LogItemUpdateEvent implements our interface.
+func (m *AuditLogDataManager) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64) {
+	m.Called(ctx, userID, itemID)
+}
+
+// LogItemArchiveEvent implements our interface.
+func (m *AuditLogDataManager) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64) {
+	m.Called(ctx, userID, itemID)
+}
+
+// LogOAuth2ClientCreationEvent implements our interface.
+func (m *AuditLogDataManager) LogOAuth2ClientCreationEvent(ctx context.Context, userID, clientID uint64) {
+	m.Called(ctx, userID, clientID)
+}
+
+// LogOAuth2ClientArchiveEvent implements our interface.
+func (m *AuditLogDataManager) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
+	m.Called(ctx, userID, clientID)
+}
+
+// LogWebhookCreationEvent implements our interface.
+func (m *AuditLogDataManager) LogWebhookCreationEvent(ctx context.Context, userID, webhookID uint64, webhookName, webhookURL, webhookMethod string) {
+	m.Called(ctx, userID, webhookID, webhookName, webhookURL, webhookMethod)
+}
+
+// LogWebhookUpdateEvent implements our interface.
+func (m *AuditLogDataManager) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, webhookName, webhookURL, webhookMethod string) {
+	m.Called(ctx, userID, webhookID, webhookName, webhookURL, webhookMethod)
+}
+
+// LogWebhookArchiveEvent implements our interface.
+func (m *AuditLogDataManager) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
+	m.Called(ctx, userID, webhookID)
+}
+
+// LogUserCreationEvent implements our interface.
+func (m *AuditLogDataManager) LogUserCreationEvent(ctx context.Context, userID uint64) {
+	m.Called(ctx, userID)
+}
+
+// LogUserVerifyTwoFactorSecretEvent implements our interface.
+func (m *AuditLogDataManager) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	m.Called(ctx, userID)
+}
+
+// LogUserUpdateTwoFactorSecretEvent implements our interface.
+func (m *AuditLogDataManager) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	m.Called(ctx, userID)
+}
+
+// LogUserUpdatePasswordEvent implements our interface.
+func (m *AuditLogDataManager) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
+	m.Called(ctx, userID)
+}
+
+// LogUserArchiveEvent implements our interface.
+func (m *AuditLogDataManager) LogUserArchiveEvent(ctx context.Context, userID uint64) {
+	m.Called(ctx, userID)
 }

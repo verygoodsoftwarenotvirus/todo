@@ -23,13 +23,7 @@ import (
 
 	"github.com/google/wire"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
-
-// ProvideReporter is an obligatory function that hopefully wire will eliminate for me one day.
-func ProvideReporter(n *newsman.Newsman) newsman.Reporter {
-	return n
-}
 
 // BuildServer builds a server.
 func BuildServer(
@@ -50,9 +44,6 @@ func BuildServer(
 		httpserver.Providers,
 		// metrics,
 		metrics.Providers,
-		// external libs,
-		newsman.NewNewsman,
-		ProvideReporter,
 		// services,
 		auditservice.Providers,
 		authservice.Providers,

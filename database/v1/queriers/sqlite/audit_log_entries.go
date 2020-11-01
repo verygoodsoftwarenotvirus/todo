@@ -255,3 +255,93 @@ func (s *Sqlite) CreateAuditLogEntry(ctx context.Context, input *models.AuditLog
 		s.logger.WithValue("event_type", input.EventType).Error(err, "executing audit log entry creation query")
 	}
 }
+
+// LogCycleCookieSecretEvent saves a CycleCookieSecretEvent in the audit log table.
+func (s *Sqlite) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
+	//
+}
+
+// LogSuccessfulLoginEvent saves a SuccessfulLoginEvent in the audit log table.
+func (s *Sqlite) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
+	//
+}
+
+// LogUnsuccessfulLoginBadPasswordEvent saves a UnsuccessfulLoginBadPasswordEvent in the audit log table.
+func (s *Sqlite) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
+	//
+}
+
+// LogUnsuccessfulLoginBad2FATokenEvent saves a UnsuccessfulLoginBad2FATokenEvent in the audit log table.
+func (s *Sqlite) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
+	//
+}
+
+// LogLogoutEvent saves a LogoutEvent in the audit log table.
+func (s *Sqlite) LogLogoutEvent(ctx context.Context, userID uint64) {
+	//
+}
+
+// LogItemCreationEvent saves a ItemCreationEvent in the audit log table.
+func (s *Sqlite) LogItemCreationEvent(ctx context.Context, userID, itemID uint64) {
+	//
+}
+
+// LogItemUpdateEvent saves a ItemUpdateEvent in the audit log table.
+func (s *Sqlite) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64) {
+	//
+}
+
+// LogItemArchiveEvent saves a ItemArchiveEvent in the audit log table.
+func (s *Sqlite) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64) {
+	//
+}
+
+// LogOAuth2ClientCreationEvent saves a OAuth2ClientCreationEvent in the audit log table.
+func (s *Sqlite) LogOAuth2ClientCreationEvent(ctx context.Context, userID, clientID uint64) {
+	//
+}
+
+// LogOAuth2ClientArchiveEvent saves a OAuth2ClientArchiveEvent in the audit log table.
+func (s *Sqlite) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
+	//
+}
+
+// LogWebhookCreationEvent saves a WebhookCreationEvent in the audit log table.
+func (s *Sqlite) LogWebhookCreationEvent(ctx context.Context, userID, webhookID uint64, webhookName, webhookURL, webhookMethod string) {
+	//
+}
+
+// LogWebhookUpdateEvent saves a WebhookUpdateEvent in the audit log table.
+func (s *Sqlite) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, webhookName, webhookURL, webhookMethod string) {
+	//
+}
+
+// LogWebhookArchiveEvent saves a WebhookArchiveEvent in the audit log table.
+func (s *Sqlite) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
+	//
+}
+
+// LogUserCreationEvent saves a UserCreationEvent in the audit log table.
+func (s *Sqlite) LogUserCreationEvent(ctx context.Context, userID uint64) {
+	//
+}
+
+// LogUserVerifyTwoFactorSecretEvent saves a UserVerifyTwoFactorSecretEvent in the audit log table.
+func (s *Sqlite) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	//
+}
+
+// LogUserUpdateTwoFactorSecretEvent saves a UserUpdateTwoFactorSecretEvent in the audit log table.
+func (s *Sqlite) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	//
+}
+
+// LogUserUpdatePasswordEvent saves a UserUpdatePasswordEvent in the audit log table.
+func (s *Sqlite) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
+	//
+}
+
+// LogUserArchiveEvent saves a UserArchiveEvent in the audit log table.
+func (s *Sqlite) LogUserArchiveEvent(ctx context.Context, userID uint64) {
+	//
+}

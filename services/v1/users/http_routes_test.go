@@ -17,11 +17,11 @@ import (
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
+	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	mocknewsman "gitlab.com/verygoodsoftwarenotvirus/newsman/mock"
 )
 
 func buildRequest(t *testing.T) *http.Request {
@@ -273,9 +273,9 @@ func TestService_CreateHandler(T *testing.T) {
 		mc.On("Increment", mock.Anything)
 		s.userCounter = mc
 
-		r := &mocknewsman.Reporter{}
-		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
-		s.reporter = r
+		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
+		s.auditLog = auditLog
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponseWithStatus", mock.Anything, mock.AnythingOfType("*models.UserCreationResponse"), http.StatusCreated)
@@ -295,7 +295,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusCreated, res.Code)
 
-		mock.AssertExpectationsForObjects(t, auth, db, mc, r, ed)
+		mock.AssertExpectationsForObjects(t, auth, db, mc, ed)
 	})
 
 	T.Run("with user creation disabled", func(t *testing.T) {
@@ -624,6 +624,10 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = auth
 
+		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
+		s.auditLog = auditLog
+
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponseWithStatus", mock.Anything, mock.AnythingOfType("*models.TOTPSecretRefreshResponse"), http.StatusAccepted)
 		s.encoderDecoder = ed
@@ -836,6 +840,10 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		mockDB.UserDataManager.On("VerifyUserTwoFactorSecret", mock.Anything, exampleUser.ID).Return(nil)
 		s.userDataManager = mockDB
 
+		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
+		s.auditLog = auditLog
+
 		s.TOTPSecretVerificationHandler(res, req)
 
 		assert.Equal(t, http.StatusAccepted, res.Code)
@@ -1022,6 +1030,10 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
 		mockDB.UserDataManager.On("UpdateUserPassword", mock.Anything, exampleUser.ID, mock.AnythingOfType("string")).Return(nil)
 		s.userDataManager = mockDB
+
+		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
+		s.auditLog = auditLog
 
 		auth := &mockauth.Authenticator{}
 		auth.On(
@@ -1236,9 +1248,9 @@ func TestService_Archive(T *testing.T) {
 		mockDB.UserDataManager.On("ArchiveUser", mock.Anything, exampleUser.ID).Return(nil)
 		s.userDataManager = mockDB
 
-		r := &mocknewsman.Reporter{}
-		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
-		s.reporter = r
+		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
+		s.auditLog = auditLog
 
 		mc := &mockmetrics.UnitCounter{}
 		mc.On("Decrement", mock.Anything)
@@ -1248,7 +1260,7 @@ func TestService_Archive(T *testing.T) {
 
 		assert.Equal(t, http.StatusNoContent, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, r, mc)
+		mock.AssertExpectationsForObjects(t, mockDB, mc)
 	})
 
 	T.Run("with error updating database", func(t *testing.T) {

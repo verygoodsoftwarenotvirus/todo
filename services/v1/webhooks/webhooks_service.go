@@ -9,7 +9,6 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
 const (
@@ -20,7 +19,6 @@ const (
 
 	counterName        metrics.CounterName = "webhooks"
 	counterDescription string              = "the number of webhooks managed by the webhooks service"
-	topicName          string              = "webhooks"
 	serviceName        string              = "webhooks_service"
 )
 
@@ -29,22 +27,15 @@ var (
 )
 
 type (
-	eventManager interface {
-		newsman.Reporter
-
-		TuneIn(newsman.Listener)
-	}
-
 	// Service handles TODO ListHandler webhooks.
 	Service struct {
 		logger             logging.Logger
 		webhookCounter     metrics.UnitCounter
 		webhookDataManager models.WebhookDataManager
-		auditLog           models.AuditLogEntryDataManager
+		auditLog           models.AuditLogDataManager
 		userIDFetcher      UserIDFetcher
 		webhookIDFetcher   WebhookIDFetcher
 		encoderDecoder     encoding.EncoderDecoder
-		eventManager       eventManager
 	}
 
 	// UserIDFetcher is a function that fetches user IDs.
@@ -58,12 +49,11 @@ type (
 func ProvideWebhooksService(
 	logger logging.Logger,
 	webhookDataManager models.WebhookDataManager,
-	auditLog models.AuditLogEntryDataManager,
+	auditLog models.AuditLogDataManager,
 	userIDFetcher UserIDFetcher,
 	webhookIDFetcher WebhookIDFetcher,
 	encoder encoding.EncoderDecoder,
 	webhookCounterProvider metrics.UnitCounterProvider,
-	em *newsman.Newsman,
 ) (*Service, error) {
 	webhookCounter, err := webhookCounterProvider(counterName, counterDescription)
 	if err != nil {
@@ -78,7 +68,6 @@ func ProvideWebhooksService(
 		webhookCounter:     webhookCounter,
 		userIDFetcher:      userIDFetcher,
 		webhookIDFetcher:   webhookIDFetcher,
-		eventManager:       em,
 	}
 
 	return svc, nil

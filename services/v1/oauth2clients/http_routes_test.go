@@ -14,6 +14,7 @@ import (
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
+	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -208,6 +209,10 @@ func TestService_CreateHandler(T *testing.T) {
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("Increment", mock.Anything).Return()
 		s.oauth2ClientCounter = uc
+
+		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
+		s.auditLog = auditLog
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponseWithStatus", mock.Anything, mock.AnythingOfType("*models.OAuth2Client"), http.StatusCreated)
@@ -574,6 +579,10 @@ func TestService_ArchiveHandler(T *testing.T) {
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("Decrement", mock.Anything).Return()
 		s.oauth2ClientCounter = uc
+
+		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
+		s.auditLog = auditLog
 
 		req := buildRequest(t)
 		req = req.WithContext(

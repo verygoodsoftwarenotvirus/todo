@@ -2,14 +2,11 @@ package httpserver
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
-	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
@@ -20,9 +17,7 @@ import (
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
 func buildTestServer() *Server {
@@ -53,11 +48,6 @@ func TestProvideServer(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		ctx := context.Background()
 
-		exampleWebhookList := fakemodels.BuildFakeWebhookList()
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.WebhookDataManager.On("GetAllWebhooks", mock.Anything).Return(exampleWebhookList, nil)
-
 		actual, err := ProvideServer(
 			ctx,
 			&config.ServerConfig{
@@ -72,25 +62,17 @@ func TestProvideServer(T *testing.T) {
 			&usersservice.Service{},
 			&oauth2clientsservice.Service{},
 			&webhooksservice.Service{},
-			mockDB,
+			database.BuildMockDatabase(),
 			noop.NewLogger(),
 			&mockencoding.EncoderDecoder{},
-			newsman.NewNewsman(nil, nil),
 		)
 
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
-
-		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with invalid cookie secret", func(t *testing.T) {
 		ctx := context.Background()
-
-		exampleWebhookList := fakemodels.BuildFakeWebhookList()
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.WebhookDataManager.On("GetAllWebhooks", mock.Anything).Return(exampleWebhookList, nil)
 
 		actual, err := ProvideServer(
 			ctx,
@@ -106,47 +88,12 @@ func TestProvideServer(T *testing.T) {
 			&usersservice.Service{},
 			&oauth2clientsservice.Service{},
 			&webhooksservice.Service{},
-			mockDB,
+			database.BuildMockDatabase(),
 			noop.NewLogger(),
 			&mockencoding.EncoderDecoder{},
-			newsman.NewNewsman(nil, nil),
 		)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err)
-
-		mock.AssertExpectationsForObjects(t, mockDB)
-	})
-
-	T.Run("with error fetching webhooks", func(t *testing.T) {
-		ctx := context.Background()
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.WebhookDataManager.On("GetAllWebhooks", mock.Anything).Return((*models.WebhookList)(nil), errors.New("blah"))
-
-		actual, err := ProvideServer(
-			ctx,
-			&config.ServerConfig{
-				Auth: config.AuthSettings{
-					CookieSecret: "THISISAVERYLONGSTRINGFORTESTPURPOSES",
-				},
-			},
-			&authservice.Service{},
-			&frontendservice.Service{},
-			&auditservice.Service{},
-			&itemsservice.Service{},
-			&usersservice.Service{},
-			&oauth2clientsservice.Service{},
-			&webhooksservice.Service{},
-			mockDB,
-			noop.NewLogger(),
-			&mockencoding.EncoderDecoder{},
-			newsman.NewNewsman(nil, nil),
-		)
-
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-
-		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }

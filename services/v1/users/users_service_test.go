@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
 func buildTestService(t *testing.T) *Service {
@@ -39,13 +38,12 @@ func buildTestService(t *testing.T) *Service {
 		config.AuthSettings{},
 		noop.NewLogger(),
 		&mockmodels.UserDataManager{},
-		&mockmodels.AuditLogEntryDataManager{},
+		&mockmodels.AuditLogDataManager{},
 		&mockauth.Authenticator{},
 		func(req *http.Request) uint64 { return 0 },
 		func(req *http.Request) (*models.SessionInfo, error) { return nil, nil },
 		&mockencoding.EncoderDecoder{},
 		ucp,
-		newsman.NewNewsman(nil, nil),
 	)
 	require.NoError(t, err)
 
@@ -66,13 +64,12 @@ func TestProvideUsersService(T *testing.T) {
 			config.AuthSettings{},
 			noop.NewLogger(),
 			&mockmodels.UserDataManager{},
-			&mockmodels.AuditLogEntryDataManager{},
+			&mockmodels.AuditLogDataManager{},
 			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },
 			func(req *http.Request) (*models.SessionInfo, error) { return nil, nil },
 			&mockencoding.EncoderDecoder{},
 			ucp,
-			nil,
 		)
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
@@ -87,13 +84,12 @@ func TestProvideUsersService(T *testing.T) {
 			config.AuthSettings{},
 			noop.NewLogger(),
 			&mockmodels.UserDataManager{},
-			&mockmodels.AuditLogEntryDataManager{},
+			&mockmodels.AuditLogDataManager{},
 			&mockauth.Authenticator{},
 			nil,
 			nil,
 			&mockencoding.EncoderDecoder{},
 			ucp,
-			nil,
 		)
 		assert.Error(t, err)
 		assert.Nil(t, service)
@@ -108,13 +104,12 @@ func TestProvideUsersService(T *testing.T) {
 			config.AuthSettings{},
 			noop.NewLogger(),
 			&mockmodels.UserDataManager{},
-			&mockmodels.AuditLogEntryDataManager{},
+			&mockmodels.AuditLogDataManager{},
 			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },
 			func(req *http.Request) (*models.SessionInfo, error) { return nil, nil },
 			&mockencoding.EncoderDecoder{},
 			ucp,
-			nil,
 		)
 		assert.Error(t, err)
 		assert.Nil(t, service)

@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	mocknewsman "gitlab.com/verygoodsoftwarenotvirus/newsman/mock"
 )
 
 func TestItemsService_ListHandler(T *testing.T) {
@@ -305,17 +304,13 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		itemDataManager.On("CreateItem", mock.Anything, mock.AnythingOfType("*models.ItemCreationInput")).Return(exampleItem, nil)
 		s.itemDataManager = itemDataManager
 
-		auditLog := &mockmodels.AuditLogEntryDataManager{}
+		auditLog := &mockmodels.AuditLogDataManager{}
 		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
 		s.auditLog = auditLog
 
 		mc := &mockmetrics.UnitCounter{}
 		mc.On("Increment", mock.Anything)
 		s.itemCounter = mc
-
-		r := &mocknewsman.Reporter{}
-		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
-		s.reporter = r
 
 		si := &mocksearch.IndexManager{}
 		si.On("Index", mock.Anything, exampleItem.ID, exampleItem).Return(nil)
@@ -340,7 +335,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusCreated, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager, mc, r, si, ed)
+		mock.AssertExpectationsForObjects(t, itemDataManager, mc, si, ed)
 	})
 
 	T.Run("without input attached", func(t *testing.T) {
@@ -654,13 +649,9 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		itemDataManager.On("UpdateItem", mock.Anything, mock.AnythingOfType("*models.Item")).Return(nil)
 		s.itemDataManager = itemDataManager
 
-		auditLog := &mockmodels.AuditLogEntryDataManager{}
+		auditLog := &mockmodels.AuditLogDataManager{}
 		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
 		s.auditLog = auditLog
-
-		r := &mocknewsman.Reporter{}
-		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
-		s.reporter = r
 
 		si := &mocksearch.IndexManager{}
 		si.On("Index", mock.Anything, exampleItem.ID, exampleItem).Return(nil)
@@ -685,7 +676,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, r, itemDataManager, ed)
+		mock.AssertExpectationsForObjects(t, itemDataManager, ed)
 	})
 
 	T.Run("without update input", func(t *testing.T) {
@@ -855,13 +846,9 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager.On("ArchiveItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return(nil)
 		s.itemDataManager = itemDataManager
 
-		auditLog := &mockmodels.AuditLogEntryDataManager{}
+		auditLog := &mockmodels.AuditLogDataManager{}
 		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
 		s.auditLog = auditLog
-
-		r := &mocknewsman.Reporter{}
-		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
-		s.reporter = r
 
 		si := &mocksearch.IndexManager{}
 		si.On("Delete", mock.Anything, exampleItem.ID).Return(nil)
@@ -884,7 +871,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusNoContent, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager, mc, r)
+		mock.AssertExpectationsForObjects(t, itemDataManager, mc)
 	})
 
 	T.Run("with no item in database", func(t *testing.T) {
@@ -972,13 +959,9 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager.On("ArchiveItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return(nil)
 		s.itemDataManager = itemDataManager
 
-		auditLog := &mockmodels.AuditLogEntryDataManager{}
+		auditLog := &mockmodels.AuditLogDataManager{}
 		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
 		s.auditLog = auditLog
-
-		r := &mocknewsman.Reporter{}
-		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
-		s.reporter = r
 
 		si := &mocksearch.IndexManager{}
 		si.On("Delete", mock.Anything, exampleItem.ID).Return(errors.New("blah"))
@@ -1001,6 +984,6 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusNoContent, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager, mc, r)
+		mock.AssertExpectationsForObjects(t, itemDataManager, mc)
 	})
 }

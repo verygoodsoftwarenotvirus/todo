@@ -30,6 +30,12 @@ func attachUint64ToSpan(span *trace.Span, attachmentKey string, id uint64) {
 	}
 }
 
+func attachIntToSpan(span *trace.Span, attachmentKey string, id int) {
+	if span != nil {
+		span.AddAttributes(trace.StringAttribute(attachmentKey, strconv.FormatInt(int64(id), 10)))
+	}
+}
+
 func attachStringToSpan(span *trace.Span, key, str string) {
 	if span != nil {
 		span.AddAttributes(trace.StringAttribute(key, str))
@@ -58,8 +64,8 @@ func AttachAuditLogEntryIDToSpan(span *trace.Span, entryID uint64) {
 }
 
 // AttachAuditLogEntryEventTypeToSpan attaches an audit log entry ID to a given span.
-func AttachAuditLogEntryEventTypeToSpan(span *trace.Span, eventType string) {
-	attachStringToSpan(span, auditLogEntryEventTypeSpanAttachmentKey, eventType)
+func AttachAuditLogEntryEventTypeToSpan(span *trace.Span, eventType int) {
+	attachIntToSpan(span, auditLogEntryEventTypeSpanAttachmentKey, eventType)
 }
 
 // AttachItemIDToSpan attaches an item ID to a given span.

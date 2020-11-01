@@ -12,12 +12,10 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
 const (
 	serviceName        = "users_service"
-	topicName          = "users"
 	counterDescription = "number of users managed by the users service"
 	counterName        = metrics.CounterName(serviceName)
 )
@@ -47,14 +45,13 @@ type (
 	Service struct {
 		cookieSecret        []byte
 		userDataManager     models.UserDataManager
-		auditLog            models.AuditLogEntryDataManager
+		auditLog            models.AuditLogDataManager
 		authenticator       auth.Authenticator
 		logger              logging.Logger
 		encoderDecoder      encoding.EncoderDecoder
 		userIDFetcher       UserIDFetcher
 		sessionInfoFetcher  SessionInfoFetcher
 		userCounter         metrics.UnitCounter
-		reporter            newsman.Reporter
 		secretGenerator     secretGenerator
 		userCreationEnabled bool
 	}
@@ -65,13 +62,12 @@ func ProvideUsersService(
 	authSettings config.AuthSettings,
 	logger logging.Logger,
 	userDataManager models.UserDataManager,
-	auditLog models.AuditLogEntryDataManager,
+	auditLog models.AuditLogDataManager,
 	authenticator auth.Authenticator,
 	userIDFetcher UserIDFetcher,
 	sessionInfoFetcher SessionInfoFetcher,
 	encoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
-	reporter newsman.Reporter,
 ) (*Service, error) {
 	if userIDFetcher == nil {
 		return nil, errors.New("userIDFetcher must be provided")
@@ -92,7 +88,6 @@ func ProvideUsersService(
 		sessionInfoFetcher:  sessionInfoFetcher,
 		encoderDecoder:      encoder,
 		userCounter:         counter,
-		reporter:            reporter,
 		secretGenerator:     &standardSecretGenerator{},
 		userCreationEnabled: authSettings.EnableUserSignup,
 	}

@@ -9,8 +9,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
 const (
@@ -81,14 +79,17 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// notify the relevant parties.
 	tracing.AttachWebhookIDToSpan(span, wh.ID)
 	s.webhookCounter.Increment(ctx)
-	s.eventManager.Report(newsman.Event{
-		EventType: string(models.Create),
-		Data:      wh,
-		Topics:    []string{topicName},
-	})
 
-	l := wh.ToListener(logger)
-	s.eventManager.TuneIn(l)
+	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
+		EventType: models.WebhookCreationEvent,
+		Context: map[string]interface{}{
+			"created_by":     userID,
+			"webhook_id":     wh.ID,
+			"webhook_name":   wh.Name,
+			"webhook_url":    wh.URL,
+			"webhook_methoc": wh.Method,
+		},
+	})
 
 	// let everybody know we're good.
 	s.encoderDecoder.EncodeResponseWithStatus(res, wh, http.StatusCreated)
@@ -205,11 +206,15 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// notify the relevant parties.
-	s.eventManager.Report(newsman.Event{
-		EventType: string(models.Update),
-		Data:      wh,
-		Topics:    []string{topicName},
+	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
+		EventType: models.WebhookUpdateEvent,
+		Context: map[string]interface{}{
+			"updated_by":     userID,
+			"webhook_id":     wh.ID,
+			"webhook_name":   wh.Name,
+			"webhook_url":    wh.URL,
+			"webhook_methoc": wh.Method,
+		},
 	})
 
 	// let everybody know we're good.
@@ -247,10 +252,12 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// let the interested parties know.
 	s.webhookCounter.Decrement(ctx)
-	s.eventManager.Report(newsman.Event{
-		EventType: string(models.Archive),
-		Data:      models.Webhook{ID: webhookID},
-		Topics:    []string{topicName},
+	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
+		EventType: models.WebhookArchiveEvent,
+		Context: map[string]interface{}{
+			"created_by": userID,
+			"webhook_id": webhookID,
+		},
 	})
 
 	// let everybody go home.

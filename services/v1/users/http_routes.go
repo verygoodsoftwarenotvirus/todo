@@ -19,7 +19,6 @@ import (
 	"github.com/makiuchi-d/gozxing"
 	"github.com/makiuchi-d/gozxing/qrcode"
 	"github.com/pquerna/otp/totp"
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
 const (
@@ -190,10 +189,12 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// notify the relevant parties.
 	tracing.AttachUserIDToSpan(span, user.ID)
 	s.userCounter.Increment(ctx)
-	s.reporter.Report(newsman.Event{
-		EventType: string(models.Create),
-		Data:      ucr,
-		Topics:    []string{topicName},
+	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
+		EventType: models.UserCreationEvent,
+		Context: map[string]interface{}{
+			"user_id":  user.ID,
+			"username": user.Username,
+		},
 	})
 
 	// encode and peace.
@@ -333,9 +334,17 @@ func (s *Service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 			return
 		}
 		statusCode = http.StatusAccepted
+
+		s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
+			EventType: models.UserVerifyTwoFactorSecretEvent,
+			Context: map[string]interface{}{
+				"user_id": user.ID,
+			},
+		})
 	} else {
 		statusCode = http.StatusBadRequest
 	}
+
 	res.WriteHeader(statusCode)
 }
 
@@ -404,6 +413,14 @@ func (s *Service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 		TwoFactorSecret: user.TwoFactorSecret,
 		TwoFactorQRCode: s.buildQRCode(ctx, user.Username, user.TwoFactorSecret),
 	}
+
+	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
+		EventType: models.UserUpdateTwoFactorSecretEvent,
+		Context: map[string]interface{}{
+			"user_id": user.ID,
+		},
+	})
+
 	s.encoderDecoder.EncodeResponseWithStatus(res, result, http.StatusAccepted)
 }
 
@@ -482,6 +499,13 @@ func (s *Service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 		http.SetCookie(res, cookie)
 	}
 
+	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
+		EventType: models.UserUpdatePasswordEvent,
+		Context: map[string]interface{}{
+			"user_id": user.ID,
+		},
+	})
+
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Redirections#Temporary_redirections
 	http.Redirect(res, req, "/auth/login", http.StatusSeeOther)
 }
@@ -507,10 +531,11 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// inform the relatives.
 	s.userCounter.Decrement(ctx)
-	s.reporter.Report(newsman.Event{
-		EventType: string(models.Archive),
-		Data:      models.User{ID: userID},
-		Topics:    []string{topicName},
+	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
+		EventType: models.UserArchiveEvent,
+		Context: map[string]interface{}{
+			"user_id": userID,
+		},
 	})
 
 	// we're all good.

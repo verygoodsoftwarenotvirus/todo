@@ -272,7 +272,7 @@ func TestService_LoginHandler(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = authr
 
-		auditLog := &mockmodels.AuditLogEntryDataManager{}
+		auditLog := &mockmodels.AuditLogDataManager{}
 		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput")).Return(nil)
 		s.auditLog = auditLog
 
@@ -332,7 +332,7 @@ func TestService_LoginHandler(T *testing.T) {
 		).Return(false, nil)
 		s.authenticator = authr
 
-		auditLog := &mockmodels.AuditLogEntryDataManager{}
+		auditLog := &mockmodels.AuditLogDataManager{}
 		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput")).Return(nil)
 		s.auditLog = auditLog
 
@@ -499,7 +499,7 @@ func TestService_LogoutHandler(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		auditLog := &mockmodels.AuditLogEntryDataManager{}
+		auditLog := &mockmodels.AuditLogDataManager{}
 		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput")).Return(nil)
 		s.auditLog = auditLog
 
@@ -821,7 +821,7 @@ func TestService_CycleSecretHandler(T *testing.T) {
 
 		exampleUser := fakemodels.BuildFakeUser()
 
-		auditLog := &mockmodels.AuditLogEntryDataManager{}
+		auditLog := &mockmodels.AuditLogDataManager{}
 		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput")).Return(nil)
 		s.auditLog = auditLog
 		res := httptest.NewRecorder()

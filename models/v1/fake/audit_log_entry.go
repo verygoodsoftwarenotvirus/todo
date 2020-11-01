@@ -10,7 +10,7 @@ import (
 func BuildFakeAuditLogEntry() *models.AuditLogEntry {
 	return &models.AuditLogEntry{
 		ID:        fake.Uint64(),
-		EventType: models.SuccessfulLoginEventType,
+		EventType: models.SuccessfulLoginEvent,
 		Context:   map[string]interface{}{"fake": "true"},
 		CreatedOn: uint64(uint32(fake.Date().Unix())),
 	}

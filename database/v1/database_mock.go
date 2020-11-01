@@ -15,12 +15,12 @@ var _ DataManager = (*MockDatabase)(nil)
 // BuildMockDatabase builds a mock database.
 func BuildMockDatabase() *MockDatabase {
 	return &MockDatabase{
-		AuditLogEntryDataManager: &mockmodels.AuditLogEntryDataManager{},
-		ItemDataManager:          &mockmodels.ItemDataManager{},
-		UserDataManager:          &mockmodels.UserDataManager{},
-		AdminUserDataManager:     &mockmodels.AdminUserDataManager{},
-		OAuth2ClientDataManager:  &mockmodels.OAuth2ClientDataManager{},
-		WebhookDataManager:       &mockmodels.WebhookDataManager{},
+		AuditLogDataManager:     &mockmodels.AuditLogDataManager{},
+		ItemDataManager:         &mockmodels.ItemDataManager{},
+		UserDataManager:         &mockmodels.UserDataManager{},
+		AdminUserDataManager:    &mockmodels.AdminUserDataManager{},
+		OAuth2ClientDataManager: &mockmodels.OAuth2ClientDataManager{},
+		WebhookDataManager:      &mockmodels.WebhookDataManager{},
 	}
 }
 
@@ -28,7 +28,7 @@ func BuildMockDatabase() *MockDatabase {
 type MockDatabase struct {
 	mock.Mock
 
-	*mockmodels.AuditLogEntryDataManager
+	*mockmodels.AuditLogDataManager
 	*mockmodels.ItemDataManager
 	*mockmodels.UserDataManager
 	*mockmodels.AdminUserDataManager

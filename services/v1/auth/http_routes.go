@@ -140,7 +140,7 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 
 		if err == auth.ErrInvalidTwoFactorCode {
 			s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-				EventType: models.UnsuccessfulLoginBad2FATokenEventType,
+				EventType: models.UnsuccessfulLoginBad2FATokenEvent,
 				Context: map[string]interface{}{
 					"user_id":    fmt.Sprintf("%d", user.ID),
 					"REFACTORME": "yes plz",
@@ -148,7 +148,7 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 			})
 		} else if err == auth.ErrPasswordDoesNotMatch {
 			s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-				EventType: models.UnsuccessfulLoginBadPasswordEventType,
+				EventType: models.UnsuccessfulLoginBadPasswordEvent,
 				Context: map[string]interface{}{
 					"user_id":    fmt.Sprintf("%d", user.ID),
 					"REFACTORME": "yes plz",
@@ -162,7 +162,7 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		logger.Debug("login was invalid")
 
 		s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-			EventType: models.UnsuccessfulLoginBadPasswordEventType,
+			EventType: models.UnsuccessfulLoginBadPasswordEvent,
 			Context: map[string]interface{}{
 				"user_id":    fmt.Sprintf("%d", user.ID),
 				"REFACTORME": "yes plz",
@@ -204,7 +204,7 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 
 	logger.Debug("login successful")
 	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-		EventType: models.SuccessfulLoginEventType,
+		EventType: models.SuccessfulLoginEvent,
 		Context: map[string]interface{}{
 			"user_id": fmt.Sprintf("%d", user.ID),
 		},
@@ -252,7 +252,7 @@ func (s *Service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 			http.SetCookie(res, c)
 
 			s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-				EventType: models.LogoutEventType,
+				EventType: models.LogoutEvent,
 				Context: map[string]interface{}{
 					"user_id": si.UserID,
 				},
@@ -316,7 +316,7 @@ func (s *Service) CycleSecretHandler(res http.ResponseWriter, req *http.Request)
 	)
 
 	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-		EventType: models.CycleCookieSecretEventType,
+		EventType: models.CycleCookieSecretEvent,
 		Context: map[string]interface{}{
 			"user_id": si.UserID,
 		},

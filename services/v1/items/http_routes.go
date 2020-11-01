@@ -8,8 +8,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
 const (
@@ -185,17 +183,12 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// notify relevant parties.
 	s.itemCounter.Increment(ctx)
-	s.reporter.Report(newsman.Event{
-		Data:      x,
-		Topics:    []string{topicName},
-		EventType: string(models.Create),
-	})
 	if searchIndexErr := s.search.Index(ctx, x.ID, x); searchIndexErr != nil {
 		logger.Error(searchIndexErr, "adding item to search index")
 	}
 
 	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-		EventType: models.ItemCreationEventType,
+		EventType: models.ItemCreationEvent,
 		Context: map[string]interface{}{
 			"id":         x.ID,
 			"created_by": si.UserID,
@@ -326,16 +319,11 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// notify relevant parties.
-	s.reporter.Report(newsman.Event{
-		Data:      x,
-		Topics:    []string{topicName},
-		EventType: string(models.Update),
-	})
 	if searchIndexErr := s.search.Index(ctx, x.ID, x); searchIndexErr != nil {
 		logger.Error(searchIndexErr, "updating item in search index")
 	}
 	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-		EventType: models.ItemUpdateEventType,
+		EventType: models.ItemUpdateEvent,
 		Context: map[string]interface{}{
 			"id":         x.ID,
 			"updated_by": si.UserID,
@@ -382,19 +370,14 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// notify relevant parties.
 	s.itemCounter.Decrement(ctx)
-	s.reporter.Report(newsman.Event{
-		EventType: string(models.Archive),
-		Data:      &models.Item{ID: itemID},
-		Topics:    []string{topicName},
-	})
 	if indexDeleteErr := s.search.Delete(ctx, itemID); indexDeleteErr != nil {
 		logger.Error(indexDeleteErr, "error removing item from search index")
 	}
 	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-		EventType: models.ItemUpdateEventType,
+		EventType: models.ItemArchiveEvent,
 		Context: map[string]interface{}{
-			"id":         itemID,
-			"deleted_by": si.UserID,
+			"id":          itemID,
+			"archived_by": si.UserID,
 		},
 	})
 

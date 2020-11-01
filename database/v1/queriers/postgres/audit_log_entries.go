@@ -12,9 +12,11 @@ import (
 )
 
 const (
-	auditLogEntriesTableName            = "audit_log"
-	auditLogEntriesTableEventTypeColumn = "event_type"
-	auditLogEntriesTableContextColumn   = "context"
+	auditLogEntriesTableName                  = "audit_log"
+	auditLogEntriesTableEventTypeColumn       = "event_type"
+	auditLogEntriesTableContextColumn         = "context"
+	auditLogEntriesTablePerformedByUserColumn = "performed_by_user"
+	auditLogEntriesTableOnBehalfOfUserColumn  = "on_behalf_of_user"
 )
 
 var (
@@ -22,6 +24,8 @@ var (
 		fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn),
 		fmt.Sprintf("%s.%s", auditLogEntriesTableName, auditLogEntriesTableEventTypeColumn),
 		fmt.Sprintf("%s.%s", auditLogEntriesTableName, auditLogEntriesTableContextColumn),
+		fmt.Sprintf("%s.%s", auditLogEntriesTableName, auditLogEntriesTablePerformedByUserColumn),
+		fmt.Sprintf("%s.%s", auditLogEntriesTableName, auditLogEntriesTableOnBehalfOfUserColumn),
 		fmt.Sprintf("%s.%s", auditLogEntriesTableName, createdOnColumn),
 	}
 )
@@ -34,6 +38,8 @@ func (p *Postgres) scanAuditLogEntry(scan database.Scanner) (*models.AuditLogEnt
 		&x.ID,
 		&x.EventType,
 		&x.Context,
+		&x.PerformedByUser,
+		&x.OnBehalfOfUser,
 		&x.CreatedOn,
 	}
 
@@ -255,4 +261,94 @@ func (p *Postgres) CreateAuditLogEntry(ctx context.Context, input *models.AuditL
 	if err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {
 		p.logger.WithValue("event_type", input.EventType).Error(err, "executing audit log entry creation query")
 	}
+}
+
+// LogCycleCookieSecretEvent saves a CycleCookieSecretEvent in the audit log table.
+func (p *Postgres) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
+	//
+}
+
+// LogSuccessfulLoginEvent saves a SuccessfulLoginEvent in the audit log table.
+func (p *Postgres) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
+	//
+}
+
+// LogUnsuccessfulLoginBadPasswordEvent saves a UnsuccessfulLoginBadPasswordEvent in the audit log table.
+func (p *Postgres) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
+	//
+}
+
+// LogUnsuccessfulLoginBad2FATokenEvent saves a UnsuccessfulLoginBad2FATokenEvent in the audit log table.
+func (p *Postgres) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
+	//
+}
+
+// LogLogoutEvent saves a LogoutEvent in the audit log table.
+func (p *Postgres) LogLogoutEvent(ctx context.Context, userID uint64) {
+	//
+}
+
+// LogItemCreationEvent saves a ItemCreationEvent in the audit log table.
+func (p *Postgres) LogItemCreationEvent(ctx context.Context, userID, itemID uint64) {
+	//
+}
+
+// LogItemUpdateEvent saves a ItemUpdateEvent in the audit log table.
+func (p *Postgres) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64) {
+	//
+}
+
+// LogItemArchiveEvent saves a ItemArchiveEvent in the audit log table.
+func (p *Postgres) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64) {
+	//
+}
+
+// LogOAuth2ClientCreationEvent saves a OAuth2ClientCreationEvent in the audit log table.
+func (p *Postgres) LogOAuth2ClientCreationEvent(ctx context.Context, userID, clientID uint64) {
+	//
+}
+
+// LogOAuth2ClientArchiveEvent saves a OAuth2ClientArchiveEvent in the audit log table.
+func (p *Postgres) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
+	//
+}
+
+// LogWebhookCreationEvent saves a WebhookCreationEvent in the audit log table.
+func (p *Postgres) LogWebhookCreationEvent(ctx context.Context, userID, webhookID uint64, webhookName, webhookURL, webhookMethod string) {
+	//
+}
+
+// LogWebhookUpdateEvent saves a WebhookUpdateEvent in the audit log table.
+func (p *Postgres) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, webhookName, webhookURL, webhookMethod string) {
+	//
+}
+
+// LogWebhookArchiveEvent saves a WebhookArchiveEvent in the audit log table.
+func (p *Postgres) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
+	//
+}
+
+// LogUserCreationEvent saves a UserCreationEvent in the audit log table.
+func (p *Postgres) LogUserCreationEvent(ctx context.Context, userID uint64) {
+	//
+}
+
+// LogUserVerifyTwoFactorSecretEvent saves a UserVerifyTwoFactorSecretEvent in the audit log table.
+func (p *Postgres) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	//
+}
+
+// LogUserUpdateTwoFactorSecretEvent saves a UserUpdateTwoFactorSecretEvent in the audit log table.
+func (p *Postgres) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	//
+}
+
+// LogUserUpdatePasswordEvent saves a UserUpdatePasswordEvent in the audit log table.
+func (p *Postgres) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
+	//
+}
+
+// LogUserArchiveEvent saves a UserArchiveEvent in the audit log table.
+func (p *Postgres) LogUserArchiveEvent(ctx context.Context, userID uint64) {
+	//
 }

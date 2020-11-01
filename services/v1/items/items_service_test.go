@@ -24,7 +24,6 @@ func buildTestService() *Service {
 		itemIDFetcher:      func(req *http.Request) uint64 { return 0 },
 		sessionInfoFetcher: func(*http.Request) (*models.SessionInfo, error) { return &models.SessionInfo{}, nil },
 		encoderDecoder:     &mockencoding.EncoderDecoder{},
-		reporter:           nil,
 		search:             &mocksearch.IndexManager{},
 	}
 }
@@ -40,12 +39,11 @@ func TestProvideItemsService(T *testing.T) {
 		s, err := ProvideItemsService(
 			noop.NewLogger(),
 			&mockmodels.ItemDataManager{},
-			&mockmodels.AuditLogEntryDataManager{},
+			&mockmodels.AuditLogDataManager{},
 			func(req *http.Request) uint64 { return 0 },
 			func(*http.Request) (*models.SessionInfo, error) { return &models.SessionInfo{}, nil },
 			&mockencoding.EncoderDecoder{},
 			ucp,
-			nil,
 			&mocksearch.IndexManager{},
 		)
 
@@ -61,12 +59,11 @@ func TestProvideItemsService(T *testing.T) {
 		s, err := ProvideItemsService(
 			noop.NewLogger(),
 			&mockmodels.ItemDataManager{},
-			&mockmodels.AuditLogEntryDataManager{},
+			&mockmodels.AuditLogDataManager{},
 			func(req *http.Request) uint64 { return 0 },
 			func(*http.Request) (*models.SessionInfo, error) { return &models.SessionInfo{}, nil },
 			&mockencoding.EncoderDecoder{},
 			ucp,
-			nil,
 			&mocksearch.IndexManager{},
 		)
 

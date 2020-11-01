@@ -12,7 +12,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
 func buildTestService() *Service {
@@ -23,7 +22,6 @@ func buildTestService() *Service {
 		userIDFetcher:      func(req *http.Request) uint64 { return 0 },
 		webhookIDFetcher:   func(req *http.Request) uint64 { return 0 },
 		encoderDecoder:     &mockencoding.EncoderDecoder{},
-		eventManager:       newsman.NewNewsman(nil, nil),
 	}
 }
 
@@ -38,12 +36,11 @@ func TestProvideWebhooksService(T *testing.T) {
 		actual, err := ProvideWebhooksService(
 			noop.NewLogger(),
 			&mockmodels.WebhookDataManager{},
-			&mockmodels.AuditLogEntryDataManager{},
+			&mockmodels.AuditLogDataManager{},
 			func(req *http.Request) uint64 { return 0 },
 			func(req *http.Request) uint64 { return 0 },
 			&mockencoding.EncoderDecoder{},
 			ucp,
-			newsman.NewNewsman(nil, nil),
 		)
 
 		assert.NotNil(t, actual)
@@ -58,12 +55,11 @@ func TestProvideWebhooksService(T *testing.T) {
 		actual, err := ProvideWebhooksService(
 			noop.NewLogger(),
 			&mockmodels.WebhookDataManager{},
-			&mockmodels.AuditLogEntryDataManager{},
+			&mockmodels.AuditLogDataManager{},
 			func(req *http.Request) uint64 { return 0 },
 			func(req *http.Request) uint64 { return 0 },
 			&mockencoding.EncoderDecoder{},
 			ucp,
-			newsman.NewNewsman(nil, nil),
 		)
 
 		assert.Nil(t, actual)

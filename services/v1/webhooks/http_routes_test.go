@@ -193,6 +193,10 @@ func TestWebhooksService_Create(T *testing.T) {
 		).Return(exampleWebhook, nil)
 		s.webhookDataManager = wd
 
+		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
+		s.auditLog = auditLog
+
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponseWithStatus", mock.Anything, mock.AnythingOfType("*models.Webhook"), http.StatusCreated)
 		s.encoderDecoder = ed
@@ -484,6 +488,10 @@ func TestWebhooksService_Update(T *testing.T) {
 		).Return(nil)
 		s.webhookDataManager = wd
 
+		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
+		s.auditLog = auditLog
+
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Webhook"))
 		s.encoderDecoder = ed
@@ -700,6 +708,10 @@ func TestWebhooksService_Archive(T *testing.T) {
 			exampleUser.ID,
 		).Return(nil)
 		s.webhookDataManager = wd
+
+		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
+		s.auditLog = auditLog
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(

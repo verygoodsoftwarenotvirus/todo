@@ -11,7 +11,6 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
 const (
@@ -22,7 +21,6 @@ const (
 
 	counterName        metrics.CounterName = "items"
 	counterDescription string              = "the number of items managed by the items service"
-	topicName          string              = "items"
 	serviceName        string              = "items_service"
 )
 
@@ -38,12 +36,11 @@ type (
 	Service struct {
 		logger             logging.Logger
 		itemDataManager    models.ItemDataManager
-		auditLog           models.AuditLogEntryDataManager
+		auditLog           models.AuditLogDataManager
 		itemIDFetcher      ItemIDFetcher
 		sessionInfoFetcher SessionInfoFetcher
 		itemCounter        metrics.UnitCounter
 		encoderDecoder     encoding.EncoderDecoder
-		reporter           newsman.Reporter
 		search             SearchIndex
 	}
 
@@ -58,12 +55,11 @@ type (
 func ProvideItemsService(
 	logger logging.Logger,
 	itemDataManager models.ItemDataManager,
-	auditLog models.AuditLogEntryDataManager,
+	auditLog models.AuditLogDataManager,
 	itemIDFetcher ItemIDFetcher,
 	sessionInfoFetcher SessionInfoFetcher,
 	encoder encoding.EncoderDecoder,
 	itemCounterProvider metrics.UnitCounterProvider,
-	reporter newsman.Reporter,
 	searchIndexManager SearchIndex,
 ) (*Service, error) {
 	itemCounter, err := itemCounterProvider(counterName, counterDescription)
@@ -79,7 +75,6 @@ func ProvideItemsService(
 		auditLog:           auditLog,
 		encoderDecoder:     encoder,
 		itemCounter:        itemCounter,
-		reporter:           reporter,
 		search:             searchIndexManager,
 	}
 

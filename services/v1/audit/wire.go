@@ -15,6 +15,6 @@ var (
 )
 
 // ProvideAuditLogEntryDataServer is an arbitrary function for dependency injection's sake.
-func ProvideAuditLogEntryDataServer(s *Service) models.AuditLogEntryDataServer {
+func ProvideAuditLogEntryDataServer(s *Service) models.AuditLogDataServer {
 	return s
 }

@@ -205,7 +205,7 @@ func (s *Service) buildQRCode(ctx context.Context, username, twoFactorSecret str
 	_, span := tracing.StartSpan(ctx, "buildQRCode")
 	defer span.End()
 
-	// "otpauth://totp/{{ .Issuer }}:{{ .DatabaseUsername }}?secret={{ .Secret }}&issuer={{ .Issuer }}",
+	// "otpauth://totp/{{ .Issuer }}:{{ .EnsureUsername }}?secret={{ .Secret }}&issuer={{ .Issuer }}",
 	otpString := fmt.Sprintf(
 		"otpauth://totp/%s:%s?secret=%s&issuer=%s",
 		totpIssuer,

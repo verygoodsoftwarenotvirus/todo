@@ -40,6 +40,7 @@ type (
 		logger             logging.Logger
 		webhookCounter     metrics.UnitCounter
 		webhookDataManager models.WebhookDataManager
+		auditLog           models.AuditLogEntryDataManager
 		userIDFetcher      UserIDFetcher
 		webhookIDFetcher   WebhookIDFetcher
 		encoderDecoder     encoding.EncoderDecoder
@@ -57,6 +58,7 @@ type (
 func ProvideWebhooksService(
 	logger logging.Logger,
 	webhookDataManager models.WebhookDataManager,
+	auditLog models.AuditLogEntryDataManager,
 	userIDFetcher UserIDFetcher,
 	webhookIDFetcher WebhookIDFetcher,
 	encoder encoding.EncoderDecoder,
@@ -71,6 +73,7 @@ func ProvideWebhooksService(
 	svc := &Service{
 		logger:             logger.WithName(serviceName),
 		webhookDataManager: webhookDataManager,
+		auditLog:           auditLog,
 		encoderDecoder:     encoder,
 		webhookCounter:     webhookCounter,
 		userIDFetcher:      userIDFetcher,

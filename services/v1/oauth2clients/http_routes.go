@@ -55,14 +55,14 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue("user_id", userID)
 
 	// fetch oauth2 clients.
-	oauth2Clients, err := s.database.GetOAuth2ClientsForUser(ctx, userID, filter)
+	oauth2Clients, err := s.clientDataManager.GetOAuth2ClientsForUser(ctx, userID, filter)
 	if err == sql.ErrNoRows {
 		// just return an empty list if there are no results.
 		oauth2Clients = &models.OAuth2ClientList{
 			Clients: []models.OAuth2Client{},
 		}
 	} else if err != nil {
-		logger.Error(err, "encountered error getting list of oauth2 clients from database")
+		logger.Error(err, "encountered error getting list of oauth2 clients from clientDataManager")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
@@ -98,7 +98,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	})
 
 	// retrieve user.
-	user, err := s.database.GetUserByUsername(ctx, input.Username)
+	user, err := s.userDataManager.GetUserByUsername(ctx, input.Username)
 	if err != nil {
 		logger.Error(err, "fetching user by username")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
@@ -129,9 +129,9 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// create the client.
-	client, err := s.database.CreateOAuth2Client(ctx, input)
+	client, err := s.clientDataManager.CreateOAuth2Client(ctx, input)
 	if err != nil {
-		logger.Error(err, "creating oauth2Client in the database")
+		logger.Error(err, "creating oauth2Client in the clientDataManager")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
@@ -161,13 +161,13 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue("oauth2_client_id", oauth2ClientID)
 
 	// fetch oauth2 client.
-	x, err := s.database.GetOAuth2Client(ctx, oauth2ClientID, userID)
+	x, err := s.clientDataManager.GetOAuth2Client(ctx, oauth2ClientID, userID)
 	if err == sql.ErrNoRows {
 		logger.Debug("ReadHandler called on nonexistent client")
 		s.encoderDecoder.EncodeNotFoundResponse(res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error fetching oauth2Client from database")
+		logger.Error(err, "error fetching oauth2Client from clientDataManager")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
@@ -194,7 +194,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue("oauth2_client_id", oauth2ClientID)
 
 	// mark client as archived.
-	err := s.database.ArchiveOAuth2Client(ctx, oauth2ClientID, userID)
+	err := s.clientDataManager.ArchiveOAuth2Client(ctx, oauth2ClientID, userID)
 	if err == sql.ErrNoRows {
 		s.encoderDecoder.EncodeNotFoundResponse(res)
 		return

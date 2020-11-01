@@ -38,6 +38,7 @@ func TestProvideWebhooksService(T *testing.T) {
 		actual, err := ProvideWebhooksService(
 			noop.NewLogger(),
 			&mockmodels.WebhookDataManager{},
+			&mockmodels.AuditLogEntryDataManager{},
 			func(req *http.Request) uint64 { return 0 },
 			func(req *http.Request) uint64 { return 0 },
 			&mockencoding.EncoderDecoder{},
@@ -57,6 +58,7 @@ func TestProvideWebhooksService(T *testing.T) {
 		actual, err := ProvideWebhooksService(
 			noop.NewLogger(),
 			&mockmodels.WebhookDataManager{},
+			&mockmodels.AuditLogEntryDataManager{},
 			func(req *http.Request) uint64 { return 0 },
 			func(req *http.Request) uint64 { return 0 },
 			&mockencoding.EncoderDecoder{},

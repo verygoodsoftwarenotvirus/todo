@@ -103,7 +103,7 @@ func sessionInfoFetcherFromRequestContext(req *http.Request) (*models.SessionInf
 	return nil, errors.New("no session info attached to request")
 }
 
-// buildRouteParamUserIDFetcher builds a function that fetches a DatabaseUsername from a request routed by chi.
+// buildRouteParamUserIDFetcher builds a function that fetches a EnsureUsername from a request routed by chi.
 func buildRouteParamUserIDFetcher(logger logging.Logger) usersservice.UserIDFetcher {
 	return func(req *http.Request) uint64 {
 		u, err := strconv.ParseUint(chi.URLParam(req, usersservice.URIParamKey), 10, 64)

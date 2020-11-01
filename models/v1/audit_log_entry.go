@@ -13,7 +13,7 @@ type (
 	eventType string
 
 	// AuditLogContext keeps track of what gets modified within audit reports
-	AuditLogContext map[string]string
+	AuditLogContext map[string]interface{}
 
 	// AuditLogEntry represents an event we might want to log for audit purposes.
 	AuditLogEntry struct {

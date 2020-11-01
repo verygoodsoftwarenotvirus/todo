@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 	immuschema "github.com/codenotary/immudb/pkg/api/schema"
-	"google.golang.org/grpc"
 	"log"
 	"os"
 
-	immuclient "github.com/codenotary/immudb/pkg/client"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
 	"google.golang.org/grpc/metadata"
 )
@@ -18,16 +16,37 @@ const (
 )
 
 type AuditLogConfig struct {
-	DevMode          bool
-	DirPath          string
-	DatabaseUsername string
-	DatabasePassword string
-	DatabasePort     int
-	DatabaseHost     string
-	DatabaseName     string
+	Server AuditLogServerConfig
+	Client AuditLogClientConfig
+
+	// MutualTLSPkey        string
+	// MutualTLSCertificate string
+	// MutualTLSClientCAs   string
+}
+
+type AuditLogServerConfig struct {
+	DevMode             bool
+	DirPath             string
+	EnsureUsername      string
+	EnsuredUserPassword string
+	DatabasePort        int
+	DatabaseHost        string
+	DatabaseName        string
 
 	PEMEncodedSigningKey string
 	SigningKeyFilepath   string
+
+	MutualTLSPkey        string
+	MutualTLSCertificate string
+	MutualTLSClientCAs   string
+}
+
+type AuditLogClientConfig struct {
+	DirPath  string
+	Username string
+	Password string
+	Port     int
+	Hostname string
 
 	MutualTLSPkey        string
 	MutualTLSCertificate string
@@ -45,13 +64,13 @@ func main() {
 		dirPath = "./artifacts/audit_log"
 	)
 
-	cfg := AuditLogConfig{
-		DirPath:          dirPath,
-		DatabasePort:     3322,
-		DatabaseName:     "auditlog",
-		DatabasePassword: password,
-		DatabaseUsername: username,
-		DatabaseHost:     "0.0.0.0",
+	serverConfig := AuditLogServerConfig{
+		DirPath:             dirPath,
+		DatabasePort:        3322,
+		DatabaseName:        "auditlog",
+		EnsuredUserPassword: password,
+		EnsureUsername:      username,
+		DatabaseHost:        "0.0.0.0",
 		PEMEncodedSigningKey: `-----BEGIN PRIVATE KEY-----
 MIGkAgEBBDB7kh4WsXnskAGMZ/ATdYB0/TxCdpgj1dNhKbgK4k7rGvyaMd6xE4/L
 bwbiFO5WXaagBwYFK4EEACKhZANiAAQs+yyAbBguvXURexlmc8aCeoBacYWuag3C
@@ -61,12 +80,19 @@ ORUoaMVfHJ4YYW8vdZmX0MJf11ZZJv3YAiSXD8CMLKPBGJog/4yPv2ijk8pqS/Em
 `,
 	}
 
+	clientConfig := AuditLogClientConfig{
+		DirPath:  dirPath,
+		Password: password,
+		Username: username,
+		Hostname: "127.0.0.1",
+	}
+
 	logger.Info("removing directory")
 	if err := os.RemoveAll(dirPath); err != nil {
 		logger.Fatal(err)
 	}
 
-	_, err := buildAndStartServer(ctx, logger, cfg)
+	_, err := buildAndStartServer(ctx, logger, serverConfig)
 	if err != nil {
 		log.Fatal("error building server: ", err)
 	}
@@ -75,33 +101,13 @@ ORUoaMVfHJ4YYW8vdZmX0MJf11ZZJv3YAiSXD8CMLKPBGJog/4yPv2ijk8pqS/Em
 
 	key := []byte("key")
 
-	clientOptions := &immuclient.Options{
-		Dir:                ".",
-		Address:            "127.0.0.1",
-		Port:               3322,
-		HealthCheckRetries: 5,
-		MTLs:               false,
-		Auth:               true,
-		Config:             "configs/immuclient.toml",
-		TokenFileName:      "token",
-		DialOptions:        &[]grpc.DialOption{},
-		Tkns:               immuclient.NewTokenService().WithTokenFileName("token").WithHds(immuclient.NewHomedirService()),
-		Metrics:            true,
-		PidPath:            "",
-		PrometheusHost:     "",
-		PrometheusPort:     "",
-		LogFileName:        "",
-	}
-	client, err := immuclient.NewImmuClient(clientOptions)
-	if err != nil {
-		log.Fatal("error building client: ", err)
-	}
+	client, err := buildClient(clientConfig)
 
 	// login with default username and password
 	lr, err := client.Login(ctx, []byte(username), []byte(password))
 	ctx = metadata.NewOutgoingContext(context.Background(), metadata.Pairs("authorization", lr.Token))
 
-	udr, err := client.UseDatabase(ctx, &immuschema.Database{Databasename: cfg.DatabaseName})
+	udr, err := client.UseDatabase(ctx, &immuschema.Database{Databasename: serverConfig.DatabaseName})
 	if err != nil {
 		log.Fatal("error using database: ", err)
 	}

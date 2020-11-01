@@ -26,7 +26,7 @@ func init() {
 	immuauth.SysAdminPassword = serverAdminPassword
 }
 
-func buildServerOptions(cfg AuditLogConfig) immuserver.Options {
+func buildServerOptions(cfg AuditLogServerConfig) immuserver.Options {
 	serverOptions := immuserver.DefaultOptions()
 	serverOptions = serverOptions.
 		WithAdminPassword(serverAdminPassword).
@@ -53,7 +53,7 @@ func buildServerOptions(cfg AuditLogConfig) immuserver.Options {
 	return serverOptions
 }
 
-func establishSigner(cfg AuditLogConfig, server *immuserver.ImmuServer) error {
+func establishSigner(cfg AuditLogServerConfig, server *immuserver.ImmuServer) error {
 	if cfg.SigningKeyFilepath == "" && cfg.PEMEncodedSigningKey != "" {
 		block, rest := pem.Decode([]byte(cfg.PEMEncodedSigningKey))
 		if len(rest) > 0 {
@@ -79,7 +79,7 @@ func establishSigner(cfg AuditLogConfig, server *immuserver.ImmuServer) error {
 	return nil
 }
 
-func ensureDatabases(ctx context.Context, cfg AuditLogConfig, server *immuserver.ImmuServer) error {
+func ensureDatabases(ctx context.Context, cfg AuditLogServerConfig, server *immuserver.ImmuServer) error {
 	databases, err := server.DatabaseList(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("error querying users: %w", err)
@@ -107,7 +107,7 @@ func ensureDatabases(ctx context.Context, cfg AuditLogConfig, server *immuserver
 	return nil
 }
 
-func ensureUsers(ctx context.Context, cfg AuditLogConfig, server *immuserver.ImmuServer) error {
+func ensureUsers(ctx context.Context, cfg AuditLogServerConfig, server *immuserver.ImmuServer) error {
 	users, err := server.ListUsers(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("error querying users: %w", err)
@@ -115,7 +115,7 @@ func ensureUsers(ctx context.Context, cfg AuditLogConfig, server *immuserver.Imm
 
 	var userAlreadyCreated bool
 	for _, u := range users.Users {
-		if string(u.User) == cfg.DatabaseUsername {
+		if string(u.User) == cfg.EnsureUsername {
 			userAlreadyCreated = true
 			break
 		}
@@ -123,8 +123,8 @@ func ensureUsers(ctx context.Context, cfg AuditLogConfig, server *immuserver.Imm
 
 	if !userAlreadyCreated {
 		if _, err := server.CreateUser(ctx, &immuschema.CreateUserRequest{
-			User:       []byte(cfg.DatabaseUsername),
-			Password:   []byte(cfg.DatabasePassword),
+			User:       []byte(cfg.EnsureUsername),
+			Password:   []byte(cfg.EnsuredUserPassword),
 			Permission: immuauth.PermissionRW,
 			Database:   cfg.DatabaseName,
 		}); err != nil {
@@ -135,7 +135,7 @@ func ensureUsers(ctx context.Context, cfg AuditLogConfig, server *immuserver.Imm
 	return nil
 }
 
-func buildAndStartServer(ctx context.Context, l logging.Logger, cfg AuditLogConfig) (*immuserver.ImmuServer, error) {
+func buildAndStartServer(ctx context.Context, l logging.Logger, cfg AuditLogServerConfig) (*immuserver.ImmuServer, error) {
 	server := immuserver.DefaultServer()
 	server.Logger = wrapLogger(l)
 	server.Options = buildServerOptions(cfg)
@@ -167,8 +167,10 @@ func buildAndStartServer(ctx context.Context, l logging.Logger, cfg AuditLogConf
 		return nil, fmt.Errorf("error encountered ensuring databases: %w", err)
 	}
 
-	if err := ensureUsers(ctx, cfg, server); err != nil {
-		return nil, fmt.Errorf("error encountered ensuring users: %w", err)
+	if cfg.EnsureUsername != "" && cfg.EnsuredUserPassword != "" {
+		if err := ensureUsers(ctx, cfg, server); err != nil {
+			return nil, fmt.Errorf("error encountered ensuring users: %w", err)
+		}
 	}
 
 	return server, nil

@@ -2,6 +2,7 @@ package users
 
 import (
 	"errors"
+
 	"net/http"
 	"testing"
 
@@ -12,6 +13,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -36,7 +38,8 @@ func buildTestService(t *testing.T) *Service {
 	service, err := ProvideUsersService(
 		config.AuthSettings{},
 		noop.NewLogger(),
-		database.BuildMockDatabase(),
+		&mockmodels.UserDataManager{},
+		&mockmodels.AuditLogEntryDataManager{},
 		&mockauth.Authenticator{},
 		func(req *http.Request) uint64 { return 0 },
 		func(req *http.Request) (*models.SessionInfo, error) { return nil, nil },
@@ -62,7 +65,8 @@ func TestProvideUsersService(T *testing.T) {
 		service, err := ProvideUsersService(
 			config.AuthSettings{},
 			noop.NewLogger(),
-			database.BuildMockDatabase(),
+			&mockmodels.UserDataManager{},
+			&mockmodels.AuditLogEntryDataManager{},
 			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },
 			func(req *http.Request) (*models.SessionInfo, error) { return nil, nil },
@@ -82,7 +86,8 @@ func TestProvideUsersService(T *testing.T) {
 		service, err := ProvideUsersService(
 			config.AuthSettings{},
 			noop.NewLogger(),
-			database.BuildMockDatabase(),
+			&mockmodels.UserDataManager{},
+			&mockmodels.AuditLogEntryDataManager{},
 			&mockauth.Authenticator{},
 			nil,
 			nil,
@@ -102,7 +107,8 @@ func TestProvideUsersService(T *testing.T) {
 		service, err := ProvideUsersService(
 			config.AuthSettings{},
 			noop.NewLogger(),
-			database.BuildMockDatabase(),
+			&mockmodels.UserDataManager{},
+			&mockmodels.AuditLogEntryDataManager{},
 			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },
 			func(req *http.Request) (*models.SessionInfo, error) { return nil, nil },

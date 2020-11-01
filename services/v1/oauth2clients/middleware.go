@@ -53,7 +53,7 @@ func (s *Service) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.
 	logger = logger.WithValue("client_id", clientID)
 
 	// fetch client by client ID.
-	c, err := s.database.GetOAuth2ClientByClientID(ctx, clientID)
+	c, err := s.clientDataManager.GetOAuth2ClientByClientID(ctx, clientID)
 	if err != nil {
 		logger.Error(err, "error fetching OAuth2 Client")
 		return nil, err
@@ -118,7 +118,7 @@ func (s *Service) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 		if v := req.URL.Query().Get(oauth2ClientIDURIParamKey); v != "" {
 			logger := s.logger.WithValue("oauth2_client_id", v)
 
-			client, err := s.database.GetOAuth2ClientByClientID(ctx, v)
+			client, err := s.clientDataManager.GetOAuth2ClientByClientID(ctx, v)
 			if err != nil {
 				logger.Error(err, "error fetching OAuth2 client")
 				http.Error(res, "invalid request", http.StatusUnauthorized)

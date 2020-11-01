@@ -78,7 +78,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 			mock.Anything,
 			exampleOAuth2Client.ClientID,
 		).Return(exampleOAuth2Client, nil)
-		s.database = mockDB
+		s.clientDataManager = mockDB
 
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
@@ -107,7 +107,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 			mock.Anything,
 			exampleOAuth2Client.ClientID,
 		).Return((*models.OAuth2Client)(nil), sql.ErrNoRows)
-		s.database = mockDB
+		s.clientDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeErrorResponse", mock.Anything, "no such oauth2 client", http.StatusUnauthorized)
@@ -138,7 +138,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 			mock.Anything,
 			exampleOAuth2Client.ClientID,
 		).Return((*models.OAuth2Client)(nil), errors.New("blah"))
-		s.database = mockDB
+		s.clientDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
@@ -186,7 +186,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 			mock.Anything,
 			exampleOAuth2Client.ClientID,
 		).Return(exampleOAuth2Client, nil)
-		s.database = mockDB
+		s.clientDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeErrorResponse", mock.Anything, "not authorized for scope", http.StatusUnauthorized)
@@ -272,7 +272,7 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 			mock.Anything,
 			stringID,
 		).Return(exampleOAuth2Client, nil)
-		s.database = mockDB
+		s.clientDataManager = mockDB
 
 		actual, err := s.ClientAuthorizedHandler(stringID, exampleGrant)
 		assert.True(t, actual)
@@ -290,7 +290,7 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 		assert.Error(t, err)
 	})
 
-	T.Run("with error reading from database", func(t *testing.T) {
+	T.Run("with error reading from clientDataManager", func(t *testing.T) {
 		s := buildTestService(t)
 		exampleGrant := oauth2.AuthorizationCode
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -302,7 +302,7 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 			mock.Anything,
 			stringID,
 		).Return((*models.OAuth2Client)(nil), errors.New("blah"))
-		s.database = mockDB
+		s.clientDataManager = mockDB
 
 		actual, err := s.ClientAuthorizedHandler(stringID, exampleGrant)
 		assert.False(t, actual)
@@ -324,7 +324,7 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 			mock.Anything,
 			stringID,
 		).Return(exampleOAuth2Client, nil)
-		s.database = mockDB
+		s.clientDataManager = mockDB
 
 		actual, err := s.ClientAuthorizedHandler(stringID, exampleGrant)
 		assert.False(t, actual)
@@ -349,7 +349,7 @@ func TestService_ClientScopeHandler(T *testing.T) {
 			mock.Anything,
 			stringID,
 		).Return(exampleOAuth2Client, nil)
-		s.database = mockDB
+		s.clientDataManager = mockDB
 
 		actual, err := s.ClientScopeHandler(stringID, exampleOAuth2Client.Scopes[0])
 		assert.True(t, actual)
@@ -358,7 +358,7 @@ func TestService_ClientScopeHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
-	T.Run("with error reading from database", func(t *testing.T) {
+	T.Run("with error reading from clientDataManager", func(t *testing.T) {
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -370,7 +370,7 @@ func TestService_ClientScopeHandler(T *testing.T) {
 			mock.Anything,
 			stringID,
 		).Return((*models.OAuth2Client)(nil), errors.New("blah"))
-		s.database = mockDB
+		s.clientDataManager = mockDB
 
 		actual, err := s.ClientScopeHandler(stringID, exampleOAuth2Client.Scopes[0])
 		assert.False(t, actual)
@@ -392,7 +392,7 @@ func TestService_ClientScopeHandler(T *testing.T) {
 			mock.Anything,
 			stringID,
 		).Return(exampleOAuth2Client, nil)
-		s.database = mockDB
+		s.clientDataManager = mockDB
 
 		actual, err := s.ClientScopeHandler(stringID, exampleScope)
 		assert.False(t, actual)

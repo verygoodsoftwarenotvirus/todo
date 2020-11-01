@@ -121,7 +121,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 			mock.Anything,
 			exampleOAuth2Client.ClientID,
 		).Return(exampleOAuth2Client, nil)
-		s.database = mockDB
+		s.clientDataManager = mockDB
 
 		req := buildRequest(t)
 		req.URL.Path = fmt.Sprintf("/api/v1/%s", exampleOAuth2Client.Scopes[0])
@@ -152,7 +152,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, mh)
 	})
 
-	T.Run("with error fetching from database", func(t *testing.T) {
+	T.Run("with error fetching from clientDataManager", func(t *testing.T) {
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -170,7 +170,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 			mock.Anything,
 			exampleOAuth2Client.ClientID,
 		).Return((*models.OAuth2Client)(nil), errors.New("blah"))
-		s.database = mockDB
+		s.clientDataManager = mockDB
 
 		req := buildRequest(t)
 		actual, err := s.ExtractOAuth2ClientFromRequest(req.Context(), req)
@@ -199,7 +199,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 			mock.Anything,
 			exampleOAuth2Client.ClientID,
 		).Return(exampleOAuth2Client, nil)
-		s.database = mockDB
+		s.clientDataManager = mockDB
 
 		req := buildRequest(t)
 		req.URL.Path = "/api/v1/stuff"
@@ -235,7 +235,7 @@ func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 			mock.Anything,
 			exampleOAuth2Client.ClientID,
 		).Return(exampleOAuth2Client, nil)
-		s.database = mockDB
+		s.clientDataManager = mockDB
 
 		req := buildRequest(t)
 		req.URL.Path = fmt.Sprintf("/api/v1/%s", exampleOAuth2Client.Scopes[0])
@@ -302,7 +302,7 @@ func TestService_OAuth2ClientInfoMiddleware(T *testing.T) {
 			mock.Anything,
 			expected,
 		).Return(exampleOAuth2Client, nil)
-		s.database = mockDB
+		s.clientDataManager = mockDB
 
 		s.OAuth2ClientInfoMiddleware(mhh).ServeHTTP(res, req)
 		assert.Equal(t, http.StatusOK, res.Code)
@@ -310,7 +310,7 @@ func TestService_OAuth2ClientInfoMiddleware(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, mhh, mockDB)
 	})
 
-	T.Run("with error reading from database", func(t *testing.T) {
+	T.Run("with error reading from clientDataManager", func(t *testing.T) {
 		s := buildTestService(t)
 		expected := "blah"
 
@@ -325,7 +325,7 @@ func TestService_OAuth2ClientInfoMiddleware(T *testing.T) {
 			mock.Anything,
 			expected,
 		).Return((*models.OAuth2Client)(nil), errors.New("blah"))
-		s.database = mockDB
+		s.clientDataManager = mockDB
 
 		mhh := &mockHTTPHandler{}
 		s.OAuth2ClientInfoMiddleware(mhh).ServeHTTP(res, req)

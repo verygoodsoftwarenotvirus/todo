@@ -88,7 +88,8 @@ func TestService_ListHandler(T *testing.T) {
 			exampleUser.ID,
 			mock.AnythingOfType("*models.QueryFilter"),
 		).Return(exampleOAuth2ClientList, nil)
-		s.database = mockDB
+		s.clientDataManager = mockDB
+		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2ClientList"))
@@ -117,7 +118,8 @@ func TestService_ListHandler(T *testing.T) {
 			exampleUser.ID,
 			mock.AnythingOfType("*models.QueryFilter"),
 		).Return((*models.OAuth2ClientList)(nil), sql.ErrNoRows)
-		s.database = mockDB
+		s.clientDataManager = mockDB
+		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2ClientList"))
@@ -135,7 +137,7 @@ func TestService_ListHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 
-	T.Run("with error fetching from database", func(t *testing.T) {
+	T.Run("with error fetching from clientDataManager", func(t *testing.T) {
 		s := buildTestService(t)
 
 		mockDB := database.BuildMockDatabase()
@@ -145,7 +147,8 @@ func TestService_ListHandler(T *testing.T) {
 			exampleUser.ID,
 			mock.AnythingOfType("*models.QueryFilter"),
 		).Return((*models.OAuth2ClientList)(nil), errors.New("blah"))
-		s.database = mockDB
+		s.clientDataManager = mockDB
+		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
@@ -187,7 +190,8 @@ func TestService_CreateHandler(T *testing.T) {
 			mock.Anything,
 			exampleInput,
 		).Return(exampleOAuth2Client, nil)
-		s.database = mockDB
+		s.clientDataManager = mockDB
+		s.userDataManager = mockDB
 
 		a := &mockauth.Authenticator{}
 		a.On(
@@ -253,7 +257,8 @@ func TestService_CreateHandler(T *testing.T) {
 			mock.Anything,
 			exampleInput.Username,
 		).Return((*models.User)(nil), errors.New("blah"))
-		s.database = mockDB
+		s.clientDataManager = mockDB
+		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
@@ -292,7 +297,8 @@ func TestService_CreateHandler(T *testing.T) {
 			mock.Anything,
 			exampleInput,
 		).Return(exampleOAuth2Client, nil)
-		s.database = mockDB
+		s.clientDataManager = mockDB
+		s.userDataManager = mockDB
 
 		a := &mockauth.Authenticator{}
 		a.On(
@@ -343,7 +349,8 @@ func TestService_CreateHandler(T *testing.T) {
 			mock.Anything,
 			exampleInput,
 		).Return(exampleOAuth2Client, nil)
-		s.database = mockDB
+		s.clientDataManager = mockDB
+		s.userDataManager = mockDB
 
 		a := &mockauth.Authenticator{}
 		a.On(
@@ -394,7 +401,8 @@ func TestService_CreateHandler(T *testing.T) {
 			mock.Anything,
 			exampleInput,
 		).Return((*models.OAuth2Client)(nil), errors.New("blah"))
-		s.database = mockDB
+		s.clientDataManager = mockDB
+		s.userDataManager = mockDB
 
 		a := &mockauth.Authenticator{}
 		a.On(
@@ -449,7 +457,8 @@ func TestService_ReadHandler(T *testing.T) {
 			exampleOAuth2Client.ID,
 			exampleOAuth2Client.BelongsToUser,
 		).Return(exampleOAuth2Client, nil)
-		s.database = mockDB
+		s.clientDataManager = mockDB
+		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.OAuth2Client"))
@@ -483,7 +492,8 @@ func TestService_ReadHandler(T *testing.T) {
 			exampleOAuth2Client.ID,
 			exampleOAuth2Client.BelongsToUser,
 		).Return(exampleOAuth2Client, sql.ErrNoRows)
-		s.database = mockDB
+		s.clientDataManager = mockDB
+		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeNotFoundResponse", mock.Anything)
@@ -501,7 +511,7 @@ func TestService_ReadHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 
-	T.Run("with error fetching client from database", func(t *testing.T) {
+	T.Run("with error fetching client from clientDataManager", func(t *testing.T) {
 		s := buildTestService(t)
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
@@ -517,7 +527,8 @@ func TestService_ReadHandler(T *testing.T) {
 			exampleOAuth2Client.ID,
 			exampleOAuth2Client.BelongsToUser,
 		).Return((*models.OAuth2Client)(nil), errors.New("blah"))
-		s.database = mockDB
+		s.clientDataManager = mockDB
+		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
@@ -557,7 +568,8 @@ func TestService_ArchiveHandler(T *testing.T) {
 			exampleOAuth2Client.ID,
 			exampleOAuth2Client.BelongsToUser,
 		).Return(nil)
-		s.database = mockDB
+		s.clientDataManager = mockDB
+		s.userDataManager = mockDB
 
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("Decrement", mock.Anything).Return()
@@ -591,7 +603,8 @@ func TestService_ArchiveHandler(T *testing.T) {
 			exampleOAuth2Client.ID,
 			exampleOAuth2Client.BelongsToUser,
 		).Return(sql.ErrNoRows)
-		s.database = mockDB
+		s.clientDataManager = mockDB
+		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeNotFoundResponse", mock.Anything)
@@ -625,7 +638,8 @@ func TestService_ArchiveHandler(T *testing.T) {
 			exampleOAuth2Client.ID,
 			exampleOAuth2Client.BelongsToUser,
 		).Return(errors.New("blah"))
-		s.database = mockDB
+		s.clientDataManager = mockDB
+		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)

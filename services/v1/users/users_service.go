@@ -47,6 +47,7 @@ type (
 	Service struct {
 		cookieSecret        []byte
 		userDataManager     models.UserDataManager
+		auditLog            models.AuditLogEntryDataManager
 		authenticator       auth.Authenticator
 		logger              logging.Logger
 		encoderDecoder      encoding.EncoderDecoder
@@ -64,6 +65,7 @@ func ProvideUsersService(
 	authSettings config.AuthSettings,
 	logger logging.Logger,
 	userDataManager models.UserDataManager,
+	auditLog models.AuditLogEntryDataManager,
 	authenticator auth.Authenticator,
 	userIDFetcher UserIDFetcher,
 	sessionInfoFetcher SessionInfoFetcher,
@@ -84,6 +86,7 @@ func ProvideUsersService(
 		cookieSecret:        []byte(authSettings.CookieSecret),
 		logger:              logger.WithName(serviceName),
 		userDataManager:     userDataManager,
+		auditLog:            auditLog,
 		authenticator:       authenticator,
 		userIDFetcher:       userIDFetcher,
 		sessionInfoFetcher:  sessionInfoFetcher,

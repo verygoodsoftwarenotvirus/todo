@@ -14,6 +14,7 @@ import (
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
+	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -34,7 +35,7 @@ func buildTestService(t *testing.T) *Service {
 	server := oauth2server.NewDefaultServer(manager)
 
 	service := &Service{
-		database:             database.BuildMockDatabase(),
+		clientDataManager:    database.BuildMockDatabase(),
 		logger:               noop.NewLogger(),
 		encoderDecoder:       &mockencoding.EncoderDecoder{},
 		authenticator:        &mockauth.Authenticator{},
@@ -50,8 +51,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
-		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2Clients", mock.Anything).Return([]*models.OAuth2Client{}, nil)
+		mockOAuth2ClientDataManager := &mockmodels.OAuth2ClientDataManager{}
 
 		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 			return nil, nil
@@ -59,7 +59,9 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 
 		service, err := ProvideOAuth2ClientsService(
 			noop.NewLogger(),
-			mockDB,
+			mockOAuth2ClientDataManager,
+			&mockmodels.UserDataManager{},
+			&mockmodels.AuditLogEntryDataManager{},
 			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },
 			&mockencoding.EncoderDecoder{},
@@ -68,12 +70,11 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, mockOAuth2ClientDataManager)
 	})
 
 	T.Run("with error providing counter", func(t *testing.T) {
-		mockDB := database.BuildMockDatabase()
-		mockDB.OAuth2ClientDataManager.On("GetAllOAuth2Clients", mock.Anything).Return([]*models.OAuth2Client{}, nil)
+		mockOAuth2ClientDataManager := &mockmodels.OAuth2ClientDataManager{}
 
 		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 			return nil, errors.New("blah")
@@ -81,7 +82,9 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 
 		service, err := ProvideOAuth2ClientsService(
 			noop.NewLogger(),
-			mockDB,
+			mockOAuth2ClientDataManager,
+			&mockmodels.UserDataManager{},
+			&mockmodels.AuditLogEntryDataManager{},
 			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },
 			&mockencoding.EncoderDecoder{},
@@ -90,7 +93,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, service)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, mockOAuth2ClientDataManager)
 	})
 }
 
@@ -107,7 +110,7 @@ func Test_clientStore_GetByID(T *testing.T) {
 			exampleOAuth2Client.ClientID,
 		).Return(exampleOAuth2Client, nil)
 
-		c := &clientStore{database: mockDB}
+		c := &clientStore{dataManager: mockDB}
 		actual, err := c.GetByID(exampleOAuth2Client.ClientID)
 
 		assert.NoError(t, err)
@@ -126,7 +129,7 @@ func Test_clientStore_GetByID(T *testing.T) {
 			exampleID,
 		).Return((*models.OAuth2Client)(nil), sql.ErrNoRows)
 
-		c := &clientStore{database: mockDB}
+		c := &clientStore{dataManager: mockDB}
 		_, err := c.GetByID(exampleID)
 
 		assert.Error(t, err)
@@ -134,7 +137,7 @@ func Test_clientStore_GetByID(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
-	T.Run("with error reading from database", func(t *testing.T) {
+	T.Run("with error reading from clientDataManager", func(t *testing.T) {
 		exampleID := "blah"
 
 		mockDB := database.BuildMockDatabase()
@@ -144,7 +147,7 @@ func Test_clientStore_GetByID(T *testing.T) {
 			exampleID,
 		).Return((*models.OAuth2Client)(nil), errors.New(exampleID))
 
-		c := &clientStore{database: mockDB}
+		c := &clientStore{dataManager: mockDB}
 		_, err := c.GetByID(exampleID)
 
 		assert.Error(t, err)

@@ -40,6 +40,7 @@ func TestProvideItemsService(T *testing.T) {
 		s, err := ProvideItemsService(
 			noop.NewLogger(),
 			&mockmodels.ItemDataManager{},
+			&mockmodels.AuditLogEntryDataManager{},
 			func(req *http.Request) uint64 { return 0 },
 			func(*http.Request) (*models.SessionInfo, error) { return &models.SessionInfo{}, nil },
 			&mockencoding.EncoderDecoder{},
@@ -60,6 +61,7 @@ func TestProvideItemsService(T *testing.T) {
 		s, err := ProvideItemsService(
 			noop.NewLogger(),
 			&mockmodels.ItemDataManager{},
+			&mockmodels.AuditLogEntryDataManager{},
 			func(req *http.Request) uint64 { return 0 },
 			func(*http.Request) (*models.SessionInfo, error) { return &models.SessionInfo{}, nil },
 			&mockencoding.EncoderDecoder{},

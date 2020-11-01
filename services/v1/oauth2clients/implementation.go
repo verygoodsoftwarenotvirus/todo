@@ -68,8 +68,8 @@ func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reque
 
 	// check to see if the client ID is present instead.
 	if clientID := s.fetchOAuth2ClientIDFromRequest(req); clientID != "" {
-		// fetch oauth2 client from database.
-		client, err = s.database.GetOAuth2ClientByClientID(ctx, clientID)
+		// fetch oauth2 client from clientDataManager.
+		client, err = s.clientDataManager.GetOAuth2ClientByClientID(ctx, clientID)
 
 		if err == sql.ErrNoRows {
 			logger.Error(err, "error fetching OAuth2 Client")
@@ -140,10 +140,10 @@ func (s *Service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantTyp
 	}
 
 	// fetch client data.
-	client, err := s.database.GetOAuth2ClientByClientID(ctx, clientID)
+	client, err := s.clientDataManager.GetOAuth2ClientByClientID(ctx, clientID)
 	if err != nil {
-		logger.Error(err, "fetching oauth2 client from database")
-		return false, fmt.Errorf("fetching oauth2 client from database: %w", err)
+		logger.Error(err, "fetching oauth2 client from clientDataManager")
+		return false, fmt.Errorf("fetching oauth2 client from clientDataManager: %w", err)
 	}
 
 	// disallow implicit grants unless authorized.
@@ -168,7 +168,7 @@ func (s *Service) ClientScopeHandler(clientID, scope string) (authed bool, err e
 	})
 
 	// fetch client info.
-	c, err := s.database.GetOAuth2ClientByClientID(ctx, clientID)
+	c, err := s.clientDataManager.GetOAuth2ClientByClientID(ctx, clientID)
 	if err != nil {
 		logger.Error(err, "error fetching OAuth2 client for ClientScopeHandler")
 		return false, err

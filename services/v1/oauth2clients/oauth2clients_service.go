@@ -1,14 +1,10 @@
 package oauth2clients
 
 import (
-	"context"
 	"crypto/rand"
-	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 
-	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
@@ -37,10 +33,7 @@ const (
 	serviceName        string              = "oauth2_clients_service"
 )
 
-var (
-	_ models.OAuth2ClientDataServer = (*Service)(nil)
-	_ oauth2.ClientStore            = (*clientStore)(nil)
-)
+var _ models.OAuth2ClientDataServer = (*Service)(nil)
 
 type (
 	oauth2Handler interface {
@@ -63,67 +56,51 @@ type (
 	// Service manages our OAuth2 clients via HTTP.
 	Service struct {
 		logger               logging.Logger
-		database             database.DataManager
+		clientDataManager    models.OAuth2ClientDataManager
+		userDataManager      models.UserDataManager
+		auditLog             models.AuditLogEntryDataManager
 		authenticator        auth.Authenticator
 		encoderDecoder       encoding.EncoderDecoder
 		urlClientIDExtractor func(req *http.Request) uint64
 		oauth2Handler        oauth2Handler
 		oauth2ClientCounter  metrics.UnitCounter
-	}
-
-	clientStore struct {
-		database database.DataManager
+		initialized          bool
 	}
 )
-
-func newClientStore(db database.DataManager) *clientStore {
-	cs := &clientStore{
-		database: db,
-	}
-	return cs
-}
-
-// GetByID implements oauth2.ClientStorage
-func (s *clientStore) GetByID(id string) (oauth2.ClientInfo, error) {
-	client, err := s.database.GetOAuth2ClientByClientID(context.Background(), id)
-
-	if err == sql.ErrNoRows {
-		return nil, errors.New("invalid client")
-	} else if err != nil {
-		return nil, fmt.Errorf("querying for client: %w", err)
-	}
-
-	return client, nil
-}
 
 // ProvideOAuth2ClientsService builds a new OAuth2ClientsService.
 func ProvideOAuth2ClientsService(
 	logger logging.Logger,
-	db database.DataManager,
+	clientDataManager models.OAuth2ClientDataManager,
+	userDataManager models.UserDataManager,
+	auditLog models.AuditLogEntryDataManager,
 	authenticator auth.Authenticator,
 	clientIDFetcher ClientIDFetcher,
 	encoderDecoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
 ) (*Service, error) {
-	manager := manage.NewDefaultManager()
-	clientStore := newClientStore(db)
-	manager.MapClientStorage(clientStore)
 	tokenStore, tokenStoreErr := oauth2store.NewMemoryTokenStore()
+
+	manager := manage.NewDefaultManager()
+	manager.MapClientStorage(newClientStore(clientDataManager))
 	manager.MustTokenStorage(tokenStore, tokenStoreErr)
 	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
 	manager.SetRefreshTokenCfg(manage.DefaultRefreshTokenCfg)
+
 	oHandler := oauth2server.NewDefaultServer(manager)
 	oHandler.SetAllowGetAccessRequest(true)
 
 	svc := &Service{
-		database:             db,
+		clientDataManager:    clientDataManager,
+		auditLog:             auditLog,
+		userDataManager:      userDataManager,
 		logger:               logger.WithName(serviceName),
 		encoderDecoder:       encoderDecoder,
 		authenticator:        authenticator,
 		urlClientIDExtractor: clientIDFetcher,
 		oauth2Handler:        oHandler,
 	}
-	initializeOAuth2Handler(svc)
+	svc.initialize()
 
 	var err error
 	if svc.oauth2ClientCounter, err = counterProvider(counterName, counterDescription); err != nil {
@@ -134,19 +111,22 @@ func ProvideOAuth2ClientsService(
 }
 
 // initializeOAuth2Handler.
-func initializeOAuth2Handler(svc *Service) {
-	svc.oauth2Handler.SetAllowGetAccessRequest(true)
-	svc.oauth2Handler.SetClientAuthorizedHandler(svc.ClientAuthorizedHandler)
-	svc.oauth2Handler.SetClientScopeHandler(svc.ClientScopeHandler)
-	svc.oauth2Handler.SetClientInfoHandler(oauth2server.ClientFormHandler)
-	svc.oauth2Handler.SetAuthorizeScopeHandler(svc.AuthorizeScopeHandler)
-	svc.oauth2Handler.SetResponseErrorHandler(svc.OAuth2ResponseErrorHandler)
-	svc.oauth2Handler.SetInternalErrorHandler(svc.OAuth2InternalErrorHandler)
-	svc.oauth2Handler.SetUserAuthorizationHandler(svc.UserAuthorizationHandler)
+func (s *Service) initialize() {
+	if s.initialized {
+		return
+	}
 
-	// this sad type cast is here because I have an arbitrary.
-	// test-only interface for OAuth2 interactions.
-	if x, ok := svc.oauth2Handler.(*oauth2server.Server); ok {
+	s.oauth2Handler.SetAllowGetAccessRequest(true)
+	s.oauth2Handler.SetClientAuthorizedHandler(s.ClientAuthorizedHandler)
+	s.oauth2Handler.SetClientScopeHandler(s.ClientScopeHandler)
+	s.oauth2Handler.SetClientInfoHandler(oauth2server.ClientFormHandler)
+	s.oauth2Handler.SetAuthorizeScopeHandler(s.AuthorizeScopeHandler)
+	s.oauth2Handler.SetResponseErrorHandler(s.OAuth2ResponseErrorHandler)
+	s.oauth2Handler.SetInternalErrorHandler(s.OAuth2InternalErrorHandler)
+	s.oauth2Handler.SetUserAuthorizationHandler(s.UserAuthorizationHandler)
+
+	// this sad type cast is here because I have an arbitrary test-only interface for OAuth2 interactions.
+	if x, ok := s.oauth2Handler.(*oauth2server.Server); ok {
 		x.Config.AllowedGrantTypes = []oauth2.GrantType{
 			oauth2.ClientCredentials,
 			// oauth2.AuthorizationCode,
@@ -154,6 +134,8 @@ func initializeOAuth2Handler(svc *Service) {
 			// oauth2.Implicit,
 		}
 	}
+
+	s.initialized = true
 }
 
 // HandleAuthorizeRequest is a simple wrapper around the internal server's HandleAuthorizeRequest.

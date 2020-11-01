@@ -141,7 +141,7 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		if err == auth.ErrInvalidTwoFactorCode {
 			s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
 				EventType: models.UnsuccessfulLoginBad2FATokenEventType,
-				Context: map[string]string{
+				Context: map[string]interface{}{
 					"user_id":    fmt.Sprintf("%d", user.ID),
 					"REFACTORME": "yes plz",
 				},
@@ -149,7 +149,7 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		} else if err == auth.ErrPasswordDoesNotMatch {
 			s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
 				EventType: models.UnsuccessfulLoginBadPasswordEventType,
-				Context: map[string]string{
+				Context: map[string]interface{}{
 					"user_id":    fmt.Sprintf("%d", user.ID),
 					"REFACTORME": "yes plz",
 				},
@@ -163,7 +163,7 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 
 		s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
 			EventType: models.UnsuccessfulLoginBadPasswordEventType,
-			Context: map[string]string{
+			Context: map[string]interface{}{
 				"user_id":    fmt.Sprintf("%d", user.ID),
 				"REFACTORME": "yes plz",
 			},
@@ -205,7 +205,7 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	logger.Debug("login successful")
 	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
 		EventType: models.SuccessfulLoginEventType,
-		Context: map[string]string{
+		Context: map[string]interface{}{
 			"user_id": fmt.Sprintf("%d", user.ID),
 		},
 	})
@@ -253,8 +253,8 @@ func (s *Service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 
 			s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
 				EventType: models.LogoutEventType,
-				Context: map[string]string{
-					"user_id": fmt.Sprintf("%d", si.UserID),
+				Context: map[string]interface{}{
+					"user_id": si.UserID,
 				},
 			})
 		} else {
@@ -317,8 +317,8 @@ func (s *Service) CycleSecretHandler(res http.ResponseWriter, req *http.Request)
 
 	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
 		EventType: models.CycleCookoieSecretEventType,
-		Context: map[string]string{
-			"user_id": fmt.Sprintf("%d", si.UserID),
+		Context: map[string]interface{}{
+			"user_id": si.UserID,
 		},
 	})
 

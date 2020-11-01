@@ -57,7 +57,10 @@ func (c *Client) CreateAuditLogEntry(ctx context.Context, input *models.AuditLog
 	defer span.End()
 
 	tracing.AttachAuditLogEntryEventTypeToSpan(span, string(input.EventType))
-	c.logger.WithValue("event_type", input.EventType).Debug("CreateAuditLogEntry called")
+	c.logger.
+		WithValue("event_type", input.EventType).
+		WithValue("event_context", input.Context).
+		Info("creating audit log entry")
 
 	c.querier.CreateAuditLogEntry(ctx, input)
 }

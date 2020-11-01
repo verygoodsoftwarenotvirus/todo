@@ -305,6 +305,10 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		itemDataManager.On("CreateItem", mock.Anything, mock.AnythingOfType("*models.ItemCreationInput")).Return(exampleItem, nil)
 		s.itemDataManager = itemDataManager
 
+		auditLog := &mockmodels.AuditLogEntryDataManager{}
+		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
+		s.auditLog = auditLog
+
 		mc := &mockmetrics.UnitCounter{}
 		mc.On("Increment", mock.Anything)
 		s.itemCounter = mc
@@ -650,6 +654,10 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		itemDataManager.On("UpdateItem", mock.Anything, mock.AnythingOfType("*models.Item")).Return(nil)
 		s.itemDataManager = itemDataManager
 
+		auditLog := &mockmodels.AuditLogEntryDataManager{}
+		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
+		s.auditLog = auditLog
+
 		r := &mocknewsman.Reporter{}
 		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
 		s.reporter = r
@@ -847,6 +855,10 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager.On("ArchiveItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return(nil)
 		s.itemDataManager = itemDataManager
 
+		auditLog := &mockmodels.AuditLogEntryDataManager{}
+		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
+		s.auditLog = auditLog
+
 		r := &mocknewsman.Reporter{}
 		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()
 		s.reporter = r
@@ -959,6 +971,10 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager := &mockmodels.ItemDataManager{}
 		itemDataManager.On("ArchiveItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return(nil)
 		s.itemDataManager = itemDataManager
+
+		auditLog := &mockmodels.AuditLogEntryDataManager{}
+		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
+		s.auditLog = auditLog
 
 		r := &mocknewsman.Reporter{}
 		r.On("Report", mock.AnythingOfType("newsman.Event")).Return()

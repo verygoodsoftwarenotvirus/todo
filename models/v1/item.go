@@ -77,14 +77,30 @@ type (
 )
 
 // Update merges an ItemInput with an item.
-func (x *Item) Update(input *ItemUpdateInput) {
+func (x *Item) Update(input *ItemUpdateInput) []FieldChangeEvent {
+	out := []FieldChangeEvent{}
+
 	if input.Name != "" && input.Name != x.Name {
+		out = append(out, FieldChangeEvent{
+			FieldName: "Name",
+			OldValue:  x.Name,
+			NewValue:  input.Name,
+		})
+
 		x.Name = input.Name
 	}
 
 	if input.Details != "" && input.Details != x.Details {
+		out = append(out, FieldChangeEvent{
+			FieldName: "Details",
+			OldValue:  x.Details,
+			NewValue:  input.Details,
+		})
+
 		x.Details = input.Details
 	}
+
+	return out
 }
 
 // ToUpdateInput creates a ItemUpdateInput struct for an item.

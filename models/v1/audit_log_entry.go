@@ -12,6 +12,13 @@ type (
 	// eventType is an enumertion-like string type
 	eventType string
 
+	// FieldChangeEvent represents a field that has changed in a given model's update
+	FieldChangeEvent struct {
+		FieldName string      `json:"fieldName"`
+		OldValue  interface{} `json:"oldValue"`
+		NewValue  interface{} `json:"newValue"`
+	}
+
 	// AuditLogContext keeps track of what gets modified within audit reports
 	AuditLogContext map[string]interface{}
 
@@ -69,14 +76,20 @@ func (d *AuditLogContext) Scan(value interface{}) error {
 // Event Types
 
 const (
-	// CycleCookoieSecretEventType events indicate a user successfully authenticated into the service via username + password + 2fa.
-	CycleCookoieSecretEventType eventType = "cookie_secret_cycled"
+	// CycleCookieSecretEventType events indicate an admin cycled the cookie secret.
+	CycleCookieSecretEventType eventType = "cookie_secret_cycled"
 	// SuccessfulLoginEventType events indicate a user successfully authenticated into the service via username + password + 2fa.
 	SuccessfulLoginEventType eventType = "successful_login"
-	// UnsuccessfulLoginBadPasswordEventType events indicate a user attempted to authenticate into the service, but failed.
+	// UnsuccessfulLoginBadPasswordEventType events indicate a user attempted to authenticate into the service, but failed because of an invalid password.
 	UnsuccessfulLoginBadPasswordEventType eventType = "unsuccessful_login_bad_password"
-	// UnsuccessfulLoginBad2FATokenEventType events indicate a user attempted to authenticate into the service, but failed.
+	// UnsuccessfulLoginBad2FATokenEventType events indicate a user attempted to authenticate into the service, but failed because of a faulty two factor token.
 	UnsuccessfulLoginBad2FATokenEventType eventType = "unsuccessful_login_bad_2fa_token"
-	// LogoutEventType events indicate a user successfully authenticated into the service via username + password + 2fa.
+	// LogoutEventType events indicate a user successfully logged out.
 	LogoutEventType eventType = "user_logged_out"
+	// ItemCreationEventType events indicate a user created an item.
+	ItemCreationEventType eventType = "created_item"
+	// ItemUpdateEventType events indicate a user updated an item.
+	ItemUpdateEventType eventType = "updated_item"
+	// ItemDeleteEventType events indicate a user deleted an item.
+	ItemDeleteEventType eventType = "deleted_item"
 )

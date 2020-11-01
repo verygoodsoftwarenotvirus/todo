@@ -194,6 +194,14 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		logger.Error(searchIndexErr, "adding item to search index")
 	}
 
+	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
+		EventType: models.ItemCreationEventType,
+		Context: map[string]interface{}{
+			"id":         x.ID,
+			"created_by": si.UserID,
+		},
+	})
+
 	// encode our response and peace.
 	s.encoderDecoder.EncodeResponseWithStatus(res, x, http.StatusCreated)
 }
@@ -308,7 +316,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// update the data structure.
-	x.Update(input)
+	changeReport := x.Update(input)
 
 	// update item in database.
 	if err = s.itemDataManager.UpdateItem(ctx, x); err != nil {
@@ -326,6 +334,14 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	if searchIndexErr := s.search.Index(ctx, x.ID, x); searchIndexErr != nil {
 		logger.Error(searchIndexErr, "updating item in search index")
 	}
+	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
+		EventType: models.ItemUpdateEventType,
+		Context: map[string]interface{}{
+			"id":         x.ID,
+			"updated_by": si.UserID,
+			"changes":    changeReport,
+		},
+	})
 
 	// encode our response and peace.
 	s.encoderDecoder.EncodeResponse(res, x)
@@ -374,6 +390,13 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	if indexDeleteErr := s.search.Delete(ctx, itemID); indexDeleteErr != nil {
 		logger.Error(indexDeleteErr, "error removing item from search index")
 	}
+	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
+		EventType: models.ItemUpdateEventType,
+		Context: map[string]interface{}{
+			"id":         itemID,
+			"deleted_by": si.UserID,
+		},
+	})
 
 	// encode our response and peace.
 	res.WriteHeader(http.StatusNoContent)

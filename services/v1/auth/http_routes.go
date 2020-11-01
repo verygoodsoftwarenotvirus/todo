@@ -316,7 +316,7 @@ func (s *Service) CycleSecretHandler(res http.ResponseWriter, req *http.Request)
 	)
 
 	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-		EventType: models.CycleCookoieSecretEventType,
+		EventType: models.CycleCookieSecretEventType,
 		Context: map[string]interface{}{
 			"user_id": si.UserID,
 		},

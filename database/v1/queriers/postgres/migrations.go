@@ -104,11 +104,7 @@ var (
 				"id" BIGSERIAL NOT NULL PRIMARY KEY,
 				"event_type" TEXT NOT NULL,
 				"event_data" JSONB NOT NULL,
-				"performed_by_user" BIGINT NOT NULL,
-				"on_behalf_of_user" BIGINT NOT NULL,
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
-				FOREIGN KEY("performed_by_user") REFERENCES users(id),
-				FOREIGN KEY("on_behalf_of_user") REFERENCES users(id)
 			);`,
 		},
 		{

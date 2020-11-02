@@ -139,36 +139,16 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		logger.Error(err, "error encountered validating login")
 
 		if err == auth.ErrInvalidTwoFactorCode {
-			s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-				EventType: models.UnsuccessfulLoginBad2FATokenEvent,
-				Context: map[string]interface{}{
-					"user_id":    fmt.Sprintf("%d", user.ID),
-					"REFACTORME": "yes plz",
-				},
-			})
+			s.auditLog.LogUnsuccessfulLoginBad2FATokenEvent(ctx, user.ID)
 		} else if err == auth.ErrPasswordDoesNotMatch {
-			s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-				EventType: models.UnsuccessfulLoginBadPasswordEvent,
-				Context: map[string]interface{}{
-					"user_id":    fmt.Sprintf("%d", user.ID),
-					"REFACTORME": "yes plz",
-				},
-			})
+			s.auditLog.LogUnsuccessfulLoginBadPasswordEvent(ctx, user.ID)
 		}
 
 		s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusUnauthorized)
 		return
 	} else if !loginValid {
 		logger.Debug("login was invalid")
-
-		s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-			EventType: models.UnsuccessfulLoginBadPasswordEvent,
-			Context: map[string]interface{}{
-				"user_id":    fmt.Sprintf("%d", user.ID),
-				"REFACTORME": "yes plz",
-			},
-		})
-
+		s.auditLog.LogUnsuccessfulLoginBadPasswordEvent(ctx, user.ID)
 		s.encoderDecoder.EncodeErrorResponse(res, "login was invalid", http.StatusUnauthorized)
 		return
 	}
@@ -203,12 +183,7 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	logger.Debug("login successful")
-	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-		EventType: models.SuccessfulLoginEvent,
-		Context: map[string]interface{}{
-			"user_id": fmt.Sprintf("%d", user.ID),
-		},
-	})
+	s.auditLog.LogSuccessfulLoginEvent(ctx, user.ID)
 
 	http.SetCookie(res, cookie)
 	statusResponse := &models.UserStatusResponse{
@@ -251,12 +226,7 @@ func (s *Service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 			c.MaxAge = -1
 			http.SetCookie(res, c)
 
-			s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-				EventType: models.LogoutEvent,
-				Context: map[string]interface{}{
-					"user_id": si.UserID,
-				},
-			})
+			s.auditLog.LogLogoutEvent(ctx, si.UserID)
 		} else {
 			logger.Error(cookieBuildingErr, "error encountered building cookie")
 			s.encoderDecoder.EncodeErrorResponse(res, "error encountered, please try again later", http.StatusInternalServerError)
@@ -315,12 +285,7 @@ func (s *Service) CycleSecretHandler(res http.ResponseWriter, req *http.Request)
 		[]byte(s.config.CookieSecret),
 	)
 
-	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-		EventType: models.CycleCookieSecretEvent,
-		Context: map[string]interface{}{
-			"user_id": si.UserID,
-		},
-	})
+	s.auditLog.LogCycleCookieSecretEvent(ctx, si.UserID)
 
 	res.WriteHeader(http.StatusCreated)
 }

@@ -12,11 +12,9 @@ import (
 )
 
 const (
-	auditLogEntriesTableName                  = "audit_log"
-	auditLogEntriesTableEventTypeColumn       = "event_type"
-	auditLogEntriesTableContextColumn         = "context"
-	auditLogEntriesTablePerformedByUserColumn = "performed_by_user"
-	auditLogEntriesTableOnBehalfOfUserColumn  = "on_behalf_of_user"
+	auditLogEntriesTableName            = "audit_log"
+	auditLogEntriesTableEventTypeColumn = "event_type"
+	auditLogEntriesTableContextColumn   = "context"
 )
 
 var (
@@ -24,8 +22,6 @@ var (
 		fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn),
 		fmt.Sprintf("%s.%s", auditLogEntriesTableName, auditLogEntriesTableEventTypeColumn),
 		fmt.Sprintf("%s.%s", auditLogEntriesTableName, auditLogEntriesTableContextColumn),
-		fmt.Sprintf("%s.%s", auditLogEntriesTableName, auditLogEntriesTablePerformedByUserColumn),
-		fmt.Sprintf("%s.%s", auditLogEntriesTableName, auditLogEntriesTableOnBehalfOfUserColumn),
 		fmt.Sprintf("%s.%s", auditLogEntriesTableName, createdOnColumn),
 	}
 )
@@ -38,8 +34,6 @@ func (p *Postgres) scanAuditLogEntry(scan database.Scanner) (*models.AuditLogEnt
 		&x.ID,
 		&x.EventType,
 		&x.Context,
-		&x.PerformedByUser,
-		&x.OnBehalfOfUser,
 		&x.CreatedOn,
 	}
 
@@ -263,92 +257,240 @@ func (p *Postgres) CreateAuditLogEntry(ctx context.Context, input *models.AuditL
 	}
 }
 
-// LogCycleCookieSecretEvent saves a CycleCookieSecretEvent in the audit log table.
-func (p *Postgres) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
-	//
-}
+// createAuditLogEntry creates an audit log entry in the database.
+func (p *Postgres) createAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) {
+	x := &models.AuditLogEntry{
+		EventType: input.EventType,
+		Context:   input.Context,
+	}
 
-// LogSuccessfulLoginEvent saves a SuccessfulLoginEvent in the audit log table.
-func (p *Postgres) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
-	//
-}
+	query, args := p.buildCreateAuditLogEntryQuery(x)
 
-// LogUnsuccessfulLoginBadPasswordEvent saves a UnsuccessfulLoginBadPasswordEvent in the audit log table.
-func (p *Postgres) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
-	//
-}
-
-// LogUnsuccessfulLoginBad2FATokenEvent saves a UnsuccessfulLoginBad2FATokenEvent in the audit log table.
-func (p *Postgres) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
-	//
-}
-
-// LogLogoutEvent saves a LogoutEvent in the audit log table.
-func (p *Postgres) LogLogoutEvent(ctx context.Context, userID uint64) {
-	//
+	// create the audit log entry.
+	if err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {
+		p.logger.WithValue("event_type", input.EventType).Error(err, "executing audit log entry creation query")
+	}
 }
 
 // LogItemCreationEvent saves a ItemCreationEvent in the audit log table.
-func (p *Postgres) LogItemCreationEvent(ctx context.Context, userID, itemID uint64) {
-	//
+func (p *Postgres) LogItemCreationEvent(ctx context.Context, item *models.Item) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.ItemCreationEvent,
+		Context: map[string]interface{}{
+			"created": item,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
 }
 
 // LogItemUpdateEvent saves a ItemUpdateEvent in the audit log table.
-func (p *Postgres) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64) {
-	//
+func (p *Postgres) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []models.FieldChangeEvent) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.ItemUpdateEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+			"item_id":      itemID,
+			"changes":      changes,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
 }
 
 // LogItemArchiveEvent saves a ItemArchiveEvent in the audit log table.
 func (p *Postgres) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64) {
-	//
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.ItemArchiveEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+			"item_id":      itemID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
 }
 
 // LogOAuth2ClientCreationEvent saves a OAuth2ClientCreationEvent in the audit log table.
-func (p *Postgres) LogOAuth2ClientCreationEvent(ctx context.Context, userID, clientID uint64) {
-	//
+func (p *Postgres) LogOAuth2ClientCreationEvent(ctx context.Context, client *models.OAuth2Client) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.OAuth2ClientCreationEvent,
+		Context: map[string]interface{}{
+			"client": client,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
 }
 
 // LogOAuth2ClientArchiveEvent saves a OAuth2ClientArchiveEvent in the audit log table.
 func (p *Postgres) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
-	//
-}
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.OAuth2ClientArchiveEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+			"client_id":    clientID,
+		},
+	}
 
-// LogWebhookCreationEvent saves a WebhookCreationEvent in the audit log table.
-func (p *Postgres) LogWebhookCreationEvent(ctx context.Context, userID, webhookID uint64, webhookName, webhookURL, webhookMethod string) {
-	//
-}
-
-// LogWebhookUpdateEvent saves a WebhookUpdateEvent in the audit log table.
-func (p *Postgres) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, webhookName, webhookURL, webhookMethod string) {
-	//
-}
-
-// LogWebhookArchiveEvent saves a WebhookArchiveEvent in the audit log table.
-func (p *Postgres) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
-	//
+	p.createAuditLogEntry(ctx, entry)
 }
 
 // LogUserCreationEvent saves a UserCreationEvent in the audit log table.
-func (p *Postgres) LogUserCreationEvent(ctx context.Context, userID uint64) {
-	//
+func (p *Postgres) LogUserCreationEvent(ctx context.Context, user *models.User) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UserCreationEvent,
+		Context: map[string]interface{}{
+			"user": user,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
 }
 
 // LogUserVerifyTwoFactorSecretEvent saves a UserVerifyTwoFactorSecretEvent in the audit log table.
 func (p *Postgres) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	//
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UserVerifyTwoFactorSecretEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
 }
 
 // LogUserUpdateTwoFactorSecretEvent saves a UserUpdateTwoFactorSecretEvent in the audit log table.
 func (p *Postgres) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	//
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UserUpdateTwoFactorSecretEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
 }
 
 // LogUserUpdatePasswordEvent saves a UserUpdatePasswordEvent in the audit log table.
 func (p *Postgres) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
-	//
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UserUpdatePasswordEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
 }
 
 // LogUserArchiveEvent saves a UserArchiveEvent in the audit log table.
 func (p *Postgres) LogUserArchiveEvent(ctx context.Context, userID uint64) {
-	//
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UserArchiveEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// LogCycleCookieSecretEvent saves a CycleCookieSecretEvent in the audit log table.
+func (p *Postgres) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.CycleCookieSecretEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// LogSuccessfulLoginEvent saves a SuccessfulLoginEvent in the audit log table.
+func (p *Postgres) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.SuccessfulLoginEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// LogUnsuccessfulLoginBadPasswordEvent saves a UnsuccessfulLoginBadPasswordEvent in the audit log table.
+func (p *Postgres) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UnsuccessfulLoginBadPasswordEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// LogUnsuccessfulLoginBad2FATokenEvent saves a UnsuccessfulLoginBad2FATokenEvent in the audit log table.
+func (p *Postgres) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UnsuccessfulLoginBad2FATokenEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// LogLogoutEvent saves a LogoutEvent in the audit log table.
+func (p *Postgres) LogLogoutEvent(ctx context.Context, userID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.LogoutEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// LogWebhookCreationEvent saves a WebhookCreationEvent in the audit log table.
+func (p *Postgres) LogWebhookCreationEvent(ctx context.Context, webhook *models.Webhook) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.WebhookCreationEvent,
+		Context: map[string]interface{}{
+			"webhook": webhook,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// LogWebhookUpdateEvent saves a WebhookUpdateEvent in the audit log table.
+func (p *Postgres) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []models.FieldChangeEvent) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.WebhookUpdateEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+			"webhook_id":   webhookID,
+			"changes":      changes,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// LogWebhookArchiveEvent saves a WebhookArchiveEvent in the audit log table.
+func (p *Postgres) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.WebhookArchiveEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+			"webhook_id":   webhookID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
 }

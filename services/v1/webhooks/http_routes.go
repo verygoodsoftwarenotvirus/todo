@@ -79,17 +79,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// notify the relevant parties.
 	tracing.AttachWebhookIDToSpan(span, wh.ID)
 	s.webhookCounter.Increment(ctx)
-
-	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-		EventType: models.WebhookCreationEvent,
-		Context: map[string]interface{}{
-			"created_by":     userID,
-			"webhook_id":     wh.ID,
-			"webhook_name":   wh.Name,
-			"webhook_url":    wh.URL,
-			"webhook_methoc": wh.Method,
-		},
-	})
+	s.auditLog.LogWebhookCreationEvent(ctx, wh)
 
 	// let everybody know we're good.
 	s.encoderDecoder.EncodeResponseWithStatus(res, wh, http.StatusCreated)
@@ -197,7 +187,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// update it.
-	wh.Update(input)
+	changes := wh.Update(input)
 
 	// save the update in the database.
 	if err = s.webhookDataManager.UpdateWebhook(ctx, wh); err != nil {
@@ -206,16 +196,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-		EventType: models.WebhookUpdateEvent,
-		Context: map[string]interface{}{
-			"updated_by":     userID,
-			"webhook_id":     wh.ID,
-			"webhook_name":   wh.Name,
-			"webhook_url":    wh.URL,
-			"webhook_methoc": wh.Method,
-		},
-	})
+	s.auditLog.LogWebhookUpdateEvent(ctx, userID, webhookID, changes)
 
 	// let everybody know we're good.
 	s.encoderDecoder.EncodeResponse(res, wh)
@@ -252,13 +233,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// let the interested parties know.
 	s.webhookCounter.Decrement(ctx)
-	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-		EventType: models.WebhookArchiveEvent,
-		Context: map[string]interface{}{
-			"created_by": userID,
-			"webhook_id": webhookID,
-		},
-	})
+	s.auditLog.LogWebhookArchiveEvent(ctx, userID, webhookID)
 
 	// let everybody go home.
 	res.WriteHeader(http.StatusNoContent)

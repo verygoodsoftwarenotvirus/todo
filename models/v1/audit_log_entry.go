@@ -24,12 +24,10 @@ type (
 
 	// AuditLogEntry represents an event we might want to log for audit purposes.
 	AuditLogEntry struct {
-		ID              uint64          `json:"id"`
-		EventType       eventType       `json:"eventType"`
-		Context         AuditLogContext `json:"context"`
-		PerformedByUser uint64          `json:"performedBy"`
-		OnBehalfOfUser  uint64          `json:"onBehalfOf"`
-		CreatedOn       uint64          `json:"createdOn"`
+		ID        uint64          `json:"id"`
+		EventType eventType       `json:"eventType"`
+		Context   AuditLogContext `json:"context"`
+		CreatedOn uint64          `json:"createdOn"`
 	}
 
 	// AuditLogEntryList represents a list of items.
@@ -50,22 +48,22 @@ type (
 		GetAllAuditLogEntriesCount(ctx context.Context) (uint64, error)
 		GetAllAuditLogEntries(ctx context.Context, resultChannel chan []AuditLogEntry) error
 		GetAuditLogEntries(ctx context.Context, filter *QueryFilter) (*AuditLogEntryList, error)
-		CreateAuditLogEntry(ctx context.Context, input *AuditLogEntryCreationInput)
+		CreateAuditLogEntry(ctx context.Context, input *AuditLogEntryCreationInput) // REMOVEME
 
 		LogCycleCookieSecretEvent(ctx context.Context, userID uint64)
 		LogSuccessfulLoginEvent(ctx context.Context, userID uint64)
 		LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64)
 		LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64)
 		LogLogoutEvent(ctx context.Context, userID uint64)
-		LogItemCreationEvent(ctx context.Context, userID, itemID uint64)
-		LogItemUpdateEvent(ctx context.Context, userID, itemID uint64)
+		LogItemCreationEvent(ctx context.Context, item *Item)
+		LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []FieldChangeEvent)
 		LogItemArchiveEvent(ctx context.Context, userID, itemID uint64)
-		LogOAuth2ClientCreationEvent(ctx context.Context, userID, clientID uint64)
+		LogOAuth2ClientCreationEvent(ctx context.Context, client *OAuth2Client)
 		LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64)
-		LogWebhookCreationEvent(ctx context.Context, userID, webhookID uint64, webhookName, webhookURL, webhookMethod string)
-		LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, webhookName, webhookURL, webhookMethod string)
+		LogWebhookCreationEvent(ctx context.Context, webhook *Webhook)
+		LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []FieldChangeEvent)
 		LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64)
-		LogUserCreationEvent(ctx context.Context, userID uint64)
+		LogUserCreationEvent(ctx context.Context, user *User)
 		LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64)
 		LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64)
 		LogUserUpdatePasswordEvent(ctx context.Context, userID uint64)

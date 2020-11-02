@@ -70,13 +70,13 @@ func (m *AuditLogDataManager) LogLogoutEvent(ctx context.Context, userID uint64)
 }
 
 // LogItemCreationEvent implements our interface.
-func (m *AuditLogDataManager) LogItemCreationEvent(ctx context.Context, userID, itemID uint64) {
-	m.Called(ctx, userID, itemID)
+func (m *AuditLogDataManager) LogItemCreationEvent(ctx context.Context, item *models.Item) {
+	m.Called(ctx, item)
 }
 
 // LogItemUpdateEvent implements our interface.
-func (m *AuditLogDataManager) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64) {
-	m.Called(ctx, userID, itemID)
+func (m *AuditLogDataManager) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []models.FieldChangeEvent) {
+	m.Called(ctx, userID, itemID, changes)
 }
 
 // LogItemArchiveEvent implements our interface.
@@ -85,8 +85,8 @@ func (m *AuditLogDataManager) LogItemArchiveEvent(ctx context.Context, userID, i
 }
 
 // LogOAuth2ClientCreationEvent implements our interface.
-func (m *AuditLogDataManager) LogOAuth2ClientCreationEvent(ctx context.Context, userID, clientID uint64) {
-	m.Called(ctx, userID, clientID)
+func (m *AuditLogDataManager) LogOAuth2ClientCreationEvent(ctx context.Context, client *models.OAuth2Client) {
+	m.Called(ctx, client)
 }
 
 // LogOAuth2ClientArchiveEvent implements our interface.
@@ -95,13 +95,13 @@ func (m *AuditLogDataManager) LogOAuth2ClientArchiveEvent(ctx context.Context, u
 }
 
 // LogWebhookCreationEvent implements our interface.
-func (m *AuditLogDataManager) LogWebhookCreationEvent(ctx context.Context, userID, webhookID uint64, webhookName, webhookURL, webhookMethod string) {
-	m.Called(ctx, userID, webhookID, webhookName, webhookURL, webhookMethod)
+func (m *AuditLogDataManager) LogWebhookCreationEvent(ctx context.Context, webhook *models.Webhook) {
+	m.Called(ctx, webhook)
 }
 
 // LogWebhookUpdateEvent implements our interface.
-func (m *AuditLogDataManager) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, webhookName, webhookURL, webhookMethod string) {
-	m.Called(ctx, userID, webhookID, webhookName, webhookURL, webhookMethod)
+func (m *AuditLogDataManager) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []models.FieldChangeEvent) {
+	m.Called(ctx, userID, webhookID, changes)
 }
 
 // LogWebhookArchiveEvent implements our interface.
@@ -110,8 +110,8 @@ func (m *AuditLogDataManager) LogWebhookArchiveEvent(ctx context.Context, userID
 }
 
 // LogUserCreationEvent implements our interface.
-func (m *AuditLogDataManager) LogUserCreationEvent(ctx context.Context, userID uint64) {
-	m.Called(ctx, userID)
+func (m *AuditLogDataManager) LogUserCreationEvent(ctx context.Context, user *models.User) {
+	m.Called(ctx, user)
 }
 
 // LogUserVerifyTwoFactorSecretEvent implements our interface.

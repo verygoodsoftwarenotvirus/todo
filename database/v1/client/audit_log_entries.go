@@ -116,23 +116,23 @@ func (c *Client) LogLogoutEvent(ctx context.Context, userID uint64) {
 }
 
 // LogItemCreationEvent implements our AuditLogDataManager interface
-func (c *Client) LogItemCreationEvent(ctx context.Context, userID, itemID uint64) {
+func (c *Client) LogItemCreationEvent(ctx context.Context, item *models.Item) {
 	ctx, span := tracing.StartSpan(ctx, "LogItemCreationEvent")
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("LogItemCreationEvent called")
+	c.logger.WithValue("user_id", item.BelongsToUser).Debug("LogItemCreationEvent called")
 
-	c.querier.LogItemCreationEvent(ctx, userID, itemID)
+	c.querier.LogItemCreationEvent(ctx, item)
 }
 
 // LogItemUpdateEvent implements our AuditLogDataManager interface
-func (c *Client) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64) {
+func (c *Client) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []models.FieldChangeEvent) {
 	ctx, span := tracing.StartSpan(ctx, "LogItemUpdateEvent")
 	defer span.End()
 
 	c.logger.WithValue("user_id", userID).Debug("LogItemUpdateEvent called")
 
-	c.querier.LogItemUpdateEvent(ctx, userID, itemID)
+	c.querier.LogItemUpdateEvent(ctx, userID, itemID, changes)
 }
 
 // LogItemArchiveEvent implements our AuditLogDataManager interface
@@ -146,13 +146,13 @@ func (c *Client) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64)
 }
 
 // LogOAuth2ClientCreationEvent implements our AuditLogDataManager interface
-func (c *Client) LogOAuth2ClientCreationEvent(ctx context.Context, userID, clientID uint64) {
+func (c *Client) LogOAuth2ClientCreationEvent(ctx context.Context, client *models.OAuth2Client) {
 	ctx, span := tracing.StartSpan(ctx, "LogOAuth2ClientCreationEvent")
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("LogOAuth2ClientCreationEvent called")
+	c.logger.WithValue("user_id", client.BelongsToUser).Debug("LogOAuth2ClientCreationEvent called")
 
-	c.querier.LogOAuth2ClientCreationEvent(ctx, userID, clientID)
+	c.querier.LogOAuth2ClientCreationEvent(ctx, client)
 }
 
 // LogOAuth2ClientArchiveEvent implements our AuditLogDataManager interface
@@ -166,23 +166,23 @@ func (c *Client) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, client
 }
 
 // LogWebhookCreationEvent implements our AuditLogDataManager interface
-func (c *Client) LogWebhookCreationEvent(ctx context.Context, userID, webhookID uint64, webhookName, webhookURL, webhookMethod string) {
+func (c *Client) LogWebhookCreationEvent(ctx context.Context, webhook *models.Webhook) {
 	ctx, span := tracing.StartSpan(ctx, "LogWebhookCreationEvent")
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("LogWebhookCreationEvent called")
+	c.logger.WithValue("user_id", webhook.BelongsToUser).Debug("LogWebhookCreationEvent called")
 
-	c.querier.LogWebhookCreationEvent(ctx, userID, webhookID, webhookName, webhookURL, webhookMethod)
+	c.querier.LogWebhookCreationEvent(ctx, webhook)
 }
 
 // LogWebhookUpdateEvent implements our AuditLogDataManager interface
-func (c *Client) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, webhookName, webhookURL, webhookMethod string) {
+func (c *Client) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []models.FieldChangeEvent) {
 	ctx, span := tracing.StartSpan(ctx, "LogWebhookUpdateEvent")
 	defer span.End()
 
 	c.logger.WithValue("user_id", userID).Debug("LogWebhookUpdateEvent called")
 
-	c.querier.LogWebhookUpdateEvent(ctx, userID, webhookID, webhookName, webhookURL, webhookMethod)
+	c.querier.LogWebhookUpdateEvent(ctx, userID, webhookID, changes)
 }
 
 // LogWebhookArchiveEvent implements our AuditLogDataManager interface
@@ -196,13 +196,13 @@ func (c *Client) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID u
 }
 
 // LogUserCreationEvent implements our AuditLogDataManager interface
-func (c *Client) LogUserCreationEvent(ctx context.Context, userID uint64) {
+func (c *Client) LogUserCreationEvent(ctx context.Context, user *models.User) {
 	ctx, span := tracing.StartSpan(ctx, "LogUserCreationEvent")
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("LogUserCreationEvent called")
+	c.logger.WithValue("user_id", user.ID).Debug("LogUserCreationEvent called")
 
-	c.querier.LogUserCreationEvent(ctx, userID)
+	c.querier.LogUserCreationEvent(ctx, user)
 }
 
 // LogUserVerifyTwoFactorSecretEvent implements our AuditLogDataManager interface

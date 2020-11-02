@@ -139,15 +139,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// notify interested parties.
 	tracing.AttachOAuth2ClientDatabaseIDToSpan(span, client.ID)
 	s.oauth2ClientCounter.Increment(ctx)
-	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-		EventType: models.OAuth2ClientCreationEvent,
-		Context: map[string]interface{}{
-			"created_by":   user.ID,
-			"client_id":    client.ID,
-			"scopes":       strings.Join(input.Scopes, scopesSeparator),
-			"redirect_uri": input.RedirectURI,
-		},
-	})
+	s.auditLog.LogOAuth2ClientCreationEvent(ctx, client)
 
 	s.encoderDecoder.EncodeResponseWithStatus(res, client, http.StatusCreated)
 }
@@ -215,13 +207,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// notify relevant parties.
 	s.oauth2ClientCounter.Decrement(ctx)
-	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-		EventType: models.OAuth2ClientArchiveEvent,
-		Context: map[string]interface{}{
-			"archived_by": userID,
-			"client_id":   oauth2ClientID,
-		},
-	})
+	s.auditLog.LogOAuth2ClientArchiveEvent(ctx, userID, oauth2ClientID)
 
 	res.WriteHeader(http.StatusNoContent)
 }

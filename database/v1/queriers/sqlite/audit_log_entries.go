@@ -256,92 +256,240 @@ func (s *Sqlite) CreateAuditLogEntry(ctx context.Context, input *models.AuditLog
 	}
 }
 
-// LogCycleCookieSecretEvent saves a CycleCookieSecretEvent in the audit log table.
-func (s *Sqlite) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
-	//
-}
+// createAuditLogEntry creates an audit log entry in the database.
+func (s *Sqlite) createAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) {
+	x := &models.AuditLogEntry{
+		EventType: input.EventType,
+		Context:   input.Context,
+	}
 
-// LogSuccessfulLoginEvent saves a SuccessfulLoginEvent in the audit log table.
-func (s *Sqlite) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
-	//
-}
+	query, args := s.buildCreateAuditLogEntryQuery(x)
 
-// LogUnsuccessfulLoginBadPasswordEvent saves a UnsuccessfulLoginBadPasswordEvent in the audit log table.
-func (s *Sqlite) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
-	//
-}
-
-// LogUnsuccessfulLoginBad2FATokenEvent saves a UnsuccessfulLoginBad2FATokenEvent in the audit log table.
-func (s *Sqlite) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
-	//
-}
-
-// LogLogoutEvent saves a LogoutEvent in the audit log table.
-func (s *Sqlite) LogLogoutEvent(ctx context.Context, userID uint64) {
-	//
+	// create the audit log entry.
+	if err := s.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {
+		s.logger.WithValue("event_type", input.EventType).Error(err, "executing audit log entry creation query")
+	}
 }
 
 // LogItemCreationEvent saves a ItemCreationEvent in the audit log table.
-func (s *Sqlite) LogItemCreationEvent(ctx context.Context, userID, itemID uint64) {
-	//
+func (s *Sqlite) LogItemCreationEvent(ctx context.Context, item *models.Item) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.ItemCreationEvent,
+		Context: map[string]interface{}{
+			"created": item,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
 }
 
 // LogItemUpdateEvent saves a ItemUpdateEvent in the audit log table.
-func (s *Sqlite) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64) {
-	//
+func (s *Sqlite) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []models.FieldChangeEvent) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.ItemUpdateEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+			"item_id":      itemID,
+			"changes":      changes,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
 }
 
 // LogItemArchiveEvent saves a ItemArchiveEvent in the audit log table.
 func (s *Sqlite) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64) {
-	//
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.ItemArchiveEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+			"item_id":      itemID,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
 }
 
 // LogOAuth2ClientCreationEvent saves a OAuth2ClientCreationEvent in the audit log table.
-func (s *Sqlite) LogOAuth2ClientCreationEvent(ctx context.Context, userID, clientID uint64) {
-	//
+func (s *Sqlite) LogOAuth2ClientCreationEvent(ctx context.Context, client *models.OAuth2Client) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.OAuth2ClientCreationEvent,
+		Context: map[string]interface{}{
+			"client": client,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
 }
 
 // LogOAuth2ClientArchiveEvent saves a OAuth2ClientArchiveEvent in the audit log table.
 func (s *Sqlite) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
-	//
-}
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.OAuth2ClientArchiveEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+			"client_id":    clientID,
+		},
+	}
 
-// LogWebhookCreationEvent saves a WebhookCreationEvent in the audit log table.
-func (s *Sqlite) LogWebhookCreationEvent(ctx context.Context, userID, webhookID uint64, webhookName, webhookURL, webhookMethod string) {
-	//
-}
-
-// LogWebhookUpdateEvent saves a WebhookUpdateEvent in the audit log table.
-func (s *Sqlite) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, webhookName, webhookURL, webhookMethod string) {
-	//
-}
-
-// LogWebhookArchiveEvent saves a WebhookArchiveEvent in the audit log table.
-func (s *Sqlite) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
-	//
+	s.createAuditLogEntry(ctx, entry)
 }
 
 // LogUserCreationEvent saves a UserCreationEvent in the audit log table.
-func (s *Sqlite) LogUserCreationEvent(ctx context.Context, userID uint64) {
-	//
+func (s *Sqlite) LogUserCreationEvent(ctx context.Context, user *models.User) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UserCreationEvent,
+		Context: map[string]interface{}{
+			"user": user,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
 }
 
 // LogUserVerifyTwoFactorSecretEvent saves a UserVerifyTwoFactorSecretEvent in the audit log table.
 func (s *Sqlite) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	//
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UserVerifyTwoFactorSecretEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
 }
 
 // LogUserUpdateTwoFactorSecretEvent saves a UserUpdateTwoFactorSecretEvent in the audit log table.
 func (s *Sqlite) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	//
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UserUpdateTwoFactorSecretEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
 }
 
 // LogUserUpdatePasswordEvent saves a UserUpdatePasswordEvent in the audit log table.
 func (s *Sqlite) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
-	//
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UserUpdatePasswordEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
 }
 
 // LogUserArchiveEvent saves a UserArchiveEvent in the audit log table.
 func (s *Sqlite) LogUserArchiveEvent(ctx context.Context, userID uint64) {
-	//
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UserArchiveEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
+}
+
+// LogCycleCookieSecretEvent saves a CycleCookieSecretEvent in the audit log table.
+func (s *Sqlite) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.CycleCookieSecretEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
+}
+
+// LogSuccessfulLoginEvent saves a SuccessfulLoginEvent in the audit log table.
+func (s *Sqlite) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.SuccessfulLoginEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
+}
+
+// LogUnsuccessfulLoginBadPasswordEvent saves a UnsuccessfulLoginBadPasswordEvent in the audit log table.
+func (s *Sqlite) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UnsuccessfulLoginBadPasswordEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
+}
+
+// LogUnsuccessfulLoginBad2FATokenEvent saves a UnsuccessfulLoginBad2FATokenEvent in the audit log table.
+func (s *Sqlite) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UnsuccessfulLoginBad2FATokenEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
+}
+
+// LogLogoutEvent saves a LogoutEvent in the audit log table.
+func (s *Sqlite) LogLogoutEvent(ctx context.Context, userID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.LogoutEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
+}
+
+// LogWebhookCreationEvent saves a WebhookCreationEvent in the audit log table.
+func (s *Sqlite) LogWebhookCreationEvent(ctx context.Context, webhook *models.Webhook) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.WebhookCreationEvent,
+		Context: map[string]interface{}{
+			"webhook": webhook,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
+}
+
+// LogWebhookUpdateEvent saves a WebhookUpdateEvent in the audit log table.
+func (s *Sqlite) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []models.FieldChangeEvent) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.WebhookUpdateEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+			"webhook_id":   webhookID,
+			"changes":      changes,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
+}
+
+// LogWebhookArchiveEvent saves a WebhookArchiveEvent in the audit log table.
+func (s *Sqlite) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.WebhookArchiveEvent,
+		Context: map[string]interface{}{
+			"performed_by": userID,
+			"webhook_id":   webhookID,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
 }

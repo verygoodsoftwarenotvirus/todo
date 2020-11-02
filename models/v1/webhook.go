@@ -81,29 +81,68 @@ type (
 )
 
 // Update merges an WebhookCreationInput with an Webhook.
-func (w *Webhook) Update(input *WebhookUpdateInput) {
+func (w *Webhook) Update(input *WebhookUpdateInput) []FieldChangeEvent {
+	changes := []FieldChangeEvent{}
+
 	if input.Name != "" {
+		changes = append(changes, FieldChangeEvent{
+			FieldName: "Name",
+			OldValue:  w.Name,
+			NewValue:  input.Name,
+		})
 		w.Name = input.Name
 	}
 	if input.ContentType != "" {
+		changes = append(changes, FieldChangeEvent{
+			FieldName: "ContentType",
+			OldValue:  w.ContentType,
+			NewValue:  input.ContentType,
+		})
 		w.ContentType = input.ContentType
 	}
 	if input.URL != "" {
+		changes = append(changes, FieldChangeEvent{
+			FieldName: "URL",
+			OldValue:  w.URL,
+			NewValue:  input.URL,
+		})
 		w.URL = input.URL
 	}
 	if input.Method != "" {
+		changes = append(changes, FieldChangeEvent{
+			FieldName: "Method",
+			OldValue:  w.Method,
+			NewValue:  input.Method,
+		})
 		w.Method = input.Method
 	}
 
 	if input.Events != nil && len(input.Events) > 0 {
+		changes = append(changes, FieldChangeEvent{
+			FieldName: "Events",
+			OldValue:  w.Events,
+			NewValue:  input.Events,
+		})
 		w.Events = input.Events
 	}
 	if input.DataTypes != nil && len(input.DataTypes) > 0 {
+		changes = append(changes, FieldChangeEvent{
+			FieldName: "DataTypes",
+			OldValue:  w.DataTypes,
+			NewValue:  input.DataTypes,
+		})
 		w.DataTypes = input.DataTypes
 	}
 	if input.Topics != nil && len(input.Topics) > 0 {
+		changes = append(changes, FieldChangeEvent{
+			FieldName: "Topics",
+			OldValue:  w.Topics,
+			NewValue:  input.Topics,
+		})
 		w.Topics = input.Topics
 	}
+
+	return changes
 }
 
 func buildErrorLogFunc(w *Webhook, logger logging.Logger) func(error) {

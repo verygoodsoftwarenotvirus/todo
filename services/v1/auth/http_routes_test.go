@@ -273,7 +273,7 @@ func TestService_LoginHandler(T *testing.T) {
 		s.authenticator = authr
 
 		auditLog := &mockmodels.AuditLogDataManager{}
-		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput")).Return(nil)
+		auditLog.On("LogLoginEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
@@ -333,7 +333,7 @@ func TestService_LoginHandler(T *testing.T) {
 		s.authenticator = authr
 
 		auditLog := &mockmodels.AuditLogDataManager{}
-		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput")).Return(nil)
+		auditLog.On("LogInvalidLoginAttempt", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
@@ -500,7 +500,7 @@ func TestService_LogoutHandler(T *testing.T) {
 		exampleUser := fakemodels.BuildFakeUser()
 
 		auditLog := &mockmodels.AuditLogDataManager{}
-		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput")).Return(nil)
+		auditLog.On("LogLogoutEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
@@ -822,8 +822,9 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		exampleUser := fakemodels.BuildFakeUser()
 
 		auditLog := &mockmodels.AuditLogDataManager{}
-		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput")).Return(nil)
+		auditLog.On("LogCycleCookieSecretEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
+
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest(http.MethodPost, "https://blah.com", nil)
 		require.NotNil(t, req)

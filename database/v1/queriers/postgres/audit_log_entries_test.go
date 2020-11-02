@@ -26,8 +26,6 @@ func buildMockRowsFromAuditLogEntries(auditLogEntries ...*models.AuditLogEntry) 
 			x.ID,
 			x.EventType,
 			x.Context,
-			x.PerformedByUser,
-			x.OnBehalfOfUser,
 			x.CreatedOn,
 		}
 
@@ -43,8 +41,6 @@ func buildErroneousMockRowFromAuditLogEntry(x *models.AuditLogEntry) *sqlmock.Ro
 		x.ID,
 		x.EventType,
 		x.Context,
-		x.PerformedByUser,
-		x.OnBehalfOfUser,
 	)
 
 	return exampleRows
@@ -85,7 +81,7 @@ func TestPostgres_buildGetAuditLogEntryQuery(T *testing.T) {
 
 		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
 
-		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.performed_by_user, audit_log.on_behalf_of_user, audit_log.created_on FROM audit_log WHERE audit_log.id = $1"
+		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.id = $1"
 		expectedArgs := []interface{}{
 			exampleAuditLogEntry.ID,
 		}
@@ -187,7 +183,7 @@ func TestPostgres_buildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 
 		beginID, endID := uint64(1), uint64(1000)
 
-		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.performed_by_user, audit_log.on_behalf_of_user, audit_log.created_on FROM audit_log WHERE audit_log.id > $1 AND audit_log.id < $2"
+		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.id > $1 AND audit_log.id < $2"
 		expectedArgs := []interface{}{
 			beginID,
 			endID,
@@ -374,7 +370,7 @@ func TestPostgres_buildGetAuditLogEntriesQuery(T *testing.T) {
 
 		filter := fakemodels.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.performed_by_user, audit_log.on_behalf_of_user, audit_log.created_on FROM audit_log WHERE audit_log.archived_on IS NULL AND audit_log.created_on > $1 AND audit_log.created_on < $2 AND audit_log.last_updated_on > $3 AND audit_log.last_updated_on < $4 ORDER BY audit_log.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.archived_on IS NULL AND audit_log.created_on > $1 AND audit_log.created_on < $2 AND audit_log.last_updated_on > $3 AND audit_log.last_updated_on < $4 ORDER BY audit_log.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,

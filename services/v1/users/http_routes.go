@@ -189,13 +189,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// notify the relevant parties.
 	tracing.AttachUserIDToSpan(span, user.ID)
 	s.userCounter.Increment(ctx)
-	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-		EventType: models.UserCreationEvent,
-		Context: map[string]interface{}{
-			"user_id":  user.ID,
-			"username": user.Username,
-		},
-	})
+	s.auditLog.LogUserCreationEvent(ctx, user)
 
 	// encode and peace.
 	s.encoderDecoder.EncodeResponseWithStatus(res, ucr, http.StatusCreated)
@@ -335,12 +329,7 @@ func (s *Service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 		}
 		statusCode = http.StatusAccepted
 
-		s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-			EventType: models.UserVerifyTwoFactorSecretEvent,
-			Context: map[string]interface{}{
-				"user_id": user.ID,
-			},
-		})
+		s.auditLog.LogUserVerifyTwoFactorSecretEvent(ctx, user.ID)
 	} else {
 		statusCode = http.StatusBadRequest
 	}
@@ -414,12 +403,7 @@ func (s *Service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 		TwoFactorQRCode: s.buildQRCode(ctx, user.Username, user.TwoFactorSecret),
 	}
 
-	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-		EventType: models.UserUpdateTwoFactorSecretEvent,
-		Context: map[string]interface{}{
-			"user_id": user.ID,
-		},
-	})
+	s.auditLog.LogUserUpdateTwoFactorSecretEvent(ctx, user.ID)
 
 	s.encoderDecoder.EncodeResponseWithStatus(res, result, http.StatusAccepted)
 }
@@ -499,12 +483,7 @@ func (s *Service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 		http.SetCookie(res, cookie)
 	}
 
-	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-		EventType: models.UserUpdatePasswordEvent,
-		Context: map[string]interface{}{
-			"user_id": user.ID,
-		},
-	})
+	s.auditLog.LogUserUpdatePasswordEvent(ctx, user.ID)
 
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Redirections#Temporary_redirections
 	http.Redirect(res, req, "/auth/login", http.StatusSeeOther)
@@ -531,12 +510,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// inform the relatives.
 	s.userCounter.Decrement(ctx)
-	s.auditLog.CreateAuditLogEntry(ctx, &models.AuditLogEntryCreationInput{
-		EventType: models.UserArchiveEvent,
-		Context: map[string]interface{}{
-			"user_id": userID,
-		},
-	})
+	s.auditLog.LogUserArchiveEvent(ctx, userID)
 
 	// we're all good.
 	res.WriteHeader(http.StatusNoContent)

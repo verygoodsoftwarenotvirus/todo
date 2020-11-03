@@ -153,6 +153,8 @@ func TestProvideBcrypt(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
+
 		auth.ProvideBcryptAuthenticator(auth.DefaultBcryptHashCost, noop.NewLogger())
 	})
 }

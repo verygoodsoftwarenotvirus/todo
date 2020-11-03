@@ -69,6 +69,7 @@ func ProvideServer(
 	if len(cfg.Auth.CookieSecret) < 32 {
 		err := errors.New("cookie secret is too short, must be at least 32 characters in length")
 		logger.Error(err, "cookie secret failure")
+
 		return nil, err
 	}
 
@@ -101,6 +102,8 @@ func ProvideServer(
 		Handler:        srv.router,
 		FormatSpanName: formatSpanNameForRequest,
 	}
+
+	logger.Debug("HTTP server successfully constructed")
 
 	return srv, nil
 }

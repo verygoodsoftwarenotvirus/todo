@@ -107,27 +107,35 @@ func (qf *QueryFilter) ToValues() url.Values {
 	}
 
 	v := url.Values{}
+
 	if qf.Page != 0 {
 		v.Set(pageQueryKey, strconv.FormatUint(qf.Page, 10))
 	}
+
 	if qf.Limit != 0 {
 		v.Set(LimitQueryKey, strconv.FormatUint(uint64(qf.Limit), 10))
 	}
+
 	if qf.SortBy != "" {
 		v.Set(sortByQueryKey, string(qf.SortBy))
 	}
+
 	if qf.CreatedBefore != 0 {
 		v.Set(createdBeforeQueryKey, strconv.FormatUint(qf.CreatedBefore, 10))
 	}
+
 	if qf.CreatedAfter != 0 {
 		v.Set(createdAfterQueryKey, strconv.FormatUint(qf.CreatedAfter, 10))
 	}
+
 	if qf.UpdatedBefore != 0 {
 		v.Set(updatedBeforeQueryKey, strconv.FormatUint(qf.UpdatedBefore, 10))
 	}
+
 	if qf.UpdatedAfter != 0 {
 		v.Set(updatedAfterQueryKey, strconv.FormatUint(qf.UpdatedAfter, 10))
 	}
+
 	v.Set(includeArchivedQueryKey, strconv.FormatBool(qf.IncludeArchived))
 
 	return v
@@ -145,6 +153,7 @@ func (qf *QueryFilter) ApplyToQueryBuilder(queryBuilder squirrel.SelectBuilder, 
 	)
 
 	qf.SetPage(qf.Page)
+
 	if qp := qf.QueryPage(); qp > 0 {
 		queryBuilder = queryBuilder.Offset(qp)
 	}
@@ -178,5 +187,6 @@ func (qf *QueryFilter) ApplyToQueryBuilder(queryBuilder squirrel.SelectBuilder, 
 func ExtractQueryFilter(req *http.Request) *QueryFilter {
 	qf := &QueryFilter{}
 	qf.FromParams(req.URL.Query())
+
 	return qf
 }

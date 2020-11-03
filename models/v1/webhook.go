@@ -81,35 +81,38 @@ type (
 )
 
 // Update merges an WebhookCreationInput with an Webhook.
-func (w *Webhook) Update(input *WebhookUpdateInput) []FieldChangeEvent {
-	changes := []FieldChangeEvent{}
+func (w *Webhook) Update(input *WebhookUpdateInput) []FieldChangeSummary {
+	changes := []FieldChangeSummary{}
 
 	if input.Name != "" {
-		changes = append(changes, FieldChangeEvent{
+		changes = append(changes, FieldChangeSummary{
 			FieldName: "Name",
 			OldValue:  w.Name,
 			NewValue:  input.Name,
 		})
 		w.Name = input.Name
 	}
+
 	if input.ContentType != "" {
-		changes = append(changes, FieldChangeEvent{
+		changes = append(changes, FieldChangeSummary{
 			FieldName: "ContentType",
 			OldValue:  w.ContentType,
 			NewValue:  input.ContentType,
 		})
 		w.ContentType = input.ContentType
 	}
+
 	if input.URL != "" {
-		changes = append(changes, FieldChangeEvent{
+		changes = append(changes, FieldChangeSummary{
 			FieldName: "URL",
 			OldValue:  w.URL,
 			NewValue:  input.URL,
 		})
 		w.URL = input.URL
 	}
+
 	if input.Method != "" {
-		changes = append(changes, FieldChangeEvent{
+		changes = append(changes, FieldChangeSummary{
 			FieldName: "Method",
 			OldValue:  w.Method,
 			NewValue:  input.Method,
@@ -118,23 +121,25 @@ func (w *Webhook) Update(input *WebhookUpdateInput) []FieldChangeEvent {
 	}
 
 	if input.Events != nil && len(input.Events) > 0 {
-		changes = append(changes, FieldChangeEvent{
+		changes = append(changes, FieldChangeSummary{
 			FieldName: "Events",
 			OldValue:  w.Events,
 			NewValue:  input.Events,
 		})
 		w.Events = input.Events
 	}
+
 	if input.DataTypes != nil && len(input.DataTypes) > 0 {
-		changes = append(changes, FieldChangeEvent{
+		changes = append(changes, FieldChangeSummary{
 			FieldName: "DataTypes",
 			OldValue:  w.DataTypes,
 			NewValue:  input.DataTypes,
 		})
 		w.DataTypes = input.DataTypes
 	}
+
 	if input.Topics != nil && len(input.Topics) > 0 {
-		changes = append(changes, FieldChangeEvent{
+		changes = append(changes, FieldChangeSummary{
 			FieldName: "Topics",
 			OldValue:  w.Topics,
 			NewValue:  input.Topics,
@@ -188,6 +193,7 @@ func (w *WebhookCreationInput) Validate() error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -207,5 +213,6 @@ func (w *WebhookUpdateInput) Validate() error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

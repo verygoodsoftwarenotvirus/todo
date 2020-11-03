@@ -23,6 +23,8 @@ func TestServerEncoderDecoder_EncodeResponse(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		expectation := "name"
 		ex := &example{Name: expectation}
 		ed := ProvideResponseEncoder(noop.NewLogger())
@@ -34,6 +36,8 @@ func TestServerEncoderDecoder_EncodeResponse(T *testing.T) {
 	})
 
 	T.Run("as XML", func(t *testing.T) {
+		t.Parallel()
+
 		expectation := "name"
 		ex := &example{Name: expectation}
 		ed := ProvideResponseEncoder(noop.NewLogger())
@@ -50,6 +54,8 @@ func TestServerEncoderDecoder_EncodeError(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		exampleMessage := "something went awry"
 		exampleCode := http.StatusBadRequest
 
@@ -63,6 +69,8 @@ func TestServerEncoderDecoder_EncodeError(T *testing.T) {
 	})
 
 	T.Run("as XML", func(t *testing.T) {
+		t.Parallel()
+
 		exampleMessage := "something went awry"
 		exampleCode := http.StatusBadRequest
 
@@ -81,6 +89,8 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		expectation := "name"
 		e := &example{Name: expectation}
 		ed := ProvideResponseEncoder(noop.NewLogger())
@@ -97,6 +107,8 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 	})
 
 	T.Run("as XML", func(t *testing.T) {
+		t.Parallel()
+
 		expectation := "name"
 		e := &example{Name: expectation}
 		ed := ProvideResponseEncoder(noop.NewLogger())

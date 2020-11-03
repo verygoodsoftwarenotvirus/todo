@@ -126,7 +126,7 @@ func (c *Client) LogItemCreationEvent(ctx context.Context, item *models.Item) {
 }
 
 // LogItemUpdateEvent implements our AuditLogDataManager interface
-func (c *Client) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []models.FieldChangeEvent) {
+func (c *Client) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []models.FieldChangeSummary) {
 	ctx, span := tracing.StartSpan(ctx, "LogItemUpdateEvent")
 	defer span.End()
 
@@ -176,7 +176,7 @@ func (c *Client) LogWebhookCreationEvent(ctx context.Context, webhook *models.We
 }
 
 // LogWebhookUpdateEvent implements our AuditLogDataManager interface
-func (c *Client) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []models.FieldChangeEvent) {
+func (c *Client) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []models.FieldChangeSummary) {
 	ctx, span := tracing.StartSpan(ctx, "LogWebhookUpdateEvent")
 	defer span.End()
 

@@ -6,12 +6,10 @@ import (
 	"github.com/google/wire"
 )
 
-var (
-	// Providers is what we provide for dependency injectors.
-	Providers = wire.NewSet(
-		ProvideUsersService,
-		ProvideUserDataServer,
-	)
+// Providers is what we provide for dependency injectors.
+var Providers = wire.NewSet(
+	ProvideUsersService,
+	ProvideUserDataServer,
 )
 
 // ProvideUserDataServer is an arbitrary function for dependency injection's sake.

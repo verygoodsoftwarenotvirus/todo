@@ -114,6 +114,7 @@ func TestSqlite_GetWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -135,6 +136,7 @@ func TestSqlite_GetWebhook(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -157,6 +159,7 @@ func TestSqlite_GetWebhook(T *testing.T) {
 	})
 
 	T.Run("with error from database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -178,6 +181,7 @@ func TestSqlite_GetWebhook(T *testing.T) {
 	})
 
 	T.Run("with invalid response from database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -217,6 +221,7 @@ func TestSqlite_GetAllWebhooksCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleCount := uint64(123)
@@ -236,6 +241,7 @@ func TestSqlite_GetAllWebhooksCount(T *testing.T) {
 	})
 
 	T.Run("with error from database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		s, mockDB := buildTestService(t)
@@ -271,6 +277,7 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhookList := fakemodels.BuildFakeWebhookList()
@@ -297,6 +304,7 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		s, mockDB := buildTestService(t)
@@ -315,6 +323,7 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		s, mockDB := buildTestService(t)
@@ -332,6 +341,7 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 	})
 
 	T.Run("with error from database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -382,6 +392,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 	exampleUser := fakemodels.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -410,6 +421,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -432,6 +444,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -453,6 +466,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 	})
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -506,6 +520,7 @@ func TestSqlite_CreateWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -534,6 +549,7 @@ func TestSqlite_CreateWebhook(T *testing.T) {
 	})
 
 	T.Run("with error interacting with database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -588,6 +604,7 @@ func TestSqlite_UpdateWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -609,6 +626,7 @@ func TestSqlite_UpdateWebhook(T *testing.T) {
 	})
 
 	T.Run("with error from database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -654,6 +672,7 @@ func TestSqlite_ArchiveWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()

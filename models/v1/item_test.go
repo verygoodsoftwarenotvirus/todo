@@ -11,6 +11,8 @@ func TestItem_Update(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		i := &Item{}
 
 		updated := &ItemUpdateInput{
@@ -18,7 +20,7 @@ func TestItem_Update(T *testing.T) {
 			Details: fake.Word(),
 		}
 
-		expected := []FieldChangeEvent{
+		expected := []FieldChangeSummary{
 			{
 				FieldName: "Name",
 				OldValue:  i.Name,
@@ -42,6 +44,8 @@ func TestItem_ToUpdateInput(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		item := &Item{
 			Name:    fake.Word(),
 			Details: fake.Word(),

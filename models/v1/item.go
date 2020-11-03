@@ -77,11 +77,11 @@ type (
 )
 
 // Update merges an ItemInput with an item.
-func (x *Item) Update(input *ItemUpdateInput) []FieldChangeEvent {
-	out := []FieldChangeEvent{}
+func (x *Item) Update(input *ItemUpdateInput) []FieldChangeSummary {
+	out := []FieldChangeSummary{}
 
 	if input.Name != "" && input.Name != x.Name {
-		out = append(out, FieldChangeEvent{
+		out = append(out, FieldChangeSummary{
 			FieldName: "Name",
 			OldValue:  x.Name,
 			NewValue:  input.Name,
@@ -91,7 +91,7 @@ func (x *Item) Update(input *ItemUpdateInput) []FieldChangeEvent {
 	}
 
 	if input.Details != "" && input.Details != x.Details {
-		out = append(out, FieldChangeEvent{
+		out = append(out, FieldChangeSummary{
 			FieldName: "Details",
 			OldValue:  x.Details,
 			NewValue:  input.Details,
@@ -122,6 +122,7 @@ func (x *ItemCreationInput) Validate() error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -136,5 +137,6 @@ func (x *ItemUpdateInput) Validate() error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

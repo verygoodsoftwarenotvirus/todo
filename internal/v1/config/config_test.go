@@ -21,6 +21,8 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 	T.Parallel()
 
 	T.Run("normal operation", func(t *testing.T) {
+		t.Parallel()
+
 		cfg := &ServerConfig{}
 
 		f, err := ioutil.TempFile("", "")

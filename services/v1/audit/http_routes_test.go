@@ -26,8 +26,9 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 	}
 
 	T.Run("happy path", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleAuditLogEntryList := fakemodels.BuildFakeAuditLogEntryList()
@@ -57,8 +58,9 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 	})
 
 	T.Run("with no rows returned", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		auditLogEntryManager := &mockmodels.AuditLogDataManager{}
@@ -86,8 +88,9 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 	})
 
 	T.Run("with error fetching entries from database", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		auditLogEntryManager := &mockmodels.AuditLogDataManager{}
@@ -124,8 +127,9 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 	}
 
 	T.Run("happy path", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
@@ -158,8 +162,9 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 	})
 
 	T.Run("with no such entry in database", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
@@ -192,8 +197,9 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 	})
 
 	T.Run("with error fetching entry from database", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()

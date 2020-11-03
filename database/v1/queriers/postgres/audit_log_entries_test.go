@@ -235,7 +235,7 @@ func TestPostgres_GetAllAuditLogEntries(T *testing.T) {
 		err := p.GetAllAuditLogEntries(ctx, out)
 		assert.NoError(t, err)
 
-		var stillQuerying = true
+		stillQuerying := true
 		for stillQuerying {
 			select {
 			case batch := <-out:

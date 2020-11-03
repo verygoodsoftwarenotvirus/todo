@@ -56,6 +56,8 @@ func TestProvideUsersService(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 			return &mockmetrics.UnitCounter{}, nil
 		}
@@ -76,6 +78,8 @@ func TestProvideUsersService(T *testing.T) {
 	})
 
 	T.Run("with nil userIDFetcher", func(t *testing.T) {
+		t.Parallel()
+
 		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 			return &mockmetrics.UnitCounter{}, nil
 		}
@@ -96,6 +100,8 @@ func TestProvideUsersService(T *testing.T) {
 	})
 
 	T.Run("with error initializing counter", func(t *testing.T) {
+		t.Parallel()
+
 		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 			return &mockmetrics.UnitCounter{}, errors.New("blah")
 		}

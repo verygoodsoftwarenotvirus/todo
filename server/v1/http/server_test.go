@@ -46,6 +46,7 @@ func TestProvideServer(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		actual, err := ProvideServer(
@@ -72,6 +73,7 @@ func TestProvideServer(T *testing.T) {
 	})
 
 	T.Run("with invalid cookie secret", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		actual, err := ProvideServer(

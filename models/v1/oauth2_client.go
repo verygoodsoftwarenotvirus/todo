@@ -110,6 +110,7 @@ func (c *OAuth2Client) HasScope(scope string) (found bool) {
 	if scope == "" {
 		return false
 	}
+
 	if c != nil && c.Scopes != nil {
 		for _, s := range c.Scopes {
 			if strings.TrimSpace(strings.ToLower(s)) == strings.TrimSpace(strings.ToLower(scope)) || strings.TrimSpace(s) == "*" {
@@ -117,5 +118,6 @@ func (c *OAuth2Client) HasScope(scope string) (found bool) {
 			}
 		}
 	}
+
 	return false
 }

@@ -61,6 +61,7 @@ func BuildFakeUserList() *models.UserList {
 // BuildFakeUserCreationInput builds a faked UserCreationInput.
 func BuildFakeUserCreationInput() *models.UserCreationInput {
 	exampleUser := BuildFakeUser()
+
 	return &models.UserCreationInput{
 		Username: exampleUser.Username,
 		Password: fake.Password(true, true, true, true, true, 32),

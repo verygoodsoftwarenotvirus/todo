@@ -285,7 +285,7 @@ func (p *Postgres) LogItemCreationEvent(ctx context.Context, item *models.Item) 
 }
 
 // LogItemUpdateEvent saves a ItemUpdateEvent in the audit log table.
-func (p *Postgres) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []models.FieldChangeEvent) {
+func (p *Postgres) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []models.FieldChangeSummary) {
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.ItemUpdateEvent,
 		Context: map[string]interface{}{
@@ -469,7 +469,7 @@ func (p *Postgres) LogWebhookCreationEvent(ctx context.Context, webhook *models.
 }
 
 // LogWebhookUpdateEvent saves a WebhookUpdateEvent in the audit log table.
-func (p *Postgres) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []models.FieldChangeEvent) {
+func (p *Postgres) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []models.FieldChangeSummary) {
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.WebhookUpdateEvent,
 		Context: map[string]interface{}{

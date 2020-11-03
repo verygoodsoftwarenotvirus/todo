@@ -90,9 +90,7 @@ func (p *Postgres) scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 
 // scanWebhooks provides a consistent way to turn sql rows into a slice of webhooks.
 func (p *Postgres) scanWebhooks(rows database.ResultIterator) ([]models.Webhook, error) {
-	var (
-		list []models.Webhook
-	)
+	var list []models.Webhook
 
 	for rows.Next() {
 		webhook, err := p.scanWebhook(rows)

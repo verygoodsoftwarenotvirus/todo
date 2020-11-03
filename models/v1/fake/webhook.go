@@ -30,6 +30,7 @@ func BuildFakeWebhookList() *models.WebhookList {
 	exampleWebhook1 := BuildFakeWebhook()
 	exampleWebhook2 := BuildFakeWebhook()
 	exampleWebhook3 := BuildFakeWebhook()
+
 	return &models.WebhookList{
 		Pagination: models.Pagination{
 			Page:  1,

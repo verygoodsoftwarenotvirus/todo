@@ -29,6 +29,8 @@ func TestProvideWebhooksService(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 			return &mockmetrics.UnitCounter{}, nil
 		}
@@ -48,6 +50,8 @@ func TestProvideWebhooksService(T *testing.T) {
 	})
 
 	T.Run("with error providing counter", func(t *testing.T) {
+		t.Parallel()
+
 		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 			return nil, errors.New("blah")
 		}

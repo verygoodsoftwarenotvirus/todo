@@ -50,6 +50,8 @@ func TestSqlite_ScanAuditLogEntries(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {
+		t.Parallel()
+
 		s, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
@@ -61,6 +63,8 @@ func TestSqlite_ScanAuditLogEntries(T *testing.T) {
 	})
 
 	T.Run("logs row closing errors", func(t *testing.T) {
+		t.Parallel()
+
 		s, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
@@ -77,6 +81,8 @@ func TestSqlite_buildGetAuditLogEntryQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		s, _ := buildTestService(t)
 
 		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
@@ -97,6 +103,7 @@ func TestSqlite_GetAuditLogEntry(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
@@ -118,6 +125,7 @@ func TestSqlite_GetAuditLogEntry(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
@@ -144,6 +152,8 @@ func TestSqlite_buildGetAllAuditLogEntriesCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		s, _ := buildTestService(t)
 
 		expectedQuery := "SELECT COUNT(audit_log.id) FROM audit_log WHERE audit_log.archived_on IS NULL"
@@ -158,6 +168,7 @@ func TestSqlite_GetAllAuditLogEntriesCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedCount := uint64(123)
@@ -179,6 +190,8 @@ func TestSqlite_buildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		s, _ := buildTestService(t)
 
 		beginID, endID := uint64(1), uint64(1000)

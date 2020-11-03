@@ -20,7 +20,7 @@ const (
 	CookieName         = "todocookie"
 	cookieErrorLogName = "_COOKIE_CONSTRUCTION_ERROR_"
 
-	sessionInfoKey = "session_info"
+	sessionInfoKey = string(models.SessionInfoKey)
 	staticError    = "error encountered, please try again later"
 )
 

@@ -18,11 +18,9 @@ type (
 	}
 )
 
-var (
-	// Providers is our wire superset of providers this package offers.
-	Providers = wire.NewSet(
-		ProvideServer,
-	)
+// Providers is our wire superset of providers this package offers.
+var Providers = wire.NewSet(
+	ProvideServer,
 )
 
 // ProvideServer builds a new Server instance.

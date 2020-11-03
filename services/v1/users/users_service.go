@@ -20,9 +20,7 @@ const (
 	counterName        = metrics.CounterName(serviceName)
 )
 
-var (
-	_ models.UserDataServer = (*Service)(nil)
-)
+var _ models.UserDataServer = (*Service)(nil)
 
 type (
 	// RequestValidator validates request.

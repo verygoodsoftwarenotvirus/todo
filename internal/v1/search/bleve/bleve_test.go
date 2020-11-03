@@ -31,6 +31,8 @@ func TestNewBleveIndexManager(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		exampleIndexPath := search.IndexPath("constructor_test_happy_path.bleve")
 
 		_, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.NewLogger())
@@ -40,6 +42,8 @@ func TestNewBleveIndexManager(T *testing.T) {
 	})
 
 	T.Run("invalid path", func(t *testing.T) {
+		t.Parallel()
+
 		exampleIndexPath := search.IndexPath("")
 
 		_, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.NewLogger())
@@ -47,6 +51,8 @@ func TestNewBleveIndexManager(T *testing.T) {
 	})
 
 	T.Run("invalid name", func(t *testing.T) {
+		t.Parallel()
+
 		exampleIndexPath := search.IndexPath("constructor_test_invalid_name.bleve")
 
 		_, err := NewBleveIndexManager(exampleIndexPath, "invalid", noop.NewLogger())
@@ -60,6 +66,7 @@ func TestBleveIndexManager_Index(T *testing.T) {
 	exampleUserID := fakemodels.BuildFakeUser().ID
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		const exampleQuery = "index_test"
@@ -86,6 +93,7 @@ func TestBleveIndexManager_Search(T *testing.T) {
 	exampleUserID := fakemodels.BuildFakeUser().ID
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		const exampleQuery = "search_test"
@@ -110,6 +118,7 @@ func TestBleveIndexManager_Search(T *testing.T) {
 	})
 
 	T.Run("with empty index and search", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleIndexPath := search.IndexPath("search_test_empty_index.bleve")
@@ -126,6 +135,7 @@ func TestBleveIndexManager_Search(T *testing.T) {
 	})
 
 	T.Run("with closed index", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		const exampleQuery = "search_test"
@@ -152,6 +162,7 @@ func TestBleveIndexManager_Search(T *testing.T) {
 	})
 
 	T.Run("with invalid ID", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		const exampleQuery = "search_test"
@@ -182,6 +193,7 @@ func TestBleveIndexManager_Delete(T *testing.T) {
 	exampleUserID := fakemodels.BuildFakeUser().ID
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		const exampleQuery = "delete_test"

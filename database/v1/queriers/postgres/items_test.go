@@ -322,7 +322,7 @@ func TestPostgres_GetAllItems(T *testing.T) {
 		err := p.GetAllItems(ctx, out)
 		assert.NoError(t, err)
 
-		var stillQuerying = true
+		stillQuerying := true
 		for stillQuerying {
 			select {
 			case batch := <-out:

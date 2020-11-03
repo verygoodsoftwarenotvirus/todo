@@ -41,6 +41,7 @@ func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger l
 		index = preexistingIndex
 	case bleve.ErrorIndexPathDoesNotExist:
 		logger.WithValue("path", path).Debug("tried to open existing index, but didn't find it")
+
 		var newIndexErr error
 
 		switch name {
@@ -78,6 +79,7 @@ func (sm *bleveIndexManager) Index(ctx context.Context, id uint64, value interfa
 	defer span.End()
 
 	sm.logger.WithValue("id", id).Debug("adding to index")
+
 	return sm.index.Index(strconv.FormatUint(id, base), value)
 }
 
@@ -95,24 +97,23 @@ func (sm *bleveIndexManager) Search(ctx context.Context, query string, userID ui
 	q := bleve.NewFuzzyQuery(query)
 	q.SetFuzziness(searcher.MaxFuzziness)
 
-	searchRequest := bleve.NewSearchRequest(q)
-	searchResults, err := sm.index.SearchInContext(ctx, searchRequest)
+	searchResults, err := sm.index.SearchInContext(ctx, bleve.NewSearchRequest(q))
 	if err != nil {
 		sm.logger.Error(err, "performing search query")
 		return nil, err
 	}
 
-	out := []uint64{}
 	for _, result := range searchResults.Hits {
 		x, err := strconv.ParseUint(result.ID, base, bitSize)
 		if err != nil {
 			// this should literally never happen
-			return nil, err
+			return nil, fmt.Errorf("*gasp* impossible: %w", err)
 		}
-		out = append(out, x)
+
+		ids = append(ids, x)
 	}
 
-	return out, nil
+	return ids, nil
 }
 
 // SearchForAdmin implements our IndexManager interface
@@ -127,26 +128,23 @@ func (sm *bleveIndexManager) SearchForAdmin(ctx context.Context, query string) (
 	q := bleve.NewFuzzyQuery(query)
 	q.SetFuzziness(2)
 
-	searchRequest := bleve.NewSearchRequest(q)
-	searchResults, err := sm.index.SearchInContext(ctx, searchRequest)
+	searchResults, err := sm.index.SearchInContext(ctx, bleve.NewSearchRequest(q))
 	if err != nil {
 		sm.logger.Error(err, "performing search query")
 		return nil, err
 	}
 
-	out := []uint64{}
 	for _, result := range searchResults.Hits {
 		x, err := strconv.ParseUint(result.ID, base, bitSize)
 		if err != nil {
 			// this should literally never happen
-			return nil, err
+			return nil, fmt.Errorf("*gasp* impossible: %w", err)
 		}
-		out = append(out, x)
+
+		ids = append(ids, x)
 	}
 
-	logger.Info(fmt.Sprintf("%v", out))
-
-	return out, nil
+	return ids, nil
 }
 
 // Delete implements our IndexManager interface
@@ -154,6 +152,12 @@ func (sm *bleveIndexManager) Delete(ctx context.Context, id uint64) error {
 	_, span := tracing.StartSpan(ctx, "Delete")
 	defer span.End()
 
-	sm.logger.WithValue("id", id).Debug("removing from index")
-	return sm.index.Delete(strconv.FormatUint(id, base))
+	if err := sm.index.Delete(strconv.FormatUint(id, base)); err != nil {
+		sm.logger.Error(err, "removing from index")
+		return err
+	}
+
+	sm.logger.WithValue("id", id).Debug("removed from index")
+
+	return nil
 }

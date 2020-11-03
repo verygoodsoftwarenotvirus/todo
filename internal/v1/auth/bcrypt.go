@@ -47,6 +47,7 @@ func ProvideBcryptAuthenticator(hashCost BcryptHashCost, logger logging.Logger) 
 		hashCost:            uint(math.Min(float64(DefaultBcryptHashCost), float64(hashCost))),
 		minimumPasswordSize: defaultMinimumPasswordSize,
 	}
+
 	return ba
 }
 
@@ -56,6 +57,7 @@ func (b *BcryptAuthenticator) HashPassword(ctx context.Context, password string)
 	defer span.End()
 
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), int(b.hashCost))
+
 	return string(hashedPass), err
 }
 

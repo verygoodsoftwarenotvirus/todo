@@ -167,6 +167,7 @@ func (c *V1Client) CreateItem(ctx context.Context, input *models.ItemCreationInp
 	}
 
 	err = c.executeRequest(ctx, req, &item)
+
 	return item, err
 }
 

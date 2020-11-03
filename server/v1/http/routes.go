@@ -84,6 +84,7 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 			s.logger.Error(err, "establishing static file server")
 		}
 		router.Get("/*", staticFileServer)
+		s.logger.Debug("static file server set")
 	}
 
 	router.With(

@@ -91,6 +91,7 @@ func NewClient(
 			Timeout: defaultTimeout,
 		}
 	}
+
 	if client.Timeout == 0 {
 		client.Timeout = defaultTimeout
 	}
@@ -112,6 +113,7 @@ func NewClient(
 	}
 
 	logger.WithValue("url", address.String()).Debug("returning client")
+
 	return c, nil
 }
 
@@ -187,6 +189,7 @@ func (c *V1Client) BuildURL(qp url.Values, parts ...string) string {
 	if u != nil {
 		return u.String()
 	}
+
 	return ""
 }
 
@@ -196,6 +199,7 @@ func (c *V1Client) buildURL(queryParams url.Values, parts ...string) *url.URL {
 	tu := *c.URL
 
 	parts = append([]string{"api", "v1"}, parts...)
+
 	u, err := url.Parse(strings.Join(parts, "/"))
 	if err != nil {
 		c.logger.Error(err, "building URL")
@@ -256,6 +260,7 @@ func (c *V1Client) IsUp(ctx context.Context) bool {
 		c.logger.Error(err, "health check")
 		return false
 	}
+
 	c.closeResponseBody(res)
 
 	return res.StatusCode == http.StatusOK
@@ -277,6 +282,7 @@ func (c *V1Client) buildDataRequest(ctx context.Context, method, uri string, in 
 	}
 
 	req.Header.Set("Content-type", "application/json")
+
 	return req, nil
 }
 
@@ -324,10 +330,12 @@ func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, r
 	}
 
 	if c.Debug {
-		bdump, err := httputil.DumpResponse(res, true)
-		if err == nil && req.Method != http.MethodGet {
-			logger = logger.WithValue("response_body", string(bdump))
+		if req.Method != http.MethodGet {
+			if bdump, err := httputil.DumpResponse(res, true); err == nil {
+				logger = logger.WithValue("response_body", string(bdump))
+			}
 		}
+
 		logger.Debug("request executed")
 	}
 
@@ -343,6 +351,7 @@ func (c *V1Client) checkExistence(ctx context.Context, req *http.Request) (bool,
 	if err != nil {
 		return false, err
 	}
+
 	c.closeResponseBody(res)
 
 	return res.StatusCode == http.StatusOK, nil

@@ -39,6 +39,8 @@ func Test_formatSpanNameForRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		req := buildRequest(t)
 		req.Method = http.MethodPatch
 		req.URL.Path = "/blah"
@@ -54,6 +56,8 @@ func TestServer_loggingMiddleware(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		s := buildTestServer()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)

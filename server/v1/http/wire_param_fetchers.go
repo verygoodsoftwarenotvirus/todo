@@ -18,19 +18,17 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
-var (
-	paramFetcherProviders = wire.NewSet(
-		ProvideUsersServiceUserIDFetcher,
-		ProvideUsersServiceSessionInfoFetcher,
-		ProvideOAuth2ClientsServiceClientIDFetcher,
-		ProvideWebhooksServiceWebhookIDFetcher,
-		ProvideWebhooksServiceUserIDFetcher,
-		ProvideItemsServiceItemIDFetcher,
-		ProvideItemsServiceSessionInfoFetcher,
-		ProvideAuditServiceItemIDFetcher,
-		ProvideAuditServiceSessionInfoFetcher,
-		ProvideAuthServiceSessionInfoFetcher,
-	)
+var paramFetcherProviders = wire.NewSet(
+	ProvideUsersServiceUserIDFetcher,
+	ProvideUsersServiceSessionInfoFetcher,
+	ProvideOAuth2ClientsServiceClientIDFetcher,
+	ProvideWebhooksServiceWebhookIDFetcher,
+	ProvideWebhooksServiceUserIDFetcher,
+	ProvideItemsServiceItemIDFetcher,
+	ProvideItemsServiceSessionInfoFetcher,
+	ProvideAuditServiceItemIDFetcher,
+	ProvideAuditServiceSessionInfoFetcher,
+	ProvideAuthServiceSessionInfoFetcher,
 )
 
 // ProvideUsersServiceUserIDFetcher provides a UsernameFetcher.

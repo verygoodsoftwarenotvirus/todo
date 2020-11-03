@@ -67,6 +67,7 @@ func (ed *ServerEncoderDecoder) EncodeErrorResponse(res http.ResponseWriter, msg
 	}
 
 	var e encoder
+
 	switch ct {
 	case XMLContentType:
 		e = xml.NewEncoder(res)
@@ -110,6 +111,7 @@ func (ed *ServerEncoderDecoder) encodeResponse(res http.ResponseWriter, v interf
 	}
 
 	var e encoder
+
 	switch ct {
 	case XMLContentType:
 		e = xml.NewEncoder(res)
@@ -143,6 +145,7 @@ func (ed *ServerEncoderDecoder) DecodeRequest(req *http.Request, v interface{}) 
 	}
 
 	var d decoder
+
 	switch ct {
 	case XMLContentType:
 		d = xml.NewDecoder(req.Body)

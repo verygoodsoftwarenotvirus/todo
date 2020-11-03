@@ -75,7 +75,7 @@ func (m *AuditLogDataManager) LogItemCreationEvent(ctx context.Context, item *mo
 }
 
 // LogItemUpdateEvent implements our interface.
-func (m *AuditLogDataManager) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []models.FieldChangeEvent) {
+func (m *AuditLogDataManager) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []models.FieldChangeSummary) {
 	m.Called(ctx, userID, itemID, changes)
 }
 
@@ -100,7 +100,7 @@ func (m *AuditLogDataManager) LogWebhookCreationEvent(ctx context.Context, webho
 }
 
 // LogWebhookUpdateEvent implements our interface.
-func (m *AuditLogDataManager) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []models.FieldChangeEvent) {
+func (m *AuditLogDataManager) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []models.FieldChangeSummary) {
 	m.Called(ctx, userID, webhookID, changes)
 }
 

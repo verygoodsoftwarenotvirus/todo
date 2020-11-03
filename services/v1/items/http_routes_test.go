@@ -30,8 +30,9 @@ func TestItemsService_ListHandler(T *testing.T) {
 	}
 
 	T.Run("happy path", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItemList := fakemodels.BuildFakeItemList()
@@ -61,8 +62,9 @@ func TestItemsService_ListHandler(T *testing.T) {
 	})
 
 	T.Run("with no rows returned", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		itemDataManager := &mockmodels.ItemDataManager{}
@@ -90,8 +92,9 @@ func TestItemsService_ListHandler(T *testing.T) {
 	})
 
 	T.Run("with error fetching items from database", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		itemDataManager := &mockmodels.ItemDataManager{}
@@ -128,8 +131,9 @@ func TestItemsService_SearchHandler(T *testing.T) {
 	}
 
 	T.Run("happy path", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleQuery := "whatever"
@@ -169,8 +173,9 @@ func TestItemsService_SearchHandler(T *testing.T) {
 	})
 
 	T.Run("with error conducting search", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleQuery := "whatever"
@@ -201,8 +206,9 @@ func TestItemsService_SearchHandler(T *testing.T) {
 	})
 
 	T.Run("with now rows returned", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleQuery := "whatever"
@@ -242,8 +248,9 @@ func TestItemsService_SearchHandler(T *testing.T) {
 	})
 
 	T.Run("with error fetching from database", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleQuery := "whatever"
@@ -292,8 +299,9 @@ func TestItemsService_CreateHandler(T *testing.T) {
 	}
 
 	T.Run("happy path", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -304,10 +312,6 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		itemDataManager.On("CreateItem", mock.Anything, mock.AnythingOfType("*models.ItemCreationInput")).Return(exampleItem, nil)
 		s.itemDataManager = itemDataManager
 
-		auditLog := &mockmodels.AuditLogDataManager{}
-		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
-		s.auditLog = auditLog
-
 		mc := &mockmetrics.UnitCounter{}
 		mc.On("Increment", mock.Anything)
 		s.itemCounter = mc
@@ -315,6 +319,10 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		si := &mocksearch.IndexManager{}
 		si.On("Index", mock.Anything, exampleItem.ID, exampleItem).Return(nil)
 		s.search = si
+
+		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog.On("LogItemCreationEvent", mock.Anything, exampleItem)
+		s.auditLog = auditLog
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponseWithStatus", mock.Anything, mock.AnythingOfType("*models.Item"), http.StatusCreated)
@@ -339,8 +347,9 @@ func TestItemsService_CreateHandler(T *testing.T) {
 	})
 
 	T.Run("without input attached", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -364,8 +373,9 @@ func TestItemsService_CreateHandler(T *testing.T) {
 	})
 
 	T.Run("with error creating item", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -408,8 +418,9 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 	}
 
 	T.Run("happy path", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -439,8 +450,9 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 	})
 
 	T.Run("with no such item in database", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -474,8 +486,9 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 	})
 
 	T.Run("with error fetching item from database", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -518,8 +531,9 @@ func TestItemsService_ReadHandler(T *testing.T) {
 	}
 
 	T.Run("happy path", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -553,8 +567,9 @@ func TestItemsService_ReadHandler(T *testing.T) {
 	})
 
 	T.Run("with no such item in database", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -588,8 +603,9 @@ func TestItemsService_ReadHandler(T *testing.T) {
 	})
 
 	T.Run("with error fetching item from database", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -632,8 +648,9 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 	}
 
 	T.Run("happy path", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -649,13 +666,13 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		itemDataManager.On("UpdateItem", mock.Anything, mock.AnythingOfType("*models.Item")).Return(nil)
 		s.itemDataManager = itemDataManager
 
-		auditLog := &mockmodels.AuditLogDataManager{}
-		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
-		s.auditLog = auditLog
-
 		si := &mocksearch.IndexManager{}
 		si.On("Index", mock.Anything, exampleItem.ID, exampleItem).Return(nil)
 		s.search = si
+
+		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog.On("LogItemUpdateEvent", mock.Anything, exampleUser.ID, exampleItem.ID, mock.AnythingOfType("[]models.FieldChangeSummary"))
+		s.auditLog = auditLog
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*models.Item"))
@@ -680,8 +697,9 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 	})
 
 	T.Run("without update input", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -705,8 +723,9 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 	})
 
 	T.Run("with no rows fetching item", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -744,8 +763,9 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 	})
 
 	T.Run("with error fetching item", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -783,8 +803,9 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 	})
 
 	T.Run("with error updating item", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -832,8 +853,9 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 	}
 
 	T.Run("happy path", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -847,7 +869,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		auditLog := &mockmodels.AuditLogDataManager{}
-		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
+		auditLog.On("LogItemArchiveEvent", mock.Anything, exampleUser.ID, exampleItem.ID)
 		s.auditLog = auditLog
 
 		si := &mocksearch.IndexManager{}
@@ -875,8 +897,9 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 	})
 
 	T.Run("with no item in database", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -910,8 +933,9 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -945,8 +969,9 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 	})
 
 	T.Run("with error removing from search index", func(t *testing.T) {
-		s := buildTestService()
+		t.Parallel()
 
+		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -960,7 +985,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		auditLog := &mockmodels.AuditLogDataManager{}
-		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
+		auditLog.On("LogItemArchiveEvent", mock.Anything, exampleUser.ID, exampleItem.ID)
 		s.auditLog = auditLog
 
 		si := &mocksearch.IndexManager{}

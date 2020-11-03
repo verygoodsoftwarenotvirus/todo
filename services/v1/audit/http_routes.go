@@ -29,6 +29,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
+
 	tracing.AttachSessionInfoToSpan(span, *si)
 	logger = logger.WithValue("user_id", si.UserID)
 
@@ -65,6 +66,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
+
 	tracing.AttachSessionInfoToSpan(span, *si)
 	logger = logger.WithValue("user_id", si.UserID)
 

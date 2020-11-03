@@ -36,6 +36,7 @@ func (c *V1Client) GetOAuth2Client(ctx context.Context, id uint64) (oauth2Client
 	}
 
 	err = c.retrieve(ctx, req, &oauth2Client)
+
 	return oauth2Client, err
 }
 
@@ -61,6 +62,7 @@ func (c *V1Client) GetOAuth2Clients(ctx context.Context, filter *models.QueryFil
 
 	var oauth2Clients *models.OAuth2ClientList
 	err = c.retrieve(ctx, req, &oauth2Clients)
+
 	return oauth2Clients, err
 }
 
@@ -79,6 +81,7 @@ func (c *V1Client) BuildCreateOAuth2ClientRequest(
 	if err != nil {
 		return nil, err
 	}
+
 	req.AddCookie(cookie)
 
 	return req, nil

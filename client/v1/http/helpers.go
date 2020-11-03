@@ -20,6 +20,7 @@ func argIsNotPointer(i interface{}) (notAPointer bool, err error) {
 	if i == nil || reflect.TypeOf(i).Kind() != reflect.Ptr {
 		return true, errors.New("value is not a pointer")
 	}
+
 	return false, nil
 }
 
@@ -28,6 +29,7 @@ func argIsNotNil(i interface{}) (isNil bool, err error) {
 	if i == nil {
 		return true, errors.New("value is nil")
 	}
+
 	return false, nil
 }
 
@@ -66,9 +68,11 @@ func unmarshalBody(ctx context.Context, res *http.Response, dest interface{}) er
 
 	if res.StatusCode >= http.StatusBadRequest {
 		apiErr := &models.ErrorResponse{}
+
 		if err = json.Unmarshal(bodyBytes, &apiErr); err != nil {
 			return fmt.Errorf("unmarshaling error: %w", err)
 		}
+
 		return apiErr
 	}
 
@@ -86,5 +90,6 @@ func createBodyFromStruct(in interface{}) (io.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return bytes.NewReader(out), nil
 }

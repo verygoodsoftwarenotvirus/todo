@@ -59,18 +59,16 @@ const (
 
 type configFunc func(filePath string) error
 
-var (
-	files = map[string]configFunc{
-		"environments/local/config.toml":                                    localDevelopmentCOnfig,
-		"environments/testing/config_files/frontend-tests.toml":             frontendTestsConfig,
-		"environments/testing/config_files/coverage.toml":                   coverageConfig,
-		"environments/testing/config_files/integration-tests-postgres.toml": buildIntegrationTestForDBImplementation(postgres, postgresDBConnDetails),
-		"environments/testing/config_files/integration-tests-sqlite.toml":   buildIntegrationTestForDBImplementation(sqlite, "/tmp/db"),
-		"environments/testing/config_files/integration-tests-mariadb.toml":  buildIntegrationTestForDBImplementation(mariadb, "dbuser:hunter2@tcp(database:3306)/todo"),
-	}
-)
+var files = map[string]configFunc{
+	"environments/local/config.toml":                                    localDevelopmentConfig,
+	"environments/testing/config_files/frontend-tests.toml":             frontendTestsConfig,
+	"environments/testing/config_files/coverage.toml":                   coverageConfig,
+	"environments/testing/config_files/integration-tests-postgres.toml": buildIntegrationTestForDBImplementation(postgres, postgresDBConnDetails),
+	"environments/testing/config_files/integration-tests-sqlite.toml":   buildIntegrationTestForDBImplementation(sqlite, "/tmp/db"),
+	"environments/testing/config_files/integration-tests-mariadb.toml":  buildIntegrationTestForDBImplementation(mariadb, "dbuser:hunter2@tcp(database:3306)/todo"),
+}
 
-func localDevelopmentCOnfig(filePath string) error {
+func localDevelopmentConfig(filePath string) error {
 	cfg := viper.BuildViperConfig()
 
 	cfg.Set(metaRunMode, developmentEnv)

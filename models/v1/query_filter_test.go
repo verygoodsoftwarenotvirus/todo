@@ -17,6 +17,8 @@ func TestFromParams(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		actual := &QueryFilter{}
 		expected := &QueryFilter{
 			Page:          100,
@@ -52,9 +54,12 @@ func TestQueryFilter_SetPage(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		qf := &QueryFilter{}
 		expected := uint64(123)
 		qf.SetPage(expected)
+
 		assert.Equal(t, expected, qf.Page)
 	})
 }
@@ -63,9 +68,12 @@ func TestQueryFilter_QueryPage(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		qf := &QueryFilter{Limit: 10, Page: 11}
 		expected := uint64(100)
 		actual := qf.QueryPage()
+
 		assert.Equal(t, expected, actual)
 	})
 }
@@ -74,6 +82,8 @@ func TestQueryFilter_ToValues(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		qf := &QueryFilter{
 			Page:            100,
 			Limit:           50,
@@ -100,6 +110,8 @@ func TestQueryFilter_ToValues(T *testing.T) {
 	})
 
 	T.Run("with nil", func(t *testing.T) {
+		t.Parallel()
+
 		qf := (*QueryFilter)(nil)
 		expected := DefaultQueryFilter().ToValues()
 		actual := qf.ToValues()
@@ -117,6 +129,8 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 		Where(squirrel.Eq{fmt.Sprintf("%s.condition", exampleTableName): true})
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		qf := &QueryFilter{
 			Page:          100,
 			Limit:         50,
@@ -137,6 +151,8 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 	})
 
 	T.Run("basic usecase", func(t *testing.T) {
+		t.Parallel()
+
 		exampleQF := &QueryFilter{Limit: 15, Page: 2}
 
 		expected := "SELECT things FROM stuff WHERE stuff.condition = $1 LIMIT 15 OFFSET 15"
@@ -149,6 +165,8 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 	})
 
 	T.Run("returns query builder if query filter is nil", func(t *testing.T) {
+		t.Parallel()
+
 		expected := "SELECT things FROM stuff WHERE stuff.condition = $1"
 
 		x := (*QueryFilter)(nil).ApplyToQueryBuilder(baseQueryBuilder, exampleTableName)
@@ -160,6 +178,8 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 	})
 
 	T.Run("whole kit and kaboodle", func(t *testing.T) {
+		t.Parallel()
+
 		exampleQF := &QueryFilter{
 			Limit:         20,
 			Page:          6,
@@ -179,6 +199,8 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 	})
 
 	T.Run("with zero limit", func(t *testing.T) {
+		t.Parallel()
+
 		exampleQF := &QueryFilter{Limit: 0, Page: 1}
 		expected := "SELECT things FROM stuff WHERE stuff.condition = $1 LIMIT 250"
 		x := exampleQF.ApplyToQueryBuilder(baseQueryBuilder, exampleTableName)
@@ -194,6 +216,8 @@ func TestExtractQueryFilter(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		expected := &QueryFilter{
 			Page:          100,
 			Limit:         MaxLimit,

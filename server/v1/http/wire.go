@@ -7,14 +7,12 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
-var (
-	// Providers is our wire superset of providers this package offers.
-	Providers = wire.NewSet(
-		paramFetcherProviders,
-		ProvideServer,
-		ProvideNamespace,
-		ProvideNewsmanTypeNameManipulationFunc,
-	)
+// Providers is our wire superset of providers this package offers.
+var Providers = wire.NewSet(
+	paramFetcherProviders,
+	ProvideServer,
+	ProvideNamespace,
+	ProvideNewsmanTypeNameManipulationFunc,
 )
 
 // ProvideNamespace provides a namespace.

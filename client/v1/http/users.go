@@ -34,6 +34,7 @@ func (c *V1Client) GetUser(ctx context.Context, userID uint64) (user *models.Use
 	}
 
 	err = c.retrieve(ctx, req, &user)
+
 	return user, err
 }
 
@@ -60,6 +61,7 @@ func (c *V1Client) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 	}
 
 	err = c.retrieve(ctx, req, &users)
+
 	return users, err
 }
 
@@ -86,6 +88,7 @@ func (c *V1Client) CreateUser(ctx context.Context, input *models.UserCreationInp
 	}
 
 	err = c.executeUnauthenticatedDataRequest(ctx, req, &user)
+
 	return user, err
 }
 

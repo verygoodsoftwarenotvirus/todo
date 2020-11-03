@@ -12,8 +12,8 @@ type (
 	// eventType is an enum alias
 	eventType int
 
-	// FieldChangeEvent represents a field that has changed in a given model's update
-	FieldChangeEvent struct {
+	// FieldChangeSummary represents a field that has changed in a given model's update
+	FieldChangeSummary struct {
 		FieldName string      `json:"fieldName"`
 		OldValue  interface{} `json:"oldValue"`
 		NewValue  interface{} `json:"newValue"`
@@ -56,12 +56,12 @@ type (
 		LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64)
 		LogLogoutEvent(ctx context.Context, userID uint64)
 		LogItemCreationEvent(ctx context.Context, item *Item)
-		LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []FieldChangeEvent)
+		LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []FieldChangeSummary)
 		LogItemArchiveEvent(ctx context.Context, userID, itemID uint64)
 		LogOAuth2ClientCreationEvent(ctx context.Context, client *OAuth2Client)
 		LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64)
 		LogWebhookCreationEvent(ctx context.Context, webhook *Webhook)
-		LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []FieldChangeEvent)
+		LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []FieldChangeSummary)
 		LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64)
 		LogUserCreationEvent(ctx context.Context, user *User)
 		LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64)

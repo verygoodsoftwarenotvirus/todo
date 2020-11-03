@@ -16,8 +16,10 @@ func (uv *urlValidator) Validate(field v.Field) v.Errors {
 		if _, err := url.Parse(u); err != nil {
 			return v.NewErrors(field.Name, "parse error", err.Error())
 		}
+
 		return nil
 	}
+
 	return v.NewErrors(field.Name, "type error", "URL field is the wrong type")
 }
 
@@ -32,8 +34,10 @@ func (slv *minimumStringLengthValidator) Validate(field v.Field) v.Errors {
 		if len(s) >= slv.minLength {
 			return nil
 		}
+
 		return v.NewErrors(field.Name, "invalid length", fmt.Sprintf("field should be at least %d characters long", slv.minLength))
 	}
+
 	return v.NewErrors(field.Name, "type error", "string field is the wrong type")
 }
 
@@ -48,7 +52,9 @@ func (slv *minimumStringSliceLengthValidator) Validate(field v.Field) v.Errors {
 		if len(*s) >= slv.minLength {
 			return nil
 		}
+
 		return v.NewErrors(field.Name, "invalid length", fmt.Sprintf("field should be at least %d entries long", slv.minLength))
 	}
+
 	return v.NewErrors(field.Name, "type error", "string slice field is the wrong type")
 }

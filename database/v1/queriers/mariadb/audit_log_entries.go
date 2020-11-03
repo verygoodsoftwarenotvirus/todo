@@ -284,7 +284,7 @@ func (m *MariaDB) LogItemCreationEvent(ctx context.Context, item *models.Item) {
 }
 
 // LogItemUpdateEvent saves a ItemUpdateEvent in the audit log table.
-func (m *MariaDB) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []models.FieldChangeEvent) {
+func (m *MariaDB) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []models.FieldChangeSummary) {
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.ItemUpdateEvent,
 		Context: map[string]interface{}{
@@ -468,7 +468,7 @@ func (m *MariaDB) LogWebhookCreationEvent(ctx context.Context, webhook *models.W
 }
 
 // LogWebhookUpdateEvent saves a WebhookUpdateEvent in the audit log table.
-func (m *MariaDB) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []models.FieldChangeEvent) {
+func (m *MariaDB) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []models.FieldChangeSummary) {
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.WebhookUpdateEvent,
 		Context: map[string]interface{}{

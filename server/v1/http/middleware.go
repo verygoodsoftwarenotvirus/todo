@@ -11,9 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
-var (
-	idReplacementRegex = regexp.MustCompile(`[^(v|oauth)]\\d+`)
-)
+var idReplacementRegex = regexp.MustCompile(`[^(v|oauth)]\\d+`)
 
 func formatSpanNameForRequest(req *http.Request) string {
 	return fmt.Sprintf(

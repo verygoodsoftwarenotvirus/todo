@@ -24,9 +24,7 @@ const (
 	serviceName        string              = "items_service"
 )
 
-var (
-	_ models.ItemDataServer = (*Service)(nil)
-)
+var _ models.ItemDataServer = (*Service)(nil)
 
 type (
 	// SearchIndex is a type alias for dependency injection's sake

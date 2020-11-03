@@ -25,6 +25,8 @@ func Test_randString(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		actual := randString()
 		assert.NotEmpty(t, actual)
 	})
@@ -48,6 +50,8 @@ func Test_fetchUserID(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		req := buildRequest(t)
 		exampleUser := fakemodels.BuildFakeUser()
 
@@ -62,6 +66,8 @@ func Test_fetchUserID(T *testing.T) {
 	})
 
 	T.Run("without context value present", func(t *testing.T) {
+		t.Parallel()
+
 		req := buildRequest(t)
 
 		expected := uint64(0)
@@ -78,6 +84,8 @@ func TestService_ListHandler(T *testing.T) {
 	exampleUser := fakemodels.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleOAuth2ClientList := fakemodels.BuildFakeOAuth2ClientList()
@@ -110,6 +118,8 @@ func TestService_ListHandler(T *testing.T) {
 	})
 
 	T.Run("with no rows returned", func(t *testing.T) {
+		t.Parallel()
+
 		s := buildTestService(t)
 
 		mockDB := database.BuildMockDatabase()
@@ -139,6 +149,8 @@ func TestService_ListHandler(T *testing.T) {
 	})
 
 	T.Run("with error fetching from clientDataManager", func(t *testing.T) {
+		t.Parallel()
+
 		s := buildTestService(t)
 
 		mockDB := database.BuildMockDatabase()
@@ -174,6 +186,8 @@ func TestService_CreateHandler(T *testing.T) {
 	exampleUser := fakemodels.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
@@ -211,7 +225,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.oauth2ClientCounter = uc
 
 		auditLog := &mockmodels.AuditLogDataManager{}
-		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
+		auditLog.On("LogOAuth2ClientCreationEvent", mock.Anything, exampleOAuth2Client)
 		s.auditLog = auditLog
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -234,6 +248,8 @@ func TestService_CreateHandler(T *testing.T) {
 	})
 
 	T.Run("with missing input", func(t *testing.T) {
+		t.Parallel()
+
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -250,6 +266,8 @@ func TestService_CreateHandler(T *testing.T) {
 	})
 
 	T.Run("with error getting user", func(t *testing.T) {
+		t.Parallel()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
@@ -285,6 +303,8 @@ func TestService_CreateHandler(T *testing.T) {
 	})
 
 	T.Run("with invalid credentials", func(t *testing.T) {
+		t.Parallel()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
@@ -337,6 +357,8 @@ func TestService_CreateHandler(T *testing.T) {
 	})
 
 	T.Run("with error validating password", func(t *testing.T) {
+		t.Parallel()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
@@ -389,6 +411,8 @@ func TestService_CreateHandler(T *testing.T) {
 	})
 
 	T.Run("with error creating oauth2 client", func(t *testing.T) {
+		t.Parallel()
+
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
@@ -447,6 +471,8 @@ func TestService_ReadHandler(T *testing.T) {
 	exampleUser := fakemodels.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		s := buildTestService(t)
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
@@ -482,6 +508,8 @@ func TestService_ReadHandler(T *testing.T) {
 	})
 
 	T.Run("with no rows found", func(t *testing.T) {
+		t.Parallel()
+
 		s := buildTestService(t)
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
@@ -517,6 +545,8 @@ func TestService_ReadHandler(T *testing.T) {
 	})
 
 	T.Run("with error fetching client from clientDataManager", func(t *testing.T) {
+		t.Parallel()
+
 		s := buildTestService(t)
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
@@ -558,6 +588,8 @@ func TestService_ArchiveHandler(T *testing.T) {
 	exampleUser := fakemodels.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
 		s := buildTestService(t)
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
@@ -581,7 +613,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 		s.oauth2ClientCounter = uc
 
 		auditLog := &mockmodels.AuditLogDataManager{}
-		auditLog.On("CreateAuditLogEntry", mock.Anything, mock.AnythingOfType("*models.AuditLogEntryCreationInput"))
+		auditLog.On("LogOAuth2ClientArchiveEvent", mock.Anything, exampleUser.ID, exampleOAuth2Client.ID)
 		s.auditLog = auditLog
 
 		req := buildRequest(t)
@@ -597,6 +629,8 @@ func TestService_ArchiveHandler(T *testing.T) {
 	})
 
 	T.Run("with no rows found", func(t *testing.T) {
+		t.Parallel()
+
 		s := buildTestService(t)
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
@@ -632,6 +666,8 @@ func TestService_ArchiveHandler(T *testing.T) {
 	})
 
 	T.Run("with error deleting record", func(t *testing.T) {
+		t.Parallel()
+
 		s := buildTestService(t)
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID

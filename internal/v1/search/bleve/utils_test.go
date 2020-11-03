@@ -14,7 +14,6 @@ func TestEnsureQueryIsRestrictedToUser(T *testing.T) {
 
 	T.Run("leaves good queries alone", func(t *testing.T) {
 		t.Parallel()
-
 		exampleUserID := fakemodels.BuildFakeUser().ID
 
 		exampleQuery := fmt.Sprintf("things +belongsToUser:%d", exampleUserID)
@@ -26,7 +25,6 @@ func TestEnsureQueryIsRestrictedToUser(T *testing.T) {
 
 	T.Run("basic replacement", func(t *testing.T) {
 		t.Parallel()
-
 		exampleUserID := fakemodels.BuildFakeUser().ID
 
 		exampleQuery := "things"
@@ -38,7 +36,6 @@ func TestEnsureQueryIsRestrictedToUser(T *testing.T) {
 
 	T.Run("with invalid user restriction", func(t *testing.T) {
 		t.Parallel()
-
 		exampleUserID := fakemodels.BuildFakeUser().ID
 
 		exampleQuery := fmt.Sprintf("stuff belongsToUser:%d", exampleUserID)

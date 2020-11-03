@@ -57,6 +57,7 @@ func TestMariaDB_ScanItems(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
@@ -68,6 +69,7 @@ func TestMariaDB_ScanItems(T *testing.T) {
 	})
 
 	T.Run("logs row closing errors", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
@@ -84,6 +86,7 @@ func TestMariaDB_buildItemExistsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -107,6 +110,7 @@ func TestMariaDB_ItemExists(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -117,9 +121,7 @@ func TestMariaDB_ItemExists(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildItemExistsQuery(exampleItem.ID, exampleItem.BelongsToUser)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
 
 		actual, err := m.ItemExists(ctx, exampleItem.ID, exampleUser.ID)
@@ -130,6 +132,7 @@ func TestMariaDB_ItemExists(T *testing.T) {
 	})
 
 	T.Run("with no rows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -140,9 +143,7 @@ func TestMariaDB_ItemExists(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildItemExistsQuery(exampleItem.ID, exampleItem.BelongsToUser)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := m.ItemExists(ctx, exampleItem.ID, exampleUser.ID)
@@ -157,6 +158,7 @@ func TestMariaDB_buildGetItemQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -182,6 +184,7 @@ func TestMariaDB_GetItem(T *testing.T) {
 	exampleUser := fakemodels.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -191,9 +194,7 @@ func TestMariaDB_GetItem(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetItemQuery(exampleItem.ID, exampleItem.BelongsToUser)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildMockRowsFromItems(exampleItem))
 
 		actual, err := m.GetItem(ctx, exampleItem.ID, exampleUser.ID)
@@ -204,6 +205,7 @@ func TestMariaDB_GetItem(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -213,9 +215,7 @@ func TestMariaDB_GetItem(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetItemQuery(exampleItem.ID, exampleItem.BelongsToUser)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := m.GetItem(ctx, exampleItem.ID, exampleUser.ID)
@@ -231,6 +231,7 @@ func TestMariaDB_buildGetAllItemsCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
@@ -245,6 +246,7 @@ func TestMariaDB_GetAllItemsCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
@@ -266,6 +268,7 @@ func TestMariaDB_buildGetBatchOfItemsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		beginID, endID := uint64(1), uint64(1000)
@@ -291,7 +294,6 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -304,9 +306,7 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedGetQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromItems(
 					&exampleItemList.Items[0],
@@ -339,7 +339,6 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 
 	T.Run("with error fetching initial count", func(t *testing.T) {
 		t.Parallel()
-
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -357,7 +356,6 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 
 	T.Run("with no rows returned", func(t *testing.T) {
 		t.Parallel()
-
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -369,9 +367,7 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedGetQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		out := make(chan []models.Item)
@@ -386,7 +382,6 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		t.Parallel()
-
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -398,9 +393,7 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedGetQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		out := make(chan []models.Item)
@@ -415,7 +408,6 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 
 	T.Run("with invalid response from database", func(t *testing.T) {
 		t.Parallel()
-
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -428,9 +420,7 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedGetQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromItem(exampleItem))
 
 		out := make(chan []models.Item)
@@ -448,6 +438,7 @@ func TestMariaDB_buildGetItemsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -473,6 +464,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -483,9 +475,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetItemsQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromItems(
 					&exampleItemList.Items[0],
@@ -503,6 +493,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -512,9 +503,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetItemsQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := m.GetItems(ctx, exampleUser.ID, filter)
@@ -526,6 +515,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 	})
 
 	T.Run("with error executing read query", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -535,9 +525,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetItemsQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := m.GetItems(ctx, exampleUser.ID, filter)
@@ -548,6 +536,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 	})
 
 	T.Run("with error scanning item", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -560,9 +549,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetItemsQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromItem(exampleItem))
 
 		actual, err := m.GetItems(ctx, exampleUser.ID, filter)
@@ -577,6 +564,7 @@ func TestMariaDB_buildGetItemsWithIDsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -605,6 +593,7 @@ func TestMariaDB_GetItemsWithIDs(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -620,9 +609,7 @@ func TestMariaDB_GetItemsWithIDs(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromItems(
 					&exampleItemList.Items[0],
@@ -640,6 +627,7 @@ func TestMariaDB_GetItemsWithIDs(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -655,9 +643,7 @@ func TestMariaDB_GetItemsWithIDs(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := m.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleIDs)
@@ -670,6 +656,7 @@ func TestMariaDB_GetItemsWithIDs(T *testing.T) {
 	})
 
 	T.Run("with error executing read query", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -685,9 +672,7 @@ func TestMariaDB_GetItemsWithIDs(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := m.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleIDs)
@@ -699,6 +684,7 @@ func TestMariaDB_GetItemsWithIDs(T *testing.T) {
 	})
 
 	T.Run("with error scanning item", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -716,9 +702,7 @@ func TestMariaDB_GetItemsWithIDs(T *testing.T) {
 		exampleItem := fakemodels.BuildFakeItem()
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromItem(exampleItem))
 
 		actual, err := m.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleIDs)
@@ -734,6 +718,7 @@ func TestMariaDB_buildCreateItemQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -758,6 +743,7 @@ func TestMariaDB_CreateItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -769,9 +755,7 @@ func TestMariaDB_CreateItem(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateItemQuery(exampleItem)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(int64(exampleItem.ID), 1))
 
 		mtt := &mockTimeTeller{}
@@ -787,6 +771,7 @@ func TestMariaDB_CreateItem(T *testing.T) {
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -798,9 +783,7 @@ func TestMariaDB_CreateItem(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateItemQuery(exampleItem)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := m.CreateItem(ctx, exampleInput)
@@ -815,6 +798,7 @@ func TestMariaDB_buildUpdateItemQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -840,6 +824,7 @@ func TestMariaDB_UpdateItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -852,9 +837,7 @@ func TestMariaDB_UpdateItem(T *testing.T) {
 
 		exampleRows := sqlmock.NewResult(int64(exampleItem.ID), 1)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(exampleRows)
 
 		err := m.UpdateItem(ctx, exampleItem)
@@ -864,6 +847,7 @@ func TestMariaDB_UpdateItem(T *testing.T) {
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -875,9 +859,7 @@ func TestMariaDB_UpdateItem(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildUpdateItemQuery(exampleItem)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		err := m.UpdateItem(ctx, exampleItem)
@@ -891,6 +873,7 @@ func TestMariaDB_buildArchiveItemQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -914,6 +897,7 @@ func TestMariaDB_ArchiveItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -925,9 +909,7 @@ func TestMariaDB_ArchiveItem(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		err := m.ArchiveItem(ctx, exampleItem.ID, exampleUser.ID)
@@ -937,6 +919,7 @@ func TestMariaDB_ArchiveItem(T *testing.T) {
 	})
 
 	T.Run("returns sql.ErrNoRows with no rows affected", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -948,9 +931,7 @@ func TestMariaDB_ArchiveItem(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(0, 0))
 
 		err := m.ArchiveItem(ctx, exampleItem.ID, exampleUser.ID)
@@ -961,6 +942,7 @@ func TestMariaDB_ArchiveItem(T *testing.T) {
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -972,9 +954,7 @@ func TestMariaDB_ArchiveItem(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		err := m.ArchiveItem(ctx, exampleItem.ID, exampleUser.ID)

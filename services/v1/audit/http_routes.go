@@ -2,6 +2,7 @@ package audit
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
@@ -38,7 +39,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		err     error
 	)
 
-	if entries, err = s.auditLog.GetAuditLogEntries(ctx, filter); err == sql.ErrNoRows {
+	if entries, err = s.auditLog.GetAuditLogEntries(ctx, filter); errors.Is(err, sql.ErrNoRows) {
 		// in the event no rows exist return an empty list.
 		entries = &models.AuditLogEntryList{
 			Entries: []models.AuditLogEntry{},
@@ -77,7 +78,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 
 	// fetch audit log entry from database.
 	x, err := s.auditLog.GetAuditLogEntry(ctx, entryID)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(res)
 		return
 	} else if err != nil {

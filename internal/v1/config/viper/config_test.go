@@ -34,7 +34,6 @@ func TestParseConfigFile(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		tf, err := ioutil.TempFile(os.TempDir(), "*.toml")
 		require.NoError(t, err)
 		expected := "thisisatest"
@@ -77,7 +76,6 @@ connection_details = "%s"
 
 	T.Run("with nonexistent file", func(t *testing.T) {
 		t.Parallel()
-
 		cfg, err := ParseConfigFile(noop.NewLogger(), "/this/doesn't/even/exist/lol")
 		assert.Error(t, err)
 		assert.Nil(t, cfg)

@@ -27,10 +27,10 @@ const (
 var _ models.ItemDataServer = (*Service)(nil)
 
 type (
-	// SearchIndex is a type alias for dependency injection's sake
+	// SearchIndex is a type alias for dependency injection's sake.
 	SearchIndex search.IndexManager
 
-	// Service handles to-do list items
+	// Service handles to-do list items.
 	Service struct {
 		logger             logging.Logger
 		itemDataManager    models.ItemDataManager
@@ -79,7 +79,7 @@ func ProvideItemsService(
 	return svc, nil
 }
 
-// ProvideItemsServiceSearchIndex provides a search index for the service
+// ProvideItemsServiceSearchIndex provides a search index for the service.
 func ProvideItemsServiceSearchIndex(
 	searchSettings config.SearchSettings,
 	indexProvider search.IndexManagerProvider,

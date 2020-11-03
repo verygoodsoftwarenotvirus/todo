@@ -32,7 +32,6 @@ func TestNewBleveIndexManager(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		exampleIndexPath := search.IndexPath("constructor_test_happy_path.bleve")
 
 		_, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.NewLogger())
@@ -43,7 +42,6 @@ func TestNewBleveIndexManager(T *testing.T) {
 
 	T.Run("invalid path", func(t *testing.T) {
 		t.Parallel()
-
 		exampleIndexPath := search.IndexPath("")
 
 		_, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.NewLogger())
@@ -52,7 +50,6 @@ func TestNewBleveIndexManager(T *testing.T) {
 
 	T.Run("invalid name", func(t *testing.T) {
 		t.Parallel()
-
 		exampleIndexPath := search.IndexPath("constructor_test_invalid_name.bleve")
 
 		_, err := NewBleveIndexManager(exampleIndexPath, "invalid", noop.NewLogger())

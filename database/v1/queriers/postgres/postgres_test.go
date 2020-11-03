@@ -21,7 +21,9 @@ const (
 func buildTestService(t *testing.T) (*Postgres, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
+
 	p := ProvidePostgres(true, db, noop.NewLogger())
+
 	return p.(*Postgres), mock
 }
 
@@ -73,6 +75,7 @@ func TestProvidePostgres(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		buildTestService(t)
 	})
 }
@@ -81,6 +84,7 @@ func TestPostgres_IsReady(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		p, _ := buildTestService(t)
@@ -92,6 +96,7 @@ func TestPostgres_logQueryBuildingError(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		p, _ := buildTestService(t)
 		p.logQueryBuildingError(errors.New("blah"))
 	})
@@ -101,8 +106,8 @@ func Test_joinUint64s(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		exampleInput := []uint64{123, 456, 789}
-
 		expected := "123,456,789"
 		actual := joinUint64s(exampleInput)
 
@@ -114,6 +119,7 @@ func TestProvidePostgresDB(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		_, err := ProvidePostgresDB(noop.NewLogger(), "")
 		assert.NoError(t, err)
 	})

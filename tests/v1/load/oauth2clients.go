@@ -25,6 +25,7 @@ func fetchRandomOAuth2Client(c *client.V1Client) *models.OAuth2Client {
 	for selectedClient == nil {
 		ri := rand.Intn(len(clientsRes.Clients))
 		c := &clientsRes.Clients[ri]
+
 		if c.ClientID != "FIXME" {
 			selectedClient = c
 		}

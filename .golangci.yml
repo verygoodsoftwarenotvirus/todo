@@ -217,15 +217,15 @@ linters:
     - misspell # Finds commonly misspelled English words in comments
     - nakedret # Finds naked returns in functions greater than a specified function length
     - nestif # Reports deeply nested if statements
-    - nlreturn # nlreturn checks for a new line before return and branch statements to increase code clarity
+    # nlreturn # nlreturn checks for a new line before return and branch statements to increase code clarity
     - noctx # noctx finds sending http request without context.Context
     - nolintlint # Reports ill-formed or insufficient nolint directives
     - prealloc # Finds slice declarations that could potentially be preallocated
-    - rowserrcheck # checks whether Err of rows is checked successfully
+    # rowserrcheck # checks whether Err of rows is checked successfully
     - scopelint # Scopelint checks for unpinned variables in go programs
     - sqlclosecheck # Checks that sql.Rows and sql.Stmt are closed.
     # stylecheck # Stylecheck is a replacement for golint
-    - testpackage # linter that makes you use a separate _test package
+    # testpackage # linter that makes you use a separate _test package
     - tparallel # tparallel detects inappropriate usage of t.Parallel() method in your Go test codes
     - unconvert # Remove unnecessary type conversions
     - unparam # Reports unused function parameters
@@ -239,6 +239,9 @@ linters:
     - funlen # Tool for detection of long functions
     - wrapcheck # Checks that errors returned from external packages are wrapped
     - gofumpt # Gofumpt checks whether code was gofumpt-ed.
+    - testpackage # linter that makes you use a separate _test package
+    - rowserrcheck # checks whether Err of rows is checked successfully; lots of false positives
+    - nlreturn # nlreturn checks for a new line before return and branch statements to increase code clarity
 
 issues:
   # # List of regexps of issue texts to exclude, empty list by default.
@@ -261,6 +264,8 @@ issues:
         - lll
         - bodyclose
         - unparam
+        - exhaustivestruct
+        - noctx  # FIXME
 
     - path: tests/v1
       linters:
@@ -319,6 +324,15 @@ issues:
     - linters:
         - gosec
       text: "G304:"
+
+    # ignore this error type because I personally think it looks shittier
+    - linters:
+        - wsl
+      text: "return statements should not be cuddled if block has more than two lines"
+
+    - linters:
+        - wsl
+      text: "whenThenStatement"
 
     # Exclude lll issues for long lines with go:generate
     - linters:

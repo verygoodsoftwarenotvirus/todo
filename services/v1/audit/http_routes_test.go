@@ -27,7 +27,6 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -59,7 +58,6 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 
 	T.Run("with no rows returned", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -89,7 +87,6 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 
 	T.Run("with error fetching entries from database", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -128,7 +125,6 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -163,7 +159,6 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 
 	T.Run("with no such entry in database", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -198,7 +193,6 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 
 	T.Run("with error fetching entry from database", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 

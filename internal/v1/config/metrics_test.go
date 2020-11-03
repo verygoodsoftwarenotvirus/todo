@@ -13,7 +13,6 @@ func TestServerConfig_ProvideInstrumentationHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		c := &ServerConfig{
 			Metrics: MetricsSettings{
 				RuntimeMetricsCollectionInterval: time.Second,
@@ -30,7 +29,6 @@ func TestServerConfig_ProvideTracing(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		c := &ServerConfig{
 			Metrics: MetricsSettings{
 				TracingProvider: DefaultTracingProvider,

@@ -14,6 +14,7 @@ func (s *Service) buildStaticFileServer(fileDir string) (*afero.HttpFs, error) {
 	var afs afero.Fs
 	if s.config.CacheStaticFiles {
 		afs = afero.NewMemMapFs()
+
 		files, err := ioutil.ReadDir(fileDir)
 		if err != nil {
 			return nil, fmt.Errorf("reading directory for frontend files: %w", err)
@@ -25,6 +26,7 @@ func (s *Service) buildStaticFileServer(fileDir string) (*afero.HttpFs, error) {
 			}
 
 			fp := filepath.Join(fileDir, file.Name())
+
 			f, err := afs.Create(fp)
 			if err != nil {
 				return nil, fmt.Errorf("creating static file in memory: %w", err)
@@ -43,6 +45,7 @@ func (s *Service) buildStaticFileServer(fileDir string) (*afero.HttpFs, error) {
 				s.logger.Error(err, "closing file while setting up static dir")
 			}
 		}
+
 		afs = afero.NewReadOnlyFs(afs)
 	} else {
 		afs = afero.NewOsFs()
@@ -109,6 +112,7 @@ func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, erro
 			if s.logStaticFiles {
 				rl.Debug("rerouting item request")
 			}
+
 			req.URL.Path = "/"
 		}
 

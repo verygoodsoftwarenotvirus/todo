@@ -18,8 +18,10 @@ import (
 
 func mustBuildCode(t *testing.T, totpSecret string) string {
 	t.Helper()
+
 	code, err := totp.GenerateCode(totpSecret, time.Now().UTC())
 	require.NoError(t, err)
+
 	return code
 }
 
@@ -87,8 +89,8 @@ func TestOAuth2Clients(test *testing.T) {
 	)
 	require.NoError(test, err, "error setting up auxiliary client")
 
-	test.Run("Creating", func(T *testing.T) {
-		T.Run("should be creatable", func(t *testing.T) {
+	test.Run("Creating", func(t *testing.T) {
+		t.Run("should be creatable", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
@@ -105,8 +107,8 @@ func TestOAuth2Clients(test *testing.T) {
 		})
 	})
 
-	test.Run("Reading", func(T *testing.T) {
-		T.Run("it should return an error when trying to read one that doesn't exist", func(t *testing.T) {
+	test.Run("Reading", func(t *testing.T) {
+		t.Run("it should return an error when trying to read one that doesn't exist", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
@@ -115,7 +117,7 @@ func TestOAuth2Clients(test *testing.T) {
 			assert.Error(t, err)
 		})
 
-		T.Run("it should be readable", func(t *testing.T) {
+		t.Run("it should be readable", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
@@ -137,8 +139,8 @@ func TestOAuth2Clients(test *testing.T) {
 		})
 	})
 
-	test.Run("Deleting", func(T *testing.T) {
-		T.Run("should be able to be deleted", func(t *testing.T) {
+	test.Run("Deleting", func(t *testing.T) {
+		t.Run("should be able to be deleted", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
@@ -152,7 +154,7 @@ func TestOAuth2Clients(test *testing.T) {
 			assert.NoError(t, err)
 		})
 
-		T.Run("should be unable to authorize after being deleted", func(t *testing.T) {
+		t.Run("should be unable to authorize after being deleted", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
@@ -187,8 +189,8 @@ func TestOAuth2Clients(test *testing.T) {
 		})
 	})
 
-	test.Run("Listing", func(T *testing.T) {
-		T.Run("should be able to be read in a list", func(t *testing.T) {
+	test.Run("Listing", func(t *testing.T) {
+		t.Run("should be able to be read in a list", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 

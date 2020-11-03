@@ -21,7 +21,9 @@ const (
 func buildTestService(t *testing.T) (*MariaDB, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
+
 	m := ProvideMariaDB(true, db, noop.NewLogger())
+
 	return m.(*MariaDB), mock
 }
 
@@ -73,6 +75,7 @@ func TestProvideMariaDB(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		buildTestService(t)
 	})
 }
@@ -81,6 +84,7 @@ func TestMariaDB_IsReady(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, _ := buildTestService(t)
@@ -92,6 +96,7 @@ func TestMariaDB_logQueryBuildingError(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 		m.logQueryBuildingError(errors.New("blah"))
 	})
@@ -101,6 +106,7 @@ func TestMariaDB_logIDRetrievalError(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 		m.logIDRetrievalError(errors.New("blah"))
 	})
@@ -110,6 +116,7 @@ func TestProvideMariaDBConnection(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		_, err := ProvideMariaDBConnection(noop.NewLogger(), "")
 		assert.NoError(t, err)
 	})

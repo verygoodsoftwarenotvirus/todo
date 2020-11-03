@@ -15,7 +15,6 @@ func TestWebhook_Update(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		exampleInput := &WebhookUpdateInput{
 			Name:        "whatever",
 			ContentType: "application/xml",
@@ -55,7 +54,6 @@ func TestWebhook_ToListener(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-
 		w := &Webhook{}
 		w.ToListener(noop.NewLogger())
 	})
@@ -66,7 +64,6 @@ func Test_buildErrorLogFunc(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-
 		w := &Webhook{}
 		actual := buildErrorLogFunc(w, noop.NewLogger())
 		actual(errors.New("blah"))
@@ -90,13 +87,11 @@ func TestWebhookCreationInput_Validate(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		assert.NoError(t, buildValidWebhookCreationInput().Validate())
 	})
 
 	T.Run("bad name", func(t *testing.T) {
 		t.Parallel()
-
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.Name = ""
 
@@ -105,7 +100,6 @@ func TestWebhookCreationInput_Validate(T *testing.T) {
 
 	T.Run("bad URL", func(t *testing.T) {
 		t.Parallel()
-
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.URL = fmt.Sprintf(`%s://verygoodsoftwarenotvirus.ru`, string(byte(127)))
 
@@ -114,7 +108,6 @@ func TestWebhookCreationInput_Validate(T *testing.T) {
 
 	T.Run("bad method", func(t *testing.T) {
 		t.Parallel()
-
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.Method = "balogna"
 
@@ -123,7 +116,6 @@ func TestWebhookCreationInput_Validate(T *testing.T) {
 
 	T.Run("bad content type", func(t *testing.T) {
 		t.Parallel()
-
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.ContentType = "application/balogna"
 
@@ -132,7 +124,6 @@ func TestWebhookCreationInput_Validate(T *testing.T) {
 
 	T.Run("empty events", func(t *testing.T) {
 		t.Parallel()
-
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.Events = []string{}
 
@@ -141,7 +132,6 @@ func TestWebhookCreationInput_Validate(T *testing.T) {
 
 	T.Run("empty data types", func(t *testing.T) {
 		t.Parallel()
-
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.DataTypes = []string{}
 
@@ -150,7 +140,6 @@ func TestWebhookCreationInput_Validate(T *testing.T) {
 
 	T.Run("empty topics", func(t *testing.T) {
 		t.Parallel()
-
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.Topics = []string{}
 
@@ -175,13 +164,11 @@ func TestWebhookUpdateInput_Validate(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		assert.NoError(t, buildValidWebhookCreationInput().Validate())
 	})
 
 	T.Run("bad name", func(t *testing.T) {
 		t.Parallel()
-
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.Name = ""
 
@@ -190,7 +177,6 @@ func TestWebhookUpdateInput_Validate(T *testing.T) {
 
 	T.Run("bad URL", func(t *testing.T) {
 		t.Parallel()
-
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.URL = fmt.Sprintf(`%s://verygoodsoftwarenotvirus.ru`, string(byte(127)))
 
@@ -199,7 +185,6 @@ func TestWebhookUpdateInput_Validate(T *testing.T) {
 
 	T.Run("bad method", func(t *testing.T) {
 		t.Parallel()
-
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.Method = "balogna"
 
@@ -208,7 +193,6 @@ func TestWebhookUpdateInput_Validate(T *testing.T) {
 
 	T.Run("bad content type", func(t *testing.T) {
 		t.Parallel()
-
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.ContentType = "application/balogna"
 
@@ -217,7 +201,6 @@ func TestWebhookUpdateInput_Validate(T *testing.T) {
 
 	T.Run("empty events", func(t *testing.T) {
 		t.Parallel()
-
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.Events = []string{}
 
@@ -226,7 +209,6 @@ func TestWebhookUpdateInput_Validate(T *testing.T) {
 
 	T.Run("empty data types", func(t *testing.T) {
 		t.Parallel()
-
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.DataTypes = []string{}
 
@@ -235,7 +217,6 @@ func TestWebhookUpdateInput_Validate(T *testing.T) {
 
 	T.Run("empty topics", func(t *testing.T) {
 		t.Parallel()
-
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.Topics = []string{}
 

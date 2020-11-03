@@ -37,6 +37,7 @@ var (
 				"two_factor_secret" TEXT NOT NULL,
 				"two_factor_secret_verified_on" BIGINT DEFAULT NULL,
 				"is_admin" BOOLEAN NOT NULL DEFAULT 'false',
+				"admin_permissions" INTEGER NOT NULL DEFAULT 0,
 				"status" TEXT NOT NULL DEFAULT 'created',
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				"last_updated_on" BIGINT DEFAULT NULL,
@@ -140,6 +141,7 @@ func buildMigrationFunc(db *sql.DB) func() {
 // safe (as in idempotent, though not necessarily recommended) to call this function multiple times.
 func (p *Postgres) Migrate(ctx context.Context, authenticator auth.Authenticator, testUserConfig *database.UserCreationConfig) error {
 	p.logger.Info("migrating db")
+
 	if !p.IsReady(ctx) {
 		return errors.New("db is not ready yet")
 	}

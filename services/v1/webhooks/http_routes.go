@@ -2,6 +2,7 @@ package webhooks
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -106,7 +107,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 
 	// find the webhooks.
 	webhooks, err := s.webhookDataManager.GetWebhooks(ctx, userID, filter)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		webhooks = &models.WebhookList{
 			Webhooks: []models.Webhook{},
 		}
@@ -140,7 +141,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 
 	// fetch the webhook from the database.
 	x, err := s.webhookDataManager.GetWebhook(ctx, webhookID, userID)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("No rows found in webhook database")
 		s.encoderDecoder.EncodeNotFoundResponse(res)
 
@@ -184,7 +185,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// fetch the webhook in question.
 	wh, err := s.webhookDataManager.GetWebhook(ctx, webhookID, userID)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("no rows found for webhook")
 		s.encoderDecoder.EncodeNotFoundResponse(res)
 
@@ -232,7 +233,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// do the deed.
 	err := s.webhookDataManager.ArchiveWebhook(ctx, webhookID, userID)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("no rows found for webhook")
 		s.encoderDecoder.EncodeNotFoundResponse(res)
 

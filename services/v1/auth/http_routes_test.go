@@ -46,7 +46,6 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -67,7 +66,6 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 
 	T.Run("with invalid cookie", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/api/v1/something", nil)
@@ -93,7 +91,6 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 
 	T.Run("without cookie", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/api/v1/something", nil)
@@ -112,7 +109,6 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 
 	T.Run("with valid oauth2 client", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -137,7 +133,6 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 
 	T.Run("with valid cookie", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -168,7 +163,6 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 
 	T.Run("with nothing", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -197,7 +191,6 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -228,7 +221,6 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 
 	T.Run("without cookie", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
@@ -242,7 +234,6 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 
 	T.Run("with error fetching user", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -278,7 +269,6 @@ func TestService_LoginHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -328,7 +318,6 @@ func TestService_LoginHandler(T *testing.T) {
 
 	T.Run("with error fetching login data from request", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
@@ -345,7 +334,6 @@ func TestService_LoginHandler(T *testing.T) {
 
 	T.Run("with invalid login", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -395,7 +383,6 @@ func TestService_LoginHandler(T *testing.T) {
 
 	T.Run("with error validating login", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -441,7 +428,6 @@ func TestService_LoginHandler(T *testing.T) {
 
 	T.Run("with error building cookie", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -495,7 +481,6 @@ func TestService_LoginHandler(T *testing.T) {
 
 	T.Run("with error building cookie and error encoding cookie response", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -553,7 +538,6 @@ func TestService_LogoutHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -581,7 +565,6 @@ func TestService_LogoutHandler(T *testing.T) {
 
 	T.Run("without cookie", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
@@ -596,7 +579,6 @@ func TestService_LogoutHandler(T *testing.T) {
 
 	T.Run("with error building cookie", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -855,7 +837,6 @@ func TestService_StatusHandler(T *testing.T) {
 
 	T.Run("normal operation", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -886,7 +867,6 @@ func TestService_StatusHandler(T *testing.T) {
 
 	T.Run("with error fetching user", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -921,7 +901,6 @@ func TestService_CycleSecretHandler(T *testing.T) {
 
 	T.Run("normal operation", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -955,7 +934,6 @@ func TestService_buildCookie(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		cookie, err := s.buildCookie("example", time.Now().Add(s.config.CookieLifetime))
@@ -965,7 +943,6 @@ func TestService_buildCookie(T *testing.T) {
 
 	T.Run("with erroneous cookie building setup", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 		s.cookieManager = securecookie.New(
 			securecookie.GenerateRandomKey(0),

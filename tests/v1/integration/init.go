@@ -18,6 +18,7 @@ import (
 
 const (
 	debug         = true
+	timeout       = 5 * time.Second
 	nonexistentID = 999999999
 )
 
@@ -35,21 +36,21 @@ var (
 )
 
 func init() {
-	_, span := tracing.StartSpan(context.Background(), "init")
+	ctx, span := tracing.StartSpan(context.Background(), "init")
 	defer span.End()
 
 	urlToUse = testutil.DetermineServiceURL()
 	logger := zerolog.NewLogger()
 
 	logger.WithValue("url", urlToUse).Info("checking server")
-	testutil.EnsureServerIsUp(urlToUse)
+	testutil.EnsureServerIsUp(ctx, urlToUse)
 
 	ogUser, err := testutil.CreateObligatoryUser(urlToUse, debug)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	oa2Client, err := testutil.CreateObligatoryClient(urlToUse, ogUser)
+	oa2Client, err := testutil.CreateObligatoryClient(ctx, urlToUse, ogUser)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -57,7 +58,7 @@ func init() {
 	todoClient = initializeClient(oa2Client)
 	todoClient.Debug = urlToUse == "" // change this for debug logs
 
-	adminOAuth2Client, err := testutil.CreateObligatoryClient(urlToUse, premadeAdminUser)
+	adminOAuth2Client, err := testutil.CreateObligatoryClient(ctx, urlToUse, premadeAdminUser)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -72,7 +73,7 @@ func init() {
 func buildHTTPClient() *http.Client {
 	return &http.Client{
 		Transport: http.DefaultTransport,
-		Timeout:   5 * time.Second,
+		Timeout:   timeout,
 	}
 }
 

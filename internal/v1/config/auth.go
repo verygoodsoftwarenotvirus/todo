@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	// DefaultCookieLifetime is the default amount of time we authorize cookies for
+	// DefaultCookieLifetime is the how long a cookie is valid.
 	DefaultCookieLifetime = 24 * time.Hour
 )
 

@@ -71,7 +71,7 @@ func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reque
 		// fetch oauth2 client from clientDataManager.
 		client, err = s.clientDataManager.GetOAuth2ClientByClientID(ctx, clientID)
 
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			logger.Error(err, "error fetching OAuth2 Client")
 			s.encoderDecoder.EncodeErrorResponse(res, "no such oauth2 client", http.StatusUnauthorized)
 			return "", err
@@ -102,8 +102,9 @@ func (s *Service) UserAuthorizationHandler(_ http.ResponseWriter, req *http.Requ
 	ctx, span := tracing.StartSpan(req.Context(), "UserAuthorizationHandler")
 	defer span.End()
 
-	logger := s.logger.WithRequest(req)
 	var uid uint64
+
+	logger := s.logger.WithRequest(req)
 
 	// check context for client.
 	if client, clientOk := ctx.Value(models.OAuth2ClientKey).(*models.OAuth2Client); !clientOk {
@@ -113,6 +114,7 @@ func (s *Service) UserAuthorizationHandler(_ http.ResponseWriter, req *http.Requ
 			logger.Debug("no user attached to this request")
 			return "", errors.New("user not found")
 		}
+
 		uid = si.UserID
 	} else {
 		uid = client.BelongsToUser

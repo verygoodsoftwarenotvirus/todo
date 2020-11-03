@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -83,6 +84,7 @@ func (p *Postgres) scanOAuth2Clients(rows database.ResultIterator) ([]*models.OA
 
 		list = append(list, client)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -141,7 +143,7 @@ func (p *Postgres) buildGetAllOAuth2ClientsQuery() (query string) {
 func (p *Postgres) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Client, error) {
 	rows, err := p.db.QueryContext(ctx, p.buildGetAllOAuth2ClientsQuery())
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
@@ -161,7 +163,7 @@ func (p *Postgres) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64
 
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
@@ -200,7 +202,7 @@ func (p *Postgres) GetOAuth2Client(ctx context.Context, clientID, userID uint64)
 
 	client, err := p.scanOAuth2Client(row)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("querying for oauth2 client: %w", err)
@@ -264,7 +266,7 @@ func (p *Postgres) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, f
 	rows, err := p.db.QueryContext(ctx, query, args...)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("querying for oauth2 clients: %w", err)
@@ -291,7 +293,7 @@ func (p *Postgres) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, f
 	return ocl, nil
 }
 
-// buildCreateOAuth2ClientQuery returns a SQL query (and args) that will create the given OAuth2Client in the database
+// buildCreateOAuth2ClientQuery returns a SQL query (and args) that will create the given OAuth2Client in the database.
 func (p *Postgres) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (query string, args []interface{}) {
 	var err error
 
@@ -341,7 +343,7 @@ func (p *Postgres) CreateOAuth2Client(ctx context.Context, input *models.OAuth2C
 	return x, nil
 }
 
-// buildUpdateOAuth2ClientQuery returns a SQL query (and args) that will update a given OAuth2 client in the database
+// buildUpdateOAuth2ClientQuery returns a SQL query (and args) that will update a given OAuth2 client in the database.
 func (p *Postgres) buildUpdateOAuth2ClientQuery(input *models.OAuth2Client) (query string, args []interface{}) {
 	var err error
 

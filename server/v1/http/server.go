@@ -22,9 +22,9 @@ import (
 )
 
 const (
-	maxTimeout      = 120 * time.Second
-	serverNamespace = "todo-service"
-	loggerName      = "api_server"
+	serverNamespace         = "todo-service"
+	loggerName              = "api_server"
+	minimumCookieSecretSize = 32
 )
 
 type (
@@ -66,7 +66,7 @@ func ProvideServer(
 	logger logging.Logger,
 	encoder encoding.EncoderDecoder,
 ) (*Server, error) {
-	if len(cfg.Auth.CookieSecret) < 32 {
+	if len(cfg.Auth.CookieSecret) < minimumCookieSecretSize {
 		err := errors.New("cookie secret is too short, must be at least 32 characters in length")
 		logger.Error(err, "cookie secret failure")
 
@@ -131,7 +131,8 @@ func (s *Server) Serve() {
 	// returns ErrServerClosed on graceful close.
 	if err := s.httpServer.ListenAndServe(); err != nil {
 		s.logger.Error(err, "server shutting down")
-		if err == http.ErrServerClosed {
+
+		if errors.Is(err, http.ErrServerClosed) {
 			// NOTE: there is a chance that next line won't have time to run,
 			// as main() doesn't wait for this goroutine to stop.
 			os.Exit(0)
@@ -139,13 +140,20 @@ func (s *Server) Serve() {
 	}
 }
 
+const (
+	maxTimeout   = 120 * time.Second
+	readTimeout  = 5 * time.Second
+	writeTimeout = 2 * readTimeout
+	idleTimeout  = maxTimeout
+)
+
 // provideHTTPServer provides an HTTP httpServer.
 func provideHTTPServer() *http.Server {
 	// heavily inspired by https://blog.cloudflare.com/exposing-go-on-the-internet/
 	srv := &http.Server{
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  120 * time.Second,
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+		IdleTimeout:  idleTimeout,
 		TLSConfig: &tls.Config{
 			PreferServerCipherSuites: true,
 			// "Only use curves which have assembly implementations"
@@ -164,5 +172,6 @@ func provideHTTPServer() *http.Server {
 			},
 		},
 	}
+
 	return srv
 }

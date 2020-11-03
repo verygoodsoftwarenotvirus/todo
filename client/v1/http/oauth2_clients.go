@@ -98,6 +98,7 @@ func (c *V1Client) CreateOAuth2Client(
 	defer span.End()
 
 	var oauth2Client *models.OAuth2Client
+
 	if cookie == nil {
 		return nil, errors.New("cookie required for request")
 	}

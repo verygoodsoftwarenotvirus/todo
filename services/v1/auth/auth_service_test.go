@@ -43,7 +43,6 @@ func TestProvideAuthService(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		logger := noop.NewLogger()
 		ed := encoding.ProvideResponseEncoder(logger)
 

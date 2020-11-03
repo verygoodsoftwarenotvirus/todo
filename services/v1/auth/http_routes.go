@@ -16,12 +16,7 @@ import (
 )
 
 const (
-	// CookieName is the name of the cookie we attach to requests.
-	CookieName         = "todocookie"
-	cookieErrorLogName = "_COOKIE_CONSTRUCTION_ERROR_"
-
-	sessionInfoKey = string(models.SessionInfoKey)
-	staticError    = "error encountered, please try again later"
+	staticError = "error encountered, please try again later"
 )
 
 // DecodeCookieFromRequest takes a request object and fetches the cookie data if it is present.
@@ -32,14 +27,13 @@ func (s *Service) DecodeCookieFromRequest(ctx context.Context, req *http.Request
 	cookie, err := req.Cookie(CookieName)
 	if err != http.ErrNoCookie && cookie != nil {
 		var token string
+
 		decodeErr := s.cookieManager.Decode(CookieName, cookie.Value, &token)
 		if decodeErr != nil {
 			return nil, fmt.Errorf("decoding request cookie: %w", decodeErr)
 		}
 
-		var sessionErr error
-		ctx, sessionErr = s.sessionManager.Load(ctx, token)
-		if sessionErr != nil {
+		if ctx, err = s.sessionManager.Load(ctx, token); err != nil {
 			return nil, errors.New("error loading token")
 		}
 
@@ -87,7 +81,6 @@ func (s *Service) fetchUserFromCookie(ctx context.Context, req *http.Request) (*
 	defer span.End()
 
 	logger := s.logger.WithRequest(req).WithValue("cookie_count", len(req.Cookies()))
-
 	logger.Debug("fetchUserFromCookie called")
 
 	ca, decodeErr := s.DecodeCookieFromRequest(ctx, req)
@@ -101,6 +94,7 @@ func (s *Service) fetchUserFromCookie(ctx context.Context, req *http.Request) (*
 		s.logger.Debug("unable to determine user from request")
 		return nil, fmt.Errorf("determining user from request: %w", userFetchErr)
 	}
+
 	tracing.AttachUserIDToSpan(span, ca.UserID)
 
 	return user, nil
@@ -120,31 +114,32 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeErrorResponse(res, "error validating request", http.StatusUnauthorized)
 		return
 	}
+
 	logger = logger.WithValue("username", loginData.Username)
 
 	user, err := s.userDB.GetUserByUsername(ctx, loginData.Username)
-	if user == nil || (err != nil && err == sql.ErrNoRows) {
+	if user == nil || (err != nil && errors.Is(err, sql.ErrNoRows)) {
 		logger.WithValue("user_is_nil", user == nil).Error(err, "error fetching user")
 		s.encoderDecoder.EncodeErrorResponse(res, "error validating request", http.StatusUnauthorized)
 		return
 	}
 
+	loginValid, err := s.validateLogin(ctx, user, loginData)
+
 	tracing.AttachUserIDToSpan(span, user.ID)
 	tracing.AttachUsernameToSpan(span, user.Username)
-	logger = logger.WithValue("user_id", user.ID)
+	logger = logger.WithValue("user_id", user.ID).WithValue("login_valid", loginValid)
 
-	loginValid, err := s.validateLogin(ctx, user, loginData)
-	logger = logger.WithValue("login_valid", loginValid)
 	if err != nil {
-		logger.Error(err, "error encountered validating login")
-
-		if err == auth.ErrInvalidTwoFactorCode {
+		if errors.Is(err, auth.ErrInvalidTwoFactorCode) {
 			s.auditLog.LogUnsuccessfulLoginBad2FATokenEvent(ctx, user.ID)
-		} else if err == auth.ErrPasswordDoesNotMatch {
+		} else if errors.Is(err, auth.ErrPasswordDoesNotMatch) {
 			s.auditLog.LogUnsuccessfulLoginBadPasswordEvent(ctx, user.ID)
 		}
 
+		logger.Error(err, "error encountered validating login")
 		s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusUnauthorized)
+
 		return
 	} else if !loginValid {
 		logger.Debug("login was invalid")
@@ -153,8 +148,7 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var sessionErr error
-	ctx, sessionErr = s.sessionManager.Load(ctx, "")
+	ctx, sessionErr := s.sessionManager.Load(ctx, "")
 	if sessionErr != nil {
 		logger.Error(sessionErr, "error loading token")
 		s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusInternalServerError)
@@ -166,6 +160,7 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusInternalServerError)
 		return
 	}
+
 	s.sessionManager.Put(ctx, sessionInfoKey, user.ToSessionInfo())
 
 	token, expiry, err := s.sessionManager.Commit(ctx)
@@ -184,12 +179,13 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 
 	logger.Debug("login successful")
 	s.auditLog.LogSuccessfulLoginEvent(ctx, user.ID)
-
 	http.SetCookie(res, cookie)
+
 	statusResponse := &models.UserStatusResponse{
 		Authenticated: true,
 		IsAdmin:       user.IsAdmin,
 	}
+
 	s.encoderDecoder.EncodeResponseWithStatus(res, statusResponse, http.StatusAccepted)
 }
 
@@ -225,7 +221,6 @@ func (s *Service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 		if c, cookieBuildingErr := s.buildCookie("deleted", time.Time{}); cookieBuildingErr == nil && c != nil {
 			c.MaxAge = -1
 			http.SetCookie(res, c)
-
 			s.auditLog.LogLogoutEvent(ctx, si.UserID)
 		} else {
 			logger.Error(cookieBuildingErr, "error encountered building cookie")
@@ -281,7 +276,7 @@ func (s *Service) CycleSecretHandler(res http.ResponseWriter, req *http.Request)
 	}
 
 	s.cookieManager = securecookie.New(
-		securecookie.GenerateRandomKey(64),
+		securecookie.GenerateRandomKey(cookieSecretSize),
 		[]byte(s.config.CookieSecret),
 	)
 

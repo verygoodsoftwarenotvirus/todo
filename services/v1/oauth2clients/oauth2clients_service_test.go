@@ -52,7 +52,6 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		mockOAuth2ClientDataManager := &mockmodels.OAuth2ClientDataManager{}
 
 		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
@@ -77,7 +76,6 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 
 	T.Run("with error providing counter", func(t *testing.T) {
 		t.Parallel()
-
 		mockOAuth2ClientDataManager := &mockmodels.OAuth2ClientDataManager{}
 
 		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
@@ -106,7 +104,6 @@ func Test_clientStore_GetByID(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		mockDB := database.BuildMockDatabase()
@@ -127,7 +124,6 @@ func Test_clientStore_GetByID(T *testing.T) {
 
 	T.Run("with no rows", func(t *testing.T) {
 		t.Parallel()
-
 		exampleID := "blah"
 
 		mockDB := database.BuildMockDatabase()
@@ -147,7 +143,6 @@ func Test_clientStore_GetByID(T *testing.T) {
 
 	T.Run("with error reading from clientDataManager", func(t *testing.T) {
 		t.Parallel()
-
 		exampleID := "blah"
 
 		mockDB := database.BuildMockDatabase()
@@ -171,7 +166,6 @@ func TestService_HandleAuthorizeRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		moah := &mockOAuth2Handler{}
@@ -194,7 +188,6 @@ func TestService_HandleTokenRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		moah := &mockOAuth2Handler{}

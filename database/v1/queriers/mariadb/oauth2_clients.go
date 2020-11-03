@@ -3,6 +3,7 @@ package mariadb
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -83,6 +84,7 @@ func (m *MariaDB) scanOAuth2Clients(rows database.ResultIterator) ([]*models.OAu
 
 		list = append(list, client)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -141,7 +143,7 @@ func (m *MariaDB) buildGetAllOAuth2ClientsQuery() (query string) {
 func (m *MariaDB) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Client, error) {
 	rows, err := m.db.QueryContext(ctx, m.buildGetAllOAuth2ClientsQuery())
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
@@ -161,7 +163,7 @@ func (m *MariaDB) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64)
 
 	rows, err := m.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
@@ -200,7 +202,7 @@ func (m *MariaDB) GetOAuth2Client(ctx context.Context, clientID, userID uint64) 
 
 	client, err := m.scanOAuth2Client(row)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("querying for oauth2 client: %w", err)
@@ -264,7 +266,7 @@ func (m *MariaDB) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, fi
 	rows, err := m.db.QueryContext(ctx, query, args...)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("querying for oauth2 clients: %w", err)
@@ -340,10 +342,10 @@ func (m *MariaDB) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cl
 	// fetch the last inserted ID.
 	id, err := res.LastInsertId()
 	m.logIDRetrievalError(err)
-	x.ID = uint64(id)
 
 	// this won't be completely accurate, but it will suffice.
 	x.CreatedOn = m.timeTeller.Now()
+	x.ID = uint64(id)
 
 	return x, nil
 }

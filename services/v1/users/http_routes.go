@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/base64"
+	"errors"
 	"fmt"
 
 	"image/png"
@@ -46,7 +47,7 @@ func (s *Service) validateCredentialChangeRequest(
 
 	// fetch user data.
 	user, err := s.userDataManager.GetUser(ctx, userID)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, http.StatusNotFound
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching user")
@@ -116,12 +117,12 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeNoInputResponse(res)
 		return
 	}
-	tracing.AttachUsernameToSpan(span, userInput.Username)
 
 	// NOTE: I feel comfortable letting username be in the logger, since
 	// the logging statements below are only in the event of errors. If
 	// and when that changes, this can/should be removed.
 	logger = logger.WithValue("username", userInput.Username)
+	tracing.AttachUsernameToSpan(span, userInput.Username)
 
 	// ensure the password isn't garbage-tier
 	if err := passwordvalidator.Validate(userInput.Password, minimumPasswordEntropy); err != nil {
@@ -163,7 +164,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// create the user.
 	user, err := s.userDataManager.CreateUser(ctx, input)
 	if err != nil {
-		if err == dbclient.ErrUserExists {
+		if errors.Is(err, dbclient.ErrUserExists) {
 			logger.Info("duplicate username attempted")
 			s.encoderDecoder.EncodeErrorResponse(res, "username already taken", http.StatusBadRequest)
 			return
@@ -247,7 +248,7 @@ func (s *Service) SelfHandler(res http.ResponseWriter, req *http.Request) {
 
 	// fetch user data.
 	x, err := s.userDataManager.GetUser(ctx, userID)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("no such user")
 		s.encoderDecoder.EncodeNotFoundResponse(res)
 		return
@@ -275,7 +276,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 
 	// fetch user data.
 	x, err := s.userDataManager.GetUser(ctx, userID)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("no such user")
 		s.encoderDecoder.EncodeNotFoundResponse(res)
 		return
@@ -311,6 +312,7 @@ func (s *Service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
+
 	tracing.AttachUserIDToSpan(span, user.ID)
 	tracing.AttachUsernameToSpan(span, user.Username)
 
@@ -327,8 +329,8 @@ func (s *Service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 			return
 		}
-		statusCode = http.StatusAccepted
 
+		statusCode = http.StatusAccepted
 		s.auditLog.LogUserVerifyTwoFactorSecretEvent(ctx, user.ID)
 	} else {
 		statusCode = http.StatusBadRequest

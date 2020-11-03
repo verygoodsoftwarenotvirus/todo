@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -69,7 +70,7 @@ type (
 	// ConnectionDetails is a string alias for a Postgres url.
 	ConnectionDetails string
 
-	// Querier is a subset interface for sql.{DB|Tx|Stmt} objects
+	// Querier is a subset interface for sql.{DB|Tx|Stmt} objects.
 	Querier interface {
 		ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error)
 		QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows, error)
@@ -139,7 +140,7 @@ func (p *Postgres) logQueryBuildingError(err error) {
 // buildError takes a given error and wraps it with a message, provided that it
 // IS NOT sql.ErrNoRows, which we want to preserve and surface to the services.
 func buildError(err error, msg string) error {
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return err
 	}
 

@@ -34,7 +34,6 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
 
@@ -60,7 +59,6 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 	T.Run("bad input", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
 
@@ -81,7 +79,6 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 	T.Run("with error decoding request", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -114,7 +111,6 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
 
@@ -140,7 +136,6 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 
 	T.Run("with error decoding request", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		ed := &mockencoding.EncoderDecoder{}

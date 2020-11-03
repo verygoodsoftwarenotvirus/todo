@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
@@ -31,14 +32,16 @@ func (a *ServiceAttacker) Do(_ context.Context) hazana.DoResult {
 
 	req, err := act.Action()
 	if err != nil || req == nil {
-		if err == ErrUnavailableYet {
+		if errors.Is(err, ErrUnavailableYet) {
 			return hazana.DoResult{
 				RequestLabel: act.Name,
 				Error:        nil,
 				StatusCode:   200,
 			}
 		}
+
 		log.Printf("something has gone awry: %v\n", err)
+
 		return hazana.DoResult{Error: err}
 	}
 
@@ -47,11 +50,13 @@ func (a *ServiceAttacker) Do(_ context.Context) hazana.DoResult {
 		bo int64
 		bi []byte
 	)
+
 	if req.Body != nil {
 		bi, err = ioutil.ReadAll(req.Body)
 		if err != nil {
 			return hazana.DoResult{Error: err}
 		}
+
 		rdr := ioutil.NopCloser(bytes.NewBuffer(bi))
 		req.Body = rdr
 	}
@@ -85,12 +90,13 @@ func (a *ServiceAttacker) Clone() hazana.Attack {
 func main() {
 	todoClient := initializeClient(oa2Client)
 
-	var runTime = 10 * time.Minute
+	runTime := 10 * time.Minute
 	if rt := os.Getenv("LOADTEST_RUN_TIME"); rt != "" {
 		_rt, err := time.ParseDuration(rt)
 		if err != nil {
 			panic(err)
 		}
+
 		runTime = _rt
 	}
 

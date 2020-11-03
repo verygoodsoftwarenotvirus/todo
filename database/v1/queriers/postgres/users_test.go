@@ -67,6 +67,7 @@ func TestPostgres_ScanUsers(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {
+		t.Parallel()
 		p, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
@@ -78,6 +79,7 @@ func TestPostgres_ScanUsers(T *testing.T) {
 	})
 
 	T.Run("logs row closing errors", func(t *testing.T) {
+		t.Parallel()
 		p, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
@@ -94,6 +96,7 @@ func TestPostgres_buildGetUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		p, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -114,6 +117,7 @@ func TestPostgres_GetUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -123,9 +127,7 @@ func TestPostgres_GetUser(T *testing.T) {
 		expectedQuery, expectedArgs := p.buildGetUserQuery(exampleUser.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildMockRowsFromUser(exampleUser))
 
 		actual, err := p.GetUser(ctx, exampleUser.ID)
@@ -136,6 +138,7 @@ func TestPostgres_GetUser(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -144,9 +147,7 @@ func TestPostgres_GetUser(T *testing.T) {
 		expectedQuery, expectedArgs := p.buildGetUserQuery(exampleUser.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := p.GetUser(ctx, exampleUser.ID)
@@ -162,6 +163,7 @@ func TestPostgres_buildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		p, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -182,6 +184,7 @@ func TestPostgres_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -191,9 +194,7 @@ func TestPostgres_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		expectedQuery, expectedArgs := p.buildGetUserWithUnverifiedTwoFactorSecretQuery(exampleUser.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildMockRowsFromUser(exampleUser))
 
 		actual, err := p.GetUserWithUnverifiedTwoFactorSecret(ctx, exampleUser.ID)
@@ -204,6 +205,7 @@ func TestPostgres_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -212,9 +214,7 @@ func TestPostgres_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		expectedQuery, expectedArgs := p.buildGetUserWithUnverifiedTwoFactorSecretQuery(exampleUser.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := p.GetUserWithUnverifiedTwoFactorSecret(ctx, exampleUser.ID)
@@ -230,6 +230,7 @@ func TestPostgres_buildGetUsersQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		p, _ := buildTestService(t)
 
 		filter := fakemodels.BuildFleshedOutQueryFilter()
@@ -253,6 +254,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -266,9 +268,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 		expectedQuery, expectedArgs := p.buildGetUsersQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromUser(
 					&exampleUserList.Users[0],
@@ -285,6 +285,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -293,9 +294,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 		expectedQuery, expectedArgs := p.buildGetUsersQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := p.GetUsers(ctx, filter)
@@ -307,6 +306,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -315,9 +315,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 		expectedQuery, expectedArgs := p.buildGetUsersQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := p.GetUsers(ctx, filter)
@@ -328,6 +326,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 	})
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -336,9 +335,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 		expectedQuery, expectedArgs := p.buildGetUsersQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromUser(fakemodels.BuildFakeUser()))
 
 		actual, err := p.GetUsers(ctx, filter)
@@ -353,6 +350,7 @@ func TestPostgres_buildGetUserByUsernameQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		p, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -373,6 +371,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -382,9 +381,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 		expectedQuery, expectedArgs := p.buildGetUserByUsernameQuery(exampleUser.Username)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildMockRowsFromUser(exampleUser))
 
 		actual, err := p.GetUserByUsername(ctx, exampleUser.Username)
@@ -395,6 +392,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -403,9 +401,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 		expectedQuery, expectedArgs := p.buildGetUserByUsernameQuery(exampleUser.Username)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := p.GetUserByUsername(ctx, exampleUser.Username)
@@ -417,6 +413,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -425,9 +422,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 		expectedQuery, expectedArgs := p.buildGetUserByUsernameQuery(exampleUser.Username)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := p.GetUserByUsername(ctx, exampleUser.Username)
@@ -442,6 +437,7 @@ func TestPostgres_buildGetAllUsersCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		p, _ := buildTestService(t)
 
 		expectedQuery := "SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL"
@@ -456,6 +452,7 @@ func TestPostgres_GetAllUsersCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleCount := uint64(123)
@@ -475,6 +472,7 @@ func TestPostgres_GetAllUsersCount(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		p, mockDB := buildTestService(t)
@@ -496,6 +494,7 @@ func TestPostgres_buildCreateUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		p, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -521,6 +520,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		p, mockDB := buildTestService(t)
@@ -534,9 +534,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleUser.ID, exampleUser.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(exampleRows)
 
 		actual, err := p.CreateUser(ctx, expectedInput)
@@ -547,6 +545,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 	})
 
 	T.Run("with postgres row exists error", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		p, mockDB := buildTestService(t)
@@ -558,9 +557,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 		expectedQuery, expectedArgs := p.buildCreateUserQuery(expectedInput)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(&postgres.Error{Code: postgresRowExistsErrorCode})
 
 		actual, err := p.CreateUser(ctx, expectedInput)
@@ -572,6 +569,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		p, mockDB := buildTestService(t)
@@ -583,9 +581,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 		expectedQuery, expectedArgs := p.buildCreateUserQuery(expectedInput)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := p.CreateUser(ctx, expectedInput)
@@ -600,6 +596,7 @@ func TestPostgres_buildUpdateUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		p, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -625,6 +622,7 @@ func TestPostgres_UpdateUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -634,9 +632,7 @@ func TestPostgres_UpdateUser(T *testing.T) {
 		expectedQuery, expectedArgs := p.buildUpdateUserQuery(exampleUser)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(exampleRows)
 
 		err := p.UpdateUser(ctx, exampleUser)
@@ -650,6 +646,7 @@ func TestPostgres_buildUpdateUserPasswordQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		p, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -672,6 +669,7 @@ func TestPostgres_UpdateUserPassword(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -680,9 +678,7 @@ func TestPostgres_UpdateUserPassword(T *testing.T) {
 		expectedQuery, expectedArgs := p.buildUpdateUserPasswordQuery(exampleUser.ID, exampleUser.HashedPassword)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(driver.ResultNoRows)
 
 		err := p.UpdateUserPassword(ctx, exampleUser.ID, exampleUser.HashedPassword)
@@ -696,6 +692,7 @@ func TestPostgres_buildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		p, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -716,6 +713,7 @@ func TestPostgres_VerifyUserTwoFactorSecret(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -724,9 +722,7 @@ func TestPostgres_VerifyUserTwoFactorSecret(T *testing.T) {
 		expectedQuery, expectedArgs := p.buildVerifyUserTwoFactorSecretQuery(exampleUser.ID)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		err := p.VerifyUserTwoFactorSecret(ctx, exampleUser.ID)
@@ -740,6 +736,7 @@ func TestPostgres_buildArchiveUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		p, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -760,6 +757,7 @@ func TestPostgres_ArchiveUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -768,9 +766,7 @@ func TestPostgres_ArchiveUser(T *testing.T) {
 		expectedQuery, expectedArgs := p.buildArchiveUserQuery(exampleUser.ID)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		err := p.ArchiveUser(ctx, exampleUser.ID)

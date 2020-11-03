@@ -15,7 +15,12 @@ import (
 )
 
 const (
-	serviceName = "auth_service"
+	// CookieName is the name of the cookie we attach to requests.
+	CookieName         = "todocookie"
+	serviceName        = "auth_service"
+	sessionInfoKey     = string(models.SessionInfoKey)
+	cookieErrorLogName = "_COOKIE_CONSTRUCTION_ERROR_"
+	cookieSecretSize   = 64
 )
 
 type (
@@ -25,7 +30,7 @@ type (
 		ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.Request) (*models.OAuth2Client, error)
 	}
 
-	// cookieEncoderDecoder is a stand-in interface for gorilla/securecookie
+	// cookieEncoderDecoder is a stand-in interface for gorilla/securecookie.
 	cookieEncoderDecoder interface {
 		Encode(name string, value interface{}) (string, error)
 		Decode(name, value string, dst interface{}) error
@@ -34,7 +39,7 @@ type (
 	// SessionInfoFetcher is a function that fetches user IDs.
 	SessionInfoFetcher func(*http.Request) (*models.SessionInfo, error)
 
-	// Service handles authentication service-wide
+	// Service handles authentication service-wide.
 	Service struct {
 		config               config.AuthSettings
 		logger               logging.Logger
@@ -72,7 +77,7 @@ func ProvideAuthService(
 		sessionManager:       sessionManager,
 		sessionInfoFetcher:   sessionInfoFetcher,
 		cookieManager: securecookie.New(
-			securecookie.GenerateRandomKey(64),
+			securecookie.GenerateRandomKey(cookieSecretSize),
 			[]byte(cfg.CookieSecret),
 		),
 	}

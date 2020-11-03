@@ -21,7 +21,9 @@ const (
 func buildTestService(t *testing.T) (*Sqlite, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
+
 	s := ProvideSqlite(true, db, noop.NewLogger())
+
 	return s.(*Sqlite), mock
 }
 
@@ -73,6 +75,7 @@ func TestProvideSqlite(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		buildTestService(t)
 	})
 }
@@ -81,6 +84,7 @@ func TestSqlite_IsReady(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		s, _ := buildTestService(t)
@@ -92,6 +96,7 @@ func TestSqlite_logQueryBuildingError(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		s, _ := buildTestService(t)
 		s.logQueryBuildingError(errors.New("blah"))
 	})
@@ -101,6 +106,7 @@ func TestSqlite_logIDRetrievalError(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		s, _ := buildTestService(t)
 		s.logIDRetrievalError(errors.New("blah"))
 	})
@@ -110,6 +116,7 @@ func TestProvideSqliteDB(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		_, err := ProvideSqliteDB(noop.NewLogger(), "")
 		assert.NoError(t, err)
 	})

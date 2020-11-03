@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
@@ -96,7 +97,7 @@ func (p *Postgres) scanUsers(rows database.ResultIterator) ([]models.User, error
 	return list, nil
 }
 
-// buildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID
+// buildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
 func (p *Postgres) buildGetUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -131,7 +132,7 @@ func (p *Postgres) GetUser(ctx context.Context, userID uint64) (*models.User, er
 }
 
 // buildGetUserWithUnverifiedTwoFactorSecretQuery returns a SQL query (and argument) for retrieving a user
-// by their database ID, who has an unverified two factor secret
+// by their database ID, who has an unverified two factor secret.
 func (p *Postgres) buildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -150,7 +151,7 @@ func (p *Postgres) buildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64)
 	return query, args
 }
 
-// GetUserWithUnverifiedTwoFactorSecret fetches a user with an unverified two factor secret
+// GetUserWithUnverifiedTwoFactorSecret fetches a user with an unverified two factor secret.
 func (p *Postgres) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*models.User, error) {
 	query, args := p.buildGetUserWithUnverifiedTwoFactorSecretQuery(userID)
 	row := p.db.QueryRowContext(ctx, query, args...)
@@ -163,7 +164,7 @@ func (p *Postgres) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, use
 	return u, err
 }
 
-// buildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username
+// buildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
 func (p *Postgres) buildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
 	var err error
 
@@ -191,7 +192,7 @@ func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*mod
 
 	u, err := p.scanUser(row)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("fetching user from database: %w", err)
@@ -273,7 +274,7 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 	return x, nil
 }
 
-// buildCreateUserQuery returns a SQL query (and arguments) that would create a given User
+// buildCreateUserQuery returns a SQL query (and arguments) that would create a given User.
 func (p *Postgres) buildCreateUserQuery(input models.UserDatabaseCreationInput) (query string, args []interface{}) {
 	var err error
 
@@ -330,7 +331,7 @@ func (p *Postgres) CreateUser(ctx context.Context, input models.UserDatabaseCrea
 	return x, nil
 }
 
-// buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row
+// buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row.
 func (p *Postgres) buildUpdateUserQuery(input *models.User) (query string, args []interface{}) {
 	var err error
 
@@ -391,7 +392,7 @@ func (p *Postgres) UpdateUserPassword(ctx context.Context, userID uint64, newHas
 	return err
 }
 
-// buildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret
+// buildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
 func (p *Postgres) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 

@@ -2,12 +2,10 @@ package items
 
 import (
 	"database/sql"
-	"fmt"
-	"net/http"
-	"strings"
-
+	"errors"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"net/http"
 )
 
 const (
@@ -15,7 +13,7 @@ const (
 	URIParamKey = "itemID"
 )
 
-// parseBool differs from strconv.ParseBool in that it returns false by default
+// parseBool differs from strconv.ParseBool in that it returns false by default.
 func parseBool(str string) bool {
 	switch str {
 	case "1", "t", "T", "true", "TRUE", "True":
@@ -41,6 +39,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
+
 	tracing.AttachSessionInfoToSpan(span, *si)
 	logger = logger.WithValue("user_id", si.UserID)
 
@@ -53,19 +52,20 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		items *models.ItemList
 		err   error
 	)
+
 	if si.UserIsAdmin && isAdminRequest {
 		items, err = s.itemDataManager.GetItemsForAdmin(ctx, filter)
 	} else {
 		items, err = s.itemDataManager.GetItems(ctx, si.UserID, filter)
 	}
-	if err == sql.ErrNoRows {
+
+	if errors.Is(err, sql.ErrNoRows) {
 		// in the event no rows exist return an empty list.
-		items = &models.ItemList{
-			Items: []models.Item{},
-		}
+		items = &models.ItemList{Items: []models.Item{}}
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching items")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+
 		return
 	}
 
@@ -92,6 +92,7 @@ func (s *Service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
+
 	tracing.AttachSessionInfoToSpan(span, *si)
 	logger = logger.WithValue("user_id", si.UserID)
 
@@ -107,23 +108,18 @@ func (s *Service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 		items []models.Item
 		dbErr error
 	)
+
 	if isAdminRequest {
 		relevantIDs, searchErr = s.search.SearchForAdmin(ctx, query)
 	} else {
 		relevantIDs, searchErr = s.search.Search(ctx, query, si.UserID)
 	}
+
 	if searchErr != nil {
 		logger.Error(searchErr, "error encountered executing search query")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
-
-	relevantIDstrings := []string{}
-	for _, x := range relevantIDs {
-		relevantIDstrings = append(relevantIDstrings, fmt.Sprintf("%d", x))
-	}
-	conglom := strings.Join(relevantIDstrings, ",")
-	logger.Debug(conglom)
 
 	// fetch items from database.
 	if isAdminRequest {
@@ -132,7 +128,7 @@ func (s *Service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 		items, dbErr = s.itemDataManager.GetItemsWithIDs(ctx, si.UserID, filter.Limit, relevantIDs)
 	}
 
-	if dbErr == sql.ErrNoRows {
+	if errors.Is(dbErr, sql.ErrNoRows) {
 		// in the event no rows exist return an empty list.
 		items = []models.Item{}
 	} else if dbErr != nil {
@@ -166,6 +162,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
+
 	tracing.AttachSessionInfoToSpan(span, *si)
 	logger = logger.WithValue("user_id", si.UserID)
 	input.BelongsToUser = si.UserID
@@ -182,14 +179,12 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue("item_id", x.ID)
 
 	// notify relevant parties.
-	s.itemCounter.Increment(ctx)
 	if searchIndexErr := s.search.Index(ctx, x.ID, x); searchIndexErr != nil {
 		logger.Error(searchIndexErr, "adding item to search index")
 	}
 
+	s.itemCounter.Increment(ctx)
 	s.auditLog.LogItemCreationEvent(ctx, x)
-
-	// encode our response and peace.
 	s.encoderDecoder.EncodeResponseWithStatus(res, x, http.StatusCreated)
 }
 
@@ -206,6 +201,7 @@ func (s *Service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
+
 	tracing.AttachSessionInfoToSpan(span, *si)
 	logger = logger.WithValue("user_id", si.UserID)
 
@@ -238,6 +234,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
+
 	tracing.AttachSessionInfoToSpan(span, *si)
 	logger = logger.WithValue("user_id", si.UserID)
 
@@ -248,7 +245,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 
 	// fetch item from database.
 	x, err := s.itemDataManager.GetItem(ctx, itemID, si.UserID)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(res)
 		return
 	} else if err != nil {
@@ -282,6 +279,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
+
 	tracing.AttachSessionInfoToSpan(span, *si)
 	logger = logger.WithValue("user_id", si.UserID)
 	input.BelongsToUser = si.UserID
@@ -293,7 +291,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// fetch item from database.
 	x, err := s.itemDataManager.GetItem(ctx, itemID, si.UserID)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(res)
 		return
 	} else if err != nil {
@@ -316,6 +314,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	if searchIndexErr := s.search.Index(ctx, x.ID, x); searchIndexErr != nil {
 		logger.Error(searchIndexErr, "updating item in search index")
 	}
+
 	s.auditLog.LogItemUpdateEvent(ctx, si.UserID, x.ID, changeReport)
 
 	// encode our response and peace.
@@ -324,7 +323,6 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 
 // ArchiveHandler returns a handler that archives an item.
 func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
-	var err error
 	ctx, span := tracing.StartSpan(req.Context(), "ArchiveHandler")
 	defer span.End()
 
@@ -336,6 +334,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
+
 	tracing.AttachSessionInfoToSpan(span, *si)
 	logger = logger.WithValue("user_id", si.UserID)
 
@@ -345,8 +344,8 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	// archive the item in the database.
-	err = s.itemDataManager.ArchiveItem(ctx, itemID, si.UserID)
-	if err == sql.ErrNoRows {
+	err := s.itemDataManager.ArchiveItem(ctx, itemID, si.UserID)
+	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(res)
 		return
 	} else if err != nil {
@@ -357,10 +356,11 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// notify relevant parties.
 	s.itemCounter.Decrement(ctx)
+	s.auditLog.LogItemArchiveEvent(ctx, si.UserID, itemID)
+
 	if indexDeleteErr := s.search.Delete(ctx, itemID); indexDeleteErr != nil {
 		logger.Error(indexDeleteErr, "error removing item from search index")
 	}
-	s.auditLog.LogItemArchiveEvent(ctx, si.UserID, itemID)
 
 	// encode our response and peace.
 	res.WriteHeader(http.StatusNoContent)

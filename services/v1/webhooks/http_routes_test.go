@@ -27,7 +27,6 @@ func TestWebhooksService_List(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		exampleWebhookList := fakemodels.BuildFakeWebhookList()
@@ -66,7 +65,6 @@ func TestWebhooksService_List(T *testing.T) {
 
 	T.Run("with no rows returned", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
@@ -103,7 +101,6 @@ func TestWebhooksService_List(T *testing.T) {
 
 	T.Run("with error fetching webhooks from database", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
@@ -146,7 +143,6 @@ func TestValidateWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 		exampleWebhook.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
@@ -156,7 +152,6 @@ func TestValidateWebhook(T *testing.T) {
 
 	T.Run("with invalid method", func(t *testing.T) {
 		t.Parallel()
-
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 		exampleWebhook.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
@@ -167,7 +162,6 @@ func TestValidateWebhook(T *testing.T) {
 
 	T.Run("with invalid url", func(t *testing.T) {
 		t.Parallel()
-
 		exampleWebhook := fakemodels.BuildFakeWebhook()
 		exampleWebhook.BelongsToUser = exampleUser.ID
 		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
@@ -184,7 +178,6 @@ func TestWebhooksService_Create(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -234,7 +227,6 @@ func TestWebhooksService_Create(T *testing.T) {
 
 	T.Run("with invalid webhook request", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -272,7 +264,6 @@ func TestWebhooksService_Create(T *testing.T) {
 
 	T.Run("without input attached", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		s.userIDFetcher = func(req *http.Request) uint64 {
@@ -300,7 +291,6 @@ func TestWebhooksService_Create(T *testing.T) {
 
 	T.Run("with error creating webhook", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -348,7 +338,6 @@ func TestWebhooksService_Read(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -392,7 +381,6 @@ func TestWebhooksService_Read(T *testing.T) {
 
 	T.Run("with no such webhook in database", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -436,7 +424,6 @@ func TestWebhooksService_Read(T *testing.T) {
 
 	T.Run("with error fetching webhook from database", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -486,7 +473,6 @@ func TestWebhooksService_Update(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -543,7 +529,6 @@ func TestWebhooksService_Update(T *testing.T) {
 
 	T.Run("without update input", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -567,7 +552,6 @@ func TestWebhooksService_Update(T *testing.T) {
 
 	T.Run("with no rows fetching webhook", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -614,7 +598,6 @@ func TestWebhooksService_Update(T *testing.T) {
 
 	T.Run("with error fetching webhook", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -661,7 +644,6 @@ func TestWebhooksService_Update(T *testing.T) {
 
 	T.Run("with error updating webhook", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -720,7 +702,6 @@ func TestWebhooksService_Archive(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -768,7 +749,6 @@ func TestWebhooksService_Archive(T *testing.T) {
 
 	T.Run("with no webhook in database", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -812,7 +792,6 @@ func TestWebhooksService_Archive(T *testing.T) {
 
 	T.Run("with error reading from database", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()

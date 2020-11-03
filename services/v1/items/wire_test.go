@@ -9,7 +9,6 @@ func TestProvideItemDataServer(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-
 		ProvideItemDataServer(buildTestService())
 	})
 }

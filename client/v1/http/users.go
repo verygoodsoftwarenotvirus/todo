@@ -151,6 +151,7 @@ func (c *V1Client) Login(ctx context.Context, input *models.UserLoginInput) (*ht
 	if err != nil {
 		return nil, fmt.Errorf("encountered error executing login request: %w", err)
 	}
+
 	c.closeResponseBody(res)
 
 	cookies := res.Cookies()
@@ -188,6 +189,7 @@ func (c *V1Client) VerifyTOTPSecret(ctx context.Context, userID uint64, token st
 	if err != nil {
 		return fmt.Errorf("executing request: %w", err)
 	}
+
 	c.closeResponseBody(res)
 
 	if res.StatusCode == http.StatusBadRequest {

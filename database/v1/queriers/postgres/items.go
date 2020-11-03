@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
@@ -30,7 +31,7 @@ var (
 	}
 )
 
-// scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct
+// scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct.
 func (p *Postgres) scanItem(scan database.Scanner) (*models.Item, error) {
 	x := &models.Item{}
 
@@ -77,7 +78,7 @@ func (p *Postgres) scanItems(rows database.ResultIterator) ([]models.Item, error
 	return list, nil
 }
 
-// buildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists
+// buildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists.
 func (p *Postgres) buildItemExistsQuery(itemID, userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -101,7 +102,7 @@ func (p *Postgres) ItemExists(ctx context.Context, itemID, userID uint64) (exist
 	query, args := p.buildItemExistsQuery(itemID, userID)
 
 	err = p.db.QueryRowContext(ctx, query, args...).Scan(&exists)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return false, nil
 	}
 
@@ -191,7 +192,7 @@ func (p *Postgres) GetAllItems(ctx context.Context, resultChannel chan []models.
 			})
 
 			rows, err := p.db.Query(query, args...)
-			if err == sql.ErrNoRows {
+			if errors.Is(err, sql.ErrNoRows) {
 				return
 			} else if err != nil {
 				logger.Error(err, "querying for database rows")

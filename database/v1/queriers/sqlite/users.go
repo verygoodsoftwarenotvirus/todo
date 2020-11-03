@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
@@ -189,7 +190,7 @@ func (s *Sqlite) GetUserByUsername(ctx context.Context, username string) (*model
 
 	u, err := s.scanUser(row)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("fetching user from database: %w", err)
@@ -321,10 +322,10 @@ func (s *Sqlite) CreateUser(ctx context.Context, input models.UserDatabaseCreati
 	// fetch the last inserted ID.
 	id, err := res.LastInsertId()
 	s.logIDRetrievalError(err)
-	x.ID = uint64(id)
 
 	// this won't be completely accurate, but it will suffice.
 	x.CreatedOn = s.timeTeller.Now()
+	x.ID = uint64(id)
 
 	return x, nil
 }
@@ -383,13 +384,11 @@ func (s *Sqlite) buildUpdateUserPasswordQuery(userID uint64, newHash string) (qu
 // UpdateUserPassword updates a user's password.
 func (s *Sqlite) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
 	query, args := s.buildUpdateUserPasswordQuery(userID, newHash)
-
 	_, err := s.db.ExecContext(ctx, query, args...)
-
 	return err
 }
 
-// buildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret
+// buildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
 func (s *Sqlite) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 

@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -13,7 +14,8 @@ import (
 var urlToUse string
 
 const (
-	seleniumHubAddr = "http://selenium-hub:4444/wd/hub"
+	seleniumHubAddr    = "http://selenium-hub:4444/wd/hub"
+	seleniumServerWait = 10 * time.Second
 )
 
 func init() {
@@ -21,11 +23,11 @@ func init() {
 
 	logger := zerolog.NewLogger()
 	logger.WithValue("url", urlToUse).Info("checking server")
-	testutil.EnsureServerIsUp(urlToUse)
+	testutil.EnsureServerIsUp(context.Background(), urlToUse)
 
 	// NOTE: this is sad, but also the only thing that consistently works
 	// see above for my vain attempts at a real solution to this problem.
-	time.Sleep(10 * time.Second)
+	time.Sleep(seleniumServerWait)
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)

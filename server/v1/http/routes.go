@@ -21,6 +21,7 @@ const (
 	root             = "/"
 	searchRoot       = "/search"
 	numericIDPattern = "/{%s:[0-9]+}"
+	maxCORSAge       = 300
 )
 
 func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Handler) {
@@ -50,8 +51,7 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 		},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
-		// Maximum value not ignored by any of major browsers,
-		MaxAge: 300,
+		MaxAge:           maxCORSAge,
 	})
 
 	router.Use(
@@ -79,10 +79,12 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 	// Frontend routes.
 	if s.config.Frontend.StaticFilesDirectory != "" {
 		s.logger.Debug("setting static file server")
+
 		staticFileServer, err := s.frontendService.StaticDir(cfg.Frontend.StaticFilesDirectory)
 		if err != nil {
 			s.logger.Error(err, "establishing static file server")
 		}
+
 		router.Get("/*", staticFileServer)
 		s.logger.Debug("static file server set")
 	}

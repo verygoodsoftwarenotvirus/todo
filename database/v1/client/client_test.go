@@ -30,6 +30,7 @@ func TestMigrate(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 		authenticator := &mockauth.Authenticator{}
 
@@ -43,6 +44,7 @@ func TestMigrate(T *testing.T) {
 	})
 
 	T.Run("bubbles up errors", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 		authenticator := &mockauth.Authenticator{}
 
@@ -60,6 +62,7 @@ func TestIsReady(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		mockDB := database.BuildMockDatabase()
@@ -76,6 +79,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 		authenticator := &mockauth.Authenticator{}
 
@@ -90,6 +94,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 	})
 
 	T.Run("with error migrating querier", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 		authenticator := &mockauth.Authenticator{}
 

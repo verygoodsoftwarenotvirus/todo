@@ -15,6 +15,7 @@ func TestClient_GetWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -34,6 +35,7 @@ func TestClient_GetAllWebhooksCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expected := uint64(123)
@@ -53,6 +55,7 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhookList := fakemodels.BuildFakeWebhookList()
@@ -74,6 +77,7 @@ func TestClient_GetWebhooks(T *testing.T) {
 	exampleUser := fakemodels.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhookList := fakemodels.BuildFakeWebhookList()
@@ -90,6 +94,7 @@ func TestClient_GetWebhooks(T *testing.T) {
 	})
 
 	T.Run("with nil filter", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhookList := fakemodels.BuildFakeWebhookList()
@@ -110,6 +115,7 @@ func TestClient_CreateWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -130,6 +136,7 @@ func TestClient_UpdateWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -150,6 +157,7 @@ func TestClient_ArchiveWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()

@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -78,9 +79,11 @@ func (p *Postgres) scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 	if events := strings.Split(eventsStr, eventsSeparator); len(events) >= 1 && events[0] != "" {
 		x.Events = events
 	}
+
 	if dataTypes := strings.Split(dataTypesStr, typesSeparator); len(dataTypes) >= 1 && dataTypes[0] != "" {
 		x.DataTypes = dataTypes
 	}
+
 	if topics := strings.Split(topicsStr, topicsSeparator); len(topics) >= 1 && topics[0] != "" {
 		x.Topics = topics
 	}
@@ -100,6 +103,7 @@ func (p *Postgres) scanWebhooks(rows database.ResultIterator) ([]models.Webhook,
 
 		list = append(list, *webhook)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -111,7 +115,7 @@ func (p *Postgres) scanWebhooks(rows database.ResultIterator) ([]models.Webhook,
 	return list, nil
 }
 
-// buildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook
+// buildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook.
 func (p *Postgres) buildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -184,7 +188,7 @@ func (p *Postgres) buildGetAllWebhooksQuery() string {
 func (p *Postgres) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
 	rows, err := p.db.QueryContext(ctx, p.buildGetAllWebhooksQuery())
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("querying for webhooks: %w", err)
@@ -205,7 +209,7 @@ func (p *Postgres) GetAllWebhooks(ctx context.Context) (*models.WebhookList, err
 	return x, err
 }
 
-// buildGetWebhooksQuery returns a SQL query (and arguments) that would return a
+// buildGetWebhooksQuery returns a SQL query (and arguments) that would return a list of webhooks.
 func (p *Postgres) buildGetWebhooksQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 
@@ -234,7 +238,7 @@ func (p *Postgres) GetWebhooks(ctx context.Context, userID uint64, filter *model
 
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("querying database: %w", err)

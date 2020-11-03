@@ -24,7 +24,7 @@ const (
 	// this value is used to guard against zero values.
 	MinimumRuntimeCollectionInterval = time.Second
 
-	// DefaultMetricsCollectionInterval is the default amount of time we wait between runtime metrics queries
+	// DefaultMetricsCollectionInterval is the default amount of time we wait between runtime metrics queries.
 	DefaultMetricsCollectionInterval = 2 * time.Second
 )
 
@@ -76,10 +76,12 @@ func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) me
 				Namespace: MetricsNamespace,
 			},
 		)
+
 		if err != nil {
 			logger.Error(err, "failed to create Prometheus exporter")
 			return nil
 		}
+
 		view.RegisterExporter(p)
 		logger.Debug("metrics provider registered")
 
@@ -87,6 +89,7 @@ func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) me
 			logger.Error(err, "registering default metric views")
 			return nil
 		}
+
 		metrics.RecordRuntimeStats(time.Duration(
 			math.Max(
 				float64(MinimumRuntimeCollectionInterval),

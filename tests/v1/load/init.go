@@ -9,6 +9,7 @@ import (
 	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 
@@ -22,18 +23,21 @@ var (
 )
 
 func init() {
+	ctx, span := tracing.StartSpan(context.Background(), "init")
+	defer span.End()
+
 	urlToUse = testutil.DetermineServiceURL()
 	logger := zerolog.NewLogger()
 
 	logger.WithValue("url", urlToUse).Info("checking server")
-	testutil.EnsureServerIsUp(urlToUse)
+	testutil.EnsureServerIsUp(ctx, urlToUse)
 
 	u, err := testutil.CreateObligatoryUser(urlToUse, debug)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	oa2Client, err = testutil.CreateObligatoryClient(urlToUse, u)
+	oa2Client, err = testutil.CreateObligatoryClient(ctx, urlToUse, u)
 	if err != nil {
 		logger.Fatal(err)
 	}

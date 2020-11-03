@@ -23,18 +23,18 @@ import (
 )
 
 const (
-	// PostgresProviderKey is the string we use to refer to postgres
+	// PostgresProviderKey is the string we use to refer to postgres.
 	PostgresProviderKey = "postgres"
-	// MariaDBProviderKey is the string we use to refer to mariaDB
+	// MariaDBProviderKey is the string we use to refer to mariaDB.
 	MariaDBProviderKey = "mariadb"
-	// SqliteProviderKey is the string we use to refer to sqlite
+	// SqliteProviderKey is the string we use to refer to sqlite.
 	SqliteProviderKey = "sqlite"
 
-	// DefaultDatabaseMetricsCollectionInterval is the default amount of time we wait between database metrics queries
+	// DefaultDatabaseMetricsCollectionInterval is the default amount of time we wait between database metrics queries.
 	DefaultDatabaseMetricsCollectionInterval = 2 * time.Second
 )
 
-// CreateTestUserSettings defines a test user created via config declaration
+// CreateTestUserSettings defines a test user created via config declaration.
 type CreateTestUserSettings struct {
 	// Username defines our test user's username we create in the event we create them.
 	Username string `json:"username" mapstructure:"username" toml:"username,omitempty"`
@@ -44,7 +44,7 @@ type CreateTestUserSettings struct {
 	IsAdmin bool `json:"is_admin" mapstructure:"is_admin" toml:"is_admin,omitempty"`
 }
 
-// UserCreationConfig is a helper method for getting around circular imports
+// UserCreationConfig is a helper method for getting around circular imports.
 func (s *CreateTestUserSettings) UserCreationConfig() *database.UserCreationConfig {
 	if s == nil {
 		return nil
@@ -97,6 +97,7 @@ func (cfg *ServerConfig) ProvideDatabaseClient(ctx context.Context, logger loggi
 	ocsql.RecordStats(rawDB, cfg.Metrics.DBMetricsCollectionInterval)
 
 	var dbc database.DataManager
+
 	switch cfg.Database.Provider {
 	case PostgresProviderKey:
 		dbc = postgres.ProvidePostgres(debug, rawDB, logger)

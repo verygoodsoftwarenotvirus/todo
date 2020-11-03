@@ -61,6 +61,7 @@ func TestSqlite_ScanOAuth2Clients(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {
+		t.Parallel()
 		s, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
@@ -72,6 +73,7 @@ func TestSqlite_ScanOAuth2Clients(T *testing.T) {
 	})
 
 	T.Run("logs row closing errors", func(t *testing.T) {
+		t.Parallel()
 		s, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
@@ -88,6 +90,7 @@ func TestSqlite_buildGetOAuth2ClientByClientIDQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		s, _ := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -108,6 +111,7 @@ func TestSqlite_GetOAuth2ClientByClientID(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -116,9 +120,7 @@ func TestSqlite_GetOAuth2ClientByClientID(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildGetOAuth2ClientByClientIDQuery(exampleOAuth2Client.ClientID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildMockRowsFromOAuth2Client(exampleOAuth2Client))
 
 		actual, err := s.GetOAuth2ClientByClientID(ctx, exampleOAuth2Client.ClientID)
@@ -129,6 +131,7 @@ func TestSqlite_GetOAuth2ClientByClientID(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -137,9 +140,7 @@ func TestSqlite_GetOAuth2ClientByClientID(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildGetOAuth2ClientByClientIDQuery(exampleOAuth2Client.ClientID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := s.GetOAuth2ClientByClientID(ctx, exampleOAuth2Client.ClientID)
@@ -151,6 +152,7 @@ func TestSqlite_GetOAuth2ClientByClientID(T *testing.T) {
 	})
 
 	T.Run("with erroneous row", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -159,9 +161,7 @@ func TestSqlite_GetOAuth2ClientByClientID(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildGetOAuth2ClientByClientIDQuery(exampleOAuth2Client.ClientID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromOAuth2Client(exampleOAuth2Client))
 
 		actual, err := s.GetOAuth2ClientByClientID(ctx, exampleOAuth2Client.ClientID)
@@ -176,6 +176,7 @@ func TestSqlite_buildGetAllOAuth2ClientsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		s, _ := buildTestService(t)
 
 		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL"
@@ -190,6 +191,7 @@ func TestSqlite_GetAllOAuth2Clients(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -220,6 +222,7 @@ func TestSqlite_GetAllOAuth2Clients(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		s, mockDB := buildTestService(t)
@@ -238,6 +241,7 @@ func TestSqlite_GetAllOAuth2Clients(T *testing.T) {
 	})
 
 	T.Run("with error executing query", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		s, mockDB := buildTestService(t)
@@ -255,6 +259,7 @@ func TestSqlite_GetAllOAuth2Clients(T *testing.T) {
 	})
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -278,6 +283,7 @@ func TestSqlite_GetAllOAuth2ClientsForUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -293,9 +299,7 @@ func TestSqlite_GetAllOAuth2ClientsForUser(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, nil)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildMockRowsFromOAuth2Client(expected...))
 
 		actual, err := s.GetAllOAuth2ClientsForUser(ctx, exampleUser.ID)
@@ -306,6 +310,7 @@ func TestSqlite_GetAllOAuth2ClientsForUser(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -314,9 +319,7 @@ func TestSqlite_GetAllOAuth2ClientsForUser(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, nil)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := s.GetAllOAuth2ClientsForUser(ctx, exampleUser.ID)
@@ -327,6 +330,7 @@ func TestSqlite_GetAllOAuth2ClientsForUser(T *testing.T) {
 	})
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -335,9 +339,7 @@ func TestSqlite_GetAllOAuth2ClientsForUser(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, nil)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := s.GetAllOAuth2ClientsForUser(ctx, exampleUser.ID)
@@ -348,6 +350,7 @@ func TestSqlite_GetAllOAuth2ClientsForUser(T *testing.T) {
 	})
 
 	T.Run("with unscannable response", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -357,9 +360,7 @@ func TestSqlite_GetAllOAuth2ClientsForUser(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, nil)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromOAuth2Client(exampleOAuth2Client))
 
 		actual, err := s.GetAllOAuth2ClientsForUser(ctx, exampleUser.ID)
@@ -374,6 +375,7 @@ func TestSqlite_buildGetOAuth2ClientQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		s, _ := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -395,6 +397,7 @@ func TestSqlite_GetOAuth2Client(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -403,9 +406,7 @@ func TestSqlite_GetOAuth2Client(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildGetOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildMockRowsFromOAuth2Client(exampleOAuth2Client))
 
 		actual, err := s.GetOAuth2Client(ctx, exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
@@ -416,6 +417,7 @@ func TestSqlite_GetOAuth2Client(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -424,9 +426,7 @@ func TestSqlite_GetOAuth2Client(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildGetOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := s.GetOAuth2Client(ctx, exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
@@ -438,6 +438,7 @@ func TestSqlite_GetOAuth2Client(T *testing.T) {
 	})
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -446,9 +447,7 @@ func TestSqlite_GetOAuth2Client(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildGetOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromOAuth2Client(exampleOAuth2Client))
 
 		actual, err := s.GetOAuth2Client(ctx, exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
@@ -463,6 +462,7 @@ func TestSqlite_buildGetAllOAuth2ClientsCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		s, _ := buildTestService(t)
 
 		expectedQuery := "SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL"
@@ -477,6 +477,7 @@ func TestSqlite_GetAllOAuth2ClientCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedCount := uint64(123)
@@ -500,6 +501,7 @@ func TestSqlite_buildGetOAuth2ClientsForUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		s, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -527,6 +529,7 @@ func TestSqlite_GetOAuth2ClientsForUser(T *testing.T) {
 	exampleUser := fakemodels.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -536,9 +539,7 @@ func TestSqlite_GetOAuth2ClientsForUser(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromOAuth2Client(
 					&exampleOAuth2ClientList.Clients[0],
@@ -555,6 +556,7 @@ func TestSqlite_GetOAuth2ClientsForUser(T *testing.T) {
 	})
 
 	T.Run("with no rows returned from database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -563,9 +565,7 @@ func TestSqlite_GetOAuth2ClientsForUser(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := s.GetOAuth2ClientsForUser(ctx, exampleUser.ID, filter)
@@ -576,6 +576,7 @@ func TestSqlite_GetOAuth2ClientsForUser(T *testing.T) {
 	})
 
 	T.Run("with error reading from database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -584,9 +585,7 @@ func TestSqlite_GetOAuth2ClientsForUser(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := s.GetOAuth2ClientsForUser(ctx, exampleUser.ID, filter)
@@ -597,6 +596,7 @@ func TestSqlite_GetOAuth2ClientsForUser(T *testing.T) {
 	})
 
 	T.Run("with erroneous response", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -605,9 +605,7 @@ func TestSqlite_GetOAuth2ClientsForUser(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromOAuth2Client(fakemodels.BuildFakeOAuth2Client()))
 
 		actual, err := s.GetOAuth2ClientsForUser(ctx, exampleUser.ID, filter)
@@ -622,6 +620,7 @@ func TestSqlite_buildCreateOAuth2ClientQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		s, _ := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -647,6 +646,7 @@ func TestSqlite_CreateOAuth2Client(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -657,9 +657,7 @@ func TestSqlite_CreateOAuth2Client(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildCreateOAuth2ClientQuery(exampleOAuth2Client)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(exampleRows)
 
 		mtt := &mockTimeTeller{}
@@ -675,6 +673,7 @@ func TestSqlite_CreateOAuth2Client(T *testing.T) {
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -684,9 +683,7 @@ func TestSqlite_CreateOAuth2Client(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildCreateOAuth2ClientQuery(exampleOAuth2Client)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := s.CreateOAuth2Client(ctx, expectedInput)
@@ -701,6 +698,7 @@ func TestSqlite_buildUpdateOAuth2ClientQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		s, _ := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -726,6 +724,7 @@ func TestSqlite_UpdateOAuth2Client(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -734,9 +733,7 @@ func TestSqlite_UpdateOAuth2Client(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildUpdateOAuth2ClientQuery(exampleOAuth2Client)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		err := s.UpdateOAuth2Client(ctx, exampleOAuth2Client)
@@ -746,6 +743,7 @@ func TestSqlite_UpdateOAuth2Client(T *testing.T) {
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -754,9 +752,7 @@ func TestSqlite_UpdateOAuth2Client(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildUpdateOAuth2ClientQuery(exampleOAuth2Client)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		err := s.UpdateOAuth2Client(ctx, exampleOAuth2Client)
@@ -770,6 +766,7 @@ func TestSqlite_buildArchiveOAuth2ClientQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		s, _ := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -791,6 +788,7 @@ func TestSqlite_ArchiveOAuth2Client(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -799,9 +797,7 @@ func TestSqlite_ArchiveOAuth2Client(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildArchiveOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		err := s.ArchiveOAuth2Client(ctx, exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
@@ -811,6 +807,7 @@ func TestSqlite_ArchiveOAuth2Client(T *testing.T) {
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -819,9 +816,7 @@ func TestSqlite_ArchiveOAuth2Client(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildArchiveOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		err := s.ArchiveOAuth2Client(ctx, exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)

@@ -63,7 +63,6 @@ func TestBcrypt_PasswordIsAcceptable(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		assert.True(t, x.PasswordIsAcceptable(examplePassword))
 		assert.False(t, x.PasswordIsAcceptable("hi there"))
 	})
@@ -154,7 +153,6 @@ func TestProvideBcrypt(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-
 		auth.ProvideBcryptAuthenticator(auth.DefaultBcryptHashCost, noop.NewLogger())
 	})
 }

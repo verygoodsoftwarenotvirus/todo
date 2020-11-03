@@ -17,6 +17,7 @@ func TestClient_GetOAuth2Client(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -32,6 +33,7 @@ func TestClient_GetOAuth2Client(T *testing.T) {
 	})
 
 	T.Run("with error returned from querier", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -52,6 +54,7 @@ func TestClient_GetOAuth2ClientByClientID(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -67,6 +70,7 @@ func TestClient_GetOAuth2ClientByClientID(T *testing.T) {
 	})
 
 	T.Run("with error returned from querier", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -86,6 +90,7 @@ func TestClient_GetAllOAuth2ClientCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleCount := uint64(123)
@@ -107,6 +112,7 @@ func TestClient_GetOAuth2ClientsForUser(T *testing.T) {
 	exampleUser := fakemodels.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		c, mockDB := buildTestClient()
@@ -123,6 +129,7 @@ func TestClient_GetOAuth2ClientsForUser(T *testing.T) {
 	})
 
 	T.Run("with nil filter", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		c, mockDB := buildTestClient()
@@ -139,6 +146,7 @@ func TestClient_GetOAuth2ClientsForUser(T *testing.T) {
 	})
 
 	T.Run("with error returned from querier", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		c, mockDB := buildTestClient()
@@ -159,6 +167,7 @@ func TestClient_CreateOAuth2Client(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		c, mockDB := buildTestClient()
@@ -176,6 +185,7 @@ func TestClient_CreateOAuth2Client(T *testing.T) {
 	})
 
 	T.Run("with error returned from querier", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		c, mockDB := buildTestClient()
@@ -198,6 +208,7 @@ func TestClient_UpdateOAuth2Client(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -218,6 +229,7 @@ func TestClient_ArchiveOAuth2Client(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -234,6 +246,7 @@ func TestClient_ArchiveOAuth2Client(T *testing.T) {
 	})
 
 	T.Run("with error returned from querier", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()

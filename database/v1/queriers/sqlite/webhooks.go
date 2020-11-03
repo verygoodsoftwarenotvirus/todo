@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -78,9 +79,11 @@ func (s *Sqlite) scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 	if events := strings.Split(eventsStr, eventsSeparator); len(events) >= 1 && events[0] != "" {
 		x.Events = events
 	}
+
 	if dataTypes := strings.Split(dataTypesStr, typesSeparator); len(dataTypes) >= 1 && dataTypes[0] != "" {
 		x.DataTypes = dataTypes
 	}
+
 	if topics := strings.Split(topicsStr, topicsSeparator); len(topics) >= 1 && topics[0] != "" {
 		x.Topics = topics
 	}
@@ -102,6 +105,7 @@ func (s *Sqlite) scanWebhooks(rows database.ResultIterator) ([]models.Webhook, e
 
 		list = append(list, *webhook)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -113,7 +117,7 @@ func (s *Sqlite) scanWebhooks(rows database.ResultIterator) ([]models.Webhook, e
 	return list, nil
 }
 
-// buildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook
+// buildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook.
 func (s *Sqlite) buildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -186,7 +190,7 @@ func (s *Sqlite) buildGetAllWebhooksQuery() string {
 func (s *Sqlite) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
 	rows, err := s.db.QueryContext(ctx, s.buildGetAllWebhooksQuery())
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("querying for webhooks: %w", err)
@@ -207,7 +211,7 @@ func (s *Sqlite) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error
 	return x, err
 }
 
-// buildGetWebhooksQuery returns a SQL query (and arguments) that would return a
+// buildGetWebhooksQuery returns a SQL query (and arguments) that would return a list of webhooks.
 func (s *Sqlite) buildGetWebhooksQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 
@@ -236,7 +240,7 @@ func (s *Sqlite) GetWebhooks(ctx context.Context, userID uint64, filter *models.
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("querying database: %w", err)
@@ -258,7 +262,7 @@ func (s *Sqlite) GetWebhooks(ctx context.Context, userID uint64, filter *models.
 	return x, err
 }
 
-// buildCreateWebhookQuery returns a SQL query (and arguments) that would create a given webhook
+// buildCreateWebhookQuery returns a SQL query (and arguments) that would create a given webhook.
 func (s *Sqlite) buildCreateWebhookQuery(x *models.Webhook) (query string, args []interface{}) {
 	var err error
 
@@ -303,8 +307,8 @@ func (s *Sqlite) CreateWebhook(ctx context.Context, input *models.WebhookCreatio
 		Topics:        input.Topics,
 		BelongsToUser: input.BelongsToUser,
 	}
-
 	query, args := s.buildCreateWebhookQuery(x)
+
 	res, err := s.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error executing webhook creation query: %w", err)
@@ -313,10 +317,10 @@ func (s *Sqlite) CreateWebhook(ctx context.Context, input *models.WebhookCreatio
 	// fetch the last inserted ID.
 	id, err := res.LastInsertId()
 	s.logIDRetrievalError(err)
-	x.ID = uint64(id)
 
 	// this won't be completely accurate, but it will suffice.
 	x.CreatedOn = s.timeTeller.Now()
+	x.ID = uint64(id)
 
 	return x, nil
 }

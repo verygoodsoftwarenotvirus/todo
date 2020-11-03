@@ -21,6 +21,7 @@ func TestV1Client_BuildItemExistsRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodHead
@@ -41,6 +42,7 @@ func TestV1Client_ItemExists(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -64,6 +66,7 @@ func TestV1Client_ItemExists(T *testing.T) {
 	})
 
 	T.Run("with erroneous response", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -80,6 +83,7 @@ func TestV1Client_BuildGetItemRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodGet
@@ -101,6 +105,7 @@ func TestV1Client_GetItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -125,6 +130,7 @@ func TestV1Client_GetItem(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -137,6 +143,7 @@ func TestV1Client_GetItem(T *testing.T) {
 	})
 
 	T.Run("with invalid response", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -164,6 +171,7 @@ func TestV1Client_BuildGetItemsRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := (*models.QueryFilter)(nil)
@@ -183,6 +191,7 @@ func TestV1Client_GetItems(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := (*models.QueryFilter)(nil)
@@ -210,6 +219,7 @@ func TestV1Client_GetItems(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := (*models.QueryFilter)(nil)
@@ -222,6 +232,7 @@ func TestV1Client_GetItems(T *testing.T) {
 	})
 
 	T.Run("with invalid response", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := (*models.QueryFilter)(nil)
@@ -250,6 +261,7 @@ func TestV1Client_BuildSearchItemsRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		limit := models.DefaultQueryFilter().Limit
@@ -273,6 +285,7 @@ func TestV1Client_SearchItems(T *testing.T) {
 	const expectedPath = "/api/v1/items/search"
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		limit := models.DefaultQueryFilter().Limit
@@ -301,6 +314,7 @@ func TestV1Client_SearchItems(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		limit := models.DefaultQueryFilter().Limit
@@ -314,6 +328,7 @@ func TestV1Client_SearchItems(T *testing.T) {
 	})
 
 	T.Run("with invalid response", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		limit := models.DefaultQueryFilter().Limit
@@ -343,6 +358,7 @@ func TestV1Client_BuildCreateItemRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -366,6 +382,7 @@ func TestV1Client_CreateItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -399,6 +416,7 @@ func TestV1Client_CreateItem(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -416,6 +434,7 @@ func TestV1Client_BuildUpdateItemRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -435,6 +454,7 @@ func TestV1Client_UpdateItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -454,6 +474,7 @@ func TestV1Client_UpdateItem(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -467,6 +488,7 @@ func TestV1Client_BuildArchiveItemRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodDelete
@@ -489,6 +511,7 @@ func TestV1Client_ArchiveItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleItem := fakemodels.BuildFakeItem()
@@ -508,6 +531,7 @@ func TestV1Client_ArchiveItem(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleItem := fakemodels.BuildFakeItem()

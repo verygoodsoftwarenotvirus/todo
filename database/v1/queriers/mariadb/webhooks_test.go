@@ -66,6 +66,7 @@ func TestMariaDB_ScanWebhooks(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
@@ -77,6 +78,7 @@ func TestMariaDB_ScanWebhooks(T *testing.T) {
 	})
 
 	T.Run("logs row closing errors", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
@@ -93,6 +95,7 @@ func TestMariaDB_buildGetWebhookQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -114,6 +117,7 @@ func TestMariaDB_GetWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -122,9 +126,7 @@ func TestMariaDB_GetWebhook(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildMockRowsFromWebhook(exampleWebhook))
 
 		actual, err := m.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
@@ -135,6 +137,7 @@ func TestMariaDB_GetWebhook(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -143,9 +146,7 @@ func TestMariaDB_GetWebhook(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := m.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
@@ -157,6 +158,7 @@ func TestMariaDB_GetWebhook(T *testing.T) {
 	})
 
 	T.Run("with error from database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -165,9 +167,7 @@ func TestMariaDB_GetWebhook(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := m.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
@@ -178,6 +178,7 @@ func TestMariaDB_GetWebhook(T *testing.T) {
 	})
 
 	T.Run("with invalid response from database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -186,9 +187,7 @@ func TestMariaDB_GetWebhook(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromWebhook(exampleWebhook))
 
 		actual, err := m.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
@@ -203,6 +202,7 @@ func TestMariaDB_buildGetAllWebhooksCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		expectedQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL"
@@ -217,6 +217,7 @@ func TestMariaDB_GetAllWebhooksCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleCount := uint64(123)
@@ -236,6 +237,7 @@ func TestMariaDB_GetAllWebhooksCount(T *testing.T) {
 	})
 
 	T.Run("with error from database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -257,6 +259,7 @@ func TestMariaDB_buildGetAllWebhooksQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL"
@@ -271,6 +274,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhookList := fakemodels.BuildFakeWebhookList()
@@ -297,6 +301,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -315,6 +320,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -332,6 +338,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 	})
 
 	T.Run("with error from database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -355,6 +362,7 @@ func TestMariaDB_buildGetWebhooksQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -382,6 +390,7 @@ func TestMariaDB_GetWebhooks(T *testing.T) {
 	exampleUser := fakemodels.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -391,9 +400,7 @@ func TestMariaDB_GetWebhooks(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetWebhooksQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromWebhook(
 					&exampleWebhookList.Webhooks[0],
@@ -410,6 +417,7 @@ func TestMariaDB_GetWebhooks(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -418,9 +426,7 @@ func TestMariaDB_GetWebhooks(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetWebhooksQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := m.GetWebhooks(ctx, exampleUser.ID, filter)
@@ -432,6 +438,7 @@ func TestMariaDB_GetWebhooks(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -440,9 +447,7 @@ func TestMariaDB_GetWebhooks(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetWebhooksQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := m.GetWebhooks(ctx, exampleUser.ID, filter)
@@ -453,6 +458,7 @@ func TestMariaDB_GetWebhooks(T *testing.T) {
 	})
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -462,9 +468,7 @@ func TestMariaDB_GetWebhooks(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetWebhooksQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromWebhook(exampleWebhook))
 
 		actual, err := m.GetWebhooks(ctx, exampleUser.ID, filter)
@@ -479,6 +483,7 @@ func TestMariaDB_buildCreateWebhookQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -506,6 +511,7 @@ func TestMariaDB_CreateWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -516,9 +522,7 @@ func TestMariaDB_CreateWebhook(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildCreateWebhookQuery(exampleWebhook)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(exampleRows)
 
 		mtt := &mockTimeTeller{}
@@ -534,6 +538,7 @@ func TestMariaDB_CreateWebhook(T *testing.T) {
 	})
 
 	T.Run("with error interacting with database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -543,9 +548,7 @@ func TestMariaDB_CreateWebhook(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildCreateWebhookQuery(exampleWebhook)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := m.CreateWebhook(ctx, exampleInput)
@@ -560,6 +563,7 @@ func TestMariaDB_buildUpdateWebhookQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -588,6 +592,7 @@ func TestMariaDB_UpdateWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -597,9 +602,7 @@ func TestMariaDB_UpdateWebhook(T *testing.T) {
 
 		exampleRows := sqlmock.NewResult(int64(exampleWebhook.ID), 1)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(exampleRows)
 
 		err := m.UpdateWebhook(ctx, exampleWebhook)
@@ -609,6 +612,7 @@ func TestMariaDB_UpdateWebhook(T *testing.T) {
 	})
 
 	T.Run("with error from database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -617,9 +621,7 @@ func TestMariaDB_UpdateWebhook(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildUpdateWebhookQuery(exampleWebhook)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		err := m.UpdateWebhook(ctx, exampleWebhook)
@@ -633,6 +635,7 @@ func TestMariaDB_buildArchiveWebhookQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -654,6 +657,7 @@ func TestMariaDB_ArchiveWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -662,9 +666,7 @@ func TestMariaDB_ArchiveWebhook(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildArchiveWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		err := m.ArchiveWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)

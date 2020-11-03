@@ -33,16 +33,16 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Meta.StartupDeadline)
 	ctx, span := tracing.StartSpan(ctx, "initialization")
 
-	// connect to our database.
 	logger.Debug("connecting to database")
+
 	rawDB, err := cfg.ProvideDatabaseConnection(logger)
 	if err != nil {
 		logger.Fatal(fmt.Errorf("error connecting to database: %w", err))
 	}
 
-	// establish the database client.
 	logger.Debug("setting up database client")
 	authenticator := auth.ProvideBcryptAuthenticator(auth.ProvideBcryptHashCost(), logger)
+
 	dbClient, err := cfg.ProvideDatabaseClient(ctx, logger, rawDB, authenticator)
 	if err != nil {
 		logger.Fatal(fmt.Errorf("error initializing database client: %w", err))

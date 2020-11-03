@@ -22,6 +22,7 @@ func TestV1Client_BuildGetUserRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodGet
@@ -43,6 +44,7 @@ func TestV1Client_GetUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -73,6 +75,7 @@ func TestV1Client_GetUser(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -91,6 +94,7 @@ func TestV1Client_BuildGetUsersRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodGet
@@ -109,6 +113,7 @@ func TestV1Client_GetUsers(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUserList := fakemodels.BuildFakeUserList()
@@ -144,6 +149,7 @@ func TestV1Client_GetUsers(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		c := buildTestClientWithInvalidURL(t)
@@ -158,6 +164,7 @@ func TestV1Client_BuildCreateUserRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost
@@ -178,6 +185,7 @@ func TestV1Client_CreateUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -208,6 +216,7 @@ func TestV1Client_CreateUser(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -225,6 +234,7 @@ func TestV1Client_BuildArchiveUserRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodDelete
@@ -246,6 +256,7 @@ func TestV1Client_ArchiveUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -264,6 +275,7 @@ func TestV1Client_ArchiveUser(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -277,6 +289,7 @@ func TestV1Client_BuildLoginRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		ts := httptest.NewTLSServer(nil)
@@ -292,6 +305,7 @@ func TestV1Client_BuildLoginRequest(T *testing.T) {
 	})
 
 	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		ts := httptest.NewTLSServer(nil)
@@ -309,6 +323,7 @@ func TestV1Client_Login(T *testing.T) {
 	const expectedPath = "/users/login"
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -332,6 +347,7 @@ func TestV1Client_Login(T *testing.T) {
 	})
 
 	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		ts := httptest.NewTLSServer(nil)
@@ -343,6 +359,7 @@ func TestV1Client_Login(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -356,6 +373,7 @@ func TestV1Client_Login(T *testing.T) {
 	})
 
 	T.Run("with timeout", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -379,6 +397,7 @@ func TestV1Client_Login(T *testing.T) {
 	})
 
 	T.Run("with missing cookie", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -404,6 +423,7 @@ func TestV1Client_BuildValidateTOTPSecretRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		ts := httptest.NewTLSServer(nil)
@@ -425,6 +445,7 @@ func TestV1Client_ValidateTOTPSecret(T *testing.T) {
 	const expectedPath = "/users/totp_secret/verify"
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -447,6 +468,7 @@ func TestV1Client_ValidateTOTPSecret(T *testing.T) {
 	})
 
 	T.Run("with bad request response", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -470,6 +492,7 @@ func TestV1Client_ValidateTOTPSecret(T *testing.T) {
 	})
 
 	T.Run("with otherwise invalid status code response", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -492,6 +515,7 @@ func TestV1Client_ValidateTOTPSecret(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -504,6 +528,7 @@ func TestV1Client_ValidateTOTPSecret(T *testing.T) {
 	})
 
 	T.Run("with timeout", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()

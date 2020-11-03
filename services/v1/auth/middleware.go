@@ -181,6 +181,7 @@ func parseLoginInputFromForm(req *http.Request) *models.UserLoginInput {
 			return uli
 		}
 	}
+
 	return nil
 }
 

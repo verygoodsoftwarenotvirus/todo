@@ -15,8 +15,9 @@ import (
 )
 
 const (
-	base    = 10
-	bitSize = 64
+	fuzziness = 2
+	base      = 10
+	bitSize   = 64
 
 	// testingSearchIndexName is an index name that is only valid for testing's sake.
 	testingSearchIndexName search.IndexName = "testing"
@@ -126,7 +127,7 @@ func (sm *bleveIndexManager) SearchForAdmin(ctx context.Context, query string) (
 	logger.Debug("performing search for admin")
 
 	q := bleve.NewFuzzyQuery(query)
-	q.SetFuzziness(2)
+	q.SetFuzziness(fuzziness)
 
 	searchResults, err := sm.index.SearchInContext(ctx, bleve.NewSearchRequest(q))
 	if err != nil {

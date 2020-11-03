@@ -36,6 +36,12 @@ func BuildViperConfig() *viper.Viper {
 	cfg.SetDefault("metrics.database_metrics_collection_interval", config.DefaultMetricsCollectionInterval)
 	cfg.SetDefault("metrics.runtime_metrics_collection_interval", config.DefaultDatabaseMetricsCollectionInterval)
 
+	// audit log stuff.
+	cfg.SetDefault("audit_log.enabled", true)
+
+	// webhooks stuff.
+	cfg.SetDefault("webhooks.enabled", true)
+
 	// server stuff.
 	cfg.SetDefault("server.http_port", 80)
 
@@ -44,11 +50,11 @@ func BuildViperConfig() *viper.Viper {
 
 // ParseConfigFile parses a configuration file.
 func ParseConfigFile(logger logging.Logger, filePath string) (*config.ServerConfig, error) {
-	cfg := BuildViperConfig()
-
 	logger.WithValue("filepath", filePath).Debug("parsing config file")
 
+	cfg := BuildViperConfig()
 	cfg.SetConfigFile(filePath)
+
 	if err := cfg.ReadInConfig(); err != nil {
 		return nil, fmt.Errorf("trying to read the config file: %w", err)
 	}

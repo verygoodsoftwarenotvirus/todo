@@ -15,6 +15,7 @@ func TestClient_GetAuditLogEntry(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
@@ -34,6 +35,7 @@ func TestClient_GetAllAuditLogEntries(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		results := make(chan []models.AuditLogEntry)
@@ -52,6 +54,7 @@ func TestClient_GetAuditLogEntries(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -68,6 +71,7 @@ func TestClient_GetAuditLogEntries(T *testing.T) {
 	})
 
 	T.Run("with nil filter", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := (*models.QueryFilter)(nil)
@@ -88,6 +92,7 @@ func TestClient_CreateAuditLogEntry(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()

@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
@@ -101,7 +102,7 @@ func (s *Sqlite) ItemExists(ctx context.Context, itemID, userID uint64) (exists 
 	query, args := s.buildItemExistsQuery(itemID, userID)
 
 	err = s.db.QueryRowContext(ctx, query, args...).Scan(&exists)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return false, nil
 	}
 
@@ -193,7 +194,7 @@ func (s *Sqlite) GetAllItems(ctx context.Context, resultChannel chan []models.It
 			})
 
 			rows, err := s.db.Query(query, args...)
-			if err == sql.ErrNoRows {
+			if errors.Is(err, sql.ErrNoRows) {
 				return
 			} else if err != nil {
 				logger.Error(err, "querying for database rows")
@@ -325,9 +326,11 @@ func (s *Sqlite) GetItemsForAdmin(ctx context.Context, filter *models.QueryFilte
 // are valid database IDs, because there's no way in squirrel to escape them in the unnest join,
 // and if we accept strings we could leave ourselves vulnerable to SQL injection attacks.
 func (s *Sqlite) buildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []uint64) (query string, args []interface{}) {
-	var err error
+	var (
+		err               error
+		whenThenStatement string
+	)
 
-	var whenThenStatement string
 	for i, id := range ids {
 		if i != 0 {
 			whenThenStatement += " "

@@ -15,6 +15,7 @@ func TestClient_ItemExists(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -36,6 +37,7 @@ func TestClient_GetItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -57,6 +59,7 @@ func TestClient_GetAllItemsCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleCount := uint64(123)
@@ -76,6 +79,7 @@ func TestClient_GetAllItems(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		results := make(chan []models.Item)
@@ -96,6 +100,7 @@ func TestClient_GetItems(T *testing.T) {
 	exampleUser := fakemodels.BuildFakeUser()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -112,6 +117,7 @@ func TestClient_GetItems(T *testing.T) {
 	})
 
 	T.Run("with nil filter", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := (*models.QueryFilter)(nil)
@@ -132,6 +138,7 @@ func TestClient_GetItemsWithIDs(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -156,6 +163,7 @@ func TestClient_CreateItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -178,6 +186,7 @@ func TestClient_UpdateItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 		var expected error
 
@@ -200,6 +209,7 @@ func TestClient_ArchiveItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		var expected error

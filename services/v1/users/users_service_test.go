@@ -26,13 +26,9 @@ func buildTestService(t *testing.T) *Service {
 
 	expectedUserCount := uint64(123)
 
+	uc := &mockmetrics.UnitCounter{}
 	mockDB := database.BuildMockDatabase()
 	mockDB.UserDataManager.On("GetAllUsersCount", mock.Anything).Return(expectedUserCount, nil)
-
-	uc := &mockmetrics.UnitCounter{}
-	var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
-		return uc, nil
-	}
 
 	service, err := ProvideUsersService(
 		config.AuthSettings{},
@@ -43,7 +39,9 @@ func buildTestService(t *testing.T) *Service {
 		func(req *http.Request) uint64 { return 0 },
 		func(req *http.Request) (*models.SessionInfo, error) { return nil, nil },
 		&mockencoding.EncoderDecoder{},
-		ucp,
+		func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
+			return uc, nil
+		},
 	)
 	require.NoError(t, err)
 
@@ -57,11 +55,6 @@ func TestProvideUsersService(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
-		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
-			return &mockmetrics.UnitCounter{}, nil
-		}
-
 		service, err := ProvideUsersService(
 			config.AuthSettings{},
 			noop.NewLogger(),
@@ -71,7 +64,9 @@ func TestProvideUsersService(T *testing.T) {
 			func(req *http.Request) uint64 { return 0 },
 			func(req *http.Request) (*models.SessionInfo, error) { return nil, nil },
 			&mockencoding.EncoderDecoder{},
-			ucp,
+			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
+				return &mockmetrics.UnitCounter{}, nil
+			},
 		)
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
@@ -79,7 +74,6 @@ func TestProvideUsersService(T *testing.T) {
 
 	T.Run("with nil userIDFetcher", func(t *testing.T) {
 		t.Parallel()
-
 		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 			return &mockmetrics.UnitCounter{}, nil
 		}
@@ -101,7 +95,6 @@ func TestProvideUsersService(T *testing.T) {
 
 	T.Run("with error initializing counter", func(t *testing.T) {
 		t.Parallel()
-
 		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 			return &mockmetrics.UnitCounter{}, errors.New("blah")
 		}

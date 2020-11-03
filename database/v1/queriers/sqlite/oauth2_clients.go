@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -141,7 +142,7 @@ func (s *Sqlite) buildGetAllOAuth2ClientsQuery() (query string) {
 func (s *Sqlite) GetAllOAuth2Clients(ctx context.Context) ([]*models.OAuth2Client, error) {
 	rows, err := s.db.QueryContext(ctx, s.buildGetAllOAuth2ClientsQuery())
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
@@ -161,7 +162,7 @@ func (s *Sqlite) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64) 
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
@@ -200,7 +201,7 @@ func (s *Sqlite) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (
 
 	client, err := s.scanOAuth2Client(row)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("querying for oauth2 client: %w", err)
@@ -264,7 +265,7 @@ func (s *Sqlite) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, fil
 	rows, err := s.db.QueryContext(ctx, query, args...)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("querying for oauth2 clients: %w", err)

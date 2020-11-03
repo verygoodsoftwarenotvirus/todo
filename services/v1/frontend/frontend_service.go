@@ -11,7 +11,7 @@ const (
 )
 
 type (
-	// Service is responsible for serving HTML (and other static resources)
+	// Service is responsible for serving HTML (and other static resources).
 	Service struct {
 		logger         logging.Logger
 		logStaticFiles bool
@@ -25,5 +25,6 @@ func ProvideFrontendService(logger logging.Logger, cfg config.FrontendSettings) 
 		config: cfg,
 		logger: logger.WithName(serviceName),
 	}
+
 	return svc
 }

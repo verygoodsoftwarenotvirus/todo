@@ -86,8 +86,8 @@ func checkUserEquality(t *testing.T, expected *models.UserCreationInput, actual 
 }
 
 func TestUsers(test *testing.T) {
-	test.Run("Creating", func(T *testing.T) {
-		T.Run("should be creatable", func(t *testing.T) {
+	test.Run("Creating", func(t *testing.T) {
+		t.Run("should be creatable", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
@@ -104,8 +104,8 @@ func TestUsers(test *testing.T) {
 		})
 	})
 
-	test.Run("Reading", func(T *testing.T) {
-		T.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
+	test.Run("Reading", func(t *testing.T) {
+		t.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
@@ -115,7 +115,7 @@ func TestUsers(test *testing.T) {
 			assert.Error(t, err)
 		})
 
-		T.Run("it should be readable", func(t *testing.T) {
+		t.Run("it should be readable", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
@@ -150,8 +150,8 @@ func TestUsers(test *testing.T) {
 		})
 	})
 
-	test.Run("Deleting", func(T *testing.T) {
-		T.Run("should be able to be deleted", func(t *testing.T) {
+	test.Run("Deleting", func(t *testing.T) {
+		t.Run("should be able to be deleted", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 

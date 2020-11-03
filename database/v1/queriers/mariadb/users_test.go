@@ -65,6 +65,7 @@ func TestMariaDB_ScanUsers(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
@@ -76,6 +77,7 @@ func TestMariaDB_ScanUsers(T *testing.T) {
 	})
 
 	T.Run("logs row closing errors", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
@@ -92,6 +94,7 @@ func TestMariaDB_buildGetUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -112,6 +115,7 @@ func TestMariaDB_GetUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -121,9 +125,7 @@ func TestMariaDB_GetUser(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetUserQuery(exampleUser.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildMockRowsFromUser(exampleUser))
 
 		actual, err := m.GetUser(ctx, exampleUser.ID)
@@ -134,6 +136,7 @@ func TestMariaDB_GetUser(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -142,9 +145,7 @@ func TestMariaDB_GetUser(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetUserQuery(exampleUser.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := m.GetUser(ctx, exampleUser.ID)
@@ -160,6 +161,7 @@ func TestMariaDB_buildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -180,6 +182,7 @@ func TestMariaDB_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -189,9 +192,7 @@ func TestMariaDB_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetUserWithUnverifiedTwoFactorSecretQuery(exampleUser.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildMockRowsFromUser(exampleUser))
 
 		actual, err := m.GetUserWithUnverifiedTwoFactorSecret(ctx, exampleUser.ID)
@@ -202,6 +203,7 @@ func TestMariaDB_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -210,9 +212,7 @@ func TestMariaDB_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetUserWithUnverifiedTwoFactorSecretQuery(exampleUser.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := m.GetUserWithUnverifiedTwoFactorSecret(ctx, exampleUser.ID)
@@ -228,6 +228,7 @@ func TestMariaDB_buildGetUsersQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		filter := fakemodels.BuildFleshedOutQueryFilter()
@@ -251,6 +252,7 @@ func TestMariaDB_GetUsers(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -264,9 +266,7 @@ func TestMariaDB_GetUsers(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetUsersQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromUser(
 					&exampleUserList.Users[0],
@@ -283,6 +283,7 @@ func TestMariaDB_GetUsers(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -291,9 +292,7 @@ func TestMariaDB_GetUsers(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetUsersQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := m.GetUsers(ctx, filter)
@@ -305,6 +304,7 @@ func TestMariaDB_GetUsers(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -313,9 +313,7 @@ func TestMariaDB_GetUsers(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetUsersQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := m.GetUsers(ctx, filter)
@@ -326,6 +324,7 @@ func TestMariaDB_GetUsers(T *testing.T) {
 	})
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		filter := models.DefaultQueryFilter()
@@ -334,9 +333,7 @@ func TestMariaDB_GetUsers(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetUsersQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromUser(fakemodels.BuildFakeUser()))
 
 		actual, err := m.GetUsers(ctx, filter)
@@ -351,6 +348,7 @@ func TestMariaDB_buildGetUserByUsernameQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -371,6 +369,7 @@ func TestMariaDB_GetUserByUsername(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -380,9 +379,7 @@ func TestMariaDB_GetUserByUsername(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetUserByUsernameQuery(exampleUser.Username)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildMockRowsFromUser(exampleUser))
 
 		actual, err := m.GetUserByUsername(ctx, exampleUser.Username)
@@ -393,6 +390,7 @@ func TestMariaDB_GetUserByUsername(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -401,9 +399,7 @@ func TestMariaDB_GetUserByUsername(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetUserByUsernameQuery(exampleUser.Username)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := m.GetUserByUsername(ctx, exampleUser.Username)
@@ -415,6 +411,7 @@ func TestMariaDB_GetUserByUsername(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -423,9 +420,7 @@ func TestMariaDB_GetUserByUsername(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetUserByUsernameQuery(exampleUser.Username)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := m.GetUserByUsername(ctx, exampleUser.Username)
@@ -440,6 +435,7 @@ func TestMariaDB_buildGetAllUsersCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		expectedQuery := "SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL"
@@ -454,6 +450,7 @@ func TestMariaDB_GetAllUsersCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleCount := uint64(123)
@@ -473,6 +470,7 @@ func TestMariaDB_GetAllUsersCount(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -494,6 +492,7 @@ func TestMariaDB_buildCreateUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -519,6 +518,7 @@ func TestMariaDB_CreateUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -532,9 +532,7 @@ func TestMariaDB_CreateUser(T *testing.T) {
 
 		exampleRows := sqlmock.NewResult(int64(exampleUser.ID), 1)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(exampleRows)
 
 		mtt := &mockTimeTeller{}
@@ -550,6 +548,7 @@ func TestMariaDB_CreateUser(T *testing.T) {
 	})
 
 	T.Run("with error querying database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -561,9 +560,7 @@ func TestMariaDB_CreateUser(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildCreateUserQuery(expectedInput)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := m.CreateUser(ctx, expectedInput)
@@ -578,6 +575,7 @@ func TestMariaDB_buildUpdateUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -603,6 +601,7 @@ func TestMariaDB_UpdateUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -612,9 +611,7 @@ func TestMariaDB_UpdateUser(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildUpdateUserQuery(exampleUser)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(exampleRows)
 
 		err := m.UpdateUser(ctx, exampleUser)
@@ -628,6 +625,7 @@ func TestMariaDB_buildUpdateUserPasswordQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -650,6 +648,7 @@ func TestMariaDB_UpdateUserPassword(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -658,9 +657,7 @@ func TestMariaDB_UpdateUserPassword(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildUpdateUserPasswordQuery(exampleUser.ID, exampleUser.HashedPassword)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(driver.ResultNoRows)
 
 		err := m.UpdateUserPassword(ctx, exampleUser.ID, exampleUser.HashedPassword)
@@ -674,6 +671,7 @@ func TestMariaDB_buildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -694,6 +692,7 @@ func TestMariaDB_VerifyUserTwoFactorSecret(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -702,9 +701,7 @@ func TestMariaDB_VerifyUserTwoFactorSecret(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildVerifyUserTwoFactorSecretQuery(exampleUser.ID)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		err := m.VerifyUserTwoFactorSecret(ctx, exampleUser.ID)
@@ -718,6 +715,7 @@ func TestMariaDB_buildArchiveUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -738,6 +736,7 @@ func TestMariaDB_ArchiveUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -746,9 +745,7 @@ func TestMariaDB_ArchiveUser(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildArchiveUserQuery(exampleUser.ID)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		err := m.ArchiveUser(ctx, exampleUser.ID)

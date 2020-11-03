@@ -88,6 +88,7 @@ func userIDFetcherFromRequestContext(req *http.Request) uint64 {
 	if si, ok := req.Context().Value(models.SessionInfoKey).(*models.SessionInfo); ok && si != nil {
 		return si.UserID
 	}
+
 	return 0
 }
 
@@ -98,6 +99,7 @@ func sessionInfoFetcherFromRequestContext(req *http.Request) (*models.SessionInf
 	if si, ok := req.Context().Value(models.SessionInfoKey).(*models.SessionInfo); ok && si != nil {
 		return si, nil
 	}
+
 	return nil, errors.New("no session info attached to request")
 }
 
@@ -108,6 +110,7 @@ func buildRouteParamUserIDFetcher(logger logging.Logger) usersservice.UserIDFetc
 		if err != nil {
 			logger.Error(err, "fetching user ID from request")
 		}
+
 		return u
 	}
 }
@@ -121,6 +124,7 @@ func buildRouteParamItemIDFetcher(logger logging.Logger) func(req *http.Request)
 		if err != nil {
 			logger.Error(err, "fetching item ID from request")
 		}
+
 		return u
 	}
 }
@@ -134,6 +138,7 @@ func buildRouteParamEntryIDFetcher(logger logging.Logger) func(req *http.Request
 		if err != nil {
 			logger.Error(err, "fetching audit log entry ID from request")
 		}
+
 		return u
 	}
 }
@@ -147,6 +152,7 @@ func buildRouteParamWebhookIDFetcher(logger logging.Logger) func(req *http.Reque
 		if err != nil {
 			logger.Error(err, "fetching webhook ID from request")
 		}
+
 		return u
 	}
 }
@@ -160,6 +166,7 @@ func buildRouteParamOAuth2ClientIDFetcher(logger logging.Logger) func(req *http.
 		if err != nil {
 			logger.Error(err, "fetching OAuth2 client ID from request")
 		}
+
 		return u
 	}
 }

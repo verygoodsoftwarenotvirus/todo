@@ -21,6 +21,7 @@ func TestV1Client_BuildGetWebhookRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodGet
@@ -41,6 +42,7 @@ func TestV1Client_GetWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -65,6 +67,7 @@ func TestV1Client_GetWebhook(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -80,6 +83,7 @@ func TestV1Client_BuildGetWebhooksRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodGet
@@ -98,6 +102,7 @@ func TestV1Client_GetWebhooks(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhookList := fakemodels.BuildFakeWebhookList()
@@ -121,6 +126,7 @@ func TestV1Client_GetWebhooks(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		actual, err := buildTestClientWithInvalidURL(t).GetWebhooks(ctx, nil)
@@ -133,6 +139,7 @@ func TestV1Client_BuildCreateWebhookRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost
@@ -154,6 +161,7 @@ func TestV1Client_CreateWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -184,6 +192,7 @@ func TestV1Client_CreateWebhook(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -199,6 +208,7 @@ func TestV1Client_BuildUpdateWebhookRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPut
@@ -218,6 +228,7 @@ func TestV1Client_UpdateWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -237,6 +248,7 @@ func TestV1Client_UpdateWebhook(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -250,6 +262,7 @@ func TestV1Client_BuildArchiveWebhookRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodDelete
@@ -271,6 +284,7 @@ func TestV1Client_ArchiveWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()
@@ -289,6 +303,7 @@ func TestV1Client_ArchiveWebhook(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleWebhook := fakemodels.BuildFakeWebhook()

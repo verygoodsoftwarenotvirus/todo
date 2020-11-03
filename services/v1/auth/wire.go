@@ -12,7 +12,7 @@ var Providers = wire.NewSet(
 	ProvideOAuth2ClientValidator,
 )
 
-// ProvideOAuth2ClientValidator converts an oauth2clients.Service to an OAuth2ClientValidator
+// ProvideOAuth2ClientValidator converts an oauth2clients.Service to an OAuth2ClientValidator.
 func ProvideOAuth2ClientValidator(s *oauth2clientsservice.Service) OAuth2ClientValidator {
 	return s
 }

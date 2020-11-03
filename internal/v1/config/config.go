@@ -8,24 +8,24 @@ import (
 )
 
 const (
-	// DevelopmentRunMode is the run mode for a development environment
+	// DevelopmentRunMode is the run mode for a development environment.
 	DevelopmentRunMode RunMode = "development"
-	// TestingRunMode is the run mode for a testing environment
+	// TestingRunMode is the run mode for a testing environment.
 	TestingRunMode RunMode = "testing"
-	// ProductionRunMode is the run mode for a production environment
+	// ProductionRunMode is the run mode for a production environment.
 	ProductionRunMode RunMode = "production"
 
-	// DefaultStartupDeadline is the default amount of time we allow for server startup
+	// DefaultStartupDeadline is the default amount of time we allow for server startup.
 	DefaultStartupDeadline = time.Minute
 
-	// DefaultRunMode is the default run mode
+	// DefaultRunMode is the default run mode.
 	DefaultRunMode = DevelopmentRunMode
 
 	randStringSize = 32
 )
 
 var (
-	// ValidModes is a helper map with every valid RunMode present
+	// ValidModes is a helper map with every valid RunMode present.
 	ValidModes = map[RunMode]struct{}{
 		DevelopmentRunMode: {},
 		TestingRunMode:     {},
@@ -41,7 +41,7 @@ func init() {
 }
 
 type (
-	// RunMode describes what method of operation the server is under
+	// RunMode describes what method of operation the server is under.
 	RunMode string
 
 	// ServerSettings describes the settings pertinent to the HTTP serving portion of the service.
@@ -62,6 +62,8 @@ type (
 		Database DatabaseSettings `json:"database" mapstructure:"database" toml:"database,omitempty"`
 		Metrics  MetricsSettings  `json:"metrics" mapstructure:"metrics" toml:"metrics,omitempty"`
 		Search   SearchSettings   `json:"search" mapstructure:"search" toml:"search,omitempty"`
+		Webhooks WebhooksSettings `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
+		AuditLog AuditLogSettings `json:"audit_log" mapstructure:"audit_log" toml:"audit_log,omitempty"`
 	}
 )
 

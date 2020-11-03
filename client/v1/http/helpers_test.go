@@ -25,16 +25,19 @@ func TestArgIsNotPointerOrNil(T *testing.T) {
 	T.Parallel()
 
 	T.Run("expected use", func(t *testing.T) {
+		t.Parallel()
 		err := argIsNotPointerOrNil(&testingType{})
 		assert.NoError(t, err, "error should not be returned when a pointer is provided")
 	})
 
 	T.Run("with non-pointer", func(t *testing.T) {
+		t.Parallel()
 		err := argIsNotPointerOrNil(testingType{})
 		assert.Error(t, err, "error should be returned when a non-pointer is provided")
 	})
 
 	T.Run("with nil", func(t *testing.T) {
+		t.Parallel()
 		err := argIsNotPointerOrNil(nil)
 		assert.Error(t, err, "error should be returned when nil is provided")
 	})
@@ -44,18 +47,21 @@ func TestArgIsNotPointer(T *testing.T) {
 	T.Parallel()
 
 	T.Run("expected use", func(t *testing.T) {
+		t.Parallel()
 		notAPointer, err := argIsNotPointer(&testingType{})
 		assert.False(t, notAPointer, "expected `false` when a pointer is provided")
 		assert.NoError(t, err, "error should not be returned when a pointer is provided")
 	})
 
 	T.Run("with non-pointer", func(t *testing.T) {
+		t.Parallel()
 		notAPointer, err := argIsNotPointer(testingType{})
 		assert.True(t, notAPointer, "expected `true` when a non-pointer is provided")
 		assert.Error(t, err, "error should be returned when a non-pointer is provided")
 	})
 
 	T.Run("with nil", func(t *testing.T) {
+		t.Parallel()
 		notAPointer, err := argIsNotPointer(nil)
 		assert.True(t, notAPointer, "expected `true` when nil is provided")
 		assert.Error(t, err, "error should be returned when nil is provided")
@@ -66,18 +72,21 @@ func TestArgIsNotNil(T *testing.T) {
 	T.Parallel()
 
 	T.Run("without nil", func(t *testing.T) {
+		t.Parallel()
 		isNil, err := argIsNotNil(&testingType{})
 		assert.False(t, isNil, "expected `false` when a pointer is provided")
 		assert.NoError(t, err, "error should not be returned when a pointer is provided")
 	})
 
 	T.Run("with non-pointer", func(t *testing.T) {
+		t.Parallel()
 		isNil, err := argIsNotNil(testingType{})
 		assert.False(t, isNil, "expected `true` when a non-pointer is provided")
 		assert.NoError(t, err, "error should not be returned when a non-pointer is provided")
 	})
 
 	T.Run("with nil", func(t *testing.T) {
+		t.Parallel()
 		isNil, err := argIsNotNil(nil)
 		assert.True(t, isNil, "expected `true` when nil is provided")
 		assert.Error(t, err, "error should be returned when nil is provided")
@@ -88,6 +97,7 @@ func TestUnmarshalBody(T *testing.T) {
 	T.Parallel()
 
 	T.Run("expected use", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expected := "whatever"
@@ -103,6 +113,7 @@ func TestUnmarshalBody(T *testing.T) {
 	})
 
 	T.Run("with good status but unmarshallable response", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		res := &http.Response{
@@ -116,6 +127,7 @@ func TestUnmarshalBody(T *testing.T) {
 	})
 
 	T.Run("with an erroneous error code", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		res := &http.Response{
@@ -138,6 +150,7 @@ func TestUnmarshalBody(T *testing.T) {
 	})
 
 	T.Run("with an erroneous error code and unmarshallable body", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		res := &http.Response{
@@ -152,6 +165,7 @@ func TestUnmarshalBody(T *testing.T) {
 	})
 
 	T.Run("with nil target variable", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		err := unmarshalBody(ctx, nil, nil)
@@ -159,6 +173,7 @@ func TestUnmarshalBody(T *testing.T) {
 	})
 
 	T.Run("with erroneous reader", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expected := errors.New("blah")
@@ -188,6 +203,7 @@ func TestCreateBodyFromStruct(T *testing.T) {
 	T.Parallel()
 
 	T.Run("expected use", func(t *testing.T) {
+		t.Parallel()
 		name := "whatever"
 		expected := fmt.Sprintf(`{"name":%q}`, name)
 		x := &testingType{Name: name}
@@ -201,6 +217,7 @@ func TestCreateBodyFromStruct(T *testing.T) {
 	})
 
 	T.Run("with unmarshallable struct", func(t *testing.T) {
+		t.Parallel()
 		x := &testBreakableStruct{Thing: "stuff"}
 		_, err := createBodyFromStruct(x)
 

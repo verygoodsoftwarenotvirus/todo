@@ -66,15 +66,12 @@ func DetermineDatabaseURL() (address, vendor string) {
 	if err != nil {
 		panic(err)
 	}
-	svcAddr := u.String()
 
-	log.Printf("using target address: %q\n", svcAddr)
-
-	return svcAddr, dbv
+	return u.String(), dbv
 }
 
 // EnsureServerIsUp checks that a server is up and doesn't return until it's certain one way or the other.
-func EnsureServerIsUp(address string) {
+func EnsureServerIsUp(ctx context.Context, address string) {
 	var (
 		isDown           = true
 		interval         = time.Second
@@ -83,9 +80,10 @@ func EnsureServerIsUp(address string) {
 	)
 
 	for isDown {
-		if !IsUp(address) {
+		if !IsUp(ctx, address) {
 			log.Printf("waiting %s before pinging again", interval)
 			time.Sleep(interval)
+
 			numberOfAttempts++
 			if numberOfAttempts >= maxAttempts {
 				log.Fatal("Maximum number of attempts made, something's gone awry")
@@ -97,9 +95,10 @@ func EnsureServerIsUp(address string) {
 }
 
 // IsUp can check if an instance of our server is alive.
-func IsUp(address string) bool {
+func IsUp(ctx context.Context, address string) bool {
 	uri := fmt.Sprintf("%s/_meta_/ready", address)
-	req, err := http.NewRequest(http.MethodGet, uri, nil)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -119,6 +118,7 @@ func IsUp(address string) bool {
 // CreateObligatoryUser creates a user for the sake of having an OAuth2 client.
 func CreateObligatoryUser(address string, debug bool) (*models.User, error) {
 	ctx := context.Background()
+
 	tu, parseErr := url.Parse(address)
 	if parseErr != nil {
 		return nil, parseErr
@@ -185,7 +185,7 @@ func buildURL(address string, parts ...string) string {
 	return tu.ResolveReference(u).String()
 }
 
-func getLoginCookie(serviceURL string, u *models.User) (*http.Cookie, error) {
+func getLoginCookie(ctx context.Context, serviceURL string, u *models.User) (*http.Cookie, error) {
 	uri := buildURL(serviceURL, "users", "login")
 
 	code, err := totp.GenerateCode(strings.ToUpper(u.TwoFactorSecret), time.Now().UTC())
@@ -193,7 +193,8 @@ func getLoginCookie(serviceURL string, u *models.User) (*http.Cookie, error) {
 		return nil, fmt.Errorf("generating totp token: %w", err)
 	}
 
-	req, err := http.NewRequest(
+	req, err := http.NewRequestWithContext(
+		ctx,
 		http.MethodPost,
 		uri,
 		strings.NewReader(
@@ -233,7 +234,7 @@ func getLoginCookie(serviceURL string, u *models.User) (*http.Cookie, error) {
 }
 
 // CreateObligatoryClient creates the OAuth2 client we need for tests.
-func CreateObligatoryClient(serviceURL string, u *models.User) (*models.OAuth2Client, error) {
+func CreateObligatoryClient(ctx context.Context, serviceURL string, u *models.User) (*models.OAuth2Client, error) {
 	if u == nil {
 		return nil, errors.New("user is nil")
 	}
@@ -248,7 +249,8 @@ func CreateObligatoryClient(serviceURL string, u *models.User) (*models.OAuth2Cl
 		return nil, err
 	}
 
-	req, err := http.NewRequest(
+	req, err := http.NewRequestWithContext(
+		ctx,
 		http.MethodPost,
 		firstOAuth2ClientURI,
 		strings.NewReader(fmt.Sprintf(`
@@ -266,10 +268,11 @@ func CreateObligatoryClient(serviceURL string, u *models.User) (*models.OAuth2Cl
 		return nil, err
 	}
 
-	cookie, err := getLoginCookie(serviceURL, u)
+	cookie, err := getLoginCookie(ctx, serviceURL, u)
 	if err != nil || cookie == nil {
 		log.Fatalf("\ncookie problems!\n\tcookie == nil: %v\n\terr: %v\n\t", cookie == nil, err)
 	}
+
 	req.AddCookie(cookie)
 
 	res, err := http.DefaultClient.Do(req)

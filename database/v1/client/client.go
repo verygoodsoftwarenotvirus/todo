@@ -77,9 +77,11 @@ func ProvideDatabaseClient(
 
 	if shouldMigrate {
 		c.logger.Debug("migrating querier")
+
 		if err := c.querier.Migrate(ctx, authenticator, testUserConfig); err != nil {
 			return nil, fmt.Errorf("error migrating database: %w", err)
 		}
+
 		c.logger.Debug("querier migrated!")
 	}
 

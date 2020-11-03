@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
@@ -26,7 +27,7 @@ var (
 	}
 )
 
-// scanAuditLogEntry takes a database Scanner (i.e. *sql.Row) and scans the result into an AuditLogEntry struct
+// scanAuditLogEntry takes a database Scanner (i.e. *sql.Row) and scans the result into an AuditLogEntry struct.
 func (p *Postgres) scanAuditLogEntry(scan database.Scanner) (*models.AuditLogEntry, error) {
 	x := &models.AuditLogEntry{}
 
@@ -152,7 +153,7 @@ func (p *Postgres) GetAllAuditLogEntries(ctx context.Context, resultChannel chan
 			})
 
 			rows, err := p.db.Query(query, args...)
-			if err == sql.ErrNoRows {
+			if errors.Is(err, sql.ErrNoRows) {
 				return
 			} else if err != nil {
 				logger.Error(err, "querying for database rows")

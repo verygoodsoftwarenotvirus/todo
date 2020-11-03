@@ -37,9 +37,9 @@ func loginUser(ctx context.Context, t *testing.T, username, password, totpSecret
 		"totpToken": %q
 	}
 `, username, password, code)
-
 	body := strings.NewReader(bodyStr)
 	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, loginURL, body)
+
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Fatal(err)
@@ -51,6 +51,7 @@ func loginUser(ctx context.Context, t *testing.T, username, password, totpSecret
 	if len(cookies) == 1 {
 		return cookies[0]
 	}
+
 	t.Logf("wrong number of cookies found: %d", len(cookies))
 	t.FailNow()
 
@@ -576,7 +577,7 @@ func TestAuth(test *testing.T) {
 		userA, err := testutil.CreateObligatoryUser(urlToUse, debug)
 		require.NoError(t, err)
 
-		ca, err := testutil.CreateObligatoryClient(urlToUse, userA)
+		ca, err := testutil.CreateObligatoryClient(ctx, urlToUse, userA)
 		require.NoError(t, err)
 
 		clientA, err := client.NewClient(
@@ -600,7 +601,7 @@ func TestAuth(test *testing.T) {
 		userB, err := testutil.CreateObligatoryUser(urlToUse, debug)
 		require.NoError(t, err)
 
-		cb, err := testutil.CreateObligatoryClient(urlToUse, userB)
+		cb, err := testutil.CreateObligatoryClient(ctx, urlToUse, userB)
 		require.NoError(t, err)
 
 		clientB, err := client.NewClient(

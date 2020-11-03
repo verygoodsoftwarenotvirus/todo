@@ -37,6 +37,7 @@ var (
 				"    `two_factor_secret` VARCHAR(256) NOT NULL,",
 				"    `two_factor_secret_verified_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    `is_admin` BOOLEAN NOT NULL DEFAULT false,",
+				"    `admin_permissions` INTEGER NOT NULL DEFAULT 0,",
 				"    `status` VARCHAR(32) NOT NULL DEFAULT 'created',",
 				"    `created_on` BIGINT UNSIGNED,",
 				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
@@ -218,6 +219,7 @@ func buildMigrationFunc(db *sql.DB) func() {
 // safe (as in idempotent, though not necessarily recommended) to call this function multiple times.
 func (m *MariaDB) Migrate(ctx context.Context, authenticator auth.Authenticator, testUserConfig *database.UserCreationConfig) error {
 	m.logger.Info("migrating db")
+
 	if !m.IsReady(ctx) {
 		return errors.New("db is not ready yet")
 	}

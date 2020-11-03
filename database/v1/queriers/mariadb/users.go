@@ -3,6 +3,7 @@ package mariadb
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
@@ -189,7 +190,7 @@ func (m *MariaDB) GetUserByUsername(ctx context.Context, username string) (*mode
 
 	u, err := m.scanUser(row)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("fetching user from database: %w", err)
@@ -321,10 +322,10 @@ func (m *MariaDB) CreateUser(ctx context.Context, input models.UserDatabaseCreat
 	// fetch the last inserted ID.
 	id, err := res.LastInsertId()
 	m.logIDRetrievalError(err)
-	x.ID = uint64(id)
 
 	// this won't be completely accurate, but it will suffice.
 	x.CreatedOn = m.timeTeller.Now()
+	x.ID = uint64(id)
 
 	return x, nil
 }

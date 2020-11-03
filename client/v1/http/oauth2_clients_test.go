@@ -20,6 +20,7 @@ func TestV1Client_BuildGetOAuth2ClientRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodGet
@@ -41,6 +42,7 @@ func TestV1Client_GetOAuth2Client(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -65,6 +67,7 @@ func TestV1Client_GetOAuth2Client(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -81,6 +84,7 @@ func TestV1Client_BuildGetOAuth2ClientsRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodGet
@@ -99,6 +103,7 @@ func TestV1Client_GetOAuth2Clients(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2ClientList := fakemodels.BuildFakeOAuth2ClientList()
@@ -122,6 +127,7 @@ func TestV1Client_GetOAuth2Clients(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		c := buildTestClientWithInvalidURL(t)
@@ -136,6 +142,7 @@ func TestV1Client_BuildCreateOAuth2ClientRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		ts := httptest.NewTLSServer(nil)
@@ -155,6 +162,7 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -177,6 +185,7 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -190,6 +199,7 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 	})
 
 	T.Run("with invalid response from server", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -213,6 +223,7 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 	})
 
 	T.Run("without cookie", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		ts := httptest.NewTLSServer(nil)
@@ -227,6 +238,7 @@ func TestV1Client_BuildArchiveOAuth2ClientRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodDelete
@@ -248,6 +260,7 @@ func TestV1Client_ArchiveOAuth2Client(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -268,6 +281,7 @@ func TestV1Client_ArchiveOAuth2Client(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()

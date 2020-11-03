@@ -26,8 +26,8 @@ func checkItemEquality(t *testing.T, expected, actual *models.Item) {
 }
 
 func TestItems(test *testing.T) {
-	test.Run("Creating", func(T *testing.T) {
-		T.Run("should be createable", func(t *testing.T) {
+	test.Run("Creating", func(t *testing.T) {
+		t.Run("should be createable", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
@@ -52,8 +52,8 @@ func TestItems(test *testing.T) {
 		})
 	})
 
-	test.Run("Listing", func(T *testing.T) {
-		T.Run("should be able to be read in a list", func(t *testing.T) {
+	test.Run("Listing", func(t *testing.T) {
+		t.Run("should be able to be read in a list", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
@@ -88,8 +88,8 @@ func TestItems(test *testing.T) {
 		})
 	})
 
-	test.Run("Searching", func(T *testing.T) {
-		T.Run("should be able to be search for items", func(t *testing.T) {
+	test.Run("Searching", func(t *testing.T) {
+		t.Run("should be able to be search for items", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
@@ -126,7 +126,7 @@ func TestItems(test *testing.T) {
 			}
 		})
 
-		T.Run("should only receive your own items", func(t *testing.T) {
+		t.Run("should only receive your own items", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
@@ -134,7 +134,7 @@ func TestItems(test *testing.T) {
 			userA, err := testutil.CreateObligatoryUser(urlToUse, debug)
 			require.NoError(t, err)
 
-			ca, err := testutil.CreateObligatoryClient(urlToUse, userA)
+			ca, err := testutil.CreateObligatoryClient(ctx, urlToUse, userA)
 			require.NoError(t, err)
 
 			clientA, err := client.NewClient(
@@ -170,7 +170,7 @@ func TestItems(test *testing.T) {
 			userB, err := testutil.CreateObligatoryUser(urlToUse, debug)
 			require.NoError(t, err)
 
-			cb, err := testutil.CreateObligatoryClient(urlToUse, userB)
+			cb, err := testutil.CreateObligatoryClient(ctx, urlToUse, userB)
 			require.NoError(t, err)
 
 			clientB, err := client.NewClient(
@@ -226,8 +226,8 @@ func TestItems(test *testing.T) {
 		})
 	})
 
-	test.Run("ExistenceChecking", func(T *testing.T) {
-		T.Run("it should return false with no error when checking something that does not exist", func(t *testing.T) {
+	test.Run("ExistenceChecking", func(t *testing.T) {
+		t.Run("it should return false with no error when checking something that does not exist", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
@@ -237,7 +237,7 @@ func TestItems(test *testing.T) {
 			assert.False(t, actual)
 		})
 
-		T.Run("it should return true with no error when the relevant item exists", func(t *testing.T) {
+		t.Run("it should return true with no error when the relevant item exists", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
@@ -257,8 +257,8 @@ func TestItems(test *testing.T) {
 		})
 	})
 
-	test.Run("Reading", func(T *testing.T) {
-		T.Run("it should return an error when trying to read something that does not exist", func(t *testing.T) {
+	test.Run("Reading", func(t *testing.T) {
+		t.Run("it should return an error when trying to read something that does not exist", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
@@ -267,7 +267,7 @@ func TestItems(test *testing.T) {
 			assert.Error(t, err)
 		})
 
-		T.Run("it should be readable", func(t *testing.T) {
+		t.Run("it should be readable", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
@@ -289,8 +289,8 @@ func TestItems(test *testing.T) {
 		})
 	})
 
-	test.Run("Updating", func(T *testing.T) {
-		T.Run("it should return an error when trying to update something that does not exist", func(t *testing.T) {
+	test.Run("Updating", func(t *testing.T) {
+		t.Run("it should return an error when trying to update something that does not exist", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
@@ -300,7 +300,7 @@ func TestItems(test *testing.T) {
 			assert.Error(t, todoClient.UpdateItem(ctx, exampleItem))
 		})
 
-		T.Run("it should be updatable", func(t *testing.T) {
+		t.Run("it should be updatable", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
@@ -328,15 +328,15 @@ func TestItems(test *testing.T) {
 		})
 	})
 
-	test.Run("Deleting", func(T *testing.T) {
-		T.Run("it should return an error when trying to delete something that does not exist", func(t *testing.T) {
+	test.Run("Deleting", func(t *testing.T) {
+		t.Run("it should return an error when trying to delete something that does not exist", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
 			assert.Error(t, todoClient.ArchiveItem(ctx, nonexistentID))
 		})
 
-		T.Run("should be able to be deleted", func(t *testing.T) {
+		t.Run("should be able to be deleted", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 

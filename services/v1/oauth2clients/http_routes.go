@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/base32"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -56,7 +57,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 
 	// fetch oauth2 clients.
 	oauth2Clients, err := s.clientDataManager.GetOAuth2ClientsForUser(ctx, userID, filter)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		// just return an empty list if there are no results.
 		oauth2Clients = &models.OAuth2ClientList{
 			Clients: []models.OAuth2Client{},
@@ -163,7 +164,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 
 	// fetch oauth2 client.
 	x, err := s.clientDataManager.GetOAuth2Client(ctx, oauth2ClientID, userID)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("ReadHandler called on nonexistent client")
 		s.encoderDecoder.EncodeNotFoundResponse(res)
 		return
@@ -196,7 +197,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// mark client as archived.
 	err := s.clientDataManager.ArchiveOAuth2Client(ctx, oauth2ClientID, userID)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(res)
 		return
 	} else if err != nil {

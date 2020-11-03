@@ -29,7 +29,6 @@ func TestService_OAuth2InternalErrorHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 		expected := errors.New("blah")
 
@@ -43,7 +42,6 @@ func TestService_OAuth2ResponseErrorHandler(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-
 		exampleInput := &oauth2errors.Response{}
 		buildTestService(t).OAuth2ResponseErrorHandler(exampleInput)
 	})
@@ -54,7 +52,6 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -75,7 +72,6 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 
 	T.Run("without client attached to request but with client ID attached", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -106,7 +102,6 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 
 	T.Run("without client attached to request and now rows found fetching client info", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -139,7 +134,6 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 
 	T.Run("without client attached to request and error fetching client info", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -172,7 +166,6 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 
 	T.Run("without client attached to request", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -191,7 +184,6 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 
 	T.Run("with invalid scope & client ID but no client", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -229,7 +221,6 @@ func TestService_UserAuthorizationHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -248,7 +239,6 @@ func TestService_UserAuthorizationHandler(T *testing.T) {
 
 	T.Run("without client attached to request", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -267,7 +257,6 @@ func TestService_UserAuthorizationHandler(T *testing.T) {
 
 	T.Run("with no user info attached", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
@@ -283,7 +272,6 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleGrant := oauth2.AuthorizationCode
@@ -307,7 +295,6 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 
 	T.Run("with password credentials grant", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 		exampleGrant := oauth2.PasswordCredentials
 
@@ -318,7 +305,6 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 
 	T.Run("with error reading from clientDataManager", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 		exampleGrant := oauth2.AuthorizationCode
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -341,7 +327,6 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 
 	T.Run("with disallowed implicit", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleGrant := oauth2.Implicit
@@ -369,7 +354,6 @@ func TestService_ClientScopeHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -392,7 +376,6 @@ func TestService_ClientScopeHandler(T *testing.T) {
 
 	T.Run("with error reading from clientDataManager", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -415,7 +398,6 @@ func TestService_ClientScopeHandler(T *testing.T) {
 
 	T.Run("without valid scope", func(t *testing.T) {
 		t.Parallel()
-
 		s := buildTestService(t)
 
 		exampleScope := "halb"

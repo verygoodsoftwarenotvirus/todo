@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -32,7 +33,7 @@ const (
 	// currentUnixTimeQuery is the query sqlite uses to determine the current unix time.
 	currentUnixTimeQuery = "(strftime('%s','now'))"
 
-	defaultBucketSize = uint64(1000)
+	defaultBucketSize uint64 = 1000
 )
 
 func init() {
@@ -126,7 +127,7 @@ func (s *Sqlite) logIDRetrievalError(err error) {
 // buildError takes a given error and wraps it with a message, provided that it
 // IS NOT sql.ErrNoRows, which we want to preserve and surface to the services.
 func buildError(err error, msg string) error {
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return err
 	}
 

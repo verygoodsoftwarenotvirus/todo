@@ -3,6 +3,7 @@ package mariadb
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
@@ -101,7 +102,7 @@ func (m *MariaDB) ItemExists(ctx context.Context, itemID, userID uint64) (exists
 	query, args := m.buildItemExistsQuery(itemID, userID)
 
 	err = m.db.QueryRowContext(ctx, query, args...).Scan(&exists)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return false, nil
 	}
 
@@ -193,7 +194,7 @@ func (m *MariaDB) GetAllItems(ctx context.Context, resultChannel chan []models.I
 			})
 
 			rows, err := m.db.Query(query, args...)
-			if err == sql.ErrNoRows {
+			if errors.Is(err, sql.ErrNoRows) {
 				return
 			} else if err != nil {
 				logger.Error(err, "querying for database rows")
@@ -323,9 +324,11 @@ func (m *MariaDB) GetItemsForAdmin(ctx context.Context, filter *models.QueryFilt
 // are valid database IDs, because there's no way in squirrel to escape them in the unnest join,
 // and if we accept strings we could leave ourselves vulnerable to SQL injection attacks.
 func (m *MariaDB) buildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []uint64) (query string, args []interface{}) {
-	var err error
+	var (
+		err               error
+		whenThenStatement string
+	)
 
-	var whenThenStatement string
 	for i, id := range ids {
 		if i != 0 {
 			whenThenStatement += " "
@@ -379,9 +382,11 @@ func (m *MariaDB) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint
 // are valid database IDs, because there's no way in squirrel to escape them in the unnest join,
 // and if we accept strings we could leave ourselves vulnerable to SQL injection attacks.
 func (m *MariaDB) buildGetItemsWithIDsForAdminQuery(limit uint8, ids []uint64) (query string, args []interface{}) {
-	var err error
+	var (
+		err               error
+		whenThenStatement string
+	)
 
-	var whenThenStatement string
 	for i, id := range ids {
 		if i != 0 {
 			whenThenStatement += " "
@@ -469,10 +474,10 @@ func (m *MariaDB) CreateItem(ctx context.Context, input *models.ItemCreationInpu
 	// fetch the last inserted ID.
 	id, err := res.LastInsertId()
 	m.logIDRetrievalError(err)
-	x.ID = uint64(id)
 
 	// this won't be completely accurate, but it will suffice.
 	x.CreatedOn = m.timeTeller.Now()
+	x.ID = uint64(id)
 
 	return x, nil
 }

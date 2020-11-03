@@ -3,6 +3,7 @@ package mariadb
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -78,9 +79,11 @@ func (m *MariaDB) scanWebhook(scan database.Scanner) (*models.Webhook, error) {
 	if events := strings.Split(eventsStr, eventsSeparator); len(events) >= 1 && events[0] != "" {
 		x.Events = events
 	}
+
 	if dataTypes := strings.Split(dataTypesStr, typesSeparator); len(dataTypes) >= 1 && dataTypes[0] != "" {
 		x.DataTypes = dataTypes
 	}
+
 	if topics := strings.Split(topicsStr, topicsSeparator); len(topics) >= 1 && topics[0] != "" {
 		x.Topics = topics
 	}
@@ -102,6 +105,7 @@ func (m *MariaDB) scanWebhooks(rows database.ResultIterator) ([]models.Webhook, 
 
 		list = append(list, *webhook)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -186,7 +190,7 @@ func (m *MariaDB) buildGetAllWebhooksQuery() string {
 func (m *MariaDB) GetAllWebhooks(ctx context.Context) (*models.WebhookList, error) {
 	rows, err := m.db.QueryContext(ctx, m.buildGetAllWebhooksQuery())
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("querying for webhooks: %w", err)
@@ -236,7 +240,7 @@ func (m *MariaDB) GetWebhooks(ctx context.Context, userID uint64, filter *models
 
 	rows, err := m.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("querying database: %w", err)
@@ -303,8 +307,8 @@ func (m *MariaDB) CreateWebhook(ctx context.Context, input *models.WebhookCreati
 		Topics:        input.Topics,
 		BelongsToUser: input.BelongsToUser,
 	}
-
 	query, args := m.buildCreateWebhookQuery(x)
+
 	res, err := m.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error executing webhook creation query: %w", err)
@@ -313,10 +317,10 @@ func (m *MariaDB) CreateWebhook(ctx context.Context, input *models.WebhookCreati
 	// fetch the last inserted ID.
 	id, err := res.LastInsertId()
 	m.logIDRetrievalError(err)
-	x.ID = uint64(id)
 
 	// this won't be completely accurate, but it will suffice.
 	x.CreatedOn = m.timeTeller.Now()
+	x.ID = uint64(id)
 
 	return x, nil
 }

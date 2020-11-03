@@ -3,6 +3,7 @@ package mariadb
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
@@ -152,7 +153,7 @@ func (m *MariaDB) GetAllAuditLogEntries(ctx context.Context, resultChannel chan 
 			})
 
 			rows, err := m.db.Query(query, args...)
-			if err == sql.ErrNoRows {
+			if errors.Is(err, sql.ErrNoRows) {
 				return
 			} else if err != nil {
 				logger.Error(err, "querying for database rows")

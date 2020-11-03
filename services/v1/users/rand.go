@@ -10,7 +10,7 @@ const (
 	randomSecretSize = 64
 )
 
-// this function tests that we have appropriate access to crypto/rand
+// this function tests that we have appropriate access to crypto/rand.
 func init() {
 	b := make([]byte, randomSecretSize)
 	if _, err := rand.Read(b); err != nil {

@@ -9,7 +9,6 @@ func TestProvideAuditLogEntryDataServer(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-
 		ProvideAuditLogEntryDataServer(buildTestService())
 	})
 }

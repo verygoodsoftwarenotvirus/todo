@@ -41,19 +41,19 @@ const (
 	dbRunMigrations                  = "database.run_migrations"
 	itemsSearchIndexPath             = "search.items_index_path"
 
-	// run modes
+	// run modes.
 	developmentEnv = "development"
 	testingEnv     = "testing"
 
-	// database providers
+	// database providers.
 	postgres = "postgres"
 	sqlite   = "sqlite"
 	mariadb  = "mariadb"
 
-	// testuser stuff
+	// testuser stuff.
 	defaultPassword = "password"
 
-	// search index paths
+	// search index paths.
 	defaultItemsSearchIndexPath = "items.bleve"
 )
 

@@ -11,7 +11,6 @@ func TestUser_Update(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		actual := User{
 			Username:        "old_username",
 			HashedPassword:  "hashed_pass",

@@ -12,6 +12,7 @@ func Test_buildDefaultTransport(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		_ = buildDefaultTransport()
 	})
 }
@@ -20,6 +21,7 @@ func Test_defaultRoundTripper_RoundTrip(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		transport := newDefaultRoundTripper()
 
 		req, err := http.NewRequest(http.MethodGet, "https://verygoodsoftwarenotvirus.ru", nil)
@@ -36,6 +38,7 @@ func Test_newDefaultRoundTripper(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		_ = newDefaultRoundTripper()
 	})
 }

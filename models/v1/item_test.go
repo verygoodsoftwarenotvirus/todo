@@ -12,7 +12,6 @@ func TestItem_Update(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		i := &Item{}
 
 		updated := &ItemUpdateInput{
@@ -45,7 +44,6 @@ func TestItem_ToUpdateInput(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		item := &Item{
 			Name:    fake.Word(),
 			Details: fake.Word(),

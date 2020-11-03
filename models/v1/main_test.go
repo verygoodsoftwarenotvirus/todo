@@ -16,7 +16,6 @@ func TestErrorResponse_Error(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-
 		_ = (&ErrorResponse{}).Error()
 	})
 }

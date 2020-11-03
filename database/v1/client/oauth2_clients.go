@@ -117,11 +117,11 @@ func (c *Client) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint6
 		"belongs_to_user": userID,
 	})
 
-	err := c.querier.ArchiveOAuth2Client(ctx, clientID, userID)
-	if err != nil {
+	if err := c.querier.ArchiveOAuth2Client(ctx, clientID, userID); err != nil {
 		logger.WithError(err).Debug("error deleting oauth2 client to the querier")
 		return err
 	}
+
 	logger.Debug("removed oauth2 client successfully")
 
 	return nil

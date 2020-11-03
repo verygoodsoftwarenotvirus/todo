@@ -29,7 +29,6 @@ func TestService_UserInputMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := &Service{
 			logger: noop.NewLogger(),
 		}
@@ -54,7 +53,6 @@ func TestService_UserInputMiddleware(T *testing.T) {
 
 	T.Run("with error decoding request", func(t *testing.T) {
 		t.Parallel()
-
 		s := &Service{
 			logger: noop.NewLogger(),
 		}
@@ -87,7 +85,6 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := &Service{
 			logger: noop.NewLogger(),
 		}
@@ -112,7 +109,6 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 
 	T.Run("with error decoding request", func(t *testing.T) {
 		t.Parallel()
-
 		s := &Service{
 			logger: noop.NewLogger(),
 		}
@@ -149,7 +145,6 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := &Service{
 			logger: noop.NewLogger(),
 		}
@@ -174,7 +169,6 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 
 	T.Run("with error decoding request", func(t *testing.T) {
 		t.Parallel()
-
 		s := &Service{
 			logger: noop.NewLogger(),
 		}
@@ -207,7 +201,6 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		s := &Service{
 			logger: noop.NewLogger(),
 		}
@@ -232,7 +225,6 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 
 	T.Run("with error decoding request", func(t *testing.T) {
 		t.Parallel()
-
 		s := &Service{
 			logger: noop.NewLogger(),
 		}

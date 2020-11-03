@@ -82,6 +82,7 @@ func TestV1Client_AuthenticatedClient(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
@@ -95,6 +96,7 @@ func TestV1Client_PlainClient(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
@@ -108,6 +110,7 @@ func TestV1Client_TokenSource(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		ts := httptest.NewTLSServer(nil)
@@ -134,6 +137,7 @@ func TestNewClient(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		ts := httptest.NewTLSServer(nil)
@@ -154,6 +158,7 @@ func TestNewClient(T *testing.T) {
 	})
 
 	T.Run("with client but invalid timeout", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		c, err := NewClient(
@@ -179,6 +184,7 @@ func TestNewSimpleClient(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		c, err := NewSimpleClient(
@@ -195,6 +201,7 @@ func TestV1Client_CloseRequestBody(T *testing.T) {
 	T.Parallel()
 
 	T.Run("with error", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		rc := newMockReadCloser()
@@ -223,6 +230,7 @@ func TestBuildURL(T *testing.T) {
 	T.Parallel()
 
 	T.Run("various urls", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		u, _ := url.Parse(exampleURI)
@@ -270,6 +278,7 @@ func TestBuildURL(T *testing.T) {
 	})
 
 	T.Run("with invalid URL parts", func(t *testing.T) {
+		t.Parallel()
 		c := buildTestClientWithInvalidURL(t)
 		assert.Empty(t, c.BuildURL(nil, asciiControlChar))
 	})
@@ -279,6 +288,7 @@ func TestBuildVersionlessURL(T *testing.T) {
 	T.Parallel()
 
 	T.Run("various urls", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		u, _ := url.Parse(exampleURI)
@@ -326,6 +336,7 @@ func TestBuildVersionlessURL(T *testing.T) {
 	})
 
 	T.Run("with invalid URL parts", func(t *testing.T) {
+		t.Parallel()
 		c := buildTestClientWithInvalidURL(t)
 		assert.Empty(t, c.buildVersionlessURL(nil, asciiControlChar))
 	})
@@ -335,6 +346,7 @@ func TestV1Client_BuildWebsocketURL(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		u, _ := url.Parse(exampleURI)
@@ -362,6 +374,7 @@ func TestV1Client_BuildHealthCheckRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodGet
@@ -380,6 +393,7 @@ func TestV1Client_IsUp(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		ts := httptest.NewTLSServer(
@@ -397,6 +411,7 @@ func TestV1Client_IsUp(T *testing.T) {
 	})
 
 	T.Run("returns error with invalid URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		c := buildTestClientWithInvalidURL(t)
@@ -406,6 +421,7 @@ func TestV1Client_IsUp(T *testing.T) {
 	})
 
 	T.Run("with bad status code", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		ts := httptest.NewTLSServer(
@@ -423,6 +439,7 @@ func TestV1Client_IsUp(T *testing.T) {
 	})
 
 	T.Run("with timeout", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		ts := httptest.NewTLSServer(
@@ -447,6 +464,7 @@ func TestV1Client_buildDataRequest(T *testing.T) {
 	exampleData := &testingType{Name: "whatever"}
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		ts := httptest.NewTLSServer(nil)
@@ -461,6 +479,7 @@ func TestV1Client_buildDataRequest(T *testing.T) {
 	})
 
 	T.Run("with invalid structure", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		ts := httptest.NewTLSServer(nil)
@@ -474,6 +493,7 @@ func TestV1Client_buildDataRequest(T *testing.T) {
 	})
 
 	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		c := buildTestClientWithInvalidURL(t)
@@ -491,6 +511,7 @@ func TestV1Client_executeRequest(T *testing.T) {
 	exampleResponse := &argleBargle{Name: "whatever"}
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost
@@ -514,6 +535,7 @@ func TestV1Client_executeRequest(T *testing.T) {
 	})
 
 	T.Run("with timeout", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost
@@ -537,6 +559,7 @@ func TestV1Client_executeRequest(T *testing.T) {
 	})
 
 	T.Run("with 401", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost
@@ -558,6 +581,7 @@ func TestV1Client_executeRequest(T *testing.T) {
 	})
 
 	T.Run("with 404", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost
@@ -579,6 +603,7 @@ func TestV1Client_executeRequest(T *testing.T) {
 	})
 
 	T.Run("with unreadable response", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost
@@ -605,6 +630,7 @@ func TestV1Client_executeRawRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("with error", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost
@@ -634,6 +660,7 @@ func TestV1Client_checkExistence(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodHead
@@ -657,6 +684,7 @@ func TestV1Client_checkExistence(T *testing.T) {
 	})
 
 	T.Run("with timeout", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodHead
@@ -685,6 +713,7 @@ func TestV1Client_retrieve(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost
@@ -709,6 +738,7 @@ func TestV1Client_retrieve(T *testing.T) {
 	})
 
 	T.Run("with nil passed in", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		ts := httptest.NewTLSServer(nil)
@@ -723,6 +753,7 @@ func TestV1Client_retrieve(T *testing.T) {
 	})
 
 	T.Run("with timeout", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost
@@ -746,6 +777,7 @@ func TestV1Client_retrieve(T *testing.T) {
 	})
 
 	T.Run("with 404", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost
@@ -773,6 +805,7 @@ func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 	exampleResponse := &argleBargle{Name: "whatever"}
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost
@@ -802,6 +835,7 @@ func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 	})
 
 	T.Run("with 401", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost
@@ -832,6 +866,7 @@ func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 	})
 
 	T.Run("with 404", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost
@@ -862,6 +897,7 @@ func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 	})
 
 	T.Run("with timeout", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost
@@ -891,6 +927,7 @@ func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 	})
 
 	T.Run("with nil as output", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost
@@ -913,6 +950,7 @@ func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 	})
 
 	T.Run("with unreadable response", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost

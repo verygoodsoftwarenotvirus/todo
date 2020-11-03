@@ -26,7 +26,7 @@ func newClientStore(db models.OAuth2ClientDataManager) oauth2.ClientStore {
 func (s *clientStore) GetByID(id string) (oauth2.ClientInfo, error) {
 	client, err := s.dataManager.GetOAuth2ClientByClientID(context.Background(), id)
 
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, errors.New("invalid client")
 	} else if err != nil {
 		return nil, fmt.Errorf("querying for client: %w", err)

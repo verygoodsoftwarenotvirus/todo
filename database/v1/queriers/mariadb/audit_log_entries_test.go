@@ -50,6 +50,7 @@ func TestMariaDB_ScanAuditLogEntries(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
@@ -61,6 +62,7 @@ func TestMariaDB_ScanAuditLogEntries(T *testing.T) {
 	})
 
 	T.Run("logs row closing errors", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
@@ -77,6 +79,7 @@ func TestMariaDB_buildGetAuditLogEntryQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
@@ -97,6 +100,7 @@ func TestMariaDB_GetAuditLogEntry(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
@@ -105,9 +109,7 @@ func TestMariaDB_GetAuditLogEntry(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildMockRowsFromAuditLogEntries(exampleAuditLogEntry))
 
 		actual, err := m.GetAuditLogEntry(ctx, exampleAuditLogEntry.ID)
@@ -118,6 +120,7 @@ func TestMariaDB_GetAuditLogEntry(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
@@ -126,9 +129,7 @@ func TestMariaDB_GetAuditLogEntry(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := m.GetAuditLogEntry(ctx, exampleAuditLogEntry.ID)
@@ -144,6 +145,7 @@ func TestMariaDB_buildGetAllAuditLogEntriesCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		expectedQuery := "SELECT COUNT(audit_log.id) FROM audit_log WHERE audit_log.archived_on IS NULL"
@@ -158,6 +160,7 @@ func TestMariaDB_GetAllAuditLogEntriesCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		expectedCount := uint64(123)
@@ -179,6 +182,7 @@ func TestMariaDB_buildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		beginID, endID := uint64(1), uint64(1000)
@@ -204,7 +208,6 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -218,9 +221,7 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 			WithArgs().
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromAuditLogEntries(
 					&exampleAuditLogEntryList.Entries[0],
@@ -253,7 +254,6 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 
 	T.Run("with error fetching initial count", func(t *testing.T) {
 		t.Parallel()
-
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -272,7 +272,6 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 
 	T.Run("with no rows returned", func(t *testing.T) {
 		t.Parallel()
-
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -285,9 +284,7 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 			WithArgs().
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		out := make(chan []models.AuditLogEntry)
@@ -302,7 +299,6 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		t.Parallel()
-
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -315,9 +311,7 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 			WithArgs().
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		out := make(chan []models.AuditLogEntry)
@@ -332,7 +326,6 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 
 	T.Run("with invalid response from database", func(t *testing.T) {
 		t.Parallel()
-
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -346,9 +339,7 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 			WithArgs().
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromAuditLogEntry(exampleAuditLogEntry))
 
 		out := make(chan []models.AuditLogEntry)
@@ -366,6 +357,7 @@ func TestMariaDB_buildGetAuditLogEntriesQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		filter := fakemodels.BuildFleshedOutQueryFilter()
@@ -389,6 +381,7 @@ func TestMariaDB_GetAuditLogEntries(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -398,9 +391,7 @@ func TestMariaDB_GetAuditLogEntries(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromAuditLogEntries(
 					&exampleAuditLogEntryList.Entries[0],
@@ -418,6 +409,7 @@ func TestMariaDB_GetAuditLogEntries(T *testing.T) {
 	})
 
 	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -426,9 +418,7 @@ func TestMariaDB_GetAuditLogEntries(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := m.GetAuditLogEntries(ctx, filter)
@@ -440,6 +430,7 @@ func TestMariaDB_GetAuditLogEntries(T *testing.T) {
 	})
 
 	T.Run("with error executing read query", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -448,9 +439,7 @@ func TestMariaDB_GetAuditLogEntries(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := m.GetAuditLogEntries(ctx, filter)
@@ -461,6 +450,7 @@ func TestMariaDB_GetAuditLogEntries(T *testing.T) {
 	})
 
 	T.Run("with error scanning item", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -471,9 +461,7 @@ func TestMariaDB_GetAuditLogEntries(T *testing.T) {
 		expectedQuery, expectedArgs := m.buildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromAuditLogEntry(exampleAuditLogEntry))
 
 		actual, err := m.GetAuditLogEntries(ctx, filter)
@@ -488,6 +476,7 @@ func TestMariaDB_buildCreateAuditLogEntryQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		m, _ := buildTestService(t)
 
 		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
@@ -509,6 +498,7 @@ func TestMariaDB_CreateAuditLogEntry(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -528,6 +518,7 @@ func TestMariaDB_CreateAuditLogEntry(T *testing.T) {
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
@@ -537,9 +528,7 @@ func TestMariaDB_CreateAuditLogEntry(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
 		m.CreateAuditLogEntry(ctx, exampleInput)

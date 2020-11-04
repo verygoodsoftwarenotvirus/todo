@@ -16,6 +16,8 @@ const (
 	apiPathPrefix   = "/api/v1/"
 )
 
+var errClientUnauthorizedForScope = errors.New("client not authorized for scope")
+
 // CreationInputMiddleware is a middleware for attaching OAuth2 client info to a request.
 func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -66,7 +68,7 @@ func (s *Service) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.
 
 	if !hasScope {
 		logger.Info("rejecting client for invalid scope")
-		return nil, errors.New("client not authorized for scope")
+		return nil, errClientUnauthorizedForScope
 	}
 
 	return c, nil

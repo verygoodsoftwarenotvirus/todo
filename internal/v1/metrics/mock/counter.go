@@ -10,7 +10,7 @@ import (
 
 var _ metrics.UnitCounter = (*UnitCounter)(nil)
 
-// UnitCounter is a mock metrics.UnitCounter
+// UnitCounter is a mock metrics.UnitCounter.
 type UnitCounter struct {
 	mock.Mock
 }

@@ -22,6 +22,8 @@ const (
 
 var _ models.UserDataServer = (*Service)(nil)
 
+var errNoUserIDFetcherProvided = errors.New("userIDFetcher must be provided")
+
 type (
 	// RequestValidator validates request.
 	RequestValidator interface {
@@ -68,7 +70,7 @@ func ProvideUsersService(
 	counterProvider metrics.UnitCounterProvider,
 ) (*Service, error) {
 	if userIDFetcher == nil {
-		return nil, errors.New("userIDFetcher must be provided")
+		return nil, errNoUserIDFetcherProvided
 	}
 
 	counter, err := counterProvider(counterName, counterDescription)

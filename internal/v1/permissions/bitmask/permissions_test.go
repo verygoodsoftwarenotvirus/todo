@@ -1,8 +1,9 @@
 package bitmask
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_permissionMask_CanCycleCookieSecrets(T *testing.T) {

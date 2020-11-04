@@ -5,9 +5,9 @@ import (
 )
 
 const (
-	// SortAscending is the pre-determined Ascending sortType for external use
+	// SortAscending is the pre-determined Ascending sortType for external use.
 	SortAscending sortType = "asc"
-	// SortDescending is the pre-determined Descending sortType for external use
+	// SortDescending is the pre-determined Descending sortType for external use.
 	SortDescending sortType = "desc"
 )
 

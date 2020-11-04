@@ -56,7 +56,7 @@ const (
 )
 
 var (
-	// ExampleUsers blah blah blah
+	// ExampleUsers blah blah blah.
 	ExampleUsers = []*models.User{
 		{
 			Username:        defaultUsername,
@@ -88,7 +88,7 @@ var (
 		},
 	}
 
-	// ExampleItems blah blah blah
+	// ExampleItems blah blah blah.
 	ExampleItems = [][]*models.ItemCreationInput{
 		{
 			{
@@ -180,7 +180,7 @@ var (
 		},
 	}
 
-	// ExampleOAuth2Clients blah blah blah
+	// ExampleOAuth2Clients blah blah blah.
 	ExampleOAuth2Clients = []*models.OAuth2Client{
 		{
 			Name:            "example client 1",
@@ -274,7 +274,7 @@ var (
 		},
 	}
 
-	// ExampleWebhooks blah blah blah
+	// ExampleWebhooks blah blah blah.
 	ExampleWebhooks = []*models.Webhook{
 		{
 			Name:          "example webhook 1",

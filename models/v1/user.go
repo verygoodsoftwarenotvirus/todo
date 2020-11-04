@@ -95,7 +95,7 @@ type (
 	}
 
 	// AdminUserDataManager contains administrative user functions that we don't necessarily want to expose
-	// to, say, the collection of handlers
+	// to, say, the collection of handlers.
 	AdminUserDataManager interface {
 		// BanUser(ctx context.Context, userID uint64) error
 	}

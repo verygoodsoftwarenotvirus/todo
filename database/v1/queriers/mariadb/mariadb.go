@@ -34,7 +34,8 @@ const (
 	// currentUnixTimeQuery is the query maria DB uses to determine the current unix time.
 	currentUnixTimeQuery = "UNIX_TIMESTAMP()"
 
-	defaultBucketSize = uint64(1000)
+	maximumConnectionAttempts        = 50
+	defaultBucketSize         uint64 = 1000
 )
 
 func init() {
@@ -68,7 +69,7 @@ type (
 	// ConnectionDetails is a string alias for a MariaDB url.
 	ConnectionDetails string
 
-	// Querier is a subset interface for sql.{DB|Tx|Stmt} objects
+	// Querier is a subset interface for sql.{DB|Tx|Stmt} objects.
 	Querier interface {
 		ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error)
 		QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows, error)
@@ -95,21 +96,22 @@ func ProvideMariaDB(debug bool, db *sql.DB, logger logging.Logger) database.Data
 
 // IsReady reports whether or not the db is ready.
 func (m *MariaDB) IsReady(ctx context.Context) (ready bool) {
-	numberOfUnsuccessfulAttempts := 0
+	attemptCount := 0
 
-	m.logger.WithValues(map[string]interface{}{
+	logger := m.logger.WithValues(map[string]interface{}{
 		"interval":     time.Second,
-		"max_attempts": 50,
-	}).Debug("IsReady called")
+		"max_attempts": maximumConnectionAttempts,
+	})
+	logger.Debug("IsReady called")
 
 	for !ready {
 		err := m.db.PingContext(ctx)
 		if err != nil {
-			m.logger.Debug("ping failed, waiting for db")
+			logger.WithValue("attempt_count", attemptCount).Debug("ping failed, waiting for db")
 			time.Sleep(time.Second)
 
-			numberOfUnsuccessfulAttempts++
-			if numberOfUnsuccessfulAttempts >= 50 {
+			attemptCount++
+			if attemptCount >= maximumConnectionAttempts {
 				return false
 			}
 		} else {

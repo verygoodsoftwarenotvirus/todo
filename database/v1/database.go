@@ -16,12 +16,12 @@ var (
 )
 
 type (
-	// Scanner represents any database response (i.e. sql.Row[s])
+	// Scanner represents any database response (i.e. sql.Row[s]).
 	Scanner interface {
 		Scan(dest ...interface{}) error
 	}
 
-	// ResultIterator represents any iterable database response (i.e. sql.Rows)
+	// ResultIterator represents any iterable database response (i.e. sql.Rows).
 	ResultIterator interface {
 		Next() bool
 		Err() error
@@ -29,14 +29,14 @@ type (
 		io.Closer
 	}
 
-	// UserCreationConfig is a helper struct because of cyclical imports
+	// UserCreationConfig is a helper struct because of cyclical imports.
 	UserCreationConfig struct {
 		Username string
 		Password string
 		IsAdmin  bool
 	}
 
-	// Querier is a subset interface for sql.{DB|Tx} objects
+	// Querier is a subset interface for sql.{DB|Tx} objects.
 	Querier interface {
 		ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 		QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)

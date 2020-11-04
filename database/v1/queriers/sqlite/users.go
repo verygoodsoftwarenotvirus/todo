@@ -95,7 +95,7 @@ func (s *Sqlite) scanUsers(rows database.ResultIterator) ([]models.User, error) 
 	return list, nil
 }
 
-// buildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID
+// buildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
 func (s *Sqlite) buildGetUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -130,7 +130,7 @@ func (s *Sqlite) GetUser(ctx context.Context, userID uint64) (*models.User, erro
 }
 
 // buildGetUserWithUnverifiedTwoFactorSecretQuery returns a SQL query (and argument) for retrieving a user
-// by their database ID, who has an unverified two factor secret
+// by their database ID, who has an unverified two factor secret.
 func (s *Sqlite) buildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -149,7 +149,7 @@ func (s *Sqlite) buildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (
 	return query, args
 }
 
-// GetUserWithUnverifiedTwoFactorSecret fetches a user with an unverified two factor secret
+// GetUserWithUnverifiedTwoFactorSecret fetches a user with an unverified two factor secret.
 func (s *Sqlite) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*models.User, error) {
 	query, args := s.buildGetUserWithUnverifiedTwoFactorSecretQuery(userID)
 	row := s.db.QueryRowContext(ctx, query, args...)
@@ -162,7 +162,7 @@ func (s *Sqlite) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userI
 	return u, err
 }
 
-// buildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username
+// buildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
 func (s *Sqlite) buildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
 	var err error
 
@@ -272,7 +272,7 @@ func (s *Sqlite) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mod
 	return x, nil
 }
 
-// buildCreateUserQuery returns a SQL query (and arguments) that would create a given User
+// buildCreateUserQuery returns a SQL query (and arguments) that would create a given User.
 func (s *Sqlite) buildCreateUserQuery(input models.UserDatabaseCreationInput) (query string, args []interface{}) {
 	var err error
 
@@ -330,7 +330,7 @@ func (s *Sqlite) CreateUser(ctx context.Context, input models.UserDatabaseCreati
 	return x, nil
 }
 
-// buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row
+// buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row.
 func (s *Sqlite) buildUpdateUserQuery(input *models.User) (query string, args []interface{}) {
 	var err error
 

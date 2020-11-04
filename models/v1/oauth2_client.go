@@ -15,7 +15,7 @@ const (
 )
 
 type (
-	// OAuth2Client represents a user-authorized API client
+	// OAuth2Client represents a user-authorized API client.
 	OAuth2Client struct {
 		ID              uint64   `json:"id"`
 		Name            string   `json:"name"`
@@ -84,7 +84,7 @@ type (
 
 var _ oauth2.ClientInfo = (*OAuth2Client)(nil)
 
-// GetID returns the client ID. NOTE: I believe this is implemented for the above interface spec (oauth2.ClientInfo)
+// GetID returns the client ID. NOTE: I believe this is implemented for the above interface spec (oauth2.ClientInfo).
 func (c *OAuth2Client) GetID() string {
 	return c.ClientID
 }

@@ -29,7 +29,7 @@ var (
 )
 
 type (
-	// BcryptAuthenticator is our bcrypt-based authenticator
+	// BcryptAuthenticator is our bcrypt-based authenticator.
 	BcryptAuthenticator struct {
 		logger              logging.Logger
 		hashCost            uint
@@ -64,7 +64,7 @@ func (b *BcryptAuthenticator) HashPassword(ctx context.Context, password string)
 // ValidateLogin validates a login attempt by:
 // 1. checking that the provided password matches the stored hashed password
 // 2. checking that the provided hashed password isn't too weak, and returning an error otherwise
-// 3. checking that the temporary one-time password provided jives with the stored two factor secret
+// 3. checking that the temporary one-time password provided jives with the stored two factor secret.
 func (b *BcryptAuthenticator) ValidateLogin(
 	ctx context.Context,
 	hashedPassword,
@@ -101,7 +101,7 @@ func (b *BcryptAuthenticator) ValidateLogin(
 	return passwordMatches, nil
 }
 
-// PasswordMatches validates whether or not a bcrypt-hashed password matches a provided password
+// PasswordMatches validates whether or not a bcrypt-hashed password matches a provided password.
 func (b *BcryptAuthenticator) PasswordMatches(ctx context.Context, hashedPassword, providedPassword string, _ []byte) bool {
 	_, span := tracing.StartSpan(ctx, "PasswordMatches")
 	defer span.End()

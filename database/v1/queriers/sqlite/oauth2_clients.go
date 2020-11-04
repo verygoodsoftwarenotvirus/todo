@@ -292,7 +292,7 @@ func (s *Sqlite) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, fil
 	return ocl, nil
 }
 
-// buildCreateOAuth2ClientQuery returns a SQL query (and args) that will create the given OAuth2Client in the database
+// buildCreateOAuth2ClientQuery returns a SQL query (and args) that will create the given OAuth2Client in the database.
 func (s *Sqlite) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (query string, args []interface{}) {
 	var err error
 
@@ -349,7 +349,7 @@ func (s *Sqlite) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cli
 	return x, nil
 }
 
-// buildUpdateOAuth2ClientQuery returns a SQL query (and args) that will update a given OAuth2 client in the database
+// buildUpdateOAuth2ClientQuery returns a SQL query (and args) that will update a given OAuth2 client in the database.
 func (s *Sqlite) buildUpdateOAuth2ClientQuery(input *models.OAuth2Client) (query string, args []interface{}) {
 	var err error
 

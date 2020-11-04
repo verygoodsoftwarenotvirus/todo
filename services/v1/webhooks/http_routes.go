@@ -17,6 +17,8 @@ const (
 	URIParamKey = "webhookID"
 )
 
+var errInvalidMethod = errors.New("invalid method provided")
+
 // validateWebhook does some validation on a WebhookCreationInput and returns an error if anything runs foul.
 func validateWebhook(input *models.WebhookCreationInput) error {
 	_, err := url.Parse(input.URL)
@@ -35,7 +37,7 @@ func validateWebhook(input *models.WebhookCreationInput) error {
 		http.MethodHead:
 		break
 	default:
-		return fmt.Errorf("invalid method provided: %q", input.Method)
+		return errInvalidMethod
 	}
 
 	return nil

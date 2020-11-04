@@ -294,7 +294,7 @@ func CreateObligatoryClient(ctx context.Context, serviceURL string, u *models.Us
 }
 
 // ParseTwoFactorSecretFromBase64EncodedQRCode accepts a base64-encoded QR code representing an otpauth:// URI,
-// parses the QR code and extracts the 2FA secret from the URI. It can also return an error
+// parses the QR code and extracts the 2FA secret from the URI. It can also return an error.
 func ParseTwoFactorSecretFromBase64EncodedQRCode(qrCode string) (string, error) {
 	qrCode = strings.TrimPrefix(qrCode, base64ImagePrefix)
 

@@ -10,7 +10,7 @@ import (
 
 var _ models.OAuth2ClientDataManager = (*OAuth2ClientDataManager)(nil)
 
-// OAuth2ClientDataManager is a mocked models.OAuth2ClientDataManager for testing
+// OAuth2ClientDataManager is a mocked models.OAuth2ClientDataManager for testing.
 type OAuth2ClientDataManager struct {
 	mock.Mock
 }

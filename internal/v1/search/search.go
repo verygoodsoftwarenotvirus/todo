@@ -7,13 +7,13 @@ import (
 )
 
 type (
-	// IndexPath is a type alias for dependency injection's sake
+	// IndexPath is a type alias for dependency injection's sake.
 	IndexPath string
 
-	// IndexName is a type alias for dependency injection's sake
+	// IndexName is a type alias for dependency injection's sake.
 	IndexName string
 
-	// IndexManager is our wrapper interface for a text search index
+	// IndexManager is our wrapper interface for a text search index.
 	IndexManager interface {
 		Index(ctx context.Context, id uint64, value interface{}) error
 		Search(ctx context.Context, query string, userID uint64) (ids []uint64, err error)

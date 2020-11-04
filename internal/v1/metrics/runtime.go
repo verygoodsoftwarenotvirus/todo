@@ -407,7 +407,7 @@ var (
 		Aggregation: view.LastValue(),
 	}
 
-	// DefaultRuntimeViews represents the pre-configured views
+	// DefaultRuntimeViews represents the pre-configured views.
 	DefaultRuntimeViews = []*view.View{
 		RuntimeTotalAllocView,
 		RuntimeSysView,

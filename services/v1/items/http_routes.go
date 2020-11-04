@@ -3,9 +3,10 @@ package items
 import (
 	"database/sql"
 	"errors"
+	"net/http"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	"net/http"
 )
 
 const (

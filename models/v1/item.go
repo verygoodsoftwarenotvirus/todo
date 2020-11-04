@@ -111,7 +111,7 @@ func (x *Item) ToUpdateInput() *ItemUpdateInput {
 	}
 }
 
-// Validate validates a ItemCreationInput
+// Validate validates a ItemCreationInput.
 func (x *ItemCreationInput) Validate() error {
 	err := v.Validate(v.Schema{
 		v.F("name", x.Name):       &minimumStringLengthValidator{minLength: 1},
@@ -126,7 +126,7 @@ func (x *ItemCreationInput) Validate() error {
 	return nil
 }
 
-// Validate validates a ItemUpdateInput
+// Validate validates a ItemUpdateInput.
 func (x *ItemUpdateInput) Validate() error {
 	err := v.Validate(v.Schema{
 		v.F("name", x.Name):       &minimumStringLengthValidator{minLength: 1},

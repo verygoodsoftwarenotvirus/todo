@@ -31,7 +31,7 @@ var (
 	}
 )
 
-// scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct
+// scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct.
 func (s *Sqlite) scanItem(scan database.Scanner) (*models.Item, error) {
 	x := &models.Item{}
 
@@ -78,7 +78,7 @@ func (s *Sqlite) scanItems(rows database.ResultIterator) ([]models.Item, error) 
 	return list, nil
 }
 
-// buildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists
+// buildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists.
 func (s *Sqlite) buildItemExistsQuery(itemID, userID uint64) (query string, args []interface{}) {
 	var err error
 

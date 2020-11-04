@@ -18,7 +18,7 @@ var (
 )
 
 type (
-	// Service handles audit log entries
+	// Service handles audit log entries.
 	Service struct {
 		logger                 logging.Logger
 		auditLog               models.AuditLogDataManager

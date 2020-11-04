@@ -17,9 +17,9 @@ const (
 	// DefaultLimit represents how many results we return in a response by default.
 	DefaultLimit = 20
 
-	// SearchQueryKey is the query param key we use to find search queries in requests
+	// SearchQueryKey is the query param key we use to find search queries in requests.
 	SearchQueryKey = "q"
-	// LimitQueryKey is the query param key we use to specify a limit in a query
+	// LimitQueryKey is the query param key we use to specify a limit in a query.
 	LimitQueryKey = "limit"
 
 	pageQueryKey            = "page"
@@ -52,7 +52,7 @@ func DefaultQueryFilter() *QueryFilter {
 	}
 }
 
-// FromParams overrides the core QueryFilter values with values retrieved from url.Params
+// FromParams overrides the core QueryFilter values with values retrieved from url.Params.
 func (qf *QueryFilter) FromParams(params url.Values) {
 	if i, err := strconv.ParseUint(params.Get(pageQueryKey), 10, 64); err == nil {
 		qf.Page = uint64(math.Max(float64(i), 1))
@@ -100,7 +100,7 @@ func (qf *QueryFilter) QueryPage() uint64 {
 	return uint64(qf.Limit) * (qf.Page - 1)
 }
 
-// ToValues returns a url.Values from a QueryFilter
+// ToValues returns a url.Values from a QueryFilter.
 func (qf *QueryFilter) ToValues() url.Values {
 	if qf == nil {
 		return DefaultQueryFilter().ToValues()

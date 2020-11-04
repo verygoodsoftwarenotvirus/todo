@@ -92,6 +92,8 @@ func userIDFetcherFromRequestContext(req *http.Request) uint64 {
 	return 0
 }
 
+var errNoSessionInfoAttachedToRequest = errors.New("no session info attached to request")
+
 // sessionInfoFetcherFromRequestContext fetches a SessionInfo from a request routed by chi.
 // NOTE: this function isn't technically a URI param fetcher, but it does fetch
 // something from the request context, which is what chi.URLParam does too.
@@ -100,7 +102,7 @@ func sessionInfoFetcherFromRequestContext(req *http.Request) (*models.SessionInf
 		return si, nil
 	}
 
-	return nil, errors.New("no session info attached to request")
+	return nil, errNoSessionInfoAttachedToRequest
 }
 
 // buildRouteParamUserIDFetcher builds a function that fetches a EnsureUsername from a request routed by chi.

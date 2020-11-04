@@ -37,7 +37,8 @@ const (
 	// currentUnixTimeQuery is the query postgres uses to determine the current unix time.
 	currentUnixTimeQuery = "extract(epoch FROM NOW())"
 
-	defaultBucketSize = uint64(1000)
+	maximumConnectionAttempts        = 50
+	defaultBucketSize         uint64 = 1000
 )
 
 func init() {
@@ -96,21 +97,22 @@ func ProvidePostgres(debug bool, db *sql.DB, logger logging.Logger) database.Dat
 
 // IsReady reports whether or not the db is ready.
 func (p *Postgres) IsReady(ctx context.Context) (ready bool) {
-	numberOfUnsuccessfulAttempts := 0
+	attemptCount := 0
 
-	p.logger.WithValues(map[string]interface{}{
+	logger := p.logger.WithValues(map[string]interface{}{
 		"interval":     time.Second,
-		"max_attempts": 50,
-	}).Debug("IsReady called")
+		"max_attempts": maximumConnectionAttempts,
+	})
+	logger.Debug("IsReady called")
 
 	for !ready {
 		err := p.db.PingContext(ctx)
 		if err != nil {
-			p.logger.Debug("ping failed, waiting for db")
+			logger.WithValue("attempt_count", attemptCount).Debug("ping failed, waiting for db")
 			time.Sleep(time.Second)
 
-			numberOfUnsuccessfulAttempts++
-			if numberOfUnsuccessfulAttempts >= 50 {
+			attemptCount++
+			if attemptCount >= maximumConnectionAttempts {
 				return false
 			}
 		} else {

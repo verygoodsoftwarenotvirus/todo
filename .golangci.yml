@@ -192,7 +192,7 @@ linters:
     - exhaustivestruct # Checks if all struct's fields are initialized
     - exportloopref # checks for pointers to enclosing loop variables
     # funlen # Tool for detection of long functions
-    - gci # control package import order and make it always deterministic.
+    # gci # control package import order and make it always deterministic.
     # gochecknoinits # Checks that no init functions are present in Go code
     # gochecknoglobals # Checks that no globals are present in Go code
     - gocognit # Computes and checks the cognitive complexity of functions
@@ -230,10 +230,11 @@ linters:
     - unconvert # Remove unnecessary type conversions
     - unparam # Reports unused function parameters
     - whitespace # Tool for detection of leading and trailing whitespace
-    - wsl # Whitespace Linter - Forces you to use empty lines!
+    # wsl # Whitespace Linter - Forces you to use empty lines!
   disable:
     - stylecheck # Stylecheck is a replacement for golint
     - gochecknoinits # Checks that no init functions are present in Go code
+    - gci # control package import order and make it always deterministic.
     - gochecknoglobals # Checks that no globals are present in Go code
     - dupl # Tool for code clone detection
     - funlen # Tool for detection of long functions
@@ -242,6 +243,7 @@ linters:
     - testpackage # linter that makes you use a separate _test package
     - rowserrcheck # checks whether Err of rows is checked successfully; lots of false positives
     - nlreturn # nlreturn checks for a new line before return and branch statements to increase code clarity
+    - wsl # Whitespace Linter - Forces you to use empty lines!
 
 issues:
   # # List of regexps of issue texts to exclude, empty list by default.
@@ -262,14 +264,17 @@ issues:
         - dupl
         - gosec
         - lll
+        - goerr113
         - bodyclose
         - unparam
         - exhaustivestruct
+        - gomnd
         - noctx  # FIXME
 
     - path: tests/v1
       linters:
         - gosec
+        - gomnd
 
     - path: tests/v1/testutil/
       linters:
@@ -284,7 +289,24 @@ issues:
       linters:
         - gocyclo # the update funcs can have very high cyclomatic complexities
 
+    - path: models/v1/fake
+      linters:
+        - gomnd
+
+    - path: internal/v1/exampledata # TODO: DELETEME
+      linters:
+        - gomnd
+
+    - path: cmd/config_gen/v1
+      linters:
+        - gomnd
+
     ## BEGIN SPECIAL SNOWFLAKES
+
+    - path: internal/v1/permissions/permissions.go
+      linters:
+        - deadcode
+        - varcheck
 
     - path: tests/v1/load/actions.go
       linters:
@@ -324,15 +346,6 @@ issues:
     - linters:
         - gosec
       text: "G304:"
-
-    # ignore this error type because I personally think it looks shittier
-    - linters:
-        - wsl
-      text: "return statements should not be cuddled if block has more than two lines"
-
-    - linters:
-        - wsl
-      text: "whenThenStatement"
 
     # Exclude lll issues for long lines with go:generate
     - linters:

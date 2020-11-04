@@ -9,6 +9,12 @@ import (
 const (
 	userAgentHeader = "User-Agent"
 	userAgent       = "TODO Service Client"
+
+	keepAlive             = 30 * time.Second
+	tlsHandshakeTimeout   = 10 * time.Second
+	expectContinueTimeout = 2 * defaultTimeout
+	idleConnTimeout       = 3 * defaultTimeout
+	maxIdleConns          = 100
 )
 
 type defaultRoundTripper struct {
@@ -34,12 +40,12 @@ func buildDefaultTransport() *http.Transport {
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
 			Timeout:   defaultTimeout,
-			KeepAlive: 30 * time.Second,
+			KeepAlive: keepAlive,
 		}).DialContext,
-		MaxIdleConns:          100,
-		MaxIdleConnsPerHost:   100,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 2 * defaultTimeout,
-		IdleConnTimeout:       3 * defaultTimeout,
+		MaxIdleConns:          maxIdleConns,
+		MaxIdleConnsPerHost:   maxIdleConns,
+		TLSHandshakeTimeout:   tlsHandshakeTimeout,
+		ExpectContinueTimeout: expectContinueTimeout,
+		IdleConnTimeout:       idleConnTimeout,
 	}
 }

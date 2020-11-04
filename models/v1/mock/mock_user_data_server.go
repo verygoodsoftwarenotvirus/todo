@@ -10,7 +10,7 @@ import (
 
 var _ models.UserDataServer = (*UserDataServer)(nil)
 
-// UserDataServer is a mocked models.UserDataServer for testing
+// UserDataServer is a mocked models.UserDataServer for testing.
 type UserDataServer struct {
 	mock.Mock
 }

@@ -177,7 +177,7 @@ func (w *Webhook) ToListener(logger logging.Logger) newsman.Listener {
 	)
 }
 
-// Validate validates a WebhookCreationInput
+// Validate validates a WebhookCreationInput.
 func (w *WebhookCreationInput) Validate() error {
 	err := v.Validate(v.Schema{
 		v.F("name", w.Name):                &minimumStringLengthValidator{minLength: 1},
@@ -197,7 +197,7 @@ func (w *WebhookCreationInput) Validate() error {
 	return nil
 }
 
-// Validate validates a WebhookUpdateInput
+// Validate validates a WebhookUpdateInput.
 func (w *WebhookUpdateInput) Validate() error {
 	err := v.Validate(v.Schema{
 		v.F("name", w.Name):                &minimumStringLengthValidator{minLength: 1},

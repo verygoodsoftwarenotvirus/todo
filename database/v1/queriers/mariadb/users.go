@@ -95,7 +95,7 @@ func (m *MariaDB) scanUsers(rows database.ResultIterator) ([]models.User, error)
 	return list, nil
 }
 
-// buildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID
+// buildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
 func (m *MariaDB) buildGetUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -130,7 +130,7 @@ func (m *MariaDB) GetUser(ctx context.Context, userID uint64) (*models.User, err
 }
 
 // buildGetUserWithUnverifiedTwoFactorSecretQuery returns a SQL query (and argument) for retrieving a user
-// by their database ID, who has an unverified two factor secret
+// by their database ID, who has an unverified two factor secret.
 func (m *MariaDB) buildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -149,7 +149,7 @@ func (m *MariaDB) buildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) 
 	return query, args
 }
 
-// GetUserWithUnverifiedTwoFactorSecret fetches a user with an unverified two factor secret
+// GetUserWithUnverifiedTwoFactorSecret fetches a user with an unverified two factor secret.
 func (m *MariaDB) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*models.User, error) {
 	query, args := m.buildGetUserWithUnverifiedTwoFactorSecretQuery(userID)
 	row := m.db.QueryRowContext(ctx, query, args...)
@@ -162,7 +162,7 @@ func (m *MariaDB) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, user
 	return u, err
 }
 
-// buildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username
+// buildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
 func (m *MariaDB) buildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
 	var err error
 
@@ -272,7 +272,7 @@ func (m *MariaDB) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mo
 	return x, nil
 }
 
-// buildCreateUserQuery returns a SQL query (and arguments) that would create a given User
+// buildCreateUserQuery returns a SQL query (and arguments) that would create a given User.
 func (m *MariaDB) buildCreateUserQuery(input models.UserDatabaseCreationInput) (query string, args []interface{}) {
 	var err error
 
@@ -330,7 +330,7 @@ func (m *MariaDB) CreateUser(ctx context.Context, input models.UserDatabaseCreat
 	return x, nil
 }
 
-// buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row
+// buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row.
 func (m *MariaDB) buildUpdateUserQuery(input *models.User) (query string, args []interface{}) {
 	var err error
 
@@ -390,7 +390,7 @@ func (m *MariaDB) UpdateUserPassword(ctx context.Context, userID uint64, newHash
 	return err
 }
 
-// buildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret
+// buildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
 func (m *MariaDB) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 

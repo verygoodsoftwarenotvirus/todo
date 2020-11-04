@@ -10,7 +10,7 @@ import (
 
 var _ models.AdminUserDataManager = (*AdminUserDataManager)(nil)
 
-// AdminUserDataManager is a mocked models.AdminUserDataManager for testing
+// AdminUserDataManager is a mocked models.AdminUserDataManager for testing.
 type AdminUserDataManager struct {
 	mock.Mock
 }

@@ -9,17 +9,17 @@ import (
 )
 
 type (
-	// eventType is an enum alias
+	// eventType is an enum alias.
 	eventType int
 
-	// FieldChangeSummary represents a field that has changed in a given model's update
+	// FieldChangeSummary represents a field that has changed in a given model's update.
 	FieldChangeSummary struct {
 		FieldName string      `json:"fieldName"`
 		OldValue  interface{} `json:"oldValue"`
 		NewValue  interface{} `json:"newValue"`
 	}
 
-	// AuditLogContext keeps track of what gets modified within audit reports
+	// AuditLogContext keeps track of what gets modified within audit reports.
 	AuditLogContext map[string]interface{}
 
 	// AuditLogEntry represents an event we might want to log for audit purposes.

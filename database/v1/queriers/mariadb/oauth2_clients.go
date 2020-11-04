@@ -293,7 +293,7 @@ func (m *MariaDB) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, fi
 	return ocl, nil
 }
 
-// buildCreateOAuth2ClientQuery returns a SQL query (and args) that will create the given OAuth2Client in the database
+// buildCreateOAuth2ClientQuery returns a SQL query (and args) that will create the given OAuth2Client in the database.
 func (m *MariaDB) buildCreateOAuth2ClientQuery(input *models.OAuth2Client) (query string, args []interface{}) {
 	var err error
 
@@ -350,7 +350,7 @@ func (m *MariaDB) CreateOAuth2Client(ctx context.Context, input *models.OAuth2Cl
 	return x, nil
 }
 
-// buildUpdateOAuth2ClientQuery returns a SQL query (and args) that will update a given OAuth2 client in the database
+// buildUpdateOAuth2ClientQuery returns a SQL query (and args) that will update a given OAuth2 client in the database.
 func (m *MariaDB) buildUpdateOAuth2ClientQuery(input *models.OAuth2Client) (query string, args []interface{}) {
 	var err error
 

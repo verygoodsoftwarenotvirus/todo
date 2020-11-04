@@ -55,13 +55,13 @@ type (
 	// ServerConfig is our server configuration struct. It is comprised of all the other setting structs
 	// For information on this structs fields, refer to their definitions.
 	ServerConfig struct {
-		Meta     MetaSettings     `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
-		Frontend FrontendSettings `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
 		Auth     AuthSettings     `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
-		Server   ServerSettings   `json:"server" mapstructure:"server" toml:"server,omitempty"`
 		Database DatabaseSettings `json:"database" mapstructure:"database" toml:"database,omitempty"`
 		Metrics  MetricsSettings  `json:"metrics" mapstructure:"metrics" toml:"metrics,omitempty"`
+		Meta     MetaSettings     `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
+		Frontend FrontendSettings `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
 		Search   SearchSettings   `json:"search" mapstructure:"search" toml:"search,omitempty"`
+		Server   ServerSettings   `json:"server" mapstructure:"server" toml:"server,omitempty"`
 		Webhooks WebhooksSettings `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
 		AuditLog AuditLogSettings `json:"audit_log" mapstructure:"audit_log" toml:"audit_log,omitempty"`
 	}

@@ -27,6 +27,8 @@ const (
 	minimumCookieSecretSize = 32
 )
 
+var errCookieSecretTooSmall = errors.New("cookie secret is too short, must be at least 32 characters in length")
+
 type (
 	// Server is our API httpServer.
 	Server struct {
@@ -67,10 +69,8 @@ func ProvideServer(
 	encoder encoding.EncoderDecoder,
 ) (*Server, error) {
 	if len(cfg.Auth.CookieSecret) < minimumCookieSecretSize {
-		err := errors.New("cookie secret is too short, must be at least 32 characters in length")
-		logger.Error(err, "cookie secret failure")
-
-		return nil, err
+		logger.Error(errCookieSecretTooSmall, "cookie secret failure")
+		return nil, errCookieSecretTooSmall
 	}
 
 	srv := &Server{

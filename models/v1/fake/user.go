@@ -111,7 +111,7 @@ func BuildFakeTOTPSecretRefreshInput() *models.TOTPSecretRefreshInput {
 	}
 }
 
-// BuildFakeTOTPSecretValidationInputForUser builds a faked TOTPSecretVerificationInput for a given user
+// BuildFakeTOTPSecretValidationInputForUser builds a faked TOTPSecretVerificationInput for a given user.
 func BuildFakeTOTPSecretValidationInputForUser(user *models.User) *models.TOTPSecretVerificationInput {
 	token, err := totp.GenerateCode(user.TwoFactorSecret, time.Now().UTC())
 	if err != nil {

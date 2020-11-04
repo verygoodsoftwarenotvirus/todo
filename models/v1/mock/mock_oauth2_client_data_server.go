@@ -11,7 +11,7 @@ import (
 
 var _ models.OAuth2ClientDataServer = (*OAuth2ClientDataServer)(nil)
 
-// OAuth2ClientDataServer is a mocked models.OAuth2ClientDataServer for testing
+// OAuth2ClientDataServer is a mocked models.OAuth2ClientDataServer for testing.
 type OAuth2ClientDataServer struct {
 	mock.Mock
 }

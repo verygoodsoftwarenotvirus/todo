@@ -6,10 +6,10 @@ import (
 )
 
 const (
-	// SessionInfoKey is the non-string type we use for referencing SessionInfo structs
+	// SessionInfoKey is the non-string type we use for referencing SessionInfo structs.
 	SessionInfoKey ContextKey = "session_info"
 
-	// AdminAsUserKey is the non-string type we use for communicating whether a user is being impersonated
+	// AdminAsUserKey is the non-string type we use for communicating whether a user is being impersonated.
 	AdminAsUserKey ContextKey = "admin_as_user"
 )
 
@@ -24,14 +24,14 @@ type (
 		UserIsAdmin bool   `json:"-"`
 	}
 
-	// UserStatusResponse is what we encode when the frontend wants to check auth status
+	// UserStatusResponse is what we encode when the frontend wants to check auth status.
 	UserStatusResponse struct {
 		Authenticated bool `json:"isAuthenticated"`
 		IsAdmin       bool `json:"isAdmin"`
 	}
 )
 
-// ToBytes returns the gob encoded session info
+// ToBytes returns the gob encoded session info.
 func (i *SessionInfo) ToBytes() []byte {
 	var b bytes.Buffer
 

@@ -19,6 +19,11 @@ const (
 	staticError = "error encountered, please try again later"
 )
 
+var (
+	errNoSessionInfo = errors.New("no session info attached to context")
+	errTokenLoading  = errors.New("error loading token")
+)
+
 // DecodeCookieFromRequest takes a request object and fetches the cookie data if it is present.
 func (s *Service) DecodeCookieFromRequest(ctx context.Context, req *http.Request) (ca *models.SessionInfo, err error) {
 	ctx, span := tracing.StartSpan(ctx, "DecodeCookieFromRequest")
@@ -34,13 +39,12 @@ func (s *Service) DecodeCookieFromRequest(ctx context.Context, req *http.Request
 		}
 
 		if ctx, err = s.sessionManager.Load(ctx, token); err != nil {
-			return nil, errors.New("error loading token")
+			return nil, errTokenLoading
 		}
 
 		si, ok := s.sessionManager.Get(ctx, sessionInfoKey).(*models.SessionInfo)
 		if !ok {
-			errToReturn := errors.New("no session info attached to context")
-			return nil, errToReturn
+			return nil, errNoSessionInfo
 		}
 
 		return si, nil

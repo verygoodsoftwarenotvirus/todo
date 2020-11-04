@@ -20,7 +20,7 @@ import (
 
 var _ oauth2server.InternalErrorHandler = (*Service)(nil).OAuth2InternalErrorHandler
 
-// OAuth2InternalErrorHandler fulfills a role for the OAuth2 server-side provider
+// OAuth2InternalErrorHandler fulfills a role for the OAuth2 server-side provider.
 func (s *Service) OAuth2InternalErrorHandler(err error) *oauth2errors.Response {
 	s.logger.Error(err, "OAuth2 Internal Error")
 
@@ -36,7 +36,7 @@ func (s *Service) OAuth2InternalErrorHandler(err error) *oauth2errors.Response {
 
 var _ oauth2server.ResponseErrorHandler = (*Service)(nil).OAuth2ResponseErrorHandler
 
-// OAuth2ResponseErrorHandler fulfills a role for the OAuth2 server-side provider
+// OAuth2ResponseErrorHandler fulfills a role for the OAuth2 server-side provider.
 func (s *Service) OAuth2ResponseErrorHandler(re *oauth2errors.Response) {
 	s.logger.WithValues(map[string]interface{}{
 		"error_code":  re.ErrorCode,
@@ -48,6 +48,11 @@ func (s *Service) OAuth2ResponseErrorHandler(re *oauth2errors.Response) {
 }
 
 var _ oauth2server.AuthorizeScopeHandler = (*Service)(nil).AuthorizeScopeHandler
+
+var (
+	errUnauthorizedForScope = errors.New("not authorized for scope")
+	errNoScopeInformation   = errors.New("no scope information found")
+)
 
 // AuthorizeScopeHandler satisfies the oauth2server AuthorizeScopeHandler interface.
 func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Request) (scope string, err error) {
@@ -84,7 +89,7 @@ func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reque
 		// authorization check.
 		if !client.HasScope(scope) {
 			s.encoderDecoder.EncodeErrorResponse(res, "not authorized for scope", http.StatusUnauthorized)
-			return "", errors.New("not authorized for scope")
+			return "", errUnauthorizedForScope
 		}
 
 		return scope, nil
@@ -92,10 +97,12 @@ func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reque
 
 	// invalid credentials.
 	s.encoderDecoder.EncodeErrorResponse(res, "no scope information found", http.StatusBadRequest)
-	return "", errors.New("no scope information found")
+	return "", errNoScopeInformation
 }
 
 var _ oauth2server.UserAuthorizationHandler = (*Service)(nil).UserAuthorizationHandler
+
+var errUserNotFound = errors.New("user not found")
 
 // UserAuthorizationHandler satisfies the oauth2server UserAuthorizationHandler interface.
 func (s *Service) UserAuthorizationHandler(_ http.ResponseWriter, req *http.Request) (userID string, err error) {
@@ -112,7 +119,7 @@ func (s *Service) UserAuthorizationHandler(_ http.ResponseWriter, req *http.Requ
 		si, userOk := ctx.Value(models.SessionInfoKey).(*models.SessionInfo)
 		if !userOk || si == nil {
 			logger.Debug("no user attached to this request")
-			return "", errors.New("user not found")
+			return "", errUserNotFound
 		}
 
 		uid = si.UserID
@@ -124,6 +131,11 @@ func (s *Service) UserAuthorizationHandler(_ http.ResponseWriter, req *http.Requ
 }
 
 var _ oauth2server.ClientAuthorizedHandler = (*Service)(nil).ClientAuthorizedHandler
+
+var (
+	errInvalidGrantTypePassword = errors.New("invalid grant type: password")
+	errImplicitGrantsUnallowed  = errors.New("client not authorized for implicit grants")
+)
 
 // ClientAuthorizedHandler satisfies the oauth2server ClientAuthorizedHandler interface.
 func (s *Service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantType) (allowed bool, err error) {
@@ -138,7 +150,7 @@ func (s *Service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantTyp
 
 	// reject invalid grant type.
 	if grant == oauth2.PasswordCredentials {
-		return false, errors.New("invalid grant type: password")
+		return false, errInvalidGrantTypePassword
 	}
 
 	// fetch client data.
@@ -150,13 +162,15 @@ func (s *Service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantTyp
 
 	// disallow implicit grants unless authorized.
 	if grant == oauth2.Implicit && !client.ImplicitAllowed {
-		return false, errors.New("client not authorized for implicit grants")
+		return false, errImplicitGrantsUnallowed
 	}
 
 	return true, nil
 }
 
 var _ oauth2server.ClientScopeHandler = (*Service)(nil).ClientScopeHandler
+
+var errUnauthorized = errors.New("unauthorized")
 
 // ClientScopeHandler satisfies the oauth2server ClientScopeHandler interface.
 func (s *Service) ClientScopeHandler(clientID, scope string) (authed bool, err error) {
@@ -181,5 +195,5 @@ func (s *Service) ClientScopeHandler(clientID, scope string) (authed bool, err e
 		return true, nil
 	}
 
-	return false, errors.New("unauthorized")
+	return false, errUnauthorized
 }

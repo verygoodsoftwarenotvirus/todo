@@ -123,7 +123,7 @@ func (cfg *ServerConfig) ProvideDatabaseClient(ctx context.Context, logger loggi
 
 // ProvideSessionManager provides a session manager based on some settings.
 // There's not a great place to put this function. I don't think it belongs in Auth because it accepts a DB connection,
-// but it obviously doesn't belong in the database package, or maybe it does
+// but it obviously doesn't belong in the database package, or maybe it does.
 func ProvideSessionManager(authConf AuthSettings, dbConf DatabaseSettings, db *sql.DB) *scs.SessionManager {
 	sessionManager := scs.New()
 

@@ -27,7 +27,7 @@ var (
 	}
 )
 
-// scanAuditLogEntry takes a database Scanner (i.e. *sql.Row) and scans the result into an AuditLogEntry struct
+// scanAuditLogEntry takes a database Scanner (i.e. *sql.Row) and scans the result into an AuditLogEntry struct.
 func (s *Sqlite) scanAuditLogEntry(scan database.Scanner) (*models.AuditLogEntry, error) {
 	x := &models.AuditLogEntry{}
 

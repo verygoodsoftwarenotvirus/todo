@@ -65,7 +65,7 @@ func (c *Client) CreateAuditLogEntry(ctx context.Context, input *models.AuditLog
 	c.querier.CreateAuditLogEntry(ctx, input)
 }
 
-// LogCycleCookieSecretEvent implements our AuditLogDataManager interface
+// LogCycleCookieSecretEvent implements our AuditLogDataManager interface.
 func (c *Client) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
 	ctx, span := tracing.StartSpan(ctx, "LogCycleCookieSecretEvent")
 	defer span.End()
@@ -75,7 +75,7 @@ func (c *Client) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
 	c.querier.LogCycleCookieSecretEvent(ctx, userID)
 }
 
-// LogSuccessfulLoginEvent implements our AuditLogDataManager interface
+// LogSuccessfulLoginEvent implements our AuditLogDataManager interface.
 func (c *Client) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
 	ctx, span := tracing.StartSpan(ctx, "LogSuccessfulLoginEvent")
 	defer span.End()
@@ -85,7 +85,7 @@ func (c *Client) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
 	c.querier.LogSuccessfulLoginEvent(ctx, userID)
 }
 
-// LogUnsuccessfulLoginBadPasswordEvent implements our AuditLogDataManager interface
+// LogUnsuccessfulLoginBadPasswordEvent implements our AuditLogDataManager interface.
 func (c *Client) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
 	ctx, span := tracing.StartSpan(ctx, "LogUnsuccessfulLoginBadPasswordEvent")
 	defer span.End()
@@ -95,7 +95,7 @@ func (c *Client) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userI
 	c.querier.LogUnsuccessfulLoginBadPasswordEvent(ctx, userID)
 }
 
-// LogUnsuccessfulLoginBad2FATokenEvent implements our AuditLogDataManager interface
+// LogUnsuccessfulLoginBad2FATokenEvent implements our AuditLogDataManager interface.
 func (c *Client) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
 	ctx, span := tracing.StartSpan(ctx, "LogUnsuccessfulLoginBad2FATokenEvent")
 	defer span.End()
@@ -105,7 +105,7 @@ func (c *Client) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userI
 	c.querier.LogUnsuccessfulLoginBad2FATokenEvent(ctx, userID)
 }
 
-// LogLogoutEvent implements our AuditLogDataManager interface
+// LogLogoutEvent implements our AuditLogDataManager interface.
 func (c *Client) LogLogoutEvent(ctx context.Context, userID uint64) {
 	ctx, span := tracing.StartSpan(ctx, "LogLogoutEvent")
 	defer span.End()
@@ -115,7 +115,7 @@ func (c *Client) LogLogoutEvent(ctx context.Context, userID uint64) {
 	c.querier.LogLogoutEvent(ctx, userID)
 }
 
-// LogItemCreationEvent implements our AuditLogDataManager interface
+// LogItemCreationEvent implements our AuditLogDataManager interface.
 func (c *Client) LogItemCreationEvent(ctx context.Context, item *models.Item) {
 	ctx, span := tracing.StartSpan(ctx, "LogItemCreationEvent")
 	defer span.End()
@@ -125,7 +125,7 @@ func (c *Client) LogItemCreationEvent(ctx context.Context, item *models.Item) {
 	c.querier.LogItemCreationEvent(ctx, item)
 }
 
-// LogItemUpdateEvent implements our AuditLogDataManager interface
+// LogItemUpdateEvent implements our AuditLogDataManager interface.
 func (c *Client) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []models.FieldChangeSummary) {
 	ctx, span := tracing.StartSpan(ctx, "LogItemUpdateEvent")
 	defer span.End()
@@ -135,7 +135,7 @@ func (c *Client) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, 
 	c.querier.LogItemUpdateEvent(ctx, userID, itemID, changes)
 }
 
-// LogItemArchiveEvent implements our AuditLogDataManager interface
+// LogItemArchiveEvent implements our AuditLogDataManager interface.
 func (c *Client) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64) {
 	ctx, span := tracing.StartSpan(ctx, "LogItemArchiveEvent")
 	defer span.End()
@@ -145,7 +145,7 @@ func (c *Client) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64)
 	c.querier.LogItemArchiveEvent(ctx, userID, itemID)
 }
 
-// LogOAuth2ClientCreationEvent implements our AuditLogDataManager interface
+// LogOAuth2ClientCreationEvent implements our AuditLogDataManager interface.
 func (c *Client) LogOAuth2ClientCreationEvent(ctx context.Context, client *models.OAuth2Client) {
 	ctx, span := tracing.StartSpan(ctx, "LogOAuth2ClientCreationEvent")
 	defer span.End()
@@ -155,7 +155,7 @@ func (c *Client) LogOAuth2ClientCreationEvent(ctx context.Context, client *model
 	c.querier.LogOAuth2ClientCreationEvent(ctx, client)
 }
 
-// LogOAuth2ClientArchiveEvent implements our AuditLogDataManager interface
+// LogOAuth2ClientArchiveEvent implements our AuditLogDataManager interface.
 func (c *Client) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
 	ctx, span := tracing.StartSpan(ctx, "LogOAuth2ClientArchiveEvent")
 	defer span.End()
@@ -165,7 +165,7 @@ func (c *Client) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, client
 	c.querier.LogOAuth2ClientArchiveEvent(ctx, userID, clientID)
 }
 
-// LogWebhookCreationEvent implements our AuditLogDataManager interface
+// LogWebhookCreationEvent implements our AuditLogDataManager interface.
 func (c *Client) LogWebhookCreationEvent(ctx context.Context, webhook *models.Webhook) {
 	ctx, span := tracing.StartSpan(ctx, "LogWebhookCreationEvent")
 	defer span.End()
@@ -175,7 +175,7 @@ func (c *Client) LogWebhookCreationEvent(ctx context.Context, webhook *models.We
 	c.querier.LogWebhookCreationEvent(ctx, webhook)
 }
 
-// LogWebhookUpdateEvent implements our AuditLogDataManager interface
+// LogWebhookUpdateEvent implements our AuditLogDataManager interface.
 func (c *Client) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []models.FieldChangeSummary) {
 	ctx, span := tracing.StartSpan(ctx, "LogWebhookUpdateEvent")
 	defer span.End()
@@ -185,7 +185,7 @@ func (c *Client) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID ui
 	c.querier.LogWebhookUpdateEvent(ctx, userID, webhookID, changes)
 }
 
-// LogWebhookArchiveEvent implements our AuditLogDataManager interface
+// LogWebhookArchiveEvent implements our AuditLogDataManager interface.
 func (c *Client) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
 	ctx, span := tracing.StartSpan(ctx, "LogWebhookArchiveEvent")
 	defer span.End()
@@ -195,7 +195,7 @@ func (c *Client) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID u
 	c.querier.LogWebhookArchiveEvent(ctx, userID, webhookID)
 }
 
-// LogUserCreationEvent implements our AuditLogDataManager interface
+// LogUserCreationEvent implements our AuditLogDataManager interface.
 func (c *Client) LogUserCreationEvent(ctx context.Context, user *models.User) {
 	ctx, span := tracing.StartSpan(ctx, "LogUserCreationEvent")
 	defer span.End()
@@ -205,7 +205,7 @@ func (c *Client) LogUserCreationEvent(ctx context.Context, user *models.User) {
 	c.querier.LogUserCreationEvent(ctx, user)
 }
 
-// LogUserVerifyTwoFactorSecretEvent implements our AuditLogDataManager interface
+// LogUserVerifyTwoFactorSecretEvent implements our AuditLogDataManager interface.
 func (c *Client) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
 	ctx, span := tracing.StartSpan(ctx, "LogUserVerifyTwoFactorSecretEvent")
 	defer span.End()
@@ -215,7 +215,7 @@ func (c *Client) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID u
 	c.querier.LogUserVerifyTwoFactorSecretEvent(ctx, userID)
 }
 
-// LogUserUpdateTwoFactorSecretEvent implements our AuditLogDataManager interface
+// LogUserUpdateTwoFactorSecretEvent implements our AuditLogDataManager interface.
 func (c *Client) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
 	ctx, span := tracing.StartSpan(ctx, "LogUserUpdateTwoFactorSecretEvent")
 	defer span.End()
@@ -225,7 +225,7 @@ func (c *Client) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID u
 	c.querier.LogUserUpdateTwoFactorSecretEvent(ctx, userID)
 }
 
-// LogUserUpdatePasswordEvent implements our AuditLogDataManager interface
+// LogUserUpdatePasswordEvent implements our AuditLogDataManager interface.
 func (c *Client) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
 	ctx, span := tracing.StartSpan(ctx, "LogUserUpdatePasswordEvent")
 	defer span.End()
@@ -235,7 +235,7 @@ func (c *Client) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) 
 	c.querier.LogUserUpdatePasswordEvent(ctx, userID)
 }
 
-// LogUserArchiveEvent implements our AuditLogDataManager interface
+// LogUserArchiveEvent implements our AuditLogDataManager interface.
 func (c *Client) LogUserArchiveEvent(ctx context.Context, userID uint64) {
 	ctx, span := tracing.StartSpan(ctx, "LogUserArchiveEvent")
 	defer span.End()

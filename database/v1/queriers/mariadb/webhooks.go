@@ -117,7 +117,7 @@ func (m *MariaDB) scanWebhooks(rows database.ResultIterator) ([]models.Webhook, 
 	return list, nil
 }
 
-// buildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook
+// buildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook.
 func (m *MariaDB) buildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -211,7 +211,7 @@ func (m *MariaDB) GetAllWebhooks(ctx context.Context) (*models.WebhookList, erro
 	return x, err
 }
 
-// buildGetWebhooksQuery returns a SQL query (and arguments) that would return a
+// buildGetWebhooksQuery returns a SQL query (and arguments) that would return a query and arguments to retrieve a list of webhooks.
 func (m *MariaDB) buildGetWebhooksQuery(userID uint64, filter *models.QueryFilter) (query string, args []interface{}) {
 	var err error
 
@@ -262,7 +262,7 @@ func (m *MariaDB) GetWebhooks(ctx context.Context, userID uint64, filter *models
 	return x, err
 }
 
-// buildCreateWebhookQuery returns a SQL query (and arguments) that would create a given webhook
+// buildCreateWebhookQuery returns a SQL query (and arguments) that would create a given webhook.
 func (m *MariaDB) buildCreateWebhookQuery(x *models.Webhook) (query string, args []interface{}) {
 	var err error
 

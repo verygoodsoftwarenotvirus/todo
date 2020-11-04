@@ -13,7 +13,7 @@ var (
 	)
 )
 
-// ProvideBleveIndexManagerProvider is a wrapper around NewBleveIndexManager
+// ProvideBleveIndexManagerProvider is a wrapper around NewBleveIndexManager.
 func ProvideBleveIndexManagerProvider() search.IndexManagerProvider {
 	return NewBleveIndexManager
 }

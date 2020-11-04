@@ -10,7 +10,7 @@ import (
 
 var _ models.WebhookDataServer = (*WebhookDataServer)(nil)
 
-// WebhookDataServer is a mocked models.WebhookDataServer for testing
+// WebhookDataServer is a mocked models.WebhookDataServer for testing.
 type WebhookDataServer struct {
 	mock.Mock
 }

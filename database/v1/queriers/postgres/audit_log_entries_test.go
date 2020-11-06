@@ -494,7 +494,7 @@ func TestPostgres_buildCreateAuditLogEntryQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_CreateAuditLogEntry(T *testing.T) {
+func TestPostgres_createAuditLogEntry(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -512,7 +512,7 @@ func TestPostgres_CreateAuditLogEntry(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(exampleRows)
 
-		p.CreateAuditLogEntry(ctx, exampleInput)
+		p.createAuditLogEntry(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -531,7 +531,7 @@ func TestPostgres_CreateAuditLogEntry(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		p.CreateAuditLogEntry(ctx, exampleInput)
+		p.createAuditLogEntry(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

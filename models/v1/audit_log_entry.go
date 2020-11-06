@@ -48,7 +48,6 @@ type (
 		GetAllAuditLogEntriesCount(ctx context.Context) (uint64, error)
 		GetAllAuditLogEntries(ctx context.Context, resultChannel chan []AuditLogEntry) error
 		GetAuditLogEntries(ctx context.Context, filter *QueryFilter) (*AuditLogEntryList, error)
-		CreateAuditLogEntry(ctx context.Context, input *AuditLogEntryCreationInput) // REMOVEME
 
 		LogCycleCookieSecretEvent(ctx context.Context, userID uint64)
 		LogSuccessfulLoginEvent(ctx context.Context, userID uint64)

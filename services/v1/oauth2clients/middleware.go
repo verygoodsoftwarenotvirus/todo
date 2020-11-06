@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
@@ -13,7 +14,6 @@ import (
 
 const (
 	scopesSeparator = ","
-	apiPathPrefix   = "/api/v1/"
 )
 
 var errClientUnauthorizedForScope = errors.New("client not authorized for scope")
@@ -76,15 +76,8 @@ func (s *Service) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.
 
 // determineScope determines the scope of a request by its URL.
 func determineScope(req *http.Request) string {
-	if strings.HasPrefix(req.URL.Path, apiPathPrefix) {
-		x := strings.TrimPrefix(req.URL.Path, apiPathPrefix)
-		if y := strings.Split(x, "/"); len(y) > 0 {
-			x = y[0]
-		}
-		return x
-	}
-
-	return ""
+	_, scope := filepath.Split(req.URL.Path)
+	return scope
 }
 
 // OAuth2TokenAuthenticationMiddleware authenticates Oauth tokens.

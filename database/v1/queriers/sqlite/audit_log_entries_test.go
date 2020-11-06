@@ -493,7 +493,7 @@ func TestSqlite_buildCreateAuditLogEntryQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_CreateAuditLogEntry(T *testing.T) {
+func TestSqlite_createAuditLogEntry(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -511,7 +511,7 @@ func TestSqlite_CreateAuditLogEntry(T *testing.T) {
 				interfaceToDriverValue(expectedArgs)...,
 			)
 
-		s.CreateAuditLogEntry(ctx, exampleInput)
+		s.createAuditLogEntry(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -530,7 +530,531 @@ func TestSqlite_CreateAuditLogEntry(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		s.CreateAuditLogEntry(ctx, exampleInput)
+		s.createAuditLogEntry(ctx, exampleInput)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogItemCreationEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeItem()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.ItemCreationEvent,
+			Context: map[string]interface{}{
+				"created": exampleInput,
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		s.LogItemCreationEvent(ctx, exampleInput)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogItemUpdateEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeItem()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.ItemUpdateEvent,
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.BelongsToUser,
+				"item_id":      exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		s.LogItemUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, nil)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogItemArchiveEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeItem()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.ItemArchiveEvent,
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.BelongsToUser,
+				"item_id":      exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		s.LogItemArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogOAuth2ClientCreationEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeOAuth2Client()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.OAuth2ClientCreationEvent,
+			Context:   map[string]interface{}{
+				//
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		s.LogOAuth2ClientCreationEvent(ctx, exampleInput)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogOAuth2ClientArchiveEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeOAuth2Client()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.OAuth2ClientArchiveEvent,
+			Context:   map[string]interface{}{
+				//
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		s.LogOAuth2ClientArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogUserCreationEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserCreationEvent,
+			Context:   map[string]interface{}{
+				//
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		s.LogUserCreationEvent(ctx, exampleInput)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogUserVerifyTwoFactorSecretEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserVerifyTwoFactorSecretEvent,
+			Context:   map[string]interface{}{
+				//
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		s.LogUserVerifyTwoFactorSecretEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogUserUpdateTwoFactorSecretEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserUpdateTwoFactorSecretEvent,
+			Context:   map[string]interface{}{
+				//
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		s.LogUserUpdateTwoFactorSecretEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogUserUpdatePasswordEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserUpdatePasswordEvent,
+			Context:   map[string]interface{}{
+				//
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		s.LogUserUpdatePasswordEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogUserArchiveEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserArchiveEvent,
+			Context:   map[string]interface{}{
+				//
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		s.LogUserArchiveEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogCycleCookieSecretEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.CycleCookieSecretEvent,
+			Context:   map[string]interface{}{
+				//
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		s.LogCycleCookieSecretEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogSuccessfulLoginEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.SuccessfulLoginEvent,
+			Context:   map[string]interface{}{
+				//
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		s.LogSuccessfulLoginEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UnsuccessfulLoginBadPasswordEvent,
+			Context:   map[string]interface{}{
+				//
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		s.LogUnsuccessfulLoginBadPasswordEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UnsuccessfulLoginBad2FATokenEvent,
+			Context:   map[string]interface{}{
+				//
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		s.LogUnsuccessfulLoginBad2FATokenEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogLogoutEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.LogoutEvent,
+			Context:   map[string]interface{}{
+				//
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		s.LogLogoutEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogWebhookCreationEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeWebhook()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.WebhookCreationEvent,
+			Context:   map[string]interface{}{
+				//
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		s.LogWebhookCreationEvent(ctx, exampleInput)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogWebhookUpdateEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeWebhook()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.WebhookUpdateEvent,
+			Context:   map[string]interface{}{
+				//
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		s.LogWebhookUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, nil)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogWebhookArchiveEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeWebhook()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.WebhookArchiveEvent,
+			Context:   map[string]interface{}{
+				//
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		s.LogWebhookArchiveEvent(ctx, exampleInput.ID, exampleInput.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

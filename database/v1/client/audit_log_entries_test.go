@@ -87,22 +87,3 @@ func TestClient_GetAuditLogEntries(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
-
-func TestClient_CreateAuditLogEntry(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
-		exampleInput := fakemodels.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
-
-		c, mockDB := buildTestClient()
-		mockDB.AuditLogDataManager.On("CreateAuditLogEntry", mock.Anything, exampleInput).Return(nil)
-
-		c.CreateAuditLogEntry(ctx, exampleInput)
-
-		mock.AssertExpectationsForObjects(t, mockDB)
-	})
-}

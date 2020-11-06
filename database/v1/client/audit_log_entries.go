@@ -51,20 +51,6 @@ func (c *Client) GetAuditLogEntries(ctx context.Context, filter *models.QueryFil
 	return c.querier.GetAuditLogEntries(ctx, filter)
 }
 
-// CreateAuditLogEntry creates an audit log entry in the database.
-func (c *Client) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) {
-	ctx, span := tracing.StartSpan(ctx, "CreateAuditLogEntry")
-	defer span.End()
-
-	tracing.AttachAuditLogEntryEventTypeToSpan(span, int(input.EventType))
-	c.logger.
-		WithValue("event_type", input.EventType).
-		WithValue("event_context", input.Context).
-		Info("creating audit log entry")
-
-	c.querier.CreateAuditLogEntry(ctx, input)
-}
-
 // LogCycleCookieSecretEvent implements our AuditLogDataManager interface.
 func (c *Client) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
 	ctx, span := tracing.StartSpan(ctx, "LogCycleCookieSecretEvent")

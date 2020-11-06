@@ -243,21 +243,6 @@ func (p *Postgres) buildCreateAuditLogEntryQuery(input *models.AuditLogEntry) (q
 	return query, args
 }
 
-// CreateAuditLogEntry creates an audit log entry in the database.
-func (p *Postgres) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) {
-	x := &models.AuditLogEntry{
-		EventType: input.EventType,
-		Context:   input.Context,
-	}
-
-	query, args := p.buildCreateAuditLogEntryQuery(x)
-
-	// create the audit log entry.
-	if err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {
-		p.logger.WithValue("event_type", input.EventType).Error(err, "executing audit log entry creation query")
-	}
-}
-
 // createAuditLogEntry creates an audit log entry in the database.
 func (p *Postgres) createAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) {
 	x := &models.AuditLogEntry{

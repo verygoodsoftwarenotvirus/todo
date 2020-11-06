@@ -333,11 +333,11 @@ func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, r
 	}
 
 	if c.Debug {
-		if req.Method != http.MethodGet {
-			if bdump, err := httputil.DumpResponse(res, true); err == nil {
-				logger = logger.WithValue("response_body", string(bdump))
-			}
+		/* if req.Method != http.MethodGet { */
+		if bdump, err := httputil.DumpResponse(res, true); err == nil {
+			logger = logger.WithValue("response_body", string(bdump))
 		}
+		/* } */
 
 		logger.Debug("request executed")
 	}

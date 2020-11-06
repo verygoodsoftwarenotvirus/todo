@@ -97,7 +97,8 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 
 		entryIDRouteParam := fmt.Sprintf(numericIDPattern, itemsservice.URIParamKey)
 		adminRouter.Get(entryIDRouteParam, s.itemsService.ReadHandler)
-		adminRouter.Get("/audit_log/entries", s.itemsService.ListHandler)
+
+		adminRouter.Get("/audit_log", s.itemsService.ListHandler)
 	})
 
 	router.Get("/auth/status", s.authService.StatusHandler)

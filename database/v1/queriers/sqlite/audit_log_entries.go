@@ -242,21 +242,6 @@ func (s *Sqlite) buildCreateAuditLogEntryQuery(input *models.AuditLogEntry) (que
 	return query, args
 }
 
-// CreateAuditLogEntry creates an audit log entry in the database.
-func (s *Sqlite) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) {
-	x := &models.AuditLogEntry{
-		EventType: input.EventType,
-		Context:   input.Context,
-	}
-
-	query, args := s.buildCreateAuditLogEntryQuery(x)
-
-	// create the audit log entry.
-	if _, err := s.db.ExecContext(ctx, query, args...); err != nil {
-		s.logger.WithValue("event_type", input.EventType).Error(err, "executing audit log entry creation query")
-	}
-}
-
 // createAuditLogEntry creates an audit log entry in the database.
 func (s *Sqlite) createAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) {
 	x := &models.AuditLogEntry{
@@ -267,7 +252,7 @@ func (s *Sqlite) createAuditLogEntry(ctx context.Context, input *models.AuditLog
 	query, args := s.buildCreateAuditLogEntryQuery(x)
 
 	// create the audit log entry.
-	if err := s.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {
+	if _, err := s.db.ExecContext(ctx, query, args...); err != nil {
 		s.logger.WithValue("event_type", input.EventType).Error(err, "executing audit log entry creation query")
 	}
 }

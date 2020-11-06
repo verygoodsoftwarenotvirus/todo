@@ -242,21 +242,6 @@ func (m *MariaDB) buildCreateAuditLogEntryQuery(input *models.AuditLogEntry) (qu
 	return query, args
 }
 
-// CreateAuditLogEntry creates an audit log entry in the database.
-func (m *MariaDB) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) {
-	x := &models.AuditLogEntry{
-		EventType: input.EventType,
-		Context:   input.Context,
-	}
-
-	query, args := m.buildCreateAuditLogEntryQuery(x)
-
-	// create the audit log entry.
-	if _, err := m.db.ExecContext(ctx, query, args...); err != nil {
-		m.logger.WithValue("event_type", input.EventType).Error(err, "executing audit log entry creation query")
-	}
-}
-
 // createAuditLogEntry creates an audit log entry in the database.
 func (m *MariaDB) createAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) {
 	x := &models.AuditLogEntry{
@@ -267,7 +252,7 @@ func (m *MariaDB) createAuditLogEntry(ctx context.Context, input *models.AuditLo
 	query, args := m.buildCreateAuditLogEntryQuery(x)
 
 	// create the audit log entry.
-	if err := m.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {
+	if _, err := m.db.ExecContext(ctx, query, args...); err != nil {
 		m.logger.WithValue("event_type", input.EventType).Error(err, "executing audit log entry creation query")
 	}
 }

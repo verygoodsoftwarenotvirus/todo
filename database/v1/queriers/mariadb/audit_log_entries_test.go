@@ -512,7 +512,7 @@ func TestMariaDB_CreateAuditLogEntry(T *testing.T) {
 				interfaceToDriverValue(expectedArgs)...,
 			)
 
-		m.CreateAuditLogEntry(ctx, exampleInput)
+		m.createAuditLogEntry(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -531,7 +531,7 @@ func TestMariaDB_CreateAuditLogEntry(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		m.CreateAuditLogEntry(ctx, exampleInput)
+		m.createAuditLogEntry(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

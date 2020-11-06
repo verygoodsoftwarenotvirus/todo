@@ -2,6 +2,7 @@ package webhooks
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -33,6 +34,8 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
 
@@ -44,7 +47,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -58,6 +61,8 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 	T.Run("bad input", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
 
@@ -66,7 +71,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		require.NoError(t, err)
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -78,6 +83,8 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 	T.Run("with error decoding request", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -91,7 +98,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -110,6 +117,8 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
 
@@ -121,7 +130,7 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -135,6 +144,8 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 
 	T.Run("with error decoding request", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -148,7 +159,7 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 

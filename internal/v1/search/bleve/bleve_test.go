@@ -3,6 +3,7 @@ package bleve
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search"
@@ -30,9 +31,11 @@ type (
 func TestNewBleveIndexManager(T *testing.T) {
 	T.Parallel()
 
+	temp := os.TempDir()
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		exampleIndexPath := search.IndexPath("constructor_test_happy_path.bleve")
+		exampleIndexPath := search.IndexPath(filepath.Join(temp, "constructor_test_happy_path.bleve"))
 
 		_, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.NewLogger())
 		assert.NoError(t, err)
@@ -60,6 +63,7 @@ func TestNewBleveIndexManager(T *testing.T) {
 func TestBleveIndexManager_Index(T *testing.T) {
 	T.Parallel()
 
+	temp := os.TempDir()
 	exampleUserID := fakemodels.BuildFakeUser().ID
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -67,7 +71,7 @@ func TestBleveIndexManager_Index(T *testing.T) {
 		ctx := context.Background()
 
 		const exampleQuery = "index_test"
-		exampleIndexPath := search.IndexPath("index_test_obligatory.bleve")
+		exampleIndexPath := search.IndexPath(filepath.Join(temp, "index_test_obligatory.bleve"))
 
 		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.NewLogger())
 		assert.NoError(t, err)
@@ -87,6 +91,7 @@ func TestBleveIndexManager_Index(T *testing.T) {
 func TestBleveIndexManager_Search(T *testing.T) {
 	T.Parallel()
 
+	temp := os.TempDir()
 	exampleUserID := fakemodels.BuildFakeUser().ID
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -94,7 +99,7 @@ func TestBleveIndexManager_Search(T *testing.T) {
 		ctx := context.Background()
 
 		const exampleQuery = "search_test"
-		exampleIndexPath := search.IndexPath("search_test_obligatory.bleve")
+		exampleIndexPath := search.IndexPath(filepath.Join(temp, "search_test_obligatory.bleve"))
 
 		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.NewLogger())
 		assert.NoError(t, err)
@@ -118,7 +123,7 @@ func TestBleveIndexManager_Search(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleIndexPath := search.IndexPath("search_test_empty_index.bleve")
+		exampleIndexPath := search.IndexPath(filepath.Join(temp, "search_test_empty_index.bleve"))
 
 		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.NewLogger())
 		assert.NoError(t, err)
@@ -136,7 +141,7 @@ func TestBleveIndexManager_Search(T *testing.T) {
 		ctx := context.Background()
 
 		const exampleQuery = "search_test"
-		exampleIndexPath := search.IndexPath("search_test_closed_index.bleve")
+		exampleIndexPath := search.IndexPath(filepath.Join(temp, "search_test_closed_index.bleve"))
 
 		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.NewLogger())
 		assert.NoError(t, err)
@@ -163,7 +168,7 @@ func TestBleveIndexManager_Search(T *testing.T) {
 		ctx := context.Background()
 
 		const exampleQuery = "search_test"
-		exampleIndexPath := search.IndexPath("search_test_invalid_id.bleve")
+		exampleIndexPath := search.IndexPath(filepath.Join(temp, "search_test_invalid_id.bleve"))
 
 		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.NewLogger())
 		assert.NoError(t, err)
@@ -187,6 +192,7 @@ func TestBleveIndexManager_Search(T *testing.T) {
 func TestBleveIndexManager_Delete(T *testing.T) {
 	T.Parallel()
 
+	temp := os.TempDir()
 	exampleUserID := fakemodels.BuildFakeUser().ID
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -194,7 +200,7 @@ func TestBleveIndexManager_Delete(T *testing.T) {
 		ctx := context.Background()
 
 		const exampleQuery = "delete_test"
-		exampleIndexPath := search.IndexPath("delete_test.bleve")
+		exampleIndexPath := search.IndexPath(filepath.Join(temp, "delete_test.bleve"))
 
 		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.NewLogger())
 		assert.NoError(t, err)

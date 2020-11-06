@@ -27,6 +27,8 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService(t)
 		exampleUser := fakemodels.BuildFakeUser()
 
@@ -37,7 +39,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 		ms := &MockHTTPHandler{}
 		ms.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 		res := httptest.NewRecorder()
@@ -52,6 +54,8 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 
 	T.Run("with nil user", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService(t)
 		exampleUser := fakemodels.BuildFakeUser()
 
@@ -59,7 +63,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 		md.On("GetUser", mock.Anything, mock.Anything).Return((*models.User)(nil), nil)
 		s.userDB = md
 
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 		res := httptest.NewRecorder()
@@ -77,9 +81,11 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 
 	T.Run("without user attached", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService(t)
 
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 		res := httptest.NewRecorder()
@@ -97,6 +103,8 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -114,7 +122,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -127,6 +135,8 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 
 	T.Run("happy path without allowing cookies", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -144,7 +154,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -157,6 +167,8 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 
 	T.Run("with error fetching client but able to use cookie", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -169,7 +181,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -182,6 +194,8 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 
 	T.Run("able to use cookies but error fetching user info", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -191,7 +205,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		s.userDB = mockDB
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -207,6 +221,8 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 
 	T.Run("no cookies allowed, with error fetching user info", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -220,7 +236,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		s.userDB = mockDB
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -234,6 +250,8 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 
 	T.Run("with error fetching client but able to use cookie but unable to decode cookie", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -248,7 +266,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		s.cookieManager = cb
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -262,6 +280,8 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 
 	T.Run("with invalid authentication", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService(t)
 
 		ocv := &mockOAuth2ClientValidator{}
@@ -269,7 +289,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		s.oauth2ClientsService = ocv
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -283,6 +303,8 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 
 	T.Run("nightmare path", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -296,7 +318,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		s.userDB = mockDB
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -314,7 +336,9 @@ func Test_parseLoginInputFromForm(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+
+		ctx := context.Background()
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -334,7 +358,9 @@ func Test_parseLoginInputFromForm(T *testing.T) {
 
 	T.Run("returns nil with error parsing form", func(t *testing.T) {
 		t.Parallel()
-		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+
+		ctx := context.Background()
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -351,6 +377,8 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -358,7 +386,7 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 		require.NoError(t, json.NewEncoder(&b).Encode(exampleInput))
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", &b)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", &b)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -374,6 +402,8 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 
 	T.Run("with error decoding request", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -381,7 +411,7 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 		require.NoError(t, json.NewEncoder(&b).Encode(exampleInput))
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", &b)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", &b)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -400,6 +430,8 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 
 	T.Run("with error decoding request but valid value attached to form", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		exampleUser := fakemodels.BuildFakeUser()
 		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -409,7 +441,8 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 			totpTokenFormKey: {exampleInput.TOTPToken},
 		}
 
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodPost,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			strings.NewReader(form.Encode()),
@@ -440,7 +473,9 @@ func TestService_AdminMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+
+		ctx := context.Background()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -470,8 +505,10 @@ func TestService_AdminMiddleware(T *testing.T) {
 
 	T.Run("without user attached", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -488,7 +525,9 @@ func TestService_AdminMiddleware(T *testing.T) {
 
 	T.Run("with non-admin user", func(t *testing.T) {
 		t.Parallel()
-		req, err := http.NewRequest(http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+
+		ctx := context.Background()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 

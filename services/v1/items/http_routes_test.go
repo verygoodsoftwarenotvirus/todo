@@ -31,6 +31,8 @@ func TestItemsService_ListHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -45,7 +47,8 @@ func TestItemsService_ListHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -62,6 +65,8 @@ func TestItemsService_ListHandler(T *testing.T) {
 
 	T.Run("with no rows returned", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -74,7 +79,8 @@ func TestItemsService_ListHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -91,6 +97,8 @@ func TestItemsService_ListHandler(T *testing.T) {
 
 	T.Run("with error fetching items from database", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -103,7 +111,8 @@ func TestItemsService_ListHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -129,6 +138,8 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -153,7 +164,8 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			fmt.Sprintf("http://todo.verygoodsoftwarenotvirus.ru?q=%s&limit=%d", exampleQuery, exampleLimit),
 			nil,
@@ -170,6 +182,8 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 	T.Run("with error conducting search", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -185,7 +199,8 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			fmt.Sprintf("http://todo.verygoodsoftwarenotvirus.ru?q=%s&limit=%d", exampleQuery, exampleLimit),
 			nil,
@@ -202,6 +217,8 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 	T.Run("with now rows returned", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -226,7 +243,8 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			fmt.Sprintf("http://todo.verygoodsoftwarenotvirus.ru?q=%s&limit=%d", exampleQuery, exampleLimit),
 			nil,
@@ -243,6 +261,8 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 	T.Run("with error fetching from database", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -267,7 +287,8 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			fmt.Sprintf("http://todo.verygoodsoftwarenotvirus.ru?q=%s&limit=%d", exampleQuery, exampleLimit),
 			nil,
@@ -293,6 +314,8 @@ func TestItemsService_CreateHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -321,7 +344,8 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -340,6 +364,8 @@ func TestItemsService_CreateHandler(T *testing.T) {
 
 	T.Run("without input attached", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -348,7 +374,8 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -365,6 +392,8 @@ func TestItemsService_CreateHandler(T *testing.T) {
 
 	T.Run("with error creating item", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -381,7 +410,8 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -409,6 +439,8 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -423,7 +455,8 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -440,6 +473,8 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 
 	T.Run("with no such item in database", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -458,7 +493,8 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -475,6 +511,8 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 
 	T.Run("with error fetching item from database", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -493,7 +531,8 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -519,6 +558,8 @@ func TestItemsService_ReadHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -537,7 +578,8 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -554,6 +596,8 @@ func TestItemsService_ReadHandler(T *testing.T) {
 
 	T.Run("with no such item in database", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -572,7 +616,8 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -589,6 +634,8 @@ func TestItemsService_ReadHandler(T *testing.T) {
 
 	T.Run("with error fetching item from database", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -607,7 +654,8 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -633,6 +681,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -662,7 +712,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -681,6 +732,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 	T.Run("without update input", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -689,7 +742,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -706,6 +760,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 	T.Run("with no rows fetching item", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -726,7 +782,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -745,6 +802,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 	T.Run("with error fetching item", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -765,7 +824,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -784,6 +844,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 	T.Run("with error updating item", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -805,7 +867,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -833,6 +896,8 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -859,7 +924,8 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		s.itemCounter = mc
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -876,6 +942,8 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 	T.Run("with no item in database", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -894,7 +962,8 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -911,6 +980,8 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 	T.Run("with error writing to database", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -929,7 +1000,8 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -946,6 +1018,8 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 	T.Run("with error removing from search index", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -972,7 +1046,8 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		s.itemCounter = mc
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,

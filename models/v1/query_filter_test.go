@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -207,6 +208,8 @@ func TestExtractQueryFilter(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+		ctx := context.Background()
+
 		expected := &QueryFilter{
 			Page:          100,
 			Limit:         MaxLimit,
@@ -226,7 +229,7 @@ func TestExtractQueryFilter(T *testing.T) {
 			sortByQueryKey:        []string{string(expected.SortBy)},
 		}
 
-		req, err := http.NewRequest(http.MethodGet, "https://verygoodsoftwarenotvirus.ru", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://verygoodsoftwarenotvirus.ru", nil)
 		assert.NoError(t, err)
 		require.NotNil(t, req)
 

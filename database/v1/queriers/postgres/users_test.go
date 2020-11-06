@@ -133,7 +133,6 @@ func TestPostgres_GetUser(T *testing.T) {
 		actual, err := p.GetUser(ctx, exampleUser.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleUser, actual)
-
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
@@ -154,7 +153,6 @@ func TestPostgres_GetUser(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.Equal(t, sql.ErrNoRows, err)
-
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
@@ -200,7 +198,6 @@ func TestPostgres_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		actual, err := p.GetUserWithUnverifiedTwoFactorSecret(ctx, exampleUser.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleUser, actual)
-
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
@@ -220,7 +217,7 @@ func TestPostgres_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		actual, err := p.GetUserWithUnverifiedTwoFactorSecret(ctx, exampleUser.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Equal(t, sql.ErrNoRows, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -563,7 +560,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 		actual, err := p.CreateUser(ctx, expectedInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Equal(t, err, dbclient.ErrUserExists)
+		assert.True(t, errors.Is(err, dbclient.ErrUserExists))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

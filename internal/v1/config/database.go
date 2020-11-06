@@ -34,6 +34,8 @@ const (
 	DefaultDatabaseMetricsCollectionInterval = 2 * time.Second
 )
 
+var errNilDatabaseConnection = errors.New("nil DB connection provided")
+
 // CreateTestUserSettings defines a test user created via config declaration.
 type CreateTestUserSettings struct {
 	// Username defines our test user's username we create in the event we create them.
@@ -88,7 +90,7 @@ func (cfg *ServerConfig) ProvideDatabaseConnection(logger logging.Logger) (*sql.
 // ProvideDatabaseClient provides a database implementation dependent on the configuration.
 func (cfg *ServerConfig) ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB, authenticator auth.Authenticator) (database.DataManager, error) {
 	if rawDB == nil {
-		return nil, errors.New("nil DB connection provided")
+		return nil, errNilDatabaseConnection
 	}
 
 	debug := cfg.Database.Debug || cfg.Meta.Debug

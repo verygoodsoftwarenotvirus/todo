@@ -318,14 +318,11 @@ func (p *Postgres) CreateUser(ctx context.Context, input models.UserDatabaseCrea
 
 	// create the user.
 	if err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {
-		switch e := err.(type) {
-		case *postgres.Error:
-			if e.Code == postgres.ErrorCode(postgresRowExistsErrorCode) {
-				return nil, dbclient.ErrUserExists
-			}
-		default:
-			return nil, fmt.Errorf("error executing user creation query: %w", err)
+		pge := &postgres.Error{}
+		if errors.As(err, &pge) && pge.Code == postgresRowExistsErrorCode {
+			return nil, dbclient.ErrUserExists
 		}
+		return nil, fmt.Errorf("error executing user creation query: %w", err)
 	}
 
 	return x, nil

@@ -189,7 +189,7 @@ linters:
     # dupl # Tool for code clone detection
     - errorlint # find code that will cause problems with the error wrapping scheme introduced in Go 1.13
     - exhaustive # check exhaustiveness of enum switch statements
-    - exhaustivestruct # Checks if all struct's fields are initialized
+    # exhaustivestruct # Checks if all struct's fields are initialized
     - exportloopref # checks for pointers to enclosing loop variables
     # funlen # Tool for detection of long functions
     # gci # control package import order and make it always deterministic.
@@ -233,6 +233,7 @@ linters:
     # wsl # Whitespace Linter - Forces you to use empty lines!
   disable:
     - stylecheck # Stylecheck is a replacement for golint
+    - exhaustivestruct # Checks if all struct's fields are initialized
     - gochecknoinits # Checks that no init functions are present in Go code
     - gci # control package import order and make it always deterministic.
     - gochecknoglobals # Checks that no globals are present in Go code
@@ -267,9 +268,8 @@ issues:
         - goerr113
         - bodyclose
         - unparam
-        - exhaustivestruct
+        - gocognit  # FIXME
         - gomnd
-        - noctx  # FIXME
 
     - path: tests/v1
       linters:
@@ -312,6 +312,10 @@ issues:
       linters:
         - gocyclo
 
+    - path: database/v1/queriers/postgres/migrations.go
+      linters:
+        - gocyclo
+
     - path: tests/v1/load/main.go
       linters:
         - gocritic # gocritic complains about an interface implementation I have no control over
@@ -324,14 +328,22 @@ issues:
       linters:
         - gosec
         - lll
-
+        -
     - path: internal/v1/config/config.go
       linters:
         - lll
 
-    - path: database/v1/queriers/postgres/migrations.go
+    - path: tests/v1/testutil/testutil.go
       linters:
-        - gocyclo
+        - goerr113
+
+    - path: cmd/server/v1/main.go
+      linters:
+        - goerr113
+
+    - path: database/v1/queriers/postgres/migrations.go # FIXME
+      linters:
+        - gocognit
 
     ## END SPECIAL SNOWFLAKES
 
@@ -341,6 +353,10 @@ issues:
     #   text: "weak cryptographic primitive"
     #   linters:
     #     - gosec
+
+    - linters:
+        - goerr113
+      text: "do not define dynamic errors"
 
     # ignore this error type because it isn't defined anywhere, and it's detecting a false positive
     - linters:

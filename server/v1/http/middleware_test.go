@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -23,7 +24,8 @@ func (m *mockHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) 
 func buildRequest(t *testing.T) *http.Request {
 	t.Helper()
 
-	req, err := http.NewRequest(
+	req, err := http.NewRequestWithContext(
+		context.Background(),
 		http.MethodGet,
 		"https://verygoodsoftwarenotvirus.ru",
 		nil,
@@ -40,6 +42,7 @@ func Test_formatSpanNameForRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		req := buildRequest(t)
 		req.Method = http.MethodPatch
 		req.URL.Path = "/blah"

@@ -91,7 +91,7 @@ func ProvideServer(
 		oauth2ClientsService: oauth2Service,
 	}
 
-	if err := cfg.ProvideTracing(logger); err != nil && err != config.ErrInvalidTracingProvider {
+	if err := cfg.ProvideTracing(logger); errors.Is(err, config.ErrInvalidTracingProvider) {
 		return nil, err
 	}
 

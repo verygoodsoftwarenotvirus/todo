@@ -28,11 +28,10 @@ import (
 func buildTestService(t *testing.T) *Service {
 	t.Helper()
 
-	manager := manage.NewDefaultManager()
 	tokenStore, err := oauth2store.NewMemoryTokenStore()
 	require.NoError(t, err)
+	manager := manage.NewDefaultManager()
 	manager.MustTokenStorage(tokenStore, err)
-	server := oauth2server.NewDefaultServer(manager)
 
 	service := &Service{
 		clientDataManager:    database.BuildMockDatabase(),
@@ -41,7 +40,7 @@ func buildTestService(t *testing.T) *Service {
 		authenticator:        &mockauth.Authenticator{},
 		urlClientIDExtractor: func(req *http.Request) uint64 { return 0 },
 		oauth2ClientCounter:  &mockmetrics.UnitCounter{},
-		oauth2Handler:        server,
+		oauth2Handler:        oauth2server.NewDefaultServer(manager),
 	}
 
 	return service
@@ -54,10 +53,6 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		t.Parallel()
 		mockOAuth2ClientDataManager := &mockmodels.OAuth2ClientDataManager{}
 
-		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
-			return nil, nil
-		}
-
 		service, err := ProvideOAuth2ClientsService(
 			noop.NewLogger(),
 			mockOAuth2ClientDataManager,
@@ -66,7 +61,9 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },
 			&mockencoding.EncoderDecoder{},
-			ucp,
+			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
+				return nil, nil
+			},
 		)
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
@@ -78,10 +75,6 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		t.Parallel()
 		mockOAuth2ClientDataManager := &mockmodels.OAuth2ClientDataManager{}
 
-		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
-			return nil, errors.New("blah")
-		}
-
 		service, err := ProvideOAuth2ClientsService(
 			noop.NewLogger(),
 			mockOAuth2ClientDataManager,
@@ -90,8 +83,11 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 			&mockauth.Authenticator{},
 			func(req *http.Request) uint64 { return 0 },
 			&mockencoding.EncoderDecoder{},
-			ucp,
+			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
+				return nil, errors.New("blah")
+			},
 		)
+
 		assert.Error(t, err)
 		assert.Nil(t, service)
 
@@ -166,7 +162,9 @@ func TestService_HandleAuthorizeRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
+		req, res := buildRequest(t), httptest.NewRecorder()
 
 		moah := &mockOAuth2Handler{}
 		moah.On(
@@ -175,7 +173,6 @@ func TestService_HandleAuthorizeRequest(T *testing.T) {
 			mock.Anything,
 		).Return(nil)
 		s.oauth2Handler = moah
-		req, res := buildRequest(t), httptest.NewRecorder()
 
 		assert.NoError(t, s.HandleAuthorizeRequest(res, req))
 
@@ -188,7 +185,9 @@ func TestService_HandleTokenRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
+		req, res := buildRequest(t), httptest.NewRecorder()
 
 		moah := &mockOAuth2Handler{}
 		moah.On(
@@ -197,7 +196,6 @@ func TestService_HandleTokenRequest(T *testing.T) {
 			mock.Anything,
 		).Return(nil)
 		s.oauth2Handler = moah
-		req, res := buildRequest(t), httptest.NewRecorder()
 
 		assert.NoError(t, s.HandleTokenRequest(res, req))
 

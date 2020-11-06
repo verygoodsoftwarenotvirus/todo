@@ -2,6 +2,7 @@ package encoding
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -86,6 +87,8 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+		ctx := context.Background()
+
 		expectation := "name"
 		e := &example{Name: expectation}
 		ed := ProvideResponseEncoder(noop.NewLogger())
@@ -93,7 +96,12 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 		bs, err := json.Marshal(e)
 		require.NoError(t, err)
 
-		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(bs))
+		req, err := http.NewRequestWithContext(
+			ctx,
+			http.MethodGet,
+			"http://todo.verygoodsoftwarenotvirus.ru",
+			bytes.NewReader(bs),
+		)
 		require.NoError(t, err)
 
 		var x example
@@ -103,6 +111,8 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 
 	T.Run("as XML", func(t *testing.T) {
 		t.Parallel()
+		ctx := context.Background()
+
 		expectation := "name"
 		e := &example{Name: expectation}
 		ed := ProvideResponseEncoder(noop.NewLogger())
@@ -110,7 +120,12 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 		bs, err := xml.Marshal(e)
 		require.NoError(t, err)
 
-		req, err := http.NewRequest(http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(bs))
+		req, err := http.NewRequestWithContext(
+			ctx,
+			http.MethodGet,
+			"http://todo.verygoodsoftwarenotvirus.ru",
+			bytes.NewReader(bs),
+		)
 		require.NoError(t, err)
 		req.Header.Set(ContentTypeHeader, XMLContentType)
 

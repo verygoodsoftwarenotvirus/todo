@@ -121,7 +121,7 @@ func (c *V1Client) BuildLoginRequest(ctx context.Context, input *models.UserLogi
 	defer span.End()
 
 	if input == nil {
-		return nil, errors.New("nil input provided")
+		return nil, ErrNilInputProvided
 	}
 
 	body, err := createBodyFromStruct(&input)
@@ -139,7 +139,7 @@ func (c *V1Client) Login(ctx context.Context, input *models.UserLoginInput) (*ht
 	defer span.End()
 
 	if input == nil {
-		return nil, errors.New("nil input provided")
+		return nil, ErrNilInputProvided
 	}
 
 	req, err := c.BuildLoginRequest(ctx, input)

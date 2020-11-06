@@ -38,6 +38,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -74,6 +75,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 	T.Run("with error decoding request", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -107,6 +109,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -138,6 +141,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 
 	T.Run("with error validating token", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		mh := &mockOAuth2Handler{}
@@ -158,6 +162,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 
 	T.Run("with error fetching from clientDataManager", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -188,6 +193,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 
 	T.Run("with invalid scope", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -225,6 +231,7 @@ func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
@@ -263,6 +270,7 @@ func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 
 	T.Run("with error authenticating request", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		mh := &mockOAuth2Handler{}
@@ -288,6 +296,7 @@ func TestService_OAuth2ClientInfoMiddleware(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 		expected := "blah"
 
@@ -321,10 +330,11 @@ func TestService_OAuth2ClientInfoMiddleware(T *testing.T) {
 
 	T.Run("with error reading from clientDataManager", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 		expected := "blah"
-
 		res, req := httptest.NewRecorder(), buildRequest(t)
+
 		q := url.Values{}
 		q.Set(oauth2ClientIDURIParamKey, expected)
 		req.URL.RawQuery = q.Encode()
@@ -370,7 +380,9 @@ func TestService_fetchOAuth2ClientFromRequest(T *testing.T) {
 
 	T.Run("without value present", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
+
 		assert.Nil(t, s.fetchOAuth2ClientFromRequest(buildRequest(t)))
 	})
 }
@@ -383,7 +395,6 @@ func TestService_fetchOAuth2ClientIDFromRequest(T *testing.T) {
 		ctx := context.Background()
 
 		s := buildTestService(t)
-
 		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
 
 		req := buildRequest(t).WithContext(
@@ -400,6 +411,7 @@ func TestService_fetchOAuth2ClientIDFromRequest(T *testing.T) {
 
 	T.Run("without value present", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		assert.Empty(t, s.fetchOAuth2ClientIDFromRequest(buildRequest(t)))

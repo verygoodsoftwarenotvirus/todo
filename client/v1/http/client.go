@@ -35,6 +35,9 @@ var (
 
 	// ErrInvalidTOTPToken is an error for when our TOTP validation request goes awry.
 	ErrInvalidTOTPToken = errors.New("invalid TOTP token")
+
+	// ErrNilInputProvided indicates nil input was provided in an unacceptable context.
+	ErrNilInputProvided = errors.New("nil input provided")
 )
 
 // V1Client is a client for interacting with v1 of our HTTP API.
@@ -128,7 +131,7 @@ func NewSimpleClient(ctx context.Context, address *url.URL, debug bool) (*V1Clie
 		"",
 		address,
 		noop.NewLogger(),
-		&http.Client{Timeout: 5 * time.Second},
+		&http.Client{Timeout: defaultTimeout},
 		[]string{"*"},
 		debug,
 	)

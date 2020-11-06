@@ -3,7 +3,6 @@ package sqlite
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
@@ -141,7 +140,7 @@ func buildMigrationFunc(db *sql.DB) func() {
 func (s *Sqlite) Migrate(ctx context.Context, authenticator auth.Authenticator, testUserConfig *database.UserCreationConfig) error {
 	s.logger.Info("migrating db")
 	if !s.IsReady(ctx) {
-		return errors.New("db is not ready yet")
+		return database.ErrDBUnready
 	}
 
 	s.migrateOnce.Do(buildMigrationFunc(s.db))

@@ -27,7 +27,7 @@ func argIsNotPointer(i interface{}) (notAPointer bool, err error) {
 // argIsNotNil checks an argument and returns whether or not it is nil.
 func argIsNotNil(i interface{}) (isNil bool, err error) {
 	if i == nil {
-		return true, errors.New("value is nil")
+		return true, ErrNilInputProvided
 	}
 
 	return false, nil

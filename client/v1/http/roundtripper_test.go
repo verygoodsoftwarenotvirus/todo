@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -22,9 +23,10 @@ func Test_defaultRoundTripper_RoundTrip(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		transport := newDefaultRoundTripper()
+		ctx := context.Background()
 
-		req, err := http.NewRequest(http.MethodGet, "https://verygoodsoftwarenotvirus.ru", nil)
+		transport := newDefaultRoundTripper()
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://verygoodsoftwarenotvirus.ru", nil)
 
 		require.NotNil(t, req)
 		assert.NoError(t, err)

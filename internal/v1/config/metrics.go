@@ -26,6 +26,13 @@ const (
 
 	// DefaultMetricsCollectionInterval is the default amount of time we wait between runtime metrics queries.
 	DefaultMetricsCollectionInterval = 2 * time.Second
+
+	// Prometheus represents the popular time series database.
+	Prometheus metricsProvider = "prometheus"
+	// DefaultMetricsProvider indicates what the preferred metrics provider is.
+	DefaultMetricsProvider = Prometheus
+	// Jaeger represents the popular distributed tracing server.
+	Jaeger tracingProvider = "jaeger"
 )
 
 type (
@@ -46,19 +53,8 @@ type (
 )
 
 var (
-	// ErrInvalidMetricsProvider is a sentinel error value.
-	ErrInvalidMetricsProvider = errors.New("invalid metrics provider")
-	// Prometheus represents the popular time series database.
-	Prometheus metricsProvider = "prometheus"
-	// DefaultMetricsProvider indicates what the preferred metrics provider is.
-	DefaultMetricsProvider = Prometheus
-
 	// ErrInvalidTracingProvider is a sentinel error value.
 	ErrInvalidTracingProvider = errors.New("invalid tracing provider")
-	// Jaeger represents the popular distributed tracing server.
-	Jaeger tracingProvider = "jaeger"
-	// DefaultTracingProvider indicates what the preferred tracing provider is.
-	DefaultTracingProvider = Jaeger
 )
 
 // ProvideInstrumentationHandler provides an instrumentation handler.

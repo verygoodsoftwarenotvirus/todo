@@ -82,11 +82,13 @@ func (d AuditLogContext) Value() (driver.Value, error) {
 	return json.Marshal(d)
 }
 
+var errByteAssertionFailed = errors.New("type assertion to []byte failed")
+
 // Scan implements the sql.Scanner interface.
 func (d *AuditLogContext) Scan(value interface{}) error {
 	b, ok := value.([]byte)
 	if !ok {
-		return errors.New("type assertion to []byte failed")
+		return errByteAssertionFailed
 	}
 
 	return json.Unmarshal(b, &d)

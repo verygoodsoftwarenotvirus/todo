@@ -31,7 +31,7 @@ func TestServerConfig_ProvideTracing(T *testing.T) {
 		t.Parallel()
 		c := &ServerConfig{
 			Metrics: MetricsSettings{
-				TracingProvider: DefaultTracingProvider,
+				TracingProvider: Jaeger,
 			},
 		}
 

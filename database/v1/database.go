@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"io"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
@@ -13,6 +14,9 @@ var (
 	_ Scanner = (*sql.Row)(nil)
 	_ Querier = (*sql.DB)(nil)
 	_ Querier = (*sql.Tx)(nil)
+
+	// ErrDBUnready indicates the given database is not ready.
+	ErrDBUnready = errors.New("database is not ready yet")
 )
 
 type (

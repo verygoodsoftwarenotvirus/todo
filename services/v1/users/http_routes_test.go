@@ -27,7 +27,9 @@ import (
 func buildRequest(t *testing.T) *http.Request {
 	t.Helper()
 
-	req, err := http.NewRequest(
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(
+		ctx,
 		http.MethodGet,
 		"https://verygoodsoftwarenotvirus.ru",
 		nil,
@@ -219,6 +221,7 @@ func TestService_ListHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUserList := fakemodels.BuildFakeUserList()
@@ -241,6 +244,7 @@ func TestService_ListHandler(T *testing.T) {
 
 	T.Run("with error reading from database", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		mockDB := database.BuildMockDatabase()
@@ -265,6 +269,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -309,6 +314,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 	T.Run("with user creation disabled", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -329,6 +335,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 	T.Run("with missing input", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -344,6 +351,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 	T.Run("with error hashing password", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -376,6 +384,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 	T.Run("with error generating two factor secret", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -416,6 +425,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 	T.Run("with error generating salt", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -457,6 +467,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 	T.Run("with error creating entry in database", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -493,6 +504,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 	T.Run("with pre-existing entry in database", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -531,6 +543,7 @@ func TestService_ReadHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -556,6 +569,7 @@ func TestService_ReadHandler(T *testing.T) {
 
 	T.Run("with no rows found", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -581,6 +595,7 @@ func TestService_ReadHandler(T *testing.T) {
 
 	T.Run("with error reading from database", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -610,6 +625,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -661,6 +677,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 
 	T.Run("without input attached to request", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -675,6 +692,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 
 	T.Run("with input attached but without user information", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -701,6 +719,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 
 	T.Run("with error validating login", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -744,6 +763,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 
 	T.Run("with error generating secret", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -795,6 +815,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 
 	T.Run("with error updating user in database", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -846,6 +867,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -879,6 +901,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 
 	T.Run("without valid input attached", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -903,6 +926,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 
 	T.Run("with error fetching user", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -935,6 +959,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 
 	T.Run("with secret already validated", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -975,6 +1000,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 
 	T.Run("with invalid code", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -1004,6 +1030,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 
 	T.Run("with error verifying two factor secret", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -1041,6 +1068,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -1089,6 +1117,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 	T.Run("without input attached to request", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -1105,6 +1134,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 	T.Run("with input but without user info", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -1131,6 +1161,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 	T.Run("with error validating login", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -1174,6 +1205,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 	T.Run("with error hashing password", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -1222,6 +1254,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 	T.Run("with error updating user", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -1274,6 +1307,7 @@ func TestService_Archive(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()
@@ -1303,6 +1337,7 @@ func TestService_Archive(T *testing.T) {
 
 	T.Run("with error updating database", func(t *testing.T) {
 		t.Parallel()
+
 		s := buildTestService(t)
 
 		exampleUser := fakemodels.BuildFakeUser()

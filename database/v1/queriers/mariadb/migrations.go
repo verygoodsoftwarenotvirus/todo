@@ -3,7 +3,6 @@ package mariadb
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -221,7 +220,7 @@ func (m *MariaDB) Migrate(ctx context.Context, authenticator auth.Authenticator,
 	m.logger.Info("migrating db")
 
 	if !m.IsReady(ctx) {
-		return errors.New("db is not ready yet")
+		return database.ErrDBUnready
 	}
 
 	m.migrateOnce.Do(buildMigrationFunc(m.db))

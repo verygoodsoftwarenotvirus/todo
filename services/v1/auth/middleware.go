@@ -55,63 +55,66 @@ func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 // AuthenticationMiddleware authenticates based on either an oauth2 token or a cookie.
 func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken bool) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			ctx, span := tracing.StartSpan(req.Context(), "AuthenticationMiddleware")
-			defer span.End()
+		return s.authorizationMiddleware(allowValidCookieInLieuOfAValidToken, next)
+	}
+}
 
-			logger := s.logger.WithRequest(req)
+func (s *Service) authorizationMiddleware(allowCookies bool, next http.Handler) http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := tracing.StartSpan(req.Context(), "AuthenticationMiddleware")
+		defer span.End()
 
-			// let's figure out who the user is.
-			var user *models.User
+		var (
+			logger = s.logger.WithRequest(req)
+			user   *models.User
+		)
 
-			// check for a cookie first if we can.
-			if allowValidCookieInLieuOfAValidToken {
-				cookieAuth, err := s.DecodeCookieFromRequest(ctx, req)
-
-				if err == nil && cookieAuth != nil {
-					user, err = s.userDB.GetUser(ctx, cookieAuth.UserID)
-					if err != nil {
-						logger.Error(err, "error authenticating request")
-						http.Error(res, "fetching user", http.StatusInternalServerError)
-						// if we get here, then we just don't have a valid cookie, and we need to move on.
-						return
-					}
-				}
-			}
-
-			// if the cookie wasn't present, or didn't indicate who the user is.
-			if user == nil {
-				// check to see if there is an OAuth2 token for a valid client attached to the request.
-				// We do this first because it is presumed to be the primary means by which requests are made to the httpServer.
-				oauth2Client, err := s.oauth2ClientsService.ExtractOAuth2ClientFromRequest(ctx, req)
-				if err != nil || oauth2Client == nil {
-					http.Redirect(res, req, "/auth/login", http.StatusUnauthorized)
-					return
-				}
-
-				// attach the oauth2 client and user's info to the request.
-				ctx = context.WithValue(ctx, models.OAuth2ClientKey, oauth2Client)
-				user, err = s.userDB.GetUser(ctx, oauth2Client.BelongsToUser)
+		// check for a cookie first if we can.
+		if allowCookies {
+			if cookieAuth, err := s.DecodeCookieFromRequest(ctx, req); err == nil && cookieAuth != nil {
+				user, err = s.userDB.GetUser(ctx, cookieAuth.UserID)
 				if err != nil {
 					logger.Error(err, "error authenticating request")
 					http.Error(res, "fetching user", http.StatusInternalServerError)
+					// if we get here, then we just don't have a valid cookie, and we need to move on.
 					return
 				}
 			}
+		}
 
-			// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere.
-			if user == nil {
-				logger.Debug("no user attached to request request")
+		// if the cookie wasn't present, or didn't indicate who the user is.
+		if user == nil {
+			// check to see if there is an OAuth2 token for a valid client attached to the request.
+			// We do this first because it is presumed to be the primary means by which requests are made to the httpServer.
+			oauth2Client, err := s.oauth2ClientsService.ExtractOAuth2ClientFromRequest(ctx, req)
+			if err != nil || oauth2Client == nil {
 				http.Redirect(res, req, "/auth/login", http.StatusUnauthorized)
 				return
 			}
 
-			// otherwise, load the request with extra context.
-			logger.WithValue("user_is_admin", user.IsAdmin).WithValue("user_id", user.ID).Debug("attaching session info to request context")
-			ctx = context.WithValue(ctx, models.SessionInfoKey, user.ToSessionInfo())
+			// attach the oauth2 client and user's info to the request.
+			ctx = context.WithValue(ctx, models.OAuth2ClientKey, oauth2Client)
+			user, err = s.userDB.GetUser(ctx, oauth2Client.BelongsToUser)
+			if err != nil {
+				logger.Error(err, "error authenticating request")
+				http.Error(res, "fetching user", http.StatusInternalServerError)
+				return
+			}
+		}
 
-			next.ServeHTTP(res, req.WithContext(ctx))
-		})
+		// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere.
+		if user == nil {
+			logger.Debug("no user attached to request request")
+			http.Redirect(res, req, "/auth/login", http.StatusUnauthorized)
+			return
+		}
+
+		// otherwise, load the request with extra context.
+		logger.WithValue("user_is_admin", user.IsAdmin).
+			WithValue("user_id", user.ID).
+			Debug("attaching session info to request context")
+
+		next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, models.SessionInfoKey, user.ToSessionInfo())))
 	}
 }
 

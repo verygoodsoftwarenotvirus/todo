@@ -2,6 +2,7 @@ package bleve
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -37,12 +38,12 @@ func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger l
 	var index bleve.Index
 
 	preexistingIndex, openIndexErr := bleve.Open(string(path))
-	switch openIndexErr {
-	case nil:
+	if openIndexErr == nil {
 		index = preexistingIndex
-	case bleve.ErrorIndexPathDoesNotExist:
-		logger.WithValue("path", path).Debug("tried to open existing index, but didn't find it")
+	}
 
+	if errors.Is(openIndexErr, bleve.ErrorIndexPathDoesNotExist) {
+		logger.WithValue("path", path).Debug("tried to open existing index, but didn't find it")
 		var newIndexErr error
 
 		switch name {
@@ -61,9 +62,9 @@ func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger l
 		default:
 			return nil, fmt.Errorf("invalid index name: %q", name)
 		}
-	default:
+	} else if openIndexErr != nil {
 		logger.Error(openIndexErr, "failed to open index")
-		return nil, openIndexErr
+		return nil, fmt.Errorf("failed to open index: %w", openIndexErr)
 	}
 
 	im := &bleveIndexManager{

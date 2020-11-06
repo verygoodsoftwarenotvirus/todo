@@ -213,11 +213,11 @@ func (s *Service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 
 	// fetch item from database.
 	exists, err := s.itemDataManager.ItemExists(ctx, itemID, si.UserID)
-	if err != nil && err != sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		logger.Error(err, "error checking item existence in database")
 	}
 
-	if !exists || err != nil && err != sql.ErrNoRows {
+	if !exists || errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(res)
 	}
 }

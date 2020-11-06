@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -16,7 +17,9 @@ import (
 func buildRequest(t *testing.T) *http.Request {
 	t.Helper()
 
-	req, err := http.NewRequest(
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(
+		ctx,
 		http.MethodGet,
 		"https://verygoodsoftwarenotvirus.ru",
 		nil,

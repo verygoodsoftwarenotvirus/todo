@@ -4,11 +4,36 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 	"regexp"
 
 	"github.com/spf13/afero"
 )
+
+func (s *Service) cacheFile(afs afero.Fs, fileDir string, file os.FileInfo) error {
+	fp := filepath.Join(fileDir, file.Name())
+
+	f, err := afs.Create(fp)
+	if err != nil {
+		return fmt.Errorf("creating static file in memory: %w", err)
+	}
+
+	bs, err := ioutil.ReadFile(fp)
+	if err != nil {
+		return fmt.Errorf("reading static file from directory: %w", err)
+	}
+
+	if _, err = f.Write(bs); err != nil {
+		return fmt.Errorf("loading static file into memory: %w", err)
+	}
+
+	if err = f.Close(); err != nil {
+		s.logger.Error(err, "closing file while setting up static dir")
+	}
+
+	return nil
+}
 
 func (s *Service) buildStaticFileServer(fileDir string) (*afero.HttpFs, error) {
 	var afs afero.Fs
@@ -25,23 +50,7 @@ func (s *Service) buildStaticFileServer(fileDir string) (*afero.HttpFs, error) {
 				continue
 			}
 
-			fp := filepath.Join(fileDir, file.Name())
-
-			f, err := afs.Create(fp)
-			if err != nil {
-				return nil, fmt.Errorf("creating static file in memory: %w", err)
-			}
-
-			bs, err := ioutil.ReadFile(fp)
-			if err != nil {
-				return nil, fmt.Errorf("reading static file from directory: %w", err)
-			}
-
-			if _, err = f.Write(bs); err != nil {
-				return nil, fmt.Errorf("loading static file into memory: %w", err)
-			}
-
-			if err = f.Close(); err != nil {
+			if err = s.cacheFile(afs, fileDir, file); err != nil {
 				s.logger.Error(err, "closing file while setting up static dir")
 			}
 		}

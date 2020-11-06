@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
@@ -143,7 +142,7 @@ func (p *Postgres) Migrate(ctx context.Context, authenticator auth.Authenticator
 	p.logger.Info("migrating db")
 
 	if !p.IsReady(ctx) {
-		return errors.New("db is not ready yet")
+		return database.ErrDBUnready
 	}
 
 	p.migrateOnce.Do(buildMigrationFunc(p.db))

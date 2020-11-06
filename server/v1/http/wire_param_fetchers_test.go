@@ -85,6 +85,7 @@ func Test_userIDFetcherFromRequestContext(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
+
 		exampleUser := fakemodels.BuildFakeUser()
 		expected := exampleUser.ToSessionInfo()
 
@@ -99,6 +100,7 @@ func Test_userIDFetcherFromRequestContext(T *testing.T) {
 
 	T.Run("without attached value", func(t *testing.T) {
 		t.Parallel()
+
 		req := buildRequest(t)
 		actual := userIDFetcherFromRequestContext(req)
 
@@ -111,13 +113,14 @@ func Test_buildRouteParamUserIDFetcher(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+		ctx := context.Background()
 		fn := buildRouteParamUserIDFetcher(noop.NewLogger())
 		expected := uint64(123)
 
 		req := buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(
-				req.Context(),
+				ctx,
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
@@ -134,6 +137,7 @@ func Test_buildRouteParamUserIDFetcher(T *testing.T) {
 
 	T.Run("with invalid value somehow", func(t *testing.T) {
 		t.Parallel()
+		ctx := context.Background()
 		// NOTE: This will probably never happen in dev or production
 		fn := buildRouteParamUserIDFetcher(noop.NewLogger())
 		expected := uint64(0)
@@ -141,7 +145,7 @@ func Test_buildRouteParamUserIDFetcher(T *testing.T) {
 		req := buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(
-				req.Context(),
+				ctx,
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
@@ -162,13 +166,14 @@ func Test_buildRouteParamItemIDFetcher(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+		ctx := context.Background()
 		fn := buildRouteParamItemIDFetcher(noop.NewLogger())
 		expected := uint64(123)
 
 		req := buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(
-				req.Context(),
+				ctx,
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
@@ -185,6 +190,7 @@ func Test_buildRouteParamItemIDFetcher(T *testing.T) {
 
 	T.Run("with invalid value somehow", func(t *testing.T) {
 		t.Parallel()
+		ctx := context.Background()
 		// NOTE: This will probably never happen in dev or production
 		fn := buildRouteParamItemIDFetcher(noop.NewLogger())
 		expected := uint64(0)
@@ -192,7 +198,7 @@ func Test_buildRouteParamItemIDFetcher(T *testing.T) {
 		req := buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(
-				req.Context(),
+				ctx,
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
@@ -213,13 +219,14 @@ func Test_buildRouteParamWebhookIDFetcher(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+		ctx := context.Background()
 		fn := buildRouteParamWebhookIDFetcher(noop.NewLogger())
 		expected := uint64(123)
 
 		req := buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(
-				req.Context(),
+				ctx,
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
@@ -236,6 +243,7 @@ func Test_buildRouteParamWebhookIDFetcher(T *testing.T) {
 
 	T.Run("with invalid value somehow", func(t *testing.T) {
 		t.Parallel()
+		ctx := context.Background()
 		// NOTE: This will probably never happen in dev or production
 		fn := buildRouteParamWebhookIDFetcher(noop.NewLogger())
 		expected := uint64(0)
@@ -243,7 +251,7 @@ func Test_buildRouteParamWebhookIDFetcher(T *testing.T) {
 		req := buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(
-				req.Context(),
+				ctx,
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
@@ -264,13 +272,15 @@ func Test_buildRouteParamOAuth2ClientIDFetcher(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		fn := buildRouteParamOAuth2ClientIDFetcher(noop.NewLogger())
 		expected := uint64(123)
 
 		req := buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(
-				req.Context(),
+				ctx,
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
@@ -287,6 +297,8 @@ func Test_buildRouteParamOAuth2ClientIDFetcher(T *testing.T) {
 
 	T.Run("with invalid value somehow", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		// NOTE: This will probably never happen in dev or production
 		fn := buildRouteParamOAuth2ClientIDFetcher(noop.NewLogger())
 		expected := uint64(0)
@@ -294,7 +306,7 @@ func Test_buildRouteParamOAuth2ClientIDFetcher(T *testing.T) {
 		req := buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(
-				req.Context(),
+				ctx,
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{

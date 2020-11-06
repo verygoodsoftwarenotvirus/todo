@@ -1,6 +1,7 @@
 package audit
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"net/http"
@@ -27,6 +28,8 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+		ctx := context.Background()
+
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -41,7 +44,8 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -52,12 +56,13 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		s.ListHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
-
 		mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
 	})
 
 	T.Run("with no rows returned", func(t *testing.T) {
 		t.Parallel()
+		ctx := context.Background()
+
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -70,7 +75,8 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -81,12 +87,13 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		s.ListHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
-
 		mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
 	})
 
 	T.Run("with error fetching entries from database", func(t *testing.T) {
 		t.Parallel()
+		ctx := context.Background()
+
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -99,7 +106,8 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -110,7 +118,6 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		s.ListHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
-
 		mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
 	})
 }
@@ -125,6 +132,8 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+		ctx := context.Background()
+
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -142,7 +151,8 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -153,12 +163,13 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
-
 		mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
 	})
 
 	T.Run("with no such entry in database", func(t *testing.T) {
 		t.Parallel()
+		ctx := context.Background()
+
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -176,7 +187,8 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -187,12 +199,13 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
-
 		mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
 	})
 
 	T.Run("with error fetching entry from database", func(t *testing.T) {
 		t.Parallel()
+		ctx := context.Background()
+
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
@@ -210,7 +223,8 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequest(
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodGet,
 			"http://todo.verygoodsoftwarenotvirus.ru",
 			nil,
@@ -221,7 +235,6 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
-
 		mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
 	})
 }

@@ -30,7 +30,7 @@ func (s *Service) DecodeCookieFromRequest(ctx context.Context, req *http.Request
 	defer span.End()
 
 	cookie, err := req.Cookie(CookieName)
-	if err != http.ErrNoCookie && cookie != nil {
+	if !errors.Is(err, http.ErrNoCookie) && cookie != nil {
 		var token string
 
 		decodeErr := s.cookieManager.Decode(CookieName, cookie.Value, &token)
@@ -308,31 +308,32 @@ func (s *Service) validateLogin(ctx context.Context, user *models.User, loginInp
 		user.Salt,
 	)
 
-	if err != nil {
-		switch err {
-		case auth.ErrCostTooLow, auth.ErrPasswordHashTooWeak:
-			// if the login is otherwise valid, but the password is too weak, try to rehash it.
-			logger.Debug("hashed password was deemed to weak, updating its hash")
+	if errors.Is(err, auth.ErrCostTooLow) || errors.Is(err, auth.ErrPasswordHashTooWeak) {
+		// if the login is otherwise valid, but the password is too weak, try to rehash it.
+		logger.Debug("hashed password was deemed to weak, updating its hash")
 
-			// re-hash the password
-			updated, hashErr := s.authenticator.HashPassword(ctx, loginInput.Password)
-			if hashErr != nil {
-				return false, fmt.Errorf("updating password hash: %w", hashErr)
-			}
-
-			// update stored hashed password in the database.
-			user.HashedPassword = updated
-			if updateErr := s.userDB.UpdateUser(ctx, user); updateErr != nil {
-				return false, fmt.Errorf("saving updated password hash: %w", updateErr)
-			}
-
-			return loginValid, nil
-		case auth.ErrInvalidTwoFactorCode, auth.ErrPasswordDoesNotMatch:
-			return false, err
-		default:
-			logger.Error(err, "issue validating login")
-			return false, err
+		// re-hash the password
+		updated, hashErr := s.authenticator.HashPassword(ctx, loginInput.Password)
+		if hashErr != nil {
+			return false, fmt.Errorf("updating password hash: %w", hashErr)
 		}
+
+		// update stored hashed password in the database.
+		user.HashedPassword = updated
+		if updateErr := s.userDB.UpdateUser(ctx, user); updateErr != nil {
+			return false, fmt.Errorf("saving updated password hash: %w", updateErr)
+		}
+
+		return loginValid, nil
+	}
+
+	if errors.Is(err, auth.ErrInvalidTwoFactorCode) || errors.Is(err, auth.ErrPasswordDoesNotMatch) {
+		return false, err
+	}
+
+	if err != nil {
+		logger.Error(err, "issue validating login")
+		return false, err
 	}
 
 	return loginValid, nil

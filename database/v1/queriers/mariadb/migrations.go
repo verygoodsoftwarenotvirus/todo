@@ -151,7 +151,7 @@ var (
 				"CREATE TABLE IF NOT EXISTS audit_log (",
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
 				"    `event_type` VARCHAR(256) NOT NULL,",
-				"    `event_data` JSON NOT NULL,",
+				"    `context` JSON NOT NULL,",
 				"    `created_on` BIGINT UNSIGNED,",
 				"    PRIMARY KEY (`id`)",
 				");",

@@ -20,6 +20,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	logger.Debug("ListHandler invoked")
 
 	// ensure query filter.
 	filter := models.ExtractQueryFilter(req)

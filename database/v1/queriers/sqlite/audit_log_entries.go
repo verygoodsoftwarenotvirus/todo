@@ -250,6 +250,7 @@ func (s *Sqlite) createAuditLogEntry(ctx context.Context, input *models.AuditLog
 	}
 
 	query, args := s.buildCreateAuditLogEntryQuery(x)
+	s.logger.WithValue("query", query).Debug("createAuditLogEntry called")
 
 	// create the audit log entry.
 	if _, err := s.db.ExecContext(ctx, query, args...); err != nil {

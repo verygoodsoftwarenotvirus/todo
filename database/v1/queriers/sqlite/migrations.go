@@ -102,7 +102,7 @@ var (
 			CREATE TABLE IF NOT EXISTS audit_log (
 				"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 				"event_type" TEXT NOT NULL,
-				"event_data" JSON NOT NULL,
+				"context" JSON NOT NULL,
 				"created_on" BIGINT NOT NULL DEFAULT (strftime('%s','now'))
 			);`,
 		},

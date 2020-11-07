@@ -250,6 +250,7 @@ func (m *MariaDB) createAuditLogEntry(ctx context.Context, input *models.AuditLo
 	}
 
 	query, args := m.buildCreateAuditLogEntryQuery(x)
+	m.logger.WithValue("query", query).Debug("createAuditLogEntry called")
 
 	// create the audit log entry.
 	if _, err := m.db.ExecContext(ctx, query, args...); err != nil {

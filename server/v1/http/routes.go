@@ -96,9 +96,9 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 		adminRouter.Post("/cycle_cookie_secret", s.authService.CycleSecretHandler)
 
 		entryIDRouteParam := fmt.Sprintf(numericIDPattern, itemsservice.URIParamKey)
-		adminRouter.Get(entryIDRouteParam, s.itemsService.ReadHandler)
+		adminRouter.Get(entryIDRouteParam, s.auditService.ReadHandler)
 
-		adminRouter.Get("/audit_log", s.itemsService.ListHandler)
+		adminRouter.Get("/audit_log", s.auditService.ListHandler)
 	})
 
 	router.Get("/auth/status", s.authService.StatusHandler)

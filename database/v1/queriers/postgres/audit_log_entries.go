@@ -251,6 +251,7 @@ func (p *Postgres) createAuditLogEntry(ctx context.Context, input *models.AuditL
 	}
 
 	query, args := p.buildCreateAuditLogEntryQuery(x)
+	p.logger.WithValue("query", query).Debug("createAuditLogEntry called")
 
 	// create the audit log entry.
 	if err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {

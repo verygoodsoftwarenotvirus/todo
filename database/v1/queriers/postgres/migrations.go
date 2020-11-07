@@ -103,7 +103,7 @@ var (
 			CREATE TABLE IF NOT EXISTS audit_log (
 				"id" BIGSERIAL NOT NULL PRIMARY KEY,
 				"event_type" TEXT NOT NULL,
-				"event_data" JSONB NOT NULL,
+				"context" JSONB NOT NULL,
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW())
 			);`,
 		},

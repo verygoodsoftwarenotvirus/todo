@@ -536,3 +536,532 @@ func TestMariaDB_CreateAuditLogEntry(T *testing.T) {
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
+
+func TestMariaDB_LogItemCreationEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		m, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeItem()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.ItemCreationEvent,
+			Context: map[string]interface{}{
+				"created": exampleInput,
+			},
+		}
+
+		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		m.LogItemCreationEvent(ctx, exampleInput)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestMariaDB_LogItemUpdateEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		m, mockDB := buildTestService(t)
+		exampleChanges := []models.FieldChangeSummary{}
+		exampleInput := fakemodels.BuildFakeItem()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.ItemUpdateEvent,
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.BelongsToUser,
+				"item_id":      exampleInput.ID,
+				"changes":      exampleChanges,
+			},
+		}
+
+		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		m.LogItemUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestMariaDB_LogItemArchiveEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		m, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeItem()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.ItemArchiveEvent,
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.BelongsToUser,
+				"item_id":      exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		m.LogItemArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestMariaDB_LogOAuth2ClientCreationEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		m, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeOAuth2Client()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.OAuth2ClientCreationEvent,
+			Context: map[string]interface{}{
+				"client": exampleInput,
+			},
+		}
+
+		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		m.LogOAuth2ClientCreationEvent(ctx, exampleInput)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestMariaDB_LogOAuth2ClientArchiveEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		m, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeOAuth2Client()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.OAuth2ClientArchiveEvent,
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.BelongsToUser,
+				"client_id":    exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		m.LogOAuth2ClientArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestMariaDB_LogUserCreationEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		m, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserCreationEvent,
+			Context: map[string]interface{}{
+				"user": exampleInput,
+			},
+		}
+
+		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		m.LogUserCreationEvent(ctx, exampleInput)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestMariaDB_LogUserVerifyTwoFactorSecretEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		m, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserVerifyTwoFactorSecretEvent,
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		m.LogUserVerifyTwoFactorSecretEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestMariaDB_LogUserUpdateTwoFactorSecretEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		m, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserUpdateTwoFactorSecretEvent,
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		m.LogUserUpdateTwoFactorSecretEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestMariaDB_LogUserUpdatePasswordEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		m, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserUpdatePasswordEvent,
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		m.LogUserUpdatePasswordEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestMariaDB_LogUserArchiveEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		m, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserArchiveEvent,
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		m.LogUserArchiveEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestMariaDB_LogCycleCookieSecretEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		m, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.CycleCookieSecretEvent,
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		m.LogCycleCookieSecretEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestMariaDB_LogSuccessfulLoginEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		m, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.SuccessfulLoginEvent,
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		m.LogSuccessfulLoginEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestMariaDB_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		m, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UnsuccessfulLoginBadPasswordEvent,
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		m.LogUnsuccessfulLoginBadPasswordEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestMariaDB_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		m, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UnsuccessfulLoginBad2FATokenEvent,
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		m.LogUnsuccessfulLoginBad2FATokenEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestMariaDB_LogLogoutEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		m, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.LogoutEvent,
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		m.LogLogoutEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestMariaDB_LogWebhookCreationEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		m, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeWebhook()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.WebhookCreationEvent,
+			Context: map[string]interface{}{
+				"webhook": exampleInput,
+			},
+		}
+
+		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		m.LogWebhookCreationEvent(ctx, exampleInput)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestMariaDB_LogWebhookUpdateEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		m, mockDB := buildTestService(t)
+		exampleChanges := []models.FieldChangeSummary{}
+		exampleInput := fakemodels.BuildFakeWebhook()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.WebhookUpdateEvent,
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.BelongsToUser,
+				"webhook_id":   exampleInput.ID,
+				"changes":      exampleChanges,
+			},
+		}
+
+		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		m.LogWebhookUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestMariaDB_LogWebhookArchiveEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		m, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeWebhook()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.WebhookArchiveEvent,
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.BelongsToUser,
+				"webhook_id":   exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(
+				interfaceToDriverValue(expectedArgs)...,
+			)
+
+		m.LogWebhookArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}

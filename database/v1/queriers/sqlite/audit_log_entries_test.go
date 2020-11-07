@@ -573,13 +573,14 @@ func TestSqlite_LogItemUpdateEvent(T *testing.T) {
 		ctx := context.Background()
 
 		s, mockDB := buildTestService(t)
-
+		exampleChanges := []models.FieldChangeSummary{}
 		exampleInput := fakemodels.BuildFakeItem()
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.ItemUpdateEvent,
 			Context: map[string]interface{}{
 				"performed_by": exampleInput.BelongsToUser,
 				"item_id":      exampleInput.ID,
+				"changes":      exampleChanges,
 			},
 		}
 
@@ -589,7 +590,7 @@ func TestSqlite_LogItemUpdateEvent(T *testing.T) {
 				interfaceToDriverValue(expectedArgs)...,
 			)
 
-		s.LogItemUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, nil)
+		s.LogItemUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -637,8 +638,8 @@ func TestSqlite_LogOAuth2ClientCreationEvent(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeOAuth2Client()
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.OAuth2ClientCreationEvent,
-			Context:   map[string]interface{}{
-				//
+			Context: map[string]interface{}{
+				"client": exampleInput,
 			},
 		}
 
@@ -666,8 +667,9 @@ func TestSqlite_LogOAuth2ClientArchiveEvent(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeOAuth2Client()
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.OAuth2ClientArchiveEvent,
-			Context:   map[string]interface{}{
-				//
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.BelongsToUser,
+				"client_id":    exampleInput.ID,
 			},
 		}
 
@@ -695,8 +697,8 @@ func TestSqlite_LogUserCreationEvent(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeUser()
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.UserCreationEvent,
-			Context:   map[string]interface{}{
-				//
+			Context: map[string]interface{}{
+				"user": exampleInput,
 			},
 		}
 
@@ -724,8 +726,8 @@ func TestSqlite_LogUserVerifyTwoFactorSecretEvent(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeUser()
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.UserVerifyTwoFactorSecretEvent,
-			Context:   map[string]interface{}{
-				//
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.ID,
 			},
 		}
 
@@ -753,8 +755,8 @@ func TestSqlite_LogUserUpdateTwoFactorSecretEvent(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeUser()
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.UserUpdateTwoFactorSecretEvent,
-			Context:   map[string]interface{}{
-				//
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.ID,
 			},
 		}
 
@@ -782,8 +784,8 @@ func TestSqlite_LogUserUpdatePasswordEvent(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeUser()
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.UserUpdatePasswordEvent,
-			Context:   map[string]interface{}{
-				//
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.ID,
 			},
 		}
 
@@ -811,8 +813,8 @@ func TestSqlite_LogUserArchiveEvent(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeUser()
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.UserArchiveEvent,
-			Context:   map[string]interface{}{
-				//
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.ID,
 			},
 		}
 
@@ -840,8 +842,8 @@ func TestSqlite_LogCycleCookieSecretEvent(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeUser()
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.CycleCookieSecretEvent,
-			Context:   map[string]interface{}{
-				//
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.ID,
 			},
 		}
 
@@ -869,8 +871,8 @@ func TestSqlite_LogSuccessfulLoginEvent(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeUser()
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.SuccessfulLoginEvent,
-			Context:   map[string]interface{}{
-				//
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.ID,
 			},
 		}
 
@@ -898,8 +900,8 @@ func TestSqlite_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeUser()
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.UnsuccessfulLoginBadPasswordEvent,
-			Context:   map[string]interface{}{
-				//
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.ID,
 			},
 		}
 
@@ -927,8 +929,8 @@ func TestSqlite_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeUser()
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.UnsuccessfulLoginBad2FATokenEvent,
-			Context:   map[string]interface{}{
-				//
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.ID,
 			},
 		}
 
@@ -956,8 +958,8 @@ func TestSqlite_LogLogoutEvent(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeUser()
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.LogoutEvent,
-			Context:   map[string]interface{}{
-				//
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.ID,
 			},
 		}
 
@@ -985,8 +987,8 @@ func TestSqlite_LogWebhookCreationEvent(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeWebhook()
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.WebhookCreationEvent,
-			Context:   map[string]interface{}{
-				//
+			Context: map[string]interface{}{
+				"webhook": exampleInput,
 			},
 		}
 
@@ -1010,12 +1012,14 @@ func TestSqlite_LogWebhookUpdateEvent(T *testing.T) {
 		ctx := context.Background()
 
 		s, mockDB := buildTestService(t)
-
+		exampleChanges := []models.FieldChangeSummary{}
 		exampleInput := fakemodels.BuildFakeWebhook()
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.WebhookUpdateEvent,
-			Context:   map[string]interface{}{
-				//
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.BelongsToUser,
+				"webhook_id":   exampleInput.ID,
+				"changes":      exampleChanges,
 			},
 		}
 
@@ -1025,7 +1029,7 @@ func TestSqlite_LogWebhookUpdateEvent(T *testing.T) {
 				interfaceToDriverValue(expectedArgs)...,
 			)
 
-		s.LogWebhookUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, nil)
+		s.LogWebhookUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -1043,8 +1047,9 @@ func TestSqlite_LogWebhookArchiveEvent(T *testing.T) {
 		exampleInput := fakemodels.BuildFakeWebhook()
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.WebhookArchiveEvent,
-			Context:   map[string]interface{}{
-				//
+			Context: map[string]interface{}{
+				"performed_by": exampleInput.BelongsToUser,
+				"webhook_id":   exampleInput.ID,
 			},
 		}
 
@@ -1054,7 +1059,7 @@ func TestSqlite_LogWebhookArchiveEvent(T *testing.T) {
 				interfaceToDriverValue(expectedArgs)...,
 			)
 
-		s.LogWebhookArchiveEvent(ctx, exampleInput.ID, exampleInput.ID)
+		s.LogWebhookArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

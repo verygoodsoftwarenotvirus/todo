@@ -41,14 +41,14 @@ coverage:
 #    - apk add --update --no-cache make
 #    - make docker-security-lint
 
- linting:
-   stage: quality
-   image: golangci/golangci-lint:latest # v1.18
-   variables:
-     GO111MODULE: "on"
-   script:
-     - go mod vendor
-     - golangci-lint run --config=.golangci.yml --deadline=15m
+linting:
+  stage: quality
+  image: golangci/golangci-lint:latest # v1.18
+  variables:
+    GO111MODULE: "on"
+  script:
+    - go mod vendor
+    - golangci-lint run --config=.golangci.yml --deadline=15m
 
 build-frontend:
   stage: quality

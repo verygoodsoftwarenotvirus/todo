@@ -9,4 +9,4 @@ COPY . .
 #ENTRYPOINT [ "go", "test", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/integration" ]
 
 # for a more specific test:
-ENTRYPOINT [ "go", "test", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/integration", "-run", "TestAuditLogEntries/Listing/should_be_able_to_be_read_in_a_list_by_an_admin" ]
+ENTRYPOINT [ "go", "test", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/integration", "-run", "TestAuditLogEntries" ]

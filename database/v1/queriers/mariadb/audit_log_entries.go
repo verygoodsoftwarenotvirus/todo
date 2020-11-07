@@ -101,9 +101,6 @@ func (m *MariaDB) buildGetAllAuditLogEntriesCountQuery() string {
 	allAuditLogEntriesCountQuery, _, err := m.sqlBuilder.
 		Select(fmt.Sprintf(countQuery, auditLogEntriesTableName)).
 		From(auditLogEntriesTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", auditLogEntriesTableName, archivedOnColumn): nil,
-		}).
 		ToSql()
 	m.logQueryBuildingError(err)
 
@@ -181,9 +178,6 @@ func (m *MariaDB) buildGetAuditLogEntriesQuery(filter *models.QueryFilter) (quer
 	builder := m.sqlBuilder.
 		Select(auditLogEntriesTableColumns...).
 		From(auditLogEntriesTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", auditLogEntriesTableName, archivedOnColumn): nil,
-		}).
 		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
 
 	if filter != nil {

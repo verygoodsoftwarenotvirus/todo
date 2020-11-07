@@ -137,8 +137,8 @@ integration-tests-%:
 	--force-recreate \
 	--remove-orphans \
 	--renew-anon-volumes \
-	--always-recreate-deps
-	# \	--abort-on-container-exit
+	--always-recreate-deps \
+	--abort-on-container-exit
 
 .PHONY: integration-coverage
 integration-coverage: base_prereqs

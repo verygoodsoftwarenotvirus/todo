@@ -4,8 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAuditLogEntries(test *testing.T) {
@@ -14,16 +15,6 @@ func TestAuditLogEntries(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			//// Create items.
-			//for i := 0; i < 5; i++ {
-			//	// Create item.
-			//	exampleItem := fakemodels.BuildFakeItem()
-			//	exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
-			//	createdItem, itemCreationErr := todoClient.CreateItem(ctx, exampleItemInput)
-			//	checkValueAndError(t, createdItem, itemCreationErr)
-			//}
-
-			// Assert item list equality.
 			actual, err := adminClient.GetAuditLogEntries(ctx, nil)
 			checkValueAndError(t, actual, err)
 

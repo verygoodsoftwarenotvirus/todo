@@ -101,9 +101,6 @@ func (p *Postgres) buildGetAllAuditLogEntriesCountQuery() string {
 	allAuditLogEntriesCountQuery, _, err := p.sqlBuilder.
 		Select(fmt.Sprintf(countQuery, auditLogEntriesTableName)).
 		From(auditLogEntriesTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", auditLogEntriesTableName, archivedOnColumn): nil,
-		}).
 		ToSql()
 	p.logQueryBuildingError(err)
 
@@ -181,9 +178,6 @@ func (p *Postgres) buildGetAuditLogEntriesQuery(filter *models.QueryFilter) (que
 	builder := p.sqlBuilder.
 		Select(auditLogEntriesTableColumns...).
 		From(auditLogEntriesTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", auditLogEntriesTableName, archivedOnColumn): nil,
-		}).
 		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
 
 	if filter != nil {

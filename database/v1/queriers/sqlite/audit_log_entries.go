@@ -101,9 +101,6 @@ func (s *Sqlite) buildGetAllAuditLogEntriesCountQuery() string {
 	allAuditLogEntriesCountQuery, _, err := s.sqlBuilder.
 		Select(fmt.Sprintf(countQuery, auditLogEntriesTableName)).
 		From(auditLogEntriesTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", auditLogEntriesTableName, archivedOnColumn): nil,
-		}).
 		ToSql()
 	s.logQueryBuildingError(err)
 
@@ -181,9 +178,6 @@ func (s *Sqlite) buildGetAuditLogEntriesQuery(filter *models.QueryFilter) (query
 	builder := s.sqlBuilder.
 		Select(auditLogEntriesTableColumns...).
 		From(auditLogEntriesTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", auditLogEntriesTableName, archivedOnColumn): nil,
-		}).
 		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
 
 	if filter != nil {

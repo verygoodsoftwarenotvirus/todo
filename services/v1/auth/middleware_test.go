@@ -98,7 +98,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 	})
 }
 
-func TestService_AuthenticationMiddleware(T *testing.T) {
+func TestService_AuthorizationMiddleware(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -126,7 +126,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		s.AuthenticationMiddleware(true)(h).ServeHTTP(res, req)
+		s.AuthorizationMiddleware(true)(h).ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -158,7 +158,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		s.AuthenticationMiddleware(false)(h).ServeHTTP(res, req)
+		s.AuthorizationMiddleware(false)(h).ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -187,7 +187,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 
 		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
-		s.AuthenticationMiddleware(true)(h).ServeHTTP(res, req)
+		s.AuthorizationMiddleware(true)(h).ServeHTTP(res, req)
 
 		mock.AssertExpectationsForObjects(t, mockDB, h)
 	})
@@ -212,7 +212,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
 		h := &MockHTTPHandler{}
-		s.AuthenticationMiddleware(true)(h).ServeHTTP(res, req)
+		s.AuthorizationMiddleware(true)(h).ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -241,7 +241,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		require.NotNil(t, req)
 
 		h := &MockHTTPHandler{}
-		s.AuthenticationMiddleware(false)(h).ServeHTTP(res, req)
+		s.AuthorizationMiddleware(false)(h).ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -273,7 +273,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
 		h := &MockHTTPHandler{}
-		s.AuthenticationMiddleware(true)(h).ServeHTTP(res, req)
+		s.AuthorizationMiddleware(true)(h).ServeHTTP(res, req)
 
 		mock.AssertExpectationsForObjects(t, ocv, cb, h)
 	})
@@ -294,7 +294,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		require.NotNil(t, req)
 
 		h := &MockHTTPHandler{}
-		s.AuthenticationMiddleware(false)(h).ServeHTTP(res, req)
+		s.AuthorizationMiddleware(false)(h).ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 
@@ -323,7 +323,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		require.NotNil(t, req)
 
 		h := &MockHTTPHandler{}
-		s.AuthenticationMiddleware(false)(h).ServeHTTP(res, req)
+		s.AuthorizationMiddleware(false)(h).ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 

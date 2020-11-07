@@ -52,8 +52,8 @@ func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 	})
 }
 
-// AuthenticationMiddleware authenticates based on either an oauth2 token or a cookie.
-func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken bool) func(next http.Handler) http.Handler {
+// AuthorizationMiddleware authenticates based on either an oauth2 token or a cookie.
+func (s *Service) AuthorizationMiddleware(allowValidCookieInLieuOfAValidToken bool) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return s.authorizationMiddleware(allowValidCookieInLieuOfAValidToken, next)
 	}
@@ -61,7 +61,7 @@ func (s *Service) AuthenticationMiddleware(allowValidCookieInLieuOfAValidToken b
 
 func (s *Service) authorizationMiddleware(allowCookies bool, next http.Handler) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := tracing.StartSpan(req.Context(), "AuthenticationMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "authorizationMiddleware")
 		defer span.End()
 
 		var (
@@ -116,6 +116,51 @@ func (s *Service) authorizationMiddleware(allowCookies bool, next http.Handler) 
 
 		next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, models.SessionInfoKey, user.ToSessionInfo())))
 	}
+}
+
+// AuthenticationMiddleware is concerned with figuring otu who a user is, but not worried about kicking out users who are not known.
+func (s *Service) AuthenticationMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := tracing.StartSpan(req.Context(), "authenticationMiddleware")
+		defer span.End()
+
+		var (
+			logger = s.logger.WithRequest(req)
+			user   *models.User
+		)
+
+		// check for a cookie first if we can.
+		if cookieAuth, err := s.DecodeCookieFromRequest(ctx, req); err == nil && cookieAuth != nil {
+			user, err = s.userDB.GetUser(ctx, cookieAuth.UserID)
+			if err != nil {
+				logger.Error(err, "error authenticating request")
+				next.ServeHTTP(res, req)
+				return
+			}
+		}
+
+		// if the cookie wasn't present, or didn't indicate who the user is.
+		if user == nil {
+			// check to see if there is an OAuth2 token for a valid client attached to the request.
+			// We do this first because it is presumed to be the primary means by which requests are made to the httpServer.
+			if oauth2Client, err := s.oauth2ClientsService.ExtractOAuth2ClientFromRequest(ctx, req); err == nil && oauth2Client != nil {
+				ctx = context.WithValue(ctx, models.OAuth2ClientKey, oauth2Client)
+
+				// attach the oauth2 client and user's info to the request.
+				user, err = s.userDB.GetUser(ctx, oauth2Client.BelongsToUser)
+				if err != nil {
+					logger.Error(err, "error fetching user info for authentication")
+				}
+			}
+		}
+
+		if user != nil {
+			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, models.SessionInfoKey, user.ToSessionInfo())))
+			return
+		}
+
+		next.ServeHTTP(res, req)
+	})
 }
 
 // AdminMiddleware restricts requests to admin users only.

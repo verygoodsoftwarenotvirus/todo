@@ -29,8 +29,6 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 		panic("config should not be nil")
 	}
 
-	router := chi.NewRouter()
-
 	// Basic CORS, for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
 	ch := cors.New(cors.Options{
 		// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts,
@@ -54,16 +52,20 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 		MaxAge:           maxCORSAge,
 	})
 
-	router.Use(
+	mux := chi.NewRouter()
+	mux.Use(
 		middleware.RequestID,
 		middleware.Timeout(maxTimeout),
 		buildLoggingMiddleware(s.logger.WithName("middleware")),
 		ch.Handler,
 	)
 
+	plainRouter := mux.With()
+	authenticatedRouter := mux.With(s.authService.AuthenticationMiddleware)
+
 	// all middleware must be defined before routes on a mux.
 
-	router.Route("/_meta_", func(metaRouter chi.Router) {
+	plainRouter.Route("/_meta_", func(metaRouter chi.Router) {
 		health := healthcheck.NewHandler()
 		// Expose a liveness check on /live
 		metaRouter.Get("/live", health.LiveEndpoint)
@@ -73,24 +75,22 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 
 	if metricsHandler != nil {
 		s.logger.Debug("establishing metrics handler")
-		router.Handle("/metrics", metricsHandler)
+		plainRouter.Handle("/metrics", metricsHandler)
 	}
 
 	// Frontend routes.
 	if s.config.Frontend.StaticFilesDirectory != "" {
-		s.logger.Debug("setting static file server")
-
 		staticFileServer, err := s.frontendService.StaticDir(cfg.Frontend.StaticFilesDirectory)
 		if err != nil {
 			s.logger.Error(err, "establishing static file server")
 		}
-
-		router.Get("/*", staticFileServer)
-		s.logger.Debug("static file server set")
+		plainRouter.Get("/*", staticFileServer)
 	}
 
-	router.With(
-		s.authService.AuthenticationMiddleware(true),
+	authenticatedRouter.Get("/auth/status", s.authService.StatusHandler)
+
+	mux.With(
+		s.authService.AuthorizationMiddleware(true),
 		s.authService.AdminMiddleware,
 	).Route("/_admin_", func(adminRouter chi.Router) {
 		adminRouter.Post("/cycle_cookie_secret", s.authService.CycleSecretHandler)
@@ -101,24 +101,22 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 		adminRouter.Get("/audit_log", s.auditService.ListHandler)
 	})
 
-	router.Get("/auth/status", s.authService.StatusHandler)
-
-	router.Route("/users", func(userRouter chi.Router) {
+	mux.Route("/users", func(userRouter chi.Router) {
 		userRouter.With(s.authService.UserLoginInputMiddleware).Post("/login", s.authService.LoginHandler)
 		userRouter.With(s.authService.CookieAuthenticationMiddleware).Post("/logout", s.authService.LogoutHandler)
 		userRouter.With(s.usersService.UserInputMiddleware).Post(root, s.usersService.CreateHandler)
 		userRouter.With(s.usersService.TOTPSecretVerificationInputMiddleware).Post("/totp_secret/verify", s.usersService.TOTPSecretVerificationHandler)
 		userRouter.With(
-			s.authService.AuthenticationMiddleware(true),
+			s.authService.AuthorizationMiddleware(true),
 			s.usersService.TOTPSecretRefreshInputMiddleware,
 		).Post("/totp_secret/new", s.usersService.NewTOTPSecretHandler)
 		userRouter.With(
-			s.authService.AuthenticationMiddleware(true),
+			s.authService.AuthorizationMiddleware(true),
 			s.usersService.PasswordUpdateInputMiddleware,
 		).Put("/password/new", s.usersService.UpdatePasswordHandler)
 	})
 
-	router.Route("/oauth2", func(oauth2Router chi.Router) {
+	mux.Route("/oauth2", func(oauth2Router chi.Router) {
 		oauth2Router.With(
 			s.authService.CookieAuthenticationMiddleware,
 			s.oauth2ClientsService.CreationInputMiddleware,
@@ -138,7 +136,7 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 		})
 	})
 
-	router.With(s.authService.AuthenticationMiddleware(true)).
+	mux.With(s.authService.AuthorizationMiddleware(true)).
 		Route("/api/v1", func(v1Router chi.Router) {
 			// Users
 			v1Router.Route("/users", func(usersRouter chi.Router) {
@@ -187,5 +185,5 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 			})
 		})
 
-	s.router = router
+	s.router = mux
 }

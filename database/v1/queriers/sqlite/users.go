@@ -123,7 +123,7 @@ func (s *Sqlite) GetUser(ctx context.Context, userID uint64) (*models.User, erro
 
 	u, err := s.scanUser(row)
 	if err != nil {
-		return nil, buildError(err, "fetching user from database")
+		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
 	return u, err
@@ -156,7 +156,7 @@ func (s *Sqlite) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userI
 
 	u, err := s.scanUser(row)
 	if err != nil {
-		return nil, buildError(err, "fetching user from database")
+		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
 	return u, err
@@ -253,7 +253,7 @@ func (s *Sqlite) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mod
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, buildError(err, "querying for user")
+		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
 	userList, err := s.scanUsers(rows)

@@ -244,7 +244,7 @@ func (m *MariaDB) GetItems(ctx context.Context, userID uint64, filter *models.Qu
 
 	rows, err := m.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, buildError(err, "querying database for items")
+		return nil, fmt.Errorf("fetching items from database: %w", err)
 	}
 
 	items, err := m.scanItems(rows)
@@ -297,7 +297,7 @@ func (m *MariaDB) GetItemsForAdmin(ctx context.Context, filter *models.QueryFilt
 
 	rows, err := m.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, buildError(err, "querying database for items")
+		return nil, fmt.Errorf("fetching items from database: %w", err)
 	}
 
 	items, err := m.scanItems(rows)
@@ -364,7 +364,7 @@ func (m *MariaDB) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint
 
 	rows, err := m.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, buildError(err, "querying database for items")
+		return nil, fmt.Errorf("fetching items from database: %w", err)
 	}
 
 	items, err := m.scanItems(rows)
@@ -421,7 +421,7 @@ func (m *MariaDB) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids 
 
 	rows, err := m.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, buildError(err, "querying database for items")
+		return nil, fmt.Errorf("fetching items from database: %w", err)
 	}
 
 	items, err := m.scanItems(rows)

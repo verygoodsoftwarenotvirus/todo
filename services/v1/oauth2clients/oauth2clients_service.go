@@ -58,7 +58,7 @@ type (
 		logger               logging.Logger
 		clientDataManager    models.OAuth2ClientDataManager
 		userDataManager      models.UserDataManager
-		auditLog             models.AuditLogDataManager
+		auditLog             models.OAuth2ClientAuditManager
 		authenticator        auth.Authenticator
 		encoderDecoder       encoding.EncoderDecoder
 		urlClientIDExtractor func(req *http.Request) uint64
@@ -73,7 +73,7 @@ func ProvideOAuth2ClientsService(
 	logger logging.Logger,
 	clientDataManager models.OAuth2ClientDataManager,
 	userDataManager models.UserDataManager,
-	auditLog models.AuditLogDataManager,
+	auditLog models.OAuth2ClientAuditManager,
 	authenticator auth.Authenticator,
 	clientIDFetcher ClientIDFetcher,
 	encoderDecoder encoding.EncoderDecoder,

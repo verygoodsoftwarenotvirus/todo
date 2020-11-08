@@ -152,7 +152,7 @@ func TestSqlite_GetWebhook(T *testing.T) {
 		actual, err := s.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Equal(t, sql.ErrNoRows, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -314,7 +314,7 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 		actual, err := s.GetAllWebhooks(ctx)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Equal(t, sql.ErrNoRows, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -432,7 +432,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 		actual, err := s.GetWebhooks(ctx, exampleUser.ID, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Equal(t, sql.ErrNoRows, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

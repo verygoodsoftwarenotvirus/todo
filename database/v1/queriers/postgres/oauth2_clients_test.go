@@ -146,7 +146,7 @@ func TestPostgres_GetOAuth2ClientByClientID(T *testing.T) {
 		actual, err := p.GetOAuth2ClientByClientID(ctx, exampleOAuth2Client.ClientID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Equal(t, sql.ErrNoRows, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -235,7 +235,7 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 		actual, err := p.GetAllOAuth2Clients(ctx)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Equal(t, sql.ErrNoRows, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -323,7 +323,7 @@ func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 			WillReturnError(sql.ErrNoRows)
 
 		actual, err := p.GetAllOAuth2ClientsForUser(ctx, exampleUser.ID)
-		assert.Equal(t, sql.ErrNoRows, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 		assert.Nil(t, actual)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -432,7 +432,7 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 		actual, err := p.GetOAuth2Client(ctx, exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Equal(t, sql.ErrNoRows, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

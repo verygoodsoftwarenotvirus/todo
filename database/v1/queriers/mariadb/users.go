@@ -123,7 +123,7 @@ func (m *MariaDB) GetUser(ctx context.Context, userID uint64) (*models.User, err
 
 	u, err := m.scanUser(row)
 	if err != nil {
-		return nil, buildError(err, "fetching user from database")
+		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
 	return u, err
@@ -156,7 +156,7 @@ func (m *MariaDB) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, user
 
 	u, err := m.scanUser(row)
 	if err != nil {
-		return nil, buildError(err, "fetching user from database")
+		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
 	return u, err
@@ -253,7 +253,7 @@ func (m *MariaDB) GetUsers(ctx context.Context, filter *models.QueryFilter) (*mo
 
 	rows, err := m.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, buildError(err, "querying for user")
+		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
 	userList, err := m.scanUsers(rows)

@@ -2,14 +2,14 @@ package httpserver
 
 import (
 	"fmt"
-	"net/http"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
+	"net/http"
+	"path/filepath"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -173,14 +173,17 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 			itemsRouteWithPrefix := fmt.Sprintf("/%s", itemPath)
 			itemIDRouteParam := fmt.Sprintf(numericIDPattern, itemsservice.URIParamKey)
 			v1Router.Route(itemsRouteWithPrefix, func(itemsRouter chi.Router) {
-				itemsRouter.With(s.itemsService.CreationInputMiddleware).Post(root, s.itemsService.CreateHandler)
 				itemsRouter.Route(itemIDRouteParam, func(singleItemRouter chi.Router) {
 					singleItemRouter.Get(root, s.itemsService.ReadHandler)
-					singleItemRouter.With(s.itemsService.UpdateInputMiddleware).Put(root, s.itemsService.UpdateHandler)
-					singleItemRouter.Delete(root, s.itemsService.ArchiveHandler)
 					singleItemRouter.Head(root, s.itemsService.ExistenceHandler)
+					singleItemRouter.Delete(root, s.itemsService.ArchiveHandler)
+					singleItemRouter.With(s.itemsService.UpdateInputMiddleware).Put(root, s.itemsService.UpdateHandler)
+					singleItemRouter.With(s.authService.AdminMiddleware).Get(filepath.Join(root, "audit"), s.itemsService.AuditEntryHandler)
 				})
+
+				itemsRouter.With(s.itemsService.CreationInputMiddleware).Post(root, s.itemsService.CreateHandler)
 				itemsRouter.Get(root, s.itemsService.ListHandler)
+				itemsRouter.Get(root, s.itemsService.AuditEntryHandler)
 				itemsRouter.Get(searchRoot, s.itemsService.SearchHandler)
 			})
 		})

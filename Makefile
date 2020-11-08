@@ -137,8 +137,7 @@ integration-tests-%:
 	--force-recreate \
 	--remove-orphans \
 	--renew-anon-volumes \
-	--always-recreate-deps \
-	--abort-on-container-exit
+	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(KEEP_RUNNING)),, --abort-on-container-exit)
 
 .PHONY: integration-coverage
 integration-coverage: base_prereqs
@@ -166,8 +165,7 @@ load-tests-%:
 	--force-recreate \
 	--remove-orphans \
 	--renew-anon-volumes \
-	--always-recreate-deps \
-	--abort-on-container-exit
+	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(KEEP_RUNNING)),, --abort-on-container-exit)
 
 ## Running
 
@@ -178,8 +176,7 @@ dev: base_prereqs
 	--force-recreate \
 	--remove-orphans \
 	--renew-anon-volumes \
-	--always-recreate-deps \
-	--abort-on-container-exit
+	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(KEEP_RUNNING)),, --abort-on-container-exit)
 
 ## housekeeping
 

@@ -125,7 +125,7 @@ func (p *Postgres) GetUser(ctx context.Context, userID uint64) (*models.User, er
 
 	u, err := p.scanUser(row)
 	if err != nil {
-		return nil, buildError(err, "fetching user from database")
+		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
 	return u, err
@@ -158,7 +158,7 @@ func (p *Postgres) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, use
 
 	u, err := p.scanUser(row)
 	if err != nil {
-		return nil, buildError(err, "fetching user from database")
+		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
 	return u, err
@@ -255,7 +255,7 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *models.QueryFilter) (*m
 
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, buildError(err, "querying for user")
+		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
 	userList, err := p.scanUsers(rows)

@@ -42,34 +42,15 @@ type (
 		Context   AuditLogContext `json:"context"`
 	}
 
-	// AuditLogDataManager describes a structure capable of storing items permanently.
+	// AuditLogDataManager describes a structure capable of managing audit log entries.
 	AuditLogDataManager interface {
 		GetAuditLogEntry(ctx context.Context, eventID uint64) (*AuditLogEntry, error)
 		GetAllAuditLogEntriesCount(ctx context.Context) (uint64, error)
 		GetAllAuditLogEntries(ctx context.Context, resultChannel chan []AuditLogEntry) error
 		GetAuditLogEntries(ctx context.Context, filter *QueryFilter) (*AuditLogEntryList, error)
-
-		LogCycleCookieSecretEvent(ctx context.Context, userID uint64)
-		LogSuccessfulLoginEvent(ctx context.Context, userID uint64)
-		LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64)
-		LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64)
-		LogLogoutEvent(ctx context.Context, userID uint64)
-		LogItemCreationEvent(ctx context.Context, item *Item)
-		LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []FieldChangeSummary)
-		LogItemArchiveEvent(ctx context.Context, userID, itemID uint64)
-		LogOAuth2ClientCreationEvent(ctx context.Context, client *OAuth2Client)
-		LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64)
-		LogWebhookCreationEvent(ctx context.Context, webhook *Webhook)
-		LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []FieldChangeSummary)
-		LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64)
-		LogUserCreationEvent(ctx context.Context, user *User)
-		LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64)
-		LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64)
-		LogUserUpdatePasswordEvent(ctx context.Context, userID uint64)
-		LogUserArchiveEvent(ctx context.Context, userID uint64)
 	}
 
-	// AuditLogDataServer describes a structure capable of serving traffic related to items.
+	// AuditLogDataServer describes a structure capable of serving traffic related to audit log entries.
 	AuditLogDataServer interface {
 		ListHandler(res http.ResponseWriter, req *http.Request)
 		ReadHandler(res http.ResponseWriter, req *http.Request)
@@ -91,6 +72,14 @@ func (d *AuditLogContext) Scan(value interface{}) error {
 	}
 
 	return json.Unmarshal(b, &d)
+}
+
+func (f FieldChangeSummary) ToInterfaceMap() map[string]interface{} {
+	return map[string]interface{}{
+		"fieldName": f.FieldName,
+		"oldValue":  f.OldValue,
+		"newValue":  f.NewValue,
+	}
 }
 
 // Event Types

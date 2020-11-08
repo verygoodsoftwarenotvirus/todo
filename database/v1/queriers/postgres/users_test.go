@@ -152,7 +152,8 @@ func TestPostgres_GetUser(T *testing.T) {
 		actual, err := p.GetUser(ctx, exampleUser.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Equal(t, sql.ErrNoRows, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
+
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
@@ -297,7 +298,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 		actual, err := p.GetUsers(ctx, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Equal(t, sql.ErrNoRows, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -404,7 +405,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 		actual, err := p.GetUserByUsername(ctx, exampleUser.Username)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Equal(t, sql.ErrNoRows, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

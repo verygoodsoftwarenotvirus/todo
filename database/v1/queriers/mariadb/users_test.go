@@ -151,7 +151,7 @@ func TestMariaDB_GetUser(T *testing.T) {
 		actual, err := m.GetUser(ctx, exampleUser.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Equal(t, sql.ErrNoRows, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -218,7 +218,7 @@ func TestMariaDB_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		actual, err := m.GetUserWithUnverifiedTwoFactorSecret(ctx, exampleUser.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Equal(t, sql.ErrNoRows, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -298,7 +298,7 @@ func TestMariaDB_GetUsers(T *testing.T) {
 		actual, err := m.GetUsers(ctx, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Equal(t, sql.ErrNoRows, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -405,7 +405,7 @@ func TestMariaDB_GetUserByUsername(T *testing.T) {
 		actual, err := m.GetUserByUsername(ctx, exampleUser.Username)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Equal(t, sql.ErrNoRows, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

@@ -3,9 +3,6 @@ package mariadb
 import (
 	"context"
 	"database/sql"
-	"errors"
-	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -147,18 +144,4 @@ func (m *MariaDB) logIDRetrievalError(err error) {
 	if err != nil {
 		m.logger.WithName("ROW_ID_ERROR").Error(err, "fetching row ID")
 	}
-}
-
-// buildError takes a given error and wraps it with a message, provided that it
-// IS NOT sql.ErrNoRows, which we want to preserve and surface to the services.
-func buildError(err error, msg string) error {
-	if errors.Is(err, sql.ErrNoRows) {
-		return err
-	}
-
-	if !strings.Contains(msg, `%w`) {
-		msg += ": %w"
-	}
-
-	return fmt.Errorf(msg, err)
 }

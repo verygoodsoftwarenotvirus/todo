@@ -114,6 +114,15 @@ type (
 		ArchiveUser(ctx context.Context, userID uint64) error
 	}
 
+	// UserAuditManager describes a structure capable of .
+	UserAuditManager interface {
+		LogUserCreationEvent(ctx context.Context, user *User)
+		LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64)
+		LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64)
+		LogUserUpdatePasswordEvent(ctx context.Context, userID uint64)
+		LogUserArchiveEvent(ctx context.Context, userID uint64)
+	}
+
 	// UserDataServer describes a structure capable of serving traffic related to users.
 	UserDataServer interface {
 		UserInputMiddleware(next http.Handler) http.Handler

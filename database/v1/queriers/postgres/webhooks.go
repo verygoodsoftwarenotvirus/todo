@@ -138,7 +138,7 @@ func (p *Postgres) GetWebhook(ctx context.Context, webhookID, userID uint64) (*m
 
 	webhook, err := p.scanWebhook(row)
 	if err != nil {
-		return nil, buildError(err, "querying for webhook")
+		return nil, fmt.Errorf("querying database webhook: %w", err)
 	}
 
 	return webhook, nil

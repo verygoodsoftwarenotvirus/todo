@@ -244,7 +244,7 @@ func (s *Sqlite) GetItems(ctx context.Context, userID uint64, filter *models.Que
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, buildError(err, "querying database for items")
+		return nil, fmt.Errorf("querying database for items: %w", err)
 	}
 
 	items, err := s.scanItems(rows)
@@ -299,7 +299,7 @@ func (s *Sqlite) GetItemsForAdmin(ctx context.Context, filter *models.QueryFilte
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, buildError(err, "querying database for items")
+		return nil, fmt.Errorf("fetching items from database: %w", err)
 	}
 
 	items, err := s.scanItems(rows)
@@ -366,7 +366,7 @@ func (s *Sqlite) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, buildError(err, "querying database for items")
+		return nil, fmt.Errorf("fetching items from database: %w", err)
 	}
 
 	items, err := s.scanItems(rows)
@@ -421,7 +421,7 @@ func (s *Sqlite) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids [
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, buildError(err, "querying database for items")
+		return nil, fmt.Errorf("fetching items from database: %w", err)
 	}
 
 	items, err := s.scanItems(rows)

@@ -51,6 +51,16 @@ func (c *Client) GetAuditLogEntries(ctx context.Context, filter *models.QueryFil
 	return c.querier.GetAuditLogEntries(ctx, filter)
 }
 
+// GetAuditLogEntriesForItem fetches a list of audit log entries from the database that meet a particular filter.
+func (c *Client) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]models.AuditLogEntry, error) {
+	ctx, span := tracing.StartSpan(ctx, "GetAuditLogEntriesForItem")
+	defer span.End()
+
+	c.logger.Debug("GetAuditLogEntriesForItem called")
+
+	return c.querier.GetAuditLogEntriesForItem(ctx, itemID)
+}
+
 // LogCycleCookieSecretEvent implements our AuditLogDataManager interface.
 func (c *Client) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
 	ctx, span := tracing.StartSpan(ctx, "LogCycleCookieSecretEvent")

@@ -16,6 +16,14 @@ const (
 	auditLogEntriesTableName            = "audit_log"
 	auditLogEntriesTableEventTypeColumn = "event_type"
 	auditLogEntriesTableContextColumn   = "context"
+
+	auditLogUserAssignmentKey     = "performed_by"
+	auditLogChangesAssignmentKey  = "changes"
+	auditLogCreationAssignmentKey = "created"
+
+	auditLogItemAssignmentKey         = "item_id"
+	auditLogOAuth2ClientAssignmentKey = "client_id"
+	auditLogWebhookAssignmentKey      = "webhook_id"
 )
 
 var (
@@ -196,7 +204,7 @@ func (m *MariaDB) GetAuditLogEntries(ctx context.Context, filter *models.QueryFi
 
 	rows, err := m.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, buildError(err, "querying database for ")
+		return nil, fmt.Errorf("fetching audit log entries from database: %w", err)
 	}
 
 	auditLogEntries, err := m.scanAuditLogEntries(rows)
@@ -213,6 +221,49 @@ func (m *MariaDB) GetAuditLogEntries(ctx context.Context, filter *models.QueryFi
 	}
 
 	return list, nil
+}
+
+// buildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+func (m *MariaDB) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query string, args []interface{}) {
+	var err error
+
+	builder := m.sqlBuilder.
+		Select(auditLogEntriesTableColumns...).
+		From(auditLogEntriesTableName).
+		Where(
+			squirrel.Expr(
+				fmt.Sprintf(
+					`JSON_CONTAINS(%s.%s, '"%d"', '$.%s');"`,
+					auditLogEntriesTableName,
+					auditLogEntriesTableContextColumn,
+					itemID,
+					auditLogItemAssignmentKey,
+				),
+			),
+		).
+		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
+
+	query, args, err = builder.ToSql()
+	m.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// GetAuditLogEntriesForItem fetches an audit log entry from the database.
+func (m *MariaDB) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]models.AuditLogEntry, error) {
+	query, args := m.buildGetAuditLogEntriesForItemQuery(itemID)
+
+	rows, err := m.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
+	}
+
+	auditLogEntries, err := m.scanAuditLogEntries(rows)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return auditLogEntries, nil
 }
 
 // buildCreateAuditLogEntryQuery takes an audit log entry and returns a creation query for that audit log entry and the relevant arguments.
@@ -244,7 +295,7 @@ func (m *MariaDB) createAuditLogEntry(ctx context.Context, input *models.AuditLo
 	}
 
 	query, args := m.buildCreateAuditLogEntryQuery(x)
-	m.logger.WithValue("query", query).Debug("createAuditLogEntry called")
+	m.logger.Debug("createAuditLogEntry called")
 
 	// create the audit log entry.
 	if _, err := m.db.ExecContext(ctx, query, args...); err != nil {
@@ -257,7 +308,7 @@ func (m *MariaDB) LogItemCreationEvent(ctx context.Context, item *models.Item) {
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.ItemCreationEvent,
 		Context: map[string]interface{}{
-			"created": item,
+			auditLogCreationAssignmentKey: item,
 		},
 	}
 
@@ -269,9 +320,9 @@ func (m *MariaDB) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64,
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.ItemUpdateEvent,
 		Context: map[string]interface{}{
-			"performed_by": userID,
-			"item_id":      itemID,
-			"changes":      changes,
+			"performed_by":               userID,
+			auditLogItemAssignmentKey:    itemID,
+			auditLogChangesAssignmentKey: changes,
 		},
 	}
 
@@ -283,8 +334,8 @@ func (m *MariaDB) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.ItemArchiveEvent,
 		Context: map[string]interface{}{
-			"performed_by": userID,
-			"item_id":      itemID,
+			"performed_by":            userID,
+			auditLogItemAssignmentKey: itemID,
 		},
 	}
 
@@ -308,8 +359,8 @@ func (m *MariaDB) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clien
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.OAuth2ClientArchiveEvent,
 		Context: map[string]interface{}{
-			"performed_by": userID,
-			"client_id":    clientID,
+			"performed_by":                    userID,
+			auditLogOAuth2ClientAssignmentKey: clientID,
 		},
 	}
 
@@ -453,9 +504,9 @@ func (m *MariaDB) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID u
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.WebhookUpdateEvent,
 		Context: map[string]interface{}{
-			"performed_by": userID,
-			"webhook_id":   webhookID,
-			"changes":      changes,
+			"performed_by":               userID,
+			auditLogWebhookAssignmentKey: webhookID,
+			auditLogChangesAssignmentKey: changes,
 		},
 	}
 
@@ -467,8 +518,8 @@ func (m *MariaDB) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID 
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.WebhookArchiveEvent,
 		Context: map[string]interface{}{
-			"performed_by": userID,
-			"webhook_id":   webhookID,
+			"performed_by":               userID,
+			auditLogWebhookAssignmentKey: webhookID,
 		},
 	}
 

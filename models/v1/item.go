@@ -61,6 +61,14 @@ type (
 		ArchiveItem(ctx context.Context, itemID, userID uint64) error
 	}
 
+	// ItemAuditManager describes a structure capable of .
+	ItemAuditManager interface {
+		GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]AuditLogEntry, error)
+		LogItemCreationEvent(ctx context.Context, item *Item)
+		LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []FieldChangeSummary)
+		LogItemArchiveEvent(ctx context.Context, userID, itemID uint64)
+	}
+
 	// ItemDataServer describes a structure capable of serving traffic related to items.
 	ItemDataServer interface {
 		CreationInputMiddleware(next http.Handler) http.Handler
@@ -68,6 +76,7 @@ type (
 
 		SearchHandler(res http.ResponseWriter, req *http.Request)
 		ListHandler(res http.ResponseWriter, req *http.Request)
+		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
 		CreateHandler(res http.ResponseWriter, req *http.Request)
 		ExistenceHandler(res http.ResponseWriter, req *http.Request)
 		ReadHandler(res http.ResponseWriter, req *http.Request)

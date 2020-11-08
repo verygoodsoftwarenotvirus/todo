@@ -32,7 +32,7 @@ type (
 		logger             logging.Logger
 		webhookCounter     metrics.UnitCounter
 		webhookDataManager models.WebhookDataManager
-		auditLog           models.AuditLogDataManager
+		auditLog           models.WebhookAuditManager
 		userIDFetcher      UserIDFetcher
 		webhookIDFetcher   WebhookIDFetcher
 		encoderDecoder     encoding.EncoderDecoder
@@ -49,7 +49,7 @@ type (
 func ProvideWebhooksService(
 	logger logging.Logger,
 	webhookDataManager models.WebhookDataManager,
-	auditLog models.AuditLogDataManager,
+	auditLog models.WebhookAuditManager,
 	userIDFetcher UserIDFetcher,
 	webhookIDFetcher WebhookIDFetcher,
 	encoder encoding.EncoderDecoder,

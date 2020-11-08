@@ -62,5 +62,11 @@ type (
 		models.AdminUserDataManager
 		models.OAuth2ClientDataManager
 		models.WebhookDataManager
+
+		models.ItemAuditManager
+		models.WebhookAuditManager
+		models.AuthAuditManager
+		models.UserAuditManager
+		models.OAuth2ClientAuditManager
 	}
 )

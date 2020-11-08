@@ -135,7 +135,7 @@ func TestPostgres_GetAuditLogEntry(T *testing.T) {
 		actual, err := p.GetAuditLogEntry(ctx, exampleAuditLogEntry.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Equal(t, sql.ErrNoRows, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -424,7 +424,7 @@ func TestPostgres_GetAuditLogEntries(T *testing.T) {
 		actual, err := p.GetAuditLogEntries(ctx, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Equal(t, sql.ErrNoRows, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -465,6 +465,105 @@ func TestPostgres_GetAuditLogEntries(T *testing.T) {
 			WillReturnRows(buildErroneousMockRowFromAuditLogEntry(exampleAuditLogEntry))
 
 		actual, err := p.GetAuditLogEntries(ctx, filter)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestPostgres_buildGetAuditLogEntriesForItemQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		p, _ := buildTestService(t)
+
+		exampleItem := fakemodels.BuildFakeItem()
+
+		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.context->'performed_by' = $1 ORDER BY audit_log.id"
+		expectedArgs := []interface{}{
+			exampleItem.ID,
+		}
+		actualQuery, actualArgs := p.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
+
+		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
+func TestPostgres_GetAuditLogEntriesForItem(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+		exampleItem := fakemodels.BuildFakeItem()
+
+		exampleAuditLogEntryList := fakemodels.BuildFakeAuditLogEntryList().Entries
+		expectedQuery, expectedArgs := p.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(
+				buildMockRowsFromAuditLogEntries(
+					&exampleAuditLogEntryList[0],
+					&exampleAuditLogEntryList[1],
+					&exampleAuditLogEntryList[2],
+				),
+			)
+
+		actual, err := p.GetAuditLogEntriesForItem(ctx, exampleItem.ID)
+
+		assert.NoError(t, err)
+		assert.Equal(t, exampleAuditLogEntryList, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("with error querying database", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+		exampleItem := fakemodels.BuildFakeItem()
+
+		expectedQuery, expectedArgs := p.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnError(errors.New("blah"))
+
+		actual, err := p.GetAuditLogEntriesForItem(ctx, exampleItem.ID)
+
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("with unscannable response from database", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+		exampleItem := fakemodels.BuildFakeItem()
+
+		expectedQuery, expectedArgs := p.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(
+				buildErroneousMockRowFromAuditLogEntry(
+					fakemodels.BuildFakeAuditLogEntry(),
+				),
+			)
+
+		actual, err := p.GetAuditLogEntriesForItem(ctx, exampleItem.ID)
+
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -549,7 +648,8 @@ func TestPostgres_LogItemCreationEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.ItemCreationEvent,
 			Context: map[string]interface{}{
-				"created": exampleInput,
+				auditLogItemAssignmentKey:     exampleInput.ID,
+				auditLogCreationAssignmentKey: exampleInput,
 			},
 		}
 
@@ -578,9 +678,9 @@ func TestPostgres_LogItemUpdateEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.ItemUpdateEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.BelongsToUser,
-				"item_id":      exampleInput.ID,
-				"changes":      exampleChanges,
+				auditLogActionAssignmentKey:  exampleInput.BelongsToUser,
+				auditLogItemAssignmentKey:    exampleInput.ID,
+				auditLogChangesAssignmentKey: exampleChanges,
 			},
 		}
 
@@ -609,8 +709,8 @@ func TestPostgres_LogItemArchiveEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.ItemArchiveEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.BelongsToUser,
-				"item_id":      exampleInput.ID,
+				auditLogActionAssignmentKey: exampleInput.BelongsToUser,
+				auditLogItemAssignmentKey:   exampleInput.ID,
 			},
 		}
 
@@ -639,7 +739,8 @@ func TestPostgres_LogOAuth2ClientCreationEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.OAuth2ClientCreationEvent,
 			Context: map[string]interface{}{
-				"client": exampleInput,
+				auditLogOAuth2ClientAssignmentKey: exampleInput.ID,
+				auditLogCreationAssignmentKey:     exampleInput,
 			},
 		}
 
@@ -668,8 +769,8 @@ func TestPostgres_LogOAuth2ClientArchiveEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.OAuth2ClientArchiveEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.BelongsToUser,
-				"client_id":    exampleInput.ID,
+				auditLogActionAssignmentKey:       exampleInput.BelongsToUser,
+				auditLogOAuth2ClientAssignmentKey: exampleInput.ID,
 			},
 		}
 
@@ -698,7 +799,8 @@ func TestPostgres_LogUserCreationEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.UserCreationEvent,
 			Context: map[string]interface{}{
-				"user": exampleInput,
+				auditLogActionAssignmentKey:   exampleInput.ID,
+				auditLogCreationAssignmentKey: exampleInput,
 			},
 		}
 
@@ -727,7 +829,7 @@ func TestPostgres_LogUserVerifyTwoFactorSecretEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.UserVerifyTwoFactorSecretEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
+				auditLogActionAssignmentKey: exampleInput.ID,
 			},
 		}
 
@@ -756,7 +858,7 @@ func TestPostgres_LogUserUpdateTwoFactorSecretEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.UserUpdateTwoFactorSecretEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
+				auditLogActionAssignmentKey: exampleInput.ID,
 			},
 		}
 
@@ -785,7 +887,7 @@ func TestPostgres_LogUserUpdatePasswordEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.UserUpdatePasswordEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
+				auditLogActionAssignmentKey: exampleInput.ID,
 			},
 		}
 
@@ -814,7 +916,7 @@ func TestPostgres_LogUserArchiveEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.UserArchiveEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
+				auditLogActionAssignmentKey: exampleInput.ID,
 			},
 		}
 
@@ -843,7 +945,7 @@ func TestPostgres_LogCycleCookieSecretEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.CycleCookieSecretEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
+				auditLogActionAssignmentKey: exampleInput.ID,
 			},
 		}
 
@@ -872,7 +974,7 @@ func TestPostgres_LogSuccessfulLoginEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.SuccessfulLoginEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
+				auditLogActionAssignmentKey: exampleInput.ID,
 			},
 		}
 
@@ -901,7 +1003,7 @@ func TestPostgres_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.UnsuccessfulLoginBadPasswordEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
+				auditLogActionAssignmentKey: exampleInput.ID,
 			},
 		}
 
@@ -930,7 +1032,7 @@ func TestPostgres_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.UnsuccessfulLoginBad2FATokenEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
+				auditLogActionAssignmentKey: exampleInput.ID,
 			},
 		}
 
@@ -959,7 +1061,7 @@ func TestPostgres_LogLogoutEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.LogoutEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
+				auditLogActionAssignmentKey: exampleInput.ID,
 			},
 		}
 
@@ -988,7 +1090,8 @@ func TestPostgres_LogWebhookCreationEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.WebhookCreationEvent,
 			Context: map[string]interface{}{
-				"webhook": exampleInput,
+				auditLogWebhookAssignmentKey:  exampleInput.ID,
+				auditLogCreationAssignmentKey: exampleInput,
 			},
 		}
 
@@ -1017,9 +1120,9 @@ func TestPostgres_LogWebhookUpdateEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.WebhookUpdateEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.BelongsToUser,
-				"webhook_id":   exampleInput.ID,
-				"changes":      exampleChanges,
+				auditLogActionAssignmentKey:  exampleInput.BelongsToUser,
+				auditLogWebhookAssignmentKey: exampleInput.ID,
+				auditLogChangesAssignmentKey: exampleChanges,
 			},
 		}
 
@@ -1048,8 +1151,8 @@ func TestPostgres_LogWebhookArchiveEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.WebhookArchiveEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.BelongsToUser,
-				"webhook_id":   exampleInput.ID,
+				auditLogActionAssignmentKey:  exampleInput.BelongsToUser,
+				auditLogWebhookAssignmentKey: exampleInput.ID,
 			},
 		}
 

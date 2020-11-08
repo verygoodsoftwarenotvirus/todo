@@ -67,6 +67,13 @@ type (
 		ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error
 	}
 
+	// WebhookAuditManager describes a structure capable of .
+	WebhookAuditManager interface {
+		LogWebhookCreationEvent(ctx context.Context, webhook *Webhook)
+		LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []FieldChangeSummary)
+		LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64)
+	}
+
 	// WebhookDataServer describes a structure capable of serving traffic related to webhooks.
 	WebhookDataServer interface {
 		CreationInputMiddleware(next http.Handler) http.Handler

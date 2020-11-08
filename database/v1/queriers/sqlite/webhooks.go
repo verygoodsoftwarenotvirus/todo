@@ -140,7 +140,7 @@ func (s *Sqlite) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mod
 
 	webhook, err := s.scanWebhook(row)
 	if err != nil {
-		return nil, buildError(err, "querying for webhook")
+		return nil, fmt.Errorf("querying database for webhook: %w", err)
 	}
 
 	return webhook, nil

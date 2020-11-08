@@ -64,6 +64,12 @@ type (
 		ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error
 	}
 
+	// OAuth2ClientAuditManager describes a structure capable of .
+	OAuth2ClientAuditManager interface {
+		LogOAuth2ClientCreationEvent(ctx context.Context, client *OAuth2Client)
+		LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64)
+	}
+
 	// OAuth2ClientDataServer describes a structure capable of serving traffic related to oauth2 clients.
 	OAuth2ClientDataServer interface {
 		ListHandler(res http.ResponseWriter, req *http.Request)

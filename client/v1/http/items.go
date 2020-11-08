@@ -142,6 +142,39 @@ func (c *V1Client) GetItems(ctx context.Context, filter *models.QueryFilter) (it
 	return items, nil
 }
 
+// BuildGetAuditLogForItemRequest builds an HTTP request for fetching items.
+func (c *V1Client) BuildGetAuditLogForItemRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
+	ctx, span := tracing.StartSpan(ctx, "BuildGetItemsRequest")
+	defer span.End()
+
+	uri := c.BuildURL(
+		nil,
+		itemsBasePath,
+		strconv.FormatUint(itemID, 10),
+		"audit",
+	)
+	tracing.AttachRequestURIToSpan(span, uri)
+
+	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+}
+
+// GetAuditLogForItem retrieves a list of items.
+func (c *V1Client) GetAuditLogForItem(ctx context.Context, itemID uint64) (entries []models.AuditLogEntry, err error) {
+	ctx, span := tracing.StartSpan(ctx, "GetItems")
+	defer span.End()
+
+	req, err := c.BuildGetAuditLogForItemRequest(ctx, itemID)
+	if err != nil {
+		return nil, fmt.Errorf("building request: %w", err)
+	}
+
+	if retrieveErr := c.retrieve(ctx, req, &entries); retrieveErr != nil {
+		return nil, retrieveErr
+	}
+
+	return entries, nil
+}
+
 // BuildCreateItemRequest builds an HTTP request for creating an item.
 func (c *V1Client) BuildCreateItemRequest(ctx context.Context, input *models.ItemCreationInput) (*http.Request, error) {
 	ctx, span := tracing.StartSpan(ctx, "BuildCreateItemRequest")

@@ -3,8 +3,6 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 	"sync"
@@ -137,20 +135,6 @@ func (p *Postgres) logQueryBuildingError(err error) {
 	if err != nil {
 		p.logger.WithName("QUERY_ERROR").Error(err, "building query")
 	}
-}
-
-// buildError takes a given error and wraps it with a message, provided that it
-// IS NOT sql.ErrNoRows, which we want to preserve and surface to the services.
-func buildError(err error, msg string) error {
-	if errors.Is(err, sql.ErrNoRows) {
-		return err
-	}
-
-	if !strings.Contains(msg, `%w`) {
-		msg += ": %w"
-	}
-
-	return fmt.Errorf(msg, err)
 }
 
 func joinUint64s(in []uint64) string {

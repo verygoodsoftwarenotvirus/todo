@@ -322,7 +322,7 @@ func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, r
 	ctx, span := tracing.StartSpan(ctx, "executeRawRequest")
 	defer span.End()
 
-	var logger = c.logger
+	logger := c.logger.WithRequest(req)
 	if command, err := http2curl.GetCurlCommand(req); err == nil && c.Debug {
 		logger = c.logger.WithValue("curl", command.String())
 	}
@@ -332,15 +332,15 @@ func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, r
 		return nil, fmt.Errorf("executing request: %w", err)
 	}
 
-	if c.Debug {
-		/* if req.Method != http.MethodGet { */
-		if bdump, err := httputil.DumpResponse(res, true); err == nil {
-			logger = logger.WithValue("response_body", string(bdump))
-		}
-		/* } */
-
-		logger.Debug("request executed")
+	//if c.Debug {
+	/* if req.Method != http.MethodGet { */
+	if bdump, err := httputil.DumpResponse(res, true); err == nil {
+		logger = logger.WithValue("response_body", string(bdump))
 	}
+	/* } */
+
+	logger.Debug("request executed")
+	//}
 
 	return res, nil
 }

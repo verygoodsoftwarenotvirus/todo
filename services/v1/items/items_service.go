@@ -34,7 +34,7 @@ type (
 	Service struct {
 		logger             logging.Logger
 		itemDataManager    models.ItemDataManager
-		auditLog           models.AuditLogDataManager
+		auditLog           models.ItemAuditManager
 		itemIDFetcher      ItemIDFetcher
 		sessionInfoFetcher SessionInfoFetcher
 		itemCounter        metrics.UnitCounter
@@ -53,7 +53,7 @@ type (
 func ProvideItemsService(
 	logger logging.Logger,
 	itemDataManager models.ItemDataManager,
-	auditLog models.AuditLogDataManager,
+	auditLog models.ItemAuditManager,
 	itemIDFetcher ItemIDFetcher,
 	sessionInfoFetcher SessionInfoFetcher,
 	encoder encoding.EncoderDecoder,

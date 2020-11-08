@@ -306,12 +306,13 @@ func TestItems(test *testing.T) {
 
 			// Create item.
 			exampleItem := fakemodels.BuildFakeItem()
+			updateTo := fakemodels.BuildFakeItem()
 			exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
 			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
 			checkValueAndError(t, createdItem, err)
 
 			// Change item.
-			createdItem.Update(exampleItem.ToUpdateInput())
+			assert.NotEmpty(t, createdItem.Update(updateTo.ToUpdateInput()))
 			err = todoClient.UpdateItem(ctx, createdItem)
 			assert.NoError(t, err)
 
@@ -320,8 +321,73 @@ func TestItems(test *testing.T) {
 			checkValueAndError(t, actual, err)
 
 			// Assert item equality.
-			checkItemEquality(t, exampleItem, actual)
+			checkItemEquality(t, updateTo, actual)
 			assert.NotNil(t, actual.LastUpdatedOn)
+
+			// Clean up item.
+			assert.NoError(t, todoClient.ArchiveItem(ctx, createdItem.ID))
+		})
+	})
+
+	test.Run("Auditing", func(t *testing.T) {
+		t.Run("it should return an error when trying to audit something that does not exist", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			exampleItem := fakemodels.BuildFakeItem()
+			exampleItem.ID = nonexistentID
+
+			x, err := adminClient.GetAuditLogForItem(ctx, exampleItem.ID)
+			assert.NoError(t, err)
+			assert.Empty(t, x)
+		})
+
+		t.Run("it should be auditable", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			// Create item.
+			exampleItem := fakemodels.BuildFakeItem()
+			updateTo := fakemodels.BuildFakeItem()
+			exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
+			checkValueAndError(t, createdItem, err)
+
+			// Change item.
+			expectedChanges := createdItem.Update(updateTo.ToUpdateInput())
+			require.NotEmpty(t, expectedChanges)
+			err = todoClient.UpdateItem(ctx, createdItem)
+			assert.NoError(t, err)
+
+			// Fetch item.
+			updated, err := todoClient.GetItem(ctx, createdItem.ID)
+			checkValueAndError(t, updated, err)
+
+			// Assert item equality.
+			checkItemEquality(t, updateTo, updated)
+			assert.NotNil(t, updated.LastUpdatedOn)
+
+			// fetch audit log entries
+			//expected := []models.AuditLogEntry{
+			//	{
+			//		EventType: models.ItemCreationEvent,
+			//		Context: map[string]interface{}{
+			//			"item_id": createdItem.ID,
+			//			"created": createdItem,
+			//		},
+			//	},
+			//	{
+			//		EventType: models.ItemUpdateEvent,
+			//		Context: map[string]interface{}{
+			//			"item_id": updated.ID,
+			//			"changes": nil,
+			//		},
+			//	},
+			//}
+
+			actual, err := adminClient.GetAuditLogForItem(ctx, updated.ID)
+			assert.NoError(t, err)
+			assert.Len(t, actual, 2)
 
 			// Clean up item.
 			assert.NoError(t, todoClient.ArchiveItem(ctx, createdItem.ID))

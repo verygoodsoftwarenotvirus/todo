@@ -2,6 +2,7 @@ package models
 
 import (
 	"bytes"
+	"context"
 	"encoding/gob"
 )
 
@@ -28,6 +29,15 @@ type (
 	UserStatusResponse struct {
 		Authenticated bool `json:"isAuthenticated"`
 		IsAdmin       bool `json:"isAdmin"`
+	}
+
+	// AuthAuditManager describes a structure capable of .
+	AuthAuditManager interface {
+		LogCycleCookieSecretEvent(ctx context.Context, userID uint64)
+		LogSuccessfulLoginEvent(ctx context.Context, userID uint64)
+		LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64)
+		LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64)
+		LogLogoutEvent(ctx context.Context, userID uint64)
 	}
 )
 

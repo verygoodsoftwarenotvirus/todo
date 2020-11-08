@@ -39,9 +39,10 @@ func (m *AuditLogDataManager) GetAuditLogEntries(ctx context.Context, filter *mo
 	return args.Get(0).(*models.AuditLogEntryList), args.Error(1)
 }
 
-// CreateAuditLogEntry is a mock function.
-func (m *AuditLogDataManager) CreateAuditLogEntry(ctx context.Context, input *models.AuditLogEntryCreationInput) {
-	m.Called(ctx, input)
+// GetAuditLogEntriesForItem is a mock function.
+func (m *AuditLogDataManager) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]models.AuditLogEntry, error) {
+	args := m.Called(ctx, itemID)
+	return args.Get(0).([]models.AuditLogEntry), args.Error(1)
 }
 
 // LogCycleCookieSecretEvent implements our interface.

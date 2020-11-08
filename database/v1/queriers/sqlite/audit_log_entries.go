@@ -16,6 +16,14 @@ const (
 	auditLogEntriesTableName            = "audit_log"
 	auditLogEntriesTableEventTypeColumn = "event_type"
 	auditLogEntriesTableContextColumn   = "context"
+
+	auditLogUserAssignmentKey     = "performed_by"
+	auditLogChangesAssignmentKey  = "changes"
+	auditLogCreationAssignmentKey = "created"
+
+	auditLogItemAssignmentKey         = "item_id"
+	auditLogOAuth2ClientAssignmentKey = "client_id"
+	auditLogWebhookAssignmentKey      = "webhook_id"
 )
 
 var (
@@ -196,7 +204,7 @@ func (s *Sqlite) GetAuditLogEntries(ctx context.Context, filter *models.QueryFil
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, buildError(err, "querying database for ")
+		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
 	}
 
 	auditLogEntries, err := s.scanAuditLogEntries(rows)
@@ -213,6 +221,40 @@ func (s *Sqlite) GetAuditLogEntries(ctx context.Context, filter *models.QueryFil
 	}
 
 	return list, nil
+}
+
+// buildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+func (s *Sqlite) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query string, args []interface{}) {
+	var err error
+
+	itemIDKey := fmt.Sprintf("%s.%s->%s", auditLogEntriesTableName, auditLogEntriesTableContextColumn, auditLogUserAssignmentKey)
+	builder := s.sqlBuilder.
+		Select(auditLogEntriesTableColumns...).
+		From(auditLogEntriesTableName).
+		Where(squirrel.Eq{itemIDKey: itemID}).
+		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
+
+	query, args, err = builder.ToSql()
+	s.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// GetAuditLogEntriesForItem fetches an audit log entry from the database.
+func (s *Sqlite) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]models.AuditLogEntry, error) {
+	query, args := s.buildGetAuditLogEntriesForItemQuery(itemID)
+
+	rows, err := s.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
+	}
+
+	auditLogEntries, err := s.scanAuditLogEntries(rows)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return auditLogEntries, nil
 }
 
 // buildCreateAuditLogEntryQuery takes an audit log entry and returns a creation query for that audit log entry and the relevant arguments.
@@ -244,7 +286,7 @@ func (s *Sqlite) createAuditLogEntry(ctx context.Context, input *models.AuditLog
 	}
 
 	query, args := s.buildCreateAuditLogEntryQuery(x)
-	s.logger.WithValue("query", query).Debug("createAuditLogEntry called")
+	s.logger.Debug("createAuditLogEntry called")
 
 	// create the audit log entry.
 	if _, err := s.db.ExecContext(ctx, query, args...); err != nil {
@@ -257,7 +299,7 @@ func (s *Sqlite) LogItemCreationEvent(ctx context.Context, item *models.Item) {
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.ItemCreationEvent,
 		Context: map[string]interface{}{
-			"created": item,
+			auditLogCreationAssignmentKey: item,
 		},
 	}
 
@@ -269,9 +311,9 @@ func (s *Sqlite) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, 
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.ItemUpdateEvent,
 		Context: map[string]interface{}{
-			"performed_by": userID,
-			"item_id":      itemID,
-			"changes":      changes,
+			"performed_by":               userID,
+			auditLogItemAssignmentKey:    itemID,
+			auditLogChangesAssignmentKey: changes,
 		},
 	}
 
@@ -283,8 +325,8 @@ func (s *Sqlite) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64)
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.ItemArchiveEvent,
 		Context: map[string]interface{}{
-			"performed_by": userID,
-			"item_id":      itemID,
+			"performed_by":            userID,
+			auditLogItemAssignmentKey: itemID,
 		},
 	}
 
@@ -308,8 +350,8 @@ func (s *Sqlite) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, client
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.OAuth2ClientArchiveEvent,
 		Context: map[string]interface{}{
-			"performed_by": userID,
-			"client_id":    clientID,
+			"performed_by":                    userID,
+			auditLogOAuth2ClientAssignmentKey: clientID,
 		},
 	}
 
@@ -453,9 +495,9 @@ func (s *Sqlite) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID ui
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.WebhookUpdateEvent,
 		Context: map[string]interface{}{
-			"performed_by": userID,
-			"webhook_id":   webhookID,
-			"changes":      changes,
+			"performed_by":               userID,
+			auditLogWebhookAssignmentKey: webhookID,
+			auditLogChangesAssignmentKey: changes,
 		},
 	}
 
@@ -467,8 +509,8 @@ func (s *Sqlite) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID u
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.WebhookArchiveEvent,
 		Context: map[string]interface{}{
-			"performed_by": userID,
-			"webhook_id":   webhookID,
+			"performed_by":               userID,
+			auditLogWebhookAssignmentKey: webhookID,
 		},
 	}
 

@@ -242,7 +242,7 @@ func (p *Postgres) GetItems(ctx context.Context, userID uint64, filter *models.Q
 
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, buildError(err, "querying database for items")
+		return nil, fmt.Errorf("querying database for items: %w", err)
 	}
 
 	items, err := p.scanItems(rows)
@@ -297,7 +297,7 @@ func (p *Postgres) GetItemsForAdmin(ctx context.Context, filter *models.QueryFil
 
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, buildError(err, "querying database for items")
+		return nil, fmt.Errorf("querying database for items: %w", err)
 	}
 
 	items, err := p.scanItems(rows)
@@ -354,7 +354,7 @@ func (p *Postgres) GetItemsWithIDs(ctx context.Context, userID uint64, limit uin
 
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, buildError(err, "querying database for items")
+		return nil, fmt.Errorf("querying database for items: %w", err)
 	}
 
 	items, err := p.scanItems(rows)
@@ -401,7 +401,7 @@ func (p *Postgres) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids
 
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, buildError(err, "querying database for items")
+		return nil, fmt.Errorf("querying database for items: %w", err)
 	}
 
 	items, err := p.scanItems(rows)
@@ -515,4 +515,78 @@ func (p *Postgres) ArchiveItem(ctx context.Context, itemID, userID uint64) error
 	}
 
 	return err
+}
+
+// LogItemCreationEvent saves a ItemCreationEvent in the audit log table.
+func (p *Postgres) LogItemCreationEvent(ctx context.Context, item *models.Item) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.ItemCreationEvent,
+		Context: map[string]interface{}{
+			auditLogItemAssignmentKey:     item.ID,
+			auditLogCreationAssignmentKey: item,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// LogItemUpdateEvent saves a ItemUpdateEvent in the audit log table.
+func (p *Postgres) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []models.FieldChangeSummary) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.ItemUpdateEvent,
+		Context: map[string]interface{}{
+			auditLogActionAssignmentKey:  userID,
+			auditLogItemAssignmentKey:    itemID,
+			auditLogChangesAssignmentKey: changes,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// LogItemArchiveEvent saves a ItemArchiveEvent in the audit log table.
+func (p *Postgres) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.ItemArchiveEvent,
+		Context: map[string]interface{}{
+			auditLogActionAssignmentKey: userID,
+			auditLogItemAssignmentKey:   itemID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// buildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+func (p *Postgres) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query string, args []interface{}) {
+	var err error
+
+	itemIDKey := fmt.Sprintf("%s.%s->'%s'", auditLogEntriesTableName, auditLogEntriesTableContextColumn, auditLogItemAssignmentKey)
+	builder := p.sqlBuilder.
+		Select(auditLogEntriesTableColumns...).
+		From(auditLogEntriesTableName).
+		Where(squirrel.Eq{itemIDKey: itemID}).
+		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
+
+	query, args, err = builder.ToSql()
+	p.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// GetAuditLogEntriesForItem fetches an audit log entry from the database.
+func (p *Postgres) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]models.AuditLogEntry, error) {
+	query, args := p.buildGetAuditLogEntriesForItemQuery(itemID)
+
+	rows, err := p.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
+	}
+
+	auditLogEntries, err := p.scanAuditLogEntries(rows)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return auditLogEntries, nil
 }

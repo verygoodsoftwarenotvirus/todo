@@ -135,7 +135,7 @@ func TestSqlite_GetAuditLogEntry(T *testing.T) {
 		actual, err := s.GetAuditLogEntry(ctx, exampleAuditLogEntry.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Equal(t, sql.ErrNoRows, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -424,7 +424,7 @@ func TestSqlite_GetAuditLogEntries(T *testing.T) {
 		actual, err := s.GetAuditLogEntries(ctx, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Equal(t, sql.ErrNoRows, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

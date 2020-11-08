@@ -140,7 +140,7 @@ func (m *MariaDB) GetWebhook(ctx context.Context, webhookID, userID uint64) (*mo
 
 	webhook, err := m.scanWebhook(row)
 	if err != nil {
-		return nil, buildError(err, "querying for webhook")
+		return nil, fmt.Errorf("fetching webhook from database: %w", err)
 	}
 
 	return webhook, nil

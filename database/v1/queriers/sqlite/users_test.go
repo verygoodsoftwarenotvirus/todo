@@ -754,3 +754,138 @@ func TestSqlite_ArchiveUser(T *testing.T) {
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
+
+func TestSqlite_LogUserCreationEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserCreationEvent,
+			Context: map[string]interface{}{
+				"user": exampleInput,
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
+
+		s.LogUserCreationEvent(ctx, exampleInput)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogUserVerifyTwoFactorSecretEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserVerifyTwoFactorSecretEvent,
+			Context: map[string]interface{}{
+				auditLogUserAssignmentKey: exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
+
+		s.LogUserVerifyTwoFactorSecretEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogUserUpdateTwoFactorSecretEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserUpdateTwoFactorSecretEvent,
+			Context: map[string]interface{}{
+				auditLogUserAssignmentKey: exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
+
+		s.LogUserUpdateTwoFactorSecretEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogUserUpdatePasswordEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserUpdatePasswordEvent,
+			Context: map[string]interface{}{
+				auditLogUserAssignmentKey: exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
+
+		s.LogUserUpdatePasswordEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogUserArchiveEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserArchiveEvent,
+			Context: map[string]interface{}{
+				auditLogUserAssignmentKey: exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
+
+		s.LogUserArchiveEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}

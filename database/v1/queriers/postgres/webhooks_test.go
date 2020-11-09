@@ -669,3 +669,94 @@ func TestPostgres_ArchiveWebhook(T *testing.T) {
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
+
+func TestPostgres_LogWebhookCreationEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeWebhook()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.WebhookCreationEvent,
+			Context: map[string]interface{}{
+				auditLogWebhookAssignmentKey:  exampleInput.ID,
+				auditLogCreationAssignmentKey: exampleInput,
+			},
+		}
+
+		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(exampleRows)
+
+		p.LogWebhookCreationEvent(ctx, exampleInput)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestPostgres_LogWebhookUpdateEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+		exampleChanges := []models.FieldChangeSummary{}
+		exampleInput := fakemodels.BuildFakeWebhook()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.WebhookUpdateEvent,
+			Context: map[string]interface{}{
+				auditLogActionAssignmentKey:  exampleInput.BelongsToUser,
+				auditLogWebhookAssignmentKey: exampleInput.ID,
+				auditLogChangesAssignmentKey: exampleChanges,
+			},
+		}
+
+		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(exampleRows)
+
+		p.LogWebhookUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestPostgres_LogWebhookArchiveEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeWebhook()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.WebhookArchiveEvent,
+			Context: map[string]interface{}{
+				auditLogActionAssignmentKey:  exampleInput.BelongsToUser,
+				auditLogWebhookAssignmentKey: exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(exampleRows)
+
+		p.LogWebhookArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}

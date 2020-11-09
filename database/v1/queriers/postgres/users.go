@@ -437,3 +437,113 @@ func (p *Postgres) ArchiveUser(ctx context.Context, userID uint64) error {
 	_, err := p.db.ExecContext(ctx, query, args...)
 	return err
 }
+
+// LogSuccessfulLoginEvent saves a SuccessfulLoginEvent in the audit log table.
+func (p *Postgres) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.SuccessfulLoginEvent,
+		Context: map[string]interface{}{
+			auditLogActionAssignmentKey: userID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// LogUnsuccessfulLoginBadPasswordEvent saves a UnsuccessfulLoginBadPasswordEvent in the audit log table.
+func (p *Postgres) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UnsuccessfulLoginBadPasswordEvent,
+		Context: map[string]interface{}{
+			auditLogActionAssignmentKey: userID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// LogUnsuccessfulLoginBad2FATokenEvent saves a UnsuccessfulLoginBad2FATokenEvent in the audit log table.
+func (p *Postgres) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UnsuccessfulLoginBad2FATokenEvent,
+		Context: map[string]interface{}{
+			auditLogActionAssignmentKey: userID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// LogLogoutEvent saves a LogoutEvent in the audit log table.
+func (p *Postgres) LogLogoutEvent(ctx context.Context, userID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.LogoutEvent,
+		Context: map[string]interface{}{
+			auditLogActionAssignmentKey: userID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// LogUserCreationEvent saves a UserCreationEvent in the audit log table.
+func (p *Postgres) LogUserCreationEvent(ctx context.Context, user *models.User) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UserCreationEvent,
+		Context: map[string]interface{}{
+			auditLogUserAssignmentKey:     user.ID,
+			auditLogCreationAssignmentKey: user,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// LogUserVerifyTwoFactorSecretEvent saves a UserVerifyTwoFactorSecretEvent in the audit log table.
+func (p *Postgres) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UserVerifyTwoFactorSecretEvent,
+		Context: map[string]interface{}{
+			auditLogActionAssignmentKey: userID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// LogUserUpdateTwoFactorSecretEvent saves a UserUpdateTwoFactorSecretEvent in the audit log table.
+func (p *Postgres) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UserUpdateTwoFactorSecretEvent,
+		Context: map[string]interface{}{
+			auditLogActionAssignmentKey: userID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// LogUserUpdatePasswordEvent saves a UserUpdatePasswordEvent in the audit log table.
+func (p *Postgres) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UserUpdatePasswordEvent,
+		Context: map[string]interface{}{
+			auditLogActionAssignmentKey: userID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// LogUserArchiveEvent saves a UserArchiveEvent in the audit log table.
+func (p *Postgres) LogUserArchiveEvent(ctx context.Context, userID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.UserArchiveEvent,
+		Context: map[string]interface{}{
+			auditLogUserAssignmentKey:   userID,
+			auditLogActionAssignmentKey: userID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}

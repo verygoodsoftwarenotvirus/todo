@@ -383,3 +383,42 @@ func (s *Sqlite) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) e
 	_, err := s.db.ExecContext(ctx, query, args...)
 	return err
 }
+
+// LogWebhookCreationEvent saves a WebhookCreationEvent in the audit log table.
+func (s *Sqlite) LogWebhookCreationEvent(ctx context.Context, webhook *models.Webhook) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.WebhookCreationEvent,
+		Context: map[string]interface{}{
+			"webhook": webhook,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
+}
+
+// LogWebhookUpdateEvent saves a WebhookUpdateEvent in the audit log table.
+func (s *Sqlite) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []models.FieldChangeSummary) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.WebhookUpdateEvent,
+		Context: map[string]interface{}{
+			auditLogUserAssignmentKey:    userID,
+			auditLogWebhookAssignmentKey: webhookID,
+			auditLogChangesAssignmentKey: changes,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
+}
+
+// LogWebhookArchiveEvent saves a WebhookArchiveEvent in the audit log table.
+func (s *Sqlite) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.WebhookArchiveEvent,
+		Context: map[string]interface{}{
+			auditLogUserAssignmentKey:    userID,
+			auditLogWebhookAssignmentKey: webhookID,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
+}

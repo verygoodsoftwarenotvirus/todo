@@ -822,3 +822,63 @@ func TestPostgres_ArchiveOAuth2Client(T *testing.T) {
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
+
+func TestPostgres_LogOAuth2ClientCreationEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeOAuth2Client()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.OAuth2ClientCreationEvent,
+			Context: map[string]interface{}{
+				auditLogOAuth2ClientAssignmentKey: exampleInput.ID,
+				auditLogCreationAssignmentKey:     exampleInput,
+			},
+		}
+
+		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(exampleRows)
+
+		p.LogOAuth2ClientCreationEvent(ctx, exampleInput)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestPostgres_LogOAuth2ClientArchiveEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeOAuth2Client()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.OAuth2ClientArchiveEvent,
+			Context: map[string]interface{}{
+				auditLogActionAssignmentKey:       exampleInput.BelongsToUser,
+				auditLogOAuth2ClientAssignmentKey: exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(exampleRows)
+
+		p.LogOAuth2ClientArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}

@@ -399,3 +399,29 @@ func (p *Postgres) ArchiveOAuth2Client(ctx context.Context, clientID, userID uin
 	_, err := p.db.ExecContext(ctx, query, args...)
 	return err
 }
+
+// LogOAuth2ClientCreationEvent saves a OAuth2ClientCreationEvent in the audit log table.
+func (p *Postgres) LogOAuth2ClientCreationEvent(ctx context.Context, client *models.OAuth2Client) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.OAuth2ClientCreationEvent,
+		Context: map[string]interface{}{
+			auditLogOAuth2ClientAssignmentKey: client.ID,
+			auditLogCreationAssignmentKey:     client,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}
+
+// LogOAuth2ClientArchiveEvent saves a OAuth2ClientArchiveEvent in the audit log table.
+func (p *Postgres) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.OAuth2ClientArchiveEvent,
+		Context: map[string]interface{}{
+			auditLogActionAssignmentKey:       userID,
+			auditLogOAuth2ClientAssignmentKey: clientID,
+		},
+	}
+
+	p.createAuditLogEntry(ctx, entry)
+}

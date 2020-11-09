@@ -7,7 +7,7 @@ RUN apt-get update -y && apt-get install -y make git gcc musl-dev
 
 COPY . .
 
-RUN go build -trimpath -o /todo -v gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
+RUN go build -tags json1 -trimpath -o /todo -v gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
 
 # frontend-build-stage
 FROM node:lts-stretch AS frontend-build-stage

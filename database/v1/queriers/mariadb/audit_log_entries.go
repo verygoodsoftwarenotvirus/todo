@@ -223,49 +223,6 @@ func (m *MariaDB) GetAuditLogEntries(ctx context.Context, filter *models.QueryFi
 	return list, nil
 }
 
-// buildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
-func (m *MariaDB) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query string, args []interface{}) {
-	var err error
-
-	builder := m.sqlBuilder.
-		Select(auditLogEntriesTableColumns...).
-		From(auditLogEntriesTableName).
-		Where(
-			squirrel.Expr(
-				fmt.Sprintf(
-					`JSON_CONTAINS(%s.%s, '"%d"', '$.%s');"`,
-					auditLogEntriesTableName,
-					auditLogEntriesTableContextColumn,
-					itemID,
-					auditLogItemAssignmentKey,
-				),
-			),
-		).
-		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
-
-	query, args, err = builder.ToSql()
-	m.logQueryBuildingError(err)
-
-	return query, args
-}
-
-// GetAuditLogEntriesForItem fetches an audit log entry from the database.
-func (m *MariaDB) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]models.AuditLogEntry, error) {
-	query, args := m.buildGetAuditLogEntriesForItemQuery(itemID)
-
-	rows, err := m.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
-	}
-
-	auditLogEntries, err := m.scanAuditLogEntries(rows)
-	if err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
-	}
-
-	return auditLogEntries, nil
-}
-
 // buildCreateAuditLogEntryQuery takes an audit log entry and returns a creation query for that audit log entry and the relevant arguments.
 func (m *MariaDB) buildCreateAuditLogEntryQuery(input *models.AuditLogEntry) (query string, args []interface{}) {
 	var err error
@@ -308,6 +265,7 @@ func (m *MariaDB) LogItemCreationEvent(ctx context.Context, item *models.Item) {
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.ItemCreationEvent,
 		Context: map[string]interface{}{
+			auditLogItemAssignmentKey:     item.ID,
 			auditLogCreationAssignmentKey: item,
 		},
 	}

@@ -292,6 +292,8 @@ func (s *Service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
+	logger.WithValue("entry_count", len(x)).Debug("returning from AuditEntryHandler")
+
 	// encode our response and peace.
 	s.encoderDecoder.EncodeResponse(res, x)
 }

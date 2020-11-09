@@ -773,3 +773,266 @@ func TestPostgres_ArchiveUser(T *testing.T) {
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
+
+func TestPostgres_LogUserCreationEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserCreationEvent,
+			Context: map[string]interface{}{
+				auditLogUserAssignmentKey:     exampleInput.ID,
+				auditLogCreationAssignmentKey: exampleInput,
+			},
+		}
+
+		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(exampleRows)
+
+		p.LogUserCreationEvent(ctx, exampleInput)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestPostgres_LogUserVerifyTwoFactorSecretEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserVerifyTwoFactorSecretEvent,
+			Context: map[string]interface{}{
+				auditLogActionAssignmentKey: exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(exampleRows)
+
+		p.LogUserVerifyTwoFactorSecretEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestPostgres_LogUserUpdateTwoFactorSecretEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserUpdateTwoFactorSecretEvent,
+			Context: map[string]interface{}{
+				auditLogActionAssignmentKey: exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(exampleRows)
+
+		p.LogUserUpdateTwoFactorSecretEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestPostgres_LogUserUpdatePasswordEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserUpdatePasswordEvent,
+			Context: map[string]interface{}{
+				auditLogActionAssignmentKey: exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(exampleRows)
+
+		p.LogUserUpdatePasswordEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestPostgres_LogUserArchiveEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UserArchiveEvent,
+			Context: map[string]interface{}{
+				auditLogActionAssignmentKey: exampleInput.ID,
+				auditLogUserAssignmentKey:   exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(exampleRows)
+
+		p.LogUserArchiveEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestPostgres_LogSuccessfulLoginEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.SuccessfulLoginEvent,
+			Context: map[string]interface{}{
+				auditLogActionAssignmentKey: exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(exampleRows)
+
+		p.LogSuccessfulLoginEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestPostgres_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UnsuccessfulLoginBadPasswordEvent,
+			Context: map[string]interface{}{
+				auditLogActionAssignmentKey: exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(exampleRows)
+
+		p.LogUnsuccessfulLoginBadPasswordEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestPostgres_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.UnsuccessfulLoginBad2FATokenEvent,
+			Context: map[string]interface{}{
+				auditLogActionAssignmentKey: exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(exampleRows)
+
+		p.LogUnsuccessfulLoginBad2FATokenEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestPostgres_LogLogoutEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeUser()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.LogoutEvent,
+			Context: map[string]interface{}{
+				auditLogActionAssignmentKey: exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(exampleRows)
+
+		p.LogLogoutEvent(ctx, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}

@@ -507,9 +507,7 @@ func TestSqlite_createAuditLogEntry(T *testing.T) {
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		s.createAuditLogEntry(ctx, exampleInput)
 
@@ -536,329 +534,6 @@ func TestSqlite_createAuditLogEntry(T *testing.T) {
 	})
 }
 
-func TestSqlite_LogItemCreationEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		s, mockDB := buildTestService(t)
-
-		exampleInput := fakemodels.BuildFakeItem()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.ItemCreationEvent,
-			Context: map[string]interface{}{
-				"created": exampleInput,
-			},
-		}
-
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
-
-		s.LogItemCreationEvent(ctx, exampleInput)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
-func TestSqlite_LogItemUpdateEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		s, mockDB := buildTestService(t)
-		exampleChanges := []models.FieldChangeSummary{}
-		exampleInput := fakemodels.BuildFakeItem()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.ItemUpdateEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.BelongsToUser,
-				"item_id":      exampleInput.ID,
-				"changes":      exampleChanges,
-			},
-		}
-
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
-
-		s.LogItemUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
-func TestSqlite_LogItemArchiveEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		s, mockDB := buildTestService(t)
-
-		exampleInput := fakemodels.BuildFakeItem()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.ItemArchiveEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.BelongsToUser,
-				"item_id":      exampleInput.ID,
-			},
-		}
-
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
-
-		s.LogItemArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
-func TestSqlite_LogOAuth2ClientCreationEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		s, mockDB := buildTestService(t)
-
-		exampleInput := fakemodels.BuildFakeOAuth2Client()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.OAuth2ClientCreationEvent,
-			Context: map[string]interface{}{
-				"client": exampleInput,
-			},
-		}
-
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
-
-		s.LogOAuth2ClientCreationEvent(ctx, exampleInput)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
-func TestSqlite_LogOAuth2ClientArchiveEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		s, mockDB := buildTestService(t)
-
-		exampleInput := fakemodels.BuildFakeOAuth2Client()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.OAuth2ClientArchiveEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.BelongsToUser,
-				"client_id":    exampleInput.ID,
-			},
-		}
-
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
-
-		s.LogOAuth2ClientArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
-func TestSqlite_LogUserCreationEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		s, mockDB := buildTestService(t)
-
-		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserCreationEvent,
-			Context: map[string]interface{}{
-				"user": exampleInput,
-			},
-		}
-
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
-
-		s.LogUserCreationEvent(ctx, exampleInput)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
-func TestSqlite_LogUserVerifyTwoFactorSecretEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		s, mockDB := buildTestService(t)
-
-		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserVerifyTwoFactorSecretEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
-			},
-		}
-
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
-
-		s.LogUserVerifyTwoFactorSecretEvent(ctx, exampleInput.ID)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
-func TestSqlite_LogUserUpdateTwoFactorSecretEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		s, mockDB := buildTestService(t)
-
-		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserUpdateTwoFactorSecretEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
-			},
-		}
-
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
-
-		s.LogUserUpdateTwoFactorSecretEvent(ctx, exampleInput.ID)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
-func TestSqlite_LogUserUpdatePasswordEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		s, mockDB := buildTestService(t)
-
-		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserUpdatePasswordEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
-			},
-		}
-
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
-
-		s.LogUserUpdatePasswordEvent(ctx, exampleInput.ID)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
-func TestSqlite_LogUserArchiveEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		s, mockDB := buildTestService(t)
-
-		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserArchiveEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
-			},
-		}
-
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
-
-		s.LogUserArchiveEvent(ctx, exampleInput.ID)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
-func TestSqlite_LogCycleCookieSecretEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		s, mockDB := buildTestService(t)
-
-		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.CycleCookieSecretEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
-			},
-		}
-
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
-
-		s.LogCycleCookieSecretEvent(ctx, exampleInput.ID)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
 func TestSqlite_LogSuccessfulLoginEvent(T *testing.T) {
 	T.Parallel()
 
@@ -872,15 +547,13 @@ func TestSqlite_LogSuccessfulLoginEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.SuccessfulLoginEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
+				auditLogUserAssignmentKey: exampleInput.ID,
 			},
 		}
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		s.LogSuccessfulLoginEvent(ctx, exampleInput.ID)
 
@@ -901,15 +574,13 @@ func TestSqlite_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.UnsuccessfulLoginBadPasswordEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
+				auditLogUserAssignmentKey: exampleInput.ID,
 			},
 		}
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		s.LogUnsuccessfulLoginBadPasswordEvent(ctx, exampleInput.ID)
 
@@ -930,15 +601,13 @@ func TestSqlite_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.UnsuccessfulLoginBad2FATokenEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
+				auditLogUserAssignmentKey: exampleInput.ID,
 			},
 		}
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		s.LogUnsuccessfulLoginBad2FATokenEvent(ctx, exampleInput.ID)
 
@@ -959,15 +628,13 @@ func TestSqlite_LogLogoutEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.LogoutEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
+				auditLogUserAssignmentKey: exampleInput.ID,
 			},
 		}
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		s.LogLogoutEvent(ctx, exampleInput.ID)
 
@@ -994,9 +661,7 @@ func TestSqlite_LogWebhookCreationEvent(T *testing.T) {
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		s.LogWebhookCreationEvent(ctx, exampleInput)
 
@@ -1017,17 +682,15 @@ func TestSqlite_LogWebhookUpdateEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.WebhookUpdateEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.BelongsToUser,
-				"webhook_id":   exampleInput.ID,
-				"changes":      exampleChanges,
+				auditLogUserAssignmentKey: exampleInput.BelongsToUser,
+				"webhook_id":              exampleInput.ID,
+				"changes":                 exampleChanges,
 			},
 		}
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		s.LogWebhookUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
 
@@ -1048,16 +711,14 @@ func TestSqlite_LogWebhookArchiveEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.WebhookArchiveEvent,
 			Context: map[string]interface{}{
-				"performed_by": exampleInput.BelongsToUser,
-				"webhook_id":   exampleInput.ID,
+				auditLogUserAssignmentKey: exampleInput.BelongsToUser,
+				"webhook_id":              exampleInput.ID,
 			},
 		}
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		s.LogWebhookArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
 

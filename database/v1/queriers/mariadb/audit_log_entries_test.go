@@ -508,9 +508,7 @@ func TestMariaDB_CreateAuditLogEntry(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		m.createAuditLogEntry(ctx, exampleInput)
 
@@ -550,15 +548,14 @@ func TestMariaDB_LogItemCreationEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.ItemCreationEvent,
 			Context: map[string]interface{}{
-				"created": exampleInput,
+				"created":                 exampleInput,
+				auditLogItemAssignmentKey: exampleInput.ID,
 			},
 		}
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		m.LogItemCreationEvent(ctx, exampleInput)
 
@@ -587,9 +584,7 @@ func TestMariaDB_LogItemUpdateEvent(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		m.LogItemUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
 
@@ -617,9 +612,7 @@ func TestMariaDB_LogItemArchiveEvent(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		m.LogItemArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
 
@@ -646,9 +639,7 @@ func TestMariaDB_LogOAuth2ClientCreationEvent(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		m.LogOAuth2ClientCreationEvent(ctx, exampleInput)
 
@@ -676,9 +667,7 @@ func TestMariaDB_LogOAuth2ClientArchiveEvent(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		m.LogOAuth2ClientArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
 
@@ -705,9 +694,7 @@ func TestMariaDB_LogUserCreationEvent(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		m.LogUserCreationEvent(ctx, exampleInput)
 
@@ -734,9 +721,7 @@ func TestMariaDB_LogUserVerifyTwoFactorSecretEvent(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		m.LogUserVerifyTwoFactorSecretEvent(ctx, exampleInput.ID)
 
@@ -763,9 +748,7 @@ func TestMariaDB_LogUserUpdateTwoFactorSecretEvent(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		m.LogUserUpdateTwoFactorSecretEvent(ctx, exampleInput.ID)
 
@@ -792,9 +775,7 @@ func TestMariaDB_LogUserUpdatePasswordEvent(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		m.LogUserUpdatePasswordEvent(ctx, exampleInput.ID)
 
@@ -821,9 +802,7 @@ func TestMariaDB_LogUserArchiveEvent(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		m.LogUserArchiveEvent(ctx, exampleInput.ID)
 
@@ -850,9 +829,7 @@ func TestMariaDB_LogCycleCookieSecretEvent(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		m.LogCycleCookieSecretEvent(ctx, exampleInput.ID)
 
@@ -879,9 +856,7 @@ func TestMariaDB_LogSuccessfulLoginEvent(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		m.LogSuccessfulLoginEvent(ctx, exampleInput.ID)
 
@@ -908,9 +883,7 @@ func TestMariaDB_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		m.LogUnsuccessfulLoginBadPasswordEvent(ctx, exampleInput.ID)
 
@@ -937,9 +910,7 @@ func TestMariaDB_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		m.LogUnsuccessfulLoginBad2FATokenEvent(ctx, exampleInput.ID)
 
@@ -966,9 +937,7 @@ func TestMariaDB_LogLogoutEvent(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		m.LogLogoutEvent(ctx, exampleInput.ID)
 
@@ -995,9 +964,7 @@ func TestMariaDB_LogWebhookCreationEvent(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		m.LogWebhookCreationEvent(ctx, exampleInput)
 
@@ -1026,9 +993,7 @@ func TestMariaDB_LogWebhookUpdateEvent(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		m.LogWebhookUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
 
@@ -1056,9 +1021,7 @@ func TestMariaDB_LogWebhookArchiveEvent(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(
-				interfaceToDriverValue(expectedArgs)...,
-			)
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
 		m.LogWebhookArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
 

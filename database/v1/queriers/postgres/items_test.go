@@ -940,3 +940,93 @@ func TestPostgres_ArchiveItem(T *testing.T) {
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
+
+func TestPostgres_LogItemCreationEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+		p, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeItem()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.ItemCreationEvent,
+			Context: map[string]interface{}{
+				auditLogItemAssignmentKey:     exampleInput.ID,
+				auditLogCreationAssignmentKey: exampleInput,
+			},
+		}
+
+		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(exampleRows)
+
+		p.LogItemCreationEvent(ctx, exampleInput)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestPostgres_LogItemUpdateEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+		exampleChanges := []models.FieldChangeSummary{}
+		exampleInput := fakemodels.BuildFakeItem()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.ItemUpdateEvent,
+			Context: map[string]interface{}{
+				auditLogActionAssignmentKey:  exampleInput.BelongsToUser,
+				auditLogItemAssignmentKey:    exampleInput.ID,
+				auditLogChangesAssignmentKey: exampleChanges,
+			},
+		}
+
+		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(exampleRows)
+
+		p.LogItemUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestPostgres_LogItemArchiveEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeItem()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.ItemArchiveEvent,
+			Context: map[string]interface{}{
+				auditLogActionAssignmentKey: exampleInput.BelongsToUser,
+				auditLogItemAssignmentKey:   exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(exampleRows)
+
+		p.LogItemArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}

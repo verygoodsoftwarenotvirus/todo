@@ -404,3 +404,28 @@ func (s *Sqlite) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint6
 	_, err := s.db.ExecContext(ctx, query, args...)
 	return err
 }
+
+// LogOAuth2ClientCreationEvent saves a OAuth2ClientCreationEvent in the audit log table.
+func (s *Sqlite) LogOAuth2ClientCreationEvent(ctx context.Context, client *models.OAuth2Client) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.OAuth2ClientCreationEvent,
+		Context: map[string]interface{}{
+			"client": client,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
+}
+
+// LogOAuth2ClientArchiveEvent saves a OAuth2ClientArchiveEvent in the audit log table.
+func (s *Sqlite) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
+	entry := &models.AuditLogEntryCreationInput{
+		EventType: models.OAuth2ClientArchiveEvent,
+		Context: map[string]interface{}{
+			auditLogUserAssignmentKey:         userID,
+			auditLogOAuth2ClientAssignmentKey: clientID,
+		},
+	}
+
+	s.createAuditLogEntry(ctx, entry)
+}

@@ -825,3 +825,58 @@ func TestSqlite_ArchiveOAuth2Client(T *testing.T) {
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
+
+func TestSqlite_LogOAuth2ClientCreationEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeOAuth2Client()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.OAuth2ClientCreationEvent,
+			Context: map[string]interface{}{
+				"client": exampleInput,
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
+
+		s.LogOAuth2ClientCreationEvent(ctx, exampleInput)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_LogOAuth2ClientArchiveEvent(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		s, mockDB := buildTestService(t)
+
+		exampleInput := fakemodels.BuildFakeOAuth2Client()
+		exampleAuditLogEntry := &models.AuditLogEntry{
+			EventType: models.OAuth2ClientArchiveEvent,
+			Context: map[string]interface{}{
+				auditLogUserAssignmentKey: exampleInput.BelongsToUser,
+				"client_id":               exampleInput.ID,
+			},
+		}
+
+		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
+
+		s.LogOAuth2ClientArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}

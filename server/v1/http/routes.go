@@ -2,14 +2,15 @@ package httpserver
 
 import (
 	"fmt"
+	"net/http"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
+	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/audit"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
 	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
-	"net/http"
-	"path/filepath"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -23,6 +24,21 @@ const (
 	numericIDPattern = "/{%s:[0-9]+}"
 	maxCORSAge       = 300
 )
+
+/*
+func (s *Server) logRoutes() {
+	if err := chi.Walk(s.router, func(method string, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
+		s.logger.WithValues(map[string]interface{}{
+			"method": method,
+			"route":  route,
+		}).Debug("route found")
+
+		return nil
+	}); err != nil {
+		s.logger.Error(err, "logging routes")
+	}
+}
+*/
 
 func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Handler) {
 	if cfg == nil {
@@ -60,12 +76,11 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 		ch.Handler,
 	)
 
-	plainRouter := mux.With()
 	authenticatedRouter := mux.With(s.authService.AuthenticationMiddleware)
 
 	// all middleware must be defined before routes on a mux.
 
-	plainRouter.Route("/_meta_", func(metaRouter chi.Router) {
+	mux.Route("/_meta_", func(metaRouter chi.Router) {
 		health := healthcheck.NewHandler()
 		// Expose a liveness check on /live
 		metaRouter.Get("/live", health.LiveEndpoint)
@@ -75,7 +90,7 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 
 	if metricsHandler != nil {
 		s.logger.Debug("establishing metrics handler")
-		plainRouter.Handle("/metrics", metricsHandler)
+		mux.Handle("/metrics", metricsHandler)
 	}
 
 	// Frontend routes.
@@ -84,7 +99,7 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 		if err != nil {
 			s.logger.Error(err, "establishing static file server")
 		}
-		plainRouter.Get("/*", staticFileServer)
+		mux.Get("/*", staticFileServer)
 	}
 
 	authenticatedRouter.Get("/auth/status", s.authService.StatusHandler)
@@ -95,7 +110,7 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 	).Route("/_admin_", func(adminRouter chi.Router) {
 		adminRouter.Post("/cycle_cookie_secret", s.authService.CycleSecretHandler)
 
-		entryIDRouteParam := fmt.Sprintf(numericIDPattern, itemsservice.URIParamKey)
+		entryIDRouteParam := fmt.Sprintf(numericIDPattern, auditservice.URIParamKey)
 		adminRouter.Get(entryIDRouteParam, s.auditService.ReadHandler)
 
 		adminRouter.Get("/audit_log", s.auditService.ListHandler)
@@ -173,18 +188,17 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 			itemsRouteWithPrefix := fmt.Sprintf("/%s", itemPath)
 			itemIDRouteParam := fmt.Sprintf(numericIDPattern, itemsservice.URIParamKey)
 			v1Router.Route(itemsRouteWithPrefix, func(itemsRouter chi.Router) {
+				itemsRouter.With(s.itemsService.CreationInputMiddleware).Post(root, s.itemsService.CreateHandler)
+				itemsRouter.Get(root, s.itemsService.ListHandler)
+				itemsRouter.Get(searchRoot, s.itemsService.SearchHandler)
+
 				itemsRouter.Route(itemIDRouteParam, func(singleItemRouter chi.Router) {
 					singleItemRouter.Get(root, s.itemsService.ReadHandler)
 					singleItemRouter.Head(root, s.itemsService.ExistenceHandler)
 					singleItemRouter.Delete(root, s.itemsService.ArchiveHandler)
 					singleItemRouter.With(s.itemsService.UpdateInputMiddleware).Put(root, s.itemsService.UpdateHandler)
-					singleItemRouter.With(s.authService.AdminMiddleware).Get(filepath.Join(root, "audit"), s.itemsService.AuditEntryHandler)
+					singleItemRouter.With(s.authService.AdminMiddleware).Get("/audit", s.itemsService.AuditEntryHandler)
 				})
-
-				itemsRouter.With(s.itemsService.CreationInputMiddleware).Post(root, s.itemsService.CreateHandler)
-				itemsRouter.Get(root, s.itemsService.ListHandler)
-				itemsRouter.Get(root, s.itemsService.AuditEntryHandler)
-				itemsRouter.Get(searchRoot, s.itemsService.SearchHandler)
 			})
 		})
 

@@ -4,6 +4,10 @@ services:
         environment:
             CONFIGURATION_FILEPATH: '/etc/config.toml'
             RUNTIME_DURATION: '30s'
+            JAEGER_AGENT_HOST: 'tracing-server'
+            JAEGER_AGENT_PORT: '6831'
+            JAEGER_SAMPLER_MANAGER_HOST_PORT: 'tracing-server:5778'
+            JAEGER_SERVICE_NAME: 'todo-server'
         ports:
             - 80:8888
         links:

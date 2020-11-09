@@ -21,9 +21,16 @@ func (c *Client) GetUser(ctx context.Context, userID uint64) (*models.User, erro
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue("user_id", userID).Debug("GetUser called")
+	logger := c.logger.WithValue("user_id", userID)
 
-	return c.querier.GetUser(ctx, userID)
+	user, err := c.querier.GetUser(ctx, userID)
+	if err != nil {
+		logger.Error(err, "querying database for user")
+		return nil, err
+	}
+
+	logger.Debug("GetUser called")
+	return user, nil
 }
 
 // GetUserWithUnverifiedTwoFactorSecret fetches a user with an unverified 2FA secret.
@@ -32,9 +39,17 @@ func (c *Client) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userI
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue("user_id", userID).Debug("GetUserWithUnverifiedTwoFactorSecret called")
+	logger := c.logger.WithValue("user_id", userID)
 
-	return c.querier.GetUserWithUnverifiedTwoFactorSecret(ctx, userID)
+	user, err := c.querier.GetUserWithUnverifiedTwoFactorSecret(ctx, userID)
+
+	if err != nil {
+		logger.Error(err, "querying database for user")
+		return nil, err
+	}
+
+	logger.Debug("GetUserWithUnverifiedTwoFactorSecret called")
+	return user, nil
 }
 
 // VerifyUserTwoFactorSecret marks a user's two factor secret as validated.
@@ -54,9 +69,17 @@ func (c *Client) GetUserByUsername(ctx context.Context, username string) (*model
 	defer span.End()
 
 	tracing.AttachUsernameToSpan(span, username)
-	c.logger.WithValue("username", username).Debug("GetUserByUsername called")
+	logger := c.logger.WithValue("username", username)
 
-	return c.querier.GetUserByUsername(ctx, username)
+	user, err := c.querier.GetUserByUsername(ctx, username)
+
+	if err != nil {
+		logger.Error(err, "querying database for user")
+		return nil, err
+	}
+
+	logger.Debug("GetUserByUsername called")
+	return user, nil
 }
 
 // GetAllUsersCount fetches a count of users from the database that meet a particular filter.
@@ -86,9 +109,17 @@ func (c *Client) CreateUser(ctx context.Context, input models.UserDatabaseCreati
 	defer span.End()
 
 	tracing.AttachUsernameToSpan(span, input.Username)
-	c.logger.WithValue("username", input.Username).Debug("CreateUser called")
+	logger := c.logger.WithValue("username", input.Username)
 
-	return c.querier.CreateUser(ctx, input)
+	user, err := c.querier.CreateUser(ctx, input)
+
+	if err != nil {
+		logger.Error(err, "querying database for user")
+		return nil, err
+	}
+
+	logger.Debug("CreateUser called")
+	return user, nil
 }
 
 // UpdateUser receives a complete User struct and updates its record in the database.

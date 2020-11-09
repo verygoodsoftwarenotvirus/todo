@@ -74,14 +74,6 @@ func (d *AuditLogContext) Scan(value interface{}) error {
 	return json.Unmarshal(b, &d)
 }
 
-func (f FieldChangeSummary) ToInterfaceMap() map[string]interface{} {
-	return map[string]interface{}{
-		"fieldName": f.FieldName,
-		"oldValue":  f.OldValue,
-		"newValue":  f.NewValue,
-	}
-}
-
 // Event Types
 
 const (

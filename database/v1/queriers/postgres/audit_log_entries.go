@@ -295,7 +295,7 @@ func (p *Postgres) LogUserCreationEvent(ctx context.Context, user *models.User) 
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.UserCreationEvent,
 		Context: map[string]interface{}{
-			auditLogActionAssignmentKey:   user.ID,
+			auditLogUserAssignmentKey:     user.ID,
 			auditLogCreationAssignmentKey: user,
 		},
 	}
@@ -344,6 +344,7 @@ func (p *Postgres) LogUserArchiveEvent(ctx context.Context, userID uint64) {
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.UserArchiveEvent,
 		Context: map[string]interface{}{
+			auditLogUserAssignmentKey:   userID,
 			auditLogActionAssignmentKey: userID,
 		},
 	}

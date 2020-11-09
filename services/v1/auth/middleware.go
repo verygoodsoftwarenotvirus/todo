@@ -80,6 +80,8 @@ func (s *Service) authorizationMiddleware(allowCookies bool, next http.Handler) 
 					return
 				}
 			}
+
+			logger.Debug("checked for cookie")
 		}
 
 		// if the cookie wasn't present, or didn't indicate who the user is.
@@ -88,14 +90,14 @@ func (s *Service) authorizationMiddleware(allowCookies bool, next http.Handler) 
 			// We do this first because it is presumed to be the primary means by which requests are made to the httpServer.
 			oauth2Client, err := s.oauth2ClientsService.ExtractOAuth2ClientFromRequest(ctx, req)
 			if err != nil || oauth2Client == nil {
+				logger.WithValue("oauth_client_is_nil", oauth2Client == nil).Error(err, "error authenticating request")
 				http.Redirect(res, req, "/auth/login", http.StatusUnauthorized)
 				return
 			}
 
 			// attach the oauth2 client and user's info to the request.
 			ctx = context.WithValue(ctx, models.OAuth2ClientKey, oauth2Client)
-			user, err = s.userDB.GetUser(ctx, oauth2Client.BelongsToUser)
-			if err != nil {
+			if user, err = s.userDB.GetUser(ctx, oauth2Client.BelongsToUser); err != nil {
 				logger.Error(err, "error authenticating request")
 				http.Error(res, "fetching user", http.StatusInternalServerError)
 				return
@@ -109,12 +111,15 @@ func (s *Service) authorizationMiddleware(allowCookies bool, next http.Handler) 
 			return
 		}
 
-		// otherwise, load the request with extra context.
-		logger.WithValue("user_is_admin", user.IsAdmin).
-			WithValue("user_id", user.ID).
-			Debug("attaching session info to request context")
+		logger = logger.WithValue("user_is_admin", user.IsAdmin).
+			WithValue("user_id", user.ID)
 
-		next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, models.SessionInfoKey, user.ToSessionInfo())))
+		logger.Debug("fetched user")
+		ctx = context.WithValue(ctx, models.SessionInfoKey, user.ToSessionInfo())
+
+		logger.Debug("serving request")
+		next.ServeHTTP(res, req.WithContext(ctx))
+		logger.Debug("served request")
 	}
 }
 
@@ -124,10 +129,8 @@ func (s *Service) AuthenticationMiddleware(next http.Handler) http.Handler {
 		ctx, span := tracing.StartSpan(req.Context(), "authenticationMiddleware")
 		defer span.End()
 
-		var (
-			logger = s.logger.WithRequest(req)
-			user   *models.User
-		)
+		var user *models.User
+		logger := s.logger.WithRequest(req).WithValue("func_name", "authenticationMiddleware")
 
 		// check for a cookie first if we can.
 		if cookieAuth, err := s.DecodeCookieFromRequest(ctx, req); err == nil && cookieAuth != nil {
@@ -139,26 +142,35 @@ func (s *Service) AuthenticationMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
+		logger.Debug("checked for cookie")
+
 		// if the cookie wasn't present, or didn't indicate who the user is.
 		if user == nil {
 			// check to see if there is an OAuth2 token for a valid client attached to the request.
 			// We do this first because it is presumed to be the primary means by which requests are made to the httpServer.
 			if oauth2Client, err := s.oauth2ClientsService.ExtractOAuth2ClientFromRequest(ctx, req); err == nil && oauth2Client != nil {
 				ctx = context.WithValue(ctx, models.OAuth2ClientKey, oauth2Client)
+				tracing.AttachOAuth2ClientIDToSpan(span, oauth2Client.ClientID)
 
+				logger.Debug("getting user")
 				// attach the oauth2 client and user's info to the request.
 				user, err = s.userDB.GetUser(ctx, oauth2Client.BelongsToUser)
 				if err != nil {
 					logger.Error(err, "error fetching user info for authentication")
 				}
+				logger.Debug("got user")
 			}
 		}
 
 		if user != nil {
-			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, models.SessionInfoKey, user.ToSessionInfo())))
+			ctx = context.WithValue(ctx, models.SessionInfoKey, user.ToSessionInfo())
+			logger.Debug("user determined")
+			tracing.AttachUserIDToSpan(span, user.ID)
+			next.ServeHTTP(res, req.WithContext(ctx))
 			return
 		}
 
+		logger.Debug("serving request")
 		next.ServeHTTP(res, req)
 	})
 }

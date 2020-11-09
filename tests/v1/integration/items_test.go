@@ -368,23 +368,6 @@ func TestItems(test *testing.T) {
 			assert.NotNil(t, updated.LastUpdatedOn)
 
 			// fetch audit log entries
-			//expected := []models.AuditLogEntry{
-			//	{
-			//		EventType: models.ItemCreationEvent,
-			//		Context: map[string]interface{}{
-			//			"item_id": createdItem.ID,
-			//			"created": createdItem,
-			//		},
-			//	},
-			//	{
-			//		EventType: models.ItemUpdateEvent,
-			//		Context: map[string]interface{}{
-			//			"item_id": updated.ID,
-			//			"changes": nil,
-			//		},
-			//	},
-			//}
-
 			actual, err := adminClient.GetAuditLogForItem(ctx, updated.ID)
 			assert.NoError(t, err)
 			assert.Len(t, actual, 2)

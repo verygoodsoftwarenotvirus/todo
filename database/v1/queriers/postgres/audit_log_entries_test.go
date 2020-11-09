@@ -481,7 +481,7 @@ func TestPostgres_buildGetAuditLogEntriesForItemQuery(T *testing.T) {
 
 		exampleItem := fakemodels.BuildFakeItem()
 
-		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.context->'performed_by' = $1 ORDER BY audit_log.id"
+		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.context->'item_id' = $1 ORDER BY audit_log.id"
 		expectedArgs := []interface{}{
 			exampleItem.ID,
 		}
@@ -799,7 +799,7 @@ func TestPostgres_LogUserCreationEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.UserCreationEvent,
 			Context: map[string]interface{}{
-				auditLogActionAssignmentKey:   exampleInput.ID,
+				auditLogUserAssignmentKey:     exampleInput.ID,
 				auditLogCreationAssignmentKey: exampleInput,
 			},
 		}
@@ -916,6 +916,7 @@ func TestPostgres_LogUserArchiveEvent(T *testing.T) {
 		exampleAuditLogEntry := &models.AuditLogEntry{
 			EventType: models.UserArchiveEvent,
 			Context: map[string]interface{}{
+				auditLogUserAssignmentKey:   exampleInput.ID,
 				auditLogActionAssignmentKey: exampleInput.ID,
 			},
 		}

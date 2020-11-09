@@ -17,7 +17,7 @@ const (
 	auditLogEntriesTableEventTypeColumn = "event_type"
 	auditLogEntriesTableContextColumn   = "context"
 
-	auditLogUserAssignmentKey     = "performed_by"
+	auditLogActionAssignmentKey   = "performed_by"
 	auditLogChangesAssignmentKey  = "changes"
 	auditLogCreationAssignmentKey = "created"
 
@@ -420,7 +420,7 @@ func (m *MariaDB) LogUserArchiveEvent(ctx context.Context, userID uint64) {
 	entry := &models.AuditLogEntryCreationInput{
 		EventType: models.UserArchiveEvent,
 		Context: map[string]interface{}{
-			"performed_by": userID,
+			auditLogActionAssignmentKey: userID,
 		},
 	}
 

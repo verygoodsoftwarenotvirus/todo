@@ -70,6 +70,7 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 
 	mux := chi.NewRouter()
 	mux.Use(
+		middleware.RealIP,
 		middleware.RequestID,
 		middleware.Timeout(maxTimeout),
 		buildLoggingMiddleware(s.logger.WithName("middleware")),
@@ -110,10 +111,13 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 	).Route("/_admin_", func(adminRouter chi.Router) {
 		adminRouter.Post("/cycle_cookie_secret", s.authService.CycleSecretHandler)
 
-		entryIDRouteParam := fmt.Sprintf(numericIDPattern, auditservice.URIParamKey)
-		adminRouter.Get(entryIDRouteParam, s.auditService.ReadHandler)
-
-		adminRouter.Get("/audit_log", s.auditService.ListHandler)
+		adminRouter.Route("/audit_log", func(auditRouter chi.Router) {
+			entryIDRouteParam := fmt.Sprintf(numericIDPattern, auditservice.LogEntryURIParamKey)
+			auditRouter.Get(root, s.auditService.ListHandler)
+			auditRouter.Route(entryIDRouteParam, func(singleEntryRouter chi.Router) {
+				singleEntryRouter.Get(root, s.auditService.ReadHandler)
+			})
+		})
 	})
 
 	mux.Route("/users", func(userRouter chi.Router) {
@@ -155,7 +159,7 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 		Route("/api/v1", func(v1Router chi.Router) {
 			// Users
 			v1Router.Route("/users", func(usersRouter chi.Router) {
-				userIDPattern := fmt.Sprintf(numericIDPattern, usersservice.URIParamKey)
+				userIDPattern := fmt.Sprintf(numericIDPattern, usersservice.UserIDURIParamKey)
 
 				usersRouter.With(s.authService.AdminMiddleware).Get(root, s.usersService.ListHandler)
 				usersRouter.Get("/self", s.usersService.SelfHandler)
@@ -165,7 +169,7 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 
 			// OAuth2 Clients.
 			v1Router.Route("/oauth2/clients", func(clientRouter chi.Router) {
-				sr := fmt.Sprintf(numericIDPattern, oauth2clientsservice.URIParamKey)
+				sr := fmt.Sprintf(numericIDPattern, oauth2clientsservice.OAuth2ClientIDURIParamKey)
 				// CreateHandler is not bound to an OAuth2 authentication token.
 				// UpdateHandler not supported for OAuth2 clients.
 				clientRouter.Get(sr, s.oauth2ClientsService.ReadHandler)
@@ -175,7 +179,7 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 
 			// Webhooks.
 			v1Router.Route("/webhooks", func(webhookRouter chi.Router) {
-				sr := fmt.Sprintf(numericIDPattern, webhooksservice.URIParamKey)
+				sr := fmt.Sprintf(numericIDPattern, webhooksservice.WebhookIDURIParamKey)
 				webhookRouter.With(s.webhooksService.CreationInputMiddleware).Post(root, s.webhooksService.CreateHandler)
 				webhookRouter.Get(sr, s.webhooksService.ReadHandler)
 				webhookRouter.With(s.webhooksService.UpdateInputMiddleware).Put(sr, s.webhooksService.UpdateHandler)
@@ -186,7 +190,7 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 			// Items
 			itemPath := "items"
 			itemsRouteWithPrefix := fmt.Sprintf("/%s", itemPath)
-			itemIDRouteParam := fmt.Sprintf(numericIDPattern, itemsservice.URIParamKey)
+			itemIDRouteParam := fmt.Sprintf(numericIDPattern, itemsservice.ItemIDURIParamKey)
 			v1Router.Route(itemsRouteWithPrefix, func(itemsRouter chi.Router) {
 				itemsRouter.With(s.itemsService.CreationInputMiddleware).Post(root, s.itemsService.CreateHandler)
 				itemsRouter.Get(root, s.itemsService.ListHandler)

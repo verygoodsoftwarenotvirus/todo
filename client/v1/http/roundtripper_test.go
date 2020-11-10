@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,8 +26,16 @@ func Test_defaultRoundTripper_RoundTrip(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
+		ts := httptest.NewServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					res.WriteHeader(http.StatusOK)
+				},
+			),
+		)
+
 		transport := newDefaultRoundTripper()
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://verygoodsoftwarenotvirus.ru", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, ts.URL, nil)
 
 		require.NotNil(t, req)
 		assert.NoError(t, err)

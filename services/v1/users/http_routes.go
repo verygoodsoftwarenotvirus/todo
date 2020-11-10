@@ -23,8 +23,8 @@ import (
 )
 
 const (
-	// URIParamKey is used to refer to user IDs in router params.
-	URIParamKey = "userID"
+	// UserIDURIParamKey is used to refer to user IDs in router params.
+	UserIDURIParamKey = "userID"
 
 	totpIssuer        = "todoService"
 	base64ImagePrefix = "data:image/jpeg;base64,"

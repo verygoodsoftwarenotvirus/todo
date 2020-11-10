@@ -21,4 +21,21 @@ func TestAuditLogEntries(test *testing.T) {
 			assert.NotEmpty(t, actual.Entries)
 		})
 	})
+
+	test.Run("Reading", func(t *testing.T) {
+		t.Run("should be able to be read as an individual by an admin", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			actual, err := adminClient.GetAuditLogEntries(ctx, nil)
+			checkValueAndError(t, actual, err)
+
+			for _, x := range actual.Entries {
+				y, err := adminClient.GetAuditLogEntry(ctx, x.ID)
+				checkValueAndError(t, y, err)
+			}
+
+			assert.NotEmpty(t, actual.Entries)
+		})
+	})
 }

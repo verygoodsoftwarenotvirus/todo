@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	// URIParamKey is a standard string that we'll use to refer to entry IDs with.
-	URIParamKey = "entryID"
+	// LogEntryURIParamKey is a standard string that we'll use to refer to entry IDs with.
+	LogEntryURIParamKey = "entryID"
 )
 
 // ListHandler is our list route.
@@ -61,6 +61,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	logger.Debug("ReadHandler invoked")
 
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)

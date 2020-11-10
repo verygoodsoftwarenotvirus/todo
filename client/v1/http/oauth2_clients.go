@@ -12,7 +12,9 @@ import (
 )
 
 const (
-	oauth2ClientsBasePath = "oauth2/clients"
+	oauth2BasePath        = "oauth2"
+	oauth2ClientBasePath  = "client"
+	oauth2ClientsBasePath = "clients"
 )
 
 // BuildGetOAuth2ClientRequest builds an HTTP request for fetching an OAuth2 client.
@@ -20,7 +22,12 @@ func (c *V1Client) BuildGetOAuth2ClientRequest(ctx context.Context, id uint64) (
 	ctx, span := tracing.StartSpan(ctx, "BuildGetOAuth2ClientRequest")
 	defer span.End()
 
-	uri := c.BuildURL(nil, oauth2ClientsBasePath, strconv.FormatUint(id, 10))
+	uri := c.BuildURL(
+		nil,
+		oauth2BasePath,
+		oauth2ClientsBasePath,
+		strconv.FormatUint(id, 10),
+	)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
@@ -45,7 +52,11 @@ func (c *V1Client) BuildGetOAuth2ClientsRequest(ctx context.Context, filter *mod
 	ctx, span := tracing.StartSpan(ctx, "BuildGetOAuth2ClientsRequest")
 	defer span.End()
 
-	uri := c.BuildURL(filter.ToValues(), oauth2ClientsBasePath)
+	uri := c.BuildURL(
+		filter.ToValues(),
+		oauth2BasePath,
+		oauth2ClientsBasePath,
+	)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
@@ -75,7 +86,11 @@ func (c *V1Client) BuildCreateOAuth2ClientRequest(
 	ctx, span := tracing.StartSpan(ctx, "BuildCreateOAuth2ClientRequest")
 	defer span.End()
 
-	uri := c.buildVersionlessURL(nil, "oauth2", "client")
+	uri := c.buildVersionlessURL(
+		nil,
+		oauth2BasePath,
+		oauth2ClientBasePath,
+	)
 
 	req, err := c.buildDataRequest(ctx, http.MethodPost, uri, body)
 	if err != nil {
@@ -120,7 +135,12 @@ func (c *V1Client) BuildArchiveOAuth2ClientRequest(ctx context.Context, id uint6
 	ctx, span := tracing.StartSpan(ctx, "BuildArchiveOAuth2ClientRequest")
 	defer span.End()
 
-	uri := c.BuildURL(nil, oauth2ClientsBasePath, strconv.FormatUint(id, 10))
+	uri := c.BuildURL(
+		nil,
+		oauth2BasePath,
+		oauth2ClientsBasePath,
+		strconv.FormatUint(id, 10),
+	)
 
 	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
 }

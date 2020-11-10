@@ -131,7 +131,7 @@ func (m *MariaDB) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, er
 // with the utmost priority.
 func (m *MariaDB) logQueryBuildingError(err error) {
 	if err != nil {
-		m.logger.WithName("QUERY_ERROR").Error(err, "building query")
+		m.logger.WithValue("QUERY_ERROR", true).Error(err, "building query")
 	}
 }
 
@@ -142,6 +142,6 @@ func (m *MariaDB) logQueryBuildingError(err error) {
 // with the utmost priority.
 func (m *MariaDB) logIDRetrievalError(err error) {
 	if err != nil {
-		m.logger.WithName("ROW_ID_ERROR").Error(err, "fetching row ID")
+		m.logger.WithValue("ROW_ID_ERROR", true).Error(err, "fetching row ID")
 	}
 }

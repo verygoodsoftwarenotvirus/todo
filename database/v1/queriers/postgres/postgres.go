@@ -133,7 +133,7 @@ func (p *Postgres) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, e
 // with the utmost priority.
 func (p *Postgres) logQueryBuildingError(err error) {
 	if err != nil {
-		p.logger.WithName("QUERY_ERROR").Error(err, "building query")
+		p.logger.WithValue("QUERY_ERROR", true).Error(err, "building query")
 	}
 }
 

@@ -124,7 +124,7 @@ func Test_buildRouteParamUserIDFetcher(T *testing.T) {
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
-						Keys:   []string{usersservice.URIParamKey},
+						Keys:   []string{usersservice.UserIDURIParamKey},
 						Values: []string{fmt.Sprintf("%d", expected)},
 					},
 				},
@@ -149,7 +149,7 @@ func Test_buildRouteParamUserIDFetcher(T *testing.T) {
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
-						Keys:   []string{usersservice.URIParamKey},
+						Keys:   []string{usersservice.UserIDURIParamKey},
 						Values: []string{"expected"},
 					},
 				},
@@ -177,7 +177,7 @@ func Test_buildRouteParamItemIDFetcher(T *testing.T) {
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
-						Keys:   []string{itemsservice.URIParamKey},
+						Keys:   []string{itemsservice.ItemIDURIParamKey},
 						Values: []string{fmt.Sprintf("%d", expected)},
 					},
 				},
@@ -202,7 +202,7 @@ func Test_buildRouteParamItemIDFetcher(T *testing.T) {
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
-						Keys:   []string{itemsservice.URIParamKey},
+						Keys:   []string{itemsservice.ItemIDURIParamKey},
 						Values: []string{"expected"},
 					},
 				},
@@ -230,7 +230,7 @@ func Test_buildRouteParamWebhookIDFetcher(T *testing.T) {
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
-						Keys:   []string{webhooksservice.URIParamKey},
+						Keys:   []string{webhooksservice.WebhookIDURIParamKey},
 						Values: []string{fmt.Sprintf("%d", expected)},
 					},
 				},
@@ -255,7 +255,7 @@ func Test_buildRouteParamWebhookIDFetcher(T *testing.T) {
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
-						Keys:   []string{webhooksservice.URIParamKey},
+						Keys:   []string{webhooksservice.WebhookIDURIParamKey},
 						Values: []string{"expected"},
 					},
 				},
@@ -284,7 +284,7 @@ func Test_buildRouteParamOAuth2ClientIDFetcher(T *testing.T) {
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
-						Keys:   []string{oauth2clientsservice.URIParamKey},
+						Keys:   []string{oauth2clientsservice.OAuth2ClientIDURIParamKey},
 						Values: []string{fmt.Sprintf("%d", expected)},
 					},
 				},
@@ -310,7 +310,7 @@ func Test_buildRouteParamOAuth2ClientIDFetcher(T *testing.T) {
 				chi.RouteCtxKey,
 				&chi.Context{
 					URLParams: chi.RouteParams{
-						Keys:   []string{oauth2clientsservice.URIParamKey},
+						Keys:   []string{oauth2clientsservice.OAuth2ClientIDURIParamKey},
 						Values: []string{"expected"},
 					},
 				},

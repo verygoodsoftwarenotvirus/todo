@@ -400,6 +400,41 @@ func (p *Postgres) ArchiveOAuth2Client(ctx context.Context, clientID, userID uin
 	return err
 }
 
+// buildGetAuditLogEntriesForOAuth2ClientQuery constructs a SQL query for fetching audit log entries
+// associated with a given oauth2 client.
+func (p *Postgres) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (query string, args []interface{}) {
+	var err error
+
+	clientIDKey := fmt.Sprintf("%s.%s->'%s'", auditLogEntriesTableName, auditLogEntriesTableContextColumn, auditLogOAuth2ClientAssignmentKey)
+	builder := p.sqlBuilder.
+		Select(auditLogEntriesTableColumns...).
+		From(auditLogEntriesTableName).
+		Where(squirrel.Eq{clientIDKey: clientID}).
+		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
+
+	query, args, err = builder.ToSql()
+	p.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// GetAuditLogEntriesForOAuth2Client fetches a audit log entries for a given oauth2 client from the database.
+func (p *Postgres) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]models.AuditLogEntry, error) {
+	query, args := p.buildGetAuditLogEntriesForOAuth2ClientQuery(clientID)
+
+	rows, err := p.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
+	}
+
+	auditLogEntries, err := p.scanAuditLogEntries(rows)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return auditLogEntries, nil
+}
+
 // LogOAuth2ClientCreationEvent saves a OAuth2ClientCreationEvent in the audit log table.
 func (p *Postgres) LogOAuth2ClientCreationEvent(ctx context.Context, client *models.OAuth2Client) {
 	entry := &models.AuditLogEntryCreationInput{

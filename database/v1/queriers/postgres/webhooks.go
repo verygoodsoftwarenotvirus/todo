@@ -375,6 +375,41 @@ func (p *Postgres) ArchiveWebhook(ctx context.Context, webhookID, userID uint64)
 	return err
 }
 
+// buildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching audit log entries
+// associated with a given webhook.
+func (p *Postgres) buildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query string, args []interface{}) {
+	var err error
+
+	webhookIDKey := fmt.Sprintf("%s.%s->'%s'", auditLogEntriesTableName, auditLogEntriesTableContextColumn, auditLogWebhookAssignmentKey)
+	builder := p.sqlBuilder.
+		Select(auditLogEntriesTableColumns...).
+		From(auditLogEntriesTableName).
+		Where(squirrel.Eq{webhookIDKey: webhookID}).
+		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
+
+	query, args, err = builder.ToSql()
+	p.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// GetAuditLogEntriesForWebhook fetches a audit log entries for a given webhook from the database.
+func (p *Postgres) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]models.AuditLogEntry, error) {
+	query, args := p.buildGetAuditLogEntriesForWebhookQuery(webhookID)
+
+	rows, err := p.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
+	}
+
+	auditLogEntries, err := p.scanAuditLogEntries(rows)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return auditLogEntries, nil
+}
+
 // LogWebhookCreationEvent saves a WebhookCreationEvent in the audit log table.
 func (p *Postgres) LogWebhookCreationEvent(ctx context.Context, webhook *models.Webhook) {
 	entry := &models.AuditLogEntryCreationInput{

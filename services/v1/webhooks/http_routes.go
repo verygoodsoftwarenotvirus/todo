@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	// URIParamKey is a standard string that we'll use to refer to webhook IDs with.
-	URIParamKey = "webhookID"
+	// WebhookIDURIParamKey is a standard string that we'll use to refer to webhook IDs with.
+	WebhookIDURIParamKey = "webhookID"
 )
 
 var errInvalidMethod = errors.New("invalid method provided")

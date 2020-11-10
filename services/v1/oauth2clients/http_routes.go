@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	// URIParamKey is used for referring to OAuth2 client IDs in router params.
-	URIParamKey = "oauth2ClientID"
+	// OAuth2ClientIDURIParamKey is used for referring to OAuth2 client IDs in router params.
+	OAuth2ClientIDURIParamKey = "oauth2ClientID"
 
 	oauth2ClientIDURIParamKey                   = "client_id"
 	clientIDKey               models.ContextKey = "client_id"

@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	// URIParamKey is a standard string that we'll use to refer to item IDs with.
-	URIParamKey = "itemID"
+	// ItemIDURIParamKey is a standard string that we'll use to refer to item IDs with.
+	ItemIDURIParamKey = "itemID"
 )
 
 // parseBool differs from strconv.ParseBool in that it returns false by default.

@@ -557,7 +557,8 @@ func (p *Postgres) LogItemArchiveEvent(ctx context.Context, userID, itemID uint6
 	p.createAuditLogEntry(ctx, entry)
 }
 
-// buildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+// buildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching audit log entries
+// associated with a given item.
 func (p *Postgres) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -574,7 +575,7 @@ func (p *Postgres) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query str
 	return query, args
 }
 
-// GetAuditLogEntriesForItem fetches an audit log entry from the database.
+// GetAuditLogEntriesForItem fetches a audit log entries for a given item from the database.
 func (p *Postgres) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]models.AuditLogEntry, error) {
 	query, args := p.buildGetAuditLogEntriesForItemQuery(itemID)
 

@@ -117,9 +117,7 @@ func (s *Service) authorizationMiddleware(allowCookies bool, next http.Handler) 
 		logger.Debug("fetched user")
 		ctx = context.WithValue(ctx, models.SessionInfoKey, user.ToSessionInfo())
 
-		logger.Debug("serving request")
 		next.ServeHTTP(res, req.WithContext(ctx))
-		logger.Debug("served request")
 	}
 }
 

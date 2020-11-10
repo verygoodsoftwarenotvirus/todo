@@ -106,7 +106,7 @@ func (s *Sqlite) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, err
 // with the utmost priority.
 func (s *Sqlite) logQueryBuildingError(err error) {
 	if err != nil {
-		s.logger.WithName("QUERY_ERROR").Error(err, "building query")
+		s.logger.WithValue("QUERY_ERROR", true).Error(err, "building query")
 	}
 }
 
@@ -117,6 +117,6 @@ func (s *Sqlite) logQueryBuildingError(err error) {
 // with the utmost priority.
 func (s *Sqlite) logIDRetrievalError(err error) {
 	if err != nil {
-		s.logger.WithName("ROW_ID_ERROR").Error(err, "fetching row ID")
+		s.logger.WithValue("ROW_ID_ERROR", true).Error(err, "fetching row ID")
 	}
 }

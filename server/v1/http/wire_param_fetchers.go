@@ -108,7 +108,7 @@ func sessionInfoFetcherFromRequestContext(req *http.Request) (*models.SessionInf
 // buildRouteParamUserIDFetcher builds a function that fetches a EnsureUsername from a request routed by chi.
 func buildRouteParamUserIDFetcher(logger logging.Logger) usersservice.UserIDFetcher {
 	return func(req *http.Request) uint64 {
-		u, err := strconv.ParseUint(chi.URLParam(req, usersservice.URIParamKey), 10, 64)
+		u, err := strconv.ParseUint(chi.URLParam(req, usersservice.UserIDURIParamKey), 10, 64)
 		if err != nil {
 			logger.Error(err, "fetching user ID from request")
 		}
@@ -122,7 +122,7 @@ func buildRouteParamItemIDFetcher(logger logging.Logger) func(req *http.Request)
 	return func(req *http.Request) uint64 {
 		// we can generally disregard this error only because we should be able to validate.
 		// that the string only contains numbers via chi's regex url param feature.
-		u, err := strconv.ParseUint(chi.URLParam(req, itemsservice.URIParamKey), 10, 64)
+		u, err := strconv.ParseUint(chi.URLParam(req, itemsservice.ItemIDURIParamKey), 10, 64)
 		if err != nil {
 			logger.Error(err, "fetching item ID from request")
 		}
@@ -136,7 +136,7 @@ func buildRouteParamEntryIDFetcher(logger logging.Logger) func(req *http.Request
 	return func(req *http.Request) uint64 {
 		// we can generally disregard this error only because we should be able to validate.
 		// that the string only contains numbers via chi's regex url param feature.
-		u, err := strconv.ParseUint(chi.URLParam(req, auditservice.URIParamKey), 10, 64)
+		u, err := strconv.ParseUint(chi.URLParam(req, auditservice.LogEntryURIParamKey), 10, 64)
 		if err != nil {
 			logger.Error(err, "fetching audit log entry ID from request")
 		}
@@ -150,7 +150,7 @@ func buildRouteParamWebhookIDFetcher(logger logging.Logger) func(req *http.Reque
 	return func(req *http.Request) uint64 {
 		// we can generally disregard this error only because we should be able to validate.
 		// that the string only contains numbers via chi's regex url param feature.
-		u, err := strconv.ParseUint(chi.URLParam(req, webhooksservice.URIParamKey), 10, 64)
+		u, err := strconv.ParseUint(chi.URLParam(req, webhooksservice.WebhookIDURIParamKey), 10, 64)
 		if err != nil {
 			logger.Error(err, "fetching webhook ID from request")
 		}
@@ -164,7 +164,7 @@ func buildRouteParamOAuth2ClientIDFetcher(logger logging.Logger) func(req *http.
 	return func(req *http.Request) uint64 {
 		// we can generally disregard this error only because we should be able to validate.
 		// that the string only contains numbers via chi's regex url param feature.
-		u, err := strconv.ParseUint(chi.URLParam(req, oauth2clientsservice.URIParamKey), 10, 64)
+		u, err := strconv.ParseUint(chi.URLParam(req, oauth2clientsservice.OAuth2ClientIDURIParamKey), 10, 64)
 		if err != nil {
 			logger.Error(err, "fetching OAuth2 client ID from request")
 		}

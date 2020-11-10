@@ -11,7 +11,9 @@ import (
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 )
 
-const usersBasePath = "users"
+const (
+	usersBasePath = "users"
+)
 
 // BuildGetUserRequest builds an HTTP request for fetching a user.
 func (c *V1Client) BuildGetUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {

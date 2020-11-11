@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/audit"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
@@ -407,25 +408,44 @@ func (s *Sqlite) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint6
 
 // LogOAuth2ClientCreationEvent saves a OAuth2ClientCreationEvent in the audit log table.
 func (s *Sqlite) LogOAuth2ClientCreationEvent(ctx context.Context, client *models.OAuth2Client) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.OAuth2ClientCreationEvent,
-		Context: map[string]interface{}{
-			"client": client,
-		},
-	}
-
-	s.createAuditLogEntry(ctx, entry)
+	s.createAuditLogEntry(ctx, audit.BuildOAuth2ClientCreationEventEntry(client))
 }
 
 // LogOAuth2ClientArchiveEvent saves a OAuth2ClientArchiveEvent in the audit log table.
 func (s *Sqlite) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.OAuth2ClientArchiveEvent,
-		Context: map[string]interface{}{
-			auditLogUserAssignmentKey:         userID,
-			auditLogOAuth2ClientAssignmentKey: clientID,
-		},
+	s.createAuditLogEntry(ctx, audit.BuildOAuth2ClientArchiveEventEntry(userID, clientID))
+}
+
+// buildGetAuditLogEntriesForOAuth2ClientQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+func (s *Sqlite) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (query string, args []interface{}) {
+	var err error
+
+	oauth2ClientIDKey := fmt.Sprintf("json_extract(%s.%s, '$.%s')", auditLogEntriesTableName, auditLogEntriesTableContextColumn, audit.OAuth2ClientAssignmentKey)
+	builder := s.sqlBuilder.
+		Select(auditLogEntriesTableColumns...).
+		From(auditLogEntriesTableName).
+		Where(squirrel.Eq{oauth2ClientIDKey: clientID}).
+		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
+
+	query, args, err = builder.ToSql()
+	s.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// GetAuditLogEntriesForOAuth2Client fetches an audit log entry from the database.
+func (s *Sqlite) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]models.AuditLogEntry, error) {
+	query, args := s.buildGetAuditLogEntriesForOAuth2ClientQuery(clientID)
+
+	rows, err := s.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
 	}
 
-	s.createAuditLogEntry(ctx, entry)
+	auditLogEntries, err := s.scanAuditLogEntries(rows)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return auditLogEntries, nil
 }

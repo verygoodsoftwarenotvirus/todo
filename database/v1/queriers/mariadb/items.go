@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/audit"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
@@ -543,6 +544,21 @@ func (m *MariaDB) ArchiveItem(ctx context.Context, itemID, userID uint64) error 
 	return err
 }
 
+// LogItemCreationEvent saves a ItemCreationEvent in the audit log table.
+func (m *MariaDB) LogItemCreationEvent(ctx context.Context, item *models.Item) {
+	m.createAuditLogEntry(ctx, audit.BuildItemCreationEventEntry(item))
+}
+
+// LogItemUpdateEvent saves a ItemUpdateEvent in the audit log table.
+func (m *MariaDB) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []models.FieldChangeSummary) {
+	m.createAuditLogEntry(ctx, audit.BuildItemUpdateEventEntry(userID, itemID, changes))
+}
+
+// LogItemArchiveEvent saves a ItemArchiveEvent in the audit log table.
+func (m *MariaDB) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64) {
+	m.createAuditLogEntry(ctx, audit.BuildItemArchiveEventEntry(userID, itemID))
+}
+
 // buildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
 func (m *MariaDB) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query string, args []interface{}) {
 	var err error
@@ -557,7 +573,7 @@ func (m *MariaDB) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query stri
 					auditLogEntriesTableName,
 					auditLogEntriesTableContextColumn,
 					itemID,
-					auditLogItemAssignmentKey,
+					audit.ItemAssignmentKey,
 				),
 			),
 		).

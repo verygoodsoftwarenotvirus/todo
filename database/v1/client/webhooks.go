@@ -98,3 +98,13 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) e
 
 	return c.querier.ArchiveWebhook(ctx, webhookID, userID)
 }
+
+// GetAuditLogEntriesForWebhook fetches a list of audit log entries from the database that relate to a given webhook.
+func (c *Client) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]models.AuditLogEntry, error) {
+	ctx, span := tracing.StartSpan(ctx, "GetAuditLogEntriesForWebhook")
+	defer span.End()
+
+	c.logger.Debug("GetAuditLogEntriesForWebhook called")
+
+	return c.querier.GetAuditLogEntriesForWebhook(ctx, webhookID)
+}

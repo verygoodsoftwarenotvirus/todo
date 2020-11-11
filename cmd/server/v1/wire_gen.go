@@ -83,9 +83,9 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	oAuth2ClientDataServer := oauth2clients.ProvideOAuth2ClientDataServer(service)
 	webhookDataManager := database.ProvideWebhookDataManager(dbm)
 	webhookAuditManager := database.ProvideWebhookAuditManager(dbm)
-	webhooksUserIDFetcher := httpserver.ProvideWebhooksServiceUserIDFetcher()
+	webhooksSessionInfoFetcher := httpserver.ProvideWebhooksServiceSessionInfoFetcher()
 	webhookIDFetcher := httpserver.ProvideWebhooksServiceWebhookIDFetcher(logger)
-	webhooksService, err := webhooks.ProvideWebhooksService(logger, webhookDataManager, webhookAuditManager, webhooksUserIDFetcher, webhookIDFetcher, encoderDecoder, unitCounterProvider)
+	webhooksService, err := webhooks.ProvideWebhooksService(logger, webhookDataManager, webhookAuditManager, webhooksSessionInfoFetcher, webhookIDFetcher, encoderDecoder, unitCounterProvider)
 	if err != nil {
 		return nil, err
 	}

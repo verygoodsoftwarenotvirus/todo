@@ -157,3 +157,36 @@ func (c *V1Client) ArchiveOAuth2Client(ctx context.Context, id uint64) error {
 
 	return c.executeRequest(ctx, req, nil)
 }
+
+// BuildGetAuditLogForOAuth2ClientRequest builds an HTTP request for fetching a list of audit log entries for an oauth2 client.
+func (c *V1Client) BuildGetAuditLogForOAuth2ClientRequest(ctx context.Context, clientID uint64) (*http.Request, error) {
+	ctx, span := tracing.StartSpan(ctx, "BuildGetAuditLogForOAuth2ClientRequest")
+	defer span.End()
+
+	uri := c.BuildURL(
+		nil,
+		oauth2ClientsBasePath,
+		strconv.FormatUint(clientID, 10),
+		"audit",
+	)
+	tracing.AttachRequestURIToSpan(span, uri)
+
+	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+}
+
+// GetAuditLogForOAuth2Client retrieves a list of audit log entries pertaining to an oauth2 client.
+func (c *V1Client) GetAuditLogForOAuth2Client(ctx context.Context, clientID uint64) (entries []models.AuditLogEntry, err error) {
+	ctx, span := tracing.StartSpan(ctx, "GetAuditLogForOAuth2Client")
+	defer span.End()
+
+	req, err := c.BuildGetAuditLogForOAuth2ClientRequest(ctx, clientID)
+	if err != nil {
+		return nil, fmt.Errorf("building request: %w", err)
+	}
+
+	if retrieveErr := c.retrieve(ctx, req, &entries); retrieveErr != nil {
+		return nil, retrieveErr
+	}
+
+	return entries, nil
+}

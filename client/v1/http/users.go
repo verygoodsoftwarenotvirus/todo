@@ -202,3 +202,36 @@ func (c *V1Client) VerifyTOTPSecret(ctx context.Context, userID uint64, token st
 
 	return nil
 }
+
+// BuildGetAuditLogForUserRequest builds an HTTP request for fetching a list of audit log entries for a user.
+func (c *V1Client) BuildGetAuditLogForUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
+	ctx, span := tracing.StartSpan(ctx, "BuildGetAuditLogForUserRequest")
+	defer span.End()
+
+	uri := c.BuildURL(
+		nil,
+		usersBasePath,
+		strconv.FormatUint(userID, 10),
+		"audit",
+	)
+	tracing.AttachRequestURIToSpan(span, uri)
+
+	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+}
+
+// GetAuditLogForUser retrieves a list of audit log entries pertaining to a user.
+func (c *V1Client) GetAuditLogForUser(ctx context.Context, userID uint64) (entries []models.AuditLogEntry, err error) {
+	ctx, span := tracing.StartSpan(ctx, "GetAuditLogForUser")
+	defer span.End()
+
+	req, err := c.BuildGetAuditLogForUserRequest(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("building request: %w", err)
+	}
+
+	if retrieveErr := c.retrieve(ctx, req, &entries); retrieveErr != nil {
+		return nil, retrieveErr
+	}
+
+	return entries, nil
+}

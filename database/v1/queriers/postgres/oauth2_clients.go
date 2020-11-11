@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/audit"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
@@ -22,6 +23,8 @@ const (
 	oauth2ClientsTableRedirectURIColumn  = "redirect_uri"
 	oauth2ClientsTableClientSecretColumn = "client_secret"
 	oauth2ClientsTableOwnershipColumn    = "belongs_to_user"
+
+	auditLogOAuth2ClientAssignmentKey = "client_id"
 )
 
 var (
@@ -400,6 +403,16 @@ func (p *Postgres) ArchiveOAuth2Client(ctx context.Context, clientID, userID uin
 	return err
 }
 
+// LogOAuth2ClientCreationEvent saves a OAuth2ClientCreationEvent in the audit log table.
+func (p *Postgres) LogOAuth2ClientCreationEvent(ctx context.Context, client *models.OAuth2Client) {
+	p.createAuditLogEntry(ctx, audit.BuildOAuth2ClientCreationEventEntry(client))
+}
+
+// LogOAuth2ClientArchiveEvent saves a OAuth2ClientArchiveEvent in the audit log table.
+func (p *Postgres) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
+	p.createAuditLogEntry(ctx, audit.BuildOAuth2ClientArchiveEventEntry(userID, clientID))
+}
+
 // buildGetAuditLogEntriesForOAuth2ClientQuery constructs a SQL query for fetching audit log entries
 // associated with a given oauth2 client.
 func (p *Postgres) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (query string, args []interface{}) {
@@ -433,30 +446,4 @@ func (p *Postgres) GetAuditLogEntriesForOAuth2Client(ctx context.Context, client
 	}
 
 	return auditLogEntries, nil
-}
-
-// LogOAuth2ClientCreationEvent saves a OAuth2ClientCreationEvent in the audit log table.
-func (p *Postgres) LogOAuth2ClientCreationEvent(ctx context.Context, client *models.OAuth2Client) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.OAuth2ClientCreationEvent,
-		Context: map[string]interface{}{
-			auditLogOAuth2ClientAssignmentKey: client.ID,
-			auditLogCreationAssignmentKey:     client,
-		},
-	}
-
-	p.createAuditLogEntry(ctx, entry)
-}
-
-// LogOAuth2ClientArchiveEvent saves a OAuth2ClientArchiveEvent in the audit log table.
-func (p *Postgres) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.OAuth2ClientArchiveEvent,
-		Context: map[string]interface{}{
-			auditLogActionAssignmentKey:       userID,
-			auditLogOAuth2ClientAssignmentKey: clientID,
-		},
-	}
-
-	p.createAuditLogEntry(ctx, entry)
 }

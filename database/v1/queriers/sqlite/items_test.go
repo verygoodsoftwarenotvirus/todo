@@ -9,7 +9,9 @@ import (
 	"time"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/audit"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/converters"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -1050,13 +1052,8 @@ func TestSqlite_LogItemCreationEvent(T *testing.T) {
 		s, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeItem()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.ItemCreationEvent,
-			Context: map[string]interface{}{
-				auditLogItemAssignmentKey: exampleInput.ID,
-				"created":                 exampleInput,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildItemCreationEventEntry(exampleInput)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -1078,14 +1075,8 @@ func TestSqlite_LogItemUpdateEvent(T *testing.T) {
 		s, mockDB := buildTestService(t)
 		exampleChanges := []models.FieldChangeSummary{}
 		exampleInput := fakemodels.BuildFakeItem()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.ItemUpdateEvent,
-			Context: map[string]interface{}{
-				auditLogUserAssignmentKey: exampleInput.BelongsToUser,
-				"item_id":                 exampleInput.ID,
-				"changes":                 exampleChanges,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildItemUpdateEventEntry(exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -1107,13 +1098,8 @@ func TestSqlite_LogItemArchiveEvent(T *testing.T) {
 		s, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeItem()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.ItemArchiveEvent,
-			Context: map[string]interface{}{
-				auditLogUserAssignmentKey: exampleInput.BelongsToUser,
-				"item_id":                 exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildItemArchiveEventEntry(exampleInput.BelongsToUser, exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).

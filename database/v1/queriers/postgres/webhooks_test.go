@@ -9,7 +9,9 @@ import (
 	"testing"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/audit"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/converters"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -679,22 +681,17 @@ func TestPostgres_LogWebhookCreationEvent(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeWebhook()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.WebhookCreationEvent,
-			Context: map[string]interface{}{
-				auditLogWebhookAssignmentKey:  exampleInput.ID,
-				auditLogCreationAssignmentKey: exampleInput,
-			},
-		}
+		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleAuditLogEntryInput := audit.BuildWebhookCreationEventEntry(exampleWebhook)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
-		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleWebhook.ID, exampleWebhook.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(exampleRows)
 
-		p.LogWebhookCreationEvent(ctx, exampleInput)
+		p.LogWebhookCreationEvent(ctx, exampleWebhook)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -710,14 +707,8 @@ func TestPostgres_LogWebhookUpdateEvent(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		exampleChanges := []models.FieldChangeSummary{}
 		exampleInput := fakemodels.BuildFakeWebhook()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.WebhookUpdateEvent,
-			Context: map[string]interface{}{
-				auditLogActionAssignmentKey:  exampleInput.BelongsToUser,
-				auditLogWebhookAssignmentKey: exampleInput.ID,
-				auditLogChangesAssignmentKey: exampleChanges,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildWebhookUpdateEventEntry(exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
@@ -741,13 +732,8 @@ func TestPostgres_LogWebhookArchiveEvent(T *testing.T) {
 		p, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeWebhook()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.WebhookArchiveEvent,
-			Context: map[string]interface{}{
-				auditLogActionAssignmentKey:  exampleInput.BelongsToUser,
-				auditLogWebhookAssignmentKey: exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildWebhookArchiveEventEntry(exampleInput.BelongsToUser, exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)

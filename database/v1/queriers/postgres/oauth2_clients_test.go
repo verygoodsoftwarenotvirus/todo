@@ -10,7 +10,9 @@ import (
 	"time"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/audit"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/converters"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -833,13 +835,8 @@ func TestPostgres_LogOAuth2ClientCreationEvent(T *testing.T) {
 		p, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeOAuth2Client()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.OAuth2ClientCreationEvent,
-			Context: map[string]interface{}{
-				auditLogOAuth2ClientAssignmentKey: exampleInput.ID,
-				auditLogCreationAssignmentKey:     exampleInput,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildOAuth2ClientCreationEventEntry(exampleInput)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
@@ -863,13 +860,8 @@ func TestPostgres_LogOAuth2ClientArchiveEvent(T *testing.T) {
 		p, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeOAuth2Client()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.OAuth2ClientArchiveEvent,
-			Context: map[string]interface{}{
-				auditLogActionAssignmentKey:       exampleInput.BelongsToUser,
-				auditLogOAuth2ClientAssignmentKey: exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildOAuth2ClientArchiveEventEntry(exampleInput.BelongsToUser, exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)

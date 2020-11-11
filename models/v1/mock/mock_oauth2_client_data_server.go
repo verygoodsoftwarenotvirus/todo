@@ -65,3 +65,8 @@ func (m *OAuth2ClientDataServer) HandleTokenRequest(res http.ResponseWriter, req
 	args := m.Called(res, req)
 	return args.Error(0)
 }
+
+// AuditEntryHandler implements our interface requirements.
+func (m *OAuth2ClientDataServer) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
+}

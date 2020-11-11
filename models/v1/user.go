@@ -116,6 +116,7 @@ type (
 
 	// UserAuditManager describes a structure capable of .
 	UserAuditManager interface {
+		GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]AuditLogEntry, error)
 		LogUserCreationEvent(ctx context.Context, user *User)
 		LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64)
 		LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64)
@@ -131,6 +132,7 @@ type (
 		TOTPSecretVerificationInputMiddleware(next http.Handler) http.Handler
 
 		ListHandler(res http.ResponseWriter, req *http.Request)
+		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
 		CreateHandler(res http.ResponseWriter, req *http.Request)
 		ReadHandler(res http.ResponseWriter, req *http.Request)
 		SelfHandler(res http.ResponseWriter, req *http.Request)

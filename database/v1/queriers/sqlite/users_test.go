@@ -8,7 +8,9 @@ import (
 	"testing"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/audit"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/converters"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -764,19 +766,15 @@ func TestSqlite_LogUserCreationEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserCreationEvent,
-			Context: map[string]interface{}{
-				"user": exampleInput,
-			},
-		}
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleAuditLogEntryInput := audit.BuildUserCreationEventEntry(exampleUser)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogUserCreationEvent(ctx, exampleInput)
+		s.LogUserCreationEvent(ctx, exampleUser)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -791,19 +789,15 @@ func TestSqlite_LogUserVerifyTwoFactorSecretEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserVerifyTwoFactorSecretEvent,
-			Context: map[string]interface{}{
-				auditLogUserAssignmentKey: exampleInput.ID,
-			},
-		}
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleAuditLogEntryInput := audit.BuildUserVerifyTwoFactorSecretEventEntry(exampleUser.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogUserVerifyTwoFactorSecretEvent(ctx, exampleInput.ID)
+		s.LogUserVerifyTwoFactorSecretEvent(ctx, exampleUser.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -818,19 +812,15 @@ func TestSqlite_LogUserUpdateTwoFactorSecretEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserUpdateTwoFactorSecretEvent,
-			Context: map[string]interface{}{
-				auditLogUserAssignmentKey: exampleInput.ID,
-			},
-		}
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleAuditLogEntryInput := audit.BuildUserUpdateTwoFactorSecretEventEntry(exampleUser.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogUserUpdateTwoFactorSecretEvent(ctx, exampleInput.ID)
+		s.LogUserUpdateTwoFactorSecretEvent(ctx, exampleUser.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -846,12 +836,8 @@ func TestSqlite_LogUserUpdatePasswordEvent(T *testing.T) {
 		s, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserUpdatePasswordEvent,
-			Context: map[string]interface{}{
-				auditLogUserAssignmentKey: exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildUserUpdatePasswordEventEntry(exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -872,19 +858,15 @@ func TestSqlite_LogUserArchiveEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserArchiveEvent,
-			Context: map[string]interface{}{
-				auditLogUserAssignmentKey: exampleInput.ID,
-			},
-		}
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleAuditLogEntryInput := audit.BuildUserArchiveEventEntry(exampleUser.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogUserArchiveEvent(ctx, exampleInput.ID)
+		s.LogUserArchiveEvent(ctx, exampleUser.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

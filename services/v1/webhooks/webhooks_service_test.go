@@ -8,6 +8,7 @@ import (
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -19,7 +20,7 @@ func buildTestService() *Service {
 		logger:             noop.NewLogger(),
 		webhookCounter:     &mockmetrics.UnitCounter{},
 		webhookDataManager: &mockmodels.WebhookDataManager{},
-		userIDFetcher:      func(req *http.Request) uint64 { return 0 },
+		sessionInfoFetcher: func(req *http.Request) (*models.SessionInfo, error) { return &models.SessionInfo{}, nil },
 		webhookIDFetcher:   func(req *http.Request) uint64 { return 0 },
 		encoderDecoder:     &mockencoding.EncoderDecoder{},
 	}
@@ -39,7 +40,7 @@ func TestProvideWebhooksService(T *testing.T) {
 			noop.NewLogger(),
 			&mockmodels.WebhookDataManager{},
 			&mockmodels.AuditLogDataManager{},
-			func(req *http.Request) uint64 { return 0 },
+			func(req *http.Request) (*models.SessionInfo, error) { return &models.SessionInfo{}, nil },
 			func(req *http.Request) uint64 { return 0 },
 			&mockencoding.EncoderDecoder{},
 			ucp,
@@ -59,7 +60,7 @@ func TestProvideWebhooksService(T *testing.T) {
 			noop.NewLogger(),
 			&mockmodels.WebhookDataManager{},
 			&mockmodels.AuditLogDataManager{},
-			func(req *http.Request) uint64 { return 0 },
+			func(req *http.Request) (*models.SessionInfo, error) { return &models.SessionInfo{}, nil },
 			func(req *http.Request) uint64 { return 0 },
 			&mockencoding.EncoderDecoder{},
 			ucp,

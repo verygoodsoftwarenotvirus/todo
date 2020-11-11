@@ -212,3 +212,36 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	res.WriteHeader(http.StatusNoContent)
 }
+
+// AuditEntryHandler returns a GET handler that returns all audit log entries related to an item.
+func (s *Service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := tracing.StartSpan(req.Context(), "AuditEntryHandler")
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+	logger.Debug("AuditEntryHandler invoked")
+
+	userID := s.fetchUserID(req)
+	tracing.AttachUserIDToSpan(span, userID)
+	logger = logger.WithValue("user_id", userID)
+
+	// determine item ID.
+	oauth2ClientID := s.urlClientIDExtractor(req)
+	tracing.AttachOAuth2ClientDatabaseIDToSpan(span, oauth2ClientID)
+	logger = logger.WithValue("oauth2_client_id", oauth2ClientID)
+
+	x, err := s.auditLog.GetAuditLogEntriesForOAuth2Client(ctx, oauth2ClientID)
+	if errors.Is(err, sql.ErrNoRows) {
+		s.encoderDecoder.EncodeNotFoundResponse(res)
+		return
+	} else if err != nil {
+		logger.Error(err, "error encountered fetching items")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		return
+	}
+
+	logger.WithValue("entry_count", len(x)).Debug("returning from AuditEntryHandler")
+
+	// encode our response and peace.
+	s.encoderDecoder.EncodeResponse(res, x)
+}

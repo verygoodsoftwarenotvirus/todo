@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/audit"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
@@ -404,4 +405,57 @@ func (m *MariaDB) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint
 	query, args := m.buildArchiveOAuth2ClientQuery(clientID, userID)
 	_, err := m.db.ExecContext(ctx, query, args...)
 	return err
+}
+
+// LogOAuth2ClientCreationEvent saves a OAuth2ClientCreationEvent in the audit log table.
+func (m *MariaDB) LogOAuth2ClientCreationEvent(ctx context.Context, client *models.OAuth2Client) {
+	m.createAuditLogEntry(ctx, audit.BuildOAuth2ClientCreationEventEntry(client))
+}
+
+// LogOAuth2ClientArchiveEvent saves a OAuth2ClientArchiveEvent in the audit log table.
+func (m *MariaDB) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
+	m.createAuditLogEntry(ctx, audit.BuildOAuth2ClientArchiveEventEntry(userID, clientID))
+}
+
+// buildGetAuditLogEntriesForOAuth2ClientQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+func (m *MariaDB) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (query string, args []interface{}) {
+	var err error
+
+	builder := m.sqlBuilder.
+		Select(auditLogEntriesTableColumns...).
+		From(auditLogEntriesTableName).
+		Where(
+			squirrel.Expr(
+				fmt.Sprintf(
+					`JSON_CONTAINS(%s.%s, '%d', '$.%s')`,
+					auditLogEntriesTableName,
+					auditLogEntriesTableContextColumn,
+					clientID,
+					audit.OAuth2ClientAssignmentKey,
+				),
+			),
+		).
+		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
+
+	query, args, err = builder.ToSql()
+	m.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// GetAuditLogEntriesForOAuth2Client fetches an audit log entry from the database.
+func (m *MariaDB) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]models.AuditLogEntry, error) {
+	query, args := m.buildGetAuditLogEntriesForOAuth2ClientQuery(clientID)
+
+	rows, err := m.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
+	}
+
+	auditLogEntries, err := m.scanAuditLogEntries(rows)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return auditLogEntries, nil
 }

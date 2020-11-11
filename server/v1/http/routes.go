@@ -20,6 +20,7 @@ import (
 
 const (
 	root             = "/"
+	auditRoute       = "/audit"
 	searchRoot       = "/search"
 	numericIDPattern = "/{%s:[0-9]+}"
 	maxCORSAge       = 300
@@ -147,7 +148,6 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 					http.Error(res, err.Error(), http.StatusBadRequest)
 				}
 			})
-
 		oauth2Router.Post("/token", func(res http.ResponseWriter, req *http.Request) {
 			if err := s.oauth2ClientsService.HandleTokenRequest(res, req); err != nil {
 				http.Error(res, err.Error(), http.StatusBadRequest)
@@ -159,32 +159,43 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 		Route("/api/v1", func(v1Router chi.Router) {
 			// Users
 			v1Router.Route("/users", func(usersRouter chi.Router) {
-				userIDPattern := fmt.Sprintf(numericIDPattern, usersservice.UserIDURIParamKey)
-
-				usersRouter.With(s.authService.AdminMiddleware).Get(root, s.usersService.ListHandler)
+				singleUserRoute := fmt.Sprintf(numericIDPattern, usersservice.UserIDURIParamKey)
 				usersRouter.Get("/self", s.usersService.SelfHandler)
-				usersRouter.With(s.authService.AdminMiddleware).Get(userIDPattern, s.usersService.ReadHandler)
-				usersRouter.Delete(userIDPattern, s.usersService.ArchiveHandler)
+				usersRouter.With(s.authService.AdminMiddleware).Get(root, s.usersService.ListHandler)
+
+				usersRouter.Route(singleUserRoute, func(singleUserRouter chi.Router) {
+					singleUserRouter.With(s.authService.AdminMiddleware).Get(root, s.usersService.ReadHandler)
+					singleUserRouter.Delete(root, s.usersService.ArchiveHandler)
+					singleUserRouter.With(s.authService.AdminMiddleware).Get(auditRoute, s.webhooksService.AuditEntryHandler)
+				})
 			})
 
 			// OAuth2 Clients.
 			v1Router.Route("/oauth2/clients", func(clientRouter chi.Router) {
-				sr := fmt.Sprintf(numericIDPattern, oauth2clientsservice.OAuth2ClientIDURIParamKey)
+				singleClientRoute := fmt.Sprintf(numericIDPattern, oauth2clientsservice.OAuth2ClientIDURIParamKey)
+				clientRouter.Get(root, s.oauth2ClientsService.ListHandler)
 				// CreateHandler is not bound to an OAuth2 authentication token.
 				// UpdateHandler not supported for OAuth2 clients.
-				clientRouter.Get(sr, s.oauth2ClientsService.ReadHandler)
-				clientRouter.Delete(sr, s.oauth2ClientsService.ArchiveHandler)
-				clientRouter.Get(root, s.oauth2ClientsService.ListHandler)
+
+				clientRouter.Route(singleClientRoute, func(singleClientRouter chi.Router) {
+					singleClientRouter.Get(root, s.oauth2ClientsService.ReadHandler)
+					singleClientRouter.Delete(root, s.oauth2ClientsService.ArchiveHandler)
+					singleClientRouter.With(s.authService.AdminMiddleware).Get(auditRoute, s.webhooksService.AuditEntryHandler)
+				})
 			})
 
 			// Webhooks.
 			v1Router.Route("/webhooks", func(webhookRouter chi.Router) {
-				sr := fmt.Sprintf(numericIDPattern, webhooksservice.WebhookIDURIParamKey)
+				singleWebhookRoute := fmt.Sprintf(numericIDPattern, webhooksservice.WebhookIDURIParamKey)
 				webhookRouter.With(s.webhooksService.CreationInputMiddleware).Post(root, s.webhooksService.CreateHandler)
-				webhookRouter.Get(sr, s.webhooksService.ReadHandler)
-				webhookRouter.With(s.webhooksService.UpdateInputMiddleware).Put(sr, s.webhooksService.UpdateHandler)
-				webhookRouter.Delete(sr, s.webhooksService.ArchiveHandler)
 				webhookRouter.Get(root, s.webhooksService.ListHandler)
+
+				webhookRouter.Route(singleWebhookRoute, func(singleWebhookRouter chi.Router) {
+					singleWebhookRouter.Get(root, s.webhooksService.ReadHandler)
+					singleWebhookRouter.Delete(root, s.webhooksService.ArchiveHandler)
+					singleWebhookRouter.With(s.webhooksService.UpdateInputMiddleware).Put(root, s.webhooksService.UpdateHandler)
+					singleWebhookRouter.With(s.authService.AdminMiddleware).Get(auditRoute, s.webhooksService.AuditEntryHandler)
+				})
 			})
 
 			// Items
@@ -201,7 +212,7 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 					singleItemRouter.Head(root, s.itemsService.ExistenceHandler)
 					singleItemRouter.Delete(root, s.itemsService.ArchiveHandler)
 					singleItemRouter.With(s.itemsService.UpdateInputMiddleware).Put(root, s.itemsService.UpdateHandler)
-					singleItemRouter.With(s.authService.AdminMiddleware).Get("/audit", s.itemsService.AuditEntryHandler)
+					singleItemRouter.With(s.authService.AdminMiddleware).Get(auditRoute, s.itemsService.AuditEntryHandler)
 				})
 			})
 		})

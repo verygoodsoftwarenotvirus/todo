@@ -1,6 +1,7 @@
 package fakemodels
 
 import (
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/audit"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	fake "github.com/brianvoe/gofakeit/v5"
@@ -10,7 +11,7 @@ import (
 func BuildFakeAuditLogEntry() *models.AuditLogEntry {
 	return &models.AuditLogEntry{
 		ID:        fake.Uint64(),
-		EventType: models.SuccessfulLoginEvent,
+		EventType: audit.SuccessfulLoginEvent,
 		Context:   map[string]interface{}{"fake": "true"},
 		CreatedOn: uint64(uint32(fake.Date().Unix())),
 	}

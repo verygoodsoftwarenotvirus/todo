@@ -16,14 +16,6 @@ const (
 	auditLogEntriesTableName            = "audit_log"
 	auditLogEntriesTableEventTypeColumn = "event_type"
 	auditLogEntriesTableContextColumn   = "context"
-
-	auditLogUserAssignmentKey     = "performed_by"
-	auditLogChangesAssignmentKey  = "changes"
-	auditLogCreationAssignmentKey = "created"
-
-	auditLogItemAssignmentKey         = "item_id"
-	auditLogOAuth2ClientAssignmentKey = "client_id"
-	auditLogWebhookAssignmentKey      = "webhook_id"
 )
 
 var (

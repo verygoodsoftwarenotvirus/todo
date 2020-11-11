@@ -69,6 +69,7 @@ type (
 
 	// WebhookAuditManager describes a structure capable of .
 	WebhookAuditManager interface {
+		GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]AuditLogEntry, error)
 		LogWebhookCreationEvent(ctx context.Context, webhook *Webhook)
 		LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []FieldChangeSummary)
 		LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64)
@@ -79,6 +80,7 @@ type (
 		CreationInputMiddleware(next http.Handler) http.Handler
 		UpdateInputMiddleware(next http.Handler) http.Handler
 
+		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
 		ListHandler(res http.ResponseWriter, req *http.Request)
 		CreateHandler(res http.ResponseWriter, req *http.Request)
 		ReadHandler(res http.ResponseWriter, req *http.Request)

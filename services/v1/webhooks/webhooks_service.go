@@ -33,7 +33,7 @@ type (
 		webhookCounter     metrics.UnitCounter
 		webhookDataManager models.WebhookDataManager
 		auditLog           models.WebhookAuditManager
-		userIDFetcher      UserIDFetcher
+		sessionInfoFetcher SessionInfoFetcher
 		webhookIDFetcher   WebhookIDFetcher
 		encoderDecoder     encoding.EncoderDecoder
 	}
@@ -43,6 +43,9 @@ type (
 
 	// WebhookIDFetcher is a function that fetches webhook IDs.
 	WebhookIDFetcher func(*http.Request) uint64
+
+	// SessionInfoFetcher is a function that fetches user IDs.
+	SessionInfoFetcher func(*http.Request) (*models.SessionInfo, error)
 )
 
 // ProvideWebhooksService builds a new WebhooksService.
@@ -50,7 +53,7 @@ func ProvideWebhooksService(
 	logger logging.Logger,
 	webhookDataManager models.WebhookDataManager,
 	auditLog models.WebhookAuditManager,
-	userIDFetcher UserIDFetcher,
+	sessionInfoFetcher SessionInfoFetcher,
 	webhookIDFetcher WebhookIDFetcher,
 	encoder encoding.EncoderDecoder,
 	webhookCounterProvider metrics.UnitCounterProvider,
@@ -66,7 +69,7 @@ func ProvideWebhooksService(
 		auditLog:           auditLog,
 		encoderDecoder:     encoder,
 		webhookCounter:     webhookCounter,
-		userIDFetcher:      userIDFetcher,
+		sessionInfoFetcher: sessionInfoFetcher,
 		webhookIDFetcher:   webhookIDFetcher,
 	}
 

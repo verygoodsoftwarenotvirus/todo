@@ -155,3 +155,13 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 
 	return c.querier.ArchiveUser(ctx, userID)
 }
+
+// GetAuditLogEntriesForUser fetches a list of audit log entries from the database that relate to a given user.
+func (c *Client) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]models.AuditLogEntry, error) {
+	ctx, span := tracing.StartSpan(ctx, "GetAuditLogEntriesForUser")
+	defer span.End()
+
+	c.logger.Debug("GetAuditLogEntriesForUser called")
+
+	return c.querier.GetAuditLogEntriesForUser(ctx, userID)
+}

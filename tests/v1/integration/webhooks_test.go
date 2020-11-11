@@ -176,4 +176,42 @@ func TestWebhooks(test *testing.T) {
 			assert.NoError(t, err)
 		})
 	})
+
+	test.Run("Auditing", func(t *testing.T) {
+		t.Run("it should return an error when trying to audit something that does not exist", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			exampleWebhook := fakemodels.BuildFakeWebhook()
+			exampleWebhook.ID = nonexistentID
+
+			x, err := adminClient.GetAuditLogForWebhook(ctx, exampleWebhook.ID)
+			assert.NoError(t, err)
+			assert.Empty(t, x)
+		})
+
+		t.Run("it should be auditable", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			// Create webhook.
+			exampleWebhook := fakemodels.BuildFakeWebhook()
+			exampleWebhookInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+			premade, err := todoClient.CreateWebhook(ctx, exampleWebhookInput)
+			checkValueAndError(t, premade, err)
+
+			// Change webhook.
+			premade.Name = reverse(premade.Name)
+			exampleWebhook.Name = premade.Name
+			assert.NoError(t, todoClient.UpdateWebhook(ctx, premade))
+
+			// fetch audit log entries
+			actual, err := adminClient.GetAuditLogForWebhook(ctx, premade.ID)
+			assert.NoError(t, err)
+			assert.Len(t, actual, 2)
+
+			// Clean up item.
+			assert.NoError(t, todoClient.ArchiveWebhook(ctx, premade.ID))
+		})
+	})
 }

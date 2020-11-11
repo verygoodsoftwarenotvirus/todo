@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/audit"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
@@ -436,110 +437,90 @@ func (s *Sqlite) ArchiveUser(ctx context.Context, userID uint64) error {
 	return err
 }
 
-// LogUserCreationEvent saves a UserCreationEvent in the audit log table.
-func (s *Sqlite) LogUserCreationEvent(ctx context.Context, user *models.User) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.UserCreationEvent,
-		Context: map[string]interface{}{
-			"user": user,
-		},
-	}
-
-	s.createAuditLogEntry(ctx, entry)
-}
-
-// LogUserVerifyTwoFactorSecretEvent saves a UserVerifyTwoFactorSecretEvent in the audit log table.
-func (s *Sqlite) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.UserVerifyTwoFactorSecretEvent,
-		Context: map[string]interface{}{
-			auditLogUserAssignmentKey: userID,
-		},
-	}
-
-	s.createAuditLogEntry(ctx, entry)
-}
-
-// LogUserUpdateTwoFactorSecretEvent saves a UserUpdateTwoFactorSecretEvent in the audit log table.
-func (s *Sqlite) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.UserUpdateTwoFactorSecretEvent,
-		Context: map[string]interface{}{
-			auditLogUserAssignmentKey: userID,
-		},
-	}
-
-	s.createAuditLogEntry(ctx, entry)
-}
-
-// LogUserUpdatePasswordEvent saves a UserUpdatePasswordEvent in the audit log table.
-func (s *Sqlite) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.UserUpdatePasswordEvent,
-		Context: map[string]interface{}{
-			auditLogUserAssignmentKey: userID,
-		},
-	}
-
-	s.createAuditLogEntry(ctx, entry)
-}
-
-// LogUserArchiveEvent saves a UserArchiveEvent in the audit log table.
-func (s *Sqlite) LogUserArchiveEvent(ctx context.Context, userID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.UserArchiveEvent,
-		Context: map[string]interface{}{
-			auditLogUserAssignmentKey: userID,
-		},
-	}
-
-	s.createAuditLogEntry(ctx, entry)
+// LogCycleCookieSecretEvent saves a CycleCookieSecretEvent in the audit log table.
+func (s *Sqlite) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
+	s.createAuditLogEntry(ctx, audit.BuildCycleCookieSecretEvent(userID))
 }
 
 // LogSuccessfulLoginEvent saves a SuccessfulLoginEvent in the audit log table.
 func (s *Sqlite) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.SuccessfulLoginEvent,
-		Context: map[string]interface{}{
-			auditLogUserAssignmentKey: userID,
-		},
-	}
-
-	s.createAuditLogEntry(ctx, entry)
+	s.createAuditLogEntry(ctx, audit.BuildSuccessfulLoginEventEntry(userID))
 }
 
 // LogUnsuccessfulLoginBadPasswordEvent saves a UnsuccessfulLoginBadPasswordEvent in the audit log table.
 func (s *Sqlite) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.UnsuccessfulLoginBadPasswordEvent,
-		Context: map[string]interface{}{
-			auditLogUserAssignmentKey: userID,
-		},
-	}
-
-	s.createAuditLogEntry(ctx, entry)
+	s.createAuditLogEntry(ctx, audit.BuildUnsuccessfulLoginBadPasswordEventEntry(userID))
 }
 
 // LogUnsuccessfulLoginBad2FATokenEvent saves a UnsuccessfulLoginBad2FATokenEvent in the audit log table.
 func (s *Sqlite) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.UnsuccessfulLoginBad2FATokenEvent,
-		Context: map[string]interface{}{
-			auditLogUserAssignmentKey: userID,
-		},
-	}
-
-	s.createAuditLogEntry(ctx, entry)
+	s.createAuditLogEntry(ctx, audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(userID))
 }
 
 // LogLogoutEvent saves a LogoutEvent in the audit log table.
 func (s *Sqlite) LogLogoutEvent(ctx context.Context, userID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.LogoutEvent,
-		Context: map[string]interface{}{
-			auditLogUserAssignmentKey: userID,
-		},
+	s.createAuditLogEntry(ctx, audit.BuildLogoutEventEntry(userID))
+}
+
+// LogUserCreationEvent saves a UserCreationEvent in the audit log table.
+func (s *Sqlite) LogUserCreationEvent(ctx context.Context, user *models.User) {
+	s.createAuditLogEntry(ctx, audit.BuildUserCreationEventEntry(user))
+}
+
+// LogUserVerifyTwoFactorSecretEvent saves a UserVerifyTwoFactorSecretEvent in the audit log table.
+func (s *Sqlite) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	s.createAuditLogEntry(ctx, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID))
+}
+
+// LogUserUpdateTwoFactorSecretEvent saves a UserUpdateTwoFactorSecretEvent in the audit log table.
+func (s *Sqlite) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	s.createAuditLogEntry(ctx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID))
+}
+
+// LogUserUpdatePasswordEvent saves a UserUpdatePasswordEvent in the audit log table.
+func (s *Sqlite) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
+	s.createAuditLogEntry(ctx, audit.BuildUserUpdatePasswordEventEntry(userID))
+}
+
+// LogUserArchiveEvent saves a UserArchiveEvent in the audit log table.
+func (s *Sqlite) LogUserArchiveEvent(ctx context.Context, userID uint64) {
+	s.createAuditLogEntry(ctx, audit.BuildUserArchiveEventEntry(userID))
+}
+
+// buildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+func (s *Sqlite) buildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{}) {
+	var err error
+
+	userIDKey := fmt.Sprintf("json_extract(%s.%s, '$.%s')", auditLogEntriesTableName, auditLogEntriesTableContextColumn, audit.UserAssignmentKey)
+	performedByIDKey := fmt.Sprintf("json_extract(%s.%s, '$.%s')", auditLogEntriesTableName, auditLogEntriesTableContextColumn, audit.ActorAssignmentKey)
+	builder := s.sqlBuilder.
+		Select(auditLogEntriesTableColumns...).
+		From(auditLogEntriesTableName).
+		Where(squirrel.Eq{
+			userIDKey:        userID,
+			performedByIDKey: userID,
+		}).
+		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
+
+	query, args, err = builder.ToSql()
+	s.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// GetAuditLogEntriesForUser fetches an audit log entry from the database.
+func (s *Sqlite) GetAuditLogEntriesForUser(ctx context.Context, itemID uint64) ([]models.AuditLogEntry, error) {
+	query, args := s.buildGetAuditLogEntriesForUserQuery(itemID)
+
+	rows, err := s.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
 	}
 
-	s.createAuditLogEntry(ctx, entry)
+	auditLogEntries, err := s.scanAuditLogEntries(rows)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return auditLogEntries, nil
 }

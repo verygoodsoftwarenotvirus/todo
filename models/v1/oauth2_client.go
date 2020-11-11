@@ -66,6 +66,7 @@ type (
 
 	// OAuth2ClientAuditManager describes a structure capable of .
 	OAuth2ClientAuditManager interface {
+		GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]AuditLogEntry, error)
 		LogOAuth2ClientCreationEvent(ctx context.Context, client *OAuth2Client)
 		LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64)
 	}
@@ -77,6 +78,7 @@ type (
 		ReadHandler(res http.ResponseWriter, req *http.Request)
 		// There is deliberately no update function.
 		ArchiveHandler(res http.ResponseWriter, req *http.Request)
+		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
 
 		CreationInputMiddleware(next http.Handler) http.Handler
 		OAuth2ClientInfoMiddleware(next http.Handler) http.Handler

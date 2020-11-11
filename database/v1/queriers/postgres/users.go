@@ -8,6 +8,7 @@ import (
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
+	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/audit"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
@@ -438,112 +439,91 @@ func (p *Postgres) ArchiveUser(ctx context.Context, userID uint64) error {
 	return err
 }
 
+// LogCycleCookieSecretEvent saves a CycleCookieSecretEvent in the audit log table.
+func (p *Postgres) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
+	p.createAuditLogEntry(ctx, audit.BuildCycleCookieSecretEvent(userID))
+}
+
 // LogSuccessfulLoginEvent saves a SuccessfulLoginEvent in the audit log table.
 func (p *Postgres) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.SuccessfulLoginEvent,
-		Context: map[string]interface{}{
-			auditLogActionAssignmentKey: userID,
-		},
-	}
-
-	p.createAuditLogEntry(ctx, entry)
+	p.createAuditLogEntry(ctx, audit.BuildSuccessfulLoginEventEntry(userID))
 }
 
 // LogUnsuccessfulLoginBadPasswordEvent saves a UnsuccessfulLoginBadPasswordEvent in the audit log table.
 func (p *Postgres) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.UnsuccessfulLoginBadPasswordEvent,
-		Context: map[string]interface{}{
-			auditLogActionAssignmentKey: userID,
-		},
-	}
-
-	p.createAuditLogEntry(ctx, entry)
+	p.createAuditLogEntry(ctx, audit.BuildUnsuccessfulLoginBadPasswordEventEntry(userID))
 }
 
 // LogUnsuccessfulLoginBad2FATokenEvent saves a UnsuccessfulLoginBad2FATokenEvent in the audit log table.
 func (p *Postgres) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.UnsuccessfulLoginBad2FATokenEvent,
-		Context: map[string]interface{}{
-			auditLogActionAssignmentKey: userID,
-		},
-	}
-
-	p.createAuditLogEntry(ctx, entry)
+	p.createAuditLogEntry(ctx, audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(userID))
 }
 
 // LogLogoutEvent saves a LogoutEvent in the audit log table.
 func (p *Postgres) LogLogoutEvent(ctx context.Context, userID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.LogoutEvent,
-		Context: map[string]interface{}{
-			auditLogActionAssignmentKey: userID,
-		},
-	}
-
-	p.createAuditLogEntry(ctx, entry)
+	p.createAuditLogEntry(ctx, audit.BuildLogoutEventEntry(userID))
 }
 
 // LogUserCreationEvent saves a UserCreationEvent in the audit log table.
 func (p *Postgres) LogUserCreationEvent(ctx context.Context, user *models.User) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.UserCreationEvent,
-		Context: map[string]interface{}{
-			auditLogUserAssignmentKey:     user.ID,
-			auditLogCreationAssignmentKey: user,
-		},
-	}
-
-	p.createAuditLogEntry(ctx, entry)
+	p.createAuditLogEntry(ctx, audit.BuildUserCreationEventEntry(user))
 }
 
 // LogUserVerifyTwoFactorSecretEvent saves a UserVerifyTwoFactorSecretEvent in the audit log table.
 func (p *Postgres) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.UserVerifyTwoFactorSecretEvent,
-		Context: map[string]interface{}{
-			auditLogActionAssignmentKey: userID,
-		},
-	}
-
-	p.createAuditLogEntry(ctx, entry)
+	p.createAuditLogEntry(ctx, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID))
 }
 
 // LogUserUpdateTwoFactorSecretEvent saves a UserUpdateTwoFactorSecretEvent in the audit log table.
 func (p *Postgres) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.UserUpdateTwoFactorSecretEvent,
-		Context: map[string]interface{}{
-			auditLogActionAssignmentKey: userID,
-		},
-	}
-
-	p.createAuditLogEntry(ctx, entry)
+	p.createAuditLogEntry(ctx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID))
 }
 
 // LogUserUpdatePasswordEvent saves a UserUpdatePasswordEvent in the audit log table.
 func (p *Postgres) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.UserUpdatePasswordEvent,
-		Context: map[string]interface{}{
-			auditLogActionAssignmentKey: userID,
-		},
-	}
-
-	p.createAuditLogEntry(ctx, entry)
+	p.createAuditLogEntry(ctx, audit.BuildUserUpdatePasswordEventEntry(userID))
 }
 
 // LogUserArchiveEvent saves a UserArchiveEvent in the audit log table.
 func (p *Postgres) LogUserArchiveEvent(ctx context.Context, userID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.UserArchiveEvent,
-		Context: map[string]interface{}{
-			auditLogUserAssignmentKey:   userID,
-			auditLogActionAssignmentKey: userID,
-		},
+	p.createAuditLogEntry(ctx, audit.BuildUserArchiveEventEntry(userID))
+}
+
+// buildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching audit log entries
+// associated with a given user.
+func (p *Postgres) buildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{}) {
+	var err error
+
+	userIDKey := fmt.Sprintf("%s.%s->'%s'", auditLogEntriesTableName, auditLogEntriesTableContextColumn, auditLogItemAssignmentKey)
+	performedByIDKey := fmt.Sprintf("%s.%s->'%s'", auditLogEntriesTableName, auditLogEntriesTableContextColumn, audit.ActorAssignmentKey)
+	builder := p.sqlBuilder.
+		Select(auditLogEntriesTableColumns...).
+		From(auditLogEntriesTableName).
+		Where(squirrel.Eq{
+			userIDKey:        userID,
+			performedByIDKey: userID,
+		}).
+		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
+
+	query, args, err = builder.ToSql()
+	p.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// GetAuditLogEntriesForUser fetches a audit log entries for a given user from the database.
+func (p *Postgres) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]models.AuditLogEntry, error) {
+	query, args := p.buildGetAuditLogEntriesForUserQuery(userID)
+
+	rows, err := p.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
 	}
 
-	p.createAuditLogEntry(ctx, entry)
+	auditLogEntries, err := p.scanAuditLogEntries(rows)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return auditLogEntries, nil
 }

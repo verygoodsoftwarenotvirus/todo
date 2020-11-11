@@ -1,10 +1,13 @@
 package integration
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/base32"
+	"encoding/json"
 	"net/http"
+	"net/url"
 	"testing"
 	"time"
 
@@ -169,6 +172,78 @@ func TestUsers(test *testing.T) {
 			// Execute.
 			err = todoClient.ArchiveUser(ctx, u.ID)
 			assert.NoError(t, err)
+		})
+	})
+
+	test.Run("Auditing", func(t *testing.T) {
+		t.Run("it should return an error when trying to audit something that does not exist", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			exampleUser := fakemodels.BuildFakeUser()
+			exampleUser.ID = nonexistentID
+
+			x, err := adminClient.GetAuditLogForUser(ctx, exampleUser.ID)
+			assert.NoError(t, err)
+			assert.Empty(t, x)
+		})
+
+		t.Run("it should be auditable", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			// Create user.
+			exampleUser := fakemodels.BuildFakeUser()
+			exampleUserInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+			updateTo := fakemodels.BuildFakeUser()
+			userUpdateInput := fakemodels.BuildFakeUserCreationInputFromUser(updateTo)
+			createdUser, err := todoClient.CreateUser(ctx, exampleUserInput)
+			checkValueAndError(t, createdUser, err)
+
+			twoFactorSecret, tfsParseErr := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(createdUser.TwoFactorQRCode)
+			require.NoError(t, tfsParseErr)
+
+			token, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
+			checkValueAndError(t, token, err)
+
+			// fetch login cookie
+			cookie, loginErr := todoClient.Login(ctx, &models.UserLoginInput{
+				Username:  createdUser.Username,
+				Password:  exampleUserInput.Password,
+				TOTPToken: token,
+			})
+			require.NoError(t, loginErr)
+
+			r := &models.PasswordUpdateInput{
+				CurrentPassword: exampleUserInput.Password,
+				TOTPToken:       token,
+				NewPassword:     userUpdateInput.Password,
+			}
+			out, err := json.Marshal(r)
+			require.NoError(t, err)
+			body := bytes.NewReader(out)
+
+			u, err := url.Parse(todoClient.BuildURL(nil))
+			require.NoError(t, err)
+			u.Path = "/users/password/new"
+
+			req, err := http.NewRequestWithContext(ctx, http.MethodPut, u.String(), body)
+			checkValueAndError(t, req, err)
+			req.AddCookie(cookie)
+
+			// execute password update request.
+			res, err := todoClient.PlainClient().Do(req)
+			checkValueAndError(t, res, err)
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+			assert.Equal(t, "/auth/login", res.Request.URL.Path)
+
+			// fetch audit log entries
+			actual, err := adminClient.GetAuditLogForUser(ctx, createdUser.ID)
+			assert.NoError(t, err)
+			assert.Len(t, actual, 2)
+
+			// Clean up item.
+			assert.NoError(t, todoClient.ArchiveUser(ctx, createdUser.ID))
 		})
 	})
 }

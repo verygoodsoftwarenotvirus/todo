@@ -51,3 +51,8 @@ func (m *WebhookDataServer) UpdateHandler(res http.ResponseWriter, req *http.Req
 func (m *WebhookDataServer) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
+
+// AuditEntryHandler implements our interface requirements.
+func (m *WebhookDataServer) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
+}

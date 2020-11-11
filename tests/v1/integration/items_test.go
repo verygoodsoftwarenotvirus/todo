@@ -306,13 +306,14 @@ func TestItems(test *testing.T) {
 
 			// Create item.
 			exampleItem := fakemodels.BuildFakeItem()
-			updateTo := fakemodels.BuildFakeItem()
 			exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+			updateTo := fakemodels.BuildFakeItem()
+			updateToInput := fakemodels.BuildFakeItemUpdateInputFromItem(exampleItem)
 			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
 			checkValueAndError(t, createdItem, err)
 
 			// Change item.
-			assert.NotEmpty(t, createdItem.Update(updateTo.ToUpdateInput()))
+			assert.NotEmpty(t, createdItem.Update(updateToInput))
 			err = todoClient.UpdateItem(ctx, createdItem)
 			assert.NoError(t, err)
 
@@ -323,6 +324,29 @@ func TestItems(test *testing.T) {
 			// Assert item equality.
 			checkItemEquality(t, updateTo, actual)
 			assert.NotNil(t, actual.LastUpdatedOn)
+
+			// Clean up item.
+			assert.NoError(t, todoClient.ArchiveItem(ctx, createdItem.ID))
+		})
+	})
+
+	test.Run("Deleting", func(t *testing.T) {
+		t.Run("it should return an error when trying to delete something that does not exist", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			assert.Error(t, todoClient.ArchiveItem(ctx, nonexistentID))
+		})
+
+		t.Run("should be able to be deleted", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			// Create item.
+			exampleItem := fakemodels.BuildFakeItem()
+			exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
+			checkValueAndError(t, createdItem, err)
 
 			// Clean up item.
 			assert.NoError(t, todoClient.ArchiveItem(ctx, createdItem.ID))
@@ -348,13 +372,14 @@ func TestItems(test *testing.T) {
 
 			// Create item.
 			exampleItem := fakemodels.BuildFakeItem()
-			updateTo := fakemodels.BuildFakeItem()
 			exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+			updateTo := fakemodels.BuildFakeItem()
+			updateToInput := fakemodels.BuildFakeItemUpdateInputFromItem(exampleItem)
 			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
 			checkValueAndError(t, createdItem, err)
 
 			// Change item.
-			expectedChanges := createdItem.Update(updateTo.ToUpdateInput())
+			expectedChanges := createdItem.Update(updateToInput)
 			require.NotEmpty(t, expectedChanges)
 			err = todoClient.UpdateItem(ctx, createdItem)
 			assert.NoError(t, err)
@@ -371,29 +396,6 @@ func TestItems(test *testing.T) {
 			actual, err := adminClient.GetAuditLogForItem(ctx, updated.ID)
 			assert.NoError(t, err)
 			assert.Len(t, actual, 2)
-
-			// Clean up item.
-			assert.NoError(t, todoClient.ArchiveItem(ctx, createdItem.ID))
-		})
-	})
-
-	test.Run("Deleting", func(t *testing.T) {
-		t.Run("it should return an error when trying to delete something that does not exist", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
-			defer span.End()
-
-			assert.Error(t, todoClient.ArchiveItem(ctx, nonexistentID))
-		})
-
-		t.Run("should be able to be deleted", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
-			defer span.End()
-
-			// Create item.
-			exampleItem := fakemodels.BuildFakeItem()
-			exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
-			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
-			checkValueAndError(t, createdItem, err)
 
 			// Clean up item.
 			assert.NoError(t, todoClient.ArchiveItem(ctx, createdItem.ID))

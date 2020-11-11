@@ -10,7 +10,9 @@ import (
 	"time"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/audit"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/converters"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -950,13 +952,8 @@ func TestPostgres_LogItemCreationEvent(T *testing.T) {
 		p, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeItem()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.ItemCreationEvent,
-			Context: map[string]interface{}{
-				auditLogItemAssignmentKey:     exampleInput.ID,
-				auditLogCreationAssignmentKey: exampleInput,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildItemCreationEventEntry(exampleInput)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
@@ -980,14 +977,8 @@ func TestPostgres_LogItemUpdateEvent(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		exampleChanges := []models.FieldChangeSummary{}
 		exampleInput := fakemodels.BuildFakeItem()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.ItemUpdateEvent,
-			Context: map[string]interface{}{
-				auditLogActionAssignmentKey:  exampleInput.BelongsToUser,
-				auditLogItemAssignmentKey:    exampleInput.ID,
-				auditLogChangesAssignmentKey: exampleChanges,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildItemUpdateEventEntry(exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
@@ -1011,13 +1002,8 @@ func TestPostgres_LogItemArchiveEvent(T *testing.T) {
 		p, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeItem()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.ItemArchiveEvent,
-			Context: map[string]interface{}{
-				auditLogActionAssignmentKey: exampleInput.BelongsToUser,
-				auditLogItemAssignmentKey:   exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildItemArchiveEventEntry(exampleInput.BelongsToUser, exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)

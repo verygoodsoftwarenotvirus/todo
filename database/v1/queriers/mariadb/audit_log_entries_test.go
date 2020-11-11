@@ -9,7 +9,9 @@ import (
 	"time"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/audit"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/converters"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -544,20 +546,15 @@ func TestMariaDB_LogItemCreationEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeItem()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.ItemCreationEvent,
-			Context: map[string]interface{}{
-				"created":                 exampleInput,
-				auditLogItemAssignmentKey: exampleInput.ID,
-			},
-		}
+		exampleItem := fakemodels.BuildFakeItem()
+		exampleAuditLogEntryInput := audit.BuildItemCreationEventEntry(exampleItem)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogItemCreationEvent(ctx, exampleInput)
+		m.LogItemCreationEvent(ctx, exampleItem)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -572,21 +569,15 @@ func TestMariaDB_LogItemUpdateEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 		exampleChanges := []models.FieldChangeSummary{}
-		exampleInput := fakemodels.BuildFakeItem()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.ItemUpdateEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.BelongsToUser,
-				"item_id":      exampleInput.ID,
-				"changes":      exampleChanges,
-			},
-		}
+		exampleItem := fakemodels.BuildFakeItem()
+		exampleAuditLogEntryInput := audit.BuildItemUpdateEventEntry(exampleItem.BelongsToUser, exampleItem.ID, exampleChanges)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogItemUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
+		m.LogItemUpdateEvent(ctx, exampleItem.BelongsToUser, exampleItem.ID, exampleChanges)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -601,20 +592,15 @@ func TestMariaDB_LogItemArchiveEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeItem()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.ItemArchiveEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.BelongsToUser,
-				"item_id":      exampleInput.ID,
-			},
-		}
+		exampleItem := fakemodels.BuildFakeItem()
+		exampleAuditLogEntryInput := audit.BuildItemArchiveEventEntry(exampleItem.BelongsToUser, exampleItem.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogItemArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
+		m.LogItemArchiveEvent(ctx, exampleItem.BelongsToUser, exampleItem.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -629,19 +615,15 @@ func TestMariaDB_LogOAuth2ClientCreationEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeOAuth2Client()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.OAuth2ClientCreationEvent,
-			Context: map[string]interface{}{
-				"client": exampleInput,
-			},
-		}
+		exampleClient := fakemodels.BuildFakeOAuth2Client()
+		exampleAuditLogEntryInput := audit.BuildOAuth2ClientCreationEventEntry(exampleClient)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogOAuth2ClientCreationEvent(ctx, exampleInput)
+		m.LogOAuth2ClientCreationEvent(ctx, exampleClient)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -657,13 +639,8 @@ func TestMariaDB_LogOAuth2ClientArchiveEvent(T *testing.T) {
 		m, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeOAuth2Client()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.OAuth2ClientArchiveEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.BelongsToUser,
-				"client_id":    exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildOAuth2ClientArchiveEventEntry(exampleInput.BelongsToUser, exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -685,12 +662,8 @@ func TestMariaDB_LogUserCreationEvent(T *testing.T) {
 		m, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserCreationEvent,
-			Context: map[string]interface{}{
-				"user": exampleInput,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildUserCreationEventEntry(exampleInput)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -712,12 +685,8 @@ func TestMariaDB_LogUserVerifyTwoFactorSecretEvent(T *testing.T) {
 		m, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserVerifyTwoFactorSecretEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildUserVerifyTwoFactorSecretEventEntry(exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -738,19 +707,15 @@ func TestMariaDB_LogUserUpdateTwoFactorSecretEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserUpdateTwoFactorSecretEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
-			},
-		}
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleAuditLogEntryInput := audit.BuildUserUpdateTwoFactorSecretEventEntry(exampleUser.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogUserUpdateTwoFactorSecretEvent(ctx, exampleInput.ID)
+		m.LogUserUpdateTwoFactorSecretEvent(ctx, exampleUser.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -766,12 +731,8 @@ func TestMariaDB_LogUserUpdatePasswordEvent(T *testing.T) {
 		m, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserUpdatePasswordEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildUserUpdatePasswordEventEntry(exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -792,19 +753,15 @@ func TestMariaDB_LogUserArchiveEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserArchiveEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
-			},
-		}
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleAuditLogEntryInput := audit.BuildUserArchiveEventEntry(exampleUser.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogUserArchiveEvent(ctx, exampleInput.ID)
+		m.LogUserArchiveEvent(ctx, exampleUser.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -820,12 +777,8 @@ func TestMariaDB_LogCycleCookieSecretEvent(T *testing.T) {
 		m, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.CycleCookieSecretEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildCycleCookieSecretEvent(exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -847,12 +800,8 @@ func TestMariaDB_LogSuccessfulLoginEvent(T *testing.T) {
 		m, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.SuccessfulLoginEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildSuccessfulLoginEventEntry(exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -874,12 +823,8 @@ func TestMariaDB_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
 		m, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UnsuccessfulLoginBadPasswordEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildUnsuccessfulLoginBadPasswordEventEntry(exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -901,12 +846,8 @@ func TestMariaDB_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
 		m, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UnsuccessfulLoginBad2FATokenEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -928,12 +869,8 @@ func TestMariaDB_LogLogoutEvent(T *testing.T) {
 		m, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.LogoutEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildLogoutEventEntry(exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -954,19 +891,15 @@ func TestMariaDB_LogWebhookCreationEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeWebhook()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.WebhookCreationEvent,
-			Context: map[string]interface{}{
-				"webhook": exampleInput,
-			},
-		}
+		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleAuditLogEntryInput := audit.BuildWebhookCreationEventEntry(exampleWebhook)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogWebhookCreationEvent(ctx, exampleInput)
+		m.LogWebhookCreationEvent(ctx, exampleWebhook)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -982,14 +915,8 @@ func TestMariaDB_LogWebhookUpdateEvent(T *testing.T) {
 		m, mockDB := buildTestService(t)
 		exampleChanges := []models.FieldChangeSummary{}
 		exampleInput := fakemodels.BuildFakeWebhook()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.WebhookUpdateEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.BelongsToUser,
-				"webhook_id":   exampleInput.ID,
-				"changes":      exampleChanges,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildWebhookUpdateEventEntry(exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -1010,20 +937,15 @@ func TestMariaDB_LogWebhookArchiveEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeWebhook()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.WebhookArchiveEvent,
-			Context: map[string]interface{}{
-				"performed_by": exampleInput.BelongsToUser,
-				"webhook_id":   exampleInput.ID,
-			},
-		}
+		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleAuditLogEntryInput := audit.BuildWebhookArchiveEventEntry(exampleWebhook.BelongsToUser, exampleWebhook.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogWebhookArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
+		m.LogWebhookArchiveEvent(ctx, exampleWebhook.BelongsToUser, exampleWebhook.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

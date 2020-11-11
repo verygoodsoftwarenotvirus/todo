@@ -126,3 +126,13 @@ func (c *Client) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint6
 
 	return nil
 }
+
+// GetAuditLogEntriesForOAuth2Client fetches a list of audit log entries from the database that relate to a given client.
+func (c *Client) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]models.AuditLogEntry, error) {
+	ctx, span := tracing.StartSpan(ctx, "GetAuditLogEntriesForOAuth2Client")
+	defer span.End()
+
+	c.logger.Debug("GetAuditLogEntriesForOAuth2Client called")
+
+	return c.querier.GetAuditLogEntriesForOAuth2Client(ctx, clientID)
+}

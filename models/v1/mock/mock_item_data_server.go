@@ -37,11 +37,6 @@ func (m *ItemDataServer) ListHandler(res http.ResponseWriter, req *http.Request)
 	m.Called(res, req)
 }
 
-// AuditEntryHandler implements our interface requirements.
-func (m *ItemDataServer) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
-}
-
 // CreateHandler implements our interface requirements.
 func (m *ItemDataServer) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
@@ -64,5 +59,10 @@ func (m *ItemDataServer) UpdateHandler(res http.ResponseWriter, req *http.Reques
 
 // ArchiveHandler implements our interface requirements.
 func (m *ItemDataServer) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
+}
+
+// AuditEntryHandler implements our interface requirements.
+func (m *ItemDataServer) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }

@@ -39,12 +39,6 @@ func (m *AuditLogDataManager) GetAuditLogEntries(ctx context.Context, filter *mo
 	return args.Get(0).(*models.AuditLogEntryList), args.Error(1)
 }
 
-// GetAuditLogEntriesForItem is a mock function.
-func (m *AuditLogDataManager) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]models.AuditLogEntry, error) {
-	args := m.Called(ctx, itemID)
-	return args.Get(0).([]models.AuditLogEntry), args.Error(1)
-}
-
 // LogCycleCookieSecretEvent implements our interface.
 func (m *AuditLogDataManager) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
 	m.Called(ctx, userID)
@@ -85,6 +79,12 @@ func (m *AuditLogDataManager) LogItemArchiveEvent(ctx context.Context, userID, i
 	m.Called(ctx, userID, itemID)
 }
 
+// GetAuditLogEntriesForItem is a mock function.
+func (m *AuditLogDataManager) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]models.AuditLogEntry, error) {
+	args := m.Called(ctx, itemID)
+	return args.Get(0).([]models.AuditLogEntry), args.Error(1)
+}
+
 // LogOAuth2ClientCreationEvent implements our interface.
 func (m *AuditLogDataManager) LogOAuth2ClientCreationEvent(ctx context.Context, client *models.OAuth2Client) {
 	m.Called(ctx, client)
@@ -93,6 +93,12 @@ func (m *AuditLogDataManager) LogOAuth2ClientCreationEvent(ctx context.Context, 
 // LogOAuth2ClientArchiveEvent implements our interface.
 func (m *AuditLogDataManager) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
 	m.Called(ctx, userID, clientID)
+}
+
+// GetAuditLogEntriesForOAuth2Client is a mock function.
+func (m *AuditLogDataManager) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]models.AuditLogEntry, error) {
+	args := m.Called(ctx, clientID)
+	return args.Get(0).([]models.AuditLogEntry), args.Error(1)
 }
 
 // LogWebhookCreationEvent implements our interface.
@@ -108,6 +114,12 @@ func (m *AuditLogDataManager) LogWebhookUpdateEvent(ctx context.Context, userID,
 // LogWebhookArchiveEvent implements our interface.
 func (m *AuditLogDataManager) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
 	m.Called(ctx, userID, webhookID)
+}
+
+// GetAuditLogEntriesForWebhook is a mock function.
+func (m *AuditLogDataManager) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]models.AuditLogEntry, error) {
+	args := m.Called(ctx, webhookID)
+	return args.Get(0).([]models.AuditLogEntry), args.Error(1)
 }
 
 // LogUserCreationEvent implements our interface.
@@ -133,4 +145,10 @@ func (m *AuditLogDataManager) LogUserUpdatePasswordEvent(ctx context.Context, us
 // LogUserArchiveEvent implements our interface.
 func (m *AuditLogDataManager) LogUserArchiveEvent(ctx context.Context, userID uint64) {
 	m.Called(ctx, userID)
+}
+
+// GetAuditLogEntriesForUser is a mock function.
+func (m *AuditLogDataManager) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]models.AuditLogEntry, error) {
+	args := m.Called(ctx, userID)
+	return args.Get(0).([]models.AuditLogEntry), args.Error(1)
 }

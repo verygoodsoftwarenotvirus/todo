@@ -131,3 +131,36 @@ func (c *V1Client) ArchiveWebhook(ctx context.Context, id uint64) error {
 
 	return c.executeRequest(ctx, req, nil)
 }
+
+// BuildGetAuditLogForWebhookRequest builds an HTTP request for fetching a list of audit log entries pertaining to a webhook.
+func (c *V1Client) BuildGetAuditLogForWebhookRequest(ctx context.Context, webhookID uint64) (*http.Request, error) {
+	ctx, span := tracing.StartSpan(ctx, "BuildGetAuditLogForWebhookRequest")
+	defer span.End()
+
+	uri := c.BuildURL(
+		nil,
+		webhooksBasePath,
+		strconv.FormatUint(webhookID, 10),
+		"audit",
+	)
+	tracing.AttachRequestURIToSpan(span, uri)
+
+	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+}
+
+// GetAuditLogForWebhook retrieves a list of audit log entries pertaining to a webhook.
+func (c *V1Client) GetAuditLogForWebhook(ctx context.Context, webhookID uint64) (entries []models.AuditLogEntry, err error) {
+	ctx, span := tracing.StartSpan(ctx, "GetAuditLogForWebhook")
+	defer span.End()
+
+	req, err := c.BuildGetAuditLogForWebhookRequest(ctx, webhookID)
+	if err != nil {
+		return nil, fmt.Errorf("building request: %w", err)
+	}
+
+	if retrieveErr := c.retrieve(ctx, req, &entries); retrieveErr != nil {
+		return nil, retrieveErr
+	}
+
+	return entries, nil
+}

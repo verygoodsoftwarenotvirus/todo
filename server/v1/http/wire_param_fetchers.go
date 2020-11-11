@@ -24,6 +24,7 @@ var paramFetcherProviders = wire.NewSet(
 	ProvideOAuth2ClientsServiceClientIDFetcher,
 	ProvideWebhooksServiceWebhookIDFetcher,
 	ProvideWebhooksServiceUserIDFetcher,
+	ProvideWebhooksServiceSessionInfoFetcher,
 	ProvideItemsServiceItemIDFetcher,
 	ProvideItemsServiceSessionInfoFetcher,
 	ProvideAuditServiceItemIDFetcher,
@@ -54,6 +55,11 @@ func ProvideWebhooksServiceWebhookIDFetcher(logger logging.Logger) webhooksservi
 // ProvideWebhooksServiceUserIDFetcher provides a UserIDFetcher.
 func ProvideWebhooksServiceUserIDFetcher() webhooksservice.UserIDFetcher {
 	return userIDFetcherFromRequestContext
+}
+
+// ProvideWebhooksServiceSessionInfoFetcher provides a SessionInfoFetcher.
+func ProvideWebhooksServiceSessionInfoFetcher() webhooksservice.SessionInfoFetcher {
+	return sessionInfoFetcherFromRequestContext
 }
 
 // ProvideItemsServiceItemIDFetcher provides an ItemIDFetcher.

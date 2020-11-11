@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/audit"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
@@ -29,6 +30,8 @@ const (
 	webhooksTableDataTypesColumn   = "data_types"
 	webhooksTableTopicsColumn      = "topics"
 	webhooksTableOwnershipColumn   = "belongs_to_user"
+
+	auditLogWebhookAssignmentKey = "webhook_id"
 )
 
 var (
@@ -375,6 +378,21 @@ func (p *Postgres) ArchiveWebhook(ctx context.Context, webhookID, userID uint64)
 	return err
 }
 
+// LogWebhookCreationEvent saves a WebhookCreationEvent in the audit log table.
+func (p *Postgres) LogWebhookCreationEvent(ctx context.Context, webhook *models.Webhook) {
+	p.createAuditLogEntry(ctx, audit.BuildWebhookCreationEventEntry(webhook))
+}
+
+// LogWebhookUpdateEvent saves a WebhookUpdateEvent in the audit log table.
+func (p *Postgres) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []models.FieldChangeSummary) {
+	p.createAuditLogEntry(ctx, audit.BuildWebhookUpdateEventEntry(userID, webhookID, changes))
+}
+
+// LogWebhookArchiveEvent saves a WebhookArchiveEvent in the audit log table.
+func (p *Postgres) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
+	p.createAuditLogEntry(ctx, audit.BuildWebhookArchiveEventEntry(userID, webhookID))
+}
+
 // buildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching audit log entries
 // associated with a given webhook.
 func (p *Postgres) buildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query string, args []interface{}) {
@@ -408,44 +426,4 @@ func (p *Postgres) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID u
 	}
 
 	return auditLogEntries, nil
-}
-
-// LogWebhookCreationEvent saves a WebhookCreationEvent in the audit log table.
-func (p *Postgres) LogWebhookCreationEvent(ctx context.Context, webhook *models.Webhook) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.WebhookCreationEvent,
-		Context: map[string]interface{}{
-			auditLogWebhookAssignmentKey:  webhook.ID,
-			auditLogCreationAssignmentKey: webhook,
-		},
-	}
-
-	p.createAuditLogEntry(ctx, entry)
-}
-
-// LogWebhookUpdateEvent saves a WebhookUpdateEvent in the audit log table.
-func (p *Postgres) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []models.FieldChangeSummary) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.WebhookUpdateEvent,
-		Context: map[string]interface{}{
-			auditLogActionAssignmentKey:  userID,
-			auditLogWebhookAssignmentKey: webhookID,
-			auditLogChangesAssignmentKey: changes,
-		},
-	}
-
-	p.createAuditLogEntry(ctx, entry)
-}
-
-// LogWebhookArchiveEvent saves a WebhookArchiveEvent in the audit log table.
-func (p *Postgres) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.WebhookArchiveEvent,
-		Context: map[string]interface{}{
-			auditLogActionAssignmentKey:  userID,
-			auditLogWebhookAssignmentKey: webhookID,
-		},
-	}
-
-	p.createAuditLogEntry(ctx, entry)
 }

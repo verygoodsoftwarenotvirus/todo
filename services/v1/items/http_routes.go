@@ -259,45 +259,6 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	s.encoderDecoder.EncodeResponse(res, x)
 }
 
-// AuditEntryHandler returns a GET handler that returns an item.
-func (s *Service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context(), "AuditEntryHandler")
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-	logger.Debug("AuditEntryHandler invoked")
-
-	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
-	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
-		return
-	}
-
-	tracing.AttachSessionInfoToSpan(span, *si)
-	logger = logger.WithValue("user_id", si.UserID)
-
-	// determine item ID.
-	itemID := s.itemIDFetcher(req)
-	tracing.AttachItemIDToSpan(span, itemID)
-	logger = logger.WithValue("item_id", itemID)
-
-	x, err := s.auditLog.GetAuditLogEntriesForItem(ctx, itemID)
-	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(res)
-		return
-	} else if err != nil {
-		logger.Error(err, "error encountered fetching items")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
-		return
-	}
-
-	logger.WithValue("entry_count", len(x)).Debug("returning from AuditEntryHandler")
-
-	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(res, x)
-}
-
 // UpdateHandler returns a handler that updates an item.
 func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context(), "UpdateHandler")
@@ -404,4 +365,43 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// encode our response and peace.
 	res.WriteHeader(http.StatusNoContent)
+}
+
+// AuditEntryHandler returns a GET handler that returns all audit log entries related to an item.
+func (s *Service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := tracing.StartSpan(req.Context(), "AuditEntryHandler")
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+	logger.Debug("AuditEntryHandler invoked")
+
+	// determine user ID.
+	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	if sessionInfoRetrievalErr != nil {
+		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+
+	tracing.AttachSessionInfoToSpan(span, *si)
+	logger = logger.WithValue("user_id", si.UserID)
+
+	// determine item ID.
+	itemID := s.itemIDFetcher(req)
+	tracing.AttachItemIDToSpan(span, itemID)
+	logger = logger.WithValue("item_id", itemID)
+
+	x, err := s.auditLog.GetAuditLogEntriesForItem(ctx, itemID)
+	if errors.Is(err, sql.ErrNoRows) {
+		s.encoderDecoder.EncodeNotFoundResponse(res)
+		return
+	} else if err != nil {
+		logger.Error(err, "error encountered fetching audit log entries")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		return
+	}
+
+	logger.WithValue("entry_count", len(x)).Debug("returning from AuditEntryHandler")
+
+	// encode our response and peace.
+	s.encoderDecoder.EncodeResponse(res, x)
 }

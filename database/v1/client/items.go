@@ -161,3 +161,13 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
 
 	return c.querier.ArchiveItem(ctx, itemID, userID)
 }
+
+// GetAuditLogEntriesForItem fetches a list of audit log entries from the database that relate to a given item.
+func (c *Client) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]models.AuditLogEntry, error) {
+	ctx, span := tracing.StartSpan(ctx, "GetAuditLogEntriesForItem")
+	defer span.End()
+
+	c.logger.Debug("GetAuditLogEntriesForItem called")
+
+	return c.querier.GetAuditLogEntriesForItem(ctx, itemID)
+}

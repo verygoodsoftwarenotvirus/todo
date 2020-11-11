@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/audit"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
@@ -17,6 +18,8 @@ const (
 	itemsTableNameColumn     = "name"
 	itemsTableDetailsColumn  = "details"
 	itemsUserOwnershipColumn = "belongs_to_user"
+
+	auditLogItemAssignmentKey = "item_id"
 )
 
 var (
@@ -519,42 +522,17 @@ func (p *Postgres) ArchiveItem(ctx context.Context, itemID, userID uint64) error
 
 // LogItemCreationEvent saves a ItemCreationEvent in the audit log table.
 func (p *Postgres) LogItemCreationEvent(ctx context.Context, item *models.Item) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.ItemCreationEvent,
-		Context: map[string]interface{}{
-			auditLogItemAssignmentKey:     item.ID,
-			auditLogCreationAssignmentKey: item,
-		},
-	}
-
-	p.createAuditLogEntry(ctx, entry)
+	p.createAuditLogEntry(ctx, audit.BuildItemCreationEventEntry(item))
 }
 
 // LogItemUpdateEvent saves a ItemUpdateEvent in the audit log table.
 func (p *Postgres) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []models.FieldChangeSummary) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.ItemUpdateEvent,
-		Context: map[string]interface{}{
-			auditLogActionAssignmentKey:  userID,
-			auditLogItemAssignmentKey:    itemID,
-			auditLogChangesAssignmentKey: changes,
-		},
-	}
-
-	p.createAuditLogEntry(ctx, entry)
+	p.createAuditLogEntry(ctx, audit.BuildItemUpdateEventEntry(userID, itemID, changes))
 }
 
 // LogItemArchiveEvent saves a ItemArchiveEvent in the audit log table.
 func (p *Postgres) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.ItemArchiveEvent,
-		Context: map[string]interface{}{
-			auditLogActionAssignmentKey: userID,
-			auditLogItemAssignmentKey:   itemID,
-		},
-	}
-
-	p.createAuditLogEntry(ctx, entry)
+	p.createAuditLogEntry(ctx, audit.BuildItemArchiveEventEntry(userID, itemID))
 }
 
 // buildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching audit log entries

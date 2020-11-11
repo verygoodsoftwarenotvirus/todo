@@ -84,3 +84,8 @@ func (m *UserDataServer) UpdatePasswordHandler(res http.ResponseWriter, req *htt
 func (m *UserDataServer) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
+
+// AuditEntryHandler implements our interface requirements.
+func (m *UserDataServer) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
+}

@@ -112,7 +112,7 @@ func (x *Item) Update(input *ItemUpdateInput) []FieldChangeSummary {
 	return out
 }
 
-// ToUpdateInput creates a ItemUpdateInput struct for an item.
+// ToUpdateInput creates an ItemUpdateInput struct for an item.
 func (x *Item) ToUpdateInput() *ItemUpdateInput {
 	return &ItemUpdateInput{
 		Name:    x.Name,

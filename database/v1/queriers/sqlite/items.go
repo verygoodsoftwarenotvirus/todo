@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/audit"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/Masterminds/squirrel"
@@ -543,11 +544,26 @@ func (s *Sqlite) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
 	return err
 }
 
+// LogItemCreationEvent saves a ItemCreationEvent in the audit log table.
+func (s *Sqlite) LogItemCreationEvent(ctx context.Context, item *models.Item) {
+	s.createAuditLogEntry(ctx, audit.BuildItemCreationEventEntry(item))
+}
+
+// LogItemUpdateEvent saves a ItemUpdateEvent in the audit log table.
+func (s *Sqlite) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []models.FieldChangeSummary) {
+	s.createAuditLogEntry(ctx, audit.BuildItemUpdateEventEntry(userID, itemID, changes))
+}
+
+// LogItemArchiveEvent saves a ItemArchiveEvent in the audit log table.
+func (s *Sqlite) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64) {
+	s.createAuditLogEntry(ctx, audit.BuildItemArchiveEventEntry(userID, itemID))
+}
+
 // buildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
 func (s *Sqlite) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query string, args []interface{}) {
 	var err error
 
-	itemIDKey := fmt.Sprintf("json_extract(%s.%s, '$.%s')", auditLogEntriesTableName, auditLogEntriesTableContextColumn, auditLogItemAssignmentKey)
+	itemIDKey := fmt.Sprintf("json_extract(%s.%s, '$.%s')", auditLogEntriesTableName, auditLogEntriesTableContextColumn, audit.ItemAssignmentKey)
 	builder := s.sqlBuilder.
 		Select(auditLogEntriesTableColumns...).
 		From(auditLogEntriesTableName).
@@ -575,44 +591,4 @@ func (s *Sqlite) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) (
 	}
 
 	return auditLogEntries, nil
-}
-
-// LogItemCreationEvent saves a ItemCreationEvent in the audit log table.
-func (s *Sqlite) LogItemCreationEvent(ctx context.Context, item *models.Item) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.ItemCreationEvent,
-		Context: map[string]interface{}{
-			auditLogItemAssignmentKey:     item.ID,
-			auditLogCreationAssignmentKey: item,
-		},
-	}
-
-	s.createAuditLogEntry(ctx, entry)
-}
-
-// LogItemUpdateEvent saves a ItemUpdateEvent in the audit log table.
-func (s *Sqlite) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []models.FieldChangeSummary) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.ItemUpdateEvent,
-		Context: map[string]interface{}{
-			auditLogUserAssignmentKey:    userID,
-			auditLogItemAssignmentKey:    itemID,
-			auditLogChangesAssignmentKey: changes,
-		},
-	}
-
-	s.createAuditLogEntry(ctx, entry)
-}
-
-// LogItemArchiveEvent saves a ItemArchiveEvent in the audit log table.
-func (s *Sqlite) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64) {
-	entry := &models.AuditLogEntryCreationInput{
-		EventType: models.ItemArchiveEvent,
-		Context: map[string]interface{}{
-			auditLogUserAssignmentKey: userID,
-			auditLogItemAssignmentKey: itemID,
-		},
-	}
-
-	s.createAuditLogEntry(ctx, entry)
 }

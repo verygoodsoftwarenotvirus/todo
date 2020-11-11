@@ -8,6 +8,7 @@ import (
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
 
 	"github.com/pquerna/otp/totp"
@@ -230,6 +231,40 @@ func TestOAuth2Clients(test *testing.T) {
 				err = testClient.ArchiveOAuth2Client(ctx, oa2c.ID)
 				assert.NoError(t, err, "error deleting client %d: %v", oa2c.ID, err)
 			}
+		})
+	})
+
+	test.Run("Auditing", func(t *testing.T) {
+		t.Run("it should return an error when trying to audit something that does not exist", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+			exampleOAuth2Client.ID = nonexistentID
+
+			x, err := adminClient.GetAuditLogForOAuth2Client(ctx, exampleOAuth2Client.ID)
+			assert.NoError(t, err)
+			assert.Empty(t, x)
+		})
+
+		t.Run("it should be auditable", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			// Create item.
+			exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+			exampleOAuth2ClientInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
+
+			createdOAuth2Client, err := todoClient.CreateOAuth2Client(ctx, cookie, exampleOAuth2ClientInput)
+			checkValueAndError(t, createdOAuth2Client, err)
+
+			// fetch audit log entries
+			actual, err := adminClient.GetAuditLogForOAuth2Client(ctx, createdOAuth2Client.ID)
+			assert.NoError(t, err)
+			assert.Len(t, actual, 2)
+
+			// Clean up item.
+			assert.NoError(t, todoClient.ArchiveOAuth2Client(ctx, createdOAuth2Client.ID))
 		})
 	})
 }

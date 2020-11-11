@@ -9,7 +9,9 @@ import (
 	"time"
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/audit"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/converters"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -543,19 +545,15 @@ func TestSqlite_LogSuccessfulLoginEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.SuccessfulLoginEvent,
-			Context: map[string]interface{}{
-				auditLogUserAssignmentKey: exampleInput.ID,
-			},
-		}
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleAuditLogEntryInput := audit.BuildSuccessfulLoginEventEntry(exampleUser.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogSuccessfulLoginEvent(ctx, exampleInput.ID)
+		s.LogSuccessfulLoginEvent(ctx, exampleUser.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -570,19 +568,15 @@ func TestSqlite_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UnsuccessfulLoginBadPasswordEvent,
-			Context: map[string]interface{}{
-				auditLogUserAssignmentKey: exampleInput.ID,
-			},
-		}
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleAuditLogEntryInput := audit.BuildUnsuccessfulLoginBadPasswordEventEntry(exampleUser.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogUnsuccessfulLoginBadPasswordEvent(ctx, exampleInput.ID)
+		s.LogUnsuccessfulLoginBadPasswordEvent(ctx, exampleUser.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -597,19 +591,15 @@ func TestSqlite_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UnsuccessfulLoginBad2FATokenEvent,
-			Context: map[string]interface{}{
-				auditLogUserAssignmentKey: exampleInput.ID,
-			},
-		}
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleAuditLogEntryInput := audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(exampleUser.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogUnsuccessfulLoginBad2FATokenEvent(ctx, exampleInput.ID)
+		s.LogUnsuccessfulLoginBad2FATokenEvent(ctx, exampleUser.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -624,19 +614,15 @@ func TestSqlite_LogLogoutEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.LogoutEvent,
-			Context: map[string]interface{}{
-				auditLogUserAssignmentKey: exampleInput.ID,
-			},
-		}
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleAuditLogEntryInput := audit.BuildLogoutEventEntry(exampleUser.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogLogoutEvent(ctx, exampleInput.ID)
+		s.LogLogoutEvent(ctx, exampleUser.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -651,19 +637,15 @@ func TestSqlite_LogWebhookCreationEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeWebhook()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.WebhookCreationEvent,
-			Context: map[string]interface{}{
-				"webhook": exampleInput,
-			},
-		}
+		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleAuditLogEntryInput := audit.BuildWebhookCreationEventEntry(exampleWebhook)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogWebhookCreationEvent(ctx, exampleInput)
+		s.LogWebhookCreationEvent(ctx, exampleWebhook)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -678,21 +660,15 @@ func TestSqlite_LogWebhookUpdateEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 		exampleChanges := []models.FieldChangeSummary{}
-		exampleInput := fakemodels.BuildFakeWebhook()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.WebhookUpdateEvent,
-			Context: map[string]interface{}{
-				auditLogUserAssignmentKey: exampleInput.BelongsToUser,
-				"webhook_id":              exampleInput.ID,
-				"changes":                 exampleChanges,
-			},
-		}
+		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleAuditLogEntryInput := audit.BuildWebhookUpdateEventEntry(exampleWebhook.BelongsToUser, exampleWebhook.ID, exampleChanges)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogWebhookUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
+		s.LogWebhookUpdateEvent(ctx, exampleWebhook.BelongsToUser, exampleWebhook.ID, exampleChanges)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -707,20 +683,15 @@ func TestSqlite_LogWebhookArchiveEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeWebhook()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.WebhookArchiveEvent,
-			Context: map[string]interface{}{
-				auditLogUserAssignmentKey: exampleInput.BelongsToUser,
-				"webhook_id":              exampleInput.ID,
-			},
-		}
+		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleAuditLogEntryInput := audit.BuildWebhookArchiveEventEntry(exampleWebhook.BelongsToUser, exampleWebhook.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogWebhookArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
+		s.LogWebhookArchiveEvent(ctx, exampleWebhook.BelongsToUser, exampleWebhook.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

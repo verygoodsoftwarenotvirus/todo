@@ -10,7 +10,9 @@ import (
 
 	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/client"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/audit"
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/converters"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -784,13 +786,8 @@ func TestPostgres_LogUserCreationEvent(T *testing.T) {
 		p, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserCreationEvent,
-			Context: map[string]interface{}{
-				auditLogUserAssignmentKey:     exampleInput.ID,
-				auditLogCreationAssignmentKey: exampleInput,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildUserCreationEventEntry(exampleInput)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
@@ -813,21 +810,17 @@ func TestPostgres_LogUserVerifyTwoFactorSecretEvent(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserVerifyTwoFactorSecretEvent,
-			Context: map[string]interface{}{
-				auditLogActionAssignmentKey: exampleInput.ID,
-			},
-		}
+		exampleUser := fakemodels.BuildFakeUser()
+		exampleAuditLogEntryInput := audit.BuildUserVerifyTwoFactorSecretEventEntry(exampleUser.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
-		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
+		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleUser.ID, exampleUser.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(exampleRows)
 
-		p.LogUserVerifyTwoFactorSecretEvent(ctx, exampleInput.ID)
+		p.LogUserVerifyTwoFactorSecretEvent(ctx, exampleUser.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -843,12 +836,8 @@ func TestPostgres_LogUserUpdateTwoFactorSecretEvent(T *testing.T) {
 		p, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserUpdateTwoFactorSecretEvent,
-			Context: map[string]interface{}{
-				auditLogActionAssignmentKey: exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildUserUpdateTwoFactorSecretEventEntry(exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
@@ -872,12 +861,8 @@ func TestPostgres_LogUserUpdatePasswordEvent(T *testing.T) {
 		p, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserUpdatePasswordEvent,
-			Context: map[string]interface{}{
-				auditLogActionAssignmentKey: exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildUserUpdatePasswordEventEntry(exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
@@ -901,13 +886,8 @@ func TestPostgres_LogUserArchiveEvent(T *testing.T) {
 		p, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UserArchiveEvent,
-			Context: map[string]interface{}{
-				auditLogActionAssignmentKey: exampleInput.ID,
-				auditLogUserAssignmentKey:   exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildUserArchiveEventEntry(exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
@@ -931,12 +911,8 @@ func TestPostgres_LogSuccessfulLoginEvent(T *testing.T) {
 		p, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.SuccessfulLoginEvent,
-			Context: map[string]interface{}{
-				auditLogActionAssignmentKey: exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildSuccessfulLoginEventEntry(exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
@@ -960,12 +936,8 @@ func TestPostgres_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
 		p, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UnsuccessfulLoginBadPasswordEvent,
-			Context: map[string]interface{}{
-				auditLogActionAssignmentKey: exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildUnsuccessfulLoginBadPasswordEventEntry(exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
@@ -989,12 +961,8 @@ func TestPostgres_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
 		p, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.UnsuccessfulLoginBad2FATokenEvent,
-			Context: map[string]interface{}{
-				auditLogActionAssignmentKey: exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
@@ -1018,12 +986,8 @@ func TestPostgres_LogLogoutEvent(T *testing.T) {
 		p, mockDB := buildTestService(t)
 
 		exampleInput := fakemodels.BuildFakeUser()
-		exampleAuditLogEntry := &models.AuditLogEntry{
-			EventType: models.LogoutEvent,
-			Context: map[string]interface{}{
-				auditLogActionAssignmentKey: exampleInput.ID,
-			},
-		}
+		exampleAuditLogEntryInput := audit.BuildLogoutEventEntry(exampleInput.ID)
+		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)

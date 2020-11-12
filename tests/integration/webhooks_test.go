@@ -6,7 +6,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -37,8 +37,8 @@ func TestWebhooks(test *testing.T) {
 			defer span.End()
 
 			// Create webhook.
-			exampleWebhook := fakemodels.BuildFakeWebhook()
-			exampleWebhookInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+			exampleWebhook := fakes.BuildFakeWebhook()
+			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 			premade, err := todoClient.CreateWebhook(ctx, exampleWebhookInput)
 			checkValueAndError(t, premade, err)
 
@@ -64,8 +64,8 @@ func TestWebhooks(test *testing.T) {
 			// Create webhooks.
 			var expected []*types.Webhook
 			for i := 0; i < 5; i++ {
-				exampleWebhook := fakemodels.BuildFakeWebhook()
-				exampleWebhookInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+				exampleWebhook := fakes.BuildFakeWebhook()
+				exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 				createdWebhook, err := todoClient.CreateWebhook(ctx, exampleWebhookInput)
 				checkValueAndError(t, createdWebhook, err)
 
@@ -100,8 +100,8 @@ func TestWebhooks(test *testing.T) {
 			defer span.End()
 
 			// Create webhook.
-			exampleWebhook := fakemodels.BuildFakeWebhook()
-			exampleWebhookInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+			exampleWebhook := fakes.BuildFakeWebhook()
+			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 			premade, err := todoClient.CreateWebhook(ctx, exampleWebhookInput)
 			checkValueAndError(t, premade, err)
 
@@ -123,7 +123,7 @@ func TestWebhooks(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			exampleWebhook := fakemodels.BuildFakeWebhook()
+			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhook.ID = nonexistentID
 
 			err := todoClient.UpdateWebhook(ctx, exampleWebhook)
@@ -135,8 +135,8 @@ func TestWebhooks(test *testing.T) {
 			defer span.End()
 
 			// Create webhook.
-			exampleWebhook := fakemodels.BuildFakeWebhook()
-			exampleWebhookInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+			exampleWebhook := fakes.BuildFakeWebhook()
+			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 			premade, err := todoClient.CreateWebhook(ctx, exampleWebhookInput)
 			checkValueAndError(t, premade, err)
 
@@ -166,8 +166,8 @@ func TestWebhooks(test *testing.T) {
 			defer span.End()
 
 			// Create webhook.
-			exampleWebhook := fakemodels.BuildFakeWebhook()
-			exampleWebhookInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+			exampleWebhook := fakes.BuildFakeWebhook()
+			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 			premade, err := todoClient.CreateWebhook(ctx, exampleWebhookInput)
 			checkValueAndError(t, premade, err)
 
@@ -182,7 +182,7 @@ func TestWebhooks(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			exampleWebhook := fakemodels.BuildFakeWebhook()
+			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhook.ID = nonexistentID
 
 			x, err := adminClient.GetAuditLogForWebhook(ctx, exampleWebhook.ID)
@@ -195,8 +195,8 @@ func TestWebhooks(test *testing.T) {
 			defer span.End()
 
 			// Create webhook.
-			exampleWebhook := fakemodels.BuildFakeWebhook()
-			exampleWebhookInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+			exampleWebhook := fakes.BuildFakeWebhook()
+			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 			premade, err := todoClient.CreateWebhook(ctx, exampleWebhookInput)
 			checkValueAndError(t, premade, err)
 
@@ -219,8 +219,8 @@ func TestWebhooks(test *testing.T) {
 			defer span.End()
 
 			// Create webhook.
-			exampleWebhook := fakemodels.BuildFakeWebhook()
-			exampleWebhookInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+			exampleWebhook := fakes.BuildFakeWebhook()
+			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 			premade, err := todoClient.CreateWebhook(ctx, exampleWebhookInput)
 			checkValueAndError(t, premade, err)
 

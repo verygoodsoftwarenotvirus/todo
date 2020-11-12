@@ -12,7 +12,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -84,7 +84,7 @@ func TestSqlite_buildGetAuditLogEntryQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
 		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.id = ?"
 		expectedArgs := []interface{}{
@@ -105,7 +105,7 @@ func TestSqlite_GetAuditLogEntry(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
 		s, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := s.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
@@ -125,7 +125,7 @@ func TestSqlite_GetAuditLogEntry(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
 		s, mockDB := buildTestService(t)
 
@@ -213,7 +213,7 @@ func TestSqlite_GetAllAuditLogEntries(T *testing.T) {
 		ctx := context.Background()
 
 		s, mockDB := buildTestService(t)
-		exampleAuditLogEntryList := fakemodels.BuildFakeAuditLogEntryList()
+		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
@@ -331,7 +331,7 @@ func TestSqlite_GetAllAuditLogEntries(T *testing.T) {
 		ctx := context.Background()
 
 		s, mockDB := buildTestService(t)
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
@@ -362,7 +362,7 @@ func TestSqlite_buildGetAuditLogEntriesQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		filter := fakemodels.BuildFleshedOutQueryFilter()
+		filter := fakes.BuildFleshedOutQueryFilter()
 
 		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.created_on > ? AND audit_log.created_on < ? AND audit_log.last_updated_on > ? AND audit_log.last_updated_on < ? ORDER BY audit_log.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
@@ -389,7 +389,7 @@ func TestSqlite_GetAuditLogEntries(T *testing.T) {
 		s, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		exampleAuditLogEntryList := fakemodels.BuildFakeAuditLogEntryList()
+		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 		expectedQuery, expectedArgs := s.buildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -458,7 +458,7 @@ func TestSqlite_GetAuditLogEntries(T *testing.T) {
 		s, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		expectedQuery, expectedArgs := s.buildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -480,7 +480,7 @@ func TestSqlite_buildCreateAuditLogEntryQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
 		expectedQuery := "INSERT INTO audit_log (event_type,context) VALUES (?,?)"
 		expectedArgs := []interface{}{
@@ -504,8 +504,8 @@ func TestSqlite_createAuditLogEntry(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
-		exampleInput := fakemodels.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
+		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -522,8 +522,8 @@ func TestSqlite_createAuditLogEntry(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
-		exampleInput := fakemodels.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
+		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
 		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -545,7 +545,7 @@ func TestSqlite_LogSuccessfulLoginEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildSuccessfulLoginEventEntry(exampleUser.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -568,7 +568,7 @@ func TestSqlite_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUnsuccessfulLoginBadPasswordEventEntry(exampleUser.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -591,7 +591,7 @@ func TestSqlite_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(exampleUser.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -614,7 +614,7 @@ func TestSqlite_LogLogoutEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildLogoutEventEntry(exampleUser.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -637,7 +637,7 @@ func TestSqlite_LogWebhookCreationEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleAuditLogEntryInput := audit.BuildWebhookCreationEventEntry(exampleWebhook)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -660,7 +660,7 @@ func TestSqlite_LogWebhookUpdateEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 		exampleChanges := []types.FieldChangeSummary{}
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleAuditLogEntryInput := audit.BuildWebhookUpdateEventEntry(exampleWebhook.BelongsToUser, exampleWebhook.ID, exampleChanges)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -683,7 +683,7 @@ func TestSqlite_LogWebhookArchiveEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleAuditLogEntryInput := audit.BuildWebhookArchiveEventEntry(exampleWebhook.BelongsToUser, exampleWebhook.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 

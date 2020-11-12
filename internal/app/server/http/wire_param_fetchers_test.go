@@ -10,7 +10,7 @@ import (
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
@@ -86,7 +86,7 @@ func Test_userIDFetcherFromRequestContext(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		expected := exampleUser.ToSessionInfo()
 
 		req := buildRequest(t)

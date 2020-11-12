@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,7 +28,7 @@ func TestV1Client_BuildItemExistsRequest(T *testing.T) {
 		ts := httptest.NewTLSServer(nil)
 
 		c := buildTestClient(t, ts)
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		actual, err := c.BuildItemExistsRequest(ctx, exampleItem.ID)
 
 		require.NotNil(t, actual)
@@ -45,7 +45,7 @@ func TestV1Client_ItemExists(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -69,7 +69,7 @@ func TestV1Client_ItemExists(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		c := buildTestClientWithInvalidURL(t)
 		actual, err := c.ItemExists(ctx, exampleItem.ID)
@@ -89,7 +89,7 @@ func TestV1Client_BuildGetItemRequest(T *testing.T) {
 		expectedMethod := http.MethodGet
 		ts := httptest.NewTLSServer(nil)
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		c := buildTestClient(t, ts)
 		actual, err := c.BuildGetItemRequest(ctx, exampleItem.ID)
@@ -108,7 +108,7 @@ func TestV1Client_GetItem(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -133,7 +133,7 @@ func TestV1Client_GetItem(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		c := buildTestClientWithInvalidURL(t)
 		actual, err := c.GetItem(ctx, exampleItem.ID)
@@ -146,7 +146,7 @@ func TestV1Client_GetItem(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -198,7 +198,7 @@ func TestV1Client_GetItems(T *testing.T) {
 
 		expectedPath := "/api/v1/items"
 
-		exampleItemList := fakemodels.BuildFakeItemList()
+		exampleItemList := fakes.BuildFakeItemList()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -291,7 +291,7 @@ func TestV1Client_SearchItems(T *testing.T) {
 		limit := types.DefaultQueryFilter().Limit
 		exampleQuery := "whatever"
 
-		exampleItemList := fakemodels.BuildFakeItemList().Items
+		exampleItemList := fakes.BuildFakeItemList().Items
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -361,10 +361,10 @@ func TestV1Client_BuildCreateItemRequest(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		expectedMethod := http.MethodPost
 		ts := httptest.NewTLSServer(nil)
@@ -385,8 +385,8 @@ func TestV1Client_CreateItem(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleItem := fakemodels.BuildFakeItem()
-		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleItem := fakes.BuildFakeItem()
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		expectedPath := "/api/v1/items"
 
@@ -419,8 +419,8 @@ func TestV1Client_CreateItem(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleItem := fakemodels.BuildFakeItem()
-		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleItem := fakes.BuildFakeItem()
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		c := buildTestClientWithInvalidURL(t)
 		actual, err := c.CreateItem(ctx, exampleInput)
@@ -437,7 +437,7 @@ func TestV1Client_BuildUpdateItemRequest(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		expectedMethod := http.MethodPut
 
 		ts := httptest.NewTLSServer(nil)
@@ -457,7 +457,7 @@ func TestV1Client_UpdateItem(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -477,7 +477,7 @@ func TestV1Client_UpdateItem(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		err := buildTestClientWithInvalidURL(t).UpdateItem(ctx, exampleItem)
 		assert.Error(t, err, "error should be returned")
@@ -494,7 +494,7 @@ func TestV1Client_BuildArchiveItemRequest(T *testing.T) {
 		expectedMethod := http.MethodDelete
 		ts := httptest.NewTLSServer(nil)
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		c := buildTestClient(t, ts)
 		actual, err := c.BuildArchiveItemRequest(ctx, exampleItem.ID)
@@ -514,7 +514,7 @@ func TestV1Client_ArchiveItem(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -534,7 +534,7 @@ func TestV1Client_ArchiveItem(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		err := buildTestClientWithInvalidURL(t).ArchiveItem(ctx, exampleItem.ID)
 		assert.Error(t, err, "error should be returned")

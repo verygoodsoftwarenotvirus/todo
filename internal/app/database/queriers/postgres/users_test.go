@@ -13,7 +13,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	postgres "github.com/lib/pq"
@@ -101,7 +101,7 @@ func TestPostgres_buildGetUserQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = $1 AND users.two_factor_secret_verified_on IS NOT NULL"
 		expectedArgs := []interface{}{
@@ -122,7 +122,7 @@ func TestPostgres_GetUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.Salt = nil
 
 		p, mockDB := buildTestService(t)
@@ -142,7 +142,7 @@ func TestPostgres_GetUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		p, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := p.buildGetUserQuery(exampleUser.ID)
@@ -167,7 +167,7 @@ func TestPostgres_buildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = $1 AND users.two_factor_secret_verified_on IS NULL"
 		expectedArgs := []interface{}{
@@ -188,7 +188,7 @@ func TestPostgres_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.Salt = nil
 
 		p, mockDB := buildTestService(t)
@@ -208,7 +208,7 @@ func TestPostgres_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		p, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := p.buildGetUserWithUnverifiedTwoFactorSecretQuery(exampleUser.ID)
@@ -233,7 +233,7 @@ func TestPostgres_buildGetUsersQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		filter := fakemodels.BuildFleshedOutQueryFilter()
+		filter := fakes.BuildFleshedOutQueryFilter()
 
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.created_on > $1 AND users.created_on < $2 AND users.last_updated_on > $3 AND users.last_updated_on < $4 ORDER BY users.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
@@ -259,7 +259,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 
 		filter := types.DefaultQueryFilter()
 
-		exampleUserList := fakemodels.BuildFakeUserList()
+		exampleUserList := fakes.BuildFakeUserList()
 		exampleUserList.Users[0].Salt = nil
 		exampleUserList.Users[1].Salt = nil
 		exampleUserList.Users[2].Salt = nil
@@ -336,7 +336,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildErroneousMockRowFromUser(fakemodels.BuildFakeUser()))
+			WillReturnRows(buildErroneousMockRowFromUser(fakes.BuildFakeUser()))
 
 		actual, err := p.GetUsers(ctx, filter)
 		assert.Error(t, err)
@@ -353,7 +353,7 @@ func TestPostgres_buildGetUserByUsernameQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.username = $1 AND users.two_factor_secret_verified_on IS NOT NULL"
 		expectedArgs := []interface{}{
@@ -374,7 +374,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.Salt = nil
 
 		p, mockDB := buildTestService(t)
@@ -395,7 +395,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		p, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := p.buildGetUserByUsernameQuery(exampleUser.Username)
@@ -416,7 +416,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		p, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := p.buildGetUserByUsernameQuery(exampleUser.Username)
@@ -497,8 +497,8 @@ func TestPostgres_buildCreateUserQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
 		expectedQuery := "INSERT INTO users (username,hashed_password,salt,two_factor_secret,is_admin) VALUES ($1,$2,$3,$4,$5) RETURNING id, created_on"
 		expectedArgs := []interface{}{
@@ -525,10 +525,10 @@ func TestPostgres_CreateUser(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 		exampleUser.Salt = nil
-		expectedInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+		expectedInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
 		expectedQuery, expectedArgs := p.buildCreateUserQuery(expectedInput)
 
@@ -550,9 +550,9 @@ func TestPostgres_CreateUser(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
-		expectedInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+		expectedInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
 		expectedQuery, expectedArgs := p.buildCreateUserQuery(expectedInput)
 
@@ -574,9 +574,9 @@ func TestPostgres_CreateUser(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
-		expectedInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+		expectedInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
 		expectedQuery, expectedArgs := p.buildCreateUserQuery(expectedInput)
 
@@ -599,7 +599,7 @@ func TestPostgres_buildUpdateUserQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "UPDATE users SET username = $1, hashed_password = $2, salt = $3, two_factor_secret = $4, two_factor_secret_verified_on = $5, last_updated_on = extract(epoch FROM NOW()) WHERE id = $6 RETURNING last_updated_on"
 		expectedArgs := []interface{}{
@@ -625,7 +625,7 @@ func TestPostgres_UpdateUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleRows := sqlmock.NewRows([]string{"last_updated_on"}).AddRow(uint64(time.Now().Unix()))
 
 		p, mockDB := buildTestService(t)
@@ -649,7 +649,7 @@ func TestPostgres_buildUpdateUserPasswordQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "UPDATE users SET hashed_password = $1, requires_password_change = $2, password_last_changed_on = extract(epoch FROM NOW()), last_updated_on = extract(epoch FROM NOW()) WHERE id = $3 RETURNING last_updated_on"
 		expectedArgs := []interface{}{
@@ -672,7 +672,7 @@ func TestPostgres_UpdateUserPassword(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		p, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := p.buildUpdateUserPasswordQuery(exampleUser.ID, exampleUser.HashedPassword)
@@ -695,7 +695,7 @@ func TestPostgres_buildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "UPDATE users SET two_factor_secret_verified_on = extract(epoch FROM NOW()) WHERE id = $1"
 		expectedArgs := []interface{}{
@@ -716,7 +716,7 @@ func TestPostgres_VerifyUserTwoFactorSecret(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		p, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := p.buildVerifyUserTwoFactorSecretQuery(exampleUser.ID)
@@ -739,7 +739,7 @@ func TestPostgres_buildArchiveUserQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "UPDATE users SET archived_on = extract(epoch FROM NOW()) WHERE id = $1 RETURNING archived_on"
 		expectedArgs := []interface{}{
@@ -760,7 +760,7 @@ func TestPostgres_ArchiveUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		p, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := p.buildArchiveUserQuery(exampleUser.ID)
@@ -783,7 +783,7 @@ func TestPostgres_buildGetAuditLogEntriesForUserQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE (audit_log.context->'user_id' = $1 OR audit_log.context->'performed_by' = $2) ORDER BY audit_log.id"
 		expectedArgs := []interface{}{
@@ -807,7 +807,7 @@ func TestPostgres_LogUserCreationEvent(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserCreationEventEntry(exampleInput)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -832,7 +832,7 @@ func TestPostgres_LogUserVerifyTwoFactorSecretEvent(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserVerifyTwoFactorSecretEventEntry(exampleUser.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -857,7 +857,7 @@ func TestPostgres_LogUserUpdateTwoFactorSecretEvent(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserUpdateTwoFactorSecretEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -882,7 +882,7 @@ func TestPostgres_LogUserUpdatePasswordEvent(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserUpdatePasswordEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -907,7 +907,7 @@ func TestPostgres_LogUserArchiveEvent(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserArchiveEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -932,7 +932,7 @@ func TestPostgres_LogSuccessfulLoginEvent(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildSuccessfulLoginEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -957,7 +957,7 @@ func TestPostgres_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUnsuccessfulLoginBadPasswordEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -982,7 +982,7 @@ func TestPostgres_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -1007,7 +1007,7 @@ func TestPostgres_LogLogoutEvent(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildLogoutEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 

@@ -11,7 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/gorilla/securecookie"
@@ -50,7 +50,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}
@@ -119,7 +119,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		oacv := &mockOAuth2ClientValidator{}
 		oacv.On(
@@ -145,11 +145,11 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		oacv := &mockOAuth2ClientValidator{}
 		oacv.On(
@@ -177,7 +177,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		oacv := &mockOAuth2ClientValidator{}
 		oacv.On(
@@ -207,7 +207,7 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}
@@ -254,7 +254,7 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}
@@ -289,13 +289,13 @@ func TestService_LoginHandler(T *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}
 
-		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 		ctx := context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, exampleLoginData)
 
 		udb := &mockmodels.UserDataManager{}
@@ -359,12 +359,12 @@ func TestService_LoginHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}
 
-		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 		ctx = context.WithValue(ctx, userLoginInputMiddlewareCtxKey, exampleLoginData)
 
 		udb := &mockmodels.UserDataManager{}
@@ -410,12 +410,12 @@ func TestService_LoginHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}
 
-		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 		ctx = context.WithValue(ctx, userLoginInputMiddlewareCtxKey, exampleLoginData)
 
 		udb := &mockmodels.UserDataManager{}
@@ -457,12 +457,12 @@ func TestService_LoginHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}
 
-		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 		ctx = context.WithValue(ctx, userLoginInputMiddlewareCtxKey, exampleLoginData)
 
 		cb := &mockCookieEncoderDecoder{}
@@ -512,12 +512,12 @@ func TestService_LoginHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}
 
-		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 		ctx = context.WithValue(ctx, userLoginInputMiddlewareCtxKey, exampleLoginData)
 
 		cb := &mockCookieEncoderDecoder{}
@@ -571,7 +571,7 @@ func TestService_LogoutHandler(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}
@@ -616,7 +616,7 @@ func TestService_LogoutHandler(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}
@@ -648,11 +648,11 @@ func TestService_validateLogin(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}
-		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		authr := &mockauth.Authenticator{}
 		authr.On(
@@ -679,11 +679,11 @@ func TestService_validateLogin(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}
-		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		authr := &mockauth.Authenticator{}
 		authr.On(
@@ -726,11 +726,11 @@ func TestService_validateLogin(T *testing.T) {
 
 		expectedErr := errors.New("arbitrary")
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}
-		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		authr := &mockauth.Authenticator{}
 		authr.On(
@@ -764,11 +764,11 @@ func TestService_validateLogin(T *testing.T) {
 		s := buildTestService(t)
 
 		expectedErr := errors.New("arbitrary")
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}
-		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		authr := &mockauth.Authenticator{}
 		authr.On(
@@ -810,11 +810,11 @@ func TestService_validateLogin(T *testing.T) {
 		s := buildTestService(t)
 
 		expectedErr := errors.New("arbitrary")
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}
-		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		authr := &mockauth.Authenticator{}
 		authr.On(
@@ -841,11 +841,11 @@ func TestService_validateLogin(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}
-		exampleLoginData := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		authr := &mockauth.Authenticator{}
 		authr.On(
@@ -876,7 +876,7 @@ func TestService_StatusHandler(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}
@@ -908,7 +908,7 @@ func TestService_StatusHandler(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}
@@ -944,7 +944,7 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
 		}

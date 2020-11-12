@@ -11,7 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -41,7 +41,7 @@ func buildDummyUser(ctx context.Context, t *testing.T) (*types.UserCreationRespo
 	t.Helper()
 
 	// build user creation route input.
-	userInput := fakemodels.BuildFakeUserCreationInput()
+	userInput := fakes.BuildFakeUserCreationInput()
 	user, err := todoClient.CreateUser(ctx, userInput)
 	require.NotNil(t, user)
 	require.NoError(t, err)
@@ -92,7 +92,7 @@ func TestUsers(test *testing.T) {
 			defer span.End()
 
 			// Create user.
-			exampleUserInput := fakemodels.BuildFakeUserCreationInput()
+			exampleUserInput := fakes.BuildFakeUserCreationInput()
 			actual, err := todoClient.CreateUser(ctx, exampleUserInput)
 			checkValueAndError(t, actual, err)
 
@@ -120,7 +120,7 @@ func TestUsers(test *testing.T) {
 			defer span.End()
 
 			// Create user.
-			exampleUserInput := fakemodels.BuildFakeUserCreationInput()
+			exampleUserInput := fakes.BuildFakeUserCreationInput()
 			premade, err := todoClient.CreateUser(ctx, exampleUserInput)
 			require.NoError(t, err)
 
@@ -156,7 +156,7 @@ func TestUsers(test *testing.T) {
 			defer span.End()
 
 			// Create user.
-			exampleUserInput := fakemodels.BuildFakeUserCreationInput()
+			exampleUserInput := fakes.BuildFakeUserCreationInput()
 			u, err := todoClient.CreateUser(ctx, exampleUserInput)
 			assert.NoError(t, err)
 			assert.NotNil(t, u)
@@ -177,7 +177,7 @@ func TestUsers(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			exampleUser := fakemodels.BuildFakeUser()
+			exampleUser := fakes.BuildFakeUser()
 			exampleUser.ID = nonexistentID
 
 			x, err := adminClient.GetAuditLogForUser(ctx, exampleUser.ID)
@@ -190,8 +190,8 @@ func TestUsers(test *testing.T) {
 			defer span.End()
 
 			// Create user.
-			exampleUser := fakemodels.BuildFakeUser()
-			exampleUserInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+			exampleUser := fakes.BuildFakeUser()
+			exampleUserInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 			createdUser, err := todoClient.CreateUser(ctx, exampleUserInput)
 			checkValueAndError(t, createdUser, err)
 
@@ -209,8 +209,8 @@ func TestUsers(test *testing.T) {
 			defer span.End()
 
 			// Create user.
-			exampleUser := fakemodels.BuildFakeUser()
-			exampleUserInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+			exampleUser := fakes.BuildFakeUser()
+			exampleUserInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 			createdUser, err := todoClient.CreateUser(ctx, exampleUserInput)
 			checkValueAndError(t, createdUser, err)
 

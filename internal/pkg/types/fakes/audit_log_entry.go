@@ -1,4 +1,4 @@
-package fake
+package fakes
 
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
@@ -12,7 +12,7 @@ func BuildFakeAuditLogEntry() *types.AuditLogEntry {
 	return &types.AuditLogEntry{
 		ID:        fake.Uint64(),
 		EventType: audit.SuccessfulLoginEvent,
-		Context:   map[string]interface{}{"fake": "true"},
+		Context:   map[string]interface{}{"fakes": "true"},
 		CreatedOn: uint64(uint32(fake.Date().Unix())),
 	}
 }

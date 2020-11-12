@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -18,7 +18,7 @@ func TestClient_GetUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
@@ -38,7 +38,7 @@ func TestClient_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.On("GetUserWithUnverifiedTwoFactorSecret", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
@@ -58,7 +58,7 @@ func TestClient_VerifyUserTwoFactorSecret(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.On("VerifyUserTwoFactorSecret", mock.Anything, exampleUser.ID).Return(nil)
@@ -77,7 +77,7 @@ func TestClient_GetUserByUsername(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.On("GetUserByUsername", mock.Anything, exampleUser.Username).Return(exampleUser, nil)
@@ -117,7 +117,7 @@ func TestClient_GetUsers(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUserList := fakemodels.BuildFakeUserList()
+		exampleUserList := fakes.BuildFakeUserList()
 		filter := types.DefaultQueryFilter()
 
 		c, mockDB := buildTestClient()
@@ -134,7 +134,7 @@ func TestClient_GetUsers(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUserList := fakemodels.BuildFakeUserList()
+		exampleUserList := fakes.BuildFakeUserList()
 		filter := (*types.QueryFilter)(nil)
 
 		c, mockDB := buildTestClient()
@@ -155,8 +155,8 @@ func TestClient_CreateUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.On("CreateUser", mock.Anything, exampleInput).Return(exampleUser, nil)
@@ -176,7 +176,7 @@ func TestClient_UpdateUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		var expected error
 
 		c, mockDB := buildTestClient()
@@ -196,7 +196,7 @@ func TestClient_UpdateUserPassword(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		var expected error
 
 		c, mockDB := buildTestClient()
@@ -216,7 +216,7 @@ func TestClient_ArchiveUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.On("ArchiveUser", mock.Anything, exampleUser.ID).Return(nil)

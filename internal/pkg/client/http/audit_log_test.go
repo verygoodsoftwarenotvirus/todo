@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -42,7 +42,7 @@ func TestV1Client_GetAuditLogEntries(T *testing.T) {
 		ctx := context.Background()
 		filter := (*types.QueryFilter)(nil)
 		expectedPath := "/_admin_/audit_log"
-		exampleAuditLogEntryList := fakemodels.BuildFakeAuditLogEntryList()
+		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(

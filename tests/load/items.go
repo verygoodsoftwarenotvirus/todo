@@ -8,7 +8,7 @@ import (
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/client/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
 // fetchRandomItem retrieves a random item from the list of available items.
@@ -29,7 +29,7 @@ func buildItemActions(c *client.V1Client) map[string]*Action {
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
 
-				itemInput := fakemodels.BuildFakeItemCreationInput()
+				itemInput := fakes.BuildFakeItemCreationInput()
 
 				return c.BuildCreateItemRequest(ctx, itemInput)
 			},
@@ -64,7 +64,7 @@ func buildItemActions(c *client.V1Client) map[string]*Action {
 				ctx := context.Background()
 
 				if randomItem := fetchRandomItem(ctx, c); randomItem != nil {
-					newItem := fakemodels.BuildFakeItemCreationInput()
+					newItem := fakes.BuildFakeItemCreationInput()
 					randomItem.Name = newItem.Name
 					randomItem.Details = newItem.Details
 					return c.BuildUpdateItemRequest(ctx, randomItem)

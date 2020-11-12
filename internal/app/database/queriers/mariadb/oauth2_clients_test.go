@@ -10,7 +10,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -93,7 +93,7 @@ func TestMariaDB_buildGetOAuth2ClientByClientIDQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.client_id = ?"
 		expectedArgs := []interface{}{
@@ -114,7 +114,7 @@ func TestMariaDB_GetOAuth2ClientByClientID(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetOAuth2ClientByClientIDQuery(exampleOAuth2Client.ClientID)
@@ -134,7 +134,7 @@ func TestMariaDB_GetOAuth2ClientByClientID(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetOAuth2ClientByClientIDQuery(exampleOAuth2Client.ClientID)
@@ -155,7 +155,7 @@ func TestMariaDB_GetOAuth2ClientByClientID(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetOAuth2ClientByClientIDQuery(exampleOAuth2Client.ClientID)
@@ -194,7 +194,7 @@ func TestMariaDB_GetAllOAuth2Clients(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		expected := []*types.OAuth2Client{
 			exampleOAuth2Client,
 			exampleOAuth2Client,
@@ -262,7 +262,7 @@ func TestMariaDB_GetAllOAuth2Clients(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery := m.buildGetAllOAuth2ClientsQuery()
@@ -286,8 +286,8 @@ func TestMariaDB_GetAllOAuth2ClientsForUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleOAuth2ClientList := fakemodels.BuildFakeOAuth2ClientList()
+		exampleUser := fakes.BuildFakeUser()
+		exampleOAuth2ClientList := fakes.BuildFakeOAuth2ClientList()
 
 		expected := []*types.OAuth2Client{
 			&exampleOAuth2ClientList.Clients[0],
@@ -313,7 +313,7 @@ func TestMariaDB_GetAllOAuth2ClientsForUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, nil)
@@ -333,7 +333,7 @@ func TestMariaDB_GetAllOAuth2ClientsForUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, nil)
@@ -353,8 +353,8 @@ func TestMariaDB_GetAllOAuth2ClientsForUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleUser := fakes.BuildFakeUser()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, nil)
@@ -378,7 +378,7 @@ func TestMariaDB_buildGetOAuth2ClientQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = ? AND oauth2_clients.id = ?"
 		expectedArgs := []interface{}{
@@ -400,7 +400,7 @@ func TestMariaDB_GetOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
@@ -420,7 +420,7 @@ func TestMariaDB_GetOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
@@ -441,7 +441,7 @@ func TestMariaDB_GetOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
@@ -504,8 +504,8 @@ func TestMariaDB_buildGetOAuth2ClientsForUserQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		filter := fakemodels.BuildFleshedOutQueryFilter()
+		exampleUser := fakes.BuildFakeUser()
+		filter := fakes.BuildFleshedOutQueryFilter()
 
 		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = ? AND oauth2_clients.created_on > ? AND oauth2_clients.created_on < ? AND oauth2_clients.last_updated_on > ? AND oauth2_clients.last_updated_on < ? ORDER BY oauth2_clients.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
@@ -526,7 +526,7 @@ func TestMariaDB_buildGetOAuth2ClientsForUserQuery(T *testing.T) {
 func TestMariaDB_GetOAuth2ClientsForUser(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -534,7 +534,7 @@ func TestMariaDB_GetOAuth2ClientsForUser(T *testing.T) {
 
 		filter := types.DefaultQueryFilter()
 
-		exampleOAuth2ClientList := fakemodels.BuildFakeOAuth2ClientList()
+		exampleOAuth2ClientList := fakes.BuildFakeOAuth2ClientList()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, filter)
@@ -607,7 +607,7 @@ func TestMariaDB_GetOAuth2ClientsForUser(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildErroneousMockRowFromOAuth2Client(fakemodels.BuildFakeOAuth2Client()))
+			WillReturnRows(buildErroneousMockRowFromOAuth2Client(fakes.BuildFakeOAuth2Client()))
 
 		actual, err := m.GetOAuth2ClientsForUser(ctx, exampleUser.ID, filter)
 		assert.Error(t, err)
@@ -624,7 +624,7 @@ func TestMariaDB_buildCreateOAuth2ClientQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		expectedQuery := "INSERT INTO oauth2_clients (name,client_id,client_secret,scopes,redirect_uri,belongs_to_user) VALUES (?,?,?,?,?,?)"
 		expectedArgs := []interface{}{
@@ -650,8 +650,8 @@ func TestMariaDB_CreateOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
-		expectedInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
+		expectedInput := fakes.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 		exampleRows := sqlmock.NewResult(int64(exampleOAuth2Client.ID), 1)
 
 		m, mockDB := buildTestService(t)
@@ -677,8 +677,8 @@ func TestMariaDB_CreateOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
-		expectedInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
+		expectedInput := fakes.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildCreateOAuth2ClientQuery(exampleOAuth2Client)
@@ -702,7 +702,7 @@ func TestMariaDB_buildUpdateOAuth2ClientQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		expectedQuery := "UPDATE oauth2_clients SET client_id = ?, client_secret = ?, scopes = ?, redirect_uri = ?, last_updated_on = UNIX_TIMESTAMP() WHERE belongs_to_user = ? AND id = ?"
 		expectedArgs := []interface{}{
@@ -728,7 +728,7 @@ func TestMariaDB_UpdateOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildUpdateOAuth2ClientQuery(exampleOAuth2Client)
@@ -747,7 +747,7 @@ func TestMariaDB_UpdateOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildUpdateOAuth2ClientQuery(exampleOAuth2Client)
@@ -770,7 +770,7 @@ func TestMariaDB_buildArchiveOAuth2ClientQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		expectedQuery := "UPDATE oauth2_clients SET last_updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE belongs_to_user = ? AND id = ?"
 		expectedArgs := []interface{}{
@@ -792,7 +792,7 @@ func TestMariaDB_ArchiveOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildArchiveOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
@@ -811,7 +811,7 @@ func TestMariaDB_ArchiveOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildArchiveOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)

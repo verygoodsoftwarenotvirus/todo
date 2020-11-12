@@ -10,7 +10,7 @@ import (
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -21,7 +21,7 @@ import (
 func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
 		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
@@ -33,7 +33,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleAuditLogEntryList := fakemodels.BuildFakeAuditLogEntryList()
+		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 
 		auditLogEntryManager := &mockmodels.AuditLogDataManager{}
 		auditLogEntryManager.On("GetAuditLogEntries", mock.Anything, mock.AnythingOfType("*types.QueryFilter")).Return(exampleAuditLogEntryList, nil)
@@ -125,7 +125,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
 		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
@@ -137,7 +137,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		s.auditLogEntryIDFetcher = func(req *http.Request) uint64 {
 			return exampleAuditLogEntry.ID
 		}
@@ -173,7 +173,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		s.auditLogEntryIDFetcher = func(req *http.Request) uint64 {
 			return exampleAuditLogEntry.ID
 		}
@@ -209,7 +209,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		s.auditLogEntryIDFetcher = func(req *http.Request) uint64 {
 			return exampleAuditLogEntry.ID
 		}

@@ -12,7 +12,7 @@ import (
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -23,7 +23,7 @@ import (
 func TestWebhooksService_List(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
 		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
@@ -35,7 +35,7 @@ func TestWebhooksService_List(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleWebhookList := fakemodels.BuildFakeWebhookList()
+		exampleWebhookList := fakes.BuildFakeWebhookList()
 
 		wd := &mockmodels.WebhookDataManager{}
 		wd.On(
@@ -142,14 +142,14 @@ func TestWebhooksService_List(T *testing.T) {
 func TestValidateWebhook(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleWebhook.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		assert.NoError(t, validateWebhook(exampleInput))
 	})
@@ -157,9 +157,9 @@ func TestValidateWebhook(T *testing.T) {
 	T.Run("with invalid method", func(t *testing.T) {
 		t.Parallel()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleWebhook.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 		exampleInput.Method = " MEATLOAF "
 
 		assert.Error(t, validateWebhook(exampleInput))
@@ -168,9 +168,9 @@ func TestValidateWebhook(T *testing.T) {
 	T.Run("with invalid url", func(t *testing.T) {
 		t.Parallel()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleWebhook.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 		exampleInput.URL = "%zzzzz"
 
 		assert.Error(t, validateWebhook(exampleInput))
@@ -180,7 +180,7 @@ func TestValidateWebhook(T *testing.T) {
 func TestWebhooksService_Create(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
 		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
@@ -192,9 +192,9 @@ func TestWebhooksService_Create(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleWebhook.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		mc := &mockmetrics.UnitCounter{}
 		mc.On("Increment", mock.Anything)
@@ -241,10 +241,10 @@ func TestWebhooksService_Create(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleWebhook.BelongsToUser = exampleUser.ID
 		exampleWebhook.URL = "%zzzzz"
-		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On(
@@ -305,9 +305,9 @@ func TestWebhooksService_Create(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleWebhook.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		wd := &mockmodels.WebhookDataManager{}
 		wd.On(
@@ -343,7 +343,7 @@ func TestWebhooksService_Create(T *testing.T) {
 func TestWebhooksService_Read(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
 		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
@@ -355,7 +355,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleWebhook.BelongsToUser = exampleUser.ID
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -398,7 +398,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleWebhook.BelongsToUser = exampleUser.ID
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -441,7 +441,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleWebhook.BelongsToUser = exampleUser.ID
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -481,7 +481,7 @@ func TestWebhooksService_Read(T *testing.T) {
 func TestWebhooksService_Update(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
 		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
@@ -493,9 +493,9 @@ func TestWebhooksService_Update(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleWebhook.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
+		exampleInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
 			return exampleWebhook.ID
@@ -576,9 +576,9 @@ func TestWebhooksService_Update(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleWebhook.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
+		exampleInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
 			return exampleWebhook.ID
@@ -622,9 +622,9 @@ func TestWebhooksService_Update(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleWebhook.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
+		exampleInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
 			return exampleWebhook.ID
@@ -668,9 +668,9 @@ func TestWebhooksService_Update(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleWebhook.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
+		exampleInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
 			return exampleWebhook.ID
@@ -717,7 +717,7 @@ func TestWebhooksService_Update(T *testing.T) {
 func TestWebhooksService_Archive(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
 		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
@@ -729,7 +729,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleWebhook.BelongsToUser = exampleUser.ID
 
 		mc := &mockmetrics.UnitCounter{}
@@ -776,7 +776,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleWebhook.BelongsToUser = exampleUser.ID
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -819,7 +819,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleWebhook.BelongsToUser = exampleUser.ID
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {

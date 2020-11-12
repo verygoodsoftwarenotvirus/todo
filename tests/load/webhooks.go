@@ -7,7 +7,7 @@ import (
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/client/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
 // fetchRandomWebhook retrieves a random webhook from the list of available webhooks.
@@ -46,7 +46,7 @@ func buildWebhookActions(c *client.V1Client) map[string]*Action {
 			Name: "CreateWebhook",
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
-				exampleInput := fakemodels.BuildFakeWebhookCreationInput()
+				exampleInput := fakes.BuildFakeWebhookCreationInput()
 				return c.BuildCreateWebhookRequest(ctx, exampleInput)
 			},
 			Weight: 1,
@@ -56,7 +56,7 @@ func buildWebhookActions(c *client.V1Client) map[string]*Action {
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
 				if randomWebhook := fetchRandomWebhook(c); randomWebhook != nil {
-					randomWebhook.Name = fakemodels.BuildFakeWebhook().Name
+					randomWebhook.Name = fakes.BuildFakeWebhook().Name
 					return c.BuildUpdateWebhookRequest(ctx, randomWebhook)
 				}
 				return nil, ErrUnavailableYet

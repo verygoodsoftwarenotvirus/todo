@@ -10,7 +10,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -82,7 +82,7 @@ func TestPostgres_buildGetAuditLogEntryQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
 		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.id = $1"
 		expectedArgs := []interface{}{
@@ -103,7 +103,7 @@ func TestPostgres_GetAuditLogEntry(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
 		p, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := p.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
@@ -123,7 +123,7 @@ func TestPostgres_GetAuditLogEntry(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
 		p, mockDB := buildTestService(t)
 
@@ -211,7 +211,7 @@ func TestPostgres_GetAllAuditLogEntries(T *testing.T) {
 		ctx := context.Background()
 
 		p, mockDB := buildTestService(t)
-		exampleAuditLogEntryList := fakemodels.BuildFakeAuditLogEntryList()
+		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
@@ -329,7 +329,7 @@ func TestPostgres_GetAllAuditLogEntries(T *testing.T) {
 		ctx := context.Background()
 
 		p, mockDB := buildTestService(t)
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
@@ -360,7 +360,7 @@ func TestPostgres_buildGetAuditLogEntriesQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		filter := fakemodels.BuildFleshedOutQueryFilter()
+		filter := fakes.BuildFleshedOutQueryFilter()
 
 		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.created_on > $1 AND audit_log.created_on < $2 AND audit_log.last_updated_on > $3 AND audit_log.last_updated_on < $4 ORDER BY audit_log.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
@@ -387,7 +387,7 @@ func TestPostgres_GetAuditLogEntries(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		exampleAuditLogEntryList := fakemodels.BuildFakeAuditLogEntryList()
+		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 		expectedQuery, expectedArgs := p.buildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -456,7 +456,7 @@ func TestPostgres_GetAuditLogEntries(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
 		expectedQuery, expectedArgs := p.buildGetAuditLogEntriesQuery(filter)
 
@@ -479,7 +479,7 @@ func TestPostgres_buildGetAuditLogEntriesForItemQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.context->'item_id' = $1 ORDER BY audit_log.id"
 		expectedArgs := []interface{}{
@@ -501,9 +501,9 @@ func TestPostgres_GetAuditLogEntriesForItem(T *testing.T) {
 		ctx := context.Background()
 
 		p, mockDB := buildTestService(t)
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
-		exampleAuditLogEntryList := fakemodels.BuildFakeAuditLogEntryList().Entries
+		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 		expectedQuery, expectedArgs := p.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -529,7 +529,7 @@ func TestPostgres_GetAuditLogEntriesForItem(T *testing.T) {
 		ctx := context.Background()
 
 		p, mockDB := buildTestService(t)
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		expectedQuery, expectedArgs := p.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 
@@ -550,7 +550,7 @@ func TestPostgres_GetAuditLogEntriesForItem(T *testing.T) {
 		ctx := context.Background()
 
 		p, mockDB := buildTestService(t)
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		expectedQuery, expectedArgs := p.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 
@@ -558,7 +558,7 @@ func TestPostgres_GetAuditLogEntriesForItem(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildErroneousMockRowFromAuditLogEntry(
-					fakemodels.BuildFakeAuditLogEntry(),
+					fakes.BuildFakeAuditLogEntry(),
 				),
 			)
 
@@ -578,7 +578,7 @@ func TestPostgres_buildCreateAuditLogEntryQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
 		expectedQuery := "INSERT INTO audit_log (event_type,context) VALUES ($1,$2) RETURNING id, created_on"
 		expectedArgs := []interface{}{
@@ -602,8 +602,8 @@ func TestPostgres_createAuditLogEntry(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
-		exampleInput := fakemodels.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
+		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
 		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleAuditLogEntry.ID, exampleAuditLogEntry.CreatedOn)
@@ -622,8 +622,8 @@ func TestPostgres_createAuditLogEntry(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
-		exampleInput := fakemodels.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
+		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
 		expectedQuery, expectedArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).

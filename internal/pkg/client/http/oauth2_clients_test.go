@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +27,7 @@ func TestV1Client_BuildGetOAuth2ClientRequest(T *testing.T) {
 
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		actual, err := c.BuildGetOAuth2ClientRequest(ctx, exampleOAuth2Client.ID)
 
@@ -45,7 +45,7 @@ func TestV1Client_GetOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -70,7 +70,7 @@ func TestV1Client_GetOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		c := buildTestClientWithInvalidURL(t)
 		actual, err := c.GetOAuth2Client(ctx, exampleOAuth2Client.ID)
@@ -106,7 +106,7 @@ func TestV1Client_GetOAuth2Clients(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2ClientList := fakemodels.BuildFakeOAuth2ClientList()
+		exampleOAuth2ClientList := fakes.BuildFakeOAuth2ClientList()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -148,8 +148,8 @@ func TestV1Client_BuildCreateOAuth2ClientRequest(T *testing.T) {
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
-		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
+		exampleInput := fakes.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 		req, err := c.BuildCreateOAuth2ClientRequest(ctx, &http.Cookie{}, exampleInput)
 
 		require.NotNil(t, req)
@@ -165,8 +165,8 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
-		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
+		exampleInput := fakes.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -188,8 +188,8 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
-		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
+		exampleInput := fakes.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		c := buildTestClientWithInvalidURL(t)
 
@@ -202,8 +202,8 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
-		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
+		exampleInput := fakes.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -244,7 +244,7 @@ func TestV1Client_BuildArchiveOAuth2ClientRequest(T *testing.T) {
 		expectedMethod := http.MethodDelete
 		ts := httptest.NewTLSServer(nil)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		c := buildTestClient(t, ts)
 		actual, err := c.BuildArchiveOAuth2ClientRequest(ctx, exampleOAuth2Client.ID)
 
@@ -263,7 +263,7 @@ func TestV1Client_ArchiveOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -284,7 +284,7 @@ func TestV1Client_ArchiveOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		err := buildTestClientWithInvalidURL(t).ArchiveOAuth2Client(ctx, exampleOAuth2Client.ID)
 		assert.Error(t, err, "error should be returned")

@@ -13,7 +13,7 @@ import (
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics/mock"
 	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -24,7 +24,7 @@ import (
 func TestItemsService_ListHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
 		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
@@ -36,7 +36,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleItemList := fakemodels.BuildFakeItemList()
+		exampleItemList := fakes.BuildFakeItemList()
 
 		itemDataManager := &mockmodels.ItemDataManager{}
 		itemDataManager.On("GetItems", mock.Anything, exampleUser.ID, mock.AnythingOfType("*types.QueryFilter")).Return(exampleItemList, nil)
@@ -131,7 +131,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 func TestItemsService_SearchHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
 		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
@@ -145,7 +145,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 		exampleQuery := "whatever"
 		exampleLimit := uint8(123)
-		exampleItemList := fakemodels.BuildFakeItemList().Items
+		exampleItemList := fakes.BuildFakeItemList().Items
 		var exampleItemIDs []uint64
 		for _, x := range exampleItemList {
 			exampleItemIDs = append(exampleItemIDs, x.ID)
@@ -224,7 +224,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 		exampleQuery := "whatever"
 		exampleLimit := uint8(123)
-		exampleItemList := fakemodels.BuildFakeItemList().Items
+		exampleItemList := fakes.BuildFakeItemList().Items
 		var exampleItemIDs []uint64
 		for _, x := range exampleItemList {
 			exampleItemIDs = append(exampleItemIDs, x.ID)
@@ -268,7 +268,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 		exampleQuery := "whatever"
 		exampleLimit := uint8(123)
-		exampleItemList := fakemodels.BuildFakeItemList().Items
+		exampleItemList := fakes.BuildFakeItemList().Items
 		var exampleItemIDs []uint64
 		for _, x := range exampleItemList {
 			exampleItemIDs = append(exampleItemIDs, x.ID)
@@ -307,7 +307,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 func TestItemsService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
 		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
@@ -319,9 +319,9 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		itemDataManager := &mockmodels.ItemDataManager{}
 		itemDataManager.On("CreateItem", mock.Anything, mock.AnythingOfType("*types.ItemCreationInput")).Return(exampleItem, nil)
@@ -397,9 +397,9 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		itemDataManager := &mockmodels.ItemDataManager{}
 		itemDataManager.On("CreateItem", mock.Anything, mock.AnythingOfType("*types.ItemCreationInput")).Return((*types.Item)(nil), errors.New("blah"))
@@ -432,7 +432,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 func TestItemsService_ExistenceHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
 		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
@@ -444,7 +444,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
@@ -478,7 +478,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
@@ -516,7 +516,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
@@ -551,7 +551,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 func TestItemsService_ReadHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
 		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
@@ -563,7 +563,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
@@ -601,7 +601,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
@@ -639,7 +639,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
@@ -674,7 +674,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 func TestItemsService_UpdateHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
 		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
@@ -686,9 +686,9 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeItemUpdateInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
 
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
@@ -765,9 +765,9 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeItemUpdateInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
 
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
@@ -807,9 +807,9 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeItemUpdateInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
 
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
@@ -849,9 +849,9 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeItemUpdateInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
 
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
@@ -889,7 +889,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 func TestItemsService_ArchiveHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
 		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
 	}
@@ -901,7 +901,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
@@ -947,7 +947,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
@@ -985,7 +985,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
@@ -1023,7 +1023,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID

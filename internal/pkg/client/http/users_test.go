@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,7 +29,7 @@ func TestV1Client_BuildGetUserRequest(T *testing.T) {
 
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		actual, err := c.BuildGetUserRequest(ctx, exampleUser.ID)
 
@@ -47,7 +47,7 @@ func TestV1Client_GetUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		// the hashed password is never transmitted over the wire.
 		exampleUser.HashedPassword = ""
 		// the two factor secret is transmitted over the wire only on creation.
@@ -78,7 +78,7 @@ func TestV1Client_GetUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.Salt = nil
 		exampleUser.HashedPassword = ""
 
@@ -116,7 +116,7 @@ func TestV1Client_GetUsers(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUserList := fakemodels.BuildFakeUserList()
+		exampleUserList := fakes.BuildFakeUserList()
 		// the hashed password is never transmitted over the wire.
 		exampleUserList.Users[0].HashedPassword = ""
 		exampleUserList.Users[1].HashedPassword = ""
@@ -170,8 +170,8 @@ func TestV1Client_BuildCreateUserRequest(T *testing.T) {
 		expectedMethod := http.MethodPost
 		ts := httptest.NewTLSServer(nil)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 		c := buildTestClient(t, ts)
 		actual, err := c.BuildCreateUserRequest(ctx, exampleInput)
 
@@ -188,9 +188,9 @@ func TestV1Client_CreateUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
-		expected := fakemodels.BuildDatabaseCreationResponse(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
+		expected := fakes.BuildDatabaseCreationResponse(exampleUser)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -219,8 +219,8 @@ func TestV1Client_CreateUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 
 		c := buildTestClientWithInvalidURL(t)
 		actual, err := c.CreateUser(ctx, exampleInput)
@@ -238,7 +238,7 @@ func TestV1Client_BuildArchiveUserRequest(T *testing.T) {
 		ctx := context.Background()
 
 		expectedMethod := http.MethodDelete
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
@@ -259,7 +259,7 @@ func TestV1Client_ArchiveUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -278,7 +278,7 @@ func TestV1Client_ArchiveUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		err := buildTestClientWithInvalidURL(t).ArchiveUser(ctx, exampleUser.ID)
 		assert.Error(t, err, "error should be returned")
@@ -295,8 +295,8 @@ func TestV1Client_BuildLoginRequest(T *testing.T) {
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		req, err := c.BuildLoginRequest(ctx, exampleInput)
 		require.NotNil(t, req)
@@ -326,8 +326,8 @@ func TestV1Client_Login(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -362,8 +362,8 @@ func TestV1Client_Login(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		c := buildTestClientWithInvalidURL(t)
 
@@ -376,8 +376,8 @@ func TestV1Client_Login(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -400,8 +400,8 @@ func TestV1Client_Login(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -429,8 +429,8 @@ func TestV1Client_BuildValidateTOTPSecretRequest(T *testing.T) {
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
 
 		req, err := c.BuildVerifyTOTPSecretRequest(ctx, exampleUser.ID, exampleInput.TOTPToken)
 		assert.NoError(t, err)
@@ -448,8 +448,8 @@ func TestV1Client_ValidateTOTPSecret(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -471,8 +471,8 @@ func TestV1Client_ValidateTOTPSecret(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -495,8 +495,8 @@ func TestV1Client_ValidateTOTPSecret(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -518,8 +518,8 @@ func TestV1Client_ValidateTOTPSecret(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
 
 		c := buildTestClientWithInvalidURL(t)
 
@@ -531,8 +531,8 @@ func TestV1Client_ValidateTOTPSecret(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(

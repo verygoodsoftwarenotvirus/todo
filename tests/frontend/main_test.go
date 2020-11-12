@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/makiuchi-d/gozxing"
 	"github.com/makiuchi-d/gozxing/qrcode"
@@ -117,7 +117,7 @@ func TestRegistrationFlow(T *testing.T) {
 				return elem.IsDisplayed()
 			}, 10*time.Second, time.Second))
 
-			user := fakemodels.BuildFakeUserCreationInput()
+			user := fakes.BuildFakeUserCreationInput()
 
 			// fetch the username field and fill it
 			usernameField, usernameFieldFindErr := driver.FindElement(selenium.ByID, usernameInputID)

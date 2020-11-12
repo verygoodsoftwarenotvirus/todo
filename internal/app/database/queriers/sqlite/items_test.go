@@ -12,7 +12,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -91,8 +91,8 @@ func TestSqlite_buildItemExistsQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery := "SELECT EXISTS ( SELECT items.id FROM items WHERE items.belongs_to_user = ? AND items.id = ? )"
@@ -115,8 +115,8 @@ func TestSqlite_ItemExists(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		s, mockDB := buildTestService(t)
@@ -137,8 +137,8 @@ func TestSqlite_ItemExists(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		s, mockDB := buildTestService(t)
@@ -163,8 +163,8 @@ func TestSqlite_buildGetItemQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.belongs_to_user = ? AND items.id = ?"
@@ -183,13 +183,13 @@ func TestSqlite_buildGetItemQuery(T *testing.T) {
 func TestSqlite_GetItem(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		s, mockDB := buildTestService(t)
@@ -210,7 +210,7 @@ func TestSqlite_GetItem(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		s, mockDB := buildTestService(t)
@@ -298,7 +298,7 @@ func TestSqlite_GetAllItems(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 		s, mockDB := buildTestService(t)
-		exampleItemList := fakemodels.BuildFakeItemList()
+		exampleItemList := fakes.BuildFakeItemList()
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
@@ -407,7 +407,7 @@ func TestSqlite_GetAllItems(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 		s, mockDB := buildTestService(t)
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
@@ -437,8 +437,8 @@ func TestSqlite_buildGetItemsQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		filter := fakemodels.BuildFleshedOutQueryFilter()
+		exampleUser := fakes.BuildFakeUser()
+		filter := fakes.BuildFleshedOutQueryFilter()
 
 		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ? ORDER BY items.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
@@ -463,12 +463,12 @@ func TestSqlite_GetItems(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		exampleItemList := fakemodels.BuildFakeItemList()
+		exampleItemList := fakes.BuildFakeItemList()
 
 		expectedQuery, expectedArgs := s.buildGetItemsQuery(exampleUser.ID, filter)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -493,7 +493,7 @@ func TestSqlite_GetItems(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
@@ -515,7 +515,7 @@ func TestSqlite_GetItems(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
@@ -538,8 +538,8 @@ func TestSqlite_GetItems(T *testing.T) {
 		s, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery, expectedArgs := s.buildGetItemsQuery(exampleUser.ID, filter)
@@ -562,7 +562,7 @@ func TestSqlite_buildGetItemsWithIDsQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleIDs := []uint64{
 			789,
 			123,
@@ -591,11 +591,11 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
 
-		exampleItemList := fakemodels.BuildFakeItemList()
+		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
 		for _, item := range exampleItemList.Items {
 			exampleIDs = append(exampleIDs, item.ID)
@@ -624,11 +624,11 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
 
-		exampleItemList := fakemodels.BuildFakeItemList()
+		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
 		for _, item := range exampleItemList.Items {
 			exampleIDs = append(exampleIDs, item.ID)
@@ -652,11 +652,11 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
 
-		exampleItemList := fakemodels.BuildFakeItemList()
+		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
 		for _, item := range exampleItemList.Items {
 			exampleIDs = append(exampleIDs, item.ID)
@@ -679,11 +679,11 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
 
-		exampleItemList := fakemodels.BuildFakeItemList()
+		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
 		for _, item := range exampleItemList.Items {
 			exampleIDs = append(exampleIDs, item.ID)
@@ -692,7 +692,7 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 		expectedQuery, expectedArgs := s.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildErroneousMockRowFromItem(fakemodels.BuildFakeItem()))
+			WillReturnRows(buildErroneousMockRowFromItem(fakes.BuildFakeItem()))
 
 		actual, err := s.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleIDs)
 
@@ -710,8 +710,8 @@ func TestSqlite_buildCreateItemQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery := "INSERT INTO items (name,details,belongs_to_user) VALUES (?,?,?)"
@@ -736,10 +736,10 @@ func TestSqlite_CreateItem(T *testing.T) {
 		ctx := context.Background()
 		s, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		expectedQuery, expectedArgs := s.buildCreateItemQuery(exampleItem)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -763,10 +763,10 @@ func TestSqlite_CreateItem(T *testing.T) {
 		ctx := context.Background()
 		s, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		expectedQuery, expectedArgs := s.buildCreateItemQuery(exampleItem)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -788,8 +788,8 @@ func TestSqlite_buildUpdateItemQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery := "UPDATE items SET name = ?, details = ?, last_updated_on = (strftime('%s','now')) WHERE belongs_to_user = ? AND id = ?"
@@ -815,8 +815,8 @@ func TestSqlite_UpdateItem(T *testing.T) {
 		ctx := context.Background()
 		s, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery, expectedArgs := s.buildUpdateItemQuery(exampleItem)
@@ -836,8 +836,8 @@ func TestSqlite_UpdateItem(T *testing.T) {
 		ctx := context.Background()
 		s, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery, expectedArgs := s.buildUpdateItemQuery(exampleItem)
@@ -859,8 +859,8 @@ func TestSqlite_buildArchiveItemQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery := "UPDATE items SET last_updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
@@ -884,8 +884,8 @@ func TestSqlite_ArchiveItem(T *testing.T) {
 		ctx := context.Background()
 		s, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery, expectedArgs := s.buildArchiveItemQuery(exampleItem.ID, exampleItem.BelongsToUser)
@@ -905,8 +905,8 @@ func TestSqlite_ArchiveItem(T *testing.T) {
 		ctx := context.Background()
 		s, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery, expectedArgs := s.buildArchiveItemQuery(exampleItem.ID, exampleItem.BelongsToUser)
@@ -927,8 +927,8 @@ func TestSqlite_ArchiveItem(T *testing.T) {
 		ctx := context.Background()
 		s, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery, expectedArgs := s.buildArchiveItemQuery(exampleItem.ID, exampleItem.BelongsToUser)
@@ -950,7 +950,7 @@ func TestSqlite_buildGetAuditLogEntriesForItemQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE json_extract(audit_log.context, '$.item_id') = ? ORDER BY audit_log.id"
 		expectedArgs := []interface{}{
@@ -972,9 +972,9 @@ func TestSqlite_GetAuditLogEntriesForItem(T *testing.T) {
 		ctx := context.Background()
 
 		s, mockDB := buildTestService(t)
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
-		exampleAuditLogEntryList := fakemodels.BuildFakeAuditLogEntryList().Entries
+		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 		expectedQuery, expectedArgs := s.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -1000,7 +1000,7 @@ func TestSqlite_GetAuditLogEntriesForItem(T *testing.T) {
 		ctx := context.Background()
 
 		p, mockDB := buildTestService(t)
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		expectedQuery, expectedArgs := p.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 
@@ -1021,7 +1021,7 @@ func TestSqlite_GetAuditLogEntriesForItem(T *testing.T) {
 		ctx := context.Background()
 
 		p, mockDB := buildTestService(t)
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		expectedQuery, expectedArgs := p.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 
@@ -1029,7 +1029,7 @@ func TestSqlite_GetAuditLogEntriesForItem(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildErroneousMockRowFromAuditLogEntry(
-					fakemodels.BuildFakeAuditLogEntry(),
+					fakes.BuildFakeAuditLogEntry(),
 				),
 			)
 
@@ -1051,7 +1051,7 @@ func TestSqlite_LogItemCreationEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeItem()
+		exampleInput := fakes.BuildFakeItem()
 		exampleAuditLogEntryInput := audit.BuildItemCreationEventEntry(exampleInput)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -1074,7 +1074,7 @@ func TestSqlite_LogItemUpdateEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 		exampleChanges := []types.FieldChangeSummary{}
-		exampleInput := fakemodels.BuildFakeItem()
+		exampleInput := fakes.BuildFakeItem()
 		exampleAuditLogEntryInput := audit.BuildItemUpdateEventEntry(exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -1097,7 +1097,7 @@ func TestSqlite_LogItemArchiveEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeItem()
+		exampleInput := fakes.BuildFakeItem()
 		exampleAuditLogEntryInput := audit.BuildItemArchiveEventEntry(exampleInput.BelongsToUser, exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 

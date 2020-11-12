@@ -10,7 +10,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -98,7 +98,7 @@ func TestMariaDB_buildGetWebhookQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.belongs_to_user = ? AND webhooks.id = ?"
 		expectedArgs := []interface{}{
@@ -120,7 +120,7 @@ func TestMariaDB_GetWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
@@ -140,7 +140,7 @@ func TestMariaDB_GetWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
@@ -161,7 +161,7 @@ func TestMariaDB_GetWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
@@ -181,7 +181,7 @@ func TestMariaDB_GetWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
@@ -277,7 +277,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhookList := fakemodels.BuildFakeWebhookList()
+		exampleWebhookList := fakes.BuildFakeWebhookList()
 		exampleWebhookList.Limit = 0
 
 		m, mockDB := buildTestService(t)
@@ -341,7 +341,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery := m.buildGetAllWebhooksQuery()
@@ -365,8 +365,8 @@ func TestMariaDB_buildGetWebhooksQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		filter := fakemodels.BuildFleshedOutQueryFilter()
+		exampleUser := fakes.BuildFakeUser()
+		filter := fakes.BuildFleshedOutQueryFilter()
 
 		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = ? AND webhooks.created_on > ? AND webhooks.created_on < ? AND webhooks.last_updated_on > ? AND webhooks.last_updated_on < ? ORDER BY webhooks.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
@@ -387,14 +387,14 @@ func TestMariaDB_buildGetWebhooksQuery(T *testing.T) {
 func TestMariaDB_GetWebhooks(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
 		filter := types.DefaultQueryFilter()
-		exampleWebhookList := fakemodels.BuildFakeWebhookList()
+		exampleWebhookList := fakes.BuildFakeWebhookList()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetWebhooksQuery(exampleUser.ID, filter)
@@ -462,7 +462,7 @@ func TestMariaDB_GetWebhooks(T *testing.T) {
 		ctx := context.Background()
 
 		filter := types.DefaultQueryFilter()
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetWebhooksQuery(exampleUser.ID, filter)
@@ -486,7 +486,7 @@ func TestMariaDB_buildCreateWebhookQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to_user) VALUES (?,?,?,?,?,?,?,?)"
 		expectedArgs := []interface{}{
@@ -514,8 +514,8 @@ func TestMariaDB_CreateWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
-		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		exampleWebhook := fakes.BuildFakeWebhook()
+		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 		exampleRows := sqlmock.NewResult(int64(exampleWebhook.ID), 1)
 
 		m, mockDB := buildTestService(t)
@@ -541,8 +541,8 @@ func TestMariaDB_CreateWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
-		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		exampleWebhook := fakes.BuildFakeWebhook()
+		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildCreateWebhookQuery(exampleWebhook)
@@ -566,7 +566,7 @@ func TestMariaDB_buildUpdateWebhookQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		expectedQuery := "UPDATE webhooks SET name = ?, content_type = ?, url = ?, method = ?, events = ?, data_types = ?, topics = ?, last_updated_on = UNIX_TIMESTAMP() WHERE belongs_to_user = ? AND id = ?"
 		expectedArgs := []interface{}{
@@ -595,7 +595,7 @@ func TestMariaDB_UpdateWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildUpdateWebhookQuery(exampleWebhook)
@@ -615,7 +615,7 @@ func TestMariaDB_UpdateWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildUpdateWebhookQuery(exampleWebhook)
@@ -638,7 +638,7 @@ func TestMariaDB_buildArchiveWebhookQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		expectedQuery := "UPDATE webhooks SET last_updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
 		expectedArgs := []interface{}{
@@ -660,7 +660,7 @@ func TestMariaDB_ArchiveWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildArchiveWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)

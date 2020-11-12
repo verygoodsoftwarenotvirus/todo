@@ -9,7 +9,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -97,7 +97,7 @@ func TestMariaDB_buildGetUserQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = ? AND users.two_factor_secret_verified_on IS NOT NULL"
 		expectedArgs := []interface{}{
@@ -118,7 +118,7 @@ func TestMariaDB_GetUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.Salt = nil
 
 		m, mockDB := buildTestService(t)
@@ -139,7 +139,7 @@ func TestMariaDB_GetUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetUserQuery(exampleUser.ID)
@@ -164,7 +164,7 @@ func TestMariaDB_buildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = ? AND users.two_factor_secret_verified_on IS NULL"
 		expectedArgs := []interface{}{
@@ -185,7 +185,7 @@ func TestMariaDB_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.Salt = nil
 
 		m, mockDB := buildTestService(t)
@@ -206,7 +206,7 @@ func TestMariaDB_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetUserWithUnverifiedTwoFactorSecretQuery(exampleUser.ID)
@@ -231,7 +231,7 @@ func TestMariaDB_buildGetUsersQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		filter := fakemodels.BuildFleshedOutQueryFilter()
+		filter := fakes.BuildFleshedOutQueryFilter()
 
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.created_on > ? AND users.created_on < ? AND users.last_updated_on > ? AND users.last_updated_on < ? ORDER BY users.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
@@ -257,7 +257,7 @@ func TestMariaDB_GetUsers(T *testing.T) {
 
 		filter := types.DefaultQueryFilter()
 
-		exampleUserList := fakemodels.BuildFakeUserList()
+		exampleUserList := fakes.BuildFakeUserList()
 		exampleUserList.Users[0].Salt = nil
 		exampleUserList.Users[1].Salt = nil
 		exampleUserList.Users[2].Salt = nil
@@ -334,7 +334,7 @@ func TestMariaDB_GetUsers(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildErroneousMockRowFromUser(fakemodels.BuildFakeUser()))
+			WillReturnRows(buildErroneousMockRowFromUser(fakes.BuildFakeUser()))
 
 		actual, err := m.GetUsers(ctx, filter)
 		assert.Error(t, err)
@@ -351,7 +351,7 @@ func TestMariaDB_buildGetUserByUsernameQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.username = ? AND users.two_factor_secret_verified_on IS NOT NULL"
 		expectedArgs := []interface{}{
@@ -372,7 +372,7 @@ func TestMariaDB_GetUserByUsername(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.Salt = nil
 
 		m, mockDB := buildTestService(t)
@@ -393,7 +393,7 @@ func TestMariaDB_GetUserByUsername(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetUserByUsernameQuery(exampleUser.Username)
@@ -414,7 +414,7 @@ func TestMariaDB_GetUserByUsername(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetUserByUsernameQuery(exampleUser.Username)
@@ -495,8 +495,8 @@ func TestMariaDB_buildCreateUserQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
 		expectedQuery := "INSERT INTO users (username,hashed_password,salt,two_factor_secret,is_admin) VALUES (?,?,?,?,?)"
 		expectedArgs := []interface{}{
@@ -523,10 +523,10 @@ func TestMariaDB_CreateUser(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 		exampleUser.Salt = nil
-		expectedInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+		expectedInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
 		expectedQuery, expectedArgs := m.buildCreateUserQuery(expectedInput)
 
@@ -553,9 +553,9 @@ func TestMariaDB_CreateUser(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
-		expectedInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+		expectedInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
 		expectedQuery, expectedArgs := m.buildCreateUserQuery(expectedInput)
 
@@ -578,7 +578,7 @@ func TestMariaDB_buildUpdateUserQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, salt = ?, two_factor_secret = ?, two_factor_secret_verified_on = ?, last_updated_on = UNIX_TIMESTAMP() WHERE id = ?"
 		expectedArgs := []interface{}{
@@ -604,7 +604,7 @@ func TestMariaDB_UpdateUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleRows := sqlmock.NewResult(int64(exampleUser.ID), 1)
 
 		m, mockDB := buildTestService(t)
@@ -628,7 +628,7 @@ func TestMariaDB_buildUpdateUserPasswordQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "UPDATE users SET hashed_password = ?, requires_password_change = ?, password_last_changed_on = UNIX_TIMESTAMP(), last_updated_on = UNIX_TIMESTAMP() WHERE id = ?"
 		expectedArgs := []interface{}{
@@ -651,7 +651,7 @@ func TestMariaDB_UpdateUserPassword(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildUpdateUserPasswordQuery(exampleUser.ID, exampleUser.HashedPassword)
@@ -674,7 +674,7 @@ func TestMariaDB_buildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "UPDATE users SET two_factor_secret_verified_on = UNIX_TIMESTAMP() WHERE id = ?"
 		expectedArgs := []interface{}{
@@ -695,7 +695,7 @@ func TestMariaDB_VerifyUserTwoFactorSecret(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildVerifyUserTwoFactorSecretQuery(exampleUser.ID)
@@ -718,7 +718,7 @@ func TestMariaDB_buildArchiveUserQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "UPDATE users SET archived_on = UNIX_TIMESTAMP() WHERE id = ?"
 		expectedArgs := []interface{}{
@@ -739,7 +739,7 @@ func TestMariaDB_ArchiveUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildArchiveUserQuery(exampleUser.ID)

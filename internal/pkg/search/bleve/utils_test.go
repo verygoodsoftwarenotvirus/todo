@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -14,7 +14,7 @@ func TestEnsureQueryIsRestrictedToUser(T *testing.T) {
 
 	T.Run("leaves good queries alone", func(t *testing.T) {
 		t.Parallel()
-		exampleUserID := fakemodels.BuildFakeUser().ID
+		exampleUserID := fakes.BuildFakeUser().ID
 
 		exampleQuery := fmt.Sprintf("things +belongsToUser:%d", exampleUserID)
 		expectation := fmt.Sprintf("things +belongsToUser:%d", exampleUserID)
@@ -25,7 +25,7 @@ func TestEnsureQueryIsRestrictedToUser(T *testing.T) {
 
 	T.Run("basic replacement", func(t *testing.T) {
 		t.Parallel()
-		exampleUserID := fakemodels.BuildFakeUser().ID
+		exampleUserID := fakes.BuildFakeUser().ID
 
 		exampleQuery := "things"
 		expectation := fmt.Sprintf("things +belongsToUser:%d", exampleUserID)
@@ -36,7 +36,7 @@ func TestEnsureQueryIsRestrictedToUser(T *testing.T) {
 
 	T.Run("with invalid user restriction", func(t *testing.T) {
 		t.Parallel()
-		exampleUserID := fakemodels.BuildFakeUser().ID
+		exampleUserID := fakes.BuildFakeUser().ID
 
 		exampleQuery := fmt.Sprintf("stuff belongsToUser:%d", exampleUserID)
 		expectation := fmt.Sprintf("stuff +belongsToUser:%d", exampleUserID)

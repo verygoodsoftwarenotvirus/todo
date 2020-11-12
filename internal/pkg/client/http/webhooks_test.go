@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,7 +25,7 @@ func TestV1Client_BuildGetWebhookRequest(T *testing.T) {
 		ctx := context.Background()
 
 		expectedMethod := http.MethodGet
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
@@ -45,7 +45,7 @@ func TestV1Client_GetWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -70,7 +70,7 @@ func TestV1Client_GetWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		actual, err := buildTestClientWithInvalidURL(t).GetWebhook(ctx, exampleWebhook.ID)
 
@@ -105,7 +105,7 @@ func TestV1Client_GetWebhooks(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhookList := fakemodels.BuildFakeWebhookList()
+		exampleWebhookList := fakes.BuildFakeWebhookList()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -145,8 +145,8 @@ func TestV1Client_BuildCreateWebhookRequest(T *testing.T) {
 		expectedMethod := http.MethodPost
 		ts := httptest.NewTLSServer(nil)
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
-		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		exampleWebhook := fakes.BuildFakeWebhook()
+		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		c := buildTestClient(t, ts)
 		actual, err := c.BuildCreateWebhookRequest(ctx, exampleInput)
@@ -164,8 +164,8 @@ func TestV1Client_CreateWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
-		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		exampleWebhook := fakes.BuildFakeWebhook()
+		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 		exampleInput.BelongsToUser = 0
 
 		ts := httptest.NewTLSServer(
@@ -195,8 +195,8 @@ func TestV1Client_CreateWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
-		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		exampleWebhook := fakes.BuildFakeWebhook()
+		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		actual, err := buildTestClientWithInvalidURL(t).CreateWebhook(ctx, exampleInput)
 		assert.Nil(t, actual)
@@ -212,7 +212,7 @@ func TestV1Client_BuildUpdateWebhookRequest(T *testing.T) {
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPut
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
@@ -231,7 +231,7 @@ func TestV1Client_UpdateWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -251,7 +251,7 @@ func TestV1Client_UpdateWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		err := buildTestClientWithInvalidURL(t).UpdateWebhook(ctx, exampleWebhook)
 		assert.Error(t, err, "error should be returned")
@@ -267,7 +267,7 @@ func TestV1Client_BuildArchiveWebhookRequest(T *testing.T) {
 
 		expectedMethod := http.MethodDelete
 		ts := httptest.NewTLSServer(nil)
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		c := buildTestClient(t, ts)
 		actual, err := c.BuildArchiveWebhookRequest(ctx, exampleWebhook.ID)
@@ -287,7 +287,7 @@ func TestV1Client_ArchiveWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -306,7 +306,7 @@ func TestV1Client_ArchiveWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		err := buildTestClientWithInvalidURL(t).ArchiveWebhook(ctx, exampleWebhook.ID)
 		assert.Error(t, err, "error should be returned")

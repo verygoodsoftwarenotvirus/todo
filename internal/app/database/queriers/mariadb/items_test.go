@@ -11,7 +11,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -90,8 +90,8 @@ func TestMariaDB_buildItemExistsQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery := "SELECT EXISTS ( SELECT items.id FROM items WHERE items.belongs_to_user = ? AND items.id = ? )"
@@ -114,8 +114,8 @@ func TestMariaDB_ItemExists(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		m, mockDB := buildTestService(t)
@@ -136,8 +136,8 @@ func TestMariaDB_ItemExists(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		m, mockDB := buildTestService(t)
@@ -162,8 +162,8 @@ func TestMariaDB_buildGetItemQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.belongs_to_user = ? AND items.id = ?"
@@ -182,13 +182,13 @@ func TestMariaDB_buildGetItemQuery(T *testing.T) {
 func TestMariaDB_GetItem(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		m, mockDB := buildTestService(t)
@@ -209,7 +209,7 @@ func TestMariaDB_GetItem(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		m, mockDB := buildTestService(t)
@@ -298,7 +298,7 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
-		exampleItemList := fakemodels.BuildFakeItemList()
+		exampleItemList := fakes.BuildFakeItemList()
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
@@ -412,7 +412,7 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
@@ -442,8 +442,8 @@ func TestMariaDB_buildGetItemsQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		filter := fakemodels.BuildFleshedOutQueryFilter()
+		exampleUser := fakes.BuildFakeUser()
+		filter := fakes.BuildFleshedOutQueryFilter()
 
 		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ? ORDER BY items.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
@@ -471,8 +471,8 @@ func TestMariaDB_GetItems(T *testing.T) {
 		m, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItemList := fakemodels.BuildFakeItemList()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItemList := fakes.BuildFakeItemList()
 		expectedQuery, expectedArgs := m.buildGetItemsQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -500,7 +500,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 		m, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		expectedQuery, expectedArgs := m.buildGetItemsQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -522,7 +522,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 		m, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		expectedQuery, expectedArgs := m.buildGetItemsQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -543,8 +543,8 @@ func TestMariaDB_GetItems(T *testing.T) {
 		m, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery, expectedArgs := m.buildGetItemsQuery(exampleUser.ID, filter)
@@ -568,7 +568,7 @@ func TestMariaDB_buildGetItemsWithIDsQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleIDs := []uint64{
 			789,
 			123,
@@ -597,11 +597,11 @@ func TestMariaDB_GetItemsWithIDs(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
 
-		exampleItemList := fakemodels.BuildFakeItemList()
+		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
 		for _, item := range exampleItemList.Items {
 			exampleIDs = append(exampleIDs, item.ID)
@@ -631,11 +631,11 @@ func TestMariaDB_GetItemsWithIDs(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
 
-		exampleItemList := fakemodels.BuildFakeItemList()
+		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
 		for _, item := range exampleItemList.Items {
 			exampleIDs = append(exampleIDs, item.ID)
@@ -660,11 +660,11 @@ func TestMariaDB_GetItemsWithIDs(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
 
-		exampleItemList := fakemodels.BuildFakeItemList()
+		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
 		for _, item := range exampleItemList.Items {
 			exampleIDs = append(exampleIDs, item.ID)
@@ -688,11 +688,11 @@ func TestMariaDB_GetItemsWithIDs(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		m, mockDB := buildTestService(t)
 
-		exampleItemList := fakemodels.BuildFakeItemList()
+		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
 		for _, item := range exampleItemList.Items {
 			exampleIDs = append(exampleIDs, item.ID)
@@ -700,7 +700,7 @@ func TestMariaDB_GetItemsWithIDs(T *testing.T) {
 
 		expectedQuery, expectedArgs := m.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs)
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -722,8 +722,8 @@ func TestMariaDB_buildCreateItemQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery := "INSERT INTO items (name,details,belongs_to_user) VALUES (?,?,?)"
@@ -749,10 +749,10 @@ func TestMariaDB_CreateItem(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		expectedQuery, expectedArgs := m.buildCreateItemQuery(exampleItem)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -777,10 +777,10 @@ func TestMariaDB_CreateItem(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		expectedQuery, expectedArgs := m.buildCreateItemQuery(exampleItem)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -802,8 +802,8 @@ func TestMariaDB_buildUpdateItemQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery := "UPDATE items SET name = ?, details = ?, last_updated_on = UNIX_TIMESTAMP() WHERE belongs_to_user = ? AND id = ?"
@@ -830,8 +830,8 @@ func TestMariaDB_UpdateItem(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery, expectedArgs := m.buildUpdateItemQuery(exampleItem)
@@ -853,8 +853,8 @@ func TestMariaDB_UpdateItem(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery, expectedArgs := m.buildUpdateItemQuery(exampleItem)
@@ -877,8 +877,8 @@ func TestMariaDB_buildArchiveItemQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery := "UPDATE items SET last_updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
@@ -903,8 +903,8 @@ func TestMariaDB_ArchiveItem(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery, expectedArgs := m.buildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
@@ -925,8 +925,8 @@ func TestMariaDB_ArchiveItem(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery, expectedArgs := m.buildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
@@ -948,8 +948,8 @@ func TestMariaDB_ArchiveItem(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery, expectedArgs := m.buildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
@@ -972,7 +972,7 @@ func TestMariaDB_buildGetAuditLogEntriesForItemQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		expectedQuery := fmt.Sprintf("SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE (JSON_CONTAINS(audit_log.context, '%d', '$.item_id') OR JSON_CONTAINS(audit_log.context, '%d', '$.performed_by')) ORDER BY audit_log.id", exampleItem.ID, exampleItem.ID)
 		expectedArgs := []interface{}(nil)
@@ -992,9 +992,9 @@ func TestMariaDB_GetAuditLogEntriesForItem(T *testing.T) {
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
-		exampleAuditLogEntryList := fakemodels.BuildFakeAuditLogEntryList().Entries
+		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 		expectedQuery, expectedArgs := m.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -1020,7 +1020,7 @@ func TestMariaDB_GetAuditLogEntriesForItem(T *testing.T) {
 		ctx := context.Background()
 
 		p, mockDB := buildTestService(t)
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		expectedQuery, expectedArgs := p.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 
@@ -1041,7 +1041,7 @@ func TestMariaDB_GetAuditLogEntriesForItem(T *testing.T) {
 		ctx := context.Background()
 
 		p, mockDB := buildTestService(t)
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 
 		expectedQuery, expectedArgs := p.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 
@@ -1049,7 +1049,7 @@ func TestMariaDB_GetAuditLogEntriesForItem(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildErroneousMockRowFromAuditLogEntry(
-					fakemodels.BuildFakeAuditLogEntry(),
+					fakes.BuildFakeAuditLogEntry(),
 				),
 			)
 

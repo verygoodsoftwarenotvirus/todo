@@ -1,4 +1,4 @@
-package fake
+package fakes
 
 import (
 	"encoding/base32"
@@ -18,7 +18,7 @@ func BuildFakeUser() *types.User {
 		ID:       uint64(fake.Uint32()),
 		Username: fake.Password(true, true, true, false, false, 32),
 		// HashedPassword: "",
-		// Salt:           []byte(fake.Word()),
+		// Salt:           []byte(fakes.Word()),
 		TwoFactorSecret:           base32.StdEncoding.EncodeToString([]byte(fake.Password(false, true, true, false, false, 32))),
 		TwoFactorSecretVerifiedOn: func(i uint64) *uint64 { return &i }(uint64(uint32(fake.Date().Unix()))),
 		IsAdmin:                   false,
@@ -115,7 +115,7 @@ func BuildFakeTOTPSecretRefreshInput() *types.TOTPSecretRefreshInput {
 func BuildFakeTOTPSecretValidationInputForUser(user *types.User) *types.TOTPSecretVerificationInput {
 	token, err := totp.GenerateCode(user.TwoFactorSecret, time.Now().UTC())
 	if err != nil {
-		log.Panicf("error generating TOTP token for fake user: %v", err)
+		log.Panicf("error generating TOTP token for fakes user: %v", err)
 	}
 
 	return &types.TOTPSecretVerificationInput{

@@ -12,7 +12,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -84,7 +84,7 @@ func TestMariaDB_buildGetAuditLogEntryQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
 		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.id = ?"
 		expectedArgs := []interface{}{
@@ -105,7 +105,7 @@ func TestMariaDB_GetAuditLogEntry(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
 		m, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := m.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
@@ -125,7 +125,7 @@ func TestMariaDB_GetAuditLogEntry(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
 		m, mockDB := buildTestService(t)
 
@@ -213,7 +213,7 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
-		exampleAuditLogEntryList := fakemodels.BuildFakeAuditLogEntryList()
+		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
@@ -331,7 +331,7 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 		ctx := context.Background()
 
 		m, mockDB := buildTestService(t)
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
@@ -362,7 +362,7 @@ func TestMariaDB_buildGetAuditLogEntriesQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		filter := fakemodels.BuildFleshedOutQueryFilter()
+		filter := fakes.BuildFleshedOutQueryFilter()
 
 		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.created_on > ? AND audit_log.created_on < ? AND audit_log.last_updated_on > ? AND audit_log.last_updated_on < ? ORDER BY audit_log.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
@@ -389,7 +389,7 @@ func TestMariaDB_GetAuditLogEntries(T *testing.T) {
 		m, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		exampleAuditLogEntryList := fakemodels.BuildFakeAuditLogEntryList()
+		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 		expectedQuery, expectedArgs := m.buildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -458,7 +458,7 @@ func TestMariaDB_GetAuditLogEntries(T *testing.T) {
 		m, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
 		expectedQuery, expectedArgs := m.buildGetAuditLogEntriesQuery(filter)
 
@@ -481,7 +481,7 @@ func TestMariaDB_buildCreateAuditLogEntryQuery(T *testing.T) {
 		t.Parallel()
 		m, _ := buildTestService(t)
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
 		expectedQuery := "INSERT INTO audit_log (event_type,context) VALUES (?,?)"
 		expectedArgs := []interface{}{
@@ -505,8 +505,8 @@ func TestMariaDB_CreateAuditLogEntry(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
-		exampleInput := fakemodels.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
+		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -523,8 +523,8 @@ func TestMariaDB_CreateAuditLogEntry(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
-		exampleInput := fakemodels.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
+		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
 		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -546,7 +546,7 @@ func TestMariaDB_LogItemCreationEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleAuditLogEntryInput := audit.BuildItemCreationEventEntry(exampleItem)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -569,7 +569,7 @@ func TestMariaDB_LogItemUpdateEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 		exampleChanges := []types.FieldChangeSummary{}
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleAuditLogEntryInput := audit.BuildItemUpdateEventEntry(exampleItem.BelongsToUser, exampleItem.ID, exampleChanges)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -592,7 +592,7 @@ func TestMariaDB_LogItemArchiveEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleAuditLogEntryInput := audit.BuildItemArchiveEventEntry(exampleItem.BelongsToUser, exampleItem.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -615,7 +615,7 @@ func TestMariaDB_LogOAuth2ClientCreationEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleClient := fakemodels.BuildFakeOAuth2Client()
+		exampleClient := fakes.BuildFakeOAuth2Client()
 		exampleAuditLogEntryInput := audit.BuildOAuth2ClientCreationEventEntry(exampleClient)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -638,7 +638,7 @@ func TestMariaDB_LogOAuth2ClientArchiveEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeOAuth2Client()
+		exampleInput := fakes.BuildFakeOAuth2Client()
 		exampleAuditLogEntryInput := audit.BuildOAuth2ClientArchiveEventEntry(exampleInput.BelongsToUser, exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -661,7 +661,7 @@ func TestMariaDB_LogUserCreationEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserCreationEventEntry(exampleInput)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -684,7 +684,7 @@ func TestMariaDB_LogUserVerifyTwoFactorSecretEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserVerifyTwoFactorSecretEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -707,7 +707,7 @@ func TestMariaDB_LogUserUpdateTwoFactorSecretEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserUpdateTwoFactorSecretEventEntry(exampleUser.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -730,7 +730,7 @@ func TestMariaDB_LogUserUpdatePasswordEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserUpdatePasswordEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -753,7 +753,7 @@ func TestMariaDB_LogUserArchiveEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserArchiveEventEntry(exampleUser.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -776,7 +776,7 @@ func TestMariaDB_LogCycleCookieSecretEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildCycleCookieSecretEvent(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -799,7 +799,7 @@ func TestMariaDB_LogSuccessfulLoginEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildSuccessfulLoginEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -822,7 +822,7 @@ func TestMariaDB_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUnsuccessfulLoginBadPasswordEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -845,7 +845,7 @@ func TestMariaDB_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -868,7 +868,7 @@ func TestMariaDB_LogLogoutEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildLogoutEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -891,7 +891,7 @@ func TestMariaDB_LogWebhookCreationEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleAuditLogEntryInput := audit.BuildWebhookCreationEventEntry(exampleWebhook)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -914,7 +914,7 @@ func TestMariaDB_LogWebhookUpdateEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 		exampleChanges := []types.FieldChangeSummary{}
-		exampleInput := fakemodels.BuildFakeWebhook()
+		exampleInput := fakes.BuildFakeWebhook()
 		exampleAuditLogEntryInput := audit.BuildWebhookUpdateEventEntry(exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -937,7 +937,7 @@ func TestMariaDB_LogWebhookArchiveEvent(T *testing.T) {
 
 		m, mockDB := buildTestService(t)
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleAuditLogEntryInput := audit.BuildWebhookArchiveEventEntry(exampleWebhook.BelongsToUser, exampleWebhook.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 

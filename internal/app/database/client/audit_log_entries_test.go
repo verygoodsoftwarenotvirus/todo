@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -18,7 +18,7 @@ func TestClient_GetAuditLogEntry(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleAuditLogEntry := fakemodels.BuildFakeAuditLogEntry()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
 		c, mockDB := buildTestClient()
 		mockDB.AuditLogDataManager.On("GetAuditLogEntry", mock.Anything, exampleAuditLogEntry.ID).Return(exampleAuditLogEntry, nil)
@@ -58,7 +58,7 @@ func TestClient_GetAuditLogEntries(T *testing.T) {
 		ctx := context.Background()
 
 		filter := types.DefaultQueryFilter()
-		exampleAuditLogEntryList := fakemodels.BuildFakeAuditLogEntryList()
+		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 
 		c, mockDB := buildTestClient()
 		mockDB.AuditLogDataManager.On("GetAuditLogEntries", mock.Anything, filter).Return(exampleAuditLogEntryList, nil)
@@ -75,7 +75,7 @@ func TestClient_GetAuditLogEntries(T *testing.T) {
 		ctx := context.Background()
 
 		filter := (*types.QueryFilter)(nil)
-		exampleAuditLogEntryList := fakemodels.BuildFakeAuditLogEntryList()
+		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 
 		c, mockDB := buildTestClient()
 		mockDB.AuditLogDataManager.On("GetAuditLogEntries", mock.Anything, filter).Return(exampleAuditLogEntryList, nil)

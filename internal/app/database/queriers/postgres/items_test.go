@@ -13,7 +13,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -91,8 +91,8 @@ func TestPostgres_buildItemExistsQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery := "SELECT EXISTS ( SELECT items.id FROM items WHERE items.belongs_to_user = $1 AND items.id = $2 )"
@@ -115,8 +115,8 @@ func TestPostgres_ItemExists(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		p, mockDB := buildTestService(t)
@@ -137,8 +137,8 @@ func TestPostgres_ItemExists(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		p, mockDB := buildTestService(t)
@@ -163,8 +163,8 @@ func TestPostgres_buildGetItemQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.belongs_to_user = $1 AND items.id = $2"
@@ -183,13 +183,13 @@ func TestPostgres_buildGetItemQuery(T *testing.T) {
 func TestPostgres_GetItem(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		p, mockDB := buildTestService(t)
@@ -210,7 +210,7 @@ func TestPostgres_GetItem(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		p, mockDB := buildTestService(t)
@@ -299,7 +299,7 @@ func TestPostgres_GetAllItems(T *testing.T) {
 		ctx := context.Background()
 
 		p, mockDB := buildTestService(t)
-		exampleItemList := fakemodels.BuildFakeItemList()
+		exampleItemList := fakes.BuildFakeItemList()
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
@@ -417,7 +417,7 @@ func TestPostgres_GetAllItems(T *testing.T) {
 		ctx := context.Background()
 
 		p, mockDB := buildTestService(t)
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleItem := fakes.BuildFakeItem()
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
@@ -448,8 +448,8 @@ func TestPostgres_buildGetItemsQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		filter := fakemodels.BuildFleshedOutQueryFilter()
+		exampleUser := fakes.BuildFakeUser()
+		filter := fakes.BuildFleshedOutQueryFilter()
 
 		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 AND items.created_on > $2 AND items.created_on < $3 AND items.last_updated_on > $4 AND items.last_updated_on < $5 ORDER BY items.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
@@ -477,8 +477,8 @@ func TestPostgres_GetItems(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItemList := fakemodels.BuildFakeItemList()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItemList := fakes.BuildFakeItemList()
 		expectedQuery, expectedArgs := p.buildGetItemsQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -506,7 +506,7 @@ func TestPostgres_GetItems(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		expectedQuery, expectedArgs := p.buildGetItemsQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -528,7 +528,7 @@ func TestPostgres_GetItems(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		expectedQuery, expectedArgs := p.buildGetItemsQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -549,8 +549,8 @@ func TestPostgres_GetItems(T *testing.T) {
 		p, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery, expectedArgs := p.buildGetItemsQuery(exampleUser.ID, filter)
@@ -574,7 +574,7 @@ func TestPostgres_buildGetItemsWithIDsQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleIDs := []uint64{
 			789,
 			123,
@@ -601,11 +601,11 @@ func TestPostgres_GetItemsWithIDs(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		p, mockDB := buildTestService(t)
 
-		exampleItemList := fakemodels.BuildFakeItemList()
+		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
 		for _, item := range exampleItemList.Items {
 			exampleIDs = append(exampleIDs, item.ID)
@@ -637,7 +637,7 @@ func TestPostgres_GetItemsWithIDs(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleIDs := []uint64{123, 456, 789}
 		expectedQuery, expectedArgs := p.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs)
 
@@ -660,7 +660,7 @@ func TestPostgres_GetItemsWithIDs(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleIDs := []uint64{123, 456, 789}
 		expectedQuery, expectedArgs := p.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs)
 
@@ -682,8 +682,8 @@ func TestPostgres_GetItemsWithIDs(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleIDs := []uint64{123, 456, 789}
 		expectedQuery, expectedArgs := p.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs)
 
@@ -707,8 +707,8 @@ func TestPostgres_buildCreateItemQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery := "INSERT INTO items (name,details,belongs_to_user) VALUES ($1,$2,$3) RETURNING id, created_on"
@@ -734,10 +734,10 @@ func TestPostgres_CreateItem(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		expectedQuery, expectedArgs := p.buildCreateItemQuery(exampleItem)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleItem.ID, exampleItem.CreatedOn)
@@ -758,10 +758,10 @@ func TestPostgres_CreateItem(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		expectedQuery, expectedArgs := p.buildCreateItemQuery(exampleItem)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -783,8 +783,8 @@ func TestPostgres_buildUpdateItemQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery := "UPDATE items SET name = $1, details = $2, last_updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $3 AND id = $4 RETURNING last_updated_on"
@@ -811,8 +811,8 @@ func TestPostgres_UpdateItem(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery, expectedArgs := p.buildUpdateItemQuery(exampleItem)
@@ -834,8 +834,8 @@ func TestPostgres_UpdateItem(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery, expectedArgs := p.buildUpdateItemQuery(exampleItem)
@@ -858,8 +858,8 @@ func TestPostgres_buildArchiveItemQuery(T *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery := "UPDATE items SET last_updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1 AND id = $2 RETURNING archived_on"
@@ -884,8 +884,8 @@ func TestPostgres_ArchiveItem(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery, expectedArgs := p.buildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
@@ -905,8 +905,8 @@ func TestPostgres_ArchiveItem(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery, expectedArgs := p.buildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
@@ -927,8 +927,8 @@ func TestPostgres_ArchiveItem(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery, expectedArgs := p.buildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
@@ -951,7 +951,7 @@ func TestPostgres_LogItemCreationEvent(T *testing.T) {
 		ctx := context.Background()
 		p, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeItem()
+		exampleInput := fakes.BuildFakeItem()
 		exampleAuditLogEntryInput := audit.BuildItemCreationEventEntry(exampleInput)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -976,7 +976,7 @@ func TestPostgres_LogItemUpdateEvent(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 		exampleChanges := []types.FieldChangeSummary{}
-		exampleInput := fakemodels.BuildFakeItem()
+		exampleInput := fakes.BuildFakeItem()
 		exampleAuditLogEntryInput := audit.BuildItemUpdateEventEntry(exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -1001,7 +1001,7 @@ func TestPostgres_LogItemArchiveEvent(T *testing.T) {
 
 		p, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeItem()
+		exampleInput := fakes.BuildFakeItem()
 		exampleAuditLogEntryInput := audit.BuildItemArchiveEventEntry(exampleInput.BelongsToUser, exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -20,7 +20,7 @@ func TestClient_GetOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		c, mockDB := buildTestClient()
 		mockDB.OAuth2ClientDataManager.On("GetOAuth2Client", mock.Anything, exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser).Return(exampleOAuth2Client, nil)
@@ -36,7 +36,7 @@ func TestClient_GetOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		expected := (*types.OAuth2Client)(nil)
 
 		c, mockDB := buildTestClient()
@@ -57,7 +57,7 @@ func TestClient_GetOAuth2ClientByClientID(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		c, mockDB := buildTestClient()
 		mockDB.OAuth2ClientDataManager.On("GetOAuth2ClientByClientID", mock.Anything, exampleOAuth2Client.ClientID).Return(exampleOAuth2Client, nil)
@@ -73,7 +73,7 @@ func TestClient_GetOAuth2ClientByClientID(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		c, mockDB := buildTestClient()
 		mockDB.OAuth2ClientDataManager.On("GetOAuth2ClientByClientID", mock.Anything, exampleOAuth2Client.ClientID).Return(exampleOAuth2Client, errors.New("blah"))
@@ -109,14 +109,14 @@ func TestClient_GetAllOAuth2ClientCount(T *testing.T) {
 func TestClient_GetOAuth2ClientsForUser(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
 		c, mockDB := buildTestClient()
-		exampleOAuth2ClientList := fakemodels.BuildFakeOAuth2ClientList()
+		exampleOAuth2ClientList := fakes.BuildFakeOAuth2ClientList()
 		filter := types.DefaultQueryFilter()
 
 		mockDB.OAuth2ClientDataManager.On("GetOAuth2ClientsForUser", mock.Anything, exampleUser.ID, filter).Return(exampleOAuth2ClientList, nil)
@@ -133,7 +133,7 @@ func TestClient_GetOAuth2ClientsForUser(T *testing.T) {
 		ctx := context.Background()
 
 		c, mockDB := buildTestClient()
-		exampleOAuth2ClientList := fakemodels.BuildFakeOAuth2ClientList()
+		exampleOAuth2ClientList := fakes.BuildFakeOAuth2ClientList()
 		filter := (*types.QueryFilter)(nil)
 
 		mockDB.OAuth2ClientDataManager.On("GetOAuth2ClientsForUser", mock.Anything, exampleUser.ID, filter).Return(exampleOAuth2ClientList, nil)
@@ -172,8 +172,8 @@ func TestClient_CreateOAuth2Client(T *testing.T) {
 
 		c, mockDB := buildTestClient()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
-		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
+		exampleInput := fakes.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		mockDB.OAuth2ClientDataManager.On("CreateOAuth2Client", mock.Anything, exampleInput).Return(exampleOAuth2Client, nil)
 
@@ -191,8 +191,8 @@ func TestClient_CreateOAuth2Client(T *testing.T) {
 		c, mockDB := buildTestClient()
 
 		expected := (*types.OAuth2Client)(nil)
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
-		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
+		exampleInput := fakes.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		mockDB.OAuth2ClientDataManager.On("CreateOAuth2Client", mock.Anything, exampleInput).Return(expected, errors.New("blah"))
 
@@ -211,7 +211,7 @@ func TestClient_UpdateOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		var expected error
 		c, mockDB := buildTestClient()
@@ -232,7 +232,7 @@ func TestClient_ArchiveOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		var expected error
 		c, mockDB := buildTestClient()
@@ -249,7 +249,7 @@ func TestClient_ArchiveOAuth2Client(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		expected := fmt.Errorf("blah")
 		c, mockDB := buildTestClient()

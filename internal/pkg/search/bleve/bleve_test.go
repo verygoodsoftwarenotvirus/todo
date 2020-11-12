@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -64,7 +64,7 @@ func TestBleveIndexManager_Index(T *testing.T) {
 	T.Parallel()
 
 	temp := os.TempDir()
-	exampleUserID := fakemodels.BuildFakeUser().ID
+	exampleUserID := fakes.BuildFakeUser().ID
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
@@ -92,7 +92,7 @@ func TestBleveIndexManager_Search(T *testing.T) {
 	T.Parallel()
 
 	temp := os.TempDir()
-	exampleUserID := fakemodels.BuildFakeUser().ID
+	exampleUserID := fakes.BuildFakeUser().ID
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
@@ -193,7 +193,7 @@ func TestBleveIndexManager_Delete(T *testing.T) {
 	T.Parallel()
 
 	temp := os.TempDir()
-	exampleUserID := fakemodels.BuildFakeUser().ID
+	exampleUserID := fakes.BuildFakeUser().ID
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()

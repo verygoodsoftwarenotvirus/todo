@@ -14,7 +14,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -30,7 +30,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService(t)
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		md := &mockmodels.UserDataManager{}
 		md.On("GetUser", mock.Anything, mock.Anything).Return(exampleUser, nil)
@@ -57,7 +57,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService(t)
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		md := &mockmodels.UserDataManager{}
 		md.On("GetUser", mock.Anything, mock.Anything).Return((*types.User)(nil), nil)
@@ -107,8 +107,8 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleUser := fakes.BuildFakeUser()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		ocv := &mockOAuth2ClientValidator{}
 		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
@@ -139,8 +139,8 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleUser := fakes.BuildFakeUser()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		ocv := &mockOAuth2ClientValidator{}
 		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
@@ -171,7 +171,7 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		mockDB := database.BuildMockDatabase().UserDataManager
 		mockDB.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
@@ -198,7 +198,7 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		mockDB := database.BuildMockDatabase().UserDataManager
 		mockDB.On("GetUser", mock.Anything, exampleUser.ID).Return((*types.User)(nil), errors.New("blah"))
@@ -225,7 +225,7 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		ocv := &mockOAuth2ClientValidator{}
 		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
@@ -254,7 +254,7 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		ocv := &mockOAuth2ClientValidator{}
 		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return((*types.OAuth2Client)(nil), errors.New("blah"))
@@ -307,7 +307,7 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		ocv := &mockOAuth2ClientValidator{}
 		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
@@ -340,8 +340,8 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleUser := fakes.BuildFakeUser()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		ocv := &mockOAuth2ClientValidator{}
 		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
@@ -372,7 +372,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		mockDB := database.BuildMockDatabase().UserDataManager
 		mockDB.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
@@ -399,7 +399,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		ocv := &mockOAuth2ClientValidator{}
 		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
@@ -430,7 +430,7 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		mockDB := database.BuildMockDatabase().UserDataManager
 		mockDB.On("GetUser", mock.Anything, exampleUser.ID).Return((*types.User)(nil), errors.New("blah"))
@@ -463,8 +463,8 @@ func Test_parseLoginInputFromForm(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		expected := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		expected := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		req.Form = map[string][]string{
 			usernameFormKey:  {expected.Username},
@@ -500,8 +500,8 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		var b bytes.Buffer
 		require.NoError(t, json.NewEncoder(&b).Encode(exampleInput))
@@ -525,8 +525,8 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		var b bytes.Buffer
 		require.NoError(t, json.NewEncoder(&b).Encode(exampleInput))
@@ -553,8 +553,8 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
 		form := url.Values{
 			usernameFormKey:  {exampleInput.Username},
@@ -600,7 +600,7 @@ func TestService_AdminMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.IsAdmin = true
 
 		res := httptest.NewRecorder()
@@ -652,7 +652,7 @@ func TestService_AdminMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.IsAdmin = false
 
 		res := httptest.NewRecorder()

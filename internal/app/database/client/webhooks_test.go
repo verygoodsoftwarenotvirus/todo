@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -18,7 +18,7 @@ func TestClient_GetWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
 		c, mockDB := buildTestClient()
 		mockDB.WebhookDataManager.On("GetWebhook", mock.Anything, exampleWebhook.ID, exampleWebhook.BelongsToUser).Return(exampleWebhook, nil)
@@ -58,7 +58,7 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhookList := fakemodels.BuildFakeWebhookList()
+		exampleWebhookList := fakes.BuildFakeWebhookList()
 
 		c, mockDB := buildTestClient()
 		mockDB.WebhookDataManager.On("GetAllWebhooks", mock.Anything).Return(exampleWebhookList, nil)
@@ -74,13 +74,13 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 func TestClient_GetWebhooks(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhookList := fakemodels.BuildFakeWebhookList()
+		exampleWebhookList := fakes.BuildFakeWebhookList()
 		filter := types.DefaultQueryFilter()
 
 		c, mockDB := buildTestClient()
@@ -97,7 +97,7 @@ func TestClient_GetWebhooks(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhookList := fakemodels.BuildFakeWebhookList()
+		exampleWebhookList := fakes.BuildFakeWebhookList()
 		filter := (*types.QueryFilter)(nil)
 
 		c, mockDB := buildTestClient()
@@ -118,8 +118,8 @@ func TestClient_CreateWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
-		exampleInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		exampleWebhook := fakes.BuildFakeWebhook()
+		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		c, mockDB := buildTestClient()
 		mockDB.WebhookDataManager.On("CreateWebhook", mock.Anything, exampleInput).Return(exampleWebhook, nil)
@@ -139,7 +139,7 @@ func TestClient_UpdateWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		var expected error
 
 		c, mockDB := buildTestClient()
@@ -160,7 +160,7 @@ func TestClient_ArchiveWebhook(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakemodels.BuildFakeWebhook()
+		exampleWebhook := fakes.BuildFakeWebhook()
 		var expected error
 
 		c, mockDB := buildTestClient()

@@ -289,7 +289,7 @@ issues:
       linters:
         - gocyclo # the update funcs can have very high cyclomatic complexities
 
-    - path: internal/pkg/types/fake
+    - path: internal/pkg/types/fakes
       linters:
         - gomnd
 

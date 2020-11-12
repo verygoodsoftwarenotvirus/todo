@@ -12,7 +12,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -39,7 +39,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		s := buildTestService()
 		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
 
-		exampleUpdateInput := fakemodels.BuildFakeWebhookCreationInput()
+		exampleUpdateInput := fakes.BuildFakeWebhookCreationInput()
 		jsonBytes, err := json.Marshal(&exampleUpdateInput)
 		require.NoError(t, err)
 
@@ -122,7 +122,7 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		s := buildTestService()
 		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
 
-		exampleUpdateInput := fakemodels.BuildFakeWebhookUpdateInputFromWebhook(fakemodels.BuildFakeWebhook())
+		exampleUpdateInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(fakes.BuildFakeWebhook())
 		jsonBytes, err := json.Marshal(&exampleUpdateInput)
 		require.NoError(t, err)
 

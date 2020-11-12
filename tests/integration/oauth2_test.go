@@ -9,7 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -239,7 +239,7 @@ func TestOAuth2Clients(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+			exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 			exampleOAuth2Client.ID = nonexistentID
 
 			x, err := adminClient.GetAuditLogForOAuth2Client(ctx, exampleOAuth2Client.ID)

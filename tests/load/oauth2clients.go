@@ -9,7 +9,7 @@ import (
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/client/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/pquerna/otp/totp"
 )
@@ -48,7 +48,7 @@ func buildOAuth2ClientActions(c *client.V1Client) map[string]*Action {
 			Name: "CreateOAuth2Client",
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
-				ui := fakemodels.BuildFakeUserCreationInput()
+				ui := fakes.BuildFakeUserCreationInput()
 				u, err := c.CreateUser(ctx, ui)
 				if err != nil {
 					return nil, err

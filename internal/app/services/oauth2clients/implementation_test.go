@@ -12,7 +12,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -54,7 +54,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
@@ -74,7 +74,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
@@ -104,7 +104,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
@@ -136,7 +136,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
@@ -186,7 +186,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
@@ -223,7 +223,7 @@ func TestService_UserAuthorizationHandler(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		expected := fmt.Sprintf("%d", exampleOAuth2Client.BelongsToUser)
 
 		req := buildRequest(t)
@@ -241,7 +241,7 @@ func TestService_UserAuthorizationHandler(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		expected := fmt.Sprintf("%d", exampleUser.ID)
 
 		req := buildRequest(t)
@@ -275,7 +275,7 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleGrant := oauth2.AuthorizationCode
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		stringID := fmt.Sprintf("%d", exampleOAuth2Client.ID)
 
 		mockDB := database.BuildMockDatabase()
@@ -307,7 +307,7 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 		exampleGrant := oauth2.AuthorizationCode
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		stringID := fmt.Sprintf("%d", exampleOAuth2Client.ID)
 
 		mockDB := database.BuildMockDatabase()
@@ -330,7 +330,7 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleGrant := oauth2.Implicit
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		stringID := fmt.Sprintf("%d", exampleOAuth2Client.ID)
 
 		mockDB := database.BuildMockDatabase()
@@ -356,7 +356,7 @@ func TestService_ClientScopeHandler(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		stringID := fmt.Sprintf("%d", exampleOAuth2Client.ID)
 
 		mockDB := database.BuildMockDatabase()
@@ -378,7 +378,7 @@ func TestService_ClientScopeHandler(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		stringID := fmt.Sprintf("%d", exampleOAuth2Client.ID)
 
 		mockDB := database.BuildMockDatabase()
@@ -401,7 +401,7 @@ func TestService_ClientScopeHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleScope := "halb"
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		stringID := fmt.Sprintf("%d", exampleOAuth2Client.ID)
 
 		mockDB := database.BuildMockDatabase()

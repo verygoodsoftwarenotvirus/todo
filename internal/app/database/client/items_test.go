@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -18,8 +18,8 @@ func TestClient_ItemExists(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		c, mockDB := buildTestClient()
@@ -40,8 +40,8 @@ func TestClient_GetItem(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		c, mockDB := buildTestClient()
@@ -97,14 +97,14 @@ func TestClient_GetAllItems(T *testing.T) {
 func TestClient_GetItems(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
 		filter := types.DefaultQueryFilter()
-		exampleItemList := fakemodels.BuildFakeItemList()
+		exampleItemList := fakes.BuildFakeItemList()
 
 		c, mockDB := buildTestClient()
 		mockDB.ItemDataManager.On("GetItems", mock.Anything, exampleUser.ID, filter).Return(exampleItemList, nil)
@@ -121,7 +121,7 @@ func TestClient_GetItems(T *testing.T) {
 		ctx := context.Background()
 
 		filter := (*types.QueryFilter)(nil)
-		exampleItemList := fakemodels.BuildFakeItemList()
+		exampleItemList := fakes.BuildFakeItemList()
 
 		c, mockDB := buildTestClient()
 		mockDB.ItemDataManager.On("GetItems", mock.Anything, exampleUser.ID, filter).Return(exampleItemList, nil)
@@ -141,8 +141,8 @@ func TestClient_GetItemsWithIDs(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItemList := fakemodels.BuildFakeItemList().Items
+		exampleUser := fakes.BuildFakeUser()
+		exampleItemList := fakes.BuildFakeItemList().Items
 		var exampleIDs []uint64
 		for _, x := range exampleItemList {
 			exampleIDs = append(exampleIDs, x.ID)
@@ -166,10 +166,10 @@ func TestClient_CreateItem(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		c, mockDB := buildTestClient()
 		mockDB.ItemDataManager.On("CreateItem", mock.Anything, exampleInput).Return(exampleItem, nil)
@@ -190,8 +190,8 @@ func TestClient_UpdateItem(T *testing.T) {
 		ctx := context.Background()
 		var expected error
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		c, mockDB := buildTestClient()
@@ -214,8 +214,8 @@ func TestClient_ArchiveItem(T *testing.T) {
 
 		var expected error
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleItem := fakemodels.BuildFakeItem()
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		c, mockDB := buildTestClient()

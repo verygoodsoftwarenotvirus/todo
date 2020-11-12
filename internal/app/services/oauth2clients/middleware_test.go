@@ -15,7 +15,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -112,7 +112,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		mh := &mockOAuth2Handler{}
 		mh.On(
@@ -165,7 +165,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		mh := &mockOAuth2Handler{}
 		mh.On(
@@ -196,7 +196,7 @@ func TestService_RequestIsAuthenticated(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		mh := &mockOAuth2Handler{}
 		mh.On(
@@ -234,7 +234,7 @@ func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		mh := &mockOAuth2Handler{}
 		mh.On(
@@ -300,7 +300,7 @@ func TestService_OAuth2ClientInfoMiddleware(T *testing.T) {
 		s := buildTestService(t)
 		expected := "blah"
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		mhh := &mockHTTPHandler{}
 		mhh.On(
@@ -364,7 +364,7 @@ func TestService_fetchOAuth2ClientFromRequest(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		req := buildRequest(t).WithContext(
 			context.WithValue(
@@ -395,7 +395,7 @@ func TestService_fetchOAuth2ClientIDFromRequest(T *testing.T) {
 		ctx := context.Background()
 
 		s := buildTestService(t)
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		req := buildRequest(t).WithContext(
 			context.WithValue(

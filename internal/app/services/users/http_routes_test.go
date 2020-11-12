@@ -16,7 +16,7 @@ import (
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -50,7 +50,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleTOTPToken := "123456"
 		examplePassword := "password"
 
@@ -89,7 +89,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleTOTPToken := "123456"
 		examplePassword := "password"
 
@@ -116,7 +116,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleTOTPToken := "123456"
 		examplePassword := "password"
 
@@ -143,7 +143,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleTOTPToken := "123456"
 		examplePassword := "password"
 
@@ -182,7 +182,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleTOTPToken := "123456"
 		examplePassword := "password"
 
@@ -224,7 +224,7 @@ func TestService_ListHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUserList := fakemodels.BuildFakeUserList()
+		exampleUserList := fakes.BuildFakeUserList()
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUsers", mock.Anything, mock.Anything).Return(exampleUserList, nil)
@@ -272,8 +272,8 @@ func TestService_CreateHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 
 		auth := &mockauth.Authenticator{}
 		auth.On("HashPassword", mock.Anything, exampleInput.Password).Return(exampleUser.HashedPassword, nil)
@@ -354,8 +354,8 @@ func TestService_CreateHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 
 		auth := &mockauth.Authenticator{}
 		auth.On("HashPassword", mock.Anything, exampleInput.Password).Return(exampleUser.HashedPassword, errors.New("blah"))
@@ -387,8 +387,8 @@ func TestService_CreateHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 
 		auth := &mockauth.Authenticator{}
 		auth.On("HashPassword", mock.Anything, exampleInput.Password).Return(exampleUser.HashedPassword, nil)
@@ -428,8 +428,8 @@ func TestService_CreateHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 
 		auth := &mockauth.Authenticator{}
 		auth.On("HashPassword", mock.Anything, exampleInput.Password).Return(exampleUser.HashedPassword, nil)
@@ -470,8 +470,8 @@ func TestService_CreateHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 
 		auth := &mockauth.Authenticator{}
 		auth.On("HashPassword", mock.Anything, exampleInput.Password).Return(exampleUser.HashedPassword, nil)
@@ -507,8 +507,8 @@ func TestService_CreateHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 
 		auth := &mockauth.Authenticator{}
 		auth.On("HashPassword", mock.Anything, exampleInput.Password).Return(exampleUser.HashedPassword, nil)
@@ -546,7 +546,7 @@ func TestService_ReadHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.userIDFetcher = func(_ *http.Request) uint64 {
 			return exampleUser.ID
 		}
@@ -572,7 +572,7 @@ func TestService_ReadHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.userIDFetcher = func(_ *http.Request) uint64 {
 			return exampleUser.ID
 		}
@@ -598,7 +598,7 @@ func TestService_ReadHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.userIDFetcher = func(_ *http.Request) uint64 {
 			return exampleUser.ID
 		}
@@ -628,8 +628,8 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeTOTPSecretRefreshInput()
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
@@ -699,7 +699,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		ed.On("EncodeErrorResponse", mock.Anything, "invalid request", http.StatusUnauthorized)
 		s.encoderDecoder = ed
 
-		exampleInput := fakemodels.BuildFakeTOTPSecretRefreshInput()
+		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
@@ -722,8 +722,8 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeTOTPSecretRefreshInput()
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
@@ -766,8 +766,8 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeTOTPSecretRefreshInput()
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
@@ -818,8 +818,8 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeTOTPSecretRefreshInput()
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
@@ -870,9 +870,9 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
-		exampleInput := fakemodels.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
@@ -904,7 +904,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -929,9 +929,9 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
-		exampleInput := fakemodels.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
@@ -962,10 +962,10 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		og := exampleUser.TwoFactorSecretVerifiedOn
 		exampleUser.TwoFactorSecretVerifiedOn = nil
-		exampleInput := fakemodels.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
@@ -1003,9 +1003,9 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
-		exampleInput := fakemodels.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
 		exampleInput.TOTPToken = "INVALID"
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -1033,9 +1033,9 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
-		exampleInput := fakemodels.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
@@ -1072,8 +1072,8 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakePasswordUpdateInput()
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakePasswordUpdateInput()
 
 		req = req.WithContext(
 			context.WithValue(
@@ -1141,7 +1141,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		ed.On("EncodeErrorResponse", mock.Anything, "invalid request", http.StatusUnauthorized)
 		s.encoderDecoder = ed
 
-		exampleInput := fakemodels.BuildFakePasswordUpdateInput()
+		exampleInput := fakes.BuildFakePasswordUpdateInput()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
@@ -1164,8 +1164,8 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakePasswordUpdateInput()
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakePasswordUpdateInput()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
@@ -1208,8 +1208,8 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakePasswordUpdateInput()
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakePasswordUpdateInput()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
@@ -1257,8 +1257,8 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakePasswordUpdateInput()
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakePasswordUpdateInput()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
@@ -1310,7 +1310,7 @@ func TestService_Archive(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.userIDFetcher = func(req *http.Request) uint64 {
 			return exampleUser.ID
 		}
@@ -1340,7 +1340,7 @@ func TestService_Archive(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		s.userIDFetcher = func(req *http.Request) uint64 {
 			return exampleUser.ID
 		}
@@ -1370,7 +1370,7 @@ func TestService_buildQRCode(T *testing.T) {
 		s := buildTestService(t)
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		actual := s.buildQRCode(ctx, exampleUser.Username, exampleUser.TwoFactorSecret)
 

@@ -16,7 +16,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -64,8 +64,8 @@ func TestAuth(test *testing.T) {
 		defer span.End()
 
 		// create a user.
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleUserCreationInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleUserCreationInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 		req, err := todoClient.BuildCreateUserRequest(ctx, exampleUserCreationInput)
 		checkValueAndError(t, req, err)
 
@@ -116,8 +116,8 @@ func TestAuth(test *testing.T) {
 		ctx, span := tracing.StartSpan(context.Background(), t.Name())
 		defer span.End()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleUserCreationInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleUserCreationInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 		req, err := todoClient.BuildCreateUserRequest(ctx, exampleUserCreationInput)
 		checkValueAndError(t, req, err)
 
@@ -200,8 +200,8 @@ func TestAuth(test *testing.T) {
 		defer span.End()
 
 		// create a user.
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleUserCreationInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleUserCreationInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 		req, err := todoClient.BuildCreateUserRequest(ctx, exampleUserCreationInput)
 		checkValueAndError(t, req, err)
 
@@ -250,8 +250,8 @@ func TestAuth(test *testing.T) {
 		ctx, span := tracing.StartSpan(context.Background(), t.Name())
 		defer span.End()
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleUserCreationInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleUserCreationInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 
 		s, err := randString()
 		require.NoError(t, err)
@@ -287,8 +287,8 @@ func TestAuth(test *testing.T) {
 		defer span.End()
 
 		// create a user.
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleUserCreationInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleUserCreationInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 		req, err := todoClient.BuildCreateUserRequest(ctx, exampleUserCreationInput)
 		checkValueAndError(t, req, err)
 
@@ -435,7 +435,7 @@ func TestAuth(test *testing.T) {
 		defer span.End()
 
 		// create user.
-		userInput := fakemodels.BuildFakeUserCreationInput()
+		userInput := fakes.BuildFakeUserCreationInput()
 		user, err := todoClient.CreateUser(ctx, userInput)
 		assert.NotNil(t, user)
 		require.NoError(t, err)
@@ -454,7 +454,7 @@ func TestAuth(test *testing.T) {
 		defer span.End()
 
 		// create user.
-		userInput := fakemodels.BuildFakeUserCreationInput()
+		userInput := fakes.BuildFakeUserCreationInput()
 		user, err := todoClient.CreateUser(ctx, userInput)
 		assert.NotNil(t, user)
 		require.NoError(t, err)
@@ -593,7 +593,7 @@ func TestAuth(test *testing.T) {
 		checkValueAndError(test, clientA, err)
 
 		// create webhook for user A.
-		wciA := fakemodels.BuildFakeWebhookCreationInput()
+		wciA := fakes.BuildFakeWebhookCreationInput()
 		webhookA, err := clientA.CreateWebhook(ctx, wciA)
 		checkValueAndError(t, webhookA, err)
 
@@ -617,7 +617,7 @@ func TestAuth(test *testing.T) {
 		checkValueAndError(test, clientB, err)
 
 		// create webhook for user B.
-		wciB := fakemodels.BuildFakeWebhookCreationInput()
+		wciB := fakes.BuildFakeWebhookCreationInput()
 		webhookB, err := clientB.CreateWebhook(ctx, wciB)
 		checkValueAndError(t, webhookB, err)
 

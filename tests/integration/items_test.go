@@ -9,7 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,8 +32,8 @@ func TestItems(test *testing.T) {
 			defer span.End()
 
 			// Create item.
-			exampleItem := fakemodels.BuildFakeItem()
-			exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+			exampleItem := fakes.BuildFakeItem()
+			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
 			checkValueAndError(t, createdItem, err)
 
@@ -61,8 +61,8 @@ func TestItems(test *testing.T) {
 			var expected []*types.Item
 			for i := 0; i < 5; i++ {
 				// Create item.
-				exampleItem := fakemodels.BuildFakeItem()
-				exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+				exampleItem := fakes.BuildFakeItem()
+				exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 				createdItem, itemCreationErr := todoClient.CreateItem(ctx, exampleItemInput)
 				checkValueAndError(t, createdItem, itemCreationErr)
 
@@ -94,11 +94,11 @@ func TestItems(test *testing.T) {
 			defer span.End()
 
 			// Create items.
-			exampleItem := fakemodels.BuildFakeItem()
+			exampleItem := fakes.BuildFakeItem()
 			var expected []*types.Item
 			for i := 0; i < 5; i++ {
 				// Create item.
-				exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+				exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 				exampleItemInput.Name = fmt.Sprintf("%s %d", exampleItemInput.Name, i)
 				createdItem, itemCreationErr := todoClient.CreateItem(ctx, exampleItemInput)
 				checkValueAndError(t, createdItem, itemCreationErr)
@@ -150,11 +150,11 @@ func TestItems(test *testing.T) {
 			checkValueAndError(test, clientA, err)
 
 			// Create items for user A.
-			exampleItemA := fakemodels.BuildFakeItem()
+			exampleItemA := fakes.BuildFakeItem()
 			var createdForA []*types.Item
 			for i := 0; i < 5; i++ {
 				// Create item.
-				exampleItemInputA := fakemodels.BuildFakeItemCreationInputFromItem(exampleItemA)
+				exampleItemInputA := fakes.BuildFakeItemCreationInputFromItem(exampleItemA)
 				exampleItemInputA.Name = fmt.Sprintf("%s %d", exampleItemInputA.Name, i)
 
 				createdItem, itemCreationErr := clientA.CreateItem(ctx, exampleItemInputA)
@@ -186,12 +186,12 @@ func TestItems(test *testing.T) {
 			checkValueAndError(test, clientB, err)
 
 			// Create items for user B.
-			exampleItemB := fakemodels.BuildFakeItem()
+			exampleItemB := fakes.BuildFakeItem()
 			exampleItemB.Name = reverse(exampleItemA.Name)
 			var createdForB []*types.Item
 			for i := 0; i < 5; i++ {
 				// Create item.
-				exampleItemInputB := fakemodels.BuildFakeItemCreationInputFromItem(exampleItemB)
+				exampleItemInputB := fakes.BuildFakeItemCreationInputFromItem(exampleItemB)
 				exampleItemInputB.Name = fmt.Sprintf("%s %d", exampleItemInputB.Name, i)
 
 				createdItem, itemCreationErr := clientB.CreateItem(ctx, exampleItemInputB)
@@ -242,8 +242,8 @@ func TestItems(test *testing.T) {
 			defer span.End()
 
 			// Create item.
-			exampleItem := fakemodels.BuildFakeItem()
-			exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+			exampleItem := fakes.BuildFakeItem()
+			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
 			checkValueAndError(t, createdItem, err)
 
@@ -272,8 +272,8 @@ func TestItems(test *testing.T) {
 			defer span.End()
 
 			// Create item.
-			exampleItem := fakemodels.BuildFakeItem()
-			exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+			exampleItem := fakes.BuildFakeItem()
+			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
 			checkValueAndError(t, createdItem, err)
 
@@ -294,7 +294,7 @@ func TestItems(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			exampleItem := fakemodels.BuildFakeItem()
+			exampleItem := fakes.BuildFakeItem()
 			exampleItem.ID = nonexistentID
 
 			assert.Error(t, todoClient.UpdateItem(ctx, exampleItem))
@@ -305,8 +305,8 @@ func TestItems(test *testing.T) {
 			defer span.End()
 
 			// Create item.
-			exampleItem := fakemodels.BuildFakeItem()
-			exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+			exampleItem := fakes.BuildFakeItem()
+			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
 			checkValueAndError(t, createdItem, err)
 
@@ -340,8 +340,8 @@ func TestItems(test *testing.T) {
 			defer span.End()
 
 			// Create item.
-			exampleItem := fakemodels.BuildFakeItem()
-			exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+			exampleItem := fakes.BuildFakeItem()
+			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
 			checkValueAndError(t, createdItem, err)
 
@@ -355,7 +355,7 @@ func TestItems(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			exampleItem := fakemodels.BuildFakeItem()
+			exampleItem := fakes.BuildFakeItem()
 			exampleItem.ID = nonexistentID
 
 			x, err := adminClient.GetAuditLogForItem(ctx, exampleItem.ID)
@@ -368,10 +368,10 @@ func TestItems(test *testing.T) {
 			defer span.End()
 
 			// Create item.
-			exampleItem := fakemodels.BuildFakeItem()
-			exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
-			updateTo := fakemodels.BuildFakeItem()
-			updateToInput := fakemodels.BuildFakeItemUpdateInputFromItem(updateTo)
+			exampleItem := fakes.BuildFakeItem()
+			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+			updateTo := fakes.BuildFakeItem()
+			updateToInput := fakes.BuildFakeItemUpdateInputFromItem(updateTo)
 			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
 			checkValueAndError(t, createdItem, err)
 
@@ -395,8 +395,8 @@ func TestItems(test *testing.T) {
 			defer span.End()
 
 			// Create item.
-			exampleItem := fakemodels.BuildFakeItem()
-			exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+			exampleItem := fakes.BuildFakeItem()
+			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
 			checkValueAndError(t, createdItem, err)
 

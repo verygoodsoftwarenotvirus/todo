@@ -11,7 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -99,7 +99,7 @@ func TestSqlite_buildGetUserQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = ? AND users.two_factor_secret_verified_on IS NOT NULL"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
@@ -119,7 +119,7 @@ func TestSqlite_GetUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.Salt = nil
 
 		s, mockDB := buildTestService(t)
@@ -140,7 +140,7 @@ func TestSqlite_GetUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := s.buildGetUserQuery(exampleUser.ID)
@@ -165,7 +165,7 @@ func TestSqlite_buildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = ? AND users.two_factor_secret_verified_on IS NULL"
 		expectedArgs := []interface{}{
@@ -186,7 +186,7 @@ func TestSqlite_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.Salt = nil
 
 		s, mockDB := buildTestService(t)
@@ -207,7 +207,7 @@ func TestSqlite_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := s.buildGetUserWithUnverifiedTwoFactorSecretQuery(exampleUser.ID)
@@ -232,7 +232,7 @@ func TestSqlite_buildGetUsersQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		filter := fakemodels.BuildFleshedOutQueryFilter()
+		filter := fakes.BuildFleshedOutQueryFilter()
 
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.created_on > ? AND users.created_on < ? AND users.last_updated_on > ? AND users.last_updated_on < ? ORDER BY users.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
@@ -258,7 +258,7 @@ func TestSqlite_GetUsers(T *testing.T) {
 
 		filter := types.DefaultQueryFilter()
 
-		exampleUserList := fakemodels.BuildFakeUserList()
+		exampleUserList := fakes.BuildFakeUserList()
 		exampleUserList.Users[0].Salt = nil
 		exampleUserList.Users[1].Salt = nil
 		exampleUserList.Users[2].Salt = nil
@@ -335,7 +335,7 @@ func TestSqlite_GetUsers(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildErroneousMockRowFromUser(fakemodels.BuildFakeUser()))
+			WillReturnRows(buildErroneousMockRowFromUser(fakes.BuildFakeUser()))
 
 		actual, err := s.GetUsers(ctx, filter)
 		assert.Error(t, err)
@@ -352,7 +352,7 @@ func TestSqlite_buildGetUserByUsernameQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.username = ? AND users.two_factor_secret_verified_on IS NOT NULL"
 		expectedArgs := []interface{}{
@@ -373,7 +373,7 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.Salt = nil
 
 		s, mockDB := buildTestService(t)
@@ -394,7 +394,7 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := s.buildGetUserByUsernameQuery(exampleUser.Username)
@@ -415,7 +415,7 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := s.buildGetUserByUsernameQuery(exampleUser.Username)
@@ -496,8 +496,8 @@ func TestSqlite_buildCreateUserQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
-		exampleInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
 		expectedQuery := "INSERT INTO users (username,hashed_password,salt,two_factor_secret,is_admin) VALUES (?,?,?,?,?)"
 		expectedArgs := []interface{}{
@@ -524,10 +524,10 @@ func TestSqlite_CreateUser(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 		exampleUser.Salt = nil
-		expectedInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+		expectedInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
 		expectedQuery, expectedArgs := s.buildCreateUserQuery(expectedInput)
 
@@ -554,9 +554,9 @@ func TestSqlite_CreateUser(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
-		expectedInput := fakemodels.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+		expectedInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
 		expectedQuery, expectedArgs := s.buildCreateUserQuery(expectedInput)
 
@@ -579,7 +579,7 @@ func TestSqlite_buildUpdateUserQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, salt = ?, two_factor_secret = ?, two_factor_secret_verified_on = ?, last_updated_on = (strftime('%s','now')) WHERE id = ?"
 		expectedArgs := []interface{}{
@@ -605,7 +605,7 @@ func TestSqlite_UpdateUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		exampleRows := sqlmock.NewResult(int64(exampleUser.ID), 1)
 
@@ -630,7 +630,7 @@ func TestSqlite_buildUpdateUserPasswordQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "UPDATE users SET hashed_password = ?, requires_password_change = ?, password_last_changed_on = (strftime('%s','now')), last_updated_on = (strftime('%s','now')) WHERE id = ?"
 		expectedArgs := []interface{}{
@@ -653,7 +653,7 @@ func TestSqlite_UpdateUserPassword(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := s.buildUpdateUserPasswordQuery(exampleUser.ID, exampleUser.HashedPassword)
@@ -676,7 +676,7 @@ func TestSqlite_buildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "UPDATE users SET two_factor_secret_verified_on = (strftime('%s','now')) WHERE id = ?"
 		expectedArgs := []interface{}{
@@ -697,7 +697,7 @@ func TestSqlite_VerifyUserTwoFactorSecret(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := s.buildVerifyUserTwoFactorSecretQuery(exampleUser.ID)
@@ -720,7 +720,7 @@ func TestSqlite_buildArchiveUserQuery(T *testing.T) {
 		t.Parallel()
 		s, _ := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "UPDATE users SET archived_on = (strftime('%s','now')) WHERE id = ?"
 		expectedArgs := []interface{}{
@@ -741,7 +741,7 @@ func TestSqlite_ArchiveUser(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		s, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := s.buildArchiveUserQuery(exampleUser.ID)
@@ -766,7 +766,7 @@ func TestSqlite_LogUserCreationEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserCreationEventEntry(exampleUser)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -789,7 +789,7 @@ func TestSqlite_LogUserVerifyTwoFactorSecretEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserVerifyTwoFactorSecretEventEntry(exampleUser.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -812,7 +812,7 @@ func TestSqlite_LogUserUpdateTwoFactorSecretEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserUpdateTwoFactorSecretEventEntry(exampleUser.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -835,7 +835,7 @@ func TestSqlite_LogUserUpdatePasswordEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleInput := fakemodels.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserUpdatePasswordEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -858,7 +858,7 @@ func TestSqlite_LogUserArchiveEvent(T *testing.T) {
 
 		s, mockDB := buildTestService(t)
 
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserArchiveEventEntry(exampleUser.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 

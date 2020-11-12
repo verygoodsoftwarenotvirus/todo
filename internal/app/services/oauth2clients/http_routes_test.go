@@ -13,7 +13,7 @@ import (
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -54,7 +54,7 @@ func Test_fetchUserID(T *testing.T) {
 		t.Parallel()
 
 		req := buildRequest(t)
-		exampleUser := fakemodels.BuildFakeUser()
+		exampleUser := fakes.BuildFakeUser()
 
 		// for the service.fetchUserID() call
 		req = req.WithContext(
@@ -81,14 +81,14 @@ func Test_fetchUserID(T *testing.T) {
 func TestService_ListHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
 
-		exampleOAuth2ClientList := fakemodels.BuildFakeOAuth2ClientList()
+		exampleOAuth2ClientList := fakes.BuildFakeOAuth2ClientList()
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
@@ -183,14 +183,14 @@ func TestService_ListHandler(T *testing.T) {
 func TestService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
+		exampleInput := fakes.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		s := buildTestService(t)
 
@@ -268,9 +268,9 @@ func TestService_CreateHandler(T *testing.T) {
 	T.Run("with error getting user", func(t *testing.T) {
 		t.Parallel()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
+		exampleInput := fakes.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		s := buildTestService(t)
 
@@ -305,9 +305,9 @@ func TestService_CreateHandler(T *testing.T) {
 	T.Run("with invalid credentials", func(t *testing.T) {
 		t.Parallel()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
+		exampleInput := fakes.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		s := buildTestService(t)
 
@@ -359,9 +359,9 @@ func TestService_CreateHandler(T *testing.T) {
 	T.Run("with error validating password", func(t *testing.T) {
 		t.Parallel()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
+		exampleInput := fakes.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		s := buildTestService(t)
 
@@ -413,9 +413,9 @@ func TestService_CreateHandler(T *testing.T) {
 	T.Run("with error creating oauth2 client", func(t *testing.T) {
 		t.Parallel()
 
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
-		exampleInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
+		exampleInput := fakes.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		s := buildTestService(t)
 
@@ -468,13 +468,13 @@ func TestService_CreateHandler(T *testing.T) {
 func TestService_ReadHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
@@ -511,7 +511,7 @@ func TestService_ReadHandler(T *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
@@ -548,7 +548,7 @@ func TestService_ReadHandler(T *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
@@ -585,13 +585,13 @@ func TestService_ReadHandler(T *testing.T) {
 func TestService_ArchiveHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakemodels.BuildFakeUser()
+	exampleUser := fakes.BuildFakeUser()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
@@ -632,7 +632,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {
@@ -669,7 +669,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		exampleOAuth2Client.BelongsToUser = exampleUser.ID
 
 		s.urlClientIDExtractor = func(req *http.Request) uint64 {

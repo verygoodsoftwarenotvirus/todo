@@ -1,4 +1,4 @@
-package fake
+package fakes
 
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"

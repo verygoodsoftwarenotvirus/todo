@@ -8,7 +8,7 @@ import (
 	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/client/http"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
 var (
@@ -43,7 +43,7 @@ func RandomAction(c *client.V1Client) *Action {
 			Name: "CreateUser",
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
-				ui := fakemodels.BuildFakeUserCreationInput()
+				ui := fakes.BuildFakeUserCreationInput()
 				return c.BuildCreateUserRequest(ctx, ui)
 			},
 			Weight: 100,

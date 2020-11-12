@@ -435,6 +435,8 @@ func (p *Postgres) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) 
 func (p *Postgres) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]models.AuditLogEntry, error) {
 	query, args := p.buildGetAuditLogEntriesForOAuth2ClientQuery(clientID)
 
+	p.logger.WithValue("query", query).WithValue("client_id", clientID).Debug("GetAuditLogEntriesForOAuth2Client invoked")
+
 	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("querying database for audit log entries: %w", err)

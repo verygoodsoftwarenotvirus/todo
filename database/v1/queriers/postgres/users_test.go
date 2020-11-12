@@ -776,6 +776,28 @@ func TestPostgres_ArchiveUser(T *testing.T) {
 	})
 }
 
+func TestPostgres_buildGetAuditLogEntriesForUserQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		p, _ := buildTestService(t)
+
+		exampleUser := fakemodels.BuildFakeUser()
+
+		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE (audit_log.context->'user_id' = $1 OR audit_log.context->'performed_by' = $2) ORDER BY audit_log.id"
+		expectedArgs := []interface{}{
+			exampleUser.ID,
+			exampleUser.ID,
+		}
+		actualQuery, actualArgs := p.buildGetAuditLogEntriesForUserQuery(exampleUser.ID)
+
+		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
 func TestPostgres_LogUserCreationEvent(T *testing.T) {
 	T.Parallel()
 

@@ -45,7 +45,7 @@ func validateWebhook(input *models.WebhookCreationInput) error {
 
 // CreateHandler is our webhook creation route.
 func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context(), "CreateHandler")
+	ctx, span := tracing.StartSpan(req.Context(), "webhooks.service.CreateHandler")
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -99,7 +99,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 // ListHandler is our list route.
 func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context(), "ListHandler")
+	ctx, span := tracing.StartSpan(req.Context(), "webhooks.service.ListHandler")
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -136,7 +136,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 
 // ReadHandler returns a GET handler that returns an webhook.
 func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context(), "ReadHandler")
+	ctx, span := tracing.StartSpan(req.Context(), "webhooks.service.ReadHandler")
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -176,7 +176,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 
 // UpdateHandler returns a handler that updates an webhook.
 func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context(), "UpdateHandler")
+	ctx, span := tracing.StartSpan(req.Context(), "webhooks.service.UpdateHandler")
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -238,7 +238,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 
 // ArchiveHandler returns a handler that archives an webhook.
 func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context(), "delete_route")
+	ctx, span := tracing.StartSpan(req.Context(), "webhooks.service.ArchiveHandler")
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -282,7 +282,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 // AuditEntryHandler returns a GET handler that returns all audit log entries related to an item.
 func (s *Service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context(), "AuditEntryHandler")
+	ctx, span := tracing.StartSpan(req.Context(), "webhooks.service.AuditEntryHandler")
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)

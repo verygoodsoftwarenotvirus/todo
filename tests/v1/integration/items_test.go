@@ -307,22 +307,19 @@ func TestItems(test *testing.T) {
 			// Create item.
 			exampleItem := fakemodels.BuildFakeItem()
 			exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
-			updateTo := fakemodels.BuildFakeItem()
-			updateToInput := fakemodels.BuildFakeItemUpdateInputFromItem(exampleItem)
 			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
 			checkValueAndError(t, createdItem, err)
 
 			// Change item.
-			assert.NotEmpty(t, createdItem.Update(updateToInput))
-			err = todoClient.UpdateItem(ctx, createdItem)
-			assert.NoError(t, err)
+			createdItem.Update(exampleItem.ToUpdateInput())
+			assert.NoError(t, todoClient.UpdateItem(ctx, createdItem))
 
 			// Fetch item.
 			actual, err := todoClient.GetItem(ctx, createdItem.ID)
 			checkValueAndError(t, actual, err)
 
 			// Assert item equality.
-			checkItemEquality(t, updateTo, actual)
+			checkItemEquality(t, exampleItem, actual)
 			assert.NotNil(t, actual.LastUpdatedOn)
 
 			// Clean up item.
@@ -374,7 +371,7 @@ func TestItems(test *testing.T) {
 			exampleItem := fakemodels.BuildFakeItem()
 			exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
 			updateTo := fakemodels.BuildFakeItem()
-			updateToInput := fakemodels.BuildFakeItemUpdateInputFromItem(exampleItem)
+			updateToInput := fakemodels.BuildFakeItemUpdateInputFromItem(updateTo)
 			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
 			checkValueAndError(t, createdItem, err)
 
@@ -384,16 +381,8 @@ func TestItems(test *testing.T) {
 			err = todoClient.UpdateItem(ctx, createdItem)
 			assert.NoError(t, err)
 
-			// Fetch item.
-			updated, err := todoClient.GetItem(ctx, createdItem.ID)
-			checkValueAndError(t, updated, err)
-
-			// Assert item equality.
-			checkItemEquality(t, updateTo, updated)
-			assert.NotNil(t, updated.LastUpdatedOn)
-
 			// fetch audit log entries
-			actual, err := adminClient.GetAuditLogForItem(ctx, updated.ID)
+			actual, err := adminClient.GetAuditLogForItem(ctx, createdItem.ID)
 			assert.NoError(t, err)
 			assert.Len(t, actual, 2)
 

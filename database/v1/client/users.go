@@ -161,7 +161,7 @@ func (c *Client) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) (
 	ctx, span := tracing.StartSpan(ctx, "GetAuditLogEntriesForUser")
 	defer span.End()
 
-	c.logger.Debug("GetAuditLogEntriesForUser called")
+	c.logger.WithValue("user_id", userID).Debug("GetAuditLogEntriesForUser called")
 
 	return c.querier.GetAuditLogEntriesForUser(ctx, userID)
 }

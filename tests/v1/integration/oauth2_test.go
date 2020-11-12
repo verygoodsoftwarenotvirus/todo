@@ -251,20 +251,18 @@ func TestOAuth2Clients(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			// Create item.
-			exampleOAuth2Client := fakemodels.BuildFakeOAuth2Client()
-			exampleOAuth2ClientInput := fakemodels.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
-
-			createdOAuth2Client, err := todoClient.CreateOAuth2Client(ctx, cookie, exampleOAuth2ClientInput)
+			// Create oauth2Client.
+			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, twoFactorSecret)
+			createdOAuth2Client, err := testClient.CreateOAuth2Client(ctx, cookie, input)
 			checkValueAndError(t, createdOAuth2Client, err)
 
 			// fetch audit log entries
 			actual, err := adminClient.GetAuditLogForOAuth2Client(ctx, createdOAuth2Client.ID)
 			assert.NoError(t, err)
-			assert.Len(t, actual, 2)
+			assert.Len(t, actual, 1)
 
 			// Clean up item.
-			assert.NoError(t, todoClient.ArchiveOAuth2Client(ctx, createdOAuth2Client.ID))
+			assert.NoError(t, testClient.ArchiveOAuth2Client(ctx, createdOAuth2Client.ID))
 		})
 	})
 }

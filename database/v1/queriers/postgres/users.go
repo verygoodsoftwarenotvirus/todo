@@ -494,14 +494,14 @@ func (p *Postgres) LogUserArchiveEvent(ctx context.Context, userID uint64) {
 func (p *Postgres) buildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
-	userIDKey := fmt.Sprintf("%s.%s->'%s'", auditLogEntriesTableName, auditLogEntriesTableContextColumn, auditLogItemAssignmentKey)
+	userIDKey := fmt.Sprintf("%s.%s->'%s'", auditLogEntriesTableName, auditLogEntriesTableContextColumn, audit.UserAssignmentKey)
 	performedByIDKey := fmt.Sprintf("%s.%s->'%s'", auditLogEntriesTableName, auditLogEntriesTableContextColumn, audit.ActorAssignmentKey)
 	builder := p.sqlBuilder.
 		Select(auditLogEntriesTableColumns...).
 		From(auditLogEntriesTableName).
-		Where(squirrel.Eq{
-			userIDKey:        userID,
-			performedByIDKey: userID,
+		Where(squirrel.Or{
+			squirrel.Eq{userIDKey: userID},
+			squirrel.Eq{performedByIDKey: userID},
 		}).
 		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
 

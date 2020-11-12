@@ -496,9 +496,9 @@ func (s *Sqlite) buildGetAuditLogEntriesForUserQuery(userID uint64) (query strin
 	builder := s.sqlBuilder.
 		Select(auditLogEntriesTableColumns...).
 		From(auditLogEntriesTableName).
-		Where(squirrel.Eq{
-			userIDKey:        userID,
-			performedByIDKey: userID,
+		Where(squirrel.Or{
+			squirrel.Eq{userIDKey: userID},
+			squirrel.Eq{performedByIDKey: userID},
 		}).
 		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
 

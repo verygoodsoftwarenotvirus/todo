@@ -56,7 +56,7 @@ var (
 
 // AuthorizeScopeHandler satisfies the oauth2server AuthorizeScopeHandler interface.
 func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Request) (scope string, err error) {
-	ctx, span := tracing.StartSpan(req.Context(), "AuthorizeScopeHandler")
+	ctx, span := tracing.StartSpan(req.Context(), "oauth2clients.service.AuthorizeScopeHandler")
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -106,7 +106,7 @@ var errUserNotFound = errors.New("user not found")
 
 // UserAuthorizationHandler satisfies the oauth2server UserAuthorizationHandler interface.
 func (s *Service) UserAuthorizationHandler(_ http.ResponseWriter, req *http.Request) (userID string, err error) {
-	ctx, span := tracing.StartSpan(req.Context(), "UserAuthorizationHandler")
+	ctx, span := tracing.StartSpan(req.Context(), "oauth2clients.service.UserAuthorizationHandler")
 	defer span.End()
 
 	var uid uint64

@@ -18,8 +18,6 @@ const (
 	itemsTableNameColumn     = "name"
 	itemsTableDetailsColumn  = "details"
 	itemsUserOwnershipColumn = "belongs_to_user"
-
-	auditLogItemAssignmentKey = "item_id"
 )
 
 var (
@@ -540,7 +538,7 @@ func (p *Postgres) LogItemArchiveEvent(ctx context.Context, userID, itemID uint6
 func (p *Postgres) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query string, args []interface{}) {
 	var err error
 
-	itemIDKey := fmt.Sprintf("%s.%s->'%s'", auditLogEntriesTableName, auditLogEntriesTableContextColumn, auditLogItemAssignmentKey)
+	itemIDKey := fmt.Sprintf("%s.%s->'%s'", auditLogEntriesTableName, auditLogEntriesTableContextColumn, audit.ItemAssignmentKey)
 	builder := p.sqlBuilder.
 		Select(auditLogEntriesTableColumns...).
 		From(auditLogEntriesTableName).

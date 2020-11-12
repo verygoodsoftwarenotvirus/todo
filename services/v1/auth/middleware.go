@@ -24,7 +24,7 @@ const (
 // CookieAuthenticationMiddleware checks every request for a user cookie.
 func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := tracing.StartSpan(req.Context(), "CookieAuthenticationMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "auth.service.CookieAuthenticationMiddleware")
 		defer span.End()
 
 		// fetch the user from the request.
@@ -61,7 +61,7 @@ func (s *Service) AuthorizationMiddleware(allowValidCookieInLieuOfAValidToken bo
 
 func (s *Service) authorizationMiddleware(allowCookies bool, next http.Handler) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := tracing.StartSpan(req.Context(), "authorizationMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "auth.service.authorizationMiddleware")
 		defer span.End()
 
 		var (
@@ -124,7 +124,7 @@ func (s *Service) authorizationMiddleware(allowCookies bool, next http.Handler) 
 // AuthenticationMiddleware is concerned with figuring otu who a user is, but not worried about kicking out users who are not known.
 func (s *Service) AuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := tracing.StartSpan(req.Context(), "authenticationMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "auth.service.authenticationMiddleware")
 		defer span.End()
 
 		var user *models.User
@@ -178,7 +178,7 @@ func (s *Service) AdminMiddleware(next http.Handler) http.Handler {
 	const staticError = "admin status required"
 
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := tracing.StartSpan(req.Context(), "AdminMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "auth.service.AdminMiddleware")
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
@@ -203,7 +203,7 @@ func (s *Service) AdminMiddleware(next http.Handler) http.Handler {
 // AdminUserImpersonationMiddleware restricts requests to admin users only.
 func (s *Service) AdminUserImpersonationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := tracing.StartSpan(req.Context(), "OperatingAsAdminMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "auth.service.OperatingAsAdminMiddleware")
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
@@ -246,7 +246,7 @@ func parseLoginInputFromForm(req *http.Request) *models.UserLoginInput {
 // UserLoginInputMiddleware fetches user login input from requests.
 func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := tracing.StartSpan(req.Context(), "UserLoginInputMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "auth.service.UserLoginInputMiddleware")
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)

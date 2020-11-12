@@ -42,7 +42,7 @@ func (s *Service) fetchUserID(req *http.Request) uint64 {
 
 // ListHandler is a handler that returns a list of OAuth2 clients.
 func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context(), "ListHandler")
+	ctx, span := tracing.StartSpan(req.Context(), "oauth2clients.service.ListHandler")
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -74,7 +74,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 
 // CreateHandler is our OAuth2 client creation route.
 func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context(), "CreateHandler")
+	ctx, span := tracing.StartSpan(req.Context(), "oauth2clients.service.CreateHandler")
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -147,7 +147,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 // ReadHandler is a route handler for retrieving an OAuth2 client.
 func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context(), "ReadHandler")
+	ctx, span := tracing.StartSpan(req.Context(), "oauth2clients.service.ReadHandler")
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -180,7 +180,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 
 // ArchiveHandler is a route handler for archiving an OAuth2 client.
 func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context(), "ArchiveHandler")
+	ctx, span := tracing.StartSpan(req.Context(), "oauth2clients.service.ArchiveHandler")
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -215,7 +215,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 // AuditEntryHandler returns a GET handler that returns all audit log entries related to an item.
 func (s *Service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context(), "AuditEntryHandler")
+	ctx, span := tracing.StartSpan(req.Context(), "oauth2clients.service.AuditEntryHandler")
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)

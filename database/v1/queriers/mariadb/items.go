@@ -566,7 +566,7 @@ func (m *MariaDB) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query stri
 	builder := m.sqlBuilder.
 		Select(auditLogEntriesTableColumns...).
 		From(auditLogEntriesTableName).
-		Where(
+		Where(squirrel.Or{
 			squirrel.Expr(
 				fmt.Sprintf(
 					`JSON_CONTAINS(%s.%s, '%d', '$.%s')`,
@@ -576,7 +576,16 @@ func (m *MariaDB) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query stri
 					audit.ItemAssignmentKey,
 				),
 			),
-		).
+			squirrel.Expr(
+				fmt.Sprintf(
+					`JSON_CONTAINS(%s.%s, '%d', '$.%s')`,
+					auditLogEntriesTableName,
+					auditLogEntriesTableContextColumn,
+					itemID,
+					audit.ActorAssignmentKey,
+				),
+			),
+		}).
 		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
 
 	query, args, err = builder.ToSql()

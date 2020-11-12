@@ -55,7 +55,7 @@ func (s *Service) DecodeCookieFromRequest(ctx context.Context, req *http.Request
 
 // WebsocketAuthFunction is provided to Newsman to determine if a user has access to websockets.
 func (s *Service) WebsocketAuthFunction(req *http.Request) bool {
-	ctx, span := tracing.StartSpan(req.Context(), "WebsocketAuthFunction")
+	ctx, span := tracing.StartSpan(req.Context(), "auth.service.WebsocketAuthFunction")
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -106,7 +106,7 @@ func (s *Service) fetchUserFromCookie(ctx context.Context, req *http.Request) (*
 
 // LoginHandler is our login route.
 func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context(), "LoginHandler")
+	ctx, span := tracing.StartSpan(req.Context(), "auth.service.LoginHandler")
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -195,7 +195,7 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 
 // LogoutHandler is our logout route.
 func (s *Service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context(), "LogoutHandler")
+	ctx, span := tracing.StartSpan(req.Context(), "auth.service.LogoutHandler")
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -238,7 +238,7 @@ func (s *Service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 
 // StatusHandler returns the user info for the user making the request.
 func (s *Service) StatusHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context(), "StatusHandler")
+	ctx, span := tracing.StartSpan(req.Context(), "auth.service.StatusHandler")
 	defer span.End()
 
 	var (
@@ -265,7 +265,7 @@ func (s *Service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 
 // CycleSecretHandler rotates the cookie building secret with a new random secret.
 func (s *Service) CycleSecretHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context(), "CycleSecretHandler")
+	ctx, span := tracing.StartSpan(req.Context(), "auth.service.CycleSecretHandler")
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)

@@ -339,7 +339,7 @@ func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, r
 		}
 	}
 
-	logger.Debug("request executed")
+	logger.WithValue("status", res.StatusCode).Debug("request executed")
 
 	return res, nil
 }

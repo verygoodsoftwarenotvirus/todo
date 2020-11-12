@@ -21,7 +21,7 @@ var errClientUnauthorizedForScope = errors.New("client not authorized for scope"
 // CreationInputMiddleware is a middleware for attaching OAuth2 client info to a request.
 func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := tracing.StartSpan(req.Context(), "CreationInputMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "oauth2clients.service.CreationInputMiddleware")
 		defer span.End()
 		x := new(models.OAuth2ClientCreationInput)
 
@@ -83,7 +83,7 @@ func determineScope(req *http.Request) string {
 // OAuth2TokenAuthenticationMiddleware authenticates Oauth tokens.
 func (s *Service) OAuth2TokenAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := tracing.StartSpan(req.Context(), "OAuth2TokenAuthenticationMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "oauth2clients.service.OAuth2TokenAuthenticationMiddleware")
 		defer span.End()
 
 		c, err := s.ExtractOAuth2ClientFromRequest(ctx, req)
@@ -107,7 +107,7 @@ func (s *Service) OAuth2TokenAuthenticationMiddleware(next http.Handler) http.Ha
 // OAuth2ClientInfoMiddleware fetches clientOAuth2Client info from requests and attaches it explicitly to a request.
 func (s *Service) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := tracing.StartSpan(req.Context(), "OAuth2ClientInfoMiddleware")
+		ctx, span := tracing.StartSpan(req.Context(), "oauth2clients.service.OAuth2ClientInfoMiddleware")
 		defer span.End()
 
 		if v := req.URL.Query().Get(oauth2ClientIDURIParamKey); v != "" {

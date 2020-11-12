@@ -165,6 +165,7 @@ func (c *V1Client) BuildGetAuditLogForOAuth2ClientRequest(ctx context.Context, c
 
 	uri := c.BuildURL(
 		nil,
+		oauth2BasePath,
 		oauth2ClientsBasePath,
 		strconv.FormatUint(clientID, 10),
 		"audit",

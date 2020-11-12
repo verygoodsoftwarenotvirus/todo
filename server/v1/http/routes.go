@@ -26,7 +26,6 @@ const (
 	maxCORSAge       = 300
 )
 
-/*
 func (s *Server) logRoutes() {
 	if err := chi.Walk(s.router, func(method string, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
 		s.logger.WithValues(map[string]interface{}{
@@ -39,7 +38,6 @@ func (s *Server) logRoutes() {
 		s.logger.Error(err, "logging routes")
 	}
 }
-*/
 
 func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Handler) {
 	if cfg == nil {
@@ -166,9 +164,11 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 				usersRouter.Route(singleUserRoute, func(singleUserRouter chi.Router) {
 					singleUserRouter.With(s.authService.AdminMiddleware).Get(root, s.usersService.ReadHandler)
 					singleUserRouter.Delete(root, s.usersService.ArchiveHandler)
-					singleUserRouter.With(s.authService.AdminMiddleware).Get(auditRoute, s.webhooksService.AuditEntryHandler)
+					singleUserRouter.With(s.authService.AdminMiddleware).Get(auditRoute, s.usersService.AuditEntryHandler)
 				})
 			})
+
+			// /api/v1/oauth2/clients/{oauth2ClientID:[0-9]+}/audit"
 
 			// OAuth2 Clients.
 			v1Router.Route("/oauth2/clients", func(clientRouter chi.Router) {
@@ -180,7 +180,7 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 				clientRouter.Route(singleClientRoute, func(singleClientRouter chi.Router) {
 					singleClientRouter.Get(root, s.oauth2ClientsService.ReadHandler)
 					singleClientRouter.Delete(root, s.oauth2ClientsService.ArchiveHandler)
-					singleClientRouter.With(s.authService.AdminMiddleware).Get(auditRoute, s.webhooksService.AuditEntryHandler)
+					singleClientRouter.With(s.authService.AdminMiddleware).Get(auditRoute, s.oauth2ClientsService.AuditEntryHandler)
 				})
 			})
 

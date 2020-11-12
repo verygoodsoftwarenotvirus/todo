@@ -974,7 +974,7 @@ func TestMariaDB_buildGetAuditLogEntriesForItemQuery(T *testing.T) {
 
 		exampleItem := fakemodels.BuildFakeItem()
 
-		expectedQuery := fmt.Sprintf("SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE JSON_CONTAINS(audit_log.context, '%d', '$.item_id') ORDER BY audit_log.id", exampleItem.ID)
+		expectedQuery := fmt.Sprintf("SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE (JSON_CONTAINS(audit_log.context, '%d', '$.item_id') OR JSON_CONTAINS(audit_log.context, '%d', '$.performed_by')) ORDER BY audit_log.id", exampleItem.ID, exampleItem.ID)
 		expectedArgs := []interface{}(nil)
 		actualQuery, actualArgs := m.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 

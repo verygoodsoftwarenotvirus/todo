@@ -213,5 +213,29 @@ func TestWebhooks(test *testing.T) {
 			// Clean up item.
 			assert.NoError(t, todoClient.ArchiveWebhook(ctx, premade.ID))
 		})
+
+		t.Run("it should not be auditable by a non-admin", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			// Create webhook.
+			exampleWebhook := fakemodels.BuildFakeWebhook()
+			exampleWebhookInput := fakemodels.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+			premade, err := todoClient.CreateWebhook(ctx, exampleWebhookInput)
+			checkValueAndError(t, premade, err)
+
+			// Change webhook.
+			premade.Name = reverse(premade.Name)
+			exampleWebhook.Name = premade.Name
+			assert.NoError(t, todoClient.UpdateWebhook(ctx, premade))
+
+			// fetch audit log entries
+			actual, err := todoClient.GetAuditLogForWebhook(ctx, premade.ID)
+			assert.Error(t, err)
+			assert.Nil(t, actual)
+
+			// Clean up item.
+			assert.NoError(t, todoClient.ArchiveWebhook(ctx, premade.ID))
+		})
 	})
 }

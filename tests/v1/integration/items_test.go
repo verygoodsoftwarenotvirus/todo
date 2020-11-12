@@ -389,5 +389,24 @@ func TestItems(test *testing.T) {
 			// Clean up item.
 			assert.NoError(t, todoClient.ArchiveItem(ctx, createdItem.ID))
 		})
+
+		t.Run("it should not be auditable by a non-admin", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			// Create item.
+			exampleItem := fakemodels.BuildFakeItem()
+			exampleItemInput := fakemodels.BuildFakeItemCreationInputFromItem(exampleItem)
+			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
+			checkValueAndError(t, createdItem, err)
+
+			// fetch audit log entries
+			actual, err := todoClient.GetAuditLogForItem(ctx, createdItem.ID)
+			assert.Error(t, err)
+			assert.Nil(t, actual)
+
+			// Clean up item.
+			assert.NoError(t, todoClient.ArchiveItem(ctx, createdItem.ID))
+		})
 	})
 }

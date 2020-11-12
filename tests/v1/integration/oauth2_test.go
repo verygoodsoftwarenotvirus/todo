@@ -264,5 +264,23 @@ func TestOAuth2Clients(test *testing.T) {
 			// Clean up item.
 			assert.NoError(t, testClient.ArchiveOAuth2Client(ctx, createdOAuth2Client.ID))
 		})
+
+		t.Run("it should not be auditable by a non-admin", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			// Create oauth2Client.
+			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, twoFactorSecret)
+			createdOAuth2Client, err := testClient.CreateOAuth2Client(ctx, cookie, input)
+			checkValueAndError(t, createdOAuth2Client, err)
+
+			// fetch audit log entries
+			actual, err := testClient.GetAuditLogForOAuth2Client(ctx, createdOAuth2Client.ID)
+			assert.Error(t, err)
+			assert.Nil(t, actual)
+
+			// Clean up item.
+			assert.NoError(t, testClient.ArchiveOAuth2Client(ctx, createdOAuth2Client.ID))
+		})
 	})
 }

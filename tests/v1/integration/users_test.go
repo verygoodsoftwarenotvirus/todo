@@ -203,5 +203,24 @@ func TestUsers(test *testing.T) {
 			// Clean up item.
 			assert.NoError(t, todoClient.ArchiveUser(ctx, createdUser.ID))
 		})
+
+		t.Run("it should not be auditable by a non-admin", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			// Create user.
+			exampleUser := fakemodels.BuildFakeUser()
+			exampleUserInput := fakemodels.BuildFakeUserCreationInputFromUser(exampleUser)
+			createdUser, err := todoClient.CreateUser(ctx, exampleUserInput)
+			checkValueAndError(t, createdUser, err)
+
+			// fetch audit log entries
+			actual, err := todoClient.GetAuditLogForUser(ctx, createdUser.ID)
+			assert.Error(t, err)
+			assert.Nil(t, actual)
+
+			// Clean up item.
+			assert.NoError(t, todoClient.ArchiveUser(ctx, createdUser.ID))
+		})
 	})
 }

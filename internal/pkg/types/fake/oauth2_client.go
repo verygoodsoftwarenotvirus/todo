@@ -1,4 +1,4 @@
-package fakemodels
+package fake
 
 import (
 	"fmt"

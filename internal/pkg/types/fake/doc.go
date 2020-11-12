@@ -1,4 +1,4 @@
 /*
 Package fakemodels provides fake model builders
 */
-package fakemodels
+package fake

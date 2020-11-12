@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/fake"
 )
 
 // fetchRandomWebhook retrieves a random webhook from the list of available webhooks.

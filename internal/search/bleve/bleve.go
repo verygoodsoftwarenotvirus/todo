@@ -8,7 +8,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
 
 	bleve "github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/search/searcher"

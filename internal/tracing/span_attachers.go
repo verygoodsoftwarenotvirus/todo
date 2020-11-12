@@ -3,7 +3,7 @@ package tracing
 import (
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
 
 	"go.opencensus.io/trace"
 )

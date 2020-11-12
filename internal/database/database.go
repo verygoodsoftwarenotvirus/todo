@@ -7,7 +7,7 @@ import (
 	"io"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
 )
 
 var (

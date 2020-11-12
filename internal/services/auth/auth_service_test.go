@@ -7,8 +7,8 @@ import (
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/mock"
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/stretchr/testify/assert"

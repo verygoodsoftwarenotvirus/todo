@@ -11,7 +11,7 @@ import (
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
 )

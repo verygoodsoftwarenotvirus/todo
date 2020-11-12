@@ -1,6 +1,6 @@
 package exampledata
 
-import "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+import "gitlab.com/verygoodsoftwarenotvirus/todo/models"
 
 /*
 

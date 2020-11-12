@@ -14,7 +14,7 @@ import (
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
 
 	passwordvalidator "github.com/lane-c-wagner/go-password-validator"
 	"github.com/makiuchi-d/gozxing"

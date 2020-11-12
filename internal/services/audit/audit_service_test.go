@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/mock"
 
 	"github.com/stretchr/testify/assert"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"

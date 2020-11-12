@@ -11,9 +11,9 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/converters"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/converters"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/fake"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"

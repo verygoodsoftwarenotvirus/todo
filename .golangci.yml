@@ -289,7 +289,7 @@ issues:
       linters:
         - gocyclo # the update funcs can have very high cyclomatic complexities
 
-    - path: models/v1/fake
+    - path: models/fake
       linters:
         - gomnd
 
@@ -297,7 +297,7 @@ issues:
       linters:
         - gomnd
 
-    - path: cmd/config_gen/v1
+    - path: cmd/config_gen
       linters:
         - gomnd
 
@@ -324,11 +324,11 @@ issues:
       linters:
         - maligned # these structs are never copied and are structured for documentation purposes
 
-    - path: cmd/config_gen/v1/main.go
+    - path: cmd/config_gen/main.go
       linters:
         - gosec
         - lll
-        -
+
     - path: internal/config/config.go
       linters:
         - lll
@@ -341,7 +341,7 @@ issues:
       linters:
         - goerr113
 
-    - path: internal/database/queriers/postgres/migrations.go # FIXME
+    - path: internal/database/queriers/postgres/migrations.go # TODO: FIXME
       linters:
         - gocognit
 

@@ -9,8 +9,8 @@ import (
 	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/oauth2clients"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/fake"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"

@@ -1,7 +1,7 @@
 package database
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
 
 	"github.com/google/wire"
 )

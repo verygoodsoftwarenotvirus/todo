@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
 )

@@ -10,9 +10,9 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/fake"
+	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/mock"
 
 	"github.com/gorilla/securecookie"
 	"github.com/stretchr/testify/assert"

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/fake"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

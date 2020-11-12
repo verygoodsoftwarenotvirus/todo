@@ -14,7 +14,7 @@ import (
 	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/oauth2clients"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
+	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/mock"
 
 	"github.com/stretchr/testify/assert"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"

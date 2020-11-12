@@ -12,9 +12,9 @@ import (
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/mock"
 	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/fake"
+	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/fake"
 
 	"github.com/stretchr/testify/assert"
 )

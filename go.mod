@@ -1,6 +1,6 @@
 module gitlab.com/verygoodsoftwarenotvirus/todo
 
-go 1.14
+go 1.15
 
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.0
@@ -16,7 +16,6 @@ require (
 	github.com/alexedwards/scs/v2 v2.4.0
 	github.com/blevesearch/bleve v1.0.9
 	github.com/brianvoe/gofakeit/v5 v5.0.0
-	github.com/codenotary/immudb v0.8.0
 	github.com/emicklei/hazana v1.6.2
 	github.com/go-chi/chi v4.0.3+incompatible
 	github.com/go-chi/cors v1.0.0
@@ -41,6 +40,5 @@ require (
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
-	google.golang.org/grpc v1.33.1
 	gopkg.in/oauth2.v3 v3.12.0
 )

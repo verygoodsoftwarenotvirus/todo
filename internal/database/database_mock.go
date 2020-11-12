@@ -5,7 +5,7 @@ import (
 	"database/sql"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
+	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/mock"
 
 	"github.com/stretchr/testify/mock"
 )

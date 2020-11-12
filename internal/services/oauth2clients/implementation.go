@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
 
 	oauth2 "gopkg.in/oauth2.v3"
 	oauth2errors "gopkg.in/oauth2.v3/errors"

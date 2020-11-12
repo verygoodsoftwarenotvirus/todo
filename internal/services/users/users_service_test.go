@@ -12,8 +12,8 @@ import (
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

@@ -10,8 +10,8 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/fake"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"

@@ -16,7 +16,7 @@ import (
 	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
 
 	fake "github.com/brianvoe/gofakeit/v5"
 	"github.com/makiuchi-d/gozxing"

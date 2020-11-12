@@ -8,7 +8,7 @@ import (
 	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/client/v1/http"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/fake"
 )
 
 var (

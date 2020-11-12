@@ -1,0 +1,16 @@
+package auth_test
+
+import (
+	"testing"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
+)
+
+func TestProvideBcryptHashCost(T *testing.T) {
+	T.Parallel()
+
+	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
+		auth.ProvideBcryptHashCost()
+	})
+}

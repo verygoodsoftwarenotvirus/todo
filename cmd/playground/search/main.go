@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
 )
@@ -13,12 +13,12 @@ import (
 func main() {
 	ctx := context.Background()
 
-	im, err := bleve.NewBleveIndexManager("whatever", models.ItemsSearchIndexName, zerolog.NewLogger())
+	im, err := bleve.NewBleveIndexManager("whatever", types.ItemsSearchIndexName, zerolog.NewLogger())
 	if err != nil {
 		panic(err)
 	}
 
-	var items []models.Item
+	var items []types.Item
 	terms := []string{
 		"App",
 		"Apple",
@@ -33,7 +33,7 @@ func main() {
 	}
 
 	for i, t := range terms {
-		items = append(items, models.Item{
+		items = append(items, types.Item{
 			ID:   uint64(i),
 			Name: t,
 		})

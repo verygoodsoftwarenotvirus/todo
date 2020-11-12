@@ -271,12 +271,12 @@ issues:
         - gocognit  # FIXME
         - gomnd
 
-    - path: tests/v1
+    - path: tests/
       linters:
         - gosec
         - gomnd
 
-    - path: tests/v1/testutil/
+    - path: tests/testutil/
       linters:
         - bodyclose
         - gocyclo
@@ -285,15 +285,15 @@ issues:
       linters:
         - lll
 
-    - path: models/
+    - path: internal/pkg/types/
       linters:
         - gocyclo # the update funcs can have very high cyclomatic complexities
 
-    - path: models/fake
+    - path: internal/pkg/types/fake
       linters:
         - gomnd
 
-    - path: internal/exampledata # TODO: DELETEME
+    - path: internal/pkg/exampledata # TODO: DELETEME
       linters:
         - gomnd
 
@@ -303,12 +303,12 @@ issues:
 
     ## BEGIN SPECIAL SNOWFLAKES
 
-    - path: internal/permissions/permissions.go
+    - path: internal/pkg/permissions/permissions.go
       linters:
         - deadcode
         - varcheck
 
-    - path: tests/v1/load/actions.go
+    - path: tests/load/actions.go
       linters:
         - gocyclo
 
@@ -316,7 +316,7 @@ issues:
       linters:
         - gocyclo
 
-    - path: tests/v1/load/main.go
+    - path: tests/load/main.go
       linters:
         - gocritic # gocritic complains about an interface implementation I have no control over
 
@@ -329,21 +329,22 @@ issues:
         - gosec
         - lll
 
-    - path: internal/config/config.go
+    - path: internal/pkg/config/config.go
       linters:
         - lll
 
-    - path: tests/v1/testutil/testutil.go
+    - path: tests/testutil/testutil.go
       linters:
         - goerr113
 
-    - path: cmd/server/v1/main.go
+    - path: cmd/server/main.go
       linters:
         - goerr113
 
-    - path: internal/database/queriers/postgres/migrations.go # TODO: FIXME
+    - path: internal/app/database/queriers/postgres/migrations.go # TODO: FIXME
       linters:
         - gocognit
+        - gocyclo
 
     ## END SPECIAL SNOWFLAKES
 

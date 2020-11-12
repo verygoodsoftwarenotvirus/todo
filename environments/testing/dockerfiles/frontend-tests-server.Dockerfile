@@ -15,7 +15,7 @@ WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 COPY . .
 COPY --from=frontend-build-stage /app/dist /frontend
 
-RUN go build -trimpath -o /todo -v gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
+RUN go build -trimpath -o /todo -v gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server
 
 # final stage
 FROM debian:stretch

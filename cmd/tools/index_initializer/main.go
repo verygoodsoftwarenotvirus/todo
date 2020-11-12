@@ -8,15 +8,15 @@ package main
 
 import (
 	"context"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
 	"log"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	flag "github.com/spf13/pflag"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
@@ -108,7 +108,7 @@ func main() {
 
 	switch typeName {
 	case "item":
-		outputChan := make(chan []models.Item)
+		outputChan := make(chan []types.Item)
 		if queryErr := dbClient.GetAllItems(ctx, outputChan); queryErr != nil {
 			log.Fatalf("error fetching items from database: %v", err)
 		}

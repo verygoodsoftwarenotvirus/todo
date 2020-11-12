@@ -5,7 +5,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 
 	//
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/viper"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
 	"io/ioutil"
 )
 

@@ -11,8 +11,8 @@ RUN go test -o /integration-server -c -coverpkg \
 	gitlab.com/verygoodsoftwarenotvirus/todo/internal/..., \
 	gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/..., \
 	gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/..., \
-	gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1/ \
-    gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
+	gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/ \
+    gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server
 
 # frontend-build-stage
 FROM node:lts-stretch AS frontend-build-stage

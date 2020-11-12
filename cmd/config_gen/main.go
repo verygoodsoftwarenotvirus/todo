@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/viper"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
 )
 
 const (

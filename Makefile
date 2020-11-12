@@ -61,11 +61,11 @@ revendor: clean_vendor vendor
 
 .PHONY: clean_wire
 clean_wire:
-	rm -f cmd/server/v1/wire_gen.go
+	rm -f cmd/server/wire_gen.go
 
 .PHONY: wire
 wire: ensure-wire vendor
-	wire gen gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/v1
+	wire gen gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server
 
 .PHONY: rewire
 rewire: ensure-wire clean_wire wire

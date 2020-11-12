@@ -7,7 +7,7 @@ RUN apt-get update -y && apt-get install -y make git gcc musl-dev
 
 COPY . .
 
-RUN go build -o /loadtester gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/load
+RUN go build -o /loadtester gitlab.com/verygoodsoftwarenotvirus/todo/tests/load
 
 # final stage
 FROM debian:stable

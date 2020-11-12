@@ -293,7 +293,7 @@ issues:
       linters:
         - gomnd
 
-    - path: internal/v1/exampledata # TODO: DELETEME
+    - path: internal/exampledata # TODO: DELETEME
       linters:
         - gomnd
 
@@ -303,7 +303,7 @@ issues:
 
     ## BEGIN SPECIAL SNOWFLAKES
 
-    - path: internal/v1/permissions/permissions.go
+    - path: internal/permissions/permissions.go
       linters:
         - deadcode
         - varcheck
@@ -312,7 +312,7 @@ issues:
       linters:
         - gocyclo
 
-    - path: database/v1/queriers/postgres/migrations.go
+    - path: internal/database/queriers/postgres/migrations.go
       linters:
         - gocyclo
 
@@ -320,7 +320,7 @@ issues:
       linters:
         - gocritic # gocritic complains about an interface implementation I have no control over
 
-    - path: server/v1/http/server.go
+    - path: internal/server/http/server.go
       linters:
         - maligned # these structs are never copied and are structured for documentation purposes
 
@@ -329,7 +329,7 @@ issues:
         - gosec
         - lll
         -
-    - path: internal/v1/config/config.go
+    - path: internal/config/config.go
       linters:
         - lll
 
@@ -341,7 +341,7 @@ issues:
       linters:
         - goerr113
 
-    - path: database/v1/queriers/postgres/migrations.go # FIXME
+    - path: internal/database/queriers/postgres/migrations.go # FIXME
       linters:
         - gocognit
 

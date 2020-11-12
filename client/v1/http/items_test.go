@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1/fake"
 
 	"github.com/stretchr/testify/assert"

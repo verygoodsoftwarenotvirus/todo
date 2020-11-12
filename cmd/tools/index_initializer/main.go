@@ -8,14 +8,14 @@ package main
 
 import (
 	"context"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"log"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search/bleve"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	flag "github.com/spf13/pflag"

@@ -5,21 +5,21 @@ package main
 import (
 	"context"
 	"database/sql"
-	database "gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/metrics"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search/bleve"
-	server "gitlab.com/verygoodsoftwarenotvirus/todo/server/v1"
-	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/server/v1/http"
-	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/audit"
-	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/auth"
-	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/frontend"
-	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/items"
-	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/oauth2clients"
-	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/users"
-	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/webhooks"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
+	database2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
+	server2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
+	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/server/http"
+	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
+	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
+	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/oauth2clients"
+	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/users"
+	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
 
 	"github.com/google/wire"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
@@ -30,16 +30,16 @@ func BuildServer(
 	ctx context.Context,
 	cfg *config.ServerConfig,
 	logger logging.Logger,
-	dbm database.DataManager,
+	dbm database2.DataManager,
 	db *sql.DB,
 	authenticator auth.Authenticator,
-) (*server.Server, error) {
+) (*server2.Server, error) {
 	wire.Build(
 		config.Providers,
-		database.Providers,
+		database2.Providers,
 		// server things,
 		bleve.Providers,
-		server.Providers,
+		server2.Providers,
 		encoding.Providers,
 		httpserver.Providers,
 		// metrics,

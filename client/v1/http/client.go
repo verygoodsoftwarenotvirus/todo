@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/tracing"
 
 	"github.com/moul/http2curl"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"

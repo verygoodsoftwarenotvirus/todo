@@ -1,8 +1,8 @@
 package fakemodels
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/audit"
-	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	fake "github.com/brianvoe/gofakeit/v5"
 )

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search/bleve"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"

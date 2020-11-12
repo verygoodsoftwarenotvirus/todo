@@ -3,7 +3,7 @@ package mock
 import (
 	"context"
 
-	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	"github.com/stretchr/testify/mock"
 )

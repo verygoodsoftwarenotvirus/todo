@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"os"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config/viper"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/viper"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/tracing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
 )

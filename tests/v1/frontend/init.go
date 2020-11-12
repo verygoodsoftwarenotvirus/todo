@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/testutil"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/testutil"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
 )

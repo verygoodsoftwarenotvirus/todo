@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	models "gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
 
 	fake "github.com/brianvoe/gofakeit/v5"
 	"github.com/pquerna/otp/totp"

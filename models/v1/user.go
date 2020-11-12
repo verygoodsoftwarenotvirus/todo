@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 )
 
 const (

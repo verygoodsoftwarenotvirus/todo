@@ -38,7 +38,7 @@ type (
 
 	// AuditLogEntryCreationInput represents what a user could set as input for creating items.
 	AuditLogEntryCreationInput struct {
-		EventType eventType       `json:"eventType"`
+		EventType string          `json:"eventType"`
 		Context   AuditLogContext `json:"context"`
 	}
 

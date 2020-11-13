@@ -2,39 +2,39 @@ package audit
 
 const (
 	// CycleCookieSecretEvent events indicate an admin cycled the cookie secret.
-	CycleCookieSecretEvent = iota
+	CycleCookieSecretEvent = "cookie_secret_cycled"
 	// SuccessfulLoginEvent events indicate a user successfully authenticated into the service via username + password + 2fa.
-	SuccessfulLoginEvent
+	SuccessfulLoginEvent = "user_logged_in"
 	// UnsuccessfulLoginBadPasswordEvent events indicate a user attempted to authenticate into the service, but failed because of an invalid password.
-	UnsuccessfulLoginBadPasswordEvent
+	UnsuccessfulLoginBadPasswordEvent = "user_login_failed_bad_password"
 	// UnsuccessfulLoginBad2FATokenEvent events indicate a user attempted to authenticate into the service, but failed because of a faulty two factor token.
-	UnsuccessfulLoginBad2FATokenEvent
+	UnsuccessfulLoginBad2FATokenEvent = "user_login_failed_bad_2FA_token"
 	// LogoutEvent events indicate a user successfully logged out.
-	LogoutEvent
+	LogoutEvent = "user_logged_out"
 	// ItemCreationEvent events indicate a user created an item.
-	ItemCreationEvent
+	ItemCreationEvent = "item_created"
 	// ItemUpdateEvent events indicate a user updated an item.
-	ItemUpdateEvent
+	ItemUpdateEvent = "item_updated"
 	// ItemArchiveEvent events indicate a user deleted an item.
-	ItemArchiveEvent
+	ItemArchiveEvent = "item_archived"
 	// OAuth2ClientCreationEvent events indicate a user created an item.
-	OAuth2ClientCreationEvent
+	OAuth2ClientCreationEvent = "oauth2_client_created"
 	// OAuth2ClientArchiveEvent events indicate a user deleted an item.
-	OAuth2ClientArchiveEvent
+	OAuth2ClientArchiveEvent = "oauth2_client_archived"
 	// WebhookCreationEvent events indicate a user created an item.
-	WebhookCreationEvent
+	WebhookCreationEvent = "webhook_created"
 	// WebhookUpdateEvent events indicate a user updated an item.
-	WebhookUpdateEvent
+	WebhookUpdateEvent = "webhook_updated"
 	// WebhookArchiveEvent events indicate a user deleted an item.
-	WebhookArchiveEvent
+	WebhookArchiveEvent = "webhook_archived"
 	// UserCreationEvent events indicate a user was created.
-	UserCreationEvent
+	UserCreationEvent = "user_account_created"
 	// UserVerifyTwoFactorSecretEvent events indicate a user was created.
-	UserVerifyTwoFactorSecretEvent
+	UserVerifyTwoFactorSecretEvent = "user_two_factor_secret_verified"
 	// UserUpdateTwoFactorSecretEvent events indicate a user updated their two factor secret.
-	UserUpdateTwoFactorSecretEvent
+	UserUpdateTwoFactorSecretEvent = "user_two_factor_secret_changed"
 	// UserUpdatePasswordEvent events indicate a user updated their two factor secret.
-	UserUpdatePasswordEvent
+	UserUpdatePasswordEvent = "user_password_updated"
 	// UserArchiveEvent events indicate a user was archived.
-	UserArchiveEvent
+	UserArchiveEvent = "user_archived"
 )

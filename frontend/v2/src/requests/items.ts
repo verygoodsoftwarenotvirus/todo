@@ -1,11 +1,11 @@
 import axios, { AxiosResponse } from "axios";
 import format from "string-format";
 
-import type { QueryFilter } from "@/models";
+import type { QueryFilter } from "@/types";
 import { Logger } from "@/logger";
-import type { Item, ItemCreationInput, ItemList } from "@/models";
+import type { Item, ItemCreationInput, ItemList } from "@/types";
 
-import { backendRoutes } from "@/requests/routes";
+import { backendRoutes } from "@/constants/routes";
 import {defaultAPIRequestConfig, requestLogFunction} from "@/requests/defaults";
 
 const logger = new Logger().withDebugValue("source", "src/requests/items.ts");
@@ -42,11 +42,10 @@ export function createItem(item: ItemCreationInput): Promise<AxiosResponse> {
         .then(requestLogFunction(logger, uri));
 }
 
-
 export function fetchItem(id: number): Promise<AxiosResponse> {
     const uri = format(backendRoutes.INDIVIDUAL_ITEM, id.toString());
     return axios.get(uri, defaultAPIRequestConfig)
-        .then(requestLogFunction(logger, uri));
+    .then(requestLogFunction(logger, uri));
 }
 
 export function saveItem(item: Item): Promise<AxiosResponse> {
@@ -59,4 +58,10 @@ export function deleteItem(id: number): Promise<AxiosResponse> {
     const uri = format(backendRoutes.INDIVIDUAL_ITEM, id.toString());
     return axios.delete(uri, defaultAPIRequestConfig)
         .then(requestLogFunction(logger, uri));
+}
+
+export function fetchAuditLogEntriesForItem(id: number): Promise<AxiosResponse> {
+    const uri = format(backendRoutes.INDIVIDUAL_ITEM_AUDIT_LOG, id.toString());
+    return axios.get(uri, defaultAPIRequestConfig)
+    .then(requestLogFunction(logger, uri));
 }

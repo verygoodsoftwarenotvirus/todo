@@ -8,9 +8,9 @@
     Item,
     ItemList,
     QueryFilter,
-    SessionSettings,
+    UserSiteSettings,
     UserStatus,
-  } from "../../models";
+  } from "../../types";
   import {adminModeStore, sessionSettingsStore, userStatusStore} from "../../stores";
   import { Logger } from "../../logger";
   import { V1APIClient } from "../../requests";
@@ -38,9 +38,9 @@
   onDestroy(unsubscribeFromAdminModeUpdates);
 
   // set up translations
-  let currentSessionSettings = new SessionSettings();
+  let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(currentSessionSettings.language).models.item;
-  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = translations.messagesFor(currentSessionSettings.language).models.item;
   });

@@ -17,6 +17,7 @@ import type {
   mainFooterTranslations,
   adminFooterTranslations,
   smallFooterTranslations,
+  auditLogEntryTableTranslations,
 } from "@/i18n";
 
 const english = "en-US";
@@ -40,6 +41,7 @@ export type SiteTranslationMap = {
     dropdowns: {
       userDropdown: userDropdownTranslations,
     },
+    auditLogEntryTable: auditLogEntryTableTranslations,
     navbars: {
       adminNavbar: adminNavbarTranslations,
       authNavbar: authNavbarTranslations,

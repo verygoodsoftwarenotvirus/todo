@@ -27,7 +27,7 @@ clean_search_indices:
 
 .PHONY: config_files
 config_files:
-	go run cmd/config_gen/v1/main.go
+	go run cmd/config_gen/main.go
 
 base_prereqs: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) config_files
 
@@ -38,6 +38,7 @@ ifndef $(shell command -v wire 2> /dev/null)
 	$(shell GO111MODULE=off go get -u github.com/google/wire/cmd/wire)
 endif
 
+# this is primarily used in CI
 ensure-go-junit-report:
 ifndef $(shell command -v go-junit-report 2> /dev/null)
 	$(shell GO111MODULE=off go get -u github.com/jstemmer/go-junit-report)

@@ -15,7 +15,7 @@
   import Items from "../views/things/Items.svelte";
 
   import {userStatusStore} from "../stores";
-  import {UserStatus} from "../models";
+  import {UserStatus} from "../types";
   import {Logger} from "../logger";
 
   export let location: Location;

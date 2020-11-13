@@ -10,15 +10,15 @@
     UserRegistrationResponse,
     TOTPTokenValidationRequest,
     ErrorResponse,
-    SessionSettings
-  } from "../../models";
+    UserSiteSettings
+  } from "../../types";
   import {translations} from "../../i18n";
   import {sessionSettingsStore} from "../../stores";
 
   // set up translations
-  let currentSessionSettings = new SessionSettings();
+  let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(currentSessionSettings.language).pages.registration;
-  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = translations.messagesFor(currentSessionSettings.language).pages.registration;
   });

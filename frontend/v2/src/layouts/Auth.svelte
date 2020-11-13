@@ -2,7 +2,7 @@
   import {Router, Route, navigate} from "svelte-routing";
 
   import { userStatusStore } from "../stores";
-  import {UserStatus} from "../models";
+  import {UserStatus} from "../types";
   import {onDestroy} from "svelte";
 
   // components for this layout

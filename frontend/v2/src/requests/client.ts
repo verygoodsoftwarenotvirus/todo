@@ -4,7 +4,7 @@ import {
     createItem,
     deleteItem,
     searchForItems,
-    fetchListOfItems,
+    fetchListOfItems, fetchAuditLogEntriesForItem,
 } from './items';
 
 import {
@@ -49,4 +49,5 @@ export class V1APIClient {
     static deleteItem = deleteItem;
     static searchForItems = searchForItems;
     static fetchListOfItems = fetchListOfItems;
+    static fetchAuditLogEntriesForItem = fetchAuditLogEntriesForItem;
 }

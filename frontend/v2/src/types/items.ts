@@ -1,11 +1,11 @@
 import * as Factory from "factory.ts";
 import faker from "faker";
 
-import { Pagination } from "@/models/api";
-import { defaultFactories } from "@/models/fakes";
-import type { APITableCell, APITableHeader } from "@/components/APITable/models";
+import { Pagination } from "@/types/api";
+import { defaultFactories } from "@/types/fakes";
+import type { APITableCell, APITableHeader } from "@/components/APITable/types";
 import { renderUnixTime } from "@/utils";
-import type {itemModel} from "@/i18n";
+import type {itemModelTranslations} from "@/i18n";
 
 export class ItemList extends Pagination {
     items: Item[];
@@ -46,7 +46,7 @@ export class Item {
     }
 
     // this function should return everything there are no presumed fields
-    static headers = (translations: Readonly<itemModel>): APITableHeader[] => {
+    static headers = (translations: Readonly<itemModelTranslations>): APITableHeader[] => {
         const columns = translations.columns;
         return [
             {content: columns.id, requiresAdmin: false},

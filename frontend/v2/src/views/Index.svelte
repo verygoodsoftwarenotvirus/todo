@@ -1,21 +1,20 @@
 <script lang="typescript">
-  import { Link } from "svelte-routing";
   import {onDestroy} from "svelte";
 
   // core components
   import IndexNavbar from "../components/Navbars/IndexNavbar.svelte";
   import Footer from "../components/Footers/MainFooter.svelte";
 
-  import {SessionSettings} from "../models";
+  import {UserSiteSettings} from "../types";
   import {translations} from "../i18n";
   import {sessionSettingsStore} from "../stores";
 
   export let location: Location;
 
   // set up translations
-  let currentSessionSettings = new SessionSettings();
+  let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(currentSessionSettings.language).pages.home;
-  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = translations.messagesFor(currentSessionSettings.language).pages.home;
   });
@@ -36,6 +35,5 @@
       </div>
     </div>
   </div>
-
 </section>
 <Footer />

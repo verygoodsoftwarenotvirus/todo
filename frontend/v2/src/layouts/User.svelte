@@ -11,7 +11,7 @@
   import Settings from "../views/user/Settings.svelte";
 
   import { userStatusStore } from "../stores";
-  import {User, UserStatus} from "../models";
+  import {User, UserStatus} from "../types";
   import { Logger } from "../logger"
 
   let logger = new Logger().withDebugValue("source", "src/layouts/User.svelte");

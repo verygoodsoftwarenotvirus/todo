@@ -2,19 +2,19 @@
   import axios, {AxiosError, AxiosResponse} from 'axios';
   import { link, navigate } from "svelte-routing";
 
-  import { UserStatus, LoginRequest } from "../../models";
+  import { UserStatus, LoginRequest } from "../../types";
   import { userStatusStore, sessionSettingsStore } from "../../stores"
   import { V1APIClient } from "../../requests";
   import { Logger } from "../../logger";
   import {translations} from "../../i18n";
-  import {SessionSettings} from "../../models";
+  import {UserSiteSettings} from "../../types";
 
   export let location: Location;
 
   // set up translations
-  let currentSessionSettings = new SessionSettings();
+  let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(currentSessionSettings.language).pages.login;
-  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = translations.messagesFor(currentSessionSettings.language).pages.login;
   });

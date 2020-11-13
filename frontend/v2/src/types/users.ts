@@ -1,8 +1,8 @@
 import * as Factory from "factory.ts";
 import faker from "faker";
 
-import { Pagination } from "@/models/api";
-import {defaultFactories} from "@/models/fakes";
+import { Pagination } from "@/types/api";
+import {defaultFactories} from "@/types/fakes";
 import {isNumeric} from "@/utils";
 
 export class UserList extends Pagination {

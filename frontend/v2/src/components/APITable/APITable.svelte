@@ -3,7 +3,7 @@
 
   import {Logger} from "../../logger";
   import {adminModeStore, sessionSettingsStore, userStatusStore} from "../../stores";
-  import {QueryFilter, SessionSettings, UserStatus} from "../../models";
+  import {QueryFilter, UserSiteSettings, UserStatus} from "../../types";
   import {translations} from "../../i18n";
 
   let logger = new Logger().withDebugValue("source", "src/components/Things/Tables/APITable.svelte");
@@ -31,9 +31,9 @@
   export let rowRenderFunction;
 
   // set up translations
-  let currentSessionSettings = new SessionSettings();
+  let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(currentSessionSettings.language).components.apiTable;
-  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = translations.messagesFor(currentSessionSettings.language).components.apiTable;
   });
@@ -114,7 +114,6 @@
     </div>
   </div>
   <div class="block w-full overflow-x-auto">
-    <!-- Projects table -->
     <table class="items-center w-full bg-transparent border-collapse">
       <thead>
         <tr>

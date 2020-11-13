@@ -4,7 +4,7 @@
   import { navigate, Router, Route } from "svelte-routing";
 
   import { userStatusStore } from "../stores";
-  import { UserStatus } from "../models";
+  import { UserStatus } from "../types";
 
   // components for this layout
   import AdminNavbar from "../components/Navbars/AdminNavbar.svelte";

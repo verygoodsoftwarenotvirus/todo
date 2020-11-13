@@ -1,13 +1,14 @@
 <script lang="typescript">
-  import { navigate } from "svelte-routing";
+  import {navigate} from "svelte-routing";
   import {onDestroy, onMount} from "svelte";
-  import { AxiosError, AxiosResponse } from "axios";
+  import {AxiosError, AxiosResponse} from "axios";
 
-  import {SessionSettings, User} from "../../../models";
-  import { Logger } from "../../../logger";
-  import { V1APIClient } from "../../../requests";
+  import {UserSiteSettings, User} from "../../../types";
+  import {Logger} from "../../../logger";
+  import {V1APIClient} from "../../../requests";
   import {translations} from "../../../i18n";
   import {sessionSettingsStore} from "../../../stores";
+  import AuditLogTable from "../../AuditLogTable/AuditLogTable.svelte";
 
   export let id: number = 0;
 
@@ -24,9 +25,9 @@
   let logger = new Logger().withDebugValue("source", "src/components/Things/ReadUpdateDelete/User.svelte");
 
   // set up translations
-  let currentSessionSettings = new SessionSettings();
+  let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(currentSessionSettings.language).pages.registration;
-  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = translations.messagesFor(currentSessionSettings.language).pages.registration;
   });
@@ -42,18 +43,18 @@
     }
 
     V1APIClient.saveUser(user)
-      .then((response: AxiosResponse<User>) => {
-        user = { ...response.data };
-        originalUser = { ...response.data };
-        needsToBeSaved = false;
-      })
-      .catch((error: AxiosError) => {
-        if (error.response) {
-          if (error.response.data) {
-            userRetrievalError = error.response.data;
-          }
+    .then((response: AxiosResponse<User>) => {
+      user = {...response.data};
+      originalUser = {...response.data};
+      needsToBeSaved = false;
+    })
+    .catch((error: AxiosError) => {
+      if (error.response) {
+        if (error.response.data) {
+          userRetrievalError = error.response.data;
         }
-      });
+      }
+    });
   }
 
   function fetchUser(): void {
@@ -64,17 +65,17 @@
     }
 
     V1APIClient.fetchUser(id)
-      .then((response: AxiosResponse<User>) => {
-        user = { ...response.data };
-        originalUser = { ...response.data };
-      })
-      .catch((error: AxiosError) => {
-        if (error.response) {
-          if (error.response.data) {
-            userRetrievalError = error.response.data;
-          }
+    .then((response: AxiosResponse<User>) => {
+      user = {...response.data};
+      originalUser = {...response.data};
+    })
+    .catch((error: AxiosError) => {
+      if (error.response) {
+        if (error.response.data) {
+          userRetrievalError = error.response.data;
         }
-      });
+      }
+    });
   }
 
   function deleteUser(): void {
@@ -85,17 +86,17 @@
     }
 
     V1APIClient.deleteUser(id)
-      .then((response: AxiosResponse<User>) => {
-        user = { ...response.data };
-        originalUser = { ...response.data };
-      })
-      .catch((error: AxiosError) => {
-        if (error.response) {
-          if (error.response.data) {
-            userRetrievalError = error.response.data;
-          }
+    .then((response: AxiosResponse<User>) => {
+      user = {...response.data};
+      originalUser = {...response.data};
+    })
+    .catch((error: AxiosError) => {
+      if (error.response) {
+        if (error.response.data) {
+          userRetrievalError = error.response.data;
         }
-      });
+      }
+    });
   }
 
   onMount(fetchUser);
@@ -136,4 +137,8 @@
       </div>
     </div>
   </div>
+
+  {#if currentUserStatus.isAdmin}
+    <AuditLogTable entries={auditLogEntries} />
+  {/if}
 </div>

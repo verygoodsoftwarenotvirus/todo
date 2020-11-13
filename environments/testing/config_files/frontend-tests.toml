@@ -1,4 +1,7 @@
 
+[audit_log]
+  enabled = true
+
 [auth]
   cookie_domain = "localhost"
   cookie_lifetime = "24h0m0s"
@@ -34,3 +37,6 @@
 [server]
   debug = true
   http_port = 8888
+
+[webhooks]
+  enabled = true

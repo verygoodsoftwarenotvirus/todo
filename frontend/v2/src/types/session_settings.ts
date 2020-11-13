@@ -4,8 +4,9 @@ import type {LanguageTag} from "typed-intl";
 
 const defaultLanguage = "en-US"
 
-export class SessionSettings {
+export class UserSiteSettings {
     language: LanguageTag;
+    darkMode: boolean;
 
     constructor(language?: supportedLanguage) {
         if (!language) {
@@ -21,5 +22,6 @@ export class SessionSettings {
         }
         
         this.language = fetchLanguage(language);
+        this.darkMode = false;
     }
 }

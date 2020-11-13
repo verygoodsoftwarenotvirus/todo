@@ -10,6 +10,19 @@ export const englishTranslations: SiteTranslationMap = {
         search: "Search...",
       },
     },
+    auditLogEntryTable: {
+      page: "page",
+      perPage: "per page",
+      inputPlaceholders: {
+        search: "search",
+      },
+      columns: {
+        id: "ID",
+        eventType: "Event Type",
+        context: "Context",
+        createdOn: "Created On",
+      },
+    },
     dropdowns: {
       userDropdown: {
         settings: "Settings",

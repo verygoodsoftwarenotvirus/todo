@@ -3,7 +3,7 @@
   import {onDestroy, onMount} from "svelte";
   import axios, {AxiosError, AxiosResponse} from "axios";
 
-  import {Item, ItemCreationInput, SessionSettings} from "../../../models";
+  import {Item, ItemCreationInput, UserSiteSettings} from "../../../types";
   import {Logger} from "../../../logger";
   import {V1APIClient} from "../../../requests";
   import {translations} from "../../../i18n";
@@ -18,9 +18,9 @@
   let logger = new Logger().withDebugValue("source", "src/components/Things/Creation/CreateItem.svelte");
 
   // set up translations
-  let currentSessionSettings = new SessionSettings();
+  let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(currentSessionSettings.language).models.item;
-  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = translations.messagesFor(currentSessionSettings.language).models.item;
   });

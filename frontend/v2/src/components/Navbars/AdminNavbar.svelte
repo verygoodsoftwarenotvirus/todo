@@ -6,7 +6,7 @@
   import UserDropdown from "../Dropdowns/UserDropdown.svelte";
 
   import {sessionSettingsStore, userStatusStore} from "../../stores";
-  import {SessionSettings, UserStatus} from "../../models";
+  import {UserSiteSettings, UserStatus} from "../../types";
   import {translations} from "../../i18n";
 
   let currentAuthStatus = {};
@@ -16,9 +16,9 @@
   onDestroy(unsubscribeFromUserStatusUpdates);
 
   // set up translations
-  let currentSessionSettings = new SessionSettings();
+  let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(currentSessionSettings.language).components.navbars.adminNavbar;
-  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = translations.messagesFor(currentSessionSettings.language).components.navbars.adminNavbar;
   });

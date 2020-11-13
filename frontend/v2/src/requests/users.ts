@@ -4,11 +4,11 @@ import format from "string-format";
 import type {
     QueryFilter,
     User,
-} from "@/models";
+} from "@/types";
 
 import {defaultAPIRequestConfig, requestLogFunction} from "@/requests/defaults";
 import { Logger } from "@/logger";
-import {backendRoutes} from "@/requests/routes";
+import {backendRoutes} from "@/constants/routes";
 
 const logger = new Logger().withDebugValue("source", "src/requests/users.ts");
 

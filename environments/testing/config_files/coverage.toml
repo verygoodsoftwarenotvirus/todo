@@ -1,4 +1,7 @@
 
+[audit_log]
+  enabled = true
+
 [auth]
   cookie_lifetime = "24h0m0s"
   cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"
@@ -36,3 +39,6 @@
 [server]
   debug = true
   http_port = 8888
+
+[webhooks]
+  enabled = true

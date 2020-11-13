@@ -6,6 +6,19 @@ export type apiTableTranslations = {
     search: string;
   },
 }
+export type auditLogEntryTableTranslations = {
+  page: string;
+  perPage: string;
+  inputPlaceholders: {
+    search: string;
+  },
+  columns: {
+    id: string;
+    eventType: string;
+    context: string;
+    createdOn: string;
+  },
+}
 
 export type userDropdownTranslations = {
   settings: string;

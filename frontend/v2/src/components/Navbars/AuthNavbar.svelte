@@ -5,7 +5,7 @@
   // core components
   // import PagesDropdown from "../components/Dropdowns/PagesDropdown.svelte";
 
-  import {SessionSettings} from "../../models";
+  import {UserSiteSettings} from "../../types";
   import {translations} from "../../i18n";
   import {sessionSettingsStore} from "../../stores";
 
@@ -16,9 +16,9 @@
   }
 
   // set up translations
-  let currentSessionSettings = new SessionSettings();
+  let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(currentSessionSettings.language).components.navbars.authNavbar;
-  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = translations.messagesFor(currentSessionSettings.language).components.navbars.authNavbar;
   });

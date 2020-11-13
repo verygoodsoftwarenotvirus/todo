@@ -10,8 +10,8 @@
     UserPasswordUpdateRequest,
     UserTwoFactorSecretUpdateRequest,
     ErrorResponse,
-    SessionSettings,
-  } from "../../models";
+    UserSiteSettings,
+  } from "../../types";
   import { Logger } from "../../logger";
   import { V1APIClient } from "../../requests";
   import {translations} from "../../i18n";
@@ -22,9 +22,9 @@
   let logger = new Logger().withDebugValue("source", "src/views/user/Settings.svelte");
 
   // set up translations
-  let currentSessionSettings = new SessionSettings();
+  let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(currentSessionSettings.language).userSettingsPage;
-  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = translations.messagesFor(currentSessionSettings.language).userSettingsPage;
   });

@@ -6,10 +6,10 @@ import type {
     TOTPTokenValidationRequest,
     UserPasswordUpdateRequest,
     UserTwoFactorSecretUpdateRequest,
-} from "@/models";
+} from "@/types";
 
 import { Logger } from "@/logger";
-import {backendRoutes} from "@/requests/routes";
+import {backendRoutes} from "@/constants/routes";
 import {defaultAPIRequestConfig, requestLogFunction} from "@/requests/defaults";
 
 const logger = new Logger().withDebugValue("source", "src/requests/auth.ts");

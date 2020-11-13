@@ -1,16 +1,16 @@
 <script lang="typescript">
   import {onDestroy} from "svelte";
 
-  import {SessionSettings} from "../../models";
+  import {UserSiteSettings} from "../../types";
   import {translations} from "../../i18n";
   import {sessionSettingsStore} from "../../stores";
 
   export let absolute: Boolean = false;
 
   // set up translations
-  let currentSessionSettings = new SessionSettings();
+  let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(currentSessionSettings.language).components.footers.smallFooter;
-  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = translations.messagesFor(currentSessionSettings.language).components.footers.smallFooter;
   });

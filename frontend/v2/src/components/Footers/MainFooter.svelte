@@ -1,15 +1,15 @@
 <script lang="typescript">
   import {onDestroy} from "svelte";
 
-  import {SessionSettings} from "../../models";
+  import {UserSiteSettings} from "../../types";
   import {translations} from "../../i18n";
   import {sessionSettingsStore} from "../../stores";
 
-  let currentSessionSettings = new SessionSettings();
-  let translationsToUse = translations.messagesFor(currentSessionSettings.language).footers.mainFooter;
-  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+  let currentSessionSettings = new UserSiteSettings();
+  let translationsToUse = translations.messagesFor(currentSessionSettings.language).components.footers.mainFooter;
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(currentSessionSettings.language).footers.mainFooter;
+    translationsToUse = translations.messagesFor(currentSessionSettings.language).components.footers.mainFooter;
   });
   onDestroy(unsubscribeFromSettingsUpdates);
 </script>

@@ -7,7 +7,7 @@
   import {V1APIClient} from "../../requests";
   import {translations} from "../../i18n";
   import {sessionSettingsStore, adminModeStore, userStatusStore} from "../../stores";
-  import {SessionSettings, UserStatus} from "../../models";
+  import {UserSiteSettings, UserStatus} from "../../types";
 
   let dropdownPopoverShow: Boolean = false;
   let btnDropdownRef;
@@ -18,11 +18,11 @@
   let logger = new Logger().withDebugValue("source", "src/components/Dropdowns/UserDropdown.svelte");
 
   // set up translations
-  let currentSessionSettings = new SessionSettings();
-  let translationsToUse = translations.messagesFor(currentSessionSettings.language).components.dropdowns.userDropDown;
-  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: SessionSettings) => {
+  let currentSessionSettings = new UserSiteSettings();
+  let translationsToUse = translations.messagesFor(currentSessionSettings.language).components.dropdowns.userDropdown;
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(currentSessionSettings.language).components.dropdowns.userDropDown;
+    translationsToUse = translations.messagesFor(currentSessionSettings.language).components.dropdowns.userDropdown;
   });
   onDestroy(unsubscribeFromSettingsUpdates);
 
@@ -104,7 +104,7 @@
       class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent {adminMode ? 'underline text-indigo-500' : ''} "
     >
       <i class="fa fa-user-secret"></i>
-      {translationsToUse.adminMode} {adminMode ? '🔓' : '🔒'}
+      {translationsToUse.adminMode} {adminMode ? '✅' : '❌'}
     </button>
     {/if}
     <div class="h-0 my-2 border border-solid border-gray-200" />

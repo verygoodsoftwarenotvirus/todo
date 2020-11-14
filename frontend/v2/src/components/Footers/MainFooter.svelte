@@ -1,21 +1,21 @@
 <script lang="typescript">
-  import { onDestroy } from "svelte";
+  import { onDestroy } from 'svelte';
 
-  import { UserSiteSettings } from "../../types";
-  import { translations } from "../../i18n";
-  import { sessionSettingsStore } from "../../stores";
+  import { UserSiteSettings } from '../../types';
+  import { translations } from '../../i18n';
+  import { sessionSettingsStore } from '../../stores';
 
   let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(
-    currentSessionSettings.language
+    currentSessionSettings.language,
   ).components.footers.mainFooter;
   const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
     (value: UserSiteSettings) => {
       currentSessionSettings = value;
       translationsToUse = translations.messagesFor(
-        currentSessionSettings.language
+        currentSessionSettings.language,
       ).components.footers.mainFooter;
-    }
+    },
   );
   onDestroy(unsubscribeFromSettingsUpdates);
 </script>

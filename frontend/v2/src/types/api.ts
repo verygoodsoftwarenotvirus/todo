@@ -14,7 +14,7 @@ export class ErrorResponse {
   message: string;
   code: number;
 
-  constructor(message: string = "", code: number = 0) {
+  constructor(message: string = '', code: number = 0) {
     this.message = message;
     this.code = code;
   }

@@ -1,11 +1,11 @@
-import * as Factory from "factory.ts";
-import faker from "faker";
+import * as Factory from 'factory.ts';
+import faker from 'faker';
 
-import { Pagination } from "@/types/api";
-import { defaultFactories } from "@/types/fakes";
-import type { APITableCell, APITableHeader } from "@/components/APITable/types";
-import { renderUnixTime } from "@/utils";
-import type { oauth2ClientModelTranslations } from "@/i18n";
+import { Pagination } from '@/types/api';
+import { defaultFactories } from '@/types/fakes';
+import type { APITableCell, APITableHeader } from '@/components/APITable/types';
+import { renderUnixTime } from '@/utils';
+import type { oauth2ClientModelTranslations } from '@/i18n';
 
 export class OAuth2ClientList extends Pagination {
   clients: OAuth2Client[];
@@ -32,14 +32,14 @@ export class OAuth2Client {
 
   constructor(
     id: number = 0,
-    name: string = "",
-    clientID: string = "",
-    clientSecret: string = "",
-    redirectURI: string = "",
+    name: string = '',
+    clientID: string = '',
+    clientSecret: string = '',
+    redirectURI: string = '',
     scopes: string[] = [],
     implicitAllowed: boolean = false,
     createdOn: number = 0,
-    belongsToUser: number = 0
+    belongsToUser: number = 0,
   ) {
     this.id = id;
     this.name = name;
@@ -66,61 +66,61 @@ export class OAuth2Client {
 
   // this function should return everything there are no presumed fields
   static headers = (
-    translations: Readonly<oauth2ClientModelTranslations>
+    translations: Readonly<oauth2ClientModelTranslations>,
   ): APITableHeader[] => {
     const columns = translations.columns;
     return [
-      { content: columns.id, requiresAdmin: false },
-      { content: columns.name, requiresAdmin: false },
-      { content: columns.clientID, requiresAdmin: false },
-      { content: columns.clientSecret, requiresAdmin: false },
-      { content: columns.redirectURI, requiresAdmin: false },
-      { content: columns.scopes, requiresAdmin: false },
-      { content: columns.implicitAllowed, requiresAdmin: false },
-      { content: columns.createdOn, requiresAdmin: false },
-      { content: columns.lastUpdatedOn, requiresAdmin: false },
-      { content: columns.belongsToUser, requiresAdmin: true },
+      { content: columns.id, requiresAdminMode: false },
+      { content: columns.name, requiresAdminMode: false },
+      { content: columns.clientID, requiresAdminMode: false },
+      { content: columns.clientSecret, requiresAdminMode: false },
+      { content: columns.redirectURI, requiresAdminMode: false },
+      { content: columns.scopes, requiresAdminMode: false },
+      { content: columns.implicitAllowed, requiresAdminMode: false },
+      { content: columns.createdOn, requiresAdminMode: false },
+      { content: columns.lastUpdatedOn, requiresAdminMode: false },
+      { content: columns.belongsToUser, requiresAdminMode: true },
     ];
   };
 
   // this function should return everything there are no presumed fields
   static asRow = (x: OAuth2Client): APITableCell[] => {
     return [
-      { fieldName: "id", content: x.id.toString(), requiresAdmin: false },
-      { fieldName: "name", content: x.name, requiresAdmin: false },
-      { fieldName: "clientID", content: x.clientID, requiresAdmin: false },
+      { fieldName: 'id', content: x.id.toString(), requiresAdmin: false },
+      { fieldName: 'name', content: x.name, requiresAdmin: false },
+      { fieldName: 'clientID', content: x.clientID, requiresAdmin: false },
       {
-        fieldName: "clientSecret",
+        fieldName: 'clientSecret',
         content: x.clientSecret,
         requiresAdmin: false,
       },
       {
-        fieldName: "redirectURI",
+        fieldName: 'redirectURI',
         content: x.redirectURI,
         requiresAdmin: false,
       },
       {
-        fieldName: "scopes",
+        fieldName: 'scopes',
         content: x.scopes.toString(),
         requiresAdmin: false,
       },
       {
-        fieldName: "implicitAllowed",
+        fieldName: 'implicitAllowed',
         content: x.implicitAllowed.toString(),
         requiresAdmin: false,
       },
       {
-        fieldName: "createdOn",
+        fieldName: 'createdOn',
         content: renderUnixTime(x.createdOn),
         requiresAdmin: false,
       },
       {
-        fieldName: "lastUpdatedOn",
+        fieldName: 'lastUpdatedOn',
         content: renderUnixTime(x.updatedOn),
         requiresAdmin: false,
       },
       {
-        fieldName: "belongsToUser",
+        fieldName: 'belongsToUser',
         content: x.belongsToUser.toString(),
         requiresAdmin: true,
       },

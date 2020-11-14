@@ -1,41 +1,41 @@
 <script lang="typescript">
-  import axios, { AxiosResponse } from "axios";
-  import { link, navigate } from "svelte-routing";
-  import { createPopper } from "@popperjs/core"; // library for creating dropdown menu appear on click
-  import { onDestroy } from "svelte";
+  import axios, { AxiosResponse } from 'axios';
+  import { link, navigate } from 'svelte-routing';
+  import { createPopper } from '@popperjs/core'; // library for creating dropdown menu appear on click
+  import { onDestroy } from 'svelte';
 
-  import { V1APIClient } from "../../requests";
-  import { translations } from "../../i18n";
+  import { V1APIClient } from '../../requests';
+  import { translations } from '../../i18n';
   import {
     sessionSettingsStore,
     adminModeStore,
     userStatusStore,
-  } from "../../stores";
-  import { UserSiteSettings, UserStatus } from "../../types";
+  } from '../../stores';
+  import { UserSiteSettings, UserStatus } from '../../types';
 
   let dropdownPopoverShow: Boolean = false;
   let btnDropdownRef;
 
   let popoverDropdownRef;
 
-  import { Logger } from "../../logger";
+  import { Logger } from '../../logger';
   let logger = new Logger().withDebugValue(
-    "source",
-    "src/components/Dropdowns/UserDropdown.svelte"
+    'source',
+    'src/components/Dropdowns/UserDropdown.svelte',
   );
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(
-    currentSessionSettings.language
+    currentSessionSettings.language,
   ).components.dropdowns.userDropdown;
   const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
     (value: UserSiteSettings) => {
       currentSessionSettings = value;
       translationsToUse = translations.messagesFor(
-        currentSessionSettings.language
+        currentSessionSettings.language,
       ).components.dropdowns.userDropdown;
-    }
+    },
   );
   onDestroy(unsubscribeFromSettingsUpdates);
 
@@ -43,7 +43,7 @@
   const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
     (value: UserStatus) => {
       currentAuthStatus = value;
-    }
+    },
   );
   onDestroy(unsubscribeFromUserStatusUpdates);
 
@@ -51,21 +51,21 @@
   const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe(
     (value: boolean) => {
       adminMode = value;
-    }
+    },
   );
   onDestroy(unsubscribeFromAdminModeUpdates);
 
   function goToSettings() {
     dropdownPopoverShow = false;
     logger.debug(`navigating to /user/settings via goToSettings`);
-    navigate("/user/settings", { state: {}, replace: true });
+    navigate('/user/settings', { state: {}, replace: true });
   }
 
   function logout() {
     V1APIClient.logout().then((response: AxiosResponse) => {
       if (response.status === 200) {
         logger.debug(`navigating to /auth/login via logout promise resolution`);
-        navigate("/auth/login", { state: {}, replace: true });
+        navigate('/auth/login', { state: {}, replace: true });
         dropdownPopoverShow = false;
       }
     });
@@ -78,7 +78,7 @@
     } else {
       dropdownPopoverShow = true;
       createPopper(btnDropdownRef, popoverDropdownRef, {
-        placement: "bottom-start",
+        placement: 'bottom-start',
       });
     }
   };

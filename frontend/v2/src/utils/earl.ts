@@ -1,11 +1,11 @@
 // QueryFilter keys
-const queryFilterKeyPage = "page";
-const queryFilterKeyCreatedBefore = "createdBefore";
-const queryFilterKeyCreatedAfter = "createdAfter";
-const queryFilterKeyUpdatedBefore = "updatedBefore";
-const queryFilterKeyUpdatedAfter = "updatedAfter";
-const queryFilterKeyIncludeArchived = "includeArchived";
-const queryFilterKeySortBy = "sortBy";
+const queryFilterKeyPage = 'page';
+const queryFilterKeyCreatedBefore = 'createdBefore';
+const queryFilterKeyCreatedAfter = 'createdAfter';
+const queryFilterKeyUpdatedBefore = 'updatedBefore';
+const queryFilterKeyUpdatedAfter = 'updatedAfter';
+const queryFilterKeyIncludeArchived = 'includeArchived';
+const queryFilterKeySortBy = 'sortBy';
 
 const validQueryFilterKeys: string[] = [
   queryFilterKeyPage,
@@ -18,7 +18,7 @@ const validQueryFilterKeys: string[] = [
 ];
 
 export function inheritQueryFilterSearchParams(
-  pageURLParams: URLSearchParams
+  pageURLParams: URLSearchParams,
 ): URLSearchParams {
   // const pageURLParams: URLSearchParams = new URLSearchParams(window.location.search);
   const outboundURLParams: URLSearchParams = new URLSearchParams();
@@ -29,12 +29,12 @@ export function inheritQueryFilterSearchParams(
     if (x) {
       if (key === queryFilterKeyIncludeArchived) {
         const val = (x as string).toLowerCase().trim();
-        if (val === "true" || val === "false") {
+        if (val === 'true' || val === 'false') {
           outboundURLParams.set(key, x);
         }
       } else if (key === queryFilterKeySortBy) {
         const val = (x as string).toLowerCase().trim();
-        if (val === "asc" || val === "desc") {
+        if (val === 'asc' || val === 'desc') {
           outboundURLParams.set(key, x);
         }
       } else {

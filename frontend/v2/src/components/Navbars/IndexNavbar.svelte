@@ -1,10 +1,10 @@
 <script lang="typescript">
-  import { link } from "svelte-routing";
-  import { onDestroy } from "svelte";
+  import { link } from 'svelte-routing';
+  import { onDestroy } from 'svelte';
 
-  import { UserSiteSettings } from "../../types";
-  import { translations } from "../../i18n";
-  import { sessionSettingsStore } from "../../stores";
+  import { UserSiteSettings } from '../../types';
+  import { translations } from '../../i18n';
+  import { sessionSettingsStore } from '../../stores';
 
   let navbarOpen: Boolean = false;
 
@@ -15,15 +15,15 @@
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(
-    currentSessionSettings.language
+    currentSessionSettings.language,
   ).components.navbars.homepageNavbar;
   const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
     (value: UserSiteSettings) => {
       currentSessionSettings = value;
       translationsToUse = translations.messagesFor(
-        currentSessionSettings.language
+        currentSessionSettings.language,
       ).components.navbars.homepageNavbar;
-    }
+    },
   );
   onDestroy(unsubscribeFromSettingsUpdates);
 </script>

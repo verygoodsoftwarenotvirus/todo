@@ -1,5 +1,5 @@
-import faker from "faker";
-import * as Factory from "factory.ts";
+import faker from 'faker';
+import * as Factory from 'factory.ts';
 
 export const idFactory = Factory.Sync.each(() => faker.random.number());
 

@@ -1,53 +1,53 @@
 <script lang="typescript">
-  import axios, { AxiosError, AxiosResponse } from "axios";
-  import { link, navigate } from "svelte-routing";
+  import axios, { AxiosError, AxiosResponse } from 'axios';
+  import { link, navigate } from 'svelte-routing';
 
-  import { UserStatus, LoginRequest } from "../../types";
-  import { userStatusStore, sessionSettingsStore } from "../../stores";
-  import { V1APIClient } from "../../requests";
-  import { Logger } from "../../logger";
-  import { translations } from "../../i18n";
-  import { UserSiteSettings } from "../../types";
+  import { UserStatus, LoginRequest } from '../../types';
+  import { userStatusStore, sessionSettingsStore } from '../../stores';
+  import { V1APIClient } from '../../requests';
+  import { Logger } from '../../logger';
+  import { translations } from '../../i18n';
+  import { UserSiteSettings } from '../../types';
 
   export let location: Location;
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(
-    currentSessionSettings.language
+    currentSessionSettings.language,
   ).pages.login;
   const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
     (value: UserSiteSettings) => {
       currentSessionSettings = value;
       translationsToUse = translations.messagesFor(
-        currentSessionSettings.language
+        currentSessionSettings.language,
       ).pages.login;
-    }
+    },
   );
 
   let logger = new Logger().withDebugValue(
-    "source",
-    "src/views/auth/Login.svelte"
+    'source',
+    'src/views/auth/Login.svelte',
   );
 
   const loginRequest = new LoginRequest();
   let canLogin: boolean = false;
-  let loginError: string = "";
+  let loginError: string = '';
 
   function evaluateInputs(): void {
     canLogin =
-      loginRequest.username !== "" &&
-      loginRequest.password !== "" &&
+      loginRequest.username !== '' &&
+      loginRequest.password !== '' &&
       loginRequest.totpToken.length > 0 &&
       loginRequest.totpToken.length <= 6;
   }
 
   async function login() {
-    logger.debug("login called!");
+    logger.debug('login called!');
     evaluateInputs();
 
     if (!canLogin) {
-      throw new Error("invalid input!");
+      throw new Error('invalid input!');
     }
 
     return V1APIClient.login(loginRequest)
@@ -57,18 +57,18 @@
 
         if (userStatus.isAdmin) {
           logger.debug(
-            `navigating to /admin/dashboard because user is an authenticated admin`
+            `navigating to /admin/dashboard because user is an authenticated admin`,
           );
-          navigate("/admin/dashboard", { state: {}, replace: true });
+          navigate('/admin/dashboard', { state: {}, replace: true });
         } else {
           logger.debug(`navigating to homepage because user is a plain user`);
-          navigate("/", { state: {}, replace: true });
+          navigate('/', { state: {}, replace: true });
         }
       })
       .catch((reason: AxiosError) => {
         if (reason.response) {
           if (reason.response.status === 401) {
-            loginError = "invalid credentials: please try again";
+            loginError = 'invalid credentials: please try again';
           } else {
             loginError = reason.response.toString();
             logger.error(JSON.stringify(reason.response));

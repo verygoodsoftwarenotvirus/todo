@@ -1,28 +1,28 @@
-import axios, { AxiosResponse } from "axios";
-import format from "string-format";
+import axios, { AxiosResponse } from 'axios';
+import format from 'string-format';
 
-import type { QueryFilter } from "@/types";
-import { Logger } from "@/logger";
-import type { Webhook, WebhookCreationInput, WebhookList } from "@/types";
+import type { QueryFilter } from '@/types';
+import { Logger } from '@/logger';
+import type { Webhook, WebhookCreationInput, WebhookList } from '@/types';
 
-import { backendRoutes } from "@/constants/routes";
+import { backendRoutes } from '@/constants/routes';
 import {
   defaultAPIRequestConfig,
   requestLogFunction,
-} from "@/requests/defaults";
+} from '@/requests/defaults';
 
-const logger = new Logger().withDebugValue("source", "src/requests/items.ts");
+const logger = new Logger().withDebugValue('source', 'src/requests/items.ts');
 
 export function searchForWebhooks(
   query: string,
   qf: QueryFilter,
-  adminMode: boolean = false
+  adminMode: boolean = false,
 ): Promise<AxiosResponse> {
   const outboundURLParams = qf.toURLSearchParams();
   if (adminMode) {
-    outboundURLParams.set("admin", "true");
+    outboundURLParams.set('admin', 'true');
   }
-  outboundURLParams.set("q", query);
+  outboundURLParams.set('q', query);
 
   const uri = `${backendRoutes.SEARCH_ITEMS}?${outboundURLParams.toString()}`;
 
@@ -33,12 +33,12 @@ export function searchForWebhooks(
 
 export function fetchListOfWebhooks(
   qf: QueryFilter,
-  adminMode: boolean = false
+  adminMode: boolean = false,
 ): Promise<AxiosResponse> {
   const outboundURLParams = qf.toURLSearchParams();
 
   if (adminMode) {
-    outboundURLParams.set("admin", "true");
+    outboundURLParams.set('admin', 'true');
   }
 
   const uri = `${backendRoutes.GET_ITEMS}?${outboundURLParams.toString()}`;
@@ -48,7 +48,7 @@ export function fetchListOfWebhooks(
 }
 
 export function createWebhook(
-  item: WebhookCreationInput
+  item: WebhookCreationInput,
 ): Promise<AxiosResponse> {
   const uri = backendRoutes.CREATE_ITEM;
   return axios
@@ -78,7 +78,7 @@ export function deleteWebhook(id: number): Promise<AxiosResponse> {
 }
 
 export function fetchAuditLogEntriesForWebhook(
-  id: number
+  id: number,
 ): Promise<AxiosResponse> {
   const uri = format(backendRoutes.INDIVIDUAL_ITEM_AUDIT_LOG, id.toString());
   return axios

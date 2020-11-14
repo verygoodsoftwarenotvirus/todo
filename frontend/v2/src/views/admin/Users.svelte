@@ -5,8 +5,8 @@
 
   import {
     ErrorResponse,
-    Item,
-    ItemList,
+    User,
+    UserList,
     QueryFilter,
     UserSiteSettings,
     UserStatus,
@@ -24,8 +24,8 @@
 
   export let location;
 
-  let itemRetrievalError = '';
-  let items: Item[] = [];
+  let userRetrievalError = '';
+  let users: User[] = [];
 
   const useAPITable: boolean = true;
 
@@ -49,23 +49,23 @@
   let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(
     currentSessionSettings.language,
-  ).models.item;
+  ).models.user;
   const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
     (value: UserSiteSettings) => {
       currentSessionSettings = value;
       translationsToUse = translations.messagesFor(
         currentSessionSettings.language,
-      ).models.item;
+      ).models.user;
     },
   );
   onDestroy(unsubscribeFromSettingsUpdates);
 
   let logger = new Logger().withDebugValue(
     'source',
-    'src/views/things/Items.svelte',
+    'src/views/things/Users.svelte',
   );
 
-  onMount(fetchItems);
+  onMount(fetchUsers);
 
   // begin experimental API table code
 
@@ -75,28 +75,28 @@
   let apiTableDecrementDisabled: boolean = false;
   let apiTableSearchQuery: string = '';
 
-  function searchItems() {
-    logger.debug('searchItems called');
-
-    V1APIClient.searchForItems(apiTableSearchQuery, queryFilter, adminMode)
-      .then((response: AxiosResponse<ItemList>) => {
-        items = response.data.items || [];
-        queryFilter.page = -1;
-      })
-      .catch((error: AxiosError) => {
-        if (error.response) {
-          if (error.response.data) {
-            itemRetrievalError = error.response.data;
-          }
-        }
-      });
+  function searchUsers() {
+    logger.debug('searchUsers called');
+    //
+    //   V1APIClient.searchForUsers(apiTableSearchQuery, queryFilter, adminMode)
+    //     .then((response: AxiosResponse<UserList>) => {
+    //       users = response.data.users || [];
+    //       queryFilter.page = -1;
+    //     })
+    //     .catch((error: AxiosError) => {
+    //       if (error.response) {
+    //         if (error.response.data) {
+    //           userRetrievalError = error.response.data;
+    //         }
+    //       }
+    //     });
   }
 
   function incrementPage() {
     if (!apiTableIncrementDisabled) {
       logger.debug(`incrementPage called`);
       queryFilter.page += 1;
-      fetchItems();
+      fetchUsers();
     }
   }
 
@@ -104,25 +104,25 @@
     if (!apiTableDecrementDisabled) {
       logger.debug(`decrementPage called`);
       queryFilter.page -= 1;
-      fetchItems();
+      fetchUsers();
     }
   }
 
-  function fetchItems() {
-    logger.debug('fetchItems called');
+  function fetchUsers() {
+    logger.debug('fetchUsers called');
 
-    V1APIClient.fetchListOfItems(queryFilter, adminMode)
-      .then((response: AxiosResponse<ItemList>) => {
-        items = response.data.items || [];
+    V1APIClient.fetchListOfUsers(queryFilter, adminMode)
+      .then((response: AxiosResponse<UserList>) => {
+        users = response.data.users || [];
 
         queryFilter.page = response.data.page;
-        apiTableIncrementDisabled = items.length === 0;
+        apiTableIncrementDisabled = users.length === 0;
         apiTableDecrementDisabled = queryFilter.page === 1;
       })
       .catch((error: AxiosError) => {
         if (error.response) {
           if (error.response.data) {
-            itemRetrievalError = error.response.data;
+            userRetrievalError = error.response.data;
           }
         }
       });
@@ -131,19 +131,19 @@
   function promptDelete(id: number) {
     logger.debug('promptDelete called');
 
-    if (confirm(`are you sure you want to delete item #${id}?`)) {
-      const path: string = `/api/v1/items/${id}`;
+    if (confirm(`are you sure you want to delete user #${id}?`)) {
+      const path: string = `/api/v1/users/${id}`;
 
-      V1APIClient.deleteItem(id)
-        .then((response: AxiosResponse<Item>) => {
+      V1APIClient.deleteUser(id)
+        .then((response: AxiosResponse<User>) => {
           if (response.status === 204) {
-            fetchItems();
+            fetchUsers();
           }
         })
         .catch((error: AxiosError<ErrorResponse>) => {
           if (error.response) {
             if (error.response.data) {
-              itemRetrievalError = error.response.data.message;
+              userRetrievalError = error.response.data.message;
             }
           }
         });
@@ -154,19 +154,19 @@
 <div class="flex flex-wrap mt-4">
   <div class="w-full mb-12 px-4">
     <APITable
-      title="Items"
-      headers={Item.headers(translationsToUse)}
-      rows={items}
-      individualPageLink="/things/items"
-      newPageLink="/things/items/new"
-      dataRetrievalError={itemRetrievalError}
-      searchFunction={searchItems}
+      title="Users"
+      headers={User.headers(translationsToUse)}
+      rows={users}
+      individualPageLink="/things/users"
+      newPageLink="/things/users/new"
+      dataRetrievalError={userRetrievalError}
+      searchFunction={searchUsers}
       incrementDisabled={apiTableIncrementDisabled}
       decrementDisabled={apiTableDecrementDisabled}
       incrementPageFunction={incrementPage}
       decrementPageFunction={decrementPage}
-      fetchFunction={fetchItems}
+      fetchFunction={fetchUsers}
       deleteFunction={promptDelete}
-      rowRenderFunction={Item.asRow} />
+      rowRenderFunction={User.asRow} />
   </div>
 </div>

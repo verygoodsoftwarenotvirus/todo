@@ -1,13 +1,13 @@
-import svelte from "rollup-plugin-svelte";
-import resolve from "@rollup/plugin-node-resolve";
-import commonjs from "@rollup/plugin-commonjs";
-import livereload from "rollup-plugin-livereload";
-import { terser } from "rollup-plugin-terser";
-import sveltePreprocess from "svelte-preprocess";
-import typescript from "@rollup/plugin-typescript";
+import svelte from 'rollup-plugin-svelte';
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import livereload from 'rollup-plugin-livereload';
+import { terser } from 'rollup-plugin-terser';
+import sveltePreprocess from 'svelte-preprocess';
+import typescript from '@rollup/plugin-typescript';
 
 const production = !process.env.ROLLUP_WATCH;
-const outputDir = "dist";
+const outputDir = 'dist';
 
 function serve() {
   let server;
@@ -19,27 +19,27 @@ function serve() {
   return {
     writeBundle() {
       if (server) return;
-      server = require("child_process").spawn(
-        "npm",
-        ["run", "start", "--", "--dev"],
+      server = require('child_process').spawn(
+        'npm',
+        ['run', 'start', '--', '--dev'],
         {
-          stdio: ["ignore", "inherit", "inherit"],
+          stdio: ['ignore', 'inherit', 'inherit'],
           shell: true,
-        }
+        },
       );
 
-      process.on("SIGTERM", toExit);
-      process.on("exit", toExit);
+      process.on('SIGTERM', toExit);
+      process.on('exit', toExit);
     },
   };
 }
 
 export default {
-  input: "src/main.ts",
+  input: 'src/main.ts',
   output: {
     sourcemap: true,
-    format: "iife",
-    name: "app",
+    format: 'iife',
+    name: 'app',
     file: `${outputDir}/build/bundle.js`,
   },
   plugins: [
@@ -49,7 +49,7 @@ export default {
       // we'll extract any component CSS out into
       // a separate file - better for performance
       css: (css) => {
-        css.write("bundle.css");
+        css.write('bundle.css');
       },
       preprocess: sveltePreprocess(),
     }),
@@ -61,11 +61,11 @@ export default {
     // https://github.com/rollup/plugins/tree/master/packages/commonjs
     resolve({
       browser: true,
-      dedupe: ["svelte", "svelte/transition", "svelte/internal"],
+      dedupe: ['svelte', 'svelte/transition', 'svelte/internal'],
     }),
     commonjs(),
     typescript({
-      tsconfig: "./tsconfig.json",
+      tsconfig: './tsconfig.json',
       sourceMap: !production,
       inlineSources: !production,
     }),

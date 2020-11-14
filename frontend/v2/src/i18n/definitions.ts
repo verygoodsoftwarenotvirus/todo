@@ -1,6 +1,6 @@
-import { LanguageTag, languageTag, translate } from "typed-intl";
+import { LanguageTag, languageTag, translate } from 'typed-intl';
 
-import { englishTranslations } from "@/i18n/english";
+import { englishTranslations } from '@/i18n/english';
 import type {
   adminNavbarTranslations,
   authNavbarTranslations,
@@ -20,13 +20,13 @@ import type {
   auditLogEntryTableTranslations,
   oauth2ClientModelTranslations,
   webhookModelTranslations,
-} from "@/i18n";
+} from '@/i18n';
 
-const english = "en-US";
-const mexicanSpanish = "es-MX";
+const english = 'en-US';
+const mexicanSpanish = 'es-MX';
 const defaultLanguage = english;
 
-export type supportedLanguage = "en-US" | "es-MX";
+export type supportedLanguage = 'en-US' | 'es-MX';
 
 export function fetchLanguage(name: supportedLanguage): LanguageTag {
   switch (name.toLowerCase().trim()) {

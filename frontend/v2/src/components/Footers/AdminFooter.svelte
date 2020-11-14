@@ -1,22 +1,22 @@
 <script lang="typescript">
   // make dynamic date to be added to footer
-  import { UserSiteSettings } from "../../types";
-  import { translations } from "../../i18n";
-  import { sessionSettingsStore } from "../../stores";
-  import { onDestroy } from "svelte";
+  import { UserSiteSettings } from '../../types';
+  import { translations } from '../../i18n';
+  import { sessionSettingsStore } from '../../stores';
+  import { onDestroy } from 'svelte';
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(
-    currentSessionSettings.language
+    currentSessionSettings.language,
   ).components.footers.adminFooter;
   const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
     (value: UserSiteSettings) => {
       currentSessionSettings = value;
       translationsToUse = translations.messagesFor(
-        currentSessionSettings.language
+        currentSessionSettings.language,
       ).components.footers.adminFooter;
-    }
+    },
   );
   onDestroy(unsubscribeFromSettingsUpdates);
 </script>

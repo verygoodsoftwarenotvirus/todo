@@ -1,32 +1,32 @@
 <script lang="typescript">
-  import { link, navigate } from "svelte-routing";
+  import { link, navigate } from 'svelte-routing';
 
-  import { Logger } from "../../logger";
+  import { Logger } from '../../logger';
   import {
     adminModeStore,
     sessionSettingsStore,
     userStatusStore,
-  } from "../../stores";
-  import { QueryFilter, UserSiteSettings, UserStatus } from "../../types";
-  import { translations } from "../../i18n";
+  } from '../../stores';
+  import { QueryFilter, UserSiteSettings, UserStatus } from '../../types';
+  import { translations } from '../../i18n';
 
   let logger = new Logger().withDebugValue(
-    "source",
-    "src/components/Things/Tables/APITable.svelte"
+    'source',
+    'src/components/APITable/APITable.svelte',
   );
 
   const queryFilter = new QueryFilter();
 
   // local state
-  let searchQuery: string = "";
+  let searchQuery: string = '';
   let currentPage: number = 0;
 
-  export let title: string = "";
+  export let title: string = '';
   export let headers: string[] = [];
   export let rows: string[][] = [[]];
-  export let newPageLink: string = "";
-  export let individualPageLink: string = "";
-  export let dataRetrievalError: string = "";
+  export let newPageLink: string = '';
+  export let individualPageLink: string = '';
+  export let dataRetrievalError: string = '';
 
   export let searchFunction;
   export let incrementDisabled;
@@ -40,15 +40,15 @@
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(
-    currentSessionSettings.language
+    currentSessionSettings.language,
   ).components.apiTable;
   const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
     (value: UserSiteSettings) => {
       currentSessionSettings = value;
       translationsToUse = translations.messagesFor(
-        currentSessionSettings.language
+        currentSessionSettings.language,
       ).components.apiTable;
-    }
+    },
   );
 
   let adminMode: boolean = false;
@@ -56,14 +56,14 @@
     (value: boolean) => {
       adminMode = value;
       fetchFunction();
-    }
+    },
   );
 
   let currentAuthStatus = {};
   const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
     (value: UserStatus) => {
       currentAuthStatus = value;
-    }
+    },
   );
 
   function search(): void {

@@ -1,4 +1,4 @@
-import { writable } from "svelte/store";
+import { writable } from 'svelte/store';
 
 function createAdminModeStore() {
   const { subscribe, update } = writable<boolean>(false);

@@ -1,30 +1,30 @@
 <script lang="typescript">
-  import { Router, Route, navigate } from "svelte-routing";
+  import { Router, Route, navigate } from 'svelte-routing';
 
-  import { userStatusStore } from "../stores";
-  import { UserStatus } from "../types";
-  import { onDestroy } from "svelte";
+  import { userStatusStore } from '../stores';
+  import { UserStatus } from '../types';
+  import { onDestroy } from 'svelte';
 
   // components for this layout
-  import AuthNavbar from "../components/Navbars/AuthNavbar.svelte";
-  import SmallFooter from "../components/Footers/SmallFooter.svelte";
+  import AuthNavbar from '../components/Navbars/AuthNavbar.svelte';
+  import SmallFooter from '../components/Footers/SmallFooter.svelte';
 
   // pages for this layout
-  import Login from "../views/auth/Login.svelte";
-  import Register from "../views/auth/Register.svelte";
+  import Login from '../views/auth/Login.svelte';
+  import Register from '../views/auth/Register.svelte';
 
-  const registerBg2: string = "../assets/img/register_bg_2.png";
+  const registerBg2: string = '../assets/img/register_bg_2.png';
 
   export let location: Location;
 
-  import { Logger } from "../logger";
-  let logger = new Logger().withDebugValue("source", "src/layouts/Auth.svelte");
+  import { Logger } from '../logger';
+  let logger = new Logger().withDebugValue('source', 'src/layouts/Auth.svelte');
 
   let currentAuthStatus = {};
   const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
     (value: UserStatus) => {
       currentAuthStatus = value;
-    }
+    },
   );
   onDestroy(unsubscribeFromUserStatusUpdates);
 </script>

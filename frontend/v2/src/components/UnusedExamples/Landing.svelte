@@ -1,9 +1,9 @@
 <script lang="typescript">
-  import { link } from "svelte-routing";
+  import { link } from 'svelte-routing';
 
   // core components
-  import AuthNavbar from "../Navbars/AuthNavbar.svelte";
-  import Footer from "../components/Footers/Footer.svelte";
+  import AuthNavbar from '../Navbars/AuthNavbar.svelte';
+  import Footer from '../components/Footers/Footer.svelte';
 
   export let location: Location;
 </script>

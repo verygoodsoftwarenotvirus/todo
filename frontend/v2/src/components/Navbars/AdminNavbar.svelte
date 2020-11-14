@@ -1,34 +1,34 @@
 <script lang="typescript">
-  import { link } from "svelte-routing";
-  import { onDestroy } from "svelte";
+  import { link } from 'svelte-routing';
+  import { onDestroy } from 'svelte';
 
   // core components
-  import UserDropdown from "../Dropdowns/UserDropdown.svelte";
+  import UserDropdown from '../Dropdowns/UserDropdown.svelte';
 
-  import { sessionSettingsStore, userStatusStore } from "../../stores";
-  import { UserSiteSettings, UserStatus } from "../../types";
-  import { translations } from "../../i18n";
+  import { sessionSettingsStore, userStatusStore } from '../../stores';
+  import { UserSiteSettings, UserStatus } from '../../types';
+  import { translations } from '../../i18n';
 
   let currentAuthStatus = {};
   const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
     (value: UserStatus) => {
       currentAuthStatus = value;
-    }
+    },
   );
   onDestroy(unsubscribeFromUserStatusUpdates);
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(
-    currentSessionSettings.language
+    currentSessionSettings.language,
   ).components.navbars.adminNavbar;
   const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
     (value: UserSiteSettings) => {
       currentSessionSettings = value;
       translationsToUse = translations.messagesFor(
-        currentSessionSettings.language
+        currentSessionSettings.language,
       ).components.navbars.adminNavbar;
-    }
+    },
   );
   onDestroy(unsubscribeFromSettingsUpdates);
 </script>

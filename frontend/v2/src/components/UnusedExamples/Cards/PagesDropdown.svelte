@@ -1,7 +1,7 @@
 <script lang="typescript">
-  import { link } from "svelte-routing";
+  import { link } from 'svelte-routing';
   // library for creating dropdown menu appear on click
-  import { createPopper } from "@popperjs/core";
+  import { createPopper } from '@popperjs/core';
 
   // core components
 
@@ -17,7 +17,7 @@
     } else {
       dropdownPopoverShow = true;
       createPopper(btnDropdownRef, popoverDropdownRef, {
-        placement: "bottom-start",
+        placement: 'bottom-start',
       });
     }
   };

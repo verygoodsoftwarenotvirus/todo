@@ -1,11 +1,11 @@
-import * as Factory from "factory.ts";
-import faker from "faker";
+import * as Factory from 'factory.ts';
+import faker from 'faker';
 
-import { Pagination } from "@/types/api";
-import { defaultFactories } from "@/types/fakes";
-import type { APITableCell, APITableHeader } from "@/components/APITable/types";
-import { renderUnixTime } from "@/utils";
-import type { webhookModelTranslations } from "@/i18n";
+import { Pagination } from '@/types/api';
+import { defaultFactories } from '@/types/fakes';
+import type { APITableCell, APITableHeader } from '@/components/APITable/types';
+import { renderUnixTime } from '@/utils';
+import type { webhookModelTranslations } from '@/i18n';
 
 export class WebhookList extends Pagination {
   webhooks: Webhook[];
@@ -33,10 +33,10 @@ export class Webhook {
 
   constructor() {
     this.id = 0;
-    this.name = "";
-    this.contentType = "";
-    this.url = "";
-    this.method = "";
+    this.name = '';
+    this.contentType = '';
+    this.url = '';
+    this.method = '';
     this.events = [];
     this.dataTypes = [];
     this.topics = [];
@@ -59,63 +59,63 @@ export class Webhook {
 
   // this function should return everything there are no presumed fields
   static headers = (
-    translations: Readonly<webhookModelTranslations>
+    translations: Readonly<webhookModelTranslations>,
   ): APITableHeader[] => {
     const columns = translations.columns;
     return [
-      { content: columns.id, requiresAdmin: false },
-      { content: columns.name, requiresAdmin: false },
-      { content: columns.contentType, requiresAdmin: false },
-      { content: columns.url, requiresAdmin: false },
-      { content: columns.method, requiresAdmin: false },
-      { content: columns.events, requiresAdmin: false },
-      { content: columns.dataTypes, requiresAdmin: false },
-      { content: columns.topics, requiresAdmin: false },
-      { content: columns.createdOn, requiresAdmin: false },
-      { content: columns.lastUpdatedOn, requiresAdmin: false },
-      { content: columns.belongsToUser, requiresAdmin: true },
+      { content: columns.id, requiresAdminMode: false },
+      { content: columns.name, requiresAdminMode: false },
+      { content: columns.contentType, requiresAdminMode: false },
+      { content: columns.url, requiresAdminMode: false },
+      { content: columns.method, requiresAdminMode: false },
+      { content: columns.events, requiresAdminMode: false },
+      { content: columns.dataTypes, requiresAdminMode: false },
+      { content: columns.topics, requiresAdminMode: false },
+      { content: columns.createdOn, requiresAdminMode: false },
+      { content: columns.lastUpdatedOn, requiresAdminMode: false },
+      { content: columns.belongsToUser, requiresAdminMode: true },
     ];
   };
 
   // this function should return everything there are no presumed fields
   static asRow = (x: Webhook): APITableCell[] => {
     return [
-      { fieldName: "id", content: x.id.toString(), requiresAdmin: false },
-      { fieldName: "name", content: x.name, requiresAdmin: false },
+      { fieldName: 'id', content: x.id.toString(), requiresAdmin: false },
+      { fieldName: 'name', content: x.name, requiresAdmin: false },
       {
-        fieldName: "contentType",
+        fieldName: 'contentType',
         content: x.contentType,
         requiresAdmin: false,
       },
-      { fieldName: "url", content: x.url, requiresAdmin: false },
-      { fieldName: "method", content: x.method, requiresAdmin: false },
+      { fieldName: 'url', content: x.url, requiresAdmin: false },
+      { fieldName: 'method', content: x.method, requiresAdmin: false },
       {
-        fieldName: "events",
+        fieldName: 'events',
         content: x.events.toString(),
         requiresAdmin: false,
       },
       {
-        fieldName: "dataTypes",
+        fieldName: 'dataTypes',
         content: x.dataTypes.toString(),
         requiresAdmin: false,
       },
       {
-        fieldName: "topics",
+        fieldName: 'topics',
         content: x.topics.toString(),
         requiresAdmin: false,
       },
       {
-        fieldName: "createdOn",
+        fieldName: 'createdOn',
         content: renderUnixTime(x.createdOn),
         requiresAdmin: false,
       },
       {
-        fieldName: "lastUpdatedOn",
+        fieldName: 'lastUpdatedOn',
         content: renderUnixTime(x.updatedOn),
         requiresAdmin: false,
       },
       {
-        fieldName: "belongsToUser",
+        fieldName: 'belongsToUser',
         content: x.belongsToUser.toString(),
         requiresAdmin: true,
       },
@@ -127,10 +127,10 @@ export const fakeWebhookFactory = Factory.Sync.makeFactory<Webhook>({
   name: Factory.Sync.each(() => faker.random.word()),
   url: Factory.Sync.each(() => faker.internet.url()),
   method: Factory.Sync.each(() => faker.hacker.verb()),
-  contentType: "application/fake",
-  events: ["things", "and", "stuff"],
-  dataTypes: ["stuff", "and", "things"],
-  topics: ["blah", "blarg", "blorp"],
+  contentType: 'application/fake',
+  events: ['things', 'and', 'stuff'],
+  dataTypes: ['stuff', 'and', 'things'],
+  topics: ['blah', 'blarg', 'blorp'],
   belongsToUser: Factory.Sync.each(() => faker.random.number()),
   ...defaultFactories,
 });
@@ -144,12 +144,12 @@ export class WebhookCreationInput {
   topics: string[];
 
   constructor(
-    contentType: string = "",
-    url: string = "",
-    method: string = "",
+    contentType: string = '',
+    url: string = '',
+    method: string = '',
     events: string[] = [],
     dataTypes: string[] = [],
-    topics: string[] = []
+    topics: string[] = [],
   ) {
     this.contentType = contentType;
     this.url = url;

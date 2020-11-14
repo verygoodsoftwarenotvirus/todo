@@ -7,28 +7,28 @@ export const enum LogLevel {
   WTF,
 }
 
-const defaultTextColor: string = "ghostwhite";
+const defaultTextColor: string = 'ghostwhite';
 const defaultLogLevel: LogLevel = LogLevel.Debug;
 
-const infoPrefix: string = "%c  INFO   ",
-  infoBackgroundColor: string = "darkslategray",
+const infoPrefix: string = '%c  INFO   ',
+  infoBackgroundColor: string = 'darkslategray',
   infoTextColor: string = defaultTextColor;
 
-const debugPrefix: string = "%c  DEBUG  ",
-  debugBackgroundColor: string = "rebeccapurple",
+const debugPrefix: string = '%c  DEBUG  ',
+  debugBackgroundColor: string = 'rebeccapurple',
   debugTextColor: string = defaultTextColor;
 
-const warningPrefix: string = "%c WARNING ",
-  warningBackgroundColor: string = "goldenrod",
+const warningPrefix: string = '%c WARNING ',
+  warningBackgroundColor: string = 'goldenrod',
   warningTextColor: string = defaultTextColor;
 
-const errorPrefix: string = "%c  ERROR  ",
-  errorBackgroundColor: string = "firebrick",
+const errorPrefix: string = '%c  ERROR  ',
+  errorBackgroundColor: string = 'firebrick',
   errorTextColor: string = defaultTextColor;
 
-const wtfPrefix: string = "%c   WTF   ",
-  wtfBackgroundColor: string = "palegreen",
-  wtfTextColor: string = "rosybrown";
+const wtfPrefix: string = '%c   WTF   ',
+  wtfBackgroundColor: string = 'palegreen',
+  wtfTextColor: string = 'rosybrown';
 
 export class Logger {
   includeContextByDefault: boolean;
@@ -40,12 +40,12 @@ export class Logger {
     prefix: string,
     style: string,
     content: string,
-    context?: Map<string, any> | string
+    context?: Map<string, any> | string,
   ) => void;
 
   constructor(
     level: LogLevel = defaultLogLevel,
-    context: Map<string, any> | null = null
+    context: Map<string, any> | null = null,
   ) {
     this._level = level;
     this.includeContextByDefault = false;
@@ -56,22 +56,22 @@ export class Logger {
   }
 
   private static buildStyle(
-    bgColor: string = "black",
-    textColor: string = "white"
+    bgColor: string = 'black',
+    textColor: string = 'white',
   ): string {
     return `background: ${bgColor}; color: ${textColor};`;
   }
 
   // this function is for vanity only
   static demo(): void {
-    const l = new Logger().withValue("demo", "true");
+    const l = new Logger().withValue('demo', 'true');
     l.level = LogLevel.WTF;
 
-    l.info("this is a demo");
-    l.debug("this is a demo");
-    l.warning("this is a demo");
-    l.error("this is a demo");
-    l.WTF("this is a demo");
+    l.info('this is a demo');
+    l.debug('this is a demo');
+    l.warning('this is a demo');
+    l.error('this is a demo');
+    l.WTF('this is a demo');
   }
 
   toggleContextInclusion(): void {
@@ -89,9 +89,9 @@ export class Logger {
   fetchPageContext(): void {
     const l: Location = window.location;
 
-    this.context.set("currentURL", l.toString());
-    this.context.set("query", l.search);
-    this.context.set("path", l.pathname);
+    this.context.set('currentURL', l.toString());
+    this.context.set('query', l.search);
+    this.context.set('path', l.pathname);
   }
 
   withValue(key: string, value: any): Logger {
@@ -114,7 +114,7 @@ export class Logger {
     return this.withValue(key, value);
   }
 
-  info(s: string = "", includeCtx: boolean = false) {
+  info(s: string = '', includeCtx: boolean = false) {
     const prefix = infoPrefix;
     const style = Logger.buildStyle(infoBackgroundColor, infoTextColor);
 
@@ -123,7 +123,7 @@ export class Logger {
       : this.actualLogFunc(prefix, style, s);
   }
 
-  debug(s: string = "", includeCtx: boolean = true) {
+  debug(s: string = '', includeCtx: boolean = true) {
     const prefix = debugPrefix;
     const style = Logger.buildStyle(debugBackgroundColor, debugTextColor);
 
@@ -141,7 +141,7 @@ export class Logger {
     }
   }
 
-  warning(s: string = "", includeCtx: boolean = false) {
+  warning(s: string = '', includeCtx: boolean = false) {
     const prefix = warningPrefix;
     const style = Logger.buildStyle(warningBackgroundColor, warningTextColor);
 
@@ -152,7 +152,7 @@ export class Logger {
     }
   }
 
-  error(s: string = "", includeCtx: boolean = true) {
+  error(s: string = '', includeCtx: boolean = true) {
     const prefix = errorPrefix;
     const style = Logger.buildStyle(errorBackgroundColor, errorTextColor);
 
@@ -163,7 +163,7 @@ export class Logger {
     }
   }
 
-  WTF(s: string = "", includeCtx: boolean = true) {
+  WTF(s: string = '', includeCtx: boolean = true) {
     const prefix = wtfPrefix;
     const style = Logger.buildStyle(wtfBackgroundColor, wtfTextColor);
 

@@ -1,28 +1,28 @@
 <script lang="typescript">
-  import { onDestroy } from "svelte";
-  import { Router, Route, navigate } from "svelte-routing";
+  import { onDestroy } from 'svelte';
+  import { Router, Route, navigate } from 'svelte-routing';
 
   // components for this layout
-  import Sidebar from "../components/Sidebar/Sidebar.svelte";
-  import AdminFooter from "../components/Footers/AdminFooter.svelte";
-  import AdminNavbar from "../components/Navbars/AdminNavbar.svelte";
+  import Sidebar from '../components/Sidebar/Sidebar.svelte';
+  import AdminFooter from '../components/Footers/AdminFooter.svelte';
+  import AdminNavbar from '../components/Navbars/AdminNavbar.svelte';
 
   // custom components for this layout
-  import ReadUpdateDeleteItem from "../components/Things/ReadUpdateDelete/Item.svelte";
-  import CreateItem from "../components/Things/Creation/CreateItem.svelte";
+  import Items from '../views/things/Items.svelte';
+  import ItemEditorComponent from '../components/Types/Items/Editor.svelte';
+  import ItemCreatorComponent from '../components/Types/Items/Creator.svelte';
 
   // pages for this layout
-  import Items from "../views/things/Items.svelte";
 
-  import { userStatusStore } from "../stores";
-  import { UserStatus } from "../types";
-  import { Logger } from "../logger";
+  import { userStatusStore } from '../stores';
+  import { UserStatus } from '../types';
+  import { Logger } from '../logger';
 
   export let location: Location;
 
   let logger = new Logger().withDebugValue(
-    "source",
-    "src/layouts/Things.svelte"
+    'source',
+    'src/layouts/Things.svelte',
   );
 
   let currentAuthStatus = {};
@@ -33,7 +33,7 @@
       //   logger.debug(`navigating to /auth/login because user is unauthenticated`);
       //   navigate("/auth/login", {state: {}, replace: true});
       // }
-    }
+    },
   );
   onDestroy(unsubscribeFromUserStatusUpdates);
 </script>
@@ -46,9 +46,9 @@
       <Router url="things">
         <Route path="items" component={Items} />
         <Route path="items/:id" let:params>
-          <ReadUpdateDeleteItem id={params.id} />
+          <ItemEditorComponent id={params.id} />
         </Route>
-        <Route path="items/new" component={CreateItem} />
+        <Route path="items/new" component={ItemCreatorComponent} />
       </Router>
       <AdminFooter />
     </div>

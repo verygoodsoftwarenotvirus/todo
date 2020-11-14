@@ -25,6 +25,16 @@ export type userModelTranslations = {
     save: string;
     delete: string;
   };
+  columns: {
+    id: string;
+    username: string;
+    isAdmin: string;
+    requiresPasswordChange: string;
+    passwordLastChangedOn: string;
+    createdOn: string;
+    lastUpdatedOn: string;
+    archivedOn: string;
+  };
   labels: {
     name: string;
   };

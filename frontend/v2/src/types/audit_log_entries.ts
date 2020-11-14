@@ -1,11 +1,11 @@
-import * as Factory from "factory.ts";
-import faker from "faker";
+import * as Factory from 'factory.ts';
+import faker from 'faker';
 
-import { Pagination } from "@/types/api";
-import { defaultFactories } from "@/types/fakes";
-import type { APITableCell, APITableHeader } from "@/components/APITable/types";
-import { renderUnixTime } from "@/utils";
-import type { auditLogEntryTableTranslations } from "@/i18n";
+import { Pagination } from '@/types/api';
+import { defaultFactories } from '@/types/fakes';
+import type { APITableCell, APITableHeader } from '@/components/APITable/types';
+import { renderUnixTime } from '@/utils';
+import type { auditLogEntryTableTranslations } from '@/i18n';
 
 export class AuditLogEntryList extends Pagination {
   entries: AuditLogEntry[];
@@ -25,9 +25,9 @@ export class AuditLogEntry {
 
   constructor(
     id: number = 0,
-    eventType: string = "",
+    eventType: string = '',
     context: object = {},
-    createdOn: number = 0
+    createdOn: number = 0,
   ) {
     this.id = id;
     this.eventType = eventType;
@@ -43,29 +43,29 @@ export class AuditLogEntry {
 
   // this function should return everything there are no presumed fields
   static headers = (
-    translations: Readonly<auditLogEntryTableTranslations>
+    translations: Readonly<auditLogEntryTableTranslations>,
   ): APITableHeader[] => {
     const columns = translations.columns;
     return [
-      { content: columns.id, requiresAdmin: false },
-      { content: columns.eventType, requiresAdmin: false },
-      { content: columns.context, requiresAdmin: false },
-      { content: columns.createdOn, requiresAdmin: false },
+      { content: columns.id, requiresAdminMode: false },
+      { content: columns.eventType, requiresAdminMode: false },
+      { content: columns.context, requiresAdminMode: false },
+      { content: columns.createdOn, requiresAdminMode: false },
     ];
   };
 
   // this function should return everything there are no presumed fields
   static asRow = (x: AuditLogEntry): APITableCell[] => {
     return [
-      { fieldName: "id", content: x.id.toString(), requiresAdmin: false },
-      { fieldName: "eventType", content: x.eventType, requiresAdmin: false },
+      { fieldName: 'id', content: x.id.toString(), requiresAdmin: false },
+      { fieldName: 'eventType', content: x.eventType, requiresAdmin: false },
       {
-        fieldName: "context",
+        fieldName: 'context',
         content: JSON.stringify(x.context),
         requiresAdmin: false,
       },
       {
-        fieldName: "createdOn",
+        fieldName: 'createdOn',
         content: renderUnixTime(x.createdOn),
         requiresAdmin: false,
       },
@@ -78,5 +78,5 @@ export const fakeAuditLogEntryFactory = Factory.Sync.makeFactory<AuditLogEntry>(
     eventType: Factory.Sync.each(() => faker.random.word()),
     context: Factory.Sync.each(() => faker.random.word()),
     ...defaultFactories,
-  }
+  },
 );

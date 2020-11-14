@@ -1,25 +1,25 @@
-import axios, { AxiosResponse } from "axios";
-import format from "string-format";
+import axios, { AxiosResponse } from 'axios';
+import format from 'string-format';
 
-import type { QueryFilter, User } from "@/types";
+import type { QueryFilter, User } from '@/types';
 
 import {
   defaultAPIRequestConfig,
   requestLogFunction,
-} from "@/requests/defaults";
-import { Logger } from "@/logger";
-import { backendRoutes } from "@/constants/routes";
+} from '@/requests/defaults';
+import { Logger } from '@/logger';
+import { backendRoutes } from '@/constants/routes';
 
-const logger = new Logger().withDebugValue("source", "src/requests/users.ts");
+const logger = new Logger().withDebugValue('source', 'src/requests/users.ts');
 
 export function fetchListOfUsers(
   qf: QueryFilter,
-  adminMode: boolean = false
+  adminMode: boolean = false,
 ): Promise<AxiosResponse> {
   const outboundURLParams = qf.toURLSearchParams();
 
   if (adminMode) {
-    outboundURLParams.set("admin", "true");
+    outboundURLParams.set('admin', 'true');
   }
 
   const uri = `/api/v1/users?${outboundURLParams.toString()}`;
@@ -51,7 +51,7 @@ export function deleteUser(id: number): Promise<AxiosResponse> {
 }
 
 export function fetchAuditLogEntriesForUser(
-  id: number
+  id: number,
 ): Promise<AxiosResponse> {
   const uri = format(backendRoutes.INDIVIDUAL_USER_AUDIT_LOG, id.toString());
   return axios

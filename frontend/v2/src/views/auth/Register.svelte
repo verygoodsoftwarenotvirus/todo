@@ -1,32 +1,32 @@
 <script lang="typescript">
-  import axios, { AxiosError, AxiosResponse } from "axios";
-  import { link, navigate } from "svelte-routing";
-  import { onDestroy } from "svelte";
+  import axios, { AxiosError, AxiosResponse } from 'axios';
+  import { link, navigate } from 'svelte-routing';
+  import { onDestroy } from 'svelte';
 
-  import { Logger } from "../../logger";
-  import { V1APIClient } from "../../requests";
+  import { Logger } from '../../logger';
+  import { V1APIClient } from '../../requests';
   import {
     RegistrationRequest,
     UserRegistrationResponse,
     TOTPTokenValidationRequest,
     ErrorResponse,
     UserSiteSettings,
-  } from "../../types";
-  import { translations } from "../../i18n";
-  import { sessionSettingsStore } from "../../stores";
+  } from '../../types';
+  import { translations } from '../../i18n';
+  import { sessionSettingsStore } from '../../stores';
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(
-    currentSessionSettings.language
+    currentSessionSettings.language,
   ).pages.registration;
   const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
     (value: UserSiteSettings) => {
       currentSessionSettings = value;
       translationsToUse = translations.messagesFor(
-        currentSessionSettings.language
+        currentSessionSettings.language,
       ).pages.registration;
-    }
+    },
   );
   onDestroy(unsubscribeFromSettingsUpdates);
 
@@ -36,13 +36,13 @@
   const totpValidationRequest = new TOTPTokenValidationRequest();
 
   let registrationMayProceed = false;
-  let registrationError = "";
-  let postRegistrationQRCode = "";
+  let registrationError = '';
+  let postRegistrationQRCode = '';
   let totpTokenValidationMayProceed = false;
 
   let logger = new Logger().withDebugValue(
-    "source",
-    "src/views/auth/Register.svelte"
+    'source',
+    'src/views/auth/Register.svelte',
   );
 
   function evaluateCreationInputs(): string {
@@ -54,13 +54,13 @@
     const reasons: string[] = [];
     if (!usernameIsLongEnough) {
       reasons.push(
-        `username '${registrationRequest.username}' has too few characters`
+        `username '${registrationRequest.username}' has too few characters`,
       );
     } else if (!passwordsMatch) {
       reasons.push("passwords don't match");
     } else if (passwordsMatch && !passwordIsLongEnough) {
       reasons.push(
-        `password is not long enough (has ${registrationRequest.password.length})`
+        `password is not long enough (has ${registrationRequest.password.length})`,
       );
     }
 
@@ -69,21 +69,21 @@
 
     let last = reasons.pop();
     if (reasons.length === 1) {
-      return last || "";
+      return last || '';
     } else if (reasons.length > 1) {
-      return reasons.join(", ") + " and " + last;
+      return reasons.join(', ') + ' and ' + last;
     }
 
-    return "";
+    return '';
   }
 
   async function register() {
-    logger.debug("register called");
+    logger.debug('register called');
 
     if (!registrationMayProceed) {
       // this should never occur
       registrationError = evaluateCreationInputs();
-      throw new Error("registration input is not valid!");
+      throw new Error('registration input is not valid!');
     }
 
     return V1APIClient.registrationRequest(registrationRequest)
@@ -110,21 +110,21 @@
   }
 
   async function validateTOTPToken() {
-    logger.debug("validateTOTPToken called");
+    logger.debug('validateTOTPToken called');
 
-    const path = "/users/totp_secret/verify";
+    const path = '/users/totp_secret/verify';
 
     if (!totpTokenValidationMayProceed) {
       // this should never occur
-      throw new Error("TOTP token validation input is not valid!");
+      throw new Error('TOTP token validation input is not valid!');
     }
 
     return V1APIClient.validateTOTPSecretWithToken(totpValidationRequest)
       .then((response: AxiosResponse) => {
         logger.debug(
-          `navigating to /auth/login because totp validation request succeeded`
+          `navigating to /auth/login because totp validation request succeeded`,
         );
-        navigate("/auth/login", { state: {}, replace: true });
+        navigate('/auth/login', { state: {}, replace: true });
       })
       .catch((reason: AxiosError<ErrorResponse>) => {
         if (reason.response) {

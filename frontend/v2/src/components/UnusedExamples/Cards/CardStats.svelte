@@ -1,20 +1,20 @@
 <script lang="typescript">
   // core components
 
-  export let statSubtitle: string = "Traffic";
-  export let statTitle: string = "350,897";
+  export let statSubtitle: string = 'Traffic';
+  export let statTitle: string = '350,897';
   // The value must match one of these strings
   // "up" or "down"
-  export let statArrow: string = "up";
-  export let statPercent: string = "3.48";
+  export let statArrow: string = 'up';
+  export let statPercent: string = '3.48';
   // can be any of the text color utilities
   // from tailwindcss
-  export let statPercentColor: string = "text-green-500";
-  export let statDescripiron: string = "Since last month";
-  export let statIconName: string = "far fa-chart-bar";
+  export let statPercentColor: string = 'text-green-500';
+  export let statDescripiron: string = 'Since last month';
+  export let statIconName: string = 'far fa-chart-bar';
   // can be any of the background color utilities
   // from tailwindcss
-  export let statIconColor: string = "bg-red-500";
+  export let statIconColor: string = 'bg-red-500';
 </script>
 
 <div

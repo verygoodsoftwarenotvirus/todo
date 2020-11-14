@@ -1,26 +1,26 @@
 <script lang="typescript">
-  import { navigate } from "svelte-routing";
-  import { onDestroy, onMount } from "svelte";
-  import { AxiosError, AxiosResponse } from "axios";
+  import { navigate } from 'svelte-routing';
+  import { onDestroy, onMount } from 'svelte';
+  import { AxiosError, AxiosResponse } from 'axios';
 
   import {
     Item,
     UserSiteSettings,
     UserStatus,
     AuditLogEntry,
-  } from "../../../types";
-  import { Logger } from "../../../logger";
-  import { V1APIClient } from "../../../requests";
-  import { translations } from "../../../i18n";
-  import { sessionSettingsStore, userStatusStore } from "../../../stores";
-  import AuditLogTable from "../../AuditLogTable/AuditLogTable.svelte";
+  } from '../../../types';
+  import { Logger } from '../../../logger';
+  import { V1APIClient } from '../../../requests';
+  import { translations } from '../../../i18n';
+  import { sessionSettingsStore, userStatusStore } from '../../../stores';
+  import AuditLogTable from '../../AuditLogTable/AuditLogTable.svelte';
 
   export let id: number = 0;
 
   // local state
   let originalItem: Item = new Item();
   let item: Item = new Item();
-  let itemRetrievalError: string = "";
+  let itemRetrievalError: string = '';
   let needsToBeSaved: boolean = false;
   let auditLogEntries: AuditLogEntry[] = [];
 
@@ -31,22 +31,22 @@
   onMount(fetchItem);
 
   let logger = new Logger().withDebugValue(
-    "source",
-    "src/components/Things/ReadUpdateDelete/Item.svelte"
+    'source',
+    'src/components/Types/Items/Editor.svelte',
   );
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(
-    currentSessionSettings.language
+    currentSessionSettings.language,
   ).models.item;
   const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
     (value: UserSiteSettings) => {
       currentSessionSettings = value;
       translationsToUse = translations.messagesFor(
-        currentSessionSettings.language
+        currentSessionSettings.language,
       ).models.item;
-    }
+    },
   );
   onDestroy(unsubscribeFromSettingsUpdates);
 
@@ -55,7 +55,7 @@
   const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
     (value: UserStatus) => {
       currentUserStatus = value;
-    }
+    },
   );
   onDestroy(unsubscribeFromUserStatusUpdates);
 
@@ -63,7 +63,7 @@
     logger.debug(`fetchItem called`);
 
     if (id === 0) {
-      throw new Error("id cannot be zero!");
+      throw new Error('id cannot be zero!');
     }
 
     V1APIClient.fetchItem(id)
@@ -86,9 +86,9 @@
     logger.debug(`saveItem called`);
 
     if (id === 0) {
-      throw new Error("id cannot be zero!");
+      throw new Error('id cannot be zero!');
     } else if (!needsToBeSaved) {
-      throw new Error("no changes to save!");
+      throw new Error('no changes to save!');
     }
 
     V1APIClient.saveItem(item)
@@ -110,16 +110,16 @@
     logger.debug(`deleteItem called`);
 
     if (id === 0) {
-      throw new Error("id cannot be zero!");
+      throw new Error('id cannot be zero!');
     }
 
     V1APIClient.deleteItem(id)
       .then((response: AxiosResponse<Item>) => {
         if (response.status === 204) {
           logger.debug(
-            `navigating to /things/items because via deletion promise resolution`
+            `navigating to /things/items because via deletion promise resolution`,
           );
-          navigate("/things/items", { state: {}, replace: true });
+          navigate('/things/items', { state: {}, replace: true });
         }
       })
       .catch((error: AxiosError) => {
@@ -135,13 +135,13 @@
     logger.debug(`deleteItem called`);
 
     if (id === 0) {
-      throw new Error("id cannot be zero!");
+      throw new Error('id cannot be zero!');
     }
 
     V1APIClient.fetchAuditLogEntriesForItem(id)
       .then((response: AxiosResponse<AuditLogEntry[]>) => {
         auditLogEntries = response.data;
-        logger.withValue("entries", auditLogEntries).debug("entries fetched");
+        logger.withValue('entries', auditLogEntries).debug('entries fetched');
       })
       .catch((error: AxiosError) => {
         if (error.response) {

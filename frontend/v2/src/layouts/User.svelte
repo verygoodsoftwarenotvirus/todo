@@ -1,20 +1,20 @@
 <script lang="typescript">
-  import { onDestroy } from "svelte";
-  import { navigate, Router, Route } from "svelte-routing";
+  import { onDestroy } from 'svelte';
+  import { navigate, Router, Route } from 'svelte-routing';
 
   // components for this layout
-  import AdminNavbar from "../components/Navbars/AdminNavbar.svelte";
-  import Sidebar from "../components/Sidebar/Sidebar.svelte";
-  import AdminFooter from "../components/Footers/AdminFooter.svelte";
+  import AdminNavbar from '../components/Navbars/AdminNavbar.svelte';
+  import Sidebar from '../components/Sidebar/Sidebar.svelte';
+  import AdminFooter from '../components/Footers/AdminFooter.svelte';
 
   // pages for this layout
-  import Settings from "../views/user/Settings.svelte";
+  import Settings from '../views/user/Settings.svelte';
 
-  import { userStatusStore } from "../stores";
-  import { User, UserStatus } from "../types";
-  import { Logger } from "../logger";
+  import { userStatusStore } from '../stores';
+  import { User, UserStatus } from '../types';
+  import { Logger } from '../logger';
 
-  let logger = new Logger().withDebugValue("source", "src/layouts/User.svelte");
+  let logger = new Logger().withDebugValue('source', 'src/layouts/User.svelte');
 
   // let currentUserStatus: UserStatus = new UserStatus();
   // const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {

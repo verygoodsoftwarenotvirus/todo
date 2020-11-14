@@ -1,11 +1,11 @@
-import { writable } from "svelte/store";
+import { writable } from 'svelte/store';
 
-import { UserSiteSettings } from "@/types";
-import { Logger } from "@/logger";
+import { UserSiteSettings } from '@/types';
+import { Logger } from '@/logger';
 
 const logger = new Logger().withDebugValue(
-  "source",
-  "src/stores/session_settings_store.ts"
+  'source',
+  'src/stores/session_settings_store.ts',
 );
 
 function buildSessionSettingsStore() {
@@ -14,7 +14,7 @@ function buildSessionSettingsStore() {
   const sessionSettingsStore = {
     subscribe,
     updateSettings: (x: UserSiteSettings) => {
-      logger.withValue("settings", x).debug("session settings updated");
+      logger.withValue('settings', x).debug('session settings updated');
       set(x);
     },
   };

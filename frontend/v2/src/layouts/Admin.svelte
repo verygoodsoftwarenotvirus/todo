@@ -1,25 +1,26 @@
 <script lang="typescript">
-  import axios, { AxiosError, AxiosResponse } from "axios";
-  import { onDestroy } from "svelte";
-  import { navigate, Router, Route } from "svelte-routing";
+  import axios, { AxiosError, AxiosResponse } from 'axios';
+  import { onDestroy } from 'svelte';
+  import { navigate, Router, Route } from 'svelte-routing';
 
-  import { userStatusStore } from "../stores";
-  import { UserStatus } from "../types";
+  import { userStatusStore } from '../stores';
+  import { UserStatus } from '../types';
 
   // components for this layout
-  import AdminNavbar from "../components/Navbars/AdminNavbar.svelte";
-  import Sidebar from "../components/Sidebar/Sidebar.svelte";
-  import AdminFooter from "../components/Footers/AdminFooter.svelte";
+  import AdminNavbar from '../components/Navbars/AdminNavbar.svelte';
+  import Sidebar from '../components/Sidebar/Sidebar.svelte';
+  import AdminFooter from '../components/Footers/AdminFooter.svelte';
 
   // pages for this layout
-  import Dashboard from "../views/admin/Dashboard.svelte";
-  import Settings from "../views/admin/Settings.svelte";
-  import ReadUpdateDeleteUser from "../components/Things/ReadUpdateDelete/User.svelte";
+  import UsersAdmin from '../views/admin/Users.svelte';
+  import Dashboard from '../views/admin/Dashboard.svelte';
+  import Settings from '../views/admin/Settings.svelte';
+  import UserEditor from '../components/Types/Users/Editor.svelte';
 
-  import { Logger } from "../logger";
+  import { Logger } from '../logger';
   let logger = new Logger().withDebugValue(
-    "source",
-    "src/layouts/Admin.svelte"
+    'source',
+    'src/layouts/Admin.svelte',
   );
 
   export let location: Location;
@@ -32,7 +33,7 @@
       //   logger.debug(`navigating to /auth/login because the user is not authenticated`);
       //   navigate("/auth/login", { state: {}, replace: true });
       // }
-    }
+    },
   );
   onDestroy(unsubscribeFromUserStatusUpdates);
 </script>
@@ -45,9 +46,9 @@
       <Router url="admin">
         <Route path="dashboard" component={Dashboard} />
         <Route path="settings" component={Settings} />
-        <!--        <Route path="users" component="{AdminUsersTable}" />-->
+        <Route path="users" component={UsersAdmin} />
         <Route path="users/:id" let:params>
-          <ReadUpdateDeleteUser id="{params.id}" />
+          <UserEditor id={params.id} />
         </Route>
       </Router>
       <AdminFooter />

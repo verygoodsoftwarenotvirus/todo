@@ -1,19 +1,19 @@
 <script lang="typescript">
-  import { navigate } from "svelte-routing";
-  import { onDestroy, onMount } from "svelte";
-  import { AxiosError, AxiosResponse } from "axios";
+  import { navigate } from 'svelte-routing';
+  import { onDestroy, onMount } from 'svelte';
+  import { AxiosError, AxiosResponse } from 'axios';
 
-  import { UserSiteSettings, User } from "../../../types";
-  import { Logger } from "../../../logger";
-  import { V1APIClient } from "../../../requests";
-  import { translations } from "../../../i18n";
-  import { sessionSettingsStore } from "../../../stores";
-  import AuditLogTable from "../../AuditLogTable/AuditLogTable.svelte";
+  import { UserSiteSettings, User } from '../../../types';
+  import { Logger } from '../../../logger';
+  import { V1APIClient } from '../../../requests';
+  import { translations } from '../../../i18n';
+  import { sessionSettingsStore } from '../../../stores';
+  import AuditLogTable from '../../AuditLogTable/AuditLogTable.svelte';
 
   export let id: number = 0;
 
   // local state
-  let userRetrievalError: string = "";
+  let userRetrievalError: string = '';
   let originalUser: User = new User();
   let user: User = new User();
   let needsToBeSaved: boolean = false;
@@ -23,22 +23,22 @@
   }
 
   let logger = new Logger().withDebugValue(
-    "source",
-    "src/components/Things/ReadUpdateDelete/User.svelte"
+    'source',
+    'src/components/Types/User/Editor.svelte',
   );
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(
-    currentSessionSettings.language
+    currentSessionSettings.language,
   ).pages.registration;
   const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
     (value: UserSiteSettings) => {
       currentSessionSettings = value;
       translationsToUse = translations.messagesFor(
-        currentSessionSettings.language
+        currentSessionSettings.language,
       ).pages.registration;
-    }
+    },
   );
   onDestroy(unsubscribeFromSettingsUpdates);
 
@@ -46,9 +46,9 @@
     logger.debug(`saveUser called`);
 
     if (id === 0) {
-      throw new Error("id cannot be zero!");
+      throw new Error('id cannot be zero!');
     } else if (!needsToBeSaved) {
-      throw new Error("no changes to save!");
+      throw new Error('no changes to save!');
     }
 
     V1APIClient.saveUser(user)
@@ -70,7 +70,7 @@
     logger.debug(`fetchUser called`);
 
     if (id === 0) {
-      throw new Error("id cannot be zero!");
+      throw new Error('id cannot be zero!');
     }
 
     V1APIClient.fetchUser(id)
@@ -91,7 +91,7 @@
     logger.debug(`fetchUser called`);
 
     if (id === 0) {
-      throw new Error("id cannot be zero!");
+      throw new Error('id cannot be zero!');
     }
 
     V1APIClient.deleteUser(id)

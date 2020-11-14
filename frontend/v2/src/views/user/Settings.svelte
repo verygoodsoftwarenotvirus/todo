@@ -1,9 +1,9 @@
 <script lang="typescript">
-  import { onDestroy, onMount } from "svelte";
-  import axios, { AxiosError, AxiosResponse } from "axios";
-  import { navigate } from "svelte-routing";
+  import { onDestroy, onMount } from 'svelte';
+  import axios, { AxiosError, AxiosResponse } from 'axios';
+  import { navigate } from 'svelte-routing';
 
-  import { userStatusStore } from "../../stores";
+  import { userStatusStore } from '../../stores';
   import {
     User,
     UserStatus,
@@ -11,31 +11,31 @@
     UserTwoFactorSecretUpdateRequest,
     ErrorResponse,
     UserSiteSettings,
-  } from "../../types";
-  import { Logger } from "../../logger";
-  import { V1APIClient } from "../../requests";
-  import { translations } from "../../i18n";
-  import { sessionSettingsStore } from "../../stores";
+  } from '../../types';
+  import { Logger } from '../../logger';
+  import { V1APIClient } from '../../requests';
+  import { translations } from '../../i18n';
+  import { sessionSettingsStore } from '../../stores';
 
   export let location: Location;
 
   let logger = new Logger().withDebugValue(
-    "source",
-    "src/views/user/Settings.svelte"
+    'source',
+    'src/views/user/Settings.svelte',
   );
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(
-    currentSessionSettings.language
+    currentSessionSettings.language,
   ).userSettingsPage;
   const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
     (value: UserSiteSettings) => {
       currentSessionSettings = value;
       translationsToUse = translations.messagesFor(
-        currentSessionSettings.language
+        currentSessionSettings.language,
       ).userSettingsPage;
-    }
+    },
   );
   onDestroy(unsubscribeFromSettingsUpdates);
 
@@ -45,11 +45,11 @@
       currentUserStatus = value;
       if (!currentUserStatus || !currentUserStatus.isAuthenticated) {
         logger.debug(
-          `navigating to /auth/login because the user is not authenticated upon authStatusStore update`
+          `navigating to /auth/login because the user is not authenticated upon authStatusStore update`,
         );
-        navigate("/auth/login", { state: {}, replace: true });
+        navigate('/auth/login', { state: {}, replace: true });
       }
-    }
+    },
   );
   onDestroy(unsubscribeFromUserStatusUpdates);
 
@@ -59,9 +59,9 @@
   let twoFactorSecretUpdate = new UserTwoFactorSecretUpdateRequest();
 
   let userInfoCanBeSaved: boolean = false;
-  let userFetchError: string = "";
-  let updatePasswordError: string = "";
-  let twoFactorSecretUpdateError: string = "";
+  let userFetchError: string = '';
+  let updatePasswordError: string = '';
+  let twoFactorSecretUpdateError: string = '';
 
   function submitChangePasswordRequest() {
     logger.debug(`submitChangePasswordRequest invoked`);
@@ -69,9 +69,9 @@
     V1APIClient.passwordChangeRequest(passwordUpdate)
       .then((res: AxiosResponse) => {
         logger
-          .withValue("responseData", res.data)
-          .info("passwordChangeRequest returned");
-        navigate("/auth/login", { state: {}, replace: false });
+          .withValue('responseData', res.data)
+          .info('passwordChangeRequest returned');
+        navigate('/auth/login', { state: {}, replace: false });
       })
       .catch((err: AxiosError<ErrorResponse>) => {
         logger.error(err.message);

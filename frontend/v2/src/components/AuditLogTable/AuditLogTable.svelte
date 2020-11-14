@@ -1,40 +1,40 @@
 <script lang="typescript">
-  import { AxiosError, AxiosResponse } from "axios";
-  import JSONTree from "svelte-json-tree";
+  import { AxiosError, AxiosResponse } from 'axios';
+  import JSONTree from 'svelte-json-tree';
 
-  import { AuditLogEntry, QueryFilter, UserSiteSettings } from "../../types";
-  import { renderUnixTime } from "../../utils";
-  import { Logger } from "../../logger";
-  import { translations } from "../../i18n";
-  import { sessionSettingsStore } from "../../stores";
-  import { onDestroy } from "svelte";
+  import { AuditLogEntry, QueryFilter, UserSiteSettings } from '../../types';
+  import { renderUnixTime } from '../../utils';
+  import { Logger } from '../../logger';
+  import { translations } from '../../i18n';
+  import { sessionSettingsStore } from '../../stores';
+  import { onDestroy } from 'svelte';
 
   export let entries: AuditLogEntry[] = [];
   export let entryFetchFunc: Promise<AxiosResponse<AuditLogEntry[]>>;
 
-  let searchQuery: string = "";
-  let retrievalError: string = "";
+  let searchQuery: string = '';
+  let retrievalError: string = '';
   let queryFilter = new QueryFilter();
   let decrementDisabled = false;
   let incrementDisabled = false;
 
   let logger = new Logger().withDebugValue(
-    "source",
-    "src/components/AuditLogTable/AuditLogTable.svelte"
+    'source',
+    'src/components/AuditLogTable/AuditLogTable.svelte',
   );
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(
-    currentSessionSettings.language
+    currentSessionSettings.language,
   ).components.auditLogEntryTable;
   const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
     (value: UserSiteSettings) => {
       currentSessionSettings = value;
       translationsToUse = translations.messagesFor(
-        currentSessionSettings.language
+        currentSessionSettings.language,
       ).components.auditLogEntryTable;
-    }
+    },
   );
   onDestroy(unsubscribeFromSettingsUpdates);
 
@@ -42,7 +42,7 @@
     entryFetchFunc
       .then((response: AxiosResponse<AuditLogEntry[]>) => {
         entries = response.data;
-        logger.withValue("entries", entries).debug("entries fetched");
+        logger.withValue('entries', entries).debug('entries fetched');
       })
       .catch((error: AxiosError) => {
         if (error.response) {

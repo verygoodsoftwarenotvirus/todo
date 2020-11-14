@@ -6,7 +6,7 @@ import {
   searchForItems,
   fetchListOfItems,
   fetchAuditLogEntriesForItem,
-} from "./items";
+} from './items';
 
 import {
   login,
@@ -17,7 +17,7 @@ import {
   checkAuthStatusRequest,
   validateTOTPSecretWithToken,
   twoFactorSecretChangeRequest,
-} from "./auth";
+} from './auth';
 
 import {
   saveUser,
@@ -25,7 +25,7 @@ import {
   deleteUser,
   fetchListOfUsers,
   fetchAuditLogEntriesForUser,
-} from "./users";
+} from './users';
 
 export class V1APIClient {
   // users stuff

@@ -1,2 +1,2 @@
 // core
-export * from "./client";
+export * from './client';

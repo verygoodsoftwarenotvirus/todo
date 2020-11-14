@@ -1,24 +1,24 @@
 <script lang="typescript">
-  import { onDestroy } from "svelte";
+  import { onDestroy } from 'svelte';
 
-  import { UserSiteSettings } from "../../types";
-  import { translations } from "../../i18n";
-  import { sessionSettingsStore } from "../../stores";
+  import { UserSiteSettings } from '../../types';
+  import { translations } from '../../i18n';
+  import { sessionSettingsStore } from '../../stores';
 
   export let absolute: Boolean = false;
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(
-    currentSessionSettings.language
+    currentSessionSettings.language,
   ).components.footers.smallFooter;
   const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
     (value: UserSiteSettings) => {
       currentSessionSettings = value;
       translationsToUse = translations.messagesFor(
-        currentSessionSettings.language
+        currentSessionSettings.language,
       ).components.footers.smallFooter;
-    }
+    },
   );
   onDestroy(unsubscribeFromSettingsUpdates);
 </script>

@@ -1,6 +1,6 @@
 <script lang="typescript">
   // library for creating dropdown menu appear on click
-  import { createPopper } from "@popperjs/core";
+  import { createPopper } from '@popperjs/core';
 
   let dropdownPopoverShow: Boolean = false;
 
@@ -15,7 +15,7 @@
     } else {
       dropdownPopoverShow = true;
       createPopper(btnDropdownRef, popoverDropdownRef, {
-        placement: "bottom-start",
+        placement: 'bottom-start',
       });
     }
   };

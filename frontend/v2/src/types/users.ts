@@ -1,17 +1,19 @@
-import * as Factory from "factory.ts";
-import faker from "faker";
+import * as Factory from 'factory.ts';
+import faker from 'faker';
 
-import { Pagination } from "@/types/api";
-import { defaultFactories } from "@/types/fakes";
-import { isNumeric } from "@/utils";
+import { Pagination } from '@/types/api';
+import { defaultFactories } from '@/types/fakes';
+import { isNumeric, renderUnixTime } from '@/utils';
+import type { userModelTranslations } from '@/i18n';
+import type { APITableCell, APITableHeader } from '@/components/APITable/types';
 
 export class UserList extends Pagination {
-  items: User[];
+  users: User[];
 
   constructor() {
     super();
 
-    this.items = [];
+    this.users = [];
   }
 }
 
@@ -20,20 +22,20 @@ export class User {
   username: string;
   isAdmin: boolean;
   requiresPasswordChange: boolean;
-  passwordLastChangedOn: number;
+  passwordLastChangedOn?: number;
   createdOn: number;
   lastUpdatedOn: number;
   archivedOn?: number;
 
   constructor(
     id: number = 0,
-    username: string = "",
+    username: string = '',
     isAdmin: boolean = false,
     requiresPasswordChange: boolean = false,
     passwordLastChangedOn: number = 0,
     createdOn: number = 0,
     lastUpdatedOn: number = 0,
-    archivedOn: number
+    archivedOn: number,
   ) {
     this.id = id;
     this.username = username;
@@ -52,6 +54,61 @@ export class User {
       x.isAdmin === y.isAdmin &&
       x.requiresPasswordChange === y.requiresPasswordChange
     );
+  };
+
+  // this function should return everything there are no presumed fields
+  static headers = (
+    translations: Readonly<userModelTranslations>,
+  ): APITableHeader[] => {
+    const columns = translations.columns;
+    return [
+      { content: columns.id, requiresAdminMode: false },
+      { content: columns.username, requiresAdminMode: false },
+      { content: columns.isAdmin, requiresAdminMode: false },
+      { content: columns.requiresPasswordChange, requiresAdminMode: false },
+      { content: columns.passwordLastChangedOn, requiresAdminMode: false },
+      { content: columns.createdOn, requiresAdminMode: false },
+      { content: columns.lastUpdatedOn, requiresAdminMode: false },
+      { content: columns.archivedOn, requiresAdminMode: false },
+    ];
+  };
+
+  // this function should return everything there are no presumed fields
+  static asRow = (x: User): APITableCell[] => {
+    return [
+      { fieldName: 'id', content: x.id.toString(), requiresAdmin: false },
+      { fieldName: 'username', content: x.username, requiresAdmin: false },
+      {
+        fieldName: 'isAdmin',
+        content: x.isAdmin.toString(),
+        requiresAdmin: false,
+      },
+      {
+        fieldName: 'requiresPasswordChange',
+        content: x.requiresPasswordChange.toString(),
+        requiresAdmin: false,
+      },
+      {
+        fieldName: 'passwordLastChangedOn',
+        content: (x.passwordLastChangedOn || 'never').toString(),
+        requiresAdmin: false,
+      },
+      {
+        fieldName: 'createdOn',
+        content: renderUnixTime(x.createdOn),
+        requiresAdmin: false,
+      },
+      {
+        fieldName: 'lastUpdatedOn',
+        content: renderUnixTime(x.lastUpdatedOn),
+        requiresAdmin: false,
+      },
+      {
+        fieldName: 'archivedOn',
+        content: renderUnixTime(x.archivedOn),
+        requiresAdmin: true,
+      },
+    ];
   };
 }
 
@@ -75,13 +132,13 @@ export class UserRegistrationResponse {
 
   constructor(
     id: number = 0,
-    username: string = "",
+    username: string = '',
     isAdmin: boolean = false,
-    qrCode: string = "",
+    qrCode: string = '',
     createdOn: number = 0,
     lastUpdatedOn: number = 0,
     archivedOn: number = 0,
-    passwordLastChangedOn: number = 0
+    passwordLastChangedOn: number = 0,
   ) {
     this.id = id;
     this.username = username;
@@ -110,9 +167,9 @@ export class UserPasswordUpdateRequest {
   totpToken: string;
 
   constructor(
-    newPassword: string = "",
-    currentPassword: string = "",
-    totpToken: string = ""
+    newPassword: string = '',
+    currentPassword: string = '',
+    totpToken: string = '',
   ) {
     this.newPassword = newPassword;
     this.currentPassword = currentPassword;
@@ -121,8 +178,8 @@ export class UserPasswordUpdateRequest {
 
   goodToGo(): boolean {
     return (
-      this.newPassword !== "" &&
-      this.currentPassword != "" &&
+      this.newPassword !== '' &&
+      this.currentPassword != '' &&
       this.currentPassword !== this.newPassword &&
       this.totpToken.length === 6 &&
       isNumeric(this.totpToken)
@@ -134,14 +191,14 @@ export class UserTwoFactorSecretUpdateRequest {
   currentPassword: string;
   totpToken: string;
 
-  constructor(currentPassword: string = "", totpToken: string = "") {
+  constructor(currentPassword: string = '', totpToken: string = '') {
     this.currentPassword = currentPassword;
     this.totpToken = totpToken;
   }
 
   goodToGo(): boolean {
     return (
-      this.currentPassword != "" &&
+      this.currentPassword != '' &&
       this.totpToken.length === 6 &&
       isNumeric(this.totpToken)
     );

@@ -1,6 +1,6 @@
 <script lang="typescript">
   // core components
-  import SettingsCard from "../../components/Cards/SettingsCard.svelte";
+  import SettingsCard from '../../components/Cards/SettingsCard.svelte';
 
   export let location: Location;
 </script>

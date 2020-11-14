@@ -1,11 +1,11 @@
-import * as Factory from "factory.ts";
-import faker from "faker";
+import * as Factory from 'factory.ts';
+import faker from 'faker';
 
-import { Pagination } from "@/types/api";
-import { defaultFactories } from "@/types/fakes";
-import type { APITableCell, APITableHeader } from "@/components/APITable/types";
-import { renderUnixTime } from "@/utils";
-import type { itemModelTranslations } from "@/i18n";
+import { Pagination } from '@/types/api';
+import { defaultFactories } from '@/types/fakes';
+import type { APITableCell, APITableHeader } from '@/components/APITable/types';
+import { renderUnixTime } from '@/utils';
+import type { itemModelTranslations } from '@/i18n';
 
 export class ItemList extends Pagination {
   items: Item[];
@@ -22,16 +22,16 @@ export class Item {
   name: string;
   details: string;
   createdOn: number;
-  updatedOn?: number;
+  lastUpdatedOn?: number;
   archivedOn?: number;
   belongsToUser: number;
 
   constructor(
     id: number = 0,
-    name: string = "",
-    details: string = "",
+    name: string = '',
+    details: string = '',
     createdOn: number = 0,
-    belongsToUser: number = 0
+    belongsToUser: number = 0,
   ) {
     this.id = id;
     this.name = name;
@@ -46,37 +46,37 @@ export class Item {
 
   // this function should return everything there are no presumed fields
   static headers = (
-    translations: Readonly<itemModelTranslations>
+    translations: Readonly<itemModelTranslations>,
   ): APITableHeader[] => {
     const columns = translations.columns;
     return [
-      { content: columns.id, requiresAdmin: false },
-      { content: columns.name, requiresAdmin: false },
-      { content: columns.details, requiresAdmin: false },
-      { content: columns.createdOn, requiresAdmin: false },
-      { content: columns.lastUpdatedOn, requiresAdmin: false },
-      { content: columns.belongsToUser, requiresAdmin: true },
+      { content: columns.id, requiresAdminMode: false },
+      { content: columns.name, requiresAdminMode: false },
+      { content: columns.details, requiresAdminMode: false },
+      { content: columns.createdOn, requiresAdminMode: false },
+      { content: columns.lastUpdatedOn, requiresAdminMode: false },
+      { content: columns.belongsToUser, requiresAdminMode: true },
     ];
   };
 
   // this function should return everything there are no presumed fields
   static asRow = (x: Item): APITableCell[] => {
     return [
-      { fieldName: "id", content: x.id.toString(), requiresAdmin: false },
-      { fieldName: "name", content: x.name, requiresAdmin: false },
-      { fieldName: "details", content: x.details, requiresAdmin: false },
+      { fieldName: 'id', content: x.id.toString(), requiresAdmin: false },
+      { fieldName: 'name', content: x.name, requiresAdmin: false },
+      { fieldName: 'details', content: x.details, requiresAdmin: false },
       {
-        fieldName: "createdOn",
+        fieldName: 'createdOn',
         content: renderUnixTime(x.createdOn),
         requiresAdmin: false,
       },
       {
-        fieldName: "lastUpdatedOn",
-        content: renderUnixTime(x.updatedOn),
+        fieldName: 'lastUpdatedOn',
+        content: renderUnixTime(x.lastUpdatedOn),
         requiresAdmin: false,
       },
       {
-        fieldName: "belongsToUser",
+        fieldName: 'belongsToUser',
         content: x.belongsToUser.toString(),
         requiresAdmin: true,
       },
@@ -96,7 +96,7 @@ export class ItemCreationInput {
   details: string;
 
   constructor() {
-    this.name = "";
-    this.details = "";
+    this.name = '';
+    this.details = '';
   }
 }

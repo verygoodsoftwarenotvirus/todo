@@ -1,37 +1,37 @@
 <script lang="typescript">
-  import { navigate } from "svelte-routing";
-  import { onDestroy, onMount } from "svelte";
-  import axios, { AxiosError, AxiosResponse } from "axios";
+  import { navigate } from 'svelte-routing';
+  import { onDestroy, onMount } from 'svelte';
+  import axios, { AxiosError, AxiosResponse } from 'axios';
 
-  import { Item, ItemCreationInput, UserSiteSettings } from "../../../types";
-  import { Logger } from "../../../logger";
-  import { V1APIClient } from "../../../requests";
-  import { translations } from "../../../i18n";
-  import { sessionSettingsStore } from "../../../stores";
+  import { Item, ItemCreationInput, UserSiteSettings } from '../../../types';
+  import { Logger } from '../../../logger';
+  import { V1APIClient } from '../../../requests';
+  import { translations } from '../../../i18n';
+  import { sessionSettingsStore } from '../../../stores';
 
   export let id: number = 0;
 
   // local state
   let item: ItemCreationInput = new ItemCreationInput();
-  let apiError: string = "";
+  let apiError: string = '';
 
   let logger = new Logger().withDebugValue(
-    "source",
-    "src/components/Things/Creation/CreateItem.svelte"
+    'source',
+    'src/components/Types/Items/Creator.svelte',
   );
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(
-    currentSessionSettings.language
+    currentSessionSettings.language,
   ).models.item;
   const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
     (value: UserSiteSettings) => {
       currentSessionSettings = value;
       translationsToUse = translations.messagesFor(
-        currentSessionSettings.language
+        currentSessionSettings.language,
       ).models.item;
-    }
+    },
   );
   onDestroy(unsubscribeFromSettingsUpdates);
 
@@ -42,7 +42,7 @@
       .then((response: AxiosResponse<Item>) => {
         const newItem = response.data;
         logger.debug(
-          `navigating to /things/items/${newItem.id} via creation promise resolution`
+          `navigating to /things/items/${newItem.id} via creation promise resolution`,
         );
         navigate(`/things/items/${newItem.id}`, { state: {}, replace: true });
       })

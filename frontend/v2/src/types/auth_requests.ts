@@ -4,9 +4,9 @@ export class LoginRequest {
   totpToken: string;
 
   constructor() {
-    this.username = "";
-    this.password = "";
-    this.totpToken = "";
+    this.username = '';
+    this.password = '';
+    this.totpToken = '';
   }
 }
 
@@ -16,9 +16,9 @@ export class RegistrationRequest {
   repeatedPassword: string;
 
   constructor(
-    username: string = "",
-    password: string = "",
-    repeatedPassword: string = ""
+    username: string = '',
+    password: string = '',
+    repeatedPassword: string = '',
   ) {
     this.username = username;
     this.password = password;
@@ -30,7 +30,7 @@ export class TOTPTokenValidationRequest {
   userID: number;
   totpToken: string;
 
-  constructor(userID: number = 0, totpToken: string = "") {
+  constructor(userID: number = 0, totpToken: string = '') {
     this.userID = userID;
     this.totpToken = totpToken;
   }

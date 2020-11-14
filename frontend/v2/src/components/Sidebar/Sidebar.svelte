@@ -1,25 +1,25 @@
 <script lang="typescript">
-  import { onDestroy } from "svelte";
-  import { link } from "svelte-routing";
+  import { onDestroy } from 'svelte';
+  import { link } from 'svelte-routing';
 
   // core components
-  import UserDropdown from "../Dropdowns/UserDropdown.svelte";
+  import UserDropdown from '../Dropdowns/UserDropdown.svelte';
 
-  import { UserSiteSettings, UserStatus } from "../../types";
-  import { sessionSettingsStore, userStatusStore } from "../../stores";
-  import { translations } from "../../i18n";
-  import { Logger } from "../../logger";
+  import { UserSiteSettings, UserStatus } from '../../types';
+  import { sessionSettingsStore, userStatusStore } from '../../stores';
+  import { translations } from '../../i18n';
+  import { Logger } from '../../logger';
 
   export let location: Location;
 
-  let collapseShow: string = "hidden";
+  let collapseShow: string = 'hidden';
   function toggleCollapseShow(classes) {
     collapseShow = classes;
   }
 
   let logger = new Logger().withDebugValue(
-    "source",
-    "src/components/Sidebar/Sidebar.svelte"
+    'source',
+    'src/components/Sidebar/Sidebar.svelte',
   );
 
   let currentAuthStatus = new UserStatus();
@@ -27,24 +27,24 @@
     (value: UserStatus) => {
       currentAuthStatus = value;
       logger
-        .withValue("current_auth_status", currentAuthStatus)
-        .debug("auth status updated");
-    }
+        .withValue('current_auth_status', currentAuthStatus)
+        .debug('auth status updated');
+    },
   );
   onDestroy(unsubscribeFromUserStatusUpdates());
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(
-    currentSessionSettings.language
+    currentSessionSettings.language,
   ).components.sidebars.primary;
   const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
     (value: UserSiteSettings) => {
       currentSessionSettings = value;
       translationsToUse = translations.messagesFor(
-        currentSessionSettings.language
+        currentSessionSettings.language,
       ).components.sidebars.primary;
-    }
+    },
   );
   onDestroy(unsubscribeFromSettingsUpdates);
 </script>

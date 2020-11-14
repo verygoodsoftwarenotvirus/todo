@@ -18,6 +18,8 @@ import type {
   adminFooterTranslations,
   smallFooterTranslations,
   auditLogEntryTableTranslations,
+  oauth2ClientModelTranslations,
+  webhookModelTranslations,
 } from "@/i18n";
 
 const english = "en-US";
@@ -45,7 +47,7 @@ export type SiteTranslationMap = {
     navbars: {
       adminNavbar: adminNavbarTranslations,
       authNavbar: authNavbarTranslations,
-      homepageNavbar:homepageNavbarTranslations,
+      homepageNavbar: homepageNavbarTranslations,
     },
     sidebars: {
       primary: primarySidebarTranslations,
@@ -65,6 +67,8 @@ export type SiteTranslationMap = {
   models: {
     item: itemModelTranslations,
     user: userModelTranslations,
+    oauth2Client: oauth2ClientModelTranslations,
+    webhook: webhookModelTranslations,
   },
 }
 

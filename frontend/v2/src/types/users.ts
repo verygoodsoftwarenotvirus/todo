@@ -25,26 +25,35 @@ export class User {
     lastUpdatedOn: number;
     archivedOn?: number;
 
-    constructor() {
-        this.id = 0;
-        this.username = '';
-        this.isAdmin = false;
-        this.requiresPasswordChange = false;
-        this.passwordLastChangedOn = 0;
-        this.createdOn = 0;
-        this.lastUpdatedOn = 0;
-        this.archivedOn = 0;
+    constructor(
+        id: number = 0,
+        username: string = '',
+        isAdmin: boolean = false,
+        requiresPasswordChange: boolean = false,
+        passwordLastChangedOn: number = 0,
+        createdOn: number = 0,
+        lastUpdatedOn: number = 0,
+        archivedOn: number,
+    ) {
+        this.id = id;
+        this.username = username;
+        this.isAdmin = isAdmin;
+        this.requiresPasswordChange = requiresPasswordChange;
+        this.passwordLastChangedOn = passwordLastChangedOn;
+        this.createdOn = createdOn;
+        this.lastUpdatedOn = lastUpdatedOn;
+        this.archivedOn = archivedOn;
     }
 
     static areEqual = function(
-        u1: User,
-        u2: User,
+        x: User,
+        y: User,
     ): boolean {
         return (
-            u1.id === u2.id &&
-            u1.username === u2.username &&
-            u1.isAdmin === u2.isAdmin &&
-            u1.requiresPasswordChange === u2.requiresPasswordChange
+            x.id === y.id &&
+            x.username === y.username &&
+            x.isAdmin === y.isAdmin &&
+            x.requiresPasswordChange === y.requiresPasswordChange
         );
     }
 }
@@ -67,15 +76,24 @@ export class UserRegistrationResponse {
     archivedOn: number;
     passwordLastChangedOn: number;
 
-    constructor() {
-        this.id = 0;
-        this.username = '';
-        this.isAdmin = false;
-        this.qrCode = '';
-        this.createdOn = 0;
-        this.lastUpdatedOn = 0;
-        this.archivedOn = 0;
-        this.passwordLastChangedOn = 0;
+    constructor(
+        id: number = 0,
+        username: string = '',
+        isAdmin: boolean = false,
+        qrCode: string = '',
+        createdOn: number = 0,
+        lastUpdatedOn: number = 0,
+        archivedOn: number = 0,
+        passwordLastChangedOn: number = 0,
+    ) {
+        this.id = id;
+        this.username = username;
+        this.isAdmin = isAdmin;
+        this.qrCode = qrCode;
+        this.createdOn = createdOn;
+        this.lastUpdatedOn = lastUpdatedOn;
+        this.archivedOn = archivedOn;
+        this.passwordLastChangedOn = passwordLastChangedOn;
     }
 }
 
@@ -83,9 +101,12 @@ export class UserStatus {
     isAuthenticated: boolean;
     isAdmin: boolean;
 
-    constructor() {
-        this.isAuthenticated = false;
-        this.isAdmin = false;
+    constructor(
+        isAuthenticated: boolean = false,
+        isAdmin: boolean = false,
+    ) {
+        this.isAuthenticated = isAuthenticated;
+        this.isAdmin = isAdmin;
     }
 }
 
@@ -94,10 +115,14 @@ export class UserPasswordUpdateRequest {
     currentPassword: string;
     totpToken: string;
 
-    constructor() {
-        this.newPassword = '';
-        this.currentPassword = '';
-        this.totpToken = '';
+    constructor(
+        newPassword: string = '',
+        currentPassword: string = '',
+        totpToken: string = '',
+    ) {
+        this.newPassword = newPassword;
+        this.currentPassword = currentPassword;
+        this.totpToken = totpToken;
     }
 
     goodToGo(): boolean {
@@ -113,9 +138,12 @@ export class UserTwoFactorSecretUpdateRequest {
     currentPassword: string;
     totpToken: string;
 
-    constructor() {
-        this.currentPassword = '';
-        this.totpToken = '';
+    constructor(
+        currentPassword: string = '',
+        totpToken: string = '',
+    ) {
+        this.currentPassword = currentPassword;
+        this.totpToken = totpToken;
     }
 
     goodToGo(): boolean {

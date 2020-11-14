@@ -23,21 +23,26 @@ export class AuditLogEntry {
     context: object;
     createdOn: number;
 
-    constructor() {
-        this.id = 0;
-        this.eventType = "";
-        this.context = {};
-        this.createdOn = 0;
+    constructor(
+        id: number = 0,
+        eventType: string = "",
+        context: object = {},
+        createdOn: number = 0,
+    ) {
+        this.id = id;
+        this.eventType = eventType;
+        this.context = context;
+        this.createdOn = createdOn;
     }
 
     static areEqual = function(
-        e1: AuditLogEntry,
-        e2: AuditLogEntry,
+        x: AuditLogEntry,
+        y: AuditLogEntry,
     ): boolean {
         return (
-            e1.id === e2.id &&
-            e1.eventType === e2.eventType &&
-            e1.context === e2.context
+            x.id === y.id &&
+            x.eventType === y.eventType &&
+            x.context === y.context
         );
     }
 

@@ -4,6 +4,7 @@ export enum backendRoutes {
   LOGIN                     = "/users/login",
   LOGOUT                    = "/users/logout",
   INDIVIDUAL_USER           = "/api/v1/users/{}",
+  INDIVIDUAL_USER_AUDIT_LOG = "/api/v1/users/{}/audit",
 
   // Auth
   USER_AUTH_STATUS          = "/auth/status",

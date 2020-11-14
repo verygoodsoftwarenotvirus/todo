@@ -32,3 +32,67 @@ export type userModelTranslations = {
     name: string;
   },
 }
+
+export type oauth2ClientModelTranslations = {
+  actions: {
+    create: string;
+    update: string;
+  },
+  columns: {
+    id: string;
+    name: string;
+    clientID: string;
+    clientSecret: string;
+    redirectURI: string;
+    scopes: string;
+    implicitAllowed: string;
+    createdOn: string;
+    lastUpdatedOn: string;
+    belongsToUser: string;
+  },
+  labels: {
+    name: string;
+    clientID: string;
+    clientSecret: string;
+    redirectURI: string;
+  },
+  inputPlaceholders: {
+    name: string;
+    redirectURI: string;
+  },
+}
+
+export type webhookModelTranslations = {
+  actions: {
+    create: string;
+    update: string;
+  },
+  columns: {
+    id: string;
+    name: string;
+    contentType: string;
+    url: string;
+    method: string;
+    events: string;
+    dataTypes: string;
+    topics: string;
+    createdOn: string;
+    lastUpdatedOn: string;
+    belongsToUser: string;
+  },
+  labels: {
+    name: string;
+    contentType: string;
+    url: string;
+    method: string;
+    events: string;
+    dataTypes: string;
+    topics: string;
+  },
+  inputPlaceholders: {
+    name: string;
+    contentType: string;
+    url: string;
+    method: string;
+  },
+}

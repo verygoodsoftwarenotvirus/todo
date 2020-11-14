@@ -3,14 +3,14 @@ import format from "string-format";
 
 import type { QueryFilter } from "@/types";
 import { Logger } from "@/logger";
-import type { Item, ItemCreationInput, ItemList } from "@/types";
+import type { Webhook, WebhookCreationInput, WebhookList } from "@/types";
 
 import { backendRoutes } from "@/constants/routes";
 import {defaultAPIRequestConfig, requestLogFunction} from "@/requests/defaults";
 
 const logger = new Logger().withDebugValue("source", "src/requests/items.ts");
 
-export function searchForItems(query: string, qf: QueryFilter, adminMode: boolean = false): Promise<AxiosResponse> {
+export function searchForWebhooks(query: string, qf: QueryFilter, adminMode: boolean = false): Promise<AxiosResponse> {
     const outboundURLParams = qf.toURLSearchParams();
     if (adminMode) {
         outboundURLParams.set("admin", "true");
@@ -23,7 +23,7 @@ export function searchForItems(query: string, qf: QueryFilter, adminMode: boolea
         .then(requestLogFunction(logger, uri));
 }
 
-export function fetchListOfItems(qf: QueryFilter, adminMode: boolean = false): Promise<AxiosResponse> {
+export function fetchListOfWebhooks(qf: QueryFilter, adminMode: boolean = false): Promise<AxiosResponse> {
     const outboundURLParams = qf.toURLSearchParams();
 
     if (adminMode) {
@@ -35,31 +35,31 @@ export function fetchListOfItems(qf: QueryFilter, adminMode: boolean = false): P
         .then(requestLogFunction(logger, uri));
 }
 
-export function createItem(item: ItemCreationInput): Promise<AxiosResponse> {
+export function createWebhook(item: WebhookCreationInput): Promise<AxiosResponse> {
     const uri = backendRoutes.CREATE_ITEM;
     return axios.post(uri, item, defaultAPIRequestConfig)
         .then(requestLogFunction(logger, uri));
 }
 
-export function fetchItem(id: number): Promise<AxiosResponse> {
+export function fetchWebhook(id: number): Promise<AxiosResponse> {
     const uri = format(backendRoutes.INDIVIDUAL_ITEM, id.toString());
     return axios.get(uri, defaultAPIRequestConfig)
     .then(requestLogFunction(logger, uri));
 }
 
-export function saveItem(item: Item): Promise<AxiosResponse> {
+export function saveWebhook(item: Webhook): Promise<AxiosResponse> {
     const uri = format(backendRoutes.INDIVIDUAL_ITEM, item.id.toString());
     return axios.put(uri, item, defaultAPIRequestConfig)
         .then(requestLogFunction(logger, uri));
 }
 
-export function deleteItem(id: number): Promise<AxiosResponse> {
+export function deleteWebhook(id: number): Promise<AxiosResponse> {
     const uri = format(backendRoutes.INDIVIDUAL_ITEM, id.toString());
     return axios.delete(uri, defaultAPIRequestConfig)
         .then(requestLogFunction(logger, uri));
 }
 
-export function fetchAuditLogEntriesForItem(id: number): Promise<AxiosResponse> {
+export function fetchAuditLogEntriesForWebhook(id: number): Promise<AxiosResponse> {
     const uri = format(backendRoutes.INDIVIDUAL_ITEM_AUDIT_LOG, id.toString());
     return axios.get(uri, defaultAPIRequestConfig)
     .then(requestLogFunction(logger, uri));

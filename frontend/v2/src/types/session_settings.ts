@@ -8,7 +8,10 @@ export class UserSiteSettings {
     language: LanguageTag;
     darkMode: boolean;
 
-    constructor(language?: supportedLanguage) {
+    constructor(
+      language?: supportedLanguage,
+      darkMode: boolean = false,
+    ) {
         if (!language) {
             switch (window.navigator.language) {
             case "es-MX":
@@ -22,6 +25,6 @@ export class UserSiteSettings {
         }
         
         this.language = fetchLanguage(language);
-        this.darkMode = false;
+        this.darkMode = darkMode;
     }
 }

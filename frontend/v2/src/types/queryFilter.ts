@@ -5,12 +5,6 @@ const enum SortBy {
     DESCENDING = "desc",
 }
 
-export function NewQueryFilterFromCurrentPage() {
-    const pageURLParams: URLSearchParams = new URLSearchParams(window.location.search);
-
-
-}
-
 const queryFilterKeyPage: string = "page";
 const queryFilterKeyCreatedBefore: string = "createdBefore";
 const queryFilterKeyCreatedAfter: string = "createdAfter";
@@ -29,15 +23,24 @@ export class QueryFilter {
     includeArchived: boolean;
     sortBy: SortBy;
 
-    constructor() {
-        this.page = 0;
-        this.limit = 20;
-        this.createdBefore = 0;
-        this.createdAfter = 0;
-        this.updatedBefore = 0;
-        this.updatedAfter = 0;
-        this.includeArchived = false;
-        this.sortBy = SortBy.ASCENDING;
+    constructor(
+        page: number = 0,
+        limit: number = 0,
+        createdBefore: number = 0,
+        createdAfter: number = 0,
+        updatedBefore: number = 0,
+        updatedAfter: number = 0,
+        includeArchived: boolean = false,
+        sortBy: SortBy =  SortBy.ASCENDING,
+    ) {
+        this.page = page;
+        this.limit = limit;
+        this.createdBefore = createdBefore;
+        this.createdAfter = createdAfter;
+        this.updatedBefore = updatedBefore;
+        this.updatedAfter = updatedAfter;
+        this.includeArchived = includeArchived;
+        this.sortBy = sortBy;
     }
 
     static fromURLSearchParams(input?: URLSearchParams): QueryFilter {

@@ -42,3 +42,10 @@ export function deleteUser(id: number): Promise<AxiosResponse> {
     return axios.delete(uri, defaultAPIRequestConfig)
         .then(requestLogFunction(logger, uri));
 }
+
+
+export function fetchAuditLogEntriesForUser(id: number): Promise<AxiosResponse> {
+    const uri = format(backendRoutes.INDIVIDUAL_USER_AUDIT_LOG, id.toString());
+    return axios.get(uri, defaultAPIRequestConfig)
+    .then(requestLogFunction(logger, uri));
+}

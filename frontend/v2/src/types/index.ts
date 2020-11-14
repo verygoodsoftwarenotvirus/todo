@@ -7,6 +7,8 @@ export * from './audit_log_entries';
 
 // default types
 export * from './users';
+export * from './webhooks';
+export * from './oauth2clients';
 
 // things
 export * from './items';

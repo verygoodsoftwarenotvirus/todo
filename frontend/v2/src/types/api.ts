@@ -3,10 +3,14 @@ export class Pagination {
     limit: number;
     totalCount: number;
 
-    constructor() {
-        this.page = 0;
-        this.limit = 0;
-        this.totalCount = 0;
+    constructor(
+      page: number = 0,
+      limit: number = 0,
+      totalCount: number = 0,
+    ) {
+        this.page = page;
+        this.limit = limit;
+        this.totalCount = totalCount;
     }
 }
 
@@ -14,8 +18,11 @@ export class ErrorResponse {
     message: string;
     code: number;
 
-    constructor() {
-        this.message = '';
-        this.code = 0;
+    constructor(
+      message: string = '',
+      code: number = 0,
+    ) {
+        this.message = message;
+        this.code = code;
     }
 }

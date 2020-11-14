@@ -26,22 +26,28 @@ export class Item {
     archivedOn?: number;
     belongsToUser: number;
 
-    constructor() {
-        this.id = 0;
-        this.name = "";
-        this.details = "";
-        this.createdOn = 0;
-        this.belongsToUser = 0;
+    constructor(
+      id: number = 0,
+      name: string = '',
+      details: string = '',
+      createdOn: number = 0,
+      belongsToUser: number = 0,
+    ) {
+        this.id = id;
+        this.name = name;
+        this.details = details;
+        this.createdOn = createdOn;
+        this.belongsToUser = belongsToUser;
     }
 
     static areEqual = function(
-        i1: Item,
-        i2: Item,
+        x: Item,
+        y: Item,
     ): boolean {
         return (
-            i1.id === i2.id &&
-            i1.name === i2.name &&
-            i1.details === i2.details
+            x.id === y.id &&
+            x.name === y.name &&
+            x.details === y.details
         );
     }
 

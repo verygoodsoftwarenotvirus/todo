@@ -15,10 +15,14 @@ export class RegistrationRequest {
     password: string;
     repeatedPassword: string;
 
-    constructor() {
-        this.username = '';
-        this.password = '';
-        this.repeatedPassword = '';
+    constructor(
+        username: string = '',
+        password: string = '',
+        repeatedPassword: string = '',
+    ) {
+        this.username = username;
+        this.password = password;
+        this.repeatedPassword = repeatedPassword;
     }
 }
 
@@ -26,8 +30,11 @@ export class TOTPTokenValidationRequest {
     userID: number;
     totpToken: string;
 
-    constructor() {
-        this.userID = 0;
-        this.totpToken = '';
+    constructor(
+        userID: number = 0,
+        totpToken: string = '',
+    ) {
+        this.userID = userID;
+        this.totpToken = totpToken;
     }
 }

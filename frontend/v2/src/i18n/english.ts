@@ -1,5 +1,10 @@
 import type {SiteTranslationMap} from "@/i18n/definitions";
 
+const _id = "ID",
+      _createdOn = "",
+      _lastUpdatedOn = "Last Updated On",
+      _belongsToUser = "Belongs to User";
+
 export const englishTranslations: SiteTranslationMap = {
   components: {
     apiTable: {
@@ -17,10 +22,10 @@ export const englishTranslations: SiteTranslationMap = {
         search: "search",
       },
       columns: {
-        id: "ID",
+        id: _id,
         eventType: "Event Type",
         context: "Context",
-        createdOn: "Created On",
+        createdOn: _createdOn,
       },
     },
     dropdowns: {
@@ -161,12 +166,12 @@ export const englishTranslations: SiteTranslationMap = {
         create: "Create Item"
       },
       columns: {
-        id: "ID",
+        id: _id,
         name: "Name",
         details: "Details",
-        createdOn: "Created On",
-        lastUpdatedOn: "Last Updated On",
-        belongsToUser: "Belongs to User",
+        createdOn: _createdOn,
+        lastUpdatedOn: _lastUpdatedOn,
+        belongsToUser: _belongsToUser,
       },
       labels: {
         name: "Name",
@@ -187,6 +192,68 @@ export const englishTranslations: SiteTranslationMap = {
       },
       inputPlaceholders: {
         name: "name",
+      },
+    },
+    oauth2Client: {
+      actions: {
+        create: "Create",
+        update: "Update",
+      },
+      columns: {
+        id: _id,
+        name: "Name",
+        clientID: "Client ID",
+        clientSecret: "Client Secret",
+        redirectURI: "Redirect URI",
+        scopes: "Scopes",
+        implicitAllowed: "Implicit Allowed",
+        createdOn: _createdOn,
+        lastUpdatedOn: _lastUpdatedOn,
+        belongsToUser: _belongsToUser,
+      },
+      labels: {
+        name: "Name",
+        clientID: "Client ID",
+        clientSecret: "Client Secret",
+        redirectURI: "Redirect URI",
+      },
+      inputPlaceholders: {
+        name: "Name",
+        redirectURI: "https://redirect-to-here.pizza",
+      },
+    },
+    webhook: {
+      actions: {
+        create: "Create",
+        update: "Update",
+      },
+      columns: {
+        id: _id,
+        name: "Name",
+        contentType: "Content-Type",
+        url: "URL",
+        method: "Method",
+        events: "Events",
+        dataTypes: "Data Types",
+        topics: "Topics",
+        createdOn: _createdOn,
+        lastUpdatedOn: _lastUpdatedOn,
+        belongsToUser: _belongsToUser,
+      },
+      labels: {
+        name: "Name",
+        contentType: "Content-Type",
+        url: "URL",
+        method: "Methods",
+        events: "Events",
+        dataTypes: "Data Types",
+        topics: "Topics",
+      },
+      inputPlaceholders: {
+        name: "Name",
+        contentType: "application/example",
+        url: "https://url-to-use.com",
+        method: "POST",
       },
     },
   },

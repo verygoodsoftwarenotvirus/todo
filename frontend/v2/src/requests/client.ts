@@ -23,6 +23,7 @@ import {
     fetchUser,
     deleteUser,
     fetchListOfUsers,
+    fetchAuditLogEntriesForUser,
 } from './users';
 
 export class V1APIClient {
@@ -41,6 +42,7 @@ export class V1APIClient {
     static registrationRequest = registrationRequest;
     static checkAuthStatusRequest = checkAuthStatusRequest;
     static validateTOTPSecretWithToken = validateTOTPSecretWithToken;
+    static fetchAuditLogEntriesForUser = fetchAuditLogEntriesForUser;
 
     // items stuff
     static createItem = createItem;

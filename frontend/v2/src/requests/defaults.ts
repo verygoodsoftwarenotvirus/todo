@@ -12,3 +12,13 @@ export function requestLogFunction(logger: Logger, uri: string) {
         return response;
     }
 }
+
+class databaseRecord {
+    createdOn: number;
+    updatedOn?: number;
+    archivedOn?: number;
+    
+    constructor() {
+        this.createdOn = 0;
+    }
+}

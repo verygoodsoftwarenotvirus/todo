@@ -1,6 +1,6 @@
-import {LanguageTag, languageTag, translate} from "typed-intl";
+import { LanguageTag, languageTag, translate } from "typed-intl";
 
-import {englishTranslations} from "@/i18n/english";
+import { englishTranslations } from "@/i18n/english";
 import type {
   adminNavbarTranslations,
   authNavbarTranslations,
@@ -30,51 +30,49 @@ export type supportedLanguage = "en-US" | "es-MX";
 
 export function fetchLanguage(name: supportedLanguage): LanguageTag {
   switch (name.toLowerCase().trim()) {
-  case mexicanSpanish.toLowerCase().trim():
-    return languageTag(mexicanSpanish)
-  default:
-    return languageTag(defaultLanguage)
+    case mexicanSpanish.toLowerCase().trim():
+      return languageTag(mexicanSpanish);
+    default:
+      return languageTag(defaultLanguage);
   }
 }
 
 export type SiteTranslationMap = {
   components: {
-    apiTable: apiTableTranslations,
+    apiTable: apiTableTranslations;
     dropdowns: {
-      userDropdown: userDropdownTranslations,
-    },
-    auditLogEntryTable: auditLogEntryTableTranslations,
+      userDropdown: userDropdownTranslations;
+    };
+    auditLogEntryTable: auditLogEntryTableTranslations;
     navbars: {
-      adminNavbar: adminNavbarTranslations,
-      authNavbar: authNavbarTranslations,
-      homepageNavbar: homepageNavbarTranslations,
-    },
+      adminNavbar: adminNavbarTranslations;
+      authNavbar: authNavbarTranslations;
+      homepageNavbar: homepageNavbarTranslations;
+    };
     sidebars: {
-      primary: primarySidebarTranslations,
-    },
+      primary: primarySidebarTranslations;
+    };
     footers: {
-      mainFooter: mainFooterTranslations,
-      adminFooter: adminFooterTranslations,
-      smallFooter: smallFooterTranslations,
-    },
-  },
+      mainFooter: mainFooterTranslations;
+      adminFooter: adminFooterTranslations;
+      smallFooter: smallFooterTranslations;
+    };
+  };
   pages: {
-    home: homePageTranslations,
-    login: loginPageTranslations,
-    registration: registrationPageTranslations,
-    userSettings: userSettingsPageTranslations,
-  },
+    home: homePageTranslations;
+    login: loginPageTranslations;
+    registration: registrationPageTranslations;
+    userSettings: userSettingsPageTranslations;
+  };
   models: {
-    item: itemModelTranslations,
-    user: userModelTranslations,
-    oauth2Client: oauth2ClientModelTranslations,
-    webhook: webhookModelTranslations,
-  },
-}
+    item: itemModelTranslations;
+    user: userModelTranslations;
+    oauth2Client: oauth2ClientModelTranslations;
+    webhook: webhookModelTranslations;
+  };
+};
 
-export const translations = translate(
-  englishTranslations,
-)
+export const translations = translate(englishTranslations);
 // .supporting(mexicanSpanish,
 //     // TODO: actually translate, lol
 //     {},

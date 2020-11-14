@@ -1,11 +1,11 @@
 export const enum methods {
-  DELETE = 'DELETE',
-  GET = 'GET',
-  HEAD = 'HEAD',
-  PATCH = 'PATCH',
-  POST = 'POST',
-  PUT = 'PUT',
-};
+  DELETE = "DELETE",
+  GET = "GET",
+  HEAD = "HEAD",
+  PATCH = "PATCH",
+  POST = "POST",
+  PUT = "PUT",
+}
 
 export const enum statusCodes {
   CONTINUE = 100,

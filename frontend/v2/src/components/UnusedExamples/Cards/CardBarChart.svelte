@@ -24,7 +24,7 @@
             borderColor: "#ed64a6",
             data: [30, 78, 56, 34, 100, 45, 13],
             fill: false,
-            barThickness: 8
+            barThickness: 8,
           },
           {
             label: new Date().getFullYear() - 1,
@@ -32,9 +32,9 @@
             backgroundColor: "#4c51bf",
             borderColor: "#4c51bf",
             data: [27, 68, 86, 74, 10, 4, 87],
-            barThickness: 8
-          }
-        ]
+            barThickness: 8,
+          },
+        ],
       },
       options: {
         maintainAspectRatio: false,
@@ -103,23 +103,18 @@
 </script>
 
 <div
-  class="relative flex flex-col min-w-0 break-words bg-white w-full mb-6 shadow-lg rounded"
->
+  class="relative flex flex-col min-w-0 break-words bg-white w-full mb-6 shadow-lg rounded">
   <div class="rounded-t mb-0 px-4 py-3 bg-transparent">
     <div class="flex flex-wrap items-center">
       <div class="relative w-full max-w-full flex-grow flex-1">
         <h6 class="uppercase text-gray-500 mb-1 text-xs font-semibold">
           Performance
         </h6>
-        <h2 class="text-gray-800 text-xl font-semibold">
-          Total orders
-        </h2>
+        <h2 class="text-gray-800 text-xl font-semibold">Total orders</h2>
       </div>
     </div>
   </div>
   <div class="p-4 flex-auto">
-    <div class="relative h-350-px">
-      <canvas id="bar-chart"></canvas>
-    </div>
+    <div class="relative h-350-px"><canvas id="bar-chart" /></div>
   </div>
 </div>

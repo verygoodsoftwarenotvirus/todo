@@ -1,7 +1,7 @@
 export type itemModelTranslations = {
   actions: {
     create: string;
-  },
+  };
   columns: {
     id: string;
     name: string;
@@ -9,35 +9,35 @@ export type itemModelTranslations = {
     createdOn: string;
     lastUpdatedOn: string;
     belongsToUser: string;
-  },
+  };
   labels: {
     name: string;
     details: string;
-  },
+  };
   inputPlaceholders: {
     name: string;
     details: string;
-  },
-}
+  };
+};
 
 export type userModelTranslations = {
   actions: {
     save: string;
     delete: string;
-  },
+  };
   labels: {
     name: string;
-  },
+  };
   inputPlaceholders: {
     name: string;
-  },
-}
+  };
+};
 
 export type oauth2ClientModelTranslations = {
   actions: {
     create: string;
     update: string;
-  },
+  };
   columns: {
     id: string;
     name: string;
@@ -49,24 +49,24 @@ export type oauth2ClientModelTranslations = {
     createdOn: string;
     lastUpdatedOn: string;
     belongsToUser: string;
-  },
+  };
   labels: {
     name: string;
     clientID: string;
     clientSecret: string;
     redirectURI: string;
-  },
+  };
   inputPlaceholders: {
     name: string;
     redirectURI: string;
-  },
-}
+  };
+};
 
 export type webhookModelTranslations = {
   actions: {
     create: string;
     update: string;
-  },
+  };
   columns: {
     id: string;
     name: string;
@@ -79,7 +79,7 @@ export type webhookModelTranslations = {
     createdOn: string;
     lastUpdatedOn: string;
     belongsToUser: string;
-  },
+  };
   labels: {
     name: string;
     contentType: string;
@@ -88,11 +88,11 @@ export type webhookModelTranslations = {
     events: string;
     dataTypes: string;
     topics: string;
-  },
+  };
   inputPlaceholders: {
     name: string;
     contentType: string;
     url: string;
     method: string;
-  },
-}
+  };
+};

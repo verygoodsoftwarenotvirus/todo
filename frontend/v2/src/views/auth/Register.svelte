@@ -1,27 +1,33 @@
 <script lang="typescript">
-  import axios, {AxiosError, AxiosResponse} from 'axios';
+  import axios, { AxiosError, AxiosResponse } from "axios";
   import { link, navigate } from "svelte-routing";
-  import {onDestroy} from "svelte";
+  import { onDestroy } from "svelte";
 
   import { Logger } from "../../logger";
-  import {V1APIClient} from "../../requests";
+  import { V1APIClient } from "../../requests";
   import {
     RegistrationRequest,
     UserRegistrationResponse,
     TOTPTokenValidationRequest,
     ErrorResponse,
-    UserSiteSettings
+    UserSiteSettings,
   } from "../../types";
-  import {translations} from "../../i18n";
-  import {sessionSettingsStore} from "../../stores";
+  import { translations } from "../../i18n";
+  import { sessionSettingsStore } from "../../stores";
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
-  let translationsToUse = translations.messagesFor(currentSessionSettings.language).pages.registration;
-  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: UserSiteSettings) => {
-    currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(currentSessionSettings.language).pages.registration;
-  });
+  let translationsToUse = translations.messagesFor(
+    currentSessionSettings.language
+  ).pages.registration;
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
+    (value: UserSiteSettings) => {
+      currentSessionSettings = value;
+      translationsToUse = translations.messagesFor(
+        currentSessionSettings.language
+      ).pages.registration;
+    }
+  );
   onDestroy(unsubscribeFromSettingsUpdates);
 
   export let location: Location;
@@ -30,33 +36,42 @@
   const totpValidationRequest = new TOTPTokenValidationRequest();
 
   let registrationMayProceed = false;
-  let registrationError = '';
-  let postRegistrationQRCode = '';
+  let registrationError = "";
+  let postRegistrationQRCode = "";
   let totpTokenValidationMayProceed = false;
 
-  let logger = new Logger().withDebugValue("source", "src/views/auth/Register.svelte");
+  let logger = new Logger().withDebugValue(
+    "source",
+    "src/views/auth/Register.svelte"
+  );
 
   function evaluateCreationInputs(): string {
     const usernameIsLongEnough = registrationRequest.username.length >= 8;
-    const passwordsMatch = registrationRequest.password === registrationRequest.repeatedPassword;
+    const passwordsMatch =
+      registrationRequest.password === registrationRequest.repeatedPassword;
     const passwordIsLongEnough = registrationRequest.password.length >= 8;
 
     const reasons: string[] = [];
     if (!usernameIsLongEnough) {
-      reasons.push(`username '${registrationRequest.username}' has too few characters`);
+      reasons.push(
+        `username '${registrationRequest.username}' has too few characters`
+      );
     } else if (!passwordsMatch) {
       reasons.push("passwords don't match");
     } else if (passwordsMatch && !passwordIsLongEnough) {
-      reasons.push(`password is not long enough (has ${registrationRequest.password.length})`);
+      reasons.push(
+        `password is not long enough (has ${registrationRequest.password.length})`
+      );
     }
 
-    registrationMayProceed = usernameIsLongEnough && passwordIsLongEnough && passwordsMatch
+    registrationMayProceed =
+      usernameIsLongEnough && passwordIsLongEnough && passwordsMatch;
 
-    let last = reasons.pop()
+    let last = reasons.pop();
     if (reasons.length === 1) {
-      return last || '';
+      return last || "";
     } else if (reasons.length > 1) {
-      return reasons.join(', ') + ' and ' + last;
+      return reasons.join(", ") + " and " + last;
     }
 
     return "";
@@ -89,14 +104,15 @@
       });
   }
 
-  function evaluateValidationInputs(): void  {
-    totpTokenValidationMayProceed = totpValidationRequest.totpToken.length === 6
+  function evaluateValidationInputs(): void {
+    totpTokenValidationMayProceed =
+      totpValidationRequest.totpToken.length === 6;
   }
 
-  async function validateTOTPToken(){
-    logger.debug("validateTOTPToken called")
+  async function validateTOTPToken() {
+    logger.debug("validateTOTPToken called");
 
-    const path = "/users/totp_secret/verify"
+    const path = "/users/totp_secret/verify";
 
     if (!totpTokenValidationMayProceed) {
       // this should never occur
@@ -105,7 +121,9 @@
 
     return V1APIClient.validateTOTPSecretWithToken(totpValidationRequest)
       .then((response: AxiosResponse) => {
-        logger.debug(`navigating to /auth/login because totp validation request succeeded`);
+        logger.debug(
+          `navigating to /auth/login because totp validation request succeeded`
+        );
         navigate("/auth/login", { state: {}, replace: true });
       })
       .catch((reason: AxiosError<ErrorResponse>) => {
@@ -120,8 +138,10 @@
 <div class="container mx-auto px-4 h-full">
   <div class="flex content-center items-center justify-center h-full">
     <div class="w-full lg:w-6/12 px-4">
-      <div class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-gray-300 border-0">
-        <div class="rounded-t mb-0 px-6 py-6"></div> <!-- spacer div -->
+      <div
+        class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-gray-300 border-0">
+        <div class="rounded-t mb-0 px-6 py-6" />
+        <!-- spacer div -->
         {#if postRegistrationQRCode === ''}
           <div class="flex-auto px-4 lg:px-10 py-10 pt-0">
             <form>
@@ -247,7 +267,7 @@
         {/if}
       </div>
       <div class="flex flex-wrap mt-6 relative">
-        <div class="w-1/2"></div>
+        <div class="w-1/2" />
         <div class="w-1/2 text-right">
           <a use:link href="/auth/login" class="text-gray-300">
             <small>{translationsToUse.linkTexts.loginInstead}</small>

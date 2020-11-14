@@ -1,2 +1,2 @@
 // core
-export * from './fakes';
+export * from "./fakes";

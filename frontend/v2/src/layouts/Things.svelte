@@ -14,36 +14,41 @@
   // pages for this layout
   import Items from "../views/things/Items.svelte";
 
-  import {userStatusStore} from "../stores";
-  import {UserStatus} from "../types";
-  import {Logger} from "../logger";
+  import { userStatusStore } from "../stores";
+  import { UserStatus } from "../types";
+  import { Logger } from "../logger";
 
   export let location: Location;
 
-  let logger = new Logger().withDebugValue("source", "src/layouts/Things.svelte");
+  let logger = new Logger().withDebugValue(
+    "source",
+    "src/layouts/Things.svelte"
+  );
 
   let currentAuthStatus = {};
-  const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
-    currentAuthStatus = value;
-    // if (!currentAuthStatus || !currentAuthStatus.isAuthenticated) {
-    //   logger.debug(`navigating to /auth/login because user is unauthenticated`);
-    //   navigate("/auth/login", {state: {}, replace: true});
-    // }
-  });
+  const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
+    (value: UserStatus) => {
+      currentAuthStatus = value;
+      // if (!currentAuthStatus || !currentAuthStatus.isAuthenticated) {
+      //   logger.debug(`navigating to /auth/login because user is unauthenticated`);
+      //   navigate("/auth/login", {state: {}, replace: true});
+      // }
+    }
+  );
   onDestroy(unsubscribeFromUserStatusUpdates);
 </script>
 
 <div>
-  <Sidebar location={location}/>
+  <Sidebar {location} />
   <div class="relative md:ml-64 bg-gray-200">
     <AdminNavbar />
     <div class="px-4 md:px-10 mx-auto w-full -m-24">
       <Router url="things">
-        <Route path="items" component="{Items}" />
+        <Route path="items" component={Items} />
         <Route path="items/:id" let:params>
-          <ReadUpdateDeleteItem id="{params.id}" />
+          <ReadUpdateDeleteItem id={params.id} />
         </Route>
-        <Route path="items/new" component="{CreateItem}" />
+        <Route path="items/new" component={CreateItem} />
       </Router>
       <AdminFooter />
     </div>

@@ -1,9 +1,9 @@
-import type {SiteTranslationMap} from "@/i18n/definitions";
+import type { SiteTranslationMap } from "@/i18n/definitions";
 
 const _id = "ID",
-      _createdOn = "",
-      _lastUpdatedOn = "Last Updated On",
-      _belongsToUser = "Belongs to User";
+  _createdOn = "",
+  _lastUpdatedOn = "Last Updated On",
+  _belongsToUser = "Belongs to User";
 
 export const englishTranslations: SiteTranslationMap = {
   components: {
@@ -113,7 +113,7 @@ export const englishTranslations: SiteTranslationMap = {
     registration: {
       buttons: {
         register: "Create Account",
-        submitVerification: "I've Saved It!"
+        submitVerification: "I've Saved It!",
       },
       inputLabels: {
         username: "Username",
@@ -130,10 +130,12 @@ export const englishTranslations: SiteTranslationMap = {
         loginInstead: "Login instead?",
       },
       notices: {
-        saveQRSecretNotice: "Save the secret this QR code contains in your 2FA Code generator of choice. You'll be required to generate a token from it on every login."
+        saveQRSecretNotice:
+          "Save the secret this QR code contains in your 2FA Code generator of choice. You'll be required to generate a token from it on every login.",
       },
       instructions: {
-        enterGeneratedTwoFactorCode: "Enter an example generated code to verify you've completed the above step:"
+        enterGeneratedTwoFactorCode:
+          "Enter an example generated code to verify you've completed the above step:",
       },
     },
     userSettings: {
@@ -163,7 +165,7 @@ export const englishTranslations: SiteTranslationMap = {
   models: {
     item: {
       actions: {
-        create: "Create Item"
+        create: "Create Item",
       },
       columns: {
         id: _id,

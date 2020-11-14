@@ -1,9 +1,9 @@
 <script lang="typescript">
-  import {Router, Route, navigate} from "svelte-routing";
+  import { Router, Route, navigate } from "svelte-routing";
 
   import { userStatusStore } from "../stores";
-  import {UserStatus} from "../types";
-  import {onDestroy} from "svelte";
+  import { UserStatus } from "../types";
+  import { onDestroy } from "svelte";
 
   // components for this layout
   import AuthNavbar from "../components/Navbars/AuthNavbar.svelte";
@@ -17,13 +17,15 @@
 
   export let location: Location;
 
-  import {Logger} from "../logger";
+  import { Logger } from "../logger";
   let logger = new Logger().withDebugValue("source", "src/layouts/Auth.svelte");
 
   let currentAuthStatus = {};
-  const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
-    currentAuthStatus = value;
-  });
+  const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
+    (value: UserStatus) => {
+      currentAuthStatus = value;
+    }
+  );
   onDestroy(unsubscribeFromUserStatusUpdates);
 </script>
 
@@ -33,11 +35,10 @@
     <section class="relative w-full h-full py-40 min-h-screen">
       <div
         class="absolute top-0 w-full h-full bg-gray-900 bg-no-repeat bg-full"
-        style="background-image: url({registerBg2});"
-      ></div>
+        style="background-image: url({registerBg2});" />
       <Router url="auth">
-        <Route path="login" component="{Login}" />
-        <Route path="register" component="{Register}" />
+        <Route path="login" component={Login} />
+        <Route path="register" component={Register} />
       </Router>
       <SmallFooter absolute="true" />
     </section>

@@ -11,8 +11,8 @@
   import Settings from "../views/user/Settings.svelte";
 
   import { userStatusStore } from "../stores";
-  import {User, UserStatus} from "../types";
-  import { Logger } from "../logger"
+  import { User, UserStatus } from "../types";
+  import { Logger } from "../logger";
 
   let logger = new Logger().withDebugValue("source", "src/layouts/User.svelte");
 
@@ -30,12 +30,12 @@
 </script>
 
 <div>
-  <Sidebar location={location}/>
+  <Sidebar {location} />
   <div class="relative md:ml-64 bg-gray-200">
     <AdminNavbar />
     <div class="px-4 md:px-10 mx-auto w-full -m-24">
       <Router url="admin">
-        <Route path="settings" component="{Settings}" />
+        <Route path="settings" component={Settings} />
       </Router>
       <AdminFooter />
     </div>

@@ -5,23 +5,31 @@
   // core components
   import UserDropdown from "../Dropdowns/UserDropdown.svelte";
 
-  import {sessionSettingsStore, userStatusStore} from "../../stores";
-  import {UserSiteSettings, UserStatus} from "../../types";
-  import {translations} from "../../i18n";
+  import { sessionSettingsStore, userStatusStore } from "../../stores";
+  import { UserSiteSettings, UserStatus } from "../../types";
+  import { translations } from "../../i18n";
 
   let currentAuthStatus = {};
-  const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe((value: UserStatus) => {
-    currentAuthStatus = value;
-  });
+  const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
+    (value: UserStatus) => {
+      currentAuthStatus = value;
+    }
+  );
   onDestroy(unsubscribeFromUserStatusUpdates);
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
-  let translationsToUse = translations.messagesFor(currentSessionSettings.language).components.navbars.adminNavbar;
-  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe((value: UserSiteSettings) => {
-    currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(currentSessionSettings.language).components.navbars.adminNavbar;
-  });
+  let translationsToUse = translations.messagesFor(
+    currentSessionSettings.language
+  ).components.navbars.adminNavbar;
+  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
+    (value: UserSiteSettings) => {
+      currentSessionSettings = value;
+      translationsToUse = translations.messagesFor(
+        currentSessionSettings.language
+      ).components.navbars.adminNavbar;
+    }
+  );
   onDestroy(unsubscribeFromSettingsUpdates);
 </script>
 
@@ -49,7 +57,6 @@
   </div>
 </nav>
 <div class="relative bg-red-500 md:pt-32 pb-32 pt-12">
-  <div class="px-4 md:px-10 mx-auto w-full">
-  </div>
+  <div class="px-4 md:px-10 mx-auto w-full" />
 </div>
 <!-- End Navbar -->

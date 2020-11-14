@@ -1,7 +1,7 @@
 <!-- App.svelte -->
 <script lang="typescript">
-  import {AxiosError, AxiosResponse} from "axios";
-  import {Router, Route, navigate} from "svelte-routing";
+  import { AxiosError, AxiosResponse } from "axios";
+  import { Router, Route, navigate } from "svelte-routing";
 
   import { Logger } from "@/logger";
 
@@ -22,7 +22,7 @@
   let logger = new Logger().withDebugValue("source", "src/App.svelte");
 </script>
 
-<Router url="{url}">
+<Router {url}>
   <!-- admin layout -->
   <Route path="admin/*admin" component="{Admin}" />
   <!-- auth layout -->

@@ -2,5 +2,4 @@
   export let location: Location;
 </script>
 
-<div>
-</div>
+<div />

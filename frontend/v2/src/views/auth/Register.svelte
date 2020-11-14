@@ -28,7 +28,7 @@
       ).pages.registration;
     },
   );
-  onDestroy(unsubscribeFromSettingsUpdates);
+  //  onDestroy(unsubscribeFromSettingsUpdates);
 
   export let location: Location;
 

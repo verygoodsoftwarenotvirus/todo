@@ -1,5 +1,7 @@
 <script lang="typescript">
+  import { onDestroy } from 'svelte';
   import { link, navigate } from 'svelte-routing';
+  import JSONTree from 'svelte-json-tree';
 
   import { Logger } from '../../logger';
   import {
@@ -20,21 +22,28 @@
   // local state
   let searchQuery: string = '';
   let currentPage: number = 0;
+  export let dataRetrievalError: string = '';
 
   export let title: string = '';
   export let headers: string[] = [];
   export let rows: string[][] = [[]];
+
   export let newPageLink: string = '';
   export let individualPageLink: string = '';
-  export let dataRetrievalError: string = '';
 
+  export let searchEnabled: boolean = true;
   export let searchFunction;
+
+  export let deleteEnabled: boolean = true;
+  export let deleteFunction;
+
   export let incrementDisabled;
   export let incrementPageFunction;
+
   export let decrementDisabled;
   export let decrementPageFunction;
+
   export let fetchFunction;
-  export let deleteFunction;
   export let rowRenderFunction;
 
   // set up translations
@@ -42,6 +51,7 @@
   let translationsToUse = translations.messagesFor(
     currentSessionSettings.language,
   ).components.apiTable;
+
   const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
     (value: UserSiteSettings) => {
       currentSessionSettings = value;
@@ -50,6 +60,7 @@
       ).components.apiTable;
     },
   );
+  //  onDestroy(unsubscribeFromSettingsUpdates);
 
   let adminMode: boolean = false;
   const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe(
@@ -58,6 +69,7 @@
       fetchFunction();
     },
   );
+  //  onDestroy(unsubscribeFromAdminModeUpdates);
 
   let currentAuthStatus = {};
   const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
@@ -65,6 +77,7 @@
       currentAuthStatus = value;
     },
   );
+  //  onDestroy(unsubscribeFromUserStatusUpdates);
 
   function search(): void {
     if (searchQuery.length >= 3) {
@@ -137,14 +150,16 @@
 
       <span class="mr-2 ml-2" />
 
-      <div class="flex border-grey-light border">
-        <input
-          class="w-full rounded ml-1"
-          type="text"
-          placeholder={translationsToUse.inputPlaceholders.search}
-          bind:value={searchQuery}
-          on:keyup={search} />
-      </div>
+      {#if searchEnabled}
+        <div class="flex border-grey-light border">
+          <input
+            class="w-full rounded ml-1"
+            type="text"
+            placeholder={translationsToUse.inputPlaceholders.search}
+            bind:value={searchQuery}
+            on:keyup={search} />
+        </div>
+      {/if}
     </div>
   </div>
   <div class="block w-full overflow-x-auto">
@@ -166,10 +181,12 @@
               </th>
             {/if}
           {/each}
-          <th
-            class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
-            {translationsToUse.delete}
-          </th>
+          {#if deleteEnabled}
+            <th
+              class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
+              {translationsToUse.delete}
+            </th>
+          {/if}
         </tr>
       </thead>
       <tbody>
@@ -187,11 +204,17 @@
                 </a>
               {:else if cell.requiresAdmin}
                 {#if currentAuthStatus.isAdmin && adminMode}
-                  <td
-                    class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4">
-                    {cell.content}
-                  </td>
+                  {#if cell.isJSON}
+                    <JSONTree value={JSON.parse(cell.content)} />
+                  {:else}
+                    <td
+                      class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4">
+                      {cell.content}
+                    </td>
+                  {/if}
                 {/if}
+              {:else if cell.isJSON}
+                <JSONTree value={JSON.parse(cell.content)} />
               {:else}
                 <td
                   class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4">
@@ -199,11 +222,13 @@
                 </td>
               {/if}
             {/each}
-            <td
-              class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-right text-red-600"
-              on:click={deleteFunction(row.id)}>
-              <div><i class="fa fa-trash" /></div>
-            </td>
+            {#if deleteEnabled}
+              <td
+                class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-right text-red-600"
+                on:click={deleteFunction(row.id)}>
+                <div><i class="fa fa-trash" /></div>
+              </td>
+            {/if}
           </tr>
         {/each}
 

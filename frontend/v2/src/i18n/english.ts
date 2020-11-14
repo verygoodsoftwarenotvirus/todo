@@ -164,27 +164,6 @@ export const englishTranslations: SiteTranslationMap = {
     },
   },
   models: {
-    item: {
-      actions: {
-        create: 'Create Item',
-      },
-      columns: {
-        id: _id,
-        name: _name,
-        details: 'Details',
-        createdOn: _createdOn,
-        lastUpdatedOn: _lastUpdatedOn,
-        belongsToUser: _belongsToUser,
-      },
-      labels: {
-        name: _name,
-        details: 'Details',
-      },
-      inputPlaceholders: {
-        name: 'name',
-        details: 'details',
-      },
-    },
     user: {
       actions: {
         save: 'Save',
@@ -205,6 +184,14 @@ export const englishTranslations: SiteTranslationMap = {
       },
       inputPlaceholders: {
         name: 'name',
+      },
+    },
+    auditLogEntry: {
+      columns: {
+        id: _id,
+        eventType: 'Event Type',
+        context: 'Context',
+        createdOn: _createdOn,
       },
     },
     oauth2Client: {
@@ -267,6 +254,27 @@ export const englishTranslations: SiteTranslationMap = {
         contentType: 'application/example',
         url: 'https://url-to-use.com',
         method: 'POST',
+      },
+    },
+    item: {
+      actions: {
+        create: 'Create Item',
+      },
+      columns: {
+        id: _id,
+        name: _name,
+        details: 'Details',
+        createdOn: _createdOn,
+        lastUpdatedOn: _lastUpdatedOn,
+        belongsToUser: _belongsToUser,
+      },
+      labels: {
+        name: _name,
+        details: 'Details',
+      },
+      inputPlaceholders: {
+        name: 'name',
+        details: 'details',
       },
     },
   },

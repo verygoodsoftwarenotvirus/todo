@@ -25,7 +25,7 @@
       ).components.navbars.homepageNavbar;
     },
   );
-  onDestroy(unsubscribeFromSettingsUpdates);
+  //  onDestroy(unsubscribeFromSettingsUpdates);
 </script>
 
 <nav

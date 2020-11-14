@@ -28,7 +28,7 @@
       ).components.navbars.authNavbar;
     },
   );
-  onDestroy(unsubscribeFromSettingsUpdates);
+  //  onDestroy(unsubscribeFromSettingsUpdates);
 </script>
 
 <nav

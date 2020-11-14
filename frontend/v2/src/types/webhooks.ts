@@ -3,7 +3,7 @@ import faker from 'faker';
 
 import { Pagination } from '@/types/api';
 import { defaultFactories } from '@/types/fakes';
-import type { APITableCell, APITableHeader } from '@/components/APITable/types';
+import { APITableCell, APITableHeader } from '@/components/APITable/types';
 import { renderUnixTime } from '@/utils';
 import type { webhookModelTranslations } from '@/i18n';
 
@@ -80,45 +80,47 @@ export class Webhook {
   // this function should return everything there are no presumed fields
   static asRow = (x: Webhook): APITableCell[] => {
     return [
-      { fieldName: 'id', content: x.id.toString(), requiresAdmin: false },
-      { fieldName: 'name', content: x.name, requiresAdmin: false },
-      {
+      new APITableCell({
+        fieldName: 'id',
+        content: x.id.toString(),
+      }),
+      new APITableCell({
+        fieldName: 'name',
+        content: x.name,
+      }),
+      new APITableCell({
         fieldName: 'contentType',
         content: x.contentType,
-        requiresAdmin: false,
-      },
-      { fieldName: 'url', content: x.url, requiresAdmin: false },
-      { fieldName: 'method', content: x.method, requiresAdmin: false },
-      {
+      }),
+      new APITableCell({ fieldName: 'url', content: x.url }),
+      new APITableCell({
+        fieldName: 'method',
+        content: x.method,
+      }),
+      new APITableCell({
         fieldName: 'events',
         content: x.events.toString(),
-        requiresAdmin: false,
-      },
-      {
+      }),
+      new APITableCell({
         fieldName: 'dataTypes',
         content: x.dataTypes.toString(),
-        requiresAdmin: false,
-      },
-      {
+      }),
+      new APITableCell({
         fieldName: 'topics',
         content: x.topics.toString(),
-        requiresAdmin: false,
-      },
-      {
+      }),
+      new APITableCell({
         fieldName: 'createdOn',
         content: renderUnixTime(x.createdOn),
-        requiresAdmin: false,
-      },
-      {
+      }),
+      new APITableCell({
         fieldName: 'lastUpdatedOn',
         content: renderUnixTime(x.updatedOn),
-        requiresAdmin: false,
-      },
-      {
+      }),
+      new APITableCell({
         fieldName: 'belongsToUser',
         content: x.belongsToUser.toString(),
-        requiresAdmin: true,
-      },
+      }),
     ];
   };
 }

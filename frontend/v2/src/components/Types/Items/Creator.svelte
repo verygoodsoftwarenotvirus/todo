@@ -33,7 +33,7 @@
       ).models.item;
     },
   );
-  onDestroy(unsubscribeFromSettingsUpdates);
+  //  onDestroy(unsubscribeFromSettingsUpdates);
 
   function createItem(): void {
     logger.debug(`createItem called`);

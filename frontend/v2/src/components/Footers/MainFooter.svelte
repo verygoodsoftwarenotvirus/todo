@@ -17,7 +17,7 @@
       ).components.footers.mainFooter;
     },
   );
-  onDestroy(unsubscribeFromSettingsUpdates);
+  //  onDestroy(unsubscribeFromSettingsUpdates);
 </script>
 
 <footer class="relative bg-gray-300 pt-8 pb-6">

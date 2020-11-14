@@ -20,6 +20,15 @@ export type itemModelTranslations = {
   };
 };
 
+export type auditLogEntryTranslations = {
+  columns: {
+    id: string;
+    eventType: string;
+    context: string;
+    createdOn: string;
+  };
+};
+
 export type userModelTranslations = {
   actions: {
     save: string;

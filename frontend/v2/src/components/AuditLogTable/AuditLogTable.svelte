@@ -36,7 +36,7 @@
       ).components.auditLogEntryTable;
     },
   );
-  onDestroy(unsubscribeFromSettingsUpdates);
+  //  onDestroy(unsubscribeFromSettingsUpdates);
 
   function fetchEntries() {
     entryFetchFunc

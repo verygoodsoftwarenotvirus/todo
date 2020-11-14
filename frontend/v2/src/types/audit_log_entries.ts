@@ -3,7 +3,7 @@ import faker from 'faker';
 
 import { Pagination } from '@/types/api';
 import { defaultFactories } from '@/types/fakes';
-import type { APITableCell, APITableHeader } from '@/components/APITable/types';
+import { APITableCell, APITableHeader } from '@/components/APITable/types';
 import { renderUnixTime } from '@/utils';
 import type { auditLogEntryTableTranslations } from '@/i18n';
 
@@ -57,18 +57,23 @@ export class AuditLogEntry {
   // this function should return everything there are no presumed fields
   static asRow = (x: AuditLogEntry): APITableCell[] => {
     return [
-      { fieldName: 'id', content: x.id.toString(), requiresAdmin: false },
-      { fieldName: 'eventType', content: x.eventType, requiresAdmin: false },
-      {
+      new APITableCell({
+        fieldName: 'id',
+        content: x.id.toString(),
+      }),
+      new APITableCell({
+        fieldName: 'eventType',
+        content: x.eventType,
+      }),
+      new APITableCell({
         fieldName: 'context',
         content: JSON.stringify(x.context),
-        requiresAdmin: false,
-      },
-      {
+        isJSON: true,
+      }),
+      new APITableCell({
         fieldName: 'createdOn',
         content: renderUnixTime(x.createdOn),
-        requiresAdmin: false,
-      },
+      }),
     ];
   };
 }

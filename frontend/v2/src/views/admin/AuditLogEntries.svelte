@@ -24,8 +24,8 @@
 
   export let location;
 
-  let userRetrievalError = '';
-  let users: AuditLogEntry[] = [];
+  let entryRetrievalError = '';
+  let entries: AuditLogEntry[] = [];
 
   const useAPITable: boolean = true;
 
@@ -35,7 +35,7 @@
       currentAuthStatus = value;
     },
   );
-  onDestroy(unsubscribeFromUserStatusUpdates);
+  //  onDestroy(unsubscribeFromUserStatusUpdates);
 
   let adminMode = false;
   const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe(
@@ -43,29 +43,30 @@
       adminMode = value;
     },
   );
-  onDestroy(unsubscribeFromAdminModeUpdates);
+  //  onDestroy(unsubscribeFromAdminModeUpdates);
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(
     currentSessionSettings.language,
-  ).models.user;
+  ).models.auditLogEntry;
+
   const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
     (value: UserSiteSettings) => {
       currentSessionSettings = value;
       translationsToUse = translations.messagesFor(
         currentSessionSettings.language,
-      ).models.user;
+      ).models.auditLogEntry;
     },
   );
-  onDestroy(unsubscribeFromSettingsUpdates);
+  //  onDestroy(unsubscribeFromSettingsUpdates);
 
   let logger = new Logger().withDebugValue(
     'source',
-    'src/views/things/AuditLogEntrys.svelte',
+    'src/views/things/AuditLogEntries.svelte',
   );
 
-  onMount(fetchAuditLogEntrys);
+  onMount(fetchAuditLogEntries);
 
   // begin experimental API table code
 
@@ -75,18 +76,17 @@
   let apiTableDecrementDisabled: boolean = false;
   let apiTableSearchQuery: string = '';
 
-  function searchAuditLogEntrys() {
-    logger.debug('searchAuditLogEntrys called');
-    //
-    //   V1APIClient.searchForAuditLogEntrys(apiTableSearchQuery, queryFilter, adminMode)
+  function searchAuditLogEntries() {
+    logger.debug('searchAuditLogEntries called');
+    //   V1APIClient.searchForAuditLogEntries(apiTableSearchQuery, queryFilter, adminMode)
     //     .then((response: AxiosResponse<AuditLogEntryList>) => {
-    //       users = response.data.users || [];
+    //       entries = response.data.entries || [];
     //       queryFilter.page = -1;
     //     })
     //     .catch((error: AxiosError) => {
     //       if (error.response) {
     //         if (error.response.data) {
-    //           userRetrievalError = error.response.data;
+    //           entryRetrievalError = error.response.data;
     //         }
     //       }
     //     });
@@ -96,7 +96,7 @@
     if (!apiTableIncrementDisabled) {
       logger.debug(`incrementPage called`);
       queryFilter.page += 1;
-      fetchAuditLogEntrys();
+      fetchAuditLogEntries();
     }
   }
 
@@ -104,25 +104,25 @@
     if (!apiTableDecrementDisabled) {
       logger.debug(`decrementPage called`);
       queryFilter.page -= 1;
-      fetchAuditLogEntrys();
+      fetchAuditLogEntries();
     }
   }
 
-  function fetchAuditLogEntrys() {
-    logger.debug('fetchAuditLogEntrys called');
+  function fetchAuditLogEntries() {
+    logger.debug('fetchAuditLogEntries called');
 
     V1APIClient.fetchListOfAuditLogEntries(queryFilter, adminMode)
       .then((response: AxiosResponse<AuditLogEntryList>) => {
-        users = response.data.users || [];
+        entries = response.data.entries || [];
 
         queryFilter.page = response.data.page;
-        apiTableIncrementDisabled = users.length === 0;
+        apiTableIncrementDisabled = entries.length === 0;
         apiTableDecrementDisabled = queryFilter.page === 1;
       })
       .catch((error: AxiosError) => {
         if (error.response) {
           if (error.response.data) {
-            userRetrievalError = error.response.data;
+            entryRetrievalError = error.response.data;
           }
         }
       });
@@ -136,19 +136,19 @@
 <div class="flex flex-wrap mt-4">
   <div class="w-full mb-12 px-4">
     <APITable
-      title="AuditLogEntrys"
+      title="Audit Log"
       headers={AuditLogEntry.headers(translationsToUse)}
-      rows={users}
-      individualPageLink="/things/users"
-      newPageLink="/things/users/new"
-      dataRetrievalError={userRetrievalError}
-      searchFunction={searchAuditLogEntrys}
+      rows={entries}
+      individualPageLink="/things/entries"
+      newPageLink="/things/entries/new"
+      dataRetrievalError={entryRetrievalError}
+      searchEnabled={false}
       incrementDisabled={apiTableIncrementDisabled}
       decrementDisabled={apiTableDecrementDisabled}
       incrementPageFunction={incrementPage}
       decrementPageFunction={decrementPage}
-      fetchFunction={fetchAuditLogEntrys}
-      deleteFunction={promptDelete}
+      fetchFunction={fetchAuditLogEntries}
+      deleteEnabled={false}
       rowRenderFunction={AuditLogEntry.asRow} />
   </div>
 </div>

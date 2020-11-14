@@ -37,7 +37,7 @@
       ).components.dropdowns.userDropdown;
     },
   );
-  onDestroy(unsubscribeFromSettingsUpdates);
+  //  onDestroy(unsubscribeFromSettingsUpdates);
 
   let currentAuthStatus: UserStatus = new UserStatus();
   const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
@@ -45,7 +45,7 @@
       currentAuthStatus = value;
     },
   );
-  onDestroy(unsubscribeFromUserStatusUpdates);
+  //  onDestroy(unsubscribeFromUserStatusUpdates);
 
   let adminMode: boolean = false;
   const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe(
@@ -53,7 +53,7 @@
       adminMode = value;
     },
   );
-  onDestroy(unsubscribeFromAdminModeUpdates);
+  //  onDestroy(unsubscribeFromAdminModeUpdates);
 
   function goToSettings() {
     dropdownPopoverShow = false;

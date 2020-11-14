@@ -35,7 +35,7 @@
       currentAuthStatus = value;
     },
   );
-  onDestroy(unsubscribeFromUserStatusUpdates);
+  //  onDestroy(unsubscribeFromUserStatusUpdates);
 
   let adminMode = false;
   const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe(
@@ -43,13 +43,14 @@
       adminMode = value;
     },
   );
-  onDestroy(unsubscribeFromAdminModeUpdates);
+  //  onDestroy(unsubscribeFromAdminModeUpdates);
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
   let translationsToUse = translations.messagesFor(
     currentSessionSettings.language,
   ).models.item;
+
   const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
     (value: UserSiteSettings) => {
       currentSessionSettings = value;
@@ -58,7 +59,7 @@
       ).models.item;
     },
   );
-  onDestroy(unsubscribeFromSettingsUpdates);
+  //  onDestroy(unsubscribeFromSettingsUpdates);
 
   let logger = new Logger().withDebugValue(
     'source',
@@ -160,12 +161,14 @@
       individualPageLink="/things/items"
       newPageLink="/things/items/new"
       dataRetrievalError={itemRetrievalError}
+      searchEnabled={true}
       searchFunction={searchItems}
       incrementDisabled={apiTableIncrementDisabled}
       decrementDisabled={apiTableDecrementDisabled}
       incrementPageFunction={incrementPage}
       decrementPageFunction={decrementPage}
       fetchFunction={fetchItems}
+      deleteEnabled={true}
       deleteFunction={promptDelete}
       rowRenderFunction={Item.asRow} />
   </div>

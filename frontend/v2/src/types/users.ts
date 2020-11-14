@@ -5,7 +5,7 @@ import { Pagination } from '@/types/api';
 import { defaultFactories } from '@/types/fakes';
 import { isNumeric, renderUnixTime } from '@/utils';
 import type { userModelTranslations } from '@/i18n';
-import type { APITableCell, APITableHeader } from '@/components/APITable/types';
+import { APITableCell, APITableHeader } from '@/components/APITable/types';
 
 export class UserList extends Pagination {
   users: User[];
@@ -76,38 +76,39 @@ export class User {
   // this function should return everything there are no presumed fields
   static asRow = (x: User): APITableCell[] => {
     return [
-      { fieldName: 'id', content: x.id.toString(), requiresAdmin: false },
-      { fieldName: 'username', content: x.username, requiresAdmin: false },
-      {
+      new APITableCell({
+        fieldName: 'id',
+        content: x.id.toString(),
+      }),
+      new APITableCell({
+        fieldName: 'username',
+        content: x.username,
+      }),
+      new APITableCell({
         fieldName: 'isAdmin',
         content: x.isAdmin.toString(),
-        requiresAdmin: false,
-      },
-      {
+      }),
+      new APITableCell({
         fieldName: 'requiresPasswordChange',
         content: x.requiresPasswordChange.toString(),
-        requiresAdmin: false,
-      },
-      {
+      }),
+      new APITableCell({
         fieldName: 'passwordLastChangedOn',
         content: (x.passwordLastChangedOn || 'never').toString(),
-        requiresAdmin: false,
-      },
-      {
+      }),
+      new APITableCell({
         fieldName: 'createdOn',
         content: renderUnixTime(x.createdOn),
-        requiresAdmin: false,
-      },
-      {
+      }),
+      new APITableCell({
         fieldName: 'lastUpdatedOn',
         content: renderUnixTime(x.lastUpdatedOn),
-        requiresAdmin: false,
-      },
-      {
+      }),
+      new APITableCell({
         fieldName: 'archivedOn',
         content: renderUnixTime(x.archivedOn),
         requiresAdmin: true,
-      },
+      }),
     ];
   };
 }

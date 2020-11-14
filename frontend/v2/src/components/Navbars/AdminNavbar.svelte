@@ -15,7 +15,7 @@
       currentAuthStatus = value;
     },
   );
-  onDestroy(unsubscribeFromUserStatusUpdates);
+  //  onDestroy(unsubscribeFromUserStatusUpdates);
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
@@ -30,7 +30,7 @@
       ).components.navbars.adminNavbar;
     },
   );
-  onDestroy(unsubscribeFromSettingsUpdates);
+  //  onDestroy(unsubscribeFromSettingsUpdates);
 </script>
 
 <!-- Navbar -->

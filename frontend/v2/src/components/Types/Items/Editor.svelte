@@ -48,7 +48,7 @@
       ).models.item;
     },
   );
-  onDestroy(unsubscribeFromSettingsUpdates);
+  //  onDestroy(unsubscribeFromSettingsUpdates);
 
   // set up user status sync
   let currentUserStatus = new UserStatus();
@@ -57,7 +57,7 @@
       currentUserStatus = value;
     },
   );
-  onDestroy(unsubscribeFromUserStatusUpdates);
+  //  onDestroy(unsubscribeFromUserStatusUpdates);
 
   function fetchItem(): void {
     logger.debug(`fetchItem called`);

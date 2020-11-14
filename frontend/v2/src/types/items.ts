@@ -3,7 +3,7 @@ import faker from 'faker';
 
 import { Pagination } from '@/types/api';
 import { defaultFactories } from '@/types/fakes';
-import type { APITableCell, APITableHeader } from '@/components/APITable/types';
+import { APITableCell, APITableHeader } from '@/components/APITable/types';
 import { renderUnixTime } from '@/utils';
 import type { itemModelTranslations } from '@/i18n';
 
@@ -62,24 +62,31 @@ export class Item {
   // this function should return everything there are no presumed fields
   static asRow = (x: Item): APITableCell[] => {
     return [
-      { fieldName: 'id', content: x.id.toString(), requiresAdmin: false },
-      { fieldName: 'name', content: x.name, requiresAdmin: false },
-      { fieldName: 'details', content: x.details, requiresAdmin: false },
-      {
+      new APITableCell({
+        fieldName: 'id',
+        content: x.id.toString(),
+      }),
+      new APITableCell({
+        fieldName: 'name',
+        content: x.name,
+      }),
+      new APITableCell({
+        fieldName: 'details',
+        content: x.details,
+      }),
+      new APITableCell({
         fieldName: 'createdOn',
         content: renderUnixTime(x.createdOn),
-        requiresAdmin: false,
-      },
-      {
+      }),
+      new APITableCell({
         fieldName: 'lastUpdatedOn',
         content: renderUnixTime(x.lastUpdatedOn),
-        requiresAdmin: false,
-      },
-      {
+      }),
+      new APITableCell({
         fieldName: 'belongsToUser',
         content: x.belongsToUser.toString(),
         requiresAdmin: true,
-      },
+      }),
     ];
   };
 }

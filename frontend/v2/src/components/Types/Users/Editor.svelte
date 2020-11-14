@@ -40,7 +40,7 @@
       ).pages.registration;
     },
   );
-  onDestroy(unsubscribeFromSettingsUpdates);
+  //  onDestroy(unsubscribeFromSettingsUpdates);
 
   function saveUser(): void {
     logger.debug(`saveUser called`);

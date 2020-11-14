@@ -20,7 +20,7 @@
       ).components.footers.smallFooter;
     },
   );
-  onDestroy(unsubscribeFromSettingsUpdates);
+  //  onDestroy(unsubscribeFromSettingsUpdates);
 </script>
 
 <footer

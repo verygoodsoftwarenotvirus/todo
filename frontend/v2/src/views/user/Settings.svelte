@@ -37,7 +37,7 @@
       ).userSettingsPage;
     },
   );
-  onDestroy(unsubscribeFromSettingsUpdates);
+  //  onDestroy(unsubscribeFromSettingsUpdates);
 
   let currentUserStatus: UserStatus = new UserStatus();
   const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
@@ -51,7 +51,7 @@
       }
     },
   );
-  onDestroy(unsubscribeFromUserStatusUpdates);
+  //  onDestroy(unsubscribeFromUserStatusUpdates);
 
   let ogUser: User = new User();
   let user: User = new User();

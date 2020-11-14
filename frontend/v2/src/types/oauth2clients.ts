@@ -3,7 +3,7 @@ import faker from 'faker';
 
 import { Pagination } from '@/types/api';
 import { defaultFactories } from '@/types/fakes';
-import type { APITableCell, APITableHeader } from '@/components/APITable/types';
+import { APITableCell, APITableHeader } from '@/components/APITable/types';
 import { renderUnixTime } from '@/utils';
 import type { oauth2ClientModelTranslations } from '@/i18n';
 
@@ -86,44 +86,47 @@ export class OAuth2Client {
   // this function should return everything there are no presumed fields
   static asRow = (x: OAuth2Client): APITableCell[] => {
     return [
-      { fieldName: 'id', content: x.id.toString(), requiresAdmin: false },
-      { fieldName: 'name', content: x.name, requiresAdmin: false },
-      { fieldName: 'clientID', content: x.clientID, requiresAdmin: false },
-      {
+      new APITableCell({
+        fieldName: 'id',
+        content: x.id.toString(),
+      }),
+      new APITableCell({
+        fieldName: 'name',
+        content: x.name,
+      }),
+      new APITableCell({
+        fieldName: 'clientID',
+        content: x.clientID,
+      }),
+      new APITableCell({
         fieldName: 'clientSecret',
         content: x.clientSecret,
-        requiresAdmin: false,
-      },
-      {
+      }),
+      new APITableCell({
         fieldName: 'redirectURI',
         content: x.redirectURI,
-        requiresAdmin: false,
-      },
-      {
+      }),
+      new APITableCell({
         fieldName: 'scopes',
         content: x.scopes.toString(),
-        requiresAdmin: false,
-      },
-      {
+      }),
+      new APITableCell({
         fieldName: 'implicitAllowed',
         content: x.implicitAllowed.toString(),
-        requiresAdmin: false,
-      },
-      {
+      }),
+      new APITableCell({
         fieldName: 'createdOn',
         content: renderUnixTime(x.createdOn),
-        requiresAdmin: false,
-      },
-      {
+      }),
+      new APITableCell({
         fieldName: 'lastUpdatedOn',
         content: renderUnixTime(x.updatedOn),
-        requiresAdmin: false,
-      },
-      {
+      }),
+      new APITableCell({
         fieldName: 'belongsToUser',
         content: x.belongsToUser.toString(),
         requiresAdmin: true,
-      },
+      }),
     ];
   };
 }

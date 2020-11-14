@@ -35,7 +35,7 @@
       currentAuthStatus = value;
     },
   );
-  onDestroy(unsubscribeFromUserStatusUpdates);
+  //  onDestroy(unsubscribeFromUserStatusUpdates);
 
   let adminMode = false;
   const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe(
@@ -43,7 +43,7 @@
       adminMode = value;
     },
   );
-  onDestroy(unsubscribeFromAdminModeUpdates);
+  //  onDestroy(unsubscribeFromAdminModeUpdates);
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
@@ -58,7 +58,7 @@
       ).models.webhook;
     },
   );
-  onDestroy(unsubscribeFromSettingsUpdates);
+  //  onDestroy(unsubscribeFromSettingsUpdates);
 
   let logger = new Logger().withDebugValue(
     'source',
@@ -77,19 +77,6 @@
 
   function searchWebhooks() {
     logger.debug('searchWebhooks called');
-    //
-    //   V1APIClient.searchForWebhooks(apiTableSearchQuery, queryFilter, adminMode)
-    //     .then((response: AxiosResponse<WebhookList>) => {
-    //       webhooks = response.data.webhooks || [];
-    //       queryFilter.page = -1;
-    //     })
-    //     .catch((error: AxiosError) => {
-    //       if (error.response) {
-    //         if (error.response.data) {
-    //           webhookRetrievalError = error.response.data;
-    //         }
-    //       }
-    //     });
   }
 
   function incrementPage() {

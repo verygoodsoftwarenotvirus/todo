@@ -15,6 +15,7 @@
   import UsersAdmin from '../views/admin/Users.svelte';
   import OAuth2ClientsAdmin from '../views/admin/OAuth2Clients.svelte';
   import WebhooksAdmin from '../views/admin/Webhooks.svelte';
+  import AuditLogEntries from '../views/admin/AuditLogEntries.svelte';
   import Dashboard from '../views/admin/Dashboard.svelte';
   import Settings from '../views/admin/Settings.svelte';
   import UserEditor from '../components/Types/Users/Editor.svelte';
@@ -37,7 +38,7 @@
       // }
     },
   );
-  onDestroy(unsubscribeFromUserStatusUpdates);
+  //  onDestroy(unsubscribeFromUserStatusUpdates);
 </script>
 
 <div>
@@ -48,6 +49,7 @@
       <Router url="admin">
         <Route path="dashboard" component={Dashboard} />
         <Route path="settings" component={Settings} />
+        <Route path="audit_log" component={AuditLogEntries} />
         <Route path="oauth2_clients" component={OAuth2ClientsAdmin} />
         <Route path="webhooks" component={WebhooksAdmin} />
         <Route path="users" component={UsersAdmin} />

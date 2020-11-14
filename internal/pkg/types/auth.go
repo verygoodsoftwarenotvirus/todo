@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 )
 
 const (
@@ -21,8 +22,9 @@ func init() {
 type (
 	// SessionInfo represents what we encode in our authentication cookies.
 	SessionInfo struct {
-		UserID      uint64 `json:"-"`
-		UserIsAdmin bool   `json:"-"`
+		UserID           uint64                        `json:"-"`
+		UserIsAdmin      bool                          `json:"-"`
+		AdminPermissions permissions.PermissionChecker `json:"-"`
 	}
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.

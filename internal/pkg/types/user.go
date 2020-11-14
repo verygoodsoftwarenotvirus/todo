@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
@@ -22,6 +23,7 @@ type (
 		ID                        uint64  `json:"id"`
 		PasswordLastChangedOn     *uint64 `json:"passwordLastChangedOn"`
 		TwoFactorSecretVerifiedOn *uint64 `json:"-"`
+		AdminPermissions          bitmask.PermissionBitmask
 		CreatedOn                 uint64  `json:"createdOn"`
 		LastUpdatedOn             *uint64 `json:"lastUpdatedOn"`
 		ArchivedOn                *uint64 `json:"archivedOn"`
@@ -161,7 +163,8 @@ func (u *User) Update(input *User) {
 // ToSessionInfo accepts a User as input and merges those values if they're set.
 func (u *User) ToSessionInfo() *SessionInfo {
 	return &SessionInfo{
-		UserID:      u.ID,
-		UserIsAdmin: u.IsAdmin,
+		UserID:           u.ID,
+		UserIsAdmin:      u.IsAdmin,
+		AdminPermissions: u.AdminPermissions,
 	}
 }

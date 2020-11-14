@@ -964,7 +964,7 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		var token string
 		assert.NoError(t, s.cookieManager.Decode(CookieName, c.Value, &token))
 
-		s.CycleSecretHandler(res, req)
+		s.CycleCookieSecretHandler(res, req)
 
 		assert.Error(t, s.cookieManager.Decode(CookieName, c.Value, &token))
 	})

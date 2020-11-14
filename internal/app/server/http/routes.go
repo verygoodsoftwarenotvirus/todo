@@ -108,7 +108,7 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 		s.authService.AuthorizationMiddleware(true),
 		s.authService.AdminMiddleware,
 	).Route("/_admin_", func(adminRouter chi.Router) {
-		adminRouter.Post("/cycle_cookie_secret", s.authService.CycleSecretHandler)
+		adminRouter.Post("/cycle_cookie_secret", s.authService.CycleCookieSecretHandler)
 
 		adminRouter.Route("/audit_log", func(auditRouter chi.Router) {
 			entryIDRouteParam := fmt.Sprintf(numericIDPattern, auditservice.LogEntryURIParamKey)

@@ -258,10 +258,9 @@ func CreateObligatoryClient(ctx context.Context, serviceURL string, u *types.Use
 		"username": %q,
 		"password": %q,
 		"totpToken": %q,
-		"belongsToUser": %d,
 		"scopes": ["*"]
 	}
-		`, u.Username, u.HashedPassword, code, u.ID)),
+		`, u.Username, u.HashedPassword, code)),
 		// remember we use u.HashedPassword as a temp container for the plain password
 	)
 	if err != nil {

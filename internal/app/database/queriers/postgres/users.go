@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/client"
@@ -25,6 +26,7 @@ const (
 	usersTableTwoFactorColumn              = "two_factor_secret"
 	usersTableTwoFactorVerifiedOnColumn    = "two_factor_secret_verified_on"
 	usersTableIsAdminColumn                = "is_admin"
+	usersTableAdminPermissionsColumn       = "admin_permissions"
 )
 
 var (
@@ -38,6 +40,7 @@ var (
 		fmt.Sprintf("%s.%s", usersTableName, usersTableTwoFactorColumn),
 		fmt.Sprintf("%s.%s", usersTableName, usersTableTwoFactorVerifiedOnColumn),
 		fmt.Sprintf("%s.%s", usersTableName, usersTableIsAdminColumn),
+		fmt.Sprintf("%s.%s", usersTableName, usersTableAdminPermissionsColumn),
 		fmt.Sprintf("%s.%s", usersTableName, createdOnColumn),
 		fmt.Sprintf("%s.%s", usersTableName, lastUpdatedOnColumn),
 		fmt.Sprintf("%s.%s", usersTableName, archivedOnColumn),
@@ -47,7 +50,8 @@ var (
 // scanUser provides a consistent way to scan something like a *sql.Row into a User struct.
 func (p *Postgres) scanUser(scan database.Scanner) (*types.User, error) {
 	var (
-		x = &types.User{}
+		x     = &types.User{}
+		perms uint32
 	)
 
 	targetVars := []interface{}{
@@ -60,6 +64,7 @@ func (p *Postgres) scanUser(scan database.Scanner) (*types.User, error) {
 		&x.TwoFactorSecret,
 		&x.TwoFactorSecretVerifiedOn,
 		&x.IsAdmin,
+		&perms,
 		&x.CreatedOn,
 		&x.LastUpdatedOn,
 		&x.ArchivedOn,
@@ -68,6 +73,7 @@ func (p *Postgres) scanUser(scan database.Scanner) (*types.User, error) {
 	if err := scan.Scan(targetVars...); err != nil {
 		return nil, err
 	}
+	x.AdminPermissions = bitmask.NewPermissionBitmask(perms)
 
 	return x, nil
 }

@@ -263,9 +263,9 @@ func (s *Service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	s.encoderDecoder.EncodeResponseWithStatus(res, usr, sc)
 }
 
-// CycleSecretHandler rotates the cookie building secret with a new random secret.
-func (s *Service) CycleSecretHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context(), "auth.service.CycleSecretHandler")
+// CycleCookieSecretHandler rotates the cookie building secret with a new random secret.
+func (s *Service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := tracing.StartSpan(req.Context(), "auth.service.CycleCookieSecretHandler")
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)

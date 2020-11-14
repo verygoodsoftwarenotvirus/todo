@@ -150,7 +150,9 @@ func (ed *ServerEncoderDecoder) DecodeRequest(req *http.Request, v interface{}) 
 	case XMLContentType:
 		d = xml.NewDecoder(req.Body)
 	default:
-		d = json.NewDecoder(req.Body)
+		dec := json.NewDecoder(req.Body)
+		// dec.DisallowUnknownFields() // this could be cool, but it would also break a lot of how my client works
+		d = dec
 	}
 
 	return d.Decode(v)

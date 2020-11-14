@@ -1,10 +1,33 @@
 package types
 
 import (
+	"encoding/json"
+	"github.com/stretchr/testify/require"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestUser_JSONUnmarshal(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		exampleInput := User{
+			Username:         "new_username",
+			HashedPassword:   "updated_hashed_pass",
+			TwoFactorSecret:  "new fancy secret",
+			AdminPermissions: bitmask.NewPermissionBitmask(123),
+		}
+
+		jsonBytes, err := json.Marshal(&exampleInput)
+		require.NoError(t, err)
+
+		var dest User
+		assert.NoError(t, json.Unmarshal(jsonBytes, &dest))
+	})
+}
 
 func TestUser_Update(T *testing.T) {
 	T.Parallel()
@@ -34,13 +57,15 @@ func TestUser_ToSessionInfo(T *testing.T) {
 		t.Parallel()
 
 		exampleInput := User{
-			ID:      12345,
-			IsAdmin: true,
+			ID:               12345,
+			IsAdmin:          true,
+			AdminPermissions: bitmask.NewPermissionBitmask(1),
 		}
 
 		expected := &SessionInfo{
-			UserID:      exampleInput.ID,
-			UserIsAdmin: exampleInput.IsAdmin,
+			UserID:           exampleInput.ID,
+			UserIsAdmin:      exampleInput.IsAdmin,
+			AdminPermissions: exampleInput.AdminPermissions,
 		}
 		actual := exampleInput.ToSessionInfo()
 

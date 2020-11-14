@@ -5,13 +5,13 @@ COVERAGE_OUT                  := $(ARTIFACTS_DIR)/coverage.out
 SEARCH_INDICES_DIR            := $(ARTIFACTS_DIR)/search_indices
 DOCKER_GO                     := docker run --interactive --tty --rm --volume $(PWD):$(PWD) --user `whoami`:`whoami` --workdir=$(PWD) golang:latest go
 GO_FORMAT                     := gofmt -s -w
-PACKAGE_LIST                  := `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|mock|fake)'`
+PACKAGE_LIST                  := `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|testutil|mock|fake)'`
 TEST_DOCKER_COMPOSE_FILES_DIR := environments/testing/compose_files
 
 ## non-PHONY folders/files
 
 clean:
-	rm -rf .root-*
+	rm -rf $(ARTIFACTS_DIR)
 
 $(ARTIFACTS_DIR):
 	@mkdir -p $(ARTIFACTS_DIR)
@@ -25,11 +25,12 @@ $(SEARCH_INDICES_DIR):
 clean_search_indices:
 	@rm -rf $(SEARCH_INDICES_DIR)
 
+.PHONY: setup
+setup: $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) revendor frontend-vendor rewire config_files
+
 .PHONY: config_files
 config_files:
 	go run cmd/config_gen/main.go
-
-base_prereqs: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) config_files
 
 ## Go-specific prerequisite stuff
 
@@ -55,8 +56,12 @@ vendor:
 	if [ ! -f go.mod ]; then go mod init; fi
 	go mod vendor
 
+.PHONY: frontend-vendor
+frontend-vendor:
+	(cd frontend/v2 && npm install)
+
 .PHONY: revendor
-revendor: clean_vendor vendor
+revendor: clean_vendor vendor frontend-vendor
 
 ## dependency injection
 
@@ -112,6 +117,7 @@ format:
 check_formatting: vendor
 	docker build --tag check_formatting:latest --file environments/testing/dockerfiles/formatting.Dockerfile .
 	docker run --rm check_formatting:latest
+	(cd frontend/v2 && npm run format-check)
 
 .PHONY: frontend-tests
 frontend-tests:
@@ -141,7 +147,7 @@ integration-tests-%:
 	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(KEEP_RUNNING)),, --abort-on-container-exit)
 
 .PHONY: integration-coverage
-integration-coverage: base_prereqs
+integration-coverage: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) config_files
 	@# big thanks to https://blog.cloudflare.com/go-coverage-with-external-tests/
 	rm -f $(ARTIFACTS_DIR)/integration-coverage.out
 	@mkdir -p $(ARTIFACTS_DIR)
@@ -171,7 +177,7 @@ load-tests-%:
 ## Running
 
 .PHONY: dev
-dev: base_prereqs
+dev: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) config_files
 	docker-compose --file environments/local/docker-compose.yaml up \
 	--build \
 	--force-recreate \

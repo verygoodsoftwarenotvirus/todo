@@ -18,7 +18,7 @@
       ).components.footers.adminFooter;
     },
   );
-  //  onDestroy(unsubscribeFromSettingsUpdates);
+  // onDestroy(unsubscribeFromSettingsUpdates);
 </script>
 
 <footer class="block py-4">

@@ -24,7 +24,7 @@
       ).pages.home;
     },
   );
-  //  onDestroy(unsubscribeFromSettingsUpdates);
+  // onDestroy(unsubscribeFromSettingsUpdates);
 </script>
 
 <IndexNavbar />

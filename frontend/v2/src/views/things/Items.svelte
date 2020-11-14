@@ -35,7 +35,7 @@
       currentAuthStatus = value;
     },
   );
-  //  onDestroy(unsubscribeFromUserStatusUpdates);
+  // onDestroy(unsubscribeFromUserStatusUpdates);
 
   let adminMode = false;
   const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe(
@@ -43,7 +43,7 @@
       adminMode = value;
     },
   );
-  //  onDestroy(unsubscribeFromAdminModeUpdates);
+  // onDestroy(unsubscribeFromAdminModeUpdates);
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
@@ -59,7 +59,7 @@
       ).models.item;
     },
   );
-  //  onDestroy(unsubscribeFromSettingsUpdates);
+  // onDestroy(unsubscribeFromSettingsUpdates);
 
   let logger = new Logger().withDebugValue(
     'source',

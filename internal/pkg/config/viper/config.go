@@ -1,21 +1,14 @@
 package viper
 
 import (
-	"crypto/rand"
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
+	_ "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/randinit"
 
 	"github.com/spf13/viper"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
-
-func init() {
-	b := make([]byte, 64)
-	if _, err := rand.Read(b); err != nil {
-		panic(err)
-	}
-}
 
 // BuildViperConfig is a constructor function that initializes a viper config.
 func BuildViperConfig() *viper.Viper {

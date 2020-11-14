@@ -112,14 +112,6 @@ func (x *Item) Update(input *ItemUpdateInput) []FieldChangeSummary {
 	return out
 }
 
-// ToUpdateInput creates an ItemUpdateInput struct for an item.
-func (x *Item) ToUpdateInput() *ItemUpdateInput {
-	return &ItemUpdateInput{
-		Name:    x.Name,
-		Details: x.Details,
-	}
-}
-
 // Validate validates a ItemCreationInput.
 func (x *ItemCreationInput) Validate() error {
 	err := v.Validate(v.Schema{

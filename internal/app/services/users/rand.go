@@ -3,20 +3,14 @@ package users
 import (
 	"crypto/rand"
 	"encoding/base32"
+
+	_ "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/randinit"
 )
 
 const (
 	saltSize         = 16
 	randomSecretSize = 64
 )
-
-// this function tests that we have appropriate access to crypto/rand.
-func init() {
-	b := make([]byte, randomSecretSize)
-	if _, err := rand.Read(b); err != nil {
-		panic(err)
-	}
-}
 
 var _ secretGenerator = (*standardSecretGenerator)(nil)
 

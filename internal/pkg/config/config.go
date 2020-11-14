@@ -5,6 +5,8 @@ import (
 	"encoding/base32"
 	"io/ioutil"
 	"time"
+
+	_ "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/randinit"
 )
 
 const (
@@ -32,13 +34,6 @@ var (
 		ProductionRunMode:  {},
 	}
 )
-
-func init() {
-	b := make([]byte, 64)
-	if _, err := rand.Read(b); err != nil {
-		panic(err)
-	}
-}
 
 type (
 	// RunMode describes what method of operation the server is under.

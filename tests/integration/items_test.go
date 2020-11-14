@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
 	"testing"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/client/http"
@@ -311,7 +312,7 @@ func TestItems(test *testing.T) {
 			checkValueAndError(t, createdItem, err)
 
 			// Change item.
-			createdItem.Update(exampleItem.ToUpdateInput())
+			createdItem.Update(converters.ConvertItemToItemUpdateInput(exampleItem))
 			assert.NoError(t, todoClient.UpdateItem(ctx, createdItem))
 
 			// Fetch item.

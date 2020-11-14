@@ -74,6 +74,43 @@ connection_details = "%s"
 		assert.NoError(t, os.Remove(tf.Name()))
 	})
 
+	T.Run("unparseable garbage", func(t *testing.T) {
+		t.Parallel()
+		tf, err := ioutil.TempFile(os.TempDir(), "*.toml")
+		require.NoError(t, err)
+
+		_, err = tf.Write([]byte(fmt.Sprintf(`
+[server]
+http_port = "fart"
+debug = ":banana:"
+`)))
+		require.NoError(t, err)
+
+		cfg, err := ParseConfigFile(noop.NewLogger(), tf.Name())
+		assert.Error(t, err)
+		assert.Nil(t, cfg)
+
+		assert.NoError(t, os.Remove(tf.Name()))
+	})
+
+	T.Run("with invalid run mode", func(t *testing.T) {
+		t.Parallel()
+		tf, err := ioutil.TempFile(os.TempDir(), "*.toml")
+		require.NoError(t, err)
+
+		_, err = tf.Write([]byte(fmt.Sprintf(`
+[meta]
+run_mode = "party time"
+`)))
+		require.NoError(t, err)
+
+		cfg, err := ParseConfigFile(noop.NewLogger(), tf.Name())
+		assert.Error(t, err)
+		assert.Nil(t, cfg)
+
+		assert.NoError(t, os.Remove(tf.Name()))
+	})
+
 	T.Run("with nonexistent file", func(t *testing.T) {
 		t.Parallel()
 		cfg, err := ParseConfigFile(noop.NewLogger(), "/this/doesn't/even/exist/lol")

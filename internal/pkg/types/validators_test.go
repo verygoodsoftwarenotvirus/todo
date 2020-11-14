@@ -8,6 +8,31 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_urlValidator_Validate(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		x := &urlValidator{}
+
+		assert.Nil(t, x.Validate(v.F("arbitrary", "https://verygoodsoftwarenotvirus.ru")))
+	})
+
+	T.Run("unhappy path", func(t *testing.T) {
+		t.Parallel()
+		x := &urlValidator{}
+
+		assert.NotNil(t, x.Validate(v.F("arbitrary", fmt.Sprintf(`%s://verygoodsoftwarenotvirus.ru`, string(byte(127))))))
+	})
+
+	T.Run("invalid value", func(t *testing.T) {
+		t.Parallel()
+		x := &urlValidator{}
+
+		assert.NotNil(t, x.Validate(v.F("arbitrary", 123)))
+	})
+}
+
 func Test_minimumStringLengthValidator_Validate(T *testing.T) {
 	T.Parallel()
 
@@ -23,6 +48,13 @@ func Test_minimumStringLengthValidator_Validate(T *testing.T) {
 		x := &minimumStringLengthValidator{minLength: 1}
 
 		assert.NotNil(t, x.Validate(v.F("arbitrary", "")))
+	})
+
+	T.Run("invalid value", func(t *testing.T) {
+		t.Parallel()
+		x := &minimumStringLengthValidator{}
+
+		assert.NotNil(t, x.Validate(v.F("arbitrary", 123)))
 	})
 }
 
@@ -44,22 +76,11 @@ func Test_minimumStringSliceLengthValidator_Validate(T *testing.T) {
 
 		assert.NotNil(t, x.Validate(v.F("arbitrary", &y)))
 	})
-}
 
-func Test_urlValidator_Validate(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("invalid value", func(t *testing.T) {
 		t.Parallel()
-		x := &urlValidator{}
+		x := &minimumStringSliceLengthValidator{}
 
-		assert.Nil(t, x.Validate(v.F("arbitrary", "https://verygoodsoftwarenotvirus.ru")))
-	})
-
-	T.Run("unhappy path", func(t *testing.T) {
-		t.Parallel()
-		x := &urlValidator{}
-
-		assert.NotNil(t, x.Validate(v.F("arbitrary", fmt.Sprintf(`%s://verygoodsoftwarenotvirus.ru`, string(byte(127))))))
+		assert.NotNil(t, x.Validate(v.F("arbitrary", 123)))
 	})
 }

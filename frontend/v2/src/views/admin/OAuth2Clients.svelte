@@ -35,7 +35,7 @@
       currentAuthStatus = value;
     },
   );
-  //  onDestroy(unsubscribeFromUserStatusUpdates);
+  // onDestroy(unsubscribeFromUserStatusUpdates);
 
   let adminMode = false;
   const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe(
@@ -43,7 +43,7 @@
       adminMode = value;
     },
   );
-  //  onDestroy(unsubscribeFromAdminModeUpdates);
+  // onDestroy(unsubscribeFromAdminModeUpdates);
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
@@ -58,7 +58,7 @@
       ).models.oauth2Client;
     },
   );
-  //  onDestroy(unsubscribeFromSettingsUpdates);
+  // onDestroy(unsubscribeFromSettingsUpdates);
 
   let logger = new Logger().withDebugValue(
     'source',
@@ -157,8 +157,8 @@
       title="OAuth2Clients"
       headers={OAuth2Client.headers(translationsToUse)}
       rows={oauth2Clients}
-      individualPageLink="/things/oauth2Clients"
-      newPageLink="/things/oauth2Clients/new"
+      individualPageLink="/admin/oauth2_clients"
+      newPageLink="/admin/oauth2_clients/new"
       dataRetrievalError={oauth2ClientRetrievalError}
       searchFunction={searchOAuth2Clients}
       incrementDisabled={apiTableIncrementDisabled}

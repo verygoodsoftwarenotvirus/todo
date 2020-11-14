@@ -26,7 +26,7 @@
       currentAuthStatus = value;
     },
   );
-  //  onDestroy(unsubscribeFromUserStatusUpdates);
+  // onDestroy(unsubscribeFromUserStatusUpdates);
 </script>
 
 <div>

@@ -31,7 +31,7 @@
         .debug('auth status updated');
     },
   );
-  //  onDestroy(unsubscribeFromUserStatusUpdates());
+  // onDestroy(unsubscribeFromUserStatusUpdates());
 
   // set up translations
   let currentSessionSettings = new UserSiteSettings();
@@ -46,7 +46,7 @@
       ).components.sidebars.primary;
     },
   );
-  //  onDestroy(unsubscribeFromSettingsUpdates);
+  // onDestroy(unsubscribeFromSettingsUpdates);
 </script>
 
 s

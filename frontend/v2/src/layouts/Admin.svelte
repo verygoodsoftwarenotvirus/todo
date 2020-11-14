@@ -12,13 +12,17 @@
   import AdminFooter from '../components/Footers/AdminFooter.svelte';
 
   // pages for this layout
+  import Dashboard from '../views/admin/Dashboard.svelte';
+  import Settings from '../views/admin/Settings.svelte';
+
   import UsersAdmin from '../views/admin/Users.svelte';
   import OAuth2ClientsAdmin from '../views/admin/OAuth2Clients.svelte';
   import WebhooksAdmin from '../views/admin/Webhooks.svelte';
   import AuditLogEntries from '../views/admin/AuditLogEntries.svelte';
-  import Dashboard from '../views/admin/Dashboard.svelte';
-  import Settings from '../views/admin/Settings.svelte';
+
   import UserEditor from '../components/Types/Users/Editor.svelte';
+  import WebhookEditor from '../components/Types/Webhooks/Editor.svelte';
+  import OAuth2ClientEditor from '../components/Types/OAuth2Clients/Editor.svelte';
 
   import { Logger } from '../logger';
   let logger = new Logger().withDebugValue(
@@ -38,7 +42,7 @@
       // }
     },
   );
-  //  onDestroy(unsubscribeFromUserStatusUpdates);
+  // onDestroy(unsubscribeFromUserStatusUpdates);
 </script>
 
 <div>
@@ -51,7 +55,13 @@
         <Route path="settings" component={Settings} />
         <Route path="audit_log" component={AuditLogEntries} />
         <Route path="oauth2_clients" component={OAuth2ClientsAdmin} />
+        <Route path="oauth2_clients/:id" let:params>
+          <OAuth2ClientEditor id={params.id} />
+        </Route>
         <Route path="webhooks" component={WebhooksAdmin} />
+        <Route path="webhooks/:id" let:params>
+          <WebhookEditor id={params.id} />
+        </Route>
         <Route path="users" component={UsersAdmin} />
         <Route path="users/:id" let:params>
           <UserEditor id={params.id} />

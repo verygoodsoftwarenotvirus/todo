@@ -21,23 +21,25 @@ func TestFromParams(T *testing.T) {
 		t.Parallel()
 		actual := &QueryFilter{}
 		expected := &QueryFilter{
-			Page:          100,
-			Limit:         MaxLimit,
-			CreatedAfter:  123456789,
-			CreatedBefore: 123456789,
-			UpdatedAfter:  123456789,
-			UpdatedBefore: 123456789,
-			SortBy:        SortDescending,
+			Page:            100,
+			Limit:           MaxLimit,
+			CreatedAfter:    123456789,
+			CreatedBefore:   123456789,
+			UpdatedAfter:    123456789,
+			UpdatedBefore:   123456789,
+			SortBy:          SortDescending,
+			IncludeArchived: true,
 		}
 
 		exampleInput := url.Values{
-			pageQueryKey:          []string{strconv.Itoa(int(expected.Page))},
-			LimitQueryKey:         []string{strconv.Itoa(int(expected.Limit))},
-			createdBeforeQueryKey: []string{strconv.Itoa(int(expected.CreatedAfter))},
-			createdAfterQueryKey:  []string{strconv.Itoa(int(expected.CreatedBefore))},
-			updatedBeforeQueryKey: []string{strconv.Itoa(int(expected.UpdatedAfter))},
-			updatedAfterQueryKey:  []string{strconv.Itoa(int(expected.UpdatedBefore))},
-			sortByQueryKey:        []string{string(expected.SortBy)},
+			pageQueryKey:            []string{strconv.Itoa(int(expected.Page))},
+			LimitQueryKey:           []string{strconv.Itoa(int(expected.Limit))},
+			createdBeforeQueryKey:   []string{strconv.Itoa(int(expected.CreatedAfter))},
+			createdAfterQueryKey:    []string{strconv.Itoa(int(expected.CreatedBefore))},
+			updatedBeforeQueryKey:   []string{strconv.Itoa(int(expected.UpdatedAfter))},
+			updatedAfterQueryKey:    []string{strconv.Itoa(int(expected.UpdatedBefore))},
+			sortByQueryKey:          []string{string(expected.SortBy)},
+			includeArchivedQueryKey: []string{strconv.FormatBool(true)},
 		}
 
 		actual.FromParams(exampleInput)

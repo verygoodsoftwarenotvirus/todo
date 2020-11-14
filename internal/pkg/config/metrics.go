@@ -22,7 +22,7 @@ const (
 
 	// MinimumRuntimeCollectionInterval is the smallest interval we can collect metrics at
 	// this value is used to guard against zero values.
-	MinimumRuntimeCollectionInterval = time.Second
+	MinimumRuntimeCollectionInterval = float64(time.Second)
 
 	// DefaultMetricsCollectionInterval is the default amount of time we wait between runtime metrics queries.
 	DefaultMetricsCollectionInterval = 2 * time.Second
@@ -88,7 +88,7 @@ func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) me
 
 		metrics.RecordRuntimeStats(time.Duration(
 			math.Max(
-				float64(MinimumRuntimeCollectionInterval),
+				MinimumRuntimeCollectionInterval,
 				float64(cfg.Metrics.RuntimeMetricsCollectionInterval),
 			),
 		))

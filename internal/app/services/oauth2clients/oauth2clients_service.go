@@ -1,13 +1,13 @@
 package oauth2clients
 
 import (
-	"crypto/rand"
 	"fmt"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics"
+	_ "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/randinit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
@@ -16,13 +16,6 @@ import (
 	oauth2server "gopkg.in/oauth2.v3/server"
 	oauth2store "gopkg.in/oauth2.v3/store"
 )
-
-func init() {
-	b := make([]byte, 64)
-	if _, err := rand.Read(b); err != nil {
-		panic(err)
-	}
-}
 
 const (
 	// creationMiddlewareCtxKey is a string alias for referring to OAuth2 client creation data.

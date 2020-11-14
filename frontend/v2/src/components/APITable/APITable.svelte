@@ -60,7 +60,7 @@
       ).components.apiTable;
     },
   );
-  //  onDestroy(unsubscribeFromSettingsUpdates);
+  // onDestroy(unsubscribeFromSettingsUpdates);
 
   let adminMode: boolean = false;
   const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe(
@@ -69,7 +69,7 @@
       fetchFunction();
     },
   );
-  //  onDestroy(unsubscribeFromAdminModeUpdates);
+  // onDestroy(unsubscribeFromAdminModeUpdates);
 
   let currentAuthStatus = {};
   const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
@@ -77,7 +77,7 @@
       currentAuthStatus = value;
     },
   );
-  //  onDestroy(unsubscribeFromUserStatusUpdates);
+  // onDestroy(unsubscribeFromUserStatusUpdates);
 
   function search(): void {
     if (searchQuery.length >= 3) {

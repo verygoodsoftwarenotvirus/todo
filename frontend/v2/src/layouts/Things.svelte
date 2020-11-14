@@ -35,7 +35,7 @@
       // }
     },
   );
-  //  onDestroy(unsubscribeFromUserStatusUpdates);
+  // onDestroy(unsubscribeFromUserStatusUpdates);
 </script>
 
 <div>
@@ -44,6 +44,7 @@
     <AdminNavbar />
     <div class="px-4 md:px-10 mx-auto w-full -m-24">
       <Router url="things">
+        <!--     ITEMS     -->
         <Route path="items" component={Items} />
         <Route path="items/:id" let:params>
           <ItemEditorComponent id={params.id} />

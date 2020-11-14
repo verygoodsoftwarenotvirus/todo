@@ -2,8 +2,9 @@ package auth
 
 import (
 	"context"
-	"crypto/rand"
 	"errors"
+
+	_ "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/randinit"
 
 	"github.com/google/wire"
 )
@@ -50,11 +51,3 @@ type (
 		) (valid bool, err error)
 	}
 )
-
-// we run this function to ensure that we have no problem reading from crypto/rand.
-func init() {
-	b := make([]byte, 64)
-	if _, err := rand.Read(b); err != nil {
-		panic(err)
-	}
-}

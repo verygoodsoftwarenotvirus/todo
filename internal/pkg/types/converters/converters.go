@@ -11,3 +11,11 @@ func ConvertAuditLogEntryCreationInputToEntry(e *types.AuditLogEntryCreationInpu
 		Context:   e.Context,
 	}
 }
+
+// ConvertItemToItemUpdateInput creates an ItemUpdateInput struct from an item.
+func ConvertItemToItemUpdateInput(x *types.Item) *types.ItemUpdateInput {
+	return &types.ItemUpdateInput{
+		Name:    x.Name,
+		Details: x.Details,
+	}
+}

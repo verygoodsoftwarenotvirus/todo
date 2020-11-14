@@ -38,3 +38,59 @@ func TestItem_Update(T *testing.T) {
 		assert.Equal(t, updated.Details, i.Details)
 	})
 }
+
+func TestItemCreationInput_Validate(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
+		x := &ItemCreationInput{
+			Name:    fake.Word(),
+			Details: fake.Word(),
+		}
+
+		actual := x.Validate()
+		assert.NoError(t, actual)
+	})
+
+	T.Run("with empty strings", func(t *testing.T) {
+		t.Parallel()
+
+		x := &ItemCreationInput{
+			Name:    "",
+			Details: "",
+		}
+
+		actual := x.Validate()
+		assert.Error(t, actual)
+	})
+}
+
+func TestItemUpdateInput_Validate(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
+		x := &ItemUpdateInput{
+			Name:    fake.Word(),
+			Details: fake.Word(),
+		}
+
+		actual := x.Validate()
+		assert.NoError(t, actual)
+	})
+
+	T.Run("with empty strings", func(t *testing.T) {
+		t.Parallel()
+
+		x := &ItemUpdateInput{
+			Name:    "",
+			Details: "",
+		}
+
+		actual := x.Validate()
+		assert.Error(t, actual)
+	})
+}

@@ -21,3 +21,17 @@ func TestConvertAuditLogEntryCreationInputToEntry(T *testing.T) {
 		assert.Equal(t, exampleInput.Context, actual.Context)
 	})
 }
+
+func TestConvertItemToItemUpdateInput(T *testing.T) {
+	T.Parallel()
+
+	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
+
+		expected := fakes.BuildFakeItem()
+		actual := ConvertItemToItemUpdateInput(expected)
+
+		assert.Equal(t, expected.Name, actual.Name, "expected Name to equal %q, but encountered %q instead", expected.Name, actual.Name)
+		assert.Equal(t, expected.Details, actual.Details, "expected Details to equal %q, but encountered %q instead", expected.Name, actual.Name)
+	})
+}

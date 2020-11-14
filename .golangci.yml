@@ -293,6 +293,10 @@ issues:
       linters:
         - gomnd
 
+    - path: internal/pkg/audit/
+      linters:
+        - gosec
+
     - path: internal/pkg/exampledata # TODO: DELETEME
       linters:
         - gomnd

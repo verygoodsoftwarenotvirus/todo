@@ -1,14 +1,15 @@
 package audit_test
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"testing"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 )
 
 func TestAuditEventBuilders(T *testing.T) {
 	T.Parallel()
 
-	tests := map[string]eventBuilderTest{
+	tests := map[string]*eventBuilderTest{
 		"BuildCycleCookieSecretEvent": {
 			expectedEventType: audit.CycleCookieSecretEvent,
 			expectedContextKeys: []string{

@@ -1,9 +1,10 @@
 package audit_test
 
 import (
+	"testing"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"testing"
 )
 
 const (
@@ -13,7 +14,7 @@ const (
 func TestOAuth2EventBuilders(T *testing.T) {
 	T.Parallel()
 
-	tests := map[string]eventBuilderTest{
+	tests := map[string]*eventBuilderTest{
 		"BuildOAuth2ClientCreationEventEntry": {
 			expectedEventType: audit.OAuth2ClientCreationEvent,
 			expectedContextKeys: []string{

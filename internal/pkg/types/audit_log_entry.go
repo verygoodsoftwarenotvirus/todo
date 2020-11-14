@@ -9,9 +9,6 @@ import (
 )
 
 type (
-	// eventType is an enum alias.
-	eventType int
-
 	// FieldChangeSummary represents a field that has changed in a given model's update.
 	FieldChangeSummary struct {
 		FieldName string      `json:"fieldName"`

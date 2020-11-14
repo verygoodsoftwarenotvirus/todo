@@ -1,9 +1,10 @@
 package audit_test
 
 import (
+	"testing"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"testing"
 )
 
 const (
@@ -13,7 +14,7 @@ const (
 func TestWebhookEventBuilders(T *testing.T) {
 	T.Parallel()
 
-	tests := map[string]eventBuilderTest{
+	tests := map[string]*eventBuilderTest{
 		"BuildWebhookCreationEventEntry": {
 			expectedEventType: audit.WebhookCreationEvent,
 			expectedContextKeys: []string{

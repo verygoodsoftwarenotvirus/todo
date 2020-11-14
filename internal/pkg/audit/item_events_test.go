@@ -19,6 +19,7 @@ func TestItemEventBuilders(T *testing.T) {
 			expectedEventType: audit.ItemCreationEvent,
 			expectedContextKeys: []string{
 				audit.ActorAssignmentKey,
+				audit.ItemAssignmentKey,
 				audit.CreationAssignmentKey,
 			},
 			actual: audit.BuildItemCreationEventEntry(&types.Item{}),
@@ -42,5 +43,5 @@ func TestItemEventBuilders(T *testing.T) {
 		},
 	}
 
-	testEventBuilders(T, tests)
+	runEventBuilderTests(T, tests)
 }

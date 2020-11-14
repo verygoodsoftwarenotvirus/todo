@@ -20,6 +20,7 @@ func TestWebhookEventBuilders(T *testing.T) {
 			expectedContextKeys: []string{
 				audit.ActorAssignmentKey,
 				audit.CreationAssignmentKey,
+				audit.WebhookAssignmentKey,
 			},
 			actual: audit.BuildWebhookCreationEventEntry(&types.Webhook{}),
 		},
@@ -42,5 +43,5 @@ func TestWebhookEventBuilders(T *testing.T) {
 		},
 	}
 
-	testEventBuilders(T, tests)
+	runEventBuilderTests(T, tests)
 }

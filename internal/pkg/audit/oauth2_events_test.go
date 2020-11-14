@@ -33,5 +33,5 @@ func TestOAuth2EventBuilders(T *testing.T) {
 		},
 	}
 
-	testEventBuilders(T, tests)
+	runEventBuilderTests(T, tests)
 }

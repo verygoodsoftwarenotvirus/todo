@@ -54,5 +54,5 @@ func TestUserEventBuilders(T *testing.T) {
 		},
 	}
 
-	testEventBuilders(T, tests)
+	runEventBuilderTests(T, tests)
 }

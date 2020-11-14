@@ -11,24 +11,6 @@ before_script:
   - cd /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
   - apt-get update -y && apt-get install -y make git gcc musl-dev
 
-formatting:
-  stage: quality
-  image: golang:stretch
-  variables:
-    GOPATH: "/go"
-  script:
-    - apt-get update -y && apt-get install -y make git gcc musl-dev
-    - if [ $(gofmt -l . | grep -Ev '^vendor\/' | head -c1 | wc -c) -ne 0 ]; then exit 1; fi
-
-coverage:
-  stage: quality
-  image: golang:stretch
-  variables:
-    GOPATH: "/go"
-  script:
-    - apt-get update -y && apt-get install -y make git gcc musl-dev
-    - make coverage
-
 ## doesn't work :'(
 #docker-security-lint:
 #  stage: quality
@@ -41,7 +23,25 @@ coverage:
 #    - apk add --update --no-cache make
 #    - make docker-security-lint
 
-linting:
+coverage:
+  stage: quality
+  image: golang:stretch
+  variables:
+    GOPATH: "/go"
+  script:
+    - apt-get update -y && apt-get install -y make git gcc musl-dev
+    - make coverage
+
+golang-format-check:
+  stage: quality
+  image: golang:stretch
+  variables:
+    GOPATH: "/go"
+  script:
+    - apt-get update -y && apt-get install -y make git gcc musl-dev
+    - if [ $(gofmt -l . | grep -Ev '^vendor\/' | head -c1 | wc -c) -ne 0 ]; then exit 1; fi
+
+golang-lint:
   stage: quality
   image: golangci/golangci-lint:latest # v1.18
   variables:
@@ -50,7 +50,7 @@ linting:
     - go mod vendor
     - golangci-lint run --config=.golangci.yml --deadline=15m
 
-build-frontend:
+frontend-build:
   stage: quality
   image: node:lts-stretch
   before_script:
@@ -59,7 +59,7 @@ build-frontend:
   script:
     - npm run build
 
-lint-frontend:
+frontend-format-check:
   stage: quality
   image: node:lts-stretch
   before_script:
@@ -76,8 +76,7 @@ integration-tests-postgres:
   variables:
     GOPATH: "/go"
   script:
-    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev
-      openssl-dev gcc libc-dev make
+    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
     - pip install docker-compose
     - make integration-tests-postgres
 
@@ -89,8 +88,7 @@ integration-tests-mariadb:
   variables:
     GOPATH: "/go"
   script:
-    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev
-      openssl-dev gcc libc-dev make
+    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
     - pip install docker-compose
     - make integration-tests-mariadb
 
@@ -102,8 +100,7 @@ integration-tests-sqlite:
   variables:
     GOPATH: "/go"
   script:
-    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev
-      openssl-dev gcc libc-dev make
+    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
     - pip install docker-compose
     - make integration-tests-sqlite
 
@@ -113,8 +110,7 @@ frontend-selenium-tests:
   services:
     - docker:dind
   script:
-    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev
-      openssl-dev gcc libc-dev make
+    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
     - pip install docker-compose
     - make frontend-tests
 
@@ -128,8 +124,7 @@ load-tests-postgres:
     GOPATH: "/go"
     LOADTEST_RUN_TIME: "2m30s"
   script:
-    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev
-      openssl-dev gcc libc-dev make
+    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
     - pip install docker-compose
     - make load-tests-postgres
   except:
@@ -144,8 +139,7 @@ load-tests-mariadb:
     GOPATH: "/go"
     LOADTEST_RUN_TIME: "5m00s"
   script:
-    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev
-      openssl-dev gcc libc-dev make
+    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
     - pip install docker-compose
     - make load-tests-mariadb
   except:
@@ -160,8 +154,7 @@ load-tests-sqlite:
     GOPATH: "/go"
     LOADTEST_RUN_TIME: "2m30s"
   script:
-    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev
-      openssl-dev gcc libc-dev make
+    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
     - pip install docker-compose
     - make load-tests-sqlite
   except:
@@ -178,8 +171,7 @@ daily-load-tests-postgres:on-schedule:
     GOPATH: "/go"
     LOADTEST_RUN_TIME: "10m"
   script:
-    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev
-      openssl-dev gcc libc-dev make
+    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
     - pip install docker-compose
     - make load-tests-postgres
   only:
@@ -194,8 +186,7 @@ daily-load-tests-mariadb:on-schedule:
     GOPATH: "/go"
     LOADTEST_RUN_TIME: "10m"
   script:
-    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev
-      openssl-dev gcc libc-dev make
+    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
     - pip install docker-compose
     - make load-tests-mariadb
   only:
@@ -210,8 +201,7 @@ daily-load-tests-sqlite:on-schedule:
     GOPATH: "/go"
     LOADTEST_RUN_TIME: "10m"
   script:
-    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev
-      openssl-dev gcc libc-dev make
+    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
     - pip install docker-compose
     - make load-tests-sqlite
   only:

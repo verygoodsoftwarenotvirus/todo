@@ -47,5 +47,5 @@ func TestAuditEventBuilders(T *testing.T) {
 		},
 	}
 
-	testEventBuilders(T, tests)
+	runEventBuilderTests(T, tests)
 }

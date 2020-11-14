@@ -14,14 +14,15 @@ type eventBuilderTest struct {
 	actual              *types.AuditLogEntryCreationInput
 }
 
-func testEventBuilders(t *testing.T, tests map[string]*eventBuilderTest) {
-	t.Helper()
+func runEventBuilderTests(T *testing.T, tests map[string]*eventBuilderTest) {
+	T.Helper()
 
 	for name, test := range tests {
 		name := name
 		test := test
-		t.Run(name, func(t *testing.T) {
+		T.Run(name, func(t *testing.T) {
 			t.Parallel()
+			t.Helper()
 
 			assert.Equal(t, test.expectedEventType, test.actual.EventType, "expected event type to be %v, was %v", test.expectedEventType, test.actual.EventType)
 			for k := range test.actual.Context {

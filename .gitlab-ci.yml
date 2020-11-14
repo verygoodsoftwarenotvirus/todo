@@ -57,7 +57,7 @@ build-frontend:
     - cd frontend/v2
     - npm install
   script:
-    - npm run build
+    - npm run format-check build
 
 integration-tests-postgres:
   stage: integration-testing

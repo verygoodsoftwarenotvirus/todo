@@ -128,6 +128,22 @@ export class OAuth2Client {
   };
 }
 
+export class OAuth2ClientCreationInput {
+  name: string;
+  redirectURI: string;
+  scopes: string;
+
+  constructor(
+    name: string = '',
+    redirectURI: string = '',
+    scopes: string = '',
+  ) {
+    this.name = name;
+    this.redirectURI = redirectURI;
+    this.scopes = scopes;
+  }
+}
+
 export const fakeOAuth2ClientFactory = Factory.Sync.makeFactory<OAuth2Client>({
   name: Factory.Sync.each(() => faker.random.word()),
   clientID: Factory.Sync.each(() => faker.random.word()),

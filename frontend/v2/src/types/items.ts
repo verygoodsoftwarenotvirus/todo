@@ -84,19 +84,19 @@ export class Item {
   };
 }
 
+export class ItemCreationInput {
+  name: string;
+  details: string;
+
+  constructor(name: string = '', details: string = '') {
+    this.name = name;
+    this.details = details;
+  }
+}
+
 export const fakeItemFactory = Factory.Sync.makeFactory<Item>({
   name: Factory.Sync.each(() => faker.random.word()),
   details: Factory.Sync.each(() => faker.random.word()),
   belongsToUser: Factory.Sync.each(() => faker.random.number()),
   ...defaultFactories,
 });
-
-export class ItemCreationInput {
-  name: string;
-  details: string;
-
-  constructor() {
-    this.name = '';
-    this.details = '';
-  }
-}

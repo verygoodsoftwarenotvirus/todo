@@ -13,6 +13,16 @@ export enum backendRoutes {
   CHANGE_2FA_SECRET = '/users/totp_secret/new',
   VERIFY_2FA_SECRET = '/users/totp_secret/verify',
 
+  // Audit Log Entries
+  GET_AUDIT_LOG_ENTRIES = '/_admin_/audit_log',
+  INDIVIDUAL_AUDIT_LOG_ENTRY = '/_admin_/audit_log/{}',
+
+  // OAuth2 Clients
+  CREATE_OAUTH2_CLIENT = '/oauth2/clients',
+  GET_OAUTH2_CLIENTS = '/api/v1/oauth2/clients',
+  INDIVIDUAL_OAUTH2_CLIENT = '/api/v1/oauth2/clients/{}',
+  INDIVIDUAL_OAUTH2_CLIENT_AUDIT_LOG = '/api/v1/oauth2/clients/{}/audit',
+
   // Items
   CREATE_ITEM = '/api/v1/items',
   GET_ITEMS = '/api/v1/items',

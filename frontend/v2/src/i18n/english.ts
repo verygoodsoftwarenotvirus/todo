@@ -2,7 +2,7 @@ import type { SiteTranslationMap } from '@/i18n/definitions';
 
 const _id = 'ID',
   _createdOn = 'Created On',
-  _name = "Name",
+  _name = 'Name',
   _lastUpdatedOn = 'Last Updated On',
   _belongsToUser = 'Belongs to User';
 

@@ -2,9 +2,8 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
-
-	_ "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/randinit"
 
 	"github.com/google/wire"
 )
@@ -23,6 +22,13 @@ var (
 		ProvideBcryptHashCost,
 	)
 )
+
+func init() {
+	b := make([]byte, 64)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+}
 
 // ProvideBcryptHashCost provides a BcryptHashCost.
 func ProvideBcryptHashCost() BcryptHashCost {

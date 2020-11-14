@@ -3,9 +3,14 @@ package users
 import (
 	"crypto/rand"
 	"encoding/base32"
-
-	_ "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/randinit"
 )
+
+func init() {
+	b := make([]byte, 64)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+}
 
 const (
 	saltSize         = 16

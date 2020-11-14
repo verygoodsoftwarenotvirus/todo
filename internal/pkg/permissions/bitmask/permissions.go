@@ -8,7 +8,7 @@ import (
 
 const (
 	// cycleCookieSecretPermission signifies whether or not the admin in question can cycle cookie secrets.
-	cycleCookieSecretPermission PermissionBitmask = 1 << iota
+	cycleCookieSecretPermission AdminPermissionsBitmask = 1 << iota
 	reservedUnusedPermission2
 	reservedUnusedPermission3
 	reservedUnusedPermission4
@@ -39,175 +39,184 @@ const (
 	reservedUnusedPermission29
 	reservedUnusedPermission30
 	reservedUnusedPermission31
-	completeAdministrativePrivilegesPermission
+	reservedUnusedPermission32
 )
 
 func init() {
-	gob.Register(PermissionBitmask(0))
+	gob.Register(AdminPermissionsBitmask(0))
 }
 
-type PermissionBitmask uint32
+// AdminPermissionsBitmask is a bitmask for keeping track of admin user permissions.
+type AdminPermissionsBitmask uint32
 
 // NewPermissionBitmask builds a new PermissionChecker.
-func NewPermissionBitmask(x uint32) PermissionBitmask {
-	return PermissionBitmask(x)
+func NewPermissionBitmask(x uint32) AdminPermissionsBitmask {
+	return AdminPermissionsBitmask(x)
 }
 
 // Value implements the driver.Valuer interface.
-func (p PermissionBitmask) Value() (driver.Value, error) {
+func (p AdminPermissionsBitmask) Value() (driver.Value, error) {
 	return driver.Value(int64(p)), nil
 }
 
 // Scan implements the sql.Scanner interface.
-func (p *PermissionBitmask) Scan(value interface{}) error {
-	b, _ := value.(int32)
-	*p = PermissionBitmask(b)
+func (p *AdminPermissionsBitmask) Scan(value interface{}) error {
+	b, ok := value.(int32)
+	if !ok {
+		*p = AdminPermissionsBitmask(0)
+	}
+
+	*p = AdminPermissionsBitmask(b)
+
 	return nil
 }
 
-var _ json.Marshaler = (*PermissionBitmask)(nil)
+var _ json.Marshaler = (*AdminPermissionsBitmask)(nil)
 
-func (p *PermissionBitmask) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements the json.Marshaler interface.
+func (p *AdminPermissionsBitmask) MarshalJSON() ([]byte, error) {
 	return json.Marshal(uint32(*p))
 }
 
-var _ json.Unmarshaler = (*PermissionBitmask)(nil)
+var _ json.Unmarshaler = (*AdminPermissionsBitmask)(nil)
 
-func (p *PermissionBitmask) UnmarshalJSON(data []byte) error {
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (p *AdminPermissionsBitmask) UnmarshalJSON(data []byte) error {
 	var v uint32
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
 
-	*p = PermissionBitmask(v)
+	*p = AdminPermissionsBitmask(v)
 
 	return nil
 }
 
-func (p PermissionBitmask) CanCycleCookieSecrets() bool {
+// CanCycleCookieSecrets determines whether or not a user can cycle cookie secrets.
+func (p AdminPermissionsBitmask) CanCycleCookieSecrets() bool {
 	return p&cycleCookieSecretPermission != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission2() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission2() bool {
 	return p&reservedUnusedPermission2 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission3() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission3() bool {
 	return p&reservedUnusedPermission3 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission4() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission4() bool {
 	return p&reservedUnusedPermission4 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission5() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission5() bool {
 	return p&reservedUnusedPermission5 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission6() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission6() bool {
 	return p&reservedUnusedPermission6 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission7() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission7() bool {
 	return p&reservedUnusedPermission7 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission8() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission8() bool {
 	return p&reservedUnusedPermission8 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission9() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission9() bool {
 	return p&reservedUnusedPermission9 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission10() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission10() bool {
 	return p&reservedUnusedPermission10 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission11() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission11() bool {
 	return p&reservedUnusedPermission11 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission12() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission12() bool {
 	return p&reservedUnusedPermission12 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission13() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission13() bool {
 	return p&reservedUnusedPermission13 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission14() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission14() bool {
 	return p&reservedUnusedPermission14 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission15() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission15() bool {
 	return p&reservedUnusedPermission15 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission16() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission16() bool {
 	return p&reservedUnusedPermission16 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission17() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission17() bool {
 	return p&reservedUnusedPermission17 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission18() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission18() bool {
 	return p&reservedUnusedPermission18 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission19() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission19() bool {
 	return p&reservedUnusedPermission19 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission20() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission20() bool {
 	return p&reservedUnusedPermission20 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission21() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission21() bool {
 	return p&reservedUnusedPermission21 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission22() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission22() bool {
 	return p&reservedUnusedPermission22 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission23() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission23() bool {
 	return p&reservedUnusedPermission23 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission24() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission24() bool {
 	return p&reservedUnusedPermission24 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission25() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission25() bool {
 	return p&reservedUnusedPermission25 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission26() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission26() bool {
 	return p&reservedUnusedPermission26 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission27() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission27() bool {
 	return p&reservedUnusedPermission27 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission28() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission28() bool {
 	return p&reservedUnusedPermission28 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission29() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission29() bool {
 	return p&reservedUnusedPermission29 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission30() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission30() bool {
 	return p&reservedUnusedPermission30 != 0
 }
 
-func (p PermissionBitmask) hasReservedUnusedPermission31() bool {
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission31() bool {
 	return p&reservedUnusedPermission31 != 0
 }
 
-func (p PermissionBitmask) IsCompleteAdmin() bool {
-	return p&completeAdministrativePrivilegesPermission != 0
+func (p AdminPermissionsBitmask) hasReservedUnusedPermission32() bool {
+	return p&reservedUnusedPermission32 != 0
 }

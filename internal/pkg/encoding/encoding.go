@@ -151,7 +151,8 @@ func (ed *ServerEncoderDecoder) DecodeRequest(req *http.Request, v interface{}) 
 		d = xml.NewDecoder(req.Body)
 	default:
 		dec := json.NewDecoder(req.Body)
-		// dec.DisallowUnknownFields() // this could be cool, but it would also break a lot of how my client works
+		// this could be cool, but it would also break a lot of how my client works
+		// dec.DisallowUnknownFields()
 		d = dec
 	}
 

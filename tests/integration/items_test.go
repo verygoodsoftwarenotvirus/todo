@@ -3,13 +3,13 @@ package integration
 import (
 	"context"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
 	"testing"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/client/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"

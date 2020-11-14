@@ -5,11 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/Masterminds/squirrel"

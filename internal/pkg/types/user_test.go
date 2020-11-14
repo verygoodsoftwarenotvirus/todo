@@ -2,11 +2,12 @@ package types
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUser_JSONUnmarshal(T *testing.T) {

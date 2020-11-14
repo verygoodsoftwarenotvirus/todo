@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	_ "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/randinit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -18,6 +17,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func init() {
+	b := make([]byte, 64)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+}
 
 // randString produces a random string.
 // https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/

@@ -2,8 +2,9 @@ package types
 
 import (
 	"context"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"net/http"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 )
@@ -23,13 +24,13 @@ type (
 		ID                        uint64  `json:"id"`
 		PasswordLastChangedOn     *uint64 `json:"passwordLastChangedOn"`
 		TwoFactorSecretVerifiedOn *uint64 `json:"-"`
-		AdminPermissions          bitmask.PermissionBitmask
 		CreatedOn                 uint64  `json:"createdOn"`
 		LastUpdatedOn             *uint64 `json:"lastUpdatedOn"`
 		ArchivedOn                *uint64 `json:"archivedOn"`
 		Status                    string  `json:"status"`
-		IsAdmin                   bool    `json:"isAdmin"`
-		RequiresPasswordChange    bool    `json:"requiresPasswordChange"`
+		AdminPermissions          bitmask.AdminPermissionsBitmask
+		IsAdmin                   bool `json:"isAdmin"`
+		RequiresPasswordChange    bool `json:"requiresPasswordChange"`
 	}
 
 	// UserList represents a list of users.

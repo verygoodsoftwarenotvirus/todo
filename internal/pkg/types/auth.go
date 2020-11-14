@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 )
 

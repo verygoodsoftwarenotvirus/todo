@@ -79,11 +79,11 @@ connection_details = "%s"
 		tf, err := ioutil.TempFile(os.TempDir(), "*.toml")
 		require.NoError(t, err)
 
-		_, err = tf.Write([]byte(fmt.Sprintf(`
+		_, err = tf.Write([]byte(`
 [server]
 http_port = "fart"
 debug = ":banana:"
-`)))
+`))
 		require.NoError(t, err)
 
 		cfg, err := ParseConfigFile(noop.NewLogger(), tf.Name())
@@ -98,10 +98,10 @@ debug = ":banana:"
 		tf, err := ioutil.TempFile(os.TempDir(), "*.toml")
 		require.NoError(t, err)
 
-		_, err = tf.Write([]byte(fmt.Sprintf(`
+		_, err = tf.Write([]byte(`
 [meta]
 run_mode = "party time"
-`)))
+`))
 		require.NoError(t, err)
 
 		cfg, err := ParseConfigFile(noop.NewLogger(), tf.Name())

@@ -5,8 +5,6 @@ import (
 	"encoding/base32"
 	"io/ioutil"
 	"time"
-
-	_ "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/randinit"
 )
 
 const (
@@ -16,15 +14,20 @@ const (
 	TestingRunMode RunMode = "testing"
 	// ProductionRunMode is the run mode for a production environment.
 	ProductionRunMode RunMode = "production"
-
+	// DefaultRunMode is the default run mode.
+	DefaultRunMode = DevelopmentRunMode
 	// DefaultStartupDeadline is the default amount of time we allow for server startup.
 	DefaultStartupDeadline = time.Minute
 
-	// DefaultRunMode is the default run mode.
-	DefaultRunMode = DevelopmentRunMode
-
 	randStringSize = 32
 )
+
+func init() {
+	b := make([]byte, 64)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+}
 
 var (
 	// ValidModes is a helper map with every valid RunMode present.

@@ -30,8 +30,9 @@ type (
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
 	UserStatusResponse struct {
-		Authenticated bool `json:"isAuthenticated"`
-		IsAdmin       bool `json:"isAdmin"`
+		Authenticated    bool                          `json:"isAuthenticated"`
+		IsAdmin          bool                          `json:"isAdmin"`
+		AdminPermissions permissions.PermissionChecker `json:"adminPermissions"`
 	}
 
 	// AuthAuditManager describes a structure capable of .

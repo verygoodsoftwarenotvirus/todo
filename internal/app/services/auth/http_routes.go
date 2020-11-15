@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -241,26 +242,23 @@ func (s *Service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context(), "auth.service.StatusHandler")
 	defer span.End()
 
-	var (
-		usr *types.UserStatusResponse
-		sc  int
-	)
+	var usr *types.UserStatusResponse
 
 	if userInfo, err := s.fetchUserFromCookie(ctx, req); err != nil {
-		sc = http.StatusUnauthorized
 		usr = &types.UserStatusResponse{
-			Authenticated: false,
-			IsAdmin:       false,
+			Authenticated:    false,
+			IsAdmin:          false,
+			AdminPermissions: bitmask.NewPermissionBitmask(0),
 		}
 	} else {
-		sc = http.StatusOK
 		usr = &types.UserStatusResponse{
-			Authenticated: true,
-			IsAdmin:       userInfo.IsAdmin,
+			Authenticated:    true,
+			IsAdmin:          userInfo.IsAdmin,
+			AdminPermissions: userInfo.AdminPermissions,
 		}
 	}
 
-	s.encoderDecoder.EncodeResponseWithStatus(res, usr, sc)
+	s.encoderDecoder.EncodeResponse(res, usr)
 }
 
 // CycleCookieSecretHandler rotates the cookie building secret with a new random secret.
@@ -279,6 +277,12 @@ func (s *Service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 		return
 	}
 
+	if !si.AdminPermissions.CanCycleCookieSecrets() {
+		logger.WithValue("admin_permissions", si.AdminPermissions).Debug("invalid permissions")
+		s.encoderDecoder.EncodeErrorResponse(res, "invalid permissions", http.StatusUnauthorized)
+		return
+	}
+
 	s.cookieManager = securecookie.New(
 		securecookie.GenerateRandomKey(cookieSecretSize),
 		[]byte(s.config.CookieSecret),
@@ -286,7 +290,7 @@ func (s *Service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 
 	s.auditLog.LogCycleCookieSecretEvent(ctx, si.UserID)
 
-	res.WriteHeader(http.StatusCreated)
+	res.WriteHeader(http.StatusAccepted)
 }
 
 // validateLogin takes login information and returns whether or not the login is valid.

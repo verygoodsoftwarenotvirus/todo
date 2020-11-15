@@ -1,99 +1,100 @@
 <script lang="typescript">
-  import { onDestroy } from 'svelte';
-  import { link, navigate } from 'svelte-routing';
-  import JSONTree from 'svelte-json-tree';
+import { onDestroy } from 'svelte';
+import { link, navigate } from 'svelte-routing';
+import JSONTree from 'svelte-json-tree';
 
-  import { Logger } from '../../logger';
-  import {
-    adminModeStore,
-    sessionSettingsStore,
-    userStatusStore,
-  } from '../../stores';
-  import { QueryFilter, UserSiteSettings, UserStatus } from '../../types';
-  import { translations } from '../../i18n';
+import { Logger } from '../../logger';
+import {
+  adminModeStore,
+  sessionSettingsStore,
+  userStatusStore,
+} from '../../stores';
+import { QueryFilter, UserSiteSettings, UserStatus } from '../../types';
+import { translations } from '../../i18n';
 
-  let logger = new Logger().withDebugValue(
-    'source',
-    'src/components/APITable/APITable.svelte',
-  );
+let logger = new Logger().withDebugValue(
+  'source',
+  'src/components/APITable/APITable.svelte',
+);
 
-  const queryFilter = new QueryFilter();
+const queryFilter = new QueryFilter();
 
-  // local state
-  let searchQuery: string = '';
-  let currentPage: number = 0;
-  export let dataRetrievalError: string = '';
+// local state
+let searchQuery: string = '';
+let currentPage: number = 0;
+export let dataRetrievalError: string = '';
 
-  export let title: string = '';
-  export let headers: string[] = [];
-  export let rows: string[][] = [[]];
+export let title: string = '';
+export let headers: string[] = [];
+export let rows: string[][] = [[]];
 
-  export let newPageLink: string = '';
-  export let individualPageLink: string = '';
+export let newPageLink: string = '';
+export let individualPageLink: string = '';
 
-  export let searchEnabled: boolean = true;
-  export let searchFunction;
+export let searchEnabled: boolean = true;
+export let searchFunction;
 
-  export let deleteEnabled: boolean = true;
-  export let deleteFunction;
+export let deleteEnabled: boolean = true;
+export let deleteFunction;
 
-  export let incrementDisabled;
-  export let incrementPageFunction;
+export let incrementDisabled;
+export let incrementPageFunction;
 
-  export let decrementDisabled;
-  export let decrementPageFunction;
+export let decrementDisabled;
+export let decrementPageFunction;
 
-  export let fetchFunction;
-  export let rowRenderFunction;
+export let fetchFunction;
+export let rowRenderFunction;
 
-  // set up translations
-  let currentSessionSettings = new UserSiteSettings();
-  let translationsToUse = translations.messagesFor(
-    currentSessionSettings.language,
-  ).components.apiTable;
+// set up translations
+let currentSessionSettings = new UserSiteSettings();
+let translationsToUse = translations.messagesFor(
+  currentSessionSettings.language,
+).components.apiTable;
 
-  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
-    (value: UserSiteSettings) => {
-      currentSessionSettings = value;
-      translationsToUse = translations.messagesFor(
-        currentSessionSettings.language,
-      ).components.apiTable;
-    },
-  );
-  // onDestroy(unsubscribeFromSettingsUpdates);
+const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
+  (value: UserSiteSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = translations.messagesFor(
+      currentSessionSettings.language,
+    ).components.apiTable;
+  },
+);
+// onDestroy(unsubscribeFromSettingsUpdates);
 
-  let adminMode: boolean = false;
-  const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe(
-    (value: boolean) => {
-      adminMode = value;
-      fetchFunction();
-    },
-  );
-  // onDestroy(unsubscribeFromAdminModeUpdates);
+let adminMode: boolean = false;
+const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe(
+  (value: boolean) => {
+    adminMode = value;
+    fetchFunction();
+  },
+);
+// onDestroy(unsubscribeFromAdminModeUpdates);
 
-  let currentAuthStatus = {};
-  const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
-    (value: UserStatus) => {
-      currentAuthStatus = value;
-    },
-  );
-  // onDestroy(unsubscribeFromUserStatusUpdates);
+let currentAuthStatus = {};
+const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
+  (value: UserStatus) => {
+    currentAuthStatus = value;
+  },
+);
+// onDestroy(unsubscribeFromUserStatusUpdates);
 
-  function search(): void {
-    if (searchQuery.length >= 3) {
-      logger.debug(`searching for items: ${searchQuery}`);
-      searchFunction();
-    }
+function search(): void {
+  if (searchQuery.length >= 3) {
+    logger.debug(`searching for items: ${searchQuery}`);
+    searchFunction();
   }
+}
 
-  function goToNewPage() {
-    logger.debug(`navigating to ${newPageLink} via goToNewPage`);
-    navigate(newPageLink, { state: {}, replace: true });
-  }
+function goToNewPage() {
+  logger.debug(`navigating to ${newPageLink} via goToNewPage`);
+  navigate(newPageLink, { state: {}, replace: true });
+}
 </script>
 
 <div
-  class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded bg-white">
+  class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded bg-white"
+>
   <div class="rounded-t mb-0 px-4 py-3 border-0">
     <div class="flex flex-wrap items-center">
       <div class="relative w-full px-4 max-w-full flex-grow flex-1">
@@ -101,12 +102,14 @@
           {title}
           <button
             class="border-2 font-bold py-1 px-4 m-2 rounded"
-            on:click={goToNewPage}>
+            on:click="{goToNewPage}"
+          >
             🆕
           </button>
           <button
             class="border-2 font-bold py-1 px-4 m-2 rounded"
-            on:click={fetchFunction}>
+            on:click="{fetchFunction}"
+          >
             🔄
           </button>
         </h3>
@@ -115,25 +118,26 @@
       <div class="text-center">
         <div class="px-4 py-2 m-2">
           <button
-            on:click={decrementPageFunction}
-            disabled={decrementDisabled}><i
-              class="fa fa-arrow-circle-left" /></button>
+            on:click="{decrementPageFunction}"
+            disabled="{decrementDisabled}"
+          ><i class="fa fa-arrow-circle-left"></i></button>
           &nbsp;
           {#if currentPage > 0}{translationsToUse.page} {currentPage}{/if}
           &nbsp;
           <button
-            on:click={incrementPageFunction}
-            disabled={incrementDisabled}><i
-              class="fa fa-arrow-circle-right" /></button>
+            on:click="{incrementPageFunction}"
+            disabled="{incrementDisabled}"
+          ><i class="fa fa-arrow-circle-right"></i></button>
         </div>
       </div>
 
       <div>
         {translationsToUse.perPage}:
         <select
-          bind:value={queryFilter.limit}
-          on:blur={fetchFunction}
-          class="appearance-none border p-1 rounded leading-tight">
+          bind:value="{queryFilter.limit}"
+          on:blur="{fetchFunction}"
+          class="appearance-none border p-1 rounded leading-tight"
+        >
           <option>20</option>
           <option>35</option>
           <option>50</option>
@@ -142,22 +146,23 @@
         </select>
       </div>
 
-      <span class="mr-2 ml-2" />
+      <span class="mr-2 ml-2"></span>
 
       {#if dataRetrievalError !== ''}
         <span class="text-red-600">{dataRetrievalError}</span>
       {/if}
 
-      <span class="mr-2 ml-2" />
+      <span class="mr-2 ml-2"></span>
 
       {#if searchEnabled}
         <div class="flex border-grey-light border">
           <input
             class="w-full rounded ml-1"
             type="text"
-            placeholder={translationsToUse.inputPlaceholders.search}
-            bind:value={searchQuery}
-            on:keyup={search} />
+            placeholder="{translationsToUse.inputPlaceholders.search}"
+            bind:value="{searchQuery}"
+            on:keyup="{search}"
+          />
         </div>
       {/if}
     </div>
@@ -170,20 +175,23 @@
             {#if header.requiresAdmin}
               {#if currentAuthStatus.isAdmin && adminMode}
                 <th
-                  class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
+                  class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200"
+                >
                   {header.content}
                 </th>
               {/if}
             {:else}
               <th
-                class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
+                class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200"
+              >
                 {header.content}
               </th>
             {/if}
           {/each}
           {#if deleteEnabled}
             <th
-              class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
+              class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200"
+            >
               {translationsToUse.delete}
             </th>
           {/if}
@@ -196,7 +204,8 @@
               {#if cell.fieldName === 'id'}
                 <a use:link href="{individualPageLink}/{row.id}">
                   <th
-                    class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-left flex items-center">
+                    class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-left flex items-center"
+                  >
                     <span class="ml-3 font-bold btext-gray-700">
                       {row.id}
                     </span>
@@ -205,19 +214,21 @@
               {:else if cell.requiresAdmin}
                 {#if currentAuthStatus.isAdmin && adminMode}
                   {#if cell.isJSON}
-                    <JSONTree value={JSON.parse(cell.content)} />
+                    <JSONTree value="{JSON.parse(cell.content)}" />
                   {:else}
                     <td
-                      class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4">
+                      class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4"
+                    >
                       {cell.content}
                     </td>
                   {/if}
                 {/if}
               {:else if cell.isJSON}
-                <JSONTree value={JSON.parse(cell.content)} />
+                <JSONTree value="{JSON.parse(cell.content)}" />
               {:else}
                 <td
-                  class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4">
+                  class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4"
+                >
                   {cell.content}
                 </td>
               {/if}
@@ -225,8 +236,9 @@
             {#if deleteEnabled}
               <td
                 class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-right text-red-600"
-                on:click={deleteFunction(row.id)}>
-                <div><i class="fa fa-trash" /></div>
+                on:click="{deleteFunction(row.id)}"
+              >
+                <div><i class="fa fa-trash"></i></div>
               </td>
             {/if}
           </tr>

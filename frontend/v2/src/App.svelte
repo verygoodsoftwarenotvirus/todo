@@ -1,27 +1,27 @@
 <!-- App.svelte -->
 <script lang="typescript">
-  import { Router, Route, navigate } from 'svelte-routing';
+import { Router, Route, navigate } from 'svelte-routing';
 
-  import { Logger } from '@/logger';
+import { Logger } from '@/logger';
 
-  // Admin Layout
-  import Admin from './layouts/Admin.svelte';
-  // Auth Layout
-  import Auth from './layouts/Auth.svelte';
-  // User Layout
-  import User from './layouts/User.svelte';
-  // Things Layout
+// Admin Layout
+import Admin from './layouts/Admin.svelte';
+// Auth Layout
+import Auth from './layouts/Auth.svelte';
+// User Layout
+import User from './layouts/User.svelte';
+// Things Layout
 
-  import Things from './layouts/Things.svelte';
-  // No Layout Pages
-  import Index from './views/Index.svelte';
+import Things from './layouts/Things.svelte';
+// No Layout Pages
+import Index from './views/Index.svelte';
 
-  export let url: string = '';
+export let url: string = '';
 
-  let logger = new Logger().withDebugValue('source', 'src/App.svelte');
+let logger = new Logger().withDebugValue('source', 'src/App.svelte');
 </script>
 
-<Router {url}>
+<Router url="{url}">
   <!-- admin layout -->
   <Route path="admin/*admin" component="{Admin}" />
   <!-- auth layout -->

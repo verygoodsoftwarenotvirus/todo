@@ -6,6 +6,7 @@ import { defaultFactories } from '@/types/fakes';
 import { isNumeric, renderUnixTime } from '@/utils';
 import type { userModelTranslations } from '@/i18n';
 import { APITableCell, APITableHeader } from '@/components/APITable/types';
+// import { AdminPermissions } from '@/types/permissions/permission_mask';
 
 export class UserList extends Pagination {
   users: User[];
@@ -35,7 +36,7 @@ export class User {
     passwordLastChangedOn: number = 0,
     createdOn: number = 0,
     lastUpdatedOn: number = 0,
-    archivedOn: number,
+    archivedOn?: number,
   ) {
     this.id = id;
     this.username = username;
@@ -156,9 +157,14 @@ export class UserStatus {
   isAuthenticated: boolean;
   isAdmin: boolean;
 
-  constructor(isAuthenticated: boolean = false, isAdmin: boolean = false) {
+  constructor(
+    isAuthenticated: boolean = false,
+    isAdmin: boolean = false,
+    // adminPerms: number = 0,
+  ) {
     this.isAuthenticated = isAuthenticated;
     this.isAdmin = isAdmin;
+    // this.adminPermissions = new AdminPermissions(adminPerms);
   }
 }
 

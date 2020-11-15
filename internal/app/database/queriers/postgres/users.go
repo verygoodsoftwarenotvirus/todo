@@ -208,6 +208,46 @@ func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*typ
 	return u, nil
 }
 
+// buildSearchForUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
+func (p *Postgres) buildSearchForUserByUsernameQuery(usernameQuery string) (query string, args []interface{}) {
+	var err error
+
+	query, args, err = p.sqlBuilder.
+		Select(usersTableColumns...).
+		From(usersTableName).
+		Where(squirrel.Expr(
+			fmt.Sprintf("%s.%s ILIKE ?", usersTableName, usersTableUsernameColumn),
+			fmt.Sprintf("%%%s%%", usernameQuery),
+		)).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", usersTableName, archivedOnColumn): nil,
+		}).
+		Where(squirrel.NotEq{
+			fmt.Sprintf("%s.%s", usersTableName, usersTableTwoFactorVerifiedOnColumn): nil,
+		}).
+		ToSql()
+
+	p.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// SearchForUserByUsername fetches a user by their username.
+func (p *Postgres) SearchForUserByUsername(ctx context.Context, usernameQuery string) (*types.User, error) {
+	query, args := p.buildSearchForUserByUsernameQuery(usernameQuery)
+	row := p.db.QueryRowContext(ctx, query, args...)
+
+	u, err := p.scanUser(row)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return nil, fmt.Errorf("fetching user from database: %w", err)
+	}
+
+	return u, nil
+}
+
 // buildGetAllUsersCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
 // to a given filter's criteria.
 func (p *Postgres) buildGetAllUsersCountQuery() (query string) {

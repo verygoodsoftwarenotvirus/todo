@@ -50,6 +50,7 @@ import {
 } from './items';
 
 import { createWebhook } from '@/requests/webhooks';
+import { cycleCookieSecret } from './admin';
 
 export class V1APIClient {
   // users stuff
@@ -68,6 +69,9 @@ export class V1APIClient {
   static checkAuthStatusRequest = checkAuthStatusRequest;
   static validateTOTPSecretWithToken = validateTOTPSecretWithToken;
   static fetchAuditLogEntriesForUser = fetchAuditLogEntriesForUser;
+
+  // admin stuff
+  static cycleCookieSecret = cycleCookieSecret;
 
   // audit log entries
   static fetchListOfAuditLogEntries = fetchListOfAuditLogEntries;

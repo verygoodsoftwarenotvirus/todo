@@ -1,64 +1,66 @@
 <script lang="typescript">
-  import { onDestroy } from 'svelte';
-  import { link } from 'svelte-routing';
+import { onDestroy } from 'svelte';
+import { link } from 'svelte-routing';
 
-  // core components
-  import UserDropdown from '../Dropdowns/UserDropdown.svelte';
+// core components
+import UserDropdown from '../Dropdowns/UserDropdown.svelte';
 
-  import { UserSiteSettings, UserStatus } from '../../types';
-  import { sessionSettingsStore, userStatusStore } from '../../stores';
-  import { translations } from '../../i18n';
-  import { Logger } from '../../logger';
+import { UserSiteSettings, UserStatus } from '../../types';
+import { sessionSettingsStore, userStatusStore } from '../../stores';
+import { translations } from '../../i18n';
+import { Logger } from '../../logger';
 
-  export let location: Location;
+export let location: Location;
 
-  let collapseShow: string = 'hidden';
-  function toggleCollapseShow(classes) {
-    collapseShow = classes;
-  }
+let collapseShow: string = 'hidden';
+function toggleCollapseShow(classes) {
+  collapseShow = classes;
+}
 
-  let logger = new Logger().withDebugValue(
-    'source',
-    'src/components/Sidebar/Sidebar.svelte',
-  );
+let logger = new Logger().withDebugValue(
+  'source',
+  'src/components/Sidebar/Sidebar.svelte',
+);
 
-  let currentAuthStatus = new UserStatus();
-  const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
-    (value: UserStatus) => {
-      currentAuthStatus = value;
-      logger
-        .withValue('current_auth_status', currentAuthStatus)
-        .debug('auth status updated');
-    },
-  );
-  // onDestroy(unsubscribeFromUserStatusUpdates());
+let currentAuthStatus = new UserStatus();
+const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
+  (value: UserStatus) => {
+    currentAuthStatus = value;
+    logger
+      .withValue('current_auth_status', currentAuthStatus)
+      .debug('auth status updated');
+  },
+);
+// onDestroy(unsubscribeFromUserStatusUpdates());
 
-  // set up translations
-  let currentSessionSettings = new UserSiteSettings();
-  let translationsToUse = translations.messagesFor(
-    currentSessionSettings.language,
-  ).components.sidebars.primary;
-  const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
-    (value: UserSiteSettings) => {
-      currentSessionSettings = value;
-      translationsToUse = translations.messagesFor(
-        currentSessionSettings.language,
-      ).components.sidebars.primary;
-    },
-  );
-  // onDestroy(unsubscribeFromSettingsUpdates);
+// set up translations
+let currentSessionSettings = new UserSiteSettings();
+let translationsToUse = translations.messagesFor(
+  currentSessionSettings.language,
+).components.sidebars.primary;
+const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
+  (value: UserSiteSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = translations.messagesFor(
+      currentSessionSettings.language,
+    ).components.sidebars.primary;
+  },
+);
+// onDestroy(unsubscribeFromSettingsUpdates);
 </script>
 
 s
 <nav
-  class="md:left-0 md:block md:fixed md:top-0 md:bottom-0 md:overflow-y-auto md:flex-row md:flex-no-wrap md:overflow-hidden shadow-xl bg-white flex flex-wrap items-center justify-between relative md:w-64 z-10 py-4 px-6">
+  class="md:left-0 md:block md:fixed md:top-0 md:bottom-0 md:overflow-y-auto md:flex-row md:flex-no-wrap md:overflow-hidden shadow-xl bg-white flex flex-wrap items-center justify-between relative md:w-64 z-10 py-4 px-6"
+>
   <div
-    class="md:flex-col md:items-stretch md:min-h-full md:flex-no-wrap px-0 flex flex-wrap items-center justify-between w-full mx-auto">
+    class="md:flex-col md:items-stretch md:min-h-full md:flex-no-wrap px-0 flex flex-wrap items-center justify-between w-full mx-auto"
+  >
     <!-- Toggler -->
     <button
       class="cursor-pointer text-black opacity-50 md:hidden px-3 py-1 text-xl leading-none bg-transparent rounded border border-solid border-transparent"
       type="button"
-      on:click={() => toggleCollapseShow('bg-white m-2 py-3 px-6')}
+      on:click="{() => toggleCollapseShow('bg-white m-2 py-3 px-6')}"
     >
       <i class="fas fa-bars"></i>
     </button>
@@ -83,9 +85,10 @@ s
     <div
       class="md:flex md:flex-col md:items-stretch md:opacity-100 md:relative md:mt-4 md:shadow-none shadow absolute top-0 left-0 right-0 z-40 overflow-y-auto overflow-x-hidden h-auto items-center flex-1 rounded {collapseShow}"
     >
-
       <div>
-        <h6 class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline">
+        <h6
+          class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline"
+        >
           {translationsToUse.things}
         </h6>
         <!-- Navigation -->
@@ -107,7 +110,9 @@ s
       {#if currentAuthStatus.isAdmin}
         <hr class="my-4 md:min-w-full" />
         <div>
-          <h6 class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline">
+          <h6
+            class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline"
+          >
             {translationsToUse.admin}
           </h6>
 
@@ -185,10 +190,8 @@ s
               </a>
             </li>
           </ul>
-
         </div>
       {/if}
-
     </div>
   </div>
 </nav>

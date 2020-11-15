@@ -1,5 +1,12 @@
 <script lang="typescript">
-  export let location: Location;
+import { Logger } from '../../logger';
+
+export let location: Location;
+
+let logger = new Logger().withDebugValue(
+  'source',
+  'src/views/admin/Dashboard.svelte',
+);
 </script>
 
-<div />
+<div></div>

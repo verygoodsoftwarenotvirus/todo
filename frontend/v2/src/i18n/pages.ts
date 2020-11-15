@@ -73,3 +73,16 @@ export type userSettingsPageTranslations = {
     twoFactorToken: string;
   };
 };
+
+export type siteSettingsPageTranslations = {
+  title: string;
+  buttons: {
+    cycleCookieSecret: string;
+  };
+  confirmations: {
+    cycleCookieSecret: string;
+  };
+  sectionLabels: {
+    actions: string;
+  };
+};

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
@@ -36,7 +37,7 @@ var (
 				"two_factor_secret" TEXT NOT NULL,
 				"two_factor_secret_verified_on" BIGINT DEFAULT NULL,
 				"is_admin" BOOLEAN NOT NULL DEFAULT 'false',
-				"admin_permissions" INTEGER NOT NULL DEFAULT 0,
+				"admin_permissions" BIGINT NOT NULL DEFAULT 0,
 				"status" TEXT NOT NULL DEFAULT 'created',
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				"last_updated_on" BIGINT DEFAULT NULL,
@@ -158,6 +159,7 @@ func (p *Postgres) Migrate(ctx context.Context, authenticator auth.Authenticator
 					usersTableSaltColumn,
 					usersTableTwoFactorColumn,
 					usersTableIsAdminColumn,
+					usersTableAdminPermissionsColumn,
 					usersTableTwoFactorVerifiedOnColumn,
 				).
 				Values(
@@ -166,6 +168,7 @@ func (p *Postgres) Migrate(ctx context.Context, authenticator auth.Authenticator
 					x.Salt,
 					x.TwoFactorSecret,
 					x.IsAdmin,
+					math.MaxUint32,
 					squirrel.Expr(currentUnixTimeQuery),
 				).
 				ToSql()
@@ -213,6 +216,7 @@ func (p *Postgres) Migrate(ctx context.Context, authenticator auth.Authenticator
 				usersTableSaltColumn,
 				usersTableTwoFactorColumn,
 				usersTableIsAdminColumn,
+				usersTableAdminPermissionsColumn,
 				usersTableTwoFactorVerifiedOnColumn,
 			).
 			Values(
@@ -222,6 +226,7 @@ func (p *Postgres) Migrate(ctx context.Context, authenticator auth.Authenticator
 				// `otpauth://totp/todo:username?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&issuer=todo`
 				"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 				testUserConfig.IsAdmin,
+				math.MaxUint32,
 				squirrel.Expr(currentUnixTimeQuery),
 			).
 			ToSql()

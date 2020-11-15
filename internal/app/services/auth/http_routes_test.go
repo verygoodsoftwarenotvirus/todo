@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,6 +11,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
@@ -929,7 +931,7 @@ func TestService_StatusHandler(T *testing.T) {
 		s.userDB = udb
 
 		s.StatusHandler(res, req)
-		assert.Equal(t, http.StatusUnauthorized, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, udb)
 	})
@@ -946,7 +948,11 @@ func TestService_CycleSecretHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return &types.SessionInfo{
+				UserID:           exampleUser.ID,
+				UserIsAdmin:      false,
+				AdminPermissions: bitmask.NewPermissionBitmask(math.MaxUint32),
+			}, nil
 		}
 
 		res := httptest.NewRecorder()
@@ -966,7 +972,76 @@ func TestService_CycleSecretHandler(T *testing.T) {
 
 		s.CycleCookieSecretHandler(res, req)
 
+		assert.Equal(t, http.StatusAccepted, res.Code, "expected code to be %d, but was %d", http.StatusUnauthorized, res.Code)
 		assert.Error(t, s.cookieManager.Decode(CookieName, c.Value, &token))
+	})
+
+	T.Run("with error retrieving session info", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		s := buildTestService(t)
+
+		exampleUser := fakes.BuildFakeUser()
+		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
+			return nil, errors.New("blah")
+		}
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://blah.com", nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog.On("LogCycleCookieSecretEvent", mock.Anything, exampleUser.ID)
+		s.auditLog = auditLog
+
+		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
+		c := req.Cookies()[0]
+
+		var token string
+		assert.NoError(t, s.cookieManager.Decode(CookieName, c.Value, &token))
+
+		s.CycleCookieSecretHandler(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code, "expected code to be %d, but was %d", http.StatusUnauthorized, res.Code)
+		assert.NoError(t, s.cookieManager.Decode(CookieName, c.Value, &token))
+	})
+
+	T.Run("with invalid permissions", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		s := buildTestService(t)
+
+		exampleUser := fakes.BuildFakeUser()
+		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
+			return &types.SessionInfo{
+				UserID:           exampleUser.ID,
+				UserIsAdmin:      false,
+				AdminPermissions: bitmask.NewPermissionBitmask(0),
+			}, nil
+		}
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://blah.com", nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog.On("LogCycleCookieSecretEvent", mock.Anything, exampleUser.ID)
+		s.auditLog = auditLog
+
+		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
+		c := req.Cookies()[0]
+
+		var token string
+		assert.NoError(t, s.cookieManager.Decode(CookieName, c.Value, &token))
+
+		s.CycleCookieSecretHandler(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code, "expected code to be %d, but was %d", http.StatusUnauthorized, res.Code)
+		assert.NoError(t, s.cookieManager.Decode(CookieName, c.Value, &token))
 	})
 }
 

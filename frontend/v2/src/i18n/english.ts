@@ -162,6 +162,19 @@ export const englishTranslations: SiteTranslationMap = {
         twoFactorToken: '123456',
       },
     },
+    siteSettings: {
+      title: 'Site Settings',
+      buttons: {
+        cycleCookieSecret: 'Cycle Cookie Secret',
+      },
+      confirmations: {
+        cycleCookieSecret:
+          'Are you sure you want to cycle the cookie secret? This will effectively log out every user.',
+      },
+      sectionLabels: {
+        actions: 'Actions',
+      },
+    },
   },
   models: {
     user: {

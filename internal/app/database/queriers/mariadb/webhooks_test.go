@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func buildMockRowsFromWebhook(webhooks ...*types.Webhook) *sqlmock.Rows {
+func buildMockRowsFromWebhooks(webhooks ...*types.Webhook) *sqlmock.Rows {
 	columns := webhooksTableColumns
 	exampleRows := sqlmock.NewRows(columns)
 
@@ -127,7 +127,7 @@ func TestMariaDB_GetWebhook(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromWebhook(exampleWebhook))
+			WillReturnRows(buildMockRowsFromWebhooks(exampleWebhook))
 
 		actual, err := m.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
 		assert.NoError(t, err)
@@ -286,7 +286,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs().
 			WillReturnRows(
-				buildMockRowsFromWebhook(
+				buildMockRowsFromWebhooks(
 					&exampleWebhookList.Webhooks[0],
 					&exampleWebhookList.Webhooks[1],
 					&exampleWebhookList.Webhooks[2],
@@ -402,7 +402,7 @@ func TestMariaDB_GetWebhooks(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
-				buildMockRowsFromWebhook(
+				buildMockRowsFromWebhooks(
 					&exampleWebhookList.Webhooks[0],
 					&exampleWebhookList.Webhooks[1],
 					&exampleWebhookList.Webhooks[2],

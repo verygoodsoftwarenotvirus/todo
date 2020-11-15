@@ -1,24 +1,25 @@
 <script lang="typescript">
-  // core components
+// core components
 
-  export let statSubtitle: string = 'Traffic';
-  export let statTitle: string = '350,897';
-  // The value must match one of these strings
-  // "up" or "down"
-  export let statArrow: string = 'up';
-  export let statPercent: string = '3.48';
-  // can be any of the text color utilities
-  // from tailwindcss
-  export let statPercentColor: string = 'text-green-500';
-  export let statDescripiron: string = 'Since last month';
-  export let statIconName: string = 'far fa-chart-bar';
-  // can be any of the background color utilities
-  // from tailwindcss
-  export let statIconColor: string = 'bg-red-500';
+export let statSubtitle: string = 'Traffic';
+export let statTitle: string = '350,897';
+// The value must match one of these strings
+// "up" or "down"
+export let statArrow: string = 'up';
+export let statPercent: string = '3.48';
+// can be any of the text color utilities
+// from tailwindcss
+export let statPercentColor: string = 'text-green-500';
+export let statDescripiron: string = 'Since last month';
+export let statIconName: string = 'far fa-chart-bar';
+// can be any of the background color utilities
+// from tailwindcss
+export let statIconColor: string = 'bg-red-500';
 </script>
 
 <div
-  class="relative flex flex-col min-w-0 break-words bg-white rounded mb-6 xl:mb-0 shadow-lg">
+  class="relative flex flex-col min-w-0 break-words bg-white rounded mb-6 xl:mb-0 shadow-lg"
+>
   <div class="flex-auto p-4">
     <div class="flex flex-wrap">
       <div class="relative w-full pr-4 max-w-full flex-grow flex-1">
@@ -29,15 +30,17 @@
       </div>
       <div class="relative w-auto pl-4 flex-initial">
         <div
-          class="text-white p-3 text-center inline-flex items-center justify-center w-12 h-12 shadow-lg rounded-full {statIconColor}">
-          <i class={statIconName} />
+          class="text-white p-3 text-center inline-flex items-center justify-center w-12 h-12 shadow-lg rounded-full {statIconColor}"
+        >
+          <i class="{statIconName}"></i>
         </div>
       </div>
     </div>
     <p class="text-sm text-gray-500 mt-4">
       <span class="mr-2 {statPercentColor}">
         <i
-          class={statArrow === 'up' ? 'fas fa-arrow-up' : 'fas fa-arrow-down'} />
+          class="{statArrow === 'up' ? 'fas fa-arrow-up' : 'fas fa-arrow-down'}"
+        ></i>
         {statPercent}%
       </span>
       <span class="whitespace-no-wrap">{statDescripiron}</span>

@@ -29,7 +29,7 @@ function buildUserStatusStore() {
   userStatusStore.subscribe((value: UserStatus) => {
     localStorage.setItem(localStorageKey, JSON.stringify(value));
   });
-
+  
   V1APIClient.checkAuthStatusRequest()
     .then((response: AxiosResponse<UserStatus>) => {
       userStatusStore.setUserStatus(response.data);

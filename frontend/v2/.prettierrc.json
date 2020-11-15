@@ -6,5 +6,11 @@
   "bracketSpacing": true,
   "arrowParens": "always",
   "quoteProps": "consistent",
-  "semi": true
+  "semi": true,
+
+  "svelteSortOrder": "styles-scripts-markup",
+  "svelteStrictMode": true,
+  "svelteBracketNewLine": true,
+  "svelteAllowShorthand": false,
+  "svelteIndentScriptAndStyle": false
 }

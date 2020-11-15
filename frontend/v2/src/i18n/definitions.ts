@@ -21,6 +21,7 @@ import type {
   oauth2ClientModelTranslations,
   webhookModelTranslations,
   auditLogEntryTranslations,
+  siteSettingsPageTranslations,
 } from '@/i18n';
 
 const english = 'en-US';
@@ -64,6 +65,7 @@ export type SiteTranslationMap = {
     login: loginPageTranslations;
     registration: registrationPageTranslations;
     userSettings: userSettingsPageTranslations;
+    siteSettings: siteSettingsPageTranslations;
   };
   models: {
     item: itemModelTranslations;

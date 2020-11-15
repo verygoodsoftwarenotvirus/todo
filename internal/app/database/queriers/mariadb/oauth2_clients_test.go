@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func buildMockRowsFromOAuth2Client(clients ...*types.OAuth2Client) *sqlmock.Rows {
+func buildMockRowsFromOAuth2Clients(clients ...*types.OAuth2Client) *sqlmock.Rows {
 	columns := oauth2ClientsTableColumns
 	exampleRows := sqlmock.NewRows(columns)
 
@@ -121,7 +121,7 @@ func TestMariaDB_GetOAuth2ClientByClientID(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromOAuth2Client(exampleOAuth2Client))
+			WillReturnRows(buildMockRowsFromOAuth2Clients(exampleOAuth2Client))
 
 		actual, err := m.GetOAuth2ClientByClientID(ctx, exampleOAuth2Client.ClientID)
 		assert.NoError(t, err)
@@ -207,7 +207,7 @@ func TestMariaDB_GetAllOAuth2Clients(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs().
 			WillReturnRows(
-				buildMockRowsFromOAuth2Client(
+				buildMockRowsFromOAuth2Clients(
 					exampleOAuth2Client,
 					exampleOAuth2Client,
 					exampleOAuth2Client,
@@ -300,7 +300,7 @@ func TestMariaDB_GetAllOAuth2ClientsForUser(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromOAuth2Client(expected...))
+			WillReturnRows(buildMockRowsFromOAuth2Clients(expected...))
 
 		actual, err := m.GetAllOAuth2ClientsForUser(ctx, exampleUser.ID)
 		assert.NoError(t, err)
@@ -407,7 +407,7 @@ func TestMariaDB_GetOAuth2Client(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromOAuth2Client(exampleOAuth2Client))
+			WillReturnRows(buildMockRowsFromOAuth2Clients(exampleOAuth2Client))
 
 		actual, err := m.GetOAuth2Client(ctx, exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 		assert.NoError(t, err)
@@ -542,7 +542,7 @@ func TestMariaDB_GetOAuth2ClientsForUser(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
-				buildMockRowsFromOAuth2Client(
+				buildMockRowsFromOAuth2Clients(
 					&exampleOAuth2ClientList.Clients[0],
 					&exampleOAuth2ClientList.Clients[1],
 					&exampleOAuth2ClientList.Clients[2],

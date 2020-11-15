@@ -1,11 +1,13 @@
 <div
-  class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-gray-200 border-0">
+  class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-gray-200 border-0"
+>
   <div class="rounded-t bg-white mb-0 px-6 py-6">
     <div class="text-center flex justify-between">
       <h6 class="text-gray-800 text-xl font-bold">My account</h6>
       <button
         class="bg-red-500 text-white active:bg-red-600 font-bold uppercase text-xs px-4 py-2 rounded shadow hover:shadow-md outline-none focus:outline-none mr-1 ease-linear transition-all duration-150"
-        type="button">
+        type="button"
+      >
         Settings
       </button>
     </div>
@@ -20,55 +22,63 @@
           <div class="relative w-full mb-3">
             <label
               class="block uppercase text-gray-700 text-xs font-bold mb-2"
-              for="grid-username">
+              for="grid-username"
+            >
               Username
             </label>
             <input
               id="grid-username"
               type="text"
               class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-              value="lucky.jesse" />
+              value="lucky.jesse"
+            />
           </div>
         </div>
         <div class="w-full lg:w-6/12 px-4">
           <div class="relative w-full mb-3">
             <label
               class="block uppercase text-gray-700 text-xs font-bold mb-2"
-              for="grid-email">
+              for="grid-email"
+            >
               Email address
             </label>
             <input
               id="grid-email"
               type="email"
-              class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150" />
+              class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
+            />
           </div>
         </div>
         <div class="w-full lg:w-6/12 px-4">
           <div class="relative w-full mb-3">
             <label
               class="block uppercase text-gray-700 text-xs font-bold mb-2"
-              for="grid-first-name">
+              for="grid-first-name"
+            >
               First Name
             </label>
             <input
               id="grid-first-name"
               type="text"
               class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-              value="Lucky" />
+              value="Lucky"
+            />
           </div>
         </div>
         <div class="w-full lg:w-6/12 px-4">
           <div class="relative w-full mb-3">
             <label
               class="block uppercase text-gray-700 text-xs font-bold mb-2"
-              for="grid-last-name">
+              for="grid-last-name"
+            >
               Last Name
             </label>
             <input
               id="grid-last-name"
               type="text"
               class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-              value="Jesse" />
+              value="Jesse"
+            />
           </div>
         </div>
       </div>
@@ -83,56 +93,64 @@
           <div class="relative w-full mb-3">
             <label
               class="block uppercase text-gray-700 text-xs font-bold mb-2"
-              for="grid-address">
+              for="grid-address"
+            >
               Address
             </label>
             <input
               id="grid-address"
               type="text"
               class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-              value="Bld Mihail Kogalniceanu, nr. 8 Bl 1, Sc 1, Ap 09" />
+              value="Bld Mihail Kogalniceanu, nr. 8 Bl 1, Sc 1, Ap 09"
+            />
           </div>
         </div>
         <div class="w-full lg:w-4/12 px-4">
           <div class="relative w-full mb-3">
             <label
               class="block uppercase text-gray-700 text-xs font-bold mb-2"
-              for="grid-city">
+              for="grid-city"
+            >
               City
             </label>
             <input
               id="grid-city"
               type="email"
               class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-              value="New York" />
+              value="New York"
+            />
           </div>
         </div>
         <div class="w-full lg:w-4/12 px-4">
           <div class="relative w-full mb-3">
             <label
               class="block uppercase text-gray-700 text-xs font-bold mb-2"
-              for="grid-country">
+              for="grid-country"
+            >
               Country
             </label>
             <input
               id="grid-country"
               type="text"
               class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-              value="United States" />
+              value="United States"
+            />
           </div>
         </div>
         <div class="w-full lg:w-4/12 px-4">
           <div class="relative w-full mb-3">
             <label
               class="block uppercase text-gray-700 text-xs font-bold mb-2"
-              for="grid-postal-code">
+              for="grid-postal-code"
+            >
               Postal Code
             </label>
             <input
               id="grid-postal-code"
               type="text"
               class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-              value="Postal Code" />
+              value="Postal Code"
+            />
           </div>
         </div>
       </div>
@@ -147,7 +165,8 @@
           <div class="relative w-full mb-3">
             <label
               class="block uppercase text-gray-700 text-xs font-bold mb-2"
-              for="grid-about-me">
+              for="grid-about-me"
+            >
               About me
             </label>
             <textarea
@@ -156,7 +175,8 @@
               class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
               rows="4"
               value="A beautiful Dashboard for Svelte & Tailwind CSS. It is Free
-                and Open Source." />
+                and Open Source."
+            ></textarea>
           </div>
         </div>
       </div>

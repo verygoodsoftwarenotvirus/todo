@@ -3,7 +3,7 @@ import { writable } from 'svelte/store';
 
 import { ErrorResponse, UserStatus } from '@/types';
 import { Logger } from '@/logger';
-import { V1APIClient } from '@/requests';
+import { V1APIClient } from '@/apiClient';
 
 const logger = new Logger().withDebugValue(
   'source',
@@ -20,7 +20,7 @@ function buildUserStatusStore() {
   const userStatusStore = {
     subscribe,
     setUserStatus: (x: UserStatus) => {
-      logger.withValue('userStatus', x).debug('setting user status');
+      logger.withDebugValue('user_status', x).debug('user status set');
       set(x);
     },
     logout: () => set(new UserStatus()),
@@ -29,7 +29,7 @@ function buildUserStatusStore() {
   userStatusStore.subscribe((value: UserStatus) => {
     localStorage.setItem(localStorageKey, JSON.stringify(value));
   });
-  
+
   V1APIClient.checkAuthStatusRequest()
     .then((response: AxiosResponse<UserStatus>) => {
       userStatusStore.setUserStatus(response.data);

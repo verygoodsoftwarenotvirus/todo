@@ -2,11 +2,12 @@
 import { navigate } from 'svelte-routing';
 
 import { Logger } from '../../logger';
-import { UserSiteSettings } from '../../types';
+import { ErrorResponse, UserSiteSettings } from '../../types';
 import { translations } from '../../i18n';
 import { sessionSettingsStore } from '../../stores';
-import { V1APIClient } from '../../requests';
+import { V1APIClient } from '../../apiClient';
 import { frontendRoutes } from '../../constants';
+import { AxiosError } from 'axios';
 
 export let location: Location;
 
@@ -31,11 +32,17 @@ const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
 );
 // onDestroy(unsubscribeFromSettingsUpdates);
 
+let cookieSecretReplacementError = '';
 function confirmCookieSecretReplacement() {
+  cookieSecretReplacementError = '';
   if (confirm(translationsToUse.confirmations.cycleCookieSecret)) {
-    V1APIClient.cycleCookieSecret().then(() => {
-      navigate(frontendRoutes.LOGIN, { state: {}, replace: true });
-    });
+    V1APIClient.cycleCookieSecret()
+      .then(() => {
+        navigate(frontendRoutes.LOGIN, { state: {}, replace: true });
+      })
+      .catch((reason: AxiosError<ErrorResponse>) => {
+        cookieSecretReplacementError = reason.message;
+      });
   }
 }
 </script>
@@ -66,6 +73,7 @@ function confirmCookieSecretReplacement() {
               >
                 {translationsToUse.buttons.cycleCookieSecret}
               </button>
+              <span class="text-red-600">{cookieSecretReplacementError}</span>
             </div>
           </div>
         </form>

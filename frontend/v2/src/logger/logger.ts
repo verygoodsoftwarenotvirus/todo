@@ -100,7 +100,7 @@ export class Logger {
     return new Logger(this.level, ctx);
   }
 
-  withValues(values: Map<string, string>): Logger {
+  withValues(values: Map<string, any>): Logger {
     let ctx = new Map(this.context);
 
     for (const x of values.entries()) {
@@ -110,7 +110,7 @@ export class Logger {
     return new Logger(this.level, ctx);
   }
 
-  withDebugValue(key: string, value: string): Logger {
+  withDebugValue(key: string, value: any): Logger {
     return this.withValue(key, value);
   }
 

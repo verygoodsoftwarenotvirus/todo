@@ -22,13 +22,14 @@ import type {
   webhookModelTranslations,
   auditLogEntryTranslations,
   siteSettingsPageTranslations,
+  userAdminPageTranslations,
 } from '@/i18n';
 
 const english = 'en-US';
 const mexicanSpanish = 'es-MX';
-const defaultLanguage = english;
-
 export type supportedLanguage = 'en-US' | 'es-MX';
+
+const defaultLanguage = english;
 
 export function fetchLanguage(name: supportedLanguage): LanguageTag {
   switch (name.toLowerCase().trim()) {
@@ -63,6 +64,7 @@ export type SiteTranslationMap = {
   pages: {
     home: homePageTranslations;
     login: loginPageTranslations;
+    userAdminPageTranslations: userAdminPageTranslations;
     registration: registrationPageTranslations;
     userSettings: userSettingsPageTranslations;
     siteSettings: siteSettingsPageTranslations;

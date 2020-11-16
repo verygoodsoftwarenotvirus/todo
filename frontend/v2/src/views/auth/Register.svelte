@@ -4,7 +4,7 @@ import { link, navigate } from 'svelte-routing';
 import { onDestroy } from 'svelte';
 
 import { Logger } from '../../logger';
-import { V1APIClient } from '../../requests';
+import { V1APIClient } from '../../apiClient';
 import {
   RegistrationRequest,
   UserRegistrationResponse,
@@ -120,9 +120,9 @@ async function validateTOTPToken() {
   }
 
   return V1APIClient.validateTOTPSecretWithToken(totpValidationRequest)
-    .then((response: AxiosResponse) => {
+    .then((_: AxiosResponse) => {
       logger.debug(
-        `navigating to /auth/login because totp validation request succeeded`,
+        `navigating to ${frontendRoutes.LOGIN} because totp validation request succeeded`,
       );
       navigate(frontendRoutes.LOGIN, { state: {}, replace: true });
     })
@@ -156,6 +156,7 @@ async function validateTOTPToken() {
                 <input
                   id="usernameInput"
                   type="text"
+                  tabindex="0"
                   class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                   placeholder="{translationsToUse.inputPlaceholders.username}"
                   on:keyup="{evaluateCreationInputs}"

@@ -4,20 +4,17 @@ import format from 'string-format';
 import type { QueryFilter } from '@/types';
 import { Logger } from '@/logger';
 import { backendRoutes } from '@/constants/routes';
-import {
-  defaultAPIRequestConfig,
-  requestLogFunction,
-} from '@/requests/defaults';
+import type { AuditLogEntry, AuditLogEntryList } from '@/types';
 
 const logger = new Logger().withDebugValue(
   'source',
-  'src/requests/audit_log_entries.ts',
+  'src/apiClient/audit_log_entries.ts',
 );
 
 export function fetchListOfAuditLogEntries(
   qf: QueryFilter,
   adminMode: boolean = false,
-): Promise<AxiosResponse> {
+): Promise<AxiosResponse<AuditLogEntryList>> {
   const outboundURLParams = qf.toURLSearchParams();
 
   if (adminMode) {
@@ -27,14 +24,12 @@ export function fetchListOfAuditLogEntries(
   const uri = `${
     backendRoutes.GET_AUDIT_LOG_ENTRIES
   }?${outboundURLParams.toString()}`;
-  return axios
-    .get(uri, defaultAPIRequestConfig)
-    .then(requestLogFunction(logger, uri));
+  return axios.get(uri);
 }
 
-export function fetchAuditLogEntry(id: number): Promise<AxiosResponse> {
+export function fetchAuditLogEntry(
+  id: number,
+): Promise<AxiosResponse<AuditLogEntry>> {
   const uri = format(backendRoutes.INDIVIDUAL_AUDIT_LOG_ENTRY, id.toString());
-  return axios
-    .get(uri, defaultAPIRequestConfig)
-    .then(requestLogFunction(logger, uri));
+  return axios.get(uri);
 }

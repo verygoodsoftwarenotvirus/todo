@@ -1,9 +1,8 @@
 <script lang="typescript">
-import { Router, Route, navigate } from 'svelte-routing';
+import { Router, Route } from 'svelte-routing';
 
 import { userStatusStore } from '../stores';
 import { UserStatus } from '../types';
-import { onDestroy } from 'svelte';
 
 // components for this layout
 import AuthNavbar from '../components/Navbars/AuthNavbar.svelte';

@@ -140,7 +140,7 @@ export const englishTranslations: SiteTranslationMap = {
       },
     },
     userSettings: {
-      myAccount: 'My account',
+      title: 'My account',
       buttons: {
         updateUserInfo: 'Update',
         changePassword: 'Change Password',

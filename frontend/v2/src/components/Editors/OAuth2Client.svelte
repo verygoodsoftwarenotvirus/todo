@@ -8,15 +8,15 @@ import {
   UserSiteSettings,
   UserStatus,
   AuditLogEntry,
-} from '../../../types';
-import { Logger } from '../../../logger';
-import { V1APIClient } from '../../../requests';
-import { translations } from '../../../i18n';
-import { sessionSettingsStore, userStatusStore } from '../../../stores';
-import AuditLogTable from '../../AuditLogTable/AuditLogTable.svelte';
-import { frontendRoutes } from '../../../constants';
+} from '../../types';
+import { Logger } from '../../logger';
+import { V1APIClient } from '../../apiClient';
+import { translations } from '../../i18n';
+import { sessionSettingsStore, userStatusStore } from '../../stores';
+import AuditLogTable from '../AuditLogTable/AuditLogTable.svelte';
+import { frontendRoutes, statusCodes } from '../../constants';
 
-export let id: number = 0;
+export let oauth2ClientID: number = 0;
 
 // local state
 let originalOAuth2Client: OAuth2Client = new OAuth2Client();
@@ -33,7 +33,7 @@ onMount(fetchOAuth2Client);
 
 let logger = new Logger().withDebugValue(
   'source',
-  'src/components/Types/OAuth2Clients/Editor.svelte',
+  'src/components/Editors/OAuth2Client.svelte',
 );
 
 // set up translations
@@ -63,11 +63,11 @@ const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
 function fetchOAuth2Client(): void {
   logger.debug(`fetchOAuth2Client called`);
 
-  if (id === 0) {
-    throw new Error('id cannot be zero!');
+  if (oauth2ClientID === 0) {
+    throw new Error('oauth2ClientID cannot be zero!');
   }
 
-  V1APIClient.fetchOAuth2Client(id)
+  V1APIClient.fetchOAuth2Client(oauth2ClientID)
     .then((response: AxiosResponse<OAuth2Client>) => {
       oauth2Client = { ...response.data };
       originalOAuth2Client = { ...response.data };
@@ -83,42 +83,18 @@ function fetchOAuth2Client(): void {
   fetchAuditLogEntries();
 }
 
-function saveOAuth2Client(): void {
-  logger.debug(`saveOAuth2Client called`);
-
-  if (id === 0) {
-    throw new Error('id cannot be zero!');
-  } else if (!needsToBeSaved) {
-    throw new Error('no changes to save!');
-  }
-
-  V1APIClient.saveOAuth2Client(oauth2Client)
-    .then((response: AxiosResponse<OAuth2Client>) => {
-      oauth2Client = { ...response.data };
-      originalOAuth2Client = { ...response.data };
-      needsToBeSaved = false;
-    })
-    .catch((error: AxiosError) => {
-      if (error.response) {
-        if (error.response.data) {
-          oauth2ClientRetrievalError = error.response.data;
-        }
-      }
-    });
-}
-
 function deleteOAuth2Client(): void {
   logger.debug(`deleteOAuth2Client called`);
 
-  if (id === 0) {
-    throw new Error('id cannot be zero!');
+  if (oauth2ClientID === 0) {
+    throw new Error('oauth2ClientID cannot be zero!');
   }
 
-  V1APIClient.deleteOAuth2Client(id)
+  V1APIClient.deleteOAuth2Client(oauth2ClientID)
     .then((response: AxiosResponse<OAuth2Client>) => {
-      if (response.status === 204) {
+      if (response.status === statusCodes.NO_CONTENT) {
         logger.debug(
-          `navigating to /things/oauth2Clients because via deletion promise resolution`,
+          `navigating to ${frontendRoutes.LIST_OAUTH2_CLIENTS} because via deletion promise resolution`,
         );
         navigate(frontendRoutes.LIST_OAUTH2_CLIENTS, {
           state: {},
@@ -138,11 +114,11 @@ function deleteOAuth2Client(): void {
 function fetchAuditLogEntries(): void {
   logger.debug(`deleteOAuth2Client called`);
 
-  if (id === 0) {
-    throw new Error('id cannot be zero!');
+  if (oauth2ClientID === 0) {
+    throw new Error('oauth2ClientID cannot be zero!');
   }
 
-  V1APIClient.fetchAuditLogEntriesForOAuth2Client(id)
+  V1APIClient.fetchAuditLogEntriesForOAuth2Client(oauth2ClientID)
     .then((response: AxiosResponse<AuditLogEntry[]>) => {
       auditLogEntries = response.data;
       logger.withValue('entries', auditLogEntries).debug('entries fetched');
@@ -171,13 +147,6 @@ function fetchAuditLogEntries(): void {
             </h2>
           {/if}
         </div>
-        <div class="flex w-full max-w-full flex-grow justify-end flex-1">
-          <button
-            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded {needsToBeSaved ? '' : 'opacity-50 cursor-not-allowed'}"
-            on:click="{saveOAuth2Client}"
-          ><i class="fa fa-save"></i>
-            Save</button>
-        </div>
       </div>
     </div>
     <div>
@@ -197,21 +166,6 @@ function fetchAuditLogEntries(): void {
             bind:value="{oauth2Client.name}"
           />
           <!--  <p class="text-red-500 text-xs italic">Please fill out this field.</p>-->
-        </div>
-        <div class="w-full md:w-1/2 px-3">
-          <label
-            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-            for="grid-last-name"
-          >
-            {translationsToUse.labels.details}
-          </label>
-          <input
-            class="appearance-none block w-full text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-            id="grid-last-name"
-            type="text"
-            on:keyup="{evaluateChanges}"
-            bind:value="{oauth2Client.details}"
-          />
         </div>
         <div
           class="flex w-full mr-3 mt-4 max-w-full flex-grow justify-end flex-1"

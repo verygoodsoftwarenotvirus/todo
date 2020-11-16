@@ -79,7 +79,7 @@ func ProvideUsersService(
 	}
 
 	svc := &Service{
-		cookieSecret:        []byte(authSettings.CookieSecret),
+		cookieSecret:        []byte(authSettings.CookieSigningKey),
 		logger:              logger.WithName(serviceName),
 		userDataManager:     userDataManager,
 		auditLog:            auditLog,

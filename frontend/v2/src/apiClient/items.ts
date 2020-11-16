@@ -6,12 +6,9 @@ import { Logger } from '@/logger';
 import type { Item, ItemCreationInput, ItemList } from '@/types';
 
 import { backendRoutes } from '@/constants/routes';
-import {
-  defaultAPIRequestConfig,
-  requestLogFunction,
-} from '@/requests/defaults';
+import { AuditLogEntry } from '@/types';
 
-const logger = new Logger().withDebugValue('source', 'src/requests/items.ts');
+const logger = new Logger().withDebugValue('source', 'src/apiClient/items.ts');
 
 export function searchForItems(
   query: string,
@@ -26,15 +23,13 @@ export function searchForItems(
 
   const uri = `${backendRoutes.SEARCH_ITEMS}?${outboundURLParams.toString()}`;
 
-  return axios
-    .get(uri, defaultAPIRequestConfig)
-    .then(requestLogFunction(logger, uri));
+  return axios.get(uri);
 }
 
 export function fetchListOfItems(
   qf: QueryFilter,
   adminMode: boolean = false,
-): Promise<AxiosResponse> {
+): Promise<AxiosResponse<ItemList>> {
   const outboundURLParams = qf.toURLSearchParams();
 
   if (adminMode) {
@@ -42,44 +37,33 @@ export function fetchListOfItems(
   }
 
   const uri = `${backendRoutes.GET_ITEMS}?${outboundURLParams.toString()}`;
-  return axios
-    .get(uri, defaultAPIRequestConfig)
-    .then(requestLogFunction(logger, uri));
+  return axios.get(uri);
 }
 
-export function createItem(item: ItemCreationInput): Promise<AxiosResponse> {
-  const uri = backendRoutes.CREATE_ITEM;
-  return axios
-    .post(uri, item, defaultAPIRequestConfig)
-    .then(requestLogFunction(logger, uri));
+export function createItem(
+  item: ItemCreationInput,
+): Promise<AxiosResponse<Item>> {
+  return axios.post(backendRoutes.CREATE_ITEM, item);
 }
 
-export function fetchItem(id: number): Promise<AxiosResponse> {
+export function fetchItem(id: number): Promise<AxiosResponse<Item>> {
   const uri = format(backendRoutes.INDIVIDUAL_ITEM, id.toString());
-  return axios
-    .get(uri, defaultAPIRequestConfig)
-    .then(requestLogFunction(logger, uri));
+  return axios.get(uri);
 }
 
-export function saveItem(item: Item): Promise<AxiosResponse> {
+export function saveItem(item: Item): Promise<AxiosResponse<Item>> {
   const uri = format(backendRoutes.INDIVIDUAL_ITEM, item.id.toString());
-  return axios
-    .put(uri, item, defaultAPIRequestConfig)
-    .then(requestLogFunction(logger, uri));
+  return axios.put(uri, item);
 }
 
 export function deleteItem(id: number): Promise<AxiosResponse> {
   const uri = format(backendRoutes.INDIVIDUAL_ITEM, id.toString());
-  return axios
-    .delete(uri, defaultAPIRequestConfig)
-    .then(requestLogFunction(logger, uri));
+  return axios.delete(uri);
 }
 
 export function fetchAuditLogEntriesForItem(
   id: number,
-): Promise<AxiosResponse> {
+): Promise<AxiosResponse<AuditLogEntry[]>> {
   const uri = format(backendRoutes.INDIVIDUAL_ITEM_AUDIT_LOG, id.toString());
-  return axios
-    .get(uri, defaultAPIRequestConfig)
-    .then(requestLogFunction(logger, uri));
+  return axios.get(uri);
 }

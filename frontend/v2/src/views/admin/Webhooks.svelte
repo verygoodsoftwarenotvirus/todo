@@ -17,10 +17,11 @@ import {
   userStatusStore,
 } from '../../stores';
 import { Logger } from '../../logger';
-import { V1APIClient } from '../../requests';
+import { V1APIClient } from '../../apiClient';
 import { translations } from '../../i18n';
 
 import APITable from '../../components/APITable/APITable.svelte';
+import { statusCodes } from '../../constants';
 
 export let location;
 
@@ -107,10 +108,8 @@ function fetchWebhooks() {
       apiTableDecrementDisabled = queryFilter.page === 1;
     })
     .catch((error: AxiosError) => {
-      if (error.response) {
-        if (error.response.data) {
-          webhookRetrievalError = error.response.data;
-        }
+      if (error.response && error.response.data) {
+        webhookRetrievalError = error.response.data;
       }
     });
 }
@@ -123,7 +122,7 @@ function promptDelete(id: number) {
 
     V1APIClient.deleteWebhook(id)
       .then((response: AxiosResponse<Webhook>) => {
-        if (response.status === 204) {
+        if (response.status === statusCodes.NO_CONTENT) {
           fetchWebhooks();
         }
       })

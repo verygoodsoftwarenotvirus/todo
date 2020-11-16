@@ -4,7 +4,7 @@ import { link, navigate } from 'svelte-routing';
 import { createPopper } from '@popperjs/core'; // library for creating dropdown menu appear on click
 import { onDestroy } from 'svelte';
 
-import { V1APIClient } from '../../requests';
+import { V1APIClient } from '../../apiClient';
 import { translations } from '../../i18n';
 import {
   sessionSettingsStore,
@@ -19,7 +19,7 @@ let btnDropdownRef;
 let popoverDropdownRef;
 
 import { Logger } from '../../logger';
-import { frontendRoutes } from '../../constants';
+import { frontendRoutes, statusCodes } from '../../constants';
 let logger = new Logger().withDebugValue(
   'source',
   'src/components/Dropdowns/UserDropdown.svelte',
@@ -58,14 +58,18 @@ const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe(
 
 function goToSettings() {
   dropdownPopoverShow = false;
-  logger.debug(`navigating to /user/settings via goToSettings`);
+  logger.debug(
+    `navigating to ${frontendRoutes.USER_SETTINGS} via goToSettings`,
+  );
   navigate(frontendRoutes.USER_SETTINGS, { state: {}, replace: true });
 }
 
 function logout() {
   V1APIClient.logout().then((response: AxiosResponse) => {
-    if (response.status === 200) {
-      logger.debug(`navigating to /auth/login via logout promise resolution`);
+    if (response.status === statusCodes.OK) {
+      logger.debug(
+        `navigating to ${frontendRoutes.LOGIN} via logout promise resolution`,
+      );
       navigate(frontendRoutes.LOGIN, { state: {}, replace: true });
       dropdownPopoverShow = false;
     }

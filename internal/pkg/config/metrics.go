@@ -99,8 +99,8 @@ func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) me
 	}
 }
 
-// ProvideTracing provides an instrumentation handler.
-func (cfg *ServerConfig) ProvideTracing(logger logging.Logger) error {
+// InitializeTracer provides an instrumentation handler.
+func (cfg *ServerConfig) InitializeTracer(logger logging.Logger) error {
 	trace.ApplyConfig(trace.Config{DefaultSampler: trace.ProbabilitySampler(1)})
 
 	log := logger.WithValue("tracing_provider", cfg.Metrics.TracingProvider)

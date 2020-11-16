@@ -17,7 +17,7 @@ import {
   userStatusStore,
 } from '../../stores';
 import { Logger } from '../../logger';
-import { V1APIClient } from '../../requests';
+import { V1APIClient } from '../../apiClient';
 import { translations } from '../../i18n';
 
 import APITable from '../../components/APITable/APITable.svelte';

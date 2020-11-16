@@ -1,10 +1,14 @@
 <script lang="typescript">
-import axios, { AxiosError, AxiosResponse } from 'axios';
 import { onDestroy } from 'svelte';
 import { Router, Route } from 'svelte-routing';
 
 import { userStatusStore } from '../stores';
 import { UserStatus } from '../types';
+import { Logger } from '../logger';
+
+let logger = new Logger().withDebugValue('source', 'src/layouts/Admin.svelte');
+
+export let location: Location;
 
 // components for this layout
 import AdminNavbar from '../components/Navbars/AdminNavbar.svelte';
@@ -20,14 +24,9 @@ import OAuth2ClientsAdmin from '../views/admin/OAuth2Clients.svelte';
 import WebhooksAdmin from '../views/admin/Webhooks.svelte';
 import AuditLogEntries from '../views/admin/AuditLogEntries.svelte';
 
-import UserEditor from '../components/Types/Users/Editor.svelte';
-import WebhookEditor from '../components/Types/Webhooks/Editor.svelte';
-import OAuth2ClientEditor from '../components/Types/OAuth2Clients/Editor.svelte';
-
-import { Logger } from '../logger';
-let logger = new Logger().withDebugValue('source', 'src/layouts/Admin.svelte');
-
-export let location: Location;
+import UserEditor from '../components/Editors/User.svelte';
+import WebhookEditor from '../components/Editors/Webhook.svelte';
+import OAuth2ClientEditor from '../components/Editors/OAuth2Client.svelte';
 
 let currentAuthStatus = {};
 const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
@@ -49,15 +48,15 @@ const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
         <Route path="audit_log" component="{AuditLogEntries}" />
         <Route path="oauth2_clients" component="{OAuth2ClientsAdmin}" />
         <Route path="oauth2_clients/:id" let:params>
-          <OAuth2ClientEditor id="{params.id}" />
+          <OAuth2ClientEditor oauth2ClientID="{params.id}" />
         </Route>
         <Route path="webhooks" component="{WebhooksAdmin}" />
         <Route path="webhooks/:id" let:params>
-          <WebhookEditor id="{params.id}" />
+          <WebhookEditor webhookID="{params.id}" />
         </Route>
         <Route path="users" component="{UsersAdmin}" />
         <Route path="users/:id" let:params>
-          <UserEditor id="{params.id}" />
+          <UserEditor userID="{params.id}" />
         </Route>
       </Router>
       <AdminFooter />

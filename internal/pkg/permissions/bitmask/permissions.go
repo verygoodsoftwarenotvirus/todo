@@ -4,6 +4,8 @@ import (
 	"database/sql/driver"
 	"encoding/gob"
 	"encoding/json"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 )
 
 const (
@@ -49,9 +51,16 @@ func init() {
 // AdminPermissionsBitmask is a bitmask for keeping track of admin user permissions.
 type AdminPermissionsBitmask uint32
 
-// NewPermissionBitmask builds a new PermissionChecker.
+// NewPermissionBitmask builds a new AdminPermissionChecker.
 func NewPermissionBitmask(x uint32) AdminPermissionsBitmask {
 	return AdminPermissionsBitmask(x)
+}
+
+// Summary produces a AdminPermissionsSummary.
+func (p AdminPermissionsBitmask) Summary() *permissions.AdminPermissionsSummary {
+	return &permissions.AdminPermissionsSummary{
+		CanCycleCookieSecrets: p.CanCycleCookieSecrets(),
+	}
 }
 
 // Value implements the driver.Valuer interface.

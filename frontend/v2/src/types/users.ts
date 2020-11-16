@@ -153,18 +153,27 @@ export class UserRegistrationResponse {
   }
 }
 
+export class AdminPermissionSummary {
+  canCycleCookieSecrets: boolean;
+
+  constructor(canCycleCookieSecrets: boolean = false) {
+    this.canCycleCookieSecrets = canCycleCookieSecrets;
+  }
+}
+
 export class UserStatus {
   isAuthenticated: boolean;
   isAdmin: boolean;
+  adminPermissions?: AdminPermissionSummary;
 
   constructor(
     isAuthenticated: boolean = false,
     isAdmin: boolean = false,
-    // adminPerms: number = 0,
+    adminPermissions?: AdminPermissionSummary,
   ) {
     this.isAuthenticated = isAuthenticated;
     this.isAdmin = isAdmin;
-    // this.adminPermissions = new AdminPermissions(adminPerms);
+    this.adminPermissions = adminPermissions;
   }
 }
 

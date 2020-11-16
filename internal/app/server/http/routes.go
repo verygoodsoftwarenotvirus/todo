@@ -9,13 +9,13 @@ import (
 	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/oauth2clients"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/heptiolabs/healthcheck"
+	"go.opencensus.io/plugin/ochttp"
 )
 
 const (
@@ -39,11 +39,7 @@ func (s *Server) logRoutes() {
 	}
 }
 
-func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Handler) {
-	if cfg == nil {
-		panic("config should not be nil")
-	}
-
+func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 	// Basic CORS, for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
 	ch := cors.New(cors.Options{
 		// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts,
@@ -94,8 +90,8 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 	}
 
 	// Frontend routes.
-	if s.config.Frontend.StaticFilesDirectory != "" {
-		staticFileServer, err := s.frontendService.StaticDir(cfg.Frontend.StaticFilesDirectory)
+	if sfd := s.frontendSettings.StaticFilesDirectory; sfd != "" {
+		staticFileServer, err := s.frontendService.StaticDir(sfd)
 		if err != nil {
 			s.logger.Error(err, "establishing static file server")
 		}
@@ -217,5 +213,8 @@ func (s *Server) setupRouter(cfg *config.ServerConfig, metricsHandler metrics.Ha
 			})
 		})
 
-	s.router = mux
+	s.httpServer.Handler = &ochttp.Handler{
+		Handler:        mux,
+		FormatSpanName: formatSpanNameForRequest,
+	}
 }

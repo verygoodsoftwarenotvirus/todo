@@ -2,7 +2,7 @@ package config
 
 import (
 	"crypto/rand"
-	"encoding/base32"
+	"encoding/base64"
 	"io/ioutil"
 	"time"
 )
@@ -20,6 +20,7 @@ const (
 	DefaultStartupDeadline = time.Minute
 
 	randStringSize = 32
+	randReadSize   = 24
 )
 
 func init() {
@@ -78,9 +79,9 @@ func (cfg *ServerConfig) EncodeToFile(path string, marshaler func(v interface{})
 // RandString produces a random string.
 // https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
 func RandString() string {
-	b := make([]byte, randStringSize)
+	b := make([]byte, randReadSize)
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}
-	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b)
+	return base64.URLEncoding.EncodeToString(b)
 }

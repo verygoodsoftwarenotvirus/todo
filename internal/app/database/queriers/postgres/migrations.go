@@ -168,7 +168,7 @@ func (p *Postgres) Migrate(ctx context.Context, authenticator auth.Authenticator
 					x.Salt,
 					x.TwoFactorSecret,
 					x.IsAdmin,
-					math.MaxUint32,
+					0,
 					squirrel.Expr(currentUnixTimeQuery),
 				).
 				ToSql()

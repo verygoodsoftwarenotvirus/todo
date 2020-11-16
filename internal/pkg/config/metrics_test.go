@@ -35,6 +35,6 @@ func TestServerConfig_ProvideTracing(T *testing.T) {
 			},
 		}
 
-		assert.NoError(t, c.ProvideTracing(noop.NewLogger()))
+		assert.NoError(t, c.InitializeTracer(noop.NewLogger()))
 	})
 }

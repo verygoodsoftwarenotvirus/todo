@@ -11,6 +11,51 @@ import (
 	"github.com/spf13/afero"
 )
 
+const (
+	loginRoute = "/auth/login"
+)
+
+var (
+	// Here is where you should put route regexes that need to be ignored by the static file server.
+	// For instance, if you allow someone to see an event in the frontend via a URL that contains dynamic.
+	// information, such as `/event/123`, you would want to put something like this below:
+	// 		eventsFrontendPathRegex = regexp.MustCompile(`/event/\d+`)
+
+	// usersAdminFrontendPathRegex matches URLs for specific user routes.
+	usersAdminFrontendPathRegex = regexp.MustCompile(`/admin/users/\d+`)
+
+	// webhooksAdminFrontendPathRegex matches URLs for specific webhook routes.
+	webhooksAdminFrontendPathRegex = regexp.MustCompile(`/admin/webhooks/\d+`)
+
+	// oauth2ClientsAdminFrontendPathRegex matches URLs for specific oauth2 client routes.
+	oauth2ClientsAdminFrontendPathRegex = regexp.MustCompile(`/admin/oauth2_clients/\d+`)
+
+	// itemsFrontendPathRegex matches URLs against our frontend router's specification for specific item routes.
+	itemsFrontendPathRegex = regexp.MustCompile(`/things/items/\d+`)
+
+	// itemsAdminFrontendPathRegex matches URLs against our frontend router's specification for specific item routes.
+	itemsAdminFrontendPathRegex = regexp.MustCompile(`/admin/things/items/\d+`)
+
+	validRoutes = map[string]struct{}{
+		"/auth/register":        {},
+		loginRoute:              {},
+		"/things/items":         {},
+		"/things/items/new":     {},
+		"/admin":                {},
+		"/admin/dashboard":      {},
+		"/admin/users":          {},
+		"/admin/oauth2_clients": {},
+		"/admin/webhooks":       {},
+		"/admin/audit_log":      {},
+		"/admin/settings":       {},
+		"/user/settings":        {},
+	}
+
+	redirections = map[string]string{
+		"/login": loginRoute,
+	}
+)
+
 func (s *Service) cacheFile(afs afero.Fs, fileDir string, file os.FileInfo) error {
 	fp := filepath.Join(fileDir, file.Name())
 
@@ -63,43 +108,6 @@ func (s *Service) buildStaticFileServer(fileDir string) (*afero.HttpFs, error) {
 	return afero.NewHttpFs(afs), nil
 }
 
-var (
-	// Here is where you should put route regexes that need to be ignored by the static file server.
-	// For instance, if you allow someone to see an event in the frontend via a URL that contains dynamic.
-	// information, such as `/event/123`, you would want to put something like this below:
-	// 		eventsFrontendPathRegex = regexp.MustCompile(`/event/\d+`)
-
-	// usersAdminFrontendPathRegex matches URLs for specific user routes.
-	usersAdminFrontendPathRegex = regexp.MustCompile(`/admin/users/\d+`)
-
-	// webhooksAdminFrontendPathRegex matches URLs for specific webhook routes.
-	webhooksAdminFrontendPathRegex = regexp.MustCompile(`/admin/webhooks/\d+`)
-
-	// oauth2ClientsAdminFrontendPathRegex matches URLs for specific oauth2 client routes.
-	oauth2ClientsAdminFrontendPathRegex = regexp.MustCompile(`/admin/oauth2_clients/\d+`)
-
-	// itemsFrontendPathRegex matches URLs against our frontend router's specification for specific item routes.
-	itemsFrontendPathRegex = regexp.MustCompile(`/things/items/\d+`)
-
-	// itemsAdminFrontendPathRegex matches URLs against our frontend router's specification for specific item routes.
-	itemsAdminFrontendPathRegex = regexp.MustCompile(`/admin/things/items/\d+`)
-
-	validRoutes = map[string]struct{}{
-		"/auth/register":        {},
-		"/auth/login":           {},
-		"/things/items":         {},
-		"/things/items/new":     {},
-		"/admin":                {},
-		"/admin/dashboard":      {},
-		"/admin/users":          {},
-		"/admin/oauth2_clients": {},
-		"/admin/webhooks":       {},
-		"/admin/audit_log":      {},
-		"/admin/settings":       {},
-		"/user/settings":        {},
-	}
-)
-
 // StaticDir builds a static directory handler.
 func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, error) {
 	fileDir, err := filepath.Abs(staticFilesDirectory)
@@ -124,15 +132,15 @@ func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, erro
 
 		if _, ok := validRoutes[req.URL.Path]; ok {
 			req.URL.Path = "/"
-		}
-
-		if itemsFrontendPathRegex.MatchString(req.URL.Path) ||
+		} else if dest, ok := redirections[req.URL.Path]; ok {
+			req.URL.Path = dest
+		} else if itemsFrontendPathRegex.MatchString(req.URL.Path) ||
 			itemsAdminFrontendPathRegex.MatchString(req.URL.Path) ||
 			usersAdminFrontendPathRegex.MatchString(req.URL.Path) ||
 			webhooksAdminFrontendPathRegex.MatchString(req.URL.Path) ||
 			oauth2ClientsAdminFrontendPathRegex.MatchString(req.URL.Path) {
 			if s.logStaticFiles {
-				rl.Debug("rerouting item request")
+				rl.Debug("rerouting request")
 			}
 
 			req.URL.Path = "/"

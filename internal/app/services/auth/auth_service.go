@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
@@ -78,10 +79,15 @@ func ProvideAuthService(
 		sessionInfoFetcher:   sessionInfoFetcher,
 		cookieManager: securecookie.New(
 			securecookie.GenerateRandomKey(cookieSecretSize),
-			[]byte(cfg.CookieSecret),
+			[]byte(cfg.CookieSigningKey),
 		),
 	}
 	svc.sessionManager.Lifetime = cfg.CookieLifetime
+
+	if _, err := svc.cookieManager.Encode(CookieName, "blah"); err != nil {
+		logger.WithValue("cookie_signing_key", cfg.CookieSigningKey).Error(err, "building test cookie")
+		return nil, fmt.Errorf("error building test cookie: %w", err)
+	}
 
 	return svc, nil
 }

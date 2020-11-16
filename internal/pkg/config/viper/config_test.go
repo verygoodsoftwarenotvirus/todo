@@ -19,7 +19,7 @@ func Test_randString(t *testing.T) {
 
 	actual := config.RandString()
 	assert.NotEmpty(t, actual)
-	assert.Len(t, actual, 52)
+	assert.Len(t, actual, 32)
 }
 
 func TestBuildConfig(t *testing.T) {

@@ -65,20 +65,18 @@ function fetchEntries() {
 
       <div class="text-center">
         <div class="px-4 py-2 m-2">
-          <button
-            on:click="{console.log('decrementPageFunction')}"
-            disabled="{decrementDisabled}"
-          ><i class="fa fa-arrow-circle-left"></i></button>
+          <button on:click="{console.log}" disabled="{decrementDisabled}"><i
+              class="fa fa-arrow-circle-left"
+            ></i></button>
           &nbsp;
           {#if queryFilter.page > 0}
             {'translationsToUse.page'}
             {queryFilter.page}
           {/if}
           &nbsp;
-          <button
-            on:click="{console.log('incrementPageFunction')}"
-            disabled="{incrementDisabled}"
-          ><i class="fa fa-arrow-circle-right"></i></button>
+          <button on:click="{console.log}" disabled="{incrementDisabled}"><i
+              class="fa fa-arrow-circle-right"
+            ></i></button>
         </div>
       </div>
 
@@ -96,7 +94,7 @@ function fetchEntries() {
           type="text"
           placeholder="{'translationsToUse.inputPlaceholders.search'}"
           bind:value="{searchQuery}"
-          on:keyup="{console.log('search')}"
+          on:keyup="{console.log}"
         />
       </div>
     </div>

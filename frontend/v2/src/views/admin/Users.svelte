@@ -17,10 +17,11 @@ import {
   userStatusStore,
 } from '../../stores';
 import { Logger } from '../../logger';
-import { V1APIClient } from '../../requests';
+import { V1APIClient } from '../../apiClient';
 import { translations } from '../../i18n';
 
 import APITable from '../../components/APITable/APITable.svelte';
+import { statusCodes } from '../../constants';
 
 export let location;
 
@@ -64,8 +65,6 @@ let logger = new Logger().withDebugValue(
   'source',
   'src/views/admin/Users.svelte',
 );
-
-onMount(fetchUsers);
 
 // begin experimental API table code
 
@@ -119,10 +118,8 @@ function fetchUsers() {
       apiTableDecrementDisabled = queryFilter.page === 1;
     })
     .catch((error: AxiosError) => {
-      if (error.response) {
-        if (error.response.data) {
-          userRetrievalError = error.response.data;
-        }
+      if (error.response && error.response.data) {
+        userRetrievalError = error.response.data;
       }
     });
 }
@@ -131,11 +128,9 @@ function promptDelete(id: number) {
   logger.debug('promptDelete called');
 
   if (confirm(`are you sure you want to delete user #${id}?`)) {
-    const path: string = `/api/v1/users/${id}`;
-
     V1APIClient.deleteUser(id)
       .then((response: AxiosResponse<User>) => {
-        if (response.status === 204) {
+        if (response.status === statusCodes.NO_CONTENT) {
           fetchUsers();
         }
       })

@@ -3,50 +3,45 @@ import { navigate } from 'svelte-routing';
 import { onDestroy, onMount } from 'svelte';
 import { AxiosError, AxiosResponse } from 'axios';
 
-import {
-  Webhook,
-  UserSiteSettings,
-  UserStatus,
-  AuditLogEntry,
-} from '../../../types';
-import { Logger } from '../../../logger';
-import { V1APIClient } from '../../../requests';
-import { translations } from '../../../i18n';
-import { sessionSettingsStore, userStatusStore } from '../../../stores';
-import AuditLogTable from '../../AuditLogTable/AuditLogTable.svelte';
-import { frontendRoutes } from '../../../constants';
+import { Item, UserSiteSettings, UserStatus, AuditLogEntry } from '../../types';
+import { Logger } from '../../logger';
+import { V1APIClient } from '../../apiClient';
+import { translations } from '../../i18n';
+import { sessionSettingsStore, userStatusStore } from '../../stores';
+import AuditLogTable from '../AuditLogTable/AuditLogTable.svelte';
+import { frontendRoutes, statusCodes } from '../../constants';
 
 export let id: number = 0;
 
 // local state
-let originalWebhook: Webhook = new Webhook();
-let webhook: Webhook = new Webhook();
-let webhookRetrievalError: string = '';
+let originalItem: Item = new Item();
+let item: Item = new Item();
+let itemRetrievalError: string = '';
 let needsToBeSaved: boolean = false;
 let auditLogEntries: AuditLogEntry[] = [];
 
 function evaluateChanges() {
-  needsToBeSaved = !Webhook.areEqual(webhook, originalWebhook);
+  needsToBeSaved = !Item.areEqual(item, originalItem);
 }
 
-onMount(fetchWebhook);
+onMount(fetchItem);
 
 let logger = new Logger().withDebugValue(
   'source',
-  'src/components/Types/Webhooks/Editor.svelte',
+  'src/components/Editors/Item.svelte',
 );
 
 // set up translations
 let currentSessionSettings = new UserSiteSettings();
 let translationsToUse = translations.messagesFor(
   currentSessionSettings.language,
-).models.webhook;
+).models.item;
 const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
   (value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = translations.messagesFor(
       currentSessionSettings.language,
-    ).models.webhook;
+    ).models.item;
   },
 );
 // onDestroy(unsubscribeFromSettingsUpdates);
@@ -60,22 +55,22 @@ const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
 );
 // onDestroy(unsubscribeFromUserStatusUpdates);
 
-function fetchWebhook(): void {
-  logger.debug(`fetchWebhook called`);
+function fetchItem(): void {
+  logger.debug(`fetchItem called`);
 
   if (id === 0) {
     throw new Error('id cannot be zero!');
   }
 
-  V1APIClient.fetchWebhook(id)
-    .then((response: AxiosResponse<Webhook>) => {
-      webhook = { ...response.data };
-      originalWebhook = { ...response.data };
+  V1APIClient.fetchItem(id)
+    .then((response: AxiosResponse<Item>) => {
+      item = { ...response.data };
+      originalItem = { ...response.data };
     })
     .catch((error: AxiosError) => {
       if (error.response) {
         if (error.response.data) {
-          webhookRetrievalError = error.response.data;
+          itemRetrievalError = error.response.data;
         }
       }
     });
@@ -83,8 +78,8 @@ function fetchWebhook(): void {
   fetchAuditLogEntries();
 }
 
-function saveWebhook(): void {
-  logger.debug(`saveWebhook called`);
+function saveItem(): void {
+  logger.debug(`saveItem called`);
 
   if (id === 0) {
     throw new Error('id cannot be zero!');
@@ -92,62 +87,63 @@ function saveWebhook(): void {
     throw new Error('no changes to save!');
   }
 
-  V1APIClient.saveWebhook(webhook)
-    .then((response: AxiosResponse<Webhook>) => {
-      webhook = { ...response.data };
-      originalWebhook = { ...response.data };
+  V1APIClient.saveItem(item)
+    .then((response: AxiosResponse<Item>) => {
+      item = { ...response.data };
+      originalItem = { ...response.data };
       needsToBeSaved = false;
+      fetchAuditLogEntries();
     })
     .catch((error: AxiosError) => {
       if (error.response) {
         if (error.response.data) {
-          webhookRetrievalError = error.response.data;
+          itemRetrievalError = error.response.data;
         }
       }
     });
 }
 
-function deleteWebhook(): void {
-  logger.debug(`deleteWebhook called`);
+function deleteItem(): void {
+  logger.debug(`deleteItem called`);
 
   if (id === 0) {
     throw new Error('id cannot be zero!');
   }
 
-  V1APIClient.deleteWebhook(id)
-    .then((response: AxiosResponse<Webhook>) => {
-      if (response.status === 204) {
+  V1APIClient.deleteItem(id)
+    .then((response: AxiosResponse<Item>) => {
+      if (response.status === statusCodes.NO_CONTENT) {
         logger.debug(
-          `navigating to /things/webhooks because via deletion promise resolution`,
+          `navigating to ${frontendRoutes.LIST_ITEMS} because via deletion promise resolution`,
         );
-        navigate(frontendRoutes.LIST_WEBHOOKS, { state: {}, replace: true });
+        navigate(frontendRoutes.LIST_ITEMS, { state: {}, replace: true });
       }
     })
     .catch((error: AxiosError) => {
       if (error.response) {
         if (error.response.data) {
-          webhookRetrievalError = error.response.data;
+          itemRetrievalError = error.response.data;
         }
       }
     });
 }
 
 function fetchAuditLogEntries(): void {
-  logger.debug(`deleteWebhook called`);
+  logger.debug(`deleteItem called`);
 
   if (id === 0) {
     throw new Error('id cannot be zero!');
   }
 
-  V1APIClient.fetchAuditLogEntriesForWebhook(id)
+  V1APIClient.fetchAuditLogEntriesForItem(id)
     .then((response: AxiosResponse<AuditLogEntry[]>) => {
-      auditLogEntries = response.data;
+      auditLogEntries = response.data || [];
       logger.withValue('entries', auditLogEntries).debug('entries fetched');
     })
     .catch((error: AxiosError) => {
       if (error.response) {
         if (error.response.data) {
-          webhookRetrievalError = error.response.data;
+          itemRetrievalError = error.response.data;
         }
       }
     });
@@ -159,19 +155,19 @@ function fetchAuditLogEntries(): void {
     class="relative flex flex-col min-w-0 break-words bg-white w-full mb-6 shadow-lg rounded"
   >
     <div class="rounded-t mb-0 px-4 py-3 bg-transparent justify-between ">
-      <div class="flex flex-wrap webhooks-center">
+      <div class="flex flex-wrap items-center">
         <div class="relative w-full max-w-full flex-grow flex-1">
-          {#if originalWebhook.id !== 0}
+          {#if originalItem.id !== 0}
             <h2 class="text-gray-800 text-xl font-semibold">
-              #{originalWebhook.id}:
-              {originalWebhook.name}
+              #{originalItem.id}:
+              {originalItem.name}
             </h2>
           {/if}
         </div>
         <div class="flex w-full max-w-full flex-grow justify-end flex-1">
           <button
             class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded {needsToBeSaved ? '' : 'opacity-50 cursor-not-allowed'}"
-            on:click="{saveWebhook}"
+            on:click="{saveItem}"
           ><i class="fa fa-save"></i>
             Save</button>
         </div>
@@ -191,7 +187,7 @@ function fetchAuditLogEntries(): void {
             id="grid-first-name"
             type="text"
             on:keyup="{evaluateChanges}"
-            bind:value="{webhook.name}"
+            bind:value="{item.name}"
           />
           <!--  <p class="text-red-500 text-xs italic">Please fill out this field.</p>-->
         </div>
@@ -207,7 +203,7 @@ function fetchAuditLogEntries(): void {
             id="grid-last-name"
             type="text"
             on:keyup="{evaluateChanges}"
-            bind:value="{webhook.details}"
+            bind:value="{item.details}"
           />
         </div>
         <div
@@ -215,7 +211,7 @@ function fetchAuditLogEntries(): void {
         >
           <button
             class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-            on:click="{deleteWebhook}"
+            on:click="{deleteItem}"
           ><i class="fa fa-trash-alt"></i>
             Delete</button>
         </div>

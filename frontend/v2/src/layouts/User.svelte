@@ -7,10 +7,8 @@ import Sidebar from '../components/Sidebar/Sidebar.svelte';
 import AdminFooter from '../components/Footers/AdminFooter.svelte';
 
 // pages for this layout
-import Settings from '../views/user/Settings.svelte';
+import UserSettings from '../views/user/Settings.svelte';
 
-import { userStatusStore } from '../stores';
-import { User, UserStatus } from '../types';
 import { Logger } from '../logger';
 
 let logger = new Logger().withDebugValue('source', 'src/layouts/User.svelte');
@@ -23,9 +21,7 @@ export let location: Location;
   <div class="relative md:ml-64 bg-gray-200">
     <AdminNavbar />
     <div class="px-4 md:px-10 mx-auto w-full -m-24">
-      <Router url="admin">
-        <Route path="settings" component="{Settings}" />
-      </Router>
+      <Route path="settings" component="{UserSettings}" />
       <AdminFooter />
     </div>
   </div>

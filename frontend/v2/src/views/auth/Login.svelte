@@ -4,7 +4,7 @@ import { link, navigate } from 'svelte-routing';
 
 import { UserStatus, LoginRequest } from '../../types';
 import { userStatusStore, sessionSettingsStore } from '../../stores';
-import { V1APIClient } from '../../requests';
+import { V1APIClient } from '../../apiClient';
 import { Logger } from '../../logger';
 import { translations } from '../../i18n';
 import { UserSiteSettings } from '../../types';
@@ -58,7 +58,7 @@ async function login() {
 
       if (userStatus.isAdmin) {
         logger.debug(
-          `navigating to /admin/dashboard because user is an authenticated admin`,
+          `navigating to ${frontendRoutes.ADMIN_DASHBOARD} because user is an authenticated admin`,
         );
         navigate(frontendRoutes.ADMIN_DASHBOARD, {
           state: {},
@@ -100,6 +100,7 @@ async function login() {
               </label>
               <input
                 id="usernameInput"
+                tabindex="0"
                 type="text"
                 class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                 placeholder="{translationsToUse.inputPlaceholders.username}"

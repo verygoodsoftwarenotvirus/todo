@@ -22,8 +22,9 @@ type (
 // ProvideFrontendService provides the frontend service to dependency injection.
 func ProvideFrontendService(logger logging.Logger, cfg config.FrontendSettings) *Service {
 	svc := &Service{
-		config: cfg,
-		logger: logger.WithName(serviceName),
+		config:         cfg,
+		logStaticFiles: cfg.LogStaticFiles,
+		logger:         logger.WithName(serviceName),
 	}
 
 	return svc

@@ -24,7 +24,7 @@ func buildTestService(t *testing.T) *Service {
 
 	service, err := ProvideAuthService(
 		logger,
-		config.AuthSettings{CookieSecret: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
+		config.AuthSettings{CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
 		&mockauth.Authenticator{},
 		&mockmodels.UserDataManager{},
 		&mockmodels.AuditLogDataManager{},
@@ -48,7 +48,7 @@ func TestProvideAuthService(T *testing.T) {
 
 		service, err := ProvideAuthService(
 			logger,
-			config.AuthSettings{CookieSecret: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
+			config.AuthSettings{CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
 			&mockauth.Authenticator{},
 			&mockmodels.UserDataManager{},
 			&mockmodels.AuditLogDataManager{},

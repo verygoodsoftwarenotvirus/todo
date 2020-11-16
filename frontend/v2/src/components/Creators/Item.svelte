@@ -1,15 +1,15 @@
 <script lang="typescript">
 import { navigate } from 'svelte-routing';
 import format from 'string-format';
-import { onDestroy, onMount } from 'svelte';
+import { onDestroy } from 'svelte';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 
-import { Item, ItemCreationInput, UserSiteSettings } from '../../../types';
-import { Logger } from '../../../logger';
-import { V1APIClient } from '../../../requests';
-import { translations } from '../../../i18n';
-import { sessionSettingsStore } from '../../../stores';
-import { frontendRoutes } from '../../../constants';
+import { Item, ItemCreationInput, UserSiteSettings } from '../../types';
+import { Logger } from '../../logger';
+import { V1APIClient } from '../../apiClient';
+import { translations } from '../../i18n';
+import { sessionSettingsStore } from '../../stores';
+import { frontendRoutes } from '../../constants';
 
 export let id: number = 0;
 
@@ -19,7 +19,7 @@ let apiError: string = '';
 
 let logger = new Logger().withDebugValue(
   'source',
-  'src/components/Types/Items/Creator.svelte',
+  'src/components/Creators/Item.svelte',
 );
 
 // set up translations

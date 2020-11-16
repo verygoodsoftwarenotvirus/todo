@@ -17,7 +17,7 @@ import {
   userStatusStore,
 } from '../../stores';
 import { Logger } from '../../logger';
-import { V1APIClient } from '../../requests';
+import { V1APIClient } from '../../apiClient';
 import { translations } from '../../i18n';
 
 import APITable from '../../components/APITable/APITable.svelte';
@@ -137,7 +137,7 @@ function promptDelete(id: number) {
 
     V1APIClient.deleteItem(id)
       .then((response: AxiosResponse<Item>) => {
-        if (response.status === 204) {
+        if (response.status === statusCodes.NO_CONTENT) {
           fetchItems();
         }
       })

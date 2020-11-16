@@ -13,8 +13,8 @@ const (
 type AuthSettings struct {
 	// CookieDomain indicates what domain the cookies will have set for them.
 	CookieDomain string `json:"cookie_domain" mapstructure:"cookie_domain" toml:"cookie_domain,omitempty"`
-	// CookieSecret indicates the secret the cookie builder should use.
-	CookieSecret string `json:"cookie_secret" mapstructure:"cookie_secret" toml:"cookie_secret,omitempty"`
+	// CookieSigningKey indicates the secret the cookie builder should use.
+	CookieSigningKey string `json:"cookie_signing_key" mapstructure:"cookie_signing_key" toml:"cookie_signing_key,omitempty"`
 	// CookieLifetime indicates how long the cookies built should last.
 	CookieLifetime time.Duration `json:"cookie_lifetime" mapstructure:"cookie_lifetime" toml:"cookie_lifetime,omitempty"`
 	// Debug determines if debug logging or other development conditions are active.

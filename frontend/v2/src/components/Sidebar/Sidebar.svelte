@@ -26,9 +26,6 @@ let currentAuthStatus = new UserStatus();
 const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
   (value: UserStatus) => {
     currentAuthStatus = value;
-    logger
-      .withValue('current_auth_status', currentAuthStatus)
-      .debug('auth status updated');
   },
 );
 // onDestroy(unsubscribeFromUserStatusUpdates());

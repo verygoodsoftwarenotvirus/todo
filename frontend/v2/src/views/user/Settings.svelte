@@ -13,7 +13,7 @@ import {
   UserSiteSettings,
 } from '../../types';
 import { Logger } from '../../logger';
-import { V1APIClient } from '../../requests';
+import { V1APIClient } from '../../apiClient';
 import { translations } from '../../i18n';
 import { sessionSettingsStore } from '../../stores';
 import { frontendRoutes } from '../../constants';
@@ -46,7 +46,7 @@ const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
     currentUserStatus = value;
     if (!currentUserStatus || !currentUserStatus.isAuthenticated) {
       logger.debug(
-        `navigating to /auth/login because the user is not authenticated upon authStatusStore update`,
+        `navigating to ${frontendRoutes.LOGIN} because the user is not authenticated upon authStatusStore update`,
       );
       navigate(frontendRoutes.LOGIN, { state: {}, replace: true });
     }
@@ -100,7 +100,7 @@ onMount(() => {
       <div class="rounded-t bg-white mb-0 px-6 py-6">
         <div class="text-center flex justify-between">
           <h6 class="text-gray-800 text-xl font-bold">
-            {translationsToUse.myAccount}
+            {translationsToUse.title}
           </h6>
         </div>
       </div>

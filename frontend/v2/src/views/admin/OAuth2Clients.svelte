@@ -17,10 +17,11 @@ import {
   userStatusStore,
 } from '../../stores';
 import { Logger } from '../../logger';
-import { V1APIClient } from '../../requests';
+import { V1APIClient } from '../../apiClient';
 import { translations } from '../../i18n';
 
 import APITable from '../../components/APITable/APITable.svelte';
+import { statusCodes } from '../../constants';
 
 export let location;
 
@@ -120,10 +121,8 @@ function fetchOAuth2Clients() {
       apiTableDecrementDisabled = queryFilter.page === 1;
     })
     .catch((error: AxiosError) => {
-      if (error.response) {
-        if (error.response.data) {
-          oauth2ClientRetrievalError = error.response.data;
-        }
+      if (error.response && error.response.data) {
+        oauth2ClientRetrievalError = error.response.data;
       }
     });
 }
@@ -136,7 +135,7 @@ function promptDelete(id: number) {
 
     V1APIClient.deleteOAuth2Client(id)
       .then((response: AxiosResponse<OAuth2Client>) => {
-        if (response.status === 204) {
+        if (response.status === statusCodes.NO_CONTENT) {
           fetchOAuth2Clients();
         }
       })

@@ -14,7 +14,7 @@ func TestRandString(t *testing.T) {
 
 	actual := RandString()
 	assert.NotEmpty(t, actual)
-	assert.Len(t, actual, 52)
+	assert.Len(t, actual, randStringSize)
 }
 
 func TestServerConfig_EncodeToFile(T *testing.T) {

@@ -50,8 +50,32 @@ export type loginPageTranslations = {
   };
 };
 
-export type userSettingsPageTranslations = {
+export type userAdminPageTranslations = {
   myAccount: string;
+  buttons: {
+    updateUserInfo: string;
+    changePassword: string;
+  };
+  sectionLabels: {
+    userInfo: string;
+    password: string;
+  };
+  inputLabels: {
+    username: string;
+    emailAddress: string;
+    currentPassword: string;
+    newPassword: string;
+    twoFactorToken: string;
+  };
+  inputPlaceholders: {
+    currentPassword: string;
+    newPassword: string;
+    twoFactorToken: string;
+  };
+};
+
+export type userSettingsPageTranslations = {
+  title: string;
   buttons: {
     updateUserInfo: string;
     changePassword: string;

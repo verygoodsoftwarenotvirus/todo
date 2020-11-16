@@ -1,7 +1,6 @@
 package httpserver
 
 import (
-	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -14,26 +13,21 @@ import (
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/go-chi/chi"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
-	"go.opencensus.io/plugin/ochttp"
 )
 
 const (
-	serverNamespace         = "todo-service"
-	loggerName              = "api_server"
-	minimumCookieSecretSize = 32
+	serverNamespace = "todo-service"
+	loggerName      = "api_server"
 )
-
-var errCookieSecretTooSmall = errors.New("cookie secret is too short, must be at least 32 characters in length")
 
 type (
 	// Server is our API httpServer.
 	Server struct {
-		DebugMode bool
-
 		// Services.
 		authService          *authservice.Service
 		frontendService      *frontendservice.Service
@@ -44,19 +38,21 @@ type (
 		itemsService         types.ItemDataServer
 
 		// infra things.
-		db         database.DataManager
-		config     *config.ServerConfig
-		router     *chi.Mux
-		httpServer *http.Server
-		logger     logging.Logger
-		encoder    encoding.EncoderDecoder
+		db               database.DataManager
+		serverSettings   config.ServerSettings
+		frontendSettings config.FrontendSettings
+		router           *chi.Mux
+		httpServer       *http.Server
+		logger           logging.Logger
+		encoder          encoding.EncoderDecoder
 	}
 )
 
 // ProvideServer builds a new Server instance.
 func ProvideServer(
-	ctx context.Context,
-	cfg *config.ServerConfig,
+	serverSettings config.ServerSettings,
+	frontendSettings config.FrontendSettings,
+	metricsHandler metrics.InstrumentationHandler,
 	authService *authservice.Service,
 	frontendService *frontendservice.Service,
 	auditService types.AuditLogDataServer,
@@ -68,19 +64,14 @@ func ProvideServer(
 	logger logging.Logger,
 	encoder encoding.EncoderDecoder,
 ) (*Server, error) {
-	if len(cfg.Auth.CookieSecret) < minimumCookieSecretSize {
-		logger.Error(errCookieSecretTooSmall, "cookie secret failure")
-		return nil, errCookieSecretTooSmall
-	}
-
 	srv := &Server{
-		DebugMode: cfg.Server.Debug,
 		// infra things,
-		db:         db,
-		config:     cfg,
-		encoder:    encoder,
-		httpServer: provideHTTPServer(),
-		logger:     logger.WithName(loggerName),
+		db:               db,
+		serverSettings:   serverSettings,
+		frontendSettings: frontendSettings,
+		encoder:          encoder,
+		httpServer:       provideHTTPServer(),
+		logger:           logger.WithName(loggerName),
 		// services,
 		auditService:         auditService,
 		webhooksService:      webhooksService,
@@ -91,17 +82,7 @@ func ProvideServer(
 		oauth2ClientsService: oauth2Service,
 	}
 
-	if err := cfg.ProvideTracing(logger); errors.Is(err, config.ErrInvalidTracingProvider) {
-		return nil, err
-	}
-
-	metricsHandler := cfg.ProvideInstrumentationHandler(logger)
-	srv.setupRouter(cfg, metricsHandler)
-
-	srv.httpServer.Handler = &ochttp.Handler{
-		Handler:        srv.router,
-		FormatSpanName: formatSpanNameForRequest,
-	}
+	srv.setupRouter(metricsHandler)
 
 	logger.Debug("HTTP server successfully constructed")
 
@@ -110,7 +91,7 @@ func ProvideServer(
 
 // Serve serves HTTP traffic.
 func (s *Server) Serve() {
-	s.httpServer.Addr = fmt.Sprintf(":%d", s.config.Server.HTTPPort)
+	s.httpServer.Addr = fmt.Sprintf(":%d", s.serverSettings.HTTPPort)
 	s.logger.Debug(fmt.Sprintf("Listening for HTTP requests on %q", s.httpServer.Addr))
 
 	// returns ErrServerClosed on graceful close.

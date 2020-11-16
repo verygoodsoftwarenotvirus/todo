@@ -23,16 +23,16 @@ func init() {
 type (
 	// SessionInfo represents what we encode in our authentication cookies.
 	SessionInfo struct {
-		UserID           uint64                        `json:"-"`
-		UserIsAdmin      bool                          `json:"-"`
-		AdminPermissions permissions.PermissionChecker `json:"-"`
+		UserID           uint64                             `json:"-"`
+		UserIsAdmin      bool                               `json:"-"`
+		AdminPermissions permissions.AdminPermissionChecker `json:"-"`
 	}
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
 	UserStatusResponse struct {
-		Authenticated    bool                          `json:"isAuthenticated"`
-		IsAdmin          bool                          `json:"isAdmin"`
-		AdminPermissions permissions.PermissionChecker `json:"adminPermissions"`
+		UserIsAuthenticated bool                                 `json:"isAuthenticated"`
+		UserIsAdmin         bool                                 `json:"isAdmin"`
+		AdminPermissions    *permissions.AdminPermissionsSummary `json:"permissions,omitempty"`
 	}
 
 	// AuthAuditManager describes a structure capable of .

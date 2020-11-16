@@ -1,3 +1,6 @@
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+
+import { Logger } from '@/logger';
 import {
   login,
   logout,
@@ -10,7 +13,6 @@ import {
 } from './auth';
 
 import {
-  saveUser,
   fetchUser,
   deleteUser,
   fetchListOfUsers,
@@ -25,7 +27,6 @@ import {
 import {
   createOAuth2Client,
   fetchOAuth2Client,
-  saveOAuth2Client,
   deleteOAuth2Client,
   fetchListOfOAuth2Clients,
   fetchAuditLogEntriesForOAuth2Client,
@@ -49,14 +50,41 @@ import {
   fetchAuditLogEntriesForItem,
 } from './items';
 
-import { createWebhook } from '@/requests/webhooks';
+import { createWebhook } from '@/apiClient/webhooks';
 import { cycleCookieSecret } from './admin';
+
+const logger = new Logger().withDebugValue('source', 'src/apiClient/client.ts');
+
+axios.interceptors.request.use((request: AxiosRequestConfig):
+  | AxiosRequestConfig
+  | Promise<AxiosRequestConfig> => {
+  logger
+    .withDebugValue('url', request.url || '')
+    .withDebugValue('method', request.method || '')
+    .withDebugValue('body', request.data || null)
+    .debug(`executing request`);
+
+  request.withCredentials = true;
+
+  return request;
+});
+
+axios.interceptors.response.use((response: AxiosResponse):
+  | AxiosResponse
+  | Promise<AxiosResponse> => {
+  logger
+    .withDebugValue('url', response.config.url || '')
+    .withDebugValue('responseStatus', response.status.toString())
+    .withDebugValue('requestBody', response.config.data || null)
+    .debug(`response received`);
+
+  return response;
+});
 
 export class V1APIClient {
   // users stuff
   static fetchUser = fetchUser;
   static fetchListOfUsers = fetchListOfUsers;
-  static saveUser = saveUser;
   static deleteUser = deleteUser;
 
   // auth stuff
@@ -80,7 +108,6 @@ export class V1APIClient {
   // oauth2 clients stuff
   static createOAuth2Client = createOAuth2Client;
   static fetchOAuth2Client = fetchOAuth2Client;
-  static saveOAuth2Client = saveOAuth2Client;
   static deleteOAuth2Client = deleteOAuth2Client;
   static fetchListOfOAuth2Clients = fetchListOfOAuth2Clients;
   static fetchAuditLogEntriesForOAuth2Client = fetchAuditLogEntriesForOAuth2Client;

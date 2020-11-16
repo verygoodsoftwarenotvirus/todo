@@ -8,8 +8,8 @@ import AdminNavbar from '../components/Navbars/AdminNavbar.svelte';
 
 // custom components for this layout
 import Items from '../views/things/Items.svelte';
-import ItemEditorComponent from '../components/Types/Items/Editor.svelte';
-import ItemCreatorComponent from '../components/Types/Items/Creator.svelte';
+import ItemEditorComponent from '../components/Editors/Item.svelte';
+import ItemCreatorComponent from '../components/Creators/Item.svelte';
 
 // pages for this layout
 

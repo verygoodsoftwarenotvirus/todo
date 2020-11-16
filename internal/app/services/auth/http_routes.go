@@ -187,8 +187,8 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	http.SetCookie(res, cookie)
 
 	statusResponse := &types.UserStatusResponse{
-		Authenticated: true,
-		IsAdmin:       user.IsAdmin,
+		UserIsAuthenticated: true,
+		UserIsAdmin:         user.IsAdmin,
 	}
 
 	s.encoderDecoder.EncodeResponseWithStatus(res, statusResponse, http.StatusAccepted)
@@ -246,15 +246,18 @@ func (s *Service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 
 	if userInfo, err := s.fetchUserFromCookie(ctx, req); err != nil {
 		usr = &types.UserStatusResponse{
-			Authenticated:    false,
-			IsAdmin:          false,
-			AdminPermissions: bitmask.NewPermissionBitmask(0),
+			UserIsAuthenticated: false,
+			UserIsAdmin:         false,
+			AdminPermissions:    bitmask.NewPermissionBitmask(0).Summary(),
 		}
 	} else {
 		usr = &types.UserStatusResponse{
-			Authenticated:    true,
-			IsAdmin:          userInfo.IsAdmin,
-			AdminPermissions: userInfo.AdminPermissions,
+			UserIsAuthenticated: true,
+			UserIsAdmin:         userInfo.IsAdmin,
+		}
+
+		if userInfo.IsAdmin {
+			usr.AdminPermissions = userInfo.AdminPermissions.Summary()
 		}
 	}
 
@@ -285,7 +288,7 @@ func (s *Service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 
 	s.cookieManager = securecookie.New(
 		securecookie.GenerateRandomKey(cookieSecretSize),
-		[]byte(s.config.CookieSecret),
+		[]byte(s.config.CookieSigningKey),
 	)
 
 	s.auditLog.LogCycleCookieSecretEvent(ctx, si.UserID)

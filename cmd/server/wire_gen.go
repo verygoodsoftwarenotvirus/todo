@@ -30,6 +30,9 @@ import (
 
 // BuildServer builds a server.
 func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, dbm database.DataManager, db *sql.DB, authenticator auth.Authenticator) (*server.Server, error) {
+	serverSettings := config.ProvideConfigServerSettings(cfg)
+	frontendSettings := config.ProvideConfigFrontendSettings(cfg)
+	instrumentationHandler := frontend.ProvideMetricsInstrumentationHandlerForServer(cfg, logger)
 	authSettings := config.ProvideConfigAuthSettings(cfg)
 	userDataManager := database.ProvideUserDataManager(dbm)
 	authAuditManager := database.ProvideAuthAuditManager(dbm)
@@ -50,7 +53,6 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
-	frontendSettings := config.ProvideConfigFrontendSettings(cfg)
 	frontendService := frontend.ProvideFrontendService(logger, frontendSettings)
 	auditLogDataManager := database.ProvideAuditLogEntryDataManager(dbm)
 	entryIDFetcher := httpserver.ProvideAuditServiceItemIDFetcher(logger)
@@ -90,7 +92,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 		return nil, err
 	}
 	webhookDataServer := webhooks.ProvideWebhookDataServer(webhooksService)
-	httpserverServer, err := httpserver.ProvideServer(ctx, cfg, authService, frontendService, auditLogDataServer, itemDataServer, userDataServer, oAuth2ClientDataServer, webhookDataServer, dbm, logger, encoderDecoder)
+	httpserverServer, err := httpserver.ProvideServer(serverSettings, frontendSettings, instrumentationHandler, authService, frontendService, auditLogDataServer, itemDataServer, userDataServer, oAuth2ClientDataServer, webhookDataServer, dbm, logger, encoderDecoder)
 	if err != nil {
 		return nil, err
 	}

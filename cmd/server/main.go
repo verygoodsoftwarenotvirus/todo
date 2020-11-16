@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 
@@ -14,12 +15,14 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
+
 	// initialize our logger of choice.
 	logger := zerolog.NewLogger()
 
 	// find and validate our configuration filepath.
-	configFilepath := os.Getenv("CONFIGURATION_FILEPATH")
-	if configFilepath == "" {
+	var configFilepath string
+	if configFilepath = os.Getenv("CONFIGURATION_FILEPATH"); configFilepath == "" {
 		logger.Fatal(errors.New("no configuration file provided"))
 	}
 
@@ -29,30 +32,39 @@ func main() {
 		logger.WithValue("config_filepath", configFilepath).Fatal(fmt.Errorf("error parsing configuration file: %w", err))
 	}
 
+	if initializeTracerErr := cfg.InitializeTracer(logger); errors.Is(initializeTracerErr, config.ErrInvalidTracingProvider) {
+		logger.Fatal(fmt.Errorf("error providing tracer: %w", initializeTracerErr))
+	}
+
 	// only allow initialization to take so long.
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.Meta.StartupDeadline)
-	ctx, span := tracing.StartSpan(ctx, "initialization")
+	ctx, cancel := context.WithTimeout(ctx, cfg.Meta.StartupDeadline)
+	ctx, initSpan := tracing.StartSpan(ctx, "initialization")
 
+	ctx, databaseConnectionSpan := tracing.StartSpan(ctx, "database connection")
 	logger.Debug("connecting to database")
-
 	rawDB, err := cfg.ProvideDatabaseConnection(logger)
 	if err != nil {
 		logger.Fatal(fmt.Errorf("error connecting to database: %w", err))
 	}
+	databaseConnectionSpan.End()
 
-	logger.Debug("setting up database client")
 	authenticator := auth.ProvideBcryptAuthenticator(auth.ProvideBcryptHashCost(), logger)
 
+	ctx, databaseClientSetupSpan := tracing.StartSpan(ctx, "database client setup")
+	logger.Debug("setting up database client")
 	dbClient, err := cfg.ProvideDatabaseClient(ctx, logger, rawDB, authenticator)
 	if err != nil {
 		logger.Fatal(fmt.Errorf("error initializing database client: %w", err))
 	}
+	databaseClientSetupSpan.End()
 
 	// build our server struct.
+	ctx, serverSetupSpan := tracing.StartSpan(ctx, "database client setup")
 	logger.Debug("building server")
 	server, err := BuildServer(ctx, cfg, logger, dbClient, rawDB, authenticator)
+	serverSetupSpan.End()
 
-	span.End()
+	initSpan.End()
 	cancel()
 
 	if err != nil {

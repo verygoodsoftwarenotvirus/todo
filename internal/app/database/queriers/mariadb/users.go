@@ -33,6 +33,8 @@ func (m *MariaDB) scanUser(scan database.Scanner) (*types.User, error) {
 		&x.TwoFactorSecretVerifiedOn,
 		&x.IsAdmin,
 		&perms,
+		&x.AccountStatus,
+		&x.StatusExplanation,
 		&x.CreatedOn,
 		&x.LastUpdatedOn,
 		&x.ArchivedOn,

@@ -15,16 +15,15 @@ import (
 )
 
 const (
-	loggerName                       = "sqlite"
-	sqliteDriverName                 = "wrapped-sqlite-driver"
-	existencePrefix, existenceSuffix = "SELECT EXISTS (", ")"
+	loggerName       = "sqlite"
+	sqliteDriverName = "wrapped-sqlite-driver"
 
 	// countQuery is a generic counter query used in a few query builders.
-	countQuery = "COUNT(%s.id)"
+	countQuery = `COUNT(%s.id)`
 	// jsonPluckQuery is a generic format string for getting something out of the first layer of a JSON blob.
-	jsonPluckQuery = "json_extract(%s.%s, '$.%s')"
+	jsonPluckQuery = `json_extract(%s.%s, '$.%s')`
 	// currentUnixTimeQuery is the query sqlite uses to determine the current unix time.
-	currentUnixTimeQuery = "(strftime('%s','now'))"
+	currentUnixTimeQuery = `(strftime('%s','now'))`
 
 	defaultBucketSize uint64 = 1000
 )

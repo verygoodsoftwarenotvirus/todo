@@ -7,6 +7,11 @@ const (
 	// Common Columns
 	//
 
+	// ExistencePrefix goes before a sql query.
+	ExistencePrefix = "SELECT EXISTS ("
+	// ExistenceSuffix goes after a sql query.
+	ExistenceSuffix = ")"
+
 	// IDColumn is a common column name for the sequential ID column.
 	IDColumn = "id"
 	// CreatedOnColumn is a common column name for the row creation time column.
@@ -42,6 +47,10 @@ const (
 	UsersTableIsAdminColumn = "is_admin"
 	// UsersTableAdminPermissionsColumn is what the users table calls the <> column.
 	UsersTableAdminPermissionsColumn = "admin_permissions"
+	// UsersTableAccountStatusColumn is what the users table calls the <> column.
+	UsersTableAccountStatusColumn = "account_status"
+	// UsersTableStatusExplanationColumn is what the users table calls the <> column.
+	UsersTableStatusExplanationColumn = "status_explanation"
 
 	//
 	// Audit Log Entries Table
@@ -135,6 +144,8 @@ var (
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableTwoFactorVerifiedOnColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableIsAdminColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableAdminPermissionsColumn),
+		fmt.Sprintf("%s.%s", UsersTableName, UsersTableAccountStatusColumn),
+		fmt.Sprintf("%s.%s", UsersTableName, UsersTableStatusExplanationColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, CreatedOnColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, LastUpdatedOnColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, ArchivedOnColumn),

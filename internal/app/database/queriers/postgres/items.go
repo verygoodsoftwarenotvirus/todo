@@ -67,9 +67,9 @@ func (p *Postgres) buildItemExistsQuery(itemID, userID uint64) (query string, ar
 
 	query, args, err = p.sqlBuilder.
 		Select(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn)).
-		Prefix(existencePrefix).
+		Prefix(queriers.ExistencePrefix).
 		From(queriers.ItemsTableName).
-		Suffix(existenceSuffix).
+		Suffix(queriers.ExistenceSuffix).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn):                      itemID,
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
@@ -520,7 +520,7 @@ func (p *Postgres) LogItemArchiveEvent(ctx context.Context, userID, itemID uint6
 func (p *Postgres) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query string, args []interface{}) {
 	var err error
 
-	itemIDKey := fmt.Sprintf("%s.%s->'%s'", queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.ItemAssignmentKey)
+	itemIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.ItemAssignmentKey)
 	builder := p.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).
 		From(queriers.AuditLogEntriesTableName).

@@ -362,7 +362,7 @@ func (p *Postgres) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID
 func (p *Postgres) buildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query string, args []interface{}) {
 	var err error
 
-	webhookIDKey := fmt.Sprintf("%s.%s->'%s'",
+	webhookIDKey := fmt.Sprintf(jsonPluckQuery,
 		queriers.AuditLogEntriesTableName,
 		queriers.AuditLogEntriesTableContextColumn,
 		audit.WebhookAssignmentKey,

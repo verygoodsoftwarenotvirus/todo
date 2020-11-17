@@ -6,13 +6,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_stdLibTimeTeller_Now(T *testing.T) {
+func Test_StandardTimeTeller_Now(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		tt := &StandardTimeTeller{}
 
-		assert.NotZero(t, tt.Now())
+		assert.NotZero(t, (&StandardTimeTeller{}).Now())
 	})
 }

@@ -17,16 +17,16 @@ import (
 )
 
 const (
-	loggerName                       = "postgres"
-	postgresDriverName               = "wrapped-postgres-driver"
-	postgresRowExistsErrorCode       = "23505"
-	existencePrefix, existenceSuffix = "SELECT EXISTS (", ")"
+	loggerName                 = "postgres"
+	postgresDriverName         = "wrapped-postgres-driver"
+	postgresRowExistsErrorCode = "23505"
 
 	// countQuery is a generic counter query used in a few query builders.
-	countQuery = "COUNT(%s.id)"
-
+	countQuery = `COUNT(%s.id)`
+	// jsonPluckQuery is a generic format string for getting something out of the first layer of a JSON blob.
+	jsonPluckQuery = `%s.%s->'%s'`
 	// currentUnixTimeQuery is the query postgres uses to determine the current unix time.
-	currentUnixTimeQuery = "extract(epoch FROM NOW())"
+	currentUnixTimeQuery = `extract(epoch FROM NOW())`
 
 	maximumConnectionAttempts        = 50
 	defaultBucketSize         uint64 = 1000

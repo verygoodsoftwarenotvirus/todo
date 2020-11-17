@@ -35,6 +35,8 @@ func (p *Postgres) scanUser(scan database.Scanner) (*types.User, error) {
 		&x.TwoFactorSecretVerifiedOn,
 		&x.IsAdmin,
 		&perms,
+		&x.AccountStatus,
+		&x.StatusExplanation,
 		&x.CreatedOn,
 		&x.LastUpdatedOn,
 		&x.ArchivedOn,
@@ -510,8 +512,8 @@ func (p *Postgres) LogUserArchiveEvent(ctx context.Context, userID uint64) {
 func (p *Postgres) buildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
-	userIDKey := fmt.Sprintf("%s.%s->'%s'", queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.UserAssignmentKey)
-	performedByIDKey := fmt.Sprintf("%s.%s->'%s'", queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.ActorAssignmentKey)
+	userIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.UserAssignmentKey)
+	performedByIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.ActorAssignmentKey)
 	builder := p.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).
 		From(queriers.AuditLogEntriesTableName).

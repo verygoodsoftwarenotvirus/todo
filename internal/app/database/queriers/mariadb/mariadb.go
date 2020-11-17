@@ -16,18 +16,15 @@ import (
 )
 
 const (
-	loggerName                       = "mariadb"
-	mariaDBDriverName                = "wrapped-mariadb-driver"
-	existencePrefix, existenceSuffix = "SELECT EXISTS (", ")"
+	loggerName        = "mariadb"
+	mariaDBDriverName = "wrapped-mariadb-driver"
 
 	// countQuery is a generic counter query used in a few query builders.
-	countQuery = "COUNT(%s.id)"
-
-	// jsonPluckQuery is a generic query for extracting something from the first level of a JSON blob.
+	countQuery = `COUNT(%s.id)`
+	// jsonPluckQuery is a generic format string for getting something out of the first layer of a JSON blob.
 	jsonPluckQuery = `JSON_CONTAINS(%s.%s, '%d', '$.%s')`
-
 	// currentUnixTimeQuery is the query maria DB uses to determine the current unix time.
-	currentUnixTimeQuery = "UNIX_TIMESTAMP()"
+	currentUnixTimeQuery = `UNIX_TIMESTAMP()`
 
 	maximumConnectionAttempts        = 50
 	defaultBucketSize         uint64 = 1000

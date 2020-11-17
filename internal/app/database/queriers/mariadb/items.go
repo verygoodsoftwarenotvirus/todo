@@ -67,9 +67,9 @@ func (m *MariaDB) buildItemExistsQuery(itemID, userID uint64) (query string, arg
 
 	query, args, err = m.sqlBuilder.
 		Select(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn)).
-		Prefix(existencePrefix).
+		Prefix(queriers.ExistencePrefix).
 		From(queriers.ItemsTableName).
-		Suffix(existenceSuffix).
+		Suffix(queriers.ExistenceSuffix).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn):                      itemID,
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,

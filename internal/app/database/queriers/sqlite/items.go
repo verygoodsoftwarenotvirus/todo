@@ -67,9 +67,9 @@ func (s *Sqlite) buildItemExistsQuery(itemID, userID uint64) (query string, args
 
 	query, args, err = s.sqlBuilder.
 		Select(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn)).
-		Prefix(existencePrefix).
+		Prefix(queriers.ExistencePrefix).
 		From(queriers.ItemsTableName).
-		Suffix(existenceSuffix).
+		Suffix(queriers.ExistenceSuffix).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn):                      itemID,
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,

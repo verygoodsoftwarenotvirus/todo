@@ -171,8 +171,10 @@ func (u *User) Update(input *User) {
 // ToSessionInfo accepts a User as input and merges those values if they're set.
 func (u *User) ToSessionInfo() *SessionInfo {
 	return &SessionInfo{
-		UserID:           u.ID,
-		UserIsAdmin:      u.IsAdmin,
-		AdminPermissions: u.AdminPermissions,
+		UserID:            u.ID,
+		UserIsAdmin:       u.IsAdmin,
+		UserAccountStatus: u.AccountStatus,
+		StatusExplanation: u.StatusExplanation,
+		AdminPermissions:  u.AdminPermissions,
 	}
 }

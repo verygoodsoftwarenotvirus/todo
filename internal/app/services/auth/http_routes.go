@@ -258,6 +258,8 @@ func (s *Service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	} else {
 		usr = &types.UserStatusResponse{
 			UserIsAuthenticated: true,
+			UserAccountStatus:   userInfo.AccountStatus,
+			StatusExplanation:   userInfo.StatusExplanation,
 			UserIsAdmin:         userInfo.IsAdmin,
 		}
 

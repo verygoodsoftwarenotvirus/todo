@@ -58,7 +58,7 @@ vendor:
 
 .PHONY: frontend-vendor
 frontend-vendor:
-	(cd frontend/v2 && npm install)
+	(cd frontend/ && npm install)
 
 .PHONY: revendor
 revendor: clean_vendor vendor frontend-vendor
@@ -117,7 +117,7 @@ format:
 check_formatting: vendor
 	docker build --tag check_formatting:latest --file environments/testing/dockerfiles/formatting.Dockerfile .
 	docker run --rm check_formatting:latest
-	(cd frontend/v2 && npm run format-check)
+	(cd frontend/ && npm run format-check)
 
 .PHONY: frontend-tests
 frontend-tests:

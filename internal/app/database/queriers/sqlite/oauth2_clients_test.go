@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
@@ -20,7 +21,7 @@ import (
 )
 
 func buildMockRowsFromOAuth2Clients(clients ...*types.OAuth2Client) *sqlmock.Rows {
-	columns := oauth2ClientsTableColumns
+	columns := queriers.OAuth2ClientsTableColumns
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, c := range clients {
@@ -28,7 +29,7 @@ func buildMockRowsFromOAuth2Clients(clients ...*types.OAuth2Client) *sqlmock.Row
 			c.ID,
 			c.Name,
 			c.ClientID,
-			strings.Join(c.Scopes, scopesSeparator),
+			strings.Join(c.Scopes, queriers.OAuth2ClientsTableScopeSeparator),
 			c.RedirectURI,
 			c.ClientSecret,
 			c.CreatedOn,
@@ -43,11 +44,11 @@ func buildMockRowsFromOAuth2Clients(clients ...*types.OAuth2Client) *sqlmock.Row
 }
 
 func buildErroneousMockRowFromOAuth2Client(c *types.OAuth2Client) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(oauth2ClientsTableColumns).AddRow(
+	exampleRows := sqlmock.NewRows(queriers.OAuth2ClientsTableColumns).AddRow(
 		c.ArchivedOn,
 		c.Name,
 		c.ClientID,
-		strings.Join(c.Scopes, scopesSeparator),
+		strings.Join(c.Scopes, queriers.OAuth2ClientsTableScopeSeparator),
 		c.RedirectURI,
 		c.ClientSecret,
 		c.CreatedOn,
@@ -632,7 +633,7 @@ func TestSqlite_buildCreateOAuth2ClientQuery(T *testing.T) {
 			exampleOAuth2Client.Name,
 			exampleOAuth2Client.ClientID,
 			exampleOAuth2Client.ClientSecret,
-			strings.Join(exampleOAuth2Client.Scopes, scopesSeparator),
+			strings.Join(exampleOAuth2Client.Scopes, queriers.OAuth2ClientsTableScopeSeparator),
 			exampleOAuth2Client.RedirectURI,
 			exampleOAuth2Client.BelongsToUser,
 		}
@@ -662,7 +663,7 @@ func TestSqlite_CreateOAuth2Client(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(exampleRows)
 
-		mtt := &mockTimeTeller{}
+		mtt := &queriers.MockTimeTeller{}
 		mtt.On("Now").Return(exampleOAuth2Client.CreatedOn)
 		s.timeTeller = mtt
 
@@ -709,7 +710,7 @@ func TestSqlite_buildUpdateOAuth2ClientQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleOAuth2Client.ClientID,
 			exampleOAuth2Client.ClientSecret,
-			strings.Join(exampleOAuth2Client.Scopes, scopesSeparator),
+			strings.Join(exampleOAuth2Client.Scopes, queriers.OAuth2ClientsTableScopeSeparator),
 			exampleOAuth2Client.RedirectURI,
 			exampleOAuth2Client.BelongsToUser,
 			exampleOAuth2Client.ID,

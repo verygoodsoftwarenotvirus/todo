@@ -7,29 +7,11 @@ import (
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/Masterminds/squirrel"
-)
-
-const (
-	itemsTableName           = "items"
-	itemsTableNameColumn     = "name"
-	itemsTableDetailsColumn  = "details"
-	itemsUserOwnershipColumn = "belongs_to_user"
-)
-
-var (
-	itemsTableColumns = []string{
-		fmt.Sprintf("%s.%s", itemsTableName, idColumn),
-		fmt.Sprintf("%s.%s", itemsTableName, itemsTableNameColumn),
-		fmt.Sprintf("%s.%s", itemsTableName, itemsTableDetailsColumn),
-		fmt.Sprintf("%s.%s", itemsTableName, createdOnColumn),
-		fmt.Sprintf("%s.%s", itemsTableName, lastUpdatedOnColumn),
-		fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn),
-		fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn),
-	}
 )
 
 // scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct.
@@ -84,13 +66,13 @@ func (s *Sqlite) buildItemExistsQuery(itemID, userID uint64) (query string, args
 	var err error
 
 	query, args, err = s.sqlBuilder.
-		Select(fmt.Sprintf("%s.%s", itemsTableName, idColumn)).
+		Select(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn)).
 		Prefix(existencePrefix).
-		From(itemsTableName).
+		From(queriers.ItemsTableName).
 		Suffix(existenceSuffix).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", itemsTableName, idColumn):                 itemID,
-			fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn):                      itemID,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
 		}).ToSql()
 
 	s.logQueryBuildingError(err)
@@ -115,11 +97,11 @@ func (s *Sqlite) buildGetItemQuery(itemID, userID uint64) (query string, args []
 	var err error
 
 	query, args, err = s.sqlBuilder.
-		Select(itemsTableColumns...).
-		From(itemsTableName).
+		Select(queriers.ItemsTableColumns...).
+		From(queriers.ItemsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", itemsTableName, idColumn):                 itemID,
-			fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn):                      itemID,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
 		}).
 		ToSql()
 
@@ -141,10 +123,10 @@ func (s *Sqlite) buildGetAllItemsCountQuery() string {
 	var err error
 
 	allItemsCountQuery, _, err := s.sqlBuilder.
-		Select(fmt.Sprintf(countQuery, itemsTableName)).
-		From(itemsTableName).
+		Select(fmt.Sprintf(countQuery, queriers.ItemsTableName)).
+		From(queriers.ItemsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn): nil,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn): nil,
 		}).
 		ToSql()
 	s.logQueryBuildingError(err)
@@ -161,13 +143,13 @@ func (s *Sqlite) GetAllItemsCount(ctx context.Context) (count uint64, err error)
 // buildGetBatchOfItemsQuery returns a query that fetches every item in the database within a bucketed range.
 func (s *Sqlite) buildGetBatchOfItemsQuery(beginID, endID uint64) (query string, args []interface{}) {
 	query, args, err := s.sqlBuilder.
-		Select(itemsTableColumns...).
-		From(itemsTableName).
+		Select(queriers.ItemsTableColumns...).
+		From(queriers.ItemsTableName).
 		Where(squirrel.Gt{
-			fmt.Sprintf("%s.%s", itemsTableName, idColumn): beginID,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn): beginID,
 		}).
 		Where(squirrel.Lt{
-			fmt.Sprintf("%s.%s", itemsTableName, idColumn): endID,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn): endID,
 		}).
 		ToSql()
 
@@ -221,16 +203,16 @@ func (s *Sqlite) buildGetItemsQuery(userID uint64, filter *types.QueryFilter) (q
 	var err error
 
 	builder := s.sqlBuilder.
-		Select(itemsTableColumns...).
-		From(itemsTableName).
+		Select(queriers.ItemsTableColumns...).
+		From(queriers.ItemsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn):         nil,
-			fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn):              nil,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
 		}).
-		OrderBy(fmt.Sprintf("%s.%s", itemsTableName, idColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn))
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder, itemsTableName)
+		builder = filter.ApplyToQueryBuilder(builder, queriers.ItemsTableName)
 	}
 
 	query, args, err = builder.ToSql()
@@ -275,17 +257,17 @@ func (s *Sqlite) buildGetItemsForAdminQuery(filter *types.QueryFilter) (query st
 
 	where := squirrel.Eq{}
 	if filter != nil && filter.IncludeArchived {
-		where[fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn)] = nil
+		where[fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn)] = nil
 	}
 
 	builder := s.sqlBuilder.
-		Select(itemsTableColumns...).
-		From(itemsTableName).
+		Select(queriers.ItemsTableColumns...).
+		From(queriers.ItemsTableName).
 		Where(where).
-		OrderBy(fmt.Sprintf("%s.%s", itemsTableName, idColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn))
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder, itemsTableName)
+		builder = filter.ApplyToQueryBuilder(builder, queriers.ItemsTableName)
 	}
 
 	query, args, err = builder.ToSql()
@@ -341,14 +323,14 @@ func (s *Sqlite) buildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []uin
 	whenThenStatement += " END"
 
 	builder := s.sqlBuilder.
-		Select(itemsTableColumns...).
-		From(itemsTableName).
+		Select(queriers.ItemsTableColumns...).
+		From(queriers.ItemsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", itemsTableName, idColumn):                 ids,
-			fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn):         nil,
-			fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn):                      ids,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn):              nil,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
 		}).
-		OrderBy(fmt.Sprintf("CASE %s.%s %s", itemsTableName, idColumn, whenThenStatement)).
+		OrderBy(fmt.Sprintf("CASE %s.%s %s", queriers.ItemsTableName, queriers.IDColumn, whenThenStatement)).
 		Limit(uint64(limit))
 
 	query, args, err = builder.ToSql()
@@ -397,13 +379,13 @@ func (s *Sqlite) buildGetItemsWithIDsForAdminQuery(limit uint8, ids []uint64) (q
 	whenThenStatement += " END"
 
 	builder := s.sqlBuilder.
-		Select(itemsTableColumns...).
-		From(itemsTableName).
+		Select(queriers.ItemsTableColumns...).
+		From(queriers.ItemsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", itemsTableName, idColumn):         ids,
-			fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn): nil,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn):         ids,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn): nil,
 		}).
-		OrderBy(fmt.Sprintf("CASE %s.%s %s", itemsTableName, idColumn, whenThenStatement)).
+		OrderBy(fmt.Sprintf("CASE %s.%s %s", queriers.ItemsTableName, queriers.IDColumn, whenThenStatement)).
 		Limit(uint64(limit))
 
 	query, args, err = builder.ToSql()
@@ -438,11 +420,11 @@ func (s *Sqlite) buildCreateItemQuery(input *types.Item) (query string, args []i
 	var err error
 
 	query, args, err = s.sqlBuilder.
-		Insert(itemsTableName).
+		Insert(queriers.ItemsTableName).
 		Columns(
-			itemsTableNameColumn,
-			itemsTableDetailsColumn,
-			itemsUserOwnershipColumn,
+			queriers.ItemsTableNameColumn,
+			queriers.ItemsTableDetailsColumn,
+			queriers.ItemsTableUserOwnershipColumn,
 		).
 		Values(
 			input.Name,
@@ -488,13 +470,13 @@ func (s *Sqlite) buildUpdateItemQuery(input *types.Item) (query string, args []i
 	var err error
 
 	query, args, err = s.sqlBuilder.
-		Update(itemsTableName).
-		Set(itemsTableNameColumn, input.Name).
-		Set(itemsTableDetailsColumn, input.Details).
-		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Update(queriers.ItemsTableName).
+		Set(queriers.ItemsTableNameColumn, input.Name).
+		Set(queriers.ItemsTableDetailsColumn, input.Details).
+		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			idColumn:                 input.ID,
-			itemsUserOwnershipColumn: input.BelongsToUser,
+			queriers.IDColumn:                      input.ID,
+			queriers.ItemsTableUserOwnershipColumn: input.BelongsToUser,
 		}).
 		ToSql()
 
@@ -515,13 +497,13 @@ func (s *Sqlite) buildArchiveItemQuery(itemID, userID uint64) (query string, arg
 	var err error
 
 	query, args, err = s.sqlBuilder.
-		Update(itemsTableName).
-		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Set(archivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Update(queriers.ItemsTableName).
+		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Set(queriers.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			idColumn:                 itemID,
-			archivedOnColumn:         nil,
-			itemsUserOwnershipColumn: userID,
+			queriers.IDColumn:                      itemID,
+			queriers.ArchivedOnColumn:              nil,
+			queriers.ItemsTableUserOwnershipColumn: userID,
 		}).
 		ToSql()
 
@@ -563,12 +545,12 @@ func (s *Sqlite) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64)
 func (s *Sqlite) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query string, args []interface{}) {
 	var err error
 
-	itemIDKey := fmt.Sprintf("json_extract(%s.%s, '$.%s')", auditLogEntriesTableName, auditLogEntriesTableContextColumn, audit.ItemAssignmentKey)
+	itemIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.ItemAssignmentKey)
 	builder := s.sqlBuilder.
-		Select(auditLogEntriesTableColumns...).
-		From(auditLogEntriesTableName).
+		Select(queriers.AuditLogEntriesTableColumns...).
+		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Eq{itemIDKey: itemID}).
-		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
 
 	query, args, err = builder.ToSql()
 	s.logQueryBuildingError(err)

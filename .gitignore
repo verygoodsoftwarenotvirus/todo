@@ -42,8 +42,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # svelte compilation artifacts
-frontend/v1/public/bundle.*
-frontend/v2/public/bundle.*
+frontend//public/bundle.*
 
 # go test profiles
 *.coverprofile

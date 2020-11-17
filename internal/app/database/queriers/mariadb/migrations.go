@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
 
 	"github.com/GuiaBolso/darwin"
@@ -26,23 +27,25 @@ var (
 			Version:     incrementMigrationVersion(),
 			Description: "create users table",
 			Script: strings.Join([]string{
-				"CREATE TABLE IF NOT EXISTS users (",
-				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
-				"    `username` VARCHAR(150) NOT NULL,",
-				"    `hashed_password` VARCHAR(100) NOT NULL,",
-				"    `salt` BINARY(16) NOT NULL,",
-				"    `requires_password_change` BOOLEAN NOT NULL DEFAULT false,",
-				"    `password_last_changed_on` INTEGER UNSIGNED,",
-				"    `two_factor_secret` VARCHAR(256) NOT NULL,",
-				"    `two_factor_secret_verified_on` BIGINT UNSIGNED DEFAULT NULL,",
-				"    `is_admin` BOOLEAN NOT NULL DEFAULT false,",
-				"    `admin_permissions` INTEGER NOT NULL DEFAULT 0,",
-				"    `status` VARCHAR(32) NOT NULL DEFAULT 'created',",
-				"    `created_on` BIGINT UNSIGNED,",
-				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
-				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
-				"    PRIMARY KEY (`id`),",
-				"    UNIQUE (`username`)",
+				// TODO:
+				fmt.Sprintf("CREATE TABLE IF NOT EXISTS users ("),
+				fmt.Sprintf("    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"),
+				fmt.Sprintf("    `username` VARCHAR(150) NOT NULL,"),
+				fmt.Sprintf("    `hashed_password` VARCHAR(100) NOT NULL,"),
+				fmt.Sprintf("    `salt` BINARY(16) NOT NULL,"),
+				fmt.Sprintf("    `requires_password_change` BOOLEAN NOT NULL DEFAULT false,"),
+				fmt.Sprintf("    `password_last_changed_on` INTEGER UNSIGNED,"),
+				fmt.Sprintf("    `two_factor_secret` VARCHAR(256) NOT NULL,"),
+				fmt.Sprintf("    `two_factor_secret_verified_on` BIGINT UNSIGNED DEFAULT NULL,"),
+				fmt.Sprintf("    `is_admin` BOOLEAN NOT NULL DEFAULT false,"),
+				fmt.Sprintf("    `admin_permissions` INTEGER NOT NULL DEFAULT 0,"),
+				fmt.Sprintf("    `account_status` VARCHAR(32) NOT NULL DEFAULT 'created',"),
+				fmt.Sprintf("    `status_explanation` VARCHAR(32) NOT NULL DEFAULT '',"),
+				fmt.Sprintf("    `created_on` BIGINT UNSIGNED,"),
+				fmt.Sprintf("    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,"),
+				fmt.Sprintf("    `archived_on` BIGINT UNSIGNED DEFAULT NULL,"),
+				fmt.Sprintf("    PRIMARY KEY (`id`),"),
+				fmt.Sprintf("    UNIQUE (`username`)"),
 				");",
 			}, "\n"),
 		},
@@ -232,14 +235,14 @@ func (m *MariaDB) Migrate(ctx context.Context, authenticator auth.Authenticator,
 		}
 
 		query, args, err := m.sqlBuilder.
-			Insert(usersTableName).
+			Insert(queriers.UsersTableName).
 			Columns(
-				usersTableUsernameColumn,
-				usersTableHashedPasswordColumn,
-				usersTableSaltColumn,
-				usersTableTwoFactorColumn,
-				usersTableIsAdminColumn,
-				usersTableTwoFactorVerifiedOnColumn,
+				queriers.UsersTableUsernameColumn,
+				queriers.UsersTableHashedPasswordColumn,
+				queriers.UsersTableSaltColumn,
+				queriers.UsersTableTwoFactorColumn,
+				queriers.UsersTableIsAdminColumn,
+				queriers.UsersTableTwoFactorVerifiedOnColumn,
 			).
 			Values(
 				testUserConfig.Username,

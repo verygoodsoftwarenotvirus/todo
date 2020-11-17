@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers"
 
 	"contrib.go.opencensus.io/integrations/ocsql"
 	"github.com/Masterminds/squirrel"
@@ -15,18 +16,15 @@ import (
 )
 
 const (
-	loggerName        = "mariadb"
-	mariaDBDriverName = "wrapped-mariadb-driver"
-
+	loggerName                       = "mariadb"
+	mariaDBDriverName                = "wrapped-mariadb-driver"
 	existencePrefix, existenceSuffix = "SELECT EXISTS (", ")"
-
-	idColumn            = "id"
-	createdOnColumn     = "created_on"
-	lastUpdatedOnColumn = "last_updated_on"
-	archivedOnColumn    = "archived_on"
 
 	// countQuery is a generic counter query used in a few query builders.
 	countQuery = "COUNT(%s.id)"
+
+	// jsonPluckQuery is a generic query for extracting something from the first level of a JSON blob.
+	jsonPluckQuery = `JSON_CONTAINS(%s.%s, '%d', '$.%s')`
 
 	// currentUnixTimeQuery is the query maria DB uses to determine the current unix time.
 	currentUnixTimeQuery = "UNIX_TIMESTAMP()"
@@ -57,7 +55,7 @@ type (
 	MariaDB struct {
 		logger      logging.Logger
 		db          *sql.DB
-		timeTeller  timeTeller
+		timeTeller  queriers.TimeTeller
 		sqlBuilder  squirrel.StatementBuilderType
 		migrateOnce sync.Once
 		debug       bool
@@ -85,7 +83,7 @@ func ProvideMariaDB(debug bool, db *sql.DB, logger logging.Logger) database.Data
 	return &MariaDB{
 		db:         db,
 		debug:      debug,
-		timeTeller: &stdLibTimeTeller{},
+		timeTeller: &queriers.StandardTimeTeller{},
 		logger:     logger.WithName(loggerName),
 		sqlBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Question),
 	}

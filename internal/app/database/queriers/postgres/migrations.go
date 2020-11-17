@@ -7,6 +7,7 @@ import (
 	"math"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/exampledata"
 
@@ -38,7 +39,8 @@ var (
 				"two_factor_secret_verified_on" BIGINT DEFAULT NULL,
 				"is_admin" BOOLEAN NOT NULL DEFAULT 'false',
 				"admin_permissions" BIGINT NOT NULL DEFAULT 0,
-				"status" TEXT NOT NULL DEFAULT 'created',
+				"account_status" TEXT NOT NULL DEFAULT 'created',
+				"status_explanation" TEXT NOT NULL DEFAULT '',
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				"last_updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
@@ -152,15 +154,15 @@ func (p *Postgres) Migrate(ctx context.Context, authenticator auth.Authenticator
 	if testUserConfig != nil && usingDemoCodeThatShouldBeDeletedLater {
 		for _, x := range exampledata.ExampleUsers {
 			query, args, err := p.sqlBuilder.
-				Insert(usersTableName).
+				Insert(queriers.UsersTableName).
 				Columns(
-					usersTableUsernameColumn,
-					usersTableHashedPasswordColumn,
-					usersTableSaltColumn,
-					usersTableTwoFactorColumn,
-					usersTableIsAdminColumn,
-					usersTableAdminPermissionsColumn,
-					usersTableTwoFactorVerifiedOnColumn,
+					queriers.UsersTableUsernameColumn,
+					queriers.UsersTableHashedPasswordColumn,
+					queriers.UsersTableSaltColumn,
+					queriers.UsersTableTwoFactorColumn,
+					queriers.UsersTableIsAdminColumn,
+					queriers.UsersTableAdminPermissionsColumn,
+					queriers.UsersTableTwoFactorVerifiedOnColumn,
 				).
 				Values(
 					x.Username,
@@ -209,15 +211,15 @@ func (p *Postgres) Migrate(ctx context.Context, authenticator auth.Authenticator
 		}
 
 		query, args, err := p.sqlBuilder.
-			Insert(usersTableName).
+			Insert(queriers.UsersTableName).
 			Columns(
-				usersTableUsernameColumn,
-				usersTableHashedPasswordColumn,
-				usersTableSaltColumn,
-				usersTableTwoFactorColumn,
-				usersTableIsAdminColumn,
-				usersTableAdminPermissionsColumn,
-				usersTableTwoFactorVerifiedOnColumn,
+				queriers.UsersTableUsernameColumn,
+				queriers.UsersTableHashedPasswordColumn,
+				queriers.UsersTableSaltColumn,
+				queriers.UsersTableTwoFactorColumn,
+				queriers.UsersTableIsAdminColumn,
+				queriers.UsersTableAdminPermissionsColumn,
+				queriers.UsersTableTwoFactorVerifiedOnColumn,
 			).
 			Values(
 				testUserConfig.Username,

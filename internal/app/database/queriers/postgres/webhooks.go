@@ -8,47 +8,11 @@ import (
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/Masterminds/squirrel"
-)
-
-const (
-	commaSeparator = ","
-
-	eventsSeparator = commaSeparator
-	typesSeparator  = commaSeparator
-	topicsSeparator = commaSeparator
-
-	webhooksTableName              = "webhooks"
-	webhooksTableNameColumn        = "name"
-	webhooksTableContentTypeColumn = "content_type"
-	webhooksTableURLColumn         = "url"
-	webhooksTableMethodColumn      = "method"
-	webhooksTableEventsColumn      = "events"
-	webhooksTableDataTypesColumn   = "data_types"
-	webhooksTableTopicsColumn      = "topics"
-	webhooksTableOwnershipColumn   = "belongs_to_user"
-
-	auditLogWebhookAssignmentKey = "webhook_id"
-)
-
-var (
-	webhooksTableColumns = []string{
-		fmt.Sprintf("%s.%s", webhooksTableName, idColumn),
-		fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableNameColumn),
-		fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableContentTypeColumn),
-		fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableURLColumn),
-		fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableMethodColumn),
-		fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableEventsColumn),
-		fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableDataTypesColumn),
-		fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableTopicsColumn),
-		fmt.Sprintf("%s.%s", webhooksTableName, createdOnColumn),
-		fmt.Sprintf("%s.%s", webhooksTableName, lastUpdatedOnColumn),
-		fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn),
-		fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableOwnershipColumn),
-	}
 )
 
 // scanWebhook is a consistent way to turn a *sql.Row into a webhook struct.
@@ -79,15 +43,15 @@ func (p *Postgres) scanWebhook(scan database.Scanner) (*types.Webhook, error) {
 		return nil, err
 	}
 
-	if events := strings.Split(eventsStr, eventsSeparator); len(events) >= 1 && events[0] != "" {
+	if events := strings.Split(eventsStr, queriers.WebhooksTableEventsSeparator); len(events) >= 1 && events[0] != "" {
 		x.Events = events
 	}
 
-	if dataTypes := strings.Split(dataTypesStr, typesSeparator); len(dataTypes) >= 1 && dataTypes[0] != "" {
+	if dataTypes := strings.Split(dataTypesStr, queriers.WebhooksTableDataTypesSeparator); len(dataTypes) >= 1 && dataTypes[0] != "" {
 		x.DataTypes = dataTypes
 	}
 
-	if topics := strings.Split(topicsStr, topicsSeparator); len(topics) >= 1 && topics[0] != "" {
+	if topics := strings.Split(topicsStr, queriers.WebhooksTableTopicsSeparator); len(topics) >= 1 && topics[0] != "" {
 		x.Topics = topics
 	}
 
@@ -123,11 +87,11 @@ func (p *Postgres) buildGetWebhookQuery(webhookID, userID uint64) (query string,
 	var err error
 
 	query, args, err = p.sqlBuilder.
-		Select(webhooksTableColumns...).
-		From(webhooksTableName).
+		Select(queriers.WebhooksTableColumns...).
+		From(queriers.WebhooksTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", webhooksTableName, idColumn):                     webhookID,
-			fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.IDColumn):                     webhookID,
+			fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.WebhooksTableOwnershipColumn): userID,
 		}).ToSql()
 
 	p.logQueryBuildingError(err)
@@ -152,10 +116,10 @@ func (p *Postgres) buildGetAllWebhooksCountQuery() string {
 	var err error
 
 	getAllWebhooksCountQuery, _, err := p.sqlBuilder.
-		Select(fmt.Sprintf(countQuery, webhooksTableName)).
-		From(webhooksTableName).
+		Select(fmt.Sprintf(countQuery, queriers.WebhooksTableName)).
+		From(queriers.WebhooksTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn): nil,
+			fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.ArchivedOnColumn): nil,
 		}).
 		ToSql()
 
@@ -175,10 +139,10 @@ func (p *Postgres) buildGetAllWebhooksQuery() string {
 	var err error
 
 	getAllWebhooksQuery, _, err := p.sqlBuilder.
-		Select(webhooksTableColumns...).
-		From(webhooksTableName).
+		Select(queriers.WebhooksTableColumns...).
+		From(queriers.WebhooksTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn): nil,
+			fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.ArchivedOnColumn): nil,
 		}).
 		ToSql()
 
@@ -217,16 +181,16 @@ func (p *Postgres) buildGetWebhooksQuery(userID uint64, filter *types.QueryFilte
 	var err error
 
 	builder := p.sqlBuilder.
-		Select(webhooksTableColumns...).
-		From(webhooksTableName).
+		Select(queriers.WebhooksTableColumns...).
+		From(queriers.WebhooksTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", webhooksTableName, webhooksTableOwnershipColumn): userID,
-			fmt.Sprintf("%s.%s", webhooksTableName, archivedOnColumn):             nil,
+			fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.WebhooksTableOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.ArchivedOnColumn):             nil,
 		}).
-		OrderBy(fmt.Sprintf("%s.%s", webhooksTableName, idColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.IDColumn))
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder, webhooksTableName)
+		builder = filter.ApplyToQueryBuilder(builder, queriers.WebhooksTableName)
 	}
 
 	query, args, err = builder.ToSql()
@@ -268,28 +232,28 @@ func (p *Postgres) buildCreateWebhookQuery(x *types.Webhook) (query string, args
 	var err error
 
 	query, args, err = p.sqlBuilder.
-		Insert(webhooksTableName).
+		Insert(queriers.WebhooksTableName).
 		Columns(
-			webhooksTableNameColumn,
-			webhooksTableContentTypeColumn,
-			webhooksTableURLColumn,
-			webhooksTableMethodColumn,
-			webhooksTableEventsColumn,
-			webhooksTableDataTypesColumn,
-			webhooksTableTopicsColumn,
-			webhooksTableOwnershipColumn,
+			queriers.WebhooksTableNameColumn,
+			queriers.WebhooksTableContentTypeColumn,
+			queriers.WebhooksTableURLColumn,
+			queriers.WebhooksTableMethodColumn,
+			queriers.WebhooksTableEventsColumn,
+			queriers.WebhooksTableDataTypesColumn,
+			queriers.WebhooksTableTopicsColumn,
+			queriers.WebhooksTableOwnershipColumn,
 		).
 		Values(
 			x.Name,
 			x.ContentType,
 			x.URL,
 			x.Method,
-			strings.Join(x.Events, eventsSeparator),
-			strings.Join(x.DataTypes, typesSeparator),
-			strings.Join(x.Topics, topicsSeparator),
+			strings.Join(x.Events, queriers.WebhooksTableEventsSeparator),
+			strings.Join(x.DataTypes, queriers.WebhooksTableDataTypesSeparator),
+			strings.Join(x.Topics, queriers.WebhooksTableTopicsSeparator),
 			x.BelongsToUser,
 		).
-		Suffix(fmt.Sprintf("RETURNING %s, %s", idColumn, createdOnColumn)).
+		Suffix(fmt.Sprintf("RETURNING %s, %s", queriers.IDColumn, queriers.CreatedOnColumn)).
 		ToSql()
 
 	p.logQueryBuildingError(err)
@@ -323,20 +287,20 @@ func (p *Postgres) buildUpdateWebhookQuery(input *types.Webhook) (query string, 
 	var err error
 
 	query, args, err = p.sqlBuilder.
-		Update(webhooksTableName).
-		Set(webhooksTableNameColumn, input.Name).
-		Set(webhooksTableContentTypeColumn, input.ContentType).
-		Set(webhooksTableURLColumn, input.URL).
-		Set(webhooksTableMethodColumn, input.Method).
-		Set(webhooksTableEventsColumn, strings.Join(input.Events, topicsSeparator)).
-		Set(webhooksTableDataTypesColumn, strings.Join(input.DataTypes, typesSeparator)).
-		Set(webhooksTableTopicsColumn, strings.Join(input.Topics, topicsSeparator)).
-		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Update(queriers.WebhooksTableName).
+		Set(queriers.WebhooksTableNameColumn, input.Name).
+		Set(queriers.WebhooksTableContentTypeColumn, input.ContentType).
+		Set(queriers.WebhooksTableURLColumn, input.URL).
+		Set(queriers.WebhooksTableMethodColumn, input.Method).
+		Set(queriers.WebhooksTableEventsColumn, strings.Join(input.Events, queriers.WebhooksTableTopicsSeparator)).
+		Set(queriers.WebhooksTableDataTypesColumn, strings.Join(input.DataTypes, queriers.WebhooksTableDataTypesSeparator)).
+		Set(queriers.WebhooksTableTopicsColumn, strings.Join(input.Topics, queriers.WebhooksTableTopicsSeparator)).
+		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			idColumn:                     input.ID,
-			webhooksTableOwnershipColumn: input.BelongsToUser,
+			queriers.IDColumn:                     input.ID,
+			queriers.WebhooksTableOwnershipColumn: input.BelongsToUser,
 		}).
-		Suffix(fmt.Sprintf("RETURNING %s", lastUpdatedOnColumn)).
+		Suffix(fmt.Sprintf("RETURNING %s", queriers.LastUpdatedOnColumn)).
 		ToSql()
 
 	p.logQueryBuildingError(err)
@@ -355,15 +319,15 @@ func (p *Postgres) buildArchiveWebhookQuery(webhookID, userID uint64) (query str
 	var err error
 
 	query, args, err = p.sqlBuilder.
-		Update(webhooksTableName).
-		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Set(archivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Update(queriers.WebhooksTableName).
+		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Set(queriers.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			idColumn:                     webhookID,
-			webhooksTableOwnershipColumn: userID,
-			archivedOnColumn:             nil,
+			queriers.IDColumn:                     webhookID,
+			queriers.WebhooksTableOwnershipColumn: userID,
+			queriers.ArchivedOnColumn:             nil,
 		}).
-		Suffix(fmt.Sprintf("RETURNING %s", archivedOnColumn)).
+		Suffix(fmt.Sprintf("RETURNING %s", queriers.ArchivedOnColumn)).
 		ToSql()
 
 	p.logQueryBuildingError(err)
@@ -398,12 +362,16 @@ func (p *Postgres) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID
 func (p *Postgres) buildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query string, args []interface{}) {
 	var err error
 
-	webhookIDKey := fmt.Sprintf("%s.%s->'%s'", auditLogEntriesTableName, auditLogEntriesTableContextColumn, auditLogWebhookAssignmentKey)
+	webhookIDKey := fmt.Sprintf("%s.%s->'%s'",
+		queriers.AuditLogEntriesTableName,
+		queriers.AuditLogEntriesTableContextColumn,
+		audit.WebhookAssignmentKey,
+	)
 	builder := p.sqlBuilder.
-		Select(auditLogEntriesTableColumns...).
-		From(auditLogEntriesTableName).
+		Select(queriers.AuditLogEntriesTableColumns...).
+		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Eq{webhookIDKey: webhookID}).
-		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
 
 	query, args, err = builder.ToSql()
 	p.logQueryBuildingError(err)

@@ -17,17 +17,10 @@ import (
 )
 
 const (
-	loggerName         = "postgres"
-	postgresDriverName = "wrapped-postgres-driver"
-
-	postgresRowExistsErrorCode = "23505"
-
+	loggerName                       = "postgres"
+	postgresDriverName               = "wrapped-postgres-driver"
+	postgresRowExistsErrorCode       = "23505"
 	existencePrefix, existenceSuffix = "SELECT EXISTS (", ")"
-
-	idColumn            = "id"
-	createdOnColumn     = "created_on"
-	lastUpdatedOnColumn = "last_updated_on"
-	archivedOnColumn    = "archived_on"
 
 	// countQuery is a generic counter query used in a few query builders.
 	countQuery = "COUNT(%s.id)"

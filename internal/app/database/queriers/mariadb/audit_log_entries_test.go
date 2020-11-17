@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
@@ -19,7 +20,7 @@ import (
 )
 
 func buildMockRowsFromAuditLogEntries(auditLogEntries ...*types.AuditLogEntry) *sqlmock.Rows {
-	columns := auditLogEntriesTableColumns
+	columns := queriers.AuditLogEntriesTableColumns
 
 	exampleRows := sqlmock.NewRows(columns)
 
@@ -38,7 +39,7 @@ func buildMockRowsFromAuditLogEntries(auditLogEntries ...*types.AuditLogEntry) *
 }
 
 func buildErroneousMockRowFromAuditLogEntry(x *types.AuditLogEntry) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(auditLogEntriesTableColumns).AddRow(
+	exampleRows := sqlmock.NewRows(queriers.AuditLogEntriesTableColumns).AddRow(
 		x.CreatedOn,
 		x.ID,
 		x.EventType,

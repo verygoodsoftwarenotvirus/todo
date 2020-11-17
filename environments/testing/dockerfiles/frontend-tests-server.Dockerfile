@@ -3,7 +3,7 @@ FROM node:lts-stretch AS frontend-build-stage
 
 WORKDIR /app
 
-COPY frontend/v2 .
+COPY frontend/ .
 
 RUN npm run install:clean
 

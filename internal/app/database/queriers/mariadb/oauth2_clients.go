@@ -8,36 +8,11 @@ import (
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/Masterminds/squirrel"
-)
-
-const (
-	scopesSeparator                      = ","
-	oauth2ClientsTableName               = "oauth2_clients"
-	oauth2ClientsTableNameColumn         = "name"
-	oauth2ClientsTableClientIDColumn     = "client_id"
-	oauth2ClientsTableScopesColumn       = "scopes"
-	oauth2ClientsTableRedirectURIColumn  = "redirect_uri"
-	oauth2ClientsTableClientSecretColumn = "client_secret"
-	oauth2ClientsTableOwnershipColumn    = "belongs_to_user"
-)
-
-var (
-	oauth2ClientsTableColumns = []string{
-		fmt.Sprintf("%s.%s", oauth2ClientsTableName, idColumn),
-		fmt.Sprintf("%s.%s", oauth2ClientsTableName, oauth2ClientsTableNameColumn),
-		fmt.Sprintf("%s.%s", oauth2ClientsTableName, oauth2ClientsTableClientIDColumn),
-		fmt.Sprintf("%s.%s", oauth2ClientsTableName, oauth2ClientsTableScopesColumn),
-		fmt.Sprintf("%s.%s", oauth2ClientsTableName, oauth2ClientsTableRedirectURIColumn),
-		fmt.Sprintf("%s.%s", oauth2ClientsTableName, oauth2ClientsTableClientSecretColumn),
-		fmt.Sprintf("%s.%s", oauth2ClientsTableName, createdOnColumn),
-		fmt.Sprintf("%s.%s", oauth2ClientsTableName, lastUpdatedOnColumn),
-		fmt.Sprintf("%s.%s", oauth2ClientsTableName, archivedOnColumn),
-		fmt.Sprintf("%s.%s", oauth2ClientsTableName, oauth2ClientsTableOwnershipColumn),
-	}
 )
 
 // scanOAuth2Client takes a Scanner (i.e. *sql.Row) and scans its results into an OAuth2Client struct.
@@ -64,7 +39,7 @@ func (m *MariaDB) scanOAuth2Client(scan database.Scanner) (*types.OAuth2Client, 
 		return nil, err
 	}
 
-	if scopes := strings.Split(scopes, scopesSeparator); len(scopes) >= 1 && scopes[0] != "" {
+	if scopes := strings.Split(scopes, queriers.OAuth2ClientsTableScopeSeparator); len(scopes) >= 1 && scopes[0] != "" {
 		x.Scopes = scopes
 	}
 
@@ -104,11 +79,11 @@ func (m *MariaDB) buildGetOAuth2ClientByClientIDQuery(clientID string) (query st
 	// This query is more or less the same as the normal OAuth2 client retrieval query, only that it doesn't
 	// care about ownership. It does still care about archived status
 	query, args, err = m.sqlBuilder.
-		Select(oauth2ClientsTableColumns...).
-		From(oauth2ClientsTableName).
+		Select(queriers.OAuth2ClientsTableColumns...).
+		From(queriers.OAuth2ClientsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", oauth2ClientsTableName, oauth2ClientsTableClientIDColumn): clientID,
-			fmt.Sprintf("%s.%s", oauth2ClientsTableName, archivedOnColumn):                 nil,
+			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.OAuth2ClientsTableClientIDColumn): clientID,
+			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.ArchivedOnColumn):                 nil,
 		}).ToSql()
 
 	m.logQueryBuildingError(err)
@@ -128,10 +103,10 @@ func (m *MariaDB) buildGetAllOAuth2ClientsQuery() (query string) {
 	var err error
 
 	getAllOAuth2ClientsQuery, _, err := m.sqlBuilder.
-		Select(oauth2ClientsTableColumns...).
-		From(oauth2ClientsTableName).
+		Select(queriers.OAuth2ClientsTableColumns...).
+		From(queriers.OAuth2ClientsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", oauth2ClientsTableName, archivedOnColumn): nil,
+			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.ArchivedOnColumn): nil,
 		}).
 		ToSql()
 
@@ -183,12 +158,12 @@ func (m *MariaDB) buildGetOAuth2ClientQuery(clientID, userID uint64) (query stri
 	var err error
 
 	query, args, err = m.sqlBuilder.
-		Select(oauth2ClientsTableColumns...).
-		From(oauth2ClientsTableName).
+		Select(queriers.OAuth2ClientsTableColumns...).
+		From(queriers.OAuth2ClientsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", oauth2ClientsTableName, idColumn):                          clientID,
-			fmt.Sprintf("%s.%s", oauth2ClientsTableName, oauth2ClientsTableOwnershipColumn): userID,
-			fmt.Sprintf("%s.%s", oauth2ClientsTableName, archivedOnColumn):                  nil,
+			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.IDColumn):                          clientID,
+			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.OAuth2ClientsTableOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.ArchivedOnColumn):                  nil,
 		}).ToSql()
 
 	m.logQueryBuildingError(err)
@@ -218,10 +193,10 @@ func (m *MariaDB) buildGetAllOAuth2ClientsCountQuery() string {
 	var err error
 
 	getAllOAuth2ClientCountQuery, _, err := m.sqlBuilder.
-		Select(fmt.Sprintf(countQuery, oauth2ClientsTableName)).
-		From(oauth2ClientsTableName).
+		Select(fmt.Sprintf(countQuery, queriers.OAuth2ClientsTableName)).
+		From(queriers.OAuth2ClientsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", oauth2ClientsTableName, archivedOnColumn): nil,
+			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.ArchivedOnColumn): nil,
 		}).
 		ToSql()
 
@@ -243,16 +218,16 @@ func (m *MariaDB) buildGetOAuth2ClientsForUserQuery(userID uint64, filter *types
 	var err error
 
 	builder := m.sqlBuilder.
-		Select(oauth2ClientsTableColumns...).
-		From(oauth2ClientsTableName).
+		Select(queriers.OAuth2ClientsTableColumns...).
+		From(queriers.OAuth2ClientsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", oauth2ClientsTableName, oauth2ClientsTableOwnershipColumn): userID,
-			fmt.Sprintf("%s.%s", oauth2ClientsTableName, archivedOnColumn):                  nil,
+			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.OAuth2ClientsTableOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.ArchivedOnColumn):                  nil,
 		}).
-		OrderBy(fmt.Sprintf("%s.%s", oauth2ClientsTableName, idColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.IDColumn))
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder, oauth2ClientsTableName)
+		builder = filter.ApplyToQueryBuilder(builder, queriers.OAuth2ClientsTableName)
 	}
 
 	query, args, err = builder.ToSql()
@@ -299,20 +274,20 @@ func (m *MariaDB) buildCreateOAuth2ClientQuery(input *types.OAuth2Client) (query
 	var err error
 
 	query, args, err = m.sqlBuilder.
-		Insert(oauth2ClientsTableName).
+		Insert(queriers.OAuth2ClientsTableName).
 		Columns(
-			oauth2ClientsTableNameColumn,
-			oauth2ClientsTableClientIDColumn,
-			oauth2ClientsTableClientSecretColumn,
-			oauth2ClientsTableScopesColumn,
-			oauth2ClientsTableRedirectURIColumn,
-			oauth2ClientsTableOwnershipColumn,
+			queriers.OAuth2ClientsTableNameColumn,
+			queriers.OAuth2ClientsTableClientIDColumn,
+			queriers.OAuth2ClientsTableClientSecretColumn,
+			queriers.OAuth2ClientsTableScopesColumn,
+			queriers.OAuth2ClientsTableRedirectURIColumn,
+			queriers.OAuth2ClientsTableOwnershipColumn,
 		).
 		Values(
 			input.Name,
 			input.ClientID,
 			input.ClientSecret,
-			strings.Join(input.Scopes, scopesSeparator),
+			strings.Join(input.Scopes, queriers.OAuth2ClientsTableScopeSeparator),
 			input.RedirectURI,
 			input.BelongsToUser,
 		).
@@ -356,15 +331,15 @@ func (m *MariaDB) buildUpdateOAuth2ClientQuery(input *types.OAuth2Client) (query
 	var err error
 
 	query, args, err = m.sqlBuilder.
-		Update(oauth2ClientsTableName).
-		Set(oauth2ClientsTableClientIDColumn, input.ClientID).
-		Set(oauth2ClientsTableClientSecretColumn, input.ClientSecret).
-		Set(oauth2ClientsTableScopesColumn, strings.Join(input.Scopes, scopesSeparator)).
-		Set(oauth2ClientsTableRedirectURIColumn, input.RedirectURI).
-		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Update(queriers.OAuth2ClientsTableName).
+		Set(queriers.OAuth2ClientsTableClientIDColumn, input.ClientID).
+		Set(queriers.OAuth2ClientsTableClientSecretColumn, input.ClientSecret).
+		Set(queriers.OAuth2ClientsTableScopesColumn, strings.Join(input.Scopes, queriers.OAuth2ClientsTableScopeSeparator)).
+		Set(queriers.OAuth2ClientsTableRedirectURIColumn, input.RedirectURI).
+		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			idColumn:                          input.ID,
-			oauth2ClientsTableOwnershipColumn: input.BelongsToUser,
+			queriers.IDColumn:                          input.ID,
+			queriers.OAuth2ClientsTableOwnershipColumn: input.BelongsToUser,
 		}).
 		ToSql()
 
@@ -386,12 +361,12 @@ func (m *MariaDB) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query 
 	var err error
 
 	query, args, err = m.sqlBuilder.
-		Update(oauth2ClientsTableName).
-		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Set(archivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Update(queriers.OAuth2ClientsTableName).
+		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Set(queriers.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			idColumn:                          clientID,
-			oauth2ClientsTableOwnershipColumn: userID,
+			queriers.IDColumn:                          clientID,
+			queriers.OAuth2ClientsTableOwnershipColumn: userID,
 		}).
 		ToSql()
 
@@ -422,20 +397,20 @@ func (m *MariaDB) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (
 	var err error
 
 	builder := m.sqlBuilder.
-		Select(auditLogEntriesTableColumns...).
-		From(auditLogEntriesTableName).
+		Select(queriers.AuditLogEntriesTableColumns...).
+		From(queriers.AuditLogEntriesTableName).
 		Where(
 			squirrel.Expr(
 				fmt.Sprintf(
-					`JSON_CONTAINS(%s.%s, '%d', '$.%s')`,
-					auditLogEntriesTableName,
-					auditLogEntriesTableContextColumn,
+					jsonPluckQuery,
+					queriers.AuditLogEntriesTableName,
+					queriers.AuditLogEntriesTableContextColumn,
 					clientID,
 					audit.OAuth2ClientAssignmentKey,
 				),
 			),
 		).
-		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
 
 	query, args, err = builder.ToSql()
 	m.logQueryBuildingError(err)

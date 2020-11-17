@@ -23,7 +23,7 @@ services:
             - tracing-server
             - database
         volumes:
-            - source: '../../frontend/v2/dist'
+            - source: '../../frontend//dist'
               target: '/frontend'
               type: 'bind'
             - source: '../../artifacts/search_indices'

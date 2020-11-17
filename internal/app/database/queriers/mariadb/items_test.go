@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
@@ -19,7 +20,7 @@ import (
 )
 
 func buildMockRowsFromItems(items ...*types.Item) *sqlmock.Rows {
-	columns := itemsTableColumns
+	columns := queriers.ItemsTableColumns
 
 	exampleRows := sqlmock.NewRows(columns)
 
@@ -41,7 +42,7 @@ func buildMockRowsFromItems(items ...*types.Item) *sqlmock.Rows {
 }
 
 func buildErroneousMockRowFromItem(x *types.Item) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(itemsTableColumns).AddRow(
+	exampleRows := sqlmock.NewRows(queriers.ItemsTableColumns).AddRow(
 		x.ArchivedOn,
 		x.Name,
 		x.Details,
@@ -759,7 +760,7 @@ func TestMariaDB_CreateItem(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(int64(exampleItem.ID), 1))
 
-		mtt := &mockTimeTeller{}
+		mtt := &queriers.MockTimeTeller{}
 		mtt.On("Now").Return(exampleItem.CreatedOn)
 		m.timeTeller = mtt
 

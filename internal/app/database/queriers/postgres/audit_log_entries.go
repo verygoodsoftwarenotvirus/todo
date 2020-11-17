@@ -7,24 +7,10 @@ import (
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/Masterminds/squirrel"
-)
-
-const (
-	auditLogEntriesTableName            = "audit_log"
-	auditLogEntriesTableEventTypeColumn = "event_type"
-	auditLogEntriesTableContextColumn   = "context"
-)
-
-var (
-	auditLogEntriesTableColumns = []string{
-		fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn),
-		fmt.Sprintf("%s.%s", auditLogEntriesTableName, auditLogEntriesTableEventTypeColumn),
-		fmt.Sprintf("%s.%s", auditLogEntriesTableName, auditLogEntriesTableContextColumn),
-		fmt.Sprintf("%s.%s", auditLogEntriesTableName, createdOnColumn),
-	}
 )
 
 var _ types.AuditLogDataManager = (*Postgres)(nil)
@@ -78,10 +64,10 @@ func (p *Postgres) buildGetAuditLogEntryQuery(entryID uint64) (query string, arg
 	var err error
 
 	query, args, err = p.sqlBuilder.
-		Select(auditLogEntriesTableColumns...).
-		From(auditLogEntriesTableName).
+		Select(queriers.AuditLogEntriesTableColumns...).
+		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn): entryID,
+			fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn): entryID,
 		}).
 		ToSql()
 
@@ -101,8 +87,8 @@ func (p *Postgres) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types
 // This query only gets generated once, and is otherwise returned from cache.
 func (p *Postgres) buildGetAllAuditLogEntriesCountQuery() string {
 	allAuditLogEntriesCountQuery, _, err := p.sqlBuilder.
-		Select(fmt.Sprintf(countQuery, auditLogEntriesTableName)).
-		From(auditLogEntriesTableName).
+		Select(fmt.Sprintf(countQuery, queriers.AuditLogEntriesTableName)).
+		From(queriers.AuditLogEntriesTableName).
 		ToSql()
 	p.logQueryBuildingError(err)
 
@@ -118,13 +104,13 @@ func (p *Postgres) GetAllAuditLogEntriesCount(ctx context.Context) (count uint64
 // buildGetBatchOfAuditLogEntriesQuery returns a query that fetches every audit log entry in the database within a bucketed range.
 func (p *Postgres) buildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (query string, args []interface{}) {
 	query, args, err := p.sqlBuilder.
-		Select(auditLogEntriesTableColumns...).
-		From(auditLogEntriesTableName).
+		Select(queriers.AuditLogEntriesTableColumns...).
+		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Gt{
-			fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn): beginID,
+			fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn): beginID,
 		}).
 		Where(squirrel.Lt{
-			fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn): endID,
+			fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn): endID,
 		}).
 		ToSql()
 
@@ -178,12 +164,12 @@ func (p *Postgres) buildGetAuditLogEntriesQuery(filter *types.QueryFilter) (quer
 	var err error
 
 	builder := p.sqlBuilder.
-		Select(auditLogEntriesTableColumns...).
-		From(auditLogEntriesTableName).
-		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
+		Select(queriers.AuditLogEntriesTableColumns...).
+		From(queriers.AuditLogEntriesTableName).
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder, auditLogEntriesTableName)
+		builder = filter.ApplyToQueryBuilder(builder, queriers.AuditLogEntriesTableName)
 	}
 
 	query, args, err = builder.ToSql()
@@ -222,16 +208,16 @@ func (p *Postgres) buildCreateAuditLogEntryQuery(input *types.AuditLogEntry) (qu
 	var err error
 
 	query, args, err = p.sqlBuilder.
-		Insert(auditLogEntriesTableName).
+		Insert(queriers.AuditLogEntriesTableName).
 		Columns(
-			auditLogEntriesTableEventTypeColumn,
-			auditLogEntriesTableContextColumn,
+			queriers.AuditLogEntriesTableEventTypeColumn,
+			queriers.AuditLogEntriesTableContextColumn,
 		).
 		Values(
 			input.EventType,
 			input.Context,
 		).
-		Suffix(fmt.Sprintf("RETURNING %s, %s", idColumn, createdOnColumn)).
+		Suffix(fmt.Sprintf("RETURNING %s, %s", queriers.IDColumn, queriers.CreatedOnColumn)).
 		ToSql()
 
 	p.logQueryBuildingError(err)

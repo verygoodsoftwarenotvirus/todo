@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
 
 	"github.com/GuiaBolso/darwin"
@@ -36,7 +37,8 @@ var (
 				"two_factor_secret_verified_on" INTEGER DEFAULT NULL,
 				"is_admin" BOOLEAN NOT NULL DEFAULT 'false',
 				"admin_permissions" INTEGER NOT NULL DEFAULT 0,
-				"status" TEXT NOT NULL DEFAULT 'created',
+				"account_status" TEXT NOT NULL DEFAULT 'created',
+				"status_explanation" TEXT NOT NULL DEFAULT '',
 				"created_on" INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				"last_updated_on" INTEGER,
 				"archived_on" INTEGER DEFAULT NULL,
@@ -152,14 +154,14 @@ func (s *Sqlite) Migrate(ctx context.Context, authenticator auth.Authenticator, 
 		}
 
 		query, args, err := s.sqlBuilder.
-			Insert(usersTableName).
+			Insert(queriers.UsersTableName).
 			Columns(
-				usersTableUsernameColumn,
-				usersTableHashedPasswordColumn,
-				usersTableSaltColumn,
-				usersTableTwoFactorColumn,
-				usersTableIsAdminColumn,
-				usersTableTwoFactorVerifiedOnColumn,
+				queriers.UsersTableUsernameColumn,
+				queriers.UsersTableHashedPasswordColumn,
+				queriers.UsersTableSaltColumn,
+				queriers.UsersTableTwoFactorColumn,
+				queriers.UsersTableIsAdminColumn,
+				queriers.UsersTableTwoFactorVerifiedOnColumn,
 			).
 			Values(
 				testUserConfig.Username,

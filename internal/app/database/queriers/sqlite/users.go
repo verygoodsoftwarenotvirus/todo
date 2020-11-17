@@ -7,42 +7,12 @@ import (
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/Masterminds/squirrel"
-)
-
-const (
-	usersTableName                         = "users"
-	usersTableUsernameColumn               = "username"
-	usersTableHashedPasswordColumn         = "hashed_password"
-	usersTableSaltColumn                   = "salt"
-	usersTableRequiresPasswordChangeColumn = "requires_password_change"
-	usersTablePasswordLastChangedOnColumn  = "password_last_changed_on"
-	usersTableTwoFactorColumn              = "two_factor_secret"
-	usersTableTwoFactorVerifiedOnColumn    = "two_factor_secret_verified_on"
-	usersTableIsAdminColumn                = "is_admin"
-	usersTableAdminPermissionsColumn       = "admin_permissions"
-)
-
-var (
-	usersTableColumns = []string{
-		fmt.Sprintf("%s.%s", usersTableName, idColumn),
-		fmt.Sprintf("%s.%s", usersTableName, usersTableUsernameColumn),
-		fmt.Sprintf("%s.%s", usersTableName, usersTableHashedPasswordColumn),
-		fmt.Sprintf("%s.%s", usersTableName, usersTableSaltColumn),
-		fmt.Sprintf("%s.%s", usersTableName, usersTableRequiresPasswordChangeColumn),
-		fmt.Sprintf("%s.%s", usersTableName, usersTablePasswordLastChangedOnColumn),
-		fmt.Sprintf("%s.%s", usersTableName, usersTableTwoFactorColumn),
-		fmt.Sprintf("%s.%s", usersTableName, usersTableTwoFactorVerifiedOnColumn),
-		fmt.Sprintf("%s.%s", usersTableName, usersTableIsAdminColumn),
-		fmt.Sprintf("%s.%s", usersTableName, usersTableAdminPermissionsColumn),
-		fmt.Sprintf("%s.%s", usersTableName, createdOnColumn),
-		fmt.Sprintf("%s.%s", usersTableName, lastUpdatedOnColumn),
-		fmt.Sprintf("%s.%s", usersTableName, archivedOnColumn),
-	}
 )
 
 // scanUser provides a consistent way to scan something like a *sql.Row into a User struct.
@@ -107,14 +77,14 @@ func (s *Sqlite) buildGetUserQuery(userID uint64) (query string, args []interfac
 	var err error
 
 	query, args, err = s.sqlBuilder.
-		Select(usersTableColumns...).
-		From(usersTableName).
+		Select(queriers.UsersTableColumns...).
+		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", usersTableName, idColumn):         userID,
-			fmt.Sprintf("%s.%s", usersTableName, archivedOnColumn): nil,
+			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.IDColumn):         userID,
+			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.ArchivedOnColumn): nil,
 		}).
 		Where(squirrel.NotEq{
-			fmt.Sprintf("%s.%s", usersTableName, usersTableTwoFactorVerifiedOnColumn): nil,
+			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.UsersTableTwoFactorVerifiedOnColumn): nil,
 		}).
 		ToSql()
 
@@ -142,12 +112,12 @@ func (s *Sqlite) buildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (
 	var err error
 
 	query, args, err = s.sqlBuilder.
-		Select(usersTableColumns...).
-		From(usersTableName).
+		Select(queriers.UsersTableColumns...).
+		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", usersTableName, idColumn):                            userID,
-			fmt.Sprintf("%s.%s", usersTableName, usersTableTwoFactorVerifiedOnColumn): nil,
-			fmt.Sprintf("%s.%s", usersTableName, archivedOnColumn):                    nil,
+			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.IDColumn):                            userID,
+			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.UsersTableTwoFactorVerifiedOnColumn): nil,
+			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.ArchivedOnColumn):                    nil,
 		}).
 		ToSql()
 
@@ -174,14 +144,14 @@ func (s *Sqlite) buildGetUserByUsernameQuery(username string) (query string, arg
 	var err error
 
 	query, args, err = s.sqlBuilder.
-		Select(usersTableColumns...).
-		From(usersTableName).
+		Select(queriers.UsersTableColumns...).
+		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", usersTableName, usersTableUsernameColumn): username,
-			fmt.Sprintf("%s.%s", usersTableName, archivedOnColumn):         nil,
+			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.UsersTableUsernameColumn): username,
+			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.ArchivedOnColumn):         nil,
 		}).
 		Where(squirrel.NotEq{
-			fmt.Sprintf("%s.%s", usersTableName, usersTableTwoFactorVerifiedOnColumn): nil,
+			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.UsersTableTwoFactorVerifiedOnColumn): nil,
 		}).
 		ToSql()
 
@@ -212,10 +182,10 @@ func (s *Sqlite) buildGetAllUsersCountQuery() (query string) {
 	var err error
 
 	builder := s.sqlBuilder.
-		Select(fmt.Sprintf(countQuery, usersTableName)).
-		From(usersTableName).
+		Select(fmt.Sprintf(countQuery, queriers.UsersTableName)).
+		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", usersTableName, archivedOnColumn): nil,
+			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.ArchivedOnColumn): nil,
 		})
 
 	query, _, err = builder.ToSql()
@@ -238,15 +208,15 @@ func (s *Sqlite) buildGetUsersQuery(filter *types.QueryFilter) (query string, ar
 	var err error
 
 	builder := s.sqlBuilder.
-		Select(usersTableColumns...).
-		From(usersTableName).
+		Select(queriers.UsersTableColumns...).
+		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", usersTableName, archivedOnColumn): nil,
+			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.ArchivedOnColumn): nil,
 		}).
-		OrderBy(fmt.Sprintf("%s.%s", usersTableName, idColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.IDColumn))
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder, usersTableName)
+		builder = filter.ApplyToQueryBuilder(builder, queriers.UsersTableName)
 	}
 
 	query, args, err = builder.ToSql()
@@ -284,13 +254,13 @@ func (s *Sqlite) buildCreateUserQuery(input types.UserDatabaseCreationInput) (qu
 	var err error
 
 	query, args, err = s.sqlBuilder.
-		Insert(usersTableName).
+		Insert(queriers.UsersTableName).
 		Columns(
-			usersTableUsernameColumn,
-			usersTableHashedPasswordColumn,
-			usersTableSaltColumn,
-			usersTableTwoFactorColumn,
-			usersTableIsAdminColumn,
+			queriers.UsersTableUsernameColumn,
+			queriers.UsersTableHashedPasswordColumn,
+			queriers.UsersTableSaltColumn,
+			queriers.UsersTableTwoFactorColumn,
+			queriers.UsersTableIsAdminColumn,
 		).
 		Values(
 			input.Username,
@@ -342,15 +312,15 @@ func (s *Sqlite) buildUpdateUserQuery(input *types.User) (query string, args []i
 	var err error
 
 	query, args, err = s.sqlBuilder.
-		Update(usersTableName).
-		Set(usersTableUsernameColumn, input.Username).
-		Set(usersTableHashedPasswordColumn, input.HashedPassword).
-		Set(usersTableSaltColumn, input.Salt).
-		Set(usersTableTwoFactorColumn, input.TwoFactorSecret).
-		Set(usersTableTwoFactorVerifiedOnColumn, input.TwoFactorSecretVerifiedOn).
-		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Update(queriers.UsersTableName).
+		Set(queriers.UsersTableUsernameColumn, input.Username).
+		Set(queriers.UsersTableHashedPasswordColumn, input.HashedPassword).
+		Set(queriers.UsersTableSaltColumn, input.Salt).
+		Set(queriers.UsersTableTwoFactorColumn, input.TwoFactorSecret).
+		Set(queriers.UsersTableTwoFactorVerifiedOnColumn, input.TwoFactorSecretVerifiedOn).
+		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			idColumn: input.ID,
+			queriers.IDColumn: input.ID,
 		}).
 		ToSql()
 
@@ -373,13 +343,13 @@ func (s *Sqlite) buildUpdateUserPasswordQuery(userID uint64, newHash string) (qu
 	var err error
 
 	query, args, err = s.sqlBuilder.
-		Update(usersTableName).
-		Set(usersTableHashedPasswordColumn, newHash).
-		Set(usersTableRequiresPasswordChangeColumn, false).
-		Set(usersTablePasswordLastChangedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Update(queriers.UsersTableName).
+		Set(queriers.UsersTableHashedPasswordColumn, newHash).
+		Set(queriers.UsersTableRequiresPasswordChangeColumn, false).
+		Set(queriers.UsersTablePasswordLastChangedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			idColumn: userID,
+			queriers.IDColumn: userID,
 		}).
 		ToSql()
 
@@ -400,10 +370,10 @@ func (s *Sqlite) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query strin
 	var err error
 
 	query, args, err = s.sqlBuilder.
-		Update(usersTableName).
-		Set(usersTableTwoFactorVerifiedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Update(queriers.UsersTableName).
+		Set(queriers.UsersTableTwoFactorVerifiedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			idColumn: userID,
+			queriers.IDColumn: userID,
 		}).
 		ToSql()
 
@@ -424,10 +394,10 @@ func (s *Sqlite) buildArchiveUserQuery(userID uint64) (query string, args []inte
 	var err error
 
 	query, args, err = s.sqlBuilder.
-		Update(usersTableName).
-		Set(archivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Update(queriers.UsersTableName).
+		Set(queriers.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			idColumn: userID,
+			queriers.IDColumn: userID,
 		}).
 		ToSql()
 
@@ -497,16 +467,26 @@ func (s *Sqlite) LogUserArchiveEvent(ctx context.Context, userID uint64) {
 func (s *Sqlite) buildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
-	userIDKey := fmt.Sprintf("json_extract(%s.%s, '$.%s')", auditLogEntriesTableName, auditLogEntriesTableContextColumn, audit.UserAssignmentKey)
-	performedByIDKey := fmt.Sprintf("json_extract(%s.%s, '$.%s')", auditLogEntriesTableName, auditLogEntriesTableContextColumn, audit.ActorAssignmentKey)
+	userIDKey := fmt.Sprintf(
+		jsonPluckQuery,
+		queriers.AuditLogEntriesTableName,
+		queriers.AuditLogEntriesTableContextColumn,
+		audit.UserAssignmentKey,
+	)
+	performedByIDKey := fmt.Sprintf(
+		jsonPluckQuery,
+		queriers.AuditLogEntriesTableName,
+		queriers.AuditLogEntriesTableContextColumn,
+		audit.ActorAssignmentKey,
+	)
 	builder := s.sqlBuilder.
-		Select(auditLogEntriesTableColumns...).
-		From(auditLogEntriesTableName).
+		Select(queriers.AuditLogEntriesTableColumns...).
+		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Or{
 			squirrel.Eq{userIDKey: userID},
 			squirrel.Eq{performedByIDKey: userID},
 		}).
-		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
 
 	query, args, err = builder.ToSql()
 	s.logQueryBuildingError(err)

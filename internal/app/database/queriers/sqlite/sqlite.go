@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers"
 
 	"contrib.go.opencensus.io/integrations/ocsql"
 	"github.com/Masterminds/squirrel"
@@ -14,19 +15,14 @@ import (
 )
 
 const (
-	loggerName       = "sqlite"
-	sqliteDriverName = "wrapped-sqlite-driver"
-
+	loggerName                       = "sqlite"
+	sqliteDriverName                 = "wrapped-sqlite-driver"
 	existencePrefix, existenceSuffix = "SELECT EXISTS (", ")"
-
-	idColumn            = "id"
-	createdOnColumn     = "created_on"
-	lastUpdatedOnColumn = "last_updated_on"
-	archivedOnColumn    = "archived_on"
 
 	// countQuery is a generic counter query used in a few query builders.
 	countQuery = "COUNT(%s.id)"
-
+	// jsonPluckQuery is a generic format string for getting something out of the first layer of a JSON blob.
+	jsonPluckQuery = "json_extract(%s.%s, '$.%s')"
 	// currentUnixTimeQuery is the query sqlite uses to determine the current unix time.
 	currentUnixTimeQuery = "(strftime('%s','now'))"
 
@@ -55,7 +51,7 @@ type (
 	Sqlite struct {
 		logger      logging.Logger
 		db          *sql.DB
-		timeTeller  timeTeller
+		timeTeller  queriers.TimeTeller
 		sqlBuilder  squirrel.StatementBuilderType
 		migrateOnce sync.Once
 		debug       bool
@@ -83,7 +79,7 @@ func ProvideSqlite(debug bool, db *sql.DB, logger logging.Logger) database.DataM
 	return &Sqlite{
 		db:         db,
 		debug:      debug,
-		timeTeller: &stdLibTimeTeller{},
+		timeTeller: &queriers.StandardTimeTeller{},
 		logger:     logger.WithName(loggerName),
 		sqlBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Question),
 	}

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
@@ -18,7 +19,7 @@ import (
 )
 
 func buildMockRowsFromWebhooks(webhooks ...*types.Webhook) *sqlmock.Rows {
-	columns := webhooksTableColumns
+	columns := queriers.WebhooksTableColumns
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, w := range webhooks {
@@ -28,9 +29,9 @@ func buildMockRowsFromWebhooks(webhooks ...*types.Webhook) *sqlmock.Rows {
 			w.ContentType,
 			w.URL,
 			w.Method,
-			strings.Join(w.Events, eventsSeparator),
-			strings.Join(w.DataTypes, typesSeparator),
-			strings.Join(w.Topics, topicsSeparator),
+			strings.Join(w.Events, queriers.WebhooksTableEventsSeparator),
+			strings.Join(w.DataTypes, queriers.WebhooksTableDataTypesSeparator),
+			strings.Join(w.Topics, queriers.WebhooksTableTopicsSeparator),
 			w.CreatedOn,
 			w.LastUpdatedOn,
 			w.ArchivedOn,
@@ -44,16 +45,16 @@ func buildMockRowsFromWebhooks(webhooks ...*types.Webhook) *sqlmock.Rows {
 }
 
 func buildErroneousMockRowFromWebhook(w *types.Webhook) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(webhooksTableColumns).AddRow(
+	exampleRows := sqlmock.NewRows(queriers.WebhooksTableColumns).AddRow(
 		w.ArchivedOn,
 		w.BelongsToUser,
 		w.Name,
 		w.ContentType,
 		w.URL,
 		w.Method,
-		strings.Join(w.Events, eventsSeparator),
-		strings.Join(w.DataTypes, typesSeparator),
-		strings.Join(w.Topics, topicsSeparator),
+		strings.Join(w.Events, queriers.WebhooksTableEventsSeparator),
+		strings.Join(w.DataTypes, queriers.WebhooksTableDataTypesSeparator),
+		strings.Join(w.Topics, queriers.WebhooksTableTopicsSeparator),
 		w.CreatedOn,
 		w.LastUpdatedOn,
 		w.ID,
@@ -494,9 +495,9 @@ func TestMariaDB_buildCreateWebhookQuery(T *testing.T) {
 			exampleWebhook.ContentType,
 			exampleWebhook.URL,
 			exampleWebhook.Method,
-			strings.Join(exampleWebhook.Events, eventsSeparator),
-			strings.Join(exampleWebhook.DataTypes, typesSeparator),
-			strings.Join(exampleWebhook.Topics, topicsSeparator),
+			strings.Join(exampleWebhook.Events, queriers.WebhooksTableEventsSeparator),
+			strings.Join(exampleWebhook.DataTypes, queriers.WebhooksTableDataTypesSeparator),
+			strings.Join(exampleWebhook.Topics, queriers.WebhooksTableTopicsSeparator),
 			exampleWebhook.BelongsToUser,
 		}
 		actualQuery, actualArgs := m.buildCreateWebhookQuery(exampleWebhook)
@@ -525,7 +526,7 @@ func TestMariaDB_CreateWebhook(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(exampleRows)
 
-		mtt := &mockTimeTeller{}
+		mtt := &queriers.MockTimeTeller{}
 		mtt.On("Now").Return(exampleWebhook.CreatedOn)
 		m.timeTeller = mtt
 
@@ -574,9 +575,9 @@ func TestMariaDB_buildUpdateWebhookQuery(T *testing.T) {
 			exampleWebhook.ContentType,
 			exampleWebhook.URL,
 			exampleWebhook.Method,
-			strings.Join(exampleWebhook.Events, eventsSeparator),
-			strings.Join(exampleWebhook.DataTypes, typesSeparator),
-			strings.Join(exampleWebhook.Topics, topicsSeparator),
+			strings.Join(exampleWebhook.Events, queriers.WebhooksTableEventsSeparator),
+			strings.Join(exampleWebhook.DataTypes, queriers.WebhooksTableDataTypesSeparator),
+			strings.Join(exampleWebhook.Topics, queriers.WebhooksTableTopicsSeparator),
 			exampleWebhook.BelongsToUser,
 			exampleWebhook.ID,
 		}

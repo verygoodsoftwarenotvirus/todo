@@ -12,38 +12,37 @@ import (
 const (
 	// UsersSearchIndexName is the name of the index used to search through items.
 	UsersSearchIndexName search.IndexName = "users"
+
+	// GoodStandingAccountStatus indicates a user's account is in good standing.
+	GoodStandingAccountStatus userAccountStatus = "good"
 )
 
 type (
+	userAccountStatus string
+
 	// User represents a user.
 	User struct {
-		Salt                      []byte  `json:"-"`
-		Username                  string  `json:"username"`
-		HashedPassword            string  `json:"-"`
-		TwoFactorSecret           string  `json:"-"`
-		ID                        uint64  `json:"id"`
-		PasswordLastChangedOn     *uint64 `json:"passwordLastChangedOn"`
-		TwoFactorSecretVerifiedOn *uint64 `json:"-"`
-		CreatedOn                 uint64  `json:"createdOn"`
-		LastUpdatedOn             *uint64 `json:"lastUpdatedOn"`
-		ArchivedOn                *uint64 `json:"archivedOn"`
-		Status                    string  `json:"status"`
-		AdminPermissions          bitmask.AdminPermissionsBitmask
-		IsAdmin                   bool `json:"isAdmin"`
-		RequiresPasswordChange    bool `json:"requiresPasswordChange"`
+		Salt                      []byte                          `json:"-"`
+		Username                  string                          `json:"username"`
+		HashedPassword            string                          `json:"-"`
+		TwoFactorSecret           string                          `json:"-"`
+		AccountStatus             userAccountStatus               `json:"accountStatus"`
+		StatusExplanation         string                          `json:"statusExplanation"`
+		ID                        uint64                          `json:"id"`
+		PasswordLastChangedOn     *uint64                         `json:"passwordLastChangedOn"`
+		TwoFactorSecretVerifiedOn *uint64                         `json:"-"`
+		CreatedOn                 uint64                          `json:"createdOn"`
+		LastUpdatedOn             *uint64                         `json:"lastUpdatedOn"`
+		ArchivedOn                *uint64                         `json:"archivedOn"`
+		AdminPermissions          bitmask.AdminPermissionsBitmask `json:"adminPermissions"`
+		IsAdmin                   bool                            `json:"isAdmin"`
+		RequiresPasswordChange    bool                            `json:"requiresPasswordChange"`
 	}
 
 	// UserList represents a list of users.
 	UserList struct {
 		Pagination
 		Users []User `json:"users"`
-	}
-
-	// UserLoginInput represents the payload used to log in a user.
-	UserLoginInput struct {
-		Username  string `json:"username"`
-		Password  string `json:"password"`
-		TOTPToken string `json:"totpToken"`
 	}
 
 	// UserCreationInput represents the input required from users to register an account.
@@ -62,14 +61,22 @@ type (
 
 	// UserCreationResponse is a response structure for Users that doesn't contain password fields, but does contain the two factor secret.
 	UserCreationResponse struct {
-		ID                    uint64  `json:"id"`
-		Username              string  `json:"username"`
-		PasswordLastChangedOn *uint64 `json:"passwordLastChangedOn"`
-		IsAdmin               bool    `json:"isAdmin"`
-		CreatedOn             uint64  `json:"createdOn"`
-		LastUpdatedOn         *uint64 `json:"lastUpdatedOn"`
-		ArchivedOn            *uint64 `json:"archivedOn"`
-		TwoFactorQRCode       string  `json:"qrCode"`
+		ID                    uint64            `json:"id"`
+		Username              string            `json:"username"`
+		PasswordLastChangedOn *uint64           `json:"passwordLastChangedOn"`
+		IsAdmin               bool              `json:"isAdmin"`
+		CreatedOn             uint64            `json:"createdOn"`
+		LastUpdatedOn         *uint64           `json:"lastUpdatedOn"`
+		ArchivedOn            *uint64           `json:"archivedOn"`
+		AccountStatus         userAccountStatus `json:"accountStatus"`
+		TwoFactorQRCode       string            `json:"qrCode"`
+	}
+
+	// UserLoginInput represents the payload used to log in a user.
+	UserLoginInput struct {
+		Username  string `json:"username"`
+		Password  string `json:"password"`
+		TOTPToken string `json:"totpToken"`
 	}
 
 	// PasswordUpdateInput represents input a user would provide when updating their password.

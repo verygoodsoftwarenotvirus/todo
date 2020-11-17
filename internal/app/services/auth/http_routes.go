@@ -129,6 +129,11 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	if user.AccountStatus == types.LimitQueryKey {
+		s.encoderDecoder.EncodeErrorResponse(res, "error validating request", http.StatusForbidden)
+		return
+	}
+
 	loginValid, err := s.validateLogin(ctx, user, loginData)
 
 	tracing.AttachUserIDToSpan(span, user.ID)

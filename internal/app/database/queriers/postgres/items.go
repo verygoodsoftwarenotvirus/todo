@@ -7,29 +7,11 @@ import (
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/Masterminds/squirrel"
-)
-
-const (
-	itemsTableName           = "items"
-	itemsTableNameColumn     = "name"
-	itemsTableDetailsColumn  = "details"
-	itemsUserOwnershipColumn = "belongs_to_user"
-)
-
-var (
-	itemsTableColumns = []string{
-		fmt.Sprintf("%s.%s", itemsTableName, idColumn),
-		fmt.Sprintf("%s.%s", itemsTableName, itemsTableNameColumn),
-		fmt.Sprintf("%s.%s", itemsTableName, itemsTableDetailsColumn),
-		fmt.Sprintf("%s.%s", itemsTableName, createdOnColumn),
-		fmt.Sprintf("%s.%s", itemsTableName, lastUpdatedOnColumn),
-		fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn),
-		fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn),
-	}
 )
 
 // scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct.
@@ -84,13 +66,13 @@ func (p *Postgres) buildItemExistsQuery(itemID, userID uint64) (query string, ar
 	var err error
 
 	query, args, err = p.sqlBuilder.
-		Select(fmt.Sprintf("%s.%s", itemsTableName, idColumn)).
+		Select(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn)).
 		Prefix(existencePrefix).
-		From(itemsTableName).
+		From(queriers.ItemsTableName).
 		Suffix(existenceSuffix).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", itemsTableName, idColumn):                 itemID,
-			fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn):                      itemID,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
 		}).ToSql()
 
 	p.logQueryBuildingError(err)
@@ -115,11 +97,11 @@ func (p *Postgres) buildGetItemQuery(itemID, userID uint64) (query string, args 
 	var err error
 
 	query, args, err = p.sqlBuilder.
-		Select(itemsTableColumns...).
-		From(itemsTableName).
+		Select(queriers.ItemsTableColumns...).
+		From(queriers.ItemsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", itemsTableName, idColumn):                 itemID,
-			fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn):                      itemID,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
 		}).
 		ToSql()
 
@@ -139,10 +121,10 @@ func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*types.I
 // This query only gets generated once, and is otherwise returned from cache.
 func (p *Postgres) buildGetAllItemsCountQuery() string {
 	allItemsCountQuery, _, err := p.sqlBuilder.
-		Select(fmt.Sprintf(countQuery, itemsTableName)).
-		From(itemsTableName).
+		Select(fmt.Sprintf(countQuery, queriers.ItemsTableName)).
+		From(queriers.ItemsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn): nil,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn): nil,
 		}).
 		ToSql()
 	p.logQueryBuildingError(err)
@@ -159,13 +141,13 @@ func (p *Postgres) GetAllItemsCount(ctx context.Context) (count uint64, err erro
 // buildGetBatchOfItemsQuery returns a query that fetches every item in the database within a bucketed range.
 func (p *Postgres) buildGetBatchOfItemsQuery(beginID, endID uint64) (query string, args []interface{}) {
 	query, args, err := p.sqlBuilder.
-		Select(itemsTableColumns...).
-		From(itemsTableName).
+		Select(queriers.ItemsTableColumns...).
+		From(queriers.ItemsTableName).
 		Where(squirrel.Gt{
-			fmt.Sprintf("%s.%s", itemsTableName, idColumn): beginID,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn): beginID,
 		}).
 		Where(squirrel.Lt{
-			fmt.Sprintf("%s.%s", itemsTableName, idColumn): endID,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn): endID,
 		}).
 		ToSql()
 
@@ -219,16 +201,16 @@ func (p *Postgres) buildGetItemsQuery(userID uint64, filter *types.QueryFilter) 
 	var err error
 
 	builder := p.sqlBuilder.
-		Select(itemsTableColumns...).
-		From(itemsTableName).
+		Select(queriers.ItemsTableColumns...).
+		From(queriers.ItemsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn):         nil,
-			fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn):              nil,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
 		}).
-		OrderBy(fmt.Sprintf("%s.%s", itemsTableName, idColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn))
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder, itemsTableName)
+		builder = filter.ApplyToQueryBuilder(builder, queriers.ItemsTableName)
 	}
 
 	query, args, err = builder.ToSql()
@@ -273,17 +255,17 @@ func (p *Postgres) buildGetItemsForAdminQuery(filter *types.QueryFilter) (query 
 
 	where := squirrel.Eq{}
 	if filter != nil && filter.IncludeArchived {
-		where[fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn)] = nil
+		where[fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn)] = nil
 	}
 
 	builder := p.sqlBuilder.
-		Select(itemsTableColumns...).
-		From(itemsTableName).
+		Select(queriers.ItemsTableColumns...).
+		From(queriers.ItemsTableName).
 		Where(where).
-		OrderBy(fmt.Sprintf("%s.%s", itemsTableName, idColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn))
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder, itemsTableName)
+		builder = filter.ApplyToQueryBuilder(builder, queriers.ItemsTableName)
 	}
 
 	query, args, err = builder.ToSql()
@@ -327,16 +309,16 @@ func (p *Postgres) GetItemsForAdmin(ctx context.Context, filter *types.QueryFilt
 func (p *Postgres) buildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []uint64) (query string, args []interface{}) {
 	var err error
 
-	subqueryBuilder := p.sqlBuilder.Select(itemsTableColumns...).
-		From(itemsTableName).
+	subqueryBuilder := p.sqlBuilder.Select(queriers.ItemsTableColumns...).
+		From(queriers.ItemsTableName).
 		Join(fmt.Sprintf("unnest('{%s}'::int[])", joinUint64s(ids))).
 		Suffix(fmt.Sprintf("WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT %d", limit))
 	builder := p.sqlBuilder.
-		Select(itemsTableColumns...).
-		FromSelect(subqueryBuilder, itemsTableName).
+		Select(queriers.ItemsTableColumns...).
+		FromSelect(subqueryBuilder, queriers.ItemsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn):         nil,
-			fmt.Sprintf("%s.%s", itemsTableName, itemsUserOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn):              nil,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
 		})
 
 	query, args, err = builder.ToSql()
@@ -375,15 +357,15 @@ func (p *Postgres) GetItemsWithIDs(ctx context.Context, userID uint64, limit uin
 func (p *Postgres) buildGetItemsWithIDsForAdminQuery(limit uint8, ids []uint64) (query string, args []interface{}) {
 	var err error
 
-	subqueryBuilder := p.sqlBuilder.Select(itemsTableColumns...).
-		From(itemsTableName).
+	subqueryBuilder := p.sqlBuilder.Select(queriers.ItemsTableColumns...).
+		From(queriers.ItemsTableName).
 		Join(fmt.Sprintf("unnest('{%s}'::int[])", joinUint64s(ids))).
 		Suffix(fmt.Sprintf("WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT %d", limit))
 	builder := p.sqlBuilder.
-		Select(itemsTableColumns...).
-		FromSelect(subqueryBuilder, itemsTableName).
+		Select(queriers.ItemsTableColumns...).
+		FromSelect(subqueryBuilder, queriers.ItemsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", itemsTableName, archivedOnColumn): nil,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn): nil,
 		})
 
 	query, args, err = builder.ToSql()
@@ -418,18 +400,18 @@ func (p *Postgres) buildCreateItemQuery(input *types.Item) (query string, args [
 	var err error
 
 	query, args, err = p.sqlBuilder.
-		Insert(itemsTableName).
+		Insert(queriers.ItemsTableName).
 		Columns(
-			itemsTableNameColumn,
-			itemsTableDetailsColumn,
-			itemsUserOwnershipColumn,
+			queriers.ItemsTableNameColumn,
+			queriers.ItemsTableDetailsColumn,
+			queriers.ItemsTableUserOwnershipColumn,
 		).
 		Values(
 			input.Name,
 			input.Details,
 			input.BelongsToUser,
 		).
-		Suffix(fmt.Sprintf("RETURNING %s, %s", idColumn, createdOnColumn)).
+		Suffix(fmt.Sprintf("RETURNING %s, %s", queriers.IDColumn, queriers.CreatedOnColumn)).
 		ToSql()
 
 	p.logQueryBuildingError(err)
@@ -461,15 +443,15 @@ func (p *Postgres) buildUpdateItemQuery(input *types.Item) (query string, args [
 	var err error
 
 	query, args, err = p.sqlBuilder.
-		Update(itemsTableName).
-		Set(itemsTableNameColumn, input.Name).
-		Set(itemsTableDetailsColumn, input.Details).
-		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Update(queriers.ItemsTableName).
+		Set(queriers.ItemsTableNameColumn, input.Name).
+		Set(queriers.ItemsTableDetailsColumn, input.Details).
+		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			idColumn:                 input.ID,
-			itemsUserOwnershipColumn: input.BelongsToUser,
+			queriers.IDColumn:                      input.ID,
+			queriers.ItemsTableUserOwnershipColumn: input.BelongsToUser,
 		}).
-		Suffix(fmt.Sprintf("RETURNING %s", lastUpdatedOnColumn)).
+		Suffix(fmt.Sprintf("RETURNING %s", queriers.LastUpdatedOnColumn)).
 		ToSql()
 
 	p.logQueryBuildingError(err)
@@ -488,15 +470,15 @@ func (p *Postgres) buildArchiveItemQuery(itemID, userID uint64) (query string, a
 	var err error
 
 	query, args, err = p.sqlBuilder.
-		Update(itemsTableName).
-		Set(lastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Set(archivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Update(queriers.ItemsTableName).
+		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Set(queriers.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			idColumn:                 itemID,
-			archivedOnColumn:         nil,
-			itemsUserOwnershipColumn: userID,
+			queriers.IDColumn:                      itemID,
+			queriers.ArchivedOnColumn:              nil,
+			queriers.ItemsTableUserOwnershipColumn: userID,
 		}).
-		Suffix(fmt.Sprintf("RETURNING %s", archivedOnColumn)).
+		Suffix(fmt.Sprintf("RETURNING %s", queriers.ArchivedOnColumn)).
 		ToSql()
 
 	p.logQueryBuildingError(err)
@@ -538,12 +520,12 @@ func (p *Postgres) LogItemArchiveEvent(ctx context.Context, userID, itemID uint6
 func (p *Postgres) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query string, args []interface{}) {
 	var err error
 
-	itemIDKey := fmt.Sprintf("%s.%s->'%s'", auditLogEntriesTableName, auditLogEntriesTableContextColumn, audit.ItemAssignmentKey)
+	itemIDKey := fmt.Sprintf("%s.%s->'%s'", queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.ItemAssignmentKey)
 	builder := p.sqlBuilder.
-		Select(auditLogEntriesTableColumns...).
-		From(auditLogEntriesTableName).
+		Select(queriers.AuditLogEntriesTableColumns...).
+		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Eq{itemIDKey: itemID}).
-		OrderBy(fmt.Sprintf("%s.%s", auditLogEntriesTableName, idColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
 
 	query, args, err = builder.ToSql()
 	p.logQueryBuildingError(err)

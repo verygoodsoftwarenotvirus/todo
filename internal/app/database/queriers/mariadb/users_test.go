@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
@@ -17,7 +18,7 @@ import (
 )
 
 func buildMockRowsFromUser(users ...*types.User) *sqlmock.Rows {
-	columns := usersTableColumns
+	columns := queriers.UsersTableColumns
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, user := range users {
@@ -44,7 +45,7 @@ func buildMockRowsFromUser(users ...*types.User) *sqlmock.Rows {
 }
 
 func buildErroneousMockRowFromUser(user *types.User) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(usersTableColumns).AddRow(
+	exampleRows := sqlmock.NewRows(queriers.UsersTableColumns).AddRow(
 		user.ArchivedOn,
 		user.ID,
 		user.Username,
@@ -537,7 +538,7 @@ func TestMariaDB_CreateUser(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(exampleRows)
 
-		mtt := &mockTimeTeller{}
+		mtt := &queriers.MockTimeTeller{}
 		mtt.On("Now").Return(exampleUser.CreatedOn)
 		m.timeTeller = mtt
 

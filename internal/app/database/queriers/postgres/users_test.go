@@ -11,6 +11,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/client"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
@@ -22,7 +23,7 @@ import (
 )
 
 func buildMockRowsFromUsers(users ...*types.User) *sqlmock.Rows {
-	columns := usersTableColumns
+	columns := queriers.UsersTableColumns
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, user := range users {
@@ -49,7 +50,7 @@ func buildMockRowsFromUsers(users ...*types.User) *sqlmock.Rows {
 }
 
 func buildErroneousMockRowFromUser(user *types.User) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(usersTableColumns).AddRow(
+	exampleRows := sqlmock.NewRows(queriers.UsersTableColumns).AddRow(
 		user.ArchivedOn,
 		user.ID,
 		user.Username,

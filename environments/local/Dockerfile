@@ -3,7 +3,7 @@ FROM node:latest AS frontend-build-stage
 
 WORKDIR /app
 
-ADD frontend/v2 .
+ADD frontend/ .
 
 RUN npm install && npm run build
 

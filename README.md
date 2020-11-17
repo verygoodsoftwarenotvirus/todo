@@ -37,5 +37,5 @@ It's a good idea to run `make quicktest lintegration-tests` before commits. You 
 ## working on the frontend
 
 1. run `make dev`
-2. in a different terminal, cd into `frontend/v2` and run `npm run autobuild`
+2. in a different terminal, cd into `frontend/` and run `npm run autobuild`
 3. edit and have fun

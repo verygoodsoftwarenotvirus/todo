@@ -15,6 +15,10 @@ const (
 
 	// GoodStandingAccountStatus indicates a user's account is in good standing.
 	GoodStandingAccountStatus userAccountStatus = "good"
+	// UnverifiedStandingAccountStatus indicates a user's account requires two factor secret verification.
+	UnverifiedStandingAccountStatus userAccountStatus = "unverified"
+	// BannedStandingAccountStatus indicates a user's account is banned.
+	BannedStandingAccountStatus userAccountStatus = "banned"
 )
 
 type (
@@ -107,7 +111,7 @@ type (
 	// AdminUserDataManager contains administrative user functions that we don't necessarily want to expose
 	// to, say, the collection of handlers.
 	AdminUserDataManager interface {
-		// BanUser(ctx context.Context, userID uint64) error
+		BanUser(ctx context.Context, userID uint64) error
 	}
 
 	// UserDataManager describes a structure which can manage users in permanent storage.

@@ -63,6 +63,17 @@ func (c *Client) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) e
 	return c.querier.VerifyUserTwoFactorSecret(ctx, userID)
 }
 
+// BanUser marks a user's two factor secret as validated.
+func (c *Client) BanUser(ctx context.Context, userID uint64) error {
+	ctx, span := tracing.StartSpan(ctx, "BanUser")
+	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
+	c.logger.WithValue("user_id", userID).Debug("BanUser called")
+
+	return c.querier.BanUser(ctx, userID)
+}
+
 // GetUserByUsername fetches a user by their username.
 func (c *Client) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
 	ctx, span := tracing.StartSpan(ctx, "GetUserByUsername")

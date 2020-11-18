@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"image/png"
 	"log"
+	"math"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,6 +17,8 @@ import (
 	"time"
 
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/client/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"
@@ -30,6 +33,16 @@ const (
 
 func init() {
 	fake.Seed(time.Now().UnixNano())
+}
+
+// BuildMaxAdminPerms builds a helpful AdminPermissionChecker.
+func BuildMaxAdminPerms() permissions.AdminPermissionChecker {
+	return bitmask.NewPermissionBitmask(math.MaxUint32)
+}
+
+// BuildNoAdminPerms builds a helpful AdminPermissionChecker.
+func BuildNoAdminPerms() permissions.AdminPermissionChecker {
+	return bitmask.NewPermissionBitmask(0)
 }
 
 // DetermineServiceURL returns the URL, if properly configured.

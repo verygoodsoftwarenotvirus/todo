@@ -262,20 +262,24 @@ func (m *MariaDB) buildCreateUserQuery(input types.UserDatabaseCreationInput) (q
 			queriers.UsersTableHashedPasswordColumn,
 			queriers.UsersTableSaltColumn,
 			queriers.UsersTableTwoFactorColumn,
+			queriers.UsersTableAccountStatusColumn,
 			queriers.UsersTableIsAdminColumn,
+			queriers.UsersTableAdminPermissionsColumn,
 		).
 		Values(
 			input.Username,
 			input.HashedPassword,
 			input.Salt,
 			input.TwoFactorSecret,
+			types.UnverifiedStandingAccountStatus,
 			false,
+			0,
 		).
 		ToSql()
 
 	// NOTE: we always default is_admin to false, on the assumption that
 	// admins have DB access and will change that value via SQL query.
-	// There should also be no way to update a user via this structure
+	// There should be no way to update a user via this structure
 	// such that they would have admin privileges.
 
 	m.logQueryBuildingError(err)
@@ -350,9 +354,7 @@ func (m *MariaDB) buildUpdateUserPasswordQuery(userID uint64, newHash string) (q
 		Set(queriers.UsersTableRequiresPasswordChangeColumn, false).
 		Set(queriers.UsersTablePasswordLastChangedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Where(squirrel.Eq{
-			queriers.IDColumn: userID,
-		}).
+		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		ToSql()
 
 	m.logQueryBuildingError(err)
@@ -376,9 +378,8 @@ func (m *MariaDB) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query stri
 	query, args, err = m.sqlBuilder.
 		Update(queriers.UsersTableName).
 		Set(queriers.UsersTableTwoFactorVerifiedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Where(squirrel.Eq{
-			queriers.IDColumn: userID,
-		}).
+		Set(queriers.UsersTableAccountStatusColumn, types.GoodStandingAccountStatus).
+		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		ToSql()
 
 	m.logQueryBuildingError(err)
@@ -393,6 +394,28 @@ func (m *MariaDB) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) 
 	return err
 }
 
+// buildBanUserQuery returns a SQL query (and arguments) that would set a user's account status to banned.
+func (m *MariaDB) buildBanUserQuery(userID uint64) (query string, args []interface{}) {
+	var err error
+
+	query, args, err = m.sqlBuilder.
+		Update(queriers.UsersTableName).
+		Set(queriers.UsersTableAccountStatusColumn, types.BannedStandingAccountStatus).
+		Where(squirrel.Eq{queriers.IDColumn: userID}).
+		ToSql()
+
+	m.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// BanUser bans a user.
+func (m *MariaDB) BanUser(ctx context.Context, userID uint64) error {
+	query, args := m.buildBanUserQuery(userID)
+	_, err := m.db.ExecContext(ctx, query, args...)
+	return err
+}
+
 // buildArchiveUserQuery builds a SQL query that marks a user as archived.
 func (m *MariaDB) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
@@ -400,9 +423,7 @@ func (m *MariaDB) buildArchiveUserQuery(userID uint64) (query string, args []int
 	query, args, err = m.sqlBuilder.
 		Update(queriers.UsersTableName).
 		Set(queriers.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Where(squirrel.Eq{
-			queriers.IDColumn: userID,
-		}).
+		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		ToSql()
 
 	m.logQueryBuildingError(err)

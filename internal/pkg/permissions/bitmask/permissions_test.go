@@ -27,10 +27,10 @@ func Test_permissionMask_hasReservedUnusedPermission2(T *testing.T) {
 		t.Parallel()
 
 		x := AdminPermissionsBitmask(0)
-		assert.False(t, x.hasReservedUnusedPermission2())
+		assert.False(t, x.CanBanUsers())
 
-		y := AdminPermissionsBitmask(0 | uint32(reservedUnusedPermission2))
-		assert.True(t, y.hasReservedUnusedPermission2())
+		y := AdminPermissionsBitmask(0 | uint32(banUserPermission))
+		assert.True(t, y.CanBanUsers())
 	})
 }
 

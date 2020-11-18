@@ -11,7 +11,7 @@ import (
 const (
 	// cycleCookieSecretPermission signifies whether or not the admin in question can cycle cookie secrets.
 	cycleCookieSecretPermission AdminPermissionsBitmask = 1 << iota
-	reservedUnusedPermission2
+	banUserPermission
 	reservedUnusedPermission3
 	reservedUnusedPermission4
 	reservedUnusedPermission5
@@ -60,6 +60,7 @@ func NewPermissionBitmask(x uint32) AdminPermissionsBitmask {
 func (p AdminPermissionsBitmask) Summary() *permissions.AdminPermissionsSummary {
 	return &permissions.AdminPermissionsSummary{
 		CanCycleCookieSecrets: p.CanCycleCookieSecrets(),
+		CanBanUsers:           p.CanBanUsers(),
 	}
 }
 
@@ -106,8 +107,9 @@ func (p AdminPermissionsBitmask) CanCycleCookieSecrets() bool {
 	return p&cycleCookieSecretPermission != 0
 }
 
-func (p AdminPermissionsBitmask) hasReservedUnusedPermission2() bool {
-	return p&reservedUnusedPermission2 != 0
+// CanBanUsers determines whether or not a user can ban users.
+func (p AdminPermissionsBitmask) CanBanUsers() bool {
+	return p&banUserPermission != 0
 }
 
 func (p AdminPermissionsBitmask) hasReservedUnusedPermission3() bool {

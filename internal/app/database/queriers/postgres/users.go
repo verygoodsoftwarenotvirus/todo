@@ -304,21 +304,25 @@ func (p *Postgres) buildCreateUserQuery(input types.UserDatabaseCreationInput) (
 			queriers.UsersTableHashedPasswordColumn,
 			queriers.UsersTableSaltColumn,
 			queriers.UsersTableTwoFactorColumn,
+			queriers.UsersTableAccountStatusColumn,
 			queriers.UsersTableIsAdminColumn,
+			queriers.UsersTableAdminPermissionsColumn,
 		).
 		Values(
 			input.Username,
 			input.HashedPassword,
 			input.Salt,
 			input.TwoFactorSecret,
+			types.UnverifiedStandingAccountStatus,
 			false,
+			0,
 		).
 		Suffix(fmt.Sprintf("RETURNING %s, %s", queriers.IDColumn, queriers.CreatedOnColumn)).
 		ToSql()
 
 	// NOTE: we always default is_admin to false, on the assumption that
 	// admins have DB access and will change that value via SQL query.
-	// There should also be no way to update a user via this structure
+	// There should be no way to update a user via this structure
 	// such that they would have admin privileges.
 
 	p.logQueryBuildingError(err)
@@ -388,9 +392,7 @@ func (p *Postgres) buildUpdateUserPasswordQuery(userID uint64, newHash string) (
 		Set(queriers.UsersTableRequiresPasswordChangeColumn, false).
 		Set(queriers.UsersTablePasswordLastChangedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Where(squirrel.Eq{
-			queriers.IDColumn: userID,
-		}).
+		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		Suffix(fmt.Sprintf("RETURNING %s", queriers.LastUpdatedOnColumn)).
 		ToSql()
 
@@ -415,9 +417,8 @@ func (p *Postgres) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query str
 	query, args, err = p.sqlBuilder.
 		Update(queriers.UsersTableName).
 		Set(queriers.UsersTableTwoFactorVerifiedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Where(squirrel.Eq{
-			queriers.IDColumn: userID,
-		}).
+		Set(queriers.UsersTableAccountStatusColumn, types.GoodStandingAccountStatus).
+		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		ToSql()
 
 	p.logQueryBuildingError(err)
@@ -432,6 +433,28 @@ func (p *Postgres) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64)
 	return err
 }
 
+// buildBanUserQuery returns a SQL query (and arguments) that would set a user's account status to banned.
+func (p *Postgres) buildBanUserQuery(userID uint64) (query string, args []interface{}) {
+	var err error
+
+	query, args, err = p.sqlBuilder.
+		Update(queriers.UsersTableName).
+		Set(queriers.UsersTableAccountStatusColumn, types.BannedStandingAccountStatus).
+		Where(squirrel.Eq{queriers.IDColumn: userID}).
+		ToSql()
+
+	p.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// BanUser bans a user.
+func (p *Postgres) BanUser(ctx context.Context, userID uint64) error {
+	query, args := p.buildBanUserQuery(userID)
+	_, err := p.db.ExecContext(ctx, query, args...)
+	return err
+}
+
 // buildArchiveUserQuery builds a SQL query that marks a user as archived.
 func (p *Postgres) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
@@ -439,9 +462,7 @@ func (p *Postgres) buildArchiveUserQuery(userID uint64) (query string, args []in
 	query, args, err = p.sqlBuilder.
 		Update(queriers.UsersTableName).
 		Set(queriers.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Where(squirrel.Eq{
-			queriers.IDColumn: userID,
-		}).
+		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		Suffix(fmt.Sprintf("RETURNING %s", queriers.ArchivedOnColumn)).
 		ToSql()
 

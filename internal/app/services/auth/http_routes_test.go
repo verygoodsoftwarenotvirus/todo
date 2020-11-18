@@ -1040,7 +1040,7 @@ func TestService_CycleSecretHandler(T *testing.T) {
 
 		s.CycleCookieSecretHandler(res, req)
 
-		assert.Equal(t, http.StatusUnauthorized, res.Code, "expected code to be %d, but was %d", http.StatusUnauthorized, res.Code)
+		assert.Equal(t, http.StatusForbidden, res.Code, "expected code to be %d, but was %d", http.StatusUnauthorized, res.Code)
 		assert.NoError(t, s.cookieManager.Decode(CookieName, c.Value, &token))
 	})
 }

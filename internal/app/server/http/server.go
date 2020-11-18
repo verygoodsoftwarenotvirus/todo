@@ -33,6 +33,7 @@ type (
 		frontendService      *frontendservice.Service
 		auditService         types.AuditLogDataServer
 		usersService         types.UserDataServer
+		adminService         types.AdminServer
 		oauth2ClientsService types.OAuth2ClientDataServer
 		webhooksService      types.WebhookDataServer
 		itemsService         types.ItemDataServer
@@ -60,6 +61,7 @@ func ProvideServer(
 	usersService types.UserDataServer,
 	oauth2Service types.OAuth2ClientDataServer,
 	webhooksService types.WebhookDataServer,
+	adminService types.AdminServer,
 	db database.DataManager,
 	logger logging.Logger,
 	encoder encoding.EncoderDecoder,
@@ -73,6 +75,7 @@ func ProvideServer(
 		httpServer:       provideHTTPServer(),
 		logger:           logger.WithName(loggerName),
 		// services,
+		adminService:         adminService,
 		auditService:         auditService,
 		webhooksService:      webhooksService,
 		frontendService:      frontendService,

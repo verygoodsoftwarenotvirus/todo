@@ -41,7 +41,7 @@ func TestV1Client_GetAuditLogEntries(T *testing.T) {
 
 		ctx := context.Background()
 		filter := (*types.QueryFilter)(nil)
-		expectedPath := "/_admin_/audit_log"
+		expectedPath := "/api/v1/_admin_/audit_log"
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 
 		ts := httptest.NewTLSServer(
@@ -81,7 +81,7 @@ func TestV1Client_GetAuditLogEntries(T *testing.T) {
 
 		filter := (*types.QueryFilter)(nil)
 
-		expectedPath := "/_admin_/audit_log"
+		expectedPath := "/api/v1/_admin_/audit_log"
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(

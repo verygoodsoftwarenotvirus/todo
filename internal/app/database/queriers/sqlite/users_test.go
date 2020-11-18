@@ -506,13 +506,15 @@ func TestSqlite_buildCreateUserQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
 
-		expectedQuery := "INSERT INTO users (username,hashed_password,salt,two_factor_secret,is_admin) VALUES (?,?,?,?,?)"
+		expectedQuery := "INSERT INTO users (username,hashed_password,salt,two_factor_secret,account_status,is_admin,admin_permissions) VALUES (?,?,?,?,?,?,?)"
 		expectedArgs := []interface{}{
 			exampleUser.Username,
 			exampleUser.HashedPassword,
 			exampleUser.Salt,
 			exampleUser.TwoFactorSecret,
-			exampleUser.IsAdmin,
+			types.UnverifiedStandingAccountStatus,
+			false,
+			0,
 		}
 		actualQuery, actualArgs := s.buildCreateUserQuery(exampleInput)
 
@@ -685,8 +687,9 @@ func TestSqlite_buildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET two_factor_secret_verified_on = (strftime('%s','now')) WHERE id = ?"
+		expectedQuery := "UPDATE users SET two_factor_secret_verified_on = (strftime('%s','now')), account_status = ? WHERE id = ?"
 		expectedArgs := []interface{}{
+			types.GoodStandingAccountStatus,
 			exampleUser.ID,
 		}
 		actualQuery, actualArgs := s.buildVerifyUserTwoFactorSecretQuery(exampleUser.ID)
@@ -714,6 +717,51 @@ func TestSqlite_VerifyUserTwoFactorSecret(T *testing.T) {
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		err := s.VerifyUserTwoFactorSecret(ctx, exampleUser.ID)
+		assert.NoError(t, err)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_buildBanUserQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		s, _ := buildTestService(t)
+
+		exampleUser := fakes.BuildFakeUser()
+
+		expectedQuery := "UPDATE users SET account_status = ? WHERE id = ?"
+		expectedArgs := []interface{}{
+			types.BannedStandingAccountStatus,
+			exampleUser.ID,
+		}
+		actualQuery, actualArgs := s.buildBanUserQuery(exampleUser.ID)
+
+		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
+func TestSqlite_BanUser(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		exampleUser := fakes.BuildFakeUser()
+
+		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildBanUserQuery(exampleUser.ID)
+
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		err := s.BanUser(ctx, exampleUser.ID)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")

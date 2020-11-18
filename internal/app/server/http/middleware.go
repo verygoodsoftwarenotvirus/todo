@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
+
 	"github.com/go-chi/chi/middleware"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
@@ -30,6 +32,9 @@ var doMotLog = map[string]struct{}{
 func buildLoggingMiddleware(logger logging.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+			ctx, span := tracing.StartSpan(req.Context(), "middleware.logging")
+			defer span.End()
+
 			ww := middleware.NewWrapResponseWriter(res, req.ProtoMajor)
 
 			start := time.Now()
@@ -48,6 +53,7 @@ func buildLoggingMiddleware(logger logging.Logger) func(next http.Handler) http.
 					"status":        ww.Status(),
 					"bytes_written": ww.BytesWritten(),
 					"elapsed":       time.Since(start),
+					"request_id":    middleware.GetReqID(ctx),
 				}).Debug("responded to request")
 			}
 		})

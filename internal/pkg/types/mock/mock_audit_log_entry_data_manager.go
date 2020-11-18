@@ -15,6 +15,11 @@ type AuditLogDataManager struct {
 	mock.Mock
 }
 
+// LogUserBanEvent implements our interface.
+func (m *AuditLogDataManager) LogUserBanEvent(ctx context.Context, banGiver, banReceiver uint64) {
+	m.Called(ctx, banGiver, banReceiver)
+}
+
 // GetAuditLogEntry is a mock function.
 func (m *AuditLogDataManager) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.AuditLogEntry, error) {
 	args := m.Called(ctx, entryID)

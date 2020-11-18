@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
+	adminservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
@@ -58,6 +59,7 @@ func TestProvideServer(T *testing.T) {
 			&usersservice.Service{},
 			&oauth2clientsservice.Service{},
 			&webhooksservice.Service{},
+			&adminservice.Service{},
 			database.BuildMockDatabase(),
 			noop.NewLogger(),
 			&mockencoding.EncoderDecoder{},

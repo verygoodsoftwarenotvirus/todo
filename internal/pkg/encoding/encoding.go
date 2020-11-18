@@ -42,6 +42,7 @@ type (
 		EncodeNotFoundResponse(res http.ResponseWriter)
 		EncodeUnspecifiedInternalServerErrorResponse(res http.ResponseWriter)
 		EncodeUnauthorizedResponse(res http.ResponseWriter)
+		EncodeInvalidPermissionsResponse(res http.ResponseWriter)
 		DecodeRequest(req *http.Request, dest interface{}) error
 	}
 
@@ -101,6 +102,11 @@ func (ed *ServerEncoderDecoder) EncodeUnspecifiedInternalServerErrorResponse(res
 // EncodeUnauthorizedResponse encodes a generic 401 error to a response.
 func (ed *ServerEncoderDecoder) EncodeUnauthorizedResponse(res http.ResponseWriter) {
 	ed.EncodeErrorResponse(res, "invalid credentials provided", http.StatusUnauthorized)
+}
+
+// EncodeInvalidPermissionsResponse encodes a generic 403 error to a response.
+func (ed *ServerEncoderDecoder) EncodeInvalidPermissionsResponse(res http.ResponseWriter) {
+	ed.EncodeErrorResponse(res, "invalid permissions", http.StatusForbidden)
 }
 
 // EncodeResponse encodes responses.

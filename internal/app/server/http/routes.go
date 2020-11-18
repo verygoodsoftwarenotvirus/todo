@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	adminservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/oauth2clients"
@@ -65,8 +66,8 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 
 	mux := chi.NewRouter()
 	mux.Use(
-		middleware.RealIP,
 		middleware.RequestID,
+		middleware.RealIP,
 		middleware.Timeout(maxTimeout),
 		buildLoggingMiddleware(s.logger.WithName("middleware")),
 		ch.Handler,
@@ -99,21 +100,6 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 	}
 
 	authenticatedRouter.Get("/auth/status", s.authService.StatusHandler)
-
-	mux.With(
-		s.authService.AuthorizationMiddleware(true),
-		s.authService.AdminMiddleware,
-	).Route("/_admin_", func(adminRouter chi.Router) {
-		adminRouter.Post("/cycle_cookie_secret", s.authService.CycleCookieSecretHandler)
-
-		adminRouter.Route("/audit_log", func(auditRouter chi.Router) {
-			entryIDRouteParam := fmt.Sprintf(numericIDPattern, auditservice.LogEntryURIParamKey)
-			auditRouter.Get(root, s.auditService.ListHandler)
-			auditRouter.Route(entryIDRouteParam, func(singleEntryRouter chi.Router) {
-				singleEntryRouter.Get(root, s.auditService.ReadHandler)
-			})
-		})
-	})
 
 	mux.Route("/users", func(userRouter chi.Router) {
 		userRouter.With(s.authService.UserLoginInputMiddleware).Post("/login", s.authService.LoginHandler)
@@ -164,7 +150,21 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 				})
 			})
 
-			// /api/v1/oauth2/clients/{oauth2ClientID:[0-9]+}/audit"
+			// Admin
+			v1Router.With(s.authService.AdminMiddleware).Route("/_admin_", func(adminRouter chi.Router) {
+				adminRouter.Post("/cycle_cookie_secret", s.authService.CycleCookieSecretHandler)
+
+				singleUserRoute := fmt.Sprintf(numericIDPattern, adminservice.UserIDURIParamKey)
+				adminRouter.Post(fmt.Sprintf("/users%s/ban", singleUserRoute), s.adminService.BanHandler)
+
+				adminRouter.Route("/audit_log", func(auditRouter chi.Router) {
+					entryIDRouteParam := fmt.Sprintf(numericIDPattern, auditservice.LogEntryURIParamKey)
+					auditRouter.Get(root, s.auditService.ListHandler)
+					auditRouter.Route(entryIDRouteParam, func(singleEntryRouter chi.Router) {
+						singleEntryRouter.Get(root, s.auditService.ReadHandler)
+					})
+				})
+			})
 
 			// OAuth2 Clients.
 			v1Router.Route("/oauth2/clients", func(clientRouter chi.Router) {

@@ -15,7 +15,7 @@ type AdminUserDataManager struct {
 	mock.Mock
 }
 
-// MakeUserAdmin is a mock function.
-func (m *AdminUserDataManager) MakeUserAdmin(ctx context.Context, userID uint64) error {
+// BanUser is a mock function.
+func (m *AdminUserDataManager) BanUser(ctx context.Context, userID uint64) error {
 	return m.Called(ctx, userID).Error(0)
 }

@@ -8,6 +8,7 @@ import (
 	database2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
 	server2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server"
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
+	adminservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
@@ -45,6 +46,7 @@ func BuildServer(
 		// metrics,
 		metrics.Providers,
 		// services,
+		adminservice.Providers,
 		auditservice.Providers,
 		authservice.Providers,
 		usersservice.Providers,

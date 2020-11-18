@@ -12,6 +12,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	auth2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
@@ -92,7 +93,16 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 		return nil, err
 	}
 	webhookDataServer := webhooks.ProvideWebhookDataServer(webhooksService)
-	httpserverServer, err := httpserver.ProvideServer(serverSettings, frontendSettings, instrumentationHandler, authService, frontendService, auditLogDataServer, itemDataServer, userDataServer, oAuth2ClientDataServer, webhookDataServer, dbm, logger, encoderDecoder)
+	adminUserDataManager := database.ProvideAdminUserDataManager(dbm)
+	adminAuditManager := database.ProvideAdminAuditManager(dbm)
+	adminSessionInfoFetcher := httpserver.ProvideAdminServiceSessionInfoFetcher()
+	adminUserIDFetcher := httpserver.ProvideAdminServiceUserIDFetcher(logger)
+	adminService, err := admin.ProvideAdminService(logger, authSettings, authenticator, adminUserDataManager, adminAuditManager, sessionManager, encoderDecoder, adminSessionInfoFetcher, adminUserIDFetcher)
+	if err != nil {
+		return nil, err
+	}
+	adminServer := admin.ProvideAdminServer(adminService)
+	httpserverServer, err := httpserver.ProvideServer(serverSettings, frontendSettings, instrumentationHandler, authService, frontendService, auditLogDataServer, itemDataServer, userDataServer, oAuth2ClientDataServer, webhookDataServer, adminServer, dbm, logger, encoderDecoder)
 	if err != nil {
 		return nil, err
 	}

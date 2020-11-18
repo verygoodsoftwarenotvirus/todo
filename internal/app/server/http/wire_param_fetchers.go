@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	adminservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
@@ -19,6 +20,8 @@ import (
 )
 
 var paramFetcherProviders = wire.NewSet(
+	ProvideAdminServiceUserIDFetcher,
+	ProvideAdminServiceSessionInfoFetcher,
 	ProvideUsersServiceUserIDFetcher,
 	ProvideUsersServiceSessionInfoFetcher,
 	ProvideOAuth2ClientsServiceClientIDFetcher,
@@ -31,6 +34,16 @@ var paramFetcherProviders = wire.NewSet(
 	ProvideAuditServiceSessionInfoFetcher,
 	ProvideAuthServiceSessionInfoFetcher,
 )
+
+// ProvideAdminServiceUserIDFetcher provides a UsernameFetcher.
+func ProvideAdminServiceUserIDFetcher(logger logging.Logger) adminservice.UserIDFetcher {
+	return buildRouteParamUserIDFetcher(logger)
+}
+
+// ProvideAdminServiceSessionInfoFetcher provides a SessionInfoFetcher.
+func ProvideAdminServiceSessionInfoFetcher() adminservice.SessionInfoFetcher {
+	return sessionInfoFetcherFromRequestContext
+}
 
 // ProvideUsersServiceUserIDFetcher provides a UsernameFetcher.
 func ProvideUsersServiceUserIDFetcher(logger logging.Logger) usersservice.UserIDFetcher {
@@ -112,7 +125,7 @@ func sessionInfoFetcherFromRequestContext(req *http.Request) (*types.SessionInfo
 }
 
 // buildRouteParamUserIDFetcher builds a function that fetches a EnsureUsername from a request routed by chi.
-func buildRouteParamUserIDFetcher(logger logging.Logger) usersservice.UserIDFetcher {
+func buildRouteParamUserIDFetcher(logger logging.Logger) func(req *http.Request) uint64 {
 	return func(req *http.Request) uint64 {
 		u, err := strconv.ParseUint(chi.URLParam(req, usersservice.UserIDURIParamKey), 10, 64)
 		if err != nil {

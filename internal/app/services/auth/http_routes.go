@@ -289,7 +289,7 @@ func (s *Service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 
 	if !si.AdminPermissions.CanCycleCookieSecrets() {
 		logger.WithValue("admin_permissions", si.AdminPermissions).Debug("invalid permissions")
-		s.encoderDecoder.EncodeErrorResponse(res, "invalid permissions", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeInvalidPermissionsResponse(res)
 		return
 	}
 

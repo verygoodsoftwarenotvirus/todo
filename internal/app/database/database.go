@@ -56,17 +56,18 @@ type (
 		IsReady(ctx context.Context) (ready bool)
 		BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
 
-		types.AuditLogDataManager
-		types.ItemDataManager
-		types.UserDataManager
 		types.AdminUserDataManager
+		types.UserDataManager
+		types.AuditLogDataManager
 		types.OAuth2ClientDataManager
 		types.WebhookDataManager
+		types.ItemDataManager
 
-		types.ItemAuditManager
-		types.WebhookAuditManager
+		types.AdminAuditManager
 		types.AuthAuditManager
 		types.UserAuditManager
 		types.OAuth2ClientAuditManager
+		types.WebhookAuditManager
+		types.ItemAuditManager
 	}
 )

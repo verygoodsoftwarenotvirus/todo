@@ -301,6 +301,36 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, ocv, h)
 	})
 
+	T.Run("with banned user", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		s := buildTestService(t)
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleUser.AccountStatus = types.BannedStandingAccountStatus
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
+
+		ocv := &mockOAuth2ClientValidator{}
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
+		s.oauth2ClientsService = ocv
+
+		mockDB := database.BuildMockDatabase().UserDataManager
+		mockDB.On("GetUser", mock.Anything, exampleOAuth2Client.BelongsToUser).Return(exampleUser, nil)
+		s.userDB = mockDB
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+
+		s.AuthorizationMiddleware(true)(&MockHTTPHandler{}).ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusForbidden, res.Code)
+
+		mock.AssertExpectationsForObjects(t, ocv, mockDB)
+	})
+
 	T.Run("nightmare path", func(t *testing.T) {
 		t.Parallel()
 

@@ -182,3 +182,7 @@ func (u *User) ToSessionInfo() *SessionInfo {
 		AdminPermissions:  u.AdminPermissions,
 	}
 }
+
+func (u *User) IsBanned() bool {
+	return u.AccountStatus == BannedStandingAccountStatus
+}

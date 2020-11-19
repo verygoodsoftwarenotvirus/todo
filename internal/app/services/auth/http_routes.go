@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -129,7 +128,7 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if user.AccountStatus == types.BannedStandingAccountStatus {
+	if user.IsBanned() {
 		s.auditLog.LogBannedUserLoginAttemptEvent(ctx, user.ID)
 		s.encoderDecoder.EncodeErrorResponse(res, user.AccountStatusExplanation, http.StatusForbidden)
 		return
@@ -248,28 +247,19 @@ func (s *Service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context(), "auth.service.StatusHandler")
 	defer span.End()
 
-	var usr *types.UserStatusResponse
+	statusResponse := &types.UserStatusResponse{}
 
-	if userInfo, err := s.fetchUserFromCookie(ctx, req); err != nil {
-		usr = &types.UserStatusResponse{
-			UserIsAuthenticated: false,
-			UserIsAdmin:         false,
-			AdminPermissions:    bitmask.NewPermissionBitmask(0).Summary(),
-		}
-	} else {
-		usr = &types.UserStatusResponse{
+	if user, err := s.fetchUserFromCookie(ctx, req); err == nil {
+		statusResponse = &types.UserStatusResponse{
 			UserIsAuthenticated: true,
-			UserAccountStatus:   userInfo.AccountStatus,
-			StatusExplanation:   userInfo.AccountStatusExplanation,
-			UserIsAdmin:         userInfo.IsAdmin,
-		}
-
-		if userInfo.IsAdmin {
-			usr.AdminPermissions = userInfo.AdminPermissions.Summary()
+			UserAccountStatus:   user.AccountStatus,
+			StatusExplanation:   user.AccountStatusExplanation,
+			UserIsAdmin:         user.IsAdmin,
+			AdminPermissions:    user.AdminPermissions.Summary(),
 		}
 	}
 
-	s.encoderDecoder.EncodeResponse(res, usr)
+	s.encoderDecoder.EncodeResponse(res, statusResponse)
 }
 
 // CycleCookieSecretHandler rotates the cookie building secret with a new random secret.

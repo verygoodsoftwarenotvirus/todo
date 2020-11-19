@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"math"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
@@ -161,6 +162,7 @@ func (p *Postgres) Migrate(ctx context.Context, authenticator auth.Authenticator
 					queriers.UsersTableSaltColumn,
 					queriers.UsersTableTwoFactorColumn,
 					queriers.UsersTableIsAdminColumn,
+					queriers.UsersTableAccountStatusColumn,
 					queriers.UsersTableAdminPermissionsColumn,
 					queriers.UsersTableTwoFactorVerifiedOnColumn,
 				).
@@ -170,7 +172,8 @@ func (p *Postgres) Migrate(ctx context.Context, authenticator auth.Authenticator
 					x.Salt,
 					x.TwoFactorSecret,
 					x.IsAdmin,
-					0,
+					types.GoodStandingAccountStatus,
+					math.MaxUint32,
 					squirrel.Expr(currentUnixTimeQuery),
 				).
 				ToSql()

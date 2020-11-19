@@ -11,7 +11,6 @@ import (
 )
 
 const (
-	adminBasePath    = "_admin_"
 	auditLogBasePath = "audit_log"
 )
 
@@ -20,11 +19,11 @@ func (c *V1Client) BuildGetAuditLogEntriesRequest(ctx context.Context, filter *t
 	ctx, span := tracing.StartSpan(ctx, "BuildGetAuditLogEntriesRequest")
 	defer span.End()
 
-	uri := c.buildURL(
+	uri := c.BuildURL(
 		filter.ToValues(),
 		adminBasePath,
 		auditLogBasePath,
-	).String()
+	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
@@ -53,12 +52,12 @@ func (c *V1Client) BuildGetAuditLogEntryRequest(ctx context.Context, entryID uin
 	ctx, span := tracing.StartSpan(ctx, "BuildGetAuditLogEntryRequest")
 	defer span.End()
 
-	uri := c.buildURL(
+	uri := c.BuildURL(
 		nil,
 		adminBasePath,
 		auditLogBasePath,
 		strconv.FormatUint(entryID, 10),
-	).String()
+	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)

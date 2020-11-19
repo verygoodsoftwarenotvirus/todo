@@ -58,6 +58,10 @@ func NewPermissionBitmask(x uint32) AdminPermissionsBitmask {
 
 // Summary produces a AdminPermissionsSummary.
 func (p AdminPermissionsBitmask) Summary() *permissions.AdminPermissionsSummary {
+	if p == 0 {
+		return nil
+	}
+
 	return &permissions.AdminPermissionsSummary{
 		CanCycleCookieSecrets: p.CanCycleCookieSecrets(),
 		CanBanUsers:           p.CanBanUsers(),

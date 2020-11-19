@@ -141,12 +141,13 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 			v1Router.Route("/users", func(usersRouter chi.Router) {
 				singleUserRoute := fmt.Sprintf(numericIDPattern, usersservice.UserIDURIParamKey)
 				usersRouter.Get("/self", s.usersService.SelfHandler)
-				usersRouter.With(s.authService.AdminMiddleware).Get(root, s.usersService.ListHandler)
 
+				usersRouter.With(s.authService.AdminMiddleware).Get(root, s.usersService.ListHandler)
 				usersRouter.Route(singleUserRoute, func(singleUserRouter chi.Router) {
 					singleUserRouter.With(s.authService.AdminMiddleware).Get(root, s.usersService.ReadHandler)
-					singleUserRouter.Delete(root, s.usersService.ArchiveHandler)
 					singleUserRouter.With(s.authService.AdminMiddleware).Get(auditRoute, s.usersService.AuditEntryHandler)
+
+					singleUserRouter.Delete(root, s.usersService.ArchiveHandler)
 				})
 			})
 

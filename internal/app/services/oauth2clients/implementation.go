@@ -102,8 +102,6 @@ func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reque
 
 var _ oauth2server.UserAuthorizationHandler = (*Service)(nil).UserAuthorizationHandler
 
-var errUserNotFound = errors.New("user not found")
-
 // UserAuthorizationHandler satisfies the oauth2server UserAuthorizationHandler interface.
 func (s *Service) UserAuthorizationHandler(_ http.ResponseWriter, req *http.Request) (userID string, err error) {
 	ctx, span := tracing.StartSpan(req.Context(), "oauth2clients.service.UserAuthorizationHandler")
@@ -119,7 +117,12 @@ func (s *Service) UserAuthorizationHandler(_ http.ResponseWriter, req *http.Requ
 		si, userOk := ctx.Value(types.SessionInfoKey).(*types.SessionInfo)
 		if !userOk || si == nil {
 			logger.Debug("no user attached to this request")
-			return "", errUserNotFound
+			return "", errors.New("user not found")
+		}
+
+		if si.UserAccountStatus == types.BannedStandingAccountStatus {
+			logger.Debug("banned user making this request")
+			return "", errors.New("user is banned")
 		}
 
 		uid = si.UserID

@@ -419,7 +419,7 @@ func TestV1Client_Login(T *testing.T) {
 	})
 }
 
-func TestV1Client_BuildValidateTOTPSecretRequest(T *testing.T) {
+func TestV1Client_BuildVerifyTOTPSecretRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -439,7 +439,7 @@ func TestV1Client_BuildValidateTOTPSecretRequest(T *testing.T) {
 	})
 }
 
-func TestV1Client_ValidateTOTPSecret(T *testing.T) {
+func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 	T.Parallel()
 
 	const expectedPath = "/users/totp_secret/verify"

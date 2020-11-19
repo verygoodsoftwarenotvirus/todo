@@ -2,11 +2,9 @@ package auth
 
 import (
 	"context"
-	"net/http"
-	"strconv"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	"net/http"
 )
 
 const (
@@ -111,7 +109,7 @@ func (s *Service) authorizationMiddleware(allowCookies bool, next http.Handler) 
 			return
 		}
 
-		if user.AccountStatus == types.BannedStandingAccountStatus {
+		if user.IsBanned() {
 			logger.Debug("banned user attempted to make request")
 			http.Redirect(res, req, "/", http.StatusForbidden)
 			return
@@ -200,32 +198,6 @@ func (s *Service) AdminMiddleware(next http.Handler) http.Handler {
 			logger.Debug("AdminMiddleware called by non-admin user")
 			s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusUnauthorized)
 			return
-		}
-
-		next.ServeHTTP(res, req)
-	})
-}
-
-// AdminUserImpersonationMiddleware restricts requests to admin users only.
-func (s *Service) AdminUserImpersonationMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := tracing.StartSpan(req.Context(), "auth.service.OperatingAsAdminMiddleware")
-		defer span.End()
-
-		logger := s.logger.WithRequest(req)
-		logger.Debug("AdminUserImpersonationMiddleware called")
-
-		if xAsUser := req.Header.Get("X-Admin-As-User"); xAsUser != "" {
-			asUser, err := strconv.ParseUint(xAsUser, 10, 64)
-			if err != nil {
-				logger.Error(err, "error encountered trying to parse X-Admin-As-User header")
-				s.encoderDecoder.EncodeErrorResponse(res, "invalid X-Admin-As-User header", http.StatusUnauthorized)
-				return
-			}
-
-			// REFACTORME: if user isn't an admin, 401 here
-
-			req = req.WithContext(context.WithValue(ctx, types.AdminAsUserKey, asUser))
 		}
 
 		next.ServeHTTP(res, req)

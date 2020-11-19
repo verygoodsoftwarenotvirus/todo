@@ -111,6 +111,12 @@ func (s *Service) authorizationMiddleware(allowCookies bool, next http.Handler) 
 			return
 		}
 
+		if user.AccountStatus == types.BannedStandingAccountStatus {
+			logger.Debug("banned user attempted to make request")
+			http.Redirect(res, req, "/", http.StatusForbidden)
+			return
+		}
+
 		logger = logger.WithValue("user_is_admin", user.IsAdmin).
 			WithValue("user_id", user.ID)
 

@@ -36,7 +36,7 @@ func (p *Postgres) scanUser(scan database.Scanner) (*types.User, error) {
 		&x.IsAdmin,
 		&perms,
 		&x.AccountStatus,
-		&x.StatusExplanation,
+		&x.AccountStatusExplanation,
 		&x.CreatedOn,
 		&x.LastUpdatedOn,
 		&x.ArchivedOn,
@@ -486,6 +486,11 @@ func (p *Postgres) LogCycleCookieSecretEvent(ctx context.Context, userID uint64)
 // LogSuccessfulLoginEvent saves a SuccessfulLoginEvent in the audit log table.
 func (p *Postgres) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
 	p.createAuditLogEntry(ctx, audit.BuildSuccessfulLoginEventEntry(userID))
+}
+
+// LogBannedUserLoginAttemptEvent saves a SuccessfulLoginEvent in the audit log table.
+func (p *Postgres) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint64) {
+	p.createAuditLogEntry(ctx, audit.BuildBannedUserLoginAttemptEventEntry(userID))
 }
 
 // LogUnsuccessfulLoginBadPasswordEvent saves a UnsuccessfulLoginBadPasswordEvent in the audit log table.

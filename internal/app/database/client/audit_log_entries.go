@@ -71,6 +71,16 @@ func (c *Client) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
 	c.querier.LogSuccessfulLoginEvent(ctx, userID)
 }
 
+// LogBannedUserLoginAttemptEvent implements our AuditLogDataManager interface.
+func (c *Client) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint64) {
+	ctx, span := tracing.StartSpan(ctx, "LogBannedUserLoginAttemptEvent")
+	defer span.End()
+
+	c.logger.WithValue("user_id", userID).Debug("LogBannedUserLoginAttemptEvent called")
+
+	c.querier.LogBannedUserLoginAttemptEvent(ctx, userID)
+}
+
 // LogUnsuccessfulLoginBadPasswordEvent implements our AuditLogDataManager interface.
 func (c *Client) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
 	ctx, span := tracing.StartSpan(ctx, "LogUnsuccessfulLoginBadPasswordEvent")

@@ -33,6 +33,16 @@ func BuildSuccessfulLoginEventEntry(userID uint64) *types.AuditLogEntryCreationI
 	}
 }
 
+// BuildBannedUserLoginAttemptEventEntry builds an entry creation input for when a user successfully logs in.
+func BuildBannedUserLoginAttemptEventEntry(userID uint64) *types.AuditLogEntryCreationInput {
+	return &types.AuditLogEntryCreationInput{
+		EventType: BannedUserLoginAttemptEvent,
+		Context: map[string]interface{}{
+			ActorAssignmentKey: userID,
+		},
+	}
+}
+
 // BuildUnsuccessfulLoginBadPasswordEventEntry builds an entry creation input for when a user fails to log in because of a bad password.
 func BuildUnsuccessfulLoginBadPasswordEventEntry(userID uint64) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{

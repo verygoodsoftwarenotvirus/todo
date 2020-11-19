@@ -34,7 +34,7 @@ func (m *MariaDB) scanUser(scan database.Scanner) (*types.User, error) {
 		&x.IsAdmin,
 		&perms,
 		&x.AccountStatus,
-		&x.StatusExplanation,
+		&x.AccountStatusExplanation,
 		&x.CreatedOn,
 		&x.LastUpdatedOn,
 		&x.ArchivedOn,
@@ -446,6 +446,11 @@ func (m *MariaDB) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) 
 // LogSuccessfulLoginEvent saves a SuccessfulLoginEvent in the audit log table.
 func (m *MariaDB) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
 	m.createAuditLogEntry(ctx, audit.BuildSuccessfulLoginEventEntry(userID))
+}
+
+// LogBannedUserLoginAttemptEvent saves a SuccessfulLoginEvent in the audit log table.
+func (m *MariaDB) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint64) {
+	m.createAuditLogEntry(ctx, audit.BuildBannedUserLoginAttemptEventEntry(userID))
 }
 
 // LogUnsuccessfulLoginBadPasswordEvent saves a UnsuccessfulLoginBadPasswordEvent in the audit log table.

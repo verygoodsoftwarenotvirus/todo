@@ -54,6 +54,11 @@ func (m *AuditLogDataManager) LogSuccessfulLoginEvent(ctx context.Context, userI
 	m.Called(ctx, userID)
 }
 
+// LogBannedUserLoginAttemptEvent implements our interface.
+func (m *AuditLogDataManager) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint64) {
+	m.Called(ctx, userID)
+}
+
 // LogUnsuccessfulLoginBadPasswordEvent implements our interface.
 func (m *AuditLogDataManager) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
 	m.Called(ctx, userID)

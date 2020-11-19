@@ -25,7 +25,7 @@ func TestWebhooksService_List(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
+		return exampleUser.ToSessionInfo(), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -182,7 +182,7 @@ func TestWebhooksService_Create(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
+		return exampleUser.ToSessionInfo(), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -345,7 +345,7 @@ func TestWebhooksService_Read(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
+		return exampleUser.ToSessionInfo(), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -483,7 +483,7 @@ func TestWebhooksService_Update(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
+		return exampleUser.ToSessionInfo(), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -719,7 +719,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
+		return exampleUser.ToSessionInfo(), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {

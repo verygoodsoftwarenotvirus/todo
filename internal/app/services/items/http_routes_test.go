@@ -26,7 +26,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
+		return exampleUser.ToSessionInfo(), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -133,7 +133,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
+		return exampleUser.ToSessionInfo(), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -309,7 +309,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
+		return exampleUser.ToSessionInfo(), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -434,7 +434,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
+		return exampleUser.ToSessionInfo(), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -553,7 +553,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
+		return exampleUser.ToSessionInfo(), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -676,7 +676,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
+		return exampleUser.ToSessionInfo(), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -891,7 +891,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: exampleUser.IsAdmin}, nil
+		return exampleUser.ToSessionInfo(), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {

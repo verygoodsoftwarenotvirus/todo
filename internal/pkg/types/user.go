@@ -31,7 +31,7 @@ type (
 		HashedPassword            string                          `json:"-"`
 		TwoFactorSecret           string                          `json:"-"`
 		AccountStatus             userAccountStatus               `json:"accountStatus"`
-		StatusExplanation         string                          `json:"statusExplanation"`
+		AccountStatusExplanation  string                          `json:"accountStatusExplanation"`
 		ID                        uint64                          `json:"id"`
 		PasswordLastChangedOn     *uint64                         `json:"passwordLastChangedOn"`
 		TwoFactorSecretVerifiedOn *uint64                         `json:"-"`
@@ -178,7 +178,7 @@ func (u *User) ToSessionInfo() *SessionInfo {
 		UserID:            u.ID,
 		UserIsAdmin:       u.IsAdmin,
 		UserAccountStatus: u.AccountStatus,
-		StatusExplanation: u.StatusExplanation,
+		StatusExplanation: u.AccountStatusExplanation,
 		AdminPermissions:  u.AdminPermissions,
 	}
 }

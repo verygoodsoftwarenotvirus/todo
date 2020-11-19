@@ -129,8 +129,9 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if user.AccountStatus == types.LimitQueryKey {
-		s.encoderDecoder.EncodeErrorResponse(res, "error validating request", http.StatusForbidden)
+	if user.AccountStatus == types.BannedStandingAccountStatus {
+		s.auditLog.LogBannedUserLoginAttemptEvent(ctx, user.ID)
+		s.encoderDecoder.EncodeErrorResponse(res, user.AccountStatusExplanation, http.StatusForbidden)
 		return
 	}
 
@@ -259,7 +260,7 @@ func (s *Service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 		usr = &types.UserStatusResponse{
 			UserIsAuthenticated: true,
 			UserAccountStatus:   userInfo.AccountStatus,
-			StatusExplanation:   userInfo.StatusExplanation,
+			StatusExplanation:   userInfo.AccountStatusExplanation,
 			UserIsAdmin:         userInfo.IsAdmin,
 		}
 

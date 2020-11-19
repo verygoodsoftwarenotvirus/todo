@@ -54,7 +54,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/api/v1/something", nil)
@@ -149,7 +149,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
@@ -211,7 +211,7 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
@@ -258,7 +258,7 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
@@ -294,7 +294,7 @@ func TestService_LoginHandler(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -334,7 +334,7 @@ func TestService_LoginHandler(T *testing.T) {
 		assert.Equal(t, http.StatusAccepted, res.Code)
 		assert.NotEmpty(t, res.Header().Get("Set-Cookie"))
 
-		mock.AssertExpectationsForObjects(t, udb, authr)
+		mock.AssertExpectationsForObjects(t, udb, authr, auditLog)
 	})
 
 	T.Run("with error fetching login data from request", func(t *testing.T) {
@@ -355,6 +355,80 @@ func TestService_LoginHandler(T *testing.T) {
 		assert.Empty(t, res.Header().Get("Set-Cookie"))
 	})
 
+	T.Run("with error retrieving user", func(t *testing.T) {
+		t.Parallel()
+
+		s := buildTestService(t)
+		exampleUser := fakes.BuildFakeUser()
+
+		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
+			return exampleUser.ToSessionInfo(), nil
+		}
+
+		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
+		ctx := context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, exampleLoginData)
+
+		udb := &mockmodels.UserDataManager{}
+		udb.On(
+			"GetUserByUsername",
+			mock.Anything,
+			exampleUser.Username,
+		).Return((*types.User)(nil), errors.New("blah"))
+		s.userDB = udb
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		s.LoginHandler(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
+		assert.Empty(t, res.Header().Get("Set-Cookie"))
+
+		mock.AssertExpectationsForObjects(t, udb)
+	})
+
+	T.Run("with banned user", func(t *testing.T) {
+		t.Parallel()
+
+		s := buildTestService(t)
+		exampleUser := fakes.BuildFakeUser()
+		exampleUser.AccountStatus = types.BannedStandingAccountStatus
+		exampleUser.AccountStatusExplanation = "bad behavior"
+
+		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
+			return exampleUser.ToSessionInfo(), nil
+		}
+
+		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
+		ctx := context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, exampleLoginData)
+
+		udb := &mockmodels.UserDataManager{}
+		udb.On(
+			"GetUserByUsername",
+			mock.Anything,
+			exampleUser.Username,
+		).Return(exampleUser, nil)
+		s.userDB = udb
+
+		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog.On("LogBannedUserLoginAttemptEvent", mock.Anything, exampleUser.ID)
+		s.auditLog = auditLog
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		s.LoginHandler(res, req)
+
+		assert.Equal(t, http.StatusForbidden, res.Code)
+		assert.Empty(t, res.Header().Get("Set-Cookie"))
+
+		mock.AssertExpectationsForObjects(t, udb, auditLog)
+	})
+
 	T.Run("with invalid login", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
@@ -363,7 +437,7 @@ func TestService_LoginHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -403,7 +477,7 @@ func TestService_LoginHandler(T *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 		assert.Empty(t, res.Header().Get("Set-Cookie"))
 
-		mock.AssertExpectationsForObjects(t, udb, authr)
+		mock.AssertExpectationsForObjects(t, udb, authr, auditLog)
 	})
 
 	T.Run("with error validating login", func(t *testing.T) {
@@ -414,7 +488,7 @@ func TestService_LoginHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -461,7 +535,7 @@ func TestService_LoginHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -516,7 +590,7 @@ func TestService_LoginHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -575,7 +649,7 @@ func TestService_LogoutHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 
 		auditLog := &mockmodels.AuditLogDataManager{}
@@ -594,6 +668,8 @@ func TestService_LogoutHandler(T *testing.T) {
 
 		actualCookie := res.Header().Get("Set-Cookie")
 		assert.Contains(t, actualCookie, "Max-Age=0")
+
+		mock.AssertExpectationsForObjects(t, auditLog)
 	})
 
 	T.Run("without cookie", func(t *testing.T) {
@@ -620,7 +696,7 @@ func TestService_LogoutHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
@@ -652,7 +728,7 @@ func TestService_validateLogin(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -683,7 +759,7 @@ func TestService_validateLogin(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -730,7 +806,7 @@ func TestService_validateLogin(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -768,7 +844,7 @@ func TestService_validateLogin(T *testing.T) {
 		expectedErr := errors.New("arbitrary")
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -814,7 +890,7 @@ func TestService_validateLogin(T *testing.T) {
 		expectedErr := errors.New("arbitrary")
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -845,7 +921,7 @@ func TestService_validateLogin(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -880,7 +956,7 @@ func TestService_StatusHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 
 		res := httptest.NewRecorder()
@@ -912,7 +988,7 @@ func TestService_StatusHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{UserID: exampleUser.ID, UserIsAdmin: false}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 
 		res := httptest.NewRecorder()
@@ -947,12 +1023,9 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
+		exampleUser.AdminPermissions = bitmask.NewPermissionBitmask(math.MaxUint32)
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{
-				UserID:           exampleUser.ID,
-				UserIsAdmin:      false,
-				AdminPermissions: bitmask.NewPermissionBitmask(math.MaxUint32),
-			}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 
 		res := httptest.NewRecorder()
@@ -974,6 +1047,8 @@ func TestService_CycleSecretHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusAccepted, res.Code, "expected code to be %d, but was %d", http.StatusUnauthorized, res.Code)
 		assert.Error(t, s.cookieManager.Decode(CookieName, c.Value, &token))
+
+		mock.AssertExpectationsForObjects(t, auditLog)
 	})
 
 	T.Run("with error retrieving session info", func(t *testing.T) {
@@ -991,10 +1066,6 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://blah.com", nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
-
-		auditLog := &mockmodels.AuditLogDataManager{}
-		auditLog.On("LogCycleCookieSecretEvent", mock.Anything, exampleUser.ID)
-		s.auditLog = auditLog
 
 		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 		c := req.Cookies()[0]
@@ -1016,21 +1087,13 @@ func TestService_CycleSecretHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{
-				UserID:           exampleUser.ID,
-				UserIsAdmin:      false,
-				AdminPermissions: bitmask.NewPermissionBitmask(0),
-			}, nil
+			return exampleUser.ToSessionInfo(), nil
 		}
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://blah.com", nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
-
-		auditLog := &mockmodels.AuditLogDataManager{}
-		auditLog.On("LogCycleCookieSecretEvent", mock.Anything, exampleUser.ID)
-		s.auditLog = auditLog
 
 		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 		c := req.Cookies()[0]

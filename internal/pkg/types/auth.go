@@ -43,6 +43,7 @@ type (
 	AuthAuditManager interface {
 		LogCycleCookieSecretEvent(ctx context.Context, userID uint64)
 		LogSuccessfulLoginEvent(ctx context.Context, userID uint64)
+		LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint64)
 		LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64)
 		LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64)
 		LogLogoutEvent(ctx context.Context, userID uint64)

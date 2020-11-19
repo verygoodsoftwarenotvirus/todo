@@ -39,7 +39,7 @@ func buildMockRowsFromUsers(users ...*types.User) *sqlmock.Rows {
 			user.IsAdmin,
 			user.AdminPermissions,
 			user.AccountStatus,
-			user.StatusExplanation,
+			user.AccountStatusExplanation,
 			user.CreatedOn,
 			user.LastUpdatedOn,
 			user.ArchivedOn,
@@ -65,7 +65,7 @@ func buildErroneousMockRowFromUser(user *types.User) *sqlmock.Rows {
 		user.IsAdmin,
 		user.AdminPermissions,
 		user.AccountStatus,
-		user.StatusExplanation,
+		user.AccountStatusExplanation,
 		user.CreatedOn,
 		user.LastUpdatedOn,
 	)

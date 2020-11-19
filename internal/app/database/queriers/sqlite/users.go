@@ -34,7 +34,7 @@ func (s *Sqlite) scanUser(scan database.Scanner) (*types.User, error) {
 		&x.IsAdmin,
 		&perms,
 		&x.AccountStatus,
-		&x.StatusExplanation,
+		&x.AccountStatusExplanation,
 		&x.CreatedOn,
 		&x.LastUpdatedOn,
 		&x.ArchivedOn,
@@ -444,6 +444,11 @@ func (s *Sqlite) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
 // LogSuccessfulLoginEvent saves a SuccessfulLoginEvent in the audit log table.
 func (s *Sqlite) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
 	s.createAuditLogEntry(ctx, audit.BuildSuccessfulLoginEventEntry(userID))
+}
+
+// LogBannedUserLoginAttemptEvent saves a SuccessfulLoginEvent in the audit log table.
+func (s *Sqlite) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint64) {
+	s.createAuditLogEntry(ctx, audit.BuildBannedUserLoginAttemptEventEntry(userID))
 }
 
 // LogUnsuccessfulLoginBadPasswordEvent saves a UnsuccessfulLoginBadPasswordEvent in the audit log table.

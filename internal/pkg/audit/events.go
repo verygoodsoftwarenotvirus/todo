@@ -7,12 +7,14 @@ const (
 	CycleCookieSecretEvent = "cookie_secret_cycled"
 	// SuccessfulLoginEvent events indicate a user successfully authenticated into the service via username + password + 2fa.
 	SuccessfulLoginEvent = "user_logged_in"
+	// LogoutEvent events indicate a user successfully logged out.
+	LogoutEvent = "user_logged_out"
+	// BannedUserLoginAttemptEvent events indicate a user successfully authenticated into the service via username + password + 2fa.
+	BannedUserLoginAttemptEvent = "banned_user_login_attempt"
 	// UnsuccessfulLoginBadPasswordEvent events indicate a user attempted to authenticate into the service, but failed because of an invalid password.
 	UnsuccessfulLoginBadPasswordEvent = "user_login_failed_bad_password"
 	// UnsuccessfulLoginBad2FATokenEvent events indicate a user attempted to authenticate into the service, but failed because of a faulty two factor token.
 	UnsuccessfulLoginBad2FATokenEvent = "user_login_failed_bad_2FA_token"
-	// LogoutEvent events indicate a user successfully logged out.
-	LogoutEvent = "user_logged_out"
 	// ItemCreationEvent events indicate a user created an item.
 	ItemCreationEvent = "item_created"
 	// ItemUpdateEvent events indicate a user updated an item.

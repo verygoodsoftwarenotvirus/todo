@@ -295,7 +295,7 @@ func (s *Sqlite) GetUsers(ctx context.Context, filter *types.QueryFilter) (*type
 }
 
 // buildCreateUserQuery returns a SQL query (and arguments) that would create a given User.
-func (s *Sqlite) buildCreateUserQuery(input types.UserDatabaseCreationInput) (query string, args []interface{}) {
+func (s *Sqlite) buildCreateUserQuery(input types.UserDataStoreCreationInput) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = s.sqlBuilder.
@@ -331,7 +331,7 @@ func (s *Sqlite) buildCreateUserQuery(input types.UserDatabaseCreationInput) (qu
 }
 
 // CreateUser creates a user.
-func (s *Sqlite) CreateUser(ctx context.Context, input types.UserDatabaseCreationInput) (*types.User, error) {
+func (s *Sqlite) CreateUser(ctx context.Context, input types.UserDataStoreCreationInput) (*types.User, error) {
 	x := &types.User{
 		Username:        input.Username,
 		HashedPassword:  input.HashedPassword,

@@ -58,7 +58,7 @@ func (m *UserDataManager) GetUsers(ctx context.Context, filter *types.QueryFilte
 }
 
 // CreateUser is a mock function.
-func (m *UserDataManager) CreateUser(ctx context.Context, input types.UserDatabaseCreationInput) (*types.User, error) {
+func (m *UserDataManager) CreateUser(ctx context.Context, input types.UserDataStoreCreationInput) (*types.User, error) {
 	args := m.Called(ctx, input)
 	return args.Get(0).(*types.User), args.Error(1)
 }

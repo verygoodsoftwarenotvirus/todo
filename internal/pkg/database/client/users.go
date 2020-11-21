@@ -132,7 +132,7 @@ func (c *Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (*type
 }
 
 // CreateUser creates a user.
-func (c *Client) CreateUser(ctx context.Context, input types.UserDatabaseCreationInput) (*types.User, error) {
+func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreationInput) (*types.User, error) {
 	ctx, span := tracing.StartSpan(ctx, "CreateUser")
 	defer span.End()
 

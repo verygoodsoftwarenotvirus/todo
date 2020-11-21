@@ -28,8 +28,8 @@ func BuildFakeUser() *types.User {
 	}
 }
 
-// BuildDatabaseCreationResponse builds a faked UserCreationResponse.
-func BuildDatabaseCreationResponse(user *types.User) *types.UserCreationResponse {
+// BuildUserCreationResponseFromUser builds a faked UserCreationResponse.
+func BuildUserCreationResponseFromUser(user *types.User) *types.UserCreationResponse {
 	return &types.UserCreationResponse{
 		ID:                    user.ID,
 		Username:              user.Username,
@@ -78,9 +78,9 @@ func BuildFakeUserCreationInputFromUser(user *types.User) *types.UserCreationInp
 	}
 }
 
-// BuildFakeUserDatabaseCreationInputFromUser builds a faked UserDatabaseCreationInput.
-func BuildFakeUserDatabaseCreationInputFromUser(user *types.User) types.UserDatabaseCreationInput {
-	return types.UserDatabaseCreationInput{
+// BuildFakeUserDataStoreCreationInputFromUser builds a faked UserDataStoreCreationInput.
+func BuildFakeUserDataStoreCreationInputFromUser(user *types.User) types.UserDataStoreCreationInput {
+	return types.UserDataStoreCreationInput{
 		Username:        user.Username,
 		HashedPassword:  user.HashedPassword,
 		TwoFactorSecret: user.TwoFactorSecret,

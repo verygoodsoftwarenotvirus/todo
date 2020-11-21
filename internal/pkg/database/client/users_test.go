@@ -177,7 +177,7 @@ func TestClient_CreateUser(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+		exampleInput := fakes.BuildFakeUserDataStoreCreationInputFromUser(exampleUser)
 
 		c, mockDB := buildTestClient()
 		mockDB.UserDataManager.On("CreateUser", mock.Anything, exampleInput).Return(exampleUser, nil)

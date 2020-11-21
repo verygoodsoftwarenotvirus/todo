@@ -158,7 +158,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	input := types.UserDatabaseCreationInput{
+	input := types.UserDataStoreCreationInput{
 		Username:        userInput.Username,
 		HashedPassword:  hp,
 		TwoFactorSecret: "",

@@ -190,7 +190,7 @@ func TestV1Client_CreateUser(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
-		expected := fakes.BuildDatabaseCreationResponse(exampleUser)
+		expected := fakes.BuildUserCreationResponseFromUser(exampleUser)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(

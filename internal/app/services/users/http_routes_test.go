@@ -338,7 +338,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.authenticator = auth
 
 		db := database.BuildMockDatabase()
-		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("types.UserDatabaseCreationInput")).Return(exampleUser, nil)
+		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("types.UserDataStoreCreationInput")).Return(exampleUser, nil)
 		s.userDataManager = db
 
 		mc := &mockmetrics.UnitCounter{}
@@ -453,7 +453,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.authenticator = auth
 
 		db := database.BuildMockDatabase()
-		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("types.UserDatabaseCreationInput")).Return(exampleUser, nil)
+		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("types.UserDataStoreCreationInput")).Return(exampleUser, nil)
 		s.userDataManager = db
 
 		sg := &mockSecretGenerator{}
@@ -494,7 +494,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.authenticator = auth
 
 		db := database.BuildMockDatabase()
-		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("types.UserDatabaseCreationInput")).Return(exampleUser, nil)
+		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("types.UserDataStoreCreationInput")).Return(exampleUser, nil)
 		s.userDataManager = db
 
 		sg := &mockSecretGenerator{}
@@ -536,7 +536,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.authenticator = auth
 
 		db := database.BuildMockDatabase()
-		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("types.UserDatabaseCreationInput")).Return(exampleUser, errors.New("blah"))
+		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("types.UserDataStoreCreationInput")).Return(exampleUser, errors.New("blah"))
 		s.userDataManager = db
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -575,7 +575,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.encoderDecoder = encoding.ProvideResponseEncoder(s.logger)
 
 		db := database.BuildMockDatabase()
-		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("types.UserDatabaseCreationInput")).Return(exampleUser, dbclient.ErrUserExists)
+		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("types.UserDataStoreCreationInput")).Return(exampleUser, dbclient.ErrUserExists)
 		s.userDataManager = db
 
 		res, req := httptest.NewRecorder(), buildRequest(t)

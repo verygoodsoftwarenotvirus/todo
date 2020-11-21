@@ -587,7 +587,7 @@ func TestSqlite_buildCreateUserQuery(T *testing.T) {
 		s, _ := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+		exampleInput := fakes.BuildFakeUserDataStoreCreationInputFromUser(exampleUser)
 
 		expectedQuery := "INSERT INTO users (username,hashed_password,salt,two_factor_secret,account_status,is_admin,admin_permissions) VALUES (?,?,?,?,?,?,?)"
 		expectedArgs := []interface{}{
@@ -619,7 +619,7 @@ func TestSqlite_CreateUser(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 		exampleUser.Salt = nil
-		expectedInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+		expectedInput := fakes.BuildFakeUserDataStoreCreationInputFromUser(exampleUser)
 
 		expectedQuery, expectedArgs := s.buildCreateUserQuery(expectedInput)
 
@@ -648,7 +648,7 @@ func TestSqlite_CreateUser(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
-		expectedInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+		expectedInput := fakes.BuildFakeUserDataStoreCreationInputFromUser(exampleUser)
 
 		expectedQuery, expectedArgs := s.buildCreateUserQuery(expectedInput)
 

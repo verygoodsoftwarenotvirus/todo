@@ -297,7 +297,7 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *types.QueryFilter) (*ty
 }
 
 // buildCreateUserQuery returns a SQL query (and arguments) that would create a given User.
-func (p *Postgres) buildCreateUserQuery(input types.UserDatabaseCreationInput) (query string, args []interface{}) {
+func (p *Postgres) buildCreateUserQuery(input types.UserDataStoreCreationInput) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = p.sqlBuilder.
@@ -334,7 +334,7 @@ func (p *Postgres) buildCreateUserQuery(input types.UserDatabaseCreationInput) (
 }
 
 // CreateUser creates a user.
-func (p *Postgres) CreateUser(ctx context.Context, input types.UserDatabaseCreationInput) (*types.User, error) {
+func (p *Postgres) CreateUser(ctx context.Context, input types.UserDataStoreCreationInput) (*types.User, error) {
 	x := &types.User{
 		Username:        input.Username,
 		HashedPassword:  input.HashedPassword,

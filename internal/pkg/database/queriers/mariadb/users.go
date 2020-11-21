@@ -295,7 +295,7 @@ func (m *MariaDB) GetUsers(ctx context.Context, filter *types.QueryFilter) (*typ
 }
 
 // buildCreateUserQuery returns a SQL query (and arguments) that would create a given User.
-func (m *MariaDB) buildCreateUserQuery(input types.UserDatabaseCreationInput) (query string, args []interface{}) {
+func (m *MariaDB) buildCreateUserQuery(input types.UserDataStoreCreationInput) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = m.sqlBuilder.
@@ -331,7 +331,7 @@ func (m *MariaDB) buildCreateUserQuery(input types.UserDatabaseCreationInput) (q
 }
 
 // CreateUser creates a user.
-func (m *MariaDB) CreateUser(ctx context.Context, input types.UserDatabaseCreationInput) (*types.User, error) {
+func (m *MariaDB) CreateUser(ctx context.Context, input types.UserDataStoreCreationInput) (*types.User, error) {
 	x := &types.User{
 		Username:        input.Username,
 		HashedPassword:  input.HashedPassword,

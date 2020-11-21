@@ -610,7 +610,7 @@ func TestPostgres_buildCreateUserQuery(T *testing.T) {
 		p, _ := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+		exampleInput := fakes.BuildFakeUserDataStoreCreationInputFromUser(exampleUser)
 
 		expectedQuery := "INSERT INTO users (username,hashed_password,salt,two_factor_secret,account_status,is_admin,admin_permissions) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id, created_on"
 		expectedArgs := []interface{}{
@@ -642,7 +642,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 		exampleUser.Salt = nil
-		expectedInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+		expectedInput := fakes.BuildFakeUserDataStoreCreationInputFromUser(exampleUser)
 
 		expectedQuery, expectedArgs := p.buildCreateUserQuery(expectedInput)
 
@@ -666,7 +666,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
-		expectedInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+		expectedInput := fakes.BuildFakeUserDataStoreCreationInputFromUser(exampleUser)
 
 		expectedQuery, expectedArgs := p.buildCreateUserQuery(expectedInput)
 
@@ -690,7 +690,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
-		expectedInput := fakes.BuildFakeUserDatabaseCreationInputFromUser(exampleUser)
+		expectedInput := fakes.BuildFakeUserDataStoreCreationInputFromUser(exampleUser)
 
 		expectedQuery, expectedArgs := p.buildCreateUserQuery(expectedInput)
 

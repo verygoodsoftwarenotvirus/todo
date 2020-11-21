@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
-	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/client"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers/mariadb"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers/postgres"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers/sqlite"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/client"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/mariadb"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/postgres"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/sqlite"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 
 	"contrib.go.opencensus.io/integrations/ocsql"
 	"github.com/alexedwards/scs/mysqlstore"
@@ -88,7 +88,7 @@ func (cfg *ServerConfig) ProvideDatabaseConnection(logger logging.Logger) (*sql.
 }
 
 // ProvideDatabaseClient provides a database implementation dependent on the configuration.
-func (cfg *ServerConfig) ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB, authenticator auth.Authenticator) (database.DataManager, error) {
+func (cfg *ServerConfig) ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB, authenticator password.Authenticator) (database.DataManager, error) {
 	if rawDB == nil {
 		return nil, errNilDatabaseConnection
 	}

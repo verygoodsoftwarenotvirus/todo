@@ -8,12 +8,12 @@ package main
 
 import (
 	"context"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
 	"log"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -101,7 +101,7 @@ func main() {
 
 	// establish the database client.
 	logger.Debug("setting up database client")
-	dbClient, err := cfg.ProvideDatabaseClient(ctx, logger, rawDB, auth.ProvideBcryptAuthenticator(auth.DefaultBcryptHashCost, logger))
+	dbClient, err := cfg.ProvideDatabaseClient(ctx, logger, rawDB, bcrypt.ProvideAuthenticator(bcrypt.DefaultHashCost, logger))
 	if err != nil {
 		log.Fatalf("error initializing database client: %v", err)
 	}

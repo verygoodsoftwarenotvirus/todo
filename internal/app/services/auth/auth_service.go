@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/alexedwards/scs/v2"
@@ -44,7 +44,7 @@ type (
 	Service struct {
 		config               config.AuthSettings
 		logger               logging.Logger
-		authenticator        auth.Authenticator
+		authenticator        password.Authenticator
 		userDB               types.UserDataManager
 		auditLog             types.AuthAuditManager
 		oauth2ClientsService OAuth2ClientValidator
@@ -59,7 +59,7 @@ type (
 func ProvideAuthService(
 	logger logging.Logger,
 	cfg config.AuthSettings,
-	authenticator auth.Authenticator,
+	authenticator password.Authenticator,
 	userDataManager types.UserDataManager,
 	auditLog types.AuthAuditManager,
 	oauth2ClientsService OAuth2ClientValidator,

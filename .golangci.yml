@@ -345,7 +345,7 @@ issues:
       linters:
         - goerr113
 
-    - path: internal/app/database/queriers/postgres/migrations.go # TODO: FIXME
+    - path: internal/pkg/database/queriers/postgres/migrations.go # TODO: FIXME
       linters:
         - gocognit
         - gocyclo

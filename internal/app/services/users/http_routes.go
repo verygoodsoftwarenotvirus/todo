@@ -11,8 +11,8 @@ import (
 	"image/png"
 	"net/http"
 
-	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
+	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 

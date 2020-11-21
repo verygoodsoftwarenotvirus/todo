@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
@@ -46,7 +46,7 @@ type (
 		cookieSecret        []byte
 		userDataManager     types.UserDataManager
 		auditLog            types.UserAuditManager
-		authenticator       auth.Authenticator
+		authenticator       password.Authenticator
 		logger              logging.Logger
 		encoderDecoder      encoding.EncoderDecoder
 		userIDFetcher       UserIDFetcher
@@ -63,7 +63,7 @@ func ProvideUsersService(
 	logger logging.Logger,
 	userDataManager types.UserDataManager,
 	auditLog types.UserAuditManager,
-	authenticator auth.Authenticator,
+	authenticator password.Authenticator,
 	userIDFetcher UserIDFetcher,
 	sessionInfoFetcher SessionInfoFetcher,
 	encoder encoding.EncoderDecoder,

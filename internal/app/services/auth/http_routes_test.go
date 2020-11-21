@@ -9,8 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
-	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
+	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -772,7 +773,7 @@ func TestService_validateLogin(T *testing.T) {
 			exampleUser.TwoFactorSecret,
 			exampleLoginData.TOTPToken,
 			exampleUser.Salt,
-		).Return(true, auth.ErrPasswordHashTooWeak)
+		).Return(true, password.ErrPasswordHashTooWeak)
 		s.authenticator = authr
 
 		authr.On(
@@ -819,7 +820,7 @@ func TestService_validateLogin(T *testing.T) {
 			exampleUser.TwoFactorSecret,
 			exampleLoginData.TOTPToken,
 			exampleUser.Salt,
-		).Return(true, auth.ErrPasswordHashTooWeak)
+		).Return(true, password.ErrPasswordHashTooWeak)
 
 		authr.On(
 			"HashPassword",
@@ -857,7 +858,7 @@ func TestService_validateLogin(T *testing.T) {
 			exampleUser.TwoFactorSecret,
 			exampleLoginData.TOTPToken,
 			exampleUser.Salt,
-		).Return(true, auth.ErrCostTooLow)
+		).Return(true, bcrypt.ErrCostTooLow)
 
 		authr.On(
 			"HashPassword",

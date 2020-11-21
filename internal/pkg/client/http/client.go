@@ -184,9 +184,9 @@ func (c *V1Client) closeResponseBody(res *http.Response) {
 func (c *V1Client) BuildURL(qp url.Values, parts ...string) string {
 	var u *url.URL
 	if qp != nil {
-		u = c.buildURL(qp, parts...)
+		u = c.buildRawURL(qp, parts...)
 	} else {
-		u = c.buildURL(nil, parts...)
+		u = c.buildRawURL(nil, parts...)
 	}
 
 	if u != nil {
@@ -196,9 +196,9 @@ func (c *V1Client) BuildURL(qp url.Values, parts ...string) string {
 	return ""
 }
 
-// buildURL takes a given set of query parameters and URL parts, and returns.
+// buildRawURL takes a given set of query parameters and URL parts, and returns.
 // a parsed URL object from them.
-func (c *V1Client) buildURL(queryParams url.Values, parts ...string) *url.URL {
+func (c *V1Client) buildRawURL(queryParams url.Values, parts ...string) *url.URL {
 	tu := *c.URL
 
 	parts = append([]string{"api", "v1"}, parts...)
@@ -217,7 +217,7 @@ func (c *V1Client) buildURL(queryParams url.Values, parts ...string) *url.URL {
 }
 
 // buildVersionlessURL builds a URL without the `/api/v1/` prefix. It should
-// otherwise be identical to buildURL.
+// otherwise be identical to buildRawURL.
 func (c *V1Client) buildVersionlessURL(qp url.Values, parts ...string) string {
 	tu := *c.URL
 
@@ -236,7 +236,7 @@ func (c *V1Client) buildVersionlessURL(qp url.Values, parts ...string) string {
 
 // BuildWebsocketURL builds a standard URL and then converts its scheme to the websocket protocol.
 func (c *V1Client) BuildWebsocketURL(parts ...string) string {
-	u := c.buildURL(nil, parts...)
+	u := c.buildRawURL(nil, parts...)
 	u.Scheme = "ws"
 
 	return u.String()

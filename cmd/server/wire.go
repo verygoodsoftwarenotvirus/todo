@@ -5,7 +5,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	database2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
 	server2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server"
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
 	adminservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"
@@ -16,10 +15,11 @@ import (
 	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/oauth2clients"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
+	database2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
 
 	"github.com/google/wire"
@@ -33,17 +33,17 @@ func BuildServer(
 	logger logging.Logger,
 	dbm database2.DataManager,
 	db *sql.DB,
-	authenticator auth.Authenticator,
+	authenticator password.Authenticator,
 ) (*server2.Server, error) {
 	wire.Build(
+		// app
+		server2.Providers,
+		// packages,
+		bleve.Providers,
 		config.Providers,
 		database2.Providers,
-		// server things,
-		bleve.Providers,
-		server2.Providers,
 		encoding.Providers,
 		httpserver.Providers,
-		// metrics,
 		metrics.Providers,
 		// services,
 		adminservice.Providers,

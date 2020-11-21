@@ -9,28 +9,28 @@ import (
 	"context"
 	"database/sql"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
-	auth2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
 )
 
 // Injectors from wire.go:
 
 // BuildServer builds a server.
-func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, dbm database.DataManager, db *sql.DB, authenticator auth.Authenticator) (*server.Server, error) {
+func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, dbm database.DataManager, db *sql.DB, authenticator password.Authenticator) (*server.Server, error) {
 	serverSettings := config.ProvideConfigServerSettings(cfg)
 	frontendSettings := config.ProvideConfigFrontendSettings(cfg)
 	instrumentationHandler := frontend.ProvideMetricsInstrumentationHandlerForServer(cfg, logger)
@@ -46,11 +46,11 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
-	oAuth2ClientValidator := auth2.ProvideOAuth2ClientValidator(service)
+	oAuth2ClientValidator := auth.ProvideOAuth2ClientValidator(service)
 	databaseSettings := config.ProvideConfigDatabaseSettings(cfg)
 	sessionManager := config.ProvideSessionManager(authSettings, databaseSettings, db)
-	sessionInfoFetcher := auth2.ProvideAuthServiceSessionInfoFetcher()
-	authService, err := auth2.ProvideAuthService(logger, authSettings, authenticator, userDataManager, authAuditManager, oAuth2ClientValidator, sessionManager, encoderDecoder, sessionInfoFetcher)
+	sessionInfoFetcher := auth.ProvideAuthServiceSessionInfoFetcher()
+	authService, err := auth.ProvideAuthService(logger, authSettings, authenticator, userDataManager, authAuditManager, oAuth2ClientValidator, sessionManager, encoderDecoder, sessionInfoFetcher)
 	if err != nil {
 		return nil, err
 	}

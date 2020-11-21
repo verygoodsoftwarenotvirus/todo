@@ -20,7 +20,7 @@ func (c *V1Client) BuildGetUserRequest(ctx context.Context, userID uint64) (*htt
 	ctx, span := tracing.StartSpan(ctx, "BuildGetUserRequest")
 	defer span.End()
 
-	uri := c.buildURL(nil, usersBasePath, strconv.FormatUint(userID, 10)).String()
+	uri := c.BuildURL(nil, usersBasePath, strconv.FormatUint(userID, 10))
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
@@ -45,7 +45,7 @@ func (c *V1Client) BuildGetUsersRequest(ctx context.Context, filter *types.Query
 	ctx, span := tracing.StartSpan(ctx, "BuildGetUsersRequest")
 	defer span.End()
 
-	uri := c.buildURL(filter.ToValues(), usersBasePath).String()
+	uri := c.BuildURL(filter.ToValues(), usersBasePath)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
@@ -58,6 +58,37 @@ func (c *V1Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (*ty
 	users := &types.UserList{}
 
 	req, err := c.BuildGetUsersRequest(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("building request: %w", err)
+	}
+
+	err = c.retrieve(ctx, req, &users)
+
+	return users, err
+}
+
+// BuildSearchForUsersByUsernameRequest builds an HTTP request that searches for a user.
+func (c *V1Client) BuildSearchForUsersByUsernameRequest(ctx context.Context, username string, filter *types.QueryFilter) (*http.Request, error) {
+	ctx, span := tracing.StartSpan(ctx, "BuildSearchForUsersByUsernameRequest")
+	defer span.End()
+
+	u := c.buildRawURL(filter.ToValues(), usersBasePath)
+	q := u.Query()
+	q.Set(types.SearchQueryKey, username)
+	u.RawQuery = q.Encode()
+	uri := u.String()
+
+	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+}
+
+// SearchForUsersByUsername retrieves a list of users.
+func (c *V1Client) SearchForUsersByUsername(ctx context.Context, username string, filter *types.QueryFilter) (*types.UserList, error) {
+	ctx, span := tracing.StartSpan(ctx, "SearchForUsersByUsername")
+	defer span.End()
+
+	users := &types.UserList{}
+
+	req, err := c.BuildSearchForUsersByUsernameRequest(ctx, username, filter)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -99,7 +130,7 @@ func (c *V1Client) BuildArchiveUserRequest(ctx context.Context, userID uint64) (
 	ctx, span := tracing.StartSpan(ctx, "BuildArchiveUserRequest")
 	defer span.End()
 
-	uri := c.buildURL(nil, usersBasePath, strconv.FormatUint(userID, 10)).String()
+	uri := c.buildRawURL(nil, usersBasePath, strconv.FormatUint(userID, 10)).String()
 
 	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
 }

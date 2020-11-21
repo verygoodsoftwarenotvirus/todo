@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"os"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
@@ -48,7 +48,7 @@ func main() {
 	}
 	databaseConnectionSpan.End()
 
-	authenticator := auth.ProvideBcryptAuthenticator(auth.ProvideBcryptHashCost(), logger)
+	authenticator := bcrypt.ProvideAuthenticator(bcrypt.ProvideHashCost(), logger)
 
 	ctx, databaseClientSetupSpan := tracing.StartSpan(ctx, "database client setup")
 	logger.Debug("setting up database client")

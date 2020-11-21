@@ -50,6 +50,11 @@ func (m *UserDataServer) ListHandler(res http.ResponseWriter, req *http.Request)
 	m.Called(res, req)
 }
 
+// UsernameSearchHandler is a mock method to satisfy our interface requirements.
+func (m *UserDataServer) UsernameSearchHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
+}
+
 // CreateHandler is a mock method to satisfy our interface requirements.
 func (m *UserDataServer) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)

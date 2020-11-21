@@ -8,7 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -141,9 +142,9 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue("user_id", user.ID).WithValue("login_valid", loginValid)
 
 	if err != nil {
-		if errors.Is(err, auth.ErrInvalidTwoFactorCode) {
+		if errors.Is(err, password.ErrInvalidTwoFactorCode) {
 			s.auditLog.LogUnsuccessfulLoginBad2FATokenEvent(ctx, user.ID)
-		} else if errors.Is(err, auth.ErrPasswordDoesNotMatch) {
+		} else if errors.Is(err, password.ErrPasswordDoesNotMatch) {
 			s.auditLog.LogUnsuccessfulLoginBadPasswordEvent(ctx, user.ID)
 		}
 
@@ -313,7 +314,7 @@ func (s *Service) validateLogin(ctx context.Context, user *types.User, loginInpu
 		user.Salt,
 	)
 
-	if errors.Is(err, auth.ErrCostTooLow) || errors.Is(err, auth.ErrPasswordHashTooWeak) {
+	if errors.Is(err, bcrypt.ErrCostTooLow) || errors.Is(err, password.ErrPasswordHashTooWeak) {
 		// if the login is otherwise valid, but the password is too weak, try to rehash it.
 		logger.Debug("hashed password was deemed to weak, updating its hash")
 
@@ -332,7 +333,7 @@ func (s *Service) validateLogin(ctx context.Context, user *types.User, loginInpu
 		return loginValid, nil
 	}
 
-	if errors.Is(err, auth.ErrInvalidTwoFactorCode) || errors.Is(err, auth.ErrPasswordDoesNotMatch) {
+	if errors.Is(err, password.ErrInvalidTwoFactorCode) || errors.Is(err, password.ErrPasswordDoesNotMatch) {
 		return false, err
 	}
 

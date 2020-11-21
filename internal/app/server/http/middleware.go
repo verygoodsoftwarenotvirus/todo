@@ -59,18 +59,3 @@ func buildLoggingMiddleware(logger logging.Logger) func(next http.Handler) http.
 		})
 	}
 }
-
-/*
-func httpsRedirectMiddleware(next http.Handler) http.Handler {
-	fn := func(res http.ResponseWriter, req *http.Request) {
-		if strings.EqualFold(req.URL.Scheme, "http") {
-			res.Header().Set("Connection", "close")
-			req.URL.Scheme = "https"
-			http.Redirect(res, req, req.URL.String(), http.StatusMovedPermanently)
-		} else {
-			next.ServeHTTP(res, req)
-		}
-	}
-	return http.HandlerFunc(fn)
-}
-*/

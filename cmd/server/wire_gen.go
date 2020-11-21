@@ -39,7 +39,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	authAuditManager := database.ProvideAuthAuditManager(dbm)
 	oAuth2ClientDataManager := database.ProvideOAuth2ClientDataManager(dbm)
 	oAuth2ClientAuditManager := database.ProvideOAuth2ClientAuditManager(dbm)
-	clientIDFetcher := httpserver.ProvideOAuth2ClientsServiceClientIDFetcher(logger)
+	clientIDFetcher := oauth2clients.ProvideOAuth2ClientsServiceClientIDFetcher(logger)
 	encoderDecoder := encoding.ProvideResponseEncoder(logger)
 	unitCounterProvider := metrics.ProvideUnitCounterProvider()
 	service, err := oauth2clients.ProvideOAuth2ClientsService(logger, oAuth2ClientDataManager, userDataManager, oAuth2ClientAuditManager, authenticator, clientIDFetcher, encoderDecoder, unitCounterProvider)
@@ -49,21 +49,21 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	oAuth2ClientValidator := auth2.ProvideOAuth2ClientValidator(service)
 	databaseSettings := config.ProvideConfigDatabaseSettings(cfg)
 	sessionManager := config.ProvideSessionManager(authSettings, databaseSettings, db)
-	sessionInfoFetcher := httpserver.ProvideAuthServiceSessionInfoFetcher()
+	sessionInfoFetcher := auth2.ProvideAuthServiceSessionInfoFetcher()
 	authService, err := auth2.ProvideAuthService(logger, authSettings, authenticator, userDataManager, authAuditManager, oAuth2ClientValidator, sessionManager, encoderDecoder, sessionInfoFetcher)
 	if err != nil {
 		return nil, err
 	}
 	frontendService := frontend.ProvideFrontendService(logger, frontendSettings)
 	auditLogDataManager := database.ProvideAuditLogEntryDataManager(dbm)
-	entryIDFetcher := httpserver.ProvideAuditServiceItemIDFetcher(logger)
-	auditSessionInfoFetcher := httpserver.ProvideAuditServiceSessionInfoFetcher()
+	entryIDFetcher := audit.ProvideAuditServiceItemIDFetcher(logger)
+	auditSessionInfoFetcher := audit.ProvideAuditServiceSessionInfoFetcher()
 	auditService := audit.ProvideAuditService(logger, auditLogDataManager, entryIDFetcher, auditSessionInfoFetcher, encoderDecoder)
 	auditLogDataServer := audit.ProvideAuditLogEntryDataServer(auditService)
 	itemDataManager := database.ProvideItemDataManager(dbm)
 	itemAuditManager := database.ProvideItemAuditManager(dbm)
-	itemIDFetcher := httpserver.ProvideItemsServiceItemIDFetcher(logger)
-	itemsSessionInfoFetcher := httpserver.ProvideItemsServiceSessionInfoFetcher()
+	itemIDFetcher := items.ProvideItemsServiceItemIDFetcher(logger)
+	itemsSessionInfoFetcher := items.ProvideItemsServiceSessionInfoFetcher()
 	searchSettings := config.ProvideSearchSettings(cfg)
 	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
 	searchIndex, err := items.ProvideItemsServiceSearchIndex(searchSettings, indexManagerProvider, logger)
@@ -76,8 +76,8 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	}
 	itemDataServer := items.ProvideItemDataServer(itemsService)
 	userAuditManager := database.ProvideUserAuditManager(dbm)
-	userIDFetcher := httpserver.ProvideUsersServiceUserIDFetcher(logger)
-	usersSessionInfoFetcher := httpserver.ProvideUsersServiceSessionInfoFetcher()
+	userIDFetcher := users.ProvideUsersServiceUserIDFetcher(logger)
+	usersSessionInfoFetcher := users.ProvideUsersServiceSessionInfoFetcher()
 	usersService, err := users.ProvideUsersService(authSettings, logger, userDataManager, userAuditManager, authenticator, userIDFetcher, usersSessionInfoFetcher, encoderDecoder, unitCounterProvider)
 	if err != nil {
 		return nil, err
@@ -86,8 +86,8 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	oAuth2ClientDataServer := oauth2clients.ProvideOAuth2ClientDataServer(service)
 	webhookDataManager := database.ProvideWebhookDataManager(dbm)
 	webhookAuditManager := database.ProvideWebhookAuditManager(dbm)
-	webhooksSessionInfoFetcher := httpserver.ProvideWebhooksServiceSessionInfoFetcher()
-	webhookIDFetcher := httpserver.ProvideWebhooksServiceWebhookIDFetcher(logger)
+	webhooksSessionInfoFetcher := webhooks.ProvideWebhooksServiceSessionInfoFetcher()
+	webhookIDFetcher := webhooks.ProvideWebhooksServiceWebhookIDFetcher(logger)
 	webhooksService, err := webhooks.ProvideWebhooksService(logger, webhookDataManager, webhookAuditManager, webhooksSessionInfoFetcher, webhookIDFetcher, encoderDecoder, unitCounterProvider)
 	if err != nil {
 		return nil, err
@@ -95,8 +95,8 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	webhookDataServer := webhooks.ProvideWebhookDataServer(webhooksService)
 	adminUserDataManager := database.ProvideAdminUserDataManager(dbm)
 	adminAuditManager := database.ProvideAdminAuditManager(dbm)
-	adminSessionInfoFetcher := httpserver.ProvideAdminServiceSessionInfoFetcher()
-	adminUserIDFetcher := httpserver.ProvideAdminServiceUserIDFetcher(logger)
+	adminSessionInfoFetcher := admin.ProvideAdminServiceSessionInfoFetcher()
+	adminUserIDFetcher := admin.ProvideAdminServiceUserIDFetcher(logger)
 	adminService, err := admin.ProvideAdminService(logger, authSettings, authenticator, adminUserDataManager, adminAuditManager, sessionManager, encoderDecoder, adminSessionInfoFetcher, adminUserIDFetcher)
 	if err != nil {
 		return nil, err

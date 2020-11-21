@@ -9,7 +9,6 @@ import (
 
 // Providers is our wire superset of providers this package offers.
 var Providers = wire.NewSet(
-	paramFetcherProviders,
 	ProvideServer,
 	ProvideNamespace,
 	ProvideNewsmanTypeNameManipulationFunc,

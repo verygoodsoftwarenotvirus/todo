@@ -55,8 +55,9 @@ func init() {
 		logger.Fatal(err)
 	}
 
+	clientsDebug := urlToUse == "" // change this to change debug log behavior
 	todoClient = initializeClient(oa2Client)
-	todoClient.Debug = urlToUse == "" // change this for debug logs
+	todoClient.Debug = clientsDebug
 
 	adminOAuth2Client, err := testutil.CreateObligatoryClient(ctx, urlToUse, premadeAdminUser)
 	if err != nil {
@@ -64,7 +65,7 @@ func init() {
 	}
 
 	adminClient = initializeClient(adminOAuth2Client)
-	adminClient.Debug = urlToUse == "" // change this for debug logs
+	adminClient.Debug = clientsDebug
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)

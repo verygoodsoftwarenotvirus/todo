@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
@@ -37,7 +38,7 @@ var (
 				"    `two_factor_secret` VARCHAR(256) NOT NULL,",
 				"    `two_factor_secret_verified_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    `is_admin` BOOLEAN NOT NULL DEFAULT false,",
-				"    `admin_permissions` INTEGER NOT NULL DEFAULT 0,",
+				"    `admin_permissions` BIGINT NOT NULL DEFAULT 0,",
 				"    `account_status` VARCHAR(32) NOT NULL DEFAULT 'created',",
 				"    `status_explanation` VARCHAR(32) NOT NULL DEFAULT '',",
 				"    `created_on` BIGINT UNSIGNED,",
@@ -241,6 +242,7 @@ func (m *MariaDB) Migrate(ctx context.Context, authenticator auth.Authenticator,
 				queriers.UsersTableSaltColumn,
 				queriers.UsersTableTwoFactorColumn,
 				queriers.UsersTableIsAdminColumn,
+				queriers.UsersTableAdminPermissionsColumn,
 				queriers.UsersTableTwoFactorVerifiedOnColumn,
 			).
 			Values(
@@ -250,6 +252,7 @@ func (m *MariaDB) Migrate(ctx context.Context, authenticator auth.Authenticator,
 				// `otpauth://totp/todo:username?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&issuer=todo`
 				"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 				testUserConfig.IsAdmin,
+				math.MaxUint32,
 				squirrel.Expr(currentUnixTimeQuery),
 			).
 			ToSql()

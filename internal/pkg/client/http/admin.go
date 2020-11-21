@@ -18,7 +18,13 @@ func (c *V1Client) BuildBanUserRequest(ctx context.Context, userID uint64) (*htt
 	ctx, span := tracing.StartSpan(ctx, "BuildBanUserRequest")
 	defer span.End()
 
-	uri := c.BuildURL(nil, usersBasePath, strconv.FormatUint(userID, 10), "ban")
+	uri := c.BuildURL(
+		nil,
+		adminBasePath,
+		usersBasePath,
+		strconv.FormatUint(userID, 10),
+		"ban",
+	)
 
 	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
 }
@@ -33,7 +39,7 @@ func (c *V1Client) BanUser(ctx context.Context, userID uint64) error {
 		return fmt.Errorf("error building user ban request: %w", err)
 	}
 
-	res, err := c.executeRawRequest(ctx, c.plainClient, req)
+	res, err := c.executeRawRequest(ctx, c.authedClient, req)
 	if err != nil {
 		return fmt.Errorf("executing request: %w", err)
 	}

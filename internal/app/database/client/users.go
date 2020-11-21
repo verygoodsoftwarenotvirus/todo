@@ -93,6 +93,23 @@ func (c *Client) GetUserByUsername(ctx context.Context, username string) (*types
 	return user, nil
 }
 
+// SearchForUsersByUsername fetches a list of users whose usernames begin with a given query.
+func (c *Client) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]types.User, error) {
+	ctx, span := tracing.StartSpan(ctx, "SearchForUsersByUsername")
+	defer span.End()
+
+	logger := c.logger.WithValue("query", usernameQuery)
+	user, err := c.querier.SearchForUsersByUsername(ctx, usernameQuery)
+
+	if err != nil {
+		logger.Error(err, "querying database for user")
+		return nil, err
+	}
+
+	logger.Debug("SearchForUsersByUsername called")
+	return user, nil
+}
+
 // GetAllUsersCount fetches a count of users from the database that meet a particular filter.
 func (c *Client) GetAllUsersCount(ctx context.Context) (count uint64, err error) {
 	ctx, span := tracing.StartSpan(ctx, "GetAllUsersCount")

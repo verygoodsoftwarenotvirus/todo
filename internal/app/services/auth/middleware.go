@@ -60,11 +60,12 @@ func (s *Service) AuthorizationMiddleware(allowValidCookieInLieuOfAValidToken bo
 
 func (s *Service) authorizationMiddleware(allowCookies bool, next http.Handler) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := tracing.StartSpan(req.Context(), "auth.service.authorizationMiddleware")
+		const this = "auth.service.authorizationMiddleware"
+		ctx, span := tracing.StartSpan(req.Context(), this)
 		defer span.End()
 
 		var (
-			logger = s.logger.WithRequest(req)
+			logger = s.logger.WithRequest(req).WithValue("source", this)
 			user   *types.User
 		)
 
@@ -129,11 +130,12 @@ func (s *Service) authorizationMiddleware(allowCookies bool, next http.Handler) 
 // AuthenticationMiddleware is concerned with figuring otu who a user is, but not worried about kicking out users who are not known.
 func (s *Service) AuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := tracing.StartSpan(req.Context(), "auth.service.authenticationMiddleware")
+		const this = "auth.service.AuthenticationMiddleware"
+		ctx, span := tracing.StartSpan(req.Context(), this)
 		defer span.End()
 
 		var user *types.User
-		logger := s.logger.WithRequest(req).WithValue("func_name", "authenticationMiddleware")
+		logger := s.logger.WithRequest(req).WithValue("source", this)
 
 		// check for a cookie first if we can.
 		if cookieAuth, err := s.DecodeCookieFromRequest(ctx, req); err == nil && cookieAuth != nil {
@@ -145,7 +147,7 @@ func (s *Service) AuthenticationMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		logger.Debug("checked for cookie")
+		logger.WithValue("user_found", user != nil).Debug("checked for cookie")
 
 		// if the cookie wasn't present, or didn't indicate who the user is.
 		if user == nil {

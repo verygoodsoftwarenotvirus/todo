@@ -36,12 +36,14 @@ func TestV1Client_BuildBanUserRequest(T *testing.T) {
 func TestV1Client_BanUser(T *testing.T) {
 	T.Parallel()
 
+	expectedPathFormat := "/api/v1/_admin_/users/%d/ban"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
-		expectedPath := fmt.Sprintf("/api/v1/users/%d/ban", exampleUser.ID)
+		expectedPath := fmt.Sprintf(expectedPathFormat, exampleUser.ID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -64,7 +66,7 @@ func TestV1Client_BanUser(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
-		expectedPath := fmt.Sprintf("/api/v1/users/%d/ban", exampleUser.ID)
+		expectedPath := fmt.Sprintf(expectedPathFormat, exampleUser.ID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -86,7 +88,7 @@ func TestV1Client_BanUser(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
-		expectedPath := fmt.Sprintf("/api/v1/users/%d/ban", exampleUser.ID)
+		expectedPath := fmt.Sprintf(expectedPathFormat, exampleUser.ID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -120,7 +122,7 @@ func TestV1Client_BanUser(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
-		expectedPath := fmt.Sprintf("/api/v1/users/%d/ban", exampleUser.ID)
+		expectedPath := fmt.Sprintf(expectedPathFormat, exampleUser.ID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(

@@ -452,7 +452,7 @@ func TestPostgres_buildSearchForUserByUsernameQuery(T *testing.T) {
 
 		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.admin_permissions, users.account_status, users.status_explanation, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.username ILIKE $1 AND users.archived_on IS NULL AND users.two_factor_secret_verified_on IS NOT NULL"
 		expectedArgs := []interface{}{
-			fmt.Sprintf("%%%s%%", exampleUser.Username),
+			fmt.Sprintf("%s%%", exampleUser.Username),
 		}
 		actualQuery, actualArgs := p.buildSearchForUserByUsernameQuery(exampleUser.Username)
 
@@ -462,47 +462,35 @@ func TestPostgres_buildSearchForUserByUsernameQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_SearchForUserByUsername(T *testing.T) {
+func TestPostgres_SearchForUsersByUsername(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleUser.Salt = nil
+		exampleUsername := fakes.BuildFakeUser().Username
+		exampleUsers := fakes.BuildFakeUserList().Users
+		exampleUsers[0].Salt = nil
+		exampleUsers[1].Salt = nil
+		exampleUsers[2].Salt = nil
 
 		p, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := p.buildSearchForUserByUsernameQuery(exampleUser.Username)
+		expectedQuery, expectedArgs := p.buildSearchForUserByUsernameQuery(exampleUsername)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromUsers(exampleUser))
+			WillReturnRows(
+				buildMockRowsFromUsers(
+					&exampleUsers[0],
+					&exampleUsers[1],
+					&exampleUsers[2],
+				),
+			)
 
-		actual, err := p.SearchForUserByUsername(ctx, exampleUser.Username)
+		actual, err := p.SearchForUsersByUsername(ctx, exampleUsername)
 		assert.NoError(t, err)
-		assert.Equal(t, exampleUser, actual)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-
-	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleUser := fakes.BuildFakeUser()
-
-		p, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := p.buildSearchForUserByUsernameQuery(exampleUser.Username)
-
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnError(sql.ErrNoRows)
-
-		actual, err := p.SearchForUserByUsername(ctx, exampleUser.Username)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-		assert.True(t, errors.Is(err, sql.ErrNoRows))
+		assert.Equal(t, exampleUsers, actual)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -511,18 +499,47 @@ func TestPostgres_SearchForUserByUsername(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleUsername := fakes.BuildFakeUser().Username
+		exampleUsers := fakes.BuildFakeUserList().Users
+		exampleUsers[0].Salt = nil
+		exampleUsers[1].Salt = nil
+		exampleUsers[2].Salt = nil
 
 		p, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := p.buildSearchForUserByUsernameQuery(exampleUser.Username)
+		expectedQuery, expectedArgs := p.buildSearchForUserByUsernameQuery(exampleUsername)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := p.SearchForUserByUsername(ctx, exampleUser.Username)
+		actual, err := p.SearchForUsersByUsername(ctx, exampleUsername)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		exampleUsername := fakes.BuildFakeUser().Username
+		exampleUsers := fakes.BuildFakeUserList().Users
+		exampleUsers[0].Salt = nil
+		exampleUsers[1].Salt = nil
+		exampleUsers[2].Salt = nil
+
+		p, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := p.buildSearchForUserByUsernameQuery(exampleUsername)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnError(sql.ErrNoRows)
+
+		actual, err := p.SearchForUsersByUsername(ctx, exampleUsername)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

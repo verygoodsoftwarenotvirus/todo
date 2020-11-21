@@ -6,6 +6,11 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 )
 
+const (
+	// UserIDURIParamKey is used to refer to user IDs in router params.
+	UserIDURIParamKey = "userID"
+)
+
 // BanHandler returns the user info for the user making the request.
 func (s *Service) BanHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context(), "auth.service.StatusHandler")
@@ -21,7 +26,7 @@ func (s *Service) BanHandler(res http.ResponseWriter, req *http.Request) {
 	}
 	logger = logger.WithValue("ban_giver", si.UserID)
 
-	if !si.AdminPermissions.CanCycleCookieSecrets() || !si.UserIsAdmin {
+	if !si.AdminPermissions.CanBanUsers() || !si.UserIsAdmin {
 		logger.Info("ban attempt made by admin without appropriate permissions")
 		s.encoderDecoder.EncodeInvalidPermissionsResponse(res)
 		return
@@ -37,10 +42,5 @@ func (s *Service) BanHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	s.auditLog.LogUserBanEvent(ctx, si.UserID, banRecipient)
-
-	if err := s.sessionManager.Destroy(ctx); err != nil {
-		logger.Error(err, "error removing user from session manager")
-	}
-
 	s.encoderDecoder.EncodeResponseWithStatus(res, nil, http.StatusAccepted)
 }

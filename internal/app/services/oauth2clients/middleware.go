@@ -3,10 +3,7 @@ package oauth2clients
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
-	"path/filepath"
-	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -35,49 +32,6 @@ func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, creationMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
-}
-
-// ExtractOAuth2ClientFromRequest extracts OAuth2 client data from a request.
-func (s *Service) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.Request) (*types.OAuth2Client, error) {
-	ctx, span := tracing.StartSpan(ctx, "ExtractOAuth2ClientFromRequest")
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-
-	// validate bearer token.
-	token, err := s.oauth2Handler.ValidationBearerToken(req)
-	if err != nil {
-		return nil, fmt.Errorf("validating bearer token: %w", err)
-	}
-
-	// fetch client ID.
-	clientID := token.GetClientID()
-	logger = logger.WithValue("client_id", clientID)
-
-	// fetch client by client ID.
-	c, err := s.clientDataManager.GetOAuth2ClientByClientID(ctx, clientID)
-	if err != nil {
-		logger.Error(err, "error fetching OAuth2 Client")
-		return nil, err
-	}
-
-	// determine the scope.
-	scope := determineScope(req)
-	hasScope := c.HasScope(scope)
-	logger = logger.WithValue("scope", scope).WithValue("scopes", strings.Join(c.Scopes, scopesSeparator))
-
-	if !hasScope {
-		logger.Info("rejecting client for invalid scope")
-		return nil, errClientUnauthorizedForScope
-	}
-
-	return c, nil
-}
-
-// determineScope determines the scope of a request by its URL.
-func determineScope(req *http.Request) string {
-	_, scope := filepath.Split(req.URL.Path)
-	return scope
 }
 
 // OAuth2TokenAuthenticationMiddleware authenticates Oauth tokens.

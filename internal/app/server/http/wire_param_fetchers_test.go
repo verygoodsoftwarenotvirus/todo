@@ -114,7 +114,7 @@ func Test_buildRouteParamUserIDFetcher(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		fn := buildRouteParamUserIDFetcher(noop.NewLogger())
+		fn := buildRouteParamUserIDFetcher(noop.NewLogger(), "")
 		expected := uint64(123)
 
 		req := buildRequest(t)
@@ -139,7 +139,7 @@ func Test_buildRouteParamUserIDFetcher(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 		// NOTE: This will probably never happen in dev or production
-		fn := buildRouteParamUserIDFetcher(noop.NewLogger())
+		fn := buildRouteParamUserIDFetcher(noop.NewLogger(), "")
 		expected := uint64(0)
 
 		req := buildRequest(t)

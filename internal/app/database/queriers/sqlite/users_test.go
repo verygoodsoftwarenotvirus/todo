@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func buildMockRowsFromUser(users ...*types.User) *sqlmock.Rows {
+func buildMockRowsFromUsers(users ...*types.User) *sqlmock.Rows {
 	columns := queriers.UsersTableColumns
 	exampleRows := sqlmock.NewRows(columns)
 
@@ -134,7 +134,7 @@ func TestSqlite_GetUser(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromUser(exampleUser))
+			WillReturnRows(buildMockRowsFromUsers(exampleUser))
 
 		actual, err := s.GetUser(ctx, exampleUser.ID)
 		assert.NoError(t, err)
@@ -201,7 +201,7 @@ func TestSqlite_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromUser(exampleUser))
+			WillReturnRows(buildMockRowsFromUsers(exampleUser))
 
 		actual, err := s.GetUserWithUnverifiedTwoFactorSecret(ctx, exampleUser.ID)
 		assert.NoError(t, err)
@@ -276,7 +276,7 @@ func TestSqlite_GetUsers(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
-				buildMockRowsFromUser(
+				buildMockRowsFromUsers(
 					&exampleUserList.Users[0],
 					&exampleUserList.Users[1],
 					&exampleUserList.Users[2],
@@ -388,7 +388,7 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromUser(exampleUser))
+			WillReturnRows(buildMockRowsFromUsers(exampleUser))
 
 		actual, err := s.GetUserByUsername(ctx, exampleUser.Username)
 		assert.NoError(t, err)
@@ -434,6 +434,89 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 		actual, err := s.GetUserByUsername(ctx, exampleUser.Username)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestSqlite_SearchForUsersByUsername(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		exampleUsername := fakes.BuildFakeUser().Username
+		exampleUsers := fakes.BuildFakeUserList().Users
+		exampleUsers[0].Salt = nil
+		exampleUsers[1].Salt = nil
+		exampleUsers[2].Salt = nil
+
+		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildSearchForUserByUsernameQuery(exampleUsername)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(
+				buildMockRowsFromUsers(
+					&exampleUsers[0],
+					&exampleUsers[1],
+					&exampleUsers[2],
+				),
+			)
+
+		actual, err := s.SearchForUsersByUsername(ctx, exampleUsername)
+		assert.NoError(t, err)
+		assert.Equal(t, exampleUsers, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("with error querying database", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		exampleUsername := fakes.BuildFakeUser().Username
+		exampleUsers := fakes.BuildFakeUserList().Users
+		exampleUsers[0].Salt = nil
+		exampleUsers[1].Salt = nil
+		exampleUsers[2].Salt = nil
+
+		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildSearchForUserByUsernameQuery(exampleUsername)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnError(errors.New("blah"))
+
+		actual, err := s.SearchForUsersByUsername(ctx, exampleUsername)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		exampleUsername := fakes.BuildFakeUser().Username
+		exampleUsers := fakes.BuildFakeUserList().Users
+		exampleUsers[0].Salt = nil
+		exampleUsers[1].Salt = nil
+		exampleUsers[2].Salt = nil
+
+		s, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := s.buildSearchForUserByUsernameQuery(exampleUsername)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnError(sql.ErrNoRows)
+
+		actual, err := s.SearchForUsersByUsername(ctx, exampleUsername)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

@@ -23,22 +23,9 @@ const (
 	root             = "/"
 	auditRoute       = "/audit"
 	searchRoot       = "/search"
-	numericIDPattern = "/{%s:[0-9]+}"
+	numericIDPattern = "{%s:[0-9]+}"
 	maxCORSAge       = 300
 )
-
-func (s *Server) logRoutes() {
-	if err := chi.Walk(s.router, func(method string, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
-		s.logger.WithValues(map[string]interface{}{
-			"method": method,
-			"route":  route,
-		}).Debug("route found")
-
-		return nil
-	}); err != nil {
-		s.logger.Error(err, "logging routes")
-	}
-}
 
 func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 	// Basic CORS, for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
@@ -139,7 +126,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 		Route("/api/v1", func(v1Router chi.Router) {
 			// Users
 			v1Router.Route("/users", func(usersRouter chi.Router) {
-				singleUserRoute := fmt.Sprintf(numericIDPattern, usersservice.UserIDURIParamKey)
+				singleUserRoute := fmt.Sprintf("/"+numericIDPattern, usersservice.UserIDURIParamKey)
 				usersRouter.Get("/self", s.usersService.SelfHandler)
 
 				usersRouter.With(s.authService.AdminMiddleware).Get(root, s.usersService.ListHandler)
@@ -156,10 +143,10 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 				adminRouter.Post("/cycle_cookie_secret", s.authService.CycleCookieSecretHandler)
 
 				singleUserRoute := fmt.Sprintf(numericIDPattern, adminservice.UserIDURIParamKey)
-				adminRouter.Post(fmt.Sprintf("/users%s/ban", singleUserRoute), s.adminService.BanHandler)
+				adminRouter.Delete(fmt.Sprintf("/users/%s/ban", singleUserRoute), s.adminService.BanHandler)
 
 				adminRouter.Route("/audit_log", func(auditRouter chi.Router) {
-					entryIDRouteParam := fmt.Sprintf(numericIDPattern, auditservice.LogEntryURIParamKey)
+					entryIDRouteParam := fmt.Sprintf("/"+numericIDPattern, auditservice.LogEntryURIParamKey)
 					auditRouter.Get(root, s.auditService.ListHandler)
 					auditRouter.Route(entryIDRouteParam, func(singleEntryRouter chi.Router) {
 						singleEntryRouter.Get(root, s.auditService.ReadHandler)
@@ -169,7 +156,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 
 			// OAuth2 Clients.
 			v1Router.Route("/oauth2/clients", func(clientRouter chi.Router) {
-				singleClientRoute := fmt.Sprintf(numericIDPattern, oauth2clientsservice.OAuth2ClientIDURIParamKey)
+				singleClientRoute := fmt.Sprintf("/"+numericIDPattern, oauth2clientsservice.OAuth2ClientIDURIParamKey)
 				clientRouter.Get(root, s.oauth2ClientsService.ListHandler)
 				// CreateHandler is not bound to an OAuth2 authentication token.
 				// UpdateHandler not supported for OAuth2 clients.
@@ -183,7 +170,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 
 			// Webhooks.
 			v1Router.Route("/webhooks", func(webhookRouter chi.Router) {
-				singleWebhookRoute := fmt.Sprintf(numericIDPattern, webhooksservice.WebhookIDURIParamKey)
+				singleWebhookRoute := fmt.Sprintf("/"+numericIDPattern, webhooksservice.WebhookIDURIParamKey)
 				webhookRouter.With(s.webhooksService.CreationInputMiddleware).Post(root, s.webhooksService.CreateHandler)
 				webhookRouter.Get(root, s.webhooksService.ListHandler)
 
@@ -198,7 +185,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 			// Items
 			itemPath := "items"
 			itemsRouteWithPrefix := fmt.Sprintf("/%s", itemPath)
-			itemIDRouteParam := fmt.Sprintf(numericIDPattern, itemsservice.ItemIDURIParamKey)
+			itemIDRouteParam := fmt.Sprintf("/"+numericIDPattern, itemsservice.ItemIDURIParamKey)
 			v1Router.Route(itemsRouteWithPrefix, func(itemsRouter chi.Router) {
 				itemsRouter.With(s.itemsService.CreationInputMiddleware).Post(root, s.itemsService.CreateHandler)
 				itemsRouter.Get(root, s.itemsService.ListHandler)
@@ -217,5 +204,20 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 	s.httpServer.Handler = &ochttp.Handler{
 		Handler:        mux,
 		FormatSpanName: formatSpanNameForRequest,
+	}
+	// logRoutes won't work without this
+	s.router = mux
+}
+
+func (s *Server) logRoutes() {
+	if err := chi.Walk(s.router, func(method string, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
+		s.logger.WithValues(map[string]interface{}{
+			"method": method,
+			"route":  route,
+		}).Debug("route found")
+
+		return nil
+	}); err != nil {
+		s.logger.Error(err, "logging routes")
 	}
 }

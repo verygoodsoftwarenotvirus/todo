@@ -189,7 +189,7 @@ func (p *Postgres) buildSearchForUserByUsernameQuery(usernameQuery string) (quer
 		From(queriers.UsersTableName).
 		Where(squirrel.Expr(
 			fmt.Sprintf("%s.%s ILIKE ?", queriers.UsersTableName, queriers.UsersTableUsernameColumn),
-			fmt.Sprintf("%%%s%%", usernameQuery),
+			fmt.Sprintf("%s%%", usernameQuery),
 		)).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.ArchivedOnColumn): nil,
@@ -204,12 +204,15 @@ func (p *Postgres) buildSearchForUserByUsernameQuery(usernameQuery string) (quer
 	return query, args
 }
 
-// SearchForUserByUsername fetches a user by their username.
-func (p *Postgres) SearchForUserByUsername(ctx context.Context, usernameQuery string) (*types.User, error) {
+// SearchForUsersByUsername fetches a list of users whose usernames begin with a given query.
+func (p *Postgres) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]types.User, error) {
 	query, args := p.buildSearchForUserByUsernameQuery(usernameQuery)
-	row := p.db.QueryRowContext(ctx, query, args...)
+	rows, err := p.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("error querying database for users: %w", err)
+	}
 
-	u, err := p.scanUser(row)
+	u, err := p.scanUsers(rows)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err

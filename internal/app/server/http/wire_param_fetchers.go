@@ -37,7 +37,7 @@ var paramFetcherProviders = wire.NewSet(
 
 // ProvideAdminServiceUserIDFetcher provides a UsernameFetcher.
 func ProvideAdminServiceUserIDFetcher(logger logging.Logger) adminservice.UserIDFetcher {
-	return buildRouteParamUserIDFetcher(logger)
+	return buildRouteParamUserIDFetcher(logger, adminservice.UserIDURIParamKey)
 }
 
 // ProvideAdminServiceSessionInfoFetcher provides a SessionInfoFetcher.
@@ -47,7 +47,7 @@ func ProvideAdminServiceSessionInfoFetcher() adminservice.SessionInfoFetcher {
 
 // ProvideUsersServiceUserIDFetcher provides a UsernameFetcher.
 func ProvideUsersServiceUserIDFetcher(logger logging.Logger) usersservice.UserIDFetcher {
-	return buildRouteParamUserIDFetcher(logger)
+	return buildRouteParamUserIDFetcher(logger, usersservice.UserIDURIParamKey)
 }
 
 // ProvideUsersServiceSessionInfoFetcher provides a SessionInfoFetcher.
@@ -125,9 +125,9 @@ func sessionInfoFetcherFromRequestContext(req *http.Request) (*types.SessionInfo
 }
 
 // buildRouteParamUserIDFetcher builds a function that fetches a EnsureUsername from a request routed by chi.
-func buildRouteParamUserIDFetcher(logger logging.Logger) func(req *http.Request) uint64 {
+func buildRouteParamUserIDFetcher(logger logging.Logger, key string) func(req *http.Request) uint64 {
 	return func(req *http.Request) uint64 {
-		u, err := strconv.ParseUint(chi.URLParam(req, usersservice.UserIDURIParamKey), 10, 64)
+		u, err := strconv.ParseUint(chi.URLParam(req, key), 10, 64)
 		if err != nil {
 			logger.Error(err, "fetching user ID from request")
 		}

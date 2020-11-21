@@ -90,6 +90,27 @@ func TestClient_GetUserByUsername(T *testing.T) {
 	})
 }
 
+func TestClient_SearchForUsersByUsername(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		exampleUsername := fakes.BuildFakeUser().Username
+		exampleUserList := fakes.BuildFakeUserList().Users
+
+		c, mockDB := buildTestClient()
+		mockDB.UserDataManager.On("SearchForUsersByUsername", mock.Anything, exampleUsername).Return(exampleUserList, nil)
+
+		actual, err := c.SearchForUsersByUsername(ctx, exampleUsername)
+		assert.NoError(t, err)
+		assert.Equal(t, exampleUserList, actual)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
+	})
+}
+
 func TestClient_GetAllUsersCount(T *testing.T) {
 	T.Parallel()
 

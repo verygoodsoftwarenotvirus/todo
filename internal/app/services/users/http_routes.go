@@ -73,6 +73,26 @@ func (s *Service) validateCredentialChangeRequest(
 	return user, http.StatusOK
 }
 
+// UsernameSearchHandler is a handler for responding to username queries.
+func (s *Service) UsernameSearchHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := tracing.StartSpan(req.Context(), "users.service.UsernameSearchHandler")
+	defer span.End()
+
+	query := req.URL.Query().Get(types.SearchQueryKey)
+	logger := s.logger.WithRequest(req).WithValue("query", query)
+
+	// fetch user data.
+	users, err := s.userDataManager.SearchForUsersByUsername(ctx, query)
+	if err != nil {
+		logger.Error(err, "error fetching users for UsernameSearchHandler route")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		return
+	}
+
+	// encode response.
+	s.encoderDecoder.EncodeResponse(res, users)
+}
+
 // ListHandler is a handler for responding with a list of users.
 func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context(), "users.service.ListHandler")

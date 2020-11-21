@@ -178,6 +178,49 @@ func (m *MariaDB) GetUserByUsername(ctx context.Context, username string) (*type
 	return u, nil
 }
 
+// buildSearchForUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
+func (m *MariaDB) buildSearchForUserByUsernameQuery(usernameQuery string) (query string, args []interface{}) {
+	var err error
+
+	query, args, err = m.sqlBuilder.
+		Select(queriers.UsersTableColumns...).
+		From(queriers.UsersTableName).
+		Where(squirrel.Expr(
+			fmt.Sprintf("%s.%s LIKE ?", queriers.UsersTableName, queriers.UsersTableUsernameColumn),
+			fmt.Sprintf("%s%%", usernameQuery),
+		)).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.ArchivedOnColumn): nil,
+		}).
+		Where(squirrel.NotEq{
+			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.UsersTableTwoFactorVerifiedOnColumn): nil,
+		}).
+		ToSql()
+
+	m.logQueryBuildingError(err)
+
+	return query, args
+}
+
+// SearchForUsersByUsername fetches a list of users whose usernames begin with a given query.
+func (m *MariaDB) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]types.User, error) {
+	query, args := m.buildSearchForUserByUsernameQuery(usernameQuery)
+	rows, err := m.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("error querying database for users: %w", err)
+	}
+
+	u, err := m.scanUsers(rows)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return nil, fmt.Errorf("fetching user from database: %w", err)
+	}
+
+	return u, nil
+}
+
 // buildGetAllUsersCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
 // to a given filter's criteria.
 func (m *MariaDB) buildGetAllUsersCountQuery() (query string) {

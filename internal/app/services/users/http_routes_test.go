@@ -264,6 +264,64 @@ func TestService_ListHandler(T *testing.T) {
 	})
 }
 
+func TestService_UsernameSearchHandler(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
+		s := buildTestService(t)
+
+		exampleUsername := fakes.BuildFakeUser().Username
+		exampleUserList := fakes.BuildFakeUserList().Users
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On("SearchForUsersByUsername", mock.Anything, exampleUsername).Return(exampleUserList, nil)
+		s.userDataManager = mockDB
+
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("[]types.User"))
+		s.encoderDecoder = ed
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+		v := req.URL.Query()
+		v.Set(types.SearchQueryKey, exampleUsername)
+		req.URL.RawQuery = v.Encode()
+
+		s.UsernameSearchHandler(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
+	})
+
+	T.Run("with error reading from database", func(t *testing.T) {
+		t.Parallel()
+
+		s := buildTestService(t)
+		exampleUsername := fakes.BuildFakeUser().Username
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On("SearchForUsersByUsername", mock.Anything, exampleUsername).Return([]types.User{}, errors.New("blah"))
+		s.userDataManager = mockDB
+
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		s.encoderDecoder = ed
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+		v := req.URL.Query()
+		v.Set(types.SearchQueryKey, exampleUsername)
+		req.URL.RawQuery = v.Encode()
+
+		s.UsernameSearchHandler(res, req)
+
+		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, ed)
+	})
+}
+
 func TestService_CreateHandler(T *testing.T) {
 	T.Parallel()
 

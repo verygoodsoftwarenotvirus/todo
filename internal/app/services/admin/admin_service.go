@@ -14,8 +14,6 @@ import (
 
 const (
 	serviceName = "auth_service"
-	// UserIDURIParamKey is used to refer to user IDs in router params.
-	UserIDURIParamKey = "userID"
 )
 
 type (

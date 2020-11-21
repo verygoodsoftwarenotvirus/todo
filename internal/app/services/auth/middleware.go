@@ -2,9 +2,10 @@ package auth
 
 import (
 	"context"
+	"net/http"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"net/http"
 )
 
 const (

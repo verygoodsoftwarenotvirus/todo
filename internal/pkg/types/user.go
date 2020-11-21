@@ -183,6 +183,7 @@ func (u *User) ToSessionInfo() *SessionInfo {
 	}
 }
 
+// IsBanned is a handy helper function.
 func (u *User) IsBanned() bool {
 	return u.AccountStatus == BannedStandingAccountStatus
 }

@@ -3,13 +3,15 @@ package client
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestV1Client_BuildBanUserRequest(T *testing.T) {

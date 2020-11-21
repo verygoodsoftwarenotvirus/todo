@@ -4,13 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"math"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/exampledata"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/GuiaBolso/darwin"
 	"github.com/Masterminds/squirrel"

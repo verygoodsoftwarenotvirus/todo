@@ -45,7 +45,7 @@ func init() {
 	logger.WithValue("url", urlToUse).Info("checking server")
 	testutil.EnsureServerIsUp(ctx, urlToUse)
 
-	ogUser, err := testutil.CreateObligatoryUser(urlToUse, debug)
+	ogUser, err := testutil.CreateObligatoryUser(ctx, urlToUse, "", debug)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -55,15 +55,14 @@ func init() {
 		logger.Fatal(err)
 	}
 
-	clientsDebug := urlToUse == "" // change this to change debug log behavior
-	todoClient = initializeClient(oa2Client)
-	todoClient.Debug = clientsDebug
-
+	clientsDebug := true // change this to change debug log behavior
 	adminOAuth2Client, err := testutil.CreateObligatoryClient(ctx, urlToUse, premadeAdminUser)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
+	todoClient = initializeClient(oa2Client)
+	todoClient.Debug = clientsDebug
 	adminClient = initializeClient(adminOAuth2Client)
 	adminClient.Debug = clientsDebug
 

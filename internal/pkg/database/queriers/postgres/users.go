@@ -454,8 +454,16 @@ func (p *Postgres) buildBanUserQuery(userID uint64) (query string, args []interf
 // BanUser bans a user.
 func (p *Postgres) BanUser(ctx context.Context, userID uint64) error {
 	query, args := p.buildBanUserQuery(userID)
-	_, err := p.db.ExecContext(ctx, query, args...)
-	return err
+	res, err := p.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+
+	if count, err := res.RowsAffected(); count == 0 || err != nil {
+		return sql.ErrNoRows
+	}
+
+	return nil
 }
 
 // buildArchiveUserQuery builds a SQL query that marks a user as archived.

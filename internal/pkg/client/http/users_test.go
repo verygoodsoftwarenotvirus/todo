@@ -160,6 +160,80 @@ func TestV1Client_GetUsers(T *testing.T) {
 	})
 }
 
+func TestV1Client_BuildSearchForUsersByUsernameRequest(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		expectedMethod := http.MethodGet
+		exampleUsername := fakes.BuildFakeUser().Username
+		ts := httptest.NewTLSServer(nil)
+
+		c := buildTestClient(t, ts)
+		actual, err := c.BuildSearchForUsersByUsernameRequest(ctx, exampleUsername)
+
+		require.NotNil(t, actual)
+		assert.NoError(t, err, "no error should be returned")
+		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
+	})
+}
+
+func TestV1Client_SearchForUsersByUsername(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+		exampleUsername := fakes.BuildFakeUser().Username
+
+		exampleUserList := fakes.BuildFakeUserList()
+		// the hashed password is never transmitted over the wire.
+		exampleUserList.Users[0].HashedPassword = ""
+		exampleUserList.Users[1].HashedPassword = ""
+		exampleUserList.Users[2].HashedPassword = ""
+		// the two factor secret is transmitted over the wire only on creation.
+		exampleUserList.Users[0].TwoFactorSecret = ""
+		exampleUserList.Users[1].TwoFactorSecret = ""
+		exampleUserList.Users[2].TwoFactorSecret = ""
+		// the two factor secret validation is never transmitted over the wire.
+		exampleUserList.Users[0].TwoFactorSecretVerifiedOn = nil
+		exampleUserList.Users[1].TwoFactorSecretVerifiedOn = nil
+		exampleUserList.Users[2].TwoFactorSecretVerifiedOn = nil
+		exampleUsers := exampleUserList.Users
+
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, req.URL.Path, "/api/v1/users/search", "expected and actual paths do not match")
+					assert.Equal(t, req.Method, http.MethodGet)
+					require.NoError(t, json.NewEncoder(res).Encode(exampleUsers))
+				},
+			),
+		)
+
+		c := buildTestClient(t, ts)
+		actual, err := c.SearchForUsersByUsername(ctx, exampleUsername)
+
+		require.NotNil(t, actual)
+		assert.NoError(t, err, "no error should be returned")
+		assert.Equal(t, exampleUsers, actual)
+	})
+
+	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+		exampleUsername := fakes.BuildFakeUser().Username
+
+		c := buildTestClientWithInvalidURL(t)
+		actual, err := c.SearchForUsersByUsername(ctx, exampleUsername)
+
+		assert.Nil(t, actual)
+		assert.Error(t, err, "error should be returned")
+	})
+}
+
 func TestV1Client_BuildCreateUserRequest(T *testing.T) {
 	T.Parallel()
 

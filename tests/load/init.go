@@ -32,7 +32,7 @@ func init() {
 	logger.WithValue("url", urlToUse).Info("checking server")
 	testutil.EnsureServerIsUp(ctx, urlToUse)
 
-	u, err := testutil.CreateObligatoryUser(urlToUse, debug)
+	u, err := testutil.CreateObligatoryUser(ctx, urlToUse, "", debug)
 	if err != nil {
 		logger.Fatal(err)
 	}

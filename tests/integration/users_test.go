@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base32"
+	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -150,6 +152,58 @@ func TestUsers(test *testing.T) {
 		})
 	})
 
+	test.Run("Searching", func(t *testing.T) {
+		t.Run("it should return empty slice when searching for a username that doesn't exist", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			// Search For user.
+			actual, err := adminClient.SearchForUsersByUsername(ctx, "   this is a really long string that contains characters unlikely to yield any real results   ")
+			assert.Nil(t, actual)
+			assert.NoError(t, err)
+		})
+
+		t.Run("it should only be accessible to admins", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			// Search For user.
+			actual, err := todoClient.SearchForUsersByUsername(ctx, "   this is a really long string that contains characters unlikely to yield any real results   ")
+			assert.Nil(t, actual)
+			assert.Error(t, err)
+		})
+
+		t.Run("it should be searchable", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			exampleUsername := fakes.BuildFakeUser().Username
+
+			// create users
+			createdUserIDs := []uint64{}
+			for i := 0; i < 5; i++ {
+				user, err := testutil.CreateObligatoryUser(ctx, urlToUse, fmt.Sprintf("%s%d", exampleUsername, i), debug)
+				require.NoError(t, err)
+				createdUserIDs = append(createdUserIDs, user.ID)
+			}
+
+			// execute search
+			actual, err := adminClient.SearchForUsersByUsername(ctx, exampleUsername)
+			assert.NoError(t, err)
+			assert.NotEmpty(t, actual)
+
+			// ensure results look how we expect them to look
+			for _, result := range actual {
+				assert.True(t, strings.HasPrefix(result.Username, exampleUsername))
+			}
+
+			// clean up
+			for _, id := range createdUserIDs {
+				require.NoError(t, adminClient.ArchiveUser(ctx, id))
+			}
+		})
+	})
+
 	test.Run("Deleting", func(t *testing.T) {
 		t.Run("should be able to be deleted", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
@@ -177,10 +231,10 @@ func TestUsers(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()
 
-			exampleUser := fakes.BuildFakeUser()
-			exampleUser.ID = nonexistentID
+			// Ban user.
+			assert.Error(t, adminClient.BanUser(ctx, nonexistentID))
 
-			x, err := adminClient.GetAuditLogForUser(ctx, exampleUser.ID)
+			x, err := adminClient.GetAuditLogForUser(ctx, nonexistentID)
 			assert.NoError(t, err)
 			assert.Empty(t, x)
 		})

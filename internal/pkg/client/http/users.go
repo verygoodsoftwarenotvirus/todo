@@ -68,11 +68,11 @@ func (c *V1Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (*ty
 }
 
 // BuildSearchForUsersByUsernameRequest builds an HTTP request that searches for a user.
-func (c *V1Client) BuildSearchForUsersByUsernameRequest(ctx context.Context, username string, filter *types.QueryFilter) (*http.Request, error) {
+func (c *V1Client) BuildSearchForUsersByUsernameRequest(ctx context.Context, username string) (*http.Request, error) {
 	ctx, span := tracing.StartSpan(ctx, "BuildSearchForUsersByUsernameRequest")
 	defer span.End()
 
-	u := c.buildRawURL(filter.ToValues(), usersBasePath)
+	u := c.buildRawURL(nil, usersBasePath, "search")
 	q := u.Query()
 	q.Set(types.SearchQueryKey, username)
 	u.RawQuery = q.Encode()
@@ -82,13 +82,11 @@ func (c *V1Client) BuildSearchForUsersByUsernameRequest(ctx context.Context, use
 }
 
 // SearchForUsersByUsername retrieves a list of users.
-func (c *V1Client) SearchForUsersByUsername(ctx context.Context, username string, filter *types.QueryFilter) (*types.UserList, error) {
+func (c *V1Client) SearchForUsersByUsername(ctx context.Context, username string) (users []types.User, err error) {
 	ctx, span := tracing.StartSpan(ctx, "SearchForUsersByUsername")
 	defer span.End()
 
-	users := &types.UserList{}
-
-	req, err := c.BuildSearchForUsersByUsernameRequest(ctx, username, filter)
+	req, err := c.BuildSearchForUsersByUsernameRequest(ctx, username)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}

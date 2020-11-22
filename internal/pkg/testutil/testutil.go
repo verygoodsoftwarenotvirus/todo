@@ -109,8 +109,10 @@ func IsUp(ctx context.Context, address string) bool {
 }
 
 // CreateObligatoryUser creates a user for the sake of having an OAuth2 client.
-func CreateObligatoryUser(address string, debug bool) (*types.User, error) {
-	ctx := context.Background()
+func CreateObligatoryUser(ctx context.Context, address, username string, debug bool) (*types.User, error) {
+	if username == "" {
+		username = fake.Password(true, true, true, false, false, 32)
+	}
 
 	tu, parseErr := url.Parse(address)
 	if parseErr != nil {
@@ -122,7 +124,6 @@ func CreateObligatoryUser(address string, debug bool) (*types.User, error) {
 		return nil, clientInitErr
 	}
 
-	username := fake.Password(true, true, true, false, false, 32)
 	in := &types.UserCreationInput{
 		Username: username,
 		Password: fake.Password(true, true, true, true, true, 64),

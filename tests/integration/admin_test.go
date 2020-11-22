@@ -12,6 +12,14 @@ import (
 
 func TestAdmin(test *testing.T) {
 	test.Run("User Management", func(t *testing.T) {
+		t.Run("it should return an error when trying to ban a user that does not exist", func(t *testing.T) {
+			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			defer span.End()
+
+			// Ban user.
+			assert.Error(t, adminClient.BanUser(ctx, nonexistentID))
+		})
+
 		t.Run("users should be bannable", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background(), t.Name())
 			defer span.End()

@@ -132,7 +132,7 @@ func TestItems(test *testing.T) {
 			defer span.End()
 
 			// create user and oauth2 client A.
-			userA, err := testutil.CreateObligatoryUser(urlToUse, debug)
+			userA, err := testutil.CreateObligatoryUser(ctx, urlToUse, "", debug)
 			require.NoError(t, err)
 
 			ca, err := testutil.CreateObligatoryClient(ctx, urlToUse, userA)
@@ -168,7 +168,7 @@ func TestItems(test *testing.T) {
 			query := exampleItemA.Name
 
 			// create user and oauth2 client B.
-			userB, err := testutil.CreateObligatoryUser(urlToUse, debug)
+			userB, err := testutil.CreateObligatoryUser(ctx, urlToUse, "", debug)
 			require.NoError(t, err)
 
 			cb, err := testutil.CreateObligatoryClient(ctx, urlToUse, userB)

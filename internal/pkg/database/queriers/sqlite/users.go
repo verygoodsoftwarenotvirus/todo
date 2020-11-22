@@ -453,8 +453,16 @@ func (s *Sqlite) buildBanUserQuery(userID uint64) (query string, args []interfac
 // BanUser bans a user.
 func (s *Sqlite) BanUser(ctx context.Context, userID uint64) error {
 	query, args := s.buildBanUserQuery(userID)
-	_, err := s.db.ExecContext(ctx, query, args...)
-	return err
+	res, err := s.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+
+	if count, err := res.RowsAffected(); count == 0 || err != nil {
+		return sql.ErrNoRows
+	}
+
+	return nil
 }
 
 // buildArchiveUserQuery builds a SQL query that marks a user as archived.

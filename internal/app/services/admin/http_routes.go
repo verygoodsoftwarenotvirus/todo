@@ -1,6 +1,8 @@
 package admin
 
 import (
+	"database/sql"
+	"errors"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
@@ -37,7 +39,11 @@ func (s *Service) BanHandler(res http.ResponseWriter, req *http.Request) {
 
 	if err := s.userDB.BanUser(ctx, banRecipient); err != nil {
 		logger.Error(err, "error banning user")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		if errors.Is(err, sql.ErrNoRows) {
+			s.encoderDecoder.EncodeNotFoundResponse(res)
+		} else {
+			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		}
 		return
 	}
 

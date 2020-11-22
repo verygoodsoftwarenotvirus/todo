@@ -455,8 +455,16 @@ func (m *MariaDB) buildBanUserQuery(userID uint64) (query string, args []interfa
 // BanUser bans a user.
 func (m *MariaDB) BanUser(ctx context.Context, userID uint64) error {
 	query, args := m.buildBanUserQuery(userID)
-	_, err := m.db.ExecContext(ctx, query, args...)
-	return err
+	res, err := m.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+
+	if count, err := res.RowsAffected(); count == 0 || err != nil {
+		return sql.ErrNoRows
+	}
+
+	return nil
 }
 
 // buildArchiveUserQuery builds a SQL query that marks a user as archived.

@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -133,6 +134,46 @@ func TestService_StatusHandler(T *testing.T) {
 
 		s.BanHandler(res, req)
 		assert.Equal(t, http.StatusForbidden, res.Code)
+	})
+
+	T.Run("returns 404 when user doesn't exist", func(t *testing.T) {
+		t.Parallel()
+
+		s := buildTestService(t)
+		ctx, err := s.sessionManager.Load(context.Background(), "")
+		require.NoError(t, err)
+
+		exampleUser := fakes.BuildFakeUser()
+		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
+			return &types.SessionInfo{
+				UserID:           exampleUser.ID,
+				UserIsAdmin:      true,
+				AdminPermissions: testutil.BuildMaxAdminPerms(),
+			}, nil
+		}
+
+		exampleUserToBeBanned := fakes.BuildFakeUser()
+		s.userIDFetcher = func(req *http.Request) uint64 {
+			return exampleUserToBeBanned.ID
+		}
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://blah.com", nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		udb := &mockmodels.AdminUserDataManager{}
+		udb.On(
+			"BanUser",
+			mock.Anything,
+			exampleUserToBeBanned.ID,
+		).Return(sql.ErrNoRows)
+		s.userDB = udb
+
+		s.BanHandler(res, req)
+		assert.Equal(t, http.StatusNotFound, res.Code)
+
+		mock.AssertExpectationsForObjects(t, udb)
 	})
 
 	T.Run("with error banning user", func(t *testing.T) {

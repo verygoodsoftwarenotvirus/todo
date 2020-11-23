@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/http/httputil"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -38,14 +40,16 @@ type requestSpec struct {
 	path            string
 	pathArgs        []interface{}
 	method          string
+	query           string
 	bodyShouldBeNil bool
 }
 
-func newRequestSpec(bodyShouldBeNil bool, method, path string, pathArgs ...interface{}) requestSpec {
+func newRequestSpec(bodyShouldBeNil bool, method, query, path string, pathArgs ...interface{}) requestSpec {
 	return requestSpec{
 		path:            path,
 		pathArgs:        pathArgs,
 		method:          method,
+		query:           query,
 		bodyShouldBeNil: bodyShouldBeNil,
 	}
 }
@@ -57,6 +61,18 @@ func assertRequestQuality(t *testing.T, req *http.Request, spec requestSpec) {
 
 	require.NotNil(t, req, "provided req must not be nil")
 	require.NotNil(t, spec, "provided spec must not be nil")
+
+	bodyBytes, err := httputil.DumpRequest(req, true)
+	require.NotEmpty(t, bodyBytes)
+	require.NoError(t, err)
+
+	if spec.bodyShouldBeNil {
+		bodyLines := strings.Split(string(bodyBytes), "\n")
+		require.NotEmpty(t, bodyLines)
+		assert.Empty(t, bodyLines[len(bodyLines)-1])
+	}
+
+	assert.Equal(t, spec.query, req.URL.Query().Encode(), "expected query to be %q, but was %q instead", spec.query, req.URL.Query().Encode())
 	assert.Equal(t, expectedPath, req.URL.Path, "expected path to be %q, but was %q instead", expectedPath, req.URL.Path)
 	assert.Equal(t, spec.method, req.Method, "expected method to be %q, but was %q instead", spec.method, req.Method)
 }

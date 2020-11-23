@@ -3,11 +3,8 @@ package client
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
-	"strings"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -20,15 +17,17 @@ import (
 func TestV1Client_BuildItemExistsRequest(T *testing.T) {
 	T.Parallel()
 
+	const expectedPathFormat = "/api/v1/items/%d"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
-		exampleItemID := fakes.BuildFakeItem().ID
-		actual, err := c.BuildItemExistsRequest(ctx, exampleItemID)
-		spec := newRequestSpec(true, http.MethodHead, "/api/v1/items/%d", exampleItemID)
+		exampleItem := fakes.BuildFakeItem()
+		actual, err := c.BuildItemExistsRequest(ctx, exampleItem.ID)
+		spec := newRequestSpec(true, http.MethodHead, "", expectedPathFormat, exampleItem.ID)
 
 		assert.NoError(t, err)
 		assertRequestQuality(t, actual, spec)
@@ -38,18 +37,20 @@ func TestV1Client_BuildItemExistsRequest(T *testing.T) {
 func TestV1Client_ItemExists(T *testing.T) {
 	T.Parallel()
 
+	const expectedPathFormat = "/api/v1/items/%d"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
 		exampleItem := fakes.BuildFakeItem()
+		spec := newRequestSpec(true, http.MethodHead, "", expectedPathFormat, exampleItem.ID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.True(t, strings.HasSuffix(req.URL.String(), strconv.Itoa(int(exampleItem.ID))))
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/items/%d", exampleItem.ID), "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodHead)
+					assertRequestQuality(t, req, spec)
+
 					res.WriteHeader(http.StatusOK)
 				},
 			),
@@ -79,40 +80,42 @@ func TestV1Client_ItemExists(T *testing.T) {
 func TestV1Client_BuildGetItemRequest(T *testing.T) {
 	T.Parallel()
 
+	const expectedPathFormat = "/api/v1/items/%d"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		expectedMethod := http.MethodGet
 		ts := httptest.NewTLSServer(nil)
 
 		exampleItem := fakes.BuildFakeItem()
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleItem.ID)
 
 		c := buildTestClient(t, ts)
 		actual, err := c.BuildGetItemRequest(ctx, exampleItem.ID)
+		assert.NoError(t, err)
 
-		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
-		assert.True(t, strings.HasSuffix(actual.URL.String(), fmt.Sprintf("%d", exampleItem.ID)))
-		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
+		assertRequestQuality(t, actual, spec)
 	})
 }
 
 func TestV1Client_GetItem(T *testing.T) {
 	T.Parallel()
 
+	const expectedPathFormat = "/api/v1/items/%d"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
 		exampleItem := fakes.BuildFakeItem()
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleItem.ID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.True(t, strings.HasSuffix(req.URL.String(), strconv.Itoa(int(exampleItem.ID))))
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/items/%d", exampleItem.ID), "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodGet)
+					assertRequestQuality(t, req, spec)
+
 					require.NoError(t, json.NewEncoder(res).Encode(exampleItem))
 				},
 			),
@@ -144,13 +147,13 @@ func TestV1Client_GetItem(T *testing.T) {
 		ctx := context.Background()
 
 		exampleItem := fakes.BuildFakeItem()
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleItem.ID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.True(t, strings.HasSuffix(req.URL.String(), strconv.Itoa(int(exampleItem.ID))))
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/items/%d", exampleItem.ID), "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodGet)
+					assertRequestQuality(t, req, spec)
+
 					require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
 				},
 			),
@@ -167,41 +170,43 @@ func TestV1Client_GetItem(T *testing.T) {
 func TestV1Client_BuildGetItemsRequest(T *testing.T) {
 	T.Parallel()
 
+	const expectedPath = "/api/v1/items"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
 		filter := (*types.QueryFilter)(nil)
-		expectedMethod := http.MethodGet
 		ts := httptest.NewTLSServer(nil)
+		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
 		c := buildTestClient(t, ts)
 		actual, err := c.BuildGetItemsRequest(ctx, filter)
-
-		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
+
+		assertRequestQuality(t, actual, spec)
 	})
 }
 
 func TestV1Client_GetItems(T *testing.T) {
 	T.Parallel()
 
+	const expectedPath = "/api/v1/items"
+
+	spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
 		filter := (*types.QueryFilter)(nil)
-
-		expectedPath := "/api/v1/items"
-
 		exampleItemList := fakes.BuildFakeItemList()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodGet)
+					assertRequestQuality(t, req, spec)
+
 					require.NoError(t, json.NewEncoder(res).Encode(exampleItemList))
 				},
 			),
@@ -234,13 +239,11 @@ func TestV1Client_GetItems(T *testing.T) {
 
 		filter := (*types.QueryFilter)(nil)
 
-		expectedPath := "/api/v1/items"
-
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodGet)
+					assertRequestQuality(t, req, spec)
+
 					require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
 				},
 			),
@@ -257,28 +260,6 @@ func TestV1Client_GetItems(T *testing.T) {
 func TestV1Client_BuildSearchItemsRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		limit := types.DefaultQueryFilter().Limit
-		exampleQuery := "whatever"
-
-		expectedMethod := http.MethodGet
-		ts := httptest.NewTLSServer(nil)
-
-		c := buildTestClient(t, ts)
-		actual, err := c.BuildSearchItemsRequest(ctx, exampleQuery, limit)
-
-		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
-	})
-}
-
-func TestV1Client_SearchItems(T *testing.T) {
-	T.Parallel()
-
 	const expectedPath = "/api/v1/items/search"
 
 	T.Run("happy path", func(t *testing.T) {
@@ -287,16 +268,36 @@ func TestV1Client_SearchItems(T *testing.T) {
 
 		limit := types.DefaultQueryFilter().Limit
 		exampleQuery := "whatever"
+		spec := newRequestSpec(true, http.MethodGet, "limit=20&q=whatever", expectedPath)
+		ts := httptest.NewTLSServer(nil)
 
+		c := buildTestClient(t, ts)
+		actual, err := c.BuildSearchItemsRequest(ctx, exampleQuery, limit)
+		assert.NoError(t, err, "no error should be returned")
+
+		assertRequestQuality(t, actual, spec)
+	})
+}
+
+func TestV1Client_SearchItems(T *testing.T) {
+	T.Parallel()
+
+	const expectedPath = "/api/v1/items/search"
+
+	exampleQuery := "whatever"
+	spec := newRequestSpec(true, http.MethodGet, "limit=20&q=whatever", expectedPath)
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		limit := types.DefaultQueryFilter().Limit
 		exampleItemList := fakes.BuildFakeItemList().Items
-
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
-					assert.Equal(t, req.URL.Query().Get(types.SearchQueryKey), exampleQuery, "expected and actual search query param do not match")
-					assert.Equal(t, req.URL.Query().Get(types.LimitQueryKey), strconv.FormatUint(uint64(limit), 10), "expected and actual limit query param do not match")
-					assert.Equal(t, req.Method, http.MethodGet)
+					assertRequestQuality(t, req, spec)
+
 					require.NoError(t, json.NewEncoder(res).Encode(exampleItemList))
 				},
 			),
@@ -312,12 +313,11 @@ func TestV1Client_SearchItems(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
-
 		limit := types.DefaultQueryFilter().Limit
-		exampleQuery := "whatever"
-
 		c := buildTestClientWithInvalidURL(t)
+
 		actual, err := c.SearchItems(ctx, exampleQuery, limit)
 
 		assert.Nil(t, actual)
@@ -326,18 +326,14 @@ func TestV1Client_SearchItems(T *testing.T) {
 
 	T.Run("with invalid response", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
-
 		limit := types.DefaultQueryFilter().Limit
-		exampleQuery := "whatever"
-
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
-					assert.Equal(t, req.URL.Query().Get(types.SearchQueryKey), exampleQuery, "expected and actual search query param do not match")
-					assert.Equal(t, req.URL.Query().Get(types.LimitQueryKey), strconv.FormatUint(uint64(limit), 10), "expected and actual limit query param do not match")
-					assert.Equal(t, req.Method, http.MethodGet)
+					assertRequestQuality(t, req, spec)
+
 					require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
 				},
 			),
@@ -354,6 +350,8 @@ func TestV1Client_SearchItems(T *testing.T) {
 func TestV1Client_BuildCreateItemRequest(T *testing.T) {
 	T.Parallel()
 
+	const expectedPath = "/api/v1/items"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
@@ -363,20 +361,24 @@ func TestV1Client_BuildCreateItemRequest(T *testing.T) {
 		exampleItem.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
-		expectedMethod := http.MethodPost
 		ts := httptest.NewTLSServer(nil)
 
 		c := buildTestClient(t, ts)
 		actual, err := c.BuildCreateItemRequest(ctx, exampleInput)
+		assert.NoError(t, err)
 
-		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+
+		assertRequestQuality(t, actual, spec)
 	})
 }
 
 func TestV1Client_CreateItem(T *testing.T) {
 	T.Parallel()
+
+	const expectedPath = "/api/v1/items"
+
+	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -385,13 +387,10 @@ func TestV1Client_CreateItem(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
-		expectedPath := "/api/v1/items"
-
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodPost)
+					assertRequestQuality(t, req, spec)
 
 					var x *types.ItemCreationInput
 					require.NoError(t, json.NewDecoder(req.Body).Decode(&x))
@@ -430,37 +429,41 @@ func TestV1Client_CreateItem(T *testing.T) {
 func TestV1Client_BuildUpdateItemRequest(T *testing.T) {
 	T.Parallel()
 
+	const expectedPathFormat = "/api/v1/items/%d"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
-
 		exampleItem := fakes.BuildFakeItem()
-		expectedMethod := http.MethodPut
-
 		ts := httptest.NewTLSServer(nil)
+		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, exampleItem.ID)
+
 		c := buildTestClient(t, ts)
 		actual, err := c.BuildUpdateItemRequest(ctx, exampleItem)
-
-		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
+
+		assertRequestQuality(t, actual, spec)
 	})
 }
 
 func TestV1Client_UpdateItem(T *testing.T) {
 	T.Parallel()
 
+	const expectedPathFormat = "/api/v1/items/%d"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
 		exampleItem := fakes.BuildFakeItem()
+		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, exampleItem.ID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/items/%d", exampleItem.ID), "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodPut)
+					assertRequestQuality(t, req, spec)
+
 					assert.NoError(t, json.NewEncoder(res).Encode(exampleItem))
 				},
 			),
@@ -484,40 +487,41 @@ func TestV1Client_UpdateItem(T *testing.T) {
 func TestV1Client_BuildArchiveItemRequest(T *testing.T) {
 	T.Parallel()
 
+	const expectedPathFormat = "/api/v1/items/%d"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		expectedMethod := http.MethodDelete
 		ts := httptest.NewTLSServer(nil)
-
 		exampleItem := fakes.BuildFakeItem()
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleItem.ID)
 
 		c := buildTestClient(t, ts)
 		actual, err := c.BuildArchiveItemRequest(ctx, exampleItem.ID)
-
-		require.NotNil(t, actual)
-		require.NotNil(t, actual.URL)
-		assert.True(t, strings.HasSuffix(actual.URL.String(), fmt.Sprintf("%d", exampleItem.ID)))
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
+
+		assertRequestQuality(t, actual, spec)
 	})
 }
 
 func TestV1Client_ArchiveItem(T *testing.T) {
 	T.Parallel()
 
+	const expectedPathFormat = "/api/v1/items/%d"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
 		exampleItem := fakes.BuildFakeItem()
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleItem.ID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/items/%d", exampleItem.ID), "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodDelete)
+					assertRequestQuality(t, req, spec)
+
 					res.WriteHeader(http.StatusOK)
 				},
 			),

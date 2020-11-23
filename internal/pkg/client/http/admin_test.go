@@ -26,7 +26,7 @@ func TestV1Client_BuildBanUserRequest(T *testing.T) {
 		c := buildTestClient(t, ts)
 
 		exampleUserID := fakes.BuildFakeUser().ID
-		spec := newRequestSpec(true, http.MethodDelete, expectedPathFormat, exampleUserID)
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleUserID)
 
 		actual, err := c.BuildBanUserRequest(ctx, exampleUserID)
 		assert.NoError(t, err)
@@ -46,7 +46,7 @@ func TestV1Client_BanUser(T *testing.T) {
 
 		ctx := context.Background()
 		exampleUserID := fakes.BuildFakeUser().ID
-		spec := newRequestSpec(true, http.MethodDelete, expectedPathFormat, exampleUserID)
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleUserID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -68,7 +68,7 @@ func TestV1Client_BanUser(T *testing.T) {
 
 		ctx := context.Background()
 		exampleUserID := fakes.BuildFakeUser().ID
-		spec := newRequestSpec(true, http.MethodDelete, expectedPathFormat, exampleUserID)
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleUserID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -89,7 +89,7 @@ func TestV1Client_BanUser(T *testing.T) {
 
 		ctx := context.Background()
 		exampleUserID := fakes.BuildFakeUser().ID
-		spec := newRequestSpec(true, http.MethodDelete, expectedPathFormat, exampleUserID)
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleUserID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -122,7 +122,7 @@ func TestV1Client_BanUser(T *testing.T) {
 
 		ctx := context.Background()
 		exampleUserID := fakes.BuildFakeUser().ID
-		spec := newRequestSpec(true, http.MethodDelete, expectedPathFormat, exampleUserID)
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleUserID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(

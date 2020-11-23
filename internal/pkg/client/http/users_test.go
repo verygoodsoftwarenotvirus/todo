@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -21,33 +19,37 @@ import (
 func TestV1Client_BuildGetUserRequest(T *testing.T) {
 	T.Parallel()
 
+	const expectedPathFormat = "/api/v1/users/%d"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
-
-		expectedMethod := http.MethodGet
-
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
+
 		exampleUser := fakes.BuildFakeUser()
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleUser.ID)
 
 		actual, err := c.BuildGetUserRequest(ctx, exampleUser.ID)
-
-		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.True(t, strings.HasSuffix(actual.URL.String(), fmt.Sprintf("%d", exampleUser.ID)))
-		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
+
+		assertRequestQuality(t, actual, spec)
 	})
 }
 
 func TestV1Client_GetUser(T *testing.T) {
 	T.Parallel()
 
+	const expectedPathFormat = "/api/v1/users/%d"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleUser.ID)
+
 		// the hashed password is never transmitted over the wire.
 		exampleUser.HashedPassword = ""
 		// the two factor secret is transmitted over the wire only on creation.
@@ -58,9 +60,8 @@ func TestV1Client_GetUser(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.True(t, strings.HasSuffix(req.URL.String(), strconv.Itoa(int(exampleUser.ID))))
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/users/%d", exampleUser.ID), "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodGet)
+					assertRequestQuality(t, req, spec)
+
 					require.NoError(t, json.NewEncoder(res).Encode(exampleUser))
 				},
 			),
@@ -93,24 +94,30 @@ func TestV1Client_GetUser(T *testing.T) {
 func TestV1Client_BuildGetUsersRequest(T *testing.T) {
 	T.Parallel()
 
+	const expectedPath = "/api/v1/users"
+
+	spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
-
-		expectedMethod := http.MethodGet
 		ts := httptest.NewTLSServer(nil)
-
 		c := buildTestClient(t, ts)
-		actual, err := c.BuildGetUsersRequest(ctx, nil)
 
-		require.NotNil(t, actual)
+		actual, err := c.BuildGetUsersRequest(ctx, nil)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
+
+		assertRequestQuality(t, actual, spec)
 	})
 }
 
 func TestV1Client_GetUsers(T *testing.T) {
 	T.Parallel()
+
+	const expectedPath = "/api/v1/users"
+
+	spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -133,8 +140,8 @@ func TestV1Client_GetUsers(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/api/v1/users", "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodGet)
+					assertRequestQuality(t, req, spec)
+
 					require.NoError(t, json.NewEncoder(res).Encode(exampleUserList))
 				},
 			),
@@ -163,30 +170,36 @@ func TestV1Client_GetUsers(T *testing.T) {
 func TestV1Client_BuildSearchForUsersByUsernameRequest(T *testing.T) {
 	T.Parallel()
 
+	const expectedPath = "/api/v1/users/search"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		expectedMethod := http.MethodGet
 		exampleUsername := fakes.BuildFakeUser().Username
+		spec := newRequestSpec(false, http.MethodGet, fmt.Sprintf("q=%s", exampleUsername), expectedPath)
+
 		ts := httptest.NewTLSServer(nil)
-
 		c := buildTestClient(t, ts)
-		actual, err := c.BuildSearchForUsersByUsernameRequest(ctx, exampleUsername)
 
-		require.NotNil(t, actual)
+		actual, err := c.BuildSearchForUsersByUsernameRequest(ctx, exampleUsername)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
+
+		assertRequestQuality(t, actual, spec)
 	})
 }
 
 func TestV1Client_SearchForUsersByUsername(T *testing.T) {
 	T.Parallel()
 
+	const expectedPath = "/api/v1/users/search"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 		exampleUsername := fakes.BuildFakeUser().Username
+		spec := newRequestSpec(true, http.MethodGet, fmt.Sprintf("q=%s", exampleUsername), expectedPath)
 
 		exampleUserList := fakes.BuildFakeUserList()
 		// the hashed password is never transmitted over the wire.
@@ -206,8 +219,8 @@ func TestV1Client_SearchForUsersByUsername(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/api/v1/users/search", "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodGet)
+					assertRequestQuality(t, req, spec)
+
 					require.NoError(t, json.NewEncoder(res).Encode(exampleUsers))
 				},
 			),
@@ -237,26 +250,33 @@ func TestV1Client_SearchForUsersByUsername(T *testing.T) {
 func TestV1Client_BuildCreateUserRequest(T *testing.T) {
 	T.Parallel()
 
+	const expectedPath = "/users"
+
+	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		expectedMethod := http.MethodPost
 		ts := httptest.NewTLSServer(nil)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 		c := buildTestClient(t, ts)
-		actual, err := c.BuildCreateUserRequest(ctx, exampleInput)
 
-		require.NotNil(t, actual)
+		actual, err := c.BuildCreateUserRequest(ctx, exampleInput)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
+
+		assertRequestQuality(t, actual, spec)
 	})
 }
 
 func TestV1Client_CreateUser(T *testing.T) {
 	T.Parallel()
+
+	const expectedPath = "/users"
+
+	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -269,8 +289,7 @@ func TestV1Client_CreateUser(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/users", "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodPost)
+					assertRequestQuality(t, req, spec)
 
 					var x *types.UserCreationInput
 					require.NoError(t, json.NewDecoder(req.Body).Decode(&x))
@@ -307,39 +326,41 @@ func TestV1Client_CreateUser(T *testing.T) {
 func TestV1Client_BuildArchiveUserRequest(T *testing.T) {
 	T.Parallel()
 
+	const expectedPathFormat = "/api/v1/users/%d"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
-
-		expectedMethod := http.MethodDelete
-		exampleUser := fakes.BuildFakeUser()
-
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
-		actual, err := c.BuildArchiveUserRequest(ctx, exampleUser.ID)
 
-		require.NotNil(t, actual)
-		require.NotNil(t, actual.URL)
-		assert.True(t, strings.HasSuffix(actual.URL.String(), fmt.Sprintf("%d", exampleUser.ID)))
+		exampleUser := fakes.BuildFakeUser()
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleUser.ID)
+
+		actual, err := c.BuildArchiveUserRequest(ctx, exampleUser.ID)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
+
+		assertRequestQuality(t, actual, spec)
 	})
 }
 
 func TestV1Client_ArchiveUser(T *testing.T) {
 	T.Parallel()
 
+	const expectedPathFormat = "/api/v1/users/%d"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleUser.ID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/users/%d", exampleUser.ID), "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodDelete)
+					assertRequestQuality(t, req, spec)
 				},
 			),
 		)
@@ -362,6 +383,10 @@ func TestV1Client_ArchiveUser(T *testing.T) {
 func TestV1Client_BuildLoginRequest(T *testing.T) {
 	T.Parallel()
 
+	const expectedPath = "/users/login"
+
+	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
@@ -372,10 +397,10 @@ func TestV1Client_BuildLoginRequest(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
-		req, err := c.BuildLoginRequest(ctx, exampleInput)
-		require.NotNil(t, req)
-		assert.Equal(t, req.Method, http.MethodPost)
+		actual, err := c.BuildLoginRequest(ctx, exampleInput)
 		assert.NoError(t, err)
+
+		assertRequestQuality(t, actual, spec)
 	})
 
 	T.Run("with nil input", func(t *testing.T) {
@@ -396,6 +421,8 @@ func TestV1Client_Login(T *testing.T) {
 
 	const expectedPath = "/users/login"
 
+	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
@@ -406,8 +433,7 @@ func TestV1Client_Login(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodPost)
+					assertRequestQuality(t, req, spec)
 
 					http.SetCookie(res, &http.Cookie{Name: exampleUser.Username})
 				},
@@ -456,8 +482,7 @@ func TestV1Client_Login(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodPost)
+					assertRequestQuality(t, req, spec)
 					time.Sleep(10 * time.Hour)
 				},
 			),
@@ -480,8 +505,7 @@ func TestV1Client_Login(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodPost)
+					assertRequestQuality(t, req, spec)
 				},
 			),
 		)
@@ -496,6 +520,10 @@ func TestV1Client_Login(T *testing.T) {
 func TestV1Client_BuildVerifyTOTPSecretRequest(T *testing.T) {
 	T.Parallel()
 
+	const expectedPath = "/users/totp_secret/verify"
+
+	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
@@ -506,10 +534,10 @@ func TestV1Client_BuildVerifyTOTPSecretRequest(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
 
-		req, err := c.BuildVerifyTOTPSecretRequest(ctx, exampleUser.ID, exampleInput.TOTPToken)
+		actual, err := c.BuildVerifyTOTPSecretRequest(ctx, exampleUser.ID, exampleInput.TOTPToken)
 		assert.NoError(t, err)
-		require.NotNil(t, req)
-		assert.Equal(t, req.Method, http.MethodPost)
+
+		assertRequestQuality(t, actual, spec)
 	})
 }
 
@@ -517,6 +545,8 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 	T.Parallel()
 
 	const expectedPath = "/users/totp_secret/verify"
+
+	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -528,8 +558,7 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodPost)
+					assertRequestQuality(t, req, spec)
 
 					res.WriteHeader(http.StatusAccepted)
 				},
@@ -551,8 +580,7 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodPost)
+					assertRequestQuality(t, req, spec)
 
 					res.WriteHeader(http.StatusBadRequest)
 				},
@@ -575,8 +603,7 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodPost)
+					assertRequestQuality(t, req, spec)
 
 					res.WriteHeader(http.StatusInternalServerError)
 				},
@@ -611,8 +638,7 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodPost)
+					assertRequestQuality(t, req, spec)
 
 					time.Sleep(10 * time.Minute)
 

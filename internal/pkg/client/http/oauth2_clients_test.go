@@ -3,11 +3,8 @@ package client
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
-	"strings"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -19,40 +16,41 @@ import (
 func TestV1Client_BuildGetOAuth2ClientRequest(T *testing.T) {
 	T.Parallel()
 
+	const expectedPathFormat = "/api/v1/oauth2/clients/%d"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		expectedMethod := http.MethodGet
-
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleOAuth2Client.ID)
 
 		actual, err := c.BuildGetOAuth2ClientRequest(ctx, exampleOAuth2Client.ID)
-
-		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.True(t, strings.HasSuffix(actual.URL.String(), fmt.Sprintf("%d", exampleOAuth2Client.ID)))
-		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
+
+		assertRequestQuality(t, actual, spec)
 	})
 }
 
 func TestV1Client_GetOAuth2Client(T *testing.T) {
 	T.Parallel()
 
+	const expectedPathFormat = "/api/v1/oauth2/clients/%d"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleOAuth2Client.ID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.True(t, strings.HasSuffix(req.URL.String(), strconv.Itoa(int(exampleOAuth2Client.ID))))
-					assert.Equal(t, fmt.Sprintf("/api/v1/oauth2/clients/%d", exampleOAuth2Client.ID), req.URL.Path, "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodGet)
+					assertRequestQuality(t, req, spec)
+
 					require.NoError(t, json.NewEncoder(res).Encode(exampleOAuth2Client))
 				},
 			),
@@ -83,24 +81,29 @@ func TestV1Client_GetOAuth2Client(T *testing.T) {
 func TestV1Client_BuildGetOAuth2ClientsRequest(T *testing.T) {
 	T.Parallel()
 
+	const expectedPath = "/api/v1/oauth2/clients"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		expectedMethod := http.MethodGet
-
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
-		actual, err := c.BuildGetOAuth2ClientsRequest(ctx, nil)
+		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
-		require.NotNil(t, actual)
+		actual, err := c.BuildGetOAuth2ClientsRequest(ctx, nil)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
+
+		assertRequestQuality(t, actual, spec)
 	})
 }
 
 func TestV1Client_GetOAuth2Clients(T *testing.T) {
 	T.Parallel()
+
+	const expectedPath = "/api/v1/oauth2/clients"
+
+	spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -111,8 +114,8 @@ func TestV1Client_GetOAuth2Clients(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/api/v1/oauth2/clients", "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodGet)
+					assertRequestQuality(t, req, spec)
+
 					require.NoError(t, json.NewEncoder(res).Encode(exampleOAuth2ClientList))
 				},
 			),
@@ -141,6 +144,8 @@ func TestV1Client_GetOAuth2Clients(T *testing.T) {
 func TestV1Client_BuildCreateOAuth2ClientRequest(T *testing.T) {
 	T.Parallel()
 
+	const expectedPath = "/oauth2/client"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
@@ -150,16 +155,21 @@ func TestV1Client_BuildCreateOAuth2ClientRequest(T *testing.T) {
 
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		exampleInput := fakes.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
-		req, err := c.BuildCreateOAuth2ClientRequest(ctx, &http.Cookie{}, exampleInput)
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-		require.NotNil(t, req)
+		req, err := c.BuildCreateOAuth2ClientRequest(ctx, &http.Cookie{}, exampleInput)
 		assert.NoError(t, err)
-		assert.Equal(t, http.MethodPost, req.Method)
+
+		assertRequestQuality(t, req, spec)
 	})
 }
 
 func TestV1Client_CreateOAuth2Client(T *testing.T) {
 	T.Parallel()
+
+	const expectedPath = "/oauth2/client"
+
+	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -171,8 +181,8 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, "/oauth2/client", req.URL.Path, "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodPost)
+					assertRequestQuality(t, req, spec)
+
 					require.NoError(t, json.NewEncoder(res).Encode(exampleOAuth2Client))
 				},
 			),
@@ -208,8 +218,8 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, "/oauth2/client", "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodPost)
+					assertRequestQuality(t, req, spec)
+
 					_, err := res.Write([]byte("BLAH"))
 					assert.NoError(t, err)
 				},
@@ -237,39 +247,41 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 func TestV1Client_BuildArchiveOAuth2ClientRequest(T *testing.T) {
 	T.Parallel()
 
+	const expectedPathFormat = "/api/v1/oauth2/clients/%d"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
-		expectedMethod := http.MethodDelete
+		ctx := context.Background()
 		ts := httptest.NewTLSServer(nil)
 
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleOAuth2Client.ID)
 		c := buildTestClient(t, ts)
-		actual, err := c.BuildArchiveOAuth2ClientRequest(ctx, exampleOAuth2Client.ID)
 
-		require.NotNil(t, actual)
-		require.NotNil(t, actual.URL)
-		assert.True(t, strings.HasSuffix(actual.URL.String(), fmt.Sprintf("%d", exampleOAuth2Client.ID)))
+		actual, err := c.BuildArchiveOAuth2ClientRequest(ctx, exampleOAuth2Client.ID)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
+
+		assertRequestQuality(t, actual, spec)
 	})
 }
 
 func TestV1Client_ArchiveOAuth2Client(T *testing.T) {
 	T.Parallel()
 
+	const expectedPathFormat = "/api/v1/oauth2/clients/%d"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleOAuth2Client.ID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, fmt.Sprintf("/api/v1/oauth2/clients/%d", exampleOAuth2Client.ID), "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodDelete)
+					assertRequestQuality(t, req, spec)
 
 					res.WriteHeader(http.StatusOK)
 				},

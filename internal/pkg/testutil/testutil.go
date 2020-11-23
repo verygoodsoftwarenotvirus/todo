@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/client/http"
+	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"

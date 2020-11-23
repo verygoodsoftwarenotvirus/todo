@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/client/http"
+	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"

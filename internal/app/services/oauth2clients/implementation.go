@@ -135,11 +135,6 @@ func (s *Service) UserAuthorizationHandler(_ http.ResponseWriter, req *http.Requ
 
 var _ oauth2server.ClientAuthorizedHandler = (*Service)(nil).ClientAuthorizedHandler
 
-var (
-	errInvalidGrantTypePassword = errors.New("invalid grant type: password")
-	errImplicitGrantsUnallowed  = errors.New("client not authorized for implicit grants")
-)
-
 // ClientAuthorizedHandler satisfies the oauth2server ClientAuthorizedHandler interface.
 func (s *Service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantType) (allowed bool, err error) {
 	// NOTE: it's a shame the interface we're implementing doesn't have this as its first argument
@@ -153,7 +148,7 @@ func (s *Service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantTyp
 
 	// reject invalid grant type.
 	if grant == oauth2.PasswordCredentials {
-		return false, errInvalidGrantTypePassword
+		return false, errors.New("invalid grant type: password")
 	}
 
 	// fetch client data.
@@ -165,7 +160,7 @@ func (s *Service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantTyp
 
 	// disallow implicit grants unless authorized.
 	if grant == oauth2.Implicit && !client.ImplicitAllowed {
-		return false, errImplicitGrantsUnallowed
+		return false, errors.New("client not authorized for implicit grants")
 	}
 
 	return true, nil

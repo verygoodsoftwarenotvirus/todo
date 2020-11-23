@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/client/http"
+	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
 
 	"github.com/emicklei/hazana"
 )

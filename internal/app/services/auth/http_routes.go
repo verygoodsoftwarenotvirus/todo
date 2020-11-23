@@ -192,10 +192,8 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	s.auditLog.LogSuccessfulLoginEvent(ctx, user.ID)
 	http.SetCookie(res, cookie)
 
-	statusResponse := &types.UserStatusResponse{
-		UserIsAuthenticated: true,
-		UserIsAdmin:         user.IsAdmin,
-	}
+	statusResponse := user.ToStatusResponse()
+	statusResponse.UserIsAuthenticated = true
 
 	s.encoderDecoder.EncodeResponseWithStatus(res, statusResponse, http.StatusAccepted)
 }
@@ -251,13 +249,8 @@ func (s *Service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	statusResponse := &types.UserStatusResponse{}
 
 	if user, err := s.fetchUserFromCookie(ctx, req); err == nil {
-		statusResponse = &types.UserStatusResponse{
-			UserIsAuthenticated: true,
-			UserAccountStatus:   user.AccountStatus,
-			StatusExplanation:   user.AccountStatusExplanation,
-			UserIsAdmin:         user.IsAdmin,
-			AdminPermissions:    user.AdminPermissions.Summary(),
-		}
+		statusResponse = user.ToStatusResponse()
+		statusResponse.UserIsAuthenticated = true
 	}
 
 	s.encoderDecoder.EncodeResponse(res, statusResponse)

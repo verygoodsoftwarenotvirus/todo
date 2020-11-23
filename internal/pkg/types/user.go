@@ -189,14 +189,23 @@ func (u *User) Update(input *User) {
 	}
 }
 
-// ToSessionInfo accepts a User as input and merges those values if they're set.
+// ToSessionInfo produces a SessionInfo object from a user's data.
 func (u *User) ToSessionInfo() *SessionInfo {
 	return &SessionInfo{
 		UserID:            u.ID,
 		UserIsAdmin:       u.IsAdmin,
 		UserAccountStatus: u.AccountStatus,
-		StatusExplanation: u.AccountStatusExplanation,
 		AdminPermissions:  u.AdminPermissions,
+	}
+}
+
+// ToStatusResponse produces a UserStatusResponse object from a user's data.
+func (u *User) ToStatusResponse() *UserStatusResponse {
+	return &UserStatusResponse{
+		UserIsAdmin:              u.IsAdmin,
+		UserAccountStatus:        u.AccountStatus,
+		AccountStatusExplanation: u.AccountStatusExplanation,
+		AdminPermissions:         u.AdminPermissions.Summary(),
 	}
 }
 

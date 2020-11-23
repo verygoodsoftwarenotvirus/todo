@@ -4,7 +4,7 @@ import "fmt"
 
 const (
 	//
-	// Common Columns
+	// Common Columns.
 	//
 
 	// ExistencePrefix goes before a sql query.
@@ -24,7 +24,7 @@ const (
 	userOwnershipColumn = "belongs_to_user"
 
 	//
-	// Users Table
+	// Users Table.
 	//
 
 	// UsersTableName is what the users table calls the <> column.
@@ -53,7 +53,7 @@ const (
 	UsersTableStatusExplanationColumn = "status_explanation"
 
 	//
-	// Audit Log Entries Table
+	// Audit Log Entries Table.
 	//
 
 	// AuditLogEntriesTableName is what the audit log entries table calls itself.
@@ -64,7 +64,7 @@ const (
 	AuditLogEntriesTableContextColumn = "context"
 
 	//
-	// OAuth2 Clients
+	// OAuth2 Clients.
 	//
 
 	// OAuth2ClientsTableScopeSeparator is what the oauth2 clients table calls the <> column.
@@ -85,7 +85,7 @@ const (
 	OAuth2ClientsTableOwnershipColumn = userOwnershipColumn
 
 	//
-	// Webhooks Table
+	// Webhooks Table.
 	//
 
 	// WebhooksTableName is what the webhooks table calls the <> column.
@@ -114,7 +114,7 @@ const (
 	WebhooksTableOwnershipColumn = "belongs_to_user"
 
 	//
-	// Items Table
+	// Items Table.
 	//
 
 	// ItemsTableName is what the items table calls itself.
@@ -129,7 +129,7 @@ const (
 
 var (
 	//
-	// Users Table
+	// Users Table.
 	//
 
 	// UsersTableColumns are the columns for the users table.
@@ -152,7 +152,7 @@ var (
 	}
 
 	//
-	// Audit Log Entries Table
+	// Audit Log Entries Table.
 	//
 
 	// AuditLogEntriesTableColumns are the columns for the audit log entries table.
@@ -164,7 +164,7 @@ var (
 	}
 
 	//
-	// OAuth2 Clients Table
+	// OAuth2 Clients Table.
 	//
 
 	// OAuth2ClientsTableColumns are the columns for the oauth2 clients table.
@@ -182,7 +182,7 @@ var (
 	}
 
 	//
-	// Webhooks Table
+	// Webhooks Table.
 	//
 
 	// WebhooksTableColumns are the columns for the webhooks table.
@@ -202,7 +202,7 @@ var (
 	}
 
 	//
-	// Items Table
+	// Items Table.
 	//
 
 	// ItemsTableColumns are the columns for the items table.

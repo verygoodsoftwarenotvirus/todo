@@ -22,19 +22,16 @@ func TestV1Client_BuildItemExistsRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
-
-		expectedMethod := http.MethodHead
 		ts := httptest.NewTLSServer(nil)
-
 		c := buildTestClient(t, ts)
-		exampleItem := fakes.BuildFakeItem()
-		actual, err := c.BuildItemExistsRequest(ctx, exampleItem.ID)
+		exampleItemID := fakes.BuildFakeItem().ID
+		actual, err := c.BuildItemExistsRequest(ctx, exampleItemID)
+		spec := newRequestSpec(true, http.MethodHead, "/api/v1/items/%d", exampleItemID)
 
-		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
-		assert.True(t, strings.HasSuffix(actual.URL.String(), fmt.Sprintf("%d", exampleItem.ID)))
-		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
+		assert.NoError(t, err)
+		assertRequestQuality(t, actual, spec)
 	})
 }
 

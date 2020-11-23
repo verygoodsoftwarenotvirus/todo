@@ -23,6 +23,7 @@ func buildTestClient() (*Client, *database.MockDatabase) {
 		logger:  noop.NewLogger(),
 		querier: db,
 	}
+
 	return c, db
 }
 

@@ -40,6 +40,7 @@ func (c *V1Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFi
 	}
 
 	c.logger.WithRequest(req).Debug("Fetching audit log entries")
+
 	if retrieveErr := c.retrieve(ctx, req, &entries); retrieveErr != nil {
 		return nil, retrieveErr
 	}
@@ -74,6 +75,7 @@ func (c *V1Client) GetAuditLogEntry(ctx context.Context, entryID uint64) (entry 
 	}
 
 	c.logger.WithRequest(req).Debug("Fetching audit log entry")
+
 	if retrieveErr := c.retrieve(ctx, req, &entry); retrieveErr != nil {
 		return nil, retrieveErr
 	}

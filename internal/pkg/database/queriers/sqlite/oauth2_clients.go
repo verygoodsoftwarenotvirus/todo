@@ -60,6 +60,7 @@ func (s *Sqlite) scanOAuth2Clients(rows database.ResultIterator) ([]*types.OAuth
 
 		list = append(list, client)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -94,6 +95,7 @@ func (s *Sqlite) buildGetOAuth2ClientByClientIDQuery(clientID string) (query str
 func (s *Sqlite) GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*types.OAuth2Client, error) {
 	query, args := s.buildGetOAuth2ClientByClientIDQuery(clientID)
 	row := s.db.QueryRowContext(ctx, query, args...)
+
 	return s.scanOAuth2Client(row)
 }
 
@@ -121,6 +123,7 @@ func (s *Sqlite) GetAllOAuth2Clients(ctx context.Context) ([]*types.OAuth2Client
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
 	}
 
@@ -141,6 +144,7 @@ func (s *Sqlite) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64) 
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
 	}
 
@@ -180,6 +184,7 @@ func (s *Sqlite) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("querying for oauth2 client: %w", err)
 	}
 
@@ -208,6 +213,7 @@ func (s *Sqlite) buildGetAllOAuth2ClientsCountQuery() string {
 func (s *Sqlite) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	var count uint64
 	err := s.db.QueryRowContext(ctx, s.buildGetAllOAuth2ClientsCountQuery()).Scan(&count)
+
 	return count, err
 }
 
@@ -244,6 +250,7 @@ func (s *Sqlite) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, fil
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("querying for oauth2 clients: %w", err)
 	}
 
@@ -317,6 +324,7 @@ func (s *Sqlite) CreateOAuth2Client(ctx context.Context, input *types.OAuth2Clie
 	// fetch the last inserted ID.
 	id, err := res.LastInsertId()
 	s.logIDRetrievalError(err)
+
 	x.ID = uint64(id)
 
 	// this won't be completely accurate, but it will suffice.
@@ -352,6 +360,7 @@ func (s *Sqlite) buildUpdateOAuth2ClientQuery(input *types.OAuth2Client) (query 
 func (s *Sqlite) UpdateOAuth2Client(ctx context.Context, input *types.OAuth2Client) error {
 	query, args := s.buildUpdateOAuth2ClientQuery(input)
 	_, err := s.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 
@@ -378,6 +387,7 @@ func (s *Sqlite) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query s
 func (s *Sqlite) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error {
 	query, args := s.buildArchiveOAuth2ClientQuery(clientID, userID)
 	_, err := s.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 

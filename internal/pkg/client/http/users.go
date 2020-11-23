@@ -161,6 +161,7 @@ func (c *V1Client) BuildLoginRequest(ctx context.Context, input *types.UserLogin
 	}
 
 	uri := c.buildVersionlessURL(nil, usersBasePath, "login")
+
 	return c.buildDataRequest(ctx, http.MethodPost, uri, body)
 }
 

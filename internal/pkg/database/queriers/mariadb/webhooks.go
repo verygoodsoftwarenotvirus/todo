@@ -97,6 +97,7 @@ func (m *MariaDB) buildGetWebhookQuery(webhookID, userID uint64) (query string, 
 		}).ToSql()
 
 	m.logQueryBuildingError(err)
+
 	return query, args
 }
 
@@ -160,6 +161,7 @@ func (m *MariaDB) GetAllWebhooks(ctx context.Context) (*types.WebhookList, error
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("querying for webhooks: %w", err)
 	}
 
@@ -210,6 +212,7 @@ func (m *MariaDB) GetWebhooks(ctx context.Context, userID uint64, filter *types.
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("querying database: %w", err)
 	}
 
@@ -321,6 +324,7 @@ func (m *MariaDB) buildUpdateWebhookQuery(input *types.Webhook) (query string, a
 func (m *MariaDB) UpdateWebhook(ctx context.Context, input *types.Webhook) error {
 	query, args := m.buildUpdateWebhookQuery(input)
 	_, err := m.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 
@@ -348,6 +352,7 @@ func (m *MariaDB) buildArchiveWebhookQuery(webhookID, userID uint64) (query stri
 func (m *MariaDB) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error {
 	query, args := m.buildArchiveWebhookQuery(webhookID, userID)
 	_, err := m.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 

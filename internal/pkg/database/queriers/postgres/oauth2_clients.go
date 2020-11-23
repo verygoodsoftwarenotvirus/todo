@@ -95,6 +95,7 @@ func (p *Postgres) buildGetOAuth2ClientByClientIDQuery(clientID string) (query s
 func (p *Postgres) GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*types.OAuth2Client, error) {
 	query, args := p.buildGetOAuth2ClientByClientIDQuery(clientID)
 	row := p.db.QueryRowContext(ctx, query, args...)
+
 	return p.scanOAuth2Client(row)
 }
 
@@ -122,6 +123,7 @@ func (p *Postgres) GetAllOAuth2Clients(ctx context.Context) ([]*types.OAuth2Clie
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
 	}
 
@@ -142,6 +144,7 @@ func (p *Postgres) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
 	}
 
@@ -181,6 +184,7 @@ func (p *Postgres) GetOAuth2Client(ctx context.Context, clientID, userID uint64)
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("querying for oauth2 client: %w", err)
 	}
 
@@ -209,6 +213,7 @@ func (p *Postgres) buildGetAllOAuth2ClientsCountQuery() string {
 func (p *Postgres) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	var count uint64
 	err := p.db.QueryRowContext(ctx, p.buildGetAllOAuth2ClientsCountQuery()).Scan(&count)
+
 	return count, err
 }
 
@@ -245,6 +250,7 @@ func (p *Postgres) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, f
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("querying for oauth2 clients: %w", err)
 	}
 
@@ -373,6 +379,7 @@ func (p *Postgres) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query
 func (p *Postgres) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error {
 	query, args := p.buildArchiveOAuth2ClientQuery(clientID, userID)
 	_, err := p.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 

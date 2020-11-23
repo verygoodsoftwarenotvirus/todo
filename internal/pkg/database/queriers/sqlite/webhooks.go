@@ -97,6 +97,7 @@ func (s *Sqlite) buildGetWebhookQuery(webhookID, userID uint64) (query string, a
 		}).ToSql()
 
 	s.logQueryBuildingError(err)
+
 	return query, args
 }
 
@@ -160,6 +161,7 @@ func (s *Sqlite) GetAllWebhooks(ctx context.Context) (*types.WebhookList, error)
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("querying for webhooks: %w", err)
 	}
 
@@ -210,6 +212,7 @@ func (s *Sqlite) GetWebhooks(ctx context.Context, userID uint64, filter *types.Q
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("querying database: %w", err)
 	}
 
@@ -321,6 +324,7 @@ func (s *Sqlite) buildUpdateWebhookQuery(input *types.Webhook) (query string, ar
 func (s *Sqlite) UpdateWebhook(ctx context.Context, input *types.Webhook) error {
 	query, args := s.buildUpdateWebhookQuery(input)
 	_, err := s.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 
@@ -348,6 +352,7 @@ func (s *Sqlite) buildArchiveWebhookQuery(webhookID, userID uint64) (query strin
 func (s *Sqlite) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error {
 	query, args := s.buildArchiveWebhookQuery(webhookID, userID)
 	_, err := s.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 

@@ -35,6 +35,7 @@ func (c *V1Client) GetWebhook(ctx context.Context, id uint64) (webhook *types.We
 	}
 
 	err = c.retrieve(ctx, req, &webhook)
+
 	return webhook, err
 }
 
@@ -59,6 +60,7 @@ func (c *V1Client) GetWebhooks(ctx context.Context, filter *types.QueryFilter) (
 	}
 
 	err = c.retrieve(ctx, req, &webhooks)
+
 	return webhooks, err
 }
 
@@ -83,6 +85,7 @@ func (c *V1Client) CreateWebhook(ctx context.Context, input *types.WebhookCreati
 	}
 
 	err = c.executeRequest(ctx, req, &webhook)
+
 	return webhook, err
 }
 

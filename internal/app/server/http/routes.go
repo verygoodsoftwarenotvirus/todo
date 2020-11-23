@@ -83,6 +83,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 		if err != nil {
 			s.logger.Error(err, "establishing static file server")
 		}
+
 		mux.Get("/*", staticFileServer)
 	}
 

@@ -45,6 +45,7 @@ func (p *Postgres) scanUser(scan database.Scanner) (*types.User, error) {
 	if err := scan.Scan(targetVars...); err != nil {
 		return nil, err
 	}
+
 	x.AdminPermissions = bitmask.NewPermissionBitmask(perms)
 
 	return x, nil
@@ -174,6 +175,7 @@ func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*typ
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
@@ -208,6 +210,7 @@ func (p *Postgres) buildSearchForUserByUsernameQuery(usernameQuery string) (quer
 func (p *Postgres) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]types.User, error) {
 	query, args := p.buildSearchForUserByUsernameQuery(usernameQuery)
 	rows, err := p.db.QueryContext(ctx, query, args...)
+
 	if err != nil {
 		return nil, fmt.Errorf("error querying database for users: %w", err)
 	}
@@ -217,6 +220,7 @@ func (p *Postgres) SearchForUsersByUsername(ctx context.Context, usernameQuery s
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
@@ -246,7 +250,8 @@ func (p *Postgres) buildGetAllUsersCountQuery() (query string) {
 func (p *Postgres) GetAllUsersCount(ctx context.Context) (count uint64, err error) {
 	query := p.buildGetAllUsersCountQuery()
 	err = p.db.QueryRowContext(ctx, query).Scan(&count)
-	return
+
+	return count, err
 }
 
 // buildGetUsersQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
@@ -268,6 +273,7 @@ func (p *Postgres) buildGetUsersQuery(filter *types.QueryFilter) (query string, 
 
 	query, args, err = builder.ToSql()
 	p.logQueryBuildingError(err)
+
 	return query, args
 }
 
@@ -348,6 +354,7 @@ func (p *Postgres) CreateUser(ctx context.Context, input types.UserDataStoreCrea
 		if errors.As(err, &pge) && pge.Code == postgresRowExistsErrorCode {
 			return nil, dbclient.ErrUserExists
 		}
+
 		return nil, fmt.Errorf("error executing user creation query: %w", err)
 	}
 
@@ -433,6 +440,7 @@ func (p *Postgres) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query str
 func (p *Postgres) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error {
 	query, args := p.buildVerifyUserTwoFactorSecretQuery(userID)
 	_, err := p.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 
@@ -455,6 +463,7 @@ func (p *Postgres) buildBanUserQuery(userID uint64) (query string, args []interf
 func (p *Postgres) BanUser(ctx context.Context, userID uint64) error {
 	query, args := p.buildBanUserQuery(userID)
 	res, err := p.db.ExecContext(ctx, query, args...)
+
 	if err != nil {
 		return err
 	}
@@ -486,6 +495,7 @@ func (p *Postgres) buildArchiveUserQuery(userID uint64) (query string, args []in
 func (p *Postgres) ArchiveUser(ctx context.Context, userID uint64) error {
 	query, args := p.buildArchiveUserQuery(userID)
 	_, err := p.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 

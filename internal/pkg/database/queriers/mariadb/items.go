@@ -114,6 +114,7 @@ func (m *MariaDB) buildGetItemQuery(itemID, userID uint64) (query string, args [
 func (m *MariaDB) GetItem(ctx context.Context, itemID, userID uint64) (*types.Item, error) {
 	query, args := m.buildGetItemQuery(itemID, userID)
 	row := m.db.QueryRowContext(ctx, query, args...)
+
 	return m.scanItem(row)
 }
 
@@ -316,8 +317,10 @@ func (m *MariaDB) buildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []ui
 		if i != 0 {
 			whenThenStatement += " "
 		}
+
 		whenThenStatement += fmt.Sprintf("WHEN %d THEN %d", id, i)
 	}
+
 	whenThenStatement += " END"
 
 	builder := m.sqlBuilder.
@@ -374,8 +377,10 @@ func (m *MariaDB) buildGetItemsWithIDsForAdminQuery(limit uint8, ids []uint64) (
 		if i != 0 {
 			whenThenStatement += " "
 		}
+
 		whenThenStatement += fmt.Sprintf("WHEN %d THEN %d", id, i)
 	}
+
 	whenThenStatement += " END"
 
 	builder := m.sqlBuilder.
@@ -489,6 +494,7 @@ func (m *MariaDB) buildUpdateItemQuery(input *types.Item) (query string, args []
 func (m *MariaDB) UpdateItem(ctx context.Context, input *types.Item) error {
 	query, args := m.buildUpdateItemQuery(input)
 	_, err := m.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 

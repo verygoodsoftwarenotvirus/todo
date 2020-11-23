@@ -74,6 +74,7 @@ func (a *ServiceAttacker) Do(_ context.Context) hazana.DoResult {
 		BytesIn:      int64(len(bi)),
 		BytesOut:     bo,
 	}
+
 	return dr
 }
 
@@ -88,9 +89,9 @@ func (a *ServiceAttacker) Clone() hazana.Attack {
 }
 
 func main() {
+	runTime := 10 * time.Minute
 	todoClient := initializeClient(oa2Client)
 
-	runTime := 10 * time.Minute
 	if rt := os.Getenv("LOADTEST_RUN_TIME"); rt != "" {
 		_rt, err := time.ParseDuration(rt)
 		if err != nil {

@@ -170,6 +170,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 		if dbVendor == mariadb {
 			sd = 5 * time.Minute
 		}
+
 		cfg.Set(viper.ConfigKeyMetaStartupDeadline, sd)
 
 		cfg.Set(viper.ConfigKeyServerHTTPPort, defaultPort)

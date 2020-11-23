@@ -95,6 +95,7 @@ func (m *MariaDB) buildGetOAuth2ClientByClientIDQuery(clientID string) (query st
 func (m *MariaDB) GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*types.OAuth2Client, error) {
 	query, args := m.buildGetOAuth2ClientByClientIDQuery(clientID)
 	row := m.db.QueryRowContext(ctx, query, args...)
+
 	return m.scanOAuth2Client(row)
 }
 
@@ -122,6 +123,7 @@ func (m *MariaDB) GetAllOAuth2Clients(ctx context.Context) ([]*types.OAuth2Clien
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
 	}
 
@@ -142,6 +144,7 @@ func (m *MariaDB) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64)
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
 	}
 
@@ -181,6 +184,7 @@ func (m *MariaDB) GetOAuth2Client(ctx context.Context, clientID, userID uint64) 
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("querying for oauth2 client: %w", err)
 	}
 
@@ -209,6 +213,7 @@ func (m *MariaDB) buildGetAllOAuth2ClientsCountQuery() string {
 func (m *MariaDB) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	var count uint64
 	err := m.db.QueryRowContext(ctx, m.buildGetAllOAuth2ClientsCountQuery()).Scan(&count)
+
 	return count, err
 }
 
@@ -245,6 +250,7 @@ func (m *MariaDB) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, fi
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("querying for oauth2 clients: %w", err)
 	}
 
@@ -353,6 +359,7 @@ func (m *MariaDB) buildUpdateOAuth2ClientQuery(input *types.OAuth2Client) (query
 func (m *MariaDB) UpdateOAuth2Client(ctx context.Context, input *types.OAuth2Client) error {
 	query, args := m.buildUpdateOAuth2ClientQuery(input)
 	_, err := m.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 
@@ -379,6 +386,7 @@ func (m *MariaDB) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query 
 func (m *MariaDB) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error {
 	query, args := m.buildArchiveOAuth2ClientQuery(clientID, userID)
 	_, err := m.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 

@@ -114,6 +114,7 @@ func (p *Postgres) buildGetItemQuery(itemID, userID uint64) (query string, args 
 func (p *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*types.Item, error) {
 	query, args := p.buildGetItemQuery(itemID, userID)
 	row := p.db.QueryRowContext(ctx, query, args...)
+
 	return p.scanItem(row)
 }
 

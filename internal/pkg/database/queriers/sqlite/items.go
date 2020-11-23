@@ -114,6 +114,7 @@ func (s *Sqlite) buildGetItemQuery(itemID, userID uint64) (query string, args []
 func (s *Sqlite) GetItem(ctx context.Context, itemID, userID uint64) (*types.Item, error) {
 	query, args := s.buildGetItemQuery(itemID, userID)
 	row := s.db.QueryRowContext(ctx, query, args...)
+
 	return s.scanItem(row)
 }
 
@@ -318,8 +319,10 @@ func (s *Sqlite) buildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []uin
 		if i != 0 {
 			whenThenStatement += " "
 		}
+
 		whenThenStatement += fmt.Sprintf("WHEN %d THEN %d", id, i)
 	}
+
 	whenThenStatement += " END"
 
 	builder := s.sqlBuilder.
@@ -367,15 +370,19 @@ func (s *Sqlite) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8
 // are valid database IDs, because there's no way in squirrel to escape them in the unnest join,
 // and if we accept strings we could leave ourselves vulnerable to SQL injection attacks.
 func (s *Sqlite) buildGetItemsWithIDsForAdminQuery(limit uint8, ids []uint64) (query string, args []interface{}) {
-	var err error
+	var (
+		err               error
+		whenThenStatement string
+	)
 
-	var whenThenStatement string
 	for i, id := range ids {
 		if i != 0 {
 			whenThenStatement += " "
 		}
+
 		whenThenStatement += fmt.Sprintf("WHEN %d THEN %d", id, i)
 	}
+
 	whenThenStatement += " END"
 
 	builder := s.sqlBuilder.
@@ -457,8 +464,8 @@ func (s *Sqlite) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 	// fetch the last inserted ID.
 	id, err := res.LastInsertId()
 	s.logIDRetrievalError(err)
-	x.ID = uint64(id)
 
+	x.ID = uint64(id)
 	// this won't be completely accurate, but it will suffice.
 	x.CreatedOn = s.timeTeller.Now()
 
@@ -489,6 +496,7 @@ func (s *Sqlite) buildUpdateItemQuery(input *types.Item) (query string, args []i
 func (s *Sqlite) UpdateItem(ctx context.Context, input *types.Item) error {
 	query, args := s.buildUpdateItemQuery(input)
 	_, err := s.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 

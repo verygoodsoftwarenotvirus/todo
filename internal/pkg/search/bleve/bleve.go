@@ -44,6 +44,7 @@ func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger l
 
 	if errors.Is(openIndexErr, bleve.ErrorIndexPathDoesNotExist) {
 		logger.WithValue("path", path).Debug("tried to open existing index, but didn't find it")
+
 		var newIndexErr error
 
 		switch name {

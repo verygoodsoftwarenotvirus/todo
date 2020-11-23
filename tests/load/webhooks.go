@@ -18,6 +18,7 @@ func fetchRandomWebhook(c *client.V1Client) *types.Webhook {
 	}
 
 	randIndex := rand.Intn(len(webhooks.Webhooks))
+
 	return &webhooks.Webhooks[randIndex]
 }
 

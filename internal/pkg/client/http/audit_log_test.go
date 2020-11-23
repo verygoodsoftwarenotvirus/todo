@@ -17,38 +17,48 @@ import (
 func TestV1Client_BuildGetAuditLogEntriesRequest(T *testing.T) {
 	T.Parallel()
 
+	const expectedPath = "/api/v1/_admin_/audit_log"
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
 		filter := (*types.QueryFilter)(nil)
-		expectedMethod := http.MethodGet
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
-		actual, err := c.BuildGetAuditLogEntriesRequest(ctx, filter)
 
+		actual, err := c.BuildGetAuditLogEntriesRequest(ctx, filter)
 		require.NotNil(t, actual)
+
+		spec := newRequestSpec(true, http.MethodGet, expectedPath)
+		assertRequestQuality(t, actual, spec)
+
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
 	})
 }
 
 func TestV1Client_GetAuditLogEntries(T *testing.T) {
 	T.Parallel()
 
+	const (
+		expectedPath   = "/api/v1/_admin_/audit_log"
+		expectedMethod = http.MethodGet
+	)
+
+	spec := newRequestSpec(true, expectedMethod, expectedPath)
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
 		filter := (*types.QueryFilter)(nil)
-		expectedPath := "/api/v1/_admin_/audit_log"
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodGet)
+					assertRequestQuality(t, req, spec)
+
 					require.NoError(t, json.NewEncoder(res).Encode(exampleAuditLogEntryList))
 				},
 			),
@@ -81,13 +91,11 @@ func TestV1Client_GetAuditLogEntries(T *testing.T) {
 
 		filter := (*types.QueryFilter)(nil)
 
-		expectedPath := "/api/v1/_admin_/audit_log"
-
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, req.URL.Path, expectedPath, "expected and actual paths do not match")
-					assert.Equal(t, req.Method, http.MethodGet)
+					assertRequestQuality(t, req, spec)
+
 					require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
 				},
 			),

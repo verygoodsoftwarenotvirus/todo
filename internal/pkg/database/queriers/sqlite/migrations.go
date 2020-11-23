@@ -142,6 +142,7 @@ func buildMigrationFunc(db *sql.DB) func() {
 // safe (as in idempotent, though not necessarily recommended) to call this function multiple times.
 func (s *Sqlite) Migrate(ctx context.Context, authenticator password.Authenticator, testUserConfig *database.UserCreationConfig) error {
 	s.logger.Info("migrating db")
+
 	if !s.IsReady(ctx) {
 		return database.ErrDBUnready
 	}

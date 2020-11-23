@@ -34,6 +34,33 @@ func (v valuer) ToValues() url.Values {
 	return url.Values(v)
 }
 
+type requestSpec struct {
+	path            string
+	pathArgs        []interface{}
+	method          string
+	bodyShouldBeNil bool
+}
+
+func newRequestSpec(bodyShouldBeNil bool, method, path string, pathArgs ...interface{}) requestSpec {
+	return requestSpec{
+		path:            path,
+		pathArgs:        pathArgs,
+		method:          method,
+		bodyShouldBeNil: bodyShouldBeNil,
+	}
+}
+
+func assertRequestQuality(t *testing.T, req *http.Request, spec requestSpec) {
+	t.Helper()
+
+	expectedPath := fmt.Sprintf(spec.path, spec.pathArgs...)
+
+	require.NotNil(t, req, "provided req must not be nil")
+	require.NotNil(t, spec, "provided spec must not be nil")
+	assert.Equal(t, expectedPath, req.URL.Path, "expected path to be %q, but was %q instead", expectedPath, req.URL.Path)
+	assert.Equal(t, spec.method, req.Method, "expected method to be %q, but was %q instead", spec.method, req.Method)
+}
+
 // begin helper funcs
 
 func mustParseURL(uri string) *url.URL {
@@ -41,6 +68,7 @@ func mustParseURL(uri string) *url.URL {
 	if err != nil {
 		panic(err)
 	}
+
 	return u
 }
 
@@ -465,26 +493,26 @@ func TestV1Client_buildDataRequest(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
+		ctx := context.Background()
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
-
 		expectedMethod := http.MethodPost
 		req, err := c.buildDataRequest(ctx, expectedMethod, ts.URL, exampleData)
 
 		require.NotNil(t, req)
 		assert.NoError(t, err)
+
 		assert.Equal(t, expectedMethod, req.Method)
+		assert.Equal(t, ts.URL, req.URL.String())
 	})
 
 	T.Run("with invalid structure", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
+		ctx := context.Background()
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
-
 		x := &testBreakableStruct{Thing: "stuff"}
 		req, err := c.buildDataRequest(ctx, http.MethodPost, ts.URL, x)
 
@@ -494,10 +522,9 @@ func TestV1Client_buildDataRequest(T *testing.T) {
 
 	T.Run("with invalid client URL", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
-
 		c := buildTestClientWithInvalidURL(t)
-
 		req, err := c.buildDataRequest(ctx, http.MethodPost, c.URL.String(), exampleData)
 
 		require.Nil(t, req)
@@ -802,13 +829,13 @@ func TestV1Client_retrieve(T *testing.T) {
 func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 	T.Parallel()
 
+	const expectedMethod = http.MethodPost
+
 	exampleResponse := &argleBargle{Name: "whatever"}
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-
-		expectedMethod := http.MethodPost
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -837,8 +864,6 @@ func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 	T.Run("with 401", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-
-		expectedMethod := http.MethodPost
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -869,8 +894,6 @@ func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		expectedMethod := http.MethodPost
-
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
@@ -900,8 +923,6 @@ func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		expectedMethod := http.MethodPost
-
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
@@ -930,8 +951,6 @@ func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		expectedMethod := http.MethodPost
-
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
@@ -952,8 +971,6 @@ func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 	T.Run("with unreadable response", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-
-		expectedMethod := http.MethodPost
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(

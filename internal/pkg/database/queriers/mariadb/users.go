@@ -43,6 +43,7 @@ func (m *MariaDB) scanUser(scan database.Scanner) (*types.User, error) {
 	if err := scan.Scan(targetVars...); err != nil {
 		return nil, err
 	}
+
 	x.AdminPermissions = bitmask.NewPermissionBitmask(perms)
 
 	return x, nil
@@ -172,6 +173,7 @@ func (m *MariaDB) GetUserByUsername(ctx context.Context, username string) (*type
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
@@ -206,6 +208,7 @@ func (m *MariaDB) buildSearchForUserByUsernameQuery(usernameQuery string) (query
 func (m *MariaDB) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]types.User, error) {
 	query, args := m.buildSearchForUserByUsernameQuery(usernameQuery)
 	rows, err := m.db.QueryContext(ctx, query, args...)
+
 	if err != nil {
 		return nil, fmt.Errorf("error querying database for users: %w", err)
 	}
@@ -215,6 +218,7 @@ func (m *MariaDB) SearchForUsersByUsername(ctx context.Context, usernameQuery st
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
@@ -244,7 +248,8 @@ func (m *MariaDB) buildGetAllUsersCountQuery() (query string) {
 func (m *MariaDB) GetAllUsersCount(ctx context.Context) (count uint64, err error) {
 	query := m.buildGetAllUsersCountQuery()
 	err = m.db.QueryRowContext(ctx, query).Scan(&count)
-	return
+
+	return count, err
 }
 
 // buildGetUsersQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
@@ -266,6 +271,7 @@ func (m *MariaDB) buildGetUsersQuery(filter *types.QueryFilter) (query string, a
 
 	query, args, err = builder.ToSql()
 	m.logQueryBuildingError(err)
+
 	return query, args
 }
 
@@ -384,6 +390,7 @@ func (m *MariaDB) buildUpdateUserQuery(input *types.User) (query string, args []
 func (m *MariaDB) UpdateUser(ctx context.Context, input *types.User) error {
 	query, args := m.buildUpdateUserQuery(input)
 	_, err := m.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 
@@ -434,6 +441,7 @@ func (m *MariaDB) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query stri
 func (m *MariaDB) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error {
 	query, args := m.buildVerifyUserTwoFactorSecretQuery(userID)
 	_, err := m.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 
@@ -456,6 +464,7 @@ func (m *MariaDB) buildBanUserQuery(userID uint64) (query string, args []interfa
 func (m *MariaDB) BanUser(ctx context.Context, userID uint64) error {
 	query, args := m.buildBanUserQuery(userID)
 	res, err := m.db.ExecContext(ctx, query, args...)
+
 	if err != nil {
 		return err
 	}
@@ -486,6 +495,7 @@ func (m *MariaDB) buildArchiveUserQuery(userID uint64) (query string, args []int
 func (m *MariaDB) ArchiveUser(ctx context.Context, userID uint64) error {
 	query, args := m.buildArchiveUserQuery(userID)
 	_, err := m.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 

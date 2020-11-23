@@ -80,6 +80,7 @@ func (p *Postgres) buildGetAuditLogEntryQuery(entryID uint64) (query string, arg
 func (p *Postgres) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.AuditLogEntry, error) {
 	query, args := p.buildGetAuditLogEntryQuery(entryID)
 	row := p.db.QueryRowContext(ctx, query, args...)
+
 	return p.scanAuditLogEntry(row)
 }
 

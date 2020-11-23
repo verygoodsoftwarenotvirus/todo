@@ -78,6 +78,7 @@ func (m *MariaDB) buildGetAuditLogEntryQuery(entryID uint64) (query string, args
 func (m *MariaDB) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.AuditLogEntry, error) {
 	query, args := m.buildGetAuditLogEntryQuery(entryID)
 	row := m.db.QueryRowContext(ctx, query, args...)
+
 	return m.scanAuditLogEntry(row)
 }
 

@@ -60,6 +60,7 @@ func DetermineServiceURL() string {
 	svcAddr := u.String()
 
 	log.Printf("using target address: %q\n", svcAddr)
+
 	return svcAddr
 }
 
@@ -283,6 +284,7 @@ func CreateObligatoryClient(ctx context.Context, serviceURL string, u *types.Use
 
 	var o types.OAuth2Client
 	err = json.NewDecoder(res.Body).Decode(&o)
+
 	return &o, err
 }
 

@@ -230,7 +230,7 @@ linters:
     - unconvert # Remove unnecessary type conversions
     - unparam # Reports unused function parameters
     - whitespace # Tool for detection of leading and trailing whitespace
-    # wsl # Whitespace Linter - Forces you to use empty lines!
+    - wsl # Whitespace Linter - Forces you to use empty lines!
   disable:
     - stylecheck # Stylecheck is a replacement for golint
     - exhaustivestruct # Checks if all struct's fields are initialized
@@ -244,7 +244,6 @@ linters:
     - testpackage # linter that makes you use a separate _test package
     - rowserrcheck # checks whether Err of rows is checked successfully; lots of false positives
     - nlreturn # nlreturn checks for a new line before return and branch statements to increase code clarity
-    - wsl # Whitespace Linter - Forces you to use empty lines!
 
 issues:
   # # List of regexps of issue texts to exclude, empty list by default.
@@ -297,11 +296,16 @@ issues:
       linters:
         - gosec
 
-    - path: internal/pkg/exampledata # TODO: DELETEME
+    - path: cmd/config_gen
       linters:
         - gomnd
 
-    - path: cmd/config_gen
+    - path: internal/app/services/
+      linters:
+        - wsl
+      text: "return statements should not be cuddled if block has more than two lines"
+
+    - path: internal/pkg/exampledata # TODO: DELETEME
       linters:
         - gomnd
 

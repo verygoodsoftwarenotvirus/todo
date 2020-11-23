@@ -20,6 +20,8 @@ const (
 	debug         = true
 	timeout       = 5 * time.Second
 	nonexistentID = 999999999
+
+	clientsDebug = debug
 )
 
 var (
@@ -55,7 +57,6 @@ func init() {
 		logger.Fatal(err)
 	}
 
-	clientsDebug := true // change this to change debug log behavior
 	adminOAuth2Client, err := testutil.CreateObligatoryClient(ctx, urlToUse, premadeAdminUser)
 	if err != nil {
 		logger.Fatal(err)
@@ -96,5 +97,6 @@ func initializeClient(oa2Client *types.OAuth2Client) *client.V1Client {
 	if err != nil {
 		panic(err)
 	}
+
 	return c
 }

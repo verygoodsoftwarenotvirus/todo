@@ -19,6 +19,7 @@ func fetchRandomItem(ctx context.Context, c *client.V1Client) *types.Item {
 	}
 
 	randIndex := rand.Intn(len(itemsRes.Items))
+
 	return &itemsRes.Items[randIndex]
 }
 

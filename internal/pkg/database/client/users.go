@@ -30,6 +30,7 @@ func (c *Client) GetUser(ctx context.Context, userID uint64) (*types.User, error
 	}
 
 	logger.Debug("GetUser called")
+
 	return user, nil
 }
 
@@ -49,6 +50,7 @@ func (c *Client) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userI
 	}
 
 	logger.Debug("GetUserWithUnverifiedTwoFactorSecret called")
+
 	return user, nil
 }
 
@@ -90,6 +92,7 @@ func (c *Client) GetUserByUsername(ctx context.Context, username string) (*types
 	}
 
 	logger.Debug("GetUserByUsername called")
+
 	return user, nil
 }
 
@@ -107,6 +110,7 @@ func (c *Client) SearchForUsersByUsername(ctx context.Context, usernameQuery str
 	}
 
 	logger.Debug("SearchForUsersByUsername called")
+
 	return user, nil
 }
 
@@ -147,6 +151,7 @@ func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreati
 	}
 
 	logger.Debug("CreateUser called")
+
 	return user, nil
 }
 

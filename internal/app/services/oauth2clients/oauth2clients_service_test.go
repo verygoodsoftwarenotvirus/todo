@@ -30,6 +30,7 @@ func buildTestService(t *testing.T) *Service {
 
 	tokenStore, err := oauth2store.NewMemoryTokenStore()
 	require.NoError(t, err)
+
 	manager := manage.NewDefaultManager()
 	manager.MustTokenStorage(tokenStore, err)
 

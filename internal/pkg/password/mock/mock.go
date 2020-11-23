@@ -32,6 +32,7 @@ func (m *Authenticator) ValidateLogin(
 		twoFactorCode,
 		salt,
 	)
+
 	return args.Bool(0), args.Error(1)
 }
 
@@ -59,5 +60,6 @@ func (m *Authenticator) PasswordMatches(
 		providedPassword,
 		salt,
 	)
+
 	return args.Bool(0)
 }

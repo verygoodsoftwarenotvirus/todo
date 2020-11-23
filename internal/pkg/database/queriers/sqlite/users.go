@@ -43,6 +43,7 @@ func (s *Sqlite) scanUser(scan database.Scanner) (*types.User, error) {
 	if err := scan.Scan(targetVars...); err != nil {
 		return nil, err
 	}
+
 	x.AdminPermissions = bitmask.NewPermissionBitmask(perms)
 
 	return x, nil
@@ -172,6 +173,7 @@ func (s *Sqlite) GetUserByUsername(ctx context.Context, username string) (*types
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
@@ -205,6 +207,7 @@ func (s *Sqlite) buildSearchForUserByUsernameQuery(usernameQuery string) (query 
 // SearchForUsersByUsername fetches a list of users whose usernames begin with a given query.
 func (s *Sqlite) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]types.User, error) {
 	query, args := s.buildSearchForUserByUsernameQuery(usernameQuery)
+
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error querying database for users: %w", err)
@@ -215,6 +218,7 @@ func (s *Sqlite) SearchForUsersByUsername(ctx context.Context, usernameQuery str
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
@@ -244,7 +248,8 @@ func (s *Sqlite) buildGetAllUsersCountQuery() (query string) {
 func (s *Sqlite) GetAllUsersCount(ctx context.Context) (count uint64, err error) {
 	query := s.buildGetAllUsersCountQuery()
 	err = s.db.QueryRowContext(ctx, query).Scan(&count)
-	return
+
+	return count, err
 }
 
 // buildGetUsersQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
@@ -266,6 +271,7 @@ func (s *Sqlite) buildGetUsersQuery(filter *types.QueryFilter) (query string, ar
 
 	query, args, err = builder.ToSql()
 	s.logQueryBuildingError(err)
+
 	return query, args
 }
 
@@ -384,6 +390,7 @@ func (s *Sqlite) buildUpdateUserQuery(input *types.User) (query string, args []i
 func (s *Sqlite) UpdateUser(ctx context.Context, input *types.User) error {
 	query, args := s.buildUpdateUserQuery(input)
 	_, err := s.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 
@@ -409,6 +416,7 @@ func (s *Sqlite) buildUpdateUserPasswordQuery(userID uint64, newHash string) (qu
 func (s *Sqlite) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
 	query, args := s.buildUpdateUserPasswordQuery(userID, newHash)
 	_, err := s.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 
@@ -432,6 +440,7 @@ func (s *Sqlite) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query strin
 func (s *Sqlite) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error {
 	query, args := s.buildVerifyUserTwoFactorSecretQuery(userID)
 	_, err := s.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 
@@ -454,6 +463,7 @@ func (s *Sqlite) buildBanUserQuery(userID uint64) (query string, args []interfac
 func (s *Sqlite) BanUser(ctx context.Context, userID uint64) error {
 	query, args := s.buildBanUserQuery(userID)
 	res, err := s.db.ExecContext(ctx, query, args...)
+
 	if err != nil {
 		return err
 	}
@@ -484,6 +494,7 @@ func (s *Sqlite) buildArchiveUserQuery(userID uint64) (query string, args []inte
 func (s *Sqlite) ArchiveUser(ctx context.Context, userID uint64) error {
 	query, args := s.buildArchiveUserQuery(userID)
 	_, err := s.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 

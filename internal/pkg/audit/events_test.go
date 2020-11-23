@@ -20,6 +20,7 @@ func runEventBuilderTests(T *testing.T, tests map[string]*eventBuilderTest) {
 	for name, test := range tests {
 		name := name
 		test := test
+
 		T.Run(name, func(t *testing.T) {
 			t.Parallel()
 			t.Helper()

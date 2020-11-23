@@ -111,6 +111,7 @@ func (p *Postgres) IsReady(ctx context.Context) (ready bool) {
 			return ready
 		}
 	}
+
 	return false
 }
 

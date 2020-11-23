@@ -74,5 +74,6 @@ func initializeClient(oa2Client *types.OAuth2Client) *client.V1Client {
 	if err != nil {
 		panic(err)
 	}
+
 	return c
 }

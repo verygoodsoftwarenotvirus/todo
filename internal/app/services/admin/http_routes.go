@@ -26,6 +26,7 @@ func (s *Service) BanHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
+
 	logger = logger.WithValue("ban_giver", si.UserID)
 
 	if !si.AdminPermissions.CanBanUsers() || !si.UserIsAdmin {
@@ -39,6 +40,7 @@ func (s *Service) BanHandler(res http.ResponseWriter, req *http.Request) {
 
 	if err := s.userDB.BanUser(ctx, banRecipient); err != nil {
 		logger.Error(err, "error banning user")
+
 		if errors.Is(err, sql.ErrNoRows) {
 			s.encoderDecoder.EncodeNotFoundResponse(res)
 		} else {

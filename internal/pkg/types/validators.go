@@ -16,6 +16,7 @@ func (uv *urlValidator) Validate(field v.Field) v.Errors {
 		if _, err := url.Parse(u); err != nil {
 			return v.NewErrors(field.Name, "parse error", err.Error())
 		}
+
 		return nil
 	}
 

@@ -95,6 +95,7 @@ func (p *Postgres) buildGetWebhookQuery(webhookID, userID uint64) (query string,
 		}).ToSql()
 
 	p.logQueryBuildingError(err)
+
 	return query, args
 }
 
@@ -158,6 +159,7 @@ func (p *Postgres) GetAllWebhooks(ctx context.Context) (*types.WebhookList, erro
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("querying for webhooks: %w", err)
 	}
 
@@ -208,6 +210,7 @@ func (p *Postgres) GetWebhooks(ctx context.Context, userID uint64, filter *types
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("querying database: %w", err)
 	}
 
@@ -339,6 +342,7 @@ func (p *Postgres) buildArchiveWebhookQuery(webhookID, userID uint64) (query str
 func (p *Postgres) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error {
 	query, args := p.buildArchiveWebhookQuery(webhookID, userID)
 	_, err := p.db.ExecContext(ctx, query, args...)
+
 	return err
 }
 

@@ -78,6 +78,7 @@ func (s *Sqlite) buildGetAuditLogEntryQuery(entryID uint64) (query string, args 
 func (s *Sqlite) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.AuditLogEntry, error) {
 	query, args := s.buildGetAuditLogEntryQuery(entryID)
 	row := s.db.QueryRowContext(ctx, query, args...)
+
 	return s.scanAuditLogEntry(row)
 }
 

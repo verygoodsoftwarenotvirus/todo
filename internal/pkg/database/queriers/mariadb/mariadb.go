@@ -111,6 +111,7 @@ func (m *MariaDB) IsReady(ctx context.Context) (ready bool) {
 			return ready
 		}
 	}
+
 	return false
 }
 

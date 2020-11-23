@@ -342,18 +342,18 @@ func (s *Service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 		return
 	}
 
-	var statusCode int
+	statusCode := http.StatusBadRequest
+
 	if totp.Validate(input.TOTPToken, user.TwoFactorSecret) {
+		statusCode = http.StatusAccepted
+
 		if updateUserErr := s.userDataManager.VerifyUserTwoFactorSecret(ctx, user.ID); updateUserErr != nil {
 			logger.Error(updateUserErr, "updating user to indicate their 2FA secret is validated")
 			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 			return
 		}
 
-		statusCode = http.StatusAccepted
 		s.auditLog.LogUserVerifyTwoFactorSecretEvent(ctx, user.ID)
-	} else {
-		statusCode = http.StatusBadRequest
 	}
 
 	res.WriteHeader(statusCode)
@@ -409,6 +409,7 @@ func (s *Service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		return
 	}
+
 	user.TwoFactorSecret = tfs
 	user.TwoFactorSecretVerifiedOn = nil
 

@@ -62,6 +62,7 @@ func (s *Service) authorizationMiddleware(allowCookies bool, next http.Handler) 
 	return func(res http.ResponseWriter, req *http.Request) {
 		const this = "auth.service.authorizationMiddleware"
 		ctx, span := tracing.StartSpan(req.Context(), this)
+
 		defer span.End()
 
 		var (
@@ -121,6 +122,7 @@ func (s *Service) authorizationMiddleware(allowCookies bool, next http.Handler) 
 			WithValue("user_id", user.ID)
 
 		logger.Debug("fetched user")
+
 		ctx = context.WithValue(ctx, types.SessionInfoKey, user.ToSessionInfo())
 
 		next.ServeHTTP(res, req.WithContext(ctx))

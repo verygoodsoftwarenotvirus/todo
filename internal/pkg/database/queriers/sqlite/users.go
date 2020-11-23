@@ -444,37 +444,6 @@ func (s *Sqlite) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) e
 	return err
 }
 
-// buildBanUserQuery returns a SQL query (and arguments) that would set a user's account status to banned.
-func (s *Sqlite) buildBanUserQuery(userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = s.sqlBuilder.
-		Update(queriers.UsersTableName).
-		Set(queriers.UsersTableAccountStatusColumn, types.BannedAccountStatus).
-		Where(squirrel.Eq{queriers.IDColumn: userID}).
-		ToSql()
-
-	s.logQueryBuildingError(err)
-
-	return query, args
-}
-
-// BanUser bans a user.
-func (s *Sqlite) BanUser(ctx context.Context, userID uint64) error {
-	query, args := s.buildBanUserQuery(userID)
-	res, err := s.db.ExecContext(ctx, query, args...)
-
-	if err != nil {
-		return err
-	}
-
-	if count, err := res.RowsAffected(); count == 0 || err != nil {
-		return sql.ErrNoRows
-	}
-
-	return nil
-}
-
 // buildArchiveUserQuery builds a SQL query that marks a user as archived.
 func (s *Sqlite) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error

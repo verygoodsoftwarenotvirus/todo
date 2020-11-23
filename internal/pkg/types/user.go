@@ -113,7 +113,8 @@ type (
 	// AdminUserDataManager contains administrative user functions that we don't necessarily want to expose
 	// to, say, the collection of handlers.
 	AdminUserDataManager interface {
-		BanUser(ctx context.Context, userID uint64) error
+		BanUserAccount(ctx context.Context, userID uint64) error
+		TerminateUserAccount(ctx context.Context, userID uint64) error
 	}
 
 	// UserDataManager describes a structure which can manage users in permanent storage.

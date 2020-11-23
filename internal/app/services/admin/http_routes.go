@@ -38,7 +38,7 @@ func (s *Service) BanHandler(res http.ResponseWriter, req *http.Request) {
 	banRecipient := s.userIDFetcher(req)
 	logger = logger.WithValue("ban_recipient", banRecipient)
 
-	if err := s.userDB.BanUser(ctx, banRecipient); err != nil {
+	if err := s.userDB.BanUserAccount(ctx, banRecipient); err != nil {
 		logger.Error(err, "error banning user")
 
 		if errors.Is(err, sql.ErrNoRows) {
@@ -75,10 +75,10 @@ func (s *Service) AccountTerminationHandler(res http.ResponseWriter, req *http.R
 		return
 	}
 
-	banRecipient := s.userIDFetcher(req)
-	logger = logger.WithValue("terminee", banRecipient)
+	terminee := s.userIDFetcher(req)
+	logger = logger.WithValue("terminee", terminee)
 
-	if err := s.userDB.BanUser(ctx, banRecipient); err != nil {
+	if err := s.userDB.TerminateUserAccount(ctx, terminee); err != nil {
 		logger.Error(err, "error terminating account")
 
 		if errors.Is(err, sql.ErrNoRows) {
@@ -89,6 +89,6 @@ func (s *Service) AccountTerminationHandler(res http.ResponseWriter, req *http.R
 		return
 	}
 
-	s.auditLog.LogUserBanEvent(ctx, si.UserID, banRecipient)
+	s.auditLog.LogUserBanEvent(ctx, si.UserID, terminee)
 	s.encoderDecoder.EncodeResponseWithStatus(res, nil, http.StatusAccepted)
 }

@@ -826,51 +826,6 @@ func TestMariaDB_VerifyUserTwoFactorSecret(T *testing.T) {
 	})
 }
 
-func TestMariaDB_buildBanUserQuery(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		m, _ := buildTestService(t)
-
-		exampleUser := fakes.BuildFakeUser()
-
-		expectedQuery := "UPDATE users SET account_status = ? WHERE id = ?"
-		expectedArgs := []interface{}{
-			types.BannedAccountStatus,
-			exampleUser.ID,
-		}
-		actualQuery, actualArgs := m.buildBanUserQuery(exampleUser.ID)
-
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
-	})
-}
-
-func TestMariaDB_BanUser(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleUser := fakes.BuildFakeUser()
-
-		m, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := m.buildBanUserQuery(exampleUser.ID)
-
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnResult(sqlmock.NewResult(1, 1))
-
-		err := m.BanUser(ctx, exampleUser.ID)
-		assert.NoError(t, err)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
 func TestMariaDB_buildArchiveUserQuery(T *testing.T) {
 	T.Parallel()
 

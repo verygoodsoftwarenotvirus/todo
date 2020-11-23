@@ -847,51 +847,6 @@ func TestPostgres_VerifyUserTwoFactorSecret(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildBanUserQuery(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		p, _ := buildTestService(t)
-
-		exampleUser := fakes.BuildFakeUser()
-
-		expectedQuery := "UPDATE users SET account_status = $1 WHERE id = $2"
-		expectedArgs := []interface{}{
-			types.BannedAccountStatus,
-			exampleUser.ID,
-		}
-		actualQuery, actualArgs := p.buildBanUserQuery(exampleUser.ID)
-
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
-	})
-}
-
-func TestPostgres_BanUser(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleUser := fakes.BuildFakeUser()
-
-		p, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := p.buildBanUserQuery(exampleUser.ID)
-
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnResult(sqlmock.NewResult(1, 1))
-
-		err := p.BanUser(ctx, exampleUser.ID)
-		assert.NoError(t, err)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
 func TestPostgres_buildArchiveUserQuery(T *testing.T) {
 	T.Parallel()
 

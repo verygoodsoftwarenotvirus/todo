@@ -54,7 +54,7 @@ func TestService_StatusHandler(T *testing.T) {
 
 		udb := &mockmodels.AdminUserDataManager{}
 		udb.On(
-			"BanUser",
+			"BanUserAccount",
 			mock.Anything,
 			exampleUserToBeBanned.ID,
 		).Return(nil)
@@ -164,7 +164,7 @@ func TestService_StatusHandler(T *testing.T) {
 
 		udb := &mockmodels.AdminUserDataManager{}
 		udb.On(
-			"BanUser",
+			"BanUserAccount",
 			mock.Anything,
 			exampleUserToBeBanned.ID,
 		).Return(sql.ErrNoRows)
@@ -204,7 +204,7 @@ func TestService_StatusHandler(T *testing.T) {
 
 		udb := &mockmodels.AdminUserDataManager{}
 		udb.On(
-			"BanUser",
+			"BanUserAccount",
 			mock.Anything,
 			exampleUserToBeBanned.ID,
 		).Return(errors.New("blah"))
@@ -252,7 +252,7 @@ func TestService_StatusHandler(T *testing.T) {
 
 		udb := &mockmodels.AdminUserDataManager{}
 		udb.On(
-			"BanUser",
+			"BanUserAccount",
 			mock.Anything,
 			exampleUserToBeBanned.ID,
 		).Return(nil)

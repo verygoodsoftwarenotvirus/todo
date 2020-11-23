@@ -806,51 +806,6 @@ func TestSqlite_VerifyUserTwoFactorSecret(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildBanUserQuery(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		s, _ := buildTestService(t)
-
-		exampleUser := fakes.BuildFakeUser()
-
-		expectedQuery := "UPDATE users SET account_status = ? WHERE id = ?"
-		expectedArgs := []interface{}{
-			types.BannedAccountStatus,
-			exampleUser.ID,
-		}
-		actualQuery, actualArgs := s.buildBanUserQuery(exampleUser.ID)
-
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
-	})
-}
-
-func TestSqlite_BanUser(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleUser := fakes.BuildFakeUser()
-
-		s, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := s.buildBanUserQuery(exampleUser.ID)
-
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnResult(sqlmock.NewResult(1, 1))
-
-		err := s.BanUser(ctx, exampleUser.ID)
-		assert.NoError(t, err)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
 func TestSqlite_buildArchiveUserQuery(T *testing.T) {
 	T.Parallel()
 

@@ -78,7 +78,7 @@ func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger l
 
 // Index implements our IndexManager interface.
 func (sm *bleveIndexManager) Index(ctx context.Context, id uint64, value interface{}) error {
-	_, span := tracing.StartSpan(ctx, "Index")
+	_, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	sm.logger.WithValue("id", id).Debug("adding to index")
@@ -88,7 +88,7 @@ func (sm *bleveIndexManager) Index(ctx context.Context, id uint64, value interfa
 
 // Search implements our IndexManager interface.
 func (sm *bleveIndexManager) Search(ctx context.Context, query string, userID uint64) (ids []uint64, err error) {
-	_, span := tracing.StartSpan(ctx, "Search")
+	_, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachSearchQueryToSpan(span, query)
@@ -121,7 +121,7 @@ func (sm *bleveIndexManager) Search(ctx context.Context, query string, userID ui
 
 // SearchForAdmin implements our IndexManager interface.
 func (sm *bleveIndexManager) SearchForAdmin(ctx context.Context, query string) (ids []uint64, err error) {
-	ctx, span := tracing.StartSpan(ctx, "SearchForAdmin")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachSearchQueryToSpan(span, query)
@@ -152,7 +152,7 @@ func (sm *bleveIndexManager) SearchForAdmin(ctx context.Context, query string) (
 
 // Delete implements our IndexManager interface.
 func (sm *bleveIndexManager) Delete(ctx context.Context, id uint64) error {
-	_, span := tracing.StartSpan(ctx, "Delete")
+	_, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	if err := sm.index.Delete(strconv.FormatUint(id, base)); err != nil {

@@ -11,7 +11,7 @@ var _ types.WebhookDataManager = (*Client)(nil)
 
 // GetWebhook fetches a webhook from the database.
 func (c *Client) GetWebhook(ctx context.Context, webhookID, userID uint64) (*types.Webhook, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetWebhook")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -27,7 +27,7 @@ func (c *Client) GetWebhook(ctx context.Context, webhookID, userID uint64) (*typ
 
 // GetWebhooks fetches a list of webhooks from the database that meet a particular filter.
 func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.WebhookList, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetWebhooks")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -40,7 +40,7 @@ func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *types.Q
 
 // GetAllWebhooks fetches a list of webhooks from the database that meet a particular filter.
 func (c *Client) GetAllWebhooks(ctx context.Context) (*types.WebhookList, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetAllWebhooks")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Debug("GetWebhookCount called")
@@ -50,7 +50,7 @@ func (c *Client) GetAllWebhooks(ctx context.Context) (*types.WebhookList, error)
 
 // GetAllWebhooksCount fetches the count of webhooks from the database that meet a particular filter.
 func (c *Client) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
-	ctx, span := tracing.StartSpan(ctx, "GetAllWebhooksCount")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Debug("GetAllWebhooksCount called")
@@ -60,7 +60,7 @@ func (c *Client) GetAllWebhooksCount(ctx context.Context) (count uint64, err err
 
 // CreateWebhook creates a webhook in a database.
 func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput) (*types.Webhook, error) {
-	ctx, span := tracing.StartSpan(ctx, "CreateWebhook")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, input.BelongsToUser)
@@ -72,7 +72,7 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 // UpdateWebhook updates a particular webhook.
 // NOTE: this function expects the provided input to have a non-zero ID.
 func (c *Client) UpdateWebhook(ctx context.Context, input *types.Webhook) error {
-	ctx, span := tracing.StartSpan(ctx, "UpdateWebhook")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachWebhookIDToSpan(span, input.ID)
@@ -85,7 +85,7 @@ func (c *Client) UpdateWebhook(ctx context.Context, input *types.Webhook) error 
 
 // ArchiveWebhook archives a webhook from the database.
 func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error {
-	ctx, span := tracing.StartSpan(ctx, "ArchiveWebhook")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -101,7 +101,7 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) e
 
 // GetAuditLogEntriesForWebhook fetches a list of audit log entries from the database that relate to a given webhook.
 func (c *Client) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]types.AuditLogEntry, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetAuditLogEntriesForWebhook")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Debug("GetAuditLogEntriesForWebhook called")

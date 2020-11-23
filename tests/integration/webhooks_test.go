@@ -34,7 +34,7 @@ func reverse(s string) string {
 func TestWebhooks(test *testing.T) {
 	test.Run("Creating", func(t *testing.T) {
 		t.Run("should be createable", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Create webhook.
@@ -59,7 +59,7 @@ func TestWebhooks(test *testing.T) {
 
 	test.Run("Listing", func(t *testing.T) {
 		t.Run("should be able to be read in a list", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Create webhooks.
@@ -88,7 +88,7 @@ func TestWebhooks(test *testing.T) {
 
 	test.Run("Reading", func(t *testing.T) {
 		t.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Fetch webhook.
@@ -97,7 +97,7 @@ func TestWebhooks(test *testing.T) {
 		})
 
 		t.Run("it should be readable", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Create webhook.
@@ -121,7 +121,7 @@ func TestWebhooks(test *testing.T) {
 
 	test.Run("Updating", func(t *testing.T) {
 		t.Run("it should return an error when trying to update something that doesn't exist", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			exampleWebhook := fakes.BuildFakeWebhook()
@@ -132,7 +132,7 @@ func TestWebhooks(test *testing.T) {
 		})
 
 		t.Run("it should be updatable", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Create webhook.
@@ -163,7 +163,7 @@ func TestWebhooks(test *testing.T) {
 
 	test.Run("Deleting", func(t *testing.T) {
 		t.Run("should be able to be deleted", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Create webhook.
@@ -180,7 +180,7 @@ func TestWebhooks(test *testing.T) {
 
 	test.Run("Auditing", func(t *testing.T) {
 		t.Run("it should return an error when trying to audit something that does not exist", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			exampleWebhook := fakes.BuildFakeWebhook()
@@ -192,7 +192,7 @@ func TestWebhooks(test *testing.T) {
 		})
 
 		t.Run("it should be auditable", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Create webhook.
@@ -216,7 +216,7 @@ func TestWebhooks(test *testing.T) {
 		})
 
 		t.Run("it should not be auditable by a non-admin", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Create webhook.

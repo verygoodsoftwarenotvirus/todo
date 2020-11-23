@@ -618,7 +618,7 @@ func TestPostgres_buildCreateUserQuery(T *testing.T) {
 			exampleUser.HashedPassword,
 			exampleUser.Salt,
 			exampleUser.TwoFactorSecret,
-			types.UnverifiedStandingAccountStatus,
+			types.UnverifiedAccountStatus,
 			false,
 			0,
 		}
@@ -858,7 +858,7 @@ func TestPostgres_buildBanUserQuery(T *testing.T) {
 
 		expectedQuery := "UPDATE users SET account_status = $1 WHERE id = $2"
 		expectedArgs := []interface{}{
-			types.BannedStandingAccountStatus,
+			types.BannedAccountStatus,
 			exampleUser.ID,
 		}
 		actualQuery, actualArgs := p.buildBanUserQuery(exampleUser.ID)

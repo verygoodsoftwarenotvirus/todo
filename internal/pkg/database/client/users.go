@@ -17,7 +17,7 @@ var (
 
 // GetUser fetches a user.
 func (c *Client) GetUser(ctx context.Context, userID uint64) (*types.User, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetUser")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -36,7 +36,7 @@ func (c *Client) GetUser(ctx context.Context, userID uint64) (*types.User, error
 
 // GetUserWithUnverifiedTwoFactorSecret fetches a user with an unverified 2FA secret.
 func (c *Client) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*types.User, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetUserWithUnverifiedTwoFactorSecret")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -56,7 +56,7 @@ func (c *Client) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userI
 
 // VerifyUserTwoFactorSecret marks a user's two factor secret as validated.
 func (c *Client) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error {
-	ctx, span := tracing.StartSpan(ctx, "VerifyUserTwoFactorSecret")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -67,7 +67,7 @@ func (c *Client) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) e
 
 // BanUser marks a user's two factor secret as validated.
 func (c *Client) BanUser(ctx context.Context, userID uint64) error {
-	ctx, span := tracing.StartSpan(ctx, "BanUser")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -78,7 +78,7 @@ func (c *Client) BanUser(ctx context.Context, userID uint64) error {
 
 // GetUserByUsername fetches a user by their username.
 func (c *Client) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetUserByUsername")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUsernameToSpan(span, username)
@@ -98,7 +98,7 @@ func (c *Client) GetUserByUsername(ctx context.Context, username string) (*types
 
 // SearchForUsersByUsername fetches a list of users whose usernames begin with a given query.
 func (c *Client) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]types.User, error) {
-	ctx, span := tracing.StartSpan(ctx, "SearchForUsersByUsername")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	logger := c.logger.WithValue("query", usernameQuery)
@@ -116,7 +116,7 @@ func (c *Client) SearchForUsersByUsername(ctx context.Context, usernameQuery str
 
 // GetAllUsersCount fetches a count of users from the database that meet a particular filter.
 func (c *Client) GetAllUsersCount(ctx context.Context) (count uint64, err error) {
-	ctx, span := tracing.StartSpan(ctx, "GetAllUsersCount")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Debug("GetAllUsersCount called")
@@ -126,7 +126,7 @@ func (c *Client) GetAllUsersCount(ctx context.Context) (count uint64, err error)
 
 // GetUsers fetches a list of users from the database that meet a particular filter.
 func (c *Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (*types.UserList, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetUsers")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachFilterToSpan(span, filter)
@@ -137,7 +137,7 @@ func (c *Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (*type
 
 // CreateUser creates a user.
 func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreationInput) (*types.User, error) {
-	ctx, span := tracing.StartSpan(ctx, "CreateUser")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUsernameToSpan(span, input.Username)
@@ -158,7 +158,7 @@ func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreati
 // UpdateUser receives a complete User struct and updates its record in the database.
 // NOTE: this function uses the ID provided in the input to make its query.
 func (c *Client) UpdateUser(ctx context.Context, updated *types.User) error {
-	ctx, span := tracing.StartSpan(ctx, "UpdateUser")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUsernameToSpan(span, updated.Username)
@@ -169,7 +169,7 @@ func (c *Client) UpdateUser(ctx context.Context, updated *types.User) error {
 
 // UpdateUserPassword updates a user's password hash in the database.
 func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
-	ctx, span := tracing.StartSpan(ctx, "UpdateUserPassword")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -180,7 +180,7 @@ func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash 
 
 // ArchiveUser archives a user.
 func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
-	ctx, span := tracing.StartSpan(ctx, "ArchiveUser")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -191,7 +191,7 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 
 // GetAuditLogEntriesForUser fetches a list of audit log entries from the database that relate to a given user.
 func (c *Client) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]types.AuditLogEntry, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetAuditLogEntriesForUser")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", userID).Debug("GetAuditLogEntriesForUser called")

@@ -32,7 +32,7 @@ var doMotLog = map[string]struct{}{
 func buildLoggingMiddleware(logger logging.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			ctx, span := tracing.StartSpan(req.Context(), "middleware.logging")
+			ctx, span := tracing.StartSpan(req.Context())
 			defer span.End()
 
 			ww := middleware.NewWrapResponseWriter(res, req.ProtoMajor)

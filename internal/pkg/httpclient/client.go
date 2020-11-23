@@ -271,7 +271,7 @@ func (c *V1Client) IsUp(ctx context.Context) bool {
 
 // buildDataRequest builds an HTTP request for a given method, URL, and body data.
 func (c *V1Client) buildDataRequest(ctx context.Context, method, uri string, in interface{}) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx, "buildDataRequest")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	body, err := createBodyFromStruct(in)
@@ -292,7 +292,7 @@ func (c *V1Client) buildDataRequest(ctx context.Context, method, uri string, in 
 // executeRequest takes a given request and executes it with the auth client. It returns some errors
 // upon receiving certain status codes, but otherwise will return nil upon success.
 func (c *V1Client) executeRequest(ctx context.Context, req *http.Request, out interface{}) error {
-	ctx, span := tracing.StartSpan(ctx, "executeRequest")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	res, err := c.executeRawRequest(ctx, c.authedClient, req)
@@ -319,7 +319,7 @@ func (c *V1Client) executeRequest(ctx context.Context, req *http.Request, out in
 // executeRawRequest takes a given *http.Request and executes it with the provided.
 // client, alongside some debugging logging.
 func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
-	ctx, span := tracing.StartSpan(ctx, "executeRawRequest")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	logger := c.logger.WithRequest(req)
@@ -346,7 +346,7 @@ func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, r
 
 // checkExistence executes an HTTP request and loads the response content into a bool.
 func (c *V1Client) checkExistence(ctx context.Context, req *http.Request) (bool, error) {
-	ctx, span := tracing.StartSpan(ctx, "checkExistence")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	res, err := c.executeRawRequest(ctx, c.authedClient, req)
@@ -362,7 +362,7 @@ func (c *V1Client) checkExistence(ctx context.Context, req *http.Request) (bool,
 // retrieve executes an HTTP request and loads the response content into a struct. In the event of a 404,
 // the provided ErrNotFound is returned.
 func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interface{}) error {
-	ctx, span := tracing.StartSpan(ctx, "retrieve")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	if err := argIsNotPointerOrNil(obj); err != nil {
@@ -383,7 +383,7 @@ func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interfac
 
 // executeUnauthenticatedDataRequest takes a given request and loads the response into an interface value.
 func (c *V1Client) executeUnauthenticatedDataRequest(ctx context.Context, req *http.Request, out interface{}) error {
-	ctx, span := tracing.StartSpan(ctx, "executeUnauthenticatedDataRequest")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	res, err := c.executeRawRequest(ctx, c.plainClient, req)

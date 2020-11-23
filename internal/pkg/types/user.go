@@ -15,10 +15,12 @@ const (
 
 	// GoodStandingAccountStatus indicates a user's account is in good standing.
 	GoodStandingAccountStatus userAccountStatus = "good"
-	// UnverifiedStandingAccountStatus indicates a user's account requires two factor secret verification.
-	UnverifiedStandingAccountStatus userAccountStatus = "unverified"
-	// BannedStandingAccountStatus indicates a user's account is banned.
-	BannedStandingAccountStatus userAccountStatus = "banned"
+	// UnverifiedAccountStatus indicates a user's account requires two factor secret verification.
+	UnverifiedAccountStatus userAccountStatus = "unverified"
+	// BannedAccountStatus indicates a user's account is banned.
+	BannedAccountStatus userAccountStatus = "banned"
+	// TerminatedAccountStatus indicates a user's account is banned.
+	TerminatedAccountStatus userAccountStatus = "terminated"
 )
 
 type (
@@ -211,5 +213,5 @@ func (u *User) ToStatusResponse() *UserStatusResponse {
 
 // IsBanned is a handy helper function.
 func (u *User) IsBanned() bool {
-	return u.AccountStatus == BannedStandingAccountStatus
+	return u.AccountStatus == BannedAccountStatus
 }

@@ -38,8 +38,8 @@ func main() {
 
 	// only allow initialization to take so long.
 	ctx, cancel := context.WithTimeout(ctx, cfg.Meta.StartupDeadline)
-	ctx, initSpan := tracing.StartSpan(ctx, "initialization")
-	ctx, databaseConnectionSpan := tracing.StartSpan(ctx, "database connection")
+	ctx, initSpan := tracing.StartSpan(ctx)
+	ctx, databaseConnectionSpan := tracing.StartSpan(ctx)
 
 	logger.Debug("connecting to database")
 
@@ -51,7 +51,7 @@ func main() {
 	databaseConnectionSpan.End()
 
 	authenticator := bcrypt.ProvideAuthenticator(bcrypt.ProvideHashCost(), logger)
-	ctx, databaseClientSetupSpan := tracing.StartSpan(ctx, "database client setup")
+	ctx, databaseClientSetupSpan := tracing.StartSpan(ctx)
 
 	logger.Debug("setting up database client")
 
@@ -63,7 +63,7 @@ func main() {
 	databaseClientSetupSpan.End()
 
 	// build our server struct.
-	ctx, serverSetupSpan := tracing.StartSpan(ctx, "database client setup")
+	ctx, serverSetupSpan := tracing.StartSpan(ctx)
 	server, err := BuildServer(ctx, cfg, logger, dbClient, rawDB, authenticator)
 
 	serverSetupSpan.End()

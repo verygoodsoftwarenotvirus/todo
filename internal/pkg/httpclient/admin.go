@@ -15,7 +15,7 @@ const (
 
 // BuildBanUserRequest builds a request to ban a user.
 func (c *V1Client) BuildBanUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx, "BuildBanUserRequest")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(
@@ -31,7 +31,7 @@ func (c *V1Client) BuildBanUserRequest(ctx context.Context, userID uint64) (*htt
 
 // BanUser executes a request to ban a user.
 func (c *V1Client) BanUser(ctx context.Context, userID uint64) error {
-	ctx, span := tracing.StartSpan(ctx, "BanUser")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildBanUserRequest(ctx, userID)

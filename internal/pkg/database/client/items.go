@@ -12,7 +12,7 @@ var _ types.ItemDataManager = (*Client)(nil)
 
 // ItemExists fetches whether or not an item exists from the database.
 func (c *Client) ItemExists(ctx context.Context, itemID, userID uint64) (bool, error) {
-	ctx, span := tracing.StartSpan(ctx, "ItemExists")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachItemIDToSpan(span, itemID)
@@ -28,7 +28,7 @@ func (c *Client) ItemExists(ctx context.Context, itemID, userID uint64) (bool, e
 
 // GetItem fetches an item from the database.
 func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*types.Item, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetItem")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachItemIDToSpan(span, itemID)
@@ -44,7 +44,7 @@ func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*types.Ite
 
 // GetAllItemsCount fetches the count of items from the database that meet a particular filter.
 func (c *Client) GetAllItemsCount(ctx context.Context) (count uint64, err error) {
-	ctx, span := tracing.StartSpan(ctx, "GetAllItemsCount")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Debug("GetAllItemsCount called")
@@ -54,7 +54,7 @@ func (c *Client) GetAllItemsCount(ctx context.Context) (count uint64, err error)
 
 // GetAllItems fetches a list of all items in the database.
 func (c *Client) GetAllItems(ctx context.Context, results chan []types.Item) error {
-	ctx, span := tracing.StartSpan(ctx, "GetAllItems")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Debug("GetAllItems called")
@@ -64,7 +64,7 @@ func (c *Client) GetAllItems(ctx context.Context, results chan []types.Item) err
 
 // GetItems fetches a list of items from the database that meet a particular filter.
 func (c *Client) GetItems(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.ItemList, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetItems")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachFilterToSpan(span, filter)
@@ -79,7 +79,7 @@ func (c *Client) GetItems(ctx context.Context, userID uint64, filter *types.Quer
 
 // GetItemsForAdmin fetches a list of items from the database that meet a particular filter for all users.
 func (c *Client) GetItemsForAdmin(ctx context.Context, filter *types.QueryFilter) (*types.ItemList, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetItemsForAdmin")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachFilterToSpan(span, filter)
@@ -92,7 +92,7 @@ func (c *Client) GetItemsForAdmin(ctx context.Context, filter *types.QueryFilter
 
 // GetItemsWithIDs fetches items from the database within a given set of IDs.
 func (c *Client) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]types.Item, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetItemsWithIDs")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -110,7 +110,7 @@ func (c *Client) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8
 
 // GetItemsWithIDsForAdmin fetches items from the database within a given set of IDs.
 func (c *Client) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]types.Item, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetItemsWithIDsForAdmin")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValues(map[string]interface{}{
@@ -126,7 +126,7 @@ func (c *Client) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids [
 
 // CreateItem creates an item in the database.
 func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput) (*types.Item, error) {
-	ctx, span := tracing.StartSpan(ctx, "CreateItem")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("input", input).Debug("CreateItem called")
@@ -137,7 +137,7 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 // UpdateItem updates a particular item. Note that UpdateItem expects the
 // provided input to have a valid ID.
 func (c *Client) UpdateItem(ctx context.Context, updated *types.Item) error {
-	ctx, span := tracing.StartSpan(ctx, "UpdateItem")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachItemIDToSpan(span, updated.ID)
@@ -148,7 +148,7 @@ func (c *Client) UpdateItem(ctx context.Context, updated *types.Item) error {
 
 // ArchiveItem archives an item from the database by its ID.
 func (c *Client) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
-	ctx, span := tracing.StartSpan(ctx, "ArchiveItem")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -164,7 +164,7 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
 
 // GetAuditLogEntriesForItem fetches a list of audit log entries from the database that relate to a given item.
 func (c *Client) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]types.AuditLogEntry, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetAuditLogEntriesForItem")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Debug("GetAuditLogEntriesForItem called")

@@ -38,7 +38,7 @@ var (
 )
 
 func init() {
-	ctx, span := tracing.StartSpan(context.Background(), "init")
+	ctx, span := tracing.StartSpan(context.Background())
 	defer span.End()
 
 	urlToUse = testutil.DetermineServiceURL()

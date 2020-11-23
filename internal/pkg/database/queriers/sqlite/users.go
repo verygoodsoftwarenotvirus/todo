@@ -320,7 +320,7 @@ func (s *Sqlite) buildCreateUserQuery(input types.UserDataStoreCreationInput) (q
 			input.HashedPassword,
 			input.Salt,
 			input.TwoFactorSecret,
-			types.UnverifiedStandingAccountStatus,
+			types.UnverifiedAccountStatus,
 			false,
 			0,
 		).
@@ -450,7 +450,7 @@ func (s *Sqlite) buildBanUserQuery(userID uint64) (query string, args []interfac
 
 	query, args, err = s.sqlBuilder.
 		Update(queriers.UsersTableName).
-		Set(queriers.UsersTableAccountStatusColumn, types.BannedStandingAccountStatus).
+		Set(queriers.UsersTableAccountStatusColumn, types.BannedAccountStatus).
 		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		ToSql()
 

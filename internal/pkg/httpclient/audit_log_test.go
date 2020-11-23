@@ -29,11 +29,10 @@ func TestV1Client_BuildGetAuditLogEntriesRequest(T *testing.T) {
 
 		actual, err := c.BuildGetAuditLogEntriesRequest(ctx, filter)
 		require.NotNil(t, actual)
+		assert.NoError(t, err, "no error should be returned")
 
 		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 		assertRequestQuality(t, actual, spec)
-
-		assert.NoError(t, err, "no error should be returned")
 	})
 }
 

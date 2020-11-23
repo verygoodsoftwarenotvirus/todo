@@ -12,7 +12,7 @@ import (
 func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.ItemCreationInput)
-		ctx, span := tracing.StartSpan(req.Context(), "items.service.CreationInputMiddleware")
+		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
@@ -39,7 +39,7 @@ func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 func (s *Service) UpdateInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.ItemUpdateInput)
-		ctx, span := tracing.StartSpan(req.Context(), "items.service.UpdateInputMiddleware")
+		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)

@@ -23,7 +23,7 @@ const (
 // CookieAuthenticationMiddleware checks every request for a user cookie.
 func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := tracing.StartSpan(req.Context(), "auth.service.CookieAuthenticationMiddleware")
+		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
 
 		// fetch the user from the request.
@@ -60,13 +60,12 @@ func (s *Service) AuthorizationMiddleware(allowValidCookieInLieuOfAValidToken bo
 
 func (s *Service) authorizationMiddleware(allowCookies bool, next http.Handler) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		const this = "auth.service.authorizationMiddleware"
-		ctx, span := tracing.StartSpan(req.Context(), this)
+		ctx, span := tracing.StartSpan(req.Context())
 
 		defer span.End()
 
 		var (
-			logger = s.logger.WithRequest(req).WithValue("source", this)
+			logger = s.logger.WithRequest(req)
 			user   *types.User
 		)
 
@@ -133,7 +132,7 @@ func (s *Service) authorizationMiddleware(allowCookies bool, next http.Handler) 
 func (s *Service) AuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		const this = "auth.service.AuthenticationMiddleware"
-		ctx, span := tracing.StartSpan(req.Context(), this)
+		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
 
 		var user *types.User
@@ -187,7 +186,7 @@ func (s *Service) AdminMiddleware(next http.Handler) http.Handler {
 	const staticError = "admin status required"
 
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := tracing.StartSpan(req.Context(), "auth.service.AdminMiddleware")
+		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
@@ -229,7 +228,7 @@ func parseLoginInputFromForm(req *http.Request) *types.UserLoginInput {
 // UserLoginInputMiddleware fetches user login input from requests.
 func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := tracing.StartSpan(req.Context(), "auth.service.UserLoginInputMiddleware")
+		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)

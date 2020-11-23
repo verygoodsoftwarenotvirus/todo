@@ -595,7 +595,7 @@ func TestSqlite_buildCreateUserQuery(T *testing.T) {
 			exampleUser.HashedPassword,
 			exampleUser.Salt,
 			exampleUser.TwoFactorSecret,
-			types.UnverifiedStandingAccountStatus,
+			types.UnverifiedAccountStatus,
 			false,
 			0,
 		}
@@ -817,7 +817,7 @@ func TestSqlite_buildBanUserQuery(T *testing.T) {
 
 		expectedQuery := "UPDATE users SET account_status = ? WHERE id = ?"
 		expectedArgs := []interface{}{
-			types.BannedStandingAccountStatus,
+			types.BannedAccountStatus,
 			exampleUser.ID,
 		}
 		actualQuery, actualArgs := s.buildBanUserQuery(exampleUser.ID)

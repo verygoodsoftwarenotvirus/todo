@@ -92,7 +92,7 @@ func TestOAuth2Clients(test *testing.T) {
 
 	test.Run("Creating", func(t *testing.T) {
 		t.Run("should be creatable", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Create oauth2Client.
@@ -110,7 +110,7 @@ func TestOAuth2Clients(test *testing.T) {
 
 	test.Run("Reading", func(t *testing.T) {
 		t.Run("it should return an error when trying to read one that doesn't exist", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Fetch oauth2Client.
@@ -119,7 +119,7 @@ func TestOAuth2Clients(test *testing.T) {
 		})
 
 		t.Run("it should be readable", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Create oauth2Client.
@@ -142,7 +142,7 @@ func TestOAuth2Clients(test *testing.T) {
 
 	test.Run("Deleting", func(t *testing.T) {
 		t.Run("should be able to be deleted", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Create oauth2Client.
@@ -156,7 +156,7 @@ func TestOAuth2Clients(test *testing.T) {
 		})
 
 		t.Run("should be unable to authorize after being deleted", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// create user.
@@ -192,7 +192,7 @@ func TestOAuth2Clients(test *testing.T) {
 
 	test.Run("Listing", func(t *testing.T) {
 		t.Run("should be able to be read in a list", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Create oauth2Clients.
@@ -236,7 +236,7 @@ func TestOAuth2Clients(test *testing.T) {
 
 	test.Run("Auditing", func(t *testing.T) {
 		t.Run("it should return an error when trying to audit something that does not exist", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
@@ -248,7 +248,7 @@ func TestOAuth2Clients(test *testing.T) {
 		})
 
 		t.Run("it should be auditable", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Create oauth2Client.
@@ -266,7 +266,7 @@ func TestOAuth2Clients(test *testing.T) {
 		})
 
 		t.Run("it should not be auditable by a non-admin", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Create oauth2Client.

@@ -395,7 +395,7 @@ func TestService_LoginHandler(T *testing.T) {
 
 		s := buildTestService(t)
 		exampleUser := fakes.BuildFakeUser()
-		exampleUser.AccountStatus = types.BannedStandingAccountStatus
+		exampleUser.AccountStatus = types.BannedAccountStatus
 		exampleUser.AccountStatusExplanation = "bad behavior"
 
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {

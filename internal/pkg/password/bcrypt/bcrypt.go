@@ -62,7 +62,7 @@ func ProvideAuthenticator(hashCost HashCost, logger logging.Logger) password.Aut
 
 // HashPassword takes a password and hashes it using bcrypt.
 func (b *Authenticator) HashPassword(ctx context.Context, passwordToHash string) (string, error) {
-	_, span := tracing.StartSpan(ctx, "HashPassword")
+	_, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(passwordToHash), int(b.hashCost))
@@ -82,7 +82,7 @@ func (b *Authenticator) ValidateLogin(
 	twoFactorCode string,
 	_ []byte,
 ) (passwordMatches bool, err error) {
-	ctx, span := tracing.StartSpan(ctx, "ValidateLogin")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	passwordMatches = b.PasswordMatches(ctx, hashedPassword, providedPassword, nil)
@@ -112,7 +112,7 @@ func (b *Authenticator) ValidateLogin(
 
 // PasswordMatches validates whether or not a bcrypt-hashed password matches a provided password.
 func (b *Authenticator) PasswordMatches(ctx context.Context, hashedPassword, providedPassword string, _ []byte) bool {
-	_, span := tracing.StartSpan(ctx, "PasswordMatches")
+	_, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(providedPassword)) == nil
@@ -120,7 +120,7 @@ func (b *Authenticator) PasswordMatches(ctx context.Context, hashedPassword, pro
 
 // hashedPasswordIsTooWeak determines if a given hashed password was hashed with too weak a bcrypt cost.
 func (b *Authenticator) hashedPasswordIsTooWeak(ctx context.Context, hashedPassword string) error {
-	_, span := tracing.StartSpan(ctx, "hashedPasswordIsTooWeak")
+	_, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	cost, err := bcrypt.Cost([]byte(hashedPassword))

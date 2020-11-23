@@ -56,7 +56,7 @@ var (
 
 // AuthorizeScopeHandler satisfies the oauth2server AuthorizeScopeHandler interface.
 func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Request) (scope string, err error) {
-	ctx, span := tracing.StartSpan(req.Context(), "oauth2clients.service.AuthorizeScopeHandler")
+	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -104,7 +104,7 @@ var _ oauth2server.UserAuthorizationHandler = (*Service)(nil).UserAuthorizationH
 
 // UserAuthorizationHandler satisfies the oauth2server UserAuthorizationHandler interface.
 func (s *Service) UserAuthorizationHandler(_ http.ResponseWriter, req *http.Request) (userID string, err error) {
-	ctx, span := tracing.StartSpan(req.Context(), "oauth2clients.service.UserAuthorizationHandler")
+	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
 	var uid uint64
@@ -120,7 +120,7 @@ func (s *Service) UserAuthorizationHandler(_ http.ResponseWriter, req *http.Requ
 			return "", errors.New("user not found")
 		}
 
-		if si.UserAccountStatus == types.BannedStandingAccountStatus {
+		if si.UserAccountStatus == types.BannedAccountStatus {
 			logger.Debug("banned user making this request")
 			return "", errors.New("user is banned")
 		}
@@ -138,7 +138,7 @@ var _ oauth2server.ClientAuthorizedHandler = (*Service)(nil).ClientAuthorizedHan
 // ClientAuthorizedHandler satisfies the oauth2server ClientAuthorizedHandler interface.
 func (s *Service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantType) (allowed bool, err error) {
 	// NOTE: it's a shame the interface we're implementing doesn't have this as its first argument
-	ctx, span := tracing.StartSpan(context.Background(), "ClientAuthorizedHandler")
+	ctx, span := tracing.StartSpan(context.Background())
 	defer span.End()
 
 	logger := s.logger.WithValues(map[string]interface{}{
@@ -173,7 +173,7 @@ var errUnauthorized = errors.New("unauthorized")
 // ClientScopeHandler satisfies the oauth2server ClientScopeHandler interface.
 func (s *Service) ClientScopeHandler(clientID, scope string) (authed bool, err error) {
 	// NOTE: it's a shame the interface we're implementing doesn't have this as its first argument
-	ctx, span := tracing.StartSpan(context.Background(), "UserAuthorizationHandler")
+	ctx, span := tracing.StartSpan(context.Background())
 	defer span.End()
 
 	logger := s.logger.WithValues(map[string]interface{}{

@@ -308,7 +308,7 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleUser.AccountStatus = types.BannedStandingAccountStatus
+		exampleUser.AccountStatus = types.BannedAccountStatus
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		ocv := &mockOAuth2ClientValidator{}

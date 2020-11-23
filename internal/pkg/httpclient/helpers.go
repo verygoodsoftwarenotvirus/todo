@@ -54,7 +54,7 @@ func argIsNotPointerOrNil(i interface{}) error {
 // The error returned here should only ever be received in
 // testing, and should never be encountered by an end-user.
 func unmarshalBody(ctx context.Context, res *http.Response, dest interface{}) error {
-	_, span := tracing.StartSpan(ctx, "unmarshalBody")
+	_, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	if err := argIsNotPointerOrNil(dest); err != nil {

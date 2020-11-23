@@ -16,7 +16,7 @@ const (
 
 // BuildGetWebhookRequest builds an HTTP request for fetching a webhook.
 func (c *V1Client) BuildGetWebhookRequest(ctx context.Context, id uint64) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx, "BuildGetWebhookRequest")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(nil, webhooksBasePath, strconv.FormatUint(id, 10))
@@ -26,7 +26,7 @@ func (c *V1Client) BuildGetWebhookRequest(ctx context.Context, id uint64) (*http
 
 // GetWebhook retrieves a webhook.
 func (c *V1Client) GetWebhook(ctx context.Context, id uint64) (webhook *types.Webhook, err error) {
-	ctx, span := tracing.StartSpan(ctx, "GetWebhook")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildGetWebhookRequest(ctx, id)
@@ -41,7 +41,7 @@ func (c *V1Client) GetWebhook(ctx context.Context, id uint64) (webhook *types.We
 
 // BuildGetWebhooksRequest builds an HTTP request for fetching webhooks.
 func (c *V1Client) BuildGetWebhooksRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx, "BuildGetWebhooksRequest")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(filter.ToValues(), webhooksBasePath)
@@ -51,7 +51,7 @@ func (c *V1Client) BuildGetWebhooksRequest(ctx context.Context, filter *types.Qu
 
 // GetWebhooks gets a list of webhooks.
 func (c *V1Client) GetWebhooks(ctx context.Context, filter *types.QueryFilter) (webhooks *types.WebhookList, err error) {
-	ctx, span := tracing.StartSpan(ctx, "GetWebhooks")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildGetWebhooksRequest(ctx, filter)
@@ -66,7 +66,7 @@ func (c *V1Client) GetWebhooks(ctx context.Context, filter *types.QueryFilter) (
 
 // BuildCreateWebhookRequest builds an HTTP request for creating a webhook.
 func (c *V1Client) BuildCreateWebhookRequest(ctx context.Context, body *types.WebhookCreationInput) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx, "BuildCreateWebhookRequest")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(nil, webhooksBasePath)
@@ -76,7 +76,7 @@ func (c *V1Client) BuildCreateWebhookRequest(ctx context.Context, body *types.We
 
 // CreateWebhook creates a webhook.
 func (c *V1Client) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput) (webhook *types.Webhook, err error) {
-	ctx, span := tracing.StartSpan(ctx, "CreateWebhook")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildCreateWebhookRequest(ctx, input)
@@ -91,7 +91,7 @@ func (c *V1Client) CreateWebhook(ctx context.Context, input *types.WebhookCreati
 
 // BuildUpdateWebhookRequest builds an HTTP request for updating a webhook.
 func (c *V1Client) BuildUpdateWebhookRequest(ctx context.Context, updated *types.Webhook) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx, "BuildUpdateWebhookRequest")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(nil, webhooksBasePath, strconv.FormatUint(updated.ID, 10))
@@ -101,7 +101,7 @@ func (c *V1Client) BuildUpdateWebhookRequest(ctx context.Context, updated *types
 
 // UpdateWebhook updates a webhook.
 func (c *V1Client) UpdateWebhook(ctx context.Context, updated *types.Webhook) error {
-	ctx, span := tracing.StartSpan(ctx, "UpdateWebhook")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildUpdateWebhookRequest(ctx, updated)
@@ -114,7 +114,7 @@ func (c *V1Client) UpdateWebhook(ctx context.Context, updated *types.Webhook) er
 
 // BuildArchiveWebhookRequest builds an HTTP request for updating a webhook.
 func (c *V1Client) BuildArchiveWebhookRequest(ctx context.Context, id uint64) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx, "BuildArchiveWebhookRequest")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(nil, webhooksBasePath, strconv.FormatUint(id, 10))
@@ -124,7 +124,7 @@ func (c *V1Client) BuildArchiveWebhookRequest(ctx context.Context, id uint64) (*
 
 // ArchiveWebhook archives a webhook.
 func (c *V1Client) ArchiveWebhook(ctx context.Context, id uint64) error {
-	ctx, span := tracing.StartSpan(ctx, "ArchiveWebhook")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildArchiveWebhookRequest(ctx, id)
@@ -137,7 +137,7 @@ func (c *V1Client) ArchiveWebhook(ctx context.Context, id uint64) error {
 
 // BuildGetAuditLogForWebhookRequest builds an HTTP request for fetching a list of audit log entries pertaining to a webhook.
 func (c *V1Client) BuildGetAuditLogForWebhookRequest(ctx context.Context, webhookID uint64) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx, "BuildGetAuditLogForWebhookRequest")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(
@@ -153,7 +153,7 @@ func (c *V1Client) BuildGetAuditLogForWebhookRequest(ctx context.Context, webhoo
 
 // GetAuditLogForWebhook retrieves a list of audit log entries pertaining to a webhook.
 func (c *V1Client) GetAuditLogForWebhook(ctx context.Context, webhookID uint64) (entries []types.AuditLogEntry, err error) {
-	ctx, span := tracing.StartSpan(ctx, "GetAuditLogForWebhook")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildGetAuditLogForWebhookRequest(ctx, webhookID)

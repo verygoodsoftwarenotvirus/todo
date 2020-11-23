@@ -17,7 +17,7 @@ const (
 
 // BuildGetUserRequest builds an HTTP request for fetching a user.
 func (c *V1Client) BuildGetUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx, "BuildGetUserRequest")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(nil, usersBasePath, strconv.FormatUint(userID, 10))
@@ -27,7 +27,7 @@ func (c *V1Client) BuildGetUserRequest(ctx context.Context, userID uint64) (*htt
 
 // GetUser retrieves a user.
 func (c *V1Client) GetUser(ctx context.Context, userID uint64) (user *types.User, err error) {
-	ctx, span := tracing.StartSpan(ctx, "GetUser")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildGetUserRequest(ctx, userID)
@@ -42,7 +42,7 @@ func (c *V1Client) GetUser(ctx context.Context, userID uint64) (user *types.User
 
 // BuildGetUsersRequest builds an HTTP request for fetching a user.
 func (c *V1Client) BuildGetUsersRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx, "BuildGetUsersRequest")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(filter.ToValues(), usersBasePath)
@@ -52,7 +52,7 @@ func (c *V1Client) BuildGetUsersRequest(ctx context.Context, filter *types.Query
 
 // GetUsers retrieves a list of users.
 func (c *V1Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (*types.UserList, error) {
-	ctx, span := tracing.StartSpan(ctx, "GetUsers")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	users := &types.UserList{}
@@ -69,7 +69,7 @@ func (c *V1Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (*ty
 
 // BuildSearchForUsersByUsernameRequest builds an HTTP request that searches for a user.
 func (c *V1Client) BuildSearchForUsersByUsernameRequest(ctx context.Context, username string) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx, "BuildSearchForUsersByUsernameRequest")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	u := c.buildRawURL(nil, usersBasePath, "search")
@@ -83,7 +83,7 @@ func (c *V1Client) BuildSearchForUsersByUsernameRequest(ctx context.Context, use
 
 // SearchForUsersByUsername retrieves a list of users.
 func (c *V1Client) SearchForUsersByUsername(ctx context.Context, username string) (users []types.User, err error) {
-	ctx, span := tracing.StartSpan(ctx, "SearchForUsersByUsername")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildSearchForUsersByUsernameRequest(ctx, username)
@@ -98,7 +98,7 @@ func (c *V1Client) SearchForUsersByUsername(ctx context.Context, username string
 
 // BuildCreateUserRequest builds an HTTP request for creating a user.
 func (c *V1Client) BuildCreateUserRequest(ctx context.Context, body *types.UserCreationInput) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx, "BuildCreateUserRequest")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.buildVersionlessURL(nil, usersBasePath)
@@ -108,7 +108,7 @@ func (c *V1Client) BuildCreateUserRequest(ctx context.Context, body *types.UserC
 
 // CreateUser creates a new user.
 func (c *V1Client) CreateUser(ctx context.Context, input *types.UserCreationInput) (*types.UserCreationResponse, error) {
-	ctx, span := tracing.StartSpan(ctx, "CreateUser")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	user := &types.UserCreationResponse{}
@@ -125,7 +125,7 @@ func (c *V1Client) CreateUser(ctx context.Context, input *types.UserCreationInpu
 
 // BuildArchiveUserRequest builds an HTTP request for updating a user.
 func (c *V1Client) BuildArchiveUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx, "BuildArchiveUserRequest")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.buildRawURL(nil, usersBasePath, strconv.FormatUint(userID, 10)).String()
@@ -135,7 +135,7 @@ func (c *V1Client) BuildArchiveUserRequest(ctx context.Context, userID uint64) (
 
 // ArchiveUser archives a user.
 func (c *V1Client) ArchiveUser(ctx context.Context, userID uint64) error {
-	ctx, span := tracing.StartSpan(ctx, "ArchiveUser")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildArchiveUserRequest(ctx, userID)
@@ -148,7 +148,7 @@ func (c *V1Client) ArchiveUser(ctx context.Context, userID uint64) error {
 
 // BuildLoginRequest builds an authenticating HTTP request.
 func (c *V1Client) BuildLoginRequest(ctx context.Context, input *types.UserLoginInput) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx, "BuildLoginRequest")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	if input == nil {
@@ -167,7 +167,7 @@ func (c *V1Client) BuildLoginRequest(ctx context.Context, input *types.UserLogin
 
 // Login will, when provided the correct credentials, fetch a login cookie.
 func (c *V1Client) Login(ctx context.Context, input *types.UserLoginInput) (*http.Cookie, error) {
-	ctx, span := tracing.StartSpan(ctx, "Login")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	if input == nil {
@@ -196,7 +196,7 @@ func (c *V1Client) Login(ctx context.Context, input *types.UserLoginInput) (*htt
 
 // BuildVerifyTOTPSecretRequest builds a request to validate a TOTP secret.
 func (c *V1Client) BuildVerifyTOTPSecretRequest(ctx context.Context, userID uint64, token string) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx, "BuildVerifyTOTPSecretRequest")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.buildVersionlessURL(nil, usersBasePath, "totp_secret", "verify")
@@ -209,7 +209,7 @@ func (c *V1Client) BuildVerifyTOTPSecretRequest(ctx context.Context, userID uint
 
 // VerifyTOTPSecret executes a request to verify a TOTP secret.
 func (c *V1Client) VerifyTOTPSecret(ctx context.Context, userID uint64, token string) error {
-	ctx, span := tracing.StartSpan(ctx, "VerifyTOTPSecret")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildVerifyTOTPSecretRequest(ctx, userID, token)
@@ -235,7 +235,7 @@ func (c *V1Client) VerifyTOTPSecret(ctx context.Context, userID uint64, token st
 
 // BuildGetAuditLogForUserRequest builds an HTTP request for fetching a list of audit log entries for a user.
 func (c *V1Client) BuildGetAuditLogForUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx, "BuildGetAuditLogForUserRequest")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(
@@ -251,7 +251,7 @@ func (c *V1Client) BuildGetAuditLogForUserRequest(ctx context.Context, userID ui
 
 // GetAuditLogForUser retrieves a list of audit log entries pertaining to a user.
 func (c *V1Client) GetAuditLogForUser(ctx context.Context, userID uint64) (entries []types.AuditLogEntry, err error) {
-	ctx, span := tracing.StartSpan(ctx, "GetAuditLogForUser")
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildGetAuditLogForUserRequest(ctx, userID)

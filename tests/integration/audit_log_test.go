@@ -12,7 +12,7 @@ import (
 func TestAuditLogEntries(test *testing.T) {
 	test.Run("Listing", func(t *testing.T) {
 		t.Run("should be able to be read in a list by an admin", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			actual, err := adminClient.GetAuditLogEntries(ctx, nil)
@@ -24,7 +24,7 @@ func TestAuditLogEntries(test *testing.T) {
 
 	test.Run("Reading", func(t *testing.T) {
 		t.Run("should be able to be read as an individual by an admin", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			actual, err := adminClient.GetAuditLogEntries(ctx, nil)

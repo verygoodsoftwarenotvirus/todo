@@ -26,7 +26,7 @@ const (
 func (s *Service) UserInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.UserCreationInput)
-		ctx, span := tracing.StartSpan(req.Context(), "users.service.UserInputMiddleware")
+		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
 
 		// decode the request.
@@ -46,7 +46,7 @@ func (s *Service) UserInputMiddleware(next http.Handler) http.Handler {
 func (s *Service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.PasswordUpdateInput)
-		ctx, span := tracing.StartSpan(req.Context(), "users.service.PasswordUpdateInputMiddleware")
+		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
 
 		// decode the request.
@@ -66,7 +66,7 @@ func (s *Service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler 
 func (s *Service) TOTPSecretVerificationInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.TOTPSecretVerificationInput)
-		ctx, span := tracing.StartSpan(req.Context(), "users.service.TOTPSecretVerificationInputMiddleware")
+		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
 
 		// decode the request.
@@ -86,7 +86,7 @@ func (s *Service) TOTPSecretVerificationInputMiddleware(next http.Handler) http.
 func (s *Service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.TOTPSecretRefreshInput)
-		ctx, span := tracing.StartSpan(req.Context(), "users.service.TOTPSecretRefreshInputMiddleware")
+		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
 
 		// decode the request.

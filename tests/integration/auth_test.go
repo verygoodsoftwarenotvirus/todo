@@ -60,7 +60,7 @@ func loginUser(ctx context.Context, t *testing.T, username, password, totpSecret
 
 func TestAuth(test *testing.T) {
 	test.Run("should be able to login", func(t *testing.T) {
-		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
 		// create a user.
@@ -113,7 +113,7 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should be able to logout", func(t *testing.T) {
-		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -179,7 +179,7 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("login request without body fails", func(t *testing.T) {
-		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
 		u, err := url.Parse(todoClient.BuildURL(nil))
@@ -196,7 +196,7 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should not be able to log in with the wrong password", func(t *testing.T) {
-		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
 		// create a user.
@@ -247,7 +247,7 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should not be able to login as someone that doesn't exist", func(t *testing.T) {
-		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -283,7 +283,7 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should not be able to login without validating TOTP secret", func(t *testing.T) {
-		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
 		// create a user.
@@ -331,7 +331,7 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should reject an unauthenticated request", func(t *testing.T) {
-		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, todoClient.BuildURL(nil, "webhooks"), nil)
@@ -343,7 +343,7 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should be able to change password", func(t *testing.T) {
-		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
 		// create user.
@@ -431,7 +431,7 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should be able to validate a 2FA token", func(t *testing.T) {
-		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
 		// create user.
@@ -450,7 +450,7 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should reject attempt to validate an invalid 2FA token", func(t *testing.T) {
-		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
 		// create user.
@@ -463,7 +463,7 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should be able to change 2FA Token", func(t *testing.T) {
-		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
 		// create user.
@@ -553,7 +553,7 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should accept a login cookie if a token is missing", func(t *testing.T) {
-		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
 		// create user.
@@ -570,7 +570,7 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should only allow users to see their own content", func(t *testing.T) {
-		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
 		// create user and oauth2 client A.
@@ -631,7 +631,7 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should only allow clients with a given scope to see that scope's content", func(t *testing.T) {
-		ctx, span := tracing.StartSpan(context.Background(), t.Name())
+		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
 		// create user.

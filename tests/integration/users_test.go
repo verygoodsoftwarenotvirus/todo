@@ -90,7 +90,7 @@ func checkUserEquality(t *testing.T, expected *types.UserCreationInput, actual *
 func TestUsers(test *testing.T) {
 	test.Run("Creating", func(t *testing.T) {
 		t.Run("should be creatable", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Create user.
@@ -108,7 +108,7 @@ func TestUsers(test *testing.T) {
 
 	test.Run("Reading", func(t *testing.T) {
 		t.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Fetch user.
@@ -118,7 +118,7 @@ func TestUsers(test *testing.T) {
 		})
 
 		t.Run("it should be readable", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Create user.
@@ -154,7 +154,7 @@ func TestUsers(test *testing.T) {
 
 	test.Run("Searching", func(t *testing.T) {
 		t.Run("it should return empty slice when searching for a username that doesn't exist", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Search For user.
@@ -164,7 +164,7 @@ func TestUsers(test *testing.T) {
 		})
 
 		t.Run("it should only be accessible to admins", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Search For user.
@@ -174,7 +174,7 @@ func TestUsers(test *testing.T) {
 		})
 
 		t.Run("it should be searchable", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			exampleUsername := fakes.BuildFakeUser().Username
@@ -206,7 +206,7 @@ func TestUsers(test *testing.T) {
 
 	test.Run("Deleting", func(t *testing.T) {
 		t.Run("should be able to be deleted", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Create user.
@@ -228,7 +228,7 @@ func TestUsers(test *testing.T) {
 
 	test.Run("Auditing", func(t *testing.T) {
 		t.Run("it should return an error when trying to audit something that does not exist", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Ban user.
@@ -240,7 +240,7 @@ func TestUsers(test *testing.T) {
 		})
 
 		t.Run("it should be auditable", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Create user.
@@ -259,7 +259,7 @@ func TestUsers(test *testing.T) {
 		})
 
 		t.Run("it should not be auditable by a non-admin", func(t *testing.T) {
-			ctx, span := tracing.StartSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
 			// Create user.

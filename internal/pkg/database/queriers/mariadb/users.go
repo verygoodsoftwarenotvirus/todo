@@ -320,7 +320,7 @@ func (m *MariaDB) buildCreateUserQuery(input types.UserDataStoreCreationInput) (
 			input.HashedPassword,
 			input.Salt,
 			input.TwoFactorSecret,
-			types.UnverifiedStandingAccountStatus,
+			types.UnverifiedAccountStatus,
 			false,
 			0,
 		).
@@ -451,7 +451,7 @@ func (m *MariaDB) buildBanUserQuery(userID uint64) (query string, args []interfa
 
 	query, args, err = m.sqlBuilder.
 		Update(queriers.UsersTableName).
-		Set(queriers.UsersTableAccountStatusColumn, types.BannedStandingAccountStatus).
+		Set(queriers.UsersTableAccountStatusColumn, types.BannedAccountStatus).
 		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		ToSql()
 

@@ -107,7 +107,7 @@ func (c *OAuth2Client) GetDomain() string {
 	return c.RedirectURI
 }
 
-// GetUserID returns the client's UserID.
+// GetUserID returns the client's TargetAccountID.
 func (c *OAuth2Client) GetUserID() string {
 	return strconv.FormatUint(c.BelongsToUser, 10)
 }

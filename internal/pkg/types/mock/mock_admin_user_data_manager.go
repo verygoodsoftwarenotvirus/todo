@@ -15,12 +15,7 @@ type AdminUserDataManager struct {
 	mock.Mock
 }
 
-// BanUserAccount is a mock function.
-func (m *AdminUserDataManager) BanUserAccount(ctx context.Context, userID uint64) error {
-	return m.Called(ctx, userID).Error(0)
-}
-
-// TerminateUserAccount is a mock function.
-func (m *AdminUserDataManager) TerminateUserAccount(ctx context.Context, userID uint64) error {
-	return m.Called(ctx, userID).Error(0)
+// UpdateUserAccountStatus is a mock function.
+func (m *AdminUserDataManager) UpdateUserAccountStatus(ctx context.Context, userID uint64, input types.AccountStatusUpdateInput) error {
+	return m.Called(ctx, userID, input).Error(0)
 }

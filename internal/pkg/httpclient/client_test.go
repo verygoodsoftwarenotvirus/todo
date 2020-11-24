@@ -37,20 +37,20 @@ func (v valuer) ToValues() url.Values {
 }
 
 type requestSpec struct {
-	path            string
-	pathArgs        []interface{}
-	method          string
-	query           string
-	bodyShouldBeNil bool
+	path              string
+	pathArgs          []interface{}
+	method            string
+	query             string
+	bodyShouldBeEmpty bool
 }
 
-func newRequestSpec(bodyShouldBeNil bool, method, query, path string, pathArgs ...interface{}) requestSpec {
+func newRequestSpec(bodyShouldBeEmpty bool, method, query, path string, pathArgs ...interface{}) requestSpec {
 	return requestSpec{
-		path:            path,
-		pathArgs:        pathArgs,
-		method:          method,
-		query:           query,
-		bodyShouldBeNil: bodyShouldBeNil,
+		path:              path,
+		pathArgs:          pathArgs,
+		method:            method,
+		query:             query,
+		bodyShouldBeEmpty: bodyShouldBeEmpty,
 	}
 }
 
@@ -66,7 +66,7 @@ func assertRequestQuality(t *testing.T, req *http.Request, spec requestSpec) {
 	require.NotEmpty(t, bodyBytes)
 	require.NoError(t, err)
 
-	if spec.bodyShouldBeNil {
+	if spec.bodyShouldBeEmpty {
 		bodyLines := strings.Split(string(bodyBytes), "\n")
 		require.NotEmpty(t, bodyLines)
 		assert.Empty(t, bodyLines[len(bodyLines)-1])

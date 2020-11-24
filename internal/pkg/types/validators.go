@@ -23,6 +23,18 @@ func (uv *urlValidator) Validate(field v.Field) v.Errors {
 	return v.NewErrors(field.Name, "type error", "URL field is the wrong type")
 }
 
+var _ v.Validator = (*userAccountStatusValidator)(nil)
+
+type userAccountStatusValidator struct{}
+
+func (slv *userAccountStatusValidator) Validate(field v.Field) v.Errors {
+	if s, ok := field.ValuePtr.(userAccountStatus); ok && !IsValidAccountStatus(string(s)) {
+		return v.NewErrors(field.Name, "invalid value", fmt.Sprintf("%q is not a valid user account status", s))
+	}
+
+	return nil
+}
+
 var _ v.Validator = (*minimumStringLengthValidator)(nil)
 
 type minimumStringLengthValidator struct {

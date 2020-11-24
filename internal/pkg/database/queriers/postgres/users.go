@@ -209,8 +209,8 @@ func (p *Postgres) buildSearchForUserByUsernameQuery(usernameQuery string) (quer
 // SearchForUsersByUsername fetches a list of users whose usernames begin with a given query.
 func (p *Postgres) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]types.User, error) {
 	query, args := p.buildSearchForUserByUsernameQuery(usernameQuery)
-	rows, err := p.db.QueryContext(ctx, query, args...)
 
+	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error querying database for users: %w", err)
 	}

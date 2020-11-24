@@ -16,8 +16,13 @@ type AuditLogDataManager struct {
 }
 
 // LogUserBanEvent implements our interface.
-func (m *AuditLogDataManager) LogUserBanEvent(ctx context.Context, banGiver, banReceiver uint64) {
-	m.Called(ctx, banGiver, banReceiver)
+func (m *AuditLogDataManager) LogUserBanEvent(ctx context.Context, banGiver, banReceiver uint64, reason string) {
+	m.Called(ctx, banGiver, banReceiver, reason)
+}
+
+// LogAccountTerminationEvent implements our interface.
+func (m *AuditLogDataManager) LogAccountTerminationEvent(ctx context.Context, adminID, accountID uint64, reason string) {
+	m.Called(ctx, adminID, accountID, reason)
 }
 
 // GetAuditLogEntry is a mock function.

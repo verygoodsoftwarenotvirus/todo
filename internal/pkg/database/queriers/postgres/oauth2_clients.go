@@ -244,8 +244,8 @@ func (p *Postgres) buildGetOAuth2ClientsForUserQuery(userID uint64, filter *type
 // GetOAuth2ClientsForUser gets a list of OAuth2 clients.
 func (p *Postgres) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.OAuth2ClientList, error) {
 	query, args := p.buildGetOAuth2ClientsForUserQuery(userID, filter)
-	rows, err := p.db.QueryContext(ctx, query, args...)
 
+	rows, err := p.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err

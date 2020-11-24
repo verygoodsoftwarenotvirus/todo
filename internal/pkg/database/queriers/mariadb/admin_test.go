@@ -4,14 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMariaDB_BanUser(T *testing.T) {
+func TestMariaDB_UpdateUserAccountStatus(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -19,15 +18,16 @@ func TestMariaDB_BanUser(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
+		exampleInput := *fakes.BuildFakeAccountStatusUpdateInput()
 
-		m, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := m.buildSetUserStatusQuery(exampleUser.ID, string(types.BannedAccountStatus))
+		p, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := p.buildSetUserStatusQuery(exampleUser.ID, exampleInput)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := m.BanUserAccount(ctx, exampleUser.ID)
+		err := p.UpdateUserAccountStatus(ctx, exampleUser.ID, exampleInput)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")

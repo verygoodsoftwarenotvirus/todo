@@ -4,17 +4,17 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
 const (
 	adminBasePath = "_admin_"
 )
 
-// BuildBanUserRequest builds a request to ban a user.
-func (c *V1Client) BuildBanUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
+// BuildAccountStatusUpdateInputRequest builds a request to ban a user.
+func (c *V1Client) BuildAccountStatusUpdateInputRequest(ctx context.Context, input *types.AccountStatusUpdateInput) (*http.Request, error) {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
@@ -22,21 +22,20 @@ func (c *V1Client) BuildBanUserRequest(ctx context.Context, userID uint64) (*htt
 		nil,
 		adminBasePath,
 		usersBasePath,
-		strconv.FormatUint(userID, 10),
-		"ban",
+		"status",
 	)
 
-	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
+	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
-// BanUser executes a request to ban a user.
-func (c *V1Client) BanUser(ctx context.Context, userID uint64) error {
+// UpdateAccountStatus executes a request to ban a user.
+func (c *V1Client) UpdateAccountStatus(ctx context.Context, input *types.AccountStatusUpdateInput) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
-	req, err := c.BuildBanUserRequest(ctx, userID)
+	req, err := c.BuildAccountStatusUpdateInputRequest(ctx, input)
 	if err != nil {
-		return fmt.Errorf("error building user ban request: %w", err)
+		return fmt.Errorf("error building user account status update request: %w", err)
 	}
 
 	res, err := c.executeRawRequest(ctx, c.authedClient, req)

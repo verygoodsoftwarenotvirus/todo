@@ -63,16 +63,13 @@ func main() {
 	databaseClientSetupSpan.End()
 
 	// build our server struct.
-	ctx, serverSetupSpan := tracing.StartSpan(ctx)
 	server, err := BuildServer(ctx, cfg, logger, dbClient, rawDB, authenticator)
-
-	serverSetupSpan.End()
-	initSpan.End()
-	cancel()
-
 	if err != nil {
 		logger.Fatal(fmt.Errorf("error initializing HTTP server: %w", err))
 	}
+
+	initSpan.End()
+	cancel()
 
 	// I slept and dreamt that life was joy.
 	//   I awoke and saw that life was service.

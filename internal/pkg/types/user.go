@@ -23,6 +23,19 @@ const (
 	TerminatedAccountStatus userAccountStatus = "terminated"
 )
 
+// IsValidAccountStatus returns whether or not the provided string is a valid userAccountStatus.
+func IsValidAccountStatus(s string) bool {
+	switch s {
+	case string(GoodStandingAccountStatus),
+		string(UnverifiedAccountStatus),
+		string(BannedAccountStatus),
+		string(TerminatedAccountStatus):
+		return true
+	default:
+		return false
+	}
+}
+
 type (
 	userAccountStatus string
 
@@ -113,8 +126,7 @@ type (
 	// AdminUserDataManager contains administrative user functions that we don't necessarily want to expose
 	// to, say, the collection of handlers.
 	AdminUserDataManager interface {
-		BanUserAccount(ctx context.Context, userID uint64) error
-		TerminateUserAccount(ctx context.Context, userID uint64) error
+		UpdateUserAccountStatus(ctx context.Context, userID uint64, input AccountStatusUpdateInput) error
 	}
 
 	// UserDataManager describes a structure which can manage users in permanent storage.

@@ -34,17 +34,17 @@ func Test_permissionMask_hasReservedUnusedPermission2(T *testing.T) {
 	})
 }
 
-func Test_permissionMask_hasReservedUnusedPermission3(T *testing.T) {
+func Test_permissionMask_CanTerminateAccounts(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
 		x := AdminPermissionsBitmask(0)
-		assert.False(t, x.hasReservedUnusedPermission3())
+		assert.False(t, x.CanTerminateAccounts())
 
-		y := AdminPermissionsBitmask(0 | uint32(reservedUnusedPermission3))
-		assert.True(t, y.hasReservedUnusedPermission3())
+		y := AdminPermissionsBitmask(0 | uint32(canTerminateAccountsPermission))
+		assert.True(t, y.CanTerminateAccounts())
 	})
 }
 

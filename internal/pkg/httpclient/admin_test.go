@@ -16,7 +16,7 @@ import (
 func TestV1Client_BuildBanUserRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/_admin_/users/%d/ban"
+	const expectedPathFormat = "/api/v1/_admin_/users/status"
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -25,10 +25,10 @@ func TestV1Client_BuildBanUserRequest(T *testing.T) {
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
-		exampleUserID := fakes.BuildFakeUser().ID
-		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleUserID)
+		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
 
-		actual, err := c.BuildBanUserRequest(ctx, exampleUserID)
+		actual, err := c.BuildAccountStatusUpdateInputRequest(ctx, exampleInput)
 		assert.NoError(t, err)
 		require.NotNil(t, actual)
 
@@ -39,14 +39,15 @@ func TestV1Client_BuildBanUserRequest(T *testing.T) {
 func TestV1Client_BanUser(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/_admin_/users/%d/ban"
+	const expectedPathFormat = "/api/v1/_admin_/users/status"
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		exampleUserID := fakes.BuildFakeUser().ID
-		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleUserID)
+
+		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -59,7 +60,7 @@ func TestV1Client_BanUser(T *testing.T) {
 		)
 		c := buildTestClient(t, ts)
 
-		err := c.BanUser(ctx, exampleUserID)
+		err := c.UpdateAccountStatus(ctx, exampleInput)
 		assert.NoError(t, err)
 	})
 
@@ -67,8 +68,9 @@ func TestV1Client_BanUser(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		exampleUserID := fakes.BuildFakeUser().ID
-		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleUserID)
+
+		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -81,15 +83,16 @@ func TestV1Client_BanUser(T *testing.T) {
 		)
 		c := buildTestClient(t, ts)
 
-		assert.Error(t, c.BanUser(ctx, exampleUserID))
+		assert.Error(t, c.UpdateAccountStatus(ctx, exampleInput))
 	})
 
 	T.Run("with otherwise invalid status code response", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		exampleUserID := fakes.BuildFakeUser().ID
-		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleUserID)
+
+		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -102,7 +105,7 @@ func TestV1Client_BanUser(T *testing.T) {
 		)
 		c := buildTestClient(t, ts)
 
-		err := c.BanUser(ctx, exampleUserID)
+		err := c.UpdateAccountStatus(ctx, exampleInput)
 		assert.Error(t, err)
 	})
 
@@ -110,9 +113,10 @@ func TestV1Client_BanUser(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		exampleUserID := fakes.BuildFakeUser().ID
+
+		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
 		c := buildTestClientWithInvalidURL(t)
-		err := c.BanUser(ctx, exampleUserID)
+		err := c.UpdateAccountStatus(ctx, exampleInput)
 
 		assert.Error(t, err)
 	})
@@ -121,8 +125,9 @@ func TestV1Client_BanUser(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		exampleUserID := fakes.BuildFakeUser().ID
-		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleUserID)
+
+		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -138,7 +143,7 @@ func TestV1Client_BanUser(T *testing.T) {
 		c := buildTestClient(t, ts)
 		c.plainClient.Timeout = time.Millisecond
 
-		err := c.BanUser(ctx, exampleUserID)
+		err := c.UpdateAccountStatus(ctx, exampleInput)
 		assert.Error(t, err)
 	})
 }

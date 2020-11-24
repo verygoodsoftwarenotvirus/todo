@@ -11,6 +11,8 @@ const (
 	ChangesAssignmentKey = "changes"
 	// CreationAssignmentKey is the key we use to indicate which object was created for creation events.
 	CreationAssignmentKey = "created"
+	// ReasonKey is the key we use to indicate the reason behind a given event.
+	ReasonKey = "reason"
 )
 
 // BuildCycleCookieSecretEvent builds an entry creation input for when a cookie secret is cycled.

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	adminservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/oauth2clients"
@@ -144,10 +143,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 			// Admin
 			v1Router.With(s.authService.AdminMiddleware).Route("/_admin_", func(adminRouter chi.Router) {
 				adminRouter.Post("/cycle_cookie_secret", s.authService.CycleCookieSecretHandler)
-
-				singleUserRoute := fmt.Sprintf(numericIDPattern, adminservice.UserIDURIParamKey)
-				adminRouter.Delete(fmt.Sprintf("/users/%s/ban", singleUserRoute), s.adminService.BanHandler)
-
+				adminRouter.With(s.adminService.AccountStatusUpdateInputMiddleware).Post("/users/status", s.adminService.UserAccountStatusChangeHandler)
 				adminRouter.Route("/audit_log", func(auditRouter chi.Router) {
 					entryIDRouteParam := fmt.Sprintf("/"+numericIDPattern, auditservice.LogEntryURIParamKey)
 					auditRouter.Get(root, s.auditService.ListHandler)

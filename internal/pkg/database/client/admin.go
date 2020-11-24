@@ -4,31 +4,26 @@ import (
 	"context"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
 // LogUserBanEvent saves a UserBannedEvent in the audit log table.
-func (c *Client) LogUserBanEvent(ctx context.Context, banGiver, banRecipient uint64) {
-	c.querier.LogUserBanEvent(ctx, banGiver, banRecipient)
+func (c *Client) LogUserBanEvent(ctx context.Context, banGiver, banRecipient uint64, reason string) {
+	c.querier.LogUserBanEvent(ctx, banGiver, banRecipient, reason)
 }
 
-// BanUserAccount marks a user's account as banned.
-func (c *Client) BanUserAccount(ctx context.Context, userID uint64) error {
+// LogAccountTerminationEvent saves a UserBannedEvent in the audit log table.
+func (c *Client) LogAccountTerminationEvent(ctx context.Context, terminator, terminee uint64, reason string) {
+	c.querier.LogAccountTerminationEvent(ctx, terminator, terminee, reason)
+}
+
+// UpdateUserAccountStatus marks a user's account as banned.
+func (c *Client) UpdateUserAccountStatus(ctx context.Context, userID uint64, input types.AccountStatusUpdateInput) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue("user_id", userID).Debug("BanUserAccount called")
+	c.logger.WithValue("user_id", userID).Debug("UpdateUserAccountStatus called")
 
-	return c.querier.BanUserAccount(ctx, userID)
-}
-
-// TerminateUserAccount marks a user's account as terminated.
-func (c *Client) TerminateUserAccount(ctx context.Context, userID uint64) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue("user_id", userID).Debug("BanUserAccount called")
-
-	return c.querier.BanUserAccount(ctx, userID)
+	return c.querier.UpdateUserAccountStatus(ctx, userID, input)
 }

@@ -15,8 +15,9 @@ func TestAdminEventBuilders(T *testing.T) {
 			expectedContextKeys: []string{
 				audit.ActorAssignmentKey,
 				audit.UserAssignmentKey,
+				audit.ReasonKey,
 			},
-			actual: audit.BuildUserBanEventEntry(exampleUserID, exampleUserID),
+			actual: audit.BuildUserBanEventEntry(exampleUserID, exampleUserID, "reason"),
 		},
 	}
 

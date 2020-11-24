@@ -19,10 +19,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestService_StatusHandler(T *testing.T) {
+func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("banning users happy path", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
@@ -38,9 +38,49 @@ func TestService_StatusHandler(T *testing.T) {
 			}, nil
 		}
 
-		exampleUserToBeBanned := fakes.BuildFakeUser()
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return exampleUserToBeBanned.ID
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://blah.com", nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+		exampleInput.NewStatus = types.BannedAccountStatus
+
+		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
+
+		udb := &mockmodels.AdminUserDataManager{}
+		udb.On(
+			"UpdateUserAccountStatus",
+			mock.Anything,
+			exampleInput.TargetAccountID,
+			*exampleInput,
+		).Return(nil)
+		s.userDB = udb
+
+		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog.On("LogUserBanEvent", mock.Anything, exampleUser.ID, exampleInput.TargetAccountID, exampleInput.Reason).Return()
+		s.auditLog = auditLog
+
+		s.UserAccountStatusChangeHandler(res, req)
+		assert.Equal(t, http.StatusAccepted, res.Code)
+
+		mock.AssertExpectationsForObjects(t, udb, auditLog)
+	})
+
+	T.Run("terminating accounts happy path", func(t *testing.T) {
+		t.Parallel()
+
+		s := buildTestService(t)
+		ctx, err := s.sessionManager.Load(context.Background(), "")
+		require.NoError(t, err)
+
+		exampleUser := fakes.BuildFakeUser()
+		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
+			return &types.SessionInfo{
+				UserID:           exampleUser.ID,
+				UserIsAdmin:      true,
+				AdminPermissions: testutil.BuildMaxAdminPerms(),
+			}, nil
 		}
 
 		res := httptest.NewRecorder()
@@ -48,22 +88,54 @@ func TestService_StatusHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		auditLog := &mockmodels.AuditLogDataManager{}
-		auditLog.On("LogUserBanEvent", mock.Anything, exampleUser.ID, exampleUserToBeBanned.ID).Return()
-		s.auditLog = auditLog
+		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+		exampleInput.NewStatus = types.TerminatedAccountStatus
+
+		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
 
 		udb := &mockmodels.AdminUserDataManager{}
 		udb.On(
-			"BanUserAccount",
+			"UpdateUserAccountStatus",
 			mock.Anything,
-			exampleUserToBeBanned.ID,
+			exampleInput.TargetAccountID,
+			*exampleInput,
 		).Return(nil)
 		s.userDB = udb
 
-		s.BanHandler(res, req)
+		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog.On("LogAccountTerminationEvent", mock.Anything, exampleUser.ID, exampleInput.TargetAccountID, exampleInput.Reason).Return()
+		s.auditLog = auditLog
+
+		s.UserAccountStatusChangeHandler(res, req)
 		assert.Equal(t, http.StatusAccepted, res.Code)
 
 		mock.AssertExpectationsForObjects(t, udb, auditLog)
+	})
+
+	T.Run("with missing input", func(t *testing.T) {
+		t.Parallel()
+
+		s := buildTestService(t)
+		ctx, err := s.sessionManager.Load(context.Background(), "")
+		require.NoError(t, err)
+
+		exampleUser := fakes.BuildFakeUser()
+		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
+			return &types.SessionInfo{
+				UserID:           exampleUser.ID,
+				UserIsAdmin:      true,
+				AdminPermissions: testutil.BuildMaxAdminPerms(),
+			}, nil
+		}
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://blah.com", nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		s.UserAccountStatusChangeHandler(res, req)
+
+		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
 
 	T.Run("with error fetching session", func(t *testing.T) {
@@ -82,7 +154,12 @@ func TestService_StatusHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.BanHandler(res, req)
+		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+		exampleInput.NewStatus = types.BannedAccountStatus
+
+		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
+
+		s.UserAccountStatusChangeHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 	})
 
@@ -107,11 +184,16 @@ func TestService_StatusHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.BanHandler(res, req)
-		assert.Equal(t, http.StatusForbidden, res.Code)
+		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+		exampleInput.NewStatus = types.BannedAccountStatus
+
+		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
+
+		s.UserAccountStatusChangeHandler(res, req)
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
 	})
 
-	T.Run("with admin user that does not have permission to ban users", func(t *testing.T) {
+	T.Run("with admin user that does not have the right permissions", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
@@ -132,7 +214,12 @@ func TestService_StatusHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		s.BanHandler(res, req)
+		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+		exampleInput.NewStatus = types.BannedAccountStatus
+
+		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
+
+		s.UserAccountStatusChangeHandler(res, req)
 		assert.Equal(t, http.StatusForbidden, res.Code)
 	})
 
@@ -152,25 +239,26 @@ func TestService_StatusHandler(T *testing.T) {
 			}, nil
 		}
 
-		exampleUserToBeBanned := fakes.BuildFakeUser()
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return exampleUserToBeBanned.ID
-		}
-
 		res := httptest.NewRecorder()
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://blah.com", nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
+		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+		exampleInput.NewStatus = types.BannedAccountStatus
+
+		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
+
 		udb := &mockmodels.AdminUserDataManager{}
 		udb.On(
-			"BanUserAccount",
+			"UpdateUserAccountStatus",
 			mock.Anything,
-			exampleUserToBeBanned.ID,
+			exampleInput.TargetAccountID,
+			*exampleInput,
 		).Return(sql.ErrNoRows)
 		s.userDB = udb
 
-		s.BanHandler(res, req)
+		s.UserAccountStatusChangeHandler(res, req)
 		assert.Equal(t, http.StatusNotFound, res.Code)
 
 		mock.AssertExpectationsForObjects(t, udb)
@@ -192,25 +280,26 @@ func TestService_StatusHandler(T *testing.T) {
 			}, nil
 		}
 
-		exampleUserToBeBanned := fakes.BuildFakeUser()
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return exampleUserToBeBanned.ID
-		}
-
 		res := httptest.NewRecorder()
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://blah.com", nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
+		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+		exampleInput.NewStatus = types.BannedAccountStatus
+
+		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
+
 		udb := &mockmodels.AdminUserDataManager{}
 		udb.On(
-			"BanUserAccount",
+			"UpdateUserAccountStatus",
 			mock.Anything,
-			exampleUserToBeBanned.ID,
+			exampleInput.TargetAccountID,
+			*exampleInput,
 		).Return(errors.New("blah"))
 		s.userDB = udb
 
-		s.BanHandler(res, req)
+		s.UserAccountStatusChangeHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
 		mock.AssertExpectationsForObjects(t, udb)
@@ -236,29 +325,30 @@ func TestService_StatusHandler(T *testing.T) {
 			}, nil
 		}
 
-		exampleUserToBeBanned := fakes.BuildFakeUser()
-		s.userIDFetcher = func(req *http.Request) uint64 {
-			return exampleUserToBeBanned.ID
-		}
-
 		res := httptest.NewRecorder()
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://blah.com", nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
+		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+		exampleInput.NewStatus = types.BannedAccountStatus
+
+		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
+
 		auditLog := &mockmodels.AuditLogDataManager{}
-		auditLog.On("LogUserBanEvent", mock.Anything, exampleUser.ID, exampleUserToBeBanned.ID).Return()
+		auditLog.On("LogUserBanEvent", mock.Anything, exampleUser.ID, exampleInput.TargetAccountID, exampleInput.Reason).Return()
 		s.auditLog = auditLog
 
 		udb := &mockmodels.AdminUserDataManager{}
 		udb.On(
-			"BanUserAccount",
+			"UpdateUserAccountStatus",
 			mock.Anything,
-			exampleUserToBeBanned.ID,
+			exampleInput.TargetAccountID,
+			*exampleInput,
 		).Return(nil)
 		s.userDB = udb
 
-		s.BanHandler(res, req)
+		s.UserAccountStatusChangeHandler(res, req)
 		assert.Equal(t, http.StatusAccepted, res.Code)
 
 		mock.AssertExpectationsForObjects(t, udb)

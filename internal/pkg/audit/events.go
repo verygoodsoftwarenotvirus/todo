@@ -3,6 +3,8 @@ package audit
 const (
 	// UserBannedEvent events indicate an admin cycled the cookie secret.
 	UserBannedEvent = "user_banned"
+	// AccountTerminatedEvent events indicate an admin cycled the cookie secret.
+	AccountTerminatedEvent = "account_terminated"
 	// CycleCookieSecretEvent events indicate an admin cycled the cookie secret.
 	CycleCookieSecretEvent = "cookie_secret_cycled"
 	// SuccessfulLoginEvent events indicate a user successfully authenticated into the service via username + password + 2fa.

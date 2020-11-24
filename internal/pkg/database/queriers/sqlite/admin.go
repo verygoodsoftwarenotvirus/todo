@@ -11,18 +11,14 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-// LogUserBanEvent saves a UserBannedEvent in the audit log table.
-func (s *Sqlite) LogUserBanEvent(ctx context.Context, banGiver, banRecipient uint64) {
-	s.createAuditLogEntry(ctx, audit.BuildUserBanEventEntry(banGiver, banRecipient))
-}
-
 // buildSetUserStatusQuery returns a SQL query (and arguments) that would set a user's account status to banned.
-func (s *Sqlite) buildSetUserStatusQuery(userID uint64, status string) (query string, args []interface{}) {
+func (s *Sqlite) buildSetUserStatusQuery(userID uint64, input types.AccountStatusUpdateInput) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = s.sqlBuilder.
 		Update(queriers.UsersTableName).
-		Set(queriers.UsersTableAccountStatusColumn, status).
+		Set(queriers.UsersTableAccountStatusColumn, input.NewStatus).
+		Set(queriers.UsersTableStatusExplanationColumn, input.Reason).
 		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		ToSql()
 
@@ -34,7 +30,6 @@ func (s *Sqlite) buildSetUserStatusQuery(userID uint64, status string) (query st
 // updateUserAccountStatus updates a user's account status.
 func (s *Sqlite) updateUserAccountStatus(ctx context.Context, query string, args []interface{}) error {
 	res, err := s.db.ExecContext(ctx, query, args...)
-
 	if err != nil {
 		return err
 	}
@@ -46,16 +41,19 @@ func (s *Sqlite) updateUserAccountStatus(ctx context.Context, query string, args
 	return nil
 }
 
-// BanUserAccount bans a user's account.
-func (s *Sqlite) BanUserAccount(ctx context.Context, userID uint64) error {
-	query, args := s.buildSetUserStatusQuery(userID, string(types.BannedAccountStatus))
+// UpdateUserAccountStatus updates a user's account status.
+func (s *Sqlite) UpdateUserAccountStatus(ctx context.Context, userID uint64, input types.AccountStatusUpdateInput) error {
+	query, args := s.buildSetUserStatusQuery(userID, input)
 
 	return s.updateUserAccountStatus(ctx, query, args)
 }
 
-// TerminateUserAccount terminates a user's account.
-func (s *Sqlite) TerminateUserAccount(ctx context.Context, userID uint64) error {
-	query, args := s.buildSetUserStatusQuery(userID, string(types.TerminatedAccountStatus))
+// LogUserBanEvent saves a UserBannedEvent in the audit log table.
+func (s *Sqlite) LogUserBanEvent(ctx context.Context, banGiver, banRecipient uint64, reason string) {
+	s.createAuditLogEntry(ctx, audit.BuildUserBanEventEntry(banGiver, banRecipient, reason))
+}
 
-	return s.updateUserAccountStatus(ctx, query, args)
+// LogAccountTerminationEvent saves a UserBannedEvent in the audit log table.
+func (s *Sqlite) LogAccountTerminationEvent(ctx context.Context, terminator, terminee uint64, reason string) {
+	s.createAuditLogEntry(ctx, audit.BuildAccountTerminationEventEntry(terminator, terminee, reason))
 }

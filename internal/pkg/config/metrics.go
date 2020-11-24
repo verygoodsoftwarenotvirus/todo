@@ -72,7 +72,6 @@ func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) me
 				Namespace: MetricsNamespace,
 			},
 		)
-
 		if err != nil {
 			logger.Error(err, "failed to create Prometheus exporter")
 			return nil

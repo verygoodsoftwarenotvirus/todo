@@ -43,7 +43,6 @@ func (c *Client) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userI
 	logger := c.logger.WithValue("user_id", userID)
 
 	user, err := c.querier.GetUserWithUnverifiedTwoFactorSecret(ctx, userID)
-
 	if err != nil {
 		logger.Error(err, "querying database for user")
 		return nil, err
@@ -74,7 +73,6 @@ func (c *Client) GetUserByUsername(ctx context.Context, username string) (*types
 	logger := c.logger.WithValue("username", username)
 
 	user, err := c.querier.GetUserByUsername(ctx, username)
-
 	if err != nil {
 		logger.Error(err, "querying database for user")
 		return nil, err
@@ -91,8 +89,8 @@ func (c *Client) SearchForUsersByUsername(ctx context.Context, usernameQuery str
 	defer span.End()
 
 	logger := c.logger.WithValue("query", usernameQuery)
-	user, err := c.querier.SearchForUsersByUsername(ctx, usernameQuery)
 
+	user, err := c.querier.SearchForUsersByUsername(ctx, usernameQuery)
 	if err != nil {
 		logger.Error(err, "querying database for user")
 		return nil, err
@@ -133,7 +131,6 @@ func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreati
 	logger := c.logger.WithValue("username", input.Username)
 
 	user, err := c.querier.CreateUser(ctx, input)
-
 	if err != nil {
 		logger.Error(err, "querying database for user")
 		return nil, err

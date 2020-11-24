@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,8 +18,11 @@ func TestAdmin(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			input := fakes.BuildFakeAccountStatusUpdateInput()
+			input.TargetAccountID = nonexistentID
+
 			// Ban user.
-			assert.Error(t, adminClient.BanUser(ctx, nonexistentID))
+			assert.Error(t, adminClient.UpdateAccountStatus(ctx, input))
 		})
 
 		t.Run("users should be bannable", func(t *testing.T) {
@@ -30,7 +35,13 @@ func TestAdmin(test *testing.T) {
 			_, initialCheckErr := testClient.GetItems(ctx, nil)
 			require.NoError(t, initialCheckErr)
 
-			assert.NoError(t, adminClient.BanUser(ctx, user.ID))
+			input := &types.AccountStatusUpdateInput{
+				TargetAccountID: user.ID,
+				NewStatus:       types.BannedAccountStatus,
+				Reason:          "testing",
+			}
+
+			assert.NoError(t, adminClient.UpdateAccountStatus(ctx, input))
 
 			// Assert user can no longer access service
 			_, subsequentCheckErr := testClient.GetItems(ctx, nil)

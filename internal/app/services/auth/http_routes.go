@@ -129,6 +129,9 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	tracing.AttachUserIDToSpan(span, user.ID)
+	tracing.AttachUsernameToSpan(span, user.Username)
+
 	if user.IsBanned() {
 		s.auditLog.LogBannedUserLoginAttemptEvent(ctx, user.ID)
 		s.encoderDecoder.EncodeErrorResponse(res, user.AccountStatusExplanation, http.StatusForbidden)
@@ -136,9 +139,6 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	loginValid, err := s.validateLogin(ctx, user, loginData)
-
-	tracing.AttachUserIDToSpan(span, user.ID)
-	tracing.AttachUsernameToSpan(span, user.Username)
 	logger = logger.WithValue("user_id", user.ID).WithValue("login_valid", loginValid)
 
 	if err != nil {

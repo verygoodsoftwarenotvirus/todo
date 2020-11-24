@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -19,15 +18,16 @@ func TestPostgres_BanUser(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
+		exampleInput := *fakes.BuildFakeAccountStatusUpdateInput()
 
-		p, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := p.buildSetUserStatusQuery(exampleUser.ID, string(types.BannedAccountStatus))
+		m, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := m.buildSetUserStatusQuery(exampleUser.ID, exampleInput)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := p.BanUserAccount(ctx, exampleUser.ID)
+		err := m.UpdateUserAccountStatus(ctx, exampleUser.ID, exampleInput)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")

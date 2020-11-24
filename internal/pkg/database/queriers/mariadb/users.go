@@ -207,8 +207,8 @@ func (m *MariaDB) buildSearchForUserByUsernameQuery(usernameQuery string) (query
 // SearchForUsersByUsername fetches a list of users whose usernames begin with a given query.
 func (m *MariaDB) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]types.User, error) {
 	query, args := m.buildSearchForUserByUsernameQuery(usernameQuery)
-	rows, err := m.db.QueryContext(ctx, query, args...)
 
+	rows, err := m.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error querying database for users: %w", err)
 	}

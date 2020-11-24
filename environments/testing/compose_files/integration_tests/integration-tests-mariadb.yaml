@@ -23,6 +23,8 @@ services:
             - 80:8888
         links:
             - database
+        logging:
+            driver: none
         build:
             context: '../../../../'
             dockerfile: 'environments/testing/dockerfiles/integration-server-mariadb.Dockerfile'

@@ -244,8 +244,8 @@ func (m *MariaDB) buildGetOAuth2ClientsForUserQuery(userID uint64, filter *types
 // GetOAuth2ClientsForUser gets a list of OAuth2 clients.
 func (m *MariaDB) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.OAuth2ClientList, error) {
 	query, args := m.buildGetOAuth2ClientsForUserQuery(userID, filter)
-	rows, err := m.db.QueryContext(ctx, query, args...)
 
+	rows, err := m.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err

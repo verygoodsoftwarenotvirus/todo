@@ -15,7 +15,12 @@ type AdminServer struct {
 	mock.Mock
 }
 
-// BanHandler implements our interface requirements.
-func (m *AdminServer) BanHandler(res http.ResponseWriter, req *http.Request) {
+// UserAccountStatusChangeHandler implements our interface requirements.
+func (m *AdminServer) UserAccountStatusChangeHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
+}
+
+// AccountStatusUpdateInputMiddleware implements our interface requirements.
+func (m *AdminServer) AccountStatusUpdateInputMiddleware(next http.Handler) http.Handler {
+	return m.Called(next).Get(0).(http.Handler)
 }

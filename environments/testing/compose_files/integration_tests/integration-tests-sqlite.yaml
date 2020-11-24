@@ -9,6 +9,8 @@ services:
             JAEGER_SERVICE_NAME: 'todo-server'
         ports:
             - 80:8888
+        logging:
+            driver: none
         build:
             context: '../../../../'
             dockerfile: 'environments/testing/dockerfiles/integration-server-sqlite.Dockerfile'

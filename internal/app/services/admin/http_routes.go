@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
 const (
@@ -13,12 +14,22 @@ const (
 	UserIDURIParamKey = "userID"
 )
 
-// BanHandler bans a user.
-func (s *Service) BanHandler(res http.ResponseWriter, req *http.Request) {
+// UserAccountStatusChangeHandler changes a user's status.
+func (s *Service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+
+	// check request context for parsed input struct.
+	input, ok := ctx.Value(accountStatusUpdateMiddlewareCtxKey).(*types.AccountStatusUpdateInput)
+	if !ok || input == nil {
+		logger.Info("valid input not attached to request")
+		s.encoderDecoder.EncodeNoInputResponse(res)
+		return
+	}
+
+	logger = logger.WithValue("new_status", input.NewStatus)
 
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
@@ -27,18 +38,32 @@ func (s *Service) BanHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	if !si.UserIsAdmin {
+		s.encoderDecoder.EncodeUnauthorizedResponse(res)
+		return
+	}
+
 	logger = logger.WithValue("ban_giver", si.UserID)
 
-	if !si.AdminPermissions.CanBanUsers() || !si.UserIsAdmin {
+	var allowed bool
+
+	switch input.NewStatus {
+	case types.BannedAccountStatus:
+		allowed = si.AdminPermissions.CanBanUsers()
+	case types.TerminatedAccountStatus:
+		allowed = si.AdminPermissions.CanTerminateAccounts()
+	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
+	}
+
+	if !allowed {
 		logger.Info("ban attempt made by admin without appropriate permissions")
 		s.encoderDecoder.EncodeInvalidPermissionsResponse(res)
 		return
 	}
 
-	banRecipient := s.userIDFetcher(req)
-	logger = logger.WithValue("ban_recipient", banRecipient)
+	logger = logger.WithValue("ban_recipient", input.TargetAccountID)
 
-	if err := s.userDB.BanUserAccount(ctx, banRecipient); err != nil {
+	if err := s.userDB.UpdateUserAccountStatus(ctx, input.TargetAccountID, *input); err != nil {
 		logger.Error(err, "error banning user")
 
 		if errors.Is(err, sql.ErrNoRows) {
@@ -46,49 +71,17 @@ func (s *Service) BanHandler(res http.ResponseWriter, req *http.Request) {
 		} else {
 			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
 		}
+
 		return
 	}
 
-	s.auditLog.LogUserBanEvent(ctx, si.UserID, banRecipient)
-	s.encoderDecoder.EncodeResponseWithStatus(res, nil, http.StatusAccepted)
-}
-
-// AccountTerminationHandler terminates an account.
-func (s *Service) AccountTerminationHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
-	if sessionInfoRetrievalErr != nil {
-		logger.Error(sessionInfoRetrievalErr, "error fetching sessionInfo")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
-		return
+	switch input.NewStatus {
+	case types.BannedAccountStatus:
+		s.auditLog.LogUserBanEvent(ctx, si.UserID, input.TargetAccountID, input.Reason)
+	case types.TerminatedAccountStatus:
+		s.auditLog.LogAccountTerminationEvent(ctx, si.UserID, input.TargetAccountID, input.Reason)
+	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
 	}
 
-	logger = logger.WithValue("terminator", si.UserID)
-
-	if !si.AdminPermissions.CanBanUsers() || !si.UserIsAdmin {
-		logger.Info("ban attempt made by admin without appropriate permissions")
-		s.encoderDecoder.EncodeInvalidPermissionsResponse(res)
-		return
-	}
-
-	terminee := s.userIDFetcher(req)
-	logger = logger.WithValue("terminee", terminee)
-
-	if err := s.userDB.TerminateUserAccount(ctx, terminee); err != nil {
-		logger.Error(err, "error terminating account")
-
-		if errors.Is(err, sql.ErrNoRows) {
-			s.encoderDecoder.EncodeNotFoundResponse(res)
-		} else {
-			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
-		}
-		return
-	}
-
-	s.auditLog.LogUserBanEvent(ctx, si.UserID, terminee)
 	s.encoderDecoder.EncodeResponseWithStatus(res, nil, http.StatusAccepted)
 }

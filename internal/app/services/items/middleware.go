@@ -8,6 +8,13 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
+const (
+	// createMiddlewareCtxKey is a string alias we can use for referring to item input data in contexts.
+	createMiddlewareCtxKey types.ContextKey = "item_create_input"
+	// updateMiddlewareCtxKey is a string alias we can use for referring to item update data in contexts.
+	updateMiddlewareCtxKey types.ContextKey = "item_update_input"
+)
+
 // CreationInputMiddleware is a middleware for fetching, parsing, and attaching an ItemInput struct from a request.
 func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {

@@ -12,7 +12,7 @@ const (
 	// cycleCookieSecretPermission signifies whether or not the admin in question can cycle cookie secrets.
 	cycleCookieSecretPermission AdminPermissionsBitmask = 1 << iota
 	banUserPermission
-	reservedUnusedPermission3
+	canTerminateAccountsPermission
 	reservedUnusedPermission4
 	reservedUnusedPermission5
 	reservedUnusedPermission6
@@ -116,8 +116,9 @@ func (p AdminPermissionsBitmask) CanBanUsers() bool {
 	return p&banUserPermission != 0
 }
 
-func (p AdminPermissionsBitmask) hasReservedUnusedPermission3() bool {
-	return p&reservedUnusedPermission3 != 0
+// CanTerminateAccounts determines whether or not a user can terminate accounts.
+func (p AdminPermissionsBitmask) CanTerminateAccounts() bool {
+	return p&canTerminateAccountsPermission != 0
 }
 
 func (p AdminPermissionsBitmask) hasReservedUnusedPermission4() bool {

@@ -231,8 +231,12 @@ func TestUsers(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			input := fakes.BuildFakeAccountStatusUpdateInput()
+			input.NewStatus = types.BannedAccountStatus
+			input.TargetAccountID = nonexistentID
+
 			// Ban user.
-			assert.Error(t, adminClient.BanUser(ctx, nonexistentID))
+			assert.Error(t, adminClient.UpdateAccountStatus(ctx, input))
 
 			x, err := adminClient.GetAuditLogForUser(ctx, nonexistentID)
 			assert.NoError(t, err)

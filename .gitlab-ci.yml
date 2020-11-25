@@ -30,7 +30,10 @@ coverage:
     GOPATH: "/go"
   script:
     - apt-get update -y && apt-get install -y make git gcc musl-dev
-    - make coverage
+    - make gitlab-ci-coverage-report
+  artifacts:
+    reports:
+      cobertura: artifacts/coverage.xml
 
 golang-format-check:
   stage: quality

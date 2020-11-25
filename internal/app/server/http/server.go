@@ -18,6 +18,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
+	"go.opencensus.io/plugin/ochttp"
 )
 
 const (
@@ -96,6 +97,11 @@ func ProvideServer(
 func (s *Server) Serve() {
 	s.httpServer.Addr = fmt.Sprintf(":%d", s.serverSettings.HTTPPort)
 	s.logger.Debug(fmt.Sprintf("Listening for HTTP requests on %q", s.httpServer.Addr))
+
+	s.httpServer.Handler = &ochttp.Handler{
+		Handler:        s.router,
+		FormatSpanName: formatSpanNameForRequest,
+	}
 
 	// returns ErrServerClosed on graceful close.
 	if err := s.httpServer.ListenAndServe(); err != nil {

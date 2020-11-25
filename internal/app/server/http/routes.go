@@ -15,7 +15,6 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/heptiolabs/healthcheck"
-	"go.opencensus.io/plugin/ochttp"
 )
 
 const (
@@ -200,11 +199,6 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 			})
 		})
 
-	s.httpServer.Handler = &ochttp.Handler{
-		Handler:        mux,
-		FormatSpanName: formatSpanNameForRequest,
-	}
-	// logRoutes won't work without this
 	s.router = mux
 }
 

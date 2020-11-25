@@ -38,7 +38,7 @@ services:
             JAEGER_AGENT_PORT: '6831'
             JAEGER_SAMPLER_MANAGER_HOST_PORT: 'tracing-server:5778'
             JAEGER_SERVICE_NAME: 'coverage-server'
-            TARGET_ADDRESS: 'http://coverage-server'
+            TARGET_ADDRESS: 'http://coverage-server:8888'
             WAIT_FOR_COVERAGE: 'yes'
             DB_ADDRESS: 'postgres://dbuser:hunter2@database:5432/todo?sslmode=disable'
             DB_VENDOR: 'postgres'

@@ -9,8 +9,6 @@ COPY . .
 
 RUN go test -o /integration-server -c -coverpkg \
 	gitlab.com/verygoodsoftwarenotvirus/todo/internal/..., \
-	gitlab.com/verygoodsoftwarenotvirus/todo/database/v1/..., \
-	gitlab.com/verygoodsoftwarenotvirus/todo/services/v1/..., \
 	gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server/ \
     gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server
 

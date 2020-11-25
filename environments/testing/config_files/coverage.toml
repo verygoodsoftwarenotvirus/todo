@@ -4,7 +4,7 @@
 
 [auth]
   cookie_lifetime = "24h0m0s"
-  cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"
+  cookie_signing_key = "HEREISA32CHARSECRETWHICHISMADEUP"
   debug = false
   enable_user_signup = true
 

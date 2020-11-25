@@ -31,6 +31,8 @@ coverage:
   script:
     - apt-get update -y && apt-get install -y make git gcc musl-dev
     - make gitlab-ci-coverage-report
+    - ls -Al
+    - ls -Al ./artifacts
   artifacts:
     reports:
       cobertura: artifacts/coverage.xml

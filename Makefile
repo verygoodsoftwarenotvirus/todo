@@ -109,7 +109,7 @@ coverage: clean_coverage $(ARTIFACTS_DIR)
 	@go tool cover -func=$(ARTIFACTS_DIR)/coverage.out | grep 'total:' | xargs | awk '{ print "COVERAGE: " $$3 }'
 
 gitlab-ci-coverage-report: $(ARTIFACTS_DIR) ensure-gocov
-	gocov test -race $(PACKAGE_LIST) | gocov-xml > $(ARTIFACTS_DIR)/coverage.xml
+	gocov test -race $(PACKAGE_LIST) | gocov-xml > $($CI_PROJECT_DIR)/$(ARTIFACTS_DIR)/coverage.xml
 
 .PHONY: quicktest # basically only running once instead of with -count 5 or whatever
 quicktest: $(ARTIFACTS_DIR) vendor

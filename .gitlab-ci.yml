@@ -30,96 +30,89 @@ coverage:
     GOPATH: "/go"
   script:
     - apt-get update -y && apt-get install -y make git gcc musl-dev
-    - make gitlab-ci-coverage-report
-    - ls -Al /builds
-  artifacts:
-    reports:
-      cobertura: artifacts/coverage.xml
+    - make coverage
 
-#golang-format-check:
-#  stage: quality
-#  image: golang:stretch
-#  variables:
-#    GOPATH: "/go"
-#  script:
-#    - apt-get update -y && apt-get install -y make git gcc musl-dev
-#    - if [ $(gofmt -l . | grep -Ev '^vendor\/' | head -c1 | wc -c) -ne 0 ]; then exit 1; fi
-#
-#golang-lint:
-#  stage: quality
-#  image: golangci/golangci-lint:latest # v1.18
-#  variables:
-#    GO111MODULE: "on"
-#  script:
-#    - go mod vendor
-#    - golangci-lint run --config=.golangci.yml --deadline=15m
-#
-#frontend-build:
-#  stage: quality
-#  image: node:lts-stretch
-#  before_script:
-#    - cd frontend/
-#    - npm install
-#  script:
-#    - npm run build
-#
-#frontend-format-check:
-#  stage: quality
-#  image: node:lts-stretch
-#  before_script:
-#    - cd frontend/
-#    - npm install
-#  script:
-#    - npm run format-check
-#
-#integration-tests-postgres:
-#  stage: integration-testing
-#  image: docker:latest
-#  services:
-#    - docker:dind
-#  variables:
-#    GOPATH: "/go"
-#  script:
-#    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
-#    - pip install docker-compose
-#    - make integration-tests-postgres
-#
-#integration-tests-mariadb:
-#  stage: integration-testing
-#  image: docker:latest
-#  services:
-#    - docker:dind
-#  variables:
-#    GOPATH: "/go"
-#  script:
-#    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
-#    - pip install docker-compose
-#    - make integration-tests-mariadb
-#
-#integration-tests-sqlite:
-#  stage: integration-testing
-#  image: docker:latest
-#  services:
-#    - docker:dind
-#  variables:
-#    GOPATH: "/go"
-#  script:
-#    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
-#    - pip install docker-compose
-#    - make integration-tests-sqlite
-#
-#frontend-selenium-tests:
-#  stage: integration-testing
-#  image: docker:latest
-#  services:
-#    - docker:dind
-#  script:
-#    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
-#    - pip install docker-compose
-#    - make frontend-tests
+golang-format-check:
+  stage: quality
+  image: golang:stretch
+  variables:
+    GOPATH: "/go"
+  script:
+    - apt-get update -y && apt-get install -y make git gcc musl-dev
+    - if [ $(gofmt -l . | grep -Ev '^vendor\/' | head -c1 | wc -c) -ne 0 ]; then exit 1; fi
 
-############################################################################
+golang-lint:
+  stage: quality
+  image: golangci/golangci-lint:latest # v1.18
+  variables:
+    GO111MODULE: "on"
+  script:
+    - go mod vendor
+    - golangci-lint run --config=.golangci.yml --deadline=15m
 
+frontend-build:
+  stage: quality
+  image: node:lts-stretch
+  before_script:
+    - cd frontend/
+    - npm install
+  script:
+    - npm run build
+
+frontend-format-check:
+  stage: quality
+  image: node:lts-stretch
+  before_script:
+    - cd frontend/
+    - npm install
+  script:
+    - npm run format-check
+
+integration-tests-postgres:
+  stage: integration-testing
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    GOPATH: "/go"
+  script:
+    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - make integration-tests-postgres
+
+integration-tests-mariadb:
+  stage: integration-testing
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    GOPATH: "/go"
+  script:
+    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - make integration-tests-mariadb
+
+integration-tests-sqlite:
+  stage: integration-testing
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    GOPATH: "/go"
+  script:
+    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - make integration-tests-sqlite
+
+frontend-selenium-tests:
+  stage: integration-testing
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - make frontend-tests
 
 ## load tests
 #load-tests-postgres:

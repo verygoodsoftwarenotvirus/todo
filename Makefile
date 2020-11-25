@@ -39,21 +39,8 @@ ifndef $(shell command -v wire 2> /dev/null)
 	$(shell GO111MODULE=off go get -u github.com/google/wire/cmd/wire)
 endif
 
-# this is used in CI
-ensure-go-junit-report:
-ifndef $(shell command -v go-junit-report 2> /dev/null)
-	$(shell GO111MODULE=off go get -u github.com/jstemmer/go-junit-report)
-endif
-
-# this is used in CI
-ensure-gocov:
-ifndef $(shell command -v quartzfuck 2> /dev/null)
-	$(shell GO111MODULE=off go get -u github.com/axw/gocov/...)
-	$(shell GO111MODULE=off go get -u github.com/AlekSi/gocov-xml)
-endif
-
 .PHONY: dev-tools
-dev-tools: ensure-wire ensure-go-junit-report
+dev-tools: ensure-wire
 
 .PHONY: clean_vendor
 clean_vendor:
@@ -107,9 +94,6 @@ clean_coverage:
 coverage: clean_coverage $(ARTIFACTS_DIR)
 	@go test -coverprofile=$(COVERAGE_OUT) -covermode=atomic -race $(PACKAGE_LIST) > /dev/null
 	@go tool cover -func=$(ARTIFACTS_DIR)/coverage.out | grep 'total:' | xargs | awk '{ print "COVERAGE: " $$3 }'
-
-gitlab-ci-coverage-report: $(ARTIFACTS_DIR) ensure-gocov
-	gocov test -race $(PACKAGE_LIST) | gocov-xml > /builds/$(CI_PROJECT_PATH)/$(ARTIFACTS_DIR)/coverage.xml
 
 .PHONY: quicktest # basically only running once instead of with -count 5 or whatever
 quicktest: $(ARTIFACTS_DIR) vendor

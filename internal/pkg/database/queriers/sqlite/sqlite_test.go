@@ -59,7 +59,7 @@ func formatQueryForSQLMock(query string) string {
 	return sqlMockReplacer.Replace(query)
 }
 
-func ensureArgCountMatchesQuery(t *testing.T, query string, args []interface{}) {
+func assertArgCountMatchesQuery(t *testing.T, query string, args []interface{}) {
 	t.Helper()
 
 	queryArgCount := len(queryArgRegexp.FindAllString(query, -1))

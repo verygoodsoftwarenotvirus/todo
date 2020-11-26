@@ -45,10 +45,17 @@ type V1Client struct {
 	plainClient  *http.Client
 	authedClient *http.Client
 	logger       logging.Logger
-	Debug        bool
-	URL          *url.URL
-	Scopes       []string
 	tokenSource  oauth2.TokenSource
+	adminMode    bool
+
+	Debug  bool
+	URL    *url.URL
+	Scopes []string
+}
+
+// EnableAdminMode enables admin mode.
+func (c *V1Client) EnableAdminMode() {
+	c.adminMode = true
 }
 
 // AuthenticatedClient returns the authenticated *http.Client that we use to make most requests.

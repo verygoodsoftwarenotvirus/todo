@@ -21,8 +21,10 @@ const (
 	postgresDriverName         = "wrapped-postgres-driver"
 	postgresRowExistsErrorCode = "23505"
 
-	// countQuery is a generic counter query used in a few query builders.
-	countQuery = `COUNT(%s.id)`
+	// columnCountQueryTemplate is a generic counter query used in a few query builders.
+	columnCountQueryTemplate = `COUNT(%s.id)`
+	// allCountQuery is a generic counter query used in a few query builders.
+	allCountQuery = `COUNT(*)`
 	// jsonPluckQuery is a generic format string for getting something out of the first layer of a JSON blob.
 	jsonPluckQuery = `%s.%s->'%s'`
 	// currentUnixTimeQuery is the query postgres uses to determine the current unix time.
@@ -87,17 +89,17 @@ func ProvidePostgres(debug bool, db *sql.DB, logger logging.Logger) database.Dat
 }
 
 // IsReady reports whether or not the db is ready.
-func (p *Postgres) IsReady(ctx context.Context) (ready bool) {
+func (q *Postgres) IsReady(ctx context.Context) (ready bool) {
 	attemptCount := 0
 
-	logger := p.logger.WithValues(map[string]interface{}{
+	logger := q.logger.WithValues(map[string]interface{}{
 		"interval":     time.Second,
 		"max_attempts": maximumConnectionAttempts,
 	})
 	logger.Debug("IsReady called")
 
 	for !ready {
-		err := p.db.PingContext(ctx)
+		err := q.db.PingContext(ctx)
 		if err != nil {
 			logger.WithValue("attempt_count", attemptCount).Debug("ping failed, waiting for db")
 			time.Sleep(time.Second)
@@ -116,8 +118,8 @@ func (p *Postgres) IsReady(ctx context.Context) (ready bool) {
 }
 
 // BeginTx begins a transaction.
-func (p *Postgres) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
-	return p.db.BeginTx(ctx, opts)
+func (q *Postgres) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
+	return q.db.BeginTx(ctx, opts)
 }
 
 // logQueryBuildingError logs errors that may occur during query construction.
@@ -125,9 +127,9 @@ func (p *Postgres) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, e
 // type discrepancies or other misuses of SQL. An alert should be set up for
 // any log entries with the given name, and those alerts should be investigated
 // with the utmost priority.
-func (p *Postgres) logQueryBuildingError(err error) {
+func (q *Postgres) logQueryBuildingError(err error) {
 	if err != nil {
-		p.logger.WithValue("QUERY_ERROR", true).Error(err, "building query")
+		q.logger.WithValue("QUERY_ERROR", true).Error(err, "building query")
 	}
 }
 

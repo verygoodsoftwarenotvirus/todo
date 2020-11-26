@@ -20,8 +20,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func buildMockRowsFromOAuth2Clients(clients ...*types.OAuth2Client) *sqlmock.Rows {
+func buildMockRowsFromOAuth2Clients(includeCount bool, clients ...*types.OAuth2Client) *sqlmock.Rows {
 	columns := queriers.OAuth2ClientsTableColumns
+
+	if includeCount {
+		columns = append(columns, "count")
+	}
+
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, c := range clients {
@@ -37,6 +42,11 @@ func buildMockRowsFromOAuth2Clients(clients ...*types.OAuth2Client) *sqlmock.Row
 			c.ArchivedOn,
 			c.BelongsToUser,
 		}
+
+		if includeCount {
+			rowValues = append(rowValues, len(clients))
+		}
+
 		exampleRows.AddRow(rowValues...)
 	}
 
@@ -71,7 +81,7 @@ func TestPostgres_ScanOAuth2Clients(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, err := p.scanOAuth2Clients(mockRows)
+		_, _, err := p.scanOAuth2Clients(mockRows, false)
 		assert.Error(t, err)
 	})
 
@@ -84,7 +94,7 @@ func TestPostgres_ScanOAuth2Clients(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, err := p.scanOAuth2Clients(mockRows)
+		_, _, err := p.scanOAuth2Clients(mockRows, false)
 		assert.NoError(t, err)
 	})
 }
@@ -104,7 +114,7 @@ func TestPostgres_buildGetOAuth2ClientByClientIDQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildGetOAuth2ClientByClientIDQuery(exampleOAuth2Client.ClientID)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -124,7 +134,7 @@ func TestPostgres_GetOAuth2ClientByClientID(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromOAuth2Clients(exampleOAuth2Client))
+			WillReturnRows(buildMockRowsFromOAuth2Clients(false, exampleOAuth2Client))
 
 		actual, err := p.GetOAuth2ClientByClientID(ctx, exampleOAuth2Client.ClientID)
 		assert.NoError(t, err)
@@ -185,7 +195,7 @@ func TestPostgres_buildGetAllOAuth2ClientsQuery(T *testing.T) {
 		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL"
 		actualQuery := p.buildGetAllOAuth2ClientsQuery()
 
-		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
 	})
 }
@@ -211,6 +221,7 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 			WithArgs().
 			WillReturnRows(
 				buildMockRowsFromOAuth2Clients(
+					false,
 					exampleOAuth2Client,
 					exampleOAuth2Client,
 					exampleOAuth2Client,
@@ -303,7 +314,7 @@ func TestPostgres_GetAllOAuth2ClientsForUser(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromOAuth2Clients(expected...))
+			WillReturnRows(buildMockRowsFromOAuth2Clients(false, expected...))
 
 		actual, err := p.GetAllOAuth2ClientsForUser(ctx, exampleUser.ID)
 		assert.NoError(t, err)
@@ -390,7 +401,7 @@ func TestPostgres_buildGetOAuth2ClientQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildGetOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -410,7 +421,7 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromOAuth2Clients(exampleOAuth2Client))
+			WillReturnRows(buildMockRowsFromOAuth2Clients(false, exampleOAuth2Client))
 
 		actual, err := p.GetOAuth2Client(ctx, exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 		assert.NoError(t, err)
@@ -471,7 +482,7 @@ func TestPostgres_buildGetAllOAuth2ClientsCountQuery(T *testing.T) {
 		expectedQuery := "SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL"
 		actualQuery := p.buildGetAllOAuth2ClientsCountQuery()
 
-		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
 	})
 }
@@ -510,8 +521,13 @@ func TestPostgres_buildGetOAuth2ClientsForUserQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $1 AND oauth2_clients.created_on > $2 AND oauth2_clients.created_on < $3 AND oauth2_clients.last_updated_on > $4 AND oauth2_clients.last_updated_on < $5 ORDER BY oauth2_clients.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user, (SELECT COUNT(*) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $1 AND items.created_on > $2 AND items.created_on < $3 AND items.last_updated_on > $4 AND items.last_updated_on < $5) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $6 AND oauth2_clients.created_on > $7 AND oauth2_clients.created_on < $8 AND oauth2_clients.last_updated_on > $9 AND oauth2_clients.last_updated_on < $10 ORDER BY oauth2_clients.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
+			exampleUser.ID,
+			filter.CreatedAfter,
+			filter.CreatedBefore,
+			filter.UpdatedAfter,
+			filter.UpdatedBefore,
 			exampleUser.ID,
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -520,7 +536,7 @@ func TestPostgres_buildGetOAuth2ClientsForUserQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, filter)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -546,6 +562,7 @@ func TestPostgres_GetOAuth2ClientsForUser(T *testing.T) {
 			WithArgs().
 			WillReturnRows(
 				buildMockRowsFromOAuth2Clients(
+					true,
 					&exampleOAuth2ClientList.Clients[0],
 					&exampleOAuth2ClientList.Clients[1],
 					&exampleOAuth2ClientList.Clients[2],
@@ -641,7 +658,7 @@ func TestPostgres_buildCreateOAuth2ClientQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildCreateOAuth2ClientQuery(exampleOAuth2Client)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -714,7 +731,7 @@ func TestPostgres_buildUpdateOAuth2ClientQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildUpdateOAuth2ClientQuery(exampleOAuth2Client)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -778,7 +795,7 @@ func TestPostgres_buildArchiveOAuth2ClientQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildArchiveOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})

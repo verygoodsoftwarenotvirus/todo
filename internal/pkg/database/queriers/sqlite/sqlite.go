@@ -18,8 +18,10 @@ const (
 	loggerName       = "sqlite"
 	sqliteDriverName = "wrapped-sqlite-driver"
 
-	// countQuery is a generic counter query used in a few query builders.
-	countQuery = `COUNT(%s.id)`
+	// columnCountQueryTemplate is a generic counter query used in a few query builders.
+	columnCountQueryTemplate = `COUNT(%s.id)`
+	// allCountQuery is a generic counter query used in a few query builders.
+	allCountQuery = `COUNT(*)`
 	// jsonPluckQuery is a generic format string for getting something out of the first layer of a JSON blob.
 	jsonPluckQuery = `json_extract(%s.%s, '$.%s')`
 	// currentUnixTimeQuery is the query sqlite uses to determine the current unix time.
@@ -85,13 +87,13 @@ func ProvideSqlite(debug bool, db *sql.DB, logger logging.Logger) database.DataM
 }
 
 // IsReady reports whether or not the db is ready.
-func (s *Sqlite) IsReady(_ context.Context) (ready bool) {
+func (q *Sqlite) IsReady(_ context.Context) (ready bool) {
 	return true
 }
 
 // BeginTx begins a transaction.
-func (s *Sqlite) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
-	return s.db.BeginTx(ctx, opts)
+func (q *Sqlite) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
+	return q.db.BeginTx(ctx, opts)
 }
 
 // logQueryBuildingError logs errors that may occur during query construction.
@@ -99,9 +101,9 @@ func (s *Sqlite) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, err
 // type discrepancies or other misuses of SQL. An alert should be set up for
 // any log entries with the given name, and those alerts should be investigated
 // with the utmost priority.
-func (s *Sqlite) logQueryBuildingError(err error) {
+func (q *Sqlite) logQueryBuildingError(err error) {
 	if err != nil {
-		s.logger.WithValue("QUERY_ERROR", true).Error(err, "building query")
+		q.logger.WithValue("QUERY_ERROR", true).Error(err, "building query")
 	}
 }
 
@@ -110,8 +112,8 @@ func (s *Sqlite) logQueryBuildingError(err error) {
 // type discrepancies or other misuses of SQL. An alert should be set up for
 // any log entries with the given name, and those alerts should be investigated
 // with the utmost priority.
-func (s *Sqlite) logIDRetrievalError(err error) {
+func (q *Sqlite) logIDRetrievalError(err error) {
 	if err != nil {
-		s.logger.WithValue("ROW_ID_ERROR", true).Error(err, "fetching row ID")
+		q.logger.WithValue("ROW_ID_ERROR", true).Error(err, "fetching row ID")
 	}
 }

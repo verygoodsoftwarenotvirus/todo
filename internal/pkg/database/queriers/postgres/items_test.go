@@ -20,8 +20,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func buildMockRowsFromItems(items ...*types.Item) *sqlmock.Rows {
+func buildMockRowsFromItems(includeCount bool, items ...*types.Item) *sqlmock.Rows {
 	columns := queriers.ItemsTableColumns
+
+	if includeCount {
+		columns = append(columns, "count")
+	}
 
 	exampleRows := sqlmock.NewRows(columns)
 
@@ -34,6 +38,10 @@ func buildMockRowsFromItems(items ...*types.Item) *sqlmock.Rows {
 			x.LastUpdatedOn,
 			x.ArchivedOn,
 			x.BelongsToUser,
+		}
+
+		if includeCount {
+			rowValues = append(rowValues, len(items))
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -67,7 +75,7 @@ func TestPostgres_ScanItems(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, err := p.scanItems(mockRows)
+		_, _, err := p.scanItems(mockRows, false)
 		assert.Error(t, err)
 	})
 
@@ -80,7 +88,7 @@ func TestPostgres_ScanItems(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, err := p.scanItems(mockRows)
+		_, _, err := p.scanItems(mockRows, false)
 		assert.NoError(t, err)
 	})
 }
@@ -103,7 +111,7 @@ func TestPostgres_buildItemExistsQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildItemExistsQuery(exampleItem.ID, exampleUser.ID)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -175,7 +183,7 @@ func TestPostgres_buildGetItemQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildGetItemQuery(exampleItem.ID, exampleUser.ID)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -198,7 +206,7 @@ func TestPostgres_GetItem(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromItems(exampleItem))
+			WillReturnRows(buildMockRowsFromItems(false, exampleItem))
 
 		actual, err := p.GetItem(ctx, exampleItem.ID, exampleUser.ID)
 		assert.NoError(t, err)
@@ -240,7 +248,7 @@ func TestPostgres_buildGetAllItemsCountQuery(T *testing.T) {
 		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
 		actualQuery := p.buildGetAllItemsCountQuery()
 
-		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
 	})
 }
@@ -283,7 +291,7 @@ func TestPostgres_buildGetBatchOfItemsQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildGetBatchOfItemsQuery(beginID, endID)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -313,6 +321,7 @@ func TestPostgres_GetAllItems(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromItems(
+					false,
 					&exampleItemList.Items[0],
 					&exampleItemList.Items[1],
 					&exampleItemList.Items[2],
@@ -452,8 +461,13 @@ func TestPostgres_buildGetItemsQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 AND items.created_on > $2 AND items.created_on < $3 AND items.last_updated_on > $4 AND items.last_updated_on < $5 ORDER BY items.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user, (SELECT COUNT(*) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 AND items.created_on > $2 AND items.created_on < $3 AND items.last_updated_on > $4 AND items.last_updated_on < $5) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $6 AND items.created_on > $7 AND items.created_on < $8 AND items.last_updated_on > $9 AND items.last_updated_on < $10 ORDER BY items.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
+			exampleUser.ID,
+			filter.CreatedAfter,
+			filter.CreatedBefore,
+			filter.UpdatedAfter,
+			filter.UpdatedBefore,
 			exampleUser.ID,
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -462,7 +476,7 @@ func TestPostgres_buildGetItemsQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildGetItemsQuery(exampleUser.ID, filter)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -486,6 +500,7 @@ func TestPostgres_GetItems(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromItems(
+					true,
 					&exampleItemList.Items[0],
 					&exampleItemList.Items[1],
 					&exampleItemList.Items[2],
@@ -568,6 +583,133 @@ func TestPostgres_GetItems(T *testing.T) {
 	})
 }
 
+func TestPostgres_buildGetItemsForAdminQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		p, _ := buildTestService(t)
+
+		filter := fakes.BuildFleshedOutQueryFilter()
+
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user, (SELECT COUNT(*) FROM items WHERE items.archived_on IS NULL AND items.created_on > $1 AND items.created_on < $2 AND items.last_updated_on > $3 AND items.last_updated_on < $4) FROM items WHERE items.archived_on IS NULL AND items.created_on > $5 AND items.created_on < $6 AND items.last_updated_on > $7 AND items.last_updated_on < $8 ORDER BY items.id LIMIT 20 OFFSET 180"
+		expectedArgs := []interface{}{
+			filter.CreatedAfter,
+			filter.CreatedBefore,
+			filter.UpdatedAfter,
+			filter.UpdatedBefore,
+			filter.CreatedAfter,
+			filter.CreatedBefore,
+			filter.UpdatedAfter,
+			filter.UpdatedBefore,
+		}
+		actualQuery, actualArgs := p.buildGetItemsForAdminQuery(filter)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
+func TestPostgres_GetItemsForAdmin(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+		filter := types.DefaultQueryFilter()
+
+		exampleItemList := fakes.BuildFakeItemList()
+		expectedQuery, expectedArgs := p.buildGetItemsForAdminQuery(filter)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(
+				buildMockRowsFromItems(
+					true,
+					&exampleItemList.Items[0],
+					&exampleItemList.Items[1],
+					&exampleItemList.Items[2],
+				),
+			)
+
+		actual, err := p.GetItemsForAdmin(ctx, filter)
+
+		assert.NoError(t, err)
+		assert.Equal(t, exampleItemList, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+		filter := types.DefaultQueryFilter()
+
+		expectedQuery, expectedArgs := p.buildGetItemsForAdminQuery(filter)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnError(sql.ErrNoRows)
+
+		actual, err := p.GetItemsForAdmin(ctx, filter)
+
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("with error executing read query", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+		filter := types.DefaultQueryFilter()
+
+		expectedQuery, expectedArgs := p.buildGetItemsForAdminQuery(filter)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnError(errors.New("blah"))
+
+		actual, err := p.GetItemsForAdmin(ctx, filter)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("with error scanning item", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+		filter := types.DefaultQueryFilter()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToUser = exampleUser.ID
+
+		expectedQuery, expectedArgs := p.buildGetItemsForAdminQuery(filter)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
+			WillReturnRows(buildErroneousMockRowFromItem(exampleItem))
+
+		actual, err := p.GetItemsForAdmin(ctx, filter)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
 func TestPostgres_buildGetItemsWithIDsQuery(T *testing.T) {
 	T.Parallel()
 
@@ -589,7 +731,7 @@ func TestPostgres_buildGetItemsWithIDsQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -618,6 +760,7 @@ func TestPostgres_GetItemsWithIDs(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromItems(
+					false,
 					&exampleItemList.Items[0],
 					&exampleItemList.Items[1],
 					&exampleItemList.Items[2],
@@ -720,7 +863,7 @@ func TestPostgres_buildCreateItemQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildCreateItemQuery(exampleItem)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -797,7 +940,7 @@ func TestPostgres_buildUpdateItemQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildUpdateItemQuery(exampleItem)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -870,7 +1013,7 @@ func TestPostgres_buildArchiveItemQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})

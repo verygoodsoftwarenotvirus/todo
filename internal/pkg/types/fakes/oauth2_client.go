@@ -29,20 +29,18 @@ func BuildFakeOAuth2Client() *types.OAuth2Client {
 
 // BuildFakeOAuth2ClientList builds a faked OAuth2ClientList.
 func BuildFakeOAuth2ClientList() *types.OAuth2ClientList {
-	exampleOAuth2Client1 := BuildFakeOAuth2Client()
-	exampleOAuth2Client2 := BuildFakeOAuth2Client()
-	exampleOAuth2Client3 := BuildFakeOAuth2Client()
+	var examples []types.OAuth2Client
+	for i := 0; i < exampleQuantity; i++ {
+		examples = append(examples, *BuildFakeOAuth2Client())
+	}
 
 	return &types.OAuth2ClientList{
 		Pagination: types.Pagination{
-			Page:  1,
-			Limit: 20,
+			Page:       1,
+			Limit:      20,
+			TotalCount: exampleQuantity,
 		},
-		Clients: []types.OAuth2Client{
-			*exampleOAuth2Client1,
-			*exampleOAuth2Client2,
-			*exampleOAuth2Client3,
-		},
+		Clients: examples,
 	}
 }
 

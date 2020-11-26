@@ -18,8 +18,13 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func buildMockRowsFromUsers(users ...*types.User) *sqlmock.Rows {
+func buildMockRowsFromUsers(includeCount bool, users ...*types.User) *sqlmock.Rows {
 	columns := queriers.UsersTableColumns
+
+	if includeCount {
+		columns = append(columns, "count")
+	}
+
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, user := range users {
@@ -39,6 +44,10 @@ func buildMockRowsFromUsers(users ...*types.User) *sqlmock.Rows {
 			user.CreatedOn,
 			user.LastUpdatedOn,
 			user.ArchivedOn,
+		}
+
+		if includeCount {
+			rowValues = append(rowValues, len(users))
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -80,7 +89,7 @@ func TestMariaDB_ScanUsers(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, err := m.scanUsers(mockRows)
+		_, _, err := m.scanUsers(mockRows, false)
 		assert.Error(t, err)
 	})
 
@@ -93,7 +102,7 @@ func TestMariaDB_ScanUsers(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, err := m.scanUsers(mockRows)
+		_, _, err := m.scanUsers(mockRows, false)
 		assert.NoError(t, err)
 	})
 }
@@ -113,7 +122,7 @@ func TestMariaDB_buildGetUserQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := m.buildGetUserQuery(exampleUser.ID)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -134,7 +143,7 @@ func TestMariaDB_GetUser(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromUsers(exampleUser))
+			WillReturnRows(buildMockRowsFromUsers(false, exampleUser))
 
 		actual, err := m.GetUser(ctx, exampleUser.ID)
 		assert.NoError(t, err)
@@ -180,7 +189,7 @@ func TestMariaDB_buildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := m.buildGetUserWithUnverifiedTwoFactorSecretQuery(exampleUser.ID)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -201,7 +210,7 @@ func TestMariaDB_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromUsers(exampleUser))
+			WillReturnRows(buildMockRowsFromUsers(false, exampleUser))
 
 		actual, err := m.GetUserWithUnverifiedTwoFactorSecret(ctx, exampleUser.ID)
 		assert.NoError(t, err)
@@ -241,8 +250,12 @@ func TestMariaDB_buildGetUsersQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.admin_permissions, users.account_status, users.status_explanation, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.created_on > ? AND users.created_on < ? AND users.last_updated_on > ? AND users.last_updated_on < ? ORDER BY users.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT users.id, users.username, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_admin, users.admin_permissions, users.account_status, users.status_explanation, users.created_on, users.last_updated_on, users.archived_on, (SELECT COUNT(*) FROM users WHERE users.archived_on IS NULL AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ?) FROM users WHERE users.archived_on IS NULL AND users.created_on > ? AND users.created_on < ? AND users.last_updated_on > ? AND users.last_updated_on < ? ORDER BY users.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
+			filter.CreatedAfter,
+			filter.CreatedBefore,
+			filter.UpdatedAfter,
+			filter.UpdatedBefore,
 			filter.CreatedAfter,
 			filter.CreatedBefore,
 			filter.UpdatedAfter,
@@ -250,7 +263,7 @@ func TestMariaDB_buildGetUsersQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := m.buildGetUsersQuery(filter)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -277,6 +290,7 @@ func TestMariaDB_GetUsers(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromUsers(
+					true,
 					&exampleUserList.Users[0],
 					&exampleUserList.Users[1],
 					&exampleUserList.Users[2],
@@ -367,7 +381,7 @@ func TestMariaDB_buildGetUserByUsernameQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := m.buildGetUserByUsernameQuery(exampleUser.Username)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -388,7 +402,7 @@ func TestMariaDB_GetUserByUsername(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromUsers(exampleUser))
+			WillReturnRows(buildMockRowsFromUsers(false, exampleUser))
 
 		actual, err := m.GetUserByUsername(ctx, exampleUser.Username)
 		assert.NoError(t, err)
@@ -454,7 +468,7 @@ func TestMariaDB_buildSearchForUserByUsernameQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := m.buildSearchForUserByUsernameQuery(exampleUser.Username)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -480,6 +494,7 @@ func TestMariaDB_SearchForUsersByUsername(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromUsers(
+					false,
 					&exampleUsers[0],
 					&exampleUsers[1],
 					&exampleUsers[2],
@@ -553,7 +568,7 @@ func TestMariaDB_buildGetAllUsersCountQuery(T *testing.T) {
 		expectedQuery := "SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL"
 		actualQuery := m.buildGetAllUsersCountQuery()
 
-		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
 	})
 }
@@ -622,7 +637,7 @@ func TestMariaDB_buildCreateUserQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := m.buildCreateUserQuery(exampleInput)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -705,7 +720,7 @@ func TestMariaDB_buildUpdateUserQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := m.buildUpdateUserQuery(exampleUser)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -752,7 +767,7 @@ func TestMariaDB_buildUpdateUserPasswordQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := m.buildUpdateUserPasswordQuery(exampleUser.ID, exampleUser.HashedPassword)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -797,7 +812,7 @@ func TestMariaDB_buildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := m.buildVerifyUserTwoFactorSecretQuery(exampleUser.ID)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -841,7 +856,7 @@ func TestMariaDB_buildArchiveUserQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := m.buildArchiveUserQuery(exampleUser.ID)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})

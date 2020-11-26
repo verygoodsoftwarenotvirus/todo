@@ -19,20 +19,18 @@ func BuildFakeAuditLogEntry() *types.AuditLogEntry {
 
 // BuildFakeAuditLogEntryList builds a faked AuditLogEntryList.
 func BuildFakeAuditLogEntryList() *types.AuditLogEntryList {
-	exampleAuditLogEntry1 := BuildFakeAuditLogEntry()
-	exampleAuditLogEntry2 := BuildFakeAuditLogEntry()
-	exampleAuditLogEntry3 := BuildFakeAuditLogEntry()
+	var examples []types.AuditLogEntry
+	for i := 0; i < exampleQuantity; i++ {
+		examples = append(examples, *BuildFakeAuditLogEntry())
+	}
 
 	return &types.AuditLogEntryList{
 		Pagination: types.Pagination{
-			Page:  1,
-			Limit: 20,
+			Page:       1,
+			Limit:      20,
+			TotalCount: exampleQuantity,
 		},
-		Entries: []types.AuditLogEntry{
-			*exampleAuditLogEntry1,
-			*exampleAuditLogEntry2,
-			*exampleAuditLogEntry3,
-		},
+		Entries: examples,
 	}
 }
 

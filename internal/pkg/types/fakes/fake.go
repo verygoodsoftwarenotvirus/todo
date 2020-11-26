@@ -9,3 +9,7 @@ import (
 func init() {
 	fake.Seed(time.Now().UnixNano())
 }
+
+const (
+	exampleQuantity = 3
+)

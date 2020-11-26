@@ -19,8 +19,13 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func buildMockRowsFromUsers(users ...*types.User) *sqlmock.Rows {
+func buildMockRowsFromUsers(includeCount bool, users ...*types.User) *sqlmock.Rows {
 	columns := queriers.UsersTableColumns
+
+	if includeCount {
+		columns = append(columns, "count")
+	}
+
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, user := range users {
@@ -40,6 +45,10 @@ func buildMockRowsFromUsers(users ...*types.User) *sqlmock.Rows {
 			user.CreatedOn,
 			user.LastUpdatedOn,
 			user.ArchivedOn,
+		}
+
+		if includeCount {
+			rowValues = append(rowValues, len(users))
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -81,7 +90,7 @@ func TestSqlite_ScanUsers(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, err := s.scanUsers(mockRows)
+		_, _, err := s.scanUsers(mockRows, false)
 		assert.Error(t, err)
 	})
 
@@ -94,7 +103,7 @@ func TestSqlite_ScanUsers(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, err := s.scanUsers(mockRows)
+		_, _, err := s.scanUsers(mockRows, false)
 		assert.NoError(t, err)
 	})
 }
@@ -113,7 +122,7 @@ func TestSqlite_buildGetUserQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := s.buildGetUserQuery(exampleUser.ID)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -134,7 +143,7 @@ func TestSqlite_GetUser(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromUsers(exampleUser))
+			WillReturnRows(buildMockRowsFromUsers(false, exampleUser))
 
 		actual, err := s.GetUser(ctx, exampleUser.ID)
 		assert.NoError(t, err)
@@ -180,7 +189,7 @@ func TestSqlite_buildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := s.buildGetUserWithUnverifiedTwoFactorSecretQuery(exampleUser.ID)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -201,7 +210,7 @@ func TestSqlite_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromUsers(exampleUser))
+			WillReturnRows(buildMockRowsFromUsers(false, exampleUser))
 
 		actual, err := s.GetUserWithUnverifiedTwoFactorSecret(ctx, exampleUser.ID)
 		assert.NoError(t, err)
@@ -250,7 +259,7 @@ func TestSqlite_buildGetUsersQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := s.buildGetUsersQuery(filter)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -277,6 +286,7 @@ func TestSqlite_GetUsers(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromUsers(
+					true,
 					&exampleUserList.Users[0],
 					&exampleUserList.Users[1],
 					&exampleUserList.Users[2],
@@ -367,7 +377,7 @@ func TestSqlite_buildGetUserByUsernameQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := s.buildGetUserByUsernameQuery(exampleUser.Username)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -388,7 +398,7 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromUsers(exampleUser))
+			WillReturnRows(buildMockRowsFromUsers(false, exampleUser))
 
 		actual, err := s.GetUserByUsername(ctx, exampleUser.Username)
 		assert.NoError(t, err)
@@ -459,6 +469,7 @@ func TestSqlite_SearchForUsersByUsername(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromUsers(
+					false,
 					&exampleUsers[0],
 					&exampleUsers[1],
 					&exampleUsers[2],
@@ -532,7 +543,7 @@ func TestSqlite_buildGetAllUsersCountQuery(T *testing.T) {
 		expectedQuery := "SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL"
 		actualQuery := s.buildGetAllUsersCountQuery()
 
-		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
 	})
 }
@@ -601,7 +612,7 @@ func TestSqlite_buildCreateUserQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := s.buildCreateUserQuery(exampleInput)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -684,7 +695,7 @@ func TestSqlite_buildUpdateUserQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := s.buildUpdateUserQuery(exampleUser)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -732,7 +743,7 @@ func TestSqlite_buildUpdateUserPasswordQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := s.buildUpdateUserPasswordQuery(exampleUser.ID, exampleUser.HashedPassword)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -777,7 +788,7 @@ func TestSqlite_buildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := s.buildVerifyUserTwoFactorSecretQuery(exampleUser.ID)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -821,7 +832,7 @@ func TestSqlite_buildArchiveUserQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := s.buildArchiveUserQuery(exampleUser.ID)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})

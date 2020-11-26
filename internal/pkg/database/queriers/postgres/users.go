@@ -18,10 +18,11 @@ import (
 )
 
 // scanUser provides a consistent way to scan something like a *sql.Row into a User struct.
-func (p *Postgres) scanUser(scan database.Scanner) (*types.User, error) {
+func (q *Postgres) scanUser(scan database.Scanner, includeCount bool) (*types.User, uint64, error) {
 	var (
 		x     = &types.User{}
 		perms uint32
+		count uint64
 	)
 
 	targetVars := []interface{}{
@@ -42,46 +43,55 @@ func (p *Postgres) scanUser(scan database.Scanner) (*types.User, error) {
 		&x.ArchivedOn,
 	}
 
+	if includeCount {
+		targetVars = append(targetVars, &count)
+	}
+
 	if err := scan.Scan(targetVars...); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	x.AdminPermissions = bitmask.NewPermissionBitmask(perms)
 
-	return x, nil
+	return x, count, nil
 }
 
 // scanUsers takes database rows and loads them into a slice of User structs.
-func (p *Postgres) scanUsers(rows database.ResultIterator) ([]types.User, error) {
+func (q *Postgres) scanUsers(rows database.ResultIterator, includeCount bool) ([]types.User, uint64, error) {
 	var (
-		list []types.User
+		list  []types.User
+		count uint64
 	)
 
 	for rows.Next() {
-		user, err := p.scanUser(rows)
+		user, c, err := q.scanUser(rows, includeCount)
 		if err != nil {
-			return nil, fmt.Errorf("scanning user result: %w", err)
+			return nil, 0, fmt.Errorf("scanning user result: %w", err)
+		}
+
+		if count == 0 && includeCount {
+			count = c
 		}
 
 		list = append(list, *user)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	if err := rows.Close(); err != nil {
-		p.logger.Error(err, "closing rows")
+		q.logger.Error(err, "closing rows")
 	}
 
-	return list, nil
+	return list, count, nil
 }
 
 // buildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
-func (p *Postgres) buildGetUserQuery(userID uint64) (query string, args []interface{}) {
+func (q *Postgres) buildGetUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = p.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Select(queriers.UsersTableColumns...).
 		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
@@ -93,17 +103,17 @@ func (p *Postgres) buildGetUserQuery(userID uint64) (query string, args []interf
 		}).
 		ToSql()
 
-	p.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetUser fetches a user.
-func (p *Postgres) GetUser(ctx context.Context, userID uint64) (*types.User, error) {
-	query, args := p.buildGetUserQuery(userID)
-	row := p.db.QueryRowContext(ctx, query, args...)
+func (q *Postgres) GetUser(ctx context.Context, userID uint64) (*types.User, error) {
+	query, args := q.buildGetUserQuery(userID)
+	row := q.db.QueryRowContext(ctx, query, args...)
 
-	u, err := p.scanUser(row)
+	u, _, err := q.scanUser(row, false)
 	if err != nil {
 		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
@@ -113,10 +123,10 @@ func (p *Postgres) GetUser(ctx context.Context, userID uint64) (*types.User, err
 
 // buildGetUserWithUnverifiedTwoFactorSecretQuery returns a SQL query (and argument) for retrieving a user
 // by their database ID, who has an unverified two factor secret.
-func (p *Postgres) buildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
+func (q *Postgres) buildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = p.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Select(queriers.UsersTableColumns...).
 		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
@@ -126,17 +136,17 @@ func (p *Postgres) buildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64)
 		}).
 		ToSql()
 
-	p.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetUserWithUnverifiedTwoFactorSecret fetches a user with an unverified two factor secret.
-func (p *Postgres) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*types.User, error) {
-	query, args := p.buildGetUserWithUnverifiedTwoFactorSecretQuery(userID)
-	row := p.db.QueryRowContext(ctx, query, args...)
+func (q *Postgres) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*types.User, error) {
+	query, args := q.buildGetUserWithUnverifiedTwoFactorSecretQuery(userID)
+	row := q.db.QueryRowContext(ctx, query, args...)
 
-	u, err := p.scanUser(row)
+	u, _, err := q.scanUser(row, false)
 	if err != nil {
 		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
@@ -145,10 +155,10 @@ func (p *Postgres) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, use
 }
 
 // buildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
-func (p *Postgres) buildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
+func (q *Postgres) buildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = p.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Select(queriers.UsersTableColumns...).
 		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
@@ -160,17 +170,17 @@ func (p *Postgres) buildGetUserByUsernameQuery(username string) (query string, a
 		}).
 		ToSql()
 
-	p.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetUserByUsername fetches a user by their username.
-func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
-	query, args := p.buildGetUserByUsernameQuery(username)
-	row := p.db.QueryRowContext(ctx, query, args...)
+func (q *Postgres) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
+	query, args := q.buildGetUserByUsernameQuery(username)
+	row := q.db.QueryRowContext(ctx, query, args...)
 
-	u, err := p.scanUser(row)
+	u, _, err := q.scanUser(row, false)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -183,10 +193,10 @@ func (p *Postgres) GetUserByUsername(ctx context.Context, username string) (*typ
 }
 
 // buildSearchForUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
-func (p *Postgres) buildSearchForUserByUsernameQuery(usernameQuery string) (query string, args []interface{}) {
+func (q *Postgres) buildSearchForUserByUsernameQuery(usernameQuery string) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = p.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Select(queriers.UsersTableColumns...).
 		From(queriers.UsersTableName).
 		Where(squirrel.Expr(
@@ -201,21 +211,21 @@ func (p *Postgres) buildSearchForUserByUsernameQuery(usernameQuery string) (quer
 		}).
 		ToSql()
 
-	p.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // SearchForUsersByUsername fetches a list of users whose usernames begin with a given query.
-func (p *Postgres) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]types.User, error) {
-	query, args := p.buildSearchForUserByUsernameQuery(usernameQuery)
+func (q *Postgres) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]types.User, error) {
+	query, args := q.buildSearchForUserByUsernameQuery(usernameQuery)
 
-	rows, err := p.db.QueryContext(ctx, query, args...)
+	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error querying database for users: %w", err)
 	}
 
-	u, err := p.scanUsers(rows)
+	u, _, err := q.scanUsers(rows, false)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -229,11 +239,11 @@ func (p *Postgres) SearchForUsersByUsername(ctx context.Context, usernameQuery s
 
 // buildGetAllUsersCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
 // to a given filter's criteria.
-func (p *Postgres) buildGetAllUsersCountQuery() (query string) {
+func (q *Postgres) buildGetAllUsersCountQuery() (query string) {
 	var err error
 
-	builder := p.sqlBuilder.
-		Select(fmt.Sprintf(countQuery, queriers.UsersTableName)).
+	builder := q.sqlBuilder.
+		Select(fmt.Sprintf(columnCountQueryTemplate, queriers.UsersTableName)).
 		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.ArchivedOnColumn): nil,
@@ -241,26 +251,38 @@ func (p *Postgres) buildGetAllUsersCountQuery() (query string) {
 
 	query, _, err = builder.ToSql()
 
-	p.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query
 }
 
 // GetAllUsersCount fetches a count of users from the database.
-func (p *Postgres) GetAllUsersCount(ctx context.Context) (count uint64, err error) {
-	query := p.buildGetAllUsersCountQuery()
-	err = p.db.QueryRowContext(ctx, query).Scan(&count)
+func (q *Postgres) GetAllUsersCount(ctx context.Context) (count uint64, err error) {
+	query := q.buildGetAllUsersCountQuery()
+	err = q.db.QueryRowContext(ctx, query).Scan(&count)
 
 	return count, err
 }
 
 // buildGetUsersQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
 // to a given filter's criteria.
-func (p *Postgres) buildGetUsersQuery(filter *types.QueryFilter) (query string, args []interface{}) {
-	var err error
+func (q *Postgres) buildGetUsersQuery(filter *types.QueryFilter) (query string, args []interface{}) {
+	countQueryBuilder := q.sqlBuilder.PlaceholderFormat(squirrel.Question).
+		Select(allCountQuery).
+		From(queriers.UsersTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.ArchivedOnColumn): nil,
+		})
 
-	builder := p.sqlBuilder.
-		Select(queriers.UsersTableColumns...).
+	if filter != nil {
+		countQueryBuilder = queriers.ApplyFilterToSubCountQueryBuilder(filter, countQueryBuilder, queriers.ItemsTableName)
+	}
+
+	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
+	q.logQueryBuildingError(err)
+
+	builder := q.sqlBuilder.
+		Select(append(queriers.UsersTableColumns, fmt.Sprintf("(%s)", countQuery))...).
 		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.ArchivedOnColumn): nil,
@@ -268,33 +290,34 @@ func (p *Postgres) buildGetUsersQuery(filter *types.QueryFilter) (query string, 
 		OrderBy(fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.IDColumn))
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder, queriers.UsersTableName)
+		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.UsersTableName)
 	}
 
-	query, args, err = builder.ToSql()
-	p.logQueryBuildingError(err)
+	query, selectArgs, err := builder.ToSql()
+	q.logQueryBuildingError(err)
 
-	return query, args
+	return query, append(countQueryArgs, selectArgs...)
 }
 
 // GetUsers fetches a list of users from the database that meet a particular filter.
-func (p *Postgres) GetUsers(ctx context.Context, filter *types.QueryFilter) (*types.UserList, error) {
-	query, args := p.buildGetUsersQuery(filter)
+func (q *Postgres) GetUsers(ctx context.Context, filter *types.QueryFilter) (*types.UserList, error) {
+	query, args := q.buildGetUsersQuery(filter)
 
-	rows, err := p.db.QueryContext(ctx, query, args...)
+	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
-	userList, err := p.scanUsers(rows)
+	userList, count, err := q.scanUsers(rows, true)
 	if err != nil {
 		return nil, fmt.Errorf("loading response from database: %w", err)
 	}
 
 	x := &types.UserList{
 		Pagination: types.Pagination{
-			Page:  filter.Page,
-			Limit: filter.Limit,
+			Page:       filter.Page,
+			Limit:      filter.Limit,
+			TotalCount: count,
 		},
 		Users: userList,
 	}
@@ -303,10 +326,10 @@ func (p *Postgres) GetUsers(ctx context.Context, filter *types.QueryFilter) (*ty
 }
 
 // buildCreateUserQuery returns a SQL query (and arguments) that would create a given User.
-func (p *Postgres) buildCreateUserQuery(input types.UserDataStoreCreationInput) (query string, args []interface{}) {
+func (q *Postgres) buildCreateUserQuery(input types.UserDataStoreCreationInput) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = p.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Insert(queriers.UsersTableName).
 		Columns(
 			queriers.UsersTableUsernameColumn,
@@ -334,22 +357,22 @@ func (p *Postgres) buildCreateUserQuery(input types.UserDataStoreCreationInput) 
 	// There should be no way to update a user via this structure
 	// such that they would have admin privileges.
 
-	p.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // CreateUser creates a user.
-func (p *Postgres) CreateUser(ctx context.Context, input types.UserDataStoreCreationInput) (*types.User, error) {
+func (q *Postgres) CreateUser(ctx context.Context, input types.UserDataStoreCreationInput) (*types.User, error) {
 	x := &types.User{
 		Username:        input.Username,
 		HashedPassword:  input.HashedPassword,
 		TwoFactorSecret: input.TwoFactorSecret,
 	}
-	query, args := p.buildCreateUserQuery(input)
+	query, args := q.buildCreateUserQuery(input)
 
 	// create the user.
-	if err := p.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {
+	if err := q.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {
 		pge := &postgres.Error{}
 		if errors.As(err, &pge) && pge.Code == postgresRowExistsErrorCode {
 			return nil, dbclient.ErrUserExists
@@ -362,10 +385,10 @@ func (p *Postgres) CreateUser(ctx context.Context, input types.UserDataStoreCrea
 }
 
 // buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row.
-func (p *Postgres) buildUpdateUserQuery(input *types.User) (query string, args []interface{}) {
+func (q *Postgres) buildUpdateUserQuery(input *types.User) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = p.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Update(queriers.UsersTableName).
 		Set(queriers.UsersTableUsernameColumn, input.Username).
 		Set(queriers.UsersTableHashedPasswordColumn, input.HashedPassword).
@@ -379,7 +402,7 @@ func (p *Postgres) buildUpdateUserQuery(input *types.User) (query string, args [
 		Suffix(fmt.Sprintf("RETURNING %s", queriers.LastUpdatedOnColumn)).
 		ToSql()
 
-	p.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -387,16 +410,16 @@ func (p *Postgres) buildUpdateUserQuery(input *types.User) (query string, args [
 // UpdateUser receives a complete User struct and updates its place in the db.
 // NOTE this function uses the ID provided in the input to make its query. Pass in
 // incomplete types at your peril.
-func (p *Postgres) UpdateUser(ctx context.Context, input *types.User) error {
-	query, args := p.buildUpdateUserQuery(input)
-	return p.db.QueryRowContext(ctx, query, args...).Scan(&input.LastUpdatedOn)
+func (q *Postgres) UpdateUser(ctx context.Context, input *types.User) error {
+	query, args := q.buildUpdateUserQuery(input)
+	return q.db.QueryRowContext(ctx, query, args...).Scan(&input.LastUpdatedOn)
 }
 
 // buildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's password.
-func (p *Postgres) buildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{}) {
+func (q *Postgres) buildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = p.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Update(queriers.UsersTableName).
 		Set(queriers.UsersTableHashedPasswordColumn, newHash).
 		Set(queriers.UsersTableRequiresPasswordChangeColumn, false).
@@ -406,131 +429,131 @@ func (p *Postgres) buildUpdateUserPasswordQuery(userID uint64, newHash string) (
 		Suffix(fmt.Sprintf("RETURNING %s", queriers.LastUpdatedOnColumn)).
 		ToSql()
 
-	p.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // UpdateUserPassword updates a user's password.
-func (p *Postgres) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
-	query, args := p.buildUpdateUserPasswordQuery(userID, newHash)
+func (q *Postgres) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
+	query, args := q.buildUpdateUserPasswordQuery(userID, newHash)
 
-	_, err := p.db.ExecContext(ctx, query, args...)
+	_, err := q.db.ExecContext(ctx, query, args...)
 
 	return err
 }
 
 // buildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
-func (p *Postgres) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
+func (q *Postgres) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = p.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Update(queriers.UsersTableName).
 		Set(queriers.UsersTableTwoFactorVerifiedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(queriers.UsersTableAccountStatusColumn, types.GoodStandingAccountStatus).
 		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		ToSql()
 
-	p.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // VerifyUserTwoFactorSecret marks a user's two factor secret as validated.
-func (p *Postgres) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error {
-	query, args := p.buildVerifyUserTwoFactorSecretQuery(userID)
-	_, err := p.db.ExecContext(ctx, query, args...)
+func (q *Postgres) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error {
+	query, args := q.buildVerifyUserTwoFactorSecretQuery(userID)
+	_, err := q.db.ExecContext(ctx, query, args...)
 
 	return err
 }
 
 // buildArchiveUserQuery builds a SQL query that marks a user as archived.
-func (p *Postgres) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
+func (q *Postgres) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = p.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Update(queriers.UsersTableName).
 		Set(queriers.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		Suffix(fmt.Sprintf("RETURNING %s", queriers.ArchivedOnColumn)).
 		ToSql()
 
-	p.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // ArchiveUser marks a user as archived.
-func (p *Postgres) ArchiveUser(ctx context.Context, userID uint64) error {
-	query, args := p.buildArchiveUserQuery(userID)
-	_, err := p.db.ExecContext(ctx, query, args...)
+func (q *Postgres) ArchiveUser(ctx context.Context, userID uint64) error {
+	query, args := q.buildArchiveUserQuery(userID)
+	_, err := q.db.ExecContext(ctx, query, args...)
 
 	return err
 }
 
 // LogCycleCookieSecretEvent saves a CycleCookieSecretEvent in the audit log table.
-func (p *Postgres) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
-	p.createAuditLogEntry(ctx, audit.BuildCycleCookieSecretEvent(userID))
+func (q *Postgres) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildCycleCookieSecretEvent(userID))
 }
 
 // LogSuccessfulLoginEvent saves a SuccessfulLoginEvent in the audit log table.
-func (p *Postgres) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
-	p.createAuditLogEntry(ctx, audit.BuildSuccessfulLoginEventEntry(userID))
+func (q *Postgres) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildSuccessfulLoginEventEntry(userID))
 }
 
 // LogBannedUserLoginAttemptEvent saves a SuccessfulLoginEvent in the audit log table.
-func (p *Postgres) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint64) {
-	p.createAuditLogEntry(ctx, audit.BuildBannedUserLoginAttemptEventEntry(userID))
+func (q *Postgres) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildBannedUserLoginAttemptEventEntry(userID))
 }
 
 // LogUnsuccessfulLoginBadPasswordEvent saves a UnsuccessfulLoginBadPasswordEvent in the audit log table.
-func (p *Postgres) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
-	p.createAuditLogEntry(ctx, audit.BuildUnsuccessfulLoginBadPasswordEventEntry(userID))
+func (q *Postgres) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildUnsuccessfulLoginBadPasswordEventEntry(userID))
 }
 
 // LogUnsuccessfulLoginBad2FATokenEvent saves a UnsuccessfulLoginBad2FATokenEvent in the audit log table.
-func (p *Postgres) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
-	p.createAuditLogEntry(ctx, audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(userID))
+func (q *Postgres) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(userID))
 }
 
 // LogLogoutEvent saves a LogoutEvent in the audit log table.
-func (p *Postgres) LogLogoutEvent(ctx context.Context, userID uint64) {
-	p.createAuditLogEntry(ctx, audit.BuildLogoutEventEntry(userID))
+func (q *Postgres) LogLogoutEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildLogoutEventEntry(userID))
 }
 
 // LogUserCreationEvent saves a UserCreationEvent in the audit log table.
-func (p *Postgres) LogUserCreationEvent(ctx context.Context, user *types.User) {
-	p.createAuditLogEntry(ctx, audit.BuildUserCreationEventEntry(user))
+func (q *Postgres) LogUserCreationEvent(ctx context.Context, user *types.User) {
+	q.createAuditLogEntry(ctx, audit.BuildUserCreationEventEntry(user))
 }
 
 // LogUserVerifyTwoFactorSecretEvent saves a UserVerifyTwoFactorSecretEvent in the audit log table.
-func (p *Postgres) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	p.createAuditLogEntry(ctx, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID))
+func (q *Postgres) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID))
 }
 
 // LogUserUpdateTwoFactorSecretEvent saves a UserUpdateTwoFactorSecretEvent in the audit log table.
-func (p *Postgres) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	p.createAuditLogEntry(ctx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID))
+func (q *Postgres) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID))
 }
 
 // LogUserUpdatePasswordEvent saves a UserUpdatePasswordEvent in the audit log table.
-func (p *Postgres) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
-	p.createAuditLogEntry(ctx, audit.BuildUserUpdatePasswordEventEntry(userID))
+func (q *Postgres) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildUserUpdatePasswordEventEntry(userID))
 }
 
 // LogUserArchiveEvent saves a UserArchiveEvent in the audit log table.
-func (p *Postgres) LogUserArchiveEvent(ctx context.Context, userID uint64) {
-	p.createAuditLogEntry(ctx, audit.BuildUserArchiveEventEntry(userID))
+func (q *Postgres) LogUserArchiveEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildUserArchiveEventEntry(userID))
 }
 
 // buildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching audit log entries
 // associated with a given user.
-func (p *Postgres) buildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{}) {
+func (q *Postgres) buildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
 	userIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.UserAssignmentKey)
 	performedByIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.ActorAssignmentKey)
-	builder := p.sqlBuilder.
+	builder := q.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).
 		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Or{
@@ -540,21 +563,21 @@ func (p *Postgres) buildGetAuditLogEntriesForUserQuery(userID uint64) (query str
 		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
 
 	query, args, err = builder.ToSql()
-	p.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetAuditLogEntriesForUser fetches a audit log entries for a given user from the database.
-func (p *Postgres) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]types.AuditLogEntry, error) {
-	query, args := p.buildGetAuditLogEntriesForUserQuery(userID)
+func (q *Postgres) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]types.AuditLogEntry, error) {
+	query, args := q.buildGetAuditLogEntriesForUserQuery(userID)
 
-	rows, err := p.db.QueryContext(ctx, query, args...)
+	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
 	}
 
-	auditLogEntries, err := p.scanAuditLogEntries(rows)
+	auditLogEntries, _, err := q.scanAuditLogEntries(rows, false)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}

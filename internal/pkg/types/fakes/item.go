@@ -19,20 +19,18 @@ func BuildFakeItem() *types.Item {
 
 // BuildFakeItemList builds a faked ItemList.
 func BuildFakeItemList() *types.ItemList {
-	exampleItem1 := BuildFakeItem()
-	exampleItem2 := BuildFakeItem()
-	exampleItem3 := BuildFakeItem()
+	var examples []types.Item
+	for i := 0; i < exampleQuantity; i++ {
+		examples = append(examples, *BuildFakeItem())
+	}
 
 	return &types.ItemList{
 		Pagination: types.Pagination{
-			Page:  1,
-			Limit: 20,
+			Page:       1,
+			Limit:      20,
+			TotalCount: exampleQuantity,
 		},
-		Items: []types.Item{
-			*exampleItem1,
-			*exampleItem2,
-			*exampleItem3,
-		},
+		Items: examples,
 	}
 }
 

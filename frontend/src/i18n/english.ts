@@ -11,7 +11,7 @@ export const englishTranslations: SiteTranslationMap = {
     apiTable: {
       page: 'Page',
       delete: 'Delete',
-      perPage: 'per page:',
+      perPage: 'per page',
       inputPlaceholders: {
         search: 'Search...',
       },

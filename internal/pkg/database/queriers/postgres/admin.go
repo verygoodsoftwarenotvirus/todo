@@ -12,24 +12,24 @@ import (
 )
 
 // buildSetUserStatusQuery returns a SQL query (and arguments) that would set a user's account status to banned.
-func (p *Postgres) buildSetUserStatusQuery(userID uint64, input types.AccountStatusUpdateInput) (query string, args []interface{}) {
+func (q *Postgres) buildSetUserStatusQuery(userID uint64, input types.AccountStatusUpdateInput) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = p.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Update(queriers.UsersTableName).
 		Set(queriers.UsersTableAccountStatusColumn, input.NewStatus).
 		Set(queriers.UsersTableStatusExplanationColumn, input.Reason).
 		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		ToSql()
 
-	p.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // updateUserAccountStatus updates a user's account status.
-func (p *Postgres) updateUserAccountStatus(ctx context.Context, query string, args []interface{}) error {
-	res, err := p.db.ExecContext(ctx, query, args...)
+func (q *Postgres) updateUserAccountStatus(ctx context.Context, query string, args []interface{}) error {
+	res, err := q.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return err
 	}
@@ -42,18 +42,18 @@ func (p *Postgres) updateUserAccountStatus(ctx context.Context, query string, ar
 }
 
 // UpdateUserAccountStatus updates a user's account status.
-func (p *Postgres) UpdateUserAccountStatus(ctx context.Context, userID uint64, input types.AccountStatusUpdateInput) error {
-	query, args := p.buildSetUserStatusQuery(userID, input)
+func (q *Postgres) UpdateUserAccountStatus(ctx context.Context, userID uint64, input types.AccountStatusUpdateInput) error {
+	query, args := q.buildSetUserStatusQuery(userID, input)
 
-	return p.updateUserAccountStatus(ctx, query, args)
+	return q.updateUserAccountStatus(ctx, query, args)
 }
 
 // LogUserBanEvent saves a UserBannedEvent in the audit log table.
-func (p *Postgres) LogUserBanEvent(ctx context.Context, banGiver, banRecipient uint64, reason string) {
-	p.createAuditLogEntry(ctx, audit.BuildUserBanEventEntry(banGiver, banRecipient, reason))
+func (q *Postgres) LogUserBanEvent(ctx context.Context, banGiver, banRecipient uint64, reason string) {
+	q.createAuditLogEntry(ctx, audit.BuildUserBanEventEntry(banGiver, banRecipient, reason))
 }
 
 // LogAccountTerminationEvent saves a UserBannedEvent in the audit log table.
-func (p *Postgres) LogAccountTerminationEvent(ctx context.Context, terminator, terminee uint64, reason string) {
-	p.createAuditLogEntry(ctx, audit.BuildAccountTerminationEventEntry(terminator, terminee, reason))
+func (q *Postgres) LogAccountTerminationEvent(ctx context.Context, terminator, terminee uint64, reason string) {
+	q.createAuditLogEntry(ctx, audit.BuildAccountTerminationEventEntry(terminator, terminee, reason))
 }

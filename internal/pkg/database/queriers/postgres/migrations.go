@@ -142,19 +142,19 @@ func buildMigrationFunc(db *sql.DB) func() {
 
 // Migrate migrates the database. It does so by invoking the migrateOnce function via sync.Once, so it should be
 // safe (as in idempotent, though not necessarily recommended) to call this function multiple times.
-func (p *Postgres) Migrate(ctx context.Context, authenticator password.Authenticator, testUserConfig *database.UserCreationConfig) error {
-	p.logger.Info("migrating db")
+func (q *Postgres) Migrate(ctx context.Context, authenticator password.Authenticator, testUserConfig *database.UserCreationConfig) error {
+	q.logger.Info("migrating db")
 
-	if !p.IsReady(ctx) {
+	if !q.IsReady(ctx) {
 		return database.ErrDBUnready
 	}
 
-	p.migrateOnce.Do(buildMigrationFunc(p.db))
+	q.migrateOnce.Do(buildMigrationFunc(q.db))
 
 	const usingDemoCodeThatShouldBeDeletedLater = true
 	if testUserConfig != nil && usingDemoCodeThatShouldBeDeletedLater {
 		for _, x := range exampledata.ExampleUsers {
-			query, args, err := p.sqlBuilder.
+			query, args, err := q.sqlBuilder.
 				Insert(queriers.UsersTableName).
 				Columns(
 					queriers.UsersTableUsernameColumn,
@@ -177,31 +177,31 @@ func (p *Postgres) Migrate(ctx context.Context, authenticator password.Authentic
 					squirrel.Expr(currentUnixTimeQuery),
 				).
 				ToSql()
-			p.logQueryBuildingError(err)
+			q.logQueryBuildingError(err)
 
-			if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
+			if _, dbErr := q.db.ExecContext(ctx, query, args...); dbErr != nil {
 				return dbErr
 			}
 		}
 
 		for _, x := range exampledata.ExampleItems {
 			for _, y := range x {
-				if _, dbErr := p.CreateItem(ctx, y); dbErr != nil {
+				if _, dbErr := q.CreateItem(ctx, y); dbErr != nil {
 					return dbErr
 				}
 			}
 		}
 
 		for _, x := range exampledata.ExampleOAuth2Clients {
-			query, args := p.buildCreateOAuth2ClientQuery(x)
-			if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
+			query, args := q.buildCreateOAuth2ClientQuery(x)
+			if _, dbErr := q.db.ExecContext(ctx, query, args...); dbErr != nil {
 				return dbErr
 			}
 		}
 
 		for _, x := range exampledata.ExampleWebhooks {
-			query, args := p.buildCreateWebhookQuery(x)
-			if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
+			query, args := q.buildCreateWebhookQuery(x)
+			if _, dbErr := q.db.ExecContext(ctx, query, args...); dbErr != nil {
 				return dbErr
 			}
 		}
@@ -213,7 +213,7 @@ func (p *Postgres) Migrate(ctx context.Context, authenticator password.Authentic
 			return fmt.Errorf("error hashing test user password: %w", err)
 		}
 
-		query, args, err := p.sqlBuilder.
+		query, args, err := q.sqlBuilder.
 			Insert(queriers.UsersTableName).
 			Columns(
 				queriers.UsersTableUsernameColumn,
@@ -235,14 +235,14 @@ func (p *Postgres) Migrate(ctx context.Context, authenticator password.Authentic
 				squirrel.Expr(currentUnixTimeQuery),
 			).
 			ToSql()
-		p.logQueryBuildingError(err)
+		q.logQueryBuildingError(err)
 
-		if _, dbErr := p.db.ExecContext(ctx, query, args...); dbErr != nil {
-			p.logger.Error(err, "creating user")
+		if _, dbErr := q.db.ExecContext(ctx, query, args...); dbErr != nil {
+			q.logger.Error(err, "creating user")
 			return fmt.Errorf("error creating test user: %w", dbErr)
 		}
 
-		p.logger.WithValue("username", testUserConfig.Username).Debug("created user")
+		q.logger.WithValue("username", testUserConfig.Username).Debug("created user")
 	}
 
 	return nil

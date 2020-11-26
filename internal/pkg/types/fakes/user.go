@@ -43,20 +43,18 @@ func BuildUserCreationResponseFromUser(user *types.User) *types.UserCreationResp
 
 // BuildFakeUserList builds a faked UserList.
 func BuildFakeUserList() *types.UserList {
-	exampleUser1 := BuildFakeUser()
-	exampleUser2 := BuildFakeUser()
-	exampleUser3 := BuildFakeUser()
+	var examples []types.User
+	for i := 0; i < exampleQuantity; i++ {
+		examples = append(examples, *BuildFakeUser())
+	}
 
 	return &types.UserList{
 		Pagination: types.Pagination{
-			Page:  1,
-			Limit: 20,
+			Page:       1,
+			Limit:      20,
+			TotalCount: exampleQuantity,
 		},
-		Users: []types.User{
-			*exampleUser1,
-			*exampleUser2,
-			*exampleUser3,
-		},
+		Users: examples,
 	}
 }
 

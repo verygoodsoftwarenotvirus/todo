@@ -1,14 +1,11 @@
 package types
 
 import (
-	"fmt"
 	"math"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
-
-	"github.com/Masterminds/squirrel"
 )
 
 const (
@@ -139,48 +136,6 @@ func (qf *QueryFilter) ToValues() url.Values {
 	v.Set(includeArchivedQueryKey, strconv.FormatBool(qf.IncludeArchived))
 
 	return v
-}
-
-// ApplyToQueryBuilder applies the query filter to a query builder.
-func (qf *QueryFilter) ApplyToQueryBuilder(queryBuilder squirrel.SelectBuilder, tableName string) squirrel.SelectBuilder {
-	if qf == nil {
-		return queryBuilder
-	}
-
-	const (
-		createdOnKey = "created_on"
-		updatedOnKey = "last_updated_on"
-	)
-
-	qf.SetPage(qf.Page)
-
-	if qp := qf.QueryPage(); qp > 0 {
-		queryBuilder = queryBuilder.Offset(qp)
-	}
-
-	if qf.Limit > 0 {
-		queryBuilder = queryBuilder.Limit(uint64(qf.Limit))
-	} else {
-		queryBuilder = queryBuilder.Limit(MaxLimit)
-	}
-
-	if qf.CreatedAfter > 0 {
-		queryBuilder = queryBuilder.Where(squirrel.Gt{fmt.Sprintf("%s.%s", tableName, createdOnKey): qf.CreatedAfter})
-	}
-
-	if qf.CreatedBefore > 0 {
-		queryBuilder = queryBuilder.Where(squirrel.Lt{fmt.Sprintf("%s.%s", tableName, createdOnKey): qf.CreatedBefore})
-	}
-
-	if qf.UpdatedAfter > 0 {
-		queryBuilder = queryBuilder.Where(squirrel.Gt{fmt.Sprintf("%s.%s", tableName, updatedOnKey): qf.UpdatedAfter})
-	}
-
-	if qf.UpdatedBefore > 0 {
-		queryBuilder = queryBuilder.Where(squirrel.Lt{fmt.Sprintf("%s.%s", tableName, updatedOnKey): qf.UpdatedBefore})
-	}
-
-	return queryBuilder
 }
 
 // ExtractQueryFilter can extract a QueryFilter from a request.

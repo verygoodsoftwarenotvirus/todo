@@ -18,8 +18,13 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func buildMockRowsFromWebhooks(webhooks ...*types.Webhook) *sqlmock.Rows {
+func buildMockRowsFromWebhooks(includeCount bool, webhooks ...*types.Webhook) *sqlmock.Rows {
 	columns := queriers.WebhooksTableColumns
+
+	if includeCount {
+		columns = append(columns, "count")
+	}
+
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, w := range webhooks {
@@ -36,6 +41,10 @@ func buildMockRowsFromWebhooks(webhooks ...*types.Webhook) *sqlmock.Rows {
 			w.LastUpdatedOn,
 			w.ArchivedOn,
 			w.BelongsToUser,
+		}
+
+		if includeCount {
+			rowValues = append(rowValues, len(webhooks))
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -74,7 +83,7 @@ func TestSqlite_ScanWebhooks(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, err := s.scanWebhooks(mockRows)
+		_, _, err := s.scanWebhooks(mockRows, false)
 		assert.Error(t, err)
 	})
 
@@ -87,7 +96,7 @@ func TestSqlite_ScanWebhooks(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, err := s.scanWebhooks(mockRows)
+		_, _, err := s.scanWebhooks(mockRows, false)
 		assert.NoError(t, err)
 	})
 }
@@ -108,7 +117,7 @@ func TestSqlite_buildGetWebhookQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := s.buildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -128,7 +137,7 @@ func TestSqlite_GetWebhook(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromWebhooks(exampleWebhook))
+			WillReturnRows(buildMockRowsFromWebhooks(false, exampleWebhook))
 
 		actual, err := s.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
 		assert.NoError(t, err)
@@ -209,7 +218,7 @@ func TestSqlite_buildGetAllWebhooksCountQuery(T *testing.T) {
 		expectedQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL"
 		actualQuery := s.buildGetAllWebhooksCountQuery()
 
-		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
 	})
 }
@@ -266,7 +275,7 @@ func TestSqlite_buildGetAllWebhooksQuery(T *testing.T) {
 		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL"
 		actualQuery := s.buildGetAllWebhooksQuery()
 
-		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
 	})
 }
@@ -279,7 +288,7 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 		ctx := context.Background()
 
 		exampleWebhookList := fakes.BuildFakeWebhookList()
-		exampleWebhookList.Limit = 0
+		exampleWebhookList.Pagination = types.Pagination{}
 
 		s, mockDB := buildTestService(t)
 		expectedQuery := s.buildGetAllWebhooksQuery()
@@ -288,6 +297,7 @@ func TestSqlite_GetAllWebhooks(T *testing.T) {
 			WithArgs().
 			WillReturnRows(
 				buildMockRowsFromWebhooks(
+					false,
 					&exampleWebhookList.Webhooks[0],
 					&exampleWebhookList.Webhooks[1],
 					&exampleWebhookList.Webhooks[2],
@@ -369,8 +379,13 @@ func TestSqlite_buildGetWebhooksQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = ? AND webhooks.created_on > ? AND webhooks.created_on < ? AND webhooks.last_updated_on > ? AND webhooks.last_updated_on < ? ORDER BY webhooks.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user, (SELECT COUNT(*) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = ? AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ?) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = ? AND webhooks.created_on > ? AND webhooks.created_on < ? AND webhooks.last_updated_on > ? AND webhooks.last_updated_on < ? ORDER BY webhooks.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
+			exampleUser.ID,
+			filter.CreatedAfter,
+			filter.CreatedBefore,
+			filter.UpdatedAfter,
+			filter.UpdatedBefore,
 			exampleUser.ID,
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -379,7 +394,7 @@ func TestSqlite_buildGetWebhooksQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := s.buildGetWebhooksQuery(exampleUser.ID, filter)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -404,6 +419,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromWebhooks(
+					true,
 					&exampleWebhookList.Webhooks[0],
 					&exampleWebhookList.Webhooks[1],
 					&exampleWebhookList.Webhooks[2],
@@ -502,7 +518,7 @@ func TestSqlite_buildCreateWebhookQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := s.buildCreateWebhookQuery(exampleWebhook)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -583,7 +599,7 @@ func TestSqlite_buildUpdateWebhookQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := s.buildUpdateWebhookQuery(exampleWebhook)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -648,7 +664,7 @@ func TestSqlite_buildArchiveWebhookQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := s.buildArchiveWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})

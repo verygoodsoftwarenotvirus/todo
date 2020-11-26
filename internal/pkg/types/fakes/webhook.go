@@ -27,20 +27,18 @@ func BuildFakeWebhook() *types.Webhook {
 
 // BuildFakeWebhookList builds a faked WebhookList.
 func BuildFakeWebhookList() *types.WebhookList {
-	exampleWebhook1 := BuildFakeWebhook()
-	exampleWebhook2 := BuildFakeWebhook()
-	exampleWebhook3 := BuildFakeWebhook()
+	var examples []types.Webhook
+	for i := 0; i < exampleQuantity; i++ {
+		examples = append(examples, *BuildFakeWebhook())
+	}
 
 	return &types.WebhookList{
 		Pagination: types.Pagination{
-			Page:  1,
-			Limit: 20,
+			Page:       1,
+			Limit:      20,
+			TotalCount: exampleQuantity,
 		},
-		Webhooks: []types.Webhook{
-			*exampleWebhook1,
-			*exampleWebhook2,
-			*exampleWebhook3,
-		},
+		Webhooks: examples,
 	}
 }
 

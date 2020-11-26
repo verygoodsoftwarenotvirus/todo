@@ -19,8 +19,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func buildMockRowsFromWebhooks(webhooks ...*types.Webhook) *sqlmock.Rows {
+func buildMockRowsFromWebhooks(includeCount bool, webhooks ...*types.Webhook) *sqlmock.Rows {
 	columns := queriers.WebhooksTableColumns
+
+	if includeCount {
+		columns = append(columns, "count")
+	}
+
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, w := range webhooks {
@@ -37,6 +42,10 @@ func buildMockRowsFromWebhooks(webhooks ...*types.Webhook) *sqlmock.Rows {
 			w.LastUpdatedOn,
 			w.ArchivedOn,
 			w.BelongsToUser,
+		}
+
+		if includeCount {
+			rowValues = append(rowValues, len(webhooks))
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -75,7 +84,7 @@ func TestPostgres_ScanWebhooks(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, err := p.scanWebhooks(mockRows)
+		_, _, err := p.scanWebhooks(mockRows, false)
 		assert.Error(t, err)
 	})
 
@@ -88,7 +97,7 @@ func TestPostgres_ScanWebhooks(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, err := p.scanWebhooks(mockRows)
+		_, _, err := p.scanWebhooks(mockRows, false)
 		assert.NoError(t, err)
 	})
 }
@@ -109,7 +118,7 @@ func TestPostgres_buildGetWebhookQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -129,7 +138,7 @@ func TestPostgres_GetWebhook(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromWebhooks(exampleWebhook))
+			WillReturnRows(buildMockRowsFromWebhooks(false, exampleWebhook))
 
 		actual, err := p.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
 		assert.NoError(t, err)
@@ -210,7 +219,7 @@ func TestPostgres_buildGetAllWebhooksCountQuery(T *testing.T) {
 		expectedQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL"
 		actualQuery := p.buildGetAllWebhooksCountQuery()
 
-		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
 	})
 }
@@ -267,7 +276,7 @@ func TestPostgres_buildGetAllWebhooksQuery(T *testing.T) {
 		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL"
 		actualQuery := p.buildGetAllWebhooksQuery()
 
-		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
 	})
 }
@@ -280,7 +289,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 		ctx := context.Background()
 
 		exampleWebhookList := fakes.BuildFakeWebhookList()
-		exampleWebhookList.Limit = 0
+		exampleWebhookList.Pagination = types.Pagination{}
 
 		p, mockDB := buildTestService(t)
 		expectedQuery := p.buildGetAllWebhooksQuery()
@@ -289,6 +298,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 			WithArgs().
 			WillReturnRows(
 				buildMockRowsFromWebhooks(
+					false,
 					&exampleWebhookList.Webhooks[0],
 					&exampleWebhookList.Webhooks[1],
 					&exampleWebhookList.Webhooks[2],
@@ -370,8 +380,13 @@ func TestPostgres_buildGetWebhooksQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $1 AND webhooks.created_on > $2 AND webhooks.created_on < $3 AND webhooks.last_updated_on > $4 AND webhooks.last_updated_on < $5 ORDER BY webhooks.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user, (SELECT COUNT(*) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $1 AND items.created_on > $2 AND items.created_on < $3 AND items.last_updated_on > $4 AND items.last_updated_on < $5) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $6 AND webhooks.created_on > $7 AND webhooks.created_on < $8 AND webhooks.last_updated_on > $9 AND webhooks.last_updated_on < $10 ORDER BY webhooks.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
+			exampleUser.ID,
+			filter.CreatedAfter,
+			filter.CreatedBefore,
+			filter.UpdatedAfter,
+			filter.UpdatedBefore,
 			exampleUser.ID,
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -380,7 +395,7 @@ func TestPostgres_buildGetWebhooksQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildGetWebhooksQuery(exampleUser.ID, filter)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -405,6 +420,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromWebhooks(
+					true,
 					&exampleWebhookList.Webhooks[0],
 					&exampleWebhookList.Webhooks[1],
 					&exampleWebhookList.Webhooks[2],
@@ -503,7 +519,7 @@ func TestPostgres_buildWebhookCreationQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildCreateWebhookQuery(exampleWebhook)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -579,7 +595,7 @@ func TestPostgres_buildUpdateWebhookQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildUpdateWebhookQuery(exampleWebhook)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -644,7 +660,7 @@ func TestPostgres_buildArchiveWebhookQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildArchiveWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})

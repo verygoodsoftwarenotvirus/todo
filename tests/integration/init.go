@@ -13,6 +13,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
 )
 
@@ -84,12 +85,17 @@ func initializeClient(oa2Client *types.OAuth2Client) *client.V1Client {
 		panic(err)
 	}
 
+	logger := zerolog.NewLogger()
+	if !debug {
+		logger = noop.NewLogger()
+	}
+
 	c, err := client.NewClient(
 		context.Background(),
 		oa2Client.ClientID,
 		oa2Client.ClientSecret,
 		uri,
-		zerolog.NewLogger(),
+		logger,
 		buildHTTPClient(),
 		oa2Client.Scopes,
 		debug,

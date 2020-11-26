@@ -18,8 +18,13 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func buildMockRowsFromOAuth2Clients(clients ...*types.OAuth2Client) *sqlmock.Rows {
+func buildMockRowsFromOAuth2Clients(includeCount bool, clients ...*types.OAuth2Client) *sqlmock.Rows {
 	columns := queriers.OAuth2ClientsTableColumns
+
+	if includeCount {
+		columns = append(columns, "count")
+	}
+
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, c := range clients {
@@ -35,6 +40,11 @@ func buildMockRowsFromOAuth2Clients(clients ...*types.OAuth2Client) *sqlmock.Row
 			c.ArchivedOn,
 			c.BelongsToUser,
 		}
+
+		if includeCount {
+			rowValues = append(rowValues, len(clients))
+		}
+
 		exampleRows.AddRow(rowValues...)
 	}
 
@@ -69,7 +79,7 @@ func TestMariaDB_ScanOAuth2Clients(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, err := m.scanOAuth2Clients(mockRows)
+		_, _, err := m.scanOAuth2Clients(mockRows, false)
 		assert.Error(t, err)
 	})
 
@@ -82,7 +92,7 @@ func TestMariaDB_ScanOAuth2Clients(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, err := m.scanOAuth2Clients(mockRows)
+		_, _, err := m.scanOAuth2Clients(mockRows, false)
 		assert.NoError(t, err)
 	})
 }
@@ -102,7 +112,7 @@ func TestMariaDB_buildGetOAuth2ClientByClientIDQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := m.buildGetOAuth2ClientByClientIDQuery(exampleOAuth2Client.ClientID)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -122,7 +132,7 @@ func TestMariaDB_GetOAuth2ClientByClientID(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromOAuth2Clients(exampleOAuth2Client))
+			WillReturnRows(buildMockRowsFromOAuth2Clients(false, exampleOAuth2Client))
 
 		actual, err := m.GetOAuth2ClientByClientID(ctx, exampleOAuth2Client.ClientID)
 		assert.NoError(t, err)
@@ -183,7 +193,7 @@ func TestMariaDB_buildGetAllOAuth2ClientsQuery(T *testing.T) {
 		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL"
 		actualQuery := m.buildGetAllOAuth2ClientsQuery()
 
-		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
 	})
 }
@@ -209,6 +219,7 @@ func TestMariaDB_GetAllOAuth2Clients(T *testing.T) {
 			WithArgs().
 			WillReturnRows(
 				buildMockRowsFromOAuth2Clients(
+					false,
 					exampleOAuth2Client,
 					exampleOAuth2Client,
 					exampleOAuth2Client,
@@ -301,7 +312,7 @@ func TestMariaDB_GetAllOAuth2ClientsForUser(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromOAuth2Clients(expected...))
+			WillReturnRows(buildMockRowsFromOAuth2Clients(false, expected...))
 
 		actual, err := m.GetAllOAuth2ClientsForUser(ctx, exampleUser.ID)
 		assert.NoError(t, err)
@@ -388,7 +399,7 @@ func TestMariaDB_buildGetOAuth2ClientQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := m.buildGetOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -408,7 +419,7 @@ func TestMariaDB_GetOAuth2Client(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromOAuth2Clients(exampleOAuth2Client))
+			WillReturnRows(buildMockRowsFromOAuth2Clients(false, exampleOAuth2Client))
 
 		actual, err := m.GetOAuth2Client(ctx, exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 		assert.NoError(t, err)
@@ -469,7 +480,7 @@ func TestMariaDB_buildGetAllOAuth2ClientsCountQuery(T *testing.T) {
 		expectedQuery := "SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL"
 		actualQuery := m.buildGetAllOAuth2ClientsCountQuery()
 
-		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
 	})
 }
@@ -508,8 +519,13 @@ func TestMariaDB_buildGetOAuth2ClientsForUserQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = ? AND oauth2_clients.created_on > ? AND oauth2_clients.created_on < ? AND oauth2_clients.last_updated_on > ? AND oauth2_clients.last_updated_on < ? ORDER BY oauth2_clients.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user, (SELECT COUNT(*) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = ? AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ?) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = ? AND oauth2_clients.created_on > ? AND oauth2_clients.created_on < ? AND oauth2_clients.last_updated_on > ? AND oauth2_clients.last_updated_on < ? ORDER BY oauth2_clients.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
+			exampleUser.ID,
+			filter.CreatedAfter,
+			filter.CreatedBefore,
+			filter.UpdatedAfter,
+			filter.UpdatedBefore,
 			exampleUser.ID,
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -518,7 +534,7 @@ func TestMariaDB_buildGetOAuth2ClientsForUserQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := m.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, filter)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -544,6 +560,7 @@ func TestMariaDB_GetOAuth2ClientsForUser(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromOAuth2Clients(
+					true,
 					&exampleOAuth2ClientList.Clients[0],
 					&exampleOAuth2ClientList.Clients[1],
 					&exampleOAuth2ClientList.Clients[2],
@@ -638,7 +655,7 @@ func TestMariaDB_buildCreateOAuth2ClientQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := m.buildCreateOAuth2ClientQuery(exampleOAuth2Client)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -716,7 +733,7 @@ func TestMariaDB_buildUpdateOAuth2ClientQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := m.buildUpdateOAuth2ClientQuery(exampleOAuth2Client)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -780,7 +797,7 @@ func TestMariaDB_buildArchiveOAuth2ClientQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := m.buildArchiveOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})

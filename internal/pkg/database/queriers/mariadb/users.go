@@ -16,10 +16,11 @@ import (
 )
 
 // scanUser provides a consistent way to scan something like a *sql.Row into a User struct.
-func (m *MariaDB) scanUser(scan database.Scanner) (*types.User, error) {
+func (q *MariaDB) scanUser(scan database.Scanner, includeCount bool) (*types.User, uint64, error) {
 	var (
 		x     = &types.User{}
 		perms uint32
+		count uint64
 	)
 
 	targetVars := []interface{}{
@@ -40,46 +41,55 @@ func (m *MariaDB) scanUser(scan database.Scanner) (*types.User, error) {
 		&x.ArchivedOn,
 	}
 
+	if includeCount {
+		targetVars = append(targetVars, &count)
+	}
+
 	if err := scan.Scan(targetVars...); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	x.AdminPermissions = bitmask.NewPermissionBitmask(perms)
 
-	return x, nil
+	return x, count, nil
 }
 
 // scanUsers takes database rows and loads them into a slice of User structs.
-func (m *MariaDB) scanUsers(rows database.ResultIterator) ([]types.User, error) {
+func (q *MariaDB) scanUsers(rows database.ResultIterator, includeCount bool) ([]types.User, uint64, error) {
 	var (
-		list []types.User
+		list  []types.User
+		count uint64
 	)
 
 	for rows.Next() {
-		user, err := m.scanUser(rows)
+		user, c, err := q.scanUser(rows, includeCount)
 		if err != nil {
-			return nil, fmt.Errorf("scanning user result: %w", err)
+			return nil, 0, fmt.Errorf("scanning user result: %w", err)
+		}
+
+		if count == 0 && includeCount {
+			count = c
 		}
 
 		list = append(list, *user)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	if err := rows.Close(); err != nil {
-		m.logger.Error(err, "closing rows")
+		q.logger.Error(err, "closing rows")
 	}
 
-	return list, nil
+	return list, count, nil
 }
 
 // buildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
-func (m *MariaDB) buildGetUserQuery(userID uint64) (query string, args []interface{}) {
+func (q *MariaDB) buildGetUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = m.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Select(queriers.UsersTableColumns...).
 		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
@@ -91,17 +101,17 @@ func (m *MariaDB) buildGetUserQuery(userID uint64) (query string, args []interfa
 		}).
 		ToSql()
 
-	m.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetUser fetches a user.
-func (m *MariaDB) GetUser(ctx context.Context, userID uint64) (*types.User, error) {
-	query, args := m.buildGetUserQuery(userID)
-	row := m.db.QueryRowContext(ctx, query, args...)
+func (q *MariaDB) GetUser(ctx context.Context, userID uint64) (*types.User, error) {
+	query, args := q.buildGetUserQuery(userID)
+	row := q.db.QueryRowContext(ctx, query, args...)
 
-	u, err := m.scanUser(row)
+	u, _, err := q.scanUser(row, false)
 	if err != nil {
 		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
@@ -111,10 +121,10 @@ func (m *MariaDB) GetUser(ctx context.Context, userID uint64) (*types.User, erro
 
 // buildGetUserWithUnverifiedTwoFactorSecretQuery returns a SQL query (and argument) for retrieving a user
 // by their database ID, who has an unverified two factor secret.
-func (m *MariaDB) buildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
+func (q *MariaDB) buildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = m.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Select(queriers.UsersTableColumns...).
 		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
@@ -124,17 +134,17 @@ func (m *MariaDB) buildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) 
 		}).
 		ToSql()
 
-	m.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetUserWithUnverifiedTwoFactorSecret fetches a user with an unverified two factor secret.
-func (m *MariaDB) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*types.User, error) {
-	query, args := m.buildGetUserWithUnverifiedTwoFactorSecretQuery(userID)
-	row := m.db.QueryRowContext(ctx, query, args...)
+func (q *MariaDB) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*types.User, error) {
+	query, args := q.buildGetUserWithUnverifiedTwoFactorSecretQuery(userID)
+	row := q.db.QueryRowContext(ctx, query, args...)
 
-	u, err := m.scanUser(row)
+	u, _, err := q.scanUser(row, false)
 	if err != nil {
 		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
@@ -143,10 +153,10 @@ func (m *MariaDB) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, user
 }
 
 // buildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
-func (m *MariaDB) buildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
+func (q *MariaDB) buildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = m.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Select(queriers.UsersTableColumns...).
 		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
@@ -158,17 +168,17 @@ func (m *MariaDB) buildGetUserByUsernameQuery(username string) (query string, ar
 		}).
 		ToSql()
 
-	m.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetUserByUsername fetches a user by their username.
-func (m *MariaDB) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
-	query, args := m.buildGetUserByUsernameQuery(username)
-	row := m.db.QueryRowContext(ctx, query, args...)
+func (q *MariaDB) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
+	query, args := q.buildGetUserByUsernameQuery(username)
+	row := q.db.QueryRowContext(ctx, query, args...)
 
-	u, err := m.scanUser(row)
+	u, _, err := q.scanUser(row, false)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -181,10 +191,10 @@ func (m *MariaDB) GetUserByUsername(ctx context.Context, username string) (*type
 }
 
 // buildSearchForUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
-func (m *MariaDB) buildSearchForUserByUsernameQuery(usernameQuery string) (query string, args []interface{}) {
+func (q *MariaDB) buildSearchForUserByUsernameQuery(usernameQuery string) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = m.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Select(queriers.UsersTableColumns...).
 		From(queriers.UsersTableName).
 		Where(squirrel.Expr(
@@ -199,21 +209,21 @@ func (m *MariaDB) buildSearchForUserByUsernameQuery(usernameQuery string) (query
 		}).
 		ToSql()
 
-	m.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // SearchForUsersByUsername fetches a list of users whose usernames begin with a given query.
-func (m *MariaDB) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]types.User, error) {
-	query, args := m.buildSearchForUserByUsernameQuery(usernameQuery)
+func (q *MariaDB) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]types.User, error) {
+	query, args := q.buildSearchForUserByUsernameQuery(usernameQuery)
 
-	rows, err := m.db.QueryContext(ctx, query, args...)
+	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error querying database for users: %w", err)
 	}
 
-	u, err := m.scanUsers(rows)
+	u, _, err := q.scanUsers(rows, false)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -227,11 +237,11 @@ func (m *MariaDB) SearchForUsersByUsername(ctx context.Context, usernameQuery st
 
 // buildGetAllUsersCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
 // to a given filter's criteria.
-func (m *MariaDB) buildGetAllUsersCountQuery() (query string) {
+func (q *MariaDB) buildGetAllUsersCountQuery() (query string) {
 	var err error
 
-	builder := m.sqlBuilder.
-		Select(fmt.Sprintf(countQuery, queriers.UsersTableName)).
+	builder := q.sqlBuilder.
+		Select(fmt.Sprintf(columnCountQueryTemplate, queriers.UsersTableName)).
 		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.ArchivedOnColumn): nil,
@@ -239,26 +249,38 @@ func (m *MariaDB) buildGetAllUsersCountQuery() (query string) {
 
 	query, _, err = builder.ToSql()
 
-	m.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query
 }
 
 // GetAllUsersCount fetches a count of users from the database.
-func (m *MariaDB) GetAllUsersCount(ctx context.Context) (count uint64, err error) {
-	query := m.buildGetAllUsersCountQuery()
-	err = m.db.QueryRowContext(ctx, query).Scan(&count)
+func (q *MariaDB) GetAllUsersCount(ctx context.Context) (count uint64, err error) {
+	query := q.buildGetAllUsersCountQuery()
+	err = q.db.QueryRowContext(ctx, query).Scan(&count)
 
 	return count, err
 }
 
 // buildGetUsersQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
 // to a given filter's criteria.
-func (m *MariaDB) buildGetUsersQuery(filter *types.QueryFilter) (query string, args []interface{}) {
-	var err error
+func (q *MariaDB) buildGetUsersQuery(filter *types.QueryFilter) (query string, args []interface{}) {
+	countQueryBuilder := q.sqlBuilder.
+		Select(allCountQuery).
+		From(queriers.UsersTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.ArchivedOnColumn): nil,
+		})
 
-	builder := m.sqlBuilder.
-		Select(queriers.UsersTableColumns...).
+	if filter != nil {
+		countQueryBuilder = queriers.ApplyFilterToSubCountQueryBuilder(filter, countQueryBuilder, queriers.ItemsTableName)
+	}
+
+	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
+	q.logQueryBuildingError(err)
+
+	builder := q.sqlBuilder.
+		Select(append(queriers.UsersTableColumns, fmt.Sprintf("(%s)", countQuery))...).
 		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.ArchivedOnColumn): nil,
@@ -266,33 +288,34 @@ func (m *MariaDB) buildGetUsersQuery(filter *types.QueryFilter) (query string, a
 		OrderBy(fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.IDColumn))
 
 	if filter != nil {
-		builder = filter.ApplyToQueryBuilder(builder, queriers.UsersTableName)
+		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.UsersTableName)
 	}
 
-	query, args, err = builder.ToSql()
-	m.logQueryBuildingError(err)
+	query, selectArgs, err := builder.ToSql()
+	q.logQueryBuildingError(err)
 
-	return query, args
+	return query, append(countQueryArgs, selectArgs...)
 }
 
 // GetUsers fetches a list of users from the database that meet a particular filter.
-func (m *MariaDB) GetUsers(ctx context.Context, filter *types.QueryFilter) (*types.UserList, error) {
-	query, args := m.buildGetUsersQuery(filter)
+func (q *MariaDB) GetUsers(ctx context.Context, filter *types.QueryFilter) (*types.UserList, error) {
+	query, args := q.buildGetUsersQuery(filter)
 
-	rows, err := m.db.QueryContext(ctx, query, args...)
+	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
-	userList, err := m.scanUsers(rows)
+	userList, count, err := q.scanUsers(rows, true)
 	if err != nil {
 		return nil, fmt.Errorf("loading response from database: %w", err)
 	}
 
 	x := &types.UserList{
 		Pagination: types.Pagination{
-			Page:  filter.Page,
-			Limit: filter.Limit,
+			Page:       filter.Page,
+			Limit:      filter.Limit,
+			TotalCount: count,
 		},
 		Users: userList,
 	}
@@ -301,10 +324,10 @@ func (m *MariaDB) GetUsers(ctx context.Context, filter *types.QueryFilter) (*typ
 }
 
 // buildCreateUserQuery returns a SQL query (and arguments) that would create a given User.
-func (m *MariaDB) buildCreateUserQuery(input types.UserDataStoreCreationInput) (query string, args []interface{}) {
+func (q *MariaDB) buildCreateUserQuery(input types.UserDataStoreCreationInput) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = m.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Insert(queriers.UsersTableName).
 		Columns(
 			queriers.UsersTableUsernameColumn,
@@ -331,42 +354,42 @@ func (m *MariaDB) buildCreateUserQuery(input types.UserDataStoreCreationInput) (
 	// There should be no way to update a user via this structure
 	// such that they would have admin privileges.
 
-	m.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // CreateUser creates a user.
-func (m *MariaDB) CreateUser(ctx context.Context, input types.UserDataStoreCreationInput) (*types.User, error) {
+func (q *MariaDB) CreateUser(ctx context.Context, input types.UserDataStoreCreationInput) (*types.User, error) {
 	x := &types.User{
 		Username:        input.Username,
 		HashedPassword:  input.HashedPassword,
 		TwoFactorSecret: input.TwoFactorSecret,
 	}
-	query, args := m.buildCreateUserQuery(input)
+	query, args := q.buildCreateUserQuery(input)
 
 	// create the user.
-	res, err := m.db.ExecContext(ctx, query, args...)
+	res, err := q.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error executing user creation query: %w", err)
 	}
 
 	// fetch the last inserted ID.
 	id, err := res.LastInsertId()
-	m.logIDRetrievalError(err)
+	q.logIDRetrievalError(err)
 
 	// this won't be completely accurate, but it will suffice.
-	x.CreatedOn = m.timeTeller.Now()
+	x.CreatedOn = q.timeTeller.Now()
 	x.ID = uint64(id)
 
 	return x, nil
 }
 
 // buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row.
-func (m *MariaDB) buildUpdateUserQuery(input *types.User) (query string, args []interface{}) {
+func (q *MariaDB) buildUpdateUserQuery(input *types.User) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = m.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Update(queriers.UsersTableName).
 		Set(queriers.UsersTableUsernameColumn, input.Username).
 		Set(queriers.UsersTableHashedPasswordColumn, input.HashedPassword).
@@ -379,7 +402,7 @@ func (m *MariaDB) buildUpdateUserQuery(input *types.User) (query string, args []
 		}).
 		ToSql()
 
-	m.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -387,18 +410,18 @@ func (m *MariaDB) buildUpdateUserQuery(input *types.User) (query string, args []
 // UpdateUser receives a complete User struct and updates its place in the db.
 // NOTE this function uses the ID provided in the input to make its query. Pass in
 // incomplete types at your peril.
-func (m *MariaDB) UpdateUser(ctx context.Context, input *types.User) error {
-	query, args := m.buildUpdateUserQuery(input)
-	_, err := m.db.ExecContext(ctx, query, args...)
+func (q *MariaDB) UpdateUser(ctx context.Context, input *types.User) error {
+	query, args := q.buildUpdateUserQuery(input)
+	_, err := q.db.ExecContext(ctx, query, args...)
 
 	return err
 }
 
 // buildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's password.
-func (m *MariaDB) buildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{}) {
+func (q *MariaDB) buildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = m.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Update(queriers.UsersTableName).
 		Set(queriers.UsersTableHashedPasswordColumn, newHash).
 		Set(queriers.UsersTableRequiresPasswordChangeColumn, false).
@@ -407,127 +430,127 @@ func (m *MariaDB) buildUpdateUserPasswordQuery(userID uint64, newHash string) (q
 		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		ToSql()
 
-	m.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // UpdateUserPassword updates a user's password.
-func (m *MariaDB) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
-	query, args := m.buildUpdateUserPasswordQuery(userID, newHash)
+func (q *MariaDB) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
+	query, args := q.buildUpdateUserPasswordQuery(userID, newHash)
 
-	_, err := m.db.ExecContext(ctx, query, args...)
+	_, err := q.db.ExecContext(ctx, query, args...)
 
 	return err
 }
 
 // buildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
-func (m *MariaDB) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
+func (q *MariaDB) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = m.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Update(queriers.UsersTableName).
 		Set(queriers.UsersTableTwoFactorVerifiedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(queriers.UsersTableAccountStatusColumn, types.GoodStandingAccountStatus).
 		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		ToSql()
 
-	m.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // VerifyUserTwoFactorSecret marks a user's two factor secret as validated.
-func (m *MariaDB) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error {
-	query, args := m.buildVerifyUserTwoFactorSecretQuery(userID)
-	_, err := m.db.ExecContext(ctx, query, args...)
+func (q *MariaDB) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error {
+	query, args := q.buildVerifyUserTwoFactorSecretQuery(userID)
+	_, err := q.db.ExecContext(ctx, query, args...)
 
 	return err
 }
 
 // buildArchiveUserQuery builds a SQL query that marks a user as archived.
-func (m *MariaDB) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
+func (q *MariaDB) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = m.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Update(queriers.UsersTableName).
 		Set(queriers.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		ToSql()
 
-	m.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // ArchiveUser marks a user as archived.
-func (m *MariaDB) ArchiveUser(ctx context.Context, userID uint64) error {
-	query, args := m.buildArchiveUserQuery(userID)
-	_, err := m.db.ExecContext(ctx, query, args...)
+func (q *MariaDB) ArchiveUser(ctx context.Context, userID uint64) error {
+	query, args := q.buildArchiveUserQuery(userID)
+	_, err := q.db.ExecContext(ctx, query, args...)
 
 	return err
 }
 
 // LogCycleCookieSecretEvent saves a CycleCookieSecretEvent in the audit log table.
-func (m *MariaDB) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
-	m.createAuditLogEntry(ctx, audit.BuildCycleCookieSecretEvent(userID))
+func (q *MariaDB) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildCycleCookieSecretEvent(userID))
 }
 
 // LogSuccessfulLoginEvent saves a SuccessfulLoginEvent in the audit log table.
-func (m *MariaDB) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
-	m.createAuditLogEntry(ctx, audit.BuildSuccessfulLoginEventEntry(userID))
+func (q *MariaDB) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildSuccessfulLoginEventEntry(userID))
 }
 
 // LogBannedUserLoginAttemptEvent saves a SuccessfulLoginEvent in the audit log table.
-func (m *MariaDB) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint64) {
-	m.createAuditLogEntry(ctx, audit.BuildBannedUserLoginAttemptEventEntry(userID))
+func (q *MariaDB) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildBannedUserLoginAttemptEventEntry(userID))
 }
 
 // LogUnsuccessfulLoginBadPasswordEvent saves a UnsuccessfulLoginBadPasswordEvent in the audit log table.
-func (m *MariaDB) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
-	m.createAuditLogEntry(ctx, audit.BuildUnsuccessfulLoginBadPasswordEventEntry(userID))
+func (q *MariaDB) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildUnsuccessfulLoginBadPasswordEventEntry(userID))
 }
 
 // LogUnsuccessfulLoginBad2FATokenEvent saves a UnsuccessfulLoginBad2FATokenEvent in the audit log table.
-func (m *MariaDB) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
-	m.createAuditLogEntry(ctx, audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(userID))
+func (q *MariaDB) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(userID))
 }
 
 // LogLogoutEvent saves a LogoutEvent in the audit log table.
-func (m *MariaDB) LogLogoutEvent(ctx context.Context, userID uint64) {
-	m.createAuditLogEntry(ctx, audit.BuildLogoutEventEntry(userID))
+func (q *MariaDB) LogLogoutEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildLogoutEventEntry(userID))
 }
 
 // LogUserCreationEvent saves a UserCreationEvent in the audit log table.
-func (m *MariaDB) LogUserCreationEvent(ctx context.Context, user *types.User) {
-	m.createAuditLogEntry(ctx, audit.BuildUserCreationEventEntry(user))
+func (q *MariaDB) LogUserCreationEvent(ctx context.Context, user *types.User) {
+	q.createAuditLogEntry(ctx, audit.BuildUserCreationEventEntry(user))
 }
 
 // LogUserVerifyTwoFactorSecretEvent saves a UserVerifyTwoFactorSecretEvent in the audit log table.
-func (m *MariaDB) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	m.createAuditLogEntry(ctx, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID))
+func (q *MariaDB) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID))
 }
 
 // LogUserUpdateTwoFactorSecretEvent saves a UserUpdateTwoFactorSecretEvent in the audit log table.
-func (m *MariaDB) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	m.createAuditLogEntry(ctx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID))
+func (q *MariaDB) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID))
 }
 
 // LogUserUpdatePasswordEvent saves a UserUpdatePasswordEvent in the audit log table.
-func (m *MariaDB) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
-	m.createAuditLogEntry(ctx, audit.BuildUserUpdatePasswordEventEntry(userID))
+func (q *MariaDB) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildUserUpdatePasswordEventEntry(userID))
 }
 
 // LogUserArchiveEvent saves a UserArchiveEvent in the audit log table.
-func (m *MariaDB) LogUserArchiveEvent(ctx context.Context, userID uint64) {
-	m.createAuditLogEntry(ctx, audit.BuildUserArchiveEventEntry(userID))
+func (q *MariaDB) LogUserArchiveEvent(ctx context.Context, userID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildUserArchiveEventEntry(userID))
 }
 
 // buildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
-func (m *MariaDB) buildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{}) {
+func (q *MariaDB) buildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
-	builder := m.sqlBuilder.
+	builder := q.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).
 		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Or{
@@ -553,21 +576,21 @@ func (m *MariaDB) buildGetAuditLogEntriesForUserQuery(userID uint64) (query stri
 		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
 
 	query, args, err = builder.ToSql()
-	m.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetAuditLogEntriesForUser fetches an audit log entry from the database.
-func (m *MariaDB) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]types.AuditLogEntry, error) {
-	query, args := m.buildGetAuditLogEntriesForUserQuery(userID)
+func (q *MariaDB) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]types.AuditLogEntry, error) {
+	query, args := q.buildGetAuditLogEntriesForUserQuery(userID)
 
-	rows, err := m.db.QueryContext(ctx, query, args...)
+	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
 	}
 
-	auditLogEntries, err := m.scanAuditLogEntries(rows)
+	auditLogEntries, _, err := q.scanAuditLogEntries(rows, false)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}

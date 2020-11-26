@@ -219,14 +219,14 @@ func buildMigrationFunc(db *sql.DB) func() {
 
 // Migrate migrates the database. It does so by invoking the migrateOnce function via sync.Once, so it should be
 // safe (as in idempotent, though not necessarily recommended) to call this function multiple times.
-func (m *MariaDB) Migrate(ctx context.Context, authenticator password.Authenticator, testUserConfig *database.UserCreationConfig) error {
-	m.logger.Info("migrating db")
+func (q *MariaDB) Migrate(ctx context.Context, authenticator password.Authenticator, testUserConfig *database.UserCreationConfig) error {
+	q.logger.Info("migrating db")
 
-	if !m.IsReady(ctx) {
+	if !q.IsReady(ctx) {
 		return database.ErrDBUnready
 	}
 
-	m.migrateOnce.Do(buildMigrationFunc(m.db))
+	q.migrateOnce.Do(buildMigrationFunc(q.db))
 
 	if testUserConfig != nil {
 		hp, err := authenticator.HashPassword(ctx, testUserConfig.Password)
@@ -234,7 +234,7 @@ func (m *MariaDB) Migrate(ctx context.Context, authenticator password.Authentica
 			return err
 		}
 
-		query, args, err := m.sqlBuilder.
+		query, args, err := q.sqlBuilder.
 			Insert(queriers.UsersTableName).
 			Columns(
 				queriers.UsersTableUsernameColumn,
@@ -256,13 +256,13 @@ func (m *MariaDB) Migrate(ctx context.Context, authenticator password.Authentica
 				squirrel.Expr(currentUnixTimeQuery),
 			).
 			ToSql()
-		m.logQueryBuildingError(err)
+		q.logQueryBuildingError(err)
 
-		if _, dbErr := m.db.ExecContext(ctx, query, args...); dbErr != nil {
+		if _, dbErr := q.db.ExecContext(ctx, query, args...); dbErr != nil {
 			return dbErr
 		}
 
-		m.logger.WithValue("username", testUserConfig.Username).Debug("created user")
+		q.logger.WithValue("username", testUserConfig.Username).Debug("created user")
 	}
 
 	return nil

@@ -17,8 +17,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func buildMockRowsFromAuditLogEntries(auditLogEntries ...*types.AuditLogEntry) *sqlmock.Rows {
+func buildMockRowsFromAuditLogEntries(includeCount bool, auditLogEntries ...*types.AuditLogEntry) *sqlmock.Rows {
 	columns := queriers.AuditLogEntriesTableColumns
+
+	if includeCount {
+		columns = append(columns, "count")
+	}
 
 	exampleRows := sqlmock.NewRows(columns)
 
@@ -28,6 +32,10 @@ func buildMockRowsFromAuditLogEntries(auditLogEntries ...*types.AuditLogEntry) *
 			x.EventType,
 			x.Context,
 			x.CreatedOn,
+		}
+
+		if includeCount {
+			rowValues = append(rowValues, len(auditLogEntries))
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -58,7 +66,7 @@ func TestPostgres_ScanAuditLogEntries(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, err := p.scanAuditLogEntries(mockRows)
+		_, _, err := p.scanAuditLogEntries(mockRows, false)
 		assert.Error(t, err)
 	})
 
@@ -71,7 +79,7 @@ func TestPostgres_ScanAuditLogEntries(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, err := p.scanAuditLogEntries(mockRows)
+		_, _, err := p.scanAuditLogEntries(mockRows, false)
 		assert.NoError(t, err)
 	})
 }
@@ -91,7 +99,7 @@ func TestPostgres_buildGetAuditLogEntryQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -111,7 +119,7 @@ func TestPostgres_GetAuditLogEntry(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromAuditLogEntries(exampleAuditLogEntry))
+			WillReturnRows(buildMockRowsFromAuditLogEntries(false, exampleAuditLogEntry))
 
 		actual, err := p.GetAuditLogEntry(ctx, exampleAuditLogEntry.ID)
 		assert.NoError(t, err)
@@ -152,7 +160,7 @@ func TestPostgres_buildGetAllAuditLogEntriesCountQuery(T *testing.T) {
 		expectedQuery := "SELECT COUNT(audit_log.id) FROM audit_log"
 		actualQuery := p.buildGetAllAuditLogEntriesCountQuery()
 
-		ensureArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
 	})
 }
@@ -195,7 +203,7 @@ func TestPostgres_buildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildGetBatchOfAuditLogEntriesQuery(beginID, endID)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -225,6 +233,7 @@ func TestPostgres_GetAllAuditLogEntries(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromAuditLogEntries(
+					false,
 					&exampleAuditLogEntryList.Entries[0],
 					&exampleAuditLogEntryList.Entries[1],
 					&exampleAuditLogEntryList.Entries[2],
@@ -363,8 +372,12 @@ func TestPostgres_buildGetAuditLogEntriesQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.created_on > $1 AND audit_log.created_on < $2 AND audit_log.last_updated_on > $3 AND audit_log.last_updated_on < $4 ORDER BY audit_log.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on, (SELECT COUNT(*) FROM audit_log WHERE audit_log.created_on > $1 AND audit_log.created_on < $2 AND audit_log.last_updated_on > $3 AND audit_log.last_updated_on < $4) FROM audit_log WHERE audit_log.created_on > $1 AND audit_log.created_on < $2 AND audit_log.last_updated_on > $3 AND audit_log.last_updated_on < $4 ORDER BY audit_log.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
+			filter.CreatedAfter,
+			filter.CreatedBefore,
+			filter.UpdatedAfter,
+			filter.UpdatedBefore,
 			filter.CreatedAfter,
 			filter.CreatedBefore,
 			filter.UpdatedAfter,
@@ -372,7 +385,7 @@ func TestPostgres_buildGetAuditLogEntriesQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildGetAuditLogEntriesQuery(filter)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -395,6 +408,7 @@ func TestPostgres_GetAuditLogEntries(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromAuditLogEntries(
+					true,
 					&exampleAuditLogEntryList.Entries[0],
 					&exampleAuditLogEntryList.Entries[1],
 					&exampleAuditLogEntryList.Entries[2],
@@ -488,7 +502,7 @@ func TestPostgres_buildGetAuditLogEntriesForItemQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
@@ -511,6 +525,7 @@ func TestPostgres_GetAuditLogEntriesForItem(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromAuditLogEntries(
+					false,
 					&exampleAuditLogEntryList[0],
 					&exampleAuditLogEntryList[1],
 					&exampleAuditLogEntryList[2],
@@ -588,7 +603,7 @@ func TestPostgres_buildCreateAuditLogEntryQuery(T *testing.T) {
 		}
 		actualQuery, actualArgs := p.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 
-		ensureArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
 	})

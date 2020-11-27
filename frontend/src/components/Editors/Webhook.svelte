@@ -38,15 +38,11 @@ let logger = new Logger().withDebugValue(
 
 // set up translations
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = translations.messagesFor(
-  currentSessionSettings.language,
-).models.webhook;
+let translationsToUse = currentSessionSettings.getTranslations().models.webhook;
 const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
   (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(
-      currentSessionSettings.language,
-    ).models.webhook;
+    translationsToUse = currentSessionSettings.getTranslations().models.webhook;
   },
 );
 // onDestroy(unsubscribeFromSettingsUpdates);

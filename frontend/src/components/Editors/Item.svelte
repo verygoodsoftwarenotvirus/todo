@@ -1,15 +1,14 @@
 <script lang="typescript">
 import { navigate } from 'svelte-routing';
-import { onDestroy, onMount } from 'svelte';
+import { onMount } from 'svelte';
 import { AxiosError, AxiosResponse } from 'axios';
 
 import { Item, UserSiteSettings, UserStatus, AuditLogEntry } from '../../types';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
-import { translations } from '../../i18n';
-import { sessionSettingsStore, userStatusStore } from '../../stores';
 import AuditLogTable from '../AuditLogTable/AuditLogTable.svelte';
 import { frontendRoutes, statusCodes } from '../../constants';
+import { Superstore } from '../../stores/superstore';
 
 export let id: number = 0;
 
@@ -31,29 +30,19 @@ let logger = new Logger().withDebugValue(
   'src/components/Editors/Item.svelte',
 );
 
-// set up translations
+let currentAuthStatus: UserStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = translations.messagesFor(
-  currentSessionSettings.language,
-).models.item;
-const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
-  (value: UserSiteSettings) => {
-    currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(
-      currentSessionSettings.language,
-    ).models.item;
-  },
-);
-// onDestroy(unsubscribeFromSettingsUpdates);
+let translationsToUse = currentSessionSettings.getTranslations().models.item;
 
-// set up user status sync
-let currentUserStatus = new UserStatus();
-const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
-  (value: UserStatus) => {
-    currentUserStatus = value;
+let superstore = new Superstore({
+  userStatusStoreUpdateFunc: (value: UserStatus) => {
+    currentAuthStatus = value;
   },
-);
-// onDestroy(unsubscribeFromUserStatusUpdates);
+  sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = currentSessionSettings.getTranslations().models.item;
+  },
+});
 
 function fetchItem(): void {
   logger.debug(`fetchItem called`);

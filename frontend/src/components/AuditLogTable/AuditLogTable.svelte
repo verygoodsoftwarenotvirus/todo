@@ -25,15 +25,13 @@ let logger = new Logger().withDebugValue(
 
 // set up translations
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = translations.messagesFor(
-  currentSessionSettings.language,
-).components.auditLogEntryTable;
+let translationsToUse = currentSessionSettings.getTranslations().components
+  .auditLogEntryTable;
 const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
   (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(
-      currentSessionSettings.language,
-    ).components.auditLogEntryTable;
+    translationsToUse = currentSessionSettings.getTranslations().components
+      .auditLogEntryTable;
   },
 );
 // onDestroy(unsubscribeFromSettingsUpdates);

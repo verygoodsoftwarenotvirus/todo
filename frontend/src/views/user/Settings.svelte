@@ -17,6 +17,7 @@ import { V1APIClient } from '../../apiClient';
 import { translations } from '../../i18n';
 import { sessionSettingsStore } from '../../stores';
 import { frontendRoutes } from '../../constants';
+import { Superstore } from '../../stores/superstore';
 
 export let location: Location;
 
@@ -25,34 +26,21 @@ let logger = new Logger().withDebugValue(
   'src/views/user/Settings.svelte',
 );
 
-// set up translations
+let currentAuthStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = translations.messagesFor(
-  currentSessionSettings.language,
-).pages.userSettings;
-const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
-  (value: UserSiteSettings) => {
-    currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(
-      currentSessionSettings.language,
-    ).pages.userSettings;
-  },
-);
-// onDestroy(unsubscribeFromSettingsUpdates);
+let translationsToUse = currentSessionSettings.getTranslations().components
+  .sidebars.primary;
 
-let currentUserStatus: UserStatus = new UserStatus();
-const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
-  (value: UserStatus) => {
-    currentUserStatus = value;
-    if (!currentUserStatus || !currentUserStatus.isAuthenticated) {
-      logger.debug(
-        `navigating to ${frontendRoutes.LOGIN} because the user is not authenticated upon authStatusStore update`,
-      );
-      navigate(frontendRoutes.LOGIN, { state: {}, replace: true });
-    }
+let superstore = new Superstore({
+  userStatusStoreUpdateFunc: (value: UserStatus) => {
+    currentAuthStatus = value;
   },
-);
-// onDestroy(unsubscribeFromUserStatusUpdates);
+  sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = currentSessionSettings.getTranslations().components
+      .sidebars.primary;
+  },
+});
 
 let ogUser: User = new User();
 let user: User = new User();

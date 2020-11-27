@@ -9,15 +9,13 @@ export let absolute: Boolean = false;
 
 // set up translations
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = translations.messagesFor(
-  currentSessionSettings.language,
-).components.footers.smallFooter;
+let translationsToUse = currentSessionSettings.getTranslations().components
+  .footers.smallFooter;
 const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
   (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(
-      currentSessionSettings.language,
-    ).components.footers.smallFooter;
+    translationsToUse = currentSessionSettings.getTranslations().components
+      .footers.smallFooter;
   },
 );
 // onDestroy(unsubscribeFromSettingsUpdates);

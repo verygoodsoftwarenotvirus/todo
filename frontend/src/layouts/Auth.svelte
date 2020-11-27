@@ -1,7 +1,6 @@
 <script lang="typescript">
 import { Router, Route } from 'svelte-routing';
 
-import { userStatusStore } from '../stores';
 import { UserStatus } from '../types';
 
 // components for this layout
@@ -17,15 +16,17 @@ const registerBg2: string = '../assets/img/register_bg_2.png';
 export let location: Location;
 
 import { Logger } from '../logger';
+import { Superstore } from '../stores/superstore';
+
 let logger = new Logger().withDebugValue('source', 'src/layouts/Auth.svelte');
 
-let currentAuthStatus = {};
-const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
-  (value: UserStatus) => {
+let currentAuthStatus: UserStatus = new UserStatus();
+
+let superstore = new Superstore({
+  userStatusStoreUpdateFunc: (value: UserStatus) => {
     currentAuthStatus = value;
   },
-);
-// onDestroy(unsubscribeFromUserStatusUpdates);
+});
 </script>
 
 <div>

@@ -17,15 +17,13 @@ function setNavbarOpen() {
 
 // set up translations
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = translations.messagesFor(
-  currentSessionSettings.language,
-).components.navbars.authNavbar;
+let translationsToUse = currentSessionSettings.getTranslations().components
+  .navbars.authNavbar;
 const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
   (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(
-      currentSessionSettings.language,
-    ).components.navbars.authNavbar;
+    translationsToUse = currentSessionSettings.getTranslations().components
+      .navbars.authNavbar;
   },
 );
 // onDestroy(unsubscribeFromSettingsUpdates);

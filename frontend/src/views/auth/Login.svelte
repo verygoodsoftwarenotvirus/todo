@@ -14,15 +14,11 @@ export let location: Location;
 
 // set up translations
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = translations.messagesFor(
-  currentSessionSettings.language,
-).pages.login;
+let translationsToUse = currentSessionSettings.getTranslations().pages.login;
 const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
   (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(
-      currentSessionSettings.language,
-    ).pages.login;
+    translationsToUse = currentSessionSettings.getTranslations().pages.login;
   },
 );
 

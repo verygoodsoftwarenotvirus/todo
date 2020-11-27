@@ -13,20 +13,21 @@ import ItemCreatorComponent from '../components/Creators/Item.svelte';
 
 // pages for this layout
 
-import { userStatusStore } from '../stores';
-import { UserStatus } from '../types';
+import { UserSiteSettings, UserStatus } from '../types';
 import { Logger } from '../logger';
+import { Superstore } from '../stores/superstore';
 
 export let location: Location;
 
 let logger = new Logger().withDebugValue('source', 'src/layouts/Things.svelte');
 
-let currentAuthStatus = {};
-const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
-  (value: UserStatus) => {
+let currentAuthStatus: UserStatus = new UserStatus();
+
+let superstore = new Superstore({
+  userStatusStoreUpdateFunc: (value: UserStatus) => {
     currentAuthStatus = value;
   },
-);
+});
 </script>
 
 <div>

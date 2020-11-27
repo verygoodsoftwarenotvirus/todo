@@ -22,44 +22,32 @@ import { translations } from '../../i18n';
 
 import APITable from '../../components/APITable/APITable.svelte';
 import { statusCodes } from '../../constants';
+import { Superstore } from '../../stores/superstore';
 
 export let location;
 
 let oauth2ClientRetrievalError = '';
 let oauth2Clients: OAuth2Client[] = [];
 
-const useAPITable: boolean = true;
+let adminMode: boolean = false;
+let currentAuthStatus: UserStatus = new UserStatus();
+let currentSessionSettings = new UserSiteSettings();
+let translationsToUse = currentSessionSettings.getTranslations().models
+  .oauth2Client;
 
-let currentAuthStatus = {};
-const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
-  (value: UserStatus) => {
+let superstore = new Superstore({
+  userStatusStoreUpdateFunc: (value: UserStatus) => {
     currentAuthStatus = value;
   },
-);
-// onDestroy(unsubscribeFromUserStatusUpdates);
-
-let adminMode = false;
-const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe(
-  (value: boolean) => {
+  sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = currentSessionSettings.getTranslations().models
+      .oauth2Client;
+  },
+  adminModeUpdateFunc: (value: boolean) => {
     adminMode = value;
   },
-);
-// onDestroy(unsubscribeFromAdminModeUpdates);
-
-// set up translations
-let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = translations.messagesFor(
-  currentSessionSettings.language,
-).models.oauth2Client;
-const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
-  (value: UserSiteSettings) => {
-    currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(
-      currentSessionSettings.language,
-    ).models.oauth2Client;
-  },
-);
-// onDestroy(unsubscribeFromSettingsUpdates);
+});
 
 let logger = new Logger().withDebugValue(
   'source',

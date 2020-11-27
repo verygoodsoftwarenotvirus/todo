@@ -7,15 +7,13 @@ import { onDestroy } from 'svelte';
 
 // set up translations
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = translations.messagesFor(
-  currentSessionSettings.language,
-).components.footers.adminFooter;
+let translationsToUse = currentSessionSettings.getTranslations().components
+  .footers.adminFooter;
 const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
   (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(
-      currentSessionSettings.language,
-    ).components.footers.adminFooter;
+    translationsToUse = currentSessionSettings.getTranslations().components
+      .footers.adminFooter;
   },
 );
 // onDestroy(unsubscribeFromSettingsUpdates);

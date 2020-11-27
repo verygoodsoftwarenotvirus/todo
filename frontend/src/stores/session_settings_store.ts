@@ -9,7 +9,7 @@ const logger = new Logger().withDebugValue(
 );
 
 function buildSessionSettingsStore() {
-  const { subscribe, set } = writable({});
+  const { subscribe, set } = writable(new UserSiteSettings());
 
   const sessionSettingsStore = {
     subscribe,

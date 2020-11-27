@@ -1,6 +1,6 @@
 <script lang="typescript">
 import { navigate } from 'svelte-routing';
-import { onDestroy, onMount } from 'svelte';
+import { onMount } from 'svelte';
 import { AxiosError, AxiosResponse } from 'axios';
 
 import {
@@ -11,10 +11,9 @@ import {
 } from '../../types';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
-import { translations } from '../../i18n';
-import { sessionSettingsStore, userStatusStore } from '../../stores';
 import AuditLogTable from '../AuditLogTable/AuditLogTable.svelte';
 import { frontendRoutes, statusCodes } from '../../constants';
+import { Superstore } from '../../stores/superstore';
 
 export let oauth2ClientID: number = 0;
 
@@ -36,29 +35,21 @@ let logger = new Logger().withDebugValue(
   'src/components/Editors/OAuth2Client.svelte',
 );
 
-// set up translations
+let currentAuthStatus: UserStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = translations.messagesFor(
-  currentSessionSettings.language,
-).models.oauth2Client;
-const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
-  (value: UserSiteSettings) => {
-    currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(
-      currentSessionSettings.language,
-    ).models.oauth2Client;
-  },
-);
-// onDestroy(unsubscribeFromSettingsUpdates);
+let translationsToUse = currentSessionSettings.getTranslations().models
+  .oauth2Client;
 
-// set up user status sync
-let currentUserStatus = new UserStatus();
-const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
-  (value: UserStatus) => {
-    currentUserStatus = value;
+let superstore = new Superstore({
+  userStatusStoreUpdateFunc: (value: UserStatus) => {
+    currentAuthStatus = value;
   },
-);
-// onDestroy(unsubscribeFromUserStatusUpdates);
+  sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = currentSessionSettings.getTranslations().models
+      .oauth2Client;
+  },
+});
 
 function fetchOAuth2Client(): void {
   logger.debug(`fetchOAuth2Client called`);
@@ -180,7 +171,7 @@ function fetchAuditLogEntries(): void {
     </div>
   </div>
 
-  {#if currentUserStatus.isAdmin}
+  {#if currentAuthStatus.isAdmin}
     <AuditLogTable entries="{auditLogEntries}" />
   {/if}
 </div>

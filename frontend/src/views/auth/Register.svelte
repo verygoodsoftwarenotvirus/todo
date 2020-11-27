@@ -18,15 +18,13 @@ import { frontendRoutes } from '../../constants';
 
 // set up translations
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = translations.messagesFor(
-  currentSessionSettings.language,
-).pages.registration;
+let translationsToUse = currentSessionSettings.getTranslations().pages
+  .registration;
 const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
   (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(
-      currentSessionSettings.language,
-    ).pages.registration;
+    translationsToUse = currentSessionSettings.getTranslations().pages
+      .registration;
   },
 );
 // onDestroy(unsubscribeFromSettingsUpdates);

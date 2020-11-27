@@ -24,15 +24,11 @@ let logger = new Logger().withDebugValue(
 
 // set up translations
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = translations.messagesFor(
-  currentSessionSettings.language,
-).models.item;
+let translationsToUse = currentSessionSettings.getTranslations().models.item;
 const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
   (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(
-      currentSessionSettings.language,
-    ).models.item;
+    translationsToUse = currentSessionSettings.getTranslations().models.item;
   },
 );
 // onDestroy(unsubscribeFromSettingsUpdates);

@@ -3,6 +3,7 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
+    "typeRoots": ["src/types/external"],
     "strict": true,
     "importHelpers": true,
     "moduleResolution": "node",

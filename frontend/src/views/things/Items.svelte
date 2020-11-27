@@ -17,50 +17,35 @@ import {
   userStatusStore,
 } from '../../stores';
 import { Logger } from '../../logger';
-import {statusCodes} from "../../constants";
+import { statusCodes } from '../../constants';
 import { V1APIClient } from '../../apiClient';
 import { translations } from '../../i18n';
 
 import APITable from '../../components/APITable/APITable.svelte';
+import { Superstore } from '../../stores/superstore';
 
 export let location;
 
 let itemRetrievalError = '';
 let items: Item[] = [];
 
-const useAPITable: boolean = true;
+let adminMode: boolean = false;
+let currentAuthStatus: UserStatus = new UserStatus();
+let currentSessionSettings = new UserSiteSettings();
+let translationsToUse = currentSessionSettings.getTranslations().models.item;
 
-let currentAuthStatus = {};
-const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
-  (value: UserStatus) => {
+let superstore = new Superstore({
+  userStatusStoreUpdateFunc: (value: UserStatus) => {
     currentAuthStatus = value;
   },
-);
-// onDestroy(unsubscribeFromUserStatusUpdates);
-
-let adminMode = false;
-const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe(
-  (value: boolean) => {
+  sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = currentSessionSettings.getTranslations().models.item;
+  },
+  adminModeUpdateFunc: (value: boolean) => {
     adminMode = value;
   },
-);
-// onDestroy(unsubscribeFromAdminModeUpdates);
-
-// set up translations
-let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = translations.messagesFor(
-  currentSessionSettings.language,
-).models.item;
-
-const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
-  (value: UserSiteSettings) => {
-    currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(
-      currentSessionSettings.language,
-    ).models.item;
-  },
-);
-// onDestroy(unsubscribeFromSettingsUpdates);
+});
 
 let logger = new Logger().withDebugValue(
   'source',

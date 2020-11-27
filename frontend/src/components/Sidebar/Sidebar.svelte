@@ -1,14 +1,12 @@
 <script lang="typescript">
-import { onDestroy } from 'svelte';
 import { link } from 'svelte-routing';
 
 // core components
 import UserDropdown from '../Dropdowns/UserDropdown.svelte';
 
 import { UserSiteSettings, UserStatus } from '../../types';
-import { sessionSettingsStore, userStatusStore } from '../../stores';
-import { translations } from '../../i18n';
 import { Logger } from '../../logger';
+import { Superstore } from '../../stores/superstore';
 
 export let location: Location;
 
@@ -23,27 +21,20 @@ let logger = new Logger().withDebugValue(
 );
 
 let currentAuthStatus = new UserStatus();
-const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
-  (value: UserStatus) => {
+let currentSessionSettings = new UserSiteSettings();
+let translationsToUse = currentSessionSettings.getTranslations().components
+  .sidebars.primary;
+
+let superstore = new Superstore({
+  userStatusStoreUpdateFunc: (value: UserStatus) => {
     currentAuthStatus = value;
   },
-);
-// onDestroy(unsubscribeFromUserStatusUpdates());
-
-// set up translations
-let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = translations.messagesFor(
-  currentSessionSettings.language,
-).components.sidebars.primary;
-const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
-  (value: UserSiteSettings) => {
+  sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(
-      currentSessionSettings.language,
-    ).components.sidebars.primary;
+    translationsToUse = currentSessionSettings.getTranslations().components
+      .sidebars.primary;
   },
-);
-// onDestroy(unsubscribeFromSettingsUpdates);
+});
 </script>
 
 s

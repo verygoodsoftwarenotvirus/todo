@@ -2,7 +2,6 @@
 import { onDestroy } from 'svelte';
 import { Router, Route } from 'svelte-routing';
 
-import { userStatusStore } from '../stores';
 import { UserStatus } from '../types';
 import { Logger } from '../logger';
 
@@ -27,14 +26,15 @@ import AuditLogEntries from '../views/admin/AuditLogEntries.svelte';
 import UserEditor from '../components/Editors/User.svelte';
 import WebhookEditor from '../components/Editors/Webhook.svelte';
 import OAuth2ClientEditor from '../components/Editors/OAuth2Client.svelte';
+import { Superstore } from '../stores/superstore';
 
-let currentAuthStatus = {};
-const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
-  (value: UserStatus) => {
+let currentAuthStatus: UserStatus = new UserStatus();
+
+let superstore = new Superstore({
+  userStatusStoreUpdateFunc: (value: UserStatus) => {
     currentAuthStatus = value;
   },
-);
-// onDestroy(unsubscribeFromUserStatusUpdates);
+});
 </script>
 
 <div>

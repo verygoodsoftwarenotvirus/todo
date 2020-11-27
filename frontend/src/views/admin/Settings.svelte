@@ -18,16 +18,14 @@ let logger = new Logger().withDebugValue(
 
 // set up translations
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = translations.messagesFor(
-  currentSessionSettings.language,
-).pages.siteSettings;
+let translationsToUse = currentSessionSettings.getTranslations().pages
+  .siteSettings;
 
 const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
   (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(
-      currentSessionSettings.language,
-    ).pages.siteSettings;
+    translationsToUse = currentSessionSettings.getTranslations().pages
+      .siteSettings;
   },
 );
 // onDestroy(unsubscribeFromSettingsUpdates);

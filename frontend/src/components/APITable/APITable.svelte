@@ -1,16 +1,10 @@
 <script lang="typescript">
-import { onDestroy } from 'svelte';
 import { link, navigate } from 'svelte-routing';
 import JSONTree from 'svelte-json-tree';
 
 import { Logger } from '../../logger';
-import {
-  adminModeStore,
-  sessionSettingsStore,
-  userStatusStore,
-} from '../../stores';
 import { QueryFilter, UserSiteSettings, UserStatus } from '../../types';
-import { translations } from '../../i18n';
+import { Superstore } from '../../stores/superstore';
 
 let logger = new Logger().withDebugValue(
   'source',
@@ -32,52 +26,40 @@ export let newPageLink: string = '';
 export let individualPageLink: string = '';
 
 export let searchEnabled: boolean = true;
-export let searchFunction;
+export let searchFunction: () => void;
 
 export let deleteEnabled: boolean = true;
-export let deleteFunction;
+export let deleteFunction: (id: number) => void;
 
-export let incrementDisabled;
-export let incrementPageFunction;
+export let incrementDisabled: boolean = true;
+export let incrementPageFunction: () => void;
 
-export let decrementDisabled;
-export let decrementPageFunction;
+export let decrementDisabled: boolean = true;
+export let decrementPageFunction: () => void;
 
-export let fetchFunction;
-export let rowRenderFunction;
-
-// set up translations
-let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = translations.messagesFor(
-  currentSessionSettings.language,
-).components.apiTable;
-
-const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
-  (value: UserSiteSettings) => {
-    currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(
-      currentSessionSettings.language,
-    ).components.apiTable;
-  },
-);
-// onDestroy(unsubscribeFromSettingsUpdates);
+export let fetchFunction: () => void;
+export let rowRenderFunction: () => void;
 
 let adminMode: boolean = false;
-const unsubscribeFromAdminModeUpdates = adminModeStore.subscribe(
-  (value: boolean) => {
+let currentAuthStatus: UserStatus = new UserStatus();
+let currentSessionSettings = new UserSiteSettings();
+let translationsToUse = currentSessionSettings.getTranslations().components
+  .apiTable;
+
+let superstore = new Superstore({
+  userStatusStoreUpdateFunc: (value: UserStatus) => {
+    currentAuthStatus = value;
+  },
+  sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = currentSessionSettings.getTranslations().components
+      .apiTable;
+  },
+  adminModeUpdateFunc: (value: boolean) => {
     adminMode = value;
     fetchFunction();
   },
-);
-// onDestroy(unsubscribeFromAdminModeUpdates);
-
-let currentAuthStatus = {};
-const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
-  (value: UserStatus) => {
-    currentAuthStatus = value;
-  },
-);
-// onDestroy(unsubscribeFromUserStatusUpdates);
+});
 
 function search(): void {
   if (searchQuery.length >= 3) {

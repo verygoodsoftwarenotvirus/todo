@@ -1,13 +1,11 @@
 <script lang="typescript">
-import { onDestroy, onMount } from 'svelte';
 import { AxiosError, AxiosResponse } from 'axios';
 
 import { UserSiteSettings, User, UserStatus, AuditLogEntry } from '../../types';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
-import { translations } from '../../i18n';
-import { sessionSettingsStore, userStatusStore } from '../../stores';
 import AuditLogTable from '../AuditLogTable/AuditLogTable.svelte';
+import { Superstore } from '../../stores/superstore';
 
 export let location: Location;
 export let userID: number = 0;
@@ -29,28 +27,19 @@ let logger = new Logger().withDebugValue(
   'src/components/Editors/User.svelte',
 );
 
-// set up translations
+let currentAuthStatus: UserStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = translations.messagesFor(
-  currentSessionSettings.language,
-).pages.userAdminPageTranslations;
-const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
-  (value: UserSiteSettings) => {
-    currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(
-      currentSessionSettings.language,
-    ).pages.userAdminPageTranslations;
-  },
-);
-// onDestroy(unsubscribeFromSettingsUpdates);
+let translationsToUse = currentSessionSettings.getTranslations().models.user;
 
-// set up user status sync
-let currentUserStatus = new UserStatus();
-const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
-  (value: UserStatus) => {
-    currentUserStatus = value;
+let superstore = new Superstore({
+  userStatusStoreUpdateFunc: (value: UserStatus) => {
+    currentAuthStatus = value;
   },
-);
+  sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = currentSessionSettings.getTranslations().models.user;
+  },
+});
 
 function fetchUser(): void {
   logger.debug(`fetchUser called`);
@@ -70,27 +59,6 @@ function fetchUser(): void {
       }
     });
 }
-
-// function deleteUser(): void {
-//   logger.debug(`fetchUser called`);
-//
-//   if (userID === 0) {
-//     throw new Error('id cannot be zero!');
-//   }
-//
-//   // V1APIClient.deleteUser(userID)
-//   //   .then((response: AxiosResponse<User>) => {
-//   //     user = { ...response.data };
-//   //     originalUser = { ...response.data };
-//   //   })
-//   //   .catch((error: AxiosError) => {
-//   //     if (error.response && error.response.data) {
-//   //       userRetrievalError = error.response.data;
-//   //     }
-//   //   });
-// }
-
-// onMount(fetchUser);
 </script>
 
 <div

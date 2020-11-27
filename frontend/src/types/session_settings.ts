@@ -1,4 +1,9 @@
-import { fetchLanguage, supportedLanguage } from '@/i18n';
+import {
+  fetchLanguage,
+  SiteTranslationMap,
+  supportedLanguage,
+  translations,
+} from '@/i18n';
 
 import type { LanguageTag } from 'typed-intl';
 
@@ -23,5 +28,9 @@ export class UserSiteSettings {
 
     this.language = fetchLanguage(language);
     this.darkMode = darkMode;
+  }
+
+  getTranslations(): Readonly<SiteTranslationMap> {
+    return translations.messagesFor(this.language);
   }
 }

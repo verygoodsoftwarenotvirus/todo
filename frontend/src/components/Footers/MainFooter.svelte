@@ -6,15 +6,13 @@ import { translations } from '../../i18n';
 import { sessionSettingsStore } from '../../stores';
 
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = translations.messagesFor(
-  currentSessionSettings.language,
-).components.footers.mainFooter;
+let translationsToUse = currentSessionSettings.getTranslations().components
+  .footers.mainFooter;
 const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
   (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = translations.messagesFor(
-      currentSessionSettings.language,
-    ).components.footers.mainFooter;
+    translationsToUse = currentSessionSettings.getTranslations().components
+      .footers.mainFooter;
   },
 );
 // onDestroy(unsubscribeFromSettingsUpdates);

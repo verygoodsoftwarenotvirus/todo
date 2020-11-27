@@ -331,3 +331,97 @@ func TestV1Client_ArchiveWebhook(T *testing.T) {
 		assert.Error(t, err, "error should be returned")
 	})
 }
+
+func TestV1Client_BuildGetAuditLogForWebhookRequest(T *testing.T) {
+	T.Parallel()
+
+	const expectedPath = "/api/v1/webhooks/%d/audit"
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		exampleWebhook := fakes.BuildFakeWebhook()
+		ts := httptest.NewTLSServer(nil)
+		c := buildTestClient(t, ts)
+
+		actual, err := c.BuildGetAuditLogForWebhookRequest(ctx, exampleWebhook.ID)
+		require.NotNil(t, actual)
+		assert.NoError(t, err, "no error should be returned")
+
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, exampleWebhook.ID)
+		assertRequestQuality(t, actual, spec)
+	})
+}
+
+func TestV1Client_GetAuditLogForWebhook(T *testing.T) {
+	T.Parallel()
+
+	const (
+		expectedPath   = "/api/v1/webhooks/%d/audit"
+		expectedMethod = http.MethodGet
+	)
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		exampleWebhook := fakes.BuildFakeWebhook()
+		spec := newRequestSpec(true, expectedMethod, "", expectedPath, exampleWebhook.ID)
+		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
+
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assertRequestQuality(t, req, spec)
+
+					require.NoError(t, json.NewEncoder(res).Encode(exampleAuditLogEntryList))
+				},
+			),
+		)
+
+		c := buildTestClient(t, ts)
+		actual, err := c.GetAuditLogForWebhook(ctx, exampleWebhook.ID)
+
+		require.NotNil(t, actual)
+		assert.NoError(t, err, "no error should be returned")
+		assert.Equal(t, exampleAuditLogEntryList, actual)
+	})
+
+	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		exampleWebhook := fakes.BuildFakeWebhook()
+
+		c := buildTestClientWithInvalidURL(t)
+		actual, err := c.GetAuditLogForWebhook(ctx, exampleWebhook.ID)
+
+		assert.Nil(t, actual)
+		assert.Error(t, err, "error should be returned")
+	})
+
+	T.Run("with invalid response", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		exampleWebhook := fakes.BuildFakeWebhook()
+		spec := newRequestSpec(true, expectedMethod, "", expectedPath, exampleWebhook.ID)
+
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assertRequestQuality(t, req, spec)
+
+					require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
+				},
+			),
+		)
+
+		c := buildTestClient(t, ts)
+		actual, err := c.GetAuditLogForWebhook(ctx, exampleWebhook.ID)
+
+		assert.Nil(t, actual)
+		assert.Error(t, err, "error should be returned")
+	})
+}

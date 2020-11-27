@@ -122,6 +122,17 @@ func buildTestClientWithInvalidURL(t *testing.T) *V1Client {
 
 // end helper funcs
 
+func TestV1Client_EnableAdminMode(T *testing.T) {
+	T.Parallel()
+
+	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
+		ts := httptest.NewTLSServer(nil)
+
+		buildTestClient(t, ts).EnableAdminMode()
+	})
+}
+
 func TestV1Client_AuthenticatedClient(T *testing.T) {
 	T.Parallel()
 

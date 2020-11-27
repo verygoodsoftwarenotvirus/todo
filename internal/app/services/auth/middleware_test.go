@@ -98,7 +98,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 	})
 }
 
-func TestService_AuthorizationMiddleware(T *testing.T) {
+func TestService_UserAttributionMiddleware(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -126,270 +126,9 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		s.AuthorizationMiddleware(true)(h).ServeHTTP(res, req)
+		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, exampleUser.ToSessionInfo()))
 
-		assert.Equal(t, http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, ocv, mockDB, h)
-	})
-
-	T.Run("happy path without allowing cookies", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService(t)
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
-
-		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
-		s.oauth2ClientsService = ocv
-
-		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleOAuth2Client.BelongsToUser).Return(exampleUser, nil)
-		s.userDB = mockDB
-
-		h := &MockHTTPHandler{}
-		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
-		require.NoError(t, err)
-		require.NotNil(t, req)
-
-		s.AuthorizationMiddleware(false)(h).ServeHTTP(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, ocv, mockDB, h)
-	})
-
-	T.Run("with error fetching client but able to use cookie", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService(t)
-
-		exampleUser := fakes.BuildFakeUser()
-
-		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
-		s.userDB = mockDB
-
-		h := &MockHTTPHandler{}
-		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
-		require.NoError(t, err)
-		require.NotNil(t, req)
-
-		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
-
-		s.AuthorizationMiddleware(true)(h).ServeHTTP(res, req)
-
-		mock.AssertExpectationsForObjects(t, mockDB, h)
-	})
-
-	T.Run("able to use cookies but error fetching user info", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService(t)
-
-		exampleUser := fakes.BuildFakeUser()
-
-		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleUser.ID).Return((*types.User)(nil), errors.New("blah"))
-		s.userDB = mockDB
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
-		require.NoError(t, err)
-		require.NotNil(t, req)
-
-		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
-
-		h := &MockHTTPHandler{}
-		s.AuthorizationMiddleware(true)(h).ServeHTTP(res, req)
-
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB, h)
-	})
-
-	T.Run("no cookies allowed, with error fetching user info", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService(t)
-
-		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
-
-		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
-		s.oauth2ClientsService = ocv
-
-		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleOAuth2Client.BelongsToUser).Return((*types.User)(nil), errors.New("blah"))
-		s.userDB = mockDB
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
-		require.NoError(t, err)
-		require.NotNil(t, req)
-
-		h := &MockHTTPHandler{}
-		s.AuthorizationMiddleware(false)(h).ServeHTTP(res, req)
-
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
-
-		mock.AssertExpectationsForObjects(t, ocv, mockDB, h)
-	})
-
-	T.Run("with error fetching client but able to use cookie but unable to decode cookie", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService(t)
-
-		exampleUser := fakes.BuildFakeUser()
-
-		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return((*types.OAuth2Client)(nil), errors.New("blah"))
-		s.oauth2ClientsService = ocv
-
-		cb := &mockCookieEncoderDecoder{}
-		cb.On("Decode", CookieName, mock.Anything, mock.Anything).Return(errors.New("blah"))
-		cb.On("Encode", CookieName, mock.Anything).Return("", nil)
-		s.cookieManager = cb
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
-		require.NoError(t, err)
-		require.NotNil(t, req)
-
-		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
-
-		h := &MockHTTPHandler{}
-		s.AuthorizationMiddleware(true)(h).ServeHTTP(res, req)
-
-		mock.AssertExpectationsForObjects(t, ocv, cb, h)
-	})
-
-	T.Run("with invalid authentication", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService(t)
-
-		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return((*types.OAuth2Client)(nil), nil)
-		s.oauth2ClientsService = ocv
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
-		require.NoError(t, err)
-		require.NotNil(t, req)
-
-		h := &MockHTTPHandler{}
-		s.AuthorizationMiddleware(false)(h).ServeHTTP(res, req)
-
-		assert.Equal(t, http.StatusUnauthorized, res.Code)
-
-		mock.AssertExpectationsForObjects(t, ocv, h)
-	})
-
-	T.Run("with banned user", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService(t)
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleUser.AccountStatus = types.BannedAccountStatus
-		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
-
-		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
-		s.oauth2ClientsService = ocv
-
-		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleOAuth2Client.BelongsToUser).Return(exampleUser, nil)
-		s.userDB = mockDB
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
-		require.NoError(t, err)
-		require.NotNil(t, req)
-
-		s.AuthorizationMiddleware(true)(&MockHTTPHandler{}).ServeHTTP(res, req)
-
-		assert.Equal(t, http.StatusForbidden, res.Code)
-
-		mock.AssertExpectationsForObjects(t, ocv, mockDB)
-	})
-
-	T.Run("nightmare path", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService(t)
-
-		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
-
-		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
-		s.oauth2ClientsService = ocv
-
-		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleOAuth2Client.BelongsToUser).Return((*types.User)(nil), nil)
-		s.userDB = mockDB
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
-		require.NoError(t, err)
-		require.NotNil(t, req)
-
-		h := &MockHTTPHandler{}
-		s.AuthorizationMiddleware(false)(h).ServeHTTP(res, req)
-
-		assert.Equal(t, http.StatusUnauthorized, res.Code)
-
-		mock.AssertExpectationsForObjects(t, ocv, mockDB, h)
-	})
-}
-
-func TestService_AuthenticationMiddleware(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService(t)
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
-
-		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
-		s.oauth2ClientsService = ocv
-
-		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleOAuth2Client.BelongsToUser).Return(exampleUser, nil)
-		s.userDB = mockDB
-
-		h := &MockHTTPHandler{}
-		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
-		require.NoError(t, err)
-		require.NotNil(t, req)
-
-		s.AuthenticationMiddleware(h).ServeHTTP(res, req)
+		s.UserAttributionMiddleware(h).ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -418,43 +157,12 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 
 		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
-		s.AuthenticationMiddleware(h).ServeHTTP(res, req)
+		s.UserAttributionMiddleware(h).ServeHTTP(res, req)
 
 		mock.AssertExpectationsForObjects(t, mockDB, h)
 	})
 
-	T.Run("with no cookie and error fetching user data", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService(t)
-
-		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
-
-		ocv := &mockOAuth2ClientValidator{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
-		s.oauth2ClientsService = ocv
-
-		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleOAuth2Client.BelongsToUser).Return((*types.User)(nil), errors.New("blah"))
-		s.userDB = mockDB
-
-		h := &MockHTTPHandler{}
-		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
-		require.NoError(t, err)
-		require.NotNil(t, req)
-
-		s.AuthenticationMiddleware(h).ServeHTTP(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, ocv, mockDB, h)
-	})
-
-	T.Run("with cookie and error fetching user data", func(t *testing.T) {
+	T.Run("with cookie and error fetching user", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -476,9 +184,161 @@ func TestService_AuthenticationMiddleware(T *testing.T) {
 
 		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
-		s.AuthenticationMiddleware(h).ServeHTTP(res, req)
+		s.UserAttributionMiddleware(h).ServeHTTP(res, req)
 
 		mock.AssertExpectationsForObjects(t, mockDB, h)
+	})
+
+	T.Run("with cookie present", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		s := buildTestService(t)
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
+
+		ocv := &mockOAuth2ClientValidator{}
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
+		s.oauth2ClientsService = ocv
+
+		mockDB := database.BuildMockDatabase().UserDataManager
+		mockDB.On("GetUser", mock.Anything, exampleOAuth2Client.BelongsToUser).Return(exampleUser, nil)
+		s.userDB = mockDB
+
+		h := &MockHTTPHandler{}
+		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+
+		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, exampleUser.ToSessionInfo()))
+
+		s.UserAttributionMiddleware(h).ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, ocv, mockDB, h)
+	})
+
+	T.Run("with error fetching user", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		s := buildTestService(t)
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
+
+		ocv := &mockOAuth2ClientValidator{}
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
+		s.oauth2ClientsService = ocv
+
+		mockDB := database.BuildMockDatabase().UserDataManager
+		mockDB.On("GetUser", mock.Anything, exampleOAuth2Client.BelongsToUser).Return((*types.User)(nil), errors.New("blah"))
+		s.userDB = mockDB
+
+		h := &MockHTTPHandler{}
+		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+
+		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, exampleUser.ToSessionInfo()))
+
+		s.UserAttributionMiddleware(h).ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, ocv, mockDB, h)
+	})
+}
+
+func TestService_AuthorizationMiddleware(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		s := buildTestService(t)
+
+		exampleUser := fakes.BuildFakeUser()
+
+		h := &MockHTTPHandler{}
+		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+
+		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, exampleUser.ToSessionInfo()))
+
+		s.AuthorizationMiddleware(h).ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, h)
+	})
+
+	T.Run("with nil user", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		s := buildTestService(t)
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+
+		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, &types.SessionInfo{}))
+
+		s.AuthorizationMiddleware(&MockHTTPHandler{}).ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
+	})
+
+	T.Run("with banned user", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		s := buildTestService(t)
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleUser.AccountStatus = types.BannedAccountStatus
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+
+		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, exampleUser.ToSessionInfo()))
+
+		s.AuthorizationMiddleware(&MockHTTPHandler{}).ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusForbidden, res.Code)
+	})
+
+	T.Run("with missing session info", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		s := buildTestService(t)
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+
+		s.AuthorizationMiddleware(&MockHTTPHandler{}).ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
 	})
 }
 

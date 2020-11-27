@@ -653,3 +653,97 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestV1Client_BuildGetAuditLogForUserRequest(T *testing.T) {
+	T.Parallel()
+
+	const expectedPath = "/api/v1/users/%d/audit"
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		exampleUser := fakes.BuildFakeUser()
+		ts := httptest.NewTLSServer(nil)
+		c := buildTestClient(t, ts)
+
+		actual, err := c.BuildGetAuditLogForUserRequest(ctx, exampleUser.ID)
+		require.NotNil(t, actual)
+		assert.NoError(t, err, "no error should be returned")
+
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, exampleUser.ID)
+		assertRequestQuality(t, actual, spec)
+	})
+}
+
+func TestV1Client_GetAuditLogForUser(T *testing.T) {
+	T.Parallel()
+
+	const (
+		expectedPath   = "/api/v1/users/%d/audit"
+		expectedMethod = http.MethodGet
+	)
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		exampleUser := fakes.BuildFakeUser()
+		spec := newRequestSpec(true, expectedMethod, "", expectedPath, exampleUser.ID)
+		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
+
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assertRequestQuality(t, req, spec)
+
+					require.NoError(t, json.NewEncoder(res).Encode(exampleAuditLogEntryList))
+				},
+			),
+		)
+
+		c := buildTestClient(t, ts)
+		actual, err := c.GetAuditLogForUser(ctx, exampleUser.ID)
+
+		require.NotNil(t, actual)
+		assert.NoError(t, err, "no error should be returned")
+		assert.Equal(t, exampleAuditLogEntryList, actual)
+	})
+
+	T.Run("with invalid client URL", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		exampleUser := fakes.BuildFakeUser()
+
+		c := buildTestClientWithInvalidURL(t)
+		actual, err := c.GetAuditLogForUser(ctx, exampleUser.ID)
+
+		assert.Nil(t, actual)
+		assert.Error(t, err, "error should be returned")
+	})
+
+	T.Run("with invalid response", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		exampleUser := fakes.BuildFakeUser()
+		spec := newRequestSpec(true, expectedMethod, "", expectedPath, exampleUser.ID)
+
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(res http.ResponseWriter, req *http.Request) {
+					assertRequestQuality(t, req, spec)
+
+					require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
+				},
+			),
+		)
+
+		c := buildTestClient(t, ts)
+		actual, err := c.GetAuditLogForUser(ctx, exampleUser.ID)
+
+		assert.Nil(t, actual)
+		assert.Error(t, err, "error should be returned")
+	})
+}

@@ -32,14 +32,14 @@ type (
 		Items []Item `json:"items"`
 	}
 
-	// ItemCreationInput represents what a user could set as input for creating items.
+	// ItemCreationInput represents what a User could set as input for creating items.
 	ItemCreationInput struct {
 		Name          string `json:"name"`
 		Details       string `json:"details"`
 		BelongsToUser uint64 `json:"-"`
 	}
 
-	// ItemUpdateInput represents what a user could set as input for updating items.
+	// ItemUpdateInput represents what a User could set as input for updating items.
 	ItemUpdateInput struct {
 		Name          string `json:"name"`
 		Details       string `json:"details"`

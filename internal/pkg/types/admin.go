@@ -21,7 +21,7 @@ type (
 		LogAccountTerminationEvent(ctx context.Context, terminator, terminee uint64, reason string)
 	}
 
-	// AccountStatusUpdateInput represents what an admin user could provide as input for changing statuses.
+	// AccountStatusUpdateInput represents what an admin User could provide as input for changing statuses.
 	AccountStatusUpdateInput struct {
 		TargetAccountID uint64            `json:"accountID"`
 		NewStatus       userAccountStatus `json:"newStatus"`

@@ -155,14 +155,9 @@ func (c *V1Client) BuildLoginRequest(ctx context.Context, input *types.UserLogin
 		return nil, ErrNilInputProvided
 	}
 
-	body, err := createBodyFromStruct(&input)
-	if err != nil {
-		return nil, fmt.Errorf("building request body: %w", err)
-	}
-
 	uri := c.buildVersionlessURL(nil, usersBasePath, "login")
 
-	return c.buildDataRequest(ctx, http.MethodPost, uri, body)
+	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
 // Login will, when provided the correct credentials, fetch a login cookie.

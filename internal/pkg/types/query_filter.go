@@ -28,7 +28,7 @@ const (
 	sortByQueryKey          = "sortBy"
 )
 
-// QueryFilter represents all the filters a user could apply to a list query.
+// QueryFilter represents all the filters a User could apply to a list query.
 type QueryFilter struct {
 	SortBy          sortType `json:"sortBy"`
 	Page            uint64   `json:"page"`

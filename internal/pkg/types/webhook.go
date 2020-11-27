@@ -26,7 +26,7 @@ type (
 		BelongsToUser uint64   `json:"belongsToUser"`
 	}
 
-	// WebhookCreationInput represents what a user could set as input for creating a webhook.
+	// WebhookCreationInput represents what a User could set as input for creating a webhook.
 	WebhookCreationInput struct {
 		Name          string   `json:"name"`
 		ContentType   string   `json:"contentType"`
@@ -38,7 +38,7 @@ type (
 		BelongsToUser uint64   `json:"-"`
 	}
 
-	// WebhookUpdateInput represents what a user could set as input for updating a webhook.
+	// WebhookUpdateInput represents what a User could set as input for updating a webhook.
 	WebhookUpdateInput struct {
 		Name          string   `json:"name"`
 		ContentType   string   `json:"contentType"`

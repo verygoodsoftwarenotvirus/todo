@@ -25,12 +25,12 @@ type (
 		TotalCount uint64 `json:"totalCount"`
 	}
 
-	// CountResponse is what we respond with when a user requests a count of data types.
+	// CountResponse is what we respond with when a User requests a count of data types.
 	CountResponse struct {
 		Count uint64 `json:"count"`
 	}
 
-	// ErrorResponse represents a response we might send to the user in the event of an error.
+	// ErrorResponse represents a response we might send to the User in the event of an error.
 	ErrorResponse struct {
 		Message string `json:"message"`
 		Code    int    `json:"code"`

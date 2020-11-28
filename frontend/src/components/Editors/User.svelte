@@ -27,6 +27,7 @@ let logger = new Logger().withDebugValue(
   'src/components/Editors/User.svelte',
 );
 
+let adminMode: boolean = false;
 let currentAuthStatus: UserStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
 let translationsToUse = currentSessionSettings.getTranslations().models.user;
@@ -38,6 +39,9 @@ let superstore = new Superstore({
   sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = currentSessionSettings.getTranslations().models.user;
+  },
+  adminModeUpdateFunc: (value: boolean) => {
+    adminMode = value;
   },
 });
 
@@ -83,13 +87,13 @@ function fetchUser(): void {
           class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
           for="grid-first-name"
         >
-          {translationsToUse.myAccount}
+          {translationsToUse.labels.name}
         </label>
         <input
           class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
           id="grid-first-name"
           type="text"
-          placeholder="{translationsToUse.myAccount}"
+          placeholder="{translationsToUse.inputPlaceholders.name}"
           on:keyup="{evaluateChanges}"
           bind:value="{user.username}"
         />
@@ -101,12 +105,12 @@ function fetchUser(): void {
           class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
           on:click="{console.log}"
         ><i class="fa fa-trash-alt"></i>
-          {translationsToUse.myAccount}</button>
+          {translationsToUse.actions.delete}</button>
       </div>
     </div>
   </div>
 
-  {#if currentUserStatus.isAdmin}
+  {#if currentAuthStatus.isAdmin && adminMode}
     <AuditLogTable entries="{auditLogEntries}" />
   {/if}
 </div>

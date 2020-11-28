@@ -1,30 +1,26 @@
 <script lang="typescript">
 // core components
 import { AxiosError, AxiosResponse } from 'axios';
-import { onDestroy, onMount } from 'svelte';
 
 import {
   ErrorResponse,
+  fakeItemFactory,
   Item,
   ItemList,
   QueryFilter,
   UserSiteSettings,
   UserStatus,
 } from '../../types';
-import {
-  adminModeStore,
-  sessionSettingsStore,
-  userStatusStore,
-} from '../../stores';
 import { Logger } from '../../logger';
 import { statusCodes } from '../../constants';
 import { V1APIClient } from '../../apiClient';
-import { translations } from '../../i18n';
 
 import APITable from '../../components/APITable/APITable.svelte';
 import { Superstore } from '../../stores/superstore';
 
 export let location;
+
+let queryFilter = QueryFilter.fromURLSearchParams();
 
 let itemRetrievalError = '';
 let items: Item[] = [];
@@ -52,12 +48,6 @@ let logger = new Logger().withDebugValue(
   'src/views/things/Items.svelte',
 );
 
-onMount(fetchItems);
-
-// begin experimental API table code
-
-let queryFilter = QueryFilter.fromURLSearchParams();
-
 let apiTableIncrementDisabled: boolean = false;
 let apiTableDecrementDisabled: boolean = false;
 let apiTableSearchQuery: string = '';
@@ -71,11 +61,7 @@ function searchItems() {
       queryFilter.page -= 1;
     })
     .catch((error: AxiosError) => {
-      if (error.response) {
-        if (error.response.data) {
-          itemRetrievalError = error.response.data;
-        }
-      }
+      itemRetrievalError = error.response?.data;
     });
 }
 
@@ -98,21 +84,24 @@ function decrementPage() {
 function fetchItems() {
   logger.debug('fetchItems called');
 
-  V1APIClient.fetchListOfItems(queryFilter, adminMode)
-    .then((response: AxiosResponse<ItemList>) => {
-      items = response.data.items || [];
+  if (superstore.frontendOnlyMode) {
+    logger.debug('using fake data because of frontend only mode');
+    setTimeout(() => {
+      items = fakeItemFactory.buildList(20);
+    }, 500);
+  } else {
+    V1APIClient.fetchListOfItems(queryFilter, adminMode)
+      .then((response: AxiosResponse<ItemList>) => {
+        items = response.data.items || [];
 
-      queryFilter.page = response.data.page;
-      apiTableIncrementDisabled = items.length === 0;
-      apiTableDecrementDisabled = queryFilter.page === 1;
-    })
-    .catch((error: AxiosError) => {
-      if (error.response) {
-        if (error.response.data) {
-          itemRetrievalError = error.response.data;
-        }
-      }
-    });
+        queryFilter.page = response.data.page;
+        apiTableIncrementDisabled = items.length === 0;
+        apiTableDecrementDisabled = queryFilter.page === 1;
+      })
+      .catch((error: AxiosError) => {
+        itemRetrievalError = error.response?.data;
+      });
+  }
 }
 
 function promptDelete(id: number) {

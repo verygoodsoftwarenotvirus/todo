@@ -109,7 +109,7 @@ const toggleDropdown = (event: any) => {
         <i class="fa fa-cogs"></i>
         {translationsToUse.settings}
       </button>
-      {#if currentAuthStatus.isAdmin}
+      {#if currentAuthStatus.isAdmin && adminMode}
         <div class="h-0 my-2 border border-solid border-gray-200"></div>
         <button
           on:click="{superstore.toggleAdminMode}"

@@ -208,7 +208,7 @@ function fetchAuditLogEntries(): void {
     </div>
   </div>
 
-  {#if currentUserStatus.isAdmin}
+  {#if currentAuthStatus.isAdmin && adminMode}
     <AuditLogTable entries="{auditLogEntries}" />
   {/if}
 </div>

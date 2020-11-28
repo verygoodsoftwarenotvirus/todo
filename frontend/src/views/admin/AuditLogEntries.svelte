@@ -1,24 +1,17 @@
 <script lang="typescript">
 // core components
 import { AxiosError, AxiosResponse } from 'axios';
-import { onDestroy, onMount } from 'svelte';
+import { onMount } from 'svelte';
 
 import {
-  ErrorResponse,
   AuditLogEntry,
   AuditLogEntryList,
   QueryFilter,
   UserSiteSettings,
   UserStatus,
 } from '../../types';
-import {
-  adminModeStore,
-  sessionSettingsStore,
-  userStatusStore,
-} from '../../stores';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
-import { translations } from '../../i18n';
 
 import APITable from '../../components/APITable/APITable.svelte';
 import { Superstore } from '../../stores/superstore';
@@ -65,18 +58,6 @@ let apiTableSearchQuery: string = '';
 
 function searchAuditLogEntries() {
   logger.debug('searchAuditLogEntries called');
-  //   V1APIClient.searchForAuditLogEntries(apiTableSearchQuery, queryFilter, adminMode)
-  //     .then((response: AxiosResponse<AuditLogEntryList>) => {
-  //       entries = response.data.entries || [];
-  //       queryFilter.page = -1;
-  //     })
-  //     .catch((error: AxiosError) => {
-  //       if (error.response) {
-  //         if (error.response.data) {
-  //           entryRetrievalError = error.response.data;
-  //         }
-  //       }
-  //     });
 }
 
 function incrementPage() {

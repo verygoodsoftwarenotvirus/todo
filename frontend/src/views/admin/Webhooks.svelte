@@ -1,7 +1,7 @@
 <script lang="typescript">
 // core components
 import { AxiosError, AxiosResponse } from 'axios';
-import { onDestroy, onMount } from 'svelte';
+import { onMount } from 'svelte';
 
 import {
   ErrorResponse,
@@ -11,14 +11,8 @@ import {
   UserSiteSettings,
   UserStatus,
 } from '../../types';
-import {
-  adminModeStore,
-  sessionSettingsStore,
-  userStatusStore,
-} from '../../stores';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
-import { translations } from '../../i18n';
 
 import APITable from '../../components/APITable/APITable.svelte';
 import { statusCodes } from '../../constants';

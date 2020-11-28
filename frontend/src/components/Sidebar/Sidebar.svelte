@@ -95,7 +95,7 @@ s
         </ul>
       </div>
 
-      {#if currentAuthStatus.isAdmin}
+      {#if currentAuthStatus.isAdmin && adminMode}
         <hr class="my-4 md:min-w-full" />
         <div>
           <h6

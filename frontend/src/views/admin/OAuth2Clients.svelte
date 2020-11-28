@@ -1,7 +1,7 @@
 <script lang="typescript">
 // core components
 import { AxiosError, AxiosResponse } from 'axios';
-import { onDestroy, onMount } from 'svelte';
+import { onMount } from 'svelte';
 
 import {
   ErrorResponse,
@@ -11,14 +11,8 @@ import {
   UserSiteSettings,
   UserStatus,
 } from '../../types';
-import {
-  adminModeStore,
-  sessionSettingsStore,
-  userStatusStore,
-} from '../../stores';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
-import { translations } from '../../i18n';
 
 import APITable from '../../components/APITable/APITable.svelte';
 import { statusCodes } from '../../constants';
@@ -66,19 +60,6 @@ let apiTableSearchQuery: string = '';
 
 function searchOAuth2Clients() {
   logger.debug('searchOAuth2Clients called');
-  //
-  //   V1APIClient.searchForOAuth2Clients(apiTableSearchQuery, queryFilter, adminMode)
-  //     .then((response: AxiosResponse<OAuth2ClientList>) => {
-  //       oauth2Clients = response.data.oauth2Clients || [];
-  //       queryFilter.page = -1;
-  //     })
-  //     .catch((error: AxiosError) => {
-  //       if (error.response) {
-  //         if (error.response.data) {
-  //           oauth2ClientRetrievalError = error.response.data;
-  //         }
-  //       }
-  //     });
 }
 
 function incrementPage() {

@@ -9,5 +9,9 @@
 1. Client: integration tests should use a client they create for their own test, but most don't. 
     - Are you using a client that has access to the resource you're trying to test?
     - Are you testing a new route, and if so, does the client use the correct route?
+
 ##
 
+## General Pointers
+
+- When building new frontend features, start in frontend-only mode by running `make frontend-only` and build out all the elements, mocking their behavior with log statements, but simulating data with fakes, and keeping page transitions real. It means you'll think through most of the interaction logic, where you can focus on implementation details (like making proper API calls) later.

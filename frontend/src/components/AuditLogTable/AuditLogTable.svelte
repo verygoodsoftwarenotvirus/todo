@@ -63,7 +63,7 @@ onMount(fetchEntries());
   <div class="rounded-t mb-0 px-4 py-3 bg-transparent justify-between ">
     <div class="flex flex-wrap items-center">
       <div class="relative w-full max-w-full flex-grow flex-1">
-        <h2 class="text-gray-800 text-xl font-semibold">Audit Log</h2>
+        <h2 class="text-gray-800 text-xl font-semibold">{translationsToUse.title}</h2>
       </div>
 
       <div class="text-center">
@@ -110,22 +110,22 @@ onMount(fetchEntries());
             <th
               class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200"
             >
-              ID
+              {translationsToUse.columns.id}
             </th>
             <th
               class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200"
             >
-              Event Type
+              {translationsToUse.columns.eventType}
             </th>
             <th
               class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200"
             >
-              Context
+              {translationsToUse.columns.context}
             </th>
             <th
               class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200"
             >
-              Created On
+              {translationsToUse.columns.createdOn}
             </th>
           </tr>
         </thead>

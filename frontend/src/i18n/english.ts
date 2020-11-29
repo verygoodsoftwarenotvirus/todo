@@ -4,7 +4,8 @@ const _id = 'ID',
   _createdOn = 'Created On',
   _name = 'Name',
   _lastUpdatedOn = 'Last Updated On',
-  _belongsToUser = 'Belongs to User';
+  _belongsToUser = 'Belongs to User',
+  _serviceName = "Todo";
 
 export const englishTranslations: SiteTranslationMap = {
   components: {
@@ -17,6 +18,7 @@ export const englishTranslations: SiteTranslationMap = {
       },
     },
     auditLogEntryTable: {
+      title: "Audit Log Entries",
       page: 'page',
       perPage: 'per page',
       inputPlaceholders: {
@@ -41,10 +43,10 @@ export const englishTranslations: SiteTranslationMap = {
         dashboard: 'Dashboard',
       },
       authNavbar: {
-        serviceName: 'Todo',
+        serviceName: _serviceName,
       },
       homepageNavbar: {
-        serviceName: 'Todo',
+        serviceName: _serviceName,
         buttons: {
           login: 'Login',
         },
@@ -52,7 +54,7 @@ export const englishTranslations: SiteTranslationMap = {
     },
     sidebars: {
       primary: {
-        serviceName: 'Todo',
+        serviceName: _serviceName,
         things: 'Things',
         admin: 'Admin',
         users: 'Users',

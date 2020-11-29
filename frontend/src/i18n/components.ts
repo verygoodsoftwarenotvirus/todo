@@ -7,6 +7,7 @@ export type apiTableTranslations = {
   };
 };
 export type auditLogEntryTableTranslations = {
+  title: string;
   page: string;
   perPage: string;
   inputPlaceholders: {

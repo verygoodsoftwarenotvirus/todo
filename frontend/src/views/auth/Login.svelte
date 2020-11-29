@@ -1,26 +1,25 @@
 <script lang="typescript">
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
 import { link, navigate } from 'svelte-routing';
 
 import { UserStatus, LoginRequest } from '../../types';
-import { userStatusStore, sessionSettingsStore } from '../../stores';
 import { V1APIClient } from '../../apiClient';
 import { Logger } from '../../logger';
-import { translations } from '../../i18n';
 import { UserSiteSettings } from '../../types';
 import { frontendRoutes } from '../../constants';
+import { Superstore } from '../../stores/superstore';
 
 export let location: Location;
 
 // set up translations
 let currentSessionSettings = new UserSiteSettings();
 let translationsToUse = currentSessionSettings.getTranslations().pages.login;
-const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
-  (value: UserSiteSettings) => {
+const superstore = new Superstore({
+  sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = currentSessionSettings.getTranslations().pages.login;
   },
-);
+});
 
 let logger = new Logger().withDebugValue(
   'source',
@@ -47,34 +46,41 @@ async function login() {
     throw new Error('invalid input!');
   }
 
-  return V1APIClient.login(loginRequest)
-    .then((res: AxiosResponse<UserStatus>) => {
-      const userStatus: UserStatus = res.data;
-      userStatusStore.setUserStatus(userStatus);
-
-      if (userStatus.isAdmin) {
-        logger.debug(
-          `navigating to ${frontendRoutes.ADMIN_DASHBOARD} because user is an authenticated admin`,
-        );
-        navigate(frontendRoutes.ADMIN_DASHBOARD, {
-          state: {},
-          replace: true,
-        });
-      } else {
-        logger.debug(`navigating to homepage because user is a plain user`);
-        navigate(frontendRoutes.LANDING, { state: {}, replace: true });
-      }
-    })
-    .catch((reason: AxiosError) => {
-      if (reason.response) {
-        if (reason.response.status === 401) {
-          loginError = 'invalid credentials: please try again';
-        } else {
-          loginError = reason.response.toString();
-          logger.error(JSON.stringify(reason.response));
-        }
-      }
+  if (superstore.frontendOnlyMode) {
+    navigate(frontendRoutes.ADMIN_DASHBOARD, {
+      state: {},
+      replace: true,
     });
+  } else {
+    return V1APIClient.login(loginRequest)
+      .then((res: AxiosResponse<UserStatus>) => {
+        const userStatus: UserStatus = res.data;
+        superstore.setUserStatus(userStatus);
+
+        if (userStatus.isAdmin) {
+          logger.debug(
+            `navigating to ${frontendRoutes.ADMIN_DASHBOARD} because user is an authenticated admin`,
+          );
+          navigate(frontendRoutes.ADMIN_DASHBOARD, {
+            state: {},
+            replace: true,
+          });
+        } else {
+          logger.debug(`navigating to homepage because user is a plain user`);
+          navigate(frontendRoutes.LANDING, { state: {}, replace: true });
+        }
+      })
+      .catch((reason: AxiosError) => {
+        if (reason.response) {
+          if (reason.response.status === 401) {
+            loginError = 'invalid credentials: please try again';
+          } else {
+            loginError = reason.response.toString();
+            logger.error(JSON.stringify(reason.response));
+          }
+        }
+      });
+  }
 }
 </script>
 

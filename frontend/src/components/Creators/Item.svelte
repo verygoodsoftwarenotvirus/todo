@@ -1,15 +1,14 @@
 <script lang="typescript">
 import { navigate } from 'svelte-routing';
+import * as faker from 'faker';
 import format from 'string-format';
-import { onDestroy } from 'svelte';
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
 
 import { Item, ItemCreationInput, UserSiteSettings } from '../../types';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
-import { translations } from '../../i18n';
-import { sessionSettingsStore } from '../../stores';
 import { frontendRoutes } from '../../constants';
+import { Superstore } from '../../stores/superstore';
 
 export let id: number = 0;
 
@@ -25,35 +24,43 @@ let logger = new Logger().withDebugValue(
 // set up translations
 let currentSessionSettings = new UserSiteSettings();
 let translationsToUse = currentSessionSettings.getTranslations().models.item;
-const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
-  (value: UserSiteSettings) => {
+const superstore = new Superstore({
+  sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = currentSessionSettings.getTranslations().models.item;
   },
-);
-// onDestroy(unsubscribeFromSettingsUpdates);
+});
 
 function createItem(): void {
   logger.debug(`createItem called`);
 
-  V1APIClient.createItem(item)
-    .then((response: AxiosResponse<Item>) => {
-      const newItem = response.data;
-      logger
-        .withValue('new_item_id', newItem.id)
-        .debug(`navigating to item page via creation promise resolution`);
-      navigate(format(frontendRoutes.INDIVIDUAL_ITEM, newItem.id.toString()), {
+  if (superstore.frontendOnlyMode) {
+    navigate(
+      format(frontendRoutes.INDIVIDUAL_ITEM, faker.random.number().toString()),
+      {
         state: {},
         replace: true,
+      },
+    );
+  } else {
+    V1APIClient.createItem(item)
+      .then((response: AxiosResponse<Item>) => {
+        const newItem = response.data;
+        logger
+          .withValue('new_item_id', newItem.id)
+          .debug(`navigating to item page via creation promise resolution`);
+        navigate(
+          format(frontendRoutes.INDIVIDUAL_ITEM, newItem.id.toString()),
+          {
+            state: {},
+            replace: true,
+          },
+        );
+      })
+      .catch((error: AxiosError) => {
+        apiError = error.response?.data;
       });
-    })
-    .catch((error: AxiosError) => {
-      if (error.response) {
-        if (error.response.data) {
-          apiError = error.response.data;
-        }
-      }
-    });
+  }
 }
 </script>
 

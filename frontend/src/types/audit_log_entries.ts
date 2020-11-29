@@ -81,7 +81,9 @@ export class AuditLogEntry {
 export const fakeAuditLogEntryFactory = Factory.Sync.makeFactory<AuditLogEntry>(
   {
     eventType: Factory.Sync.each(() => faker.random.word()),
-    context: Factory.Sync.each(() => faker.random.word()),
+    context: Factory.Sync.each(() => {
+      return { performed_by: faker.random.number() };
+    }),
     ...defaultFactories,
   },
 );

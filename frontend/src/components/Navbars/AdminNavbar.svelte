@@ -7,6 +7,7 @@ import UserDropdown from '../Dropdowns/UserDropdown.svelte';
 import { UserSiteSettings, UserStatus } from '../../types';
 import { Superstore } from '../../stores/superstore';
 
+let adminMode: boolean = false;
 let currentAuthStatus: UserStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
 let translationsToUse = currentSessionSettings.getTranslations().components
@@ -20,6 +21,9 @@ let superstore = new Superstore({
     currentSessionSettings = value;
     translationsToUse = currentSessionSettings.getTranslations().components
       .navbars.adminNavbar;
+  },
+  adminModeUpdateFunc: (value: boolean) => {
+    adminMode = value;
   },
 });
 </script>

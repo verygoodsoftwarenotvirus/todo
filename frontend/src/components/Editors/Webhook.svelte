@@ -22,6 +22,7 @@ export let webhookID: number = 0;
 let originalWebhook: Webhook = new Webhook();
 let webhook: Webhook = new Webhook();
 let webhookRetrievalError: string = '';
+let auditLogEntriesRetrievalError: string = '';
 let needsToBeSaved: boolean = false;
 let auditLogEntries: AuditLogEntry[] = [];
 
@@ -69,11 +70,7 @@ function fetchWebhook(): void {
       originalWebhook = { ...response.data };
     })
     .catch((error: AxiosError) => {
-      if (error.response) {
-        if (error.response.data) {
-          webhookRetrievalError = error.response.data;
-        }
-      }
+      webhookRetrievalError = error.response?.data;
     });
 
   fetchAuditLogEntries();
@@ -119,11 +116,7 @@ function deleteWebhook(): void {
       }
     })
     .catch((error: AxiosError) => {
-      if (error.response) {
-        if (error.response.data) {
-          webhookRetrievalError = error.response.data;
-        }
-      }
+      webhookRetrievalError = error.response?.data;
     });
 }
 
@@ -140,11 +133,7 @@ function fetchAuditLogEntries(): void {
       logger.withValue('entries', auditLogEntries).debug('entries fetched');
     })
     .catch((error: AxiosError) => {
-      if (error.response) {
-        if (error.response.data) {
-          webhookRetrievalError = error.response.data;
-        }
-      }
+      auditLogEntriesRetrievalError = error.response?.data;
     });
 }
 </script>
@@ -219,6 +208,6 @@ function fetchAuditLogEntries(): void {
   </div>
 
   {#if currentUserStatus.isAdmin}
-    <AuditLogTable entries="{auditLogEntries}" />
+    <AuditLogTable entryFetchFunc="{fetchAuditLogEntries}" />
   {/if}
 </div>

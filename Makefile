@@ -175,6 +175,10 @@ dev: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) config_files
 	--renew-anon-volumes \
 	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(KEEP_RUNNING)),, --abort-on-container-exit)
 
+.PHONY: frontend-only
+frontend-only:
+	@(cd frontend && npm run frontend-only)
+
 ## housekeeping
 
 .PHONY: show_tree

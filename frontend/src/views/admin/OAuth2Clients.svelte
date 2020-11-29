@@ -5,6 +5,8 @@ import { onMount } from 'svelte';
 
 import {
   ErrorResponse,
+  fakeOAuth2ClientFactory,
+  fakeUserFactory,
   OAuth2Client,
   OAuth2ClientList,
   QueryFilter,
@@ -81,19 +83,23 @@ function decrementPage() {
 function fetchOAuth2Clients() {
   logger.debug('fetchOAuth2Clients called');
 
-  V1APIClient.fetchListOfOAuth2Clients(queryFilter, adminMode)
-    .then((response: AxiosResponse<OAuth2ClientList>) => {
-      oauth2Clients = response.data.clients || [];
+  if (superstore.frontendOnlyMode) {
+    oauth2Clients = fakeOAuth2ClientFactory.buildList(queryFilter.limit);
+  } else {
+    V1APIClient.fetchListOfOAuth2Clients(queryFilter, adminMode)
+      .then((response: AxiosResponse<OAuth2ClientList>) => {
+        oauth2Clients = response.data.clients || [];
 
-      queryFilter.page = response.data.page;
-      apiTableIncrementDisabled = oauth2Clients.length === 0;
-      apiTableDecrementDisabled = queryFilter.page === 1;
-    })
-    .catch((error: AxiosError) => {
-      if (error.response && error.response.data) {
-        oauth2ClientRetrievalError = error.response.data;
-      }
-    });
+        queryFilter.page = response.data.page;
+        apiTableIncrementDisabled = oauth2Clients.length === 0;
+        apiTableDecrementDisabled = queryFilter.page === 1;
+      })
+      .catch((error: AxiosError) => {
+        if (error.response && error.response.data) {
+          oauth2ClientRetrievalError = error.response.data;
+        }
+      });
+  }
 }
 
 function promptDelete(id: number) {

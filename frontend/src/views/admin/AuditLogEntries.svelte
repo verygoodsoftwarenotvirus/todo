@@ -6,6 +6,7 @@ import { onMount } from 'svelte';
 import {
   AuditLogEntry,
   AuditLogEntryList,
+  fakeAuditLogEntryFactory,
   QueryFilter,
   UserSiteSettings,
   UserStatus,
@@ -79,21 +80,21 @@ function decrementPage() {
 function fetchAuditLogEntries() {
   logger.debug('fetchAuditLogEntries called');
 
-  V1APIClient.fetchListOfAuditLogEntries(queryFilter, adminMode)
-    .then((response: AxiosResponse<AuditLogEntryList>) => {
-      entries = response.data.entries || [];
+  if (superstore.frontendOnlyMode) {
+    entries = fakeAuditLogEntryFactory.buildList(queryFilter.limit);
+  } else {
+    V1APIClient.fetchListOfAuditLogEntries(queryFilter, adminMode)
+      .then((response: AxiosResponse<AuditLogEntryList>) => {
+        entries = response.data.entries || [];
 
-      queryFilter.page = response.data.page;
-      apiTableIncrementDisabled = entries.length === 0;
-      apiTableDecrementDisabled = queryFilter.page === 1;
-    })
-    .catch((error: AxiosError) => {
-      if (error.response) {
-        if (error.response.data) {
-          entryRetrievalError = error.response.data;
-        }
-      }
-    });
+        queryFilter.page = response.data.page;
+        apiTableIncrementDisabled = entries.length === 0;
+        apiTableDecrementDisabled = queryFilter.page === 1;
+      })
+      .catch((error: AxiosError) => {
+        entryRetrievalError = error.response?.data;
+      });
+  }
 }
 </script>
 

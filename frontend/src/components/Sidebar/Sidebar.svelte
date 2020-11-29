@@ -95,7 +95,7 @@ s
         </ul>
       </div>
 
-      {#if currentAuthStatus.isAdmin && adminMode}
+      {#if currentAuthStatus.isAdmin && superstore.frontendOnlyMode}
         <hr class="my-4 md:min-w-full" />
         <div>
           <h6

@@ -35,6 +35,7 @@ let logger = new Logger().withDebugValue(
   'src/components/Editors/OAuth2Client.svelte',
 );
 
+let adminMode: boolean = false;
 let currentAuthStatus: UserStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
 let translationsToUse = currentSessionSettings.getTranslations().models
@@ -48,6 +49,9 @@ let superstore = new Superstore({
     currentSessionSettings = value;
     translationsToUse = currentSessionSettings.getTranslations().models
       .oauth2Client;
+  },
+  adminModeUpdateFunc: (value: boolean) => {
+    adminMode = value;
   },
 });
 
@@ -64,11 +68,7 @@ function fetchOAuth2Client(): void {
       originalOAuth2Client = { ...response.data };
     })
     .catch((error: AxiosError) => {
-      if (error.response) {
-        if (error.response.data) {
-          oauth2ClientRetrievalError = error.response.data;
-        }
-      }
+      oauth2ClientRetrievalError = error.response?.data;
     });
 
   fetchAuditLogEntries();
@@ -94,11 +94,7 @@ function deleteOAuth2Client(): void {
       }
     })
     .catch((error: AxiosError) => {
-      if (error.response) {
-        if (error.response.data) {
-          oauth2ClientRetrievalError = error.response.data;
-        }
-      }
+      oauth2ClientRetrievalError = error.response?.data;
     });
 }
 
@@ -115,11 +111,7 @@ function fetchAuditLogEntries(): void {
       logger.withValue('entries', auditLogEntries).debug('entries fetched');
     })
     .catch((error: AxiosError) => {
-      if (error.response) {
-        if (error.response.data) {
-          oauth2ClientRetrievalError = error.response.data;
-        }
-      }
+      oauth2ClientRetrievalError = error.response?.data;
     });
 }
 </script>
@@ -172,6 +164,6 @@ function fetchAuditLogEntries(): void {
   </div>
 
   {#if currentAuthStatus.isAdmin && adminMode}
-    <AuditLogTable entries="{auditLogEntries}" />
+    <AuditLogTable entryFetchFunc="{fetchAuditLogEntries}" />
   {/if}
 </div>

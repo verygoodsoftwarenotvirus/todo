@@ -9,6 +9,7 @@ import {
   QueryFilter,
   UserSiteSettings,
   UserStatus,
+  fakeUserFactory,
 } from '../../types';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
@@ -88,19 +89,23 @@ function decrementPage() {
 function fetchUsers() {
   logger.debug('fetchUsers called');
 
-  V1APIClient.fetchListOfUsers(queryFilter, adminMode)
-    .then((response: AxiosResponse<UserList>) => {
-      users = response.data.users || [];
+  if (superstore.frontendOnlyMode) {
+    users = fakeUserFactory.buildList(queryFilter.limit);
+  } else {
+    V1APIClient.fetchListOfUsers(queryFilter, adminMode)
+      .then((response: AxiosResponse<UserList>) => {
+        users = response.data.users || [];
 
-      queryFilter.page = response.data.page;
-      apiTableIncrementDisabled = users.length === 0;
-      apiTableDecrementDisabled = queryFilter.page === 1;
-    })
-    .catch((error: AxiosError) => {
-      if (error.response && error.response.data) {
-        userRetrievalError = error.response.data;
-      }
-    });
+        queryFilter.page = response.data.page;
+        apiTableIncrementDisabled = users.length === 0;
+        apiTableDecrementDisabled = queryFilter.page === 1;
+      })
+      .catch((error: AxiosError) => {
+        if (error.response && error.response.data) {
+          userRetrievalError = error.response.data;
+        }
+      });
+  }
 }
 
 function promptDelete(id: number) {

@@ -3,7 +3,14 @@ import { navigate } from 'svelte-routing';
 import { onMount } from 'svelte';
 import { AxiosError, AxiosResponse } from 'axios';
 
-import { Item, UserSiteSettings, UserStatus, AuditLogEntry } from '../../types';
+import {
+  Item,
+  UserSiteSettings,
+  UserStatus,
+  AuditLogEntry,
+  fakeItemFactory,
+  fakeAuditLogEntryFactory,
+} from '../../types';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
 import AuditLogTable from '../AuditLogTable/AuditLogTable.svelte';
@@ -16,6 +23,7 @@ export let id: number = 0;
 let originalItem: Item = new Item();
 let item: Item = new Item();
 let itemRetrievalError: string = '';
+let auditLogEntriesRetrievalError: string = '';
 let needsToBeSaved: boolean = false;
 let auditLogEntries: AuditLogEntry[] = [];
 
@@ -30,11 +38,15 @@ let logger = new Logger().withDebugValue(
   'src/components/Editors/Item.svelte',
 );
 
+let adminMode: boolean = false;
 let currentAuthStatus: UserStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
 let translationsToUse = currentSessionSettings.getTranslations().models.item;
 
 let superstore = new Superstore({
+  adminModeUpdateFunc: (value: boolean) => {
+    adminMode = value;
+  },
   userStatusStoreUpdateFunc: (value: UserStatus) => {
     currentAuthStatus = value;
   },
@@ -51,18 +63,20 @@ function fetchItem(): void {
     throw new Error('id cannot be zero!');
   }
 
-  V1APIClient.fetchItem(id)
-    .then((response: AxiosResponse<Item>) => {
-      item = { ...response.data };
-      originalItem = { ...response.data };
-    })
-    .catch((error: AxiosError) => {
-      if (error.response) {
-        if (error.response.data) {
-          itemRetrievalError = error.response.data;
-        }
-      }
-    });
+  if (superstore.frontendOnlyMode) {
+    const i = fakeItemFactory.build();
+    item = { ...i };
+    originalItem = { ...i };
+  } else {
+    V1APIClient.fetchItem(id)
+      .then((response: AxiosResponse<Item>) => {
+        item = { ...response.data };
+        originalItem = { ...response.data };
+      })
+      .catch((error: AxiosError) => {
+        itemRetrievalError = error.response?.data;
+      });
+  }
 
   fetchAuditLogEntries();
 }
@@ -76,20 +90,21 @@ function saveItem(): void {
     throw new Error('no changes to save!');
   }
 
-  V1APIClient.saveItem(item)
-    .then((response: AxiosResponse<Item>) => {
-      item = { ...response.data };
-      originalItem = { ...response.data };
-      needsToBeSaved = false;
-      fetchAuditLogEntries();
-    })
-    .catch((error: AxiosError) => {
-      if (error.response) {
-        if (error.response.data) {
-          itemRetrievalError = error.response.data;
-        }
-      }
-    });
+  if (superstore.frontendOnlyMode) {
+    needsToBeSaved = false;
+    originalItem = { ...item };
+  } else {
+    V1APIClient.saveItem(item)
+      .then((response: AxiosResponse<Item>) => {
+        item = { ...response.data };
+        originalItem = { ...response.data };
+        needsToBeSaved = false;
+        fetchAuditLogEntries();
+      })
+      .catch((error: AxiosError) => {
+        itemRetrievalError = error.response?.data;
+      });
+  }
 }
 
 function deleteItem(): void {
@@ -99,43 +114,44 @@ function deleteItem(): void {
     throw new Error('id cannot be zero!');
   }
 
-  V1APIClient.deleteItem(id)
-    .then((response: AxiosResponse<Item>) => {
-      if (response.status === statusCodes.NO_CONTENT) {
-        logger.debug(
-          `navigating to ${frontendRoutes.LIST_ITEMS} because via deletion promise resolution`,
-        );
-        navigate(frontendRoutes.LIST_ITEMS, { state: {}, replace: true });
-      }
-    })
-    .catch((error: AxiosError) => {
-      if (error.response) {
-        if (error.response.data) {
-          itemRetrievalError = error.response.data;
+  if (superstore.frontendOnlyMode) {
+    navigate(frontendRoutes.LIST_ITEMS, { state: {}, replace: true });
+  } else {
+    V1APIClient.deleteItem(id)
+      .then((response: AxiosResponse<Item>) => {
+        if (response.status === statusCodes.NO_CONTENT) {
+          logger.debug(
+            `navigating to ${frontendRoutes.LIST_ITEMS} via deletion promise resolution`,
+          );
+          navigate(frontendRoutes.LIST_ITEMS, { state: {}, replace: true });
         }
-      }
-    });
+      })
+      .catch((error: AxiosError) => {
+        auditLogEntriesRetrievalError = error.response?.data;
+      });
+  }
 }
 
-function fetchAuditLogEntries(): void {
-  logger.debug(`deleteItem called`);
+function fetchAuditLogEntries(): Promise<AxiosResponse<AuditLogEntry[]>> {
+  logger.debug(`fetchAuditLogEntries called`);
 
   if (id === 0) {
     throw new Error('id cannot be zero!');
   }
 
-  V1APIClient.fetchAuditLogEntriesForItem(id)
-    .then((response: AxiosResponse<AuditLogEntry[]>) => {
-      auditLogEntries = response.data || [];
-      logger.withValue('entries', auditLogEntries).debug('entries fetched');
-    })
-    .catch((error: AxiosError) => {
-      if (error.response) {
-        if (error.response.data) {
-          itemRetrievalError = error.response.data;
-        }
-      }
+  if (!adminMode) {
+    return;
+  }
+
+  if (superstore.frontendOnlyMode) {
+    return new Promise<AxiosResponse<AuditLogEntry[]>>((resolve) => {
+      resolve({
+        data: fakeAuditLogEntryFactory.buildList(10),
+      });
     });
+  } else {
+    return V1APIClient.fetchAuditLogEntriesForItem(id);
+  }
 }
 </script>
 
@@ -209,6 +225,6 @@ function fetchAuditLogEntries(): void {
   </div>
 
   {#if currentAuthStatus.isAdmin && adminMode}
-    <AuditLogTable entries="{auditLogEntries}" />
+    <AuditLogTable entryFetchFunc="{fetchAuditLogEntries}" />
   {/if}
 </div>

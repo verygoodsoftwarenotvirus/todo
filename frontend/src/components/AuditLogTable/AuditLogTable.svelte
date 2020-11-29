@@ -1,15 +1,19 @@
 <script lang="typescript">
 import { AxiosError, AxiosResponse } from 'axios';
+import { onMount } from 'svelte';
 import JSONTree from 'svelte-json-tree';
 
-import { AuditLogEntry, QueryFilter, UserSiteSettings } from '../../types';
+import {
+  AuditLogEntry,
+  fakeAuditLogEntryFactory,
+  QueryFilter,
+  UserSiteSettings,
+} from '../../types';
 import { renderUnixTime } from '../../utils';
 import { Logger } from '../../logger';
-import { translations } from '../../i18n';
-import { sessionSettingsStore } from '../../stores';
-import { onDestroy } from 'svelte';
+import { Superstore } from '../../stores/superstore';
 
-export let entries: AuditLogEntry[] = [];
+let entries: AuditLogEntry[] = [];
 export let entryFetchFunc: Promise<AxiosResponse<AuditLogEntry[]>>;
 
 let searchQuery: string = '';
@@ -27,29 +31,30 @@ let logger = new Logger().withDebugValue(
 let currentSessionSettings = new UserSiteSettings();
 let translationsToUse = currentSessionSettings.getTranslations().components
   .auditLogEntryTable;
-const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
-  (value: UserSiteSettings) => {
+const superstore = new Superstore({
+  sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = currentSessionSettings.getTranslations().components
       .auditLogEntryTable;
   },
-);
-// onDestroy(unsubscribeFromSettingsUpdates);
+});
 
-function fetchEntries() {
-  entryFetchFunc
-    .then((response: AxiosResponse<AuditLogEntry[]>) => {
-      entries = response.data;
-      logger.withValue('entries', entries).debug('entries fetched');
-    })
-    .catch((error: AxiosError) => {
-      if (error.response) {
-        if (error.response.data) {
-          retrievalError = error.response.data;
-        }
-      }
-    });
+export function fetchEntries() {
+  if (superstore.frontendOnlyMode) {
+    entries = fakeAuditLogEntryFactory.buildList(queryFilter.limit);
+  } else if (entryFetchFunc) {
+    entryFetchFunc
+      .then((response: AxiosResponse<AuditLogEntry[]>) => {
+        entries = response.data;
+        logger.withValue('entries', entries).debug('entries fetched');
+      })
+      .catch((error: AxiosError) => {
+        retrievalError = error.response?.data;
+      });
+  }
 }
+
+onMount(fetchEntries());
 </script>
 
 <div
@@ -68,7 +73,7 @@ function fetchEntries() {
             ></i></button>
           &nbsp;
           {#if queryFilter.page > 0}
-            {'translationsToUse.page'}
+            {translationsToUse.page}
             {queryFilter.page}
           {/if}
           &nbsp;
@@ -90,7 +95,7 @@ function fetchEntries() {
         <input
           class="w-full rounded ml-1"
           type="text"
-          placeholder="{'translationsToUse.inputPlaceholders.search'}"
+          placeholder="{translationsToUse.inputPlaceholders.search}"
           bind:value="{searchQuery}"
           on:keyup="{console.log}"
         />
@@ -123,16 +128,6 @@ function fetchEntries() {
               Created On
             </th>
           </tr>
-
-          <!--
-            <tr>
-              {#each AuditLogEntry.headers(translationsToUse) as header}
-                <th class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
-                  {header.content}
-                </th>
-              {/each}
-            </tr>
-          -->
         </thead>
         <tbody>
           {#each entries as entry}

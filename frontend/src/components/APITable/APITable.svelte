@@ -11,8 +11,6 @@ let logger = new Logger().withDebugValue(
   'src/components/APITable/APITable.svelte',
 );
 
-const queryFilter = new QueryFilter();
-
 // local state
 let searchQuery: string = '';
 let currentPage: number = 0;
@@ -21,6 +19,8 @@ export let dataRetrievalError: string = '';
 export let title: string = '';
 export let headers: string[] = [];
 export let rows: string[][] = [[]];
+
+export let queryFilter: QueryFilter = new QueryFilter();
 
 export let newPageLink: string = '';
 export let individualPageLink: string = '';

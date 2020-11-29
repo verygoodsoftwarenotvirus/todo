@@ -8,6 +8,7 @@ import { sessionSettingsStore } from '../../stores';
 import { V1APIClient } from '../../apiClient';
 import { frontendRoutes } from '../../constants';
 import { AxiosError } from 'axios';
+import { Superstore } from '../../stores/superstore';
 
 export let location: Location;
 
@@ -21,26 +22,29 @@ let currentSessionSettings = new UserSiteSettings();
 let translationsToUse = currentSessionSettings.getTranslations().pages
   .siteSettings;
 
-const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
-  (value: UserSiteSettings) => {
+const superstore = new Superstore({
+  sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = currentSessionSettings.getTranslations().pages
       .siteSettings;
   },
-);
-// onDestroy(unsubscribeFromSettingsUpdates);
+});
 
 let cookieSecretReplacementError = '';
 function confirmCookieSecretReplacement() {
   cookieSecretReplacementError = '';
   if (confirm(translationsToUse.confirmations.cycleCookieSecret)) {
-    V1APIClient.cycleCookieSecret()
-      .then(() => {
-        navigate(frontendRoutes.LOGIN, { state: {}, replace: true });
-      })
-      .catch((reason: AxiosError<ErrorResponse>) => {
-        cookieSecretReplacementError = reason.message;
-      });
+    if (superstore.frontendOnlyMode) {
+      navigate(frontendRoutes.LOGIN, { state: {}, replace: true });
+    } else {
+      V1APIClient.cycleCookieSecret()
+        .then(() => {
+          navigate(frontendRoutes.LOGIN, { state: {}, replace: true });
+        })
+        .catch((reason: AxiosError<ErrorResponse>) => {
+          cookieSecretReplacementError = reason.message;
+        });
+    }
   }
 }
 </script>

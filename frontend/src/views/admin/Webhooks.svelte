@@ -10,6 +10,8 @@ import {
   QueryFilter,
   UserSiteSettings,
   UserStatus,
+  fakeUserFactory,
+  fakeWebhookFactory,
 } from '../../types';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
@@ -79,19 +81,23 @@ function decrementPage() {
 function fetchWebhooks() {
   logger.debug('fetchWebhooks called');
 
-  V1APIClient.fetchListOfWebhooks(queryFilter, adminMode)
-    .then((response: AxiosResponse<WebhookList>) => {
-      webhooks = response.data.webhooks || [];
+  if (superstore.frontendOnlyMode) {
+    webhooks = fakeWebhookFactory.buildList(queryFilter.limit);
+  } else {
+    V1APIClient.fetchListOfWebhooks(queryFilter, adminMode)
+      .then((response: AxiosResponse<WebhookList>) => {
+        webhooks = response.data.webhooks || [];
 
-      queryFilter.page = response.data.page;
-      apiTableIncrementDisabled = webhooks.length === 0;
-      apiTableDecrementDisabled = queryFilter.page === 1;
-    })
-    .catch((error: AxiosError) => {
-      if (error.response && error.response.data) {
-        webhookRetrievalError = error.response.data;
-      }
-    });
+        queryFilter.page = response.data.page;
+        apiTableIncrementDisabled = webhooks.length === 0;
+        apiTableDecrementDisabled = queryFilter.page === 1;
+      })
+      .catch((error: AxiosError) => {
+        if (error.response && error.response.data) {
+          webhookRetrievalError = error.response.data;
+        }
+      });
+  }
 }
 
 function promptDelete(id: number) {

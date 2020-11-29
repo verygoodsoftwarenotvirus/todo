@@ -5,6 +5,9 @@ const enum SortBy {
   DESCENDING = 'desc',
 }
 
+const defaultLimit = 25;
+const defaultSortBy = SortBy.ASCENDING;
+
 const queryFilterKeyPage: string = 'page';
 const queryFilterKeyCreatedBefore: string = 'createdBefore';
 const queryFilterKeyCreatedAfter: string = 'createdAfter';
@@ -24,14 +27,14 @@ export class QueryFilter {
   sortBy: SortBy;
 
   constructor(
-    page: number = 0,
-    limit: number = 0,
+    page: number = 1,
+    limit: number = defaultLimit,
     createdBefore: number = 0,
     createdAfter: number = 0,
     updatedBefore: number = 0,
     updatedAfter: number = 0,
     includeArchived: boolean = false,
-    sortBy: SortBy = SortBy.ASCENDING,
+    sortBy: SortBy = defaultSortBy,
   ) {
     this.page = page;
     this.limit = limit;
@@ -50,16 +53,26 @@ export class QueryFilter {
       input = new URLSearchParams(window.location.search);
     }
 
-    out.page = parseInt(input.get(queryFilterKeyPage) || '1');
-    out.createdBefore = parseInt(input.get(queryFilterKeyCreatedBefore) || '0');
-    out.createdAfter = parseInt(input.get(queryFilterKeyCreatedAfter) || '0');
-    out.updatedBefore = parseInt(input.get(queryFilterKeyUpdatedBefore) || '0');
-    out.updatedAfter = parseInt(input.get(queryFilterKeyUpdatedAfter) || '0');
+    out.page = input.get(queryFilterKeyPage)
+      ? parseInt(input.get(queryFilterKeyPage) || '0')
+      : out.page;
+    out.createdBefore = input.get(queryFilterKeyCreatedBefore)
+      ? parseInt(input.get(queryFilterKeyCreatedBefore) || '0')
+      : out.createdBefore;
+    out.createdAfter = input.get(queryFilterKeyCreatedAfter)
+      ? parseInt(input.get(queryFilterKeyCreatedAfter) || '0')
+      : out.createdAfter;
+    out.updatedBefore = input.get(queryFilterKeyUpdatedBefore)
+      ? parseInt(input.get(queryFilterKeyUpdatedBefore) || '0')
+      : out.updatedBefore;
+    out.updatedAfter = input.get(queryFilterKeyUpdatedAfter)
+      ? parseInt(input.get(queryFilterKeyUpdatedAfter) || '0')
+      : out.updatedAfter;
     out.includeArchived = parseBool(
       input.get(queryFilterKeyIncludeArchived) || 'false',
     );
-    out.sortBy =
-      (input.get(queryFilterKeySortBy) as SortBy) || SortBy.ASCENDING;
+    out.sortBy = (input.get(queryFilterKeySortBy) ||
+      SortBy.ASCENDING.toString()) as SortBy;
 
     return out;
   }

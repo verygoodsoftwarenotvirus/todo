@@ -1,7 +1,14 @@
 <script lang="typescript">
 import { AxiosError, AxiosResponse } from 'axios';
 
-import { UserSiteSettings, User, UserStatus, AuditLogEntry } from '../../types';
+import {
+  UserSiteSettings,
+  User,
+  UserStatus,
+  AuditLogEntry,
+  fakeUserFactory,
+  fakeAuditLogEntryFactory,
+} from '../../types';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
 import AuditLogTable from '../AuditLogTable/AuditLogTable.svelte';
@@ -16,7 +23,9 @@ let user: User = new User();
 let auditLogEntries: AuditLogEntry[] = [];
 
 let needsToBeSaved: boolean = false;
+
 let userRetrievalError: string = '';
+let auditLogEntriesRetrievalError: string = '';
 
 function evaluateChanges() {
   needsToBeSaved = !User.areEqual(user, originalUser);
@@ -52,16 +61,40 @@ function fetchUser(): void {
     throw new Error('id cannot be zero!');
   }
 
-  V1APIClient.fetchUser(userID)
-    .then((response: AxiosResponse<User>) => {
-      user = { ...response.data };
-      originalUser = { ...response.data };
-    })
-    .catch((error: AxiosError) => {
-      if (error.response && error.response.data) {
-        userRetrievalError = error.response.data;
-      }
+  if (superstore.frontendOnlyMode) {
+    user = fakeUserFactory.build();
+  } else {
+    V1APIClient.fetchUser(userID)
+      .then((response: AxiosResponse<User>) => {
+        user = { ...response.data };
+        originalUser = { ...response.data };
+      })
+      .catch((error: AxiosError) => {
+        userRetrievalError = error.response?.data;
+      });
+  }
+}
+
+function fetchAuditLogEntries(): Promise<AxiosResponse<AuditLogEntry[]>> {
+  logger.debug(`fetchAuditLogEntries called`);
+
+  if (userID === 0) {
+    throw new Error('id cannot be zero!');
+  }
+
+  if (!adminMode) {
+    return;
+  }
+
+  if (superstore.frontendOnlyMode) {
+    return new Promise<AxiosResponse<AuditLogEntry[]>>((resolve) => {
+      resolve({
+        data: fakeAuditLogEntryFactory.buildList(10),
+      });
     });
+  } else {
+    return V1APIClient.fetchAuditLogEntriesForUser(userID);
+  }
 }
 </script>
 
@@ -111,6 +144,6 @@ function fetchUser(): void {
   </div>
 
   {#if currentAuthStatus.isAdmin && adminMode}
-    <AuditLogTable entries="{auditLogEntries}" />
+    <AuditLogTable entryFetchFunc="{fetchAuditLogEntries}" />
   {/if}
 </div>

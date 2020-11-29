@@ -55,14 +55,18 @@ let apiTableSearchQuery: string = '';
 function searchItems() {
   logger.debug('searchItems called');
 
-  V1APIClient.searchForItems(apiTableSearchQuery, queryFilter, adminMode)
-    .then((response: AxiosResponse<ItemList>) => {
-      items = response.data.items || [];
-      queryFilter.page -= 1;
-    })
-    .catch((error: AxiosError) => {
-      itemRetrievalError = error.response?.data;
-    });
+  if (superstore.frontendOnlyMode) {
+    items = fakeItemFactory.buildList(10);
+  } else {
+    V1APIClient.searchForItems(apiTableSearchQuery, queryFilter, adminMode)
+      .then((response: AxiosResponse<ItemList>) => {
+        items = response.data.items || [];
+        queryFilter.page -= 1;
+      })
+      .catch((error: AxiosError) => {
+        itemRetrievalError = error.response?.data;
+      });
+  }
 }
 
 function incrementPage() {
@@ -85,10 +89,7 @@ function fetchItems() {
   logger.debug('fetchItems called');
 
   if (superstore.frontendOnlyMode) {
-    logger.debug('using fake data because of frontend only mode');
-    setTimeout(() => {
-      items = fakeItemFactory.buildList(20);
-    }, 500);
+    items = fakeItemFactory.buildList(queryFilter.limit);
   } else {
     V1APIClient.fetchListOfItems(queryFilter, adminMode)
       .then((response: AxiosResponse<ItemList>) => {
@@ -108,8 +109,6 @@ function promptDelete(id: number) {
   logger.debug('promptDelete called');
 
   if (confirm(`are you sure you want to delete item #${id}?`)) {
-    const path: string = `/api/v1/items/${id}`;
-
     V1APIClient.deleteItem(id)
       .then((response: AxiosResponse<Item>) => {
         if (response.status === statusCodes.NO_CONTENT) {

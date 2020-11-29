@@ -46,6 +46,10 @@ export class Superstore {
     }
   }
 
+  setUserStatus(x: UserStatus) {
+    userStatusStore.setUserStatus(x);
+  }
+
   toggleAdminMode() {
     adminModeStore.toggle();
   }

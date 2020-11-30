@@ -16,7 +16,7 @@ import { V1APIClient } from '../../apiClient';
 
 import APITable from '../../components/APITable/APITable.svelte';
 import { statusCodes } from '../../constants';
-import { Superstore } from '../../stores/superstore';
+import { Superstore } from '../../stores';
 
 export let location;
 
@@ -56,18 +56,6 @@ let apiTableSearchQuery: string = '';
 
 function searchUsers() {
   logger.debug('searchUsers called');
-  //   V1APIClient.searchForUsers(apiTableSearchQuery, queryFilter, adminMode)
-  //     .then((response: AxiosResponse<UserList>) => {
-  //       users = response.data.users || [];
-  //       queryFilter.page = -1;
-  //     })
-  //     .catch((error: AxiosError) => {
-  //       if (error.response) {
-  //         if (error.response.data) {
-  //           userRetrievalError = error.response.data;
-  //         }
-  //       }
-  //     });
 }
 
 function incrementPage() {
@@ -101,9 +89,7 @@ function fetchUsers() {
         apiTableDecrementDisabled = queryFilter.page === 1;
       })
       .catch((error: AxiosError) => {
-        if (error.response && error.response.data) {
-          userRetrievalError = error.response.data;
-        }
+        userRetrievalError = error.response?.data;
       });
   }
 }

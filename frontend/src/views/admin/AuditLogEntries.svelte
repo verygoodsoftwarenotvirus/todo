@@ -15,7 +15,7 @@ import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
 
 import APITable from '../../components/APITable/APITable.svelte';
-import { Superstore } from '../../stores/superstore';
+import { Superstore } from '../../stores';
 
 export let location;
 

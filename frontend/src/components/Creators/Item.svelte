@@ -8,7 +8,7 @@ import { Item, ItemCreationInput, UserSiteSettings } from '../../types';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
 import { frontendRoutes } from '../../constants';
-import { Superstore } from '../../stores/superstore';
+import { Superstore } from '../../stores';
 
 export let id: number = 0;
 

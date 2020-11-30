@@ -8,7 +8,7 @@ import { sessionSettingsStore } from '../../stores';
 import { V1APIClient } from '../../apiClient';
 import { frontendRoutes } from '../../constants';
 import { AxiosError } from 'axios';
-import { Superstore } from '../../stores/superstore';
+import { Superstore } from '../../stores';
 
 export let location: Location;
 

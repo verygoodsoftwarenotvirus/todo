@@ -7,13 +7,14 @@ import {
   OAuth2Client,
   UserSiteSettings,
   UserStatus,
-  AuditLogEntry, fakeOAuth2ClientFactory,
+  AuditLogEntry,
+  fakeOAuth2ClientFactory,
 } from '../../types';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
 import AuditLogTable from '../AuditLogTable/AuditLogTable.svelte';
 import { frontendRoutes, statusCodes } from '../../constants';
-import { Superstore } from '../../stores/superstore';
+import { Superstore } from '../../stores';
 
 export let oauth2ClientID: number = 0;
 
@@ -64,16 +65,16 @@ function fetchOAuth2Client(): void {
 
   if (superstore.frontendOnlyMode) {
     oauth2Client = fakeOAuth2ClientFactory.build();
-    originalOAuth2Client = {...oauth2Client};
+    originalOAuth2Client = { ...oauth2Client };
   } else {
     V1APIClient.fetchOAuth2Client(oauth2ClientID)
-    .then((response: AxiosResponse<OAuth2Client>) => {
-      oauth2Client = {...response.data};
-      originalOAuth2Client = {...response.data};
-    })
-    .catch((error: AxiosError) => {
-      oauth2ClientRetrievalError = error.response?.data;
-    });
+      .then((response: AxiosResponse<OAuth2Client>) => {
+        oauth2Client = { ...response.data };
+        originalOAuth2Client = { ...response.data };
+      })
+      .catch((error: AxiosError) => {
+        oauth2ClientRetrievalError = error.response?.data;
+      });
   }
 
   fetchAuditLogEntries();
@@ -93,22 +94,21 @@ function deleteOAuth2Client(): void {
     });
   } else {
     V1APIClient.deleteOAuth2Client(oauth2ClientID)
-    .then((response: AxiosResponse<OAuth2Client>) => {
-      if (response.status === statusCodes.NO_CONTENT) {
-        logger.debug(
-          `navigating to ${frontendRoutes.LIST_OAUTH2_CLIENTS} because via deletion promise resolution`,
-        );
-        navigate(frontendRoutes.LIST_OAUTH2_CLIENTS, {
-          state: {},
-          replace: true,
-        });
-      }
-    })
-    .catch((error: AxiosError) => {
-      oauth2ClientRetrievalError = error.response?.data;
-    });
+      .then((response: AxiosResponse<OAuth2Client>) => {
+        if (response.status === statusCodes.NO_CONTENT) {
+          logger.debug(
+            `navigating to ${frontendRoutes.LIST_OAUTH2_CLIENTS} because via deletion promise resolution`,
+          );
+          navigate(frontendRoutes.LIST_OAUTH2_CLIENTS, {
+            state: {},
+            replace: true,
+          });
+        }
+      })
+      .catch((error: AxiosError) => {
+        oauth2ClientRetrievalError = error.response?.data;
+      });
   }
-
 }
 
 function fetchAuditLogEntries(): void {
@@ -116,6 +116,10 @@ function fetchAuditLogEntries(): void {
 
   if (oauth2ClientID === 0) {
     throw new Error('oauth2ClientID cannot be zero!');
+  }
+
+  if (!adminMode) {
+    return;
   }
 
   V1APIClient.fetchAuditLogEntriesForOAuth2Client(oauth2ClientID)
@@ -149,64 +153,64 @@ function fetchAuditLogEntries(): void {
       <div class="flex flex-wrap -mx-3 mb-6">
         <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
           <label
-                  class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-                  for="grid-name"
+            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+            for="grid-name"
           >
             {translationsToUse.labels.name}
           </label>
           <input
-                  class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-                  id="grid-name"
-                  type="text"
-                  on:keyup="{evaluateChanges}"
-                  bind:value="{oauth2Client.name}"
+            class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
+            id="grid-name"
+            type="text"
+            on:keyup="{evaluateChanges}"
+            bind:value="{oauth2Client.name}"
           />
 
           <label
-                  class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-                  for="grid-client-id"
+            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+            for="grid-client-id"
           >
             {translationsToUse.labels.clientID}
           </label>
           <input
-                  class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-                  id="grid-client-id"
-                  type="text"
-                  disabled
-                  bind:value="{oauth2Client.clientID}"
+            class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
+            id="grid-client-id"
+            type="text"
+            disabled
+            bind:value="{oauth2Client.clientID}"
           />
 
           <label
-                  class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-                  for="grid-client-secret"
+            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+            for="grid-client-secret"
           >
             {translationsToUse.labels.clientSecret}
           </label>
           <input
-                  class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-                  id="grid-client-secret"
-                  type="text"
-                  disabled
-                  bind:value="{oauth2Client.clientSecret}"
+            class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
+            id="grid-client-secret"
+            type="text"
+            disabled
+            bind:value="{oauth2Client.clientSecret}"
           />
 
           <label
-                  class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-                  for="grid-redirect-uri"
+            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+            for="grid-redirect-uri"
           >
             {translationsToUse.labels.redirectURI}
           </label>
           <input
-                  class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-                  id="grid-redirect-uri"
-                  type="text"
-                  disabled
-                  bind:value="{oauth2Client.redirectURI}"
+            class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
+            id="grid-redirect-uri"
+            type="text"
+            disabled
+            bind:value="{oauth2Client.redirectURI}"
           />
 
           <label
-                  class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-                  for="grid-scopes"
+            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+            for="grid-scopes"
           >
             {translationsToUse.labels.scopes}
           </label>
@@ -217,17 +221,17 @@ function fetchAuditLogEntries(): void {
           </ul>
 
           <label
-                  class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-                  for="grid-implicit-allowed"
+            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+            for="grid-implicit-allowed"
           >
             {translationsToUse.labels.implicitAllowed}
           </label>
           <input
-                  class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-                  id="grid-implicit-allowed"
-                  type="text"
-                  disabled
-                  bind:value="{oauth2Client.implicitAllowed}"
+            class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
+            id="grid-implicit-allowed"
+            type="text"
+            disabled
+            bind:value="{oauth2Client.implicitAllowed}"
           />
         </div>
 
@@ -241,7 +245,6 @@ function fetchAuditLogEntries(): void {
           ><i class="fa fa-trash-alt"></i>
             Delete</button>
         </div>
-
       </div>
     </div>
   </div>

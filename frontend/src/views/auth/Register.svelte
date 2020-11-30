@@ -9,17 +9,18 @@ import {
   UserRegistrationResponse,
   TOTPTokenValidationRequest,
   ErrorResponse,
-  UserSiteSettings, fakeUserRegistrationResponseFactory,
+  UserSiteSettings,
+  fakeUserRegistrationResponseFactory,
 } from '../../types';
 import { frontendRoutes } from '../../constants';
-import {Superstore} from "../../stores/superstore";
+import { Superstore } from '../../stores';
 
 // set up translations
 let currentSessionSettings = new UserSiteSettings();
 let translationsToUse = currentSessionSettings.getTranslations().pages
   .registration;
 const superstore = new Superstore({
-    sessionSettingsStoreUpdateFunc:(value: UserSiteSettings) => {
+  sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = currentSessionSettings.getTranslations().pages
       .registration;
@@ -88,21 +89,21 @@ async function register() {
     totpValidationRequest.userID = fakeRes.id;
   } else {
     return V1APIClient.registrationRequest(registrationRequest)
-    .then((response: AxiosResponse<UserRegistrationResponse>) => {
-      const data = response.data;
+      .then((response: AxiosResponse<UserRegistrationResponse>) => {
+        const data = response.data;
 
-      postRegistrationQRCode = data.qrCode;
-      totpValidationRequest.userID = data.id;
+        postRegistrationQRCode = data.qrCode;
+        totpValidationRequest.userID = data.id;
 
-      return data;
-    })
-    .catch((reason: AxiosError<ErrorResponse>) => {
-      if (reason.response) {
-        const data = reason.response.data;
-        logger.error(data.message);
-        registrationError = data.message;
-      }
-    });
+        return data;
+      })
+      .catch((reason: AxiosError<ErrorResponse>) => {
+        if (reason.response) {
+          const data = reason.response.data;
+          logger.error(data.message);
+          registrationError = data.message;
+        }
+      });
   }
 }
 
@@ -119,21 +120,21 @@ async function validateTOTPToken() {
   }
 
   if (superstore.frontendOnlyMode) {
-    navigate(frontendRoutes.LOGIN, {state: {}, replace: true});
+    navigate(frontendRoutes.LOGIN, { state: {}, replace: true });
   } else {
     return V1APIClient.validateTOTPSecretWithToken(totpValidationRequest)
-    .then((_: AxiosResponse) => {
-      logger.debug(
-        `navigating to ${frontendRoutes.LOGIN} because totp validation request succeeded`,
-      );
-      navigate(frontendRoutes.LOGIN, {state: {}, replace: true});
-    })
-    .catch((reason: AxiosError<ErrorResponse>) => {
-      if (reason.response) {
-        const data = reason.response.data;
-        logger.error(data.message);
-      }
-    });
+      .then((_: AxiosResponse) => {
+        logger.debug(
+          `navigating to ${frontendRoutes.LOGIN} because totp validation request succeeded`,
+        );
+        navigate(frontendRoutes.LOGIN, { state: {}, replace: true });
+      })
+      .catch((reason: AxiosError<ErrorResponse>) => {
+        if (reason.response) {
+          const data = reason.response.data;
+          logger.error(data.message);
+        }
+      });
   }
 }
 </script>

@@ -18,7 +18,7 @@ import { V1APIClient } from '../../apiClient';
 
 import APITable from '../../components/APITable/APITable.svelte';
 import { statusCodes } from '../../constants';
-import { Superstore } from '../../stores/superstore';
+import { Superstore } from '../../stores';
 
 export let location;
 
@@ -95,9 +95,7 @@ function fetchOAuth2Clients() {
         apiTableDecrementDisabled = queryFilter.page === 1;
       })
       .catch((error: AxiosError) => {
-        if (error.response && error.response.data) {
-          oauth2ClientRetrievalError = error.response.data;
-        }
+        oauth2ClientRetrievalError = error.response?.data;
       });
   }
 }

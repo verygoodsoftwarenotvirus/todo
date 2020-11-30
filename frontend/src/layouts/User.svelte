@@ -1,5 +1,5 @@
 <script lang="typescript">
-import { Router, Route } from 'svelte-routing';
+import { Route } from 'svelte-routing';
 
 // components for this layout
 import AdminNavbar from '../components/Navbars/AdminNavbar.svelte';
@@ -7,6 +7,7 @@ import Sidebar from '../components/Sidebar/Sidebar.svelte';
 import AdminFooter from '../components/Footers/AdminFooter.svelte';
 
 // pages for this layout
+import WebhookEditor from '../components/Editors/Webhook.svelte';
 import UserSettings from '../views/user/Settings.svelte';
 
 import { Logger } from '../logger';

@@ -18,7 +18,7 @@ import { V1APIClient } from '../../apiClient';
 
 import APITable from '../../components/APITable/APITable.svelte';
 import { statusCodes } from '../../constants';
-import { Superstore } from '../../stores/superstore';
+import { Superstore } from '../../stores';
 
 export let location;
 
@@ -93,9 +93,7 @@ function fetchWebhooks() {
         apiTableDecrementDisabled = queryFilter.page === 1;
       })
       .catch((error: AxiosError) => {
-        if (error.response && error.response.data) {
-          webhookRetrievalError = error.response.data;
-        }
+        webhookRetrievalError = error.response?.data;
       });
   }
 }
@@ -113,11 +111,7 @@ function promptDelete(id: number) {
         }
       })
       .catch((error: AxiosError<ErrorResponse>) => {
-        if (error.response) {
-          if (error.response.data) {
-            webhookRetrievalError = error.response.data.message;
-          }
-        }
+        webhookRetrievalError = error.response?.data?.message;
       });
   }
 }
@@ -129,8 +123,8 @@ function promptDelete(id: number) {
       title="Webhooks"
       headers="{Webhook.headers(translationsToUse)}"
       rows="{webhooks}"
-      individualPageLink="/things/webhooks"
-      newPageLink="/things/webhooks/new"
+      individualPageLink="/user/webhooks"
+      newPageLink="/user/webhooks/new"
       dataRetrievalError="{webhookRetrievalError}"
       searchFunction="{searchWebhooks}"
       incrementDisabled="{apiTableIncrementDisabled}"

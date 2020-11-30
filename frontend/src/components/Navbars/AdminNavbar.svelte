@@ -5,7 +5,7 @@ import { link } from 'svelte-routing';
 import UserDropdown from '../Dropdowns/UserDropdown.svelte';
 
 import { UserSiteSettings, UserStatus } from '../../types';
-import { Superstore } from '../../stores/superstore';
+import { Superstore } from '../../stores';
 
 let adminMode: boolean = false;
 let currentAuthStatus: UserStatus = new UserStatus();

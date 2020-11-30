@@ -3,10 +3,9 @@ import format from 'string-format';
 
 import type { QueryFilter } from '@/types';
 import { Logger } from '@/logger';
-import type { Item, ItemCreationInput, ItemList } from '@/types';
+import type { AuditLogEntry, Item, ItemCreationInput, ItemList } from '@/types';
 
 import { backendRoutes } from '@/constants/routes';
-import { AuditLogEntry } from '@/types';
 
 const logger = new Logger().withDebugValue('source', 'src/apiClient/items.ts');
 

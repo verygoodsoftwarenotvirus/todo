@@ -4,7 +4,7 @@ import JSONTree from 'svelte-json-tree';
 
 import { Logger } from '../../logger';
 import { QueryFilter, UserSiteSettings, UserStatus } from '../../types';
-import { Superstore } from '../../stores/superstore';
+import { Superstore } from '../../stores';
 
 let logger = new Logger().withDebugValue(
   'source',

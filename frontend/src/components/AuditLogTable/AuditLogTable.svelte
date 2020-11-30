@@ -11,7 +11,7 @@ import {
 } from '../../types';
 import { renderUnixTime } from '../../utils';
 import { Logger } from '../../logger';
-import { Superstore } from '../../stores/superstore';
+import { Superstore } from '../../stores';
 
 let entries: AuditLogEntry[] = [];
 export let entryFetchFunc: Promise<AxiosResponse<AuditLogEntry[]>>;
@@ -63,7 +63,9 @@ onMount(fetchEntries);
   <div class="rounded-t mb-0 px-4 py-3 bg-transparent justify-between ">
     <div class="flex flex-wrap items-center">
       <div class="relative w-full max-w-full flex-grow flex-1">
-        <h2 class="text-gray-800 text-xl font-semibold">{translationsToUse.title}</h2>
+        <h2 class="text-gray-800 text-xl font-semibold">
+          {translationsToUse.title}
+        </h2>
       </div>
 
       <div class="text-center">

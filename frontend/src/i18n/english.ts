@@ -5,7 +5,7 @@ const _id = 'ID',
   _name = 'Name',
   _lastUpdatedOn = 'Last Updated On',
   _belongsToUser = 'Belongs to User',
-  _serviceName = "Todo";
+  _serviceName = 'Todo';
 
 export const englishTranslations: SiteTranslationMap = {
   components: {
@@ -18,7 +18,7 @@ export const englishTranslations: SiteTranslationMap = {
       },
     },
     auditLogEntryTable: {
-      title: "Audit Log Entries",
+      title: 'Audit Log Entries',
       page: 'page',
       perPage: 'per page',
       inputPlaceholders: {
@@ -178,28 +178,28 @@ export const englishTranslations: SiteTranslationMap = {
       },
     },
     userAdminPageTranslations: {
-      myAccount: "undefined FUCK YOU undefined",
+      myAccount: 'undefined FUCK YOU undefined',
       buttons: {
-        updateUserInfo: "undefined FUCK YOU undefined",
-        changePassword: "undefined FUCK YOU undefined",
+        updateUserInfo: 'undefined FUCK YOU undefined',
+        changePassword: 'undefined FUCK YOU undefined',
       },
       sectionLabels: {
-        userInfo: "undefined FUCK YOU undefined",
-        password: "undefined FUCK YOU undefined",
+        userInfo: 'undefined FUCK YOU undefined',
+        password: 'undefined FUCK YOU undefined',
       },
       inputLabels: {
-        username: "undefined FUCK YOU undefined",
-        emailAddress: "undefined FUCK YOU undefined",
-        currentPassword: "undefined FUCK YOU undefined",
-        newPassword: "undefined FUCK YOU undefined",
-        twoFactorToken: "undefined FUCK YOU undefined",
+        username: 'undefined FUCK YOU undefined',
+        emailAddress: 'undefined FUCK YOU undefined',
+        currentPassword: 'undefined FUCK YOU undefined',
+        newPassword: 'undefined FUCK YOU undefined',
+        twoFactorToken: 'undefined FUCK YOU undefined',
       },
       inputPlaceholders: {
-        currentPassword: "undefined FUCK YOU undefined",
-        newPassword: "undefined FUCK YOU undefined",
-        twoFactorToken: "undefined FUCK YOU undefined",
+        currentPassword: 'undefined FUCK YOU undefined',
+        newPassword: 'undefined FUCK YOU undefined',
+        twoFactorToken: 'undefined FUCK YOU undefined',
       },
-    }
+    },
   },
   models: {
     user: {
@@ -288,6 +288,7 @@ export const englishTranslations: SiteTranslationMap = {
         events: 'Events',
         dataTypes: 'Data Types',
         topics: 'Topics',
+        createdOn: _createdOn,
       },
       inputPlaceholders: {
         name: _name,

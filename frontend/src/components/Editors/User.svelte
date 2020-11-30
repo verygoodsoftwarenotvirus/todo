@@ -12,7 +12,7 @@ import {
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
 import AuditLogTable from '../AuditLogTable/AuditLogTable.svelte';
-import { Superstore } from '../../stores/superstore';
+import { Superstore } from '../../stores';
 
 export let location: Location;
 export let userID: number = 0;

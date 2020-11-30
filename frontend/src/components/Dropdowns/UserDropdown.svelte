@@ -15,7 +15,7 @@ let popoverDropdownRef: HTMLElement;
 
 import { Logger } from '../../logger';
 import { frontendRoutes, statusCodes } from '../../constants';
-import { Superstore } from '../../stores/superstore';
+import { Superstore } from '../../stores';
 let logger = new Logger().withDebugValue(
   'source',
   'src/components/Dropdowns/UserDropdown.svelte',

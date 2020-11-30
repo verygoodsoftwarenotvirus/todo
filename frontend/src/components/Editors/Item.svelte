@@ -15,7 +15,7 @@ import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
 import AuditLogTable from '../AuditLogTable/AuditLogTable.svelte';
 import { frontendRoutes, statusCodes } from '../../constants';
-import { Superstore } from '../../stores/superstore';
+import { Superstore } from '../../stores';
 
 export let id: number = 0;
 

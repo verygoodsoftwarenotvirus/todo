@@ -1,20 +1,24 @@
 <script lang="typescript">
 import { navigate } from 'svelte-routing';
-import { onDestroy, onMount } from 'svelte';
+import { onMount } from 'svelte';
 import { AxiosError, AxiosResponse } from 'axios';
+
+import AuditLogTable from '../AuditLogTable/AuditLogTable.svelte';
 
 import {
   Webhook,
   UserSiteSettings,
   UserStatus,
   AuditLogEntry,
+  fakeWebhookFactory,
+  fakeAuditLogEntryFactory,
 } from '../../types';
-import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
-import { translations } from '../../i18n';
-import { sessionSettingsStore, userStatusStore } from '../../stores';
-import AuditLogTable from '../AuditLogTable/AuditLogTable.svelte';
 import { frontendRoutes, statusCodes } from '../../constants';
+import { Superstore } from '../../stores';
+
+import { Logger } from '../../logger';
+import {renderUnixTime} from "../../utils";
 
 export let webhookID: number = 0;
 
@@ -38,24 +42,22 @@ let logger = new Logger().withDebugValue(
 );
 
 // set up translations
+let adminMode: boolean = false;
+let currentUserStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
 let translationsToUse = currentSessionSettings.getTranslations().models.webhook;
-const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
-  (value: UserSiteSettings) => {
+const superstore = new Superstore({
+  adminModeUpdateFunc: (value: boolean) => {
+    adminMode = value;
+  },
+  sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = currentSessionSettings.getTranslations().models.webhook;
   },
-);
-// onDestroy(unsubscribeFromSettingsUpdates);
-
-// set up user status sync
-let currentUserStatus = new UserStatus();
-const unsubscribeFromUserStatusUpdates = userStatusStore.subscribe(
-  (value: UserStatus) => {
+  userStatusStoreUpdateFunc: (value: UserStatus) => {
     currentUserStatus = value;
   },
-);
-// onDestroy(unsubscribeFromUserStatusUpdates);
+});
 
 function fetchWebhook(): void {
   logger.debug(`fetchWebhook called`);
@@ -64,14 +66,19 @@ function fetchWebhook(): void {
     throw new Error('webhookID cannot be zero!');
   }
 
-  V1APIClient.fetchWebhook(webhookID)
-    .then((response: AxiosResponse<Webhook>) => {
-      webhook = { ...response.data };
-      originalWebhook = { ...response.data };
-    })
-    .catch((error: AxiosError) => {
-      webhookRetrievalError = error.response?.data;
-    });
+  if (superstore.frontendOnlyMode) {
+    webhook = fakeWebhookFactory.build();
+    originalWebhook = { ...webhook };
+  } else {
+    V1APIClient.fetchWebhook(webhookID)
+      .then((response: AxiosResponse<Webhook>) => {
+        webhook = { ...response.data };
+        originalWebhook = { ...response.data };
+      })
+      .catch((error: AxiosError) => {
+        webhookRetrievalError = error.response?.data;
+      });
+  }
 
   fetchAuditLogEntries();
 }
@@ -85,18 +92,21 @@ function saveWebhook(): void {
     throw new Error('no changes to save!');
   }
 
-  V1APIClient.saveWebhook(webhook)
-    .then((response: AxiosResponse<Webhook>) => {
-      webhook = { ...response.data };
-      originalWebhook = { ...response.data };
-      needsToBeSaved = false;
-      fetchAuditLogEntries();
-    })
-    .catch((error: AxiosError) => {
-      if (error.response && error.response.data) {
-        webhookRetrievalError = error.response.data;
-      }
-    });
+  if (superstore.frontendOnlyMode) {
+    originalWebhook = { ...webhook };
+    needsToBeSaved = false;
+  } else {
+    V1APIClient.saveWebhook(webhook)
+      .then((response: AxiosResponse<Webhook>) => {
+        webhook = { ...response.data };
+        originalWebhook = { ...response.data };
+        needsToBeSaved = false;
+        fetchAuditLogEntries();
+      })
+      .catch((error: AxiosError) => {
+        webhookRetrievalError = error.response?.data;
+      });
+  }
 }
 
 function deleteWebhook(): void {
@@ -106,35 +116,47 @@ function deleteWebhook(): void {
     throw new Error('webhookID cannot be zero!');
   }
 
-  V1APIClient.deleteWebhook(webhookID)
-    .then((response: AxiosResponse<Webhook>) => {
-      if (response.status === statusCodes.NO_CONTENT) {
-        logger.debug(
-          `navigating to ${frontendRoutes.LIST_WEBHOOKS} because via deletion promise resolution`,
-        );
-        navigate(frontendRoutes.LIST_WEBHOOKS, { state: {}, replace: true });
-      }
-    })
-    .catch((error: AxiosError) => {
-      webhookRetrievalError = error.response?.data;
-    });
+  if (superstore.frontendOnlyMode) {
+    navigate(frontendRoutes.LIST_WEBHOOKS, { state: {}, replace: true });
+  } else {
+    V1APIClient.deleteWebhook(webhookID)
+      .then((response: AxiosResponse<Webhook>) => {
+        if (response.status === statusCodes.NO_CONTENT) {
+          logger.debug(
+            `navigating to ${frontendRoutes.LIST_WEBHOOKS} because via deletion promise resolution`,
+          );
+          navigate(frontendRoutes.LIST_WEBHOOKS, { state: {}, replace: true });
+        }
+      })
+      .catch((error: AxiosError) => {
+        webhookRetrievalError = error.response?.data;
+      });
+  }
 }
 
 function fetchAuditLogEntries(): void {
-  logger.debug(`deleteWebhook called`);
+  logger.debug(`fetchAuditLogEntries called`);
 
   if (webhookID === 0) {
     throw new Error('webhookID cannot be zero!');
   }
 
-  V1APIClient.fetchAuditLogEntriesForWebhook(webhookID)
-    .then((response: AxiosResponse<AuditLogEntry[]>) => {
-      auditLogEntries = response.data;
-      logger.withValue('entries', auditLogEntries).debug('entries fetched');
-    })
-    .catch((error: AxiosError) => {
-      auditLogEntriesRetrievalError = error.response?.data;
-    });
+  if (!adminMode) {
+    return;
+  }
+
+  if (superstore.frontendOnlyMode) {
+    auditLogEntries = fakeAuditLogEntryFactory.buildList(10);
+  } else {
+    V1APIClient.fetchAuditLogEntriesForWebhook(webhookID)
+      .then((response: AxiosResponse<AuditLogEntry[]>) => {
+        auditLogEntries = response.data;
+        logger.withValue('entries', auditLogEntries).debug('entries fetched');
+      })
+      .catch((error: AxiosError) => {
+        auditLogEntriesRetrievalError = error.response?.data;
+      });
+  }
 }
 </script>
 
@@ -166,33 +188,105 @@ function fetchAuditLogEntries(): void {
         <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
           <label
             class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-            for="grid-first-name"
+            for="grid-name"
           >
             {translationsToUse.labels.name}
           </label>
           <input
             class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-            id="grid-first-name"
+            id="grid-name"
             type="text"
             on:keyup="{evaluateChanges}"
             bind:value="{webhook.name}"
           />
-          <!--  <p class="text-red-500 text-xs italic">Please fill out this field.</p>-->
-        </div>
-        <div class="w-full md:w-1/2 px-3">
           <label
             class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-            for="grid-last-name"
+            for="grid-content-type"
           >
-            {translationsToUse.labels.details}
+            {translationsToUse.labels.contentType}
           </label>
           <input
-            class="appearance-none block w-full text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-            id="grid-last-name"
+            class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
+            id="grid-content-type"
             type="text"
             on:keyup="{evaluateChanges}"
-            bind:value="{webhook.details}"
+            bind:value="{webhook.contentType}"
           />
+
+          <label
+            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+            for="grid-url"
+          >
+            {translationsToUse.labels.url}
+          </label>
+          <input
+            class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
+            id="grid-url"
+            type="text"
+            on:keyup="{evaluateChanges}"
+            bind:value="{webhook.url}"
+          />
+
+          <label
+            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+            for="grid-method"
+          >
+            {translationsToUse.labels.method}
+          </label>
+          <input
+            class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
+            id="grid-method"
+            type="text"
+            on:keyup="{evaluateChanges}"
+            bind:value="{webhook.method}"
+          />
+
+          <label
+            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+            for="grid-events"
+          >
+            {translationsToUse.labels.events}
+          </label>
+          <ul class="m-2" id="grid-events">
+            {#each webhook.events as event}
+              <li>{event}</li>
+            {/each}
+          </ul>
+
+
+          <label
+            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+            for="grid-data-types"
+          >
+            {translationsToUse.labels.dataTypes}
+          </label>
+          <ul class="m-2" id="grid-data-types">
+            {#each webhook.dataTypes as dataType}
+              <li>{dataType}</li>
+            {/each}
+          </ul>
+
+          <label
+            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+            for="grid-topics"
+          >
+            {translationsToUse.labels.topics}
+          </label>
+          <ul class="m-2" id="grid-topics">
+            {#each webhook.topics as topic}
+              <li>{topic}</li>
+            {/each}
+          </ul>
+
+          <label
+            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+            for="grid-created-on"
+          >
+            {translationsToUse.labels.createdOn}
+          </label>
+          <p id="grid-created-on">
+            {renderUnixTime(webhook.createdOn)}
+          </p>
         </div>
         <div
           class="flex w-full mr-3 mt-4 max-w-full flex-grow justify-end flex-1"
@@ -211,3 +305,4 @@ function fetchAuditLogEntries(): void {
     <AuditLogTable entryFetchFunc="{fetchAuditLogEntries}" />
   {/if}
 </div>
+

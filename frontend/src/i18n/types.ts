@@ -109,6 +109,7 @@ export type webhookModelTranslations = {
     events: string;
     dataTypes: string;
     topics: string;
+    createdOn: string;
   };
   inputPlaceholders: {
     name: string;

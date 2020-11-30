@@ -1,6 +1,6 @@
 <!-- App.svelte -->
 <script lang="typescript">
-import { Router, Route, navigate } from 'svelte-routing';
+import { Router, Route } from 'svelte-routing';
 
 import { Logger } from '@/logger';
 
@@ -11,8 +11,8 @@ import Auth from './layouts/Auth.svelte';
 // User Layout
 import User from './layouts/User.svelte';
 // Things Layout
-
 import Things from './layouts/Things.svelte';
+
 // No Layout Pages
 import Index from './views/Index.svelte';
 
@@ -27,7 +27,7 @@ let logger = new Logger().withDebugValue('source', 'src/App.svelte');
   <!-- auth layout -->
   <Route path="auth/*auth" component="{Auth}" />
   <!-- user layout -->
-  <Route path="user/*user" component="{User}" />
+  <Route path="user/*" component="{User}" />
   <!-- things layout -->
   <Route path="things/*things" component="{Things}" />
   <!-- no layout pages -->

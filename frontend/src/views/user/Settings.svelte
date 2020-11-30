@@ -17,7 +17,7 @@ import { V1APIClient } from '../../apiClient';
 import { translations } from '../../i18n';
 import { sessionSettingsStore } from '../../stores';
 import { frontendRoutes } from '../../constants';
-import { Superstore } from '../../stores/superstore';
+import { Superstore } from '../../stores';
 
 export let location: Location;
 

@@ -6,7 +6,7 @@ import UserDropdown from '../Dropdowns/UserDropdown.svelte';
 
 import { UserSiteSettings, UserStatus } from '../../types';
 import { Logger } from '../../logger';
-import { Superstore } from '../../stores/superstore';
+import { Superstore } from '../../stores';
 
 export let location: Location;
 

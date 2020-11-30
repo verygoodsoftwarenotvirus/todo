@@ -7,7 +7,7 @@ import { V1APIClient } from '../../apiClient';
 import { Logger } from '../../logger';
 import { UserSiteSettings } from '../../types';
 import { frontendRoutes } from '../../constants';
-import { Superstore } from '../../stores/superstore';
+import { Superstore } from '../../stores';
 
 export let location: Location;
 

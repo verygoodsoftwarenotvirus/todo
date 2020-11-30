@@ -177,12 +177,35 @@ export const englishTranslations: SiteTranslationMap = {
         actions: 'Actions',
       },
     },
+    userAdminPageTranslations: {
+      myAccount: "undefined FUCK YOU undefined",
+      buttons: {
+        updateUserInfo: "undefined FUCK YOU undefined",
+        changePassword: "undefined FUCK YOU undefined",
+      },
+      sectionLabels: {
+        userInfo: "undefined FUCK YOU undefined",
+        password: "undefined FUCK YOU undefined",
+      },
+      inputLabels: {
+        username: "undefined FUCK YOU undefined",
+        emailAddress: "undefined FUCK YOU undefined",
+        currentPassword: "undefined FUCK YOU undefined",
+        newPassword: "undefined FUCK YOU undefined",
+        twoFactorToken: "undefined FUCK YOU undefined",
+      },
+      inputPlaceholders: {
+        currentPassword: "undefined FUCK YOU undefined",
+        newPassword: "undefined FUCK YOU undefined",
+        twoFactorToken: "undefined FUCK YOU undefined",
+      },
+    }
   },
   models: {
     user: {
       actions: {
         save: 'Save',
-        delete: 'Delete',
+        ban: 'Ban',
       },
       columns: {
         id: 'ID',

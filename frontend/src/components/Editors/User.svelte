@@ -136,9 +136,8 @@ function fetchAuditLogEntries(): Promise<AxiosResponse<AuditLogEntry[]>> {
       >
         <button
           class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-          on:click="{console.log}"
         ><i class="fa fa-trash-alt"></i>
-          {translationsToUse.actions.delete}</button>
+          {translationsToUse.actions.ban}</button>
       </div>
     </div>
   </div>

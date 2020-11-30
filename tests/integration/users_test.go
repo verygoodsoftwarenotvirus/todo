@@ -73,8 +73,6 @@ func checkUserCreationEquality(t *testing.T, expected *types.UserCreationInput, 
 	assert.Equal(t, expected.Username, actual.Username)
 	assert.NotEmpty(t, twoFactorSecret)
 	assert.NotZero(t, actual.CreatedOn)
-	assert.Nil(t, actual.LastUpdatedOn)
-	assert.Nil(t, actual.ArchivedOn)
 }
 
 func checkUserEquality(t *testing.T, expected *types.UserCreationInput, actual *types.User) {

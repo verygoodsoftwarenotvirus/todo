@@ -1,7 +1,6 @@
 <script lang="typescript">
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
 import { link, navigate } from 'svelte-routing';
-import { onDestroy } from 'svelte';
 
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
@@ -10,24 +9,22 @@ import {
   UserRegistrationResponse,
   TOTPTokenValidationRequest,
   ErrorResponse,
-  UserSiteSettings,
+  UserSiteSettings, fakeUserRegistrationResponseFactory,
 } from '../../types';
-import { translations } from '../../i18n';
-import { sessionSettingsStore } from '../../stores';
 import { frontendRoutes } from '../../constants';
+import {Superstore} from "../../stores/superstore";
 
 // set up translations
 let currentSessionSettings = new UserSiteSettings();
 let translationsToUse = currentSessionSettings.getTranslations().pages
   .registration;
-const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
-  (value: UserSiteSettings) => {
+const superstore = new Superstore({
+    sessionSettingsStoreUpdateFunc:(value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = currentSessionSettings.getTranslations().pages
       .registration;
   },
-);
-// onDestroy(unsubscribeFromSettingsUpdates);
+});
 
 export let location: Location;
 
@@ -85,7 +82,12 @@ async function register() {
     throw new Error('registration input is not valid!');
   }
 
-  return V1APIClient.registrationRequest(registrationRequest)
+  if (superstore.frontendOnlyMode) {
+    const fakeRes: UserRegistrationResponse = fakeUserRegistrationResponseFactory.build();
+    postRegistrationQRCode = fakeRes.qrCode;
+    totpValidationRequest.userID = fakeRes.id;
+  } else {
+    return V1APIClient.registrationRequest(registrationRequest)
     .then((response: AxiosResponse<UserRegistrationResponse>) => {
       const data = response.data;
 
@@ -101,6 +103,7 @@ async function register() {
         registrationError = data.message;
       }
     });
+  }
 }
 
 function evaluateValidationInputs(): void {
@@ -110,19 +113,20 @@ function evaluateValidationInputs(): void {
 async function validateTOTPToken() {
   logger.debug('validateTOTPToken called');
 
-  const path = '/users/totp_secret/verify';
-
   if (!totpTokenValidationMayProceed) {
     // this should never occur
     throw new Error('TOTP token validation input is not valid!');
   }
 
-  return V1APIClient.validateTOTPSecretWithToken(totpValidationRequest)
+  if (superstore.frontendOnlyMode) {
+    navigate(frontendRoutes.LOGIN, {state: {}, replace: true});
+  } else {
+    return V1APIClient.validateTOTPSecretWithToken(totpValidationRequest)
     .then((_: AxiosResponse) => {
       logger.debug(
         `navigating to ${frontendRoutes.LOGIN} because totp validation request succeeded`,
       );
-      navigate(frontendRoutes.LOGIN, { state: {}, replace: true });
+      navigate(frontendRoutes.LOGIN, {state: {}, replace: true});
     })
     .catch((reason: AxiosError<ErrorResponse>) => {
       if (reason.response) {
@@ -130,6 +134,7 @@ async function validateTOTPToken() {
         logger.error(data.message);
       }
     });
+  }
 }
 </script>
 
@@ -198,24 +203,6 @@ async function validateTOTPToken() {
                   bind:value="{registrationRequest.repeatedPassword}"
                 />
               </div>
-
-              <!--
-              <div>
-                <label class="inline-flex items-center cursor-pointer">
-                  <input
-                    id="customCheckLogin"
-                    type="checkbox"
-                    class="form-checkbox text-gray-800 ml-1 w-5 h-5 ease-linear transition-all duration-150"
-                  />
-                  <span class="ml-2 text-sm font-semibold text-gray-700">
-                    I agree with the
-                    <a href="#pablo" on:click={(e) => e.preventDefault()} class="text-red-500">
-                      Privacy Policy
-                    </a>
-                  </span>
-                </label>
-              </div>
-              -->
 
               <p class="text-red-600">{registrationError}</p>
 

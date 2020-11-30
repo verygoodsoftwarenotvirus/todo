@@ -128,9 +128,6 @@ export class UserRegistrationResponse {
   isAdmin: boolean;
   qrCode: string;
   createdOn: number;
-  lastUpdatedOn: number;
-  archivedOn: number;
-  passwordLastChangedOn: number;
 
   constructor(
     id: number = 0,
@@ -138,20 +135,24 @@ export class UserRegistrationResponse {
     isAdmin: boolean = false,
     qrCode: string = '',
     createdOn: number = 0,
-    lastUpdatedOn: number = 0,
-    archivedOn: number = 0,
-    passwordLastChangedOn: number = 0,
   ) {
     this.id = id;
     this.username = username;
     this.isAdmin = isAdmin;
     this.qrCode = qrCode;
     this.createdOn = createdOn;
-    this.lastUpdatedOn = lastUpdatedOn;
-    this.archivedOn = archivedOn;
-    this.passwordLastChangedOn = passwordLastChangedOn;
   }
 }
+
+// QR Code for `otpauth://totp/todo:username?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&issuer=todo`
+const fakeTwoFactorQRCode = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAAAAADmVT4XAAADKUlEQVR4nOxa0Y7kIAwLp/3/X85p1SsksUN5OREkLM2q06HdYFLjZOZHZS/+bP7/N4AbwA3gBnADuAHcAG4A+wP4Ieeae6f9vbrP1Yz7PR4vMX/jvQAlGbCRjtn62UmYs3ZOWr9S6b0CijIwZi5m/uLm7Y9nsPcClGUA8TvT1tda+9n4DHi2PnEEA839tev/Auf/lRcdZRnA1Ys6MEa1ngvjNb+XQVEG4gpqon9cF+O+MMV2BtrCo9q6zmvY5zwLY7R8rfzAdgZyP6Amv6Ur4TNfddogJgfEXOudRDvID4yn26+61z4L9AY4Ltk1SzLwzlf+7X8NOHnhtd9z5r1RujNuZ2CmA17JrBKg3mVX43FAUQZQydXooYAXzDwRjgOUZMBHzOodvILnxjT/HxRmgOmh/VzIGlvwHAFsZyCrDZvRQ+uLeR3wIrqFBS3czkCuAxLcDauNpX8eNcDOuB3nBwRWzTLSiP/nOsh6JIDtDMxdsfXD0SsK1YHsdqfpALrZ2PFZ8QMScugcHWDeT1xOr/oBi6o5kDEwq/2YOvC62PcPKLYzkFdGD1DR/fp6jbQvy95pfoApm/UHCvtbrBTF1cm1/UDuiN5+wHvG74Vf/YFYVUhWH21nIHNELxRmERVekrpAAi+nOSLp/QH7Lh7ZHIjPPtNHgpIMcB1Q6IMJ3ePw3ax+qsmAn58Ety+kT5D7geaqCoLtDHA/4JU+07MvHWAjAUUZeBBdIVaMX98MKWgCoCQDvAeiJKf5Ph+Zknz+BRiY6YDVd+x5SNIXkD4i5kjNHJj1B0a8GryPuMqB9wXGKIV7GJRlQEMtKJAHjfIiocf2VUPvZ2CuA/7Zj2fm34Vw9wgoyYDXb+YCY0av9AdO6pDAGNB/cUfZd0krmVKTgbi+47z3O9/fFyj0lQDbGVj5LVkzvWENcxn9gagTDT6v+RSs/paM60KD8b4ndLIfiPDRK3n2hfTG3mvfqwiOYABrpJEBti+YVVTx2KEsA1jlx/0wu4ZVjpX9wNpvyVpQhFlfYOh/c4pQdS9Y8QP/FdsZuAHcAG4AN4AbwA3gBnAD2B7A3wAAAP//lX36HfFGOAwAAAAASUVORK5CYII=`
+
+export const fakeUserRegistrationResponseFactory = Factory.Sync.makeFactory<UserRegistrationResponse>({
+  username: Factory.Sync.each(() => faker.random.word()),
+  isAdmin: Factory.Sync.each(() => faker.random.boolean()),
+  qrCode: fakeTwoFactorQRCode,
+  ...defaultFactories,
+})
 
 export class AdminPermissionSummary {
   canCycleCookieSecrets: boolean;

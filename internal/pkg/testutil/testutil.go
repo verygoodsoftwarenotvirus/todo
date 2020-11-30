@@ -155,12 +155,9 @@ func CreateObligatoryUser(ctx context.Context, address, username string, debug b
 		ID:       ucr.ID,
 		Username: ucr.Username,
 		// this is a dirty trick to reuse most of this model,
-		HashedPassword:        in.Password,
-		TwoFactorSecret:       twoFactorSecret,
-		PasswordLastChangedOn: ucr.PasswordLastChangedOn,
-		CreatedOn:             ucr.CreatedOn,
-		LastUpdatedOn:         ucr.LastUpdatedOn,
-		ArchivedOn:            ucr.ArchivedOn,
+		HashedPassword:  in.Password,
+		TwoFactorSecret: twoFactorSecret,
+		CreatedOn:       ucr.CreatedOn,
 	}
 
 	return u, nil

@@ -104,7 +104,6 @@ function fetchAuditLogEntries() {
       title="Audit Log"
       headers="{AuditLogEntry.headers(translationsToUse)}"
       rows="{entries}"
-      individualPageLink="/admin/audit_log_entries"
       newPageLink=""
       dataRetrievalError="{entryRetrievalError}"
       searchEnabled="{false}"

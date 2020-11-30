@@ -54,7 +54,7 @@ export function fetchEntries() {
   }
 }
 
-onMount(fetchEntries());
+onMount(fetchEntries);
 </script>
 
 <div
@@ -68,7 +68,7 @@ onMount(fetchEntries());
 
       <div class="text-center">
         <div class="px-4 py-2 m-2">
-          <button on:click="{console.log}" disabled="{decrementDisabled}"><i
+          <button disabled="{decrementDisabled}"><i
               class="fa fa-arrow-circle-left"
             ></i></button>
           &nbsp;
@@ -77,7 +77,7 @@ onMount(fetchEntries());
             {queryFilter.page}
           {/if}
           &nbsp;
-          <button on:click="{console.log}" disabled="{incrementDisabled}"><i
+          <button disabled="{incrementDisabled}"><i
               class="fa fa-arrow-circle-right"
             ></i></button>
         </div>
@@ -97,7 +97,6 @@ onMount(fetchEntries());
           type="text"
           placeholder="{translationsToUse.inputPlaceholders.search}"
           bind:value="{searchQuery}"
-          on:keyup="{console.log}"
         />
       </div>
     </div>

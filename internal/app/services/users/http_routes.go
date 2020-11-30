@@ -198,13 +198,10 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// UserCreationResponse is a struct we can use to notify the user of
 	// their two factor secret, but ideally just this once and then never again.
 	ucr := &types.UserCreationResponse{
-		ID:                    user.ID,
-		Username:              user.Username,
-		PasswordLastChangedOn: user.PasswordLastChangedOn,
-		CreatedOn:             user.CreatedOn,
-		LastUpdatedOn:         user.LastUpdatedOn,
-		ArchivedOn:            user.ArchivedOn,
-		TwoFactorQRCode:       s.buildQRCode(ctx, user.Username, user.TwoFactorSecret),
+		ID:              user.ID,
+		Username:        user.Username,
+		CreatedOn:       user.CreatedOn,
+		TwoFactorQRCode: s.buildQRCode(ctx, user.Username, user.TwoFactorSecret),
 	}
 
 	// notify the relevant parties.

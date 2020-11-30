@@ -32,7 +32,7 @@ export type auditLogEntryTranslations = {
 export type userModelTranslations = {
   actions: {
     save: string;
-    delete: string;
+    ban: string;
   };
   columns: {
     id: string;

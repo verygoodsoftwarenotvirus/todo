@@ -80,15 +80,12 @@ type (
 
 	// UserCreationResponse is a response structure for Users that doesn't contain password fields, but does contain the two factor secret.
 	UserCreationResponse struct {
-		ID                    uint64            `json:"id"`
-		Username              string            `json:"username"`
-		PasswordLastChangedOn *uint64           `json:"passwordLastChangedOn"`
-		IsAdmin               bool              `json:"isAdmin"`
-		CreatedOn             uint64            `json:"createdOn"`
-		LastUpdatedOn         *uint64           `json:"lastUpdatedOn"`
-		ArchivedOn            *uint64           `json:"archivedOn"`
-		AccountStatus         userAccountStatus `json:"accountStatus"`
-		TwoFactorQRCode       string            `json:"qrCode"`
+		ID              uint64            `json:"id"`
+		Username        string            `json:"username"`
+		IsAdmin         bool              `json:"isAdmin"`
+		CreatedOn       uint64            `json:"createdOn"`
+		AccountStatus   userAccountStatus `json:"accountStatus"`
+		TwoFactorQRCode string            `json:"qrCode"`
 	}
 
 	// UserLoginInput represents the payload used to log in a User.

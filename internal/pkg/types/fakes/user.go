@@ -31,13 +31,10 @@ func BuildFakeUser() *types.User {
 // BuildUserCreationResponseFromUser builds a faked UserCreationResponse.
 func BuildUserCreationResponseFromUser(user *types.User) *types.UserCreationResponse {
 	return &types.UserCreationResponse{
-		ID:                    user.ID,
-		Username:              user.Username,
-		PasswordLastChangedOn: user.PasswordLastChangedOn,
-		IsAdmin:               user.IsAdmin,
-		CreatedOn:             user.CreatedOn,
-		LastUpdatedOn:         user.LastUpdatedOn,
-		ArchivedOn:            user.ArchivedOn,
+		ID:        user.ID,
+		Username:  user.Username,
+		IsAdmin:   user.IsAdmin,
+		CreatedOn: user.CreatedOn,
 	}
 }
 

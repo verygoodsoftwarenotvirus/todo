@@ -175,9 +175,11 @@ dev: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) config_files
 	--renew-anon-volumes \
 	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(KEEP_RUNNING)),, --abort-on-container-exit)
 
+# frontend-only runs a simple static server that powers the frontend of the application. In this mode, all API calls are
+# skipped, and data on the page is faked. This is useful for making changes that don't require running the entire service.
 .PHONY: frontend-only
 frontend-only:
-	@(cd frontend && npm run frontend-only)
+	@(cd frontend && rm -rf dist/build/ && npm run frontend-only)
 
 ## housekeeping
 

@@ -74,6 +74,8 @@ export type oauth2ClientModelTranslations = {
     clientID: string;
     clientSecret: string;
     redirectURI: string;
+    scopes: string;
+    implicitAllowed: string;
   };
   inputPlaceholders: {
     name: string;

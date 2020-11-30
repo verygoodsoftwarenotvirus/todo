@@ -27,7 +27,7 @@ export class Webhook {
   dataTypes: string[];
   topics: string[];
   createdOn: number;
-  updatedOn?: number;
+  lastUpdatedOn?: number;
   archivedOn?: number;
   belongsToUser: number;
 
@@ -115,7 +115,7 @@ export class Webhook {
       }),
       new APITableCell({
         fieldName: 'lastUpdatedOn',
-        content: renderUnixTime(x.updatedOn),
+        content: renderUnixTime(x.lastUpdatedOn),
       }),
       new APITableCell({
         fieldName: 'belongsToUser',

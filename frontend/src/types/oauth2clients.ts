@@ -26,7 +26,7 @@ export class OAuth2Client {
   scopes: string[];
   implicitAllowed: boolean;
   createdOn: number;
-  updatedOn?: number;
+  lastUpdatedOn?: number;
   archivedOn?: number;
   belongsToUser: number;
 
@@ -120,7 +120,7 @@ export class OAuth2Client {
       }),
       new APITableCell({
         fieldName: 'lastUpdatedOn',
-        content: renderUnixTime(x.updatedOn),
+        content: renderUnixTime(x.lastUpdatedOn),
       }),
       new APITableCell({
         fieldName: 'belongsToUser',

@@ -254,6 +254,8 @@ export const englishTranslations: SiteTranslationMap = {
         clientID: 'Client ID',
         clientSecret: 'Client Secret',
         redirectURI: 'Redirect URI',
+        scopes: 'Scopes',
+        implicitAllowed: 'Implicit Allowed',
       },
       inputPlaceholders: {
         name: _name,

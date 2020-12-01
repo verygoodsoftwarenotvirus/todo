@@ -5,7 +5,8 @@ COVERAGE_OUT                  := $(ARTIFACTS_DIR)/coverage.out
 SEARCH_INDICES_DIR            := $(ARTIFACTS_DIR)/search_indices
 DOCKER_GO                     := docker run --interactive --tty --rm --volume $(PWD):$(PWD) --user `whoami`:`whoami` --workdir=$(PWD) golang:latest go
 GO_FORMAT                     := gofmt -s -w
-PACKAGE_LIST                  := `go list gitlab.com/verygoodsoftwarenotvirus/todo/... | grep -Ev '(cmd|tests|testutil|mock|fake)'`
+THIS                          := gitlab.com/verygoodsoftwarenotvirus/todo
+PACKAGE_LIST                  := `go list $(THIS)/... | grep -Ev '(cmd|tests|testutil|mock|fake)'`
 TEST_DOCKER_COMPOSE_FILES_DIR := environments/testing/compose_files
 
 ## non-PHONY folders/files
@@ -71,7 +72,7 @@ clean_wire:
 
 .PHONY: wire
 wire: ensure-wire vendor
-	wire gen gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server
+	wire gen $(THIS)/cmd/server
 
 .PHONY: rewire
 rewire: ensure-wire clean_wire wire
@@ -181,6 +182,10 @@ dev: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) config_files
 	--renew-anon-volumes \
 	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(KEEP_RUNNING)),, --abort-on-container-exit)
 
+.PHONY: load-data
+load-data:
+	go run $(THIS)/cmd/tools/data_scaffolder --url=http://localhost --count=5 --debug
+
 .PHONY: dev-frontend
 dev-frontend:
 	@(cd frontend && rm -rf dist/build/ && npm run autobuild)
@@ -191,8 +196,8 @@ dev-frontend:
 frontend-only:
 	@(cd frontend && rm -rf dist/build/ && npm run frontend-only)
 
-## housekeeping
+## misc
 
-.PHONY: show_tree
-show_tree:
+.PHONY: tree
+tree:
 	tree -d -I vendor

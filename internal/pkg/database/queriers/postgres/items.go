@@ -249,8 +249,6 @@ func (q *Postgres) buildGetItemsQuery(userID uint64, filter *types.QueryFilter) 
 func (q *Postgres) GetItems(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.ItemList, error) {
 	query, args := q.buildGetItemsQuery(userID, filter)
 
-	logger := q.logger.WithValue("query", query)
-
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("querying database for items: %w", err)
@@ -260,9 +258,6 @@ func (q *Postgres) GetItems(ctx context.Context, userID uint64, filter *types.Qu
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
-
-	logger = logger.WithValue("count", count)
-	logger.Debug("scanned items")
 
 	list := &types.ItemList{
 		Pagination: types.Pagination{

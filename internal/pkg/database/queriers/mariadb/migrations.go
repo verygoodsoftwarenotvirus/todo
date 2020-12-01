@@ -15,17 +15,10 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var currentMigration float64 = 0
-
-func incrementMigrationVersion() float64 {
-	currentMigration++
-	return currentMigration
-}
-
 var (
 	migrations = []darwin.Migration{
 		{
-			Version:     incrementMigrationVersion(),
+			Version:     1,
 			Description: "create users table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS users (",
@@ -50,7 +43,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     incrementMigrationVersion(),
+			Version:     2,
 			Description: "create users table creation trigger",
 			Script: strings.Join([]string{
 				"CREATE TRIGGER IF NOT EXISTS users_creation_trigger BEFORE INSERT ON users FOR EACH ROW",
@@ -63,7 +56,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     incrementMigrationVersion(),
+			Version:     3,
 			Description: "create sessions table for session manager",
 			Script: strings.Join([]string{
 				"CREATE TABLE sessions (",
@@ -74,12 +67,12 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     incrementMigrationVersion(),
+			Version:     4,
 			Description: "create sessions table for session manager",
 			Script:      "CREATE INDEX sessions_expiry_idx ON sessions (expiry);",
 		},
 		{
-			Version:     incrementMigrationVersion(),
+			Version:     5,
 			Description: "create oauth2_clients table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS oauth2_clients (",
@@ -100,7 +93,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     incrementMigrationVersion(),
+			Version:     6,
 			Description: "create oauth2_clients table creation trigger",
 			Script: strings.Join([]string{
 				"CREATE TRIGGER IF NOT EXISTS oauth2_clients_creation_trigger BEFORE INSERT ON oauth2_clients FOR EACH ROW",
@@ -113,7 +106,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     incrementMigrationVersion(),
+			Version:     7,
 			Description: "create webhooks table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS webhooks (",
@@ -135,7 +128,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     incrementMigrationVersion(),
+			Version:     8,
 			Description: "create webhooks table creation trigger",
 			Script: strings.Join([]string{
 				"CREATE TRIGGER IF NOT EXISTS webhooks_creation_trigger BEFORE INSERT ON webhooks FOR EACH ROW",
@@ -148,7 +141,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     incrementMigrationVersion(),
+			Version:     9,
 			Description: "create audit log table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS audit_log (",
@@ -161,7 +154,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     incrementMigrationVersion(),
+			Version:     10,
 			Description: "create audit_log table creation trigger",
 			Script: strings.Join([]string{
 				"CREATE TRIGGER IF NOT EXISTS audit_log_creation_trigger BEFORE INSERT ON audit_log FOR EACH ROW",
@@ -174,7 +167,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     incrementMigrationVersion(),
+			Version:     11,
 			Description: "create items table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS items (",
@@ -191,7 +184,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     incrementMigrationVersion(),
+			Version:     12,
 			Description: "create items table creation trigger",
 			Script: strings.Join([]string{
 				"CREATE TRIGGER IF NOT EXISTS items_creation_trigger BEFORE INSERT ON items FOR EACH ROW",

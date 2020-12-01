@@ -14,17 +14,10 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var currentMigration float64 = 0
-
-func incrementMigrationVersion() float64 {
-	currentMigration++
-	return currentMigration
-}
-
 var (
 	migrations = []darwin.Migration{
 		{
-			Version:     incrementMigrationVersion(),
+			Version:     1,
 			Description: "create users table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS users (
@@ -47,7 +40,7 @@ var (
 			);`,
 		},
 		{
-			Version:     incrementMigrationVersion(),
+			Version:     2,
 			Description: "create sessions table for session manager",
 			Script: `
 			CREATE TABLE sessions (
@@ -60,7 +53,7 @@ var (
 		`,
 		},
 		{
-			Version:     incrementMigrationVersion(),
+			Version:     3,
 			Description: "create oauth2_clients table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS oauth2_clients (
@@ -79,7 +72,7 @@ var (
 			);`,
 		},
 		{
-			Version:     incrementMigrationVersion(),
+			Version:     4,
 			Description: "create webhooks table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
@@ -99,7 +92,7 @@ var (
 			);`,
 		},
 		{
-			Version:     incrementMigrationVersion(),
+			Version:     5,
 			Description: "create audit log table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS audit_log (
@@ -110,7 +103,7 @@ var (
 			);`,
 		},
 		{
-			Version:     incrementMigrationVersion(),
+			Version:     6,
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (

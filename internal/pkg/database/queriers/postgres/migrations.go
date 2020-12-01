@@ -8,9 +8,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/exampledata"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/GuiaBolso/darwin"
 	"github.com/Masterminds/squirrel"
@@ -150,62 +148,6 @@ func (q *Postgres) Migrate(ctx context.Context, authenticator password.Authentic
 	}
 
 	q.migrateOnce.Do(buildMigrationFunc(q.db))
-
-	const usingDemoCodeThatShouldBeDeletedLater = true
-	if testUserConfig != nil && usingDemoCodeThatShouldBeDeletedLater {
-		for _, x := range exampledata.ExampleUsers {
-			query, args, err := q.sqlBuilder.
-				Insert(queriers.UsersTableName).
-				Columns(
-					queriers.UsersTableUsernameColumn,
-					queriers.UsersTableHashedPasswordColumn,
-					queriers.UsersTableSaltColumn,
-					queriers.UsersTableTwoFactorColumn,
-					queriers.UsersTableIsAdminColumn,
-					queriers.UsersTableAccountStatusColumn,
-					queriers.UsersTableAdminPermissionsColumn,
-					queriers.UsersTableTwoFactorVerifiedOnColumn,
-				).
-				Values(
-					x.Username,
-					x.HashedPassword,
-					x.Salt,
-					x.TwoFactorSecret,
-					x.IsAdmin,
-					types.GoodStandingAccountStatus,
-					math.MaxUint32,
-					squirrel.Expr(currentUnixTimeQuery),
-				).
-				ToSql()
-			q.logQueryBuildingError(err)
-
-			if _, dbErr := q.db.ExecContext(ctx, query, args...); dbErr != nil {
-				return dbErr
-			}
-		}
-
-		for _, x := range exampledata.ExampleItems {
-			for _, y := range x {
-				if _, dbErr := q.CreateItem(ctx, y); dbErr != nil {
-					return dbErr
-				}
-			}
-		}
-
-		for _, x := range exampledata.ExampleOAuth2Clients {
-			query, args := q.buildCreateOAuth2ClientQuery(x)
-			if _, dbErr := q.db.ExecContext(ctx, query, args...); dbErr != nil {
-				return dbErr
-			}
-		}
-
-		for _, x := range exampledata.ExampleWebhooks {
-			query, args := q.buildCreateWebhookQuery(x)
-			if _, dbErr := q.db.ExecContext(ctx, query, args...); dbErr != nil {
-				return dbErr
-			}
-		}
-	}
 
 	if testUserConfig != nil {
 		hashedPassword, err := authenticator.HashPassword(ctx, testUserConfig.Password)

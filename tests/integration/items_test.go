@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
@@ -14,7 +12,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func checkItemEquality(t *testing.T, expected, actual *types.Item) {
@@ -32,20 +29,22 @@ func TestItems(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			_, testClient := createUserAndClientForTest(ctx, t)
+
 			// Create item.
 			exampleItem := fakes.BuildFakeItem()
 			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
+			createdItem, err := testClient.CreateItem(ctx, exampleItemInput)
 			checkValueAndError(t, createdItem, err)
 
 			// Assert item equality.
 			checkItemEquality(t, exampleItem, createdItem)
 
 			// Clean up.
-			err = todoClient.ArchiveItem(ctx, createdItem.ID)
+			err = testClient.ArchiveItem(ctx, createdItem.ID)
 			assert.NoError(t, err)
 
-			actual, err := todoClient.GetItem(ctx, createdItem.ID)
+			actual, err := testClient.GetItem(ctx, createdItem.ID)
 			checkValueAndError(t, actual, err)
 			checkItemEquality(t, exampleItem, actual)
 			assert.NotNil(t, actual.ArchivedOn)
@@ -58,20 +57,22 @@ func TestItems(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			_, testClient := createUserAndClientForTest(ctx, t)
+
 			// Create items.
 			var expected []*types.Item
 			for i := 0; i < 5; i++ {
 				// Create item.
 				exampleItem := fakes.BuildFakeItem()
 				exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-				createdItem, itemCreationErr := todoClient.CreateItem(ctx, exampleItemInput)
+				createdItem, itemCreationErr := testClient.CreateItem(ctx, exampleItemInput)
 				checkValueAndError(t, createdItem, itemCreationErr)
 
 				expected = append(expected, createdItem)
 			}
 
 			// Assert item list equality.
-			actual, err := todoClient.GetItems(ctx, nil)
+			actual, err := testClient.GetItems(ctx, nil)
 			checkValueAndError(t, actual, err)
 			assert.True(
 				t,
@@ -83,7 +84,7 @@ func TestItems(test *testing.T) {
 
 			// Clean up.
 			for _, createdItem := range actual.Items {
-				err = todoClient.ArchiveItem(ctx, createdItem.ID)
+				err = testClient.ArchiveItem(ctx, createdItem.ID)
 				assert.NoError(t, err)
 			}
 		})
@@ -94,6 +95,8 @@ func TestItems(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			_, testClient := createUserAndClientForTest(ctx, t)
+
 			// Create items.
 			exampleItem := fakes.BuildFakeItem()
 			var expected []*types.Item
@@ -101,7 +104,7 @@ func TestItems(test *testing.T) {
 				// Create item.
 				exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 				exampleItemInput.Name = fmt.Sprintf("%s %d", exampleItemInput.Name, i)
-				createdItem, itemCreationErr := todoClient.CreateItem(ctx, exampleItemInput)
+				createdItem, itemCreationErr := testClient.CreateItem(ctx, exampleItemInput)
 				checkValueAndError(t, createdItem, itemCreationErr)
 
 				expected = append(expected, createdItem)
@@ -110,7 +113,7 @@ func TestItems(test *testing.T) {
 			exampleLimit := uint8(20)
 
 			// Assert item list equality.
-			actual, err := todoClient.SearchItems(ctx, exampleItem.Name, exampleLimit)
+			actual, err := testClient.SearchItems(ctx, exampleItem.Name, exampleLimit)
 			checkValueAndError(t, actual, err)
 			assert.True(
 				t,
@@ -122,7 +125,7 @@ func TestItems(test *testing.T) {
 
 			// Clean up.
 			for _, createdItem := range expected {
-				err = todoClient.ArchiveItem(ctx, createdItem.ID)
+				err = testClient.ArchiveItem(ctx, createdItem.ID)
 				assert.NoError(t, err)
 			}
 		})
@@ -131,24 +134,9 @@ func TestItems(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
-			// create user and oauth2 client A.
-			userA, err := testutil.CreateObligatoryUser(ctx, urlToUse, "", debug)
-			require.NoError(t, err)
-
-			ca, err := testutil.CreateObligatoryClient(ctx, urlToUse, userA)
-			require.NoError(t, err)
-
-			clientA, err := client.NewClient(
-				ctx,
-				ca.ClientID,
-				ca.ClientSecret,
-				todoClient.URL,
-				noop.NewLogger(),
-				buildHTTPClient(),
-				ca.Scopes,
-				true,
-			)
-			checkValueAndError(test, clientA, err)
+			exampleLimit := uint8(20)
+			_, clientA := createUserAndClientForTest(ctx, t)
+			_, clientB := createUserAndClientForTest(ctx, t)
 
 			// Create items for user A.
 			exampleItemA := fakes.BuildFakeItem()
@@ -163,28 +151,7 @@ func TestItems(test *testing.T) {
 
 				createdForA = append(createdForA, createdItem)
 			}
-
-			exampleLimit := uint8(20)
 			query := exampleItemA.Name
-
-			// create user and oauth2 client B.
-			userB, err := testutil.CreateObligatoryUser(ctx, urlToUse, "", debug)
-			require.NoError(t, err)
-
-			cb, err := testutil.CreateObligatoryClient(ctx, urlToUse, userB)
-			require.NoError(t, err)
-
-			clientB, err := client.NewClient(
-				ctx,
-				cb.ClientID,
-				cb.ClientSecret,
-				todoClient.URL,
-				noop.NewLogger(),
-				buildHTTPClient(),
-				cb.Scopes,
-				true,
-			)
-			checkValueAndError(test, clientB, err)
 
 			// Create items for user B.
 			exampleItemB := fakes.BuildFakeItem()
@@ -232,8 +199,10 @@ func TestItems(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			_, testClient := createUserAndClientForTest(ctx, t)
+
 			// Attempt to fetch nonexistent item.
-			actual, err := todoClient.ItemExists(ctx, nonexistentID)
+			actual, err := testClient.ItemExists(ctx, nonexistentID)
 			assert.NoError(t, err)
 			assert.False(t, actual)
 		})
@@ -242,19 +211,21 @@ func TestItems(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			_, testClient := createUserAndClientForTest(ctx, t)
+
 			// Create item.
 			exampleItem := fakes.BuildFakeItem()
 			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
+			createdItem, err := testClient.CreateItem(ctx, exampleItemInput)
 			checkValueAndError(t, createdItem, err)
 
 			// Fetch item.
-			actual, err := todoClient.ItemExists(ctx, createdItem.ID)
+			actual, err := testClient.ItemExists(ctx, createdItem.ID)
 			assert.NoError(t, err)
 			assert.True(t, actual)
 
 			// Clean up item.
-			assert.NoError(t, todoClient.ArchiveItem(ctx, createdItem.ID))
+			assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
 		})
 	})
 
@@ -263,8 +234,10 @@ func TestItems(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			_, testClient := createUserAndClientForTest(ctx, t)
+
 			// Attempt to fetch nonexistent item.
-			_, err := todoClient.GetItem(ctx, nonexistentID)
+			_, err := testClient.GetItem(ctx, nonexistentID)
 			assert.Error(t, err)
 		})
 
@@ -272,21 +245,23 @@ func TestItems(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			_, testClient := createUserAndClientForTest(ctx, t)
+
 			// Create item.
 			exampleItem := fakes.BuildFakeItem()
 			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
+			createdItem, err := testClient.CreateItem(ctx, exampleItemInput)
 			checkValueAndError(t, createdItem, err)
 
 			// Fetch item.
-			actual, err := todoClient.GetItem(ctx, createdItem.ID)
+			actual, err := testClient.GetItem(ctx, createdItem.ID)
 			checkValueAndError(t, actual, err)
 
 			// Assert item equality.
 			checkItemEquality(t, exampleItem, actual)
 
 			// Clean up item.
-			assert.NoError(t, todoClient.ArchiveItem(ctx, createdItem.ID))
+			assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
 		})
 	})
 
@@ -295,28 +270,32 @@ func TestItems(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			_, testClient := createUserAndClientForTest(ctx, t)
+
 			exampleItem := fakes.BuildFakeItem()
 			exampleItem.ID = nonexistentID
 
-			assert.Error(t, todoClient.UpdateItem(ctx, exampleItem))
+			assert.Error(t, testClient.UpdateItem(ctx, exampleItem))
 		})
 
 		t.Run("it should be updatable", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			_, testClient := createUserAndClientForTest(ctx, t)
+
 			// Create item.
 			exampleItem := fakes.BuildFakeItem()
 			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
+			createdItem, err := testClient.CreateItem(ctx, exampleItemInput)
 			checkValueAndError(t, createdItem, err)
 
 			// Change item.
 			createdItem.Update(converters.ConvertItemToItemUpdateInput(exampleItem))
-			assert.NoError(t, todoClient.UpdateItem(ctx, createdItem))
+			assert.NoError(t, testClient.UpdateItem(ctx, createdItem))
 
 			// Fetch item.
-			actual, err := todoClient.GetItem(ctx, createdItem.ID)
+			actual, err := testClient.GetItem(ctx, createdItem.ID)
 			checkValueAndError(t, actual, err)
 
 			// Assert item equality.
@@ -324,7 +303,7 @@ func TestItems(test *testing.T) {
 			assert.NotNil(t, actual.LastUpdatedOn)
 
 			// Clean up item.
-			assert.NoError(t, todoClient.ArchiveItem(ctx, createdItem.ID))
+			assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
 		})
 	})
 
@@ -333,21 +312,25 @@ func TestItems(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
-			assert.Error(t, todoClient.ArchiveItem(ctx, nonexistentID))
+			_, testClient := createUserAndClientForTest(ctx, t)
+
+			assert.Error(t, testClient.ArchiveItem(ctx, nonexistentID))
 		})
 
 		t.Run("should be able to be deleted", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			_, testClient := createUserAndClientForTest(ctx, t)
+
 			// Create item.
 			exampleItem := fakes.BuildFakeItem()
 			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
+			createdItem, err := testClient.CreateItem(ctx, exampleItemInput)
 			checkValueAndError(t, createdItem, err)
 
 			// Clean up item.
-			assert.NoError(t, todoClient.ArchiveItem(ctx, createdItem.ID))
+			assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
 		})
 	})
 
@@ -368,18 +351,20 @@ func TestItems(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			_, testClient := createUserAndClientForTest(ctx, t)
+
 			// Create item.
 			exampleItem := fakes.BuildFakeItem()
 			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 			updateTo := fakes.BuildFakeItem()
 			updateToInput := fakes.BuildFakeItemUpdateInputFromItem(updateTo)
-			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
+			createdItem, err := testClient.CreateItem(ctx, exampleItemInput)
 			checkValueAndError(t, createdItem, err)
 
 			// Change item.
 			expectedChanges := createdItem.Update(updateToInput)
 			require.NotEmpty(t, expectedChanges)
-			err = todoClient.UpdateItem(ctx, createdItem)
+			err = testClient.UpdateItem(ctx, createdItem)
 			assert.NoError(t, err)
 
 			// fetch audit log entries
@@ -388,26 +373,28 @@ func TestItems(test *testing.T) {
 			assert.Len(t, actual, 2)
 
 			// Clean up item.
-			assert.NoError(t, todoClient.ArchiveItem(ctx, createdItem.ID))
+			assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
 		})
 
 		t.Run("it should not be auditable by a non-admin", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			_, testClient := createUserAndClientForTest(ctx, t)
+
 			// Create item.
 			exampleItem := fakes.BuildFakeItem()
 			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-			createdItem, err := todoClient.CreateItem(ctx, exampleItemInput)
+			createdItem, err := testClient.CreateItem(ctx, exampleItemInput)
 			checkValueAndError(t, createdItem, err)
 
 			// fetch audit log entries
-			actual, err := todoClient.GetAuditLogForItem(ctx, createdItem.ID)
+			actual, err := testClient.GetAuditLogForItem(ctx, createdItem.ID)
 			assert.Error(t, err)
 			assert.Nil(t, actual)
 
 			// Clean up item.
-			assert.NoError(t, todoClient.ArchiveItem(ctx, createdItem.ID))
+			assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
 		})
 	})
 }

@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -109,8 +109,8 @@ func IsUp(ctx context.Context, address string) bool {
 	return res.StatusCode == http.StatusOK
 }
 
-// CreateObligatoryUser creates a user for the sake of having an OAuth2 client.
-func CreateObligatoryUser(ctx context.Context, address, username string, debug bool) (*types.User, error) {
+// CreateServiceUser creates a user.
+func CreateServiceUser(ctx context.Context, address, username string, debug bool) (*types.User, error) {
 	if username == "" {
 		username = fake.Password(true, true, true, false, false, 32)
 	}
@@ -120,7 +120,7 @@ func CreateObligatoryUser(ctx context.Context, address, username string, debug b
 		return nil, parseErr
 	}
 
-	c, clientInitErr := client.NewSimpleClient(ctx, tu, debug)
+	c, clientInitErr := httpclient.NewSimpleClient(ctx, tu, debug)
 	if clientInitErr != nil {
 		return nil, clientInitErr
 	}
@@ -225,8 +225,8 @@ func getLoginCookie(ctx context.Context, serviceURL string, u *types.User) (*htt
 	return nil, errors.New("no cookie found :(")
 }
 
-// CreateObligatoryClient creates the OAuth2 client we need for tests.
-func CreateObligatoryClient(ctx context.Context, serviceURL string, u *types.User) (*types.OAuth2Client, error) {
+// CreateObligatoryOAuth2Client creates the OAuth2 httpclient we need for tests.
+func CreateObligatoryOAuth2Client(ctx context.Context, serviceURL string, u *types.User) (*types.OAuth2Client, error) {
 	if u == nil {
 		return nil, errors.New("user is nil")
 	}

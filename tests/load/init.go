@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -32,12 +32,12 @@ func init() {
 	logger.WithValue("url", urlToUse).Info("checking server")
 	testutil.EnsureServerIsUp(ctx, urlToUse)
 
-	u, err := testutil.CreateObligatoryUser(ctx, urlToUse, "", debug)
+	u, err := testutil.CreateServiceUser(ctx, urlToUse, "", debug)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	oa2Client, err = testutil.CreateObligatoryClient(ctx, urlToUse, u)
+	oa2Client, err = testutil.CreateObligatoryOAuth2Client(ctx, urlToUse, u)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -55,13 +55,13 @@ func buildHTTPClient() *http.Client {
 	return httpc
 }
 
-func initializeClient(oa2Client *types.OAuth2Client) *client.V1Client {
+func initializeClient(oa2Client *types.OAuth2Client) *httpclient.V1Client {
 	uri, err := url.Parse(urlToUse)
 	if err != nil {
 		panic(err)
 	}
 
-	c, err := client.NewClient(
+	c, err := httpclient.NewClient(
 		context.Background(),
 		oa2Client.ClientID,
 		oa2Client.ClientSecret,

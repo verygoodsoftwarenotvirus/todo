@@ -44,6 +44,25 @@ func BuildFakeOAuth2ClientList() *types.OAuth2ClientList {
 	}
 }
 
+// BuildFakeOAuth2ClientCreationInput builds a faked OAuth2ClientCreationInput.
+func BuildFakeOAuth2ClientCreationInput() *types.OAuth2ClientCreationInput {
+	client := BuildFakeOAuth2Client()
+
+	return &types.OAuth2ClientCreationInput{
+		UserLoginInput: types.UserLoginInput{
+			Username:  fake.Username(),
+			Password:  fake.Password(true, true, true, true, true, 32),
+			TOTPToken: fmt.Sprintf("0%s", fake.Zip()),
+		},
+		Name:          client.Name,
+		Scopes:        client.Scopes,
+		ClientID:      client.ClientID,
+		ClientSecret:  client.ClientSecret,
+		RedirectURI:   client.RedirectURI,
+		BelongsToUser: client.BelongsToUser,
+	}
+}
+
 // BuildFakeOAuth2ClientCreationInputFromClient builds a faked OAuth2ClientCreationInput.
 func BuildFakeOAuth2ClientCreationInputFromClient(client *types.OAuth2Client) *types.OAuth2ClientCreationInput {
 	return &types.OAuth2ClientCreationInput{

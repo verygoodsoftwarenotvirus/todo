@@ -5,8 +5,7 @@ import (
 	"testing"
 	"time"
 
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -64,47 +63,72 @@ func checkOAuth2ClientEquality(t *testing.T, expected, actual *types.OAuth2Clien
 	assert.Nil(t, actual.ArchivedOn)
 }
 
+func createOAuth2Client(ctx context.Context, t *testing.T, testUser *types.User, testClient *httpclient.V1Client) (*types.OAuth2ClientCreationInput, *types.OAuth2Client) {
+	cookie, err := testClient.Login(ctx, &types.UserLoginInput{
+		Username:  testUser.Username,
+		Password:  testUser.HashedPassword,
+		TOTPToken: generateTOTPTokenForUser(t, testUser),
+	})
+	require.NoError(t, err)
+
+	clientInput := fakes.BuildFakeOAuth2ClientCreationInput()
+	input := &types.OAuth2ClientCreationInput{
+		UserLoginInput: types.UserLoginInput{
+			Username:  testUser.Username,
+			Password:  testUser.HashedPassword,
+			TOTPToken: generateTOTPTokenForUser(t, testUser),
+		},
+		Name:         clientInput.Name,
+		ClientID:     clientInput.ClientID,
+		ClientSecret: clientInput.ClientSecret,
+		RedirectURI:  clientInput.RedirectURI,
+		Scopes:       []string{"*"},
+	}
+
+	createdClient, err := testClient.CreateOAuth2Client(ctx, cookie, input)
+
+	checkValueAndError(t, createdClient, err)
+	checkOAuth2ClientEquality(t, convertInputToClient(input), createdClient)
+
+	return input, createdClient
+}
+
 func TestOAuth2Clients(test *testing.T) {
-	_ctx := context.Background()
-
-	// create user.
-	x, y, cookie := buildDummyUser(_ctx, test)
-	assert.NotNil(test, cookie)
-
-	twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(x.TwoFactorQRCode)
-	require.NoError(test, err)
-
-	input := buildDummyOAuth2ClientInput(test, x.Username, y.Password, twoFactorSecret)
-	premade, err := todoClient.CreateOAuth2Client(_ctx, cookie, input)
-	checkValueAndError(test, premade, err)
-
-	testClient, err := client.NewClient(
-		_ctx,
-		premade.ClientID,
-		premade.ClientSecret,
-		todoClient.URL,
-		noop.NewLogger(),
-		todoClient.PlainClient(),
-		premade.Scopes,
-		debug,
-	)
-	require.NoError(test, err, "error setting up auxiliary client")
-
 	test.Run("Creating", func(t *testing.T) {
 		t.Run("should be creatable", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
-			// Create oauth2Client.
-			actual, err := testClient.CreateOAuth2Client(ctx, cookie, input)
-			checkValueAndError(t, actual, err)
+			testUser, testClient := createUserAndClientForTest(ctx, t)
+			cookie, err := testClient.Login(ctx, &types.UserLoginInput{
+				Username:  testUser.Username,
+				Password:  testUser.HashedPassword,
+				TOTPToken: generateTOTPTokenForUser(t, testUser),
+			})
+			require.NoError(t, err)
 
-			// Assert oauth2Client equality.
-			checkOAuth2ClientEquality(t, convertInputToClient(input), actual)
+			// create oauth2 client
+			clientInput := fakes.BuildFakeOAuth2ClientCreationInput()
+			input := &types.OAuth2ClientCreationInput{
+				UserLoginInput: types.UserLoginInput{
+					Username:  testUser.Username,
+					Password:  testUser.HashedPassword,
+					TOTPToken: generateTOTPTokenForUser(t, testUser),
+				},
+				Name:         clientInput.Name,
+				ClientID:     clientInput.ClientID,
+				ClientSecret: clientInput.ClientSecret,
+				RedirectURI:  clientInput.RedirectURI,
+				Scopes:       []string{"*"},
+			}
+
+			createdClient, err := testClient.CreateOAuth2Client(ctx, cookie, input)
+
+			checkValueAndError(t, createdClient, err)
+			checkOAuth2ClientEquality(t, convertInputToClient(input), createdClient)
 
 			// Clean up.
-			err = testClient.ArchiveOAuth2Client(ctx, actual.ID)
-			assert.NoError(t, err)
+			assert.NoError(t, testClient.ArchiveOAuth2Client(ctx, createdClient.ID))
 		})
 	})
 
@@ -112,6 +136,8 @@ func TestOAuth2Clients(test *testing.T) {
 		t.Run("it should return an error when trying to read one that doesn't exist", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
+
+			_, testClient := createUserAndClientForTest(ctx, t)
 
 			// Fetch oauth2Client.
 			_, err := testClient.GetOAuth2Client(ctx, nonexistentID)
@@ -122,13 +148,13 @@ func TestOAuth2Clients(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			testUser, testClient := createUserAndClientForTest(ctx, t)
+
 			// Create oauth2Client.
-			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, twoFactorSecret)
-			c, err := testClient.CreateOAuth2Client(ctx, cookie, input)
-			checkValueAndError(t, c, err)
+			input, createdClient := createOAuth2Client(ctx, t, testUser, testClient)
 
 			// Fetch oauth2Client.
-			actual, err := testClient.GetOAuth2Client(ctx, c.ID)
+			actual, err := testClient.GetOAuth2Client(ctx, createdClient.ID)
 			checkValueAndError(t, actual, err)
 
 			// Assert oauth2Client equality.
@@ -145,39 +171,39 @@ func TestOAuth2Clients(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			testUser, testClient := createUserAndClientForTest(ctx, t)
+
 			// Create oauth2Client.
-			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, twoFactorSecret)
-			premade, err := testClient.CreateOAuth2Client(ctx, cookie, input)
-			checkValueAndError(t, premade, err)
+			_, createdClient := createOAuth2Client(ctx, t, testUser, testClient)
 
 			// Clean up.
-			err = testClient.ArchiveOAuth2Client(ctx, premade.ID)
-			assert.NoError(t, err)
+			assert.NoError(t, testClient.ArchiveOAuth2Client(ctx, createdClient.ID))
 		})
 
 		t.Run("should be unable to authorize after being deleted", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
-			// create user.
-			createdUser, createdUserInput, _ := buildDummyUser(ctx, test)
-			assert.NotNil(test, cookie)
-
-			createdUserTwoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(createdUser.TwoFactorQRCode)
+			testUser, testClient := createUserAndClientForTest(ctx, t)
+			cookie, err := testClient.Login(ctx, &types.UserLoginInput{
+				Username:  testUser.Username,
+				Password:  testUser.HashedPassword,
+				TOTPToken: generateTOTPTokenForUser(t, testUser),
+			})
 			require.NoError(t, err)
 
-			input := buildDummyOAuth2ClientInput(test, createdUserInput.Username, createdUserInput.Password, createdUserTwoFactorSecret)
-			premade, err := todoClient.CreateOAuth2Client(ctx, cookie, input)
+			input := buildDummyOAuth2ClientInput(test, testUser.Username, testUser.HashedPassword, testUser.TwoFactorSecret)
+			premade, err := testClient.CreateOAuth2Client(ctx, cookie, input)
 			checkValueAndError(test, premade, err)
 
 			// archive oauth2Client.
 			require.NoError(t, testClient.ArchiveOAuth2Client(ctx, premade.ID))
 
-			c2, err := client.NewClient(
+			c2, err := httpclient.NewClient(
 				ctx,
 				premade.ClientID,
 				premade.ClientSecret,
-				todoClient.URL,
+				testClient.URL,
 				noop.NewLogger(),
 				buildHTTPClient(),
 				premade.Scopes,
@@ -195,12 +221,13 @@ func TestOAuth2Clients(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			testUser, testClient := createUserAndClientForTest(ctx, t)
+
 			// Create oauth2Clients.
 			var expected []*types.OAuth2Client
 			for i := 0; i < 5; i++ {
-				input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, twoFactorSecret)
-				oac, err := testClient.CreateOAuth2Client(ctx, cookie, input)
-				checkValueAndError(t, oac, err)
+				// Create oauth2Client.
+				_, oac := createOAuth2Client(ctx, t, testUser, testClient)
 				expected = append(expected, oac)
 			}
 
@@ -251,36 +278,36 @@ func TestOAuth2Clients(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			testUser, testClient := createUserAndClientForTest(ctx, t)
+
 			// Create oauth2Client.
-			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, twoFactorSecret)
-			createdOAuth2Client, err := testClient.CreateOAuth2Client(ctx, cookie, input)
-			checkValueAndError(t, createdOAuth2Client, err)
+			_, createdClient := createOAuth2Client(ctx, t, testUser, testClient)
 
 			// fetch audit log entries
-			actual, err := adminClient.GetAuditLogForOAuth2Client(ctx, createdOAuth2Client.ID)
+			actual, err := adminClient.GetAuditLogForOAuth2Client(ctx, createdClient.ID)
 			assert.NoError(t, err)
 			assert.Len(t, actual, 1)
 
 			// Clean up item.
-			assert.NoError(t, testClient.ArchiveOAuth2Client(ctx, createdOAuth2Client.ID))
+			assert.NoError(t, testClient.ArchiveOAuth2Client(ctx, createdClient.ID))
 		})
 
 		t.Run("it should not be auditable by a non-admin", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			testUser, testClient := createUserAndClientForTest(ctx, t)
+
 			// Create oauth2Client.
-			input := buildDummyOAuth2ClientInput(t, x.Username, y.Password, twoFactorSecret)
-			createdOAuth2Client, err := testClient.CreateOAuth2Client(ctx, cookie, input)
-			checkValueAndError(t, createdOAuth2Client, err)
+			_, createdClient := createOAuth2Client(ctx, t, testUser, testClient)
 
 			// fetch audit log entries
-			actual, err := testClient.GetAuditLogForOAuth2Client(ctx, createdOAuth2Client.ID)
+			actual, err := testClient.GetAuditLogForOAuth2Client(ctx, createdClient.ID)
 			assert.Error(t, err)
 			assert.Nil(t, actual)
 
 			// Clean up item.
-			assert.NoError(t, testClient.ArchiveOAuth2Client(ctx, createdOAuth2Client.ID))
+			assert.NoError(t, testClient.ArchiveOAuth2Client(ctx, createdClient.ID))
 		})
 	})
 }

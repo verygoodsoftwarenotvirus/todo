@@ -356,6 +356,8 @@ func (s *Service) buildCookie(value string, expiry time.Time) (*http.Cookie, err
 		Secure:   s.config.SecureCookiesOnly,
 		Domain:   s.config.CookieDomain,
 		Expires:  expiry,
+		SameSite: http.SameSiteStrictMode,
+		MaxAge:   int(time.Until(expiry).Seconds()),
 	}
 
 	return cookie, nil

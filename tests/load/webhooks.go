@@ -5,13 +5,13 @@ import (
 	"math/rand"
 	"net/http"
 
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
 // fetchRandomWebhook retrieves a random webhook from the list of available webhooks.
-func fetchRandomWebhook(c *client.V1Client) *types.Webhook {
+func fetchRandomWebhook(c *httpclient.V1Client) *types.Webhook {
 	webhooks, err := c.GetWebhooks(context.Background(), nil)
 	if err != nil || webhooks == nil || len(webhooks.Webhooks) == 0 {
 		return nil
@@ -22,7 +22,7 @@ func fetchRandomWebhook(c *client.V1Client) *types.Webhook {
 	return &webhooks.Webhooks[randIndex]
 }
 
-func buildWebhookActions(c *client.V1Client) map[string]*Action {
+func buildWebhookActions(c *httpclient.V1Client) map[string]*Action {
 	return map[string]*Action{
 		"GetWebhooks": {
 			Name: "GetWebhooks",

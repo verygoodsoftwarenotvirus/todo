@@ -189,6 +189,36 @@ func (c *V1Client) Login(ctx context.Context, input *types.UserLoginInput) (*htt
 	return nil, errors.New("no cookies returned from request")
 }
 
+// BuildLogoutRequest builds a de-authorizing HTTP request.
+func (c *V1Client) BuildLogoutRequest(ctx context.Context) (*http.Request, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.End()
+
+	uri := c.buildVersionlessURL(nil, usersBasePath, "logout")
+
+	return http.NewRequestWithContext(ctx, http.MethodPost, uri, nil)
+}
+
+// Logout logs a user out.
+func (c *V1Client) Logout(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.End()
+
+	req, err := c.BuildLogoutRequest(ctx)
+	if err != nil {
+		return fmt.Errorf("error building login request: %w", err)
+	}
+
+	res, err := c.authedClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("encountered error executing login request: %w", err)
+	}
+
+	c.closeResponseBody(res)
+
+	return nil
+}
+
 // BuildVerifyTOTPSecretRequest builds a request to validate a TOTP secret.
 func (c *V1Client) BuildVerifyTOTPSecretRequest(ctx context.Context, userID uint64, token string) (*http.Request, error) {
 	ctx, span := tracing.StartSpan(ctx)

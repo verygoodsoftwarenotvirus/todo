@@ -2,66 +2,18 @@ package integration
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/base32"
 	"fmt"
-	"net/http"
 	"strings"
 	"testing"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
-	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func init() {
-	b := make([]byte, 64)
-	if _, err := rand.Read(b); err != nil {
-		panic(err)
-	}
-}
-
-// randString produces a random string.
-// https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
-func randString() (string, error) {
-	b := make([]byte, 64)
-	// Note that err == nil only if we read len(b) bytes
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-
-	return base32.StdEncoding.EncodeToString(b), nil
-}
-
-func buildDummyUser(ctx context.Context, t *testing.T) (*types.UserCreationResponse, *types.UserCreationInput, *http.Cookie) {
-	t.Helper()
-
-	// build user creation route input.
-	userInput := fakes.BuildFakeUserCreationInput()
-	user, err := todoClient.CreateUser(ctx, userInput)
-	require.NotNil(t, user)
-	require.NoError(t, err)
-
-	twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(user.TwoFactorQRCode)
-	require.NoError(t, err)
-
-	token, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
-	require.NoError(t, err)
-	require.NoError(t, todoClient.VerifyTOTPSecret(ctx, user.ID, token))
-
-	cookie := loginUser(ctx, t, userInput.Username, userInput.Password, twoFactorSecret)
-
-	require.NoError(t, err)
-	require.NotNil(t, cookie)
-
-	return user, userInput, cookie
-}
 
 func checkUserCreationEquality(t *testing.T, expected *types.UserCreationInput, actual *types.UserCreationResponse) {
 	t.Helper()
@@ -75,7 +27,7 @@ func checkUserCreationEquality(t *testing.T, expected *types.UserCreationInput, 
 	assert.NotZero(t, actual.CreatedOn)
 }
 
-func checkUserEquality(t *testing.T, expected *types.UserCreationInput, actual *types.User) {
+func checkUserEquality(t *testing.T, expected, actual *types.User) {
 	t.Helper()
 
 	assert.NotZero(t, actual.ID)
@@ -91,16 +43,18 @@ func TestUsers(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			testClient := buildSimpleClient(ctx, t)
+
 			// Create user.
 			exampleUserInput := fakes.BuildFakeUserCreationInput()
-			actual, err := todoClient.CreateUser(ctx, exampleUserInput)
+			actual, err := testClient.CreateUser(ctx, exampleUserInput)
 			checkValueAndError(t, actual, err)
 
 			// Assert user equality.
 			checkUserCreationEquality(t, exampleUserInput, actual)
 
 			// Clean up.
-			assert.NoError(t, todoClient.ArchiveUser(ctx, actual.ID))
+			assert.NoError(t, adminClient.ArchiveUser(ctx, actual.ID))
 		})
 	})
 
@@ -110,7 +64,7 @@ func TestUsers(test *testing.T) {
 			defer span.End()
 
 			// Fetch user.
-			actual, err := todoClient.GetUser(ctx, nonexistentID)
+			actual, err := adminClient.GetUser(ctx, nonexistentID)
 			assert.Nil(t, actual)
 			assert.Error(t, err)
 		})
@@ -119,34 +73,20 @@ func TestUsers(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
-			// Create user.
-			exampleUserInput := fakes.BuildFakeUserCreationInput()
-			premade, err := todoClient.CreateUser(ctx, exampleUserInput)
-			require.NoError(t, err)
-
-			twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(premade.TwoFactorQRCode)
-			assert.NoError(t, err)
-
-			checkValueAndError(t, premade, err)
-			assert.NotEmpty(t, twoFactorSecret)
-
-			secretVerificationToken, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
-			checkValueAndError(t, secretVerificationToken, err)
-
-			assert.NoError(t, todoClient.VerifyTOTPSecret(ctx, premade.ID, secretVerificationToken))
+			createdUser, _ := createUserAndClientForTest(ctx, t)
 
 			// Fetch user.
-			actual, err := adminClient.GetUser(ctx, premade.ID)
+			actual, err := adminClient.GetUser(ctx, createdUser.ID)
 			if err != nil {
-				t.Logf("error encountered trying to fetch user %q: %v\n", premade.Username, err)
+				t.Logf("error encountered trying to fetch user %q: %v\n", createdUser.Username, err)
 			}
 			checkValueAndError(t, actual, err)
 
 			// Assert user equality.
-			checkUserEquality(t, exampleUserInput, actual)
+			checkUserEquality(t, createdUser, actual)
 
 			// Clean up.
-			assert.NoError(t, todoClient.ArchiveUser(ctx, actual.ID))
+			assert.NoError(t, adminClient.ArchiveUser(ctx, actual.ID))
 		})
 	})
 
@@ -165,8 +105,10 @@ func TestUsers(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			_, testClient := createUserAndClientForTest(ctx, t)
+
 			// Search For user.
-			actual, err := todoClient.SearchForUsersByUsername(ctx, "   this is a really long string that contains characters unlikely to yield any real results   ")
+			actual, err := testClient.SearchForUsersByUsername(ctx, "   this is a really long string that contains characters unlikely to yield any real results   ")
 			assert.Nil(t, actual)
 			assert.Error(t, err)
 		})
@@ -180,7 +122,7 @@ func TestUsers(test *testing.T) {
 			// create users
 			createdUserIDs := []uint64{}
 			for i := 0; i < 5; i++ {
-				user, err := testutil.CreateObligatoryUser(ctx, urlToUse, fmt.Sprintf("%s%d", exampleUsername, i), debug)
+				user, err := testutil.CreateServiceUser(ctx, urlToUse, fmt.Sprintf("%s%d", exampleUsername, i), debug)
 				require.NoError(t, err)
 				createdUserIDs = append(createdUserIDs, user.ID)
 			}
@@ -207,9 +149,11 @@ func TestUsers(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			testClient := buildSimpleClient(ctx, t)
+
 			// Create user.
 			exampleUserInput := fakes.BuildFakeUserCreationInput()
-			u, err := todoClient.CreateUser(ctx, exampleUserInput)
+			u, err := testClient.CreateUser(ctx, exampleUserInput)
 			assert.NoError(t, err)
 			assert.NotNil(t, u)
 
@@ -219,7 +163,7 @@ func TestUsers(test *testing.T) {
 			}
 
 			// Execute.
-			err = todoClient.ArchiveUser(ctx, u.ID)
+			err = adminClient.ArchiveUser(ctx, u.ID)
 			assert.NoError(t, err)
 		})
 	})
@@ -245,10 +189,12 @@ func TestUsers(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			testClient := buildSimpleClient(ctx, t)
+
 			// Create user.
 			exampleUser := fakes.BuildFakeUser()
 			exampleUserInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
-			createdUser, err := todoClient.CreateUser(ctx, exampleUserInput)
+			createdUser, err := testClient.CreateUser(ctx, exampleUserInput)
 			checkValueAndError(t, createdUser, err)
 
 			// fetch audit log entries
@@ -257,26 +203,28 @@ func TestUsers(test *testing.T) {
 			assert.Len(t, actual, 1)
 
 			// Clean up item.
-			assert.NoError(t, todoClient.ArchiveUser(ctx, createdUser.ID))
+			assert.NoError(t, adminClient.ArchiveUser(ctx, createdUser.ID))
 		})
 
 		t.Run("it should not be auditable by a non-admin", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			testClient := buildSimpleClient(ctx, t)
+
 			// Create user.
 			exampleUser := fakes.BuildFakeUser()
 			exampleUserInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
-			createdUser, err := todoClient.CreateUser(ctx, exampleUserInput)
+			createdUser, err := testClient.CreateUser(ctx, exampleUserInput)
 			checkValueAndError(t, createdUser, err)
 
 			// fetch audit log entries
-			actual, err := todoClient.GetAuditLogForUser(ctx, createdUser.ID)
+			actual, err := testClient.GetAuditLogForUser(ctx, createdUser.ID)
 			assert.Error(t, err)
 			assert.Nil(t, actual)
 
 			// Clean up item.
-			assert.NoError(t, todoClient.ArchiveUser(ctx, createdUser.ID))
+			assert.NoError(t, adminClient.ArchiveUser(ctx, createdUser.ID))
 		})
 	})
 }

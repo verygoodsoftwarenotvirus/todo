@@ -305,7 +305,15 @@ issues:
         - wsl
       text: "return statements should not be cuddled if block has more than two lines"
 
-    - path: internal/pkg/exampledata # TODO: DELETEME
+    - path: internal/pkg/database/queriers/mariadb/migrations.go
+      linters:
+        - gomnd
+
+    - path: internal/pkg/database/queriers/postgres/migrations.go
+      linters:
+        - gomnd
+
+    - path: internal/pkg/database/queriers/sqlite/migrations.go
       linters:
         - gomnd
 

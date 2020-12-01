@@ -31,7 +31,7 @@ setup: $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) revendor frontend-vendor rewire co
 
 .PHONY: config_files
 config_files:
-	go run cmd/config_gen/main.go
+	go run cmd/tools/config_gen/main.go
 
 ## Go-specific prerequisite stuff
 

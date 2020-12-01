@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
@@ -28,8 +28,8 @@ type (
 	}
 )
 
-// RandomAction takes a client and returns a closure which is an action.
-func RandomAction(c *client.V1Client) *Action {
+// RandomAction takes a httpclient and returns a closure which is an action.
+func RandomAction(c *httpclient.V1Client) *Action {
 	allActions := map[string]*Action{
 		"GetHealthCheck": {
 			Name: "GetHealthCheck",

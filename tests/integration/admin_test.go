@@ -48,7 +48,7 @@ func TestAdmin(test *testing.T) {
 			assert.Error(t, subsequentCheckErr)
 
 			// Clean up.
-			assert.NoError(t, todoClient.ArchiveUser(ctx, user.ID))
+			assert.NoError(t, adminClient.ArchiveUser(ctx, user.ID))
 		})
 	})
 }

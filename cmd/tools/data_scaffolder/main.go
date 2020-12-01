@@ -60,7 +60,7 @@ func main() {
 
 	for i := 0; i < count; i++ {
 		// create user.
-		createdUser, err := testutil.CreateObligatoryUser(ctx, uri, "", debug)
+		createdUser, err := testutil.CreateServiceUser(ctx, uri, "", debug)
 		if err != nil {
 			quitter.ComplainAndQuit(fmt.Errorf("error creating user #%d: %w", i, err))
 		}
@@ -75,7 +75,7 @@ func main() {
 		for j := 0; j < count; j++ {
 			iterationLogger := userLogger.WithValue("iteration", j)
 
-			createdOAuth2Client, err := testutil.CreateObligatoryClient(ctx, uri, createdUser)
+			createdOAuth2Client, err := testutil.CreateObligatoryOAuth2Client(ctx, uri, createdUser)
 			if err != nil {
 				quitter.ComplainAndQuit(fmt.Errorf("error creating oauth2 client #%d for user #%d: %w", j, i, err))
 			}

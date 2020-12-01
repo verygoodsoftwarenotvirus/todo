@@ -6,13 +6,15 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"testing"
 	"time"
 
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
+	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
 )
@@ -27,8 +29,7 @@ const (
 
 var (
 	urlToUse    string
-	adminClient *client.V1Client
-	todoClient  *client.V1Client
+	adminClient *httpclient.V1Client
 
 	premadeAdminUser = &types.User{
 		ID:              1,
@@ -48,23 +49,11 @@ func init() {
 	logger.WithValue("url", urlToUse).Info("checking server")
 	testutil.EnsureServerIsUp(ctx, urlToUse)
 
-	ogUser, err := testutil.CreateObligatoryUser(ctx, urlToUse, "", debug)
+	adminOAuth2Client, err := testutil.CreateObligatoryOAuth2Client(ctx, urlToUse, premadeAdminUser)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	oa2Client, err := testutil.CreateObligatoryClient(ctx, urlToUse, ogUser)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	adminOAuth2Client, err := testutil.CreateObligatoryClient(ctx, urlToUse, premadeAdminUser)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	todoClient = initializeClient(oa2Client)
-	todoClient.Debug = clientsDebug
 	adminClient = initializeClient(adminOAuth2Client)
 	adminClient.Debug = clientsDebug
 
@@ -79,7 +68,7 @@ func buildHTTPClient() *http.Client {
 	}
 }
 
-func initializeClient(oa2Client *types.OAuth2Client) *client.V1Client {
+func initializeClient(oa2Client *types.OAuth2Client) *httpclient.V1Client {
 	uri, err := url.Parse(urlToUse)
 	if err != nil {
 		panic(err)
@@ -90,7 +79,7 @@ func initializeClient(oa2Client *types.OAuth2Client) *client.V1Client {
 		logger = noop.NewLogger()
 	}
 
-	c, err := client.NewClient(
+	c, err := httpclient.NewClient(
 		context.Background(),
 		oa2Client.ClientID,
 		oa2Client.ClientSecret,
@@ -103,6 +92,18 @@ func initializeClient(oa2Client *types.OAuth2Client) *client.V1Client {
 	if err != nil {
 		panic(err)
 	}
+
+	return c
+}
+
+func buildSimpleClient(ctx context.Context, t *testing.T) *httpclient.V1Client {
+	t.Helper()
+
+	uri, err := url.Parse(urlToUse)
+	require.NoError(t, err)
+
+	c, err := httpclient.NewSimpleClient(ctx, uri, false)
+	require.NoError(t, err)
 
 	return c
 }

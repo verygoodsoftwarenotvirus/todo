@@ -218,10 +218,16 @@ export const englishTranslations: SiteTranslationMap = {
         archivedOn: 'Archived On',
       },
       labels: {
-        name: _name,
+        id: 'ID',
+        username: 'Username',
+        isAdmin: 'Is Admin',
+        requiresPasswordChange: 'Requires Password Change?',
+        passwordLastChangedOn: 'Password Last Changed',
+        createdOn: _createdOn,
+        lastUpdatedOn: _lastUpdatedOn,
       },
       inputPlaceholders: {
-        name: 'name',
+        username: 'new username',
       },
     },
     auditLogEntry: {

@@ -109,19 +109,23 @@ function promptDelete(id: number) {
   logger.debug('promptDelete called');
 
   if (confirm(`are you sure you want to delete item #${id}?`)) {
-    V1APIClient.deleteItem(id)
-      .then((response: AxiosResponse<Item>) => {
-        if (response.status === statusCodes.NO_CONTENT) {
-          fetchItems();
-        }
-      })
-      .catch((error: AxiosError<ErrorResponse>) => {
-        if (error.response) {
-          if (error.response.data) {
-            itemRetrievalError = error.response.data.message;
+    if (superstore.frontendOnlyMode) {
+      fetchItems();
+    } else {
+      V1APIClient.deleteItem(id)
+        .then((response: AxiosResponse<Item>) => {
+          if (response.status === statusCodes.NO_CONTENT) {
+            fetchItems();
           }
-        }
-      });
+        })
+        .catch((error: AxiosError<ErrorResponse>) => {
+          if (error.response) {
+            if (error.response.data) {
+              itemRetrievalError = error.response.data.message;
+            }
+          }
+        });
+    }
   }
 }
 </script>

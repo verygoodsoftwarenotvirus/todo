@@ -18,7 +18,7 @@ import { frontendRoutes, statusCodes } from '../../constants';
 import { Superstore } from '../../stores';
 
 import { Logger } from '../../logger';
-import {renderUnixTime} from "../../utils";
+import { renderUnixTime } from '../../utils';
 
 export let webhookID: number = 0;
 
@@ -253,7 +253,6 @@ function fetchAuditLogEntries(): void {
             {/each}
           </ul>
 
-
           <label
             class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
             for="grid-data-types"
@@ -284,9 +283,7 @@ function fetchAuditLogEntries(): void {
           >
             {translationsToUse.labels.createdOn}
           </label>
-          <p id="grid-created-on">
-            {renderUnixTime(webhook.createdOn)}
-          </p>
+          <p id="grid-created-on">{renderUnixTime(webhook.createdOn)}</p>
         </div>
         <div
           class="flex w-full mr-3 mt-4 max-w-full flex-grow justify-end flex-1"
@@ -305,4 +302,3 @@ function fetchAuditLogEntries(): void {
     <AuditLogTable entryFetchFunc="{fetchAuditLogEntries}" />
   {/if}
 </div>
-

@@ -104,21 +104,19 @@ function promptDelete(id: number) {
   logger.debug('promptDelete called');
 
   if (confirm(`are you sure you want to delete oauth2Client #${id}?`)) {
-    const path: string = `/api/v1/oauth2Clients/${id}`;
-
-    V1APIClient.deleteOAuth2Client(id)
-      .then((response: AxiosResponse<OAuth2Client>) => {
-        if (response.status === statusCodes.NO_CONTENT) {
-          fetchOAuth2Clients();
-        }
-      })
-      .catch((error: AxiosError<ErrorResponse>) => {
-        if (error.response) {
-          if (error.response.data) {
-            oauth2ClientRetrievalError = error.response.data.message;
+    if (superstore.frontendOnlyMode) {
+      fetchOAuth2Clients();
+    } else {
+      V1APIClient.deleteOAuth2Client(id)
+        .then((response: AxiosResponse<OAuth2Client>) => {
+          if (response.status === statusCodes.NO_CONTENT) {
+            fetchOAuth2Clients();
           }
-        }
-      });
+        })
+        .catch((error: AxiosError<ErrorResponse>) => {
+          oauth2ClientRetrievalError = error.response?.data?.message;
+        });
+    }
   }
 }
 </script>

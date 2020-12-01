@@ -1,4 +1,5 @@
 <script lang="typescript">
+import { onMount } from 'svelte';
 import { AxiosError, AxiosResponse } from 'axios';
 
 import {
@@ -13,6 +14,7 @@ import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
 import AuditLogTable from '../AuditLogTable/AuditLogTable.svelte';
 import { Superstore } from '../../stores';
+import { renderUnixTime } from '../../utils';
 
 export let location: Location;
 export let userID: number = 0;
@@ -96,6 +98,8 @@ function fetchAuditLogEntries(): Promise<AxiosResponse<AuditLogEntry[]>> {
     return V1APIClient.fetchAuditLogEntriesForUser(userID);
   }
 }
+
+onMount(fetchUser);
 </script>
 
 <div
@@ -118,27 +122,79 @@ function fetchAuditLogEntries(): Promise<AxiosResponse<AuditLogEntry[]>> {
       <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
         <label
           class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-          for="grid-first-name"
+          for="grid-username"
         >
-          {translationsToUse.labels.name}
+          {translationsToUse.labels.username}
         </label>
         <input
           class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-          id="grid-first-name"
+          id="grid-username"
           type="text"
-          placeholder="{translationsToUse.inputPlaceholders.name}"
+          disabled
+          placeholder="{translationsToUse.inputPlaceholders.username}"
           on:keyup="{evaluateChanges}"
           bind:value="{user.username}"
         />
+
+        <div class="m-3 inline-flex">
+          <label
+            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+            for="grid-is-admin"
+          >
+            {translationsToUse.labels.isAdmin}: &nbsp;
+          </label>
+          <div id="grid-is-admin">{user.isAdmin ? 'yes' : 'no'}</div>
+        </div>
+
+        <div></div>
+
+        <div class="m-3 inline-flex">
+          <label
+            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+            for="grid-password-last-changed-on"
+          >
+            {translationsToUse.labels.passwordLastChangedOn}: &nbsp;
+          </label>
+          <div id="grid-password-last-changed-on">
+            {renderUnixTime(user.passwordLastChangedOn)}
+          </div>
+        </div>
+
+        <div></div>
+
+        <div class="m-3 inline-flex">
+          <label
+            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+            for="grid-created-on"
+          >
+            {translationsToUse.labels.createdOn}: &nbsp;
+          </label>
+          <p id="grid-created-on">{renderUnixTime(user.createdOn)}</p>
+        </div>
+
+        <div></div>
+
+        <div class="m-3 inline-flex">
+          <label
+            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+            for="grid-last-updated-on"
+          >
+            {translationsToUse.labels.lastUpdatedOn}: &nbsp;
+          </label>
+          <p id="grid-last-updated-on">{renderUnixTime(user.lastUpdatedOn)}</p>
+        </div>
       </div>
-      <div
-        class="flex w-full mr-3 mt-4 max-w-full flex-grow justify-end flex-1"
-      >
-        <button
-          class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-        ><i class="fa fa-trash-alt"></i>
-          {translationsToUse.actions.ban}</button>
-      </div>
+
+      {#if currentAuthStatus.isAdmin && adminMode}
+        <div
+          class="flex w-full mr-3 mt-4 max-w-full flex-grow justify-end flex-1"
+        >
+          <button
+            class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+          ><i class="fa fa-trash-alt"></i>
+            {translationsToUse.actions.ban}</button>
+        </div>
+      {/if}
     </div>
   </div>
 

@@ -98,19 +98,23 @@ function promptDelete(id: number) {
   logger.debug('promptDelete called');
 
   if (confirm(`are you sure you want to delete user #${id}?`)) {
-    V1APIClient.deleteUser(id)
-      .then((response: AxiosResponse<User>) => {
-        if (response.status === statusCodes.NO_CONTENT) {
-          fetchUsers();
-        }
-      })
-      .catch((error: AxiosError<ErrorResponse>) => {
-        if (error.response) {
-          if (error.response.data) {
-            userRetrievalError = error.response.data.message;
+    if (superstore.frontendOnlyMode) {
+      fetchUsers();
+    } else {
+      V1APIClient.deleteUser(id)
+        .then((response: AxiosResponse<User>) => {
+          if (response.status === statusCodes.NO_CONTENT) {
+            fetchUsers();
           }
-        }
-      });
+        })
+        .catch((error: AxiosError<ErrorResponse>) => {
+          if (error.response) {
+            if (error.response.data) {
+              userRetrievalError = error.response.data.message;
+            }
+          }
+        });
+    }
   }
 }
 </script>

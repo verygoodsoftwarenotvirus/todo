@@ -11,6 +11,7 @@ import {
   UserTwoFactorSecretUpdateRequest,
   ErrorResponse,
   UserSiteSettings,
+  fakeUserFactory,
 } from '../../types';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
@@ -55,28 +56,37 @@ let twoFactorSecretUpdateError: string = '';
 function submitChangePasswordRequest() {
   logger.debug(`submitChangePasswordRequest invoked`);
 
-  V1APIClient.passwordChangeRequest(passwordUpdate)
-    .then((res: AxiosResponse) => {
-      logger
-        .withValue('responseData', res.data)
-        .info('passwordChangeRequest returned');
-      navigate(frontendRoutes.LOGIN, { state: {}, replace: false });
-    })
-    .catch((err: AxiosError<ErrorResponse>) => {
-      logger.error(err.message);
-      updatePasswordError = err.message;
-    });
+  if (superstore.frontendOnlyMode) {
+    navigate(frontendRoutes.LOGIN, { state: {}, replace: false });
+  } else {
+    V1APIClient.passwordChangeRequest(passwordUpdate)
+      .then((res: AxiosResponse) => {
+        logger
+          .withValue('responseData', res.data)
+          .info('passwordChangeRequest returned');
+        navigate(frontendRoutes.LOGIN, { state: {}, replace: false });
+      })
+      .catch((err: AxiosError<ErrorResponse>) => {
+        logger.error(err.message);
+        updatePasswordError = err.message;
+      });
+  }
 }
 
 onMount(() => {
-  V1APIClient.selfRequest()
-    .then((resp: AxiosResponse<User>) => {
-      user = resp.data;
-      ogUser = { ...user };
-    })
-    .catch((err: AxiosError<ErrorResponse>) => {
-      userFetchError = err.message;
-    });
+  if (superstore.frontendOnlyMode) {
+    user = fakeUserFactory.build();
+    ogUser = { ...user };
+  } else {
+    V1APIClient.selfRequest()
+      .then((resp: AxiosResponse<User>) => {
+        user = resp.data;
+        ogUser = { ...user };
+      })
+      .catch((err: AxiosError<ErrorResponse>) => {
+        userFetchError = err.message;
+      });
+  }
 });
 </script>
 

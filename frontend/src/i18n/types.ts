@@ -45,10 +45,16 @@ export type userModelTranslations = {
     archivedOn: string;
   };
   labels: {
-    name: string;
+    id: string;
+    username: string;
+    isAdmin: string;
+    requiresPasswordChange: string;
+    passwordLastChangedOn: string;
+    createdOn: string;
+    lastUpdatedOn: string;
   };
   inputPlaceholders: {
-    name: string;
+    username: string;
   };
 };
 

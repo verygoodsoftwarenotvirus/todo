@@ -9,6 +9,7 @@ import {
   UserStatus,
   AuditLogEntry,
   fakeOAuth2ClientFactory,
+  fakeAuditLogEntryFactory,
 } from '../../types';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
@@ -96,9 +97,6 @@ function deleteOAuth2Client(): void {
     V1APIClient.deleteOAuth2Client(oauth2ClientID)
       .then((response: AxiosResponse<OAuth2Client>) => {
         if (response.status === statusCodes.NO_CONTENT) {
-          logger.debug(
-            `navigating to ${frontendRoutes.LIST_OAUTH2_CLIENTS} because via deletion promise resolution`,
-          );
           navigate(frontendRoutes.LIST_OAUTH2_CLIENTS, {
             state: {},
             replace: true,
@@ -122,14 +120,17 @@ function fetchAuditLogEntries(): void {
     return;
   }
 
-  V1APIClient.fetchAuditLogEntriesForOAuth2Client(oauth2ClientID)
-    .then((response: AxiosResponse<AuditLogEntry[]>) => {
-      auditLogEntries = response.data;
-      logger.withValue('entries', auditLogEntries).debug('entries fetched');
-    })
-    .catch((error: AxiosError) => {
-      oauth2ClientRetrievalError = error.response?.data;
-    });
+  if (superstore.frontendOnlyMode) {
+    auditLogEntries = fakeAuditLogEntryFactory.buildList(10);
+  } else {
+    V1APIClient.fetchAuditLogEntriesForOAuth2Client(oauth2ClientID)
+      .then((response: AxiosResponse<AuditLogEntry[]>) => {
+        auditLogEntries = response.data;
+      })
+      .catch((error: AxiosError) => {
+        oauth2ClientRetrievalError = error.response?.data;
+      });
+  }
 }
 </script>
 

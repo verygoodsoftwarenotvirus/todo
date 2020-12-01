@@ -102,17 +102,19 @@ function promptDelete(id: number) {
   logger.debug('promptDelete called');
 
   if (confirm(`are you sure you want to delete webhook #${id}?`)) {
-    const path: string = `/api/v1/webhooks/${id}`;
-
-    V1APIClient.deleteWebhook(id)
-      .then((response: AxiosResponse<Webhook>) => {
-        if (response.status === statusCodes.NO_CONTENT) {
-          fetchWebhooks();
-        }
-      })
-      .catch((error: AxiosError<ErrorResponse>) => {
-        webhookRetrievalError = error.response?.data?.message;
-      });
+    if (superstore.frontendOnlyMode) {
+      fetchWebhooks();
+    } else {
+      V1APIClient.deleteWebhook(id)
+        .then((response: AxiosResponse<Webhook>) => {
+          if (response.status === statusCodes.NO_CONTENT) {
+            fetchWebhooks();
+          }
+        })
+        .catch((error: AxiosError<ErrorResponse>) => {
+          webhookRetrievalError = error.response?.data?.message;
+        });
+    }
   }
 }
 </script>
@@ -123,8 +125,7 @@ function promptDelete(id: number) {
       title="Webhooks"
       headers="{Webhook.headers(translationsToUse)}"
       rows="{webhooks}"
-      individualPageLink="/user/webhooks"
-      newPageLink="/user/webhooks/new"
+      individualPageLink="/admin/webhooks"
       dataRetrievalError="{webhookRetrievalError}"
       searchFunction="{searchWebhooks}"
       incrementDisabled="{apiTableIncrementDisabled}"

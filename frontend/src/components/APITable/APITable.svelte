@@ -38,7 +38,7 @@ export let decrementDisabled: boolean = true;
 export let decrementPageFunction: () => void;
 
 export let fetchFunction: () => void;
-export let rowRenderFunction: () => void;
+export let rowRenderFunction: (rowContent: string[]) => void;
 
 let adminMode: boolean = false;
 let currentAuthStatus: UserStatus = new UserStatus();
@@ -82,34 +82,44 @@ function goToNewPage() {
       <div class="relative w-full px-4 max-w-full flex-grow flex-1">
         <h3 class="font-semibold text-lg text-gray-800">
           {title}
-          <button
-            class="border-2 font-bold py-1 px-4 m-2 rounded"
-            on:click="{goToNewPage}"
-          >
-            🆕
-          </button>
-          <button
-            class="border-2 font-bold py-1 px-4 m-2 rounded"
-            on:click="{fetchFunction}"
-          >
-            🔄
-          </button>
+
+          {#if goToNewPage !== undefined && newPageLink !== ''}
+            <button
+              class="border-2 font-bold py-1 px-4 m-2 rounded"
+              on:click="{goToNewPage}"
+            >
+              🆕
+            </button>
+          {/if}
+
+          {#if fetchFunction !== undefined}
+            <button
+              class="border-2 font-bold py-1 px-4 m-2 rounded"
+              on:click="{fetchFunction}"
+            >
+              🔄
+            </button>
+          {/if}
         </h3>
       </div>
 
       <div class="text-center">
         <div class="px-4 py-2 m-2">
-          <button
-            on:click="{decrementPageFunction}"
-            disabled="{decrementDisabled}"
-          ><i class="fa fa-arrow-circle-left"></i></button>
+          {#if decrementPageFunction !== undefined}
+            <button
+              on:click="{decrementPageFunction}"
+              disabled="{decrementDisabled}"
+            ><i class="fa fa-arrow-circle-left"></i></button>
+          {/if}
           &nbsp;
           {#if currentPage > 0}{translationsToUse.page} {currentPage}{/if}
           &nbsp;
-          <button
-            on:click="{incrementPageFunction}"
-            disabled="{incrementDisabled}"
-          ><i class="fa fa-arrow-circle-right"></i></button>
+          {#if incrementPageFunction !== undefined}
+            <button
+              on:click="{incrementPageFunction}"
+              disabled="{incrementDisabled}"
+            ><i class="fa fa-arrow-circle-right"></i></button>
+          {/if}
         </div>
       </div>
 
@@ -215,7 +225,7 @@ function goToNewPage() {
                 </td>
               {/if}
             {/each}
-            {#if deleteEnabled}
+            {#if deleteFunction !== undefined && deleteEnabled}
               <td
                 class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-right text-red-600"
                 on:click="{deleteFunction(row.id)}"

@@ -71,8 +71,8 @@ type (
 		LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64)
 	}
 
-	// OAuth2ClientDataServer describes a structure capable of serving traffic related to oauth2 clients.
-	OAuth2ClientDataServer interface {
+	// OAuth2ClientDataService describes a structure capable of serving traffic related to oauth2 clients.
+	OAuth2ClientDataService interface {
 		ListHandler(res http.ResponseWriter, req *http.Request)
 		CreateHandler(res http.ResponseWriter, req *http.Request)
 		ReadHandler(res http.ResponseWriter, req *http.Request)

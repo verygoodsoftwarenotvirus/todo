@@ -27,7 +27,7 @@ func TestProvideAuditService(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		s := ProvideAuditService(
+		s := ProvideService(
 			noop.NewLogger(),
 			&mockmodels.AuditLogDataManager{},
 			func(req *http.Request) uint64 { return 0 },

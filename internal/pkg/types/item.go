@@ -69,8 +69,8 @@ type (
 		LogItemArchiveEvent(ctx context.Context, userID, itemID uint64)
 	}
 
-	// ItemDataServer describes a structure capable of serving traffic related to items.
-	ItemDataServer interface {
+	// ItemDataService describes a structure capable of serving traffic related to items.
+	ItemDataService interface {
 		CreationInputMiddleware(next http.Handler) http.Handler
 		UpdateInputMiddleware(next http.Handler) http.Handler
 

@@ -20,7 +20,7 @@ var (
 )
 
 // ProvideWebhookDataServer is an arbitrary function for dependency injection's sake.
-func ProvideWebhookDataServer(s *Service) types.WebhookDataServer {
+func ProvideWebhookDataServer(s *Service) types.WebhookDataService {
 	return s
 }
 

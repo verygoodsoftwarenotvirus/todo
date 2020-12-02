@@ -19,7 +19,7 @@ const (
 	serviceName        string              = "items_service"
 )
 
-var _ types.ItemDataServer = (*Service)(nil)
+var _ types.ItemDataService = (*Service)(nil)
 
 type (
 	// SearchIndex is a type alias for dependency injection's sake.
@@ -44,8 +44,8 @@ type (
 	ItemIDFetcher func(*http.Request) uint64
 )
 
-// ProvideItemsService builds a new ItemsService.
-func ProvideItemsService(
+// ProvideService builds a new ItemsService.
+func ProvideService(
 	logger logging.Logger,
 	itemDataManager types.ItemDataManager,
 	auditLog types.ItemAuditManager,

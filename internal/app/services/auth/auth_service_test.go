@@ -22,7 +22,7 @@ func buildTestService(t *testing.T) *Service {
 	logger := noop.NewLogger()
 	ed := encoding.ProvideResponseEncoder(logger)
 
-	service, err := ProvideAuthService(
+	service, err := ProvideService(
 		logger,
 		config.AuthSettings{CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
 		&mockauth.Authenticator{},
@@ -46,7 +46,7 @@ func TestProvideAuthService(T *testing.T) {
 		logger := noop.NewLogger()
 		ed := encoding.ProvideResponseEncoder(logger)
 
-		service, err := ProvideAuthService(
+		service, err := ProvideService(
 			logger,
 			config.AuthSettings{CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
 			&mockauth.Authenticator{},

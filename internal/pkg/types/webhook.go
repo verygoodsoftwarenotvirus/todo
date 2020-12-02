@@ -75,8 +75,8 @@ type (
 		LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64)
 	}
 
-	// WebhookDataServer describes a structure capable of serving traffic related to webhooks.
-	WebhookDataServer interface {
+	// WebhookDataService describes a structure capable of serving traffic related to webhooks.
+	WebhookDataService interface {
 		CreationInputMiddleware(next http.Handler) http.Handler
 		UpdateInputMiddleware(next http.Handler) http.Handler
 

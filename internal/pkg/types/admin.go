@@ -8,8 +8,8 @@ import (
 )
 
 type (
-	// AdminServer describes a structure capable of serving traffic related to users.
-	AdminServer interface {
+	// AdminService describes a structure capable of serving traffic related to users.
+	AdminService interface {
 		UserAccountStatusChangeHandler(res http.ResponseWriter, req *http.Request)
 
 		AccountStatusUpdateInputMiddleware(next http.Handler) http.Handler
@@ -26,6 +26,11 @@ type (
 		TargetAccountID uint64            `json:"accountID"`
 		NewStatus       userAccountStatus `json:"newStatus"`
 		Reason          string            `json:"reason"`
+	}
+
+	// FrontendService serves static frontend files.
+	FrontendService interface {
+		StaticDir(staticFilesDirectory string) (http.HandlerFunc, error)
 	}
 )
 

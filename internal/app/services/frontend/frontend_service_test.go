@@ -13,6 +13,6 @@ func TestProvideFrontendService(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		ProvideFrontendService(noop.NewLogger(), config.FrontendSettings{})
+		ProvideService(noop.NewLogger(), config.FrontendSettings{})
 	})
 }

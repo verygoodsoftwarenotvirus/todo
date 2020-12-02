@@ -19,8 +19,8 @@ type (
 	}
 )
 
-// ProvideFrontendService provides the frontend service to dependency injection.
-func ProvideFrontendService(logger logging.Logger, cfg config.FrontendSettings) *Service {
+// ProvideService provides the frontend service to dependency injection.
+func ProvideService(logger logging.Logger, cfg config.FrontendSettings) *Service {
 	svc := &Service{
 		config:         cfg,
 		logStaticFiles: cfg.LogStaticFiles,

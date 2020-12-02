@@ -12,6 +12,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
@@ -19,16 +20,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
-
-var _ http.Handler = (*mockHTTPHandler)(nil)
-
-type mockHTTPHandler struct {
-	mock.Mock
-}
-
-func (m *mockHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
-}
 
 func TestService_CreationInputMiddleware(T *testing.T) {
 	T.Parallel()
@@ -44,7 +35,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		jsonBytes, err := json.Marshal(&exampleCreationInput)
 		require.NoError(t, err)
 
-		mh := &mockHTTPHandler{}
+		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		res := httptest.NewRecorder()
@@ -76,7 +67,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		actual := s.CreationInputMiddleware(&mockHTTPHandler{})
+		actual := s.CreationInputMiddleware(&testutil.MockHTTPHandler{})
 		actual.ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
@@ -103,7 +94,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		mh := &mockHTTPHandler{}
+		mh := &testutil.MockHTTPHandler{}
 		actual := s.CreationInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
@@ -127,7 +118,7 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		jsonBytes, err := json.Marshal(&exampleCreationInput)
 		require.NoError(t, err)
 
-		mh := &mockHTTPHandler{}
+		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		res := httptest.NewRecorder()
@@ -164,7 +155,7 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		mh := &mockHTTPHandler{}
+		mh := &testutil.MockHTTPHandler{}
 		actual := s.UpdateInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 

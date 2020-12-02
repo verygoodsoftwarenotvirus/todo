@@ -33,7 +33,7 @@ const (
 	serviceName        string              = "oauth2_clients_service"
 )
 
-var _ types.OAuth2ClientDataServer = (*Service)(nil)
+var _ types.OAuth2ClientDataService = (*Service)(nil)
 
 type (
 	oauth2Handler interface {

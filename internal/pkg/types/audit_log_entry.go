@@ -47,8 +47,8 @@ type (
 		GetAuditLogEntries(ctx context.Context, filter *QueryFilter) (*AuditLogEntryList, error)
 	}
 
-	// AuditLogDataServer describes a structure capable of serving traffic related to audit log entries.
-	AuditLogDataServer interface {
+	// AuditLogDataService describes a structure capable of serving traffic related to audit log entries.
+	AuditLogDataService interface {
 		ListHandler(res http.ResponseWriter, req *http.Request)
 		ReadHandler(res http.ResponseWriter, req *http.Request)
 	}

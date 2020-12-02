@@ -14,6 +14,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
@@ -22,16 +23,6 @@ import (
 	"github.com/stretchr/testify/require"
 	oauth2models "gopkg.in/oauth2.v3/models"
 )
-
-var _ http.Handler = (*mockHTTPHandler)(nil)
-
-type mockHTTPHandler struct {
-	mock.Mock
-}
-
-func (m *mockHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
-}
 
 func TestService_CreationInputMiddleware(T *testing.T) {
 	T.Parallel()
@@ -49,7 +40,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		).Return(nil)
 		s.encoderDecoder = ed
 
-		mh := &mockHTTPHandler{}
+		mh := &testutil.MockHTTPHandler{}
 		mh.On(
 			"ServeHTTP",
 			mock.Anything,
@@ -92,7 +83,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		)
 		s.encoderDecoder = ed
 
-		mh := &mockHTTPHandler{}
+		mh := &testutil.MockHTTPHandler{}
 		h := s.CreationInputMiddleware(mh)
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
@@ -135,7 +126,7 @@ func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 		req.URL.Path = fmt.Sprintf("/api/v1/%s", exampleOAuth2Client.Scopes[0])
 		res := httptest.NewRecorder()
 
-		mhh := &mockHTTPHandler{}
+		mhh := &testutil.MockHTTPHandler{}
 		mhh.On(
 			"ServeHTTP",
 			mock.Anything,
@@ -163,7 +154,7 @@ func TestService_OAuth2TokenAuthenticationMiddleware(T *testing.T) {
 		res := httptest.NewRecorder()
 		req := buildRequest(t)
 
-		mhh := &mockHTTPHandler{}
+		mhh := &testutil.MockHTTPHandler{}
 		s.OAuth2TokenAuthenticationMiddleware(mhh).ServeHTTP(res, req)
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 
@@ -182,7 +173,7 @@ func TestService_OAuth2ClientInfoMiddleware(T *testing.T) {
 
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
-		mhh := &mockHTTPHandler{}
+		mhh := &testutil.MockHTTPHandler{}
 		mhh.On(
 			"ServeHTTP",
 			mock.Anything,
@@ -227,7 +218,7 @@ func TestService_OAuth2ClientInfoMiddleware(T *testing.T) {
 		).Return((*types.OAuth2Client)(nil), errors.New("blah"))
 		s.clientDataManager = mockDB
 
-		mhh := &mockHTTPHandler{}
+		mhh := &testutil.MockHTTPHandler{}
 		s.OAuth2ClientInfoMiddleware(mhh).ServeHTTP(res, req)
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 

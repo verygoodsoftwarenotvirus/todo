@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var _ types.WebhookDataServer = (*WebhookDataServer)(nil)
+var _ types.WebhookDataService = (*WebhookDataServer)(nil)
 
-// WebhookDataServer is a mocked types.WebhookDataServer for testing.
+// WebhookDataServer is a mocked types.WebhookDataService for testing.
 type WebhookDataServer struct {
 	mock.Mock
 }

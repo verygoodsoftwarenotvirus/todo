@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var _ types.OAuth2ClientDataServer = (*OAuth2ClientDataServer)(nil)
+var _ types.OAuth2ClientDataService = (*OAuth2ClientDataServer)(nil)
 
-// OAuth2ClientDataServer is a mocked types.OAuth2ClientDataServer for testing.
+// OAuth2ClientDataServer is a mocked types.OAuth2ClientDataService for testing.
 type OAuth2ClientDataServer struct {
 	mock.Mock
 }

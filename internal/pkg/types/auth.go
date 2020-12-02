@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
+	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 )
@@ -34,6 +35,20 @@ type (
 		UserAccountStatus        userAccountStatus                    `json:"accountStatus,omitempty"`
 		AccountStatusExplanation string                               `json:"statusExplanation,omitempty"`
 		AdminPermissions         *permissions.AdminPermissionsSummary `json:"permissions,omitempty"`
+	}
+
+	// AuthService describes a structure capable of .
+	AuthService interface {
+		StatusHandler(res http.ResponseWriter, req *http.Request)
+		LoginHandler(res http.ResponseWriter, req *http.Request)
+		LogoutHandler(res http.ResponseWriter, req *http.Request)
+		CycleCookieSecretHandler(res http.ResponseWriter, req *http.Request)
+
+		CookieAuthenticationMiddleware(next http.Handler) http.Handler
+		UserAttributionMiddleware(next http.Handler) http.Handler
+		AuthorizationMiddleware(next http.Handler) http.Handler
+		AdminMiddleware(next http.Handler) http.Handler
+		UserLoginInputMiddleware(next http.Handler) http.Handler
 	}
 
 	// AuthAuditManager describes a structure capable of .

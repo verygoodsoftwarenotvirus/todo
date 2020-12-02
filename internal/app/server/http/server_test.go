@@ -21,17 +21,16 @@ import (
 )
 
 func buildTestServer() *Server {
+	l := noop.NewLogger()
+
 	s := &Server{
-		db:               database.BuildMockDatabase(),
-		serverSettings:   config.ServerSettings{},
-		frontendSettings: config.FrontendSettings{},
-		encoder:          &mockencoding.EncoderDecoder{},
-		httpServer:       provideHTTPServer(),
-		logger:           noop.NewLogger(),
-		frontendService: frontendservice.ProvideFrontendService(
-			noop.NewLogger(),
-			config.FrontendSettings{},
-		),
+		logger:               l,
+		db:                   database.BuildMockDatabase(),
+		serverSettings:       config.ServerSettings{},
+		frontendSettings:     config.FrontendSettings{},
+		encoder:              &mockencoding.EncoderDecoder{},
+		httpServer:           provideHTTPServer(),
+		frontendService:      frontendservice.ProvideService(l, config.FrontendSettings{}),
 		webhooksService:      &mockmodels.WebhookDataServer{},
 		usersService:         &mockmodels.UserDataServer{},
 		authService:          &authservice.Service{},

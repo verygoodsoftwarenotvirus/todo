@@ -7,19 +7,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
-
-var _ http.Handler = (*mockHTTPHandler)(nil)
-
-type mockHTTPHandler struct {
-	mock.Mock
-}
-
-func (m *mockHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
-}
 
 func buildRequest(t *testing.T) *http.Request {
 	t.Helper()

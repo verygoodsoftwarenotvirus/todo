@@ -17,7 +17,7 @@ var Providers = wire.NewSet(
 )
 
 // ProvideUserDataServer is an arbitrary function for dependency injection's sake.
-func ProvideUserDataServer(s *Service) types.UserDataServer {
+func ProvideUserDataServer(s *Service) types.UserDataService {
 	return s
 }
 

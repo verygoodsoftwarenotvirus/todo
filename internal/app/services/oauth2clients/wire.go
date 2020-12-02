@@ -18,7 +18,7 @@ var (
 )
 
 // ProvideOAuth2ClientDataServer is an arbitrary function for dependency injection's sake.
-func ProvideOAuth2ClientDataServer(s *Service) types.OAuth2ClientDataServer {
+func ProvideOAuth2ClientDataServer(s *Service) types.OAuth2ClientDataService {
 	return s
 }
 

@@ -20,7 +20,7 @@ const (
 	counterName        = metrics.CounterName(serviceName)
 )
 
-var _ types.UserDataServer = (*Service)(nil)
+var _ types.UserDataService = (*Service)(nil)
 
 var errNoUserIDFetcherProvided = errors.New("userIDFetcher must be provided")
 

@@ -166,8 +166,8 @@ type (
 		LogUserArchiveEvent(ctx context.Context, userID uint64)
 	}
 
-	// UserDataServer describes a structure capable of serving traffic related to users.
-	UserDataServer interface {
+	// UserDataService describes a structure capable of serving traffic related to users.
+	UserDataService interface {
 		UserInputMiddleware(next http.Handler) http.Handler
 		PasswordUpdateInputMiddleware(next http.Handler) http.Handler
 		TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handler

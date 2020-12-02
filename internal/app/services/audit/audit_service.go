@@ -14,7 +14,7 @@ const (
 )
 
 var (
-	_ types.AuditLogDataServer = (*Service)(nil)
+	_ types.AuditLogDataService = (*Service)(nil)
 )
 
 type (
@@ -34,8 +34,8 @@ type (
 	EntryIDFetcher func(*http.Request) uint64
 )
 
-// ProvideAuditService builds a new Service.
-func ProvideAuditService(
+// ProvideService builds a new Service.
+func ProvideService(
 	logger logging.Logger,
 	auditLog types.AuditLogDataManager,
 	auditLogEntryIDFetcher EntryIDFetcher,

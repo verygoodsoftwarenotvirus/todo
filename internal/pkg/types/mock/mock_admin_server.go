@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var _ types.AdminServer = (*AdminServer)(nil)
+var _ types.AdminService = (*AdminServer)(nil)
 
-// AdminServer is a mocked types.AdminServer for testing.
+// AdminServer is a mocked types.AdminService for testing.
 type AdminServer struct {
 	mock.Mock
 }

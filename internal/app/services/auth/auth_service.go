@@ -55,8 +55,8 @@ type (
 	}
 )
 
-// ProvideAuthService builds a new AuthService.
-func ProvideAuthService(
+// ProvideService builds a new AuthService.
+func ProvideService(
 	logger logging.Logger,
 	cfg config.AuthSettings,
 	authenticator password.Authenticator,

@@ -37,7 +37,7 @@ func TestProvideItemsService(T *testing.T) {
 			return &mockmetrics.UnitCounter{}, nil
 		}
 
-		s, err := ProvideItemsService(
+		s, err := ProvideService(
 			noop.NewLogger(),
 			&mockmodels.ItemDataManager{},
 			&mockmodels.AuditLogDataManager{},
@@ -58,7 +58,7 @@ func TestProvideItemsService(T *testing.T) {
 			return nil, errors.New("blah")
 		}
 
-		s, err := ProvideItemsService(
+		s, err := ProvideService(
 			noop.NewLogger(),
 			&mockmodels.ItemDataManager{},
 			&mockmodels.AuditLogDataManager{},

@@ -49,6 +49,39 @@ func TestAuth(test *testing.T) {
 		assert.NoError(t, testClient.Logout(ctx))
 	})
 
+	test.Run("should be able to check their auth status with the client", func(t *testing.T) {
+		t.Parallel()
+
+		ctx, span := tracing.StartSpan(context.Background())
+		defer span.End()
+
+		testUser, testClient := createUserAndClientForTest(ctx, t)
+		cookie, err := testClient.Login(ctx, &types.UserLoginInput{
+			Username:  testUser.Username,
+			Password:  testUser.HashedPassword,
+			TOTPToken: generateTOTPTokenForUser(t, testUser),
+		})
+
+		require.NotNil(t, cookie)
+		assert.NoError(t, err)
+
+		actual, err := testClient.Status(ctx, cookie)
+		assert.NoError(t, err)
+
+		expected := &types.UserStatusResponse{
+			UserIsAuthenticated:      true,
+			UserIsAdmin:              false,
+			UserAccountStatus:        types.GoodStandingAccountStatus,
+			AccountStatusExplanation: "",
+			AdminPermissions:         nil,
+		}
+
+		assert.Equal(t, expected, actual)
+		assert.NoError(t, err)
+
+		assert.NoError(t, testClient.Logout(ctx))
+	})
+
 	test.Run("login request without body fails", func(t *testing.T) {
 		t.Parallel()
 

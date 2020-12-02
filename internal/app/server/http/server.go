@@ -8,8 +8,6 @@ import (
 	"os"
 	"time"
 
-	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
-	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
@@ -30,14 +28,14 @@ type (
 	// Server is our API httpServer.
 	Server struct {
 		// Services.
-		authService          *authservice.Service
-		frontendService      *frontendservice.Service
-		auditService         types.AuditLogDataServer
-		usersService         types.UserDataServer
-		adminService         types.AdminServer
-		oauth2ClientsService types.OAuth2ClientDataServer
-		webhooksService      types.WebhookDataServer
-		itemsService         types.ItemDataServer
+		authService          types.AuthService
+		frontendService      types.FrontendService
+		auditService         types.AuditLogDataService
+		usersService         types.UserDataService
+		adminService         types.AdminService
+		oauth2ClientsService types.OAuth2ClientDataService
+		webhooksService      types.WebhookDataService
+		itemsService         types.ItemDataService
 
 		// infra things.
 		db               database.DataManager
@@ -55,14 +53,14 @@ func ProvideServer(
 	serverSettings config.ServerSettings,
 	frontendSettings config.FrontendSettings,
 	metricsHandler metrics.InstrumentationHandler,
-	authService *authservice.Service,
-	frontendService *frontendservice.Service,
-	auditService types.AuditLogDataServer,
-	itemsService types.ItemDataServer,
-	usersService types.UserDataServer,
-	oauth2Service types.OAuth2ClientDataServer,
-	webhooksService types.WebhookDataServer,
-	adminService types.AdminServer,
+	authService types.AuthService,
+	frontendService types.FrontendService,
+	auditService types.AuditLogDataService,
+	itemsService types.ItemDataService,
+	usersService types.UserDataService,
+	oauth2Service types.OAuth2ClientDataService,
+	webhooksService types.WebhookDataService,
+	adminService types.AdminService,
 	db database.DataManager,
 	logger logging.Logger,
 	encoder encoding.EncoderDecoder,

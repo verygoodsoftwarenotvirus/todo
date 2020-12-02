@@ -23,7 +23,7 @@ const (
 )
 
 var (
-	_ types.WebhookDataServer = (*Service)(nil)
+	_ types.WebhookDataService = (*Service)(nil)
 )
 
 type (

@@ -10,7 +10,7 @@ import (
 
 // Providers is our collection of what we provide to other services.
 var Providers = wire.NewSet(
-	ProvideItemsService,
+	ProvideService,
 	ProvideItemDataServer,
 	ProvideItemsServiceSearchIndex,
 	ProvideItemsServiceItemIDFetcher,
@@ -18,7 +18,7 @@ var Providers = wire.NewSet(
 )
 
 // ProvideItemDataServer is an arbitrary function for dependency injection's sake.
-func ProvideItemDataServer(s *Service) types.ItemDataServer {
+func ProvideItemDataServer(s *Service) types.ItemDataService {
 	return s
 }
 

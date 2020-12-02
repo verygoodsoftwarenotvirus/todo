@@ -10,14 +10,14 @@ import (
 
 // Providers is our collection of what we provide to other services.
 var Providers = wire.NewSet(
+	ProvideService,
 	ProvideAdminService,
-	ProvideAdminServer,
 	ProvideAdminServiceUserIDFetcher,
 	ProvideAdminServiceSessionInfoFetcher,
 )
 
-// ProvideAdminServer does the job I wish wire would do for itself.
-func ProvideAdminServer(s *Service) types.AdminServer {
+// ProvideAdminService does the job I wish wire would do for itself.
+func ProvideAdminService(s *Service) types.AdminService {
 	return s
 }
 

@@ -219,6 +219,88 @@ func (c *V1Client) Logout(ctx context.Context) error {
 	return nil
 }
 
+// BuildChangePasswordRequest builds a request to change a user's password.
+func (c *V1Client) BuildChangePasswordRequest(ctx context.Context, cookie *http.Cookie, input *types.PasswordUpdateInput) (*http.Request, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.End()
+
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	uri := c.buildVersionlessURL(nil, usersBasePath, "password", "new")
+
+	req, err := c.buildDataRequest(ctx, http.MethodPut, uri, input)
+	if err != nil {
+		return nil, err
+	}
+
+	req.AddCookie(cookie)
+
+	return req, nil
+}
+
+// ChangePassword executes a request to change a user's password.
+func (c *V1Client) ChangePassword(ctx context.Context, cookie *http.Cookie, input *types.PasswordUpdateInput) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.End()
+
+	req, err := c.BuildChangePasswordRequest(ctx, cookie, input)
+	if err != nil {
+		return fmt.Errorf("error building password change request: %w", err)
+	}
+
+	res, err := c.executeRawRequest(ctx, c.plainClient, req)
+	if err != nil {
+		return fmt.Errorf("executing request: %w", err)
+	}
+
+	c.closeResponseBody(res)
+
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("erroneous response code when changing password: %d", res.StatusCode)
+	}
+
+	return nil
+}
+
+// BuildCycleTwoFactorSecretRequest builds a request to change a user's 2FA secret.
+func (c *V1Client) BuildCycleTwoFactorSecretRequest(ctx context.Context, cookie *http.Cookie, input *types.TOTPSecretRefreshInput) (*http.Request, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.End()
+
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	uri := c.buildVersionlessURL(nil, usersBasePath, "totp_secret", "new")
+
+	req, err := c.buildDataRequest(ctx, http.MethodPost, uri, input)
+	if err != nil {
+		return nil, err
+	}
+
+	req.AddCookie(cookie)
+
+	return req, nil
+}
+
+// CycleTwoFactorSecret executes a request to change a user's 2FA secret.
+func (c *V1Client) CycleTwoFactorSecret(ctx context.Context, cookie *http.Cookie, input *types.TOTPSecretRefreshInput) (*types.TOTPSecretRefreshResponse, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.End()
+
+	req, err := c.BuildCycleTwoFactorSecretRequest(ctx, cookie, input)
+	if err != nil {
+		return nil, fmt.Errorf("error building password change request: %w", err)
+	}
+
+	var output *types.TOTPSecretRefreshResponse
+	err = c.executeRequest(ctx, req, &output)
+
+	return output, err
+}
+
 // BuildVerifyTOTPSecretRequest builds a request to validate a TOTP secret.
 func (c *V1Client) BuildVerifyTOTPSecretRequest(ctx context.Context, userID uint64, token string) (*http.Request, error) {
 	ctx, span := tracing.StartSpan(ctx)

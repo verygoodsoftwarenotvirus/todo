@@ -38,8 +38,14 @@ func checkUserEquality(t *testing.T, expected, actual *types.User) {
 }
 
 func TestUsers(test *testing.T) {
-	test.Run("Creating", func(t *testing.T) {
-		t.Run("should be creatable", func(t *testing.T) {
+	test.Parallel()
+
+	test.Run("Creating", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		subtest.Run("should be creatable", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -58,8 +64,12 @@ func TestUsers(test *testing.T) {
 		})
 	})
 
-	test.Run("Reading", func(t *testing.T) {
-		t.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
+	test.Run("Reading", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		subtest.Run("it should return an error when trying to read something that doesn'subtest exist", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -69,7 +79,9 @@ func TestUsers(test *testing.T) {
 			assert.Error(t, err)
 		})
 
-		t.Run("it should be readable", func(t *testing.T) {
+		subtest.Run("it should be readable", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -90,8 +102,12 @@ func TestUsers(test *testing.T) {
 		})
 	})
 
-	test.Run("Searching", func(t *testing.T) {
-		t.Run("it should return empty slice when searching for a username that doesn't exist", func(t *testing.T) {
+	test.Run("Searching", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		subtest.Run("it should return empty slice when searching for a username that doesn'subtest exist", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -101,7 +117,9 @@ func TestUsers(test *testing.T) {
 			assert.NoError(t, err)
 		})
 
-		t.Run("it should only be accessible to admins", func(t *testing.T) {
+		subtest.Run("it should only be accessible to admins", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -113,7 +131,9 @@ func TestUsers(test *testing.T) {
 			assert.Error(t, err)
 		})
 
-		t.Run("it should be searchable", func(t *testing.T) {
+		subtest.Run("it should be searchable", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -144,8 +164,12 @@ func TestUsers(test *testing.T) {
 		})
 	})
 
-	test.Run("Deleting", func(t *testing.T) {
-		t.Run("should be able to be deleted", func(t *testing.T) {
+	test.Run("Deleting", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		subtest.Run("should be able to be deleted", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -168,8 +192,12 @@ func TestUsers(test *testing.T) {
 		})
 	})
 
-	test.Run("Auditing", func(t *testing.T) {
-		t.Run("it should return an error when trying to audit something that does not exist", func(t *testing.T) {
+	test.Run("Auditing", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		subtest.Run("it should return an error when trying to audit something that does not exist", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -185,7 +213,9 @@ func TestUsers(test *testing.T) {
 			assert.Empty(t, x)
 		})
 
-		t.Run("it should be auditable", func(t *testing.T) {
+		subtest.Run("it should be auditable", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -206,7 +236,9 @@ func TestUsers(test *testing.T) {
 			assert.NoError(t, adminClient.ArchiveUser(ctx, createdUser.ID))
 		})
 
-		t.Run("it should not be auditable by a non-admin", func(t *testing.T) {
+		subtest.Run("it should not be auditable by a non-admin", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 

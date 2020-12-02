@@ -10,7 +10,11 @@ import (
 )
 
 func TestAuditLogEntries(test *testing.T) {
+	test.Parallel()
+
 	test.Run("Listing", func(t *testing.T) {
+		t.Parallel()
+
 		t.Run("should be able to be read in a list by an admin", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
@@ -23,6 +27,8 @@ func TestAuditLogEntries(test *testing.T) {
 	})
 
 	test.Run("Reading", func(t *testing.T) {
+		t.Parallel()
+
 		t.Run("should be able to be read as an individual by an admin", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()

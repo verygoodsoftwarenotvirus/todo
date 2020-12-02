@@ -1,9 +1,7 @@
 package integration
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"net/http"
 	"net/url"
 	"testing"
@@ -23,7 +21,11 @@ import (
 )
 
 func TestAuth(test *testing.T) {
+	test.Parallel()
+
 	test.Run("should be able to login and log out", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
@@ -48,6 +50,8 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("login request without body fails", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
@@ -67,6 +71,8 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should not be able to log in with the wrong password", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
@@ -90,6 +96,8 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should not be able to login as someone that doesn't exist", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
@@ -108,6 +116,8 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should not be able to login without validating TOTP secret", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
@@ -137,6 +147,8 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should reject an unauthenticated request", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
@@ -151,12 +163,14 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should be able to change password", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
 		testUser, testClient := createUserAndClientForTest(ctx, t)
 
-		// get login cookie
+		// login.
 		cookie, err := testClient.Login(ctx, &types.UserLoginInput{
 			Username:  testUser.Username,
 			Password:  testUser.HashedPassword,
@@ -171,73 +185,30 @@ func TestAuth(test *testing.T) {
 			backwardsPass = string(v) + backwardsPass
 		}
 
-		// create password update request.
-		r := &types.PasswordUpdateInput{
+		// update password.
+		assert.NoError(t, testClient.ChangePassword(ctx, cookie, &types.PasswordUpdateInput{
 			CurrentPassword: testUser.HashedPassword,
 			TOTPToken:       generateTOTPTokenForUser(t, testUser),
 			NewPassword:     backwardsPass,
-		}
-		out, err := json.Marshal(r)
-		require.NoError(t, err)
-		body := bytes.NewReader(out)
-
-		// TODO: BUILD REAL CHANGE PASSWORD METHOD IN HTTPCLIENT
-
-		u, err := url.Parse(testClient.BuildURL(nil))
-		require.NoError(t, err)
-		u.Path = "/users/password/new"
-
-		req, err := http.NewRequestWithContext(ctx, http.MethodPut, u.String(), body)
-		checkValueAndError(t, req, err)
-		req.AddCookie(cookie)
-
-		// execute password update request.
-		res, err := testClient.PlainClient().Do(req)
-		checkValueAndError(t, res, err)
-		assert.Equal(t, http.StatusOK, res.StatusCode)
-		assert.Equal(t, "/auth/login", res.Request.URL.Path)
+		}))
 
 		// logout.
+		assert.NoError(t, testClient.Logout(ctx))
 
-		u2, err := url.Parse(testClient.BuildURL(nil))
-		require.NoError(t, err)
-		u2.Path = "/users/logout"
-
-		req, err = http.NewRequestWithContext(ctx, http.MethodPost, u2.String(), nil)
-		checkValueAndError(t, req, err)
-		req.AddCookie(cookie)
-
-		res, err = testClient.PlainClient().Do(req)
-		checkValueAndError(t, res, err)
-		assert.Equal(t, http.StatusOK, res.StatusCode)
-
-		// create login request.
-		l, err := json.Marshal(&types.UserLoginInput{
+		// login again with new password.
+		cookie, err = testClient.Login(ctx, &types.UserLoginInput{
 			Username:  testUser.Username,
 			Password:  backwardsPass,
 			TOTPToken: generateTOTPTokenForUser(t, testUser),
 		})
-		require.NoError(t, err)
-		body = bytes.NewReader(l)
 
-		u3, err := url.Parse(testClient.BuildURL(nil))
-		require.NoError(t, err)
-		u3.Path = "/users/login"
-
-		req, err = http.NewRequestWithContext(ctx, http.MethodPost, u3.String(), body)
-		checkValueAndError(t, req, err)
-
-		// execute login request.
-		res, err = testClient.PlainClient().Do(req)
-		checkValueAndError(t, res, err)
-		assert.Equal(t, http.StatusAccepted, res.StatusCode)
-
-		cookies := res.Cookies()
-		require.Len(t, cookies, 1)
-		assert.NotEqual(t, cookie, cookies[0])
+		assert.NotNil(t, cookie)
+		assert.NoError(t, err)
 	})
 
 	test.Run("should be able to validate a 2FA token", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
@@ -259,6 +230,8 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should reject attempt to validate an invalid 2FA token", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
@@ -274,28 +247,12 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should be able to change 2FA Token", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
 		testUser, testClient := createUserAndClientForTest(ctx, t)
-
-		// create TOTP secret update request.
-		token, err := totp.GenerateCode(testUser.TwoFactorSecret, time.Now().UTC())
-		checkValueAndError(t, token, err)
-		ir := &types.TOTPSecretRefreshInput{
-			CurrentPassword: testUser.HashedPassword,
-			TOTPToken:       token,
-		}
-		out, err := json.Marshal(ir)
-		require.NoError(t, err)
-		body := bytes.NewReader(out)
-
-		u, err := url.Parse(testClient.BuildURL(nil))
-		require.NoError(t, err)
-		u.Path = "/users/totp_secret/new"
-
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), body)
-		checkValueAndError(t, req, err)
 
 		cookie, err := testClient.Login(ctx, &types.UserLoginInput{
 			Username:  testUser.Username,
@@ -303,17 +260,12 @@ func TestAuth(test *testing.T) {
 			TOTPToken: generateTOTPTokenForUser(t, testUser),
 		})
 		require.NoError(t, err)
-		req.AddCookie(cookie)
 
-		// execute TOTP secret update request.
-		res, err := testClient.PlainClient().Do(req)
-		checkValueAndError(t, res, err)
-		assert.Equal(t, http.StatusAccepted, res.StatusCode)
-
-		// load user response.
-		r := &types.TOTPSecretRefreshResponse{}
-		require.NoError(t, json.NewDecoder(res.Body).Decode(r))
-		require.NotEqual(t, testUser.TwoFactorSecret, r.TwoFactorSecret)
+		r, err := testClient.CycleTwoFactorSecret(ctx, cookie, &types.TOTPSecretRefreshInput{
+			CurrentPassword: testUser.HashedPassword,
+			TOTPToken:       generateTOTPTokenForUser(t, testUser),
+		})
+		assert.NoError(t, err)
 
 		secretVerificationToken, err := totp.GenerateCode(r.TwoFactorSecret, time.Now().UTC())
 		checkValueAndError(t, secretVerificationToken, err)
@@ -337,6 +289,8 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should accept a cookie if a token is missing", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
@@ -359,6 +313,8 @@ func TestAuth(test *testing.T) {
 	})
 
 	test.Run("should only allow clients with a given scope to see that scope's content", func(t *testing.T) {
+		t.Parallel()
+
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 

@@ -595,26 +595,15 @@ func (q *MariaDB) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query stri
 	builder := q.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).
 		From(queriers.AuditLogEntriesTableName).
-		Where(squirrel.Or{
-			squirrel.Expr(
-				fmt.Sprintf(
-					jsonPluckQuery,
-					queriers.AuditLogEntriesTableName,
-					queriers.AuditLogEntriesTableContextColumn,
-					itemID,
-					audit.ItemAssignmentKey,
-				),
+		Where(squirrel.Expr(
+			fmt.Sprintf(
+				jsonPluckQuery,
+				queriers.AuditLogEntriesTableName,
+				queriers.AuditLogEntriesTableContextColumn,
+				itemID,
+				audit.ItemAssignmentKey,
 			),
-			squirrel.Expr(
-				fmt.Sprintf(
-					jsonPluckQuery,
-					queriers.AuditLogEntriesTableName,
-					queriers.AuditLogEntriesTableContextColumn,
-					itemID,
-					audit.ActorAssignmentKey,
-				),
-			),
-		}).
+		)).
 		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
 
 	query, args, err = builder.ToSql()

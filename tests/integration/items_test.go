@@ -24,8 +24,14 @@ func checkItemEquality(t *testing.T, expected, actual *types.Item) {
 }
 
 func TestItems(test *testing.T) {
-	test.Run("Creating", func(t *testing.T) {
-		t.Run("should be createable", func(t *testing.T) {
+	test.Parallel()
+
+	test.Run("Creating", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		subtest.Run("should be createable", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -52,8 +58,12 @@ func TestItems(test *testing.T) {
 		})
 	})
 
-	test.Run("Listing", func(t *testing.T) {
-		t.Run("should be able to be read in a list", func(t *testing.T) {
+	test.Run("Listing", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		subtest.Run("should be able to be read in a list", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -90,8 +100,12 @@ func TestItems(test *testing.T) {
 		})
 	})
 
-	test.Run("Searching", func(t *testing.T) {
-		t.Run("should be able to be search for items", func(t *testing.T) {
+	test.Run("Searching", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		subtest.Run("should be able to be search for items", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -130,7 +144,9 @@ func TestItems(test *testing.T) {
 			}
 		})
 
-		t.Run("should only receive your own items", func(t *testing.T) {
+		subtest.Run("should only receive your own items", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -194,8 +210,12 @@ func TestItems(test *testing.T) {
 		})
 	})
 
-	test.Run("ExistenceChecking", func(t *testing.T) {
-		t.Run("it should return false with no error when checking something that does not exist", func(t *testing.T) {
+	test.Run("ExistenceChecking", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		subtest.Run("it should return false with no error when checking something that does not exist", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -207,7 +227,9 @@ func TestItems(test *testing.T) {
 			assert.False(t, actual)
 		})
 
-		t.Run("it should return true with no error when the relevant item exists", func(t *testing.T) {
+		subtest.Run("it should return true with no error when the relevant item exists", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -229,8 +251,12 @@ func TestItems(test *testing.T) {
 		})
 	})
 
-	test.Run("Reading", func(t *testing.T) {
-		t.Run("it should return an error when trying to read something that does not exist", func(t *testing.T) {
+	test.Run("Reading", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		subtest.Run("it should return an error when trying to read something that does not exist", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -241,7 +267,9 @@ func TestItems(test *testing.T) {
 			assert.Error(t, err)
 		})
 
-		t.Run("it should be readable", func(t *testing.T) {
+		subtest.Run("it should be readable", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -265,8 +293,12 @@ func TestItems(test *testing.T) {
 		})
 	})
 
-	test.Run("Updating", func(t *testing.T) {
-		t.Run("it should return an error when trying to update something that does not exist", func(t *testing.T) {
+	test.Run("Updating", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		subtest.Run("it should return an error when trying to update something that does not exist", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -278,7 +310,9 @@ func TestItems(test *testing.T) {
 			assert.Error(t, testClient.UpdateItem(ctx, exampleItem))
 		})
 
-		t.Run("it should be updatable", func(t *testing.T) {
+		subtest.Run("it should be updatable", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -307,8 +341,12 @@ func TestItems(test *testing.T) {
 		})
 	})
 
-	test.Run("Deleting", func(t *testing.T) {
-		t.Run("it should return an error when trying to delete something that does not exist", func(t *testing.T) {
+	test.Run("Deleting", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		subtest.Run("it should return an error when trying to delete something that does not exist", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -317,7 +355,9 @@ func TestItems(test *testing.T) {
 			assert.Error(t, testClient.ArchiveItem(ctx, nonexistentID))
 		})
 
-		t.Run("should be able to be deleted", func(t *testing.T) {
+		subtest.Run("should be able to be deleted", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -334,8 +374,12 @@ func TestItems(test *testing.T) {
 		})
 	})
 
-	test.Run("Auditing", func(t *testing.T) {
-		t.Run("it should return an error when trying to audit something that does not exist", func(t *testing.T) {
+	test.Run("Auditing", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		subtest.Run("it should return an error when trying to audit something that does not exist", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -347,7 +391,9 @@ func TestItems(test *testing.T) {
 			assert.Empty(t, x)
 		})
 
-		t.Run("it should be auditable", func(t *testing.T) {
+		subtest.Run("it should be auditable", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -376,7 +422,9 @@ func TestItems(test *testing.T) {
 			assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
 		})
 
-		t.Run("it should not be auditable by a non-admin", func(t *testing.T) {
+		subtest.Run("it should not be auditable by a non-admin", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 

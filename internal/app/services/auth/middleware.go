@@ -54,12 +54,11 @@ func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 // UserAttributionMiddleware is concerned with figuring otu who a user is, but not worried about kicking out users who are not known.
 func (s *Service) UserAttributionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		const this = "auth.service.UserAttributionMiddleware"
 		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
 
 		var user *types.User
-		logger := s.logger.WithRequest(req).WithValue("source", this)
+		logger := s.logger.WithRequest(req)
 
 		// check for a cookie first if we can.
 		if cookieAuth, err := s.DecodeCookieFromRequest(ctx, req); err == nil && cookieAuth != nil {

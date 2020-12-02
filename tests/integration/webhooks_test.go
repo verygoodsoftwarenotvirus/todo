@@ -32,8 +32,14 @@ func reverse(s string) string {
 }
 
 func TestWebhooks(test *testing.T) {
-	test.Run("Creating", func(t *testing.T) {
-		t.Run("should be createable", func(t *testing.T) {
+	test.Parallel()
+
+	test.Run("Creating", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		subtest.Run("should be createable", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -59,8 +65,12 @@ func TestWebhooks(test *testing.T) {
 		})
 	})
 
-	test.Run("Reading", func(t *testing.T) {
-		t.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
+	test.Run("Reading", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		subtest.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -71,7 +81,9 @@ func TestWebhooks(test *testing.T) {
 			assert.Error(t, err)
 		})
 
-		t.Run("it should be readable", func(t *testing.T) {
+		subtest.Run("it should be readable", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -95,7 +107,9 @@ func TestWebhooks(test *testing.T) {
 			assert.NoError(t, err)
 		})
 
-		t.Run("should be able to be read in a list", func(t *testing.T) {
+		subtest.Run("should be able to be read in a list", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -124,7 +138,9 @@ func TestWebhooks(test *testing.T) {
 			}
 		})
 
-		test.Run("should only allow users to see their own webhooks", func(t *testing.T) {
+		subtest.Run("should only allow users to see their own webhooks", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -151,8 +167,12 @@ func TestWebhooks(test *testing.T) {
 		})
 	})
 
-	test.Run("Updating", func(t *testing.T) {
-		t.Run("it should return an error when trying to update something that doesn't exist", func(t *testing.T) {
+	test.Run("Updating", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		subtest.Run("it should return an error when trying to update something that does not exist", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -165,7 +185,9 @@ func TestWebhooks(test *testing.T) {
 			assert.Error(t, err)
 		})
 
-		t.Run("it should be updatable", func(t *testing.T) {
+		subtest.Run("it should be updatable", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -197,8 +219,12 @@ func TestWebhooks(test *testing.T) {
 		})
 	})
 
-	test.Run("Deleting", func(t *testing.T) {
-		t.Run("should be able to be deleted", func(t *testing.T) {
+	test.Run("Deleting", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		subtest.Run("should be able to be deleted", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -216,8 +242,12 @@ func TestWebhooks(test *testing.T) {
 		})
 	})
 
-	test.Run("Auditing", func(t *testing.T) {
-		t.Run("it should return an error when trying to audit something that does not exist", func(t *testing.T) {
+	test.Run("Auditing", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		subtest.Run("it should return an error when trying to audit something that does not exist", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -229,7 +259,9 @@ func TestWebhooks(test *testing.T) {
 			assert.Empty(t, x)
 		})
 
-		t.Run("it should be auditable", func(t *testing.T) {
+		subtest.Run("it should be auditable", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
@@ -255,7 +287,9 @@ func TestWebhooks(test *testing.T) {
 			assert.NoError(t, testClient.ArchiveWebhook(ctx, premade.ID))
 		})
 
-		t.Run("it should not be auditable by a non-admin", func(t *testing.T) {
+		subtest.Run("it should not be auditable by a non-admin", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 

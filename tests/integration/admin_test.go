@@ -13,7 +13,11 @@ import (
 )
 
 func TestAdmin(test *testing.T) {
+	test.Parallel()
+
 	test.Run("User Management", func(t *testing.T) {
+		t.Parallel()
+
 		t.Run("it should return an error when trying to ban a user that does not exist", func(t *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
@@ -26,6 +30,8 @@ func TestAdmin(test *testing.T) {
 		})
 
 		t.Run("users should be bannable", func(t *testing.T) {
+			t.Parallel()
+
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 

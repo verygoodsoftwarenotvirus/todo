@@ -174,7 +174,7 @@ func (q *Postgres) buildGetBatchOfItemsQuery(beginID, endID uint64) (query strin
 func (q *Postgres) GetAllItems(ctx context.Context, resultChannel chan []types.Item) error {
 	count, err := q.GetAllItemsCount(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("error fetching count of items: %w", err)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {

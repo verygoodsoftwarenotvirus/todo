@@ -7,6 +7,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
@@ -266,36 +267,50 @@ func TestPostgres_GetAllWebhooksCount(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetAllWebhooksQuery(T *testing.T) {
+func TestPostgres_buildGetBatchOfWebhooksQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		p, _ := buildTestService(t)
 
-		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL"
-		actualQuery := p.buildGetAllWebhooksQuery()
+		beginID, endID := uint64(1), uint64(1000)
 
-		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.id > $1 AND webhooks.id < $2"
+		expectedArgs := []interface{}{
+			beginID,
+			endID,
+		}
+		actualQuery, actualArgs := p.buildGetBatchOfWebhooksQuery(beginID, endID)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
 
 func TestPostgres_GetAllWebhooks(T *testing.T) {
 	T.Parallel()
 
+	p, _ := buildTestService(T)
+	expectedCountQuery := p.buildGetAllWebhooksCountQuery()
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhookList := fakes.BuildFakeWebhookList()
-		exampleWebhookList.Pagination = types.Pagination{}
-
 		p, mockDB := buildTestService(t)
-		expectedQuery := p.buildGetAllWebhooksQuery()
+		exampleWebhookList := fakes.BuildFakeWebhookList()
+		expectedCount := uint64(20)
 
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		begin, end := uint64(1), uint64(1001)
+		expectedQuery, expectedArgs := p.buildGetBatchOfWebhooksQuery(begin, end)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromWebhooks(
 					false,
@@ -305,28 +320,69 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 				),
 			)
 
-		actual, err := p.GetAllWebhooks(ctx)
+		out := make(chan []types.Webhook)
+		doneChan := make(chan bool, 1)
+
+		err := p.GetAllWebhooks(ctx, out)
 		assert.NoError(t, err)
-		assert.Equal(t, exampleWebhookList, actual)
+
+		stillQuerying := true
+		for stillQuerying {
+			select {
+			case batch := <-out:
+				assert.NotEmpty(t, batch)
+				doneChan <- true
+			case <-time.After(time.Second):
+				t.FailNow()
+			case <-doneChan:
+				stillQuerying = false
+			}
+		}
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
-	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+	T.Run("with error fetching initial count", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
 		p, mockDB := buildTestService(t)
-		expectedQuery := p.buildGetAllWebhooksQuery()
 
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
+			WillReturnError(errors.New("blah"))
+
+		out := make(chan []types.Webhook)
+
+		err := p.GetAllWebhooks(ctx, out)
+		assert.Error(t, err)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("with no rows returned", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+		expectedCount := uint64(20)
+
+		begin, end := uint64(1), uint64(1001)
+		expectedQuery, expectedArgs := p.buildGetBatchOfWebhooksQuery(begin, end)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
+			WithArgs().
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := p.GetAllWebhooks(ctx)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-		assert.True(t, errors.Is(err, sql.ErrNoRows))
+		out := make(chan []types.Webhook)
+
+		err := p.GetAllWebhooks(ctx, out)
+		assert.NoError(t, err)
+
+		time.Sleep(time.Second)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -336,35 +392,52 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 		ctx := context.Background()
 
 		p, mockDB := buildTestService(t)
-		expectedQuery := p.buildGetAllWebhooksQuery()
+		expectedCount := uint64(20)
 
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		begin, end := uint64(1), uint64(1001)
+		expectedQuery, expectedArgs := p.buildGetBatchOfWebhooksQuery(begin, end)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := p.GetAllWebhooks(ctx)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
+		out := make(chan []types.Webhook)
+
+		err := p.GetAllWebhooks(ctx, out)
+		assert.NoError(t, err)
+
+		time.Sleep(time.Second)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
-	T.Run("with error from database", func(t *testing.T) {
+	T.Run("with invalid response from database", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhook := fakes.BuildFakeWebhook()
-
 		p, mockDB := buildTestService(t)
-		expectedQuery := p.buildGetAllWebhooksQuery()
+		exampleWebhook := fakes.BuildFakeWebhook()
+		expectedCount := uint64(20)
 
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		begin, end := uint64(1), uint64(1001)
+		expectedQuery, expectedArgs := p.buildGetBatchOfWebhooksQuery(begin, end)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromWebhook(exampleWebhook))
 
-		actual, err := p.GetAllWebhooks(ctx)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
+		out := make(chan []types.Webhook)
+
+		err := p.GetAllWebhooks(ctx, out)
+		assert.NoError(t, err)
+
+		time.Sleep(time.Second)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -380,7 +453,7 @@ func TestPostgres_buildGetWebhooksQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user, (SELECT COUNT(*) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $1 AND items.created_on > $2 AND items.created_on < $3 AND items.last_updated_on > $4 AND items.last_updated_on < $5) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $6 AND webhooks.created_on > $7 AND webhooks.created_on < $8 AND webhooks.last_updated_on > $9 AND webhooks.last_updated_on < $10 ORDER BY webhooks.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user, (SELECT COUNT(*) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $1 AND webhooks.created_on > $2 AND webhooks.created_on < $3 AND webhooks.last_updated_on > $4 AND webhooks.last_updated_on < $5) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $6 AND webhooks.created_on > $7 AND webhooks.created_on < $8 AND webhooks.last_updated_on > $9 AND webhooks.last_updated_on < $10 ORDER BY webhooks.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,

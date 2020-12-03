@@ -58,14 +58,13 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleWebhookList := fakes.BuildFakeWebhookList()
+		results := make(chan []types.Webhook)
 
 		c, mockDB := buildTestClient()
-		mockDB.WebhookDataManager.On("GetAllWebhooks", mock.Anything).Return(exampleWebhookList, nil)
+		mockDB.WebhookDataManager.On("GetAllWebhooks", mock.Anything, results).Return(nil)
 
-		actual, err := c.GetAllWebhooks(ctx)
+		err := c.GetAllWebhooks(ctx, results)
 		assert.NoError(t, err)
-		assert.Equal(t, exampleWebhookList, actual)
 
 		mock.AssertExpectationsForObjects(t, mockDB)
 	})

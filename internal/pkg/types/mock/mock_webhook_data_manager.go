@@ -34,9 +34,8 @@ func (m *WebhookDataManager) GetWebhooks(ctx context.Context, userID uint64, fil
 }
 
 // GetAllWebhooks satisfies our WebhookDataManager interface.
-func (m *WebhookDataManager) GetAllWebhooks(ctx context.Context) (*types.WebhookList, error) {
-	args := m.Called(ctx)
-	return args.Get(0).(*types.WebhookList), args.Error(1)
+func (m *WebhookDataManager) GetAllWebhooks(ctx context.Context, results chan []types.Webhook) error {
+	return m.Called(ctx, results).Error(0)
 }
 
 // CreateWebhook satisfies our WebhookDataManager interface.

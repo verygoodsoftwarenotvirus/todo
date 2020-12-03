@@ -102,7 +102,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue("user_id", userID)
 
 	// fetch oauth2 clients.
-	oauth2Clients, err := s.clientDataManager.GetOAuth2ClientsForUser(ctx, userID, filter)
+	oauth2Clients, err := s.clientDataManager.GetOAuth2Clients(ctx, userID, filter)
 	if errors.Is(err, sql.ErrNoRows) {
 		// just return an empty list if there are no results.
 		oauth2Clients = &types.OAuth2ClientList{

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
@@ -265,36 +266,50 @@ func TestMariaDB_GetAllWebhooksCount(T *testing.T) {
 	})
 }
 
-func TestMariaDB_buildGetAllWebhooksQuery(T *testing.T) {
+func TestMariaDB_buildGetBatchOfWebhooksQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		m, _ := buildTestService(t)
+		p, _ := buildTestService(t)
 
-		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL"
-		actualQuery := m.buildGetAllWebhooksQuery()
+		beginID, endID := uint64(1), uint64(1000)
 
-		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.id > ? AND webhooks.id < ?"
+		expectedArgs := []interface{}{
+			beginID,
+			endID,
+		}
+		actualQuery, actualArgs := p.buildGetBatchOfWebhooksQuery(beginID, endID)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
 
 func TestMariaDB_GetAllWebhooks(T *testing.T) {
 	T.Parallel()
 
+	p, _ := buildTestService(T)
+	expectedCountQuery := p.buildGetAllWebhooksCountQuery()
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
+		p, mockDB := buildTestService(t)
 		exampleWebhookList := fakes.BuildFakeWebhookList()
-		exampleWebhookList.Pagination = types.Pagination{}
+		expectedCount := uint64(20)
 
-		m, mockDB := buildTestService(t)
-		expectedQuery := m.buildGetAllWebhooksQuery()
+		begin, end := uint64(1), uint64(1001)
+		expectedQuery, expectedArgs := p.buildGetBatchOfWebhooksQuery(begin, end)
 
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromWebhooks(
 					false,
@@ -304,28 +319,69 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 				),
 			)
 
-		actual, err := m.GetAllWebhooks(ctx)
+		out := make(chan []types.Webhook)
+		doneChan := make(chan bool, 1)
+
+		err := p.GetAllWebhooks(ctx, out)
 		assert.NoError(t, err)
-		assert.Equal(t, exampleWebhookList, actual)
+
+		stillQuerying := true
+		for stillQuerying {
+			select {
+			case batch := <-out:
+				assert.NotEmpty(t, batch)
+				doneChan <- true
+			case <-time.After(time.Second):
+				t.FailNow()
+			case <-doneChan:
+				stillQuerying = false
+			}
+		}
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
-	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+	T.Run("with error fetching initial count", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
-		expectedQuery := m.buildGetAllWebhooksQuery()
+		p, mockDB := buildTestService(t)
 
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
+			WillReturnError(errors.New("blah"))
+
+		out := make(chan []types.Webhook)
+
+		err := p.GetAllWebhooks(ctx, out)
+		assert.Error(t, err)
+
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+
+	T.Run("with no rows returned", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		p, mockDB := buildTestService(t)
+		expectedCount := uint64(20)
+
+		begin, end := uint64(1), uint64(1001)
+		expectedQuery, expectedArgs := p.buildGetBatchOfWebhooksQuery(begin, end)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
+			WithArgs().
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := m.GetAllWebhooks(ctx)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-		assert.True(t, errors.Is(err, sql.ErrNoRows))
+		out := make(chan []types.Webhook)
+
+		err := p.GetAllWebhooks(ctx, out)
+		assert.NoError(t, err)
+
+		time.Sleep(time.Second)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -334,36 +390,53 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
-		expectedQuery := m.buildGetAllWebhooksQuery()
+		p, mockDB := buildTestService(t)
+		expectedCount := uint64(20)
 
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		begin, end := uint64(1), uint64(1001)
+		expectedQuery, expectedArgs := p.buildGetBatchOfWebhooksQuery(begin, end)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := m.GetAllWebhooks(ctx)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
+		out := make(chan []types.Webhook)
+
+		err := p.GetAllWebhooks(ctx, out)
+		assert.NoError(t, err)
+
+		time.Sleep(time.Second)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
-	T.Run("with error from database", func(t *testing.T) {
+	T.Run("with invalid response from database", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
+		p, mockDB := buildTestService(t)
 		exampleWebhook := fakes.BuildFakeWebhook()
+		expectedCount := uint64(20)
 
-		m, mockDB := buildTestService(t)
-		expectedQuery := m.buildGetAllWebhooksQuery()
+		begin, end := uint64(1), uint64(1001)
+		expectedQuery, expectedArgs := p.buildGetBatchOfWebhooksQuery(begin, end)
 
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromWebhook(exampleWebhook))
 
-		actual, err := m.GetAllWebhooks(ctx)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
+		out := make(chan []types.Webhook)
+
+		err := p.GetAllWebhooks(ctx, out)
+		assert.NoError(t, err)
+
+		time.Sleep(time.Second)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

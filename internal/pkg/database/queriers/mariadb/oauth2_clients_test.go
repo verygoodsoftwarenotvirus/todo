@@ -7,6 +7,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
@@ -183,201 +184,177 @@ func TestMariaDB_GetOAuth2ClientByClientID(T *testing.T) {
 	})
 }
 
-func TestMariaDB_buildGetAllOAuth2ClientsQuery(T *testing.T) {
+func TestMariDB_buildGetBatchOfOAuth2ClientsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		m, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
-		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL"
-		actualQuery := m.buildGetAllOAuth2ClientsQuery()
+		beginID, endID := uint64(1), uint64(1000)
 
-		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
+		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user FROM oauth2_clients WHERE oauth2_clients.id > ? AND oauth2_clients.id < ?"
+		expectedArgs := []interface{}{
+			beginID,
+			endID,
+		}
+		actualQuery, actualArgs := q.buildGetBatchOfOAuth2ClientsQuery(beginID, endID)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
 
-func TestMariaDB_GetAllOAuth2Clients(T *testing.T) {
+func TestMariDB_GetAllOAuth2Clients(T *testing.T) {
 	T.Parallel()
+
+	_q, _ := buildTestService(T)
+	expectedCountQuery := _q.buildGetAllOAuth2ClientsCountQuery()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
-		expected := []*types.OAuth2Client{
-			exampleOAuth2Client,
-			exampleOAuth2Client,
-			exampleOAuth2Client,
-		}
+		q, mockDB := buildTestService(t)
+		exampleOAuth2ClientList := fakes.BuildFakeOAuth2ClientList()
+		expectedCount := uint64(20)
 
-		m, mockDB := buildTestService(t)
-		expectedQuery := m.buildGetAllOAuth2ClientsQuery()
+		begin, end := uint64(1), uint64(1001)
+		expectedQuery, expectedArgs := q.buildGetBatchOfOAuth2ClientsQuery(begin, end)
 
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromOAuth2Clients(
 					false,
-					exampleOAuth2Client,
-					exampleOAuth2Client,
-					exampleOAuth2Client,
+					&exampleOAuth2ClientList.Clients[0],
+					&exampleOAuth2ClientList.Clients[1],
+					&exampleOAuth2ClientList.Clients[2],
 				),
 			)
 
-		actual, err := m.GetAllOAuth2Clients(ctx)
+		out := make(chan []types.OAuth2Client)
+		doneChan := make(chan bool, 1)
+
+		err := q.GetAllOAuth2Clients(ctx, out)
 		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
 
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-
-	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		m, mockDB := buildTestService(t)
-		expectedQuery := m.buildGetAllOAuth2ClientsQuery()
-
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs().
-			WillReturnError(sql.ErrNoRows)
-
-		actual, err := m.GetAllOAuth2Clients(ctx)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-		assert.True(t, errors.Is(err, sql.ErrNoRows))
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-
-	T.Run("with error executing query", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		m, mockDB := buildTestService(t)
-		expectedQuery := m.buildGetAllOAuth2ClientsQuery()
-
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs().
-			WillReturnError(errors.New("blah"))
-
-		actual, err := m.GetAllOAuth2Clients(ctx)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-
-	T.Run("with erroneous response from database", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
-
-		m, mockDB := buildTestService(t)
-		expectedQuery := m.buildGetAllOAuth2ClientsQuery()
-
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs().
-			WillReturnRows(buildErroneousMockRowFromOAuth2Client(exampleOAuth2Client))
-
-		actual, err := m.GetAllOAuth2Clients(ctx)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
-func TestMariaDB_GetAllOAuth2ClientsForUser(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleOAuth2ClientList := fakes.BuildFakeOAuth2ClientList()
-
-		expected := []*types.OAuth2Client{
-			&exampleOAuth2ClientList.Clients[0],
-			&exampleOAuth2ClientList.Clients[1],
-			&exampleOAuth2ClientList.Clients[2],
+		stillQuerying := true
+		for stillQuerying {
+			select {
+			case batch := <-out:
+				assert.NotEmpty(t, batch)
+				doneChan <- true
+			case <-time.After(time.Second):
+				t.FailNow()
+			case <-doneChan:
+				stillQuerying = false
+			}
 		}
 
-		m, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := m.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, nil)
+		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
 
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromOAuth2Clients(false, expected...))
+	T.Run("with error fetching initial count", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
 
-		actual, err := m.GetAllOAuth2ClientsForUser(ctx, exampleUser.ID)
-		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
+		q, mockDB := buildTestService(t)
+
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
+			WithArgs().
+			WillReturnError(errors.New("blah"))
+
+		out := make(chan []types.OAuth2Client)
+
+		err := q.GetAllOAuth2Clients(ctx, out)
+		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
-	T.Run("surfaces sql.ErrNoRows", func(t *testing.T) {
+	T.Run("with no rows returned", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakes.BuildFakeUser()
+		q, mockDB := buildTestService(t)
+		expectedCount := uint64(20)
 
-		m, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := m.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, nil)
+		begin, end := uint64(1), uint64(1001)
+		expectedQuery, expectedArgs := q.buildGetBatchOfOAuth2ClientsQuery(begin, end)
 
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
+			WithArgs().
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := m.GetAllOAuth2ClientsForUser(ctx, exampleUser.ID)
-		assert.True(t, errors.Is(err, sql.ErrNoRows))
-		assert.Nil(t, actual)
+		out := make(chan []types.OAuth2Client)
+
+		err := q.GetAllOAuth2Clients(ctx, out)
+		assert.NoError(t, err)
+
+		time.Sleep(time.Second)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
-	T.Run("with erroneous response from database", func(t *testing.T) {
+	T.Run("with error querying database", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakes.BuildFakeUser()
+		q, mockDB := buildTestService(t)
+		expectedCount := uint64(20)
 
-		m, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := m.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, nil)
+		begin, end := uint64(1), uint64(1001)
+		expectedQuery, expectedArgs := q.buildGetBatchOfOAuth2ClientsQuery(begin, end)
 
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
+			WithArgs().
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := m.GetAllOAuth2ClientsForUser(ctx, exampleUser.ID)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
+		out := make(chan []types.OAuth2Client)
+
+		err := q.GetAllOAuth2Clients(ctx, out)
+		assert.NoError(t, err)
+
+		time.Sleep(time.Second)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
-	T.Run("with unscannable response", func(t *testing.T) {
+	T.Run("with invalid response from database", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakes.BuildFakeUser()
+		q, mockDB := buildTestService(t)
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
+		expectedCount := uint64(20)
 
-		m, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := m.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, nil)
+		begin, end := uint64(1), uint64(1001)
+		expectedQuery, expectedArgs := q.buildGetBatchOfOAuth2ClientsQuery(begin, end)
 
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
+			WithArgs().
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromOAuth2Client(exampleOAuth2Client))
 
-		actual, err := m.GetAllOAuth2ClientsForUser(ctx, exampleUser.ID)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
+		out := make(chan []types.OAuth2Client)
+
+		err := q.GetAllOAuth2Clients(ctx, out)
+		assert.NoError(t, err)
+
+		time.Sleep(time.Second)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -501,7 +478,7 @@ func TestMariaDB_GetAllOAuth2ClientCount(T *testing.T) {
 			WithArgs().
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
-		actualCount, err := m.GetAllOAuth2ClientCount(ctx)
+		actualCount, err := m.GetTotalOAuth2ClientCount(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedCount, actualCount)
 
@@ -567,7 +544,7 @@ func TestMariaDB_GetOAuth2ClientsForUser(T *testing.T) {
 				),
 			)
 
-		actual, err := m.GetOAuth2ClientsForUser(ctx, exampleUser.ID, filter)
+		actual, err := m.GetOAuth2Clients(ctx, exampleUser.ID, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleOAuth2ClientList, actual)
 
@@ -587,7 +564,7 @@ func TestMariaDB_GetOAuth2ClientsForUser(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := m.GetOAuth2ClientsForUser(ctx, exampleUser.ID, filter)
+		actual, err := m.GetOAuth2Clients(ctx, exampleUser.ID, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -607,7 +584,7 @@ func TestMariaDB_GetOAuth2ClientsForUser(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := m.GetOAuth2ClientsForUser(ctx, exampleUser.ID, filter)
+		actual, err := m.GetOAuth2Clients(ctx, exampleUser.ID, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -627,7 +604,7 @@ func TestMariaDB_GetOAuth2ClientsForUser(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromOAuth2Client(fakes.BuildFakeOAuth2Client()))
 
-		actual, err := m.GetOAuth2ClientsForUser(ctx, exampleUser.ID, filter)
+		actual, err := m.GetOAuth2Clients(ctx, exampleUser.ID, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 

@@ -27,20 +27,19 @@ func (m *OAuth2ClientDataManager) GetOAuth2ClientByClientID(ctx context.Context,
 	return args.Get(0).(*types.OAuth2Client), args.Error(1)
 }
 
-// GetAllOAuth2ClientCount is a mock function.
-func (m *OAuth2ClientDataManager) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
+// GetTotalOAuth2ClientCount is a mock function.
+func (m *OAuth2ClientDataManager) GetTotalOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	args := m.Called(ctx)
 	return args.Get(0).(uint64), args.Error(1)
 }
 
 // GetAllOAuth2Clients is a mock function.
-func (m *OAuth2ClientDataManager) GetAllOAuth2Clients(ctx context.Context) ([]*types.OAuth2Client, error) {
-	args := m.Called(ctx)
-	return args.Get(0).([]*types.OAuth2Client), args.Error(1)
+func (m *OAuth2ClientDataManager) GetAllOAuth2Clients(ctx context.Context, results chan []types.OAuth2Client) error {
+	return m.Called(ctx, results).Error(0)
 }
 
-// GetOAuth2ClientsForUser is a mock function.
-func (m *OAuth2ClientDataManager) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.OAuth2ClientList, error) {
+// GetOAuth2Clients is a mock function.
+func (m *OAuth2ClientDataManager) GetOAuth2Clients(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.OAuth2ClientList, error) {
 	args := m.Called(ctx, userID, filter)
 	return args.Get(0).(*types.OAuth2ClientList), args.Error(1)
 }

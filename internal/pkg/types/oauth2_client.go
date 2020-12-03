@@ -56,9 +56,10 @@ type (
 	// OAuth2ClientDataManager handles OAuth2 clients.
 	OAuth2ClientDataManager interface {
 		GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*OAuth2Client, error)
+		GetAllOAuth2Clients(ctx context.Context, resultChannel chan []OAuth2Client) error
 		GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*OAuth2Client, error)
-		GetAllOAuth2ClientCount(ctx context.Context) (uint64, error)
-		GetOAuth2ClientsForUser(ctx context.Context, userID uint64, filter *QueryFilter) (*OAuth2ClientList, error)
+		GetTotalOAuth2ClientCount(ctx context.Context) (uint64, error)
+		GetOAuth2Clients(ctx context.Context, userID uint64, filter *QueryFilter) (*OAuth2ClientList, error)
 		CreateOAuth2Client(ctx context.Context, input *OAuth2ClientCreationInput) (*OAuth2Client, error)
 		UpdateOAuth2Client(ctx context.Context, updated *OAuth2Client) error
 		ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error

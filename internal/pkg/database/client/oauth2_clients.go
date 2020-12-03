@@ -51,27 +51,37 @@ func (c *Client) GetOAuth2ClientByClientID(ctx context.Context, clientID string)
 	return client, nil
 }
 
-// GetAllOAuth2ClientCount gets the count of OAuth2 clients that match the current filter.
-func (c *Client) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
+// GetTotalOAuth2ClientCount gets the count of OAuth2 clients that match the current filter.
+func (c *Client) GetTotalOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.Debug("GetAllOAuth2ClientCount called")
+	c.logger.Debug("GetTotalOAuth2ClientCount called")
 
-	return c.querier.GetAllOAuth2ClientCount(ctx)
+	return c.querier.GetTotalOAuth2ClientCount(ctx)
 }
 
-// GetOAuth2ClientsForUser gets a list of OAuth2 clients.
-func (c *Client) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.OAuth2ClientList, error) {
+// GetAllOAuth2Clients loads all OAuth2 clients into a channel.
+func (c *Client) GetAllOAuth2Clients(ctx context.Context, results chan []types.OAuth2Client) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.End()
+
+	c.logger.Debug("GetAllItems called")
+
+	return c.querier.GetAllOAuth2Clients(ctx, results)
+}
+
+// GetOAuth2Clients gets a list of OAuth2 clients.
+func (c *Client) GetOAuth2Clients(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.OAuth2ClientList, error) {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
 	tracing.AttachFilterToSpan(span, filter)
 
-	c.logger.WithValue("user_id", userID).Debug("GetOAuth2ClientsForUser called")
+	c.logger.WithValue("user_id", userID).Debug("GetOAuth2Clients called")
 
-	return c.querier.GetOAuth2ClientsForUser(ctx, userID, filter)
+	return c.querier.GetOAuth2Clients(ctx, userID, filter)
 }
 
 // CreateOAuth2Client creates an OAuth2 client.

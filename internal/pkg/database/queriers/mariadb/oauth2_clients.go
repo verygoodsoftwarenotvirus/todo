@@ -52,9 +52,9 @@ func (q *MariaDB) scanOAuth2Client(scan database.Scanner, includeCount bool) (*t
 }
 
 // scanOAuth2Clients takes sql rows and turns them into a slice of OAuth2Clients.
-func (q *MariaDB) scanOAuth2Clients(rows database.ResultIterator, includeCount bool) ([]*types.OAuth2Client, uint64, error) {
+func (q *MariaDB) scanOAuth2Clients(rows database.ResultIterator, includeCount bool) ([]types.OAuth2Client, uint64, error) {
 	var (
-		list  []*types.OAuth2Client
+		list  []types.OAuth2Client
 		count uint64
 	)
 
@@ -68,7 +68,7 @@ func (q *MariaDB) scanOAuth2Clients(rows database.ResultIterator, includeCount b
 			count = c
 		}
 
-		list = append(list, client)
+		list = append(list, *client)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -111,61 +111,61 @@ func (q *MariaDB) GetOAuth2ClientByClientID(ctx context.Context, clientID string
 	return client, err
 }
 
-// buildGetAllOAuth2ClientsQuery builds a SQL query.
-func (q *MariaDB) buildGetAllOAuth2ClientsQuery() (query string) {
-	var err error
-
-	getAllOAuth2ClientsQuery, _, err := q.sqlBuilder.
+// buildGetBatchOfOAuth2ClientsQuery returns a query that fetches every item in the database within a bucketed range.
+func (q *MariaDB) buildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (query string, args []interface{}) {
+	query, args, err := q.sqlBuilder.
 		Select(queriers.OAuth2ClientsTableColumns...).
 		From(queriers.OAuth2ClientsTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.ArchivedOnColumn): nil,
+		Where(squirrel.Gt{
+			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.IDColumn): beginID,
+		}).
+		Where(squirrel.Lt{
+			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.IDColumn): endID,
 		}).
 		ToSql()
 
 	q.logQueryBuildingError(err)
 
-	return getAllOAuth2ClientsQuery
+	return query, args
 }
 
-// GetAllOAuth2Clients gets a list of OAuth2 clients regardless of ownership.
-func (q *MariaDB) GetAllOAuth2Clients(ctx context.Context) ([]*types.OAuth2Client, error) {
-	rows, err := q.db.QueryContext(ctx, q.buildGetAllOAuth2ClientsQuery())
+// GetAllOAuth2Clients fetches every item from the database and writes them to a channel. This method primarily exists
+// to aid in administrative data tasks.
+func (q *MariaDB) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []types.OAuth2Client) error {
+	count, err := q.GetTotalOAuth2ClientCount(ctx)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, err
-		}
-
-		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
+		return fmt.Errorf("error fetching count of items: %w", err)
 	}
 
-	list, _, err := q.scanOAuth2Clients(rows, false)
-	if err != nil {
-		return nil, fmt.Errorf("fetching list of OAuth2Clients: %w", err)
+	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
+		endID := beginID + defaultBucketSize
+		go func(begin, end uint64) {
+			query, args := q.buildGetBatchOfOAuth2ClientsQuery(begin, end)
+			logger := q.logger.WithValues(map[string]interface{}{
+				"query": query,
+				"begin": begin,
+				"end":   end,
+			})
+
+			rows, err := q.db.Query(query, args...)
+			if errors.Is(err, sql.ErrNoRows) {
+				return
+			} else if err != nil {
+				logger.Error(err, "querying for database rows")
+				return
+			}
+
+			clients, _, err := q.scanOAuth2Clients(rows, false)
+			if err != nil {
+				logger.Error(err, "scanning database rows")
+				return
+			}
+
+			resultChannel <- clients
+		}(beginID, endID)
 	}
 
-	return list, nil
-}
-
-// GetAllOAuth2ClientsForUser gets a list of OAuth2 clients belonging to a given user.
-func (q *MariaDB) GetAllOAuth2ClientsForUser(ctx context.Context, userID uint64) ([]*types.OAuth2Client, error) {
-	query, args := q.buildGetOAuth2ClientsForUserQuery(userID, nil)
-
-	rows, err := q.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, err
-		}
-
-		return nil, fmt.Errorf("querying database for oauth2 clients: %w", err)
-	}
-
-	list, _, err := q.scanOAuth2Clients(rows, false)
-	if err != nil {
-		return nil, fmt.Errorf("fetching list of OAuth2Clients: %w", err)
-	}
-
-	return list, nil
+	return nil
 }
 
 // buildGetOAuth2ClientQuery returns a SQL query which requests a given OAuth2 client by its database ID.
@@ -221,8 +221,8 @@ func (q *MariaDB) buildGetAllOAuth2ClientsCountQuery() string {
 	return getAllOAuth2ClientCountQuery
 }
 
-// GetAllOAuth2ClientCount will get the count of OAuth2 clients that match the current filter.
-func (q *MariaDB) GetAllOAuth2ClientCount(ctx context.Context) (uint64, error) {
+// GetTotalOAuth2ClientCount will get the count of OAuth2 clients that match the current filter.
+func (q *MariaDB) GetTotalOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	var count uint64
 	err := q.db.QueryRowContext(ctx, q.buildGetAllOAuth2ClientsCountQuery()).Scan(&count)
 
@@ -266,8 +266,8 @@ func (q *MariaDB) buildGetOAuth2ClientsForUserQuery(userID uint64, filter *types
 	return query, append(countQueryArgs, selectArgs...)
 }
 
-// GetOAuth2ClientsForUser gets a list of OAuth2 clients.
-func (q *MariaDB) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.OAuth2ClientList, error) {
+// GetOAuth2Clients gets a list of OAuth2 clients.
+func (q *MariaDB) GetOAuth2Clients(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.OAuth2ClientList, error) {
 	query, args := q.buildGetOAuth2ClientsForUserQuery(userID, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
@@ -292,12 +292,7 @@ func (q *MariaDB) GetOAuth2ClientsForUser(ctx context.Context, userID uint64, fi
 			Limit:      filter.Limit,
 			TotalCount: count,
 		},
-	}
-
-	// de-pointer-ize clients
-	ocl.Clients = make([]types.OAuth2Client, len(list))
-	for i, t := range list {
-		ocl.Clients[i] = *t
+		Clients: list,
 	}
 
 	return ocl, nil

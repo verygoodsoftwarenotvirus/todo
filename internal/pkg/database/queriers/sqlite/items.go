@@ -177,7 +177,7 @@ func (q *Sqlite) buildGetBatchOfItemsQuery(beginID, endID uint64) (query string,
 func (q *Sqlite) GetAllItems(ctx context.Context, resultChannel chan []types.Item) error {
 	count, err := q.GetAllItemsCount(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("error fetching count of items: %w", err)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {

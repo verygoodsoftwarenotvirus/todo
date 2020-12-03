@@ -147,44 +147,61 @@ func (q *Sqlite) GetAllWebhooksCount(ctx context.Context) (count uint64, err err
 	return count, err
 }
 
-// buildGetAllWebhooksQuery returns a SQL query which will return all webhooks, regardless of ownership.
-func (q *Sqlite) buildGetAllWebhooksQuery() string {
-	var err error
-
-	getAllWebhooksQuery, _, err := q.sqlBuilder.
+// buildGetBatchOfWebhooksQuery returns a query that fetches every item in the database within a bucketed range.
+func (q *Sqlite) buildGetBatchOfWebhooksQuery(beginID, endID uint64) (query string, args []interface{}) {
+	query, args, err := q.sqlBuilder.
 		Select(queriers.WebhooksTableColumns...).
 		From(queriers.WebhooksTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.ArchivedOnColumn): nil,
+		Where(squirrel.Gt{
+			fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.IDColumn): beginID,
+		}).
+		Where(squirrel.Lt{
+			fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.IDColumn): endID,
 		}).
 		ToSql()
 
 	q.logQueryBuildingError(err)
 
-	return getAllWebhooksQuery
+	return query, args
 }
 
-// GetAllWebhooks fetches a list of all webhooks from the database.
-func (q *Sqlite) GetAllWebhooks(ctx context.Context) (*types.WebhookList, error) {
-	rows, err := q.db.QueryContext(ctx, q.buildGetAllWebhooksQuery())
+// GetAllWebhooks fetches every item from the database and writes them to a channel. This method primarily exists
+// to aid in administrative data tasks.
+func (q *Sqlite) GetAllWebhooks(ctx context.Context, resultChannel chan []types.Webhook) error {
+	count, err := q.GetAllWebhooksCount(ctx)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, err
-		}
-
-		return nil, fmt.Errorf("querying for webhooks: %w", err)
+		return fmt.Errorf("error fetching count of webhooks: %w", err)
 	}
 
-	list, _, err := q.scanWebhooks(rows, false)
-	if err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
+	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
+		endID := beginID + defaultBucketSize
+		go func(begin, end uint64) {
+			query, args := q.buildGetBatchOfWebhooksQuery(begin, end)
+			logger := q.logger.WithValues(map[string]interface{}{
+				"query": query,
+				"begin": begin,
+				"end":   end,
+			})
+
+			rows, err := q.db.Query(query, args...)
+			if errors.Is(err, sql.ErrNoRows) {
+				return
+			} else if err != nil {
+				logger.Error(err, "querying for database rows")
+				return
+			}
+
+			webhooks, _, err := q.scanWebhooks(rows, false)
+			if err != nil {
+				logger.Error(err, "scanning database rows")
+				return
+			}
+
+			resultChannel <- webhooks
+		}(beginID, endID)
 	}
 
-	x := &types.WebhookList{
-		Webhooks: list,
-	}
-
-	return x, err
+	return nil
 }
 
 // buildGetWebhooksQuery returns a SQL query (and arguments) that would return a list of webhooks.

@@ -214,7 +214,7 @@ func TestService_ListHandler(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
-			"GetOAuth2ClientsForUser",
+			"GetOAuth2Clients",
 			mock.Anything,
 			exampleUser.ID,
 			mock.AnythingOfType("*types.QueryFilter"),
@@ -246,7 +246,7 @@ func TestService_ListHandler(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
-			"GetOAuth2ClientsForUser",
+			"GetOAuth2Clients",
 			mock.Anything,
 			exampleUser.ID,
 			mock.AnythingOfType("*types.QueryFilter"),
@@ -277,7 +277,7 @@ func TestService_ListHandler(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.OAuth2ClientDataManager.On(
-			"GetOAuth2ClientsForUser",
+			"GetOAuth2Clients",
 			mock.Anything,
 			exampleUser.ID,
 			mock.AnythingOfType("*types.QueryFilter"),

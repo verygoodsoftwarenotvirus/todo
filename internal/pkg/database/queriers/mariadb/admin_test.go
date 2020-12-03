@@ -20,14 +20,14 @@ func TestMariaDB_UpdateUserAccountStatus(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := *fakes.BuildFakeAccountStatusUpdateInput()
 
-		p, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := p.buildSetUserStatusQuery(exampleUser.ID, exampleInput)
+		q, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := q.buildSetUserStatusQuery(exampleUser.ID, exampleInput)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := p.UpdateUserAccountStatus(ctx, exampleUser.ID, exampleInput)
+		err := q.UpdateUserAccountStatus(ctx, exampleUser.ID, exampleInput)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")

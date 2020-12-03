@@ -62,26 +62,26 @@ func TestMariaDB_ScanAuditLogEntries(T *testing.T) {
 
 	T.Run("surfaces row errors", func(t *testing.T) {
 		t.Parallel()
-		m, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, _, err := m.scanAuditLogEntries(mockRows, false)
+		_, _, err := q.scanAuditLogEntries(mockRows, false)
 		assert.Error(t, err)
 	})
 
 	T.Run("logs row closing errors", func(t *testing.T) {
 		t.Parallel()
-		m, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, _, err := m.scanAuditLogEntries(mockRows, false)
+		_, _, err := q.scanAuditLogEntries(mockRows, false)
 		assert.NoError(t, err)
 	})
 }
@@ -91,7 +91,7 @@ func TestMariaDB_buildGetAuditLogEntryQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		m, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
@@ -99,7 +99,7 @@ func TestMariaDB_buildGetAuditLogEntryQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleAuditLogEntry.ID,
 		}
-		actualQuery, actualArgs := m.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
+		actualQuery, actualArgs := q.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -116,14 +116,14 @@ func TestMariaDB_GetAuditLogEntry(T *testing.T) {
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
-		m, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := m.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
+		q, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := q.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildMockRowsFromAuditLogEntries(false, exampleAuditLogEntry))
 
-		actual, err := m.GetAuditLogEntry(ctx, exampleAuditLogEntry.ID)
+		actual, err := q.GetAuditLogEntry(ctx, exampleAuditLogEntry.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleAuditLogEntry, actual)
 
@@ -136,14 +136,14 @@ func TestMariaDB_GetAuditLogEntry(T *testing.T) {
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
-		expectedQuery, expectedArgs := m.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
+		expectedQuery, expectedArgs := q.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := m.GetAuditLogEntry(ctx, exampleAuditLogEntry.ID)
+		actual, err := q.GetAuditLogEntry(ctx, exampleAuditLogEntry.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
@@ -157,10 +157,10 @@ func TestMariaDB_buildGetAllAuditLogEntriesCountQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		m, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		expectedQuery := "SELECT COUNT(audit_log.id) FROM audit_log"
-		actualQuery := m.buildGetAllAuditLogEntriesCountQuery()
+		actualQuery := q.buildGetAllAuditLogEntriesCountQuery()
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -176,12 +176,12 @@ func TestMariaDB_GetAllAuditLogEntriesCount(T *testing.T) {
 
 		expectedCount := uint64(123)
 
-		m, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(m.buildGetAllAuditLogEntriesCountQuery())).
+		q, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(q.buildGetAllAuditLogEntriesCountQuery())).
 			WithArgs().
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
-		actualCount, err := m.GetAllAuditLogEntriesCount(ctx)
+		actualCount, err := q.GetAllAuditLogEntriesCount(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedCount, actualCount)
 
@@ -194,7 +194,7 @@ func TestMariaDB_buildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		m, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		beginID, endID := uint64(1), uint64(1000)
 
@@ -203,7 +203,7 @@ func TestMariaDB_buildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 			beginID,
 			endID,
 		}
-		actualQuery, actualArgs := m.buildGetBatchOfAuditLogEntriesQuery(beginID, endID)
+		actualQuery, actualArgs := q.buildGetBatchOfAuditLogEntriesQuery(beginID, endID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -214,19 +214,19 @@ func TestMariaDB_buildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 	T.Parallel()
 
-	m, _ := buildTestService(T)
-	expectedCountQuery := m.buildGetAllAuditLogEntriesCountQuery()
+	_q, _ := buildTestService(T)
+	expectedCountQuery := _q.buildGetAllAuditLogEntriesCountQuery()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := m.buildGetBatchOfAuditLogEntriesQuery(begin, end)
+		expectedQuery, expectedArgs := q.buildGetBatchOfAuditLogEntriesQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -245,7 +245,7 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 		out := make(chan []types.AuditLogEntry)
 		doneChan := make(chan bool, 1)
 
-		err := m.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out)
 		assert.NoError(t, err)
 
 		var stillQuerying = true
@@ -268,7 +268,7 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -276,7 +276,7 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 
 		out := make(chan []types.AuditLogEntry)
 
-		err := m.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -286,11 +286,11 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := m.buildGetBatchOfAuditLogEntriesQuery(begin, end)
+		expectedQuery, expectedArgs := q.buildGetBatchOfAuditLogEntriesQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -301,7 +301,7 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 
 		out := make(chan []types.AuditLogEntry)
 
-		err := m.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -313,11 +313,11 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := m.buildGetBatchOfAuditLogEntriesQuery(begin, end)
+		expectedQuery, expectedArgs := q.buildGetBatchOfAuditLogEntriesQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -328,7 +328,7 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 
 		out := make(chan []types.AuditLogEntry)
 
-		err := m.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -340,12 +340,12 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := m.buildGetBatchOfAuditLogEntriesQuery(begin, end)
+		expectedQuery, expectedArgs := q.buildGetBatchOfAuditLogEntriesQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -356,7 +356,7 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 
 		out := make(chan []types.AuditLogEntry)
 
-		err := m.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -370,7 +370,7 @@ func TestMariaDB_buildGetAuditLogEntriesQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		m, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
@@ -385,7 +385,7 @@ func TestMariaDB_buildGetAuditLogEntriesQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := m.buildGetAuditLogEntriesQuery(filter)
+		actualQuery, actualArgs := q.buildGetAuditLogEntriesQuery(filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -400,11 +400,11 @@ func TestMariaDB_GetAuditLogEntries(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
-		expectedQuery, expectedArgs := m.buildGetAuditLogEntriesQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -417,7 +417,7 @@ func TestMariaDB_GetAuditLogEntries(T *testing.T) {
 				),
 			)
 
-		actual, err := m.GetAuditLogEntries(ctx, filter)
+		actual, err := q.GetAuditLogEntries(ctx, filter)
 
 		assert.NoError(t, err)
 		assert.Equal(t, exampleAuditLogEntryList, actual)
@@ -429,16 +429,16 @@ func TestMariaDB_GetAuditLogEntries(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		expectedQuery, expectedArgs := m.buildGetAuditLogEntriesQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := m.GetAuditLogEntries(ctx, filter)
+		actual, err := q.GetAuditLogEntries(ctx, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
@@ -450,16 +450,16 @@ func TestMariaDB_GetAuditLogEntries(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		expectedQuery, expectedArgs := m.buildGetAuditLogEntriesQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := m.GetAuditLogEntries(ctx, filter)
+		actual, err := q.GetAuditLogEntries(ctx, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -470,18 +470,18 @@ func TestMariaDB_GetAuditLogEntries(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
-		expectedQuery, expectedArgs := m.buildGetAuditLogEntriesQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromAuditLogEntry(exampleAuditLogEntry))
 
-		actual, err := m.GetAuditLogEntries(ctx, filter)
+		actual, err := q.GetAuditLogEntries(ctx, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -494,7 +494,7 @@ func TestMariaDB_buildCreateAuditLogEntryQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		m, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
@@ -503,7 +503,7 @@ func TestMariaDB_buildCreateAuditLogEntryQuery(T *testing.T) {
 			exampleAuditLogEntry.EventType,
 			exampleAuditLogEntry.Context,
 		}
-		actualQuery, actualArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		actualQuery, actualArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -518,16 +518,16 @@ func TestMariaDB_CreateAuditLogEntry(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.createAuditLogEntry(ctx, exampleInput)
+		q.createAuditLogEntry(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -536,17 +536,17 @@ func TestMariaDB_CreateAuditLogEntry(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		m.createAuditLogEntry(ctx, exampleInput)
+		q.createAuditLogEntry(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -559,17 +559,17 @@ func TestMariaDB_LogItemCreationEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleAuditLogEntryInput := audit.BuildItemCreationEventEntry(exampleItem)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogItemCreationEvent(ctx, exampleItem)
+		q.LogItemCreationEvent(ctx, exampleItem)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -582,17 +582,17 @@ func TestMariaDB_LogItemUpdateEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		exampleChanges := []types.FieldChangeSummary{}
 		exampleItem := fakes.BuildFakeItem()
 		exampleAuditLogEntryInput := audit.BuildItemUpdateEventEntry(exampleItem.BelongsToUser, exampleItem.ID, exampleChanges)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogItemUpdateEvent(ctx, exampleItem.BelongsToUser, exampleItem.ID, exampleChanges)
+		q.LogItemUpdateEvent(ctx, exampleItem.BelongsToUser, exampleItem.ID, exampleChanges)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -605,17 +605,17 @@ func TestMariaDB_LogItemArchiveEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleAuditLogEntryInput := audit.BuildItemArchiveEventEntry(exampleItem.BelongsToUser, exampleItem.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogItemArchiveEvent(ctx, exampleItem.BelongsToUser, exampleItem.ID)
+		q.LogItemArchiveEvent(ctx, exampleItem.BelongsToUser, exampleItem.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -628,17 +628,17 @@ func TestMariaDB_LogOAuth2ClientCreationEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleClient := fakes.BuildFakeOAuth2Client()
 		exampleAuditLogEntryInput := audit.BuildOAuth2ClientCreationEventEntry(exampleClient)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogOAuth2ClientCreationEvent(ctx, exampleClient)
+		q.LogOAuth2ClientCreationEvent(ctx, exampleClient)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -651,17 +651,17 @@ func TestMariaDB_LogOAuth2ClientArchiveEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleInput := fakes.BuildFakeOAuth2Client()
 		exampleAuditLogEntryInput := audit.BuildOAuth2ClientArchiveEventEntry(exampleInput.BelongsToUser, exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogOAuth2ClientArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
+		q.LogOAuth2ClientArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -674,17 +674,17 @@ func TestMariaDB_LogUserCreationEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserCreationEventEntry(exampleInput)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogUserCreationEvent(ctx, exampleInput)
+		q.LogUserCreationEvent(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -697,17 +697,17 @@ func TestMariaDB_LogUserVerifyTwoFactorSecretEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserVerifyTwoFactorSecretEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogUserVerifyTwoFactorSecretEvent(ctx, exampleInput.ID)
+		q.LogUserVerifyTwoFactorSecretEvent(ctx, exampleInput.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -720,17 +720,17 @@ func TestMariaDB_LogUserUpdateTwoFactorSecretEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserUpdateTwoFactorSecretEventEntry(exampleUser.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogUserUpdateTwoFactorSecretEvent(ctx, exampleUser.ID)
+		q.LogUserUpdateTwoFactorSecretEvent(ctx, exampleUser.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -743,17 +743,17 @@ func TestMariaDB_LogUserUpdatePasswordEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserUpdatePasswordEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogUserUpdatePasswordEvent(ctx, exampleInput.ID)
+		q.LogUserUpdatePasswordEvent(ctx, exampleInput.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -766,17 +766,17 @@ func TestMariaDB_LogUserArchiveEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserArchiveEventEntry(exampleUser.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogUserArchiveEvent(ctx, exampleUser.ID)
+		q.LogUserArchiveEvent(ctx, exampleUser.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -789,17 +789,17 @@ func TestMariaDB_LogCycleCookieSecretEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildCycleCookieSecretEvent(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogCycleCookieSecretEvent(ctx, exampleInput.ID)
+		q.LogCycleCookieSecretEvent(ctx, exampleInput.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -812,17 +812,17 @@ func TestMariaDB_LogSuccessfulLoginEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildSuccessfulLoginEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogSuccessfulLoginEvent(ctx, exampleInput.ID)
+		q.LogSuccessfulLoginEvent(ctx, exampleInput.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -835,17 +835,17 @@ func TestMariaDB_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUnsuccessfulLoginBadPasswordEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogUnsuccessfulLoginBadPasswordEvent(ctx, exampleInput.ID)
+		q.LogUnsuccessfulLoginBadPasswordEvent(ctx, exampleInput.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -858,17 +858,17 @@ func TestMariaDB_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogUnsuccessfulLoginBad2FATokenEvent(ctx, exampleInput.ID)
+		q.LogUnsuccessfulLoginBad2FATokenEvent(ctx, exampleInput.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -881,17 +881,17 @@ func TestMariaDB_LogLogoutEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildLogoutEventEntry(exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogLogoutEvent(ctx, exampleInput.ID)
+		q.LogLogoutEvent(ctx, exampleInput.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -904,17 +904,17 @@ func TestMariaDB_LogWebhookCreationEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleAuditLogEntryInput := audit.BuildWebhookCreationEventEntry(exampleWebhook)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogWebhookCreationEvent(ctx, exampleWebhook)
+		q.LogWebhookCreationEvent(ctx, exampleWebhook)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -927,17 +927,17 @@ func TestMariaDB_LogWebhookUpdateEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		exampleChanges := []types.FieldChangeSummary{}
 		exampleInput := fakes.BuildFakeWebhook()
 		exampleAuditLogEntryInput := audit.BuildWebhookUpdateEventEntry(exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogWebhookUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
+		q.LogWebhookUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -950,17 +950,17 @@ func TestMariaDB_LogWebhookArchiveEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleAuditLogEntryInput := audit.BuildWebhookArchiveEventEntry(exampleWebhook.BelongsToUser, exampleWebhook.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := m.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		m.LogWebhookArchiveEvent(ctx, exampleWebhook.BelongsToUser, exampleWebhook.ID)
+		q.LogWebhookArchiveEvent(ctx, exampleWebhook.BelongsToUser, exampleWebhook.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

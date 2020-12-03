@@ -22,9 +22,7 @@ func buildTestService(t *testing.T) (*MariaDB, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 
-	m := ProvideMariaDB(true, db, noop.NewLogger())
-
-	return m.(*MariaDB), mock
+	return ProvideMariaDB(true, db, noop.NewLogger()).(*MariaDB), mock
 }
 
 var (
@@ -87,8 +85,8 @@ func TestMariaDB_IsReady(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		m, _ := buildTestService(t)
-		assert.True(t, m.IsReady(ctx))
+		q, _ := buildTestService(t)
+		assert.True(t, q.IsReady(ctx))
 	})
 }
 
@@ -97,8 +95,8 @@ func TestMariaDB_logQueryBuildingError(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		m, _ := buildTestService(t)
-		m.logQueryBuildingError(errors.New("blah"))
+		q, _ := buildTestService(t)
+		q.logQueryBuildingError(errors.New("blah"))
 	})
 }
 
@@ -107,8 +105,8 @@ func TestMariaDB_logIDRetrievalError(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		m, _ := buildTestService(t)
-		m.logIDRetrievalError(errors.New("blah"))
+		q, _ := buildTestService(t)
+		q.logIDRetrievalError(errors.New("blah"))
 	})
 }
 

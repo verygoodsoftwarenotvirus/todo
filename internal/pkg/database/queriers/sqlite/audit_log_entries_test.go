@@ -62,26 +62,26 @@ func TestSqlite_ScanAuditLogEntries(T *testing.T) {
 
 	T.Run("surfaces row errors", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, _, err := s.scanAuditLogEntries(mockRows, false)
+		_, _, err := q.scanAuditLogEntries(mockRows, false)
 		assert.Error(t, err)
 	})
 
 	T.Run("logs row closing errors", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, _, err := s.scanAuditLogEntries(mockRows, false)
+		_, _, err := q.scanAuditLogEntries(mockRows, false)
 		assert.NoError(t, err)
 	})
 }
@@ -91,7 +91,7 @@ func TestSqlite_buildGetAuditLogEntryQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
@@ -99,7 +99,7 @@ func TestSqlite_buildGetAuditLogEntryQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleAuditLogEntry.ID,
 		}
-		actualQuery, actualArgs := s.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
+		actualQuery, actualArgs := q.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -116,14 +116,14 @@ func TestSqlite_GetAuditLogEntry(T *testing.T) {
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
-		s, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := s.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
+		q, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := q.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildMockRowsFromAuditLogEntries(false, exampleAuditLogEntry))
 
-		actual, err := s.GetAuditLogEntry(ctx, exampleAuditLogEntry.ID)
+		actual, err := q.GetAuditLogEntry(ctx, exampleAuditLogEntry.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleAuditLogEntry, actual)
 
@@ -136,14 +136,14 @@ func TestSqlite_GetAuditLogEntry(T *testing.T) {
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
-		expectedQuery, expectedArgs := s.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
+		expectedQuery, expectedArgs := q.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := s.GetAuditLogEntry(ctx, exampleAuditLogEntry.ID)
+		actual, err := q.GetAuditLogEntry(ctx, exampleAuditLogEntry.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
@@ -157,10 +157,10 @@ func TestSqlite_buildGetAllAuditLogEntriesCountQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		expectedQuery := "SELECT COUNT(audit_log.id) FROM audit_log"
-		actualQuery := s.buildGetAllAuditLogEntriesCountQuery()
+		actualQuery := q.buildGetAllAuditLogEntriesCountQuery()
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -176,12 +176,12 @@ func TestSqlite_GetAllAuditLogEntriesCount(T *testing.T) {
 
 		expectedCount := uint64(123)
 
-		s, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(s.buildGetAllAuditLogEntriesCountQuery())).
+		q, mockDB := buildTestService(t)
+		mockDB.ExpectQuery(formatQueryForSQLMock(q.buildGetAllAuditLogEntriesCountQuery())).
 			WithArgs().
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
-		actualCount, err := s.GetAllAuditLogEntriesCount(ctx)
+		actualCount, err := q.GetAllAuditLogEntriesCount(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedCount, actualCount)
 
@@ -194,7 +194,7 @@ func TestSqlite_buildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		beginID, endID := uint64(1), uint64(1000)
 
@@ -203,7 +203,7 @@ func TestSqlite_buildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 			beginID,
 			endID,
 		}
-		actualQuery, actualArgs := s.buildGetBatchOfAuditLogEntriesQuery(beginID, endID)
+		actualQuery, actualArgs := q.buildGetBatchOfAuditLogEntriesQuery(beginID, endID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -214,19 +214,19 @@ func TestSqlite_buildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 func TestSqlite_GetAllAuditLogEntries(T *testing.T) {
 	T.Parallel()
 
-	s, _ := buildTestService(T)
-	expectedCountQuery := s.buildGetAllAuditLogEntriesCountQuery()
+	_q, _ := buildTestService(T)
+	expectedCountQuery := _q.buildGetAllAuditLogEntriesCountQuery()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := s.buildGetBatchOfAuditLogEntriesQuery(begin, end)
+		expectedQuery, expectedArgs := q.buildGetBatchOfAuditLogEntriesQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -245,7 +245,7 @@ func TestSqlite_GetAllAuditLogEntries(T *testing.T) {
 		out := make(chan []types.AuditLogEntry)
 		doneChan := make(chan bool, 1)
 
-		err := s.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out)
 		assert.NoError(t, err)
 
 		var stillQuerying = true
@@ -268,7 +268,7 @@ func TestSqlite_GetAllAuditLogEntries(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -276,7 +276,7 @@ func TestSqlite_GetAllAuditLogEntries(T *testing.T) {
 
 		out := make(chan []types.AuditLogEntry)
 
-		err := s.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -286,11 +286,11 @@ func TestSqlite_GetAllAuditLogEntries(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := s.buildGetBatchOfAuditLogEntriesQuery(begin, end)
+		expectedQuery, expectedArgs := q.buildGetBatchOfAuditLogEntriesQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -301,7 +301,7 @@ func TestSqlite_GetAllAuditLogEntries(T *testing.T) {
 
 		out := make(chan []types.AuditLogEntry)
 
-		err := s.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -313,11 +313,11 @@ func TestSqlite_GetAllAuditLogEntries(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := s.buildGetBatchOfAuditLogEntriesQuery(begin, end)
+		expectedQuery, expectedArgs := q.buildGetBatchOfAuditLogEntriesQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -328,7 +328,7 @@ func TestSqlite_GetAllAuditLogEntries(T *testing.T) {
 
 		out := make(chan []types.AuditLogEntry)
 
-		err := s.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -340,12 +340,12 @@ func TestSqlite_GetAllAuditLogEntries(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := s.buildGetBatchOfAuditLogEntriesQuery(begin, end)
+		expectedQuery, expectedArgs := q.buildGetBatchOfAuditLogEntriesQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -356,7 +356,7 @@ func TestSqlite_GetAllAuditLogEntries(T *testing.T) {
 
 		out := make(chan []types.AuditLogEntry)
 
-		err := s.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -370,7 +370,7 @@ func TestSqlite_buildGetAuditLogEntriesQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
@@ -385,7 +385,7 @@ func TestSqlite_buildGetAuditLogEntriesQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := s.buildGetAuditLogEntriesQuery(filter)
+		actualQuery, actualArgs := q.buildGetAuditLogEntriesQuery(filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -400,11 +400,11 @@ func TestSqlite_GetAuditLogEntries(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
-		expectedQuery, expectedArgs := s.buildGetAuditLogEntriesQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -417,7 +417,7 @@ func TestSqlite_GetAuditLogEntries(T *testing.T) {
 				),
 			)
 
-		actual, err := s.GetAuditLogEntries(ctx, filter)
+		actual, err := q.GetAuditLogEntries(ctx, filter)
 
 		assert.NoError(t, err)
 		assert.Equal(t, exampleAuditLogEntryList, actual)
@@ -429,16 +429,16 @@ func TestSqlite_GetAuditLogEntries(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		expectedQuery, expectedArgs := s.buildGetAuditLogEntriesQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := s.GetAuditLogEntries(ctx, filter)
+		actual, err := q.GetAuditLogEntries(ctx, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
@@ -450,16 +450,16 @@ func TestSqlite_GetAuditLogEntries(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		expectedQuery, expectedArgs := s.buildGetAuditLogEntriesQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := s.GetAuditLogEntries(ctx, filter)
+		actual, err := q.GetAuditLogEntries(ctx, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -470,17 +470,17 @@ func TestSqlite_GetAuditLogEntries(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
-		expectedQuery, expectedArgs := s.buildGetAuditLogEntriesQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromAuditLogEntry(exampleAuditLogEntry))
 
-		actual, err := s.GetAuditLogEntries(ctx, filter)
+		actual, err := q.GetAuditLogEntries(ctx, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -493,7 +493,7 @@ func TestSqlite_buildCreateAuditLogEntryQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
@@ -502,7 +502,7 @@ func TestSqlite_buildCreateAuditLogEntryQuery(T *testing.T) {
 			exampleAuditLogEntry.EventType,
 			exampleAuditLogEntry.Context,
 		}
-		actualQuery, actualArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		actualQuery, actualArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -517,16 +517,16 @@ func TestSqlite_createAuditLogEntry(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.createAuditLogEntry(ctx, exampleInput)
+		q.createAuditLogEntry(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -535,17 +535,17 @@ func TestSqlite_createAuditLogEntry(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		s.createAuditLogEntry(ctx, exampleInput)
+		q.createAuditLogEntry(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -558,17 +558,17 @@ func TestSqlite_LogSuccessfulLoginEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildSuccessfulLoginEventEntry(exampleUser.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogSuccessfulLoginEvent(ctx, exampleUser.ID)
+		q.LogSuccessfulLoginEvent(ctx, exampleUser.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -581,17 +581,17 @@ func TestSqlite_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUnsuccessfulLoginBadPasswordEventEntry(exampleUser.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogUnsuccessfulLoginBadPasswordEvent(ctx, exampleUser.ID)
+		q.LogUnsuccessfulLoginBadPasswordEvent(ctx, exampleUser.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -604,17 +604,17 @@ func TestSqlite_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(exampleUser.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogUnsuccessfulLoginBad2FATokenEvent(ctx, exampleUser.ID)
+		q.LogUnsuccessfulLoginBad2FATokenEvent(ctx, exampleUser.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -627,17 +627,17 @@ func TestSqlite_LogLogoutEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildLogoutEventEntry(exampleUser.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogLogoutEvent(ctx, exampleUser.ID)
+		q.LogLogoutEvent(ctx, exampleUser.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -650,17 +650,17 @@ func TestSqlite_LogWebhookCreationEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleAuditLogEntryInput := audit.BuildWebhookCreationEventEntry(exampleWebhook)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogWebhookCreationEvent(ctx, exampleWebhook)
+		q.LogWebhookCreationEvent(ctx, exampleWebhook)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -673,17 +673,17 @@ func TestSqlite_LogWebhookUpdateEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		exampleChanges := []types.FieldChangeSummary{}
 		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleAuditLogEntryInput := audit.BuildWebhookUpdateEventEntry(exampleWebhook.BelongsToUser, exampleWebhook.ID, exampleChanges)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogWebhookUpdateEvent(ctx, exampleWebhook.BelongsToUser, exampleWebhook.ID, exampleChanges)
+		q.LogWebhookUpdateEvent(ctx, exampleWebhook.BelongsToUser, exampleWebhook.ID, exampleChanges)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -696,17 +696,17 @@ func TestSqlite_LogWebhookArchiveEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleAuditLogEntryInput := audit.BuildWebhookArchiveEventEntry(exampleWebhook.BelongsToUser, exampleWebhook.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogWebhookArchiveEvent(ctx, exampleWebhook.BelongsToUser, exampleWebhook.ID)
+		q.LogWebhookArchiveEvent(ctx, exampleWebhook.BelongsToUser, exampleWebhook.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

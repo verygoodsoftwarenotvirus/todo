@@ -17,6 +17,8 @@ import (
 	postgres "github.com/lib/pq"
 )
 
+var _ types.UserDataManager = (*Postgres)(nil)
+
 // scanUser provides a consistent way to scan something like a *sql.Row into a User struct.
 func (q *Postgres) scanUser(scan database.Scanner, includeCount bool) (*types.User, uint64, error) {
 	var (

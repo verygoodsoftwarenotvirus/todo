@@ -15,6 +15,8 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
+var _ types.OAuth2ClientDataManager = (*Sqlite)(nil)
+
 // scanOAuth2Client takes a Scanner (i.e. *sql.Row) and scans its results into an OAuth2Client struct.
 func (q *Sqlite) scanOAuth2Client(scan database.Scanner, includeCount bool) (*types.OAuth2Client, uint64, error) {
 	var (

@@ -15,6 +15,8 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
+var _ types.WebhookDataManager = (*MariaDB)(nil)
+
 // scanWebhook is a consistent way to turn a *sql.Row into a webhook struct.
 func (q *MariaDB) scanWebhook(scan database.Scanner, includeCount bool) (*types.Webhook, uint64, error) {
 	var (

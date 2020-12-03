@@ -69,26 +69,26 @@ func TestSqlite_ScanItems(T *testing.T) {
 
 	T.Run("surfaces row errors", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, _, err := s.scanItems(mockRows, false)
+		_, _, err := q.scanItems(mockRows, false)
 		assert.Error(t, err)
 	})
 
 	T.Run("logs row closing errors", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 		mockRows := &database.MockResultIterator{}
 
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, _, err := s.scanItems(mockRows, false)
+		_, _, err := q.scanItems(mockRows, false)
 		assert.NoError(t, err)
 	})
 }
@@ -98,7 +98,7 @@ func TestSqlite_buildItemExistsQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
@@ -109,7 +109,7 @@ func TestSqlite_buildItemExistsQuery(T *testing.T) {
 			exampleItem.BelongsToUser,
 			exampleItem.ID,
 		}
-		actualQuery, actualArgs := s.buildItemExistsQuery(exampleItem.ID, exampleUser.ID)
+		actualQuery, actualArgs := q.buildItemExistsQuery(exampleItem.ID, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -128,14 +128,14 @@ func TestSqlite_ItemExists(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
-		expectedQuery, expectedArgs := s.buildItemExistsQuery(exampleItem.ID, exampleUser.ID)
+		expectedQuery, expectedArgs := q.buildItemExistsQuery(exampleItem.ID, exampleUser.ID)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
 
-		actual, err := s.ItemExists(ctx, exampleItem.ID, exampleUser.ID)
+		actual, err := q.ItemExists(ctx, exampleItem.ID, exampleUser.ID)
 		assert.NoError(t, err)
 		assert.True(t, actual)
 
@@ -150,14 +150,14 @@ func TestSqlite_ItemExists(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
-		expectedQuery, expectedArgs := s.buildItemExistsQuery(exampleItem.ID, exampleUser.ID)
+		expectedQuery, expectedArgs := q.buildItemExistsQuery(exampleItem.ID, exampleUser.ID)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := s.ItemExists(ctx, exampleItem.ID, exampleUser.ID)
+		actual, err := q.ItemExists(ctx, exampleItem.ID, exampleUser.ID)
 		assert.NoError(t, err)
 		assert.False(t, actual)
 
@@ -170,7 +170,7 @@ func TestSqlite_buildGetItemQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
@@ -181,7 +181,7 @@ func TestSqlite_buildGetItemQuery(T *testing.T) {
 			exampleItem.BelongsToUser,
 			exampleItem.ID,
 		}
-		actualQuery, actualArgs := s.buildGetItemQuery(exampleItem.ID, exampleUser.ID)
+		actualQuery, actualArgs := q.buildGetItemQuery(exampleItem.ID, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -201,14 +201,14 @@ func TestSqlite_GetItem(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
-		expectedQuery, expectedArgs := s.buildGetItemQuery(exampleItem.ID, exampleUser.ID)
+		expectedQuery, expectedArgs := q.buildGetItemQuery(exampleItem.ID, exampleUser.ID)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildMockRowsFromItems(false, exampleItem))
 
-		actual, err := s.GetItem(ctx, exampleItem.ID, exampleUser.ID)
+		actual, err := q.GetItem(ctx, exampleItem.ID, exampleUser.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItem, actual)
 
@@ -222,14 +222,14 @@ func TestSqlite_GetItem(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
-		expectedQuery, expectedArgs := s.buildGetItemQuery(exampleItem.ID, exampleUser.ID)
+		expectedQuery, expectedArgs := q.buildGetItemQuery(exampleItem.ID, exampleUser.ID)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := s.GetItem(ctx, exampleItem.ID, exampleUser.ID)
+		actual, err := q.GetItem(ctx, exampleItem.ID, exampleUser.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
@@ -243,10 +243,10 @@ func TestSqlite_buildGetAllItemsCountQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
-		actualQuery := s.buildGetAllItemsCountQuery()
+		actualQuery := q.buildGetAllItemsCountQuery()
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -259,15 +259,15 @@ func TestSqlite_GetAllItemsCount(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
-		expectedQuery := s.buildGetAllItemsCountQuery()
+		expectedQuery := q.buildGetAllItemsCountQuery()
 		expectedCount := uint64(123)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
-		actualCount, err := s.GetAllItemsCount(ctx)
+		actualCount, err := q.GetAllItemsCount(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedCount, actualCount)
 
@@ -280,7 +280,7 @@ func TestSqlite_buildGetBatchOfItemsQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		beginID, endID := uint64(1), uint64(1000)
 
@@ -289,7 +289,7 @@ func TestSqlite_buildGetBatchOfItemsQuery(T *testing.T) {
 			beginID,
 			endID,
 		}
-		actualQuery, actualArgs := s.buildGetBatchOfItemsQuery(beginID, endID)
+		actualQuery, actualArgs := q.buildGetBatchOfItemsQuery(beginID, endID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -300,18 +300,18 @@ func TestSqlite_buildGetBatchOfItemsQuery(T *testing.T) {
 func TestSqlite_GetAllItems(T *testing.T) {
 	T.Parallel()
 
-	s, _ := buildTestService(T)
-	expectedCountQuery := s.buildGetAllItemsCountQuery()
+	_q, _ := buildTestService(T)
+	expectedCountQuery := _q.buildGetAllItemsCountQuery()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		exampleItemList := fakes.BuildFakeItemList()
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := s.buildGetBatchOfItemsQuery(begin, end)
+		expectedQuery, expectedArgs := q.buildGetBatchOfItemsQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
@@ -329,7 +329,7 @@ func TestSqlite_GetAllItems(T *testing.T) {
 		out := make(chan []types.Item)
 		doneChan := make(chan bool, 1)
 
-		err := s.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out)
 		assert.NoError(t, err)
 
 		var stillQuerying = true
@@ -351,13 +351,13 @@ func TestSqlite_GetAllItems(T *testing.T) {
 	T.Run("with error fetching initial count", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnError(errors.New("blah"))
 
 		out := make(chan []types.Item)
 
-		err := s.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -366,11 +366,11 @@ func TestSqlite_GetAllItems(T *testing.T) {
 	T.Run("with no rows returned", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := s.buildGetBatchOfItemsQuery(begin, end)
+		expectedQuery, expectedArgs := q.buildGetBatchOfItemsQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
@@ -380,7 +380,7 @@ func TestSqlite_GetAllItems(T *testing.T) {
 
 		out := make(chan []types.Item)
 
-		err := s.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -391,11 +391,11 @@ func TestSqlite_GetAllItems(T *testing.T) {
 	T.Run("with error querying database", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := s.buildGetBatchOfItemsQuery(begin, end)
+		expectedQuery, expectedArgs := q.buildGetBatchOfItemsQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
@@ -405,7 +405,7 @@ func TestSqlite_GetAllItems(T *testing.T) {
 
 		out := make(chan []types.Item)
 
-		err := s.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -416,12 +416,12 @@ func TestSqlite_GetAllItems(T *testing.T) {
 	T.Run("with invalid response from database", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		exampleItem := fakes.BuildFakeItem()
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := s.buildGetBatchOfItemsQuery(begin, end)
+		expectedQuery, expectedArgs := q.buildGetBatchOfItemsQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
@@ -431,7 +431,7 @@ func TestSqlite_GetAllItems(T *testing.T) {
 
 		out := make(chan []types.Item)
 
-		err := s.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -445,7 +445,7 @@ func TestSqlite_buildGetItemsQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
@@ -463,7 +463,7 @@ func TestSqlite_buildGetItemsQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := s.buildGetItemsQuery(exampleUser.ID, filter)
+		actualQuery, actualArgs := q.buildGetItemsQuery(exampleUser.ID, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -480,12 +480,12 @@ func TestSqlite_GetItems(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
 		exampleItemList := fakes.BuildFakeItemList()
 
-		expectedQuery, expectedArgs := s.buildGetItemsQuery(exampleUser.ID, filter)
+		expectedQuery, expectedArgs := q.buildGetItemsQuery(exampleUser.ID, filter)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
@@ -497,7 +497,7 @@ func TestSqlite_GetItems(T *testing.T) {
 				),
 			)
 
-		actual, err := s.GetItems(ctx, exampleUser.ID, filter)
+		actual, err := q.GetItems(ctx, exampleUser.ID, filter)
 
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItemList, actual)
@@ -511,15 +511,15 @@ func TestSqlite_GetItems(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		expectedQuery, expectedArgs := s.buildGetItemsQuery(exampleUser.ID, filter)
+		expectedQuery, expectedArgs := q.buildGetItemsQuery(exampleUser.ID, filter)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := s.GetItems(ctx, exampleUser.ID, filter)
+		actual, err := q.GetItems(ctx, exampleUser.ID, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
@@ -533,15 +533,15 @@ func TestSqlite_GetItems(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		expectedQuery, expectedArgs := s.buildGetItemsQuery(exampleUser.ID, filter)
+		expectedQuery, expectedArgs := q.buildGetItemsQuery(exampleUser.ID, filter)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := s.GetItems(ctx, exampleUser.ID, filter)
+		actual, err := q.GetItems(ctx, exampleUser.ID, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -551,19 +551,19 @@ func TestSqlite_GetItems(T *testing.T) {
 	T.Run("with error scanning item", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := s.buildGetItemsQuery(exampleUser.ID, filter)
+		expectedQuery, expectedArgs := q.buildGetItemsQuery(exampleUser.ID, filter)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromItem(exampleItem))
 
-		actual, err := s.GetItems(ctx, exampleUser.ID, filter)
+		actual, err := q.GetItems(ctx, exampleUser.ID, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -576,7 +576,7 @@ func TestSqlite_buildGetItemsForAdminQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
@@ -591,7 +591,7 @@ func TestSqlite_buildGetItemsForAdminQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := s.buildGetItemsForAdminQuery(filter)
+		actualQuery, actualArgs := q.buildGetItemsForAdminQuery(filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -606,11 +606,11 @@ func TestSqlite_GetItemsForAdmin(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
 		exampleItemList := fakes.BuildFakeItemList()
-		expectedQuery, expectedArgs := s.buildGetItemsForAdminQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetItemsForAdminQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -623,7 +623,7 @@ func TestSqlite_GetItemsForAdmin(T *testing.T) {
 				),
 			)
 
-		actual, err := s.GetItemsForAdmin(ctx, filter)
+		actual, err := q.GetItemsForAdmin(ctx, filter)
 
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItemList, actual)
@@ -635,16 +635,16 @@ func TestSqlite_GetItemsForAdmin(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		expectedQuery, expectedArgs := s.buildGetItemsForAdminQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetItemsForAdminQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := s.GetItemsForAdmin(ctx, filter)
+		actual, err := q.GetItemsForAdmin(ctx, filter)
 
 		assert.Error(t, err)
 		assert.Nil(t, actual)
@@ -657,16 +657,16 @@ func TestSqlite_GetItemsForAdmin(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		expectedQuery, expectedArgs := s.buildGetItemsForAdminQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetItemsForAdminQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := s.GetItemsForAdmin(ctx, filter)
+		actual, err := q.GetItemsForAdmin(ctx, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -677,20 +677,20 @@ func TestSqlite_GetItemsForAdmin(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := s.buildGetItemsForAdminQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetItemsForAdminQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromItem(exampleItem))
 
-		actual, err := s.GetItemsForAdmin(ctx, filter)
+		actual, err := q.GetItemsForAdmin(ctx, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -703,7 +703,7 @@ func TestSqlite_buildGetItemsWithIDsQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleIDs := []uint64{
@@ -719,7 +719,7 @@ func TestSqlite_buildGetItemsWithIDsQuery(T *testing.T) {
 			exampleIDs[1],
 			exampleIDs[2],
 		}
-		actualQuery, actualArgs := s.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs)
+		actualQuery, actualArgs := q.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -736,7 +736,7 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
@@ -744,7 +744,7 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 			exampleIDs = append(exampleIDs, item.ID)
 		}
 
-		expectedQuery, expectedArgs := s.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs)
+		expectedQuery, expectedArgs := q.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
@@ -756,7 +756,7 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 				),
 			)
 
-		actual, err := s.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleIDs)
+		actual, err := q.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleIDs)
 
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItemList.Items, actual)
@@ -770,7 +770,7 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
@@ -778,12 +778,12 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 			exampleIDs = append(exampleIDs, item.ID)
 		}
 
-		expectedQuery, expectedArgs := s.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs)
+		expectedQuery, expectedArgs := q.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := s.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleIDs)
+		actual, err := q.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleIDs)
 
 		assert.Error(t, err)
 		assert.Nil(t, actual)
@@ -798,7 +798,7 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
@@ -806,12 +806,12 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 			exampleIDs = append(exampleIDs, item.ID)
 		}
 
-		expectedQuery, expectedArgs := s.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs)
+		expectedQuery, expectedArgs := q.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := s.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleIDs)
+		actual, err := q.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleIDs)
 
 		assert.Error(t, err)
 		assert.Nil(t, actual)
@@ -825,7 +825,7 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
@@ -833,12 +833,12 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 			exampleIDs = append(exampleIDs, item.ID)
 		}
 
-		expectedQuery, expectedArgs := s.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs)
+		expectedQuery, expectedArgs := q.buildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromItem(fakes.BuildFakeItem()))
 
-		actual, err := s.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleIDs)
+		actual, err := q.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleIDs)
 
 		assert.Error(t, err)
 		assert.Nil(t, actual)
@@ -852,7 +852,7 @@ func TestSqlite_buildCreateItemQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
@@ -864,7 +864,7 @@ func TestSqlite_buildCreateItemQuery(T *testing.T) {
 			exampleItem.Details,
 			exampleItem.BelongsToUser,
 		}
-		actualQuery, actualArgs := s.buildCreateItemQuery(exampleItem)
+		actualQuery, actualArgs := q.buildCreateItemQuery(exampleItem)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -878,23 +878,23 @@ func TestSqlite_CreateItem(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
-		expectedQuery, expectedArgs := s.buildCreateItemQuery(exampleItem)
+		expectedQuery, expectedArgs := q.buildCreateItemQuery(exampleItem)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(int64(exampleItem.ID), 1))
 
 		mtt := &queriers.MockTimeTeller{}
 		mtt.On("Now").Return(exampleItem.CreatedOn)
-		s.timeTeller = mtt
+		q.timeTeller = mtt
 
-		actual, err := s.CreateItem(ctx, exampleInput)
+		actual, err := q.CreateItem(ctx, exampleInput)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItem, actual)
 
@@ -905,19 +905,19 @@ func TestSqlite_CreateItem(T *testing.T) {
 	T.Run("with error writing to database", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
-		expectedQuery, expectedArgs := s.buildCreateItemQuery(exampleItem)
+		expectedQuery, expectedArgs := q.buildCreateItemQuery(exampleItem)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := s.CreateItem(ctx, exampleInput)
+		actual, err := q.CreateItem(ctx, exampleInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -930,7 +930,7 @@ func TestSqlite_buildUpdateItemQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
@@ -943,7 +943,7 @@ func TestSqlite_buildUpdateItemQuery(T *testing.T) {
 			exampleItem.BelongsToUser,
 			exampleItem.ID,
 		}
-		actualQuery, actualArgs := s.buildUpdateItemQuery(exampleItem)
+		actualQuery, actualArgs := q.buildUpdateItemQuery(exampleItem)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -957,19 +957,19 @@ func TestSqlite_UpdateItem(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := s.buildUpdateItemQuery(exampleItem)
+		expectedQuery, expectedArgs := q.buildUpdateItemQuery(exampleItem)
 		exampleRows := sqlmock.NewResult(int64(exampleItem.ID), 1)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(exampleRows)
 
-		err := s.UpdateItem(ctx, exampleItem)
+		err := q.UpdateItem(ctx, exampleItem)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -978,18 +978,18 @@ func TestSqlite_UpdateItem(T *testing.T) {
 	T.Run("with error writing to database", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := s.buildUpdateItemQuery(exampleItem)
+		expectedQuery, expectedArgs := q.buildUpdateItemQuery(exampleItem)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		err := s.UpdateItem(ctx, exampleItem)
+		err := q.UpdateItem(ctx, exampleItem)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -1001,7 +1001,7 @@ func TestSqlite_buildArchiveItemQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
@@ -1012,7 +1012,7 @@ func TestSqlite_buildArchiveItemQuery(T *testing.T) {
 			exampleUser.ID,
 			exampleItem.ID,
 		}
-		actualQuery, actualArgs := s.buildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
+		actualQuery, actualArgs := q.buildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -1026,19 +1026,19 @@ func TestSqlite_ArchiveItem(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := s.buildArchiveItemQuery(exampleItem.ID, exampleItem.BelongsToUser)
+		expectedQuery, expectedArgs := q.buildArchiveItemQuery(exampleItem.ID, exampleItem.BelongsToUser)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := s.ArchiveItem(ctx, exampleItem.ID, exampleUser.ID)
+		err := q.ArchiveItem(ctx, exampleItem.ID, exampleUser.ID)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -1047,19 +1047,19 @@ func TestSqlite_ArchiveItem(T *testing.T) {
 	T.Run("returns sql.ErrNoRows with no rows affected", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := s.buildArchiveItemQuery(exampleItem.ID, exampleItem.BelongsToUser)
+		expectedQuery, expectedArgs := q.buildArchiveItemQuery(exampleItem.ID, exampleItem.BelongsToUser)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(0, 0))
 
-		err := s.ArchiveItem(ctx, exampleItem.ID, exampleUser.ID)
+		err := q.ArchiveItem(ctx, exampleItem.ID, exampleUser.ID)
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
@@ -1069,18 +1069,18 @@ func TestSqlite_ArchiveItem(T *testing.T) {
 	T.Run("with error writing to database", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := s.buildArchiveItemQuery(exampleItem.ID, exampleItem.BelongsToUser)
+		expectedQuery, expectedArgs := q.buildArchiveItemQuery(exampleItem.ID, exampleItem.BelongsToUser)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		err := s.ArchiveItem(ctx, exampleItem.ID, exampleUser.ID)
+		err := q.ArchiveItem(ctx, exampleItem.ID, exampleUser.ID)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -1092,7 +1092,7 @@ func TestSqlite_buildGetAuditLogEntriesForItemQuery(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
+		q, _ := buildTestService(t)
 
 		exampleItem := fakes.BuildFakeItem()
 
@@ -1100,7 +1100,7 @@ func TestSqlite_buildGetAuditLogEntriesForItemQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleItem.ID,
 		}
-		actualQuery, actualArgs := s.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
+		actualQuery, actualArgs := q.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -1115,11 +1115,11 @@ func TestSqlite_GetAuditLogEntriesForItem(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		exampleItem := fakes.BuildFakeItem()
 
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
-		expectedQuery, expectedArgs := s.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
+		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -1132,7 +1132,7 @@ func TestSqlite_GetAuditLogEntriesForItem(T *testing.T) {
 				),
 			)
 
-		actual, err := s.GetAuditLogEntriesForItem(ctx, exampleItem.ID)
+		actual, err := q.GetAuditLogEntriesForItem(ctx, exampleItem.ID)
 
 		assert.NoError(t, err)
 		assert.Equal(t, exampleAuditLogEntryList, actual)
@@ -1144,16 +1144,16 @@ func TestSqlite_GetAuditLogEntriesForItem(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		p, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		exampleItem := fakes.BuildFakeItem()
 
-		expectedQuery, expectedArgs := p.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
+		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := p.GetAuditLogEntriesForItem(ctx, exampleItem.ID)
+		actual, err := q.GetAuditLogEntriesForItem(ctx, exampleItem.ID)
 
 		assert.Error(t, err)
 		assert.Nil(t, actual)
@@ -1165,10 +1165,10 @@ func TestSqlite_GetAuditLogEntriesForItem(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		p, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		exampleItem := fakes.BuildFakeItem()
 
-		expectedQuery, expectedArgs := p.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
+		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -1178,7 +1178,7 @@ func TestSqlite_GetAuditLogEntriesForItem(T *testing.T) {
 				),
 			)
 
-		actual, err := p.GetAuditLogEntriesForItem(ctx, exampleItem.ID)
+		actual, err := q.GetAuditLogEntriesForItem(ctx, exampleItem.ID)
 
 		assert.Error(t, err)
 		assert.Nil(t, actual)
@@ -1194,17 +1194,17 @@ func TestSqlite_LogItemCreationEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleInput := fakes.BuildFakeItem()
 		exampleAuditLogEntryInput := audit.BuildItemCreationEventEntry(exampleInput)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogItemCreationEvent(ctx, exampleInput)
+		q.LogItemCreationEvent(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -1217,17 +1217,17 @@ func TestSqlite_LogItemUpdateEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 		exampleChanges := []types.FieldChangeSummary{}
 		exampleInput := fakes.BuildFakeItem()
 		exampleAuditLogEntryInput := audit.BuildItemUpdateEventEntry(exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogItemUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
+		q.LogItemUpdateEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -1240,17 +1240,17 @@ func TestSqlite_LogItemArchiveEvent(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, mockDB := buildTestService(t)
+		q, mockDB := buildTestService(t)
 
 		exampleInput := fakes.BuildFakeItem()
 		exampleAuditLogEntryInput := audit.BuildItemArchiveEventEntry(exampleInput.BelongsToUser, exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := s.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		s.LogItemArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
+		q.LogItemArchiveEvent(ctx, exampleInput.BelongsToUser, exampleInput.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

@@ -7,6 +7,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
+var _ types.AdminUserDataManager = (*Client)(nil)
+
 // LogUserBanEvent saves a UserBannedEvent in the audit log table.
 func (c *Client) LogUserBanEvent(ctx context.Context, banGiver, banRecipient uint64, reason string) {
 	c.querier.LogUserBanEvent(ctx, banGiver, banRecipient, reason)

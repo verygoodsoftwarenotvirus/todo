@@ -14,6 +14,8 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
+var _ types.ItemDataManager = (*MariaDB)(nil)
+
 // scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct.
 func (q *MariaDB) scanItem(scan database.Scanner, includeCount bool) (*types.Item, uint64, error) {
 	var (

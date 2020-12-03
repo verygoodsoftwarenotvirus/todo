@@ -20,14 +20,14 @@ func TestSqlite_UpdateUserAccountStatus(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := *fakes.BuildFakeAccountStatusUpdateInput()
 
-		s, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := s.buildSetUserStatusQuery(exampleUser.ID, exampleInput)
+		q, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := q.buildSetUserStatusQuery(exampleUser.ID, exampleInput)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := s.UpdateUserAccountStatus(ctx, exampleUser.ID, exampleInput)
+		err := q.UpdateUserAccountStatus(ctx, exampleUser.ID, exampleInput)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")

@@ -22,9 +22,9 @@ func buildTestService(t *testing.T) (*Postgres, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 
-	p := ProvidePostgres(true, db, noop.NewLogger())
+	q := ProvidePostgres(true, db, noop.NewLogger())
 
-	return p.(*Postgres), mock
+	return q.(*Postgres), mock
 }
 
 var (
@@ -87,8 +87,8 @@ func TestPostgres_IsReady(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		p, _ := buildTestService(t)
-		assert.True(t, p.IsReady(ctx))
+		q, _ := buildTestService(t)
+		assert.True(t, q.IsReady(ctx))
 	})
 }
 
@@ -97,8 +97,8 @@ func TestPostgres_logQueryBuildingError(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		p, _ := buildTestService(t)
-		p.logQueryBuildingError(errors.New("blah"))
+		q, _ := buildTestService(t)
+		q.logQueryBuildingError(errors.New("blah"))
 	})
 }
 

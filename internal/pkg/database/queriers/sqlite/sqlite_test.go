@@ -22,9 +22,9 @@ func buildTestService(t *testing.T) (*Sqlite, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 
-	s := ProvideSqlite(true, db, noop.NewLogger())
+	q := ProvideSqlite(true, db, noop.NewLogger())
 
-	return s.(*Sqlite), mock
+	return q.(*Sqlite), mock
 }
 
 var (
@@ -87,8 +87,8 @@ func TestSqlite_IsReady(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		s, _ := buildTestService(t)
-		assert.True(t, s.IsReady(ctx))
+		q, _ := buildTestService(t)
+		assert.True(t, q.IsReady(ctx))
 	})
 }
 
@@ -97,8 +97,8 @@ func TestSqlite_logQueryBuildingError(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
-		s.logQueryBuildingError(errors.New("blah"))
+		q, _ := buildTestService(t)
+		q.logQueryBuildingError(errors.New("blah"))
 	})
 }
 
@@ -107,8 +107,8 @@ func TestSqlite_logIDRetrievalError(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		s, _ := buildTestService(t)
-		s.logIDRetrievalError(errors.New("blah"))
+		q, _ := buildTestService(t)
+		q.logIDRetrievalError(errors.New("blah"))
 	})
 }
 

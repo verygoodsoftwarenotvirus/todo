@@ -54,7 +54,7 @@ frontend-build:
   stage: quality
   image: node:lts-stretch
   before_script:
-    - cd frontend/
+    - cd _frontend/
     - npm install
   script:
     - npm run build
@@ -66,9 +66,9 @@ frontend-format-check:
     - cd frontend/
     - npm install
   script:
-    - npm run format-check
+    - npm run format_check
 
-integration-tests-postgres:
+integration_tests_postgres:
   stage: integration-testing
   image: docker:latest
   services:
@@ -78,9 +78,9 @@ integration-tests-postgres:
   script:
     - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
     - pip install docker-compose
-    - make integration-tests-postgres
+    - make integration_tests_postgres
 
-integration-tests-mariadb:
+integration_tests_mariadb:
   stage: integration-testing
   image: docker:latest
   services:
@@ -90,9 +90,9 @@ integration-tests-mariadb:
   script:
     - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
     - pip install docker-compose
-    - make integration-tests-mariadb
+    - make integration_tests_mariadb
 
-integration-tests-sqlite:
+integration_tests_sqlite:
   stage: integration-testing
   image: docker:latest
   services:
@@ -102,7 +102,7 @@ integration-tests-sqlite:
   script:
     - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
     - pip install docker-compose
-    - make integration-tests-sqlite
+    - make integration_tests_sqlite
 
 frontend-selenium-tests:
   stage: integration-testing
@@ -112,10 +112,10 @@ frontend-selenium-tests:
   script:
     - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
     - pip install docker-compose
-    - make frontend-tests
+    - make frontend_tests
 
 ## load tests
-#load-tests-postgres:
+#load_tests_postgres:
 #  stage: load-testing
 #  image: docker:latest
 #  services:
@@ -126,11 +126,11 @@ frontend-selenium-tests:
 #  script:
 #    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
 #    - pip install docker-compose
-#    - make load-tests-postgres
+#    - make load_tests_postgres
 #  except:
 #    - schedules
 #
-#load-tests-mariadb:
+#load_tests_mariadb:
 #  stage: load-testing
 #  image: docker:latest
 #  services:
@@ -141,11 +141,11 @@ frontend-selenium-tests:
 #  script:
 #    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
 #    - pip install docker-compose
-#    - make load-tests-mariadb
+#    - make load_tests_mariadb
 #  except:
 #    - schedules
 #
-#load-tests-sqlite:
+#load_tests_sqlite:
 #  stage: load-testing
 #  image: docker:latest
 #  services:
@@ -156,13 +156,13 @@ frontend-selenium-tests:
 #  script:
 #    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
 #    - pip install docker-compose
-#    - make load-tests-sqlite
+#    - make load_tests_sqlite
 #  except:
 #    - schedules
 #
 ## daily load tests
 #
-#daily-load-tests-postgres:on-schedule:
+#daily-load_tests_postgres:on-schedule:
 #  stage: load-testing
 #  image: docker:latest
 #  services:
@@ -173,11 +173,11 @@ frontend-selenium-tests:
 #  script:
 #    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
 #    - pip install docker-compose
-#    - make load-tests-postgres
+#    - make load_tests_postgres
 #  only:
 #    - schedules
 #
-#daily-load-tests-mariadb:on-schedule:
+#daily-load_tests_mariadb:on-schedule:
 #  stage: load-testing
 #  image: docker:latest
 #  services:
@@ -188,11 +188,11 @@ frontend-selenium-tests:
 #  script:
 #    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
 #    - pip install docker-compose
-#    - make load-tests-mariadb
+#    - make load_tests_mariadb
 #  only:
 #    - schedules
 #
-#daily-load-tests-sqlite:on-schedule:
+#daily-load_tests_sqlite:on-schedule:
 #  stage: load-testing
 #  image: docker:latest
 #  services:
@@ -203,7 +203,7 @@ frontend-selenium-tests:
 #  script:
 #    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
 #    - pip install docker-compose
-#    - make load-tests-sqlite
+#    - make load_tests_sqlite
 #  only:
 #    - schedules
 

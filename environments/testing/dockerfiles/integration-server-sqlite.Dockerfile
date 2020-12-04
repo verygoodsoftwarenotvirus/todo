@@ -16,7 +16,9 @@ WORKDIR /app
 
 COPY frontend/ .
 
-RUN npm install && npm run build
+RUN npm install -g pnpm
+RUN pnpm install
+RUN pnpm run build
 
 # final stage
 FROM debian:stretch

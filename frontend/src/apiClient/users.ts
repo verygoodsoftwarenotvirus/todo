@@ -1,10 +1,8 @@
+import { backendRoutes } from '@/constants/routes';
+import { Logger } from '@/logger';
+import type { AuditLogEntry, QueryFilter, User } from '@/types';
 import axios, { AxiosResponse } from 'axios';
 import format from 'string-format';
-
-import type { QueryFilter, User } from '@/types';
-import { Logger } from '@/logger';
-import { backendRoutes } from '@/constants/routes';
-import type { AuditLogEntry } from '@/types';
 
 const logger = new Logger().withDebugValue('source', 'src/apiClient/users.ts');
 

@@ -1,9 +1,7 @@
-import axios, { AxiosError, AxiosResponse } from 'axios';
-
-import { Logger } from '@/logger';
-
-import { backendRoutes } from '@/constants/routes';
 import { statusCodes } from '@/constants';
+import { backendRoutes } from '@/constants/routes';
+import { Logger } from '@/logger';
+import axios, { AxiosResponse } from 'axios';
 
 const logger = new Logger().withDebugValue('source', 'src/apiClient/admin.ts');
 

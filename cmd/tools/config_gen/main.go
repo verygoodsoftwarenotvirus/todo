@@ -73,7 +73,7 @@ func localDevelopmentConfig(filePath string) error {
 	cfg.Set(viper.ConfigKeyDatabaseProvider, postgres)
 	cfg.Set(viper.ConfigKeyDatabaseConnectionDetails, devPostgresDBConnDetails)
 
-	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserUsername, "localUser")
+	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserUsername, "username")
 	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserPassword, defaultPassword)
 	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserIsAdmin, true)
 

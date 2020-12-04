@@ -5,7 +5,9 @@ WORKDIR /app
 
 ADD frontend/ .
 
-RUN npm install && npm run build
+RUN npm install -g pnpm
+RUN pnpm install
+RUN pnpm run build
 
 # build stage
 FROM golang:stretch AS build-stage

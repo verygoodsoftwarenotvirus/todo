@@ -57,10 +57,12 @@ export const englishTranslations: SiteTranslationMap = {
         serviceName: _serviceName,
         things: 'Things',
         admin: 'Admin',
+        settings: 'Settings',
         users: 'Users',
         oauth2Clients: 'OAuth2 Clients',
         webhooks: 'Webhooks',
         auditLog: 'Audit Log',
+        userSettings: 'Settings',
         serverSettings: 'Server Settings',
         items: 'Items',
       },
@@ -158,7 +160,14 @@ export const englishTranslations: SiteTranslationMap = {
         newPassword: 'New Password',
         twoFactorToken: '2FA Token',
       },
+      valueLabels: {
+        accountStatus: 'Account Status',
+      },
+      hovertexts: {
+        accountStatus: 'your account status is: ',
+      },
       inputPlaceholders: {
+        email: "we don't want your stinkin' email",
         currentPassword: 'current password',
         newPassword: 'new password',
         twoFactorToken: '123456',

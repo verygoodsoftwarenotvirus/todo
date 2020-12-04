@@ -40,6 +40,11 @@ ifndef $(shell command -v wire 2> /dev/null)
 	$(shell GO111MODULE=off go get -u github.com/google/wire/cmd/wire)
 endif
 
+ensure-pnpm:
+ifndef $(shell command -v pnpm 2> /dev/null)
+	$(shell npm install -g pnpm)
+endif
+
 .PHONY: dev-tools
 dev-tools: ensure-wire
 
@@ -187,14 +192,14 @@ load-data:
 	go run $(THIS)/cmd/tools/data_scaffolder --url=http://localhost --count=5 --debug
 
 .PHONY: dev-frontend
-dev-frontend:
-	@(cd frontend && rm -rf dist/build/ && npm run autobuild)
+dev-frontend: ensure-pnpm
+	@(cd frontend && rm -rf dist/build/ && pnpm run autobuild)
 
 # frontend-only runs a simple static server that powers the frontend of the application. In this mode, all API calls are
 # skipped, and data on the page is faked. This is useful for making changes that don't require running the entire service.
 .PHONY: frontend-only
-frontend-only:
-	@(cd frontend && rm -rf dist/build/ && npm run frontend-only)
+frontend-only: ensure-pnpm
+	@(cd frontend && rm -rf dist/build/ && pnpm run frontend-only)
 
 ## misc
 

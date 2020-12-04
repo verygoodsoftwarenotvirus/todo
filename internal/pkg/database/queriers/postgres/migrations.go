@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"math"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
@@ -143,6 +144,8 @@ func (q *Postgres) Migrate(ctx context.Context, authenticator password.Authentic
 	q.migrateOnce.Do(buildMigrationFunc(q.db))
 
 	if testUserConfig != nil {
+		q.logger.Debug("creating test user")
+
 		hashedPassword, err := authenticator.HashPassword(ctx, testUserConfig.Password)
 		if err != nil {
 			return fmt.Errorf("error hashing test user password: %w", err)
@@ -156,6 +159,7 @@ func (q *Postgres) Migrate(ctx context.Context, authenticator password.Authentic
 				queriers.UsersTableSaltColumn,
 				queriers.UsersTableTwoFactorColumn,
 				queriers.UsersTableIsAdminColumn,
+				queriers.UsersTableAccountStatusColumn,
 				queriers.UsersTableAdminPermissionsColumn,
 				queriers.UsersTableTwoFactorVerifiedOnColumn,
 			).
@@ -166,6 +170,7 @@ func (q *Postgres) Migrate(ctx context.Context, authenticator password.Authentic
 				// `otpauth://totp/todo:username?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&issuer=todo`
 				"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 				testUserConfig.IsAdmin,
+				types.GoodStandingAccountStatus,
 				math.MaxUint32,
 				squirrel.Expr(currentUnixTimeQuery),
 			).
@@ -177,7 +182,7 @@ func (q *Postgres) Migrate(ctx context.Context, authenticator password.Authentic
 			return fmt.Errorf("error creating test user: %w", dbErr)
 		}
 
-		q.logger.WithValue("username", testUserConfig.Username).Debug("created user")
+		q.logger.WithValue("username", testUserConfig.Username).Debug("created test user")
 	}
 
 	return nil

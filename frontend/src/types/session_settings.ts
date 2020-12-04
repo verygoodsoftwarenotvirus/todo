@@ -4,7 +4,6 @@ import {
   supportedLanguage,
   translations,
 } from '@/i18n';
-
 import type { LanguageTag } from 'typed-intl';
 
 const defaultLanguage = 'en-US';

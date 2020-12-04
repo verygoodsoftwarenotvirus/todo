@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"math"
 	"strings"
 
@@ -235,6 +236,7 @@ func (q *MariaDB) Migrate(ctx context.Context, authenticator password.Authentica
 				queriers.UsersTableSaltColumn,
 				queriers.UsersTableTwoFactorColumn,
 				queriers.UsersTableIsAdminColumn,
+				queriers.UsersTableAccountStatusColumn,
 				queriers.UsersTableAdminPermissionsColumn,
 				queriers.UsersTableTwoFactorVerifiedOnColumn,
 			).
@@ -245,6 +247,7 @@ func (q *MariaDB) Migrate(ctx context.Context, authenticator password.Authentica
 				// `otpauth://totp/todo:username?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&issuer=todo`
 				"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 				testUserConfig.IsAdmin,
+				types.GoodStandingAccountStatus,
 				math.MaxUint32,
 				squirrel.Expr(currentUnixTimeQuery),
 			).

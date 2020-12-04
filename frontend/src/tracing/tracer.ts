@@ -1,11 +1,11 @@
 // this will be needed to get a tracer
 import opentelemetry, { Tracer } from '@opentelemetry/api';
-// tracer provider for web
-import { WebTracerProvider } from '@opentelemetry/web';
-// and an exporter with span processor
-import { SimpleSpanProcessor } from '@opentelemetry/tracing';
 // and a Jaeger-specific exporter
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
+// and an exporter with span processor
+import { SimpleSpanProcessor } from '@opentelemetry/tracing';
+// tracer provider for web
+import { WebTracerProvider } from '@opentelemetry/web';
 // Create a provider for activating and tracking spans
 const tracerProvider = new WebTracerProvider();
 

@@ -19,13 +19,9 @@ import Dashboard from '../views/admin/Dashboard.svelte';
 import Settings from '../views/admin/Settings.svelte';
 
 import UsersAdmin from '../views/admin/Users.svelte';
-import OAuth2ClientsAdmin from '../views/admin/OAuth2Clients.svelte';
-import WebhooksAdmin from '../views/admin/Webhooks.svelte';
 import AuditLogEntries from '../views/admin/AuditLogEntries.svelte';
 
 import UserEditor from '../components/Editors/User.svelte';
-import WebhookEditor from '../components/Editors/Webhook.svelte';
-import OAuth2ClientEditor from '../components/Editors/OAuth2Client.svelte';
 import { Superstore } from '../stores/superstore';
 
 let currentAuthStatus: UserStatus = new UserStatus();
@@ -46,14 +42,6 @@ let superstore = new Superstore({
         <Route path="dashboard" component="{Dashboard}" />
         <Route path="settings" component="{Settings}" />
         <Route path="audit_log" component="{AuditLogEntries}" />
-        <Route path="oauth2_clients" component="{OAuth2ClientsAdmin}" />
-        <Route path="oauth2_clients/:id" let:params>
-          <OAuth2ClientEditor oauth2ClientID="{params.id}" />
-        </Route>
-        <Route path="webhooks" component="{WebhooksAdmin}" />
-        <Route path="webhooks/:id" let:params>
-          <WebhookEditor webhookID="{params.id}" />
-        </Route>
         <Route path="users" component="{UsersAdmin}" />
         <Route path="users/:id" let:params>
           <UserEditor userID="{params.id}" />

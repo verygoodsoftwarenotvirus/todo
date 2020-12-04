@@ -84,6 +84,12 @@ export type userSettingsPageTranslations = {
     userInfo: string;
     password: string;
   };
+  valueLabels: {
+    accountStatus: string;
+  };
+  hovertexts: {
+    accountStatus: string;
+  };
   inputLabels: {
     username: string;
     emailAddress: string;
@@ -92,6 +98,7 @@ export type userSettingsPageTranslations = {
     twoFactorToken: string;
   };
   inputPlaceholders: {
+    email: string;
     currentPassword: string;
     newPassword: string;
     twoFactorToken: string;

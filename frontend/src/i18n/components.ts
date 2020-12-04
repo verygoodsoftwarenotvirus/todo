@@ -46,10 +46,12 @@ export type primarySidebarTranslations = {
   serviceName: string;
   things: string;
   admin: string;
+  settings: string;
   users: string;
   oauth2Clients: string;
   webhooks: string;
   auditLog: string;
+  userSettings: string;
   serverSettings: string;
   items: string;
 };

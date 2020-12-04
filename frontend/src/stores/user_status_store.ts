@@ -1,9 +1,8 @@
+import { V1APIClient } from '@/apiClient';
+import { Logger } from '@/logger';
+import { AdminPermissionSummary, ErrorResponse, UserStatus } from '@/types';
 import type { AxiosError, AxiosResponse } from 'axios';
 import { writable } from 'svelte/store';
-
-import { AdminPermissionSummary, ErrorResponse, UserStatus } from '@/types';
-import { Logger } from '@/logger';
-import { V1APIClient } from '@/apiClient';
 
 const logger = new Logger().withDebugValue(
   'source',

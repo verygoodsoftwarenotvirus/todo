@@ -29,8 +29,7 @@ let logger = new Logger().withDebugValue(
 
 let currentAuthStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = currentSessionSettings.getTranslations().components
-  .sidebars.primary;
+let translationsToUse = currentSessionSettings.getTranslations().pages.userSettings;
 
 let superstore = new Superstore({
   userStatusStoreUpdateFunc: (value: UserStatus) => {
@@ -38,8 +37,7 @@ let superstore = new Superstore({
   },
   sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = currentSessionSettings.getTranslations().components
-      .sidebars.primary;
+    translationsToUse = currentSessionSettings.getTranslations().pages.userSettings;
   },
 });
 
@@ -73,6 +71,17 @@ function submitChangePasswordRequest() {
   }
 }
 
+function chooseIconForStatus(status: string): string {
+  switch( status.toLowerCase().trim()) {
+    case "good":
+      return "fa-user-check"
+    case "created":
+      return "fa-user-clock"
+    default:
+      return "fa-user-minus"
+  }
+}
+
 onMount(() => {
   if (superstore.frontendOnlyMode) {
     user = fakeUserFactory.build();
@@ -98,8 +107,9 @@ onMount(() => {
       <div class="rounded-t bg-white mb-0 px-6 py-6">
         <div class="text-center flex justify-between">
           <h6 class="text-gray-800 text-xl font-bold">
-            {translationsToUse.title}
+            {user.username}
           </h6>
+          <span class="fa {chooseIconForStatus(user.accountStatus)}" title="{translationsToUse.hovertexts.accountStatus} {user.accountStatus}"></span>
         </div>
       </div>
 
@@ -119,34 +129,34 @@ onMount(() => {
           <div class="w-full lg:w-6/12 px-4">
             <div class="relative w-full mb-3">
               <label
-                class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                for="grid-username"
+                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                      for="grid-username"
               >
                 {translationsToUse.inputLabels.username}
               </label>
               <input
-                id="grid-username"
-                type="text"
-                disabled
-                class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-gray-300 rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                bind:value="{user.username}"
+                      id="grid-username"
+                      type="text"
+                      disabled
+                      class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-gray-300 rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
+                      bind:value="{user.username}"
               />
             </div>
           </div>
           <div class="w-full lg:w-6/12 px-4">
             <div class="relative w-full mb-3">
               <label
-                class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                for="grid-email"
+                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                      for="grid-email"
               >
                 {translationsToUse.inputLabels.emailAddress}
               </label>
               <input
-                id="grid-email"
-                type="email"
-                class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-gray-300 rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
-                disabled
-                value="we don't want your stinkin' email"
+                      id="grid-email"
+                      type="email"
+                      class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-gray-300 rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
+                      disabled
+                      value="we don't want your stinkin' email"
               />
             </div>
           </div>

@@ -19,7 +19,7 @@
   [database.create_test_user]
     is_admin = true
     password = "password"
-    username = "localUser"
+    username = "username"
 
 [frontend]
   cache_static_files = false

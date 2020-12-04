@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"math"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
@@ -156,6 +157,7 @@ func (q *Sqlite) Migrate(ctx context.Context, authenticator password.Authenticat
 				queriers.UsersTableSaltColumn,
 				queriers.UsersTableTwoFactorColumn,
 				queriers.UsersTableIsAdminColumn,
+				queriers.UsersTableAccountStatusColumn,
 				queriers.UsersTableAdminPermissionsColumn,
 				queriers.UsersTableTwoFactorVerifiedOnColumn,
 			).
@@ -166,6 +168,7 @@ func (q *Sqlite) Migrate(ctx context.Context, authenticator password.Authenticat
 				// `otpauth://totp/todo:username?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&issuer=todo`
 				"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 				testUserConfig.IsAdmin,
+				types.GoodStandingAccountStatus,
 				math.MaxUint32,
 				squirrel.Expr(currentUnixTimeQuery),
 			).

@@ -48,6 +48,7 @@ let translationsToUse = currentSessionSettings.getTranslations().components
 
 let superstore = new Superstore({
   userStatusStoreUpdateFunc: (value: UserStatus) => {
+    logger.withDebugValue("value", value).debug(`new UserStatus received in APITable; isAdmin: ${value.isAdmin}`)
     currentAuthStatus = value;
   },
   sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {

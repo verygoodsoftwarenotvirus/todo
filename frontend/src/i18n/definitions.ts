@@ -1,29 +1,28 @@
-import { LanguageTag, languageTag, translate } from 'typed-intl';
-
-import { englishTranslations } from '@/i18n/english';
 import type {
+  adminFooterTranslations,
   adminNavbarTranslations,
+  apiTableTranslations,
+  auditLogEntryTableTranslations,
+  auditLogEntryTranslations,
   authNavbarTranslations,
   homepageNavbarTranslations,
-  userDropdownTranslations,
-  itemModelTranslations,
   homePageTranslations,
+  itemModelTranslations,
   loginPageTranslations,
-  registrationPageTranslations,
-  userSettingsPageTranslations,
-  userModelTranslations,
-  apiTableTranslations,
-  primarySidebarTranslations,
   mainFooterTranslations,
-  adminFooterTranslations,
-  smallFooterTranslations,
-  auditLogEntryTableTranslations,
   oauth2ClientModelTranslations,
-  webhookModelTranslations,
-  auditLogEntryTranslations,
+  primarySidebarTranslations,
+  registrationPageTranslations,
   siteSettingsPageTranslations,
+  smallFooterTranslations,
   userAdminPageTranslations,
+  userDropdownTranslations,
+  userModelTranslations,
+  userSettingsPageTranslations,
+  webhookModelTranslations,
 } from '@/i18n';
+import { englishTranslations } from '@/i18n/english';
+import { LanguageTag, languageTag, translate } from 'typed-intl';
 
 const english = 'en-US';
 const mexicanSpanish = 'es-MX';

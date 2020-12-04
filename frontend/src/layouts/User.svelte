@@ -1,14 +1,17 @@
 <script lang="typescript">
-import { Route } from 'svelte-routing';
+import { Route, Router } from 'svelte-routing';
 
 // components for this layout
 import AdminNavbar from '../components/Navbars/AdminNavbar.svelte';
 import Sidebar from '../components/Sidebar/Sidebar.svelte';
 import AdminFooter from '../components/Footers/AdminFooter.svelte';
+import WebhookEditor from '../components/Editors/Webhook.svelte';
+import OAuth2ClientEditor from '../components/Editors/OAuth2Client.svelte';
 
 // pages for this layout
-import WebhookEditor from '../components/Editors/Webhook.svelte';
+import Webhooks from '../views/admin/Webhooks.svelte';
 import UserSettings from '../views/user/Settings.svelte';
+import OAuth2Clients from '../views/admin/OAuth2Clients.svelte';
 
 import { Logger } from '../logger';
 
@@ -22,7 +25,17 @@ export let location: Location;
   <div class="relative md:ml-64 bg-gray-200">
     <AdminNavbar />
     <div class="px-4 md:px-10 mx-auto w-full -m-24">
-      <Route path="settings" component="{UserSettings}" />
+      <Router url="user">
+        <Route path="oauth2_clients" component="{OAuth2Clients}" />
+        <Route path="oauth2_clients/:id" let:params>
+          <OAuth2ClientEditor oauth2ClientID="{params.id}" />
+        </Route>
+        <Route path="webhooks" component="{Webhooks}" />
+        <Route path="webhooks/:id" let:params>
+          <WebhookEditor webhookID="{params.id}" />
+        </Route>
+        <Route path="settings" component="{UserSettings}" />
+      </Router>
       <AdminFooter />
     </div>
   </div>

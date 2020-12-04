@@ -1,57 +1,50 @@
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
-
+import { createWebhook } from '@/apiClient/webhooks';
 import { Logger } from '@/logger';
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import { cycleCookieSecret } from './admin';
 import {
+  fetchAuditLogEntry,
+  fetchListOfAuditLogEntries,
+} from './audit_log_entries';
+import {
+  checkAuthStatusRequest,
   login,
   logout,
-  selfRequest,
-  registrationRequest,
   passwordChangeRequest,
-  checkAuthStatusRequest,
-  validateTOTPSecretWithToken,
+  registrationRequest,
+  selfRequest,
   twoFactorSecretChangeRequest,
+  validateTOTPSecretWithToken,
 } from './auth';
-
 import {
-  fetchUser,
-  deleteUser,
-  fetchListOfUsers,
-  fetchAuditLogEntriesForUser,
-} from './users';
-
-import {
-  fetchListOfAuditLogEntries,
-  fetchAuditLogEntry,
-} from './audit_log_entries';
-
-import {
-  createOAuth2Client,
-  fetchOAuth2Client,
-  deleteOAuth2Client,
-  fetchListOfOAuth2Clients,
-  fetchAuditLogEntriesForOAuth2Client,
-} from './oauth2clients';
-
-import {
-  saveWebhook,
-  fetchWebhook,
-  deleteWebhook,
-  fetchListOfWebhooks,
-  fetchAuditLogEntriesForWebhook,
-} from './webhooks';
-
-import {
-  saveItem,
-  fetchItem,
   createItem,
   deleteItem,
-  searchForItems,
-  fetchListOfItems,
   fetchAuditLogEntriesForItem,
+  fetchItem,
+  fetchListOfItems,
+  saveItem,
+  searchForItems,
 } from './items';
-
-import { createWebhook } from '@/apiClient/webhooks';
-import { cycleCookieSecret } from './admin';
+import {
+  createOAuth2Client,
+  deleteOAuth2Client,
+  fetchAuditLogEntriesForOAuth2Client,
+  fetchListOfOAuth2Clients,
+  fetchOAuth2Client,
+} from './oauth2clients';
+import {
+  deleteUser,
+  fetchAuditLogEntriesForUser,
+  fetchListOfUsers,
+  fetchUser,
+} from './users';
+import {
+  deleteWebhook,
+  fetchAuditLogEntriesForWebhook,
+  fetchListOfWebhooks,
+  fetchWebhook,
+  saveWebhook,
+} from './webhooks';
 
 const logger = new Logger().withDebugValue('source', 'src/apiClient/client.ts');
 

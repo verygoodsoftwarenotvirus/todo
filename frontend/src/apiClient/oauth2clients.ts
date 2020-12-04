@@ -1,16 +1,14 @@
+import { backendRoutes } from '@/constants/routes';
+import { Logger } from '@/logger';
+import type {
+  AuditLogEntry,
+  OAuth2Client,
+  OAuth2ClientCreationInput,
+  OAuth2ClientList,
+  QueryFilter,
+} from '@/types';
 import axios, { AxiosResponse } from 'axios';
 import format from 'string-format';
-
-import type { QueryFilter } from '@/types';
-import { Logger } from '@/logger';
-
-import { backendRoutes } from '@/constants/routes';
-import type {
-  OAuth2Client,
-  OAuth2ClientList,
-  OAuth2ClientCreationInput,
-  AuditLogEntry,
-} from '@/types';
 
 const logger = new Logger().withDebugValue(
   'source',

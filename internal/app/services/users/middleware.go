@@ -22,17 +22,25 @@ const (
 	totpSecretRefreshMiddlewareCtxKey types.ContextKey = "totp_refresh"
 )
 
-// UserInputMiddleware fetches user input from requests.
-func (s *Service) UserInputMiddleware(next http.Handler) http.Handler {
+// UserCreationInputMiddleware fetches user input from requests.
+func (s *Service) UserCreationInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.UserCreationInput)
 		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
 
+		logger := s.logger.WithRequest(req)
+
 		// decode the request.
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
-			s.logger.Error(err, "error encountered decoding request body")
+			logger.Error(err, "error encountered decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(res, "invalid request content", http.StatusBadRequest)
+			return
+		}
+
+		if err := x.Validate(4, 6); err != nil {
+			logger.Error(err, "provided input was invalid")
+			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -49,10 +57,18 @@ func (s *Service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler 
 		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
 
+		logger := s.logger.WithRequest(req)
+
 		// decode the request.
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
-			s.logger.Error(err, "error encountered decoding request body")
+			logger.Error(err, "error encountered decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(res, "invalid request content", http.StatusBadRequest)
+			return
+		}
+
+		if err := x.Validate(); err != nil {
+			logger.Error(err, "provided input was invalid")
+			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -69,10 +85,18 @@ func (s *Service) TOTPSecretVerificationInputMiddleware(next http.Handler) http.
 		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
 
+		logger := s.logger.WithRequest(req)
+
 		// decode the request.
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
-			s.logger.Error(err, "error encountered decoding request body")
+			logger.Error(err, "error encountered decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(res, "invalid request content", http.StatusBadRequest)
+			return
+		}
+
+		if err := x.Validate(); err != nil {
+			logger.Error(err, "provided input was invalid")
+			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -89,10 +113,18 @@ func (s *Service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handl
 		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
 
+		logger := s.logger.WithRequest(req)
+
 		// decode the request.
 		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
-			s.logger.Error(err, "error encountered decoding request body")
+			logger.Error(err, "error encountered decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(res, "invalid request content", http.StatusBadRequest)
+			return
+		}
+
+		if err := x.Validate(); err != nil {
+			logger.Error(err, "provided input was invalid")
+			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
 			return
 		}
 

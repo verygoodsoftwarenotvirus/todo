@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	v "github.com/RussellLuo/validating/v2"
+	"github.com/RussellLuo/validating/v2"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
@@ -188,40 +188,26 @@ func (w *Webhook) ToListener(logger logging.Logger) newsman.Listener {
 
 // Validate validates a WebhookCreationInput.
 func (w *WebhookCreationInput) Validate() error {
-	err := v.Validate(v.Schema{
-		v.F("name", w.Name):                &minimumStringLengthValidator{minLength: 1},
-		v.F("url", w.URL):                  &urlValidator{},
-		v.F("method", &w.Method):           v.In(http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete),
-		v.F("contentType", &w.ContentType): v.In("application/json", "application/xml"),
-		v.F("events", &w.Events):           &minimumStringSliceLengthValidator{minLength: 1},
-		v.F("dataTypes", &w.DataTypes):     &minimumStringSliceLengthValidator{minLength: 1},
-		v.F("topics", &w.Topics):           &minimumStringSliceLengthValidator{minLength: 1},
+	return validating.Validate(validating.Schema{
+		validating.F("name", w.Name):                &minimumStringLengthValidator{minLength: 1},
+		validating.F("url", w.URL):                  &urlValidator{},
+		validating.F("method", &w.Method):           validating.In(http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete),
+		validating.F("contentType", &w.ContentType): validating.In("application/json", "application/xml"),
+		validating.F("events", &w.Events):           &minimumStringSliceLengthValidator{minLength: 1},
+		validating.F("dataTypes", &w.DataTypes):     &minimumStringSliceLengthValidator{minLength: 1},
+		validating.F("topics", &w.Topics):           &minimumStringSliceLengthValidator{minLength: 1},
 	})
-
-	// for whatever reason, returning straight from v.Validate makes my tests fail /shrug
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // Validate validates a WebhookUpdateInput.
 func (w *WebhookUpdateInput) Validate() error {
-	err := v.Validate(v.Schema{
-		v.F("name", w.Name):                &minimumStringLengthValidator{minLength: 1},
-		v.F("url", w.URL):                  &urlValidator{},
-		v.F("method", &w.Method):           v.In(http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete),
-		v.F("contentType", &w.ContentType): v.In("application/json", "application/xml"),
-		v.F("events", &w.Events):           &minimumStringSliceLengthValidator{minLength: 1},
-		v.F("dataTypes", &w.DataTypes):     &minimumStringSliceLengthValidator{minLength: 1},
-		v.F("topics", &w.Topics):           &minimumStringSliceLengthValidator{minLength: 1},
+	return validating.Validate(validating.Schema{
+		validating.F("name", w.Name):                &minimumStringLengthValidator{minLength: 1},
+		validating.F("url", w.URL):                  &urlValidator{},
+		validating.F("method", &w.Method):           validating.In(http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete),
+		validating.F("contentType", &w.ContentType): validating.In("application/json", "application/xml"),
+		validating.F("events", &w.Events):           &minimumStringSliceLengthValidator{minLength: 1},
+		validating.F("dataTypes", &w.DataTypes):     &minimumStringSliceLengthValidator{minLength: 1},
+		validating.F("topics", &w.Topics):           &minimumStringSliceLengthValidator{minLength: 1},
 	})
-
-	// for whatever reason, returning straight from v.Validate makes my tests fail /shrug
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

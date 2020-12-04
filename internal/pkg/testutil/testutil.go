@@ -7,13 +7,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"image/png"
+	"io"
+	"io/ioutil"
 	"log"
 	"math"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
+	"testing"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
@@ -318,4 +322,14 @@ func ParseTwoFactorSecretFromBase64EncodedQRCode(qrCode string) (string, error) 
 	}
 
 	return u.Query().Get("secret"), nil
+}
+
+// CreateBodyFromStruct takes any value in and returns an io.ReadCloser for an http.Request's body.
+func CreateBodyFromStruct(t *testing.T, in interface{}) io.ReadCloser {
+	t.Helper()
+
+	out, err := json.Marshal(in)
+	require.NoError(t, err)
+
+	return ioutil.NopCloser(bytes.NewReader(out))
 }

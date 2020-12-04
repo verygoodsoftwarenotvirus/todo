@@ -22,7 +22,7 @@ func (m *UserDataServer) UserLoginInputMiddleware(next http.Handler) http.Handle
 }
 
 // UserInputMiddleware is a mock method to satisfy our interface requirements.
-func (m *UserDataServer) UserInputMiddleware(next http.Handler) http.Handler {
+func (m *UserDataServer) UserCreationInputMiddleware(next http.Handler) http.Handler {
 	args := m.Called(next)
 	return args.Get(0).(http.Handler)
 }

@@ -194,6 +194,12 @@ func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
+		if err := x.Validate(4, 6); err != nil {
+			logger.Error(err, "provided input was invalid")
+			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		ctx = context.WithValue(ctx, userLoginInputMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})

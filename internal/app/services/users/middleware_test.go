@@ -2,6 +2,9 @@ package users
 
 import (
 	"errors"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,17 +17,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
-var _ http.Handler = (*MockHTTPHandler)(nil)
-
-type MockHTTPHandler struct {
-	mock.Mock
-}
-
-func (m *MockHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
-}
-
-func TestService_UserInputMiddleware(T *testing.T) {
+func TestService_UserCreationInputMiddleware(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -33,22 +26,26 @@ func TestService_UserInputMiddleware(T *testing.T) {
 			logger: noop.NewLogger(),
 		}
 
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(nil)
-		s.encoderDecoder = ed
+		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
 
-		mh := &MockHTTPHandler{}
+		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
 
-		actual := s.UserInputMiddleware(mh)
+		input := &types.UserCreationInput{
+			Username: "username",
+			Password: "password",
+		}
+		req.Body = testutil.CreateBodyFromStruct(t, input)
+
+		actual := s.UserCreationInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, ed, mh)
+		mock.AssertExpectationsForObjects(t, mh)
 	})
 
 	T.Run("with error decoding request", func(t *testing.T) {
@@ -70,8 +67,8 @@ func TestService_UserInputMiddleware(T *testing.T) {
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
 
-		mh := &MockHTTPHandler{}
-		actual := s.UserInputMiddleware(mh)
+		mh := &testutil.MockHTTPHandler{}
+		actual := s.UserCreationInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
@@ -89,22 +86,27 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 			logger: noop.NewLogger(),
 		}
 
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(nil)
-		s.encoderDecoder = ed
+		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
 
-		mh := &MockHTTPHandler{}
+		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
+
+		input := &types.PasswordUpdateInput{
+			NewPassword:     "new_password",
+			CurrentPassword: "current_password",
+			TOTPToken:       "123456",
+		}
+		req.Body = testutil.CreateBodyFromStruct(t, input)
 
 		actual := s.PasswordUpdateInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, ed, mh)
+		mock.AssertExpectationsForObjects(t, mh)
 	})
 
 	T.Run("with error decoding request", func(t *testing.T) {
@@ -130,7 +132,7 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
 
-		mh := &MockHTTPHandler{}
+		mh := &testutil.MockHTTPHandler{}
 		actual := s.PasswordUpdateInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
@@ -149,22 +151,26 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 			logger: noop.NewLogger(),
 		}
 
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(nil)
-		s.encoderDecoder = ed
+		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
 
-		mh := &MockHTTPHandler{}
+		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
+
+		input := &types.TOTPSecretVerificationInput{
+			UserID:    1,
+			TOTPToken: "123456",
+		}
+		req.Body = testutil.CreateBodyFromStruct(t, input)
 
 		actual := s.TOTPSecretVerificationInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, ed, mh)
+		mock.AssertExpectationsForObjects(t, mh)
 	})
 
 	T.Run("with error decoding request", func(t *testing.T) {
@@ -186,7 +192,7 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
 
-		mh := &MockHTTPHandler{}
+		mh := &testutil.MockHTTPHandler{}
 		actual := s.TOTPSecretVerificationInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
@@ -205,22 +211,26 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 			logger: noop.NewLogger(),
 		}
 
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(nil)
-		s.encoderDecoder = ed
+		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
 
-		mh := &MockHTTPHandler{}
+		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
+
+		input := &types.TOTPSecretRefreshInput{
+			CurrentPassword: "current_password",
+			TOTPToken:       "123456",
+		}
+		req.Body = testutil.CreateBodyFromStruct(t, input)
 
 		actual := s.TOTPSecretRefreshInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, ed, mh)
+		mock.AssertExpectationsForObjects(t, mh)
 	})
 
 	T.Run("with error decoding request", func(t *testing.T) {
@@ -242,7 +252,7 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
 
-		mh := &MockHTTPHandler{}
+		mh := &testutil.MockHTTPHandler{}
 		actual := s.TOTPSecretRefreshInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 

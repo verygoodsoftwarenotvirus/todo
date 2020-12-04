@@ -6,7 +6,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 
-	v "github.com/RussellLuo/validating/v2"
+	"github.com/RussellLuo/validating/v2"
 )
 
 const (
@@ -114,30 +114,16 @@ func (x *Item) Update(input *ItemUpdateInput) []FieldChangeSummary {
 
 // Validate validates a ItemCreationInput.
 func (x *ItemCreationInput) Validate() error {
-	err := v.Validate(v.Schema{
-		v.F("name", x.Name):       &minimumStringLengthValidator{minLength: 1},
-		v.F("details", x.Details): &minimumStringLengthValidator{minLength: 1},
+	return validating.Validate(validating.Schema{
+		validating.F("name", x.Name):       &minimumStringLengthValidator{minLength: 1},
+		validating.F("details", x.Details): &minimumStringLengthValidator{minLength: 1},
 	})
-
-	// for whatever reason, returning straight from v.Validate makes my tests fail /shrug
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // Validate validates a ItemUpdateInput.
 func (x *ItemUpdateInput) Validate() error {
-	err := v.Validate(v.Schema{
-		v.F("name", x.Name):       &minimumStringLengthValidator{minLength: 1},
-		v.F("details", x.Details): &minimumStringLengthValidator{minLength: 1},
+	return validating.Validate(validating.Schema{
+		validating.F("name", x.Name):       &minimumStringLengthValidator{minLength: 1},
+		validating.F("details", x.Details): &minimumStringLengthValidator{minLength: 1},
 	})
-
-	// for whatever reason, returning straight from v.Validate makes my tests fail /shrug
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

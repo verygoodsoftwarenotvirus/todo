@@ -87,7 +87,7 @@ func TestWebhookCreationInput_Validate(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		assert.NoError(t, buildValidWebhookCreationInput().Validate())
+		assert.Nil(t, buildValidWebhookCreationInput().Validate())
 	})
 
 	T.Run("bad name", func(t *testing.T) {
@@ -164,7 +164,7 @@ func TestWebhookUpdateInput_Validate(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		assert.NoError(t, buildValidWebhookCreationInput().Validate())
+		assert.Nil(t, buildValidWebhookCreationInput().Validate())
 	})
 
 	T.Run("bad name", func(t *testing.T) {

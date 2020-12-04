@@ -4,15 +4,11 @@ import (
 	"context"
 	"net/http"
 
+	validating "github.com/RussellLuo/validating/v2"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 )
 
 const (
-	// UsersSearchIndexName is the name of the index used to search through items.
-	UsersSearchIndexName search.IndexName = "users"
-
 	// GoodStandingAccountStatus indicates a User's account is in good standing.
 	GoodStandingAccountStatus userAccountStatus = "good"
 	// UnverifiedAccountStatus indicates a User's account requires two factor secret verification.
@@ -168,7 +164,7 @@ type (
 
 	// UserDataService describes a structure capable of serving traffic related to users.
 	UserDataService interface {
-		UserInputMiddleware(next http.Handler) http.Handler
+		UserCreationInputMiddleware(next http.Handler) http.Handler
 		PasswordUpdateInputMiddleware(next http.Handler) http.Handler
 		TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handler
 		TOTPSecretVerificationInputMiddleware(next http.Handler) http.Handler
@@ -225,4 +221,41 @@ func (u *User) ToStatusResponse() *UserStatusResponse {
 // IsBanned is a handy helper function.
 func (u *User) IsBanned() bool {
 	return u.AccountStatus == BannedAccountStatus
+}
+
+func (i *UserCreationInput) Validate(minUsernameLength, minPasswordLength uint) error {
+	return validating.Validate(validating.Schema{
+		validating.F("username", i.Username): &minimumStringLengthValidator{minLength: minUsernameLength},
+		validating.F("password", i.Password): &minimumStringLengthValidator{minLength: minPasswordLength},
+	})
+}
+
+func (i *UserLoginInput) Validate(minUsernameLength, minPasswordLength uint) error {
+	return validating.Validate(validating.Schema{
+		validating.F("username", i.Username):   &minimumStringLengthValidator{minLength: minUsernameLength},
+		validating.F("password", i.Password):   &minimumStringLengthValidator{minLength: minPasswordLength},
+		validating.F("totpToken", i.TOTPToken): &exactStringLengthValidator{length: 6},
+	})
+}
+
+func (i *PasswordUpdateInput) Validate() error {
+	return validating.Validate(validating.Schema{
+		validating.F("username", i.CurrentPassword): &minimumStringLengthValidator{minLength: 1},
+		validating.F("password", i.NewPassword):     &minimumStringLengthValidator{minLength: 1},
+		validating.F("totpToken", i.TOTPToken):      &exactStringLengthValidator{length: 6},
+	})
+}
+
+func (i *TOTPSecretRefreshInput) Validate() error {
+	return validating.Validate(validating.Schema{
+		validating.F("username", i.CurrentPassword): &minimumStringLengthValidator{minLength: 1},
+		validating.F("totpToken", i.TOTPToken):      &exactStringLengthValidator{length: 6},
+	})
+}
+
+func (i *TOTPSecretVerificationInput) Validate() error {
+	return validating.Validate(validating.Schema{
+		validating.F("userID", i.UserID):       validating.Nonzero(),
+		validating.F("totpToken", i.TOTPToken): &exactStringLengthValidator{length: 6},
+	})
 }

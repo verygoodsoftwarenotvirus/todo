@@ -90,7 +90,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 	mux.Route("/users", func(userRouter chi.Router) {
 		userRouter.With(s.authService.UserLoginInputMiddleware).Post("/login", s.authService.LoginHandler)
 		userRouter.With(s.authService.CookieAuthenticationMiddleware).Post("/logout", s.authService.LogoutHandler)
-		userRouter.With(s.usersService.UserInputMiddleware).Post(root, s.usersService.CreateHandler)
+		userRouter.With(s.usersService.UserCreationInputMiddleware).Post(root, s.usersService.CreateHandler)
 		userRouter.With(s.usersService.TOTPSecretVerificationInputMiddleware).Post("/totp_secret/verify", s.usersService.TOTPSecretVerificationHandler)
 
 		// need creds beyond this point.

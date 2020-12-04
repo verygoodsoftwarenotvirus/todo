@@ -4,69 +4,87 @@ import (
 	"fmt"
 	"net/url"
 
-	v "github.com/RussellLuo/validating/v2"
+	"github.com/RussellLuo/validating/v2"
 )
 
-var _ v.Validator = (*urlValidator)(nil)
+var _ validating.Validator = (*urlValidator)(nil)
 
 type urlValidator struct{}
 
-func (uv *urlValidator) Validate(field v.Field) v.Errors {
+func (uv *urlValidator) Validate(field validating.Field) validating.Errors {
 	if u, ok := field.ValuePtr.(string); ok {
 		if _, err := url.Parse(u); err != nil {
-			return v.NewErrors(field.Name, "parse error", err.Error())
+			return validating.NewErrors(field.Name, "parse error", err.Error())
 		}
 
 		return nil
 	}
 
-	return v.NewErrors(field.Name, "type error", "URL field is the wrong type")
+	return validating.NewErrors(field.Name, "type error", "URL field is the wrong type")
 }
 
-var _ v.Validator = (*userAccountStatusValidator)(nil)
+var _ validating.Validator = (*userAccountStatusValidator)(nil)
 
 type userAccountStatusValidator struct{}
 
-func (slv *userAccountStatusValidator) Validate(field v.Field) v.Errors {
+func (slv *userAccountStatusValidator) Validate(field validating.Field) validating.Errors {
 	if s, ok := field.ValuePtr.(userAccountStatus); ok && !IsValidAccountStatus(string(s)) {
-		return v.NewErrors(field.Name, "invalid value", fmt.Sprintf("%q is not a valid User account status", s))
+		return validating.NewErrors(field.Name, "invalid value", fmt.Sprintf("%q is not a valid User account status", s))
 	}
 
 	return nil
 }
 
-var _ v.Validator = (*minimumStringLengthValidator)(nil)
+var _ validating.Validator = (*minimumStringLengthValidator)(nil)
 
 type minimumStringLengthValidator struct {
-	minLength int
+	minLength uint
 }
 
-func (slv *minimumStringLengthValidator) Validate(field v.Field) v.Errors {
+func (slv *minimumStringLengthValidator) Validate(field validating.Field) validating.Errors {
 	if s, ok := field.ValuePtr.(string); ok {
-		if len(s) >= slv.minLength {
+		if uint(len(s)) >= slv.minLength {
 			return nil
 		}
 
-		return v.NewErrors(field.Name, "invalid length", fmt.Sprintf("field should be at least %d characters long", slv.minLength))
+		return validating.NewErrors(field.Name, "invalid length", fmt.Sprintf("field should be at least %d characters long", slv.minLength))
 	}
 
-	return v.NewErrors(field.Name, "type error", "string field is the wrong type")
+	return validating.NewErrors(field.Name, "type error", "string field is the wrong type")
 }
 
-var _ v.Validator = (*minimumStringSliceLengthValidator)(nil)
+var _ validating.Validator = (*exactStringLengthValidator)(nil)
+
+type exactStringLengthValidator struct {
+	length uint
+}
+
+func (slv *exactStringLengthValidator) Validate(field validating.Field) validating.Errors {
+	if s, ok := field.ValuePtr.(string); ok {
+		if uint(len(s)) == slv.length {
+			return nil
+		}
+
+		return validating.NewErrors(field.Name, "invalid length", fmt.Sprintf("field should be at least %d characters long", slv.length))
+	}
+
+	return validating.NewErrors(field.Name, "type error", "string field is the wrong type")
+}
+
+var _ validating.Validator = (*minimumStringSliceLengthValidator)(nil)
 
 type minimumStringSliceLengthValidator struct {
-	minLength int
+	minLength uint
 }
 
-func (slv *minimumStringSliceLengthValidator) Validate(field v.Field) v.Errors {
+func (slv *minimumStringSliceLengthValidator) Validate(field validating.Field) validating.Errors {
 	if s, ok := field.ValuePtr.(*[]string); ok {
-		if len(*s) >= slv.minLength {
+		if uint(len(*s)) >= slv.minLength {
 			return nil
 		}
 
-		return v.NewErrors(field.Name, "invalid length", fmt.Sprintf("field should be at least %d entries long", slv.minLength))
+		return validating.NewErrors(field.Name, "invalid length", fmt.Sprintf("field should be at least %d entries long", slv.minLength))
 	}
 
-	return v.NewErrors(field.Name, "type error", "string slice field is the wrong type")
+	return validating.NewErrors(field.Name, "type error", "string slice field is the wrong type")
 }

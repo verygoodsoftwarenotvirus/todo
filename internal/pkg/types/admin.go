@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	v "github.com/RussellLuo/validating/v2"
+	"github.com/RussellLuo/validating/v2"
 )
 
 type (
@@ -36,15 +36,8 @@ type (
 
 // Validate ensures our struct is validatable.
 func (i *AccountStatusUpdateInput) Validate() error {
-	err := v.Validate(v.Schema{
-		v.F("newStatus", i.NewStatus): &userAccountStatusValidator{},
-		v.F("reason", i.Reason):       &minimumStringLengthValidator{minLength: 1},
+	return validating.Validate(validating.Schema{
+		validating.F("newStatus", i.NewStatus): &userAccountStatusValidator{},
+		validating.F("reason", i.Reason):       &minimumStringLengthValidator{minLength: 1},
 	})
-
-	// for whatever reason, returning straight from v.Validate makes my tests fail /shrug
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

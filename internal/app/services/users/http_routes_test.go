@@ -930,7 +930,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
-		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
@@ -989,7 +989,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
-		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
@@ -1023,7 +1023,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		og := exampleUser.TwoFactorSecretVerifiedOn
 		exampleUser.TwoFactorSecretVerifiedOn = nil
-		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(
@@ -1063,7 +1063,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
-		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 		exampleInput.TOTPToken = "INVALID"
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -1093,7 +1093,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
-		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		req = req.WithContext(

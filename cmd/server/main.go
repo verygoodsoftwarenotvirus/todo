@@ -5,24 +5,38 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
 )
 
+const (
+	useNoOpLoggerEnvVar  = "USE_NOOP_LOGGER"
+	configFilepathEnvVar = "CONFIGURATION_FILEPATH"
+)
+
 func main() {
-	ctx := context.Background()
+
+	var (
+		logger         logging.Logger
+		configFilepath string
+	)
 
 	// initialize our logger of choice.
-	logger := zerolog.NewLogger()
+	logger = zerolog.NewLogger()
+	if x, _ := strconv.ParseBool(os.Getenv(useNoOpLoggerEnvVar)); x {
+		logger = noop.NewLogger()
+	}
 
 	// find and validate our configuration filepath.
-	var configFilepath string
-	if configFilepath = os.Getenv("CONFIGURATION_FILEPATH"); configFilepath == "" {
+	if configFilepath = os.Getenv(configFilepathEnvVar); configFilepath == "" {
 		logger.Fatal(errors.New("no configuration file provided"))
 	}
 
@@ -37,24 +51,22 @@ func main() {
 	}
 
 	// only allow initialization to take so long.
-	ctx, cancel := context.WithTimeout(ctx, cfg.Meta.StartupDeadline)
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.Meta.StartupDeadline)
 	ctx, initSpan := tracing.StartSpan(ctx)
-	ctx, databaseConnectionSpan := tracing.StartSpan(ctx)
 
 	logger.Debug("connecting to database")
 
+	ctx, databaseConnectionSpan := tracing.StartSpan(ctx)
 	rawDB, err := cfg.ProvideDatabaseConnection(logger)
 	if err != nil {
 		logger.Fatal(fmt.Errorf("error connecting to database: %w", err))
 	}
-
 	databaseConnectionSpan.End()
 
 	authenticator := bcrypt.ProvideAuthenticator(bcrypt.ProvideHashCost(), logger)
-	ctx, databaseClientSetupSpan := tracing.StartSpan(ctx)
-
 	logger.Debug("setting up database client")
 
+	ctx, databaseClientSetupSpan := tracing.StartSpan(ctx)
 	dbClient, err := cfg.ProvideDatabaseClient(ctx, logger, rawDB, authenticator)
 	if err != nil {
 		logger.Fatal(fmt.Errorf("error initializing database client: %w", err))

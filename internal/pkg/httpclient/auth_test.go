@@ -165,7 +165,7 @@ func TestV1Client_BuildVerifyTOTPSecretRequest(T *testing.T) {
 		c := buildTestClient(t, ts)
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 
 		actual, err := c.BuildVerifyTOTPSecretRequest(ctx, exampleUser.ID, exampleInput.TOTPToken)
 		assert.NoError(t, err)
@@ -186,7 +186,7 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -208,7 +208,7 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -231,7 +231,7 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -253,7 +253,7 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 
 		c := buildTestClientWithInvalidURL(t)
 
@@ -266,7 +266,7 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeTOTPSecretValidationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(

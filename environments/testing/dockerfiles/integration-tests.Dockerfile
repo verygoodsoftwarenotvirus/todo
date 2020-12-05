@@ -6,7 +6,7 @@ WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
 COPY . .
 
-ENTRYPOINT [ "go", "test", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration" ]
+# ENTRYPOINT [ "go", "test", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration" ]
 
 # for a more specific test:
-# ENTRYPOINT [ "go", "test", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration", "-run", "TestSomethingMoreSpecific" ]
+ENTRYPOINT [ "go", "test", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration", "-run", "TestItems/Deleting/should_be_able_to_be_deleted" ]

@@ -84,12 +84,10 @@ func (s *Service) UserAttributionMiddleware(next http.Handler) http.Handler {
 				if user, err = s.userDB.GetUser(ctx, oauth2Client.BelongsToUser); err != nil {
 					logger.Error(err, "error fetching user info for authentication")
 				}
-				logger.Debug("got user")
 			}
 		}
 
 		if user != nil {
-			logger.Debug("user determined")
 			tracing.AttachUserIDToSpan(span, user.ID)
 			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.SessionInfoKey, user.ToSessionInfo())))
 			return
@@ -194,11 +192,11 @@ func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		if err := x.Validate(4, 6); err != nil {
-			logger.Error(err, "provided input was invalid")
-			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
-			return
-		}
+		//if err := x.Validate(4, 6); err != nil {
+		//	logger.Error(err, "provided input was invalid")
+		//	s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
+		//	return
+		//}
 
 		ctx = context.WithValue(ctx, userLoginInputMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))

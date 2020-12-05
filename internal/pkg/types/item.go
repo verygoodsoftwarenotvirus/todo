@@ -6,7 +6,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 
-	"github.com/RussellLuo/validating/v2"
+	"github.com/go-ozzo/ozzo-validation"
 )
 
 const (
@@ -34,15 +34,15 @@ type (
 
 	// ItemCreationInput represents what a User could set as input for creating items.
 	ItemCreationInput struct {
-		Name          string `json:"name"`
-		Details       string `json:"details"`
+		Name          string `validate:"required" json:"name"`
+		Details       string `validate:"required" json:"details"`
 		BelongsToUser uint64 `json:"-"`
 	}
 
 	// ItemUpdateInput represents what a User could set as input for updating items.
 	ItemUpdateInput struct {
-		Name          string `json:"name"`
-		Details       string `json:"details"`
+		Name          string `validate:"required" json:"name"`
+		Details       string `validate:"required" json:"details"`
 		BelongsToUser uint64 `json:"-"`
 	}
 
@@ -114,16 +114,14 @@ func (x *Item) Update(input *ItemUpdateInput) []FieldChangeSummary {
 
 // Validate validates a ItemCreationInput.
 func (x *ItemCreationInput) Validate() error {
-	return validating.Validate(validating.Schema{
-		validating.F("name", x.Name):       &minimumStringLengthValidator{minLength: 1},
-		validating.F("details", x.Details): &minimumStringLengthValidator{minLength: 1},
-	})
+	return validation.ValidateStruct(x,
+		validation.Field(&x.Name, validation.Required),
+	)
 }
 
 // Validate validates a ItemUpdateInput.
 func (x *ItemUpdateInput) Validate() error {
-	return validating.Validate(validating.Schema{
-		validating.F("name", x.Name):       &minimumStringLengthValidator{minLength: 1},
-		validating.F("details", x.Details): &minimumStringLengthValidator{minLength: 1},
-	})
+	return validation.ValidateStruct(x,
+		validation.Field(&x.Name, validation.Required),
+	)
 }

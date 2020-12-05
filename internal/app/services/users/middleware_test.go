@@ -4,7 +4,7 @@ import (
 	"errors"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -33,12 +33,7 @@ func TestService_UserCreationInputMiddleware(T *testing.T) {
 
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
-
-		input := &types.UserCreationInput{
-			Username: "username",
-			Password: "password",
-		}
-		req.Body = testutil.CreateBodyFromStruct(t, input)
+		req.Body = testutil.CreateBodyFromStruct(t, fakes.BuildFakeUserCreationInput())
 
 		actual := s.UserCreationInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
@@ -92,14 +87,8 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		req := buildRequest(t)
+		req.Body = testutil.CreateBodyFromStruct(t, fakes.BuildFakePasswordUpdateInput())
 		res := httptest.NewRecorder()
-
-		input := &types.PasswordUpdateInput{
-			NewPassword:     "new_password",
-			CurrentPassword: "current_password",
-			TOTPToken:       "123456",
-		}
-		req.Body = testutil.CreateBodyFromStruct(t, input)
 
 		actual := s.PasswordUpdateInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
@@ -157,13 +146,8 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		req := buildRequest(t)
+		req.Body = testutil.CreateBodyFromStruct(t, fakes.BuildFakeTOTPSecretVerificationInput())
 		res := httptest.NewRecorder()
-
-		input := &types.TOTPSecretVerificationInput{
-			UserID:    1,
-			TOTPToken: "123456",
-		}
-		req.Body = testutil.CreateBodyFromStruct(t, input)
 
 		actual := s.TOTPSecretVerificationInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
@@ -217,13 +201,8 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		req := buildRequest(t)
+		req.Body = testutil.CreateBodyFromStruct(t, fakes.BuildFakeTOTPSecretRefreshInput())
 		res := httptest.NewRecorder()
-
-		input := &types.TOTPSecretRefreshInput{
-			CurrentPassword: "current_password",
-			TOTPToken:       "123456",
-		}
-		req.Body = testutil.CreateBodyFromStruct(t, input)
 
 		actual := s.TOTPSecretRefreshInputMiddleware(mh)
 		actual.ServeHTTP(res, req)

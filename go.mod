@@ -19,6 +19,7 @@ require (
 	github.com/emicklei/hazana v1.6.2
 	github.com/go-chi/chi v4.0.3+incompatible
 	github.com/go-chi/cors v1.0.0
+	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/google/wire v0.4.0
 	github.com/gorilla/securecookie v1.1.1

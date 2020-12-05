@@ -223,7 +223,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		assert.Equal(t, http.StatusForbidden, res.Code)
 	})
 
-	T.Run("returns 404 when user doesn't exist", func(t *testing.T) {
+	T.Run("returns 404 when user does not exist", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)

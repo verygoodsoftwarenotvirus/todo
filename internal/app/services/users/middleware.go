@@ -38,11 +38,11 @@ func (s *Service) UserCreationInputMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		if err := x.Validate(4, 6); err != nil {
-			logger.Error(err, "provided input was invalid")
-			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
-			return
-		}
+		//if err := x.Validate(4, 6); err != nil {
+		//	logger.Error(err, "provided input was invalid")
+		//	s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
+		//	return
+		//}
 
 		// attach parsed value to request context.
 		ctx = context.WithValue(ctx, userCreationMiddlewareCtxKey, x)
@@ -66,11 +66,11 @@ func (s *Service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler 
 			return
 		}
 
-		if err := x.Validate(); err != nil {
-			logger.Error(err, "provided input was invalid")
-			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
-			return
-		}
+		//if err := x.Validate(); err != nil {
+		//	logger.Error(err, "provided input was invalid")
+		//	s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
+		//	return
+		//}
 
 		// attach parsed value to request context.
 		ctx = context.WithValue(ctx, passwordChangeMiddlewareCtxKey, x)
@@ -94,11 +94,11 @@ func (s *Service) TOTPSecretVerificationInputMiddleware(next http.Handler) http.
 			return
 		}
 
-		if err := x.Validate(); err != nil {
-			logger.Error(err, "provided input was invalid")
-			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
-			return
-		}
+		//if err := x.Validate(); err != nil {
+		//	logger.Error(err, "provided input was invalid")
+		//	s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
+		//	return
+		//}
 
 		// attach parsed value to request context.
 		ctx = context.WithValue(ctx, totpSecretVerificationMiddlewareCtxKey, x)
@@ -122,11 +122,11 @@ func (s *Service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handl
 			return
 		}
 
-		if err := x.Validate(); err != nil {
-			logger.Error(err, "provided input was invalid")
-			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
-			return
-		}
+		//if err := x.Validate(); err != nil {
+		//	logger.Error(err, "provided input was invalid")
+		//	s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
+		//	return
+		//}
 
 		// attach parsed value to request context.
 		ctx = context.WithValue(ctx, totpSecretRefreshMiddlewareCtxKey, x)

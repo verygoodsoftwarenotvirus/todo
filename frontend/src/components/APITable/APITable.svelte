@@ -22,7 +22,7 @@ export let rows: string[][] = [[]];
 
 export let queryFilter: QueryFilter = new QueryFilter();
 
-export let newPageLink: string = '';
+export let creationLink: string = '';
 export let individualPageLink: string = '';
 
 export let searchEnabled: boolean = true;
@@ -70,8 +70,8 @@ function search(): void {
 }
 
 function goToNewPage() {
-  logger.debug(`navigating to ${newPageLink} via goToNewPage`);
-  navigate(newPageLink, { state: {}, replace: true });
+  logger.debug(`navigating to ${creationLink} via goToNewPage`);
+  navigate(creationLink, { state: {}, replace: true });
 }
 </script>
 
@@ -84,7 +84,7 @@ function goToNewPage() {
         <h3 class="font-semibold text-lg text-gray-800">
           {title}
 
-          {#if goToNewPage !== undefined && newPageLink !== ''}
+          {#if goToNewPage !== undefined && creationLink !== ''}
             <button
               class="border-2 font-bold py-1 px-4 m-2 rounded"
               on:click="{goToNewPage}"

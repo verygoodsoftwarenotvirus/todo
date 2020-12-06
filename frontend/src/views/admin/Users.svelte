@@ -126,7 +126,7 @@ function promptDelete(id: number) {
       headers="{User.headers(translationsToUse)}"
       rows="{users}"
       individualPageLink="/admin/users"
-      newPageLink="/admin/users/new"
+      creationLink="/admin/users/new"
       dataRetrievalError="{userRetrievalError}"
       searchFunction="{searchUsers}"
       incrementDisabled="{apiTableIncrementDisabled}"

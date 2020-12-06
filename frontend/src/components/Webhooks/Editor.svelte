@@ -117,15 +117,15 @@ function deleteWebhook(): void {
   }
 
   if (superstore.frontendOnlyMode) {
-    navigate(frontendRoutes.LIST_WEBHOOKS, { state: {}, replace: true });
+    navigate(frontendRoutes.USER_LIST_WEBHOOKS, { state: {}, replace: true });
   } else {
     V1APIClient.deleteWebhook(webhookID)
       .then((response: AxiosResponse<Webhook>) => {
         if (response.status === statusCodes.NO_CONTENT) {
           logger.debug(
-            `navigating to ${frontendRoutes.LIST_WEBHOOKS} because via deletion promise resolution`,
+            `navigating to ${frontendRoutes.USER_LIST_WEBHOOKS} because via deletion promise resolution`,
           );
-          navigate(frontendRoutes.LIST_WEBHOOKS, { state: {}, replace: true });
+          navigate(frontendRoutes.USER_LIST_WEBHOOKS, { state: {}, replace: true });
         }
       })
       .catch((error: AxiosError) => {

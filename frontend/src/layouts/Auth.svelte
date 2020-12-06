@@ -1,8 +1,6 @@
 <script lang="typescript">
 import { Router, Route } from 'svelte-routing';
 
-import { UserStatus } from '../types';
-
 // components for this layout
 import AuthNavbar from '../components/Navbars/AuthNavbar.svelte';
 import SmallFooter from '../components/Footers/SmallFooter.svelte';
@@ -16,17 +14,8 @@ const registerBg2: string = '../assets/img/register_bg_2.png';
 export let location: Location;
 
 import { Logger } from '../logger';
-import { Superstore } from '../stores/superstore';
 
 let logger = new Logger().withDebugValue('source', 'src/layouts/Auth.svelte');
-
-let currentAuthStatus: UserStatus = new UserStatus();
-
-let superstore = new Superstore({
-  userStatusStoreUpdateFunc: (value: UserStatus) => {
-    currentAuthStatus = value;
-  },
-});
 </script>
 
 <div>

@@ -37,17 +37,21 @@ export enum backendRoutes {
 export enum frontendRoutes {
   // Pages
   LANDING = '/',
+
+  // Admin Pages
   ADMIN_DASHBOARD = '/admin/dashboard',
+  ADMIN_USERS = '/admin/users',
+  ADMIN_AUDIT_LOGS = '/admin/audit_log',
+  ADMIN_SETTINGS = '/admin/settings',
 
   // User accounts
   LOGIN = '/auth/login',
+  REGISTER = '/auth/register',
+  
+  // User routes
   USER_SETTINGS = '/user/settings',
-
-  // OAuth2 Clients
-  LIST_OAUTH2_CLIENTS = '/things/oauth2_clients',
-
-  // Webhooks
-  LIST_WEBHOOKS = '/things/webhooks',
+  USER_LIST_OAUTH2_CLIENTS = '/user/oauth2_clients',
+  USER_LIST_WEBHOOKS = '/user/webhooks',
 
   // Items
   LIST_ITEMS = '/things/items',

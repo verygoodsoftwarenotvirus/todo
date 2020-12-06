@@ -89,7 +89,7 @@ function deleteOAuth2Client(): void {
   }
 
   if (superstore.frontendOnlyMode) {
-    navigate(frontendRoutes.LIST_OAUTH2_CLIENTS, {
+    navigate(frontendRoutes.USER_LIST_OAUTH2_CLIENTS, {
       state: {},
       replace: true,
     });
@@ -97,7 +97,7 @@ function deleteOAuth2Client(): void {
     V1APIClient.deleteOAuth2Client(oauth2ClientID)
       .then((response: AxiosResponse<OAuth2Client>) => {
         if (response.status === statusCodes.NO_CONTENT) {
-          navigate(frontendRoutes.LIST_OAUTH2_CLIENTS, {
+          navigate(frontendRoutes.USER_LIST_OAUTH2_CLIENTS, {
             state: {},
             replace: true,
           });

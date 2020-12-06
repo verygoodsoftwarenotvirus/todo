@@ -58,9 +58,6 @@ async function login() {
         superstore.setUserStatus(userStatus);
 
         if (userStatus.isAdmin) {
-          logger.debug(
-            `navigating to ${frontendRoutes.ADMIN_DASHBOARD} because user is an authenticated admin`,
-          );
           navigate(frontendRoutes.ADMIN_DASHBOARD, {
             state: {},
             replace: true,
@@ -154,7 +151,7 @@ async function login() {
 
             <div class="text-center mt-6">
               <button
-                on:click="{login}"
+                on:mouseup="{login}"
                 type="submit"
                 id="loginButton"
                 class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear transition-all duration-150"
@@ -176,7 +173,7 @@ async function login() {
           </a>
         </div>
         <div class="w-1/2 text-right">
-          <a use:link href="/auth/register" class="text-gray-300">
+          <a use:link href="{frontendRoutes.REGISTER}" class="text-gray-300">
             <small>{translationsToUse.linkTexts.createAccount}</small>
           </a>
         </div>

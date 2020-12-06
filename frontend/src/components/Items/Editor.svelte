@@ -17,7 +17,7 @@ import AuditLogTable from '../AuditLogTable/AuditLogTable.svelte';
 import { frontendRoutes, statusCodes } from '../../constants';
 import { Superstore } from '../../stores';
 
-export let id: number = 0;
+export let itemID: number = 0;
 
 // local state
 let originalItem: Item = new Item();
@@ -59,7 +59,7 @@ let superstore = new Superstore({
 function fetchItem(): void {
   logger.debug(`fetchItem called`);
 
-  if (id === 0) {
+  if (itemID === 0) {
     throw new Error('id cannot be zero!');
   }
 
@@ -68,7 +68,7 @@ function fetchItem(): void {
     item = { ...i };
     originalItem = { ...i };
   } else {
-    V1APIClient.fetchItem(id)
+    V1APIClient.fetchItem(itemID)
       .then((response: AxiosResponse<Item>) => {
         item = { ...response.data };
         originalItem = { ...response.data };
@@ -84,7 +84,7 @@ function fetchItem(): void {
 function saveItem(): void {
   logger.debug(`saveItem called`);
 
-  if (id === 0) {
+  if (itemID === 0) {
     throw new Error('id cannot be zero!');
   } else if (!needsToBeSaved) {
     throw new Error('no changes to save!');
@@ -110,14 +110,14 @@ function saveItem(): void {
 function deleteItem(): void {
   logger.debug(`deleteItem called`);
 
-  if (id === 0) {
+  if (itemID === 0) {
     throw new Error('id cannot be zero!');
   }
 
   if (superstore.frontendOnlyMode) {
     navigate(frontendRoutes.LIST_ITEMS, { state: {}, replace: true });
   } else {
-    V1APIClient.deleteItem(id)
+    V1APIClient.deleteItem(itemID)
       .then((response: AxiosResponse<Item>) => {
         if (response.status === statusCodes.NO_CONTENT) {
           logger.debug(
@@ -135,7 +135,7 @@ function deleteItem(): void {
 function fetchAuditLogEntries(): Promise<AxiosResponse<AuditLogEntry[]>> {
   logger.debug(`fetchAuditLogEntries called`);
 
-  if (id === 0) {
+  if (itemID === 0) {
     throw new Error('id cannot be zero!');
   }
 
@@ -150,7 +150,7 @@ function fetchAuditLogEntries(): Promise<AxiosResponse<AuditLogEntry[]>> {
       });
     });
   } else {
-    return V1APIClient.fetchAuditLogEntriesForItem(id);
+    return V1APIClient.fetchAuditLogEntriesForItem(itemID);
   }
 }
 </script>

@@ -4,9 +4,11 @@ import { AxiosError, AxiosResponse } from 'axios';
 import { onMount } from 'svelte';
 
 import {
-  AuditLogEntry,
-  AuditLogEntryList,
-  fakeAuditLogEntryFactory,
+  ErrorResponse,
+  fakeOAuth2ClientFactory,
+  fakeUserFactory,
+  OAuth2Client,
+  OAuth2ClientList,
   QueryFilter,
   UserSiteSettings,
   UserStatus,
@@ -15,18 +17,18 @@ import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
 
 import APITable from '../../components/APITable/APITable.svelte';
+import { statusCodes } from '../../constants';
 import { Superstore } from '../../stores';
 
 export let location;
 
-let entryRetrievalError = '';
-let entries: AuditLogEntry[] = [];
+let oauth2ClientRetrievalError = '';
+let oauth2Clients: OAuth2Client[] = [];
 
-let adminMode: boolean = false;
 let currentAuthStatus: UserStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
 let translationsToUse = currentSessionSettings.getTranslations().models
-  .auditLogEntry;
+  .oauth2Client;
 
 let superstore = new Superstore({
   userStatusStoreUpdateFunc: (value: UserStatus) => {
@@ -35,19 +37,16 @@ let superstore = new Superstore({
   sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = currentSessionSettings.getTranslations().models
-      .auditLogEntry;
-  },
-  adminModeUpdateFunc: (value: boolean) => {
-    adminMode = value;
+      .oauth2Client;
   },
 });
 
 let logger = new Logger().withDebugValue(
   'source',
-  'src/views/admin/AuditLogEntries.svelte',
+  'src/views/admin/OAuth2Clients.svelte',
 );
 
-onMount(fetchAuditLogEntries);
+onMount(fetchOAuth2Clients);
 
 // begin experimental API table code
 
@@ -57,15 +56,15 @@ let apiTableIncrementDisabled: boolean = false;
 let apiTableDecrementDisabled: boolean = false;
 let apiTableSearchQuery: string = '';
 
-function searchAuditLogEntries() {
-  logger.debug('searchAuditLogEntries called');
+function searchOAuth2Clients() {
+  logger.debug('searchOAuth2Clients called');
 }
 
 function incrementPage() {
   if (!apiTableIncrementDisabled) {
     logger.debug(`incrementPage called`);
     queryFilter.page += 1;
-    fetchAuditLogEntries();
+    fetchOAuth2Clients();
   }
 }
 
@@ -73,27 +72,47 @@ function decrementPage() {
   if (!apiTableDecrementDisabled) {
     logger.debug(`decrementPage called`);
     queryFilter.page -= 1;
-    fetchAuditLogEntries();
+    fetchOAuth2Clients();
   }
 }
 
-function fetchAuditLogEntries() {
-  logger.debug('fetchAuditLogEntries called');
+function fetchOAuth2Clients() {
+  logger.debug('fetchOAuth2Clients called');
 
   if (superstore.frontendOnlyMode) {
-    entries = fakeAuditLogEntryFactory.buildList(queryFilter.limit);
+    oauth2Clients = fakeOAuth2ClientFactory.buildList(queryFilter.limit);
   } else {
-    V1APIClient.fetchListOfAuditLogEntries(queryFilter, adminMode)
-      .then((response: AxiosResponse<AuditLogEntryList>) => {
-        entries = response.data.entries || [];
+    V1APIClient.fetchListOfOAuth2Clients(queryFilter, false)
+      .then((response: AxiosResponse<OAuth2ClientList>) => {
+        oauth2Clients = response.data.clients || [];
 
         queryFilter.page = response.data.page;
-        apiTableIncrementDisabled = entries.length === 0;
+        apiTableIncrementDisabled = oauth2Clients.length === 0;
         apiTableDecrementDisabled = queryFilter.page === 1;
       })
       .catch((error: AxiosError) => {
-        entryRetrievalError = error.response?.data;
+        oauth2ClientRetrievalError = error.response?.data;
       });
+  }
+}
+
+function promptDelete(id: number) {
+  logger.debug('promptDelete called');
+
+  if (confirm(`are you sure you want to delete oauth2Client #${id}?`)) {
+    if (superstore.frontendOnlyMode) {
+      fetchOAuth2Clients();
+    } else {
+      V1APIClient.deleteOAuth2Client(id)
+        .then((response: AxiosResponse<OAuth2Client>) => {
+          if (response.status === statusCodes.NO_CONTENT) {
+            fetchOAuth2Clients();
+          }
+        })
+        .catch((error: AxiosError<ErrorResponse>) => {
+          oauth2ClientRetrievalError = error.response?.data?.message;
+        });
+    }
   }
 }
 </script>
@@ -101,19 +120,20 @@ function fetchAuditLogEntries() {
 <div class="flex flex-wrap mt-4">
   <div class="w-full mb-12 px-4">
     <APITable
-      title="Audit Log"
-      headers="{AuditLogEntry.headers(translationsToUse)}"
-      rows="{entries}"
-      creationLink=""
-      dataRetrievalError="{entryRetrievalError}"
-      searchEnabled="{false}"
+      title="OAuth2Clients"
+      headers="{OAuth2Client.headers(translationsToUse)}"
+      rows="{oauth2Clients}"
+      individualPageLink="/admin/oauth2_clients"
+      creationLink="/admin/oauth2_clients/new"
+      dataRetrievalError="{oauth2ClientRetrievalError}"
+      searchFunction="{searchOAuth2Clients}"
       incrementDisabled="{apiTableIncrementDisabled}"
       decrementDisabled="{apiTableDecrementDisabled}"
       incrementPageFunction="{incrementPage}"
       decrementPageFunction="{decrementPage}"
-      fetchFunction="{fetchAuditLogEntries}"
-      deleteEnabled="{false}"
-      rowRenderFunction="{AuditLogEntry.asRow}"
+      fetchFunction="{fetchOAuth2Clients}"
+      deleteFunction="{promptDelete}"
+      rowRenderFunction="{OAuth2Client.asRow}"
     />
   </div>
 </div>

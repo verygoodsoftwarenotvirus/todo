@@ -7,22 +7,21 @@ import AdminFooter from '../components/Footers/AdminFooter.svelte';
 import AdminNavbar from '../components/Navbars/AdminNavbar.svelte';
 
 // custom components for this layout
-import Items from '../views/things/Items.svelte';
-import ItemEditorComponent from '../components/Editors/Item.svelte';
-import ItemCreatorComponent from '../components/Creators/Item.svelte';
+import ItemsList from '../components/Items/List.svelte';
+import ItemEditor from '../components/Items/Editor.svelte';
+import ItemCreator from '../components/Items/Creator.svelte';
 
 // pages for this layout
 
-import { UserSiteSettings, UserStatus } from '../types';
+import { UserStatus } from '../types';
 import { Logger } from '../logger';
-import { Superstore } from '../stores/superstore';
+import { Superstore } from '../stores';
 
 export let location: Location;
 
 let logger = new Logger().withDebugValue('source', 'src/layouts/Things.svelte');
 
 let currentAuthStatus: UserStatus = new UserStatus();
-
 let superstore = new Superstore({
   userStatusStoreUpdateFunc: (value: UserStatus) => {
     currentAuthStatus = value;
@@ -37,11 +36,11 @@ let superstore = new Superstore({
     <div class="px-4 md:px-10 mx-auto w-full -m-24">
       <Router url="things">
         <!--     ITEMS     -->
-        <Route path="items" component="{Items}" />
-        <Route path="items/:id" let:params>
-          <ItemEditorComponent id="{params.id}" />
+        <Route path="items" component="{ItemsList}" />
+        <Route path="items/:id" let:itemParams>
+          <ItemEditor itemID="{itemParams.id}" />
         </Route>
-        <Route path="items/new" component="{ItemCreatorComponent}" />
+        <Route path="items/new" component="{ItemCreator}" />
       </Router>
       <AdminFooter />
     </div>

@@ -39,7 +39,7 @@ let superstore = new Superstore({
     <a
       class="text-white text-sm uppercase hidden lg:inline-block font-semibold"
       use:link
-      href="/admin"
+      href="##"
     >
       {translationsToUse.dashboard}
     </a>

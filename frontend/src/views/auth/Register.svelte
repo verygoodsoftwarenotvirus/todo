@@ -255,7 +255,7 @@ async function validateTOTPToken() {
       <div class="flex flex-wrap mt-6 relative">
         <div class="w-1/2"></div>
         <div class="w-1/2 text-right">
-          <a use:link href="/auth/login" class="text-gray-300">
+          <a use:link href="{frontendRoutes.LOGIN}" class="text-gray-300">
             <small>{translationsToUse.linkTexts.loginInstead}</small>
           </a>
         </div>

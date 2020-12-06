@@ -15,7 +15,7 @@ import { Logger } from '../../logger';
 import { statusCodes } from '../../constants';
 import { V1APIClient } from '../../apiClient';
 
-import APITable from '../../components/APITable/APITable.svelte';
+import APITable from '../APITable/APITable.svelte';
 import { Superstore } from '../../stores';
 
 export let location;
@@ -45,7 +45,7 @@ let superstore = new Superstore({
 
 let logger = new Logger().withDebugValue(
   'source',
-  'src/views/things/Items.svelte',
+  'src/views/Items.svelte',
 );
 
 let apiTableIncrementDisabled: boolean = false;
@@ -137,7 +137,7 @@ function promptDelete(id: number) {
       headers="{Item.headers(translationsToUse)}"
       rows="{items}"
       individualPageLink="/things/items"
-      newPageLink="/things/items/new"
+      creationLink="/things/items/new"
       dataRetrievalError="{itemRetrievalError}"
       searchEnabled="{true}"
       searchFunction="{searchItems}"

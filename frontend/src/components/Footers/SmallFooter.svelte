@@ -39,7 +39,7 @@ const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
         <ul class="flex flex-wrap list-none md:justify-end justify-center">
           <li>
             <a
-              href="#"
+              href="##"
               class="text-white hover:text-gray-400 text-sm font-semibold block py-1 px-3"
             >
               {translationsToUse.aboutUs}
@@ -47,7 +47,7 @@ const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
           </li>
           <li>
             <a
-              href="#"
+              href="##"
               class="text-white hover:text-gray-400 text-sm font-semibold block py-1 px-3"
             >
               {translationsToUse.blog}

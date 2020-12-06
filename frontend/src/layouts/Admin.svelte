@@ -21,8 +21,8 @@ import Settings from '../views/admin/Settings.svelte';
 import UsersAdmin from '../views/admin/Users.svelte';
 import AuditLogEntries from '../views/admin/AuditLogEntries.svelte';
 
-import UserEditor from '../components/Editors/User.svelte';
-import { Superstore } from '../stores/superstore';
+import UserEditor from '../components/Users/Editor.svelte';
+import { Superstore } from '../stores';
 
 let currentAuthStatus: UserStatus = new UserStatus();
 

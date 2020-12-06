@@ -5,13 +5,13 @@ import { onMount } from 'svelte';
 
 import {
   ErrorResponse,
-  fakeOAuth2ClientFactory,
-  fakeUserFactory,
-  OAuth2Client,
-  OAuth2ClientList,
+  Webhook,
+  WebhookList,
   QueryFilter,
   UserSiteSettings,
   UserStatus,
+  fakeUserFactory,
+  fakeWebhookFactory,
 } from '../../types';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
@@ -22,14 +22,12 @@ import { Superstore } from '../../stores';
 
 export let location;
 
-let oauth2ClientRetrievalError = '';
-let oauth2Clients: OAuth2Client[] = [];
+let webhookRetrievalError = '';
+let webhooks: Webhook[] = [];
 
-let adminMode: boolean = false;
 let currentAuthStatus: UserStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = currentSessionSettings.getTranslations().models
-  .oauth2Client;
+let translationsToUse = currentSessionSettings.getTranslations().models.webhook;
 
 let superstore = new Superstore({
   userStatusStoreUpdateFunc: (value: UserStatus) => {
@@ -37,20 +35,16 @@ let superstore = new Superstore({
   },
   sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = currentSessionSettings.getTranslations().models
-      .oauth2Client;
-  },
-  adminModeUpdateFunc: (value: boolean) => {
-    adminMode = value;
+    translationsToUse = currentSessionSettings.getTranslations().models.webhook;
   },
 });
 
 let logger = new Logger().withDebugValue(
   'source',
-  'src/views/admin/OAuth2Clients.svelte',
+  'src/views/admin/Webhooks.svelte',
 );
 
-onMount(fetchOAuth2Clients);
+onMount(fetchWebhooks);
 
 // begin experimental API table code
 
@@ -60,15 +54,15 @@ let apiTableIncrementDisabled: boolean = false;
 let apiTableDecrementDisabled: boolean = false;
 let apiTableSearchQuery: string = '';
 
-function searchOAuth2Clients() {
-  logger.debug('searchOAuth2Clients called');
+function searchWebhooks() {
+  logger.debug('searchWebhooks called');
 }
 
 function incrementPage() {
   if (!apiTableIncrementDisabled) {
     logger.debug(`incrementPage called`);
     queryFilter.page += 1;
-    fetchOAuth2Clients();
+    fetchWebhooks();
   }
 }
 
@@ -76,26 +70,26 @@ function decrementPage() {
   if (!apiTableDecrementDisabled) {
     logger.debug(`decrementPage called`);
     queryFilter.page -= 1;
-    fetchOAuth2Clients();
+    fetchWebhooks();
   }
 }
 
-function fetchOAuth2Clients() {
-  logger.debug('fetchOAuth2Clients called');
+function fetchWebhooks() {
+  logger.debug('fetchWebhooks called');
 
   if (superstore.frontendOnlyMode) {
-    oauth2Clients = fakeOAuth2ClientFactory.buildList(queryFilter.limit);
+    webhooks = fakeWebhookFactory.buildList(queryFilter.limit);
   } else {
-    V1APIClient.fetchListOfOAuth2Clients(queryFilter, adminMode)
-      .then((response: AxiosResponse<OAuth2ClientList>) => {
-        oauth2Clients = response.data.clients || [];
+    V1APIClient.fetchListOfWebhooks(queryFilter, false)
+      .then((response: AxiosResponse<WebhookList>) => {
+        webhooks = response.data.webhooks || [];
 
         queryFilter.page = response.data.page;
-        apiTableIncrementDisabled = oauth2Clients.length === 0;
+        apiTableIncrementDisabled = webhooks.length === 0;
         apiTableDecrementDisabled = queryFilter.page === 1;
       })
       .catch((error: AxiosError) => {
-        oauth2ClientRetrievalError = error.response?.data;
+        webhookRetrievalError = error.response?.data;
       });
   }
 }
@@ -103,18 +97,18 @@ function fetchOAuth2Clients() {
 function promptDelete(id: number) {
   logger.debug('promptDelete called');
 
-  if (confirm(`are you sure you want to delete oauth2Client #${id}?`)) {
+  if (confirm(`are you sure you want to delete webhook #${id}?`)) {
     if (superstore.frontendOnlyMode) {
-      fetchOAuth2Clients();
+      fetchWebhooks();
     } else {
-      V1APIClient.deleteOAuth2Client(id)
-        .then((response: AxiosResponse<OAuth2Client>) => {
+      V1APIClient.deleteWebhook(id)
+        .then((response: AxiosResponse<Webhook>) => {
           if (response.status === statusCodes.NO_CONTENT) {
-            fetchOAuth2Clients();
+            fetchWebhooks();
           }
         })
         .catch((error: AxiosError<ErrorResponse>) => {
-          oauth2ClientRetrievalError = error.response?.data?.message;
+          webhookRetrievalError = error.response?.data?.message;
         });
     }
   }
@@ -124,20 +118,20 @@ function promptDelete(id: number) {
 <div class="flex flex-wrap mt-4">
   <div class="w-full mb-12 px-4">
     <APITable
-      title="OAuth2Clients"
-      headers="{OAuth2Client.headers(translationsToUse)}"
-      rows="{oauth2Clients}"
-      individualPageLink="/admin/oauth2_clients"
-      creationLink="/admin/oauth2_clients/new"
-      dataRetrievalError="{oauth2ClientRetrievalError}"
-      searchFunction="{searchOAuth2Clients}"
+      title="Webhooks"
+      headers="{Webhook.headers(translationsToUse)}"
+      rows="{webhooks}"
+      creationLink="/user/webhooks/new"
+      individualPageLink="/user/webhooks"
+      dataRetrievalError="{webhookRetrievalError}"
+      searchFunction="{searchWebhooks}"
       incrementDisabled="{apiTableIncrementDisabled}"
       decrementDisabled="{apiTableDecrementDisabled}"
       incrementPageFunction="{incrementPage}"
       decrementPageFunction="{decrementPage}"
-      fetchFunction="{fetchOAuth2Clients}"
+      fetchFunction="{fetchWebhooks}"
       deleteFunction="{promptDelete}"
-      rowRenderFunction="{OAuth2Client.asRow}"
+      rowRenderFunction="{Webhook.asRow}"
     />
   </div>
 </div>

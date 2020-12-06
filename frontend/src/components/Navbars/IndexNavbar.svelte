@@ -1,10 +1,9 @@
 <script lang="typescript">
 import { link } from 'svelte-routing';
-import { onDestroy } from 'svelte';
 
 import { UserSiteSettings } from '../../types';
-import { translations } from '../../i18n';
 import { sessionSettingsStore } from '../../stores';
+import {frontendRoutes} from "../../constants";
 
 let navbarOpen: Boolean = false;
 
@@ -23,7 +22,6 @@ const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
       .navbars.homepageNavbar;
   },
 );
-// onDestroy(unsubscribeFromSettingsUpdates);
 </script>
 
 <nav
@@ -38,7 +36,7 @@ const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
       <a
         use:link
         class="text-gray-800 text-sm font-bold leading-relaxed inline-block mr-4 py-2 whitespace-no-wrap uppercase"
-        href="/"
+        href="{frontendRoutes.LANDING}"
       >
         {translationsToUse.serviceName}
       </a>
@@ -58,7 +56,7 @@ const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
         <li class="flex items-center">
           <a
             use:link
-            href="/auth/login"
+            href="{frontendRoutes.LOGIN}"
             class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent text-gray-800"
           >
             <button

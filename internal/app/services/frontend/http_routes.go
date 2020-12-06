@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	loginRoute = "/auth/login"
+	loginRoute        = "/auth/login"
+	registrationRoute = "/auth/register"
 )
 
 var (
@@ -37,10 +38,10 @@ var (
 	itemsAdminFrontendPathRegex = regexp.MustCompile(`/admin/things/items/\d+`)
 
 	validRoutes = map[string]struct{}{
-		"/auth/register":        {},
-		loginRoute:              {},
-		"/things/items":         {},
-		"/things/items/new":     {},
+		// entry routes
+		loginRoute:        {},
+		registrationRoute: {},
+		// admin routes
 		"/admin":                {},
 		"/admin/dashboard":      {},
 		"/admin/users":          {},
@@ -48,11 +49,22 @@ var (
 		"/admin/webhooks":       {},
 		"/admin/audit_log":      {},
 		"/admin/settings":       {},
-		"/user/settings":        {},
+		// user routes
+		"/items":                   {},
+		"/items/new":               {},
+		"/things/items":            {},
+		"/things/items/new":        {},
+		"/dashboard":               {},
+		"/user/oauth2_clients/new": {},
+		"/user/oauth2_clients":     {},
+		"/user/webhooks":           {},
+		"/user/webhooks/new":       {},
+		"/user/settings":           {},
 	}
 
 	redirections = map[string]string{
-		"/login": loginRoute,
+		"/login":    loginRoute,
+		"/register": registrationRoute,
 	}
 )
 

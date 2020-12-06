@@ -7,6 +7,7 @@ import UserDropdown from '../Dropdowns/UserDropdown.svelte';
 import { UserSiteSettings, UserStatus } from '../../types';
 import { Logger } from '../../logger';
 import { Superstore } from '../../stores';
+import {frontendRoutes} from "../../constants";
 
 export let location: Location;
 
@@ -24,6 +25,8 @@ let currentAuthStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
 let translationsToUse = currentSessionSettings.getTranslations().components
   .sidebars.primary;
+
+
 
 let superstore = new Superstore({
   userStatusStoreUpdateFunc: (value: UserStatus) => {
@@ -56,7 +59,7 @@ s
     <a
       use:link
       class="md:block text-left md:pb-2 text-gray-700 mr-0 inline-block whitespace-no-wrap text-sm uppercase font-bold p-4 px-0"
-      href="/"
+      href="{frontendRoutes.LANDING}"
     >
       {translationsToUse.serviceName}
     </a>
@@ -86,7 +89,7 @@ s
             <a
               use:link
               class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-              href="/things/items"
+              href="{frontendRoutes.LIST_ITEMS}"
             >
               <i class="fas fa-list-ul text-gray-400 mr-2 text-sm"></i>
               {translationsToUse.items}
@@ -110,7 +113,7 @@ s
               <a
                 use:link
                 class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-                href="/user/oauth2_clients"
+                href="{frontendRoutes.USER_LIST_OAUTH2_CLIENTS}"
               >
                 <i class="fas fa-robot text-gray-400 mr-2 text-sm"></i>
                 {translationsToUse.oauth2Clients}
@@ -125,8 +128,8 @@ s
               <a
                 use:link
                 class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-                href="/user/webhooks"
-              >
+                href="{frontendRoutes.USER_LIST_WEBHOOKS}"
+               >
                 <i class="fas fa-network-wired text-gray-400 mr-2 text-sm"></i>
                 {translationsToUse.webhooks}
               </a>
@@ -140,7 +143,7 @@ s
               <a
                       use:link
                       class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-                      href="/user/settings"
+                      href="{frontendRoutes.USER_SETTINGS}"
               >
                 <i class="fas fa-cog text-gray-400 mr-2 text-sm"></i>
                 {translationsToUse.userSettings}
@@ -162,7 +165,7 @@ s
                 <a
                         use:link
                         class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-                        href="/admin/users"
+                        href="{frontendRoutes.ADMIN_USERS}"
                 >
                   <i class="fas fa-users text-gray-400 mr-2 text-sm"></i>
                   {translationsToUse.users}
@@ -177,7 +180,7 @@ s
                 <a
                   use:link
                   class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-                  href="/admin/audit_log"
+                  href="{frontendRoutes.ADMIN_AUDIT_LOGS}"
                 >
                   <i class="fas fa-record-vinyl text-gray-400 mr-2 text-sm"></i>
                   {translationsToUse.auditLog}
@@ -192,7 +195,7 @@ s
                 <a
                   use:link
                   class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-                  href="/admin/settings"
+                  href="{frontendRoutes.ADMIN_SETTINGS}"
                 >
                   <i class="fas fa-cog text-gray-400 mr-2 text-sm"></i>
                   {translationsToUse.serverSettings}

@@ -47,7 +47,7 @@ export enum frontendRoutes {
   // User accounts
   LOGIN = '/auth/login',
   REGISTER = '/auth/register',
-  
+
   // User routes
   USER_SETTINGS = '/user/settings',
   USER_LIST_OAUTH2_CLIENTS = '/user/oauth2_clients',

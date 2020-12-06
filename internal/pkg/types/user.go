@@ -2,10 +2,12 @@ package types
 
 import (
 	"context"
+	"math"
 	"net/http"
 
-	validating "github.com/RussellLuo/validating/v2"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
+
+	validation "github.com/go-ozzo/ozzo-validation"
 )
 
 const (
@@ -17,6 +19,12 @@ const (
 	BannedAccountStatus userAccountStatus = "banned"
 	// TerminatedAccountStatus indicates a User's account is banned.
 	TerminatedAccountStatus userAccountStatus = "terminated"
+
+	validTOTPTokenLength = 6
+)
+
+var (
+	totpTokenLengthRule = validation.Length(validTOTPTokenLength, validTOTPTokenLength)
 )
 
 // IsValidAccountStatus returns whether or not the provided string is a valid userAccountStatus.
@@ -223,39 +231,44 @@ func (u *User) IsBanned() bool {
 	return u.AccountStatus == BannedAccountStatus
 }
 
-func (i *UserCreationInput) Validate(minUsernameLength, minPasswordLength uint) error {
-	return validating.Validate(validating.Schema{
-		validating.F("username", i.Username): &minimumStringLengthValidator{minLength: minUsernameLength},
-		validating.F("password", i.Password): &minimumStringLengthValidator{minLength: minPasswordLength},
-	})
+// Validate ensures our provided UserCreationInput meets expectations.
+func (i *UserCreationInput) Validate(minUsernameLength, minPasswordLength uint8) error {
+	return validation.ValidateStruct(i,
+		validation.Field(&i.Username, validation.Required, validation.Length(int(minUsernameLength), math.MaxInt8)),
+		validation.Field(&i.Password, validation.Required, validation.Length(int(minPasswordLength), math.MaxInt8)),
+	)
 }
 
-func (i *UserLoginInput) Validate(minUsernameLength, minPasswordLength uint) error {
-	return validating.Validate(validating.Schema{
-		validating.F("username", i.Username):   &minimumStringLengthValidator{minLength: minUsernameLength},
-		validating.F("password", i.Password):   &minimumStringLengthValidator{minLength: minPasswordLength},
-		validating.F("totpToken", i.TOTPToken): &exactStringLengthValidator{length: 6},
-	})
+// Validate ensures our  provided UserLoginInput meets expectations.
+func (i *UserLoginInput) Validate(minUsernameLength, minPasswordLength uint8) error {
+	return validation.ValidateStruct(i,
+		validation.Field(&i.Username, validation.Required, validation.Length(int(minUsernameLength), math.MaxInt8)),
+		validation.Field(&i.Password, validation.Required, validation.Length(int(minPasswordLength), math.MaxInt8)),
+		validation.Field(&i.TOTPToken, validation.Required, totpTokenLengthRule),
+	)
 }
 
-func (i *PasswordUpdateInput) Validate() error {
-	return validating.Validate(validating.Schema{
-		validating.F("username", i.CurrentPassword): &minimumStringLengthValidator{minLength: 1},
-		validating.F("password", i.NewPassword):     &minimumStringLengthValidator{minLength: 1},
-		validating.F("totpToken", i.TOTPToken):      &exactStringLengthValidator{length: 6},
-	})
+// Validate ensures our provided PasswordUpdateInput meets expectations.
+func (i *PasswordUpdateInput) Validate(minPasswordLength uint8) error {
+	return validation.ValidateStruct(i,
+		validation.Field(&i.CurrentPassword, validation.Required, validation.Length(int(minPasswordLength), math.MaxInt8)),
+		validation.Field(&i.NewPassword, validation.Required, validation.Length(int(minPasswordLength), math.MaxInt8)),
+		validation.Field(&i.TOTPToken, validation.Required, totpTokenLengthRule),
+	)
 }
 
+// Validate ensures our provided TOTPSecretRefreshInput meets expectations.
 func (i *TOTPSecretRefreshInput) Validate() error {
-	return validating.Validate(validating.Schema{
-		validating.F("username", i.CurrentPassword): &minimumStringLengthValidator{minLength: 1},
-		validating.F("totpToken", i.TOTPToken):      &exactStringLengthValidator{length: 6},
-	})
+	return validation.ValidateStruct(i,
+		validation.Field(&i.CurrentPassword, validation.Required),
+		validation.Field(&i.TOTPToken, validation.Required, totpTokenLengthRule),
+	)
 }
 
+// Validate ensures our provided TOTPSecretVerificationInput meets expectations.
 func (i *TOTPSecretVerificationInput) Validate() error {
-	return validating.Validate(validating.Schema{
-		validating.F("userID", i.UserID):       validating.Nonzero(),
-		validating.F("totpToken", i.TOTPToken): &exactStringLengthValidator{length: 6},
-	})
+	return validation.ValidateStruct(i,
+		validation.Field(&i.UserID, validation.Required),
+		validation.Field(&i.TOTPToken, validation.Required, totpTokenLengthRule),
+	)
 }

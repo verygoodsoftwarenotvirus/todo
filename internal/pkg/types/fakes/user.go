@@ -111,6 +111,7 @@ func BuildFakeTOTPSecretRefreshInput() *types.TOTPSecretRefreshInput {
 // BuildFakeTOTPSecretVerificationInput builds a faked TOTPSecretVerificationInput.
 func BuildFakeTOTPSecretVerificationInput() *types.TOTPSecretVerificationInput {
 	user := BuildFakeUser()
+
 	token, err := totp.GenerateCode(user.TwoFactorSecret, time.Now().UTC())
 	if err != nil {
 		log.Panicf("error generating TOTP token for fakes user: %v", err)

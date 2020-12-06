@@ -15,71 +15,20 @@ func Test_urlValidator_Validate(T *testing.T) {
 		t.Parallel()
 		x := &urlValidator{}
 
-		assert.Nil(t, x.Validate(validating.F("arbitrary", "https://verygoodsoftwarenotvirus.ru")))
+		assert.Nil(t, x.Validate("https://verygoodsoftwarenotvirus.ru"))
 	})
 
 	T.Run("unhappy path", func(t *testing.T) {
 		t.Parallel()
 		x := &urlValidator{}
 
-		assert.NotNil(t, x.Validate(validating.F("arbitrary", fmt.Sprintf(`%s://verygoodsoftwarenotvirus.ru`, string(byte(127))))))
+		// much as we'd like to use testutil.InvalidRawURL here, it causes a cyclical import :'(
+		assert.NotNil(t, x.Validate(fmt.Sprintf("%s://verygoodsoftwarenotvirus.ru", string(byte(127)))))
 	})
 
 	T.Run("invalid value", func(t *testing.T) {
 		t.Parallel()
 		x := &urlValidator{}
-
-		assert.NotNil(t, x.Validate(validating.F("arbitrary", 123)))
-	})
-}
-
-func Test_minimumStringLengthValidator_Validate(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		x := &minimumStringLengthValidator{minLength: 1}
-
-		assert.Nil(t, x.Validate(validating.F("arbitrary", "blah")))
-	})
-
-	T.Run("unhappy path", func(t *testing.T) {
-		t.Parallel()
-		x := &minimumStringLengthValidator{minLength: 1}
-
-		assert.NotNil(t, x.Validate(validating.F("arbitrary", "")))
-	})
-
-	T.Run("invalid value", func(t *testing.T) {
-		t.Parallel()
-		x := &minimumStringLengthValidator{}
-
-		assert.NotNil(t, x.Validate(validating.F("arbitrary", 123)))
-	})
-}
-
-func Test_minimumStringSliceLengthValidator_Validate(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		x := &minimumStringSliceLengthValidator{minLength: 1}
-		y := []string{"blah"}
-
-		assert.Nil(t, x.Validate(validating.F("arbitrary", &y)))
-	})
-
-	T.Run("unhappy path", func(t *testing.T) {
-		t.Parallel()
-		x := &minimumStringSliceLengthValidator{minLength: 1}
-		y := []string{}
-
-		assert.NotNil(t, x.Validate(validating.F("arbitrary", &y)))
-	})
-
-	T.Run("invalid value", func(t *testing.T) {
-		t.Parallel()
-		x := &minimumStringSliceLengthValidator{}
 
 		assert.NotNil(t, x.Validate(validating.F("arbitrary", 123)))
 	})

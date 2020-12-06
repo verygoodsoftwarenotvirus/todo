@@ -43,17 +43,16 @@ type (
 
 	// Service handles our users.
 	Service struct {
-		cookieSecret        []byte
-		userDataManager     types.UserDataManager
-		auditLog            types.UserAuditManager
-		authenticator       password.Authenticator
-		logger              logging.Logger
-		encoderDecoder      encoding.EncoderDecoder
-		userIDFetcher       UserIDFetcher
-		sessionInfoFetcher  SessionInfoFetcher
-		userCounter         metrics.UnitCounter
-		secretGenerator     secretGenerator
-		userCreationEnabled bool
+		userDataManager    types.UserDataManager
+		auditLog           types.UserAuditManager
+		authSettings       config.AuthSettings
+		authenticator      password.Authenticator
+		logger             logging.Logger
+		encoderDecoder     encoding.EncoderDecoder
+		userIDFetcher      UserIDFetcher
+		sessionInfoFetcher SessionInfoFetcher
+		userCounter        metrics.UnitCounter
+		secretGenerator    secretGenerator
 	}
 )
 
@@ -79,17 +78,16 @@ func ProvideUsersService(
 	}
 
 	svc := &Service{
-		cookieSecret:        []byte(authSettings.CookieSigningKey),
-		logger:              logger.WithName(serviceName),
-		userDataManager:     userDataManager,
-		auditLog:            auditLog,
-		authenticator:       authenticator,
-		userIDFetcher:       userIDFetcher,
-		sessionInfoFetcher:  sessionInfoFetcher,
-		encoderDecoder:      encoder,
-		userCounter:         counter,
-		secretGenerator:     &standardSecretGenerator{},
-		userCreationEnabled: authSettings.EnableUserSignup,
+		logger:             logger.WithName(serviceName),
+		userDataManager:    userDataManager,
+		auditLog:           auditLog,
+		authenticator:      authenticator,
+		userIDFetcher:      userIDFetcher,
+		sessionInfoFetcher: sessionInfoFetcher,
+		encoderDecoder:     encoder,
+		authSettings:       authSettings,
+		userCounter:        counter,
+		secretGenerator:    &standardSecretGenerator{},
 	}
 
 	return svc, nil

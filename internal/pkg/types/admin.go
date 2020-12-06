@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/RussellLuo/validating/v2"
+	validation "github.com/go-ozzo/ozzo-validation"
 )
 
 type (
@@ -36,8 +36,9 @@ type (
 
 // Validate ensures our struct is validatable.
 func (i *AccountStatusUpdateInput) Validate() error {
-	return validating.Validate(validating.Schema{
-		validating.F("newStatus", i.NewStatus): &userAccountStatusValidator{},
-		validating.F("reason", i.Reason):       &minimumStringLengthValidator{minLength: 1},
-	})
+	return validation.ValidateStruct(i,
+		validation.Field(&i.NewStatus, validation.Required),
+		validation.Field(&i.Reason, validation.Required),
+		validation.Field(&i.TargetAccountID, validation.Required, validation.Min(uint64(1))),
+	)
 }

@@ -124,7 +124,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// in the event that we don't want new users to be able to sign up (a config setting)
 	// just decline the request from the get-go
-	if !s.userCreationEnabled {
+	if !s.authSettings.EnableUserSignup {
 		logger.Info("disallowing user creation")
 		s.encoderDecoder.EncodeErrorResponse(res, "user creation is disabled", http.StatusForbidden)
 		return

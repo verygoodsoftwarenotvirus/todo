@@ -362,7 +362,7 @@ func TestService_CreateHandler(T *testing.T) {
 			),
 		)
 
-		s.userCreationEnabled = true
+		s.authSettings.EnableUserSignup = true
 		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusCreated, res.Code)
@@ -385,7 +385,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		s.userCreationEnabled = false
+		s.authSettings.EnableUserSignup = false
 		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusForbidden, res.Code)
@@ -401,7 +401,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		s.userCreationEnabled = true
+		s.authSettings.EnableUserSignup = true
 		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
@@ -432,7 +432,7 @@ func TestService_CreateHandler(T *testing.T) {
 			),
 		)
 
-		s.userCreationEnabled = true
+		s.authSettings.EnableUserSignup = true
 		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
@@ -473,7 +473,7 @@ func TestService_CreateHandler(T *testing.T) {
 			),
 		)
 
-		s.userCreationEnabled = true
+		s.authSettings.EnableUserSignup = true
 		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
@@ -515,7 +515,7 @@ func TestService_CreateHandler(T *testing.T) {
 			),
 		)
 
-		s.userCreationEnabled = true
+		s.authSettings.EnableUserSignup = true
 		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
@@ -552,7 +552,7 @@ func TestService_CreateHandler(T *testing.T) {
 			),
 		)
 
-		s.userCreationEnabled = true
+		s.authSettings.EnableUserSignup = true
 		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
@@ -587,7 +587,7 @@ func TestService_CreateHandler(T *testing.T) {
 			),
 		)
 
-		s.userCreationEnabled = true
+		s.authSettings.EnableUserSignup = true
 		s.CreateHandler(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)

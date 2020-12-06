@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	// We need the frame at index 3, since we never want runtime.Callers or getFunctionCaller or StartSpan itself
+	// We need the frame at index 3, since we never want runtime.Callers or getFunctionCaller or StartSpan itself.
 	runtimeFrameBuffer = 3
 	counterBuffer      = 2
 

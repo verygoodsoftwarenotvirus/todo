@@ -2,11 +2,11 @@ package types
 
 import (
 	"context"
-	"github.com/RussellLuo/validating/v2"
 	"net/http"
 	"strconv"
 	"strings"
 
+	validation "github.com/go-ozzo/ozzo-validation"
 	oauth2 "gopkg.in/oauth2.v3"
 )
 
@@ -133,13 +133,13 @@ func (c *OAuth2Client) HasScope(scope string) (found bool) {
 }
 
 // Validate validates a ItemCreationInput.
-func (x *OAuth2ClientCreationInput) Validate(minUsernameLength, minPasswordLength uint) error {
+func (x *OAuth2ClientCreationInput) Validate(minUsernameLength, minPasswordLength uint8) error {
 	if err := x.UserLoginInput.Validate(minUsernameLength, minPasswordLength); err != nil {
 		return err
 	}
 
-	return validating.Validate(validating.Schema{
-		validating.F("name", x.Name):               &minimumStringLengthValidator{minLength: 1},
-		validating.F("redirectURI", x.RedirectURI): &urlValidator{},
-	})
+	return validation.ValidateStruct(x,
+		validation.Field(&x.Name, validation.Required),
+		validation.Field(&x.RedirectURI, validation.Required, &urlValidator{}),
+	)
 }

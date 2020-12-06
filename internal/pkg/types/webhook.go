@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/RussellLuo/validating/v2"
+	validation "github.com/go-ozzo/ozzo-validation"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
@@ -188,26 +188,26 @@ func (w *Webhook) ToListener(logger logging.Logger) newsman.Listener {
 
 // Validate validates a WebhookCreationInput.
 func (w *WebhookCreationInput) Validate() error {
-	return validating.Validate(validating.Schema{
-		validating.F("name", w.Name):                &minimumStringLengthValidator{minLength: 1},
-		validating.F("url", w.URL):                  &urlValidator{},
-		validating.F("method", &w.Method):           validating.In(http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete),
-		validating.F("contentType", &w.ContentType): validating.In("application/json", "application/xml"),
-		validating.F("events", &w.Events):           &minimumStringSliceLengthValidator{minLength: 1},
-		validating.F("dataTypes", &w.DataTypes):     &minimumStringSliceLengthValidator{minLength: 1},
-		validating.F("topics", &w.Topics):           &minimumStringSliceLengthValidator{minLength: 1},
-	})
+	return validation.ValidateStruct(w,
+		validation.Field(&w.Name, validation.Required),
+		validation.Field(&w.URL, validation.Required, &urlValidator{}),
+		validation.Field(&w.Method, validation.Required, validation.In(http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete)),
+		validation.Field(&w.ContentType, validation.Required, validation.In("application/json", "application/xml")),
+		validation.Field(&w.Events, validation.Required),
+		validation.Field(&w.DataTypes, validation.Required),
+		validation.Field(&w.Topics, validation.Required),
+	)
 }
 
 // Validate validates a WebhookUpdateInput.
 func (w *WebhookUpdateInput) Validate() error {
-	return validating.Validate(validating.Schema{
-		validating.F("name", w.Name):                &minimumStringLengthValidator{minLength: 1},
-		validating.F("url", w.URL):                  &urlValidator{},
-		validating.F("method", &w.Method):           validating.In(http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete),
-		validating.F("contentType", &w.ContentType): validating.In("application/json", "application/xml"),
-		validating.F("events", &w.Events):           &minimumStringSliceLengthValidator{minLength: 1},
-		validating.F("dataTypes", &w.DataTypes):     &minimumStringSliceLengthValidator{minLength: 1},
-		validating.F("topics", &w.Topics):           &minimumStringSliceLengthValidator{minLength: 1},
-	})
+	return validation.ValidateStruct(w,
+		validation.Field(&w.Name, validation.Required),
+		validation.Field(&w.URL, validation.Required, &urlValidator{}),
+		validation.Field(&w.Method, validation.Required, validation.In(http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete)),
+		validation.Field(&w.ContentType, validation.Required, validation.In("application/json", "application/xml")),
+		validation.Field(&w.Events, validation.Required),
+		validation.Field(&w.DataTypes, validation.Required),
+		validation.Field(&w.Topics, validation.Required),
+	)
 }

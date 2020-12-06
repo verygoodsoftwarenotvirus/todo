@@ -23,15 +23,13 @@ const (
 )
 
 func main() {
-
 	var (
-		logger         logging.Logger
+		logger         logging.Logger = zerolog.NewLogger()
 		configFilepath string
 	)
 
-	// initialize our logger of choice.
-	logger = zerolog.NewLogger()
-	if x, _ := strconv.ParseBool(os.Getenv(useNoOpLoggerEnvVar)); x {
+	if x, err := strconv.ParseBool(os.Getenv(useNoOpLoggerEnvVar)); x {
+		_ = err
 		logger = noop.NewLogger()
 	}
 
@@ -56,17 +54,21 @@ func main() {
 
 	logger.Debug("connecting to database")
 
+	// connect to database
 	ctx, databaseConnectionSpan := tracing.StartSpan(ctx)
+
 	rawDB, err := cfg.ProvideDatabaseConnection(logger)
 	if err != nil {
 		logger.Fatal(fmt.Errorf("error connecting to database: %w", err))
 	}
-	databaseConnectionSpan.End()
 
-	authenticator := bcrypt.ProvideAuthenticator(bcrypt.ProvideHashCost(), logger)
+	databaseConnectionSpan.End()
 	logger.Debug("setting up database client")
 
+	// setup DB client
 	ctx, databaseClientSetupSpan := tracing.StartSpan(ctx)
+	authenticator := bcrypt.ProvideAuthenticator(bcrypt.ProvideHashCost(), logger)
+
 	dbClient, err := cfg.ProvideDatabaseClient(ctx, logger, rawDB, authenticator)
 	if err != nil {
 		logger.Fatal(fmt.Errorf("error initializing database client: %w", err))

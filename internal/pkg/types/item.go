@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
+	validation "github.com/go-ozzo/ozzo-validation"
 
-	"github.com/go-ozzo/ozzo-validation"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 )
 
 const (

@@ -24,7 +24,7 @@ type AuthSettings struct {
 	// EnableUserSignup enables user signups.
 	EnableUserSignup bool `json:"enable_user_signup" mapstructure:"enable_user_signup" toml:"enable_user_signup,omitempty"`
 	// MinimumUsernameLength indicates how short a username can be.
-	MinimumUsernameLength uint `json:"minimum_username_length" mapstructure:"minimum_username_length" toml:"minimum_username_length,omitempty"`
+	MinimumUsernameLength uint8 `json:"minimum_username_length" mapstructure:"minimum_username_length" toml:"minimum_username_length,omitempty"`
 	// MinimumPasswordLength indicates how short a password can be.
-	MinimumPasswordLength uint `json:"minimum_password_length" mapstructure:"minimum_password_length" toml:"minimum_password_length,omitempty"`
+	MinimumPasswordLength uint8 `json:"minimum_password_length" mapstructure:"minimum_password_length" toml:"minimum_password_length,omitempty"`
 }

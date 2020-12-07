@@ -18,7 +18,9 @@ dependencies:
   svelte-click-outside: 1.0.0
   svelte-json-tree: 0.1.0
   svelte-routing: 1.4.2_svelte@3.31.0
+  svelte-select: 3.14.1
   svelte-simple-modal: 0.6.1_svelte@3.31.0
+  sveltejs-forms: 2.1.2_svelte@3.31.0
   tailwindcss: 1.8.10
   typed-intl: 1.0.3
 devDependencies:
@@ -28,6 +30,7 @@ devDependencies:
   '@rollup/plugin-typescript': 6.1.0_355a2433eaa2065b719865572e451a54
   '@tsconfig/svelte': 1.0.10
   '@types/string-format': 2.0.0
+  '@types/yup': 0.29.10
   cross-env: 7.0.3
   prettier: 2.2.1
   prettier-plugin-organize-imports: 1.1.1_prettier@2.2.1+typescript@3.9.7
@@ -288,6 +291,10 @@ packages:
     dev: true
     resolution:
       integrity: sha512-mMwtmgN0ureESnJ3SuMM4W9lsi4CgOxs43YxNo14SDHgzJ+OPYO3yM7nOTJTh8x5YICseBdtrySUbvxnpb+NYQ==
+  /@types/yup/0.29.10:
+    dev: true
+    resolution:
+      integrity: sha512-kRKRZaWkxxnOK7H5C4oWqhCw9ID1QF3cBZ2oAPoXYsjIncwgpDGigWtXGjZ91t+hsc3cvPdBci9YoJo1A96CYg==
   /acorn-node/1.8.2:
     dependencies:
       acorn: 7.4.1
@@ -933,6 +940,10 @@ packages:
       node: '>=10'
     resolution:
       integrity: sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==
+  /lodash-es/4.17.15:
+    dev: false
+    resolution:
+      integrity: sha512-rlrc3yU3+JNOpZ9zj5pQtxnx2THmvRykwL4Xlxoa8I9lHBlVbbyPhgyPMioxVZ4NqyxaVVtaJnzsyOidQIhyyQ==
   /lodash.toarray/4.4.0:
     resolution:
       integrity: sha1-JMS/zWsvuji/0FlNsRedjptlZWE=
@@ -1195,10 +1206,20 @@ packages:
       svelte: ^3.2.0
     resolution:
       integrity: sha512-6y0m37Xw01GRf/WIHau+Kp3uXj2JB1agtEmNVKb9opMy34A6OMOYhfneVpNIlrghQSw/jIV+t3e5Ngt4up2CMA==
+  /prettier-plugin-svelte/1.4.2_prettier@2.2.1+svelte@3.31.0:
+    dependencies:
+      prettier: 2.2.1
+      svelte: 3.31.0
+    dev: true
+    peerDependencies:
+      prettier: ^1.16.4 || ^2.0.0
+      svelte: ^3.2.0
+    resolution:
+      integrity: sha512-O9VsNwII+raTG8QPoQWouk5ABQy/hmLm4dZ2eqJ7DPnbO35A+BxMSjlfqkw0cNP+UcbykHFYU8zNXm93ytWP9g==
   /prettier-plugin-tailwind/2.2.2_svelte@3.31.0:
     dependencies:
       prettier: 2.2.1
-      svelte-prettier-plugin: /prettier-plugin-svelte/1.4.1_prettier@2.2.1+svelte@3.31.0
+      svelte-prettier-plugin: /prettier-plugin-svelte/1.4.2_prettier@2.2.1+svelte@3.31.0
       tailwind-classes-sorter: 0.2.5
       tailwindcss: 1.9.6
     dev: true
@@ -1550,6 +1571,10 @@ packages:
       svelte: 3.x
     resolution:
       integrity: sha512-CSCKRLeOp9vjsDGGOEgL9DPm9HZLgZuTNehyTCl3K+6fCVH1Aw/K/WicavAVNcbsHmdR4wgF//0YVR9hrcdvGA==
+  /svelte-select/3.14.1:
+    dev: false
+    resolution:
+      integrity: sha512-YurQfJBWgemesILZy5bQeB2vaq7J9empOjVC3VXJPsFUog+bW8HWHd+0n6mPXkvHQI2xFfxtqGg3rDalVbDFcA==
   /svelte-simple-modal/0.6.1_svelte@3.31.0:
     dependencies:
       svelte: 3.31.0
@@ -1558,12 +1583,31 @@ packages:
       svelte: ^3.18.2
     resolution:
       integrity: sha512-GJGYj+jymzuar105fwkZ73dtcSFCordpbHqt53iE1N1GdqhvEmSs24idRzyIcO7TrTD/V/287X1icFXp88RQHQ==
+  /svelte-writable-derived/2.0.1_svelte@3.31.0:
+    dependencies:
+      svelte: 3.31.0
+    dev: false
+    peerDependencies:
+      svelte: ^3.2.1
+    resolution:
+      integrity: sha512-aQ0p4rpFjcfemh0mzXEzQcAbXCC9r8fnHo49Hlx/e14O2T44pJMYiuBwJcciGtDT+b8HRxikAS+DUdwJf3RIPw==
   /svelte/3.31.0:
     dev: true
     engines:
       node: '>= 8'
     resolution:
       integrity: sha512-r+n8UJkDqoQm1b+3tA3Lh6mHXKpcfOSOuEuIo5gE2W9wQYi64RYX/qE6CZBDDsP/H4M+N426JwY7XGH4xASvGQ==
+  /sveltejs-forms/2.1.2_svelte@3.31.0:
+    dependencies:
+      lodash-es: 4.17.15
+      svelte: 3.31.0
+      svelte-writable-derived: 2.0.1_svelte@3.31.0
+    dev: false
+    peerDependencies:
+      svelte: ~3.20.0
+      yup: ~0.28.2
+    resolution:
+      integrity: sha512-Gr38Kj1Q6+ODtdr7qu+bt+XJUgFs34KO/plX7jMlnZ2Ba7C7dAy5JpxrFJrNqX8oUrUo+MzEiIl+w8R0Rhjz5g==
   /tailwind-classes-sorter/0.2.5:
     dependencies:
       find-up: 5.0.0
@@ -1763,6 +1807,7 @@ specifiers:
   '@types/chart.js': ^2.9.25
   '@types/faker': ^5.1.2
   '@types/string-format': ^2.0.0
+  '@types/yup': ^0.29.10
   axios: ^0.20.0
   chart.js: 2.9.3
   cross-env: ^7.0.2
@@ -1787,7 +1832,9 @@ specifiers:
   svelte-json-tree: ^0.1.0
   svelte-preprocess: ^4.0.0
   svelte-routing: ^1.4.2
+  svelte-select: ^3.14.1
   svelte-simple-modal: ^0.6.1
+  sveltejs-forms: ^2.1.2
   tailwindcss: 1.8.10
   tslib: ^2.0.0
   typed-intl: ^1.0.3

@@ -33,7 +33,9 @@
     "svelte-click-outside": "^1.0.0",
     "svelte-json-tree": "^0.1.0",
     "svelte-routing": "^1.4.2",
+    "svelte-select": "^3.14.1",
     "svelte-simple-modal": "^0.6.1",
+    "sveltejs-forms": "^2.1.2",
     "tailwindcss": "1.8.10",
     "typed-intl": "^1.0.3"
   },
@@ -44,6 +46,7 @@
     "@rollup/plugin-typescript": "^6.0.0",
     "@tsconfig/svelte": "^1.0.0",
     "@types/string-format": "^2.0.0",
+    "@types/yup": "^0.29.10",
     "cross-env": "^7.0.2",
     "prettier": "^2.2.1",
     "prettier-plugin-organize-imports": "^1.1.1",

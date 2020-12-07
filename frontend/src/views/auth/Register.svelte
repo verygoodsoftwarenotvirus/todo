@@ -1,5 +1,6 @@
 <script lang="typescript">
 import { AxiosError, AxiosResponse } from 'axios';
+import Modal from 'svelte-simple-modal';
 import { link, navigate } from 'svelte-routing';
 
 import { Logger } from '../../logger';

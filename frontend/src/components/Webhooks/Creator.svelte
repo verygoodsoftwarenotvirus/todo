@@ -21,6 +21,11 @@ let logger = new Logger().withDebugValue(
   'src/components/Creators/Webhook.svelte',
 );
 
+interface selectOptions {
+  value: string;
+  label: string;
+}
+
 // set up translations
 let currentSessionSettings = new UserSiteSettings();
 let translationsToUse = currentSessionSettings.getTranslations().models.webhook;
@@ -32,29 +37,29 @@ const superstore = new Superstore({
 });
 
 let selectedContentType: string = '';
-const validContentTypes = [
+const validContentTypes: selectOptions[] = [
   {value: "application/json", label: "application/json" },
   {value: "application/xml", label: "application/xml" },
 ];
 
 
 let selectedMethod: string = '';
-const validMethods = [
+const validMethods: selectOptions[] = [
   {value: methods.PATCH, label: methods.PATCH },
   {value: methods.PUT, label: methods.PUT },
   {value: methods.POST, label: methods.POST },
   {value: methods.DELETE, label: methods.DELETE },
 ];
 
-let selectedEvent: string = '';
-const validEvents = [
+let selectedEvents: any[] = new Array();
+const validEvents: selectOptions[] = [
   {value: "Create", label: "Create" },
   {value: "Update", label: "Update" },
   {value: "Delete", label: "Delete" },
 ];
 
-let selectedDataType: string = '';
-const validDataTypes = [
+let selectedDataTypes: string[] = [];
+const validDataTypes: selectOptions[]  = [
   {value: "Item", label: "Item" },
 ];
 
@@ -73,9 +78,17 @@ function evaluateInputValidity(): void {
 
 function createWebhook(): void {
   logger.debug(`createWebhook called`);
+  evaluateInputValidity();
 
   webhook.contentType = selectedContentType;
   webhook.method = selectedMethod;
+
+  console.dir(webhook);
+  console.dir(selectedEvents);
+
+  if (!canProceed) {
+    return;
+  }
 
   if (superstore.frontendOnlyMode) {
     navigate(
@@ -190,7 +203,7 @@ function createWebhook(): void {
         </label>
 
         <div  id="grid-events">
-          <Select items={validEvents} isMulti={true} bind:selectedEvent />
+          <Select items={validEvents} isMulti={true} bind:selectedEvents />
         </div>
       </div>
       <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
@@ -202,7 +215,7 @@ function createWebhook(): void {
         </label>
 
         <div  id="grid-data-types">
-          <Select items={validDataTypes} isMulti={true} bind:selectedDataType />
+          <Select items={validDataTypes} isMulti={true} bind:selectedDataTypes />
         </div>
       </div>
       <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">

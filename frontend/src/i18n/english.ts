@@ -2,10 +2,16 @@ import type { SiteTranslationMap } from '@/i18n/definitions';
 
 const _id = 'ID',
   _createdOn = 'Created On',
+  _login = 'Login',
   _name = 'Name',
+  _username = 'Username',
+  _password = 'Password',
   _lastUpdatedOn = 'Last Updated On',
   _belongsToUser = 'Belongs to User',
-  _serviceName = 'Todo';
+  _serviceName = 'Todo',
+  _settings = 'Settings',
+  _copyright = 'Copyright ©',
+  _aboutUs = 'About Us';
 
 export const englishTranslations: SiteTranslationMap = {
   components: {
@@ -33,7 +39,7 @@ export const englishTranslations: SiteTranslationMap = {
     },
     dropdowns: {
       userDropdown: {
-        settings: 'Settings',
+        settings: _settings,
         adminMode: 'Admin Mode',
         logout: 'Log Out',
       },
@@ -45,26 +51,20 @@ export const englishTranslations: SiteTranslationMap = {
       authNavbar: {
         serviceName: _serviceName,
       },
-      homepageNavbar: {
-        serviceName: _serviceName,
-        buttons: {
-          login: 'Login',
-        },
-      },
     },
     sidebars: {
       primary: {
         serviceName: _serviceName,
+        items: 'Items',
         things: 'Things',
         admin: 'Admin',
-        settings: 'Settings',
+        settings: _settings,
         users: 'Users',
         oauth2Clients: 'OAuth2 Clients',
         webhooks: 'Webhooks',
         auditLog: 'Audit Log',
-        userSettings: 'Settings',
+        userSettings: _settings,
         serverSettings: 'Server Settings',
-        items: 'Items',
       },
     },
     footers: {
@@ -72,7 +72,7 @@ export const englishTranslations: SiteTranslationMap = {
         keepInTouch: "Let's keep in touch!",
         weLikeYou: 'We like you.',
         usefulLinks: 'Useful Links',
-        aboutUs: 'About Us',
+        aboutUs: _aboutUs,
         blog: 'Blog',
         otherResources: 'Other Resources',
         termsAndConditions: 'Terms & Conditions',
@@ -80,13 +80,13 @@ export const englishTranslations: SiteTranslationMap = {
         contactUs: 'Contact Us',
       },
       adminFooter: {
-        copyright: 'Copyright ©',
-        aboutUs: 'About Us',
+        copyright: _copyright,
+        aboutUs: _aboutUs,
         blog: 'Blog',
       },
       smallFooter: {
-        copyright: 'Copyright ©',
-        aboutUs: 'About Us',
+        copyright: _copyright,
+        aboutUs: _aboutUs,
         blog: 'Blog',
       },
     },
@@ -95,18 +95,25 @@ export const englishTranslations: SiteTranslationMap = {
     home: {
       mainGreeting: 'this is the homepage.',
       subGreeting: 'websites are cool and good to read.',
+      navBar: {
+        serviceName: _serviceName,
+        buttons: {
+          login: _login,
+          register: 'Register',
+        },
+      },
     },
     login: {
       buttons: {
-        login: 'Login',
+        login: _login,
       },
       inputLabels: {
-        username: 'Username',
-        password: 'Password',
+        username: _username,
+        password: _password,
         twoFactorCode: '2FA Code',
       },
       inputPlaceholders: {
-        username: 'username',
+        username: _username.toLowerCase(),
         password: 'pick something strong, please',
         twoFactorCode: '123456',
       },
@@ -121,13 +128,13 @@ export const englishTranslations: SiteTranslationMap = {
         submitVerification: "I've Saved It!",
       },
       inputLabels: {
-        username: 'Username',
-        password: 'Password',
+        username: _username,
+        password: _password,
         passwordRepeat: 'Confirm Password',
         twoFactorCode: '2FA Code',
       },
       inputPlaceholders: {
-        username: 'username',
+        username: _username.toLowerCase(),
         password: 'your password',
         passwordRepeat: 'your password again',
       },
@@ -151,10 +158,10 @@ export const englishTranslations: SiteTranslationMap = {
       },
       sectionLabels: {
         userInfo: 'User Info',
-        password: 'Password',
+        password: _password,
       },
       inputLabels: {
-        username: 'Username',
+        username: _username,
         emailAddress: 'Email Address',
         currentPassword: 'Current Password',
         newPassword: 'New Password',
@@ -164,10 +171,10 @@ export const englishTranslations: SiteTranslationMap = {
         accountStatus: 'Account Status',
       },
       hovertexts: {
-        accountStatus: 'your account status is: ',
+        accountStatus: 'account status: ',
       },
       inputPlaceholders: {
-        email: "we don't want your stinkin' email",
+        email: "we don't want your stinkin' email!",
         currentPassword: 'current password',
         newPassword: 'new password',
         twoFactorToken: '123456',
@@ -218,7 +225,7 @@ export const englishTranslations: SiteTranslationMap = {
       },
       columns: {
         id: 'ID',
-        username: 'Username',
+        username: _username,
         isAdmin: 'Admin',
         requiresPasswordChange: 'Requires Password Change',
         passwordLastChangedOn: 'Password Last Changed On',
@@ -228,7 +235,7 @@ export const englishTranslations: SiteTranslationMap = {
       },
       labels: {
         id: 'ID',
-        username: 'Username',
+        username: _username,
         isAdmin: 'Is Admin',
         requiresPasswordChange: 'Requires Password Change?',
         passwordLastChangedOn: 'Password Last Changed',

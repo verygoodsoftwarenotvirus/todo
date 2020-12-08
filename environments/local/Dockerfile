@@ -22,14 +22,14 @@ RUN go build -trimpath -o /todo gitlab.com/verygoodsoftwarenotvirus/todo/cmd/ser
 # final stage
 FROM debian:stretch
 
-COPY --from=build-stage /todo /todo
+RUN mkdir /home/appuser
+RUN groupadd --gid 1000 appuser && \
+    useradd --system --uid 1000 --gid appuser appuser
+RUN chown appuser /home/appuser
+WORKDIR /home/appuser
+USER appuser
 
-#RUN mkdir /home/appuser
-#RUN groupadd --gid 999 appuser && \
-#    useradd --system --uid 999 --gid appuser appuser
-#RUN chown appuser /home/appuser
-#WORKDIR /home/appuser
-#USER appuser
+COPY --from=build-stage /todo /todo
 
 ENV DOCKER=true
 

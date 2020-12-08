@@ -39,6 +39,7 @@ export type homepageNavbarTranslations = {
   serviceName: string;
   buttons: {
     login: string;
+    register: string;
   };
 };
 

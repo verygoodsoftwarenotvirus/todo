@@ -37,7 +37,8 @@
     "svelte-simple-modal": "^0.6.1",
     "sveltejs-forms": "^2.1.2",
     "tailwindcss": "1.8.10",
-    "typed-intl": "^1.0.3"
+    "typed-intl": "^1.0.3",
+    "valid-url": "^1.0.9"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^14.0.0",
@@ -46,6 +47,7 @@
     "@rollup/plugin-typescript": "^6.0.0",
     "@tsconfig/svelte": "^1.0.0",
     "@types/string-format": "^2.0.0",
+    "@types/valid-url": "^1.0.3",
     "@types/yup": "^0.29.10",
     "cross-env": "^7.0.2",
     "prettier": "^2.2.1",

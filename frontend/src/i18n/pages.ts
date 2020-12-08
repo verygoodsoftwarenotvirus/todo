@@ -1,6 +1,13 @@
 export type homePageTranslations = {
   mainGreeting: string;
   subGreeting: string;
+  navBar: {
+    serviceName: string;
+    buttons: {
+      login: string;
+      register: string;
+    };
+  };
 };
 
 export type registrationPageTranslations = {

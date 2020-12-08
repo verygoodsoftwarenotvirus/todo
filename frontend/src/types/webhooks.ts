@@ -137,6 +137,7 @@ export const fakeWebhookFactory = Factory.Sync.makeFactory<Webhook>({
 });
 
 export class WebhookCreationInput {
+  name: string;
   contentType: string;
   url: string;
   method: string;
@@ -145,6 +146,7 @@ export class WebhookCreationInput {
   topics: string[];
 
   constructor(
+    name: string = '',
     contentType: string = '',
     url: string = '',
     method: string = '',
@@ -152,6 +154,7 @@ export class WebhookCreationInput {
     dataTypes: string[] = [],
     topics: string[] = [],
   ) {
+    this.name = name;
     this.contentType = contentType;
     this.url = url;
     this.method = method;

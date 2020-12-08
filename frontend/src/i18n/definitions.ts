@@ -5,7 +5,6 @@ import type {
   auditLogEntryTableTranslations,
   auditLogEntryTranslations,
   authNavbarTranslations,
-  homepageNavbarTranslations,
   homePageTranslations,
   itemModelTranslations,
   loginPageTranslations,
@@ -49,7 +48,6 @@ export type SiteTranslationMap = {
     navbars: {
       adminNavbar: adminNavbarTranslations;
       authNavbar: authNavbarTranslations;
-      homepageNavbar: homepageNavbarTranslations;
     };
     sidebars: {
       primary: primarySidebarTranslations;

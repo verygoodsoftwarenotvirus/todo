@@ -5,11 +5,6 @@ import { UserSiteSettings } from '../../types';
 import { sessionSettingsStore } from '../../stores';
 import {frontendRoutes} from "../../constants";
 
-let navbarOpen: Boolean = false;
-
-function setNavbarOpen() {
-  navbarOpen = !navbarOpen;
-}
 
 // set up translations
 let currentSessionSettings = new UserSiteSettings();
@@ -53,19 +48,31 @@ const unsubscribeFromSettingsUpdates = sessionSettingsStore.subscribe(
       id="example-navbar-warning"
     >
       <ul class="flex flex-col lg:flex-row list-none lg:ml-auto">
-        <li class="flex items-center">
+        <li class="flex items-right">
           <a
             use:link
             href="{frontendRoutes.LOGIN}"
             class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent text-gray-800"
           >
             <button
+                    class="bg-red-500 text-white active:bg-red-600 text-xs font-bold uppercase px-4 py-2 rounded shadow hover:shadow-lg outline-none focus:outline-none lg:mr-1 lg:mb-0 ml-3 mb-3 ease-linear transition-all duration-150"
+                    type="button"
+            >
+              <i
+                      class="fas fa-sign-in-alt"
+              ></i>&nbsp;&nbsp;{translationsToUse.buttons.login}
+            </button>
+          </a>
+          <a
+            use:link
+            href="{frontendRoutes.REGISTER}"
+            class="text-sm py-2 px-4 font-normal block w-full whitespace-no-wrap bg-transparent text-gray-800"
+          >
+            <button
               class="bg-red-500 text-white active:bg-red-600 text-xs font-bold uppercase px-4 py-2 rounded shadow hover:shadow-lg outline-none focus:outline-none lg:mr-1 lg:mb-0 ml-3 mb-3 ease-linear transition-all duration-150"
               type="button"
             >
-              <i
-                class="fas fa-sign-in-alt"
-              ></i>&nbsp;&nbsp;{translationsToUse.buttons.login}
+              <i class="fas fa-user-alt"></i>&nbsp;&nbsp;{translationsToUse.buttons.register}
             </button>
           </a>
         </li>

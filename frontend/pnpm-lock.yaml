@@ -23,6 +23,7 @@ dependencies:
   sveltejs-forms: 2.1.2_svelte@3.31.0
   tailwindcss: 1.8.10
   typed-intl: 1.0.3
+  valid-url: 1.0.9
 devDependencies:
   '@rollup/plugin-commonjs': 14.0.0_rollup@2.34.1
   '@rollup/plugin-node-resolve': 8.4.0_rollup@2.34.1
@@ -30,6 +31,7 @@ devDependencies:
   '@rollup/plugin-typescript': 6.1.0_355a2433eaa2065b719865572e451a54
   '@tsconfig/svelte': 1.0.10
   '@types/string-format': 2.0.0
+  '@types/valid-url': 1.0.3
   '@types/yup': 0.29.10
   cross-env: 7.0.3
   prettier: 2.2.1
@@ -291,6 +293,10 @@ packages:
     dev: true
     resolution:
       integrity: sha512-mMwtmgN0ureESnJ3SuMM4W9lsi4CgOxs43YxNo14SDHgzJ+OPYO3yM7nOTJTh8x5YICseBdtrySUbvxnpb+NYQ==
+  /@types/valid-url/1.0.3:
+    dev: true
+    resolution:
+      integrity: sha512-+33x29mg+ecU88ODdWpqaie2upIuRkhujVLA7TuJjM823cNMbeggfI6NhxewaRaRF8dy+g33e4uIg/m5Mb3xDQ==
   /@types/yup/0.29.10:
     dev: true
     resolution:
@@ -1754,6 +1760,10 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==
+  /valid-url/1.0.9:
+    dev: false
+    resolution:
+      integrity: sha1-HBRHm0DxOXp1eC8RXkCGRHQzogA=
   /which/2.0.2:
     dependencies:
       isexe: 2.0.0
@@ -1807,6 +1817,7 @@ specifiers:
   '@types/chart.js': ^2.9.25
   '@types/faker': ^5.1.2
   '@types/string-format': ^2.0.0
+  '@types/valid-url': ^1.0.3
   '@types/yup': ^0.29.10
   axios: ^0.20.0
   chart.js: 2.9.3
@@ -1839,3 +1850,4 @@ specifiers:
   tslib: ^2.0.0
   typed-intl: ^1.0.3
   typescript: ^3.9.3
+  valid-url: ^1.0.9

@@ -211,8 +211,12 @@ dev: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) config_files
 	--renew-anon-volumes \
 	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(KEEP_RUNNING)),, --abort-on-container-exit)
 
-.PHONY: load_data
-load_data:
+.PHONY: dev_user
+dev_user:
+	go run $(THIS)/cmd/tools/data_scaffolder --url=http://localhost --count=1 --single-user-mode --debug
+
+.PHONY: load_data_for_admin
+load_data_for_admin:
 	go run $(THIS)/cmd/tools/data_scaffolder --url=http://localhost --count=5 --debug
 
 ## misc

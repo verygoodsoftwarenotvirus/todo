@@ -14,10 +14,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
+	oauth2 "github.com/go-oauth2/oauth2/v4"
+	oauth2errors "github.com/go-oauth2/oauth2/v4/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	oauth2 "gopkg.in/oauth2.v3"
-	oauth2errors "gopkg.in/oauth2.v3/errors"
 )
 
 const (

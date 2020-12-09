@@ -1,6 +1,7 @@
 package oauth2clients
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"net/http"
@@ -16,13 +17,13 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
+	"github.com/go-oauth2/oauth2/v4/manage"
+	oauth2server "github.com/go-oauth2/oauth2/v4/server"
+	oauth2store "github.com/go-oauth2/oauth2/v4/store"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
-	"gopkg.in/oauth2.v3/manage"
-	oauth2server "gopkg.in/oauth2.v3/server"
-	oauth2store "gopkg.in/oauth2.v3/store"
 )
 
 func buildTestService(t *testing.T) *Service {
@@ -101,6 +102,8 @@ func Test_clientStore_GetByID(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		mockDB := database.BuildMockDatabase()
@@ -111,7 +114,7 @@ func Test_clientStore_GetByID(T *testing.T) {
 		).Return(exampleOAuth2Client, nil)
 
 		c := &clientStore{dataManager: mockDB}
-		actual, err := c.GetByID(exampleOAuth2Client.ClientID)
+		actual, err := c.GetByID(ctx, exampleOAuth2Client.ClientID)
 
 		assert.NoError(t, err)
 		assert.Equal(t, exampleOAuth2Client.ClientID, actual.GetID())
@@ -121,6 +124,8 @@ func Test_clientStore_GetByID(T *testing.T) {
 
 	T.Run("with no rows", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		exampleID := "blah"
 
 		mockDB := database.BuildMockDatabase()
@@ -131,7 +136,7 @@ func Test_clientStore_GetByID(T *testing.T) {
 		).Return((*types.OAuth2Client)(nil), sql.ErrNoRows)
 
 		c := &clientStore{dataManager: mockDB}
-		_, err := c.GetByID(exampleID)
+		_, err := c.GetByID(ctx, exampleID)
 
 		assert.Error(t, err)
 
@@ -140,6 +145,8 @@ func Test_clientStore_GetByID(T *testing.T) {
 
 	T.Run("with error reading from clientDataManager", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		exampleID := "blah"
 
 		mockDB := database.BuildMockDatabase()
@@ -150,7 +157,7 @@ func Test_clientStore_GetByID(T *testing.T) {
 		).Return((*types.OAuth2Client)(nil), errors.New(exampleID))
 
 		c := &clientStore{dataManager: mockDB}
-		_, err := c.GetByID(exampleID)
+		_, err := c.GetByID(ctx, exampleID)
 
 		assert.Error(t, err)
 

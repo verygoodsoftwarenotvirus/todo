@@ -10,11 +10,11 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
+	oauth2 "github.com/go-oauth2/oauth2/v4"
+	"github.com/go-oauth2/oauth2/v4/manage"
+	oauth2server "github.com/go-oauth2/oauth2/v4/server"
+	oauth2store "github.com/go-oauth2/oauth2/v4/store"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
-	oauth2 "gopkg.in/oauth2.v3"
-	"gopkg.in/oauth2.v3/manage"
-	oauth2server "gopkg.in/oauth2.v3/server"
-	oauth2store "gopkg.in/oauth2.v3/store"
 )
 
 func init() {

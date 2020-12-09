@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	oauth2 "github.com/go-oauth2/oauth2/v4"
 	validation "github.com/go-ozzo/ozzo-validation"
-	oauth2 "gopkg.in/oauth2.v3"
 )
 
 const (

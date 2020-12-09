@@ -195,7 +195,6 @@ func (w *WebhookCreationInput) Validate() error {
 		validation.Field(&w.ContentType, validation.Required, validation.In("application/json", "application/xml")),
 		validation.Field(&w.Events, validation.Required),
 		validation.Field(&w.DataTypes, validation.Required),
-		validation.Field(&w.Topics, validation.Required),
 	)
 }
 
@@ -208,6 +207,5 @@ func (w *WebhookUpdateInput) Validate() error {
 		validation.Field(&w.ContentType, validation.Required, validation.In("application/json", "application/xml")),
 		validation.Field(&w.Events, validation.Required),
 		validation.Field(&w.DataTypes, validation.Required),
-		validation.Field(&w.Topics, validation.Required),
 	)
 }

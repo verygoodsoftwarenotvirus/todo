@@ -28,8 +28,14 @@ var (
 	// webhooksAdminFrontendPathRegex matches URLs for specific webhook routes.
 	webhooksAdminFrontendPathRegex = regexp.MustCompile(`/admin/webhooks/\d+`)
 
+	// webhooksUserFrontendPathRegex matches URLs for specific webhook routes.
+	webhooksUserFrontendPathRegex = regexp.MustCompile(`/user/webhooks/\d+`)
+
 	// oauth2ClientsAdminFrontendPathRegex matches URLs for specific oauth2 client routes.
 	oauth2ClientsAdminFrontendPathRegex = regexp.MustCompile(`/admin/oauth2_clients/\d+`)
+
+	// oauth2ClientsAdminFrontendPathRegex matches URLs for specific oauth2 client routes.
+	oauth2ClientsUserFrontendPathRegex = regexp.MustCompile(`/user/oauth2_clients/\d+`)
 
 	// itemsFrontendPathRegex matches URLs against our frontend router's specification for specific item routes.
 	itemsFrontendPathRegex = regexp.MustCompile(`/things/items/\d+`)
@@ -58,6 +64,7 @@ var (
 		"/user/oauth2_clients/new": {},
 		"/user/oauth2_clients":     {},
 		"/user/webhooks":           {},
+		"/user/webhooks/nu":        {},
 		"/user/webhooks/new":       {},
 		"/user/settings":           {},
 	}
@@ -150,7 +157,9 @@ func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, erro
 			itemsAdminFrontendPathRegex.MatchString(req.URL.Path) ||
 			usersAdminFrontendPathRegex.MatchString(req.URL.Path) ||
 			webhooksAdminFrontendPathRegex.MatchString(req.URL.Path) ||
-			oauth2ClientsAdminFrontendPathRegex.MatchString(req.URL.Path) {
+			webhooksUserFrontendPathRegex.MatchString(req.URL.Path) ||
+			oauth2ClientsAdminFrontendPathRegex.MatchString(req.URL.Path) ||
+			oauth2ClientsUserFrontendPathRegex.MatchString(req.URL.Path) {
 			if s.logStaticFiles {
 				rl.Debug("rerouting request")
 			}

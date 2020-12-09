@@ -18,10 +18,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
+	oauth2models "github.com/go-oauth2/oauth2/v4/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	oauth2models "gopkg.in/oauth2.v3/models"
 )
 
 func TestService_CreationInputMiddleware(T *testing.T) {

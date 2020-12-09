@@ -106,7 +106,7 @@ export class Webhook {
       }),
       new APITableCell({
         fieldName: 'topics',
-        content: x.topics.toString(),
+        content: (x.topics || []).toString(),
       }),
       new APITableCell({
         fieldName: 'createdOn',

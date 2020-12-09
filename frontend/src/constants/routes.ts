@@ -20,6 +20,12 @@ export enum backendRoutes {
   GET_AUDIT_LOG_ENTRIES = '/_admin_/audit_log',
   INDIVIDUAL_AUDIT_LOG_ENTRY = '/_admin_/audit_log/{}',
 
+  // Items
+  CREATE_WEBHOOK = '/api/v1/webhooks',
+  GET_WEBHOOKS = '/api/v1/webhooks',
+  INDIVIDUAL_WEBHOOK = '/api/v1/webhooks/{}',
+  INDIVIDUAL_WEBHOOK_AUDIT_LOG = '/api/v1/webhooks/{}/audit',
+
   // OAuth2 Clients
   CREATE_OAUTH2_CLIENT = '/oauth2/clients',
   GET_OAUTH2_CLIENTS = '/api/v1/oauth2/clients',
@@ -50,8 +56,9 @@ export enum frontendRoutes {
 
   // User routes
   USER_SETTINGS = '/user/settings',
-  USER_LIST_OAUTH2_CLIENTS = '/user/oauth2_clients',
   USER_LIST_WEBHOOKS = '/user/webhooks',
+  INDIVIDUAL_WEBHOOK = '/user/webhooks/{}',
+  USER_LIST_OAUTH2_CLIENTS = '/user/oauth2_clients',
 
   // Items
   LIST_ITEMS = '/things/items',

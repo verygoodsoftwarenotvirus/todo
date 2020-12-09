@@ -18,6 +18,7 @@ import type {
   userDropdownTranslations,
   userModelTranslations,
   userSettingsPageTranslations,
+  webhookCreationPageTranslations,
   webhookModelTranslations,
 } from '@/i18n';
 import { englishTranslations } from '@/i18n/english';
@@ -61,10 +62,11 @@ export type SiteTranslationMap = {
   pages: {
     home: homePageTranslations;
     login: loginPageTranslations;
-    userAdminPageTranslations: userAdminPageTranslations;
     registration: registrationPageTranslations;
     userSettings: userSettingsPageTranslations;
     siteSettings: siteSettingsPageTranslations;
+    webhookCreationPage: webhookCreationPageTranslations;
+    userAdminPage: userAdminPageTranslations;
   };
   models: {
     item: itemModelTranslations;

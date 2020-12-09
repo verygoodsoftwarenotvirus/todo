@@ -1,5 +1,6 @@
 <script lang="typescript">
 import { navigate } from 'svelte-routing';
+import Select from 'svelte-select';
 import { onMount } from 'svelte';
 import { AxiosError, AxiosResponse } from 'axios';
 
@@ -14,11 +15,22 @@ import {
   fakeAuditLogEntryFactory,
 } from '../../types';
 import { V1APIClient } from '../../apiClient';
-import { frontendRoutes, statusCodes } from '../../constants';
+import { contentTypes, frontendRoutes, methods, statusCodes } from '../../constants';
 import { Superstore } from '../../stores';
-
 import { Logger } from '../../logger';
-import { renderUnixTime } from '../../utils';
+
+declare interface SelectOption {
+  value: string;
+  label: string;
+}
+
+declare interface SelectedValue {
+  detail: SelectOption
+}
+
+declare interface SelectedValues {
+  detail: SelectOption[]
+}
 
 export let webhookID: number = 0;
 
@@ -31,7 +43,12 @@ let needsToBeSaved: boolean = false;
 let auditLogEntries: AuditLogEntry[] = [];
 
 function evaluateChanges() {
-  needsToBeSaved = !Webhook.areEqual(webhook, originalWebhook);
+  evaluateInputValidity()
+  needsToBeSaved = !Webhook.areEqual(webhook, originalWebhook) && webhookIsValid;
+}
+
+function buildSelectOptionsFromStrings(...input: string[]): SelectOption[] {
+  return input.map((x) => { return { value: x, label: x, } as SelectOption})
 }
 
 onMount(fetchWebhook);
@@ -45,19 +62,113 @@ let logger = new Logger().withDebugValue(
 let adminMode: boolean = false;
 let currentUserStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = currentSessionSettings.getTranslations().models.webhook;
+let translationsToUse = currentSessionSettings.getTranslations().pages.webhookCreationPage;
 const superstore = new Superstore({
   adminModeUpdateFunc: (value: boolean) => {
     adminMode = value;
   },
   sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = currentSessionSettings.getTranslations().models.webhook;
+    translationsToUse = currentSessionSettings.getTranslations().pages.webhookCreationPage;
   },
   userStatusStoreUpdateFunc: (value: UserStatus) => {
     currentUserStatus = value;
   },
 });
+
+let webhookIsValid: boolean = false;
+function evaluateInputValidity(): void {
+  webhookIsValid = urlIsValid &&
+    webhook.name != "" &&
+    webhook.method != "" &&
+    webhook.contentType != "" &&
+    webhook.events.length !== 0 &&
+    webhook.dataTypes.length !== 0;
+}
+
+// Content-type
+const validContentTypes: SelectOption[] = [
+  {value: contentTypes.JSON, label: contentTypes.JSON },
+  {value: contentTypes.XML, label: contentTypes.XML },
+];
+
+function selectContentType(value: SelectedValue) {
+  webhook.contentType = value.detail.value;
+  evaluateChanges();
+}
+
+function clearContentType() {
+  webhook.contentType = '';
+  evaluateChanges();
+}
+
+// Methods
+const validMethods: SelectOption[] = buildSelectOptionsFromStrings(methods.PATCH, methods.PUT, methods.POST, methods.DELETE);
+
+function selectMethod(value: SelectedValue) {
+  webhook.method = value.detail.value;
+  evaluateChanges();
+}
+
+function clearMethod() {
+  webhook.method = '';
+  evaluateChanges();
+}
+
+// Events
+const validEvents: SelectOption[] = buildSelectOptionsFromStrings(...translationsToUse.validInputs.events);
+
+function selectEvent(value: SelectedValues) {
+  webhook.events = value.detail.map((value) => { return value.label });
+  evaluateChanges();
+}
+
+function clearEvents() {
+  webhook.events = [];
+  evaluateChanges();
+}
+
+// Data Types
+const validDataTypes: SelectOption[] = buildSelectOptionsFromStrings(...translationsToUse.validInputs.types)
+
+function selectDataType(value: SelectedValues) {
+  webhook.dataTypes = value.detail.map((value) => { return value.label });
+  evaluateChanges();
+}
+
+function clearDataTypes() {
+  webhook.dataTypes = [];
+  evaluateChanges();
+}
+
+// Topics
+const validTopics: SelectOption[] = buildSelectOptionsFromStrings(...translationsToUse.validInputs.types)
+
+function selectTopic(value: SelectedValues) {
+  webhook.topics = value.detail.map((value) => { return value.label });
+  evaluateChanges();
+}
+
+function clearTopics() {
+  webhook.topics = [];
+  evaluateChanges();
+}
+
+// URL
+let urlIsValid: boolean = false;
+function validateURL(): void {
+  logger.debug("validateURL called")
+
+  urlIsValid = false;
+  try {
+    // only allow secure (lol) protocols
+    urlIsValid = new URL(webhook.url).protocol.toLowerCase() === 'https:';
+  } catch {
+    urlIsValid = false;
+  }
+
+  evaluateChanges();
+}
 
 function fetchWebhook(): void {
   logger.debug(`fetchWebhook called`);
@@ -188,111 +299,92 @@ function fetchAuditLogEntries(): void {
         <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
           <label
             class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-            for="grid-name"
+            for="grid-first-name"
           >
-            {translationsToUse.labels.name}
+            {translationsToUse.model.labels.name}
           </label>
           <input
             class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-            id="grid-name"
+            id="grid-first-name"
             type="text"
-            on:keyup="{evaluateChanges}"
+            on:blur={evaluateInputValidity}
             bind:value="{webhook.name}"
           />
-          <label
-            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-            for="grid-content-type"
-          >
-            {translationsToUse.labels.contentType}
-          </label>
-          <input
-            class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-            id="grid-content-type"
-            type="text"
-            on:keyup="{evaluateChanges}"
-            bind:value="{webhook.contentType}"
-          />
-
+        </div>
+        <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
           <label
             class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
             for="grid-url"
           >
-            {translationsToUse.labels.url}
+            {translationsToUse.model.labels.url}
           </label>
           <input
             class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
             id="grid-url"
             type="text"
-            on:keyup="{evaluateChanges}"
+            on:blur={validateURL}
             bind:value="{webhook.url}"
           />
-
+        </div>
+        <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
           <label
             class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
             for="grid-method"
           >
-            {translationsToUse.labels.method}
+            {translationsToUse.model.labels.method}
           </label>
-          <input
-            class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-            id="grid-method"
-            type="text"
-            on:keyup="{evaluateChanges}"
-            bind:value="{webhook.method}"
-          />
 
+          <div  id="grid-method">
+            <Select items={validMethods} selectedValue={webhook.method} on:select={selectMethod} on:clear={clearMethod} />
+          </div>
+        </div>
+        <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
+          <label
+            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+            for="grid-content-type"
+          >
+            {translationsToUse.model.labels.contentType}
+          </label>
+
+          <div  id="grid-content-type">
+            <Select items={validContentTypes} selectedValue={webhook.contentType} on:select={selectContentType} on:clear={clearContentType} />
+          </div>
+        </div>
+        <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
           <label
             class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
             for="grid-events"
           >
-            {translationsToUse.labels.events}
+            {translationsToUse.model.labels.events}
           </label>
-          <ul class="m-2" id="grid-events">
-            {#each webhook.events as event}
-              <li>{event}</li>
-            {/each}
-          </ul>
 
+          <div  id="grid-events">
+            <Select items={validEvents} selectedValue={webhook.events} isMulti={true} on:select={selectEvent} on:clear={clearEvents} />
+          </div>
+        </div>
+        <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
           <label
             class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
             for="grid-data-types"
           >
-            {translationsToUse.labels.dataTypes}
+            {translationsToUse.model.labels.dataTypes}
           </label>
-          <ul class="m-2" id="grid-data-types">
-            {#each webhook.dataTypes as dataType}
-              <li>{dataType}</li>
-            {/each}
-          </ul>
 
+          <div  id="grid-data-types">
+            <Select items={validDataTypes} selectedValue={webhook.dataTypes} isMulti={true} on:select={selectDataType} on:clear={clearDataTypes} />
+          </div>
+        </div>
+        <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
           <label
             class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
             for="grid-topics"
           >
-            {translationsToUse.labels.topics}
+            {translationsToUse.model.labels.topics}
           </label>
-          <ul class="m-2" id="grid-topics">
-            {#each webhook.topics as topic}
-              <li>{topic}</li>
-            {/each}
-          </ul>
 
-          <label
-            class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-            for="grid-created-on"
-          >
-            {translationsToUse.labels.createdOn}
-          </label>
-          <p id="grid-created-on">{renderUnixTime(webhook.createdOn)}</p>
-        </div>
-        <div
-          class="flex w-full mr-3 mt-4 max-w-full flex-grow justify-end flex-1"
-        >
-          <button
-            class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-            on:click="{deleteWebhook}"
-          ><i class="fa fa-trash-alt"></i>
-            Delete</button>
+          <div  id="grid-topics">
+            <Select disabled={true} items={validDataTypes} selectedValue={webhook.topics} isMulti={true} on:select={selectTopic} on:clear={clearTopics} />
+          </div>
         </div>
       </div>
     </div>

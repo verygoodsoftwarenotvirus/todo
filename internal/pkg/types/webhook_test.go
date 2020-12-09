@@ -138,14 +138,6 @@ func TestWebhookCreationInput_Validate(T *testing.T) {
 
 		assert.Error(t, exampleInput.Validate())
 	})
-
-	T.Run("empty topics", func(t *testing.T) {
-		t.Parallel()
-		exampleInput := buildValidWebhookCreationInput()
-		exampleInput.Topics = []string{}
-
-		assert.Error(t, exampleInput.Validate())
-	})
 }
 
 func TestWebhookUpdateInput_Validate(T *testing.T) {
@@ -212,14 +204,6 @@ func TestWebhookUpdateInput_Validate(T *testing.T) {
 		t.Parallel()
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.DataTypes = []string{}
-
-		assert.Error(t, exampleInput.Validate())
-	})
-
-	T.Run("empty topics", func(t *testing.T) {
-		t.Parallel()
-		exampleInput := buildValidWebhookCreationInput()
-		exampleInput.Topics = []string{}
 
 		assert.Error(t, exampleInput.Validate())
 	})

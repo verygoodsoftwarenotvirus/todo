@@ -3,96 +3,143 @@ import { navigate } from 'svelte-routing';
 import * as faker from 'faker';
 import format from 'string-format';
 import Select from 'svelte-select';
-import { isWebUri } from 'valid-url';
 import { AxiosError, AxiosResponse } from 'axios';
 
-import { Webhook, WebhookCreationInput, UserSiteSettings } from '../../types';
+import { UserSiteSettings, Webhook, WebhookCreationInput } from '../../types';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
-import {frontendRoutes, methods} from '../../constants';
+import { contentTypes, frontendRoutes, methods } from '../../constants';
 import { Superstore } from '../../stores';
 
-// local state
-let webhook: WebhookCreationInput = new WebhookCreationInput();
-let apiError: string = '';
+declare interface SelectOption {
+  value: string;
+  label: string;
+}
+
+declare interface SelectedValue {
+  detail: SelectOption
+}
+
+declare interface SelectedValues {
+  detail: SelectOption[]
+}
+
 
 let logger = new Logger().withDebugValue(
   'source',
   'src/components/Creators/Webhook.svelte',
 );
 
-interface selectOptions {
-  value: string;
-  label: string;
+function buildSelectOptionsFromStrings(...input: string[]): SelectOption[] {
+  return input.map((x) => { return { value: x, label: x, } as SelectOption})
 }
 
+// local state
+let webhook: WebhookCreationInput = new WebhookCreationInput();
+let apiError: string = '';
+
 // set up translations
+let adminMode: boolean = false;
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = currentSessionSettings.getTranslations().models.webhook;
+let translationsToUse = currentSessionSettings.getTranslations().pages.webhookCreationPage;
 const superstore = new Superstore({
+  adminModeUpdateFunc: (value: boolean) => {
+    adminMode = value;
+  },
   sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = currentSessionSettings.getTranslations().models.webhook;
+    translationsToUse = currentSessionSettings.getTranslations().pages.webhookCreationPage;
   },
 });
 
-let selectedContentType: string = '';
-const validContentTypes: selectOptions[] = [
-  {value: "application/json", label: "application/json" },
-  {value: "application/xml", label: "application/xml" },
+// Content-type
+const validContentTypes: SelectOption[] = [
+  {value: contentTypes.JSON, label: contentTypes.JSON },
+  {value: contentTypes.XML, label: contentTypes.XML },
 ];
 
-
-let selectedMethod: string = '';
-const validMethods: selectOptions[] = [
-  {value: methods.PATCH, label: methods.PATCH },
-  {value: methods.PUT, label: methods.PUT },
-  {value: methods.POST, label: methods.POST },
-  {value: methods.DELETE, label: methods.DELETE },
-];
-
-let selectedEvents: any[] = new Array();
-const validEvents: selectOptions[] = [
-  {value: "Create", label: "Create" },
-  {value: "Update", label: "Update" },
-  {value: "Delete", label: "Delete" },
-];
-
-let selectedDataTypes: string[] = [];
-const validDataTypes: selectOptions[]  = [
-  {value: "Item", label: "Item" },
-];
-
-
-let urlIsValid: boolean = false;
-function validateURL(): void {
-  logger.debug("validateURL called")
-  urlIsValid = isWebUri(webhook.url) !== '';
+function selectContentType(value: SelectedValue) {
+  webhook.contentType = value.detail.value;
   evaluateInputValidity();
 }
 
-let canProceed: boolean = false;
+function clearContentType() {
+  webhook.contentType = '';
+  evaluateInputValidity();
+}
+
+// Methods
+const validMethods: SelectOption[] = buildSelectOptionsFromStrings(methods.PATCH, methods.PUT, methods.POST, methods.DELETE);
+
+function selectMethod(value: SelectedValue) {
+  webhook.method = value.detail.value;
+  evaluateInputValidity();
+}
+
+function clearMethod() {
+  webhook.method = '';
+  evaluateInputValidity();
+}
+
+// Events
+const validEvents: SelectOption[] = buildSelectOptionsFromStrings(...translationsToUse.validInputs.events);
+
+function selectEvent(value: SelectedValues) {
+  webhook.events = value.detail.map((value) => { return value.label });
+  evaluateInputValidity();
+}
+
+function clearEvents() {
+  webhook.events = [];
+  evaluateInputValidity();
+}
+
+// Data Types
+const validDataTypes: SelectOption[] = buildSelectOptionsFromStrings(...translationsToUse.validInputs.types)
+
+function selectDataType(value: SelectedValues) {
+  webhook.dataTypes = value.detail.map((value) => { return value.label });
+  evaluateInputValidity();
+}
+
+function clearDataTypes() {
+  webhook.dataTypes = [];
+  evaluateInputValidity();
+}
+
+// URL
+let urlIsValid: boolean = false;
+function validateURL(): void {
+  logger.debug("validateURL called")
+
+  urlIsValid = false;
+  try {
+    // only allow secure (lol) protocols
+    urlIsValid = new URL(webhook.url).protocol.toLowerCase() === 'https:';
+  } catch {
+    urlIsValid = false;
+  }
+
+  evaluateInputValidity();
+}
+
+let webhookInputIsValid: boolean = false;
 function evaluateInputValidity(): void {
-  canProceed = urlIsValid && true;
+  webhookInputIsValid = urlIsValid &&
+                webhook.name != "" &&
+                webhook.method != "" &&
+                webhook.contentType != "" &&
+                webhook.events.length !== 0 &&
+                webhook.dataTypes.length !== 0;
 }
 
 function createWebhook(): void {
   logger.debug(`createWebhook called`);
   evaluateInputValidity();
 
-  webhook.contentType = selectedContentType;
-  webhook.method = selectedMethod;
-
-  console.dir(webhook);
-  console.dir(selectedEvents);
-
-  if (!canProceed) {
-    return;
-  }
-
   if (superstore.frontendOnlyMode) {
     navigate(
-      format(frontendRoutes.INDIVIDUAL_ITEM, faker.random.number().toString()),
+      format(frontendRoutes.INDIVIDUAL_WEBHOOK, faker.random.number().toString()),
       {
         state: {},
         replace: true,
@@ -106,7 +153,7 @@ function createWebhook(): void {
           .withValue('new_webhook_id', newWebhook.id)
           .debug(`navigating to webhook page via creation promise resolution`);
         navigate(
-          format(frontendRoutes.INDIVIDUAL_ITEM, newWebhook.id.toString()),
+          format(frontendRoutes.INDIVIDUAL_WEBHOOK, newWebhook.id.toString()),
           {
             state: {},
             replace: true,
@@ -127,12 +174,12 @@ function createWebhook(): void {
     <div class="flex flex-wrap webhooks-center">
       <div class="relative w-full max-w-full flex-grow flex-1">
         <h2 class="text-gray-800 text-xl font-semibold">
-          {translationsToUse.actions.create}
+          {translationsToUse.model.actions.create}
         </h2>
       </div>
       <div class="flex w-full max-w-full flex-grow justify-end flex-1">
         <button
-          class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+          class="{webhookInputIsValid ? 'bg-green-500 shadow-md' : 'bg-gray-200'} text-white border font-bold py-2 px-4 rounded"
           on:click="{createWebhook}"
         ><i class="fa fa-plus-circle"></i>
           Create</button>
@@ -146,12 +193,13 @@ function createWebhook(): void {
           class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
           for="grid-first-name"
         >
-          {translationsToUse.labels.name}
+          {translationsToUse.model.labels.name}
         </label>
         <input
           class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
           id="grid-first-name"
           type="text"
+          on:blur={evaluateInputValidity}
           bind:value="{webhook.name}"
         />
       </div>
@@ -160,7 +208,7 @@ function createWebhook(): void {
           class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
           for="grid-url"
         >
-          {translationsToUse.labels.url}
+          {translationsToUse.model.labels.url}
         </label>
         <input
           class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
@@ -175,11 +223,11 @@ function createWebhook(): void {
           class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
           for="grid-method"
         >
-          {translationsToUse.labels.method}
+          {translationsToUse.model.labels.method}
         </label>
 
         <div  id="grid-method">
-          <Select items={validMethods} bind:selectedMethod />
+          <Select items={validMethods} on:select={selectMethod} on:clear={clearMethod} />
         </div>
       </div>
       <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
@@ -187,11 +235,11 @@ function createWebhook(): void {
           class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
           for="grid-content-type"
         >
-          {translationsToUse.labels.contentType}
+          {translationsToUse.model.labels.contentType}
         </label>
 
         <div  id="grid-content-type">
-          <Select items={validContentTypes} bind:selectedContentType />
+          <Select items={validContentTypes} on:select={selectContentType} on:clear={clearContentType} />
         </div>
       </div>
       <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
@@ -199,11 +247,11 @@ function createWebhook(): void {
           class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
           for="grid-events"
         >
-          {translationsToUse.labels.events}
+          {translationsToUse.model.labels.events}
         </label>
 
         <div  id="grid-events">
-          <Select items={validEvents} isMulti={true} bind:selectedEvents />
+          <Select items={validEvents} isMulti={true} on:select={selectEvent} on:clear={clearEvents} />
         </div>
       </div>
       <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
@@ -211,11 +259,11 @@ function createWebhook(): void {
           class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
           for="grid-data-types"
         >
-          {translationsToUse.labels.dataTypes}
+          {translationsToUse.model.labels.dataTypes}
         </label>
 
         <div  id="grid-data-types">
-          <Select items={validDataTypes} isMulti={true} bind:selectedDataTypes />
+          <Select items={validDataTypes} isMulti={true} on:select={selectDataType} on:clear={clearDataTypes} />
         </div>
       </div>
       <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
@@ -223,12 +271,13 @@ function createWebhook(): void {
           class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
           for="grid-topics"
         >
-          {translationsToUse.labels.topics}
+          {translationsToUse.model.labels.topics}
         </label>
         <input
           class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
           id="grid-topics"
           type="text"
+          disabled
           bind:value="{webhook.topics}"
         />
       </div>

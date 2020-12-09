@@ -33,6 +33,7 @@ export let location: Location;
         </Route>
         <Route path="webhooks" component="{Webhooks}" />
         <Route path="webhooks/new" component="{WebhookCreator}" />
+        <Route path="webhooks/nu" component="{WebhookEditor}" />
         <Route path="webhooks/:id" let:params>
           <WebhookEditor webhookID="{params.id}" />
         </Route>

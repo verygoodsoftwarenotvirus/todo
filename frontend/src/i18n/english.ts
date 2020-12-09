@@ -1,4 +1,5 @@
 import type { SiteTranslationMap } from '@/i18n/definitions';
+import type { webhookModelTranslations } from '@/i18n/types';
 
 const _id = 'ID',
   _createdOn = 'Created On',
@@ -12,6 +13,42 @@ const _id = 'ID',
   _settings = 'Settings',
   _copyright = 'Copyright ©',
   _aboutUs = 'About Us';
+
+const webhook: webhookModelTranslations = {
+  actions: {
+    create: 'Create',
+    update: 'Update',
+  },
+  columns: {
+    id: _id,
+    name: _name,
+    contentType: 'Content-Type',
+    url: 'URL',
+    method: 'Method',
+    events: 'Events',
+    dataTypes: 'Data Types',
+    topics: 'Topics',
+    createdOn: _createdOn,
+    lastUpdatedOn: _lastUpdatedOn,
+    belongsToUser: _belongsToUser,
+  },
+  labels: {
+    name: _name,
+    contentType: 'Content-Type',
+    url: 'URL',
+    method: 'Methods',
+    events: 'Events',
+    dataTypes: 'Data Types',
+    topics: 'Topics',
+    createdOn: _createdOn,
+  },
+  inputPlaceholders: {
+    name: _name,
+    contentType: 'application/example',
+    url: 'https://url-to-use.com',
+    method: 'POST',
+  },
+};
 
 export const englishTranslations: SiteTranslationMap = {
   components: {
@@ -137,6 +174,7 @@ export const englishTranslations: SiteTranslationMap = {
         username: _username.toLowerCase(),
         password: 'your password',
         passwordRepeat: 'your password again',
+        twoFactorCode: '123456',
       },
       linkTexts: {
         loginInstead: 'Login instead?',
@@ -193,7 +231,14 @@ export const englishTranslations: SiteTranslationMap = {
         actions: 'Actions',
       },
     },
-    userAdminPageTranslations: {
+    webhookCreationPage: {
+      model: webhook,
+      validInputs: {
+        events: ['All', 'Create', 'Update', 'Delete'],
+        types: ['All', 'Item'],
+      },
+    },
+    userAdminPage: {
       myAccount: 'undefined FUCK YOU undefined',
       buttons: {
         updateUserInfo: 'undefined FUCK YOU undefined',
@@ -284,41 +329,7 @@ export const englishTranslations: SiteTranslationMap = {
         redirectURI: 'https://redirect-to-here.pizza',
       },
     },
-    webhook: {
-      actions: {
-        create: 'Create',
-        update: 'Update',
-      },
-      columns: {
-        id: _id,
-        name: _name,
-        contentType: 'Content-Type',
-        url: 'URL',
-        method: 'Method',
-        events: 'Events',
-        dataTypes: 'Data Types',
-        topics: 'Topics',
-        createdOn: _createdOn,
-        lastUpdatedOn: _lastUpdatedOn,
-        belongsToUser: _belongsToUser,
-      },
-      labels: {
-        name: _name,
-        contentType: 'Content-Type',
-        url: 'URL',
-        method: 'Methods',
-        events: 'Events',
-        dataTypes: 'Data Types',
-        topics: 'Topics',
-        createdOn: _createdOn,
-      },
-      inputPlaceholders: {
-        name: _name,
-        contentType: 'application/example',
-        url: 'https://url-to-use.com',
-        method: 'POST',
-      },
-    },
+    webhook: webhook,
     item: {
       actions: {
         create: 'Create Item',

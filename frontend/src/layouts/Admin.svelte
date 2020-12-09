@@ -13,12 +13,13 @@ export let location: Location;
 import AdminNavbar from '../components/Navbars/AdminNavbar.svelte';
 import Sidebar from '../components/Sidebar/Sidebar.svelte';
 import UserEditor from '../components/Users/Editor.svelte';
+import WebhookEditor from '../components/Webhooks/Editor.svelte';
+import OAuth2ClientEditor from '../components/OAuth2Clients/Editor.svelte';
 import AdminFooter from '../components/Footers/AdminFooter.svelte';
-
 
 // pages for this layout
 import Dashboard from '../views/admin/Dashboard.svelte';
-import Settings from '../views/admin/Settings.svelte';
+import ServerSettings from '../views/admin/Settings.svelte';
 import UsersAdmin from '../views/admin/Users.svelte';
 import Webhooks from '../views/admin/Webhooks.svelte';
 import OAuth2Clients from '../views/admin/OAuth2Clients.svelte';
@@ -42,7 +43,7 @@ let superstore = new Superstore({
     <div class="px-4 md:px-10 mx-auto w-full -m-24">
       <Router url="admin">
         <Route path="dashboard" component="{Dashboard}" />
-        <Route path="settings" component="{Settings}" />
+        <Route path="settings" component="{ServerSettings}" />
         <Route path="audit_log" component="{AuditLogEntries}" />
         <Route path="users" component="{UsersAdmin}" />
         <Route path="users/:id" let:params>
@@ -53,11 +54,9 @@ let superstore = new Superstore({
           <OAuth2ClientEditor oauth2ClientID="{params.id}" />
         </Route>
         <Route path="webhooks" component="{Webhooks}" />
-        <Route path="webhooks/new" component="{WebhookCreator}" />
         <Route path="webhooks/:id" let:params>
           <WebhookEditor webhookID="{params.id}" />
         </Route>
-        <Route path="settings" component="{UserSettings}" />
       </Router>
       <AdminFooter />
     </div>

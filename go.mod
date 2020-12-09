@@ -19,6 +19,7 @@ require (
 	github.com/emicklei/hazana v1.6.2
 	github.com/go-chi/chi v4.0.3+incompatible
 	github.com/go-chi/cors v1.0.0
+	github.com/go-oauth2/oauth2/v4 v4.1.2
 	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/google/wire v0.4.0
@@ -33,7 +34,7 @@ require (
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.6.3
-	github.com/stretchr/testify v1.5.1
+	github.com/stretchr/testify v1.6.1
 	github.com/tebeka/selenium v0.9.9
 	gitlab.com/verygoodsoftwarenotvirus/logging/v2 v2.0.0
 	gitlab.com/verygoodsoftwarenotvirus/newsman v1.0.1
@@ -41,5 +42,4 @@ require (
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
-	gopkg.in/oauth2.v3 v3.12.0
 )

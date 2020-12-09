@@ -1,3 +1,5 @@
+import type { webhookModelTranslations } from '@/i18n/types';
+
 export type homePageTranslations = {
   mainGreeting: string;
   subGreeting: string;
@@ -25,6 +27,7 @@ export type registrationPageTranslations = {
     username: string;
     password: string;
     passwordRepeat: string;
+    twoFactorCode: string;
   };
   linkTexts: {
     loginInstead: string;
@@ -122,5 +125,13 @@ export type siteSettingsPageTranslations = {
   };
   sectionLabels: {
     actions: string;
+  };
+};
+
+export type webhookCreationPageTranslations = {
+  model: webhookModelTranslations;
+  validInputs: {
+    events: string[];
+    types: string[];
   };
 };

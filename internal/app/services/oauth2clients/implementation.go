@@ -11,12 +11,12 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
-	oauth2 "gopkg.in/oauth2.v3"
-	oauth2errors "gopkg.in/oauth2.v3/errors"
-	oauth2server "gopkg.in/oauth2.v3/server"
+	"github.com/go-oauth2/oauth2/v4"
+	oauth2errors "github.com/go-oauth2/oauth2/v4/errors"
+	oauth2server "github.com/go-oauth2/oauth2/v4/server"
 )
 
-// gopkg.in/oauth2.v3/server specific implementations
+// github.com/go-oauth2/oauth2/v4/server specific implementations
 
 var _ oauth2server.InternalErrorHandler = (*Service)(nil).OAuth2InternalErrorHandler
 

@@ -208,7 +208,7 @@ func (u *User) Update(input *User) {
 // ToSessionInfo produces a SessionInfo object from a User's data.
 func (u *User) ToSessionInfo() *SessionInfo {
 	return &SessionInfo{
-		User:              u,
+		Username:          u.Username,
 		UserID:            u.ID,
 		UserIsAdmin:       u.IsAdmin,
 		UserAccountStatus: u.AccountStatus,

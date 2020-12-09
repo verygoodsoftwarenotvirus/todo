@@ -7,6 +7,11 @@ export const enum methods {
   PUT = 'PUT',
 }
 
+export const enum contentTypes {
+  JSON = 'application/json',
+  XML = 'application/xml',
+}
+
 export const enum statusCodes {
   CONTINUE = 100,
   SWITCHING_PROTOCOLS = 101,

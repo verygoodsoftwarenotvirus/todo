@@ -144,7 +144,7 @@ async function validateTOTPToken() {
   <div class="flex content-center items-center justify-center h-full">
     <div class="w-full lg:w-6/12 px-4">
       <div
-        class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-gray-300 border-0"
+        class="relative flex flex-col min-w-0 break-words w-full mb-6 rounded-lg border-0"
       >
         <div class="rounded-t mb-0 px-6 py-6"></div>
         <!-- spacer div -->
@@ -153,7 +153,7 @@ async function validateTOTPToken() {
             <form>
               <div class="relative w-full mb-3">
                 <label
-                  class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                  class="block uppercase text-white text-xs font-bold mb-2"
                   for="usernameInput"
                 >
                   {translationsToUse.inputLabels.username}
@@ -162,7 +162,7 @@ async function validateTOTPToken() {
                   id="usernameInput"
                   type="text"
                   tabindex="0"
-                  class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
+                  class="px-3 py-3 placeholder-gray-400 text-black bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                   placeholder="{translationsToUse.inputPlaceholders.username}"
                   on:keyup="{evaluateCreationInputs}"
                   on:blur="{evaluateCreationInputs}"
@@ -172,7 +172,7 @@ async function validateTOTPToken() {
 
               <div class="relative w-full mb-3">
                 <label
-                  class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                  class="block uppercase text-white text-xs font-bold mb-2"
                   for="passwordInput"
                 >
                   {translationsToUse.inputLabels.password}
@@ -180,7 +180,7 @@ async function validateTOTPToken() {
                 <input
                   id="passwordInput"
                   type="password"
-                  class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
+                  class="px-3 py-3 placeholder-gray-400 text-black bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                   placeholder="{translationsToUse.inputPlaceholders.password}"
                   on:keyup="{evaluateCreationInputs}"
                   on:blur="{evaluateCreationInputs}"
@@ -190,7 +190,7 @@ async function validateTOTPToken() {
 
               <div class="relative w-full mb-3">
                 <label
-                  class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                  class="block uppercase text-white text-xs font-bold mb-2"
                   for="passwordRepeatInput"
                 >
                   {translationsToUse.inputLabels.passwordRepeat}
@@ -198,7 +198,7 @@ async function validateTOTPToken() {
                 <input
                   id="passwordRepeatInput"
                   type="password"
-                  class="px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
+                  class="px-3 py-3 placeholder-gray-400 text-black bg-white rounded text-sm shadow focus:outline-none focus:shadow-outline w-full ease-linear transition-all duration-150"
                   placeholder="{translationsToUse.inputPlaceholders.passwordRepeat}"
                   on:keyup="{evaluateCreationInputs}"
                   on:blur="{evaluateCreationInputs}"
@@ -211,7 +211,7 @@ async function validateTOTPToken() {
               <div class="text-center mt-6">
                 <button
                   id="registrationButton"
-                  class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear transition-all duration-150"
+                  class="{registrationMayProceed ? 'bg-gray-900 active:bg-gray-700 text-white' : 'bg-gray-300 text-black'} text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear border border-white transition-all duration-150"
                   type="button"
                   on:click="{register}"
                 >
@@ -228,7 +228,7 @@ async function validateTOTPToken() {
               src="{postRegistrationQRCode}"
               alt="two factor authentication secret encoded as a QR code"
             />
-            <p class="m-4">{translationsToUse.notices.saveQRSecretNotice}</p>
+            <p class="m-4 text-white">{translationsToUse.notices.saveQRSecretNotice}</p>
             <p class="p-4">
               {translationsToUse.instructions.enterGeneratedTwoFactorCode}
               <input
@@ -243,7 +243,7 @@ async function validateTOTPToken() {
             <p class="p-4">
               <button
                 id="totpTokenSubmitButton"
-                class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear transition-all duration-150"
+                class="{totpTokenValidationMayProceed ? 'bg-gray-900 active:bg-gray-700 text-white' : 'bg-gray-300 text-black'} text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear border border-white transition-all duration-150"
                 type="button"
                 on:click="{validateTOTPToken}"
               >

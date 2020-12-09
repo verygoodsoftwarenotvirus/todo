@@ -3,9 +3,9 @@ package oauth2clients
 import (
 	"net/http"
 
+	oauth2 "github.com/go-oauth2/oauth2/v4"
+	oauth2server "github.com/go-oauth2/oauth2/v4/server"
 	"github.com/stretchr/testify/mock"
-	oauth2 "gopkg.in/oauth2.v3"
-	oauth2server "gopkg.in/oauth2.v3/server"
 )
 
 var _ oauth2Handler = (*mockOAuth2Handler)(nil)

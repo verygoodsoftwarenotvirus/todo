@@ -6,9 +6,10 @@ import (
 	"errors"
 	"fmt"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
-	"gopkg.in/oauth2.v3"
+	"github.com/go-oauth2/oauth2/v4"
 )
 
 type clientStore struct {
@@ -25,8 +26,11 @@ func newClientStore(db types.OAuth2ClientDataManager) oauth2.ClientStore {
 var errInvalidClient = errors.New("invalid client")
 
 // GetByID implements oauth2.ClientStorage.
-func (s *clientStore) GetByID(id string) (oauth2.ClientInfo, error) {
-	client, err := s.dataManager.GetOAuth2ClientByClientID(context.Background(), id)
+func (s *clientStore) GetByID(ctx context.Context, id string) (oauth2.ClientInfo, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.End()
+
+	client, err := s.dataManager.GetOAuth2ClientByClientID(ctx, id)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, errInvalidClient

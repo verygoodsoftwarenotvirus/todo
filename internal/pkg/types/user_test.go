@@ -64,7 +64,6 @@ func TestUser_ToSessionInfo(T *testing.T) {
 		}
 
 		expected := &SessionInfo{
-			User:             &exampleInput,
 			UserID:           exampleInput.ID,
 			UserIsAdmin:      exampleInput.IsAdmin,
 			AdminPermissions: exampleInput.AdminPermissions,

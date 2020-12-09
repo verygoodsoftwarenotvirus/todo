@@ -109,13 +109,7 @@ func (s *Service) AuthorizationMiddleware(next http.Handler) http.Handler {
 		// UserAttributionMiddleware should be called before this middleware.
 		if si, ok := ctx.Value(types.SessionInfoKey).(*types.SessionInfo); ok {
 			// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere.
-			if si.User == nil {
-				logger.Debug("no user attached to request request")
-				http.Redirect(res, req, "/auth/login", http.StatusUnauthorized)
-				return
-			}
-
-			if si.User.IsBanned() {
+			if si.UserAccountStatus == types.BannedAccountStatus {
 				logger.Debug("banned user attempted to make request")
 				http.Redirect(res, req, "/", http.StatusForbidden)
 				return

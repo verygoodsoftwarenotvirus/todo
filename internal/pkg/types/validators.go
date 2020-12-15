@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/url"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 var errInvalidType = errors.New("unexpected type received")

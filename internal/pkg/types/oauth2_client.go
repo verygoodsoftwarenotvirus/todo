@@ -6,8 +6,10 @@ import (
 	"strconv"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
+
 	oauth2 "github.com/go-oauth2/oauth2/v4"
-	validation "github.com/go-ozzo/ozzo-validation"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 const (
@@ -133,12 +135,15 @@ func (c *OAuth2Client) HasScope(scope string) (found bool) {
 }
 
 // Validate validates a ItemCreationInput.
-func (x *OAuth2ClientCreationInput) Validate(minUsernameLength, minPasswordLength uint8) error {
-	if err := x.UserLoginInput.Validate(minUsernameLength, minPasswordLength); err != nil {
+func (x *OAuth2ClientCreationInput) Validate(ctx context.Context, minUsernameLength, minPasswordLength uint8) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.End()
+
+	if err := x.UserLoginInput.Validate(ctx, minUsernameLength, minPasswordLength); err != nil {
 		return err
 	}
 
-	return validation.ValidateStruct(x,
+	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.Name, validation.Required),
 		validation.Field(&x.RedirectURI, validation.Required, &urlValidator{}),
 	)

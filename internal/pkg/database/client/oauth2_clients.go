@@ -77,7 +77,10 @@ func (c *Client) GetOAuth2Clients(ctx context.Context, userID uint64, filter *ty
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	tracing.AttachFilterToSpan(span, filter)
+
+	if filter != nil {
+		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
+	}
 
 	c.logger.WithValue("user_id", userID).Debug("GetOAuth2Clients called")
 

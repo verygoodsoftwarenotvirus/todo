@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"testing"
 
 	fake "github.com/brianvoe/gofakeit/v5"
@@ -50,7 +51,7 @@ func TestItemCreationInput_Validate(T *testing.T) {
 			Details: fake.Word(),
 		}
 
-		actual := x.Validate()
+		actual := x.Validate(context.Background())
 		assert.Nil(t, actual)
 	})
 
@@ -62,7 +63,7 @@ func TestItemCreationInput_Validate(T *testing.T) {
 			Details: "",
 		}
 
-		actual := x.Validate()
+		actual := x.Validate(context.Background())
 		assert.Error(t, actual)
 	})
 }
@@ -78,7 +79,7 @@ func TestItemUpdateInput_Validate(T *testing.T) {
 			Details: fake.Word(),
 		}
 
-		actual := x.Validate()
+		actual := x.Validate(context.Background())
 		assert.Nil(t, actual)
 	})
 
@@ -90,7 +91,7 @@ func TestItemUpdateInput_Validate(T *testing.T) {
 			Details: "",
 		}
 
-		actual := x.Validate()
+		actual := x.Validate(context.Background())
 		assert.Error(t, actual)
 	})
 }

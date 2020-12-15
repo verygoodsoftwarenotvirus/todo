@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -8,9 +9,11 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 
 	"contrib.go.opencensus.io/exporter/jaeger"
 	"contrib.go.opencensus.io/exporter/prometheus"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
@@ -35,6 +38,11 @@ const (
 	Jaeger tracingProvider = "jaeger"
 )
 
+var (
+	// ErrInvalidTracingProvider is a sentinel error value.
+	ErrInvalidTracingProvider = errors.New("invalid tracing provider")
+)
+
 type (
 	metricsProvider string
 	tracingProvider string
@@ -52,10 +60,18 @@ type (
 	}
 )
 
-var (
-	// ErrInvalidTracingProvider is a sentinel error value.
-	ErrInvalidTracingProvider = errors.New("invalid tracing provider")
-)
+// Validate validates a FrontendSettings struct.
+func (s MetricsSettings) Validate(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.End()
+
+	return validation.ValidateStructWithContext(ctx, &s,
+		validation.Field(&s.MetricsProvider, validation.In(Prometheus)),
+		validation.Field(&s.TracingProvider, validation.In(Jaeger)),
+		validation.Field(&s.DBMetricsCollectionInterval, validation.Required),
+		validation.Field(&s.RuntimeMetricsCollectionInterval, validation.Required),
+	)
+}
 
 // ProvideInstrumentationHandler provides an instrumentation handler.
 func (cfg *ServerConfig) ProvideInstrumentationHandler(logger logging.Logger) metrics.InstrumentationHandler {
@@ -107,14 +123,14 @@ func (cfg *ServerConfig) InitializeTracer(logger logging.Logger) error {
 
 	switch cfg.Metrics.TracingProvider {
 	case Jaeger:
-		ah := os.Getenv("JAEGER_AGENT_HOST")
-		ap := os.Getenv("JAEGER_AGENT_PORT")
-		sn := os.Getenv("JAEGER_SERVICE_NAME")
+		agentHost := os.Getenv("JAEGER_AGENT_HOST")
+		agentPort := os.Getenv("JAEGER_AGENT_PORT")
+		serviceName := os.Getenv("JAEGER_SERVICE_NAME")
 
-		if ah != "" && ap != "" && sn != "" {
+		if agentHost != "" && agentPort != "" && serviceName != "" {
 			je, err := jaeger.NewExporter(jaeger.Options{
-				AgentEndpoint: fmt.Sprintf("%s:%s", ah, ap),
-				Process:       jaeger.Process{ServiceName: sn},
+				AgentEndpoint: fmt.Sprintf("%s:%s", agentHost, agentPort),
+				Process:       jaeger.Process{ServiceName: serviceName},
 			})
 			if err != nil {
 				return fmt.Errorf("failed to create Jaeger exporter: %w", err)

@@ -4,7 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 type (
@@ -35,8 +37,11 @@ type (
 )
 
 // Validate ensures our struct is validatable.
-func (i *AccountStatusUpdateInput) Validate() error {
-	return validation.ValidateStruct(i,
+func (i *AccountStatusUpdateInput) Validate(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.End()
+
+	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.NewStatus, validation.Required),
 		validation.Field(&i.Reason, validation.Required),
 		validation.Field(&i.TargetAccountID, validation.Required, validation.Min(uint64(1))),

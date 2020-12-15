@@ -1,10 +1,12 @@
 package viper
 
 import (
-	"fmt"
+	"context"
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
@@ -14,7 +16,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
-func Test_randString(t *testing.T) {
+func Test_RandString(t *testing.T) {
 	t.Parallel()
 
 	actual := config.RandString()
@@ -32,44 +34,59 @@ func TestBuildConfig(t *testing.T) {
 func TestParseConfigFile(T *testing.T) {
 	T.Parallel()
 
+	ctx := context.Background()
+	logger := noop.NewLogger()
+
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		tf, err := ioutil.TempFile(os.TempDir(), "*.toml")
+
+		tf, err := ioutil.TempFile(os.TempDir(), "*.json")
 		require.NoError(t, err)
-		expected := "thisisatest"
+		filename := tf.Name()
 
-		_, err = tf.Write([]byte(fmt.Sprintf(`
-[server]
-http_port = 1234
-debug = false
-
-[database]
-provider = "postgres"
-debug = true
-connection_details = "%s"
-`, expected)))
-		require.NoError(t, err)
-
-		expectedConfig := &config.ServerConfig{
+		exampleConfig := &config.ServerConfig{
 			Server: config.ServerSettings{
 				HTTPPort: 1234,
 				Debug:    false,
 			},
+			AuditLog: config.AuditLogSettings{
+				Enabled: true,
+			},
+			Meta: config.MetaSettings{
+				StartupDeadline: time.Minute,
+				RunMode:         "development",
+			},
+			Auth: config.AuthSettings{
+				CookieDomain:          "https://verygoodsoftwarenotvirus.ru",
+				CookieLifetime:        time.Second,
+				MinimumUsernameLength: 4,
+				MinimumPasswordLength: 8,
+				EnableUserSignup:      true,
+			},
+			Metrics: config.MetricsSettings{
+				DBMetricsCollectionInterval:      2 * time.Second,
+				RuntimeMetricsCollectionInterval: 2 * time.Second,
+			},
+			Frontend: config.FrontendSettings{
+				StaticFilesDirectory: "/static",
+			},
+			Search: config.SearchSettings{
+				ItemsIndexPath: "/items_index_path",
+			},
 			Database: config.DatabaseSettings{
 				Provider:          "postgres",
 				Debug:             true,
-				ConnectionDetails: database.ConnectionDetails(expected),
+				RunMigrations:     true,
+				ConnectionDetails: database.ConnectionDetails("thisisatest"),
 			},
 		}
 
-		cfg, err := ParseConfigFile(noop.NewLogger(), tf.Name())
-		assert.NoError(t, err)
+		require.NoError(t, exampleConfig.EncodeToFile(filename, json.Marshal))
 
-		assert.Equal(t, expectedConfig.Server.HTTPPort, cfg.Server.HTTPPort)
-		assert.Equal(t, expectedConfig.Server.Debug, cfg.Server.Debug)
-		assert.Equal(t, expectedConfig.Database.Provider, cfg.Database.Provider)
-		assert.Equal(t, expectedConfig.Database.Debug, cfg.Database.Debug)
-		assert.Equal(t, expectedConfig.Database.ConnectionDetails, cfg.Database.ConnectionDetails)
+		cfg, err := ParseConfigFile(ctx, logger, filename)
+		require.NoError(t, err)
+
+		assert.Equal(t, exampleConfig, cfg)
 
 		assert.NoError(t, os.Remove(tf.Name()))
 	})
@@ -86,25 +103,7 @@ debug = ":banana:"
 `))
 		require.NoError(t, err)
 
-		cfg, err := ParseConfigFile(noop.NewLogger(), tf.Name())
-		assert.Error(t, err)
-		assert.Nil(t, cfg)
-
-		assert.NoError(t, os.Remove(tf.Name()))
-	})
-
-	T.Run("with invalid run mode", func(t *testing.T) {
-		t.Parallel()
-		tf, err := ioutil.TempFile(os.TempDir(), "*.toml")
-		require.NoError(t, err)
-
-		_, err = tf.Write([]byte(`
-[meta]
-run_mode = "party time"
-`))
-		require.NoError(t, err)
-
-		cfg, err := ParseConfigFile(noop.NewLogger(), tf.Name())
+		cfg, err := ParseConfigFile(ctx, logger, tf.Name())
 		assert.Error(t, err)
 		assert.Nil(t, cfg)
 
@@ -113,7 +112,7 @@ run_mode = "party time"
 
 	T.Run("with nonexistent file", func(t *testing.T) {
 		t.Parallel()
-		cfg, err := ParseConfigFile(noop.NewLogger(), "/this/doesn't/even/exist/lol")
+		cfg, err := ParseConfigFile(ctx, logger, "/this/doesn't/even/exist/lol")
 		assert.Error(t, err)
 		assert.Nil(t, cfg)
 	})

@@ -3,10 +3,13 @@
   enabled = true
 
 [auth]
+  cookie_domain = "http://localhost"
   cookie_lifetime = "24h0m0s"
   cookie_signing_key = "HEREISA32CHARSECRETWHICHISMADEUP"
   debug = false
   enable_user_signup = true
+  minimum_password_length = 8
+  minimum_username_length = 4
 
 [database]
   connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
@@ -41,4 +44,4 @@
   http_port = 8888
 
 [webhooks]
-  enabled = true
+  enabled = false

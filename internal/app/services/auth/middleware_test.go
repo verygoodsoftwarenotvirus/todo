@@ -286,24 +286,6 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, h)
 	})
 
-	T.Run("with nil user", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService(t)
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
-		require.NoError(t, err)
-		require.NotNil(t, req)
-
-		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, &types.SessionInfo{}))
-
-		s.AuthorizationMiddleware(&MockHTTPHandler{}).ServeHTTP(res, req)
-
-		assert.Equal(t, http.StatusUnauthorized, res.Code)
-	})
-
 	T.Run("with banned user", func(t *testing.T) {
 		t.Parallel()
 

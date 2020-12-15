@@ -3,11 +3,13 @@
   enabled = true
 
 [auth]
-  cookie_domain = "localhost"
+  cookie_domain = "http://localhost"
   cookie_lifetime = "24h0m0s"
   cookie_signing_key = "HEREISA32CHARSECRETWHICHISMADEUP"
   debug = true
   enable_user_signup = true
+  minimum_password_length = 8
+  minimum_username_length = 4
   secure_cookies_only = false
 
 [database]
@@ -39,4 +41,4 @@
   http_port = 8888
 
 [webhooks]
-  enabled = true
+  enabled = false

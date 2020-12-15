@@ -42,7 +42,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, *si)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
 	logger = logger.WithValue("user_id", si.UserID)
 
 	// determine if it's an admin request
@@ -94,7 +94,7 @@ func (s *Service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, *si)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
 	logger = logger.WithValue("user_id", si.UserID)
 
 	// determine if it's an admin request
@@ -164,7 +164,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, *si)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
 	logger = logger.WithValue("user_id", si.UserID)
 	input.BelongsToUser = si.UserID
 
@@ -203,7 +203,7 @@ func (s *Service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, *si)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
 	logger = logger.WithValue("user_id", si.UserID)
 
 	// determine item ID.
@@ -236,7 +236,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, *si)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
 	logger = logger.WithValue("user_id", si.UserID)
 
 	// determine item ID.
@@ -281,7 +281,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, *si)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
 	logger = logger.WithValue("user_id", si.UserID)
 	input.BelongsToUser = si.UserID
 
@@ -336,7 +336,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, *si)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
 	logger = logger.WithValue("user_id", si.UserID)
 
 	// determine item ID.
@@ -382,7 +382,7 @@ func (s *Service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, *si)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
 	logger = logger.WithValue("user_id", si.UserID)
 
 	// determine item ID.

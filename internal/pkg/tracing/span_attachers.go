@@ -3,8 +3,6 @@ package tracing
 import (
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-
 	"go.opencensus.io/trace"
 )
 
@@ -49,13 +47,11 @@ func attachBooleanToSpan(span *trace.Span, key string, b bool) {
 }
 
 // AttachFilterToSpan provides a consistent way to attach a filter's info to a span.
-func AttachFilterToSpan(span *trace.Span, filter *types.QueryFilter) {
-	if filter != nil && span != nil {
-		span.AddAttributes(
-			trace.StringAttribute(filterPageSpanAttachmentKey, strconv.FormatUint(filter.QueryPage(), 10)),
-			trace.StringAttribute(filterLimitSpanAttachmentKey, strconv.FormatUint(uint64(filter.Limit), 10)),
-		)
-	}
+func AttachFilterToSpan(span *trace.Span, page uint64, limit uint8) {
+	span.AddAttributes(
+		trace.StringAttribute(filterPageSpanAttachmentKey, strconv.FormatUint(page, 10)),
+		trace.StringAttribute(filterLimitSpanAttachmentKey, strconv.FormatUint(uint64(limit), 10)),
+	)
 }
 
 // AttachAuditLogEntryIDToSpan attaches an audit log entry ID to a given span.
@@ -78,15 +74,10 @@ func AttachUserIDToSpan(span *trace.Span, userID uint64) {
 	attachUint64ToSpan(span, userIDSpanAttachmentKey, userID)
 }
 
-// AttachUserAdminStatusToSpan provides a consistent way to attach a user's admin status to a span.
-func AttachUserAdminStatusToSpan(span *trace.Span, isAdmin bool) {
-	attachBooleanToSpan(span, userIsAdminSpanAttachmentKey, isAdmin)
-}
-
 // AttachSessionInfoToSpan provides a consistent way to attach a SessionInfo object to a span.
-func AttachSessionInfoToSpan(span *trace.Span, info types.SessionInfo) {
-	attachUint64ToSpan(span, userIDSpanAttachmentKey, info.UserID)
-	attachBooleanToSpan(span, userIsAdminSpanAttachmentKey, info.UserIsAdmin)
+func AttachSessionInfoToSpan(span *trace.Span, userID uint64, userIsAdmin bool) {
+	attachUint64ToSpan(span, userIDSpanAttachmentKey, userID)
+	attachBooleanToSpan(span, userIsAdminSpanAttachmentKey, userIsAdmin)
 }
 
 // AttachOAuth2ClientDatabaseIDToSpan is a consistent way to attach an oauth2 client's ID to a span.

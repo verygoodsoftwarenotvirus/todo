@@ -28,7 +28,7 @@ func (s *Service) AccountStatusUpdateInputMiddleware(next http.Handler) http.Han
 			return
 		}
 
-		if err := x.Validate(); err != nil {
+		if err := x.Validate(ctx); err != nil {
 			logger.Error(err, "provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
 			return

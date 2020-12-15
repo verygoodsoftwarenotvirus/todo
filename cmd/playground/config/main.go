@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 
@@ -24,7 +25,7 @@ func main() {
 	_, writeErr := f.WriteString(exampleConfig)
 	mustnt(writeErr)
 
-	cfg, configParseErr := viper.ParseConfigFile(noop.NewLogger(), f.Name())
+	cfg, configParseErr := viper.ParseConfigFile(context.Background(), noop.NewLogger(), f.Name())
 	mustnt(configParseErr)
 
 	fmt.Println(cfg.Database.CreateTestUser)

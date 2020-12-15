@@ -4,7 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
@@ -187,8 +189,11 @@ func (w *Webhook) ToListener(logger logging.Logger) newsman.Listener {
 }
 
 // Validate validates a WebhookCreationInput.
-func (w *WebhookCreationInput) Validate() error {
-	return validation.ValidateStruct(w,
+func (w *WebhookCreationInput) Validate(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.End()
+
+	return validation.ValidateStructWithContext(ctx, w,
 		validation.Field(&w.Name, validation.Required),
 		validation.Field(&w.URL, validation.Required, &urlValidator{}),
 		validation.Field(&w.Method, validation.Required, validation.In(http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete)),
@@ -199,8 +204,11 @@ func (w *WebhookCreationInput) Validate() error {
 }
 
 // Validate validates a WebhookUpdateInput.
-func (w *WebhookUpdateInput) Validate() error {
-	return validation.ValidateStruct(w,
+func (w *WebhookUpdateInput) Validate(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.End()
+
+	return validation.ValidateStructWithContext(ctx, w,
 		validation.Field(&w.Name, validation.Required),
 		validation.Field(&w.URL, validation.Required, &urlValidator{}),
 		validation.Field(&w.Method, validation.Required, validation.In(http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete)),

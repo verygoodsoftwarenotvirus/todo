@@ -12,7 +12,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
 )
@@ -24,7 +23,8 @@ const (
 
 func main() {
 	var (
-		logger         logging.Logger = zerolog.NewLogger()
+		ctx            = context.Background()
+		logger         = zerolog.NewLogger()
 		configFilepath string
 	)
 
@@ -39,7 +39,7 @@ func main() {
 	}
 
 	// parse our config file.
-	cfg, err := viper.ParseConfigFile(logger, configFilepath)
+	cfg, err := viper.ParseConfigFile(ctx, logger, configFilepath)
 	if err != nil || cfg == nil {
 		logger.WithValue("config_filepath", configFilepath).Fatal(fmt.Errorf("error parsing configuration file: %w", err))
 	}
@@ -49,7 +49,7 @@ func main() {
 	}
 
 	// only allow initialization to take so long.
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.Meta.StartupDeadline)
+	ctx, cancel := context.WithTimeout(ctx, cfg.Meta.StartupDeadline)
 	ctx, initSpan := tracing.StartSpan(ctx)
 
 	logger.Debug("connecting to database")

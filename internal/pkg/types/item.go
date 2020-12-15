@@ -4,9 +4,10 @@ import (
 	"context"
 	"net/http"
 
-	validation "github.com/go-ozzo/ozzo-validation"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 const (
@@ -113,15 +114,21 @@ func (x *Item) Update(input *ItemUpdateInput) []FieldChangeSummary {
 }
 
 // Validate validates a ItemCreationInput.
-func (x *ItemCreationInput) Validate() error {
-	return validation.ValidateStruct(x,
+func (x *ItemCreationInput) Validate(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.End()
+
+	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.Name, validation.Required),
 	)
 }
 
 // Validate validates a ItemUpdateInput.
-func (x *ItemUpdateInput) Validate() error {
-	return validation.ValidateStruct(x,
+func (x *ItemUpdateInput) Validate(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.End()
+
+	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.Name, validation.Required),
 	)
 }

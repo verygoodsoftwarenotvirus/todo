@@ -67,7 +67,10 @@ func (c *Client) GetItems(ctx context.Context, userID uint64, filter *types.Quer
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachFilterToSpan(span, filter)
+	if filter != nil {
+		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
+	}
+
 	tracing.AttachUserIDToSpan(span, userID)
 
 	c.logger.WithValues(map[string]interface{}{
@@ -82,7 +85,10 @@ func (c *Client) GetItemsForAdmin(ctx context.Context, filter *types.QueryFilter
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachFilterToSpan(span, filter)
+	if filter != nil {
+		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
+	}
+
 	c.logger.Debug("GetItemsForAdmin called")
 
 	itemList, err := c.querier.GetItemsForAdmin(ctx, filter)

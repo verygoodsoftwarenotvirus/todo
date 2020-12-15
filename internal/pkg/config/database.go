@@ -13,12 +13,14 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 
 	"contrib.go.opencensus.io/integrations/ocsql"
 	"github.com/alexedwards/scs/mysqlstore"
 	"github.com/alexedwards/scs/postgresstore"
 	"github.com/alexedwards/scs/sqlite3store"
 	scs "github.com/alexedwards/scs/v2"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
@@ -59,6 +61,17 @@ func (s *CreateTestUserSettings) UserCreationConfig() *database.UserCreationConf
 	}
 }
 
+// Validate validates an CreateTestUserSettings struct.
+func (s CreateTestUserSettings) Validate(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.End()
+
+	return validation.ValidateStructWithContext(ctx, &s,
+		validation.Field(&s.Username, validation.Required),
+		validation.Field(&s.Password, validation.Required),
+	)
+}
+
 // DatabaseSettings represents our database configuration.
 type DatabaseSettings struct {
 	// Debug determines if debug logging or other development conditions are active.
@@ -71,6 +84,18 @@ type DatabaseSettings struct {
 	Provider string `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
 	// ConnectionDetails indicates how our database driver should connect to the instance.
 	ConnectionDetails database.ConnectionDetails `json:"connection_details" mapstructure:"connection_details" toml:"connection_details,omitempty"`
+}
+
+// Validate validates an DatabaseSettings struct.
+func (s DatabaseSettings) Validate(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.End()
+
+	return validation.ValidateStructWithContext(ctx, &s,
+		validation.Field(&s.CreateTestUser),
+		validation.Field(&s.Provider, validation.In(PostgresProviderKey, MariaDBProviderKey, SqliteProviderKey)),
+		validation.Field(&s.ConnectionDetails, validation.Required),
+	)
 }
 
 // ProvideDatabaseConnection provides a database implementation dependent on the configuration.
@@ -89,6 +114,9 @@ func (cfg *ServerConfig) ProvideDatabaseConnection(logger logging.Logger) (*sql.
 
 // ProvideDatabaseClient provides a database implementation dependent on the configuration.
 func (cfg *ServerConfig) ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB, authenticator password.Authenticator) (database.DataManager, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.End()
+
 	if rawDB == nil {
 		return nil, errNilDatabaseConnection
 	}
@@ -98,15 +126,15 @@ func (cfg *ServerConfig) ProvideDatabaseClient(ctx context.Context, logger loggi
 	ocsql.RegisterAllViews()
 	ocsql.RecordStats(rawDB, cfg.Metrics.DBMetricsCollectionInterval)
 
-	var dbc database.DataManager
+	var dbManager database.DataManager
 
 	switch cfg.Database.Provider {
 	case PostgresProviderKey:
-		dbc = postgres.ProvidePostgres(debug, rawDB, logger)
+		dbManager = postgres.ProvidePostgres(debug, rawDB, logger)
 	case MariaDBProviderKey:
-		dbc = mariadb.ProvideMariaDB(debug, rawDB, logger)
+		dbManager = mariadb.ProvideMariaDB(debug, rawDB, logger)
 	case SqliteProviderKey:
-		dbc = sqlite.ProvideSqlite(debug, rawDB, logger)
+		dbManager = sqlite.ProvideSqlite(debug, rawDB, logger)
 	default:
 		return nil, fmt.Errorf("invalid database type selected: %q", cfg.Database.Provider)
 	}
@@ -114,7 +142,7 @@ func (cfg *ServerConfig) ProvideDatabaseClient(ctx context.Context, logger loggi
 	return dbclient.ProvideDatabaseClient(
 		ctx,
 		logger,
-		dbc,
+		dbManager,
 		rawDB,
 		authenticator,
 		cfg.Database.CreateTestUser.UserCreationConfig(),
@@ -126,8 +154,12 @@ func (cfg *ServerConfig) ProvideDatabaseClient(ctx context.Context, logger loggi
 // ProvideSessionManager provides a session manager based on some settings.
 // There's not a great place to put this function. I don't think it belongs in Auth because it accepts a DB connection,
 // but it obviously doesn't belong in the database package, or maybe it does.
-func ProvideSessionManager(authConf AuthSettings, dbConf DatabaseSettings, db *sql.DB) *scs.SessionManager {
+func ProvideSessionManager(authConf AuthSettings, dbConf DatabaseSettings, db *sql.DB) (*scs.SessionManager, error) {
 	sessionManager := scs.New()
+
+	if db == nil {
+		return nil, errors.New("invalid DB connection provided")
+	}
 
 	switch dbConf.Provider {
 	case PostgresProviderKey:
@@ -136,10 +168,12 @@ func ProvideSessionManager(authConf AuthSettings, dbConf DatabaseSettings, db *s
 		sessionManager.Store = mysqlstore.New(db)
 	case SqliteProviderKey:
 		sessionManager.Store = sqlite3store.New(db)
+	default:
+		return nil, fmt.Errorf("invalid database provider: %q", dbConf.Provider)
 	}
 
 	sessionManager.Lifetime = authConf.CookieLifetime
 	// elaborate further here later if you so choose
 
-	return sessionManager
+	return sessionManager, nil
 }

@@ -31,7 +31,10 @@ func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *types.Q
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	tracing.AttachFilterToSpan(span, filter)
+
+	if filter != nil {
+		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
+	}
 
 	c.logger.WithValue("user_id", userID).Debug("GetWebhookCount called")
 

@@ -186,7 +186,7 @@ func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		if err := x.Validate(s.config.MinimumUsernameLength, s.config.MinimumPasswordLength); err != nil {
+		if err := x.Validate(ctx, s.config.MinimumUsernameLength, s.config.MinimumPasswordLength); err != nil {
 			logger.Error(err, "provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
 			return

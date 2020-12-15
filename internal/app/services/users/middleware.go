@@ -38,7 +38,7 @@ func (s *Service) UserCreationInputMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		if err := x.Validate(s.authSettings.MinimumUsernameLength, s.authSettings.MinimumPasswordLength); err != nil {
+		if err := x.Validate(ctx, s.authSettings.MinimumUsernameLength, s.authSettings.MinimumPasswordLength); err != nil {
 			logger.Error(err, "provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
 			return
@@ -66,7 +66,7 @@ func (s *Service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler 
 			return
 		}
 
-		if err := x.Validate(s.authSettings.MinimumPasswordLength); err != nil {
+		if err := x.Validate(ctx, s.authSettings.MinimumPasswordLength); err != nil {
 			logger.Error(err, "provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
 			return
@@ -94,7 +94,7 @@ func (s *Service) TOTPSecretVerificationInputMiddleware(next http.Handler) http.
 			return
 		}
 
-		if err := x.Validate(); err != nil {
+		if err := x.Validate(ctx); err != nil {
 			logger.Error(err, "provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
 			return
@@ -122,7 +122,7 @@ func (s *Service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handl
 			return
 		}
 
-		if err := x.Validate(); err != nil {
+		if err := x.Validate(ctx); err != nil {
 			logger.Error(err, "provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
 			return

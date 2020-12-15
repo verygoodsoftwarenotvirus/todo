@@ -11,8 +11,11 @@ import (
 
 const (
 	defaultPort              = 8888
+	defaultCookieDomain      = "localhost"
 	debugCookieSecret        = "HEREISA32CHARSECRETWHICHISMADEUP"
 	devPostgresDBConnDetails = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
+	devSqliteConnDetails     = "/tmp/db"
+	devMariaDBConnDetails    = "dbuser:hunter2@tcp(database:3306)/todo"
 	defaultFrontendFilepath  = "/frontend"
 
 	// run modes.
@@ -38,8 +41,8 @@ var files = map[string]configFunc{
 	"environments/testing/config_files/frontend-tests.toml":             frontendTestsConfig,
 	"environments/testing/config_files/coverage.toml":                   coverageConfig,
 	"environments/testing/config_files/integration-tests-postgres.toml": buildIntegrationTestForDBImplementation(postgres, devPostgresDBConnDetails),
-	"environments/testing/config_files/integration-tests-sqlite.toml":   buildIntegrationTestForDBImplementation(sqlite, "/tmp/db"),
-	"environments/testing/config_files/integration-tests-mariadb.toml":  buildIntegrationTestForDBImplementation(mariadb, "dbuser:hunter2@tcp(database:3306)/todo"),
+	"environments/testing/config_files/integration-tests-sqlite.toml":   buildIntegrationTestForDBImplementation(sqlite, devSqliteConnDetails),
+	"environments/testing/config_files/integration-tests-mariadb.toml":  buildIntegrationTestForDBImplementation(mariadb, devMariaDBConnDetails),
 }
 
 func localDevelopmentConfig(filePath string) error {
@@ -59,6 +62,7 @@ func localDevelopmentConfig(filePath string) error {
 	cfg.Set(viper.ConfigKeyAuthDebug, true)
 	cfg.Set(viper.ConfigKeyAuthCookieDomain, "localhost")
 	cfg.Set(viper.ConfigKeyAuthCookieSigningKey, debugCookieSecret)
+	cfg.Set(viper.ConfigKeyAuthCookieDomain, defaultCookieDomain)
 	cfg.Set(viper.ConfigKeyAuthCookieLifetime, config.DefaultCookieLifetime)
 	cfg.Set(viper.ConfigKeyAuthSecureCookiesOnly, false)
 	cfg.Set(viper.ConfigKeyAuthEnableUserSignup, true)
@@ -102,6 +106,7 @@ func frontendTestsConfig(filePath string) error {
 	cfg.Set(viper.ConfigKeyAuthDebug, true)
 	cfg.Set(viper.ConfigKeyAuthCookieDomain, "localhost")
 	cfg.Set(viper.ConfigKeyAuthCookieSigningKey, debugCookieSecret)
+	cfg.Set(viper.ConfigKeyAuthCookieDomain, defaultCookieDomain)
 	cfg.Set(viper.ConfigKeyAuthCookieLifetime, config.DefaultCookieLifetime)
 	cfg.Set(viper.ConfigKeyAuthSecureCookiesOnly, false)
 	cfg.Set(viper.ConfigKeyAuthEnableUserSignup, true)
@@ -140,6 +145,7 @@ func coverageConfig(filePath string) error {
 
 	cfg.Set(viper.ConfigKeyAuthDebug, false)
 	cfg.Set(viper.ConfigKeyAuthCookieSigningKey, debugCookieSecret)
+	cfg.Set(viper.ConfigKeyAuthCookieDomain, defaultCookieDomain)
 
 	cfg.Set(viper.ConfigKeyDatabaseDebug, false)
 	cfg.Set(viper.ConfigKeyDatabaseProvider, postgres)
@@ -174,10 +180,11 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 		cfg.Set(viper.ConfigKeyMetaStartupDeadline, sd)
 
 		cfg.Set(viper.ConfigKeyServerHTTPPort, defaultPort)
-		cfg.Set(viper.ConfigKeyServerDebug, true)
+		cfg.Set(viper.ConfigKeyServerDebug, false)
 
 		cfg.Set(viper.ConfigKeyFrontendStaticFilesDir, defaultFrontendFilepath)
 		cfg.Set(viper.ConfigKeyAuthCookieSigningKey, debugCookieSecret)
+		cfg.Set(viper.ConfigKeyAuthCookieDomain, defaultCookieDomain)
 
 		cfg.Set(viper.ConfigKeyMetricsProvider, "prometheus")
 		cfg.Set(viper.ConfigKeyMetricsTracer, "jaeger")

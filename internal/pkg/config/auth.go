@@ -1,10 +1,15 @@
 package config
 
 import (
+	"context"
 	"time"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 const (
+	// DefaultCookieDomain is the default Cookie.Domain.
+	DefaultCookieDomain = "localhost"
 	// DefaultCookieLifetime is the how long a cookie is valid.
 	DefaultCookieLifetime = 24 * time.Hour
 )
@@ -27,4 +32,14 @@ type AuthSettings struct {
 	MinimumUsernameLength uint8 `json:"minimum_username_length" mapstructure:"minimum_username_length" toml:"minimum_username_length,omitempty"`
 	// MinimumPasswordLength indicates how short a password can be.
 	MinimumPasswordLength uint8 `json:"minimum_password_length" mapstructure:"minimum_password_length" toml:"minimum_password_length,omitempty"`
+}
+
+// Validate validates an AuthSettings struct.
+func (s *AuthSettings) Validate(ctx context.Context) error {
+	return validation.ValidateStructWithContext(ctx, s,
+		validation.Field(&s.CookieDomain, validation.Required),
+		validation.Field(&s.CookieLifetime, validation.Required),
+		validation.Field(&s.MinimumUsernameLength, validation.Required),
+		validation.Field(&s.MinimumPasswordLength, validation.Required),
+	)
 }

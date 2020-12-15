@@ -116,7 +116,10 @@ func (c *Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (*type
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachFilterToSpan(span, filter)
+	if filter != nil {
+		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
+	}
+
 	c.logger.WithValue("filter", filter).Debug("GetUsers called")
 
 	return c.querier.GetUsers(ctx, filter)

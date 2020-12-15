@@ -48,7 +48,10 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	}
 	oAuth2ClientValidator := auth.ProvideOAuth2ClientValidator(service)
 	databaseSettings := config.ProvideConfigDatabaseSettings(cfg)
-	sessionManager := config.ProvideSessionManager(authSettings, databaseSettings, db)
+	sessionManager, err := config.ProvideSessionManager(authSettings, databaseSettings, db)
+	if err != nil {
+		return nil, err
+	}
 	sessionInfoFetcher := auth.ProvideAuthServiceSessionInfoFetcher()
 	authService, err := auth.ProvideService(logger, authSettings, authenticator, userDataManager, authAuditManager, oAuth2ClientValidator, sessionManager, encoderDecoder, sessionInfoFetcher)
 	if err != nil {

@@ -29,10 +29,10 @@ clean_search_indices:
 	@rm --recursive --force $(SEARCH_INDICES_DIR)
 
 .PHONY: setup
-setup: $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) revendor frontend_vendor rewire config_files
+setup: $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) revendor frontend_vendor rewire configs
 
-.PHONY: config_files
-config_files:
+.PHONY: configs
+configs:
 	go run cmd/tools/config_gen/main.go
 
 ## Go-specific prerequisite stuff
@@ -173,7 +173,7 @@ integration_tests_%:
 	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(KEEP_RUNNING)),, --abort-on-container-exit)
 
 .PHONY: integration_coverage
-integration_coverage: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) config_files
+integration_coverage: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) configs
 	@# big thanks to https://blog.cloudflare.com/go-coverage-with-external-tests/
 	rm -f $(ARTIFACTS_DIR)/integration-coverage.out
 	@mkdir --parents $(ARTIFACTS_DIR)
@@ -203,7 +203,7 @@ load_tests_%:
 ## Running
 
 .PHONY: dev
-dev: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) config_files
+dev: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) configs
 	docker-compose --file environments/local/docker-compose.yaml up \
 	--build \
 	--force-recreate \

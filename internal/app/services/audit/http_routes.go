@@ -32,7 +32,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, *si)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
 	logger = logger.WithValue("user_id", si.UserID)
 
 	var (
@@ -70,7 +70,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, *si)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
 	logger = logger.WithValue("user_id", si.UserID)
 
 	// determine audit log entry ID.

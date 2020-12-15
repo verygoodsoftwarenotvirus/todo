@@ -20,7 +20,7 @@ require (
 	github.com/go-chi/chi v4.0.3+incompatible
 	github.com/go-chi/cors v1.0.0
 	github.com/go-oauth2/oauth2/v4 v4.1.2
-	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
+	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/google/wire v0.4.0
 	github.com/gorilla/securecookie v1.1.1

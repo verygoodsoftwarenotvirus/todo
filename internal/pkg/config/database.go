@@ -21,6 +21,7 @@ import (
 	"github.com/alexedwards/scs/sqlite3store"
 	scs "github.com/alexedwards/scs/v2"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
@@ -94,6 +95,7 @@ func (s DatabaseSettings) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, &s,
 		validation.Field(&s.CreateTestUser),
 		validation.Field(&s.Provider, validation.In(PostgresProviderKey, MariaDBProviderKey, SqliteProviderKey)),
+		validation.Field(&s.ConnectionDetails, validation.When(s.Provider == PostgresProviderKey || s.Provider == MariaDBProviderKey), is.URL),
 		validation.Field(&s.ConnectionDetails, validation.Required),
 	)
 }

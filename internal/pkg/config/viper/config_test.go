@@ -77,7 +77,7 @@ func TestParseConfigFile(T *testing.T) {
 				Provider:          "postgres",
 				Debug:             true,
 				RunMigrations:     true,
-				ConnectionDetails: database.ConnectionDetails("thisisatest"),
+				ConnectionDetails: database.ConnectionDetails("postgres://username:password@host/table"),
 			},
 		}
 

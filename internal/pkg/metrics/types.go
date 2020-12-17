@@ -6,10 +6,10 @@ import (
 )
 
 type (
-	// Namespace is a string alias for dependency injection's sake.
+	// Namespace is a types alias for dependency injection's sake.
 	Namespace string
 
-	// CounterName is a string alias for dependency injection's sake.
+	// CounterName is a type alias for dependency injection's sake.
 	CounterName string
 
 	// SpanFormatter formats the name of a span given a request.

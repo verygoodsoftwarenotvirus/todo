@@ -9,7 +9,7 @@ import (
 )
 
 // CreationInputMiddleware is a middleware for fetching, parsing, and attaching a parsed WebhookCreationInput struct from a request.
-func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
+func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.WebhookCreationInput)
 		ctx, span := tracing.StartSpan(req.Context())
@@ -36,7 +36,7 @@ func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 
 // UpdateInputMiddleware is a middleware for fetching, parsing, and attaching a parsed WebhookCreationInput struct from a request.
 // This is the same as the creation one, but it won't always be.
-func (s *Service) UpdateInputMiddleware(next http.Handler) http.Handler {
+func (s *service) UpdateInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.WebhookUpdateInput)
 		ctx, span := tracing.StartSpan(req.Context())

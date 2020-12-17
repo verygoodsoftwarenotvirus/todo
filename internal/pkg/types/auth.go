@@ -37,7 +37,7 @@ type (
 		AdminPermissions         *permissions.AdminPermissionsSummary `json:"permissions,omitempty"`
 	}
 
-	// AuthService describes a structure capable of .
+	// AuthService describes a structure capable of handling authentication and authorization requests.
 	AuthService interface {
 		StatusHandler(res http.ResponseWriter, req *http.Request)
 		LoginHandler(res http.ResponseWriter, req *http.Request)
@@ -51,7 +51,7 @@ type (
 		UserLoginInputMiddleware(next http.Handler) http.Handler
 	}
 
-	// AuthAuditManager describes a structure capable of .
+	// AuthAuditManager describes a structure capable of auditing auth events.
 	AuthAuditManager interface {
 		LogCycleCookieSecretEvent(ctx context.Context, userID uint64)
 		LogSuccessfulLoginEvent(ctx context.Context, userID uint64)

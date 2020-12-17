@@ -71,9 +71,10 @@ type (
 	}
 )
 
-// ProvideMariaDBConnection provides an instrumented maria DB db.
-func ProvideMariaDBConnection(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
+// ProvideMariaDBDB provides an instrumented maria DB db.
+func ProvideMariaDBDB(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
 	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to maria DB")
+
 	return sql.Open(mariaDBDriverName, string(connectionDetails))
 }
 

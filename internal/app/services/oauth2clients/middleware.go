@@ -16,7 +16,7 @@ const (
 var errClientUnauthorizedForScope = errors.New("client not authorized for scope")
 
 // CreationInputMiddleware is a middleware for attaching OAuth2 client info to a request.
-func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
+func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
@@ -35,7 +35,7 @@ func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 }
 
 // OAuth2TokenAuthenticationMiddleware authenticates Oauth tokens.
-func (s *Service) OAuth2TokenAuthenticationMiddleware(next http.Handler) http.Handler {
+func (s *service) OAuth2TokenAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
@@ -59,7 +59,7 @@ func (s *Service) OAuth2TokenAuthenticationMiddleware(next http.Handler) http.Ha
 }
 
 // OAuth2ClientInfoMiddleware fetches clientOAuth2Client info from requests and attaches it explicitly to a request.
-func (s *Service) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
+func (s *service) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
@@ -87,14 +87,14 @@ func (s *Service) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Service) fetchOAuth2ClientFromRequest(req *http.Request) *types.OAuth2Client {
+func (s *service) fetchOAuth2ClientFromRequest(req *http.Request) *types.OAuth2Client {
 	if client, ok := req.Context().Value(types.OAuth2ClientKey).(*types.OAuth2Client); ok {
 		return client
 	}
 	return nil
 }
 
-func (s *Service) fetchOAuth2ClientIDFromRequest(req *http.Request) string {
+func (s *service) fetchOAuth2ClientIDFromRequest(req *http.Request) string {
 	if clientID, ok := req.Context().Value(clientIDKey).(string); ok {
 		return clientID
 	}

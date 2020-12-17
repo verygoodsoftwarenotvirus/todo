@@ -26,7 +26,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
-func buildTestService(t *testing.T) *Service {
+func buildTestService(t *testing.T) *service {
 	t.Helper()
 
 	tokenStore, err := oauth2store.NewMemoryTokenStore()
@@ -35,7 +35,7 @@ func buildTestService(t *testing.T) *Service {
 	manager := manage.NewDefaultManager()
 	manager.MustTokenStorage(tokenStore, err)
 
-	service := &Service{
+	service := &service{
 		clientDataManager:    database.BuildMockDatabase(),
 		logger:               noop.NewLogger(),
 		encoderDecoder:       &mockencoding.EncoderDecoder{},

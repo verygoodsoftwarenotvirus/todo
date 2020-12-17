@@ -115,7 +115,7 @@ func TestProvideMariaDBConnection(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		_, err := ProvideMariaDBConnection(noop.NewLogger(), "")
+		_, err := ProvideMariaDBDB(noop.NewLogger(), "")
 		assert.NoError(t, err)
 	})
 }

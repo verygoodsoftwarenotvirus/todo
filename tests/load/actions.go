@@ -23,7 +23,7 @@ type (
 	// Action is a wrapper struct around some important values.
 	Action struct {
 		Action actionFunc
-		Weight int
+		Weight uint
 		Name   string
 	}
 )
@@ -62,16 +62,16 @@ func RandomAction(c *httpclient.V1Client) *Action {
 		allActions[k] = v
 	}
 
-	totalWeight := 0
+	var totalWeight uint = 0
 	for _, rb := range allActions {
 		totalWeight += rb.Weight
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	r := rand.Intn(totalWeight)
+	r := rand.Intn(int(totalWeight))
 
 	for _, rb := range allActions {
-		r -= rb.Weight
+		r -= int(rb.Weight)
 		if r <= 0 {
 			return rb
 		}

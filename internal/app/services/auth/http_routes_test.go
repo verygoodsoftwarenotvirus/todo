@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func attachCookieToRequestForTest(t *testing.T, s *Service, req *http.Request, user *types.User) (context.Context, *http.Request) {
+func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, user *types.User) (context.Context, *http.Request) {
 	t.Helper()
 
 	ctx, sessionErr := s.sessionManager.Load(req.Context(), "")
@@ -124,7 +124,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
-		oacv := &mockOAuth2ClientValidator{}
+		oacv := &mockmodels.OAuth2ClientDataServer{}
 		oacv.On(
 			"ExtractOAuth2ClientFromRequest",
 			mock.Anything,
@@ -154,7 +154,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 		}
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
-		oacv := &mockOAuth2ClientValidator{}
+		oacv := &mockmodels.OAuth2ClientDataServer{}
 		oacv.On(
 			"ExtractOAuth2ClientFromRequest",
 			mock.Anything,
@@ -182,7 +182,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
-		oacv := &mockOAuth2ClientValidator{}
+		oacv := &mockmodels.OAuth2ClientDataServer{}
 		oacv.On(
 			"ExtractOAuth2ClientFromRequest",
 			mock.Anything,

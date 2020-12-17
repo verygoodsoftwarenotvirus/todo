@@ -44,7 +44,7 @@ func validateWebhook(input *types.WebhookCreationInput) error {
 }
 
 // CreateHandler is our webhook creation route.
-func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -98,7 +98,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // ListHandler is our list route.
-func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -135,7 +135,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // ReadHandler returns a GET handler that returns an webhook.
-func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -175,7 +175,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // UpdateHandler returns a handler that updates an webhook.
-func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -237,7 +237,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // ArchiveHandler returns a handler that archives an webhook.
-func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -281,7 +281,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // AuditEntryHandler returns a GET handler that returns all audit log entries related to an item.
-func (s *Service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 

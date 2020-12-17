@@ -110,7 +110,7 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
-		ocv := &mockOAuth2ClientValidator{}
+		ocv := &mockmodels.OAuth2ClientDataServer{}
 		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
 		s.oauth2ClientsService = ocv
 
@@ -198,7 +198,7 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
-		ocv := &mockOAuth2ClientValidator{}
+		ocv := &mockmodels.OAuth2ClientDataServer{}
 		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
 		s.oauth2ClientsService = ocv
 
@@ -232,7 +232,7 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
-		ocv := &mockOAuth2ClientValidator{}
+		ocv := &mockmodels.OAuth2ClientDataServer{}
 		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
 		s.oauth2ClientsService = ocv
 

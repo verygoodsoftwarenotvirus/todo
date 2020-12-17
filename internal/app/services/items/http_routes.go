@@ -25,7 +25,7 @@ func parseBool(str string) bool {
 }
 
 // ListHandler is our list route.
-func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -75,7 +75,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // SearchHandler is our search route.
-func (s *Service) SearchHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -143,7 +143,7 @@ func (s *Service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // CreateHandler is our item creation route.
-func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -190,7 +190,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // ExistenceHandler returns a HEAD handler that returns 200 if an item exists, 404 otherwise.
-func (s *Service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -223,7 +223,7 @@ func (s *Service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // ReadHandler returns a GET handler that returns an item.
-func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -260,7 +260,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // UpdateHandler returns a handler that updates an item.
-func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -323,7 +323,7 @@ func (s *Service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // ArchiveHandler returns a handler that archives an item.
-func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -368,7 +368,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // AuditEntryHandler returns a GET handler that returns all audit log entries related to an item.
-func (s *Service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 

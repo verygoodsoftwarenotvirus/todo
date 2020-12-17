@@ -31,10 +31,10 @@ import (
 
 // BuildServer builds a server.
 func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, dbm database.DataManager, db *sql.DB, authenticator password.Authenticator) (*server.Server, error) {
-	serverSettings := config.ProvideConfigServerSettings(cfg)
-	frontendSettings := config.ProvideConfigFrontendSettings(cfg)
+	serverSettings := cfg.Server
+	frontendSettings := cfg.Frontend
 	instrumentationHandler := frontend.ProvideMetricsInstrumentationHandlerForServer(cfg, logger)
-	authSettings := config.ProvideConfigAuthSettings(cfg)
+	authSettings := cfg.Auth
 	userDataManager := database.ProvideUserDataManager(dbm)
 	authAuditManager := database.ProvideAuthAuditManager(dbm)
 	oAuth2ClientDataManager := database.ProvideOAuth2ClientDataManager(dbm)
@@ -42,72 +42,64 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	clientIDFetcher := oauth2clients.ProvideOAuth2ClientsServiceClientIDFetcher(logger)
 	encoderDecoder := encoding.ProvideResponseEncoder(logger)
 	unitCounterProvider := metrics.ProvideUnitCounterProvider()
-	service, err := oauth2clients.ProvideOAuth2ClientsService(logger, oAuth2ClientDataManager, userDataManager, oAuth2ClientAuditManager, authenticator, clientIDFetcher, encoderDecoder, unitCounterProvider)
+	oAuth2ClientDataService, err := oauth2clients.ProvideOAuth2ClientsService(logger, oAuth2ClientDataManager, userDataManager, oAuth2ClientAuditManager, authenticator, clientIDFetcher, encoderDecoder, unitCounterProvider)
 	if err != nil {
 		return nil, err
 	}
-	oAuth2ClientValidator := auth.ProvideOAuth2ClientValidator(service)
-	databaseSettings := config.ProvideConfigDatabaseSettings(cfg)
+	databaseSettings := cfg.Database
 	sessionManager, err := config.ProvideSessionManager(authSettings, databaseSettings, db)
 	if err != nil {
 		return nil, err
 	}
 	sessionInfoFetcher := auth.ProvideAuthServiceSessionInfoFetcher()
-	authService, err := auth.ProvideService(logger, authSettings, authenticator, userDataManager, authAuditManager, oAuth2ClientValidator, sessionManager, encoderDecoder, sessionInfoFetcher)
+	authService, err := auth.ProvideService(logger, authSettings, authenticator, userDataManager, authAuditManager, oAuth2ClientDataService, sessionManager, encoderDecoder, sessionInfoFetcher)
 	if err != nil {
 		return nil, err
 	}
-	typesAuthService := auth.ProvideAuthService(authService)
 	frontendService := frontend.ProvideService(logger, frontendSettings)
-	typesFrontendService := frontend.ProvideFrontendService(frontendService)
 	auditLogDataManager := database.ProvideAuditLogEntryDataManager(dbm)
 	entryIDFetcher := audit.ProvideAuditServiceItemIDFetcher(logger)
 	auditSessionInfoFetcher := audit.ProvideAuditServiceSessionInfoFetcher()
-	auditService := audit.ProvideService(logger, auditLogDataManager, entryIDFetcher, auditSessionInfoFetcher, encoderDecoder)
-	auditLogDataService := audit.ProvideAuditLogEntryDataServer(auditService)
+	auditLogDataService := audit.ProvideService(logger, auditLogDataManager, entryIDFetcher, auditSessionInfoFetcher, encoderDecoder)
 	itemDataManager := database.ProvideItemDataManager(dbm)
 	itemAuditManager := database.ProvideItemAuditManager(dbm)
 	itemIDFetcher := items.ProvideItemsServiceItemIDFetcher(logger)
 	itemsSessionInfoFetcher := items.ProvideItemsServiceSessionInfoFetcher()
-	searchSettings := config.ProvideSearchSettings(cfg)
+	searchSettings := cfg.Search
 	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
 	searchIndex, err := items.ProvideItemsServiceSearchIndex(searchSettings, indexManagerProvider, logger)
 	if err != nil {
 		return nil, err
 	}
-	itemsService, err := items.ProvideService(logger, itemDataManager, itemAuditManager, itemIDFetcher, itemsSessionInfoFetcher, encoderDecoder, unitCounterProvider, searchIndex)
+	itemDataService, err := items.ProvideService(logger, itemDataManager, itemAuditManager, itemIDFetcher, itemsSessionInfoFetcher, encoderDecoder, unitCounterProvider, searchIndex)
 	if err != nil {
 		return nil, err
 	}
-	itemDataService := items.ProvideItemDataServer(itemsService)
 	userAuditManager := database.ProvideUserAuditManager(dbm)
 	userIDFetcher := users.ProvideUsersServiceUserIDFetcher(logger)
 	usersSessionInfoFetcher := users.ProvideUsersServiceSessionInfoFetcher()
-	usersService, err := users.ProvideUsersService(authSettings, logger, userDataManager, userAuditManager, authenticator, userIDFetcher, usersSessionInfoFetcher, encoderDecoder, unitCounterProvider)
+	userDataService, err := users.ProvideUsersService(authSettings, logger, userDataManager, userAuditManager, authenticator, userIDFetcher, usersSessionInfoFetcher, encoderDecoder, unitCounterProvider)
 	if err != nil {
 		return nil, err
 	}
-	userDataService := users.ProvideUserDataServer(usersService)
-	oAuth2ClientDataService := oauth2clients.ProvideOAuth2ClientDataServer(service)
 	webhookDataManager := database.ProvideWebhookDataManager(dbm)
 	webhookAuditManager := database.ProvideWebhookAuditManager(dbm)
 	webhooksSessionInfoFetcher := webhooks.ProvideWebhooksServiceSessionInfoFetcher()
 	webhookIDFetcher := webhooks.ProvideWebhooksServiceWebhookIDFetcher(logger)
-	webhooksService, err := webhooks.ProvideWebhooksService(logger, webhookDataManager, webhookAuditManager, webhooksSessionInfoFetcher, webhookIDFetcher, encoderDecoder, unitCounterProvider)
+	webhookDataService, err := webhooks.ProvideWebhooksService(logger, webhookDataManager, webhookAuditManager, webhooksSessionInfoFetcher, webhookIDFetcher, encoderDecoder, unitCounterProvider)
 	if err != nil {
 		return nil, err
 	}
-	webhookDataService := webhooks.ProvideWebhookDataServer(webhooksService)
 	adminUserDataManager := database.ProvideAdminUserDataManager(dbm)
 	adminAuditManager := database.ProvideAdminAuditManager(dbm)
 	adminSessionInfoFetcher := admin.ProvideAdminServiceSessionInfoFetcher()
 	adminUserIDFetcher := admin.ProvideAdminServiceUserIDFetcher(logger)
-	adminService, err := admin.ProvideService(logger, authSettings, authenticator, adminUserDataManager, adminAuditManager, sessionManager, encoderDecoder, adminSessionInfoFetcher, adminUserIDFetcher)
+	service, err := admin.ProvideService(logger, authSettings, authenticator, adminUserDataManager, adminAuditManager, sessionManager, encoderDecoder, adminSessionInfoFetcher, adminUserIDFetcher)
 	if err != nil {
 		return nil, err
 	}
-	typesAdminService := admin.ProvideAdminService(adminService)
-	httpserverServer, err := httpserver.ProvideServer(serverSettings, frontendSettings, instrumentationHandler, typesAuthService, typesFrontendService, auditLogDataService, itemDataService, userDataService, oAuth2ClientDataService, webhookDataService, typesAdminService, dbm, logger, encoderDecoder)
+	adminService := admin.ProvideAdminService(service)
+	httpserverServer, err := httpserver.ProvideServer(serverSettings, frontendSettings, instrumentationHandler, authService, frontendService, auditLogDataService, itemDataService, userDataService, oAuth2ClientDataService, webhookDataService, adminService, dbm, logger, encoderDecoder)
 	if err != nil {
 		return nil, err
 	}

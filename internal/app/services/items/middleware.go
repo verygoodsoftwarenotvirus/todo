@@ -16,7 +16,7 @@ const (
 )
 
 // CreationInputMiddleware is a middleware for fetching, parsing, and attaching an ItemInput struct from a request.
-func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
+func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.ItemCreationInput)
 		ctx, span := tracing.StartSpan(req.Context())
@@ -43,7 +43,7 @@ func (s *Service) CreationInputMiddleware(next http.Handler) http.Handler {
 
 // UpdateInputMiddleware is a middleware for fetching, parsing, and attaching an ItemInput struct from a request.
 // This is the same as the creation one, but that won't always be the case.
-func (s *Service) UpdateInputMiddleware(next http.Handler) http.Handler {
+func (s *service) UpdateInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.ItemUpdateInput)
 		ctx, span := tracing.StartSpan(req.Context())

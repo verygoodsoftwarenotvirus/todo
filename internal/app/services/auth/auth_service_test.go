@@ -16,26 +16,26 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
-func buildTestService(t *testing.T) *Service {
+func buildTestService(t *testing.T) *service {
 	t.Helper()
 
 	logger := noop.NewLogger()
 	ed := encoding.ProvideResponseEncoder(logger)
 
-	service, err := ProvideService(
+	s, err := ProvideService(
 		logger,
 		config.AuthSettings{CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
 		&mockauth.Authenticator{},
 		&mockmodels.UserDataManager{},
 		&mockmodels.AuditLogDataManager{},
-		&mockOAuth2ClientValidator{},
+		&mockmodels.OAuth2ClientDataServer{},
 		scs.New(),
 		ed,
 		func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
 	)
 	require.NoError(t, err)
 
-	return service
+	return s.(*service)
 }
 
 func TestProvideAuthService(T *testing.T) {
@@ -52,7 +52,7 @@ func TestProvideAuthService(T *testing.T) {
 			&mockauth.Authenticator{},
 			&mockmodels.UserDataManager{},
 			&mockmodels.AuditLogDataManager{},
-			&mockOAuth2ClientValidator{},
+			&mockmodels.OAuth2ClientDataServer{},
 			scs.New(),
 			ed,
 			func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },

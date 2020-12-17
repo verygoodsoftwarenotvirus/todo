@@ -33,7 +33,7 @@ const (
 	serviceName        string              = "oauth2_clients_service"
 )
 
-var _ types.OAuth2ClientDataService = (*Service)(nil)
+var _ types.OAuth2ClientDataService = (*service)(nil)
 
 type (
 	oauth2Handler interface {
@@ -53,8 +53,8 @@ type (
 	// ClientIDFetcher is a function for fetching client IDs out of requests.
 	ClientIDFetcher func(req *http.Request) uint64
 
-	// Service manages our OAuth2 clients via HTTP.
-	Service struct {
+	// service manages our OAuth2 clients via HTTP.
+	service struct {
 		logger               logging.Logger
 		clientDataManager    types.OAuth2ClientDataManager
 		userDataManager      types.UserDataManager
@@ -78,7 +78,7 @@ func ProvideOAuth2ClientsService(
 	clientIDFetcher ClientIDFetcher,
 	encoderDecoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
-) (*Service, error) {
+) (types.OAuth2ClientDataService, error) {
 	tokenStore, tokenStoreErr := oauth2store.NewMemoryTokenStore()
 
 	manager := manage.NewDefaultManager()
@@ -90,7 +90,7 @@ func ProvideOAuth2ClientsService(
 	oHandler := oauth2server.NewDefaultServer(manager)
 	oHandler.SetAllowGetAccessRequest(true)
 
-	svc := &Service{
+	svc := &service{
 		clientDataManager:    clientDataManager,
 		auditLog:             auditLog,
 		userDataManager:      userDataManager,
@@ -111,7 +111,7 @@ func ProvideOAuth2ClientsService(
 }
 
 // initializeOAuth2Handler.
-func (s *Service) initialize() {
+func (s *service) initialize() {
 	if s.initialized {
 		return
 	}
@@ -139,11 +139,11 @@ func (s *Service) initialize() {
 }
 
 // HandleAuthorizeRequest is a simple wrapper around the internal server's HandleAuthorizeRequest.
-func (s *Service) HandleAuthorizeRequest(res http.ResponseWriter, req *http.Request) error {
+func (s *service) HandleAuthorizeRequest(res http.ResponseWriter, req *http.Request) error {
 	return s.oauth2Handler.HandleAuthorizeRequest(res, req)
 }
 
 // HandleTokenRequest is a simple wrapper around the internal server's HandleTokenRequest.
-func (s *Service) HandleTokenRequest(res http.ResponseWriter, req *http.Request) error {
+func (s *service) HandleTokenRequest(res http.ResponseWriter, req *http.Request) error {
 	return s.oauth2Handler.HandleTokenRequest(res, req)
 }

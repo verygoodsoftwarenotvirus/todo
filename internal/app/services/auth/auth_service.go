@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -25,12 +24,6 @@ const (
 )
 
 type (
-	// OAuth2ClientValidator is a stand-in interface, where we needed to abstract
-	// a regular structure with an interface for testing purposes.
-	OAuth2ClientValidator interface {
-		ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.Request) (*types.OAuth2Client, error)
-	}
-
 	// cookieEncoderDecoder is a stand-in interface for gorilla/securecookie.
 	cookieEncoderDecoder interface {
 		Encode(name string, value interface{}) (string, error)
@@ -40,14 +33,14 @@ type (
 	// SessionInfoFetcher is a function that fetches user IDs.
 	SessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
 
-	// Service handles authentication service-wide.
-	Service struct {
+	// service handles authentication service-wide.
+	service struct {
 		config               config.AuthSettings
 		logger               logging.Logger
 		authenticator        password.Authenticator
 		userDB               types.UserDataManager
 		auditLog             types.AuthAuditManager
-		oauth2ClientsService OAuth2ClientValidator
+		oauth2ClientsService types.OAuth2ClientDataService
 		encoderDecoder       encoding.EncoderDecoder
 		cookieManager        cookieEncoderDecoder
 		sessionManager       *scs.SessionManager
@@ -62,12 +55,12 @@ func ProvideService(
 	authenticator password.Authenticator,
 	userDataManager types.UserDataManager,
 	auditLog types.AuthAuditManager,
-	oauth2ClientsService OAuth2ClientValidator,
+	oauth2ClientsService types.OAuth2ClientDataService,
 	sessionManager *scs.SessionManager,
 	encoder encoding.EncoderDecoder,
 	sessionInfoFetcher SessionInfoFetcher,
-) (*Service, error) {
-	svc := &Service{
+) (types.AuthService, error) {
+	svc := &service{
 		logger:               logger.WithName(serviceName),
 		encoderDecoder:       encoder,
 		config:               cfg,

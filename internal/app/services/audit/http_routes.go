@@ -15,7 +15,7 @@ const (
 )
 
 // ListHandler is our list route.
-func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -56,7 +56,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // ReadHandler returns a GET handler that returns an audit log entry.
-func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 

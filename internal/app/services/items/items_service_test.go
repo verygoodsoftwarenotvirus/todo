@@ -16,8 +16,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
-func buildTestService() *Service {
-	return &Service{
+func buildTestService() *service {
+	return &service{
 		logger:             noop.NewLogger(),
 		itemCounter:        &mockmetrics.UnitCounter{},
 		itemDataManager:    &mockmodels.ItemDataManager{},

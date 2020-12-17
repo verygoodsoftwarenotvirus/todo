@@ -23,7 +23,7 @@ const (
 )
 
 // UserCreationInputMiddleware fetches user input from requests.
-func (s *Service) UserCreationInputMiddleware(next http.Handler) http.Handler {
+func (s *service) UserCreationInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.UserCreationInput)
 		ctx, span := tracing.StartSpan(req.Context())
@@ -51,7 +51,7 @@ func (s *Service) UserCreationInputMiddleware(next http.Handler) http.Handler {
 }
 
 // PasswordUpdateInputMiddleware fetches password update input from requests.
-func (s *Service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler {
+func (s *service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.PasswordUpdateInput)
 		ctx, span := tracing.StartSpan(req.Context())
@@ -79,7 +79,7 @@ func (s *Service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler 
 }
 
 // TOTPSecretVerificationInputMiddleware fetches 2FA update input from requests.
-func (s *Service) TOTPSecretVerificationInputMiddleware(next http.Handler) http.Handler {
+func (s *service) TOTPSecretVerificationInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.TOTPSecretVerificationInput)
 		ctx, span := tracing.StartSpan(req.Context())
@@ -107,7 +107,7 @@ func (s *Service) TOTPSecretVerificationInputMiddleware(next http.Handler) http.
 }
 
 // TOTPSecretRefreshInputMiddleware fetches 2FA update input from requests.
-func (s *Service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handler {
+func (s *service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.TOTPSecretRefreshInput)
 		ctx, span := tracing.StartSpan(req.Context())

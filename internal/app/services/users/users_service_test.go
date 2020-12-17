@@ -21,7 +21,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
-func buildTestService(t *testing.T) *Service {
+func buildTestService(t *testing.T) *service {
 	t.Helper()
 
 	expectedUserCount := uint64(123)
@@ -30,7 +30,7 @@ func buildTestService(t *testing.T) *Service {
 	mockDB := database.BuildMockDatabase()
 	mockDB.UserDataManager.On("GetAllUsersCount", mock.Anything).Return(expectedUserCount, nil)
 
-	service, err := ProvideUsersService(
+	s, err := ProvideUsersService(
 		config.AuthSettings{},
 		noop.NewLogger(),
 		&mockmodels.UserDataManager{},
@@ -47,7 +47,7 @@ func buildTestService(t *testing.T) *Service {
 
 	mock.AssertExpectationsForObjects(t, mockDB, uc)
 
-	return service
+	return s.(*service)
 }
 
 func TestProvideUsersService(T *testing.T) {

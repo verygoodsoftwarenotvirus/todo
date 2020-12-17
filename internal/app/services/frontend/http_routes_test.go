@@ -36,7 +36,7 @@ func TestService_StaticDir(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		s := &Service{logger: noop.NewLogger()}
+		s := &service{logger: noop.NewLogger()}
 
 		cwd, err := os.Getwd()
 		require.NoError(t, err)
@@ -54,7 +54,7 @@ func TestService_StaticDir(T *testing.T) {
 
 	T.Run("with frontend routing path", func(t *testing.T) {
 		t.Parallel()
-		s := &Service{logger: noop.NewLogger()}
+		s := &service{logger: noop.NewLogger()}
 		exampleDir := "."
 
 		hf, err := s.StaticDir(exampleDir)
@@ -74,7 +74,7 @@ func TestService_buildStaticFileServer(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		s := &Service{
+		s := &service{
 			config: config.FrontendSettings{
 				CacheStaticFiles: true,
 			},

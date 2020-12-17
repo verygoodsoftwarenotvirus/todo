@@ -21,7 +21,7 @@ const (
 )
 
 // CookieAuthenticationMiddleware checks every request for a user cookie.
-func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler {
+func (s *service) CookieAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
@@ -52,7 +52,7 @@ func (s *Service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 }
 
 // UserAttributionMiddleware is concerned with figuring otu who a user is, but not worried about kicking out users who are not known.
-func (s *Service) UserAttributionMiddleware(next http.Handler) http.Handler {
+func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
@@ -99,7 +99,7 @@ func (s *Service) UserAttributionMiddleware(next http.Handler) http.Handler {
 }
 
 // AuthorizationMiddleware checks to see if a user is associated with the request, and then determines whether said request can proceed.
-func (s *Service) AuthorizationMiddleware(next http.Handler) http.Handler {
+func (s *service) AuthorizationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()
@@ -125,7 +125,7 @@ func (s *Service) AuthorizationMiddleware(next http.Handler) http.Handler {
 }
 
 // AdminMiddleware restricts requests to admin users only.
-func (s *Service) AdminMiddleware(next http.Handler) http.Handler {
+func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 	const staticError = "admin status required"
 
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -169,7 +169,7 @@ func parseLoginInputFromForm(req *http.Request) *types.UserLoginInput {
 }
 
 // UserLoginInputMiddleware fetches user login input from requests.
-func (s *Service) UserLoginInputMiddleware(next http.Handler) http.Handler {
+func (s *service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := tracing.StartSpan(req.Context())
 		defer span.End()

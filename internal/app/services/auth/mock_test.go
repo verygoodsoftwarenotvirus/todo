@@ -1,24 +1,10 @@
 package auth
 
 import (
-	"context"
 	"net/http"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/stretchr/testify/mock"
 )
-
-var _ OAuth2ClientValidator = (*mockOAuth2ClientValidator)(nil)
-
-type mockOAuth2ClientValidator struct {
-	mock.Mock
-}
-
-func (m *mockOAuth2ClientValidator) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.Request) (*types.OAuth2Client, error) {
-	args := m.Called(ctx, req)
-	return args.Get(0).(*types.OAuth2Client), args.Error(1)
-}
 
 var _ cookieEncoderDecoder = (*mockCookieEncoderDecoder)(nil)
 

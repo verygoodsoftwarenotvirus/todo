@@ -12,8 +12,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
-func buildTestService() *Service {
-	return &Service{
+func buildTestService() *service {
+	return &service{
 		logger:                 noop.NewLogger(),
 		auditLog:               &mockmodels.AuditLogDataManager{},
 		auditLogEntryIDFetcher: func(req *http.Request) uint64 { return 0 },

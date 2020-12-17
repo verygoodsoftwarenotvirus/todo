@@ -1,26 +1,20 @@
 package items
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-
 	"github.com/google/wire"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
+
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
 // Providers is our collection of what we provide to other services.
 var Providers = wire.NewSet(
 	ProvideService,
-	ProvideItemDataServer,
 	ProvideItemsServiceSearchIndex,
 	ProvideItemsServiceItemIDFetcher,
 	ProvideItemsServiceSessionInfoFetcher,
 )
-
-// ProvideItemDataServer is an arbitrary function for dependency injection's sake.
-func ProvideItemDataServer(s *Service) types.ItemDataService {
-	return s
-}
 
 // ProvideItemsServiceItemIDFetcher provides an ItemIDFetcher.
 func ProvideItemsServiceItemIDFetcher(logger logging.Logger) ItemIDFetcher {

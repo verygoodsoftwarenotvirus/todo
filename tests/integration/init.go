@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	debug         = true
+	debug         = false
 	timeout       = 5 * time.Second
 	nonexistentID = 999999999
 

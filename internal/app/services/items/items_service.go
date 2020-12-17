@@ -19,14 +19,14 @@ const (
 	serviceName        string              = "items_service"
 )
 
-var _ types.ItemDataService = (*Service)(nil)
+var _ types.ItemDataService = (*service)(nil)
 
 type (
 	// SearchIndex is a type alias for dependency injection's sake.
 	SearchIndex search.IndexManager
 
-	// Service handles to-do list items.
-	Service struct {
+	// service handles to-do list items.
+	service struct {
 		logger             logging.Logger
 		itemDataManager    types.ItemDataManager
 		auditLog           types.ItemAuditManager
@@ -54,13 +54,13 @@ func ProvideService(
 	encoder encoding.EncoderDecoder,
 	itemCounterProvider metrics.UnitCounterProvider,
 	searchIndexManager SearchIndex,
-) (*Service, error) {
+) (types.ItemDataService, error) {
 	itemCounter, err := itemCounterProvider(counterName, counterDescription)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing counter: %w", err)
 	}
 
-	svc := &Service{
+	svc := &service{
 		logger:             logger.WithName(serviceName),
 		itemIDFetcher:      itemIDFetcher,
 		sessionInfoFetcher: sessionInfoFetcher,

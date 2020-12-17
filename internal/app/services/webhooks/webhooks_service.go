@@ -23,12 +23,12 @@ const (
 )
 
 var (
-	_ types.WebhookDataService = (*Service)(nil)
+	_ types.WebhookDataService = (*service)(nil)
 )
 
 type (
-	// Service handles TODO ListHandler webhooks.
-	Service struct {
+	// service handles webhooks.
+	service struct {
 		logger             logging.Logger
 		webhookCounter     metrics.UnitCounter
 		webhookDataManager types.WebhookDataManager
@@ -57,13 +57,13 @@ func ProvideWebhooksService(
 	webhookIDFetcher WebhookIDFetcher,
 	encoder encoding.EncoderDecoder,
 	webhookCounterProvider metrics.UnitCounterProvider,
-) (*Service, error) {
+) (types.WebhookDataService, error) {
 	webhookCounter, err := webhookCounterProvider(counterName, counterDescription)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing counter: %w", err)
 	}
 
-	svc := &Service{
+	svc := &service{
 		logger:             logger.WithName(serviceName),
 		webhookDataManager: webhookDataManager,
 		auditLog:           auditLog,

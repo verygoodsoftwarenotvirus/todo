@@ -45,7 +45,7 @@ type (
 		minimumPasswordSize uint
 	}
 
-	// HashCost is an arbitrary type alias for dependency injection's sake.
+	// HashCost is a type alias for dependency injection's sake.
 	HashCost uint
 )
 

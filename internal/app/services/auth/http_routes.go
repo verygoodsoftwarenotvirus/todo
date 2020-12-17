@@ -26,7 +26,7 @@ var (
 )
 
 // DecodeCookieFromRequest takes a request object and fetches the cookie data if it is present.
-func (s *Service) DecodeCookieFromRequest(ctx context.Context, req *http.Request) (ca *types.SessionInfo, err error) {
+func (s *service) DecodeCookieFromRequest(ctx context.Context, req *http.Request) (ca *types.SessionInfo, err error) {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
@@ -55,7 +55,7 @@ func (s *Service) DecodeCookieFromRequest(ctx context.Context, req *http.Request
 }
 
 // WebsocketAuthFunction is provided to Newsman to determine if a user has access to websockets.
-func (s *Service) WebsocketAuthFunction(req *http.Request) bool {
+func (s *service) WebsocketAuthFunction(req *http.Request) bool {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -81,7 +81,7 @@ func (s *Service) WebsocketAuthFunction(req *http.Request) bool {
 }
 
 // fetchUserFromCookie takes a request object and fetches the cookie, and then the user for that cookie.
-func (s *Service) fetchUserFromCookie(ctx context.Context, req *http.Request) (*types.User, error) {
+func (s *service) fetchUserFromCookie(ctx context.Context, req *http.Request) (*types.User, error) {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
@@ -106,7 +106,7 @@ func (s *Service) fetchUserFromCookie(ctx context.Context, req *http.Request) (*
 }
 
 // LoginHandler is our login route.
-func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -199,7 +199,7 @@ func (s *Service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // LogoutHandler is our logout route.
-func (s *Service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -242,7 +242,7 @@ func (s *Service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // StatusHandler returns the user info for the user making the request.
-func (s *Service) StatusHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -257,7 +257,7 @@ func (s *Service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // CycleCookieSecretHandler rotates the cookie building secret with a new random secret.
-func (s *Service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -290,7 +290,7 @@ func (s *Service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 
 // validateLogin takes login information and returns whether or not the login is valid.
 // In the event that there's an error, this function will return false and the error.
-func (s *Service) validateLogin(ctx context.Context, user *types.User, loginInput *types.UserLoginInput) (bool, error) {
+func (s *service) validateLogin(ctx context.Context, user *types.User, loginInput *types.UserLoginInput) (bool, error) {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
@@ -339,7 +339,7 @@ func (s *Service) validateLogin(ctx context.Context, user *types.User, loginInpu
 }
 
 // buildCookie provides a consistent way of constructing an HTTP cookie.
-func (s *Service) buildCookie(value string, expiry time.Time) (*http.Cookie, error) {
+func (s *service) buildCookie(value string, expiry time.Time) (*http.Cookie, error) {
 	encoded, err := s.cookieManager.Encode(CookieName, value)
 	if err != nil {
 		// NOTE: these errors should be infrequent, and should cause alarm when they do occur

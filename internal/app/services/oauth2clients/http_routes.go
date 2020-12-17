@@ -36,7 +36,7 @@ func randString() string {
 }
 
 // fetchUserID grabs a userID out of the request context.
-func (s *Service) fetchUserID(req *http.Request) uint64 {
+func (s *service) fetchUserID(req *http.Request) uint64 {
 	if si, ok := req.Context().Value(types.SessionInfoKey).(*types.SessionInfo); ok && si != nil {
 		return si.UserID
 	}
@@ -50,7 +50,7 @@ func determineScope(req *http.Request) string {
 }
 
 // ExtractOAuth2ClientFromRequest extracts OAuth2 client data from a request.
-func (s *Service) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.Request) (*types.OAuth2Client, error) {
+func (s *service) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.Request) (*types.OAuth2Client, error) {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
@@ -87,7 +87,7 @@ func (s *Service) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.
 }
 
 // ListHandler is a handler that returns a list of OAuth2 clients.
-func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -119,7 +119,7 @@ func (s *Service) ListHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // CreateHandler is our OAuth2 client creation route.
-func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -192,7 +192,7 @@ func (s *Service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // ReadHandler is a route handler for retrieving an OAuth2 client.
-func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -225,7 +225,7 @@ func (s *Service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // ArchiveHandler is a route handler for archiving an OAuth2 client.
-func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -260,7 +260,7 @@ func (s *Service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 // AuditEntryHandler returns a GET handler that returns all audit log entries related to an item.
-func (s *Service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 

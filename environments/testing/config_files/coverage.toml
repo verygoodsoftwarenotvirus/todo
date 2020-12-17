@@ -3,7 +3,7 @@
   enabled = true
 
 [auth]
-  cookie_domain = "http://localhost"
+  cookie_domain = "localhost"
   cookie_lifetime = "24h0m0s"
   cookie_signing_key = "HEREISA32CHARSECRETWHICHISMADEUP"
   debug = false

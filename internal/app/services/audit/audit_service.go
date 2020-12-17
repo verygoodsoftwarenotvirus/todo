@@ -14,12 +14,12 @@ const (
 )
 
 var (
-	_ types.AuditLogDataService = (*Service)(nil)
+	_ types.AuditLogDataService = (*service)(nil)
 )
 
 type (
-	// Service handles audit log entries.
-	Service struct {
+	// service handles audit log entries.
+	service struct {
 		logger                 logging.Logger
 		auditLog               types.AuditLogDataManager
 		auditLogEntryIDFetcher EntryIDFetcher
@@ -34,15 +34,15 @@ type (
 	EntryIDFetcher func(*http.Request) uint64
 )
 
-// ProvideService builds a new Service.
+// ProvideService builds a new service.
 func ProvideService(
 	logger logging.Logger,
 	auditLog types.AuditLogDataManager,
 	auditLogEntryIDFetcher EntryIDFetcher,
 	sessionInfoFetcher SessionInfoFetcher,
 	encoder encoding.EncoderDecoder,
-) *Service {
-	svc := &Service{
+) types.AuditLogDataService {
+	svc := &service{
 		logger:                 logger.WithName(serviceName),
 		auditLog:               auditLog,
 		auditLogEntryIDFetcher: auditLogEntryIDFetcher,

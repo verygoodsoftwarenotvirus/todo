@@ -5,7 +5,9 @@ go 1.15
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.0
 	contrib.go.opencensus.io/exporter/prometheus v0.1.0
-	contrib.go.opencensus.io/integrations/ocsql v0.1.5
+	contrib.go.opencensus.io/integrations/ocsql v0.1.7
+	github.com/Azure/azure-pipeline-go v0.2.3
+	github.com/Azure/azure-storage-blob-go v0.11.0
 	github.com/DATA-DOG/go-sqlmock v1.4.1
 	github.com/GuiaBolso/darwin v0.0.0-20191218124601-fd6d2aa3d244
 	github.com/Masterminds/squirrel v1.2.0
@@ -14,6 +16,7 @@ require (
 	github.com/alexedwards/scs/postgresstore v0.0.0-20200503134757-95908882a5b1
 	github.com/alexedwards/scs/sqlite3store v0.0.0-20200503134757-95908882a5b1
 	github.com/alexedwards/scs/v2 v2.4.0
+	github.com/aws/aws-sdk-go v1.36.9
 	github.com/blevesearch/bleve v1.0.9
 	github.com/brianvoe/gofakeit/v5 v5.0.0
 	github.com/emicklei/hazana v1.6.2
@@ -26,7 +29,7 @@ require (
 	github.com/gorilla/securecookie v1.1.1
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
 	github.com/lane-c-wagner/go-password-validator v0.1.0
-	github.com/lib/pq v1.4.0
+	github.com/lib/pq v1.9.0
 	github.com/makiuchi-d/gozxing v0.0.0-20200903113411-25f730ed83da
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/moul/http2curl v1.0.0
@@ -38,8 +41,9 @@ require (
 	github.com/tebeka/selenium v0.9.9
 	gitlab.com/verygoodsoftwarenotvirus/logging/v2 v2.0.0
 	gitlab.com/verygoodsoftwarenotvirus/newsman v1.0.1
-	go.opencensus.io v0.22.3
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
+	go.opencensus.io v0.22.5
+	gocloud.dev v0.21.0
+	golang.org/x/crypto v0.0.0-20201203163018-be400aefbc4c
+	golang.org/x/oauth2 v0.0.0-20201203001011-0b49973bad19
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 )

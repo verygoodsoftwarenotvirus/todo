@@ -3,7 +3,6 @@ package frontend
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/google/wire"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
@@ -12,14 +11,8 @@ import (
 // Providers is our collection of what we provide to other services.
 var Providers = wire.NewSet(
 	ProvideService,
-	ProvideFrontendService,
 	ProvideMetricsInstrumentationHandlerForServer,
 )
-
-// ProvideFrontendService provides a types.FrontendService from our service.
-func ProvideFrontendService(s *Service) types.FrontendService {
-	return s
-}
 
 // ProvideMetricsInstrumentationHandlerForServer provides a metrics.InstrumentationHandler from a config for our server.
 func ProvideMetricsInstrumentationHandlerForServer(cfg *config.ServerConfig, logger logging.Logger) metrics.InstrumentationHandler {

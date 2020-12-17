@@ -75,7 +75,7 @@ var (
 	}
 )
 
-func (s *Service) cacheFile(afs afero.Fs, fileDir string, file os.FileInfo) error {
+func (s *service) cacheFile(afs afero.Fs, fileDir string, file os.FileInfo) error {
 	fp := filepath.Join(fileDir, file.Name())
 
 	f, err := afs.Create(fp)
@@ -99,7 +99,7 @@ func (s *Service) cacheFile(afs afero.Fs, fileDir string, file os.FileInfo) erro
 	return nil
 }
 
-func (s *Service) buildStaticFileServer(fileDir string) (*afero.HttpFs, error) {
+func (s *service) buildStaticFileServer(fileDir string) (*afero.HttpFs, error) {
 	var afs afero.Fs
 	if s.config.CacheStaticFiles {
 		afs = afero.NewMemMapFs()
@@ -128,7 +128,7 @@ func (s *Service) buildStaticFileServer(fileDir string) (*afero.HttpFs, error) {
 }
 
 // StaticDir builds a static directory handler.
-func (s *Service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, error) {
+func (s *service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, error) {
 	fileDir, err := filepath.Abs(staticFilesDirectory)
 	if err != nil {
 		return nil, fmt.Errorf("determining absolute path of static files directory: %w", err)

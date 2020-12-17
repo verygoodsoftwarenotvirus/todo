@@ -20,7 +20,7 @@ const (
 	counterName        = metrics.CounterName(serviceName)
 )
 
-var _ types.UserDataService = (*Service)(nil)
+var _ types.UserDataService = (*service)(nil)
 
 var errNoUserIDFetcherProvided = errors.New("userIDFetcher must be provided")
 
@@ -41,8 +41,8 @@ type (
 	// SessionInfoFetcher is a function that fetches user IDs.
 	SessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
 
-	// Service handles our users.
-	Service struct {
+	// service handles our users.
+	service struct {
 		userDataManager    types.UserDataManager
 		auditLog           types.UserAuditManager
 		authSettings       config.AuthSettings
@@ -67,7 +67,7 @@ func ProvideUsersService(
 	sessionInfoFetcher SessionInfoFetcher,
 	encoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
-) (*Service, error) {
+) (types.UserDataService, error) {
 	if userIDFetcher == nil {
 		return nil, errNoUserIDFetcherProvided
 	}
@@ -77,7 +77,7 @@ func ProvideUsersService(
 		return nil, fmt.Errorf("error initializing counter: %w", err)
 	}
 
-	svc := &Service{
+	svc := &service{
 		logger:             logger.WithName(serviceName),
 		userDataManager:    userDataManager,
 		auditLog:           auditLog,

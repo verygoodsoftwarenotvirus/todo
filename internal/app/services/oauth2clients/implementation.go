@@ -18,10 +18,10 @@ import (
 
 // github.com/go-oauth2/oauth2/v4/server specific implementations
 
-var _ oauth2server.InternalErrorHandler = (*Service)(nil).OAuth2InternalErrorHandler
+var _ oauth2server.InternalErrorHandler = (*service)(nil).OAuth2InternalErrorHandler
 
 // OAuth2InternalErrorHandler fulfills a role for the OAuth2 server-side provider.
-func (s *Service) OAuth2InternalErrorHandler(err error) *oauth2errors.Response {
+func (s *service) OAuth2InternalErrorHandler(err error) *oauth2errors.Response {
 	s.logger.Error(err, "OAuth2 Internal Error")
 
 	res := &oauth2errors.Response{
@@ -34,10 +34,10 @@ func (s *Service) OAuth2InternalErrorHandler(err error) *oauth2errors.Response {
 	return res
 }
 
-var _ oauth2server.ResponseErrorHandler = (*Service)(nil).OAuth2ResponseErrorHandler
+var _ oauth2server.ResponseErrorHandler = (*service)(nil).OAuth2ResponseErrorHandler
 
 // OAuth2ResponseErrorHandler fulfills a role for the OAuth2 server-side provider.
-func (s *Service) OAuth2ResponseErrorHandler(re *oauth2errors.Response) {
+func (s *service) OAuth2ResponseErrorHandler(re *oauth2errors.Response) {
 	s.logger.WithValues(map[string]interface{}{
 		"error_code":  re.ErrorCode,
 		"description": re.Description,
@@ -47,7 +47,7 @@ func (s *Service) OAuth2ResponseErrorHandler(re *oauth2errors.Response) {
 	}).Error(re.Error, "OAuth2ResponseErrorHandler")
 }
 
-var _ oauth2server.AuthorizeScopeHandler = (*Service)(nil).AuthorizeScopeHandler
+var _ oauth2server.AuthorizeScopeHandler = (*service)(nil).AuthorizeScopeHandler
 
 var (
 	errUnauthorizedForScope = errors.New("not authorized for scope")
@@ -55,7 +55,7 @@ var (
 )
 
 // AuthorizeScopeHandler satisfies the oauth2server AuthorizeScopeHandler interface.
-func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Request) (scope string, err error) {
+func (s *service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Request) (scope string, err error) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -100,10 +100,10 @@ func (s *Service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reque
 	return "", errNoScopeInformation
 }
 
-var _ oauth2server.UserAuthorizationHandler = (*Service)(nil).UserAuthorizationHandler
+var _ oauth2server.UserAuthorizationHandler = (*service)(nil).UserAuthorizationHandler
 
 // UserAuthorizationHandler satisfies the oauth2server UserAuthorizationHandler interface.
-func (s *Service) UserAuthorizationHandler(_ http.ResponseWriter, req *http.Request) (userID string, err error) {
+func (s *service) UserAuthorizationHandler(_ http.ResponseWriter, req *http.Request) (userID string, err error) {
 	ctx, span := tracing.StartSpan(req.Context())
 	defer span.End()
 
@@ -133,10 +133,10 @@ func (s *Service) UserAuthorizationHandler(_ http.ResponseWriter, req *http.Requ
 	return strconv.FormatUint(uid, 10), nil
 }
 
-var _ oauth2server.ClientAuthorizedHandler = (*Service)(nil).ClientAuthorizedHandler
+var _ oauth2server.ClientAuthorizedHandler = (*service)(nil).ClientAuthorizedHandler
 
 // ClientAuthorizedHandler satisfies the oauth2server ClientAuthorizedHandler interface.
-func (s *Service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantType) (allowed bool, err error) {
+func (s *service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantType) (allowed bool, err error) {
 	// NOTE: it's a shame the interface we're implementing doesn't have this as its first argument
 	ctx, span := tracing.StartSpan(context.Background())
 	defer span.End()
@@ -166,12 +166,12 @@ func (s *Service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantTyp
 	return true, nil
 }
 
-var _ oauth2server.ClientScopeHandler = (*Service)(nil).ClientScopeHandler
+var _ oauth2server.ClientScopeHandler = (*service)(nil).ClientScopeHandler
 
 var errUnauthorized = errors.New("unauthorized")
 
 // ClientScopeHandler satisfies the oauth2server ClientScopeHandler interface.
-func (s *Service) ClientScopeHandler(clientID, scope string) (authed bool, err error) {
+func (s *service) ClientScopeHandler(clientID, scope string) (authed bool, err error) {
 	// NOTE: it's a shame the interface we're implementing doesn't have this as its first argument
 	ctx, span := tracing.StartSpan(context.Background())
 	defer span.End()

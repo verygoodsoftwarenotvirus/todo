@@ -30,6 +30,7 @@ type (
 	bleveIndexManager struct {
 		index  bleve.Index
 		logger logging.Logger
+		tracer tracing.Tracer
 	}
 )
 
@@ -68,9 +69,12 @@ func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger l
 		return nil, fmt.Errorf("failed to open index: %w", openIndexErr)
 	}
 
+	serviceName := fmt.Sprintf("%s_search", name)
+
 	im := &bleveIndexManager{
 		index:  index,
-		logger: logger.WithName(fmt.Sprintf("%s_search", name)),
+		logger: logger.WithName(serviceName),
+		tracer: tracing.NewTracer(serviceName),
 	}
 
 	return im, nil
@@ -78,7 +82,7 @@ func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger l
 
 // Index implements our IndexManager interface.
 func (sm *bleveIndexManager) Index(ctx context.Context, id uint64, value interface{}) error {
-	_, span := tracing.StartSpan(ctx)
+	_, span := sm.tracer.StartSpan(ctx)
 	defer span.End()
 
 	sm.logger.WithValue("id", id).Debug("adding to index")
@@ -88,7 +92,7 @@ func (sm *bleveIndexManager) Index(ctx context.Context, id uint64, value interfa
 
 // Search implements our IndexManager interface.
 func (sm *bleveIndexManager) Search(ctx context.Context, query string, userID uint64) (ids []uint64, err error) {
-	_, span := tracing.StartSpan(ctx)
+	_, span := sm.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachSearchQueryToSpan(span, query)
@@ -121,7 +125,7 @@ func (sm *bleveIndexManager) Search(ctx context.Context, query string, userID ui
 
 // SearchForAdmin implements our IndexManager interface.
 func (sm *bleveIndexManager) SearchForAdmin(ctx context.Context, query string) (ids []uint64, err error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := sm.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachSearchQueryToSpan(span, query)
@@ -152,7 +156,7 @@ func (sm *bleveIndexManager) SearchForAdmin(ctx context.Context, query string) (
 
 // Delete implements our IndexManager interface.
 func (sm *bleveIndexManager) Delete(ctx context.Context, id uint64) error {
-	_, span := tracing.StartSpan(ctx)
+	_, span := sm.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if err := sm.index.Delete(strconv.FormatUint(id, base)); err != nil {

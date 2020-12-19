@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"gocloud.dev/blob"
 	"gocloud.dev/blob/gcsblob"
@@ -80,9 +78,6 @@ func buildGCSBucket(ctx context.Context, cfg *GCSConfig) (*blob.Bucket, error) {
 
 // Validate validates the GCSConfig.
 func (c *GCSConfig) Validate(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, c,
 		validation.Field(&c, validation.Required),
 	)

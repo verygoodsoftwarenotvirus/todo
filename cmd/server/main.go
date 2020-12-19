@@ -68,7 +68,7 @@ func main() {
 	ctx, databaseClientSetupSpan := tracing.StartSpan(ctx)
 	authenticator := bcrypt.ProvideAuthenticator(bcrypt.ProvideHashCost(), logger)
 
-	dbClient, err := cfg.Database.ProvideDatabaseClient(ctx, logger, rawDB, cfg.Database.MetricsCollectionInterval)
+	dbClient, err := cfg.Database.ProvideDatabaseClient(ctx, logger, rawDB)
 	if err != nil {
 		logger.Fatal(fmt.Errorf("error initializing database client: %w", err))
 	}

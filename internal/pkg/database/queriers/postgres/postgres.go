@@ -9,10 +9,11 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
-	"contrib.go.opencensus.io/integrations/ocsql"
 	"github.com/Masterminds/squirrel"
 	postgres "github.com/lib/pq"
+	"github.com/luna-duclos/instrumentedsql"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
@@ -33,21 +34,6 @@ const (
 	maximumConnectionAttempts        = 50
 	defaultBucketSize         uint64 = 1000
 )
-
-func init() {
-	// Register our ocsql wrapper as a db driver.
-	sql.Register(
-		driverName,
-		ocsql.Wrap(
-			&postgres.Driver{},
-			ocsql.WithQuery(true),
-			ocsql.WithAllowRoot(false),
-			ocsql.WithRowsNext(true),
-			ocsql.WithRowsClose(true),
-			ocsql.WithQueryParams(true),
-		),
-	)
-}
 
 var _ database.DataManager = (*Postgres)(nil)
 
@@ -72,17 +58,28 @@ type (
 	}
 )
 
+var instrumentedDriverRegistration sync.Once
+
 // ProvidePostgresDB provides an instrumented postgres db.
-func ProvidePostgresDB(logger logging.Logger, connectionDetails database.ConnectionDetails, metricsCollectionInterval time.Duration) (*sql.DB, error) {
+func ProvidePostgresDB(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
 	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to postgres")
+
+	instrumentedDriverRegistration.Do(func() {
+		sql.Register(
+			driverName,
+			instrumentedsql.WrapDriver(
+				&postgres.Driver{},
+				instrumentedsql.WithOmitArgs(),
+				instrumentedsql.WithTracer(tracing.NewInstrumentedSQLTracer("postgres_connection")),
+				instrumentedsql.WithLogger(tracing.NewInstrumentedSQLLogger(logger)),
+			),
+		)
+	})
 
 	db, err := sql.Open(driverName, string(connectionDetails))
 	if err != nil {
 		return nil, err
 	}
-
-	ocsql.RegisterAllViews()
-	ocsql.RecordStats(db, metricsCollectionInterval)
 
 	return db, nil
 }

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -23,9 +22,7 @@ var (
 )
 
 func init() {
-	ctx, span := tracing.StartSpan(context.Background())
-	defer span.End()
-
+	ctx := context.Background()
 	urlToUse = testutil.DetermineServiceURL()
 	logger := zerolog.NewLogger()
 

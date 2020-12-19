@@ -4,8 +4,6 @@ import (
 	"context"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -22,9 +20,6 @@ type MetaSettings struct {
 
 // Validate validates an MetaSettings struct.
 func (s MetaSettings) Validate(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, &s,
 		validation.Field(&s.RunMode, validation.In(TestingRunMode, DevelopmentRunMode, ProductionRunMode)),
 		validation.Field(&s.StartupDeadline, validation.Required),

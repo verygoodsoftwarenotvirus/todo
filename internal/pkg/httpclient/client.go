@@ -16,14 +16,14 @@ import (
 	"github.com/moul/http2curl"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
-	"go.opencensus.io/plugin/ochttp"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )
 
 const (
 	defaultTimeout = 30 * time.Second
-	clientName     = "v1_client"
+	clientName     = "todo_client_v1"
 )
 
 var (
@@ -46,6 +46,7 @@ type V1Client struct {
 	authedClient *http.Client
 	logger       logging.Logger
 	tokenSource  oauth2.TokenSource
+	tracer       tracing.Tracer
 	adminMode    bool
 
 	Debug  bool
@@ -106,6 +107,8 @@ func NewClient(
 		client.Timeout = defaultTimeout
 	}
 
+	client.Transport = otelhttp.NewTransport(client.Transport)
+
 	if debug {
 		logger.SetLevel(logging.DebugLevel)
 		logger.Debug("log level set to debug!")
@@ -115,11 +118,12 @@ func NewClient(
 
 	c := &V1Client{
 		URL:          address,
-		plainClient:  client,
-		logger:       logger.WithName(clientName),
-		Debug:        debug,
-		authedClient: ac,
 		tokenSource:  ts,
+		authedClient: ac,
+		plainClient:  client,
+		Debug:        debug,
+		logger:       logger.WithName(clientName),
+		tracer:       tracing.NewTracer(clientName),
 	}
 
 	logger.WithValue("url", address.String()).Debug("returning client")
@@ -167,9 +171,7 @@ func buildOAuthClient(
 	ts := oauth2.ReuseTokenSource(nil, conf.TokenSource(ctx))
 	client := &http.Client{
 		Transport: &oauth2.Transport{
-			Base: &ochttp.Transport{
-				Base: newDefaultRoundTripper(),
-			},
+			Base:   otelhttp.NewTransport(newDefaultRoundTripper()),
 			Source: ts,
 		},
 		Timeout: timeout,
@@ -278,7 +280,7 @@ func (c *V1Client) IsUp(ctx context.Context) bool {
 
 // buildDataRequest builds an HTTP request for a given method, URL, and body data.
 func (c *V1Client) buildDataRequest(ctx context.Context, method, uri string, in interface{}) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	body, err := createBodyFromStruct(in)
@@ -299,7 +301,7 @@ func (c *V1Client) buildDataRequest(ctx context.Context, method, uri string, in 
 // executeRequest takes a given request and executes it with the auth client. It returns some errors
 // upon receiving certain status codes, but otherwise will return nil upon success.
 func (c *V1Client) executeRequest(ctx context.Context, req *http.Request, out interface{}) error {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	res, err := c.executeRawRequest(ctx, c.authedClient, req)
@@ -315,7 +317,7 @@ func (c *V1Client) executeRequest(ctx context.Context, req *http.Request, out in
 	}
 
 	if out != nil {
-		if resErr := unmarshalBody(ctx, res, out); resErr != nil {
+		if resErr := c.unmarshalBody(ctx, res, out); resErr != nil {
 			return fmt.Errorf("loading response from server: %w", err)
 		}
 	}
@@ -326,7 +328,7 @@ func (c *V1Client) executeRequest(ctx context.Context, req *http.Request, out in
 // executeRawRequest takes a given *http.Request and executes it with the provided.
 // client, alongside some debugging logging.
 func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := c.logger.WithRequest(req)
@@ -353,7 +355,7 @@ func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, r
 
 // checkExistence executes an HTTP request and loads the response content into a bool.
 func (c *V1Client) checkExistence(ctx context.Context, req *http.Request) (bool, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	res, err := c.executeRawRequest(ctx, c.authedClient, req)
@@ -369,7 +371,7 @@ func (c *V1Client) checkExistence(ctx context.Context, req *http.Request) (bool,
 // retrieve executes an HTTP request and loads the response content into a struct. In the event of a 404,
 // the provided ErrNotFound is returned.
 func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interface{}) error {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if err := argIsNotPointerOrNil(obj); err != nil {
@@ -385,12 +387,12 @@ func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interfac
 		return ErrNotFound
 	}
 
-	return unmarshalBody(ctx, res, &obj)
+	return c.unmarshalBody(ctx, res, &obj)
 }
 
 // executeUnauthenticatedDataRequest takes a given request and loads the response into an interface value.
 func (c *V1Client) executeUnauthenticatedDataRequest(ctx context.Context, req *http.Request, out interface{}) error {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	res, err := c.executeRawRequest(ctx, c.plainClient, req)
@@ -406,7 +408,7 @@ func (c *V1Client) executeUnauthenticatedDataRequest(ctx context.Context, req *h
 	}
 
 	if out != nil {
-		if resErr := unmarshalBody(ctx, res, out); resErr != nil {
+		if resErr := c.unmarshalBody(ctx, res, out); resErr != nil {
 			return fmt.Errorf("loading response from server: %w", err)
 		}
 	}

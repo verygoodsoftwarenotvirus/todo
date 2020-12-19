@@ -4,8 +4,6 @@ import (
 	"context"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 )
 
 const (
@@ -22,9 +20,6 @@ type (
 
 // Validate validates the S3Config.
 func (c *S3Config) Validate(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, c,
 		validation.Field(&c.BucketName, validation.Required),
 	)

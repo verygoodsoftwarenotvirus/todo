@@ -51,7 +51,7 @@ func determineScope(req *http.Request) string {
 
 // ExtractOAuth2ClientFromRequest extracts OAuth2 client data from a request.
 func (s *service) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.Request) (*types.OAuth2Client, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -88,7 +88,7 @@ func (s *service) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.
 
 // ListHandler is a handler that returns a list of OAuth2 clients.
 func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -120,7 +120,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 
 // CreateHandler is our OAuth2 client creation route.
 func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -193,7 +193,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 // ReadHandler is a route handler for retrieving an OAuth2 client.
 func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -226,7 +226,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 
 // ArchiveHandler is a route handler for archiving an OAuth2 client.
 func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -261,7 +261,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 // AuditEntryHandler returns a GET handler that returns all audit log entries related to an item.
 func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)

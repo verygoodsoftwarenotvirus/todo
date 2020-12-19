@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -16,7 +15,7 @@ const (
 
 // UserAccountStatusChangeHandler changes a user's status.
 func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)

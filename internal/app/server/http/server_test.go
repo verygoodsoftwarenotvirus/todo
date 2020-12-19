@@ -6,6 +6,7 @@ import (
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -28,6 +29,7 @@ func buildTestServer() *Server {
 		authService:          &mocktypes.AuthService{},
 		itemsService:         &mocktypes.ItemDataServer{},
 		oauth2ClientsService: &mocktypes.OAuth2ClientDataServer{},
+		tracer:               tracing.NewTracer("test"),
 	}
 
 	return s

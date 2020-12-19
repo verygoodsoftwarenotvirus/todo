@@ -17,7 +17,7 @@ const (
 
 // BuildItemExistsRequest builds an HTTP request for checking the existence of an item.
 func (c *V1Client) BuildItemExistsRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(
@@ -32,7 +32,7 @@ func (c *V1Client) BuildItemExistsRequest(ctx context.Context, itemID uint64) (*
 
 // ItemExists retrieves whether or not an item exists.
 func (c *V1Client) ItemExists(ctx context.Context, itemID uint64) (exists bool, err error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildItemExistsRequest(ctx, itemID)
@@ -45,7 +45,7 @@ func (c *V1Client) ItemExists(ctx context.Context, itemID uint64) (exists bool, 
 
 // BuildGetItemRequest builds an HTTP request for fetching an item.
 func (c *V1Client) BuildGetItemRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(
@@ -60,7 +60,7 @@ func (c *V1Client) BuildGetItemRequest(ctx context.Context, itemID uint64) (*htt
 
 // GetItem retrieves an item.
 func (c *V1Client) GetItem(ctx context.Context, itemID uint64) (item *types.Item, err error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildGetItemRequest(ctx, itemID)
@@ -77,7 +77,7 @@ func (c *V1Client) GetItem(ctx context.Context, itemID uint64) (item *types.Item
 
 // BuildSearchItemsRequest builds an HTTP request for querying items.
 func (c *V1Client) BuildSearchItemsRequest(ctx context.Context, query string, limit uint8) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	params := url.Values{}
@@ -96,7 +96,7 @@ func (c *V1Client) BuildSearchItemsRequest(ctx context.Context, query string, li
 
 // SearchItems searches for a list of items.
 func (c *V1Client) SearchItems(ctx context.Context, query string, limit uint8) (items []types.Item, err error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildSearchItemsRequest(ctx, query, limit)
@@ -113,7 +113,7 @@ func (c *V1Client) SearchItems(ctx context.Context, query string, limit uint8) (
 
 // BuildGetItemsRequest builds an HTTP request for fetching items.
 func (c *V1Client) BuildGetItemsRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(
@@ -127,7 +127,7 @@ func (c *V1Client) BuildGetItemsRequest(ctx context.Context, filter *types.Query
 
 // GetItems retrieves a list of items.
 func (c *V1Client) GetItems(ctx context.Context, filter *types.QueryFilter) (items *types.ItemList, err error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildGetItemsRequest(ctx, filter)
@@ -144,7 +144,7 @@ func (c *V1Client) GetItems(ctx context.Context, filter *types.QueryFilter) (ite
 
 // BuildCreateItemRequest builds an HTTP request for creating an item.
 func (c *V1Client) BuildCreateItemRequest(ctx context.Context, input *types.ItemCreationInput) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(
@@ -158,7 +158,7 @@ func (c *V1Client) BuildCreateItemRequest(ctx context.Context, input *types.Item
 
 // CreateItem creates an item.
 func (c *V1Client) CreateItem(ctx context.Context, input *types.ItemCreationInput) (item *types.Item, err error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildCreateItemRequest(ctx, input)
@@ -173,7 +173,7 @@ func (c *V1Client) CreateItem(ctx context.Context, input *types.ItemCreationInpu
 
 // BuildUpdateItemRequest builds an HTTP request for updating an item.
 func (c *V1Client) BuildUpdateItemRequest(ctx context.Context, item *types.Item) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(
@@ -188,7 +188,7 @@ func (c *V1Client) BuildUpdateItemRequest(ctx context.Context, item *types.Item)
 
 // UpdateItem updates an item.
 func (c *V1Client) UpdateItem(ctx context.Context, item *types.Item) error {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildUpdateItemRequest(ctx, item)
@@ -201,7 +201,7 @@ func (c *V1Client) UpdateItem(ctx context.Context, item *types.Item) error {
 
 // BuildArchiveItemRequest builds an HTTP request for updating an item.
 func (c *V1Client) BuildArchiveItemRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(
@@ -216,7 +216,7 @@ func (c *V1Client) BuildArchiveItemRequest(ctx context.Context, itemID uint64) (
 
 // ArchiveItem archives an item.
 func (c *V1Client) ArchiveItem(ctx context.Context, itemID uint64) error {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildArchiveItemRequest(ctx, itemID)
@@ -229,7 +229,7 @@ func (c *V1Client) ArchiveItem(ctx context.Context, itemID uint64) error {
 
 // BuildGetAuditLogForItemRequest builds an HTTP request for fetching a list of audit log entries pertaining to an item.
 func (c *V1Client) BuildGetAuditLogForItemRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(
@@ -245,7 +245,7 @@ func (c *V1Client) BuildGetAuditLogForItemRequest(ctx context.Context, itemID ui
 
 // GetAuditLogForItem retrieves a list of audit log entries pertaining to an item.
 func (c *V1Client) GetAuditLogForItem(ctx context.Context, itemID uint64) (entries []types.AuditLogEntry, err error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildGetAuditLogForItemRequest(ctx, itemID)

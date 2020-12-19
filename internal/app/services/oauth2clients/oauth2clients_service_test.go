@@ -12,6 +12,7 @@ import (
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -35,7 +36,7 @@ func buildTestService(t *testing.T) *service {
 	manager := manage.NewDefaultManager()
 	manager.MustTokenStorage(tokenStore, err)
 
-	service := &service{
+	return &service{
 		clientDataManager:    database.BuildMockDatabase(),
 		logger:               noop.NewLogger(),
 		encoderDecoder:       &mockencoding.EncoderDecoder{},
@@ -43,9 +44,8 @@ func buildTestService(t *testing.T) *service {
 		urlClientIDExtractor: func(req *http.Request) uint64 { return 0 },
 		oauth2ClientCounter:  &mockmetrics.UnitCounter{},
 		oauth2Handler:        oauth2server.NewDefaultServer(manager),
+		tracer:               tracing.NewTracer(serviceName),
 	}
-
-	return service
 }
 
 func TestProvideOAuth2ClientsService(T *testing.T) {
@@ -55,7 +55,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		t.Parallel()
 		mockOAuth2ClientDataManager := &mocktypes.OAuth2ClientDataManager{}
 
-		service, err := ProvideOAuth2ClientsService(
+		s, err := ProvideOAuth2ClientsService(
 			noop.NewLogger(),
 			mockOAuth2ClientDataManager,
 			&mocktypes.UserDataManager{},
@@ -67,7 +67,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 			},
 		)
 		assert.NoError(t, err)
-		assert.NotNil(t, service)
+		assert.NotNil(t, s)
 
 		mock.AssertExpectationsForObjects(t, mockOAuth2ClientDataManager)
 	})
@@ -76,7 +76,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		t.Parallel()
 		mockOAuth2ClientDataManager := &mocktypes.OAuth2ClientDataManager{}
 
-		service, err := ProvideOAuth2ClientsService(
+		s, err := ProvideOAuth2ClientsService(
 			noop.NewLogger(),
 			mockOAuth2ClientDataManager,
 			&mocktypes.UserDataManager{},
@@ -89,7 +89,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		)
 
 		assert.Error(t, err)
-		assert.Nil(t, service)
+		assert.Nil(t, s)
 
 		mock.AssertExpectationsForObjects(t, mockOAuth2ClientDataManager)
 	})
@@ -111,7 +111,10 @@ func Test_clientStore_GetByID(T *testing.T) {
 			exampleOAuth2Client.ClientID,
 		).Return(exampleOAuth2Client, nil)
 
-		c := &clientStore{dataManager: mockDB}
+		c := &clientStore{
+			dataManager: mockDB,
+			tracer:      tracing.NewTracer("test"),
+		}
 		actual, err := c.GetByID(ctx, exampleOAuth2Client.ClientID)
 
 		assert.NoError(t, err)
@@ -133,7 +136,10 @@ func Test_clientStore_GetByID(T *testing.T) {
 			exampleID,
 		).Return((*types.OAuth2Client)(nil), sql.ErrNoRows)
 
-		c := &clientStore{dataManager: mockDB}
+		c := &clientStore{
+			dataManager: mockDB,
+			tracer:      tracing.NewTracer("test"),
+		}
 		_, err := c.GetByID(ctx, exampleID)
 
 		assert.Error(t, err)
@@ -154,7 +160,10 @@ func Test_clientStore_GetByID(T *testing.T) {
 			exampleID,
 		).Return((*types.OAuth2Client)(nil), errors.New(exampleID))
 
-		c := &clientStore{dataManager: mockDB}
+		c := &clientStore{
+			dataManager: mockDB,
+			tracer:      tracing.NewTracer("test"),
+		}
 		_, err := c.GetByID(ctx, exampleID)
 
 		assert.Error(t, err)

@@ -54,7 +54,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 		middleware.RequestID,
 		middleware.RealIP,
 		middleware.Timeout(maxTimeout),
-		buildLoggingMiddleware(s.logger.WithName("middleware")),
+		buildLoggingMiddleware(s.logger.WithName("middleware"), s.tracer),
 		ch.Handler,
 	)
 

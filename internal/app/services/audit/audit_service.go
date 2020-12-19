@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -26,6 +27,7 @@ type (
 		auditLogEntryIDFetcher func(*http.Request) uint64
 		sessionInfoFetcher     func(*http.Request) (*types.SessionInfo, error)
 		encoderDecoder         encoding.EncoderDecoder
+		tracer                 tracing.Tracer
 	}
 )
 
@@ -41,6 +43,7 @@ func ProvideService(
 		auditLogEntryIDFetcher: routeparams.BuildRouteParamIDFetcher(logger, LogEntryURIParamKey, "audit log entry"),
 		sessionInfoFetcher:     routeparams.SessionInfoFetcherFromRequestContext,
 		encoderDecoder:         encoder,
+		tracer:                 tracing.NewTracer(serviceName),
 	}
 
 	return svc

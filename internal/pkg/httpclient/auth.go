@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -16,7 +15,7 @@ const (
 
 // BuildStatusRequest builds an HTTP request that fetches a user's status.
 func (c *V1Client) BuildStatusRequest(ctx context.Context, cookie *http.Cookie) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.buildVersionlessURL(nil, authBasePath, "status")
@@ -33,7 +32,7 @@ func (c *V1Client) BuildStatusRequest(ctx context.Context, cookie *http.Cookie) 
 
 // Status executes an HTTP request that fetches a user's status.
 func (c *V1Client) Status(ctx context.Context, cookie *http.Cookie) (*types.UserStatusResponse, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildStatusRequest(ctx, cookie)
@@ -52,7 +51,7 @@ func (c *V1Client) Status(ctx context.Context, cookie *http.Cookie) (*types.User
 
 // BuildLoginRequest builds an authenticating HTTP request.
 func (c *V1Client) BuildLoginRequest(ctx context.Context, input *types.UserLoginInput) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if input == nil {
@@ -66,7 +65,7 @@ func (c *V1Client) BuildLoginRequest(ctx context.Context, input *types.UserLogin
 
 // Login will, when provided the correct credentials, fetch a login cookie.
 func (c *V1Client) Login(ctx context.Context, input *types.UserLoginInput) (*http.Cookie, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if input == nil {
@@ -95,7 +94,7 @@ func (c *V1Client) Login(ctx context.Context, input *types.UserLoginInput) (*htt
 
 // BuildLogoutRequest builds a de-authorizing HTTP request.
 func (c *V1Client) BuildLogoutRequest(ctx context.Context) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.buildVersionlessURL(nil, usersBasePath, "logout")
@@ -105,7 +104,7 @@ func (c *V1Client) BuildLogoutRequest(ctx context.Context) (*http.Request, error
 
 // Logout logs a user out.
 func (c *V1Client) Logout(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildLogoutRequest(ctx)
@@ -125,7 +124,7 @@ func (c *V1Client) Logout(ctx context.Context) error {
 
 // BuildChangePasswordRequest builds a request to change a user's password.
 func (c *V1Client) BuildChangePasswordRequest(ctx context.Context, cookie *http.Cookie, input *types.PasswordUpdateInput) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if input == nil {
@@ -146,7 +145,7 @@ func (c *V1Client) BuildChangePasswordRequest(ctx context.Context, cookie *http.
 
 // ChangePassword executes a request to change a user's password.
 func (c *V1Client) ChangePassword(ctx context.Context, cookie *http.Cookie, input *types.PasswordUpdateInput) error {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildChangePasswordRequest(ctx, cookie, input)
@@ -170,7 +169,7 @@ func (c *V1Client) ChangePassword(ctx context.Context, cookie *http.Cookie, inpu
 
 // BuildCycleTwoFactorSecretRequest builds a request to change a user's 2FA secret.
 func (c *V1Client) BuildCycleTwoFactorSecretRequest(ctx context.Context, cookie *http.Cookie, input *types.TOTPSecretRefreshInput) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if input == nil {
@@ -191,7 +190,7 @@ func (c *V1Client) BuildCycleTwoFactorSecretRequest(ctx context.Context, cookie 
 
 // CycleTwoFactorSecret executes a request to change a user's 2FA secret.
 func (c *V1Client) CycleTwoFactorSecret(ctx context.Context, cookie *http.Cookie, input *types.TOTPSecretRefreshInput) (*types.TOTPSecretRefreshResponse, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildCycleTwoFactorSecretRequest(ctx, cookie, input)
@@ -207,7 +206,7 @@ func (c *V1Client) CycleTwoFactorSecret(ctx context.Context, cookie *http.Cookie
 
 // BuildVerifyTOTPSecretRequest builds a request to validate a TOTP secret.
 func (c *V1Client) BuildVerifyTOTPSecretRequest(ctx context.Context, userID uint64, token string) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.buildVersionlessURL(nil, usersBasePath, "totp_secret", "verify")
@@ -220,7 +219,7 @@ func (c *V1Client) BuildVerifyTOTPSecretRequest(ctx context.Context, userID uint
 
 // VerifyTOTPSecret executes a request to verify a TOTP secret.
 func (c *V1Client) VerifyTOTPSecret(ctx context.Context, userID uint64, token string) error {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildVerifyTOTPSecretRequest(ctx, userID, token)

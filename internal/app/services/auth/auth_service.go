@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -42,6 +43,7 @@ type (
 		cookieManager        cookieEncoderDecoder
 		sessionManager       *scs.SessionManager
 		sessionInfoFetcher   func(*http.Request) (*types.SessionInfo, error)
+		tracer               tracing.Tracer
 	}
 )
 
@@ -70,6 +72,7 @@ func ProvideService(
 			securecookie.GenerateRandomKey(cookieSecretSize),
 			[]byte(cfg.CookieSigningKey),
 		),
+		tracer: tracing.NewTracer(serviceName),
 	}
 	svc.sessionManager.Lifetime = cfg.CookieLifetime
 

@@ -8,10 +8,11 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
-	"contrib.go.opencensus.io/integrations/ocsql"
 	"github.com/Masterminds/squirrel"
 	"github.com/go-sql-driver/mysql"
+	"github.com/luna-duclos/instrumentedsql"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
@@ -31,21 +32,6 @@ const (
 	maximumConnectionAttempts        = 50
 	defaultBucketSize         uint64 = 1000
 )
-
-func init() {
-	// Register our ocsql wrapper as a db driverName.
-	sql.Register(
-		driverName,
-		ocsql.Wrap(
-			&mysql.MySQLDriver{},
-			ocsql.WithQuery(true),
-			ocsql.WithAllowRoot(false),
-			ocsql.WithRowsNext(true),
-			ocsql.WithRowsClose(true),
-			ocsql.WithQueryParams(true),
-		),
-	)
-}
 
 var _ database.DataManager = (*MariaDB)(nil)
 
@@ -71,17 +57,28 @@ type (
 	}
 )
 
+var instrumentedDriverRegistration sync.Once
+
 // ProvideMariaDBConnection provides an instrumented maria DB db.
 func ProvideMariaDBConnection(logger logging.Logger, connectionDetails database.ConnectionDetails, metricsCollectionInterval time.Duration) (*sql.DB, error) {
 	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to maria DB")
+
+	instrumentedDriverRegistration.Do(func() {
+		sql.Register(
+			driverName,
+			instrumentedsql.WrapDriver(
+				&mysql.MySQLDriver{},
+				instrumentedsql.WithOmitArgs(),
+				instrumentedsql.WithTracer(tracing.NewInstrumentedSQLTracer("mariadb_connection")),
+				instrumentedsql.WithLogger(tracing.NewInstrumentedSQLLogger(logger)),
+			),
+		)
+	})
 
 	db, err := sql.Open(driverName, string(connectionDetails))
 	if err != nil {
 		return nil, err
 	}
-
-	ocsql.RegisterAllViews()
-	ocsql.RecordStats(db, metricsCollectionInterval)
 
 	return db, nil
 }

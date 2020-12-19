@@ -5,7 +5,6 @@ import (
 	"math"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -246,9 +245,6 @@ func (u *User) IsBanned() bool {
 
 // Validate ensures our provided UserCreationInput meets expectations.
 func (i *UserCreationInput) Validate(ctx context.Context, minUsernameLength, minPasswordLength uint8) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.Username, validation.Required, validation.Length(int(minUsernameLength), math.MaxInt8)),
 		validation.Field(&i.Password, validation.Required, validation.Length(int(minPasswordLength), math.MaxInt8)),
@@ -257,9 +253,6 @@ func (i *UserCreationInput) Validate(ctx context.Context, minUsernameLength, min
 
 // Validate ensures our  provided UserLoginInput meets expectations.
 func (i *UserLoginInput) Validate(ctx context.Context, minUsernameLength, minPasswordLength uint8) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.Username, validation.Required, validation.Length(int(minUsernameLength), math.MaxInt8)),
 		validation.Field(&i.Password, validation.Required, validation.Length(int(minPasswordLength), math.MaxInt8)),
@@ -269,9 +262,6 @@ func (i *UserLoginInput) Validate(ctx context.Context, minUsernameLength, minPas
 
 // Validate ensures our provided PasswordUpdateInput meets expectations.
 func (i *PasswordUpdateInput) Validate(ctx context.Context, minPasswordLength uint8) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.CurrentPassword, validation.Required, validation.Length(int(minPasswordLength), math.MaxInt8)),
 		validation.Field(&i.NewPassword, validation.Required, validation.Length(int(minPasswordLength), math.MaxInt8)),
@@ -281,9 +271,6 @@ func (i *PasswordUpdateInput) Validate(ctx context.Context, minPasswordLength ui
 
 // Validate ensures our provided TOTPSecretRefreshInput meets expectations.
 func (i *TOTPSecretRefreshInput) Validate(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.CurrentPassword, validation.Required),
 		validation.Field(&i.TOTPToken, validation.Required, totpTokenLengthRule),
@@ -292,9 +279,6 @@ func (i *TOTPSecretRefreshInput) Validate(ctx context.Context) error {
 
 // Validate ensures our provided TOTPSecretVerificationInput meets expectations.
 func (i *TOTPSecretVerificationInput) Validate(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.UserID, validation.Required),
 		validation.Field(&i.TOTPToken, validation.Required, totpTokenLengthRule),

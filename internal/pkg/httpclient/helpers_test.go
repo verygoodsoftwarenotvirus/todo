@@ -100,6 +100,8 @@ func TestUnmarshalBody(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
+		c := buildTestClient(t, nil)
+
 		expected := "whatever"
 		res := &http.Response{
 			Body:       ioutil.NopCloser(strings.NewReader(fmt.Sprintf(`{"name": %q}`, expected))),
@@ -107,7 +109,7 @@ func TestUnmarshalBody(T *testing.T) {
 		}
 		var out testingType
 
-		err := unmarshalBody(ctx, res, &out)
+		err := c.unmarshalBody(ctx, res, &out)
 		assert.Equal(t, out.Name, expected, "expected marshaling to work")
 		assert.NoError(t, err, "no error should be encountered unmarshaling into a valid struct")
 	})
@@ -116,19 +118,23 @@ func TestUnmarshalBody(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
+		c := buildTestClient(t, nil)
+
 		res := &http.Response{
 			Body:       ioutil.NopCloser(strings.NewReader("BLAH")),
 			StatusCode: http.StatusOK,
 		}
 		var out testingType
 
-		err := unmarshalBody(ctx, res, &out)
+		err := c.unmarshalBody(ctx, res, &out)
 		assert.Error(t, err, "error should be encountered unmarshaling invalid response into a valid struct")
 	})
 
 	T.Run("with an erroneous error code", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
+
+		c := buildTestClient(t, nil)
 
 		res := &http.Response{
 			Body: ioutil.NopCloser(
@@ -144,7 +150,7 @@ func TestUnmarshalBody(T *testing.T) {
 		}
 		var out *testingType
 
-		err := unmarshalBody(ctx, res, &out)
+		err := c.unmarshalBody(ctx, res, &out)
 		assert.Nil(t, out, "expected nil to be returned")
 		assert.Error(t, err, "error should be returned from the API")
 	})
@@ -153,13 +159,15 @@ func TestUnmarshalBody(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
+		c := buildTestClient(t, nil)
+
 		res := &http.Response{
 			Body:       ioutil.NopCloser(strings.NewReader("BLAH")),
 			StatusCode: http.StatusBadRequest,
 		}
 		var out *testingType
 
-		err := unmarshalBody(ctx, res, &out)
+		err := c.unmarshalBody(ctx, res, &out)
 		assert.Nil(t, out, "expected nil to be returned")
 		assert.Error(t, err, "error should be returned from the unmarshaller")
 	})
@@ -168,13 +176,17 @@ func TestUnmarshalBody(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		err := unmarshalBody(ctx, nil, nil)
+		c := buildTestClient(t, nil)
+
+		err := c.unmarshalBody(ctx, nil, nil)
 		assert.Error(t, err, "error should be encountered when passed nil")
 	})
 
 	T.Run("with erroneous reader", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
+
+		c := buildTestClient(t, nil)
 
 		expected := errors.New("blah")
 
@@ -187,7 +199,7 @@ func TestUnmarshalBody(T *testing.T) {
 		}
 		var out testingType
 
-		err := unmarshalBody(ctx, res, &out)
+		err := c.unmarshalBody(ctx, res, &out)
 		assert.Equal(t, expected, err)
 		assert.Error(t, err, "no error should be encountered unmarshaling into a valid struct")
 

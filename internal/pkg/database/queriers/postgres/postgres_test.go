@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -121,7 +120,7 @@ func TestProvidePostgresDB(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		_, err := ProvidePostgresDB(noop.NewLogger(), "", time.Hour)
+		_, err := ProvidePostgresDB(noop.NewLogger(), "")
 		assert.NoError(t, err)
 	})
 }

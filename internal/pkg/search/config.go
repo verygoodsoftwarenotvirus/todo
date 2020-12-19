@@ -3,8 +3,6 @@ package search
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -23,9 +21,6 @@ type Config struct {
 
 // Validate validates a Config struct.
 func (cfg Config) Validate(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, &cfg,
 		validation.Field(&cfg.Provider, validation.In(BleveProvider)),
 		validation.Field(&cfg.ItemsIndexPath, validation.Required),

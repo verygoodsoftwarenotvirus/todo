@@ -15,7 +15,6 @@ import (
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 	uploadconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/config"
 )
@@ -75,9 +74,6 @@ func (cfg *ServerConfig) EncodeToFile(path string, marshaller func(v interface{}
 
 // Validate validates a ServerConfig struct.
 func (cfg *ServerConfig) Validate(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	if err := cfg.Auth.Validate(ctx); err != nil {
 		return fmt.Errorf("error validating the Auth portion of config: %w", err)
 	}

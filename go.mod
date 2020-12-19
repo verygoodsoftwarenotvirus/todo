@@ -5,7 +5,7 @@ go 1.15
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.0
 	contrib.go.opencensus.io/exporter/prometheus v0.1.0
-	contrib.go.opencensus.io/integrations/ocsql v0.1.7
+	contrib.go.opencensus.io/integrations/ocsql v0.1.7 // indirect
 	github.com/Azure/azure-pipeline-go v0.2.3
 	github.com/Azure/azure-storage-blob-go v0.11.0
 	github.com/DATA-DOG/go-sqlmock v1.4.1
@@ -30,6 +30,7 @@ require (
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
 	github.com/lane-c-wagner/go-password-validator v0.1.0
 	github.com/lib/pq v1.9.0
+	github.com/luna-duclos/instrumentedsql v1.1.3
 	github.com/makiuchi-d/gozxing v0.0.0-20200903113411-25f730ed83da
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/moul/http2curl v1.0.0
@@ -43,7 +44,10 @@ require (
 	gitlab.com/verygoodsoftwarenotvirus/logging/v2 v2.0.0
 	gitlab.com/verygoodsoftwarenotvirus/newsman v1.0.1
 	go.opencensus.io v0.22.5
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.15.1
 	go.opentelemetry.io/otel v0.15.0
+	go.opentelemetry.io/otel/exporters/trace/jaeger v0.15.0
+	go.opentelemetry.io/otel/sdk v0.15.0
 	gocloud.dev v0.21.0
 	golang.org/x/crypto v0.0.0-20201203163018-be400aefbc4c
 	golang.org/x/oauth2 v0.0.0-20201203001011-0b49973bad19

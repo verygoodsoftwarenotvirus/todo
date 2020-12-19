@@ -99,7 +99,7 @@ func main() {
 
 	// establish the database client.
 	logger.Debug("setting up database client")
-	dbClient, err := cfg.Database.ProvideDatabaseClient(ctx, logger, rawDB, cfg.Database.MetricsCollectionInterval)
+	dbClient, err := cfg.Database.ProvideDatabaseClient(ctx, logger, rawDB)
 	if err != nil {
 		log.Fatalf("error initializing database client: %v", err)
 	}

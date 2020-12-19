@@ -143,6 +143,9 @@ func (s *service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, erro
 	fs := http.StripPrefix("/", http.FileServer(httpFs.Dir(fileDir)))
 
 	return func(res http.ResponseWriter, req *http.Request) {
+		_, span := s.tracer.StartSpan(req.Context())
+		defer span.End()
+
 		rl := s.logger.WithRequest(req)
 
 		if s.config.LogStaticFiles {

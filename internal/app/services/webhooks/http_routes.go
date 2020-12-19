@@ -45,7 +45,7 @@ func validateWebhook(input *types.WebhookCreationInput) error {
 
 // CreateHandler is our webhook creation route.
 func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -99,7 +99,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 // ListHandler is our list route.
 func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -136,7 +136,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 
 // ReadHandler returns a GET handler that returns an webhook.
 func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -176,7 +176,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 
 // UpdateHandler returns a handler that updates an webhook.
 func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -238,7 +238,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 
 // ArchiveHandler returns a handler that archives an webhook.
 func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -282,7 +282,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 // AuditEntryHandler returns a GET handler that returns all audit log entries related to an item.
 func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)

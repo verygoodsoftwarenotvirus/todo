@@ -15,6 +15,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+const (
+	observableName = "bcrypt"
+)
+
 func init() {
 	b := make([]byte, 64)
 	if _, err := rand.Read(b); err != nil {
@@ -43,6 +47,7 @@ type (
 		logger              logging.Logger
 		hashCost            uint
 		minimumPasswordSize uint
+		tracer              tracing.Tracer
 	}
 
 	// HashCost is a type alias for dependency injection's sake.
@@ -52,9 +57,10 @@ type (
 // ProvideAuthenticator returns a bcrypt powered Authenticator.
 func ProvideAuthenticator(hashCost HashCost, logger logging.Logger) password.Authenticator {
 	ba := &Authenticator{
-		logger:              logger.WithName("bcrypt"),
+		logger:              logger.WithName(observableName),
 		hashCost:            uint(math.Min(float64(DefaultHashCost), float64(hashCost))),
 		minimumPasswordSize: defaultMinimumPasswordSize,
+		tracer:              tracing.NewTracer(observableName),
 	}
 
 	return ba
@@ -62,7 +68,7 @@ func ProvideAuthenticator(hashCost HashCost, logger logging.Logger) password.Aut
 
 // HashPassword takes a password and hashes it using bcrypt.
 func (b *Authenticator) HashPassword(ctx context.Context, passwordToHash string) (string, error) {
-	_, span := tracing.StartSpan(ctx)
+	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(passwordToHash), int(b.hashCost))
@@ -82,7 +88,7 @@ func (b *Authenticator) ValidateLogin(
 	twoFactorCode string,
 	_ []byte,
 ) (passwordMatches bool, err error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	passwordMatches = b.PasswordMatches(ctx, hashedPassword, providedPassword, nil)
@@ -112,7 +118,7 @@ func (b *Authenticator) ValidateLogin(
 
 // PasswordMatches validates whether or not a bcrypt-hashed password matches a provided password.
 func (b *Authenticator) PasswordMatches(ctx context.Context, hashedPassword, providedPassword string, _ []byte) bool {
-	_, span := tracing.StartSpan(ctx)
+	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(providedPassword)) == nil
@@ -120,7 +126,7 @@ func (b *Authenticator) PasswordMatches(ctx context.Context, hashedPassword, pro
 
 // hashedPasswordIsTooWeak determines if a given hashed password was hashed with too weak a bcrypt cost.
 func (b *Authenticator) hashedPasswordIsTooWeak(ctx context.Context, hashedPassword string) error {
-	_, span := tracing.StartSpan(ctx)
+	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	cost, err := bcrypt.Cost([]byte(hashedPassword))

@@ -50,7 +50,7 @@ func TestProvideUsersService(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		service, err := ProvideUsersService(
+		s, err := ProvideUsersService(
 			authservice.Config{},
 			noop.NewLogger(),
 			&mocktypes.UserDataManager{},
@@ -62,7 +62,7 @@ func TestProvideUsersService(T *testing.T) {
 			},
 		)
 		assert.NoError(t, err)
-		assert.NotNil(t, service)
+		assert.NotNil(t, s)
 	})
 
 	T.Run("with error initializing counter", func(t *testing.T) {
@@ -71,7 +71,7 @@ func TestProvideUsersService(T *testing.T) {
 			return &mockmetrics.UnitCounter{}, errors.New("blah")
 		}
 
-		service, err := ProvideUsersService(
+		s, err := ProvideUsersService(
 			authservice.Config{},
 			noop.NewLogger(),
 			&mocktypes.UserDataManager{},
@@ -81,6 +81,6 @@ func TestProvideUsersService(T *testing.T) {
 			ucp,
 		)
 		assert.Error(t, err)
-		assert.Nil(t, service)
+		assert.Nil(t, s)
 	})
 }

@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"reflect"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -53,8 +52,8 @@ func argIsNotPointerOrNil(i interface{}) error {
 // pointer to an object. Ideally, response is also not nil.
 // The error returned here should only ever be received in
 // testing, and should never be encountered by an end-user.
-func unmarshalBody(ctx context.Context, res *http.Response, dest interface{}) error {
-	_, span := tracing.StartSpan(ctx)
+func (c *V1Client) unmarshalBody(ctx context.Context, res *http.Response, dest interface{}) error {
+	_, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if err := argIsNotPointerOrNil(dest); err != nil {

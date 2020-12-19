@@ -3,8 +3,6 @@ package frontend
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -22,9 +20,6 @@ type Config struct {
 
 // Validate validates a Config struct.
 func (s Config) Validate(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, &s,
 		validation.Field(&s.StaticFilesDirectory, validation.Required),
 	)

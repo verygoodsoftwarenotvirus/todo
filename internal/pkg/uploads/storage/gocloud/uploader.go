@@ -34,6 +34,7 @@ type (
 	Uploader struct {
 		bucket *blob.Bucket
 		logger logging.Logger
+		tracer tracing.Tracer
 	}
 
 	// UploaderConfig configures our UploadManager.
@@ -49,9 +50,6 @@ type (
 
 // Validate validates the UploaderConfig.
 func (c *UploaderConfig) Validate(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, c,
 		validation.Field(&c.Name, validation.Required),
 		validation.Field(&c.Provider, validation.In(AzureProvider, GCSProvider, S3Provider, FilesystemProvider, MemoryProvider)),
@@ -64,11 +62,10 @@ func (c *UploaderConfig) Validate(ctx context.Context) error {
 
 // NewUploadManager provides a new uploads.UploadManager.
 func NewUploadManager(ctx context.Context, logger logging.Logger, cfg *UploaderConfig) (uploads.UploadManager, error) {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
+	serviceName := fmt.Sprintf("%s_uploader", cfg.Name)
 	u := &Uploader{
-		logger: logger.WithName(fmt.Sprintf("%s_uploader", cfg.Name)),
+		logger: logger.WithName(serviceName),
+		tracer: tracing.NewTracer(serviceName),
 	}
 
 	if err := cfg.Validate(ctx); err != nil {
@@ -134,7 +131,7 @@ func selectBucket(ctx context.Context, logger logging.Logger, cfg *UploaderConfi
 
 // SaveFile saves a file to the blob.
 func (u *Uploader) SaveFile(ctx context.Context, path string, content []byte) error {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := u.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if err := u.bucket.WriteAll(ctx, path, content, nil); err != nil {
@@ -146,7 +143,7 @@ func (u *Uploader) SaveFile(ctx context.Context, path string, content []byte) er
 
 // ReadFile reads a file from the blob.
 func (u *Uploader) ReadFile(ctx context.Context, path string) ([]byte, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := u.tracer.StartSpan(ctx)
 	defer span.End()
 
 	r, err := u.bucket.NewReader(ctx, path, nil)

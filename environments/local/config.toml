@@ -20,7 +20,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$EAG9cY5e2r4fblGYQ3jNJezaOBGhykYCfHh0R6inaLov/XVT1h/WW"
+    hashed_password = "$2a$11$Azqcba2lh4JFNfGOatcs1OxZYSjEXyBDbP/GLtPQ/1RccH303E3G."
     is_admin = true
     password = "password"
     username = "username"

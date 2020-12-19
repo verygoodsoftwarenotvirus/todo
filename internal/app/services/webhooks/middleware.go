@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -12,7 +11,7 @@ import (
 func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.WebhookCreationInput)
-		ctx, span := tracing.StartSpan(req.Context())
+		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
@@ -39,7 +38,7 @@ func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 func (s *service) UpdateInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.WebhookUpdateInput)
-		ctx, span := tracing.StartSpan(req.Context())
+		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)

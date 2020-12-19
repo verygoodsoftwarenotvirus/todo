@@ -7,6 +7,7 @@ import (
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -45,6 +46,7 @@ type (
 		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
 		userCounter        metrics.UnitCounter
 		secretGenerator    secretGenerator
+		tracer             tracing.Tracer
 	}
 )
 
@@ -74,6 +76,7 @@ func ProvideUsersService(
 		authSettings:       authSettings,
 		userCounter:        counter,
 		secretGenerator:    &standardSecretGenerator{},
+		tracer:             tracing.NewTracer(serviceName),
 	}
 
 	return svc, nil

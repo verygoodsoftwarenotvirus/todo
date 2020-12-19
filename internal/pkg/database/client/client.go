@@ -27,11 +27,12 @@ type Client struct {
 	querier database.DataManager
 	debug   bool
 	logger  logging.Logger
+	tracer  tracing.Tracer
 }
 
 // Migrate is a simple wrapper around the core querier Migrate call.
 func (c *Client) Migrate(ctx context.Context, testUserConfig *types.TestUserCreationConfig) error {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	return c.querier.Migrate(ctx, testUserConfig)
@@ -39,7 +40,7 @@ func (c *Client) Migrate(ctx context.Context, testUserConfig *types.TestUserCrea
 
 // IsReady is a simple wrapper around the core querier IsReady call.
 func (c *Client) IsReady(ctx context.Context) (ready bool) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	return c.querier.IsReady(ctx)
@@ -47,7 +48,7 @@ func (c *Client) IsReady(ctx context.Context) (ready bool) {
 
 // BeginTx is a simple wrapper around the core querier BeginTx call.
 func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	return c.querier.BeginTx(ctx, opts)
@@ -68,6 +69,7 @@ func ProvideDatabaseClient(
 		querier: querier,
 		debug:   debug,
 		logger:  logger.WithName("db_client"),
+		tracer:  tracing.NewTracer("db_client"),
 	}
 
 	if debug {

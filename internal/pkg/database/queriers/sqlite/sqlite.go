@@ -8,9 +8,10 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
-	"contrib.go.opencensus.io/integrations/ocsql"
 	"github.com/Masterminds/squirrel"
+	"github.com/luna-duclos/instrumentedsql"
 	sqlite "github.com/mattn/go-sqlite3"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
@@ -30,21 +31,6 @@ const (
 
 	defaultBucketSize uint64 = 1000
 )
-
-func init() {
-	// Register our ocsql wrapper as a db driverName.
-	sql.Register(
-		driverName,
-		ocsql.Wrap(
-			&sqlite.SQLiteDriver{},
-			ocsql.WithQuery(true),
-			ocsql.WithAllowRoot(false),
-			ocsql.WithRowsNext(true),
-			ocsql.WithRowsClose(true),
-			ocsql.WithQueryParams(true),
-		),
-	)
-}
 
 var _ database.DataManager = (*Sqlite)(nil)
 
@@ -70,17 +56,28 @@ type (
 	}
 )
 
+var instrumentedDriverRegistration sync.Once
+
 // ProvideSqliteDB provides an instrumented sqlite db.
 func ProvideSqliteDB(logger logging.Logger, connectionDetails database.ConnectionDetails, metricsCollectionInterval time.Duration) (*sql.DB, error) {
 	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to sqlite")
+
+	instrumentedDriverRegistration.Do(func() {
+		sql.Register(
+			driverName,
+			instrumentedsql.WrapDriver(
+				&sqlite.SQLiteDriver{},
+				instrumentedsql.WithOmitArgs(),
+				instrumentedsql.WithTracer(tracing.NewInstrumentedSQLTracer("sqlite_connection")),
+				instrumentedsql.WithLogger(tracing.NewInstrumentedSQLLogger(logger)),
+			),
+		)
+	})
 
 	db, err := sql.Open(driverName, string(connectionDetails))
 	if err != nil {
 		return nil, err
 	}
-
-	ocsql.RegisterAllViews()
-	ocsql.RecordStats(db, metricsCollectionInterval)
 
 	return db, nil
 }

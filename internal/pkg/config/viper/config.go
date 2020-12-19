@@ -10,7 +10,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 
 	"github.com/spf13/viper"
@@ -140,9 +139,6 @@ var errInvalidTestUserRunModeConfiguration = errors.New("requested test user in 
 
 // ParseConfigFile parses a configuration file.
 func ParseConfigFile(ctx context.Context, logger logging.Logger, filePath string) (*config.ServerConfig, error) {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	logger = logger.WithValue("filepath", filePath)
 	logger.Debug("parsing config file")
 

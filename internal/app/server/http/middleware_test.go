@@ -37,7 +37,7 @@ func Test_formatSpanNameForRequest(T *testing.T) {
 		req.URL.Path = "/blah"
 
 		expected := "PATCH /blah"
-		actual := formatSpanNameForRequest(req)
+		actual := formatSpanNameForRequest("", req)
 
 		assert.Equal(t, expected, actual)
 	})
@@ -51,7 +51,7 @@ func TestServer_loggingMiddleware(T *testing.T) {
 		s := buildTestServer()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		buildLoggingMiddleware(s.logger)(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {})).ServeHTTP(res, req)
+		buildLoggingMiddleware(s.logger, s.tracer)(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {})).ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 	})

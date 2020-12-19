@@ -6,6 +6,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -34,6 +35,7 @@ type (
 		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
 		itemCounter        metrics.UnitCounter
 		encoderDecoder     encoding.EncoderDecoder
+		tracer             tracing.Tracer
 		search             SearchIndex
 	}
 
@@ -76,6 +78,7 @@ func ProvideService(
 		encoderDecoder:     encoder,
 		itemCounter:        itemCounter,
 		search:             searchIndexManager,
+		tracer:             tracing.NewTracer(serviceName),
 	}
 
 	return svc, nil

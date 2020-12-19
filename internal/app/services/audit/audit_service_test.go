@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
@@ -19,6 +20,7 @@ func buildTestService() *service {
 		auditLogEntryIDFetcher: func(req *http.Request) uint64 { return 0 },
 		sessionInfoFetcher:     func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
 		encoderDecoder:         &mockencoding.EncoderDecoder{},
+		tracer:                 tracing.NewTracer("test"),
 	}
 }
 

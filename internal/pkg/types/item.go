@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -115,9 +114,6 @@ func (x *Item) Update(input *ItemUpdateInput) []FieldChangeSummary {
 
 // Validate validates a ItemCreationInput.
 func (x *ItemCreationInput) Validate(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.Name, validation.Required),
 	)
@@ -125,9 +121,6 @@ func (x *ItemCreationInput) Validate(ctx context.Context) error {
 
 // Validate validates a ItemUpdateInput.
 func (x *ItemUpdateInput) Validate(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.Name, validation.Required),
 	)

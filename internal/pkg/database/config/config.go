@@ -13,10 +13,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/mariadb"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/sqlite"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
-	"contrib.go.opencensus.io/integrations/ocsql"
 	"github.com/alexedwards/scs/mysqlstore"
 	"github.com/alexedwards/scs/postgresstore"
 	"github.com/alexedwards/scs/sqlite3store"
@@ -55,9 +53,6 @@ type Config struct {
 
 // Validate validates an DatabaseSettings struct.
 func (cfg Config) Validate(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, &cfg,
 		validation.Field(&cfg.CreateTestUser),
 		validation.Field(&cfg.Provider, validation.In(PostgresProviderKey, MariaDBProviderKey, SqliteProviderKey)),
@@ -72,7 +67,7 @@ var errNilDatabaseConnection = errors.New("nil DB connection provided")
 func (cfg *Config) ProvideDatabaseConnection(logger logging.Logger) (*sql.DB, error) {
 	switch cfg.Provider {
 	case PostgresProviderKey:
-		return postgres.ProvidePostgresDB(logger, cfg.ConnectionDetails, cfg.MetricsCollectionInterval)
+		return postgres.ProvidePostgresDB(logger, cfg.ConnectionDetails)
 	case MariaDBProviderKey:
 		return mariadb.ProvideMariaDBConnection(logger, cfg.ConnectionDetails, cfg.MetricsCollectionInterval)
 	case SqliteProviderKey:
@@ -87,17 +82,10 @@ func (cfg *Config) ProvideDatabaseClient(
 	ctx context.Context,
 	logger logging.Logger,
 	rawDB *sql.DB,
-	metricsCollectionInterval time.Duration,
 ) (database.DataManager, error) {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	if rawDB == nil {
 		return nil, errNilDatabaseConnection
 	}
-
-	ocsql.RegisterAllViews()
-	ocsql.RecordStats(rawDB, metricsCollectionInterval)
 
 	var dbManager database.DataManager
 

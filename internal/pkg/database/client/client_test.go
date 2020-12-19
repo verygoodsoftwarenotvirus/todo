@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/stretchr/testify/assert"
@@ -22,6 +23,7 @@ func buildTestClient() (*Client, *database.MockDatabase) {
 	c := &Client{
 		logger:  noop.NewLogger(),
 		querier: db,
+		tracer:  tracing.NewTracer("test"),
 	}
 
 	return c, db
@@ -37,7 +39,9 @@ func TestMigrate(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.On("Migrate", mock.Anything, (*types.TestUserCreationConfig)(nil)).Return(nil)
 
-		c := &Client{querier: mockDB}
+		c, _ := buildTestClient()
+		c.querier = mockDB
+
 		assert.NoError(t, c.Migrate(ctx, nil))
 
 		mock.AssertExpectationsForObjects(t, mockDB)
@@ -47,10 +51,13 @@ func TestMigrate(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
+		c, _ := buildTestClient()
+
 		mockDB := database.BuildMockDatabase()
 		mockDB.On("Migrate", mock.Anything, (*types.TestUserCreationConfig)(nil)).Return(errors.New("blah"))
 
-		c := &Client{querier: mockDB}
+		c.querier = mockDB
+
 		assert.Error(t, c.Migrate(ctx, nil))
 
 		mock.AssertExpectationsForObjects(t, mockDB)
@@ -64,10 +71,12 @@ func TestIsReady(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
+		c, _ := buildTestClient()
+
 		mockDB := database.BuildMockDatabase()
 		mockDB.On("IsReady", mock.Anything).Return(true)
 
-		c := &Client{querier: mockDB}
+		c.querier = mockDB
 		c.IsReady(ctx)
 
 		mock.AssertExpectationsForObjects(t, mockDB)

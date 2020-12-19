@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/Azure/azure-storage-blob-go/azblob"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -74,9 +72,6 @@ func (cfg *AzureRetryConfig) buildRetryOptions() azblob.RetryOptions {
 
 // Validate validates the AzureTokenCreds.
 func (c *AzureTokenCreds) Validate(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, c,
 		validation.Field(&c.InitialToken, validation.Required),
 	)
@@ -84,9 +79,6 @@ func (c *AzureTokenCreds) Validate(ctx context.Context) error {
 
 // Validate validates the AzureSharedKeyConfig.
 func (c *AzureSharedKeyConfig) Validate(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, c,
 		validation.Field(&c.AccountName, validation.Required),
 		validation.Field(&c.AccountKey, validation.Required),
@@ -95,9 +87,6 @@ func (c *AzureSharedKeyConfig) Validate(ctx context.Context) error {
 
 // Validate validates the AzureUserDelegationConfig.
 func (c *AzureUserDelegationConfig) Validate(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, c,
 		validation.Field(&c, validation.Required),
 	)
@@ -105,9 +94,6 @@ func (c *AzureUserDelegationConfig) Validate(ctx context.Context) error {
 
 // Validate validates the AzureConfig.
 func (c *AzureConfig) Validate(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, c,
 		validation.Field(&c.AuthMethod, validation.Required),
 		validation.Field(&c.AccountName, validation.Required),

@@ -42,7 +42,7 @@ func TestProvideAdminService(T *testing.T) {
 		logger := noop.NewLogger()
 		ed := encoding.ProvideResponseEncoder(logger)
 
-		service, err := ProvideService(
+		s, err := ProvideService(
 			logger,
 			authservice.Config{CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
 			&mockauth.Authenticator{},
@@ -51,7 +51,7 @@ func TestProvideAdminService(T *testing.T) {
 			scs.New(),
 			ed,
 		)
-		assert.NotNil(t, service)
+		assert.NotNil(t, s)
 		assert.NoError(t, err)
 	})
 }

@@ -12,15 +12,16 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/go-chi/chi"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
-	"go.opencensus.io/plugin/ochttp"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 const (
-	serverNamespace = "todo-service"
+	serverNamespace = "todo_service"
 	loggerName      = "api_server"
 )
 
@@ -45,6 +46,7 @@ type (
 		httpServer       *http.Server
 		logger           logging.Logger
 		encoder          encoding.EncoderDecoder
+		tracer           tracing.Tracer
 	}
 )
 
@@ -82,6 +84,7 @@ func ProvideServer(
 		authService:          authService,
 		itemsService:         itemsService,
 		oauth2ClientsService: oauth2Service,
+		tracer:               tracing.NewTracer(loggerName),
 	}
 
 	srv.setupRouter(metricsHandler)
@@ -96,10 +99,11 @@ func (s *Server) Serve() {
 	s.httpServer.Addr = fmt.Sprintf(":%d", s.serverSettings.HTTPPort)
 	s.logger.Debug(fmt.Sprintf("Listening for HTTP requests on %q", s.httpServer.Addr))
 
-	s.httpServer.Handler = &ochttp.Handler{
-		Handler:        s.router,
-		FormatSpanName: formatSpanNameForRequest,
-	}
+	s.httpServer.Handler = otelhttp.NewHandler(
+		s.router,
+		serverNamespace,
+		otelhttp.WithSpanNameFormatter(formatSpanNameForRequest),
+	)
 
 	// returns ErrServerClosed on graceful close.
 	if err := s.httpServer.ListenAndServe(); err != nil {

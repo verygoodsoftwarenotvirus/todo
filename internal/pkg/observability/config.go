@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	"contrib.go.opencensus.io/exporter/jaeger"
 	"contrib.go.opencensus.io/exporter/prometheus"
@@ -54,9 +53,6 @@ type (
 
 // Validate validates a Config struct.
 func (cfg Config) Validate(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, &cfg,
 		validation.Field(&cfg.MetricsProvider, validation.In(Prometheus)),
 		validation.Field(&cfg.TracingProvider, validation.In(Jaeger)),

@@ -7,6 +7,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -63,6 +64,7 @@ type (
 		oauth2Handler        oauth2Handler
 		oauth2ClientCounter  metrics.UnitCounter
 		initialized          bool
+		tracer               tracing.Tracer
 	}
 )
 
@@ -77,9 +79,10 @@ func ProvideOAuth2ClientsService(
 	counterProvider metrics.UnitCounterProvider,
 ) (types.OAuth2ClientDataService, error) {
 	tokenStore, tokenStoreErr := oauth2store.NewMemoryTokenStore()
+	tracer := tracing.NewTracer(serviceName)
 
 	manager := manage.NewDefaultManager()
-	manager.MapClientStorage(newClientStore(clientDataManager))
+	manager.MapClientStorage(newClientStore(clientDataManager, tracer))
 	manager.MustTokenStorage(tokenStore, tokenStoreErr)
 	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
 	manager.SetRefreshTokenCfg(manage.DefaultRefreshTokenCfg)
@@ -96,6 +99,7 @@ func ProvideOAuth2ClientsService(
 		authenticator:        authenticator,
 		urlClientIDExtractor: routeparams.BuildRouteParamIDFetcher(logger, OAuth2ClientIDURIParamKey, "oauth2 client"),
 		oauth2Handler:        oHandler,
+		tracer:               tracer,
 	}
 	svc.initialize()
 

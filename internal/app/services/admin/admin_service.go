@@ -5,6 +5,7 @@ import (
 
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -29,6 +30,7 @@ type (
 		sessionManager     *scs.SessionManager
 		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
 		userIDFetcher      func(*http.Request) uint64
+		tracer             tracing.Tracer
 	}
 )
 
@@ -52,6 +54,7 @@ func ProvideService(
 		sessionManager:     sessionManager,
 		sessionInfoFetcher: routeparams.SessionInfoFetcherFromRequestContext,
 		userIDFetcher:      routeparams.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
+		tracer:             tracing.NewTracer(serviceName),
 	}
 	svc.sessionManager.Lifetime = cfg.CookieLifetime
 

@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
@@ -15,6 +16,7 @@ type (
 	service struct {
 		logger logging.Logger
 		config Config
+		tracer tracing.Tracer
 	}
 )
 
@@ -23,6 +25,7 @@ func ProvideService(logger logging.Logger, cfg Config) types.FrontendService {
 	svc := &service{
 		config: cfg,
 		logger: logger.WithName(serviceName),
+		tracer: tracing.NewTracer(serviceName),
 	}
 
 	return svc

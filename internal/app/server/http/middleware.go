@@ -15,7 +15,7 @@ import (
 
 var idReplacementRegex = regexp.MustCompile(`[^(v|oauth)]\\d+`)
 
-func formatSpanNameForRequest(req *http.Request) string {
+func formatSpanNameForRequest(operation string, req *http.Request) string {
 	return fmt.Sprintf(
 		"%s %s",
 		req.Method,
@@ -29,10 +29,10 @@ var doMotLog = map[string]struct{}{
 	"/assets/": {},
 }
 
-func buildLoggingMiddleware(logger logging.Logger) func(next http.Handler) http.Handler {
+func buildLoggingMiddleware(logger logging.Logger, tracer tracing.Tracer) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			ctx, span := tracing.StartSpan(req.Context())
+			ctx, span := tracer.StartSpan(req.Context())
 			defer span.End()
 
 			ww := middleware.NewWrapResponseWriter(res, req.ProtoMajor)

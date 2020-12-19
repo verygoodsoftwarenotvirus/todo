@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-
 	oauth2 "github.com/go-oauth2/oauth2/v4"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
@@ -136,9 +134,6 @@ func (c *OAuth2Client) HasScope(scope string) (found bool) {
 
 // Validate validates a ItemCreationInput.
 func (x *OAuth2ClientCreationInput) Validate(ctx context.Context, minUsernameLength, minPasswordLength uint8) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	if err := x.UserLoginInput.Validate(ctx, minUsernameLength, minPasswordLength); err != nil {
 		return err
 	}

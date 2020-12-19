@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/go-oauth2/oauth2/v4"
@@ -56,7 +55,7 @@ var (
 
 // AuthorizeScopeHandler satisfies the oauth2server AuthorizeScopeHandler interface.
 func (s *service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Request) (scope string, err error) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -104,7 +103,7 @@ var _ oauth2server.UserAuthorizationHandler = (*service)(nil).UserAuthorizationH
 
 // UserAuthorizationHandler satisfies the oauth2server UserAuthorizationHandler interface.
 func (s *service) UserAuthorizationHandler(_ http.ResponseWriter, req *http.Request) (userID string, err error) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	var uid uint64
@@ -138,7 +137,7 @@ var _ oauth2server.ClientAuthorizedHandler = (*service)(nil).ClientAuthorizedHan
 // ClientAuthorizedHandler satisfies the oauth2server ClientAuthorizedHandler interface.
 func (s *service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantType) (allowed bool, err error) {
 	// NOTE: it's a shame the interface we're implementing doesn't have this as its first argument
-	ctx, span := tracing.StartSpan(context.Background())
+	ctx, span := s.tracer.StartSpan(context.Background())
 	defer span.End()
 
 	logger := s.logger.WithValues(map[string]interface{}{
@@ -173,7 +172,7 @@ var errUnauthorized = errors.New("unauthorized")
 // ClientScopeHandler satisfies the oauth2server ClientScopeHandler interface.
 func (s *service) ClientScopeHandler(clientID, scope string) (authed bool, err error) {
 	// NOTE: it's a shame the interface we're implementing doesn't have this as its first argument
-	ctx, span := tracing.StartSpan(context.Background())
+	ctx, span := s.tracer.StartSpan(context.Background())
 	defer span.End()
 
 	logger := s.logger.WithValues(map[string]interface{}{

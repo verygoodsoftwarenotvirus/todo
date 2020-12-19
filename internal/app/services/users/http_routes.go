@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-
 	"image/png"
 	"net/http"
 
@@ -40,7 +39,7 @@ func (s *service) validateCredentialChangeRequest(
 	password,
 	totpToken string,
 ) (user *types.User, httpStatus int) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := s.logger.WithValue("user_id", userID)
@@ -75,7 +74,7 @@ func (s *service) validateCredentialChangeRequest(
 
 // UsernameSearchHandler is a handler for responding to username queries.
 func (s *service) UsernameSearchHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	query := req.URL.Query().Get(types.SearchQueryKey)
@@ -95,7 +94,7 @@ func (s *service) UsernameSearchHandler(res http.ResponseWriter, req *http.Reque
 
 // ListHandler is a handler for responding with a list of users.
 func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -117,7 +116,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 
 // CreateHandler is our user creation route.
 func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -215,7 +214,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 // buildQRCode builds a QR code for a given username and secret.
 func (s *service) buildQRCode(ctx context.Context, username, twoFactorSecret string) string {
-	_, span := tracing.StartSpan(ctx)
+	_, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
 	// "otpauth://totp/{{ .Issuer }}:{{ .EnsureUsername }}?secret={{ .Secret }}&issuer={{ .Issuer }}",
@@ -246,7 +245,7 @@ func (s *service) buildQRCode(ctx context.Context, username, twoFactorSecret str
 
 // SelfHandler returns information about the user making the request.
 func (s *service) SelfHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -281,7 +280,7 @@ func (s *service) SelfHandler(res http.ResponseWriter, req *http.Request) {
 
 // ReadHandler is our read route.
 func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -310,7 +309,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 // TOTPSecretVerificationHandler accepts a TOTP token as input and returns 200 if the TOTP token
 // is validated by the user's TOTP secret.
 func (s *service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -359,7 +358,7 @@ func (s *service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 // NewTOTPSecretHandler fetches a user, and issues them a new TOTP secret, after validating
 // that information received from TOTPSecretRefreshInputContextMiddleware is valid.
 func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -431,7 +430,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 // UpdatePasswordHandler updates a user's password, after validating that information received
 // from PasswordUpdateInputContextMiddleware is valid.
 func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -511,7 +510,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 
 // ArchiveHandler is a handler for archiving a user.
 func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -538,7 +537,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 // AuditEntryHandler returns a GET handler that returns all audit log entries related to an item.
 func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := tracing.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)

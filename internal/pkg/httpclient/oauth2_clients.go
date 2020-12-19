@@ -19,7 +19,7 @@ const (
 
 // BuildGetOAuth2ClientRequest builds an HTTP request for fetching an OAuth2 client.
 func (c *V1Client) BuildGetOAuth2ClientRequest(ctx context.Context, id uint64) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(
@@ -34,7 +34,7 @@ func (c *V1Client) BuildGetOAuth2ClientRequest(ctx context.Context, id uint64) (
 
 // GetOAuth2Client gets an OAuth2 client.
 func (c *V1Client) GetOAuth2Client(ctx context.Context, id uint64) (oauth2Client *types.OAuth2Client, err error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildGetOAuth2ClientRequest(ctx, id)
@@ -49,7 +49,7 @@ func (c *V1Client) GetOAuth2Client(ctx context.Context, id uint64) (oauth2Client
 
 // BuildGetOAuth2ClientsRequest builds an HTTP request for fetching a list of OAuth2 clients.
 func (c *V1Client) BuildGetOAuth2ClientsRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(
@@ -63,7 +63,7 @@ func (c *V1Client) BuildGetOAuth2ClientsRequest(ctx context.Context, filter *typ
 
 // GetOAuth2Clients gets a list of OAuth2 clients.
 func (c *V1Client) GetOAuth2Clients(ctx context.Context, filter *types.QueryFilter) (*types.OAuth2ClientList, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildGetOAuth2ClientsRequest(ctx, filter)
@@ -83,7 +83,7 @@ func (c *V1Client) BuildCreateOAuth2ClientRequest(
 	cookie *http.Cookie,
 	body *types.OAuth2ClientCreationInput,
 ) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.buildVersionlessURL(
@@ -109,7 +109,7 @@ func (c *V1Client) CreateOAuth2Client(
 	cookie *http.Cookie,
 	input *types.OAuth2ClientCreationInput,
 ) (*types.OAuth2Client, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	var oauth2Client *types.OAuth2Client
@@ -132,7 +132,7 @@ func (c *V1Client) CreateOAuth2Client(
 
 // BuildArchiveOAuth2ClientRequest builds an HTTP request for archiving an oauth2 client.
 func (c *V1Client) BuildArchiveOAuth2ClientRequest(ctx context.Context, id uint64) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(
@@ -147,7 +147,7 @@ func (c *V1Client) BuildArchiveOAuth2ClientRequest(ctx context.Context, id uint6
 
 // ArchiveOAuth2Client archives an OAuth2 client.
 func (c *V1Client) ArchiveOAuth2Client(ctx context.Context, id uint64) error {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildArchiveOAuth2ClientRequest(ctx, id)
@@ -160,7 +160,7 @@ func (c *V1Client) ArchiveOAuth2Client(ctx context.Context, id uint64) error {
 
 // BuildGetAuditLogForOAuth2ClientRequest builds an HTTP request for fetching a list of audit log entries for an oauth2 client.
 func (c *V1Client) BuildGetAuditLogForOAuth2ClientRequest(ctx context.Context, clientID uint64) (*http.Request, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	uri := c.BuildURL(
@@ -177,7 +177,7 @@ func (c *V1Client) BuildGetAuditLogForOAuth2ClientRequest(ctx context.Context, c
 
 // GetAuditLogForOAuth2Client retrieves a list of audit log entries pertaining to an oauth2 client.
 func (c *V1Client) GetAuditLogForOAuth2Client(ctx context.Context, clientID uint64) (entries []types.AuditLogEntry, err error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildGetAuditLogForOAuth2ClientRequest(ctx, clientID)

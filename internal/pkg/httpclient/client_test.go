@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -91,9 +93,16 @@ func mustParseURL(uri string) *url.URL {
 func buildTestClient(t *testing.T, ts *httptest.Server) *V1Client {
 	t.Helper()
 
-	l := noop.NewLogger()
-	u := mustParseURL(ts.URL)
-	c := ts.Client()
+	var (
+		u *url.URL
+		c *http.Client
+		l = noop.NewLogger()
+	)
+
+	if ts != nil {
+		u = mustParseURL(ts.URL)
+		c = ts.Client()
+	}
 
 	return &V1Client{
 		URL:          u,
@@ -101,6 +110,7 @@ func buildTestClient(t *testing.T, ts *httptest.Server) *V1Client {
 		logger:       l,
 		Debug:        true,
 		authedClient: c,
+		tracer:       tracing.NewTracer("test"),
 	}
 }
 
@@ -117,6 +127,7 @@ func buildTestClientWithInvalidURL(t *testing.T) *V1Client {
 		logger:       l,
 		Debug:        true,
 		authedClient: http.DefaultClient,
+		tracer:       tracing.NewTracer("test"),
 	}
 }
 

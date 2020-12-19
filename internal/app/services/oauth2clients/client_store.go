@@ -14,11 +14,13 @@ import (
 
 type clientStore struct {
 	dataManager types.OAuth2ClientDataManager
+	tracer      tracing.Tracer
 }
 
-func newClientStore(db types.OAuth2ClientDataManager) oauth2.ClientStore {
+func newClientStore(db types.OAuth2ClientDataManager, tracer tracing.Tracer) oauth2.ClientStore {
 	cs := &clientStore{
 		dataManager: db,
+		tracer:      tracer,
 	}
 	return cs
 }
@@ -27,7 +29,7 @@ var errInvalidClient = errors.New("invalid client")
 
 // GetByID implements oauth2.ClientStorage.
 func (s *clientStore) GetByID(ctx context.Context, id string) (oauth2.ClientInfo, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
 	client, err := s.dataManager.GetOAuth2ClientByClientID(ctx, id)

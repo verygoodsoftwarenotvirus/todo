@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -11,7 +12,7 @@ var _ types.AuditLogDataManager = (*Client)(nil)
 
 // GetAuditLogEntry fetches an audit log entry from the database.
 func (c *Client) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.AuditLogEntry, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachAuditLogEntryIDToSpan(span, entryID)
@@ -22,7 +23,7 @@ func (c *Client) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.A
 
 // GetAllAuditLogEntriesCount fetches the count of audit log entries from the database that meet a particular filter.
 func (c *Client) GetAllAuditLogEntriesCount(ctx context.Context) (count uint64, err error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Debug("GetAllAuditLogEntriesCount called")
@@ -32,7 +33,7 @@ func (c *Client) GetAllAuditLogEntriesCount(ctx context.Context) (count uint64, 
 
 // GetAllAuditLogEntries fetches a list of all audit log entries in the database.
 func (c *Client) GetAllAuditLogEntries(ctx context.Context, results chan []types.AuditLogEntry) error {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Debug("GetAllAuditLogEntries called")
@@ -42,7 +43,7 @@ func (c *Client) GetAllAuditLogEntries(ctx context.Context, results chan []types
 
 // GetAuditLogEntries fetches a list of audit log entries from the database that meet a particular filter.
 func (c *Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilter) (*types.AuditLogEntryList, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if filter != nil {
@@ -56,7 +57,7 @@ func (c *Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilt
 
 // LogCycleCookieSecretEvent implements our AuditLogDataManager interface.
 func (c *Client) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", userID).Debug("LogCycleCookieSecretEvent called")
@@ -66,7 +67,7 @@ func (c *Client) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
 
 // LogSuccessfulLoginEvent implements our AuditLogDataManager interface.
 func (c *Client) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", userID).Debug("LogSuccessfulLoginEvent called")
@@ -76,7 +77,7 @@ func (c *Client) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
 
 // LogBannedUserLoginAttemptEvent implements our AuditLogDataManager interface.
 func (c *Client) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint64) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", userID).Debug("LogBannedUserLoginAttemptEvent called")
@@ -86,7 +87,7 @@ func (c *Client) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint
 
 // LogUnsuccessfulLoginBadPasswordEvent implements our AuditLogDataManager interface.
 func (c *Client) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", userID).Debug("LogUnsuccessfulLoginBadPasswordEvent called")
@@ -96,7 +97,7 @@ func (c *Client) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userI
 
 // LogUnsuccessfulLoginBad2FATokenEvent implements our AuditLogDataManager interface.
 func (c *Client) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", userID).Debug("LogUnsuccessfulLoginBad2FATokenEvent called")
@@ -106,7 +107,7 @@ func (c *Client) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userI
 
 // LogLogoutEvent implements our AuditLogDataManager interface.
 func (c *Client) LogLogoutEvent(ctx context.Context, userID uint64) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", userID).Debug("LogLogoutEvent called")
@@ -116,7 +117,7 @@ func (c *Client) LogLogoutEvent(ctx context.Context, userID uint64) {
 
 // LogItemCreationEvent implements our AuditLogDataManager interface.
 func (c *Client) LogItemCreationEvent(ctx context.Context, item *types.Item) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", item.BelongsToUser).Debug("LogItemCreationEvent called")
@@ -126,7 +127,7 @@ func (c *Client) LogItemCreationEvent(ctx context.Context, item *types.Item) {
 
 // LogItemUpdateEvent implements our AuditLogDataManager interface.
 func (c *Client) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []types.FieldChangeSummary) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", userID).Debug("LogItemUpdateEvent called")
@@ -136,7 +137,7 @@ func (c *Client) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, 
 
 // LogItemArchiveEvent implements our AuditLogDataManager interface.
 func (c *Client) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", userID).Debug("LogItemArchiveEvent called")
@@ -146,7 +147,7 @@ func (c *Client) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64)
 
 // LogOAuth2ClientCreationEvent implements our AuditLogDataManager interface.
 func (c *Client) LogOAuth2ClientCreationEvent(ctx context.Context, client *types.OAuth2Client) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", client.BelongsToUser).Debug("LogOAuth2ClientCreationEvent called")
@@ -156,7 +157,7 @@ func (c *Client) LogOAuth2ClientCreationEvent(ctx context.Context, client *types
 
 // LogOAuth2ClientArchiveEvent implements our AuditLogDataManager interface.
 func (c *Client) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", userID).Debug("LogOAuth2ClientArchiveEvent called")
@@ -166,7 +167,7 @@ func (c *Client) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, client
 
 // LogWebhookCreationEvent implements our AuditLogDataManager interface.
 func (c *Client) LogWebhookCreationEvent(ctx context.Context, webhook *types.Webhook) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", webhook.BelongsToUser).Debug("LogWebhookCreationEvent called")
@@ -176,7 +177,7 @@ func (c *Client) LogWebhookCreationEvent(ctx context.Context, webhook *types.Web
 
 // LogWebhookUpdateEvent implements our AuditLogDataManager interface.
 func (c *Client) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []types.FieldChangeSummary) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", userID).Debug("LogWebhookUpdateEvent called")
@@ -186,7 +187,7 @@ func (c *Client) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID ui
 
 // LogWebhookArchiveEvent implements our AuditLogDataManager interface.
 func (c *Client) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", userID).Debug("LogWebhookArchiveEvent called")
@@ -196,7 +197,7 @@ func (c *Client) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID u
 
 // LogUserCreationEvent implements our AuditLogDataManager interface.
 func (c *Client) LogUserCreationEvent(ctx context.Context, user *types.User) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", user.ID).Debug("LogUserCreationEvent called")
@@ -206,7 +207,7 @@ func (c *Client) LogUserCreationEvent(ctx context.Context, user *types.User) {
 
 // LogUserVerifyTwoFactorSecretEvent implements our AuditLogDataManager interface.
 func (c *Client) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", userID).Debug("LogUserVerifyTwoFactorSecretEvent called")
@@ -216,7 +217,7 @@ func (c *Client) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID u
 
 // LogUserUpdateTwoFactorSecretEvent implements our AuditLogDataManager interface.
 func (c *Client) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", userID).Debug("LogUserUpdateTwoFactorSecretEvent called")
@@ -226,7 +227,7 @@ func (c *Client) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID u
 
 // LogUserUpdatePasswordEvent implements our AuditLogDataManager interface.
 func (c *Client) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", userID).Debug("LogUserUpdatePasswordEvent called")
@@ -236,7 +237,7 @@ func (c *Client) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) 
 
 // LogUserArchiveEvent implements our AuditLogDataManager interface.
 func (c *Client) LogUserArchiveEvent(ctx context.Context, userID uint64) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue("user_id", userID).Debug("LogUserArchiveEvent called")

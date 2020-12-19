@@ -6,6 +6,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -37,6 +38,7 @@ type (
 		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
 		webhookIDFetcher   func(*http.Request) uint64
 		encoderDecoder     encoding.EncoderDecoder
+		tracer             tracing.Tracer
 	}
 )
 
@@ -61,6 +63,7 @@ func ProvideWebhooksService(
 		webhookCounter:     webhookCounter,
 		sessionInfoFetcher: routeparams.SessionInfoFetcherFromRequestContext,
 		webhookIDFetcher:   routeparams.BuildRouteParamIDFetcher(logger, WebhookIDURIParamKey, "webhook"),
+		tracer:             tracing.NewTracer(serviceName),
 	}
 
 	return svc, nil

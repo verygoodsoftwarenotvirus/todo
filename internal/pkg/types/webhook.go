@@ -4,8 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"
@@ -190,9 +188,6 @@ func (w *Webhook) ToListener(logger logging.Logger) newsman.Listener {
 
 // Validate validates a WebhookCreationInput.
 func (w *WebhookCreationInput) Validate(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, w,
 		validation.Field(&w.Name, validation.Required),
 		validation.Field(&w.URL, validation.Required, &urlValidator{}),
@@ -205,9 +200,6 @@ func (w *WebhookCreationInput) Validate(ctx context.Context) error {
 
 // Validate validates a WebhookUpdateInput.
 func (w *WebhookUpdateInput) Validate(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.End()
-
 	return validation.ValidateStructWithContext(ctx, w,
 		validation.Field(&w.Name, validation.Required),
 		validation.Field(&w.URL, validation.Required, &urlValidator{}),

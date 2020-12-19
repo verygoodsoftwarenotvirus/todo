@@ -7,6 +7,8 @@ import (
 	"os"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
@@ -34,7 +36,10 @@ func TestService_StaticDir(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		s := &service{logger: noop.NewLogger()}
+		s := &service{
+			logger: noop.NewLogger(),
+			tracer: tracing.NewTracer("test"),
+		}
 
 		cwd, err := os.Getwd()
 		require.NoError(t, err)
@@ -52,7 +57,11 @@ func TestService_StaticDir(T *testing.T) {
 
 	T.Run("with frontend routing path", func(t *testing.T) {
 		t.Parallel()
-		s := &service{logger: noop.NewLogger()}
+		s := &service{
+			logger: noop.NewLogger(),
+			tracer: tracing.NewTracer("test"),
+		}
+
 		exampleDir := "."
 
 		hf, err := s.StaticDir(exampleDir)
